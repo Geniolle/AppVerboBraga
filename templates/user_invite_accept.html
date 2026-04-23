@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ativar conta</title>
+  <style>
+    :root {
+      --bg: #eceef2;
+      --panel: #ffffff;
+      --line: #d8dce4;
+      --text: #2f3540;
+      --muted: #6b7483;
+      --primary: #0e5abc;
+      --primary-hover: #1c67c9;
+      --ok: #1f7a49;
+      --ok-bg: #e9f8ef;
+      --error: #a02a2a;
+      --error-bg: #fdeeee;
+      --readonly-bg: #edf1f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      width: min(900px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #0f2647;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .alert {
+      padding: 11px 12px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    .alert.error {
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid #efc2c2;
+    }
+
+    .alert.ok {
+      background: var(--ok-bg);
+      color: var(--ok);
+      border: 1px solid #c6ebd4;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      color: #415370;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      padding: 9px 10px;
+      font-size: 15px;
+      color: #253147;
+      background: #fff;
+    }
+
+    input:focus {
+      outline: 2px solid rgba(14, 90, 188, 0.16);
+      border-color: #8fb4e7;
+    }
+
+    input[readonly],
+    input[disabled] {
+      background: var(--readonly-bg);
+      color: #5d6b80;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    button,
+    .link-btn {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    .link-btn {
+      background: #e8edf6;
+      color: #2e3c52;
+      border: 1px solid #cad4e4;
+    }
+
+    .link-btn:hover {
+      background: #dee7f4;
+    }
+
+    @media (max-width: 740px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <h1>Ativar conta</h1>
+      <p class="subtitle">Complete os dados abaixo para ativar o acesso.</p>
+
+      {% if error %}
+        <div class="alert error">{{ error }}</div>
+      {% endif %}
+      {% if success %}
+        <div class="alert ok">{{ success }}</div>
+      {% endif %}
+
+      {% if account_already_active %}
+        <div class="actions">
+          <a class="link-btn" href="/login">Ir para login</a>
+        </div>
+      {% else %}
+        <form method="post" action="/users/invite/accept">
+          <input type="hidden" name="token" value="{{ token }}">
+          <div class="grid">
+            <div class="field">
+              <label for="invite_email">Email</label>
+              <input id="invite_email" value="{{ form_data.email }}" readonly disabled>
+            </div>
+            <div class="field">
+              <label for="invite_entity_name">Entidade</label>
+              <input id="invite_entity_name" value="{{ form_data.entity_name }}" readonly disabled>
+            </div>
+            <div class="field">
+              <label for="invite_full_name">Nome completo *</label>
+              <input id="invite_full_name" name="full_name" required value="{{ form_data.full_name }}">
+            </div>
+            <div class="field">
+              <label for="invite_primary_phone">Telefone principal *</label>
+              <input id="invite_primary_phone" name="primary_phone" required value="{{ form_data.primary_phone }}">
+            </div>
+            <div class="field full">
+              <label for="invite_address">Morada *</label>
+              <input id="invite_address" name="address" required value="{{ form_data.address }}">
+            </div>
+            <div class="field">
+              <label for="invite_city">Cidade *</label>
+              <input id="invite_city" name="city" required value="{{ form_data.city }}">
+            </div>
+            <div class="field">
+              <label for="invite_freguesia">Freguesia *</label>
+              <input id="invite_freguesia" name="freguesia" required value="{{ form_data.freguesia }}">
+            </div>
+            <div class="field">
+              <label for="invite_postal_code">Código postal *</label>
+              <input id="invite_postal_code" name="postal_code" required value="{{ form_data.postal_code }}">
+            </div>
+            <div class="field">
+              <label for="invite_birth_date">Data de nascimento (opcional)</label>
+              <input id="invite_birth_date" name="birth_date" placeholder="dd/mm/aaaa" value="{{ form_data.birth_date }}">
+            </div>
+            <div class="field">
+              <label for="invite_password">Palavra-passe *</label>
+              <input id="invite_password" name="password" type="password" minlength="8" required>
+            </div>
+            <div class="field">
+              <label for="invite_confirm_password">Confirmar palavra-passe *</label>
+              <input id="invite_confirm_password" name="confirm_password" type="password" minlength="8" required>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit">Ativar conta</button>
+            <a class="link-btn" href="/login">Voltar ao login</a>
+          </div>
+        </form>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

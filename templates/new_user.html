@@ -1,0 +1,4653 @@
+﻿<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}</title>
+  <style>
+    :root {
+      --bg: #eceef2;
+      --topbar: #2f86d7;
+      --sidebar-bg: #f3f3f4;
+      --sidebar-line: #d7d9de;
+      --sidebar-active: #e4e6ea;
+      --panel-bg: #ffffff;
+      --line: #d8dce4;
+      --text: #2f3540;
+      --muted: #6b7483;
+      --primary: #3f51b5;
+      --primary-hover: #35449d;
+      --ok: #1f7a49;
+      --ok-bg: #e9f8ef;
+      --error: #a02a2a;
+      --error-bg: #fdeeee;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+   .topbar {
+      height: 62px;
+      background: var(--topbar);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+   .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+   .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+   .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      overflow: hidden;
+      flex: 0 0 32px;
+    }
+
+   .brand-mark img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+   .brand-name {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+   .topbar-action {
+      background: transparent;
+      border: 0;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+   .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+   .topbar-meta {
+      opacity: 0.95;
+    }
+
+   .user-menu {
+      position: relative;
+    }
+
+   .user-menu-trigger {
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 999px;
+      min-height: 38px;
+    }
+
+   .user-menu-trigger:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+   .user-name {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+   .avatar-img {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.75);
+      background: #dbeafe;
+      object-fit: cover;
+      flex: 0 0 auto;
+    }
+
+   .user-caret {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+   .user-dropdown {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      width: min(430px, calc(100vw - 24px));
+      background: #fff;
+      border: 1px solid #bfc7d4;
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.2);
+      z-index: 40;
+      padding: 18px 18px 14px;
+    }
+
+   .user-dropdown::before {
+      content: "";
+      position: absolute;
+      top: -8px;
+      right: 30px;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-top: 1px solid #bfc7d4;
+      border-left: 1px solid #bfc7d4;
+      transform: rotate(45deg);
+    }
+
+   .user-dropdown-header {
+      padding: 0 0 14px;
+      text-align: center;
+      border-bottom: 1px solid #e1e6ef;
+    }
+
+   .dropdown-avatar {
+      width: 64px;
+      height: 64px;
+      border: 0;
+      margin: 0 auto 12px;
+      display: block;
+      background: #cbe6ff;
+    }
+
+   .dropdown-name {
+      margin: 0;
+      color: #0f2647;
+      font-size: clamp(24px, 2vw, 32px);
+      font-weight: 700;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+   .dropdown-meta {
+      margin: 6px 0 0;
+      color: #5d6981;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+   .dropdown-email {
+      margin: 6px 0 0;
+      color: #1f2f4a;
+      font-size: 15px;
+      word-break: break-word;
+    }
+
+   .dropdown-entity {
+      margin: 4px 0 0;
+      color: #1f2f4a;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+   .user-dropdown-actions {
+      padding: 12px 0 8px;
+      display: grid;
+      gap: 0;
+    }
+
+   .dropdown-link {
+      text-decoration: none;
+      color: #102746;
+      font-size: 16px;
+      font-weight: 500;
+      padding: 10px 2px;
+      display: block;
+      border-bottom: 1px solid #e8ecf3;
+    }
+
+   .dropdown-link:hover {
+      color: #0e5abc;
+    }
+
+   .dropdown-logout-form {
+      padding: 10px 0 0;
+      margin: 0;
+    }
+
+   .dropdown-logout-btn {
+      width: 100%;
+      margin: 0;
+      background: transparent;
+      color: #102746;
+      border: 0;
+      padding: 8px 2px;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.16s ease, color 0.16s ease;
+    }
+
+   .dropdown-logout-btn:hover,
+   .dropdown-logout-btn:focus-visible {
+      background: #5f79cf;
+      color: #ffffff;
+      outline: none;
+    }
+
+   .dropdown-logout-btn:active {
+      background: #4f68b8;
+      color: #ffffff;
+    }
+
+   .layout {
+      min-height: calc(100vh - 62px);
+      display: grid;
+      grid-template-columns: 234px minmax(0, 1fr);
+    }
+
+   .sidebar {
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-line);
+      padding: 14px 0;
+    }
+
+   .menu-section {
+      margin: 10px 0 4px;
+      padding: 0 18px;
+      font-size: 13px;
+      color: #808792;
+      text-transform: uppercase;
+    }
+
+   .menu-list {
+      display: grid;
+      gap: 1px;
+      margin: 6px 0 14px;
+    }
+
+   .menu-item {
+      border: 0;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      padding: 11px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #5c6572;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+   .menu-item:hover {
+      background: #eaecf0;
+    }
+
+   .menu-item.active {
+      background: var(--sidebar-active);
+      color: #2f333a;
+      font-weight: 700;
+    }
+
+   .menu-icon {
+      width: 20px;
+      text-align: center;
+      color: #7b8089;
+      font-size: 12px;
+    }
+
+   .menu-arrow {
+      margin-left: auto;
+      color: #8a9099;
+    }
+
+   .perfil-submenu {
+      padding: 4px 12px 10px 42px;
+      margin: -8px 0 10px;
+    }
+
+   .sidebar-submenu {
+      padding: 0 12px;
+      margin: -4px 0 10px;
+    }
+
+   .sidebar-address-card {
+      margin: 0 12px 14px;
+      border: 1px solid #dce3f2;
+      border-radius: 8px;
+      background: #f9fbff;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+   .sidebar-address-title {
+      margin: 0 0 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2f3850;
+      text-transform: uppercase;
+    }
+
+   .sidebar-address-row {
+      font-size: 13px;
+      color: #344055;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+   .sidebar-address-label {
+      color: #667388;
+      font-weight: 600;
+    }
+
+   .submenu-items {
+      display: grid;
+      gap: 8px;
+    }
+
+   .submenu-item {
+      display: block;
+      text-decoration: none;
+      color: #2f3850;
+      background: #f9fbff;
+      border: 1px solid #dce3f2;
+      border-radius: 8px;
+      padding: 10px 11px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+   .submenu-item:hover {
+      background: #f2f6ff;
+      border-color: #becdf0;
+    }
+
+   .submenu-item.active {
+      background: #edf3ff;
+      border-color: #b5c7ee;
+      color: #22304f;
+    }
+
+   .menu-tabs-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+   .menu-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      overflow-x: auto;
+      border-bottom: 1px solid #dce3f2;
+      padding: 0 10px;
+    }
+
+   .menu-tabs.submenu-item {
+      background: transparent;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      padding: 13px 10px 11px;
+      white-space: nowrap;
+      color: #33425c;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+   .menu-tabs.submenu-item:hover {
+      background: #f4f7fd;
+      border-color: transparent;
+    }
+
+   .menu-tabs.submenu-item.active {
+      background: transparent;
+      border-color: #1c67c9;
+      color: #0e5abc;
+    }
+
+   .content {
+      padding: 24px;
+      min-width: 0;
+    }
+
+   .container {
+      width: 100%;
+      max-width: 100%;
+    }
+
+   .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+   .entity-create-collapse {
+      border: 0;
+      text-align: left;
+    }
+
+   .entity-create-collapse summary {
+      list-style: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+      width: auto;
+      border-radius: 10px;
+      padding: 8px 16px;
+      background: #0e5abc;
+      border: 1px solid #2458c3;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+   .entity-create-collapse summary:hover {
+      background: #1c67c9;
+      border-color: #1c67c9;
+    }
+
+   .entity-create-collapse summary::-webkit-details-marker {
+      display: none;
+    }
+
+   .entity-create-collapse[open] > summary {
+      display: none;
+    }
+
+   .entity-create-body {
+      margin-top: 10px;
+      text-align: left;
+    }
+
+   .entity-first-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+   .entity-first-row.field {
+      min-width: 0;
+    }
+
+   .entity-first-row.field label {
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+   .entity-first-row.entity-first-row-client,
+   .entity-first-row.entity-first-row-acronym {
+      width: max-content;
+    }
+
+   .entity-first-row.entity-first-row-client input {
+      width: 100%;
+      min-width: 10ch;
+    }
+
+   .entity-first-row.entity-first-row-acronym input {
+      width: 100%;
+      min-width: 5ch;
+    }
+
+   .entity-second-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+   .entity-second-row.field {
+      min-width: 0;
+    }
+
+   .entity-second-row.field label {
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+   .entity-second-row.entity-second-row-tax,
+   .entity-second-row.entity-second-row-phone {
+      width: max-content;
+    }
+
+   .entity-second-row.entity-second-row-tax input {
+      width: 100%;
+      min-width: 30ch;
+      max-width: 30ch;
+    }
+
+   .entity-second-row.entity-second-row-phone input {
+      width: 100%;
+      min-width: 30ch;
+      max-width: 30ch;
+    }
+
+   .entity-third-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+   .entity-third-row.field {
+      min-width: 0;
+    }
+
+   .entity-third-row.field label {
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+   .entity-third-row.entity-third-row-door {
+      width: max-content;
+    }
+
+   .entity-third-row.entity-third-row-door input {
+      width: 100%;
+      min-width: 15ch;
+      max-width: 15ch;
+    }
+
+   .entity-fourth-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+   .entity-fourth-row.field {
+      min-width: 0;
+    }
+
+   .entity-fourth-row.field label {
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+
+   .entity-fourth-row.entity-fourth-row-postal,
+   .entity-fourth-row.entity-fourth-row-country {
+      width: max-content;
+    }
+
+   .entity-fourth-row.entity-fourth-row-postal input {
+      width: 100%;
+      min-width: 30ch;
+      max-width: 30ch;
+    }
+
+   .entity-fourth-row.entity-fourth-row-country input {
+      width: 100%;
+      min-width: 50ch;
+      max-width: 50ch;
+    }
+
+   .entity-fifth-row-created-at {
+      width: max-content;
+    }
+
+   .entity-fifth-row-created-at input {
+      width: 100%;
+      min-width: 30ch;
+      max-width: 30ch;
+    }
+
+   .entity-fifth-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+   .entity-scope-row {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+   .entity-fifth-row-edit {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+
+   .entity-fifth-row.field {
+      min-width: 0;
+    }
+
+   .entity-edit-logo-row {
+      margin-bottom: 12px;
+    }
+
+   .entity-edit-status-row {
+      max-width: 240px;
+      min-width: 220px;
+    }
+
+   .entity-edit-current-logo {
+      min-width: 0;
+    }
+
+   .entity-edit-current-logo-preview {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+    }
+
+   .entity-edit-current-logo-image {
+      display: block;
+      width: 100%;
+      height: 120px;
+      object-fit: contain;
+      object-position: center;
+      border: 1px solid #d8deea;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 8px;
+    }
+
+   .entity-edit-remove-logo-placeholder {
+      display: none;
+      width: 100%;
+      height: 120px;
+      border: 1px dashed #d9a8a8;
+      border-radius: 10px;
+      background: #fff7f7;
+      color: #8f2f2f;
+      font-size: 13px;
+      font-weight: 600;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px 12px;
+    }
+
+   .entity-edit-remove-logo-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+   .entity-edit-remove-logo-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid #e4a8a8;
+      background: #ffffff;
+      color: #8f2f2f;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(36, 49, 74, 0.15);
+      user-select: none;
+    }
+
+   .entity-edit-remove-logo-btn:hover {
+      background: #fdeeee;
+      border-color: #d57a7a;
+      color: #7d2525;
+    }
+
+   .entity-edit-remove-logo-input:checked +.entity-edit-remove-logo-btn {
+      background: #fdeeee;
+      border-color: #d57a7a;
+      color: #7d2525;
+    }
+
+   .entity-edit-remove-logo-input:checked ~ .entity-edit-current-logo-image {
+      display: none;
+    }
+
+   .entity-edit-remove-logo-input:checked ~ .entity-edit-remove-logo-placeholder {
+      display: flex;
+    }
+
+   .entity-panel-card {
+      border-radius: 18px;
+      border: 1px solid #d6dde9;
+      background: #f5f7fb;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+   .entity-panel-card h2 {
+      color: #0f2647;
+    }
+
+   .home-summary-head {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+   .home-summary-head h2 {
+      margin: 0;
+    }
+
+   .home-summary-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+   .home-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+   .home-kpi {
+      border: 1px solid #d6dce8;
+      background: #fafcff;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+   .home-kpi-label {
+      margin: 0;
+      color: #64728a;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+   .home-kpi-value {
+      margin: 8px 0 0;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+      color: #2f3850;
+    }
+
+   .home-chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+   .home-chart-box {
+      border: 1px solid #d6dce8;
+      background: #fcfdff;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 300px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+   .home-chart-box h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #2f3850;
+    }
+
+   .home-chart-wrap {
+      position: relative;
+      height: 230px;
+    }
+
+   .personal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 16px;
+    }
+
+   .profile-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+   .profile-card-header h2 {
+      margin: 0;
+    }
+
+   .profile-edit-toggle {
+      margin: 0;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+   .profile-edit-form {
+      display: none;
+    }
+
+   .card.editing .profile-readonly {
+      display: none;
+    }
+
+   .card.editing .profile-edit-form {
+      display: block;
+    }
+
+   .card.editing .profile-edit-toggle {
+      display: none;
+    }
+
+   .profile-edit-actions {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+   .profile-edit-actions button {
+      margin-top: 0;
+      min-width: 132px;
+    }
+
+   .profile-process-tabs {
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #d5deee;
+      padding-bottom: 8px;
+    }
+
+   .profile-process-tab-btn {
+      border: 1px solid #c4d1ec;
+      background: #eef3ff;
+      color: #233b66;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+   .profile-process-tab-btn:hover {
+      background: #e3ecff;
+      border-color: #b4c6eb;
+    }
+
+   .profile-process-tab-btn.active {
+      background: #3f51b5;
+      border-color: #3f51b5;
+      color: #ffffff;
+    }
+
+   .profile-cancel-btn {
+      background: #8b95a7;
+    }
+
+   .profile-cancel-btn:hover {
+      background: #727d91;
+    }
+
+   .training-options-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+   .training-option-row {
+      border: 1px solid #d6dce8;
+      background: #fafcff;
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+   .training-option-row input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+   .training-option-row span {
+      font-weight: 600;
+      color: #2c3649;
+    }
+
+   .training-option-outros {
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+   .training-outros-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: #2c3649;
+      font-weight: 600;
+    }
+
+   .training-outros-input {
+      flex: 1 1 auto;
+      min-width: 220px;
+      margin: 0;
+      padding: 8px 10px;
+      border: 1px solid #cfd5df;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #313845;
+      background: #fff;
+    }
+
+   .training-outros-input:disabled {
+      background: #eef1f6;
+      color: #7b869a;
+    }
+
+   .training-selected-list {
+      margin: 8px 0 14px;
+      padding-left: 18px;
+      color: #2c3649;
+    }
+
+   .training-selected-list li {
+      margin-bottom: 4px;
+    }
+
+   .personal-item {
+      border: 1px solid #d6dce8;
+      background: #fafcff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+   .personal-label {
+      display: block;
+      font-size: 12px;
+      text-transform: none;
+      color: #68748a;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+   .personal-value {
+      display: block;
+      font-size: 15px;
+      color: #2c3649;
+      word-break: break-word;
+    }
+
+    h1,
+    h2 {
+      margin: 0 0 12px;
+      font-weight: 700;
+      color: #2f3a4a;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+
+   .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+   .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+   .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 13px;
+      color: #586273;
+      text-transform: uppercase;
+    }
+
+   .profile-edit-form label {
+      text-transform: none;
+    }
+
+   .profile-edit-form input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+   .profile-custom-flag-control {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #cfd5df;
+      border-radius: 4px;
+      background: #fff;
+      padding: 10px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #313845;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 4px;
+      background: #fff;
+      color: #313845;
+      font-size: 14px;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 8px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 15px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+   .alert {
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid;
+      font-size: 14px;
+    }
+
+   .alert.ok {
+      color: var(--ok);
+      background: var(--ok-bg);
+      border-color: #b8e7c9;
+    }
+
+   .alert.error {
+      color: var(--error);
+      background: var(--error-bg);
+      border-color: #f5c7c7;
+    }
+
+   .alert ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #d9dee8;
+      text-align: left;
+      padding: 10px 8px;
+    }
+
+    th {
+      color: #5f6877;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+   .empty {
+      color: var(--muted);
+    }
+
+   .table-limiter {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+   .table-limiter-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #5f6877;
+      font-size: 14px;
+    }
+
+   .readonly-field {
+      background: #eef1f6 !important;
+      border-color: #d6dce8 !important;
+      color: #5f6877 !important;
+      cursor: not-allowed;
+    }
+
+   .entity-panel-card[data-readonly-mode="1"] input:disabled,
+   .entity-panel-card[data-readonly-mode="1"] select:disabled,
+   .entity-panel-card[data-readonly-mode="1"] textarea:disabled {
+      background: #eef1f6 !important;
+      border-color: #d6dce8 !important;
+      color: #5f6877 !important;
+      cursor: not-allowed;
+    }
+
+   .table-limiter-select {
+      width: auto;
+      min-width: 84px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #253046;
+    }
+
+   .table-limiter-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+   .table-limiter-nav-btn {
+      margin-top: 0;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: #2f6db4;
+      border: 1px solid #d3dced;
+      font-size: 18px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+   .table-limiter-nav-btn:hover {
+      background: #eef3ff;
+      color: #1f4eb7;
+      border-color: #becdf0;
+    }
+
+   .table-limiter-nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: transparent;
+      color: #7a879d;
+      border-color: #d9dee8;
+    }
+
+   .table-limiter-page {
+      min-width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #2f6db4;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+   .entity-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+   .entity-status-active {
+      color: #17663f;
+      background: #e9f8ef;
+      border-color: #b7e3c7;
+    }
+
+   .entity-status-inactive {
+      color: #7a2f2f;
+      background: #fdeeee;
+      border-color: #f2c2c2;
+    }
+
+   .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+   .table-actions form {
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+    }
+
+   .table-link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border: 1px solid #c5d2ed;
+      background: #eef3ff;
+      color: #25385e;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+   .table-link-btn:hover {
+      background: #e2eaff;
+      border-color: #afc0e7;
+    }
+
+   .table-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      margin-top: 0;
+      padding: 0;
+      text-decoration: none;
+      border: 1px solid #c5d2ed;
+      background: #eef3ff;
+      color: #25385e;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+   .table-icon-btn:hover {
+      background: #e2eaff;
+      border-color: #afc0e7;
+    }
+
+   .table-icon-btn-disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+   .table-icon-btn-danger {
+      border-color: #f0c0c0;
+      background: #fdeeee;
+      color: #8f2f2f;
+    }
+
+   .table-icon-btn-danger:hover {
+      border-color: #e4a8a8;
+      background: #fbdede;
+      color: #7d2525;
+    }
+
+   .entity-logo-preview {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #5f6877;
+      font-size: 13px;
+    }
+
+   .entity-logo-preview img {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      border: 1px solid #d8deea;
+      object-fit: cover;
+      background: #fff;
+    }
+
+   .form-action-row {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+   .action-btn {
+      margin-top: 0;
+    }
+
+   .action-btn-cancel {
+      margin-top: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border: 1px solid #c5d2ed;
+      background: #eef3ff;
+      color: #25385e;
+      border-radius: 4px;
+      padding: 10px 15px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+
+   .action-btn-cancel:hover {
+      background: #e2eaff;
+      border-color: #afc0e7;
+    }
+
+   .form-action-row .action-btn,
+   .form-action-row .action-btn-cancel,
+   .form-action-row .action-btn-secondary,
+   .form-action-row .action-btn-danger {
+      min-width: 132px;
+    }
+
+   .process-window-card {
+      border: 1px solid #c7d4ef;
+      box-shadow: 0 10px 28px rgba(28, 53, 99, 0.15);
+    }
+
+   .process-window-subtitle {
+      margin-top: -4px;
+      margin-bottom: 12px;
+      color: #4b5f85;
+      font-weight: 600;
+    }
+
+   .process-edit-tabs {
+      margin: 6px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #cdd8ee;
+      padding-bottom: 0;
+    }
+
+   .process-edit-tab-link {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      margin: 0;
+      padding: 10px 14px;
+      border: 1px solid transparent;
+      border-bottom: 2px solid transparent;
+      border-radius: 8px 8px 0 0;
+      background: transparent;
+      color: #39527f;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+      cursor: pointer;
+      user-select: none;
+    }
+
+   .process-edit-tab-link:hover {
+      background: #eef3ff;
+      color: #25385e;
+    }
+
+   .process-edit-tab-link.active {
+      background: #ffffff;
+      color: #1f3660;
+      border-color: #cdd8ee;
+      border-bottom-color: #3f51b5;
+    }
+
+   .process-edit-pane {
+      display: none;
+    }
+
+   .process-edit-pane.active {
+      display: block;
+    }
+
+   .process-fields-builder {
+      display: grid;
+      gap: 10px;
+    }
+
+   .process-visible-fields {
+      display: grid;
+      gap: 8px;
+    }
+
+   .process-field-row {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+   .process-additional-fields-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+   .process-additional-field-row {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.8fr) minmax(140px, 0.4fr) auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+   .process-additional-field-row .field {
+      min-width: 0;
+      margin-bottom: 0;
+    }
+
+   .process-additional-size-readonly {
+      background: #eef2fb;
+      color: #5a6580;
+    }
+
+   .process-field-row .field {
+      margin-bottom: 0;
+    }
+
+   .process-field-select {
+      margin-top: 0;
+    }
+
+   .process-field-add-btn {
+      width: 34px;
+    }
+
+   .process-config-shortcut-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+   .process-config-shortcut-label {
+      color: #3f4f70;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+   .action-btn-secondary {
+      background: #7f8aa1;
+    }
+
+   .action-btn-secondary:hover {
+      background: #6a768f;
+    }
+
+   .action-btn-danger {
+      background: #ad2d2d;
+    }
+
+   .action-btn-danger:hover {
+      background: #912525;
+    }
+
+   .action-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+   .admin-subsection {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #d9dee8;
+    }
+
+   .admin-subsection h3 {
+      margin-top: 0;
+    }
+
+   .superuser-list {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+      color: #2f3850;
+      font-size: 14px;
+    }
+
+    @media (max-width: 1200px) {
+     .layout {
+        grid-template-columns: 210px minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+     .layout {
+        grid-template-columns: 190px minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+     .layout {
+        grid-template-columns: 1fr;
+      }
+
+     .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+    }
+
+    @media (max-width: 760px) {
+     .topbar-right {
+        gap: 8px;
+      }
+
+     .user-name {
+        display: none;
+      }
+
+     .user-dropdown {
+        right: 0;
+        width: min(430px, calc(100vw - 16px));
+      }
+
+     .content {
+        padding: 14px;
+      }
+
+     .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .process-field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .process-additional-fields-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .process-additional-field-row {
+        grid-template-columns: 1fr;
+      }
+
+      .entity-first-row {
+        grid-template-columns: 1fr;
+      }
+
+     .entity-second-row {
+        grid-template-columns: 1fr;
+      }
+
+     .entity-third-row {
+        grid-template-columns: 1fr;
+      }
+
+     .entity-fourth-row {
+        grid-template-columns: 1fr;
+      }
+
+     .entity-fifth-row {
+        grid-template-columns: 1fr;
+      }
+
+     .entity-scope-row {
+        grid-template-columns: 1fr;
+      }
+
+     .personal-grid {
+        grid-template-columns: 1fr;
+      }
+
+     .home-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+     .home-chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 540px) {
+     .home-kpis {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand">
+        <span class="brand-mark">
+          {% if user_personal_data.primary_entity_logo_url %}
+            <img src="{{ user_personal_data.primary_entity_logo_url }}" alt="Imagem da entidade">
+          {% else %}
+            <span>[+]</span>
+          {% endif %}
+        </span>
+        <span class="brand-name" title="{{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else user_personal_data.entities }}">
+          {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else (user_personal_data.entities if user_personal_data.entities != '-' else 'SOMA') }}
+        </span>
+      </div>
+      <button class="topbar-action" type="button" title="Voltar">&larr;</button>
+    </div>
+    <div class="topbar-right">
+      <div id="user-menu" class="user-menu">
+        <button id="user-menu-trigger" class="user-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="user-dropdown">
+          <img id="user-avatar-image" class="avatar-img" alt="Foto do utilizador">
+          <span class="user-name">{{ current_user.full_name }}</span>
+          <span class="user-caret">v</span>
+        </button>
+        <div id="user-dropdown" class="user-dropdown" hidden>
+          <div class="user-dropdown-header">
+            <img id="dropdown-avatar-image" class="avatar-img dropdown-avatar" alt="Foto do utilizador">
+            <p class="dropdown-name">{{ current_user.full_name }}</p>
+            <p class="dropdown-meta">ID {{ current_user.id }}</p>
+            <p class="dropdown-email">{{ current_user.login_email }}</p>
+            <p class="dropdown-entity">
+              {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else user_personal_data.entities }}
+            </p>
+          </div>
+          <div class="user-dropdown-actions">
+            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-pessoal-card" href="#perfil-pessoal-card">Minha conta</a>
+            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-morada-card" href="#perfil-morada-card">Minhas configurações</a>
+            <a class="dropdown-link" data-dropdown-menu="links" data-dropdown-target="#sessao-card" href="#sessao-card">Minhas informações sobre a entidade</a>
+            <a class="dropdown-link" data-dropdown-menu="home" data-dropdown-target="#home-summary-card" href="#home-summary-card">Quais são as novidades?</a>
+          </div>
+          <form class="dropdown-logout-form" method="post" action="/logout">
+            <button class="dropdown-logout-btn" type="submit">Efetuar logoff</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="menu-section">Geral</div>
+      <nav class="menu-list" aria-label="Menu principal">
+        {% if "home" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item active" data-menu="home">
+          <span class="menu-icon">[H]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "home" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "administrativo" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="administrativo">
+          <span class="menu-icon">[*]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "administrativo" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+      </nav>
+
+      <div class="menu-section">Igreja</div>
+      <nav class="menu-list" aria-label="Menu igreja">
+        {% if "documentos" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="documentos">
+          <span class="menu-icon">[D]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "documentos" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "funcionarios" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="funcionarios">
+          <span class="menu-icon">[F]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "funcionarios" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "financeiro" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="financeiro">
+          <span class="menu-icon">[$]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "financeiro" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "relatorios" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="relatorios">
+          <span class="menu-icon">[R]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "relatorios" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "links" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="links">
+          <span class="menu-icon">[L]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "links" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "contato" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="contato">
+          <span class="menu-icon">[C]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "contato" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+        {% if "tutorial" in visible_sidebar_menu_keys %}
+        <button type="button" class="menu-item" data-menu="tutorial">
+          <span class="menu-icon">[T]</span>
+          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "tutorial" %}{{ setting.label }}{% endif %}{% endfor %}</span>
+        </button>
+        {% endif %}
+      </nav>
+    </aside>
+
+    <main class="content">
+      <div class="container">
+        <section id="menu-tabs-card" class="card menu-tabs-card">
+          <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
+        </section>
+
+        <section id="home-summary-card" class="card" data-menu-scope="home">
+          <div class="home-summary-head">
+            <h2>Resumo geral do sistema</h2>
+            <p>Visao padrao com indicadores de entidades e utilizadores por perfil global.</p>
+          </div>
+          <div class="home-kpis">
+            <div class="home-kpi">
+              <p class="home-kpi-label">Entidades totais</p>
+              <p class="home-kpi-value">{{ dashboard_data.totals.entities }}</p>
+            </div>
+            <div class="home-kpi">
+              <p class="home-kpi-label">Entidades ativas</p>
+              <p class="home-kpi-value">{{ dashboard_data.totals.active_entities }}</p>
+            </div>
+            <div class="home-kpi">
+              <p class="home-kpi-label">Entidades inativas</p>
+              <p class="home-kpi-value">{{ dashboard_data.totals.inactive_entities }}</p>
+            </div>
+            <div class="home-kpi">
+              <p class="home-kpi-label">Utilizadores totais</p>
+              <p class="home-kpi-value">{{ dashboard_data.totals.users }}</p>
+            </div>
+          </div>
+          <div class="home-chart-grid">
+            <div class="home-chart-box">
+              <h3>Quantidade de entidades ativas e inativas</h3>
+              <div class="home-chart-wrap">
+                <canvas id="home-entities-chart" aria-label="Grafico de entidades ativas e inativas"></canvas>
+              </div>
+            </div>
+            <div class="home-chart-box">
+              <h3>Quantidade de utilizadores por perfil</h3>
+              <div class="home-chart-wrap">
+                <canvas id="home-profiles-chart" aria-label="Grafico de utilizadores por perfil"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,documentos">
+          <div class="profile-card-header">
+            <h2>Dados pessoais do utilizador</h2>
+            <button type="button" class="profile-edit-toggle" data-edit-target="perfil-pessoal-card">Editar</button>
+          </div>
+          {% if profile_tab == "pessoal" and profile_success %}
+            <div class="alert ok">{{ profile_success }}</div>
+          {% endif %}
+          {% if profile_tab == "pessoal" and profile_error %}
+            <div class="alert error">{{ profile_error }}</div>
+          {% endif %}
+          <div class="profile-readonly">
+            <div class="personal-grid">
+              {% if "nome" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', 'geral') }}">
+                <span class="personal-label">Nome</span>
+                <strong class="personal-value">{{ user_personal_data.full_name }}</strong>
+              </div>
+              {% endif %}
+              {% if "email" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', 'geral') }}">
+                <span class="personal-label">Email</span>
+                <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
+              </div>
+              {% endif %}
+              {% if "telefone" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', 'geral') }}">
+                <span class="personal-label">Telefone</span>
+                <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
+              </div>
+              {% endif %}
+              {% if "data_nascimento" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', 'geral') }}">
+                <span class="personal-label">Data de nascimento</span>
+                <strong class="personal-value">{{ user_personal_data.birth_date }}</strong>
+              </div>
+              {% endif %}
+              {% if "whatsapp" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', 'geral') }}">
+                <span class="personal-label">WhatsApp</span>
+                <strong class="personal-value">{{ user_personal_data.whatsapp_verification_status }}</strong>
+              </div>
+              {% endif %}
+              {% if "autorizacao_whatsapp" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', 'geral') }}">
+                <span class="personal-label">Autorização para avisos por WhatsApp</span>
+                <strong class="personal-value">{{ user_personal_data.whatsapp_notice_opt_in }}</strong>
+              </div>
+              {% endif %}
+              {% if "conta" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', 'geral') }}">
+                <span class="personal-label">Conta</span>
+                <strong class="personal-value">{{ user_personal_data.account_status }}</strong>
+              </div>
+              {% endif %}
+              {% if "estado_membro" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', 'geral') }}">
+                <span class="personal-label">Estado de membro</span>
+                <strong class="personal-value">{{ user_personal_data.member_status }}</strong>
+              </div>
+              {% endif %}
+              {% if "colaborador" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', 'geral') }}">
+                <span class="personal-label">Colaborador</span>
+                <strong class="personal-value">{{ user_personal_data.is_collaborator }}</strong>
+              </div>
+              {% endif %}
+              {% if "entidades" in profile_personal_visible_fields %}
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', 'geral') }}">
+                <span class="personal-label">Entidades</span>
+                <strong class="personal-value">{{ user_personal_data.entities }}</strong>
+              </div>
+              {% endif %}
+              {% if "ultima_verificacao_whatsapp" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', 'geral') }}">
+                <span class="personal-label">Última verificação WhatsApp</span>
+                <strong class="personal-value">{{ user_personal_data.whatsapp_last_check_at }}</strong>
+              </div>
+              {% endif %}
+              {% if "detalhe_verificacao" in profile_personal_visible_fields %}
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', 'geral') }}">
+                <span class="personal-label">Detalhe da verificação</span>
+                <strong class="personal-value">{{ user_personal_data.whatsapp_last_error }}</strong>
+              </div>
+              {% endif %}
+              {% for field_key in profile_personal_visible_fields %}
+              {% if field_key.startswith("custom_") %}
+              {% set custom_meta = profile_personal_custom_field_meta.get(field_key, {}) %}
+              {% set custom_type = custom_meta.get("field_type", "text") %}
+              {% set custom_raw_value = user_personal_data.custom_fields.get(field_key, "") %}
+              {% if custom_type != "header" %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, 'geral') }}">
+                <span class="personal-label">{{ profile_personal_field_labels.get(field_key, field_key) }}</span>
+                {% if custom_type == "flag" %}
+                <strong class="personal-value">
+                  {% if custom_raw_value in ["1", "true", "sim", "yes", "on"] %}Sim{% else %}Não{% endif %}
+                </strong>
+                {% else %}
+                <strong class="personal-value">{{ custom_raw_value if custom_raw_value else "-" }}</strong>
+                {% endif %}
+              </div>
+              {% endif %}
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          <form class="profile-edit-form" method="post" action="/users/profile/personal">
+            <div class="personal-grid">
+              {% if "nome" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', 'geral') }}">
+                <label for="edit_full_name">Nome *</label>
+                <input
+                  id="edit_full_name"
+                  name="full_name"
+                  required
+                  value="{{ '' if user_personal_data.full_name == '-' else user_personal_data.full_name }}"
+                >
+              </div>
+              {% else %}
+              <input
+                type="hidden"
+                name="full_name"
+                value="{{ '' if user_personal_data.full_name == '-' else user_personal_data.full_name }}"
+              >
+              {% endif %}
+              {% if "telefone" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', 'geral') }}">
+                <label for="edit_primary_phone">Telefone *</label>
+                <input
+                  id="edit_primary_phone"
+                  name="primary_phone"
+                  required
+                  value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
+                >
+              </div>
+              {% else %}
+              <input
+                type="hidden"
+                name="primary_phone"
+                value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
+              >
+              {% endif %}
+              {% if "data_nascimento" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', 'geral') }}">
+                <label for="edit_birth_date">Data de nascimento (dd/mm/aaaa)</label>
+                <input
+                  id="edit_birth_date"
+                  name="birth_date"
+                  placeholder="dd/mm/aaaa"
+                  value="{{ '' if user_personal_data.birth_date == '-' else user_personal_data.birth_date }}"
+                >
+              </div>
+              {% else %}
+              <input
+                type="hidden"
+                name="birth_date"
+                value="{{ '' if user_personal_data.birth_date == '-' else user_personal_data.birth_date }}"
+              >
+              {% endif %}
+              <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', 'geral') }}">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="whatsapp_notice_opt_in"
+                    value="1"
+                    {% if user_personal_data.whatsapp_notice_opt_in_raw %}checked{% endif %}
+                  >
+                  Autorizo a igreja a enviar avisos por WhatsApp
+                </label>
+              </div>
+              {% if "email" in profile_personal_visible_fields %}
+              <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', 'geral') }}">
+                <label for="edit_login_email">Email (não editável aqui)</label>
+                <input
+                  id="edit_login_email"
+                  value="{{ '' if user_personal_data.login_email == '-' else user_personal_data.login_email }}"
+                  readonly
+                >
+              </div>
+              {% endif %}
+              {% for field_key in profile_personal_visible_fields %}
+              {% if field_key.startswith("custom_") %}
+              {% set custom_meta = profile_personal_custom_field_meta.get(field_key, {}) %}
+              {% set custom_type = custom_meta.get("field_type", "text") %}
+              {% set custom_size = custom_meta.get("size") %}
+              {% if custom_type != "header" %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, 'geral') }}">
+                <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}</label>
+                {% if custom_type == "flag" %}
+                <label class="profile-custom-flag-control">
+                  <input
+                    id="edit_{{ field_key }}"
+                    type="checkbox"
+                    name="custom_field__{{ field_key }}"
+                    value="1"
+                    {% if user_personal_data.custom_fields.get(field_key, "") in ["1", "true", "sim", "yes", "on"] %}checked{% endif %}
+                  >
+                  <span>Ativo</span>
+                </label>
+                {% else %}
+                <input
+                  id="edit_{{ field_key }}"
+                  type="{% if custom_type == 'email' %}email{% elif custom_type == 'phone' %}tel{% elif custom_type == 'number' %}number{% elif custom_type == 'date' %}date{% else %}text{% endif %}"
+                  name="custom_field__{{ field_key }}"
+                  value="{{ user_personal_data.custom_fields.get(field_key, '') }}"
+                  {% if custom_size and custom_type in ["text", "email", "phone"] %}maxlength="{{ custom_size }}"{% endif %}
+                >
+                {% endif %}
+              </div>
+              {% endif %}
+              {% endif %}
+              {% endfor %}
+            </div>
+            <div class="profile-edit-actions">
+              <button type="submit">Gravar alterações</button>
+              <button type="button" class="profile-cancel-btn" data-edit-cancel="perfil-pessoal-card">Cancelar</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="perfil-morada-card" class="card" data-menu-scope="perfil">
+          <div class="profile-card-header">
+            <h2>Dados de morada</h2>
+            <button type="button" class="profile-edit-toggle" data-edit-target="perfil-morada-card">Editar</button>
+          </div>
+          {% if profile_tab == "morada" and profile_success %}
+            <div class="alert ok">{{ profile_success }}</div>
+          {% endif %}
+          {% if profile_tab == "morada" and profile_error %}
+            <div class="alert error">{{ profile_error }}</div>
+          {% endif %}
+          <div class="profile-readonly">
+            <div class="personal-grid">
+              <div class="personal-item" style="grid-column: 1 / -1;">
+                <span class="personal-label">Morada</span>
+                <strong class="personal-value">{{ user_personal_data.address }}</strong>
+              </div>
+              <div class="personal-item">
+                <span class="personal-label">Cidade</span>
+                <strong class="personal-value">{{ user_personal_data.city }}</strong>
+              </div>
+              <div class="personal-item">
+                <span class="personal-label">Freguesia</span>
+                <strong class="personal-value">{{ user_personal_data.freguesia }}</strong>
+              </div>
+              <div class="personal-item">
+                <span class="personal-label">Código postal</span>
+                <strong class="personal-value">{{ user_personal_data.postal_code }}</strong>
+              </div>
+            </div>
+          </div>
+          <form class="profile-edit-form" method="post" action="/users/profile/address">
+            <div class="personal-grid">
+              <div class="field full">
+                <label for="edit_address">Morada</label>
+                <input
+                  id="edit_address"
+                  name="address"
+                  value="{{ '' if user_personal_data.address == '-' else user_personal_data.address }}"
+                >
+              </div>
+              <div class="field">
+                <label for="edit_city">Cidade</label>
+                <input
+                  id="edit_city"
+                  name="city"
+                  value="{{ '' if user_personal_data.city == '-' else user_personal_data.city }}"
+                >
+              </div>
+              <div class="field">
+                <label for="edit_freguesia">Freguesia</label>
+                <input
+                  id="edit_freguesia"
+                  name="freguesia"
+                  value="{{ '' if user_personal_data.freguesia == '-' else user_personal_data.freguesia }}"
+                >
+              </div>
+              <div class="field">
+                <label for="edit_postal_code">Código postal</label>
+                <input
+                  id="edit_postal_code"
+                  name="postal_code"
+                  value="{{ '' if user_personal_data.postal_code == '-' else user_personal_data.postal_code }}"
+                >
+              </div>
+            </div>
+            <div class="profile-edit-actions">
+              <button type="submit">Gravar alterações</button>
+              <button type="button" class="profile-cancel-btn" data-edit-cancel="perfil-morada-card">Cancelar</button>
+            </div>
+          </form>
+        </section>
+        <section id="dados-treinamento-card" class="card" data-menu-scope="perfil">
+          <div class="profile-card-header">
+            <h2>Dados de treinamento</h2>
+            <button type="button" class="profile-edit-toggle" data-edit-target="dados-treinamento-card">Editar</button>
+          </div>
+          {% if profile_tab == "treinamento" and profile_success %}
+            <div class="alert ok">{{ profile_success }}</div>
+          {% endif %}
+          {% if profile_tab == "treinamento" and profile_error %}
+            <div class="alert error">{{ profile_error }}</div>
+          {% endif %}
+          <div class="profile-readonly">
+            <div class="personal-item">
+              <span class="personal-label">Treinamentos selecionados</span>
+              {% if user_personal_data.training_selected %}
+                <ul class="training-selected-list">
+                  {% for training_item in user_personal_data.training_selected %}
+                    <li>{{ training_item }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <strong class="personal-value">Sem treinamentos selecionados.</strong>
+              {% endif %}
+            </div>
+          </div>
+          <form class="profile-edit-form" method="post" action="/users/profile/training">
+            <div class="training-options-grid">
+              <label class="training-option-row">
+                <input
+                  type="checkbox"
+                  name="training_discipulado_verbo_vida"
+                  value="1"
+                  {% if user_personal_data.training_discipulado_verbo_vida %}checked{% endif %}
+                >
+                <span>Discipulado Verbo da Vida</span>
+              </label>
+              <label class="training-option-row">
+                <input
+                  type="checkbox"
+                  name="training_ebvv"
+                  value="1"
+                  {% if user_personal_data.training_ebvv %}checked{% endif %}
+                >
+                <span>EBVV</span>
+              </label>
+              <label class="training-option-row">
+                <input
+                  type="checkbox"
+                  name="training_rhema"
+                  value="1"
+                  {% if user_personal_data.training_rhema %}checked{% endif %}
+                >
+                <span>RHEMA</span>
+              </label>
+              <label class="training-option-row">
+                <input
+                  type="checkbox"
+                  name="training_escola_ministerial"
+                  value="1"
+                  {% if user_personal_data.training_escola_ministerial %}checked{% endif %}
+                >
+                <span>Escola Ministerial</span>
+              </label>
+              <label class="training-option-row">
+                <input
+                  type="checkbox"
+                  name="training_escola_missoes"
+                  value="1"
+                  {% if user_personal_data.training_escola_missoes %}checked{% endif %}
+                >
+                <span>Escola de Missões</span>
+              </label>
+              <div class="training-option-row training-option-outros">
+                <label for="edit_training_outros_enabled" class="training-outros-label">
+                  <input
+                    id="edit_training_outros_enabled"
+                    type="checkbox"
+                    name="training_outros_enabled"
+                    value="1"
+                    {% if user_personal_data.training_outros %}checked{% endif %}
+                  >
+                  <span>Outros</span>
+                </label>
+                <input
+                  id="edit_training_outros"
+                  class="training-outros-input"
+                  name="training_outros"
+                  placeholder="Indique qual é o treinamento"
+                  value="{{ user_personal_data.training_outros }}"
+                >
+              </div>
+            </div>
+            <div class="profile-edit-actions">
+              <button type="submit">Gravar alterações</button>
+              <button type="button" class="profile-cancel-btn" data-edit-cancel="dados-treinamento-card">Cancelar</button>
+            </div>
+          </form>
+        </section>
+        <section id="sessao-card" class="card" data-menu-scope="links,contato">
+          <h2>Sessão</h2>
+          <p>Ligado como <strong>{{ current_user.full_name }}</strong> ({{ current_user.login_email }})</p>
+        </section>
+
+        {% if current_user_is_admin %}
+        {% if not (user_edit_data is defined and user_edit_data.id) %}
+        <section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,documentos,funcionarios,financeiro,relatorios,links,tutorial">
+            {% if success %}
+              <div class="alert ok">{{ success }}</div>
+            {% endif %}
+
+            <details class="entity-create-collapse" {% if errors %}open{% endif %}>
+              <summary>
+                <span>Criar utilizador</span>
+              </summary>
+              <div class="entity-create-body">
+                {% if errors %}
+                  <div class="alert error">
+                    <ul>
+                      {% for error in errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                {% endif %}
+
+                <div class="admin-subsection">
+                  <form method="post" action="/users/new">
+                    <div class="grid">
+                      <div class="field">
+                        <label for="full_name">Nome completo *</label>
+                        <input id="full_name" name="full_name" required value="{{ form_data.full_name }}">
+                      </div>
+                      <div class="field">
+                        <label for="primary_phone">Telefone principal *</label>
+                        <input id="primary_phone" name="primary_phone" required value="{{ form_data.primary_phone }}">
+                      </div>
+                      <div class="field">
+                        <label for="email">Email *</label>
+                        <input id="email" name="email" type="email" required value="{{ form_data.email }}">
+                      </div>
+                      <div class="field">
+                        <label for="create_user_status">Estado da conta</label>
+                        <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
+                      </div>
+                      <div class="field">
+                        <label for="entity_auto_name">Entidade (automática pelo email)</label>
+                        <input
+                          id="entity_auto_name"
+                          value="{{ form_data.entity_name if form_data.entity_name else 'Será definida automaticamente ao enviar o convite' }}"
+                          readonly
+                          disabled
+                          class="readonly-field"
+                        >
+                      </div>
+                      <div class="field full">
+                        <label for="profile_id">Perfil global (opcional)</label>
+                        <select id="profile_id" name="profile_id">
+                          <option value="">Sem perfil</option>
+                          {% for profile in profiles %}
+                            <option value="{{ profile.id }}" {% if form_data.profile_id == profile.id|string %}selected{% endif %}>
+                              {{ profile.name }}
+                            </option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </div>
+                    <div class="form-action-row">
+                      <button type="submit" class="action-btn">Enviar convite</button>
+                      <button
+                        type="button"
+                        class="action-btn-cancel"
+                        onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                      >Cancelar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </details>
+        </section>
+        {% endif %}
+
+        {% if user_edit_data is defined and user_edit_data.id %}
+        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,documentos,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
+          <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
+
+          {% if success %}
+            <div class="alert ok">{{ success }}</div>
+          {% endif %}
+
+          {% if errors %}
+            <div class="alert error">
+              <ul>
+                {% for error in errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <div class="admin-subsection">
+            <form method="post" action="/users/update">
+              <input type="hidden" name="user_id" value="{{ user_edit_data.id }}">
+              <div class="grid">
+                <div class="field">
+                  <label for="edit_user_full_name">Nome completo *</label>
+                  <input id="edit_user_full_name" name="full_name" required value="{{ user_edit_data.full_name }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_primary_phone">Telefone principal *</label>
+                  <input id="edit_user_primary_phone" name="primary_phone" required value="{{ user_edit_data.primary_phone }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_email">Email *</label>
+                  <input id="edit_user_email" name="email" type="email" required value="{{ user_edit_data.email }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_account_status">Estado da conta *</label>
+                  <select id="edit_user_account_status" name="account_status" required>
+                    <option value="active" {% if user_edit_data.account_status == "active" %}selected{% endif %}>active</option>
+                    <option value="pending" {% if user_edit_data.account_status == "pending" %}selected{% endif %}>pending</option>
+                    <option value="inactive" {% if user_edit_data.account_status == "inactive" %}selected{% endif %}>inactive</option>
+                    <option value="blocked" {% if user_edit_data.account_status == "blocked" %}selected{% endif %}>blocked</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="edit_user_entity_name">Entidade (automática pelo email)</label>
+                  <input
+                    id="edit_user_entity_name"
+                    value="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                  <input type="hidden" name="entity_id" value="{{ user_edit_data.entity_id }}">
+                </div>
+                <div class="field full">
+                  <label for="edit_user_profile_id">Perfil global (opcional)</label>
+                  <select id="edit_user_profile_id" name="profile_id">
+                    <option value="">Sem perfil</option>
+                    {% for profile in profiles %}
+                      <option value="{{ profile.id }}" {% if user_edit_data.profile_id == profile.id|string %}selected{% endif %}>
+                        {{ profile.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-action-row">
+                {% if not user_readonly_mode %}
+                <button type="submit" class="action-btn">Guardar</button>
+                {% endif %}
+                <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card">{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+              </div>
+            </form>
+          </div>
+        </section>
+        {% endif %}
+
+        <section id="admin-users-created-card" class="card" data-menu-scope="administrativo">
+          <h2>Utilizadores criados</h2>
+          {% if all_users %}
+            <table id="admin-users-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Telefone</th>
+                  <th>Entidade</th>
+                  <th>Perfil</th>
+                  <th>Estado</th>
+                  <th>Criado em</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in all_users %}
+                  <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.login_email }}</td>
+                    <td>{{ row.primary_phone }}</td>
+                    <td>{{ row.entity_name }}</td>
+                    <td>{{ row.profile_name }}</td>
+                    <td>{{ row.account_status }}</td>
+                    <td>{{ row.created_at }}</td>
+                    <td>
+                      <div class="table-actions">
+                        {% if row.account_status == "pending" %}
+                        <form method="post" action="/users/resend-invite">
+                          <input type="hidden" name="user_id" value="{{ row.id }}">
+                          <button
+                            type="submit"
+                            class="table-icon-btn"
+                            title="Reenviar convite"
+                            aria-label="Reenviar convite"
+                          >
+                            &#9993;
+                          </button>
+                        </form>
+                        {% endif %}
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}&user_view=1#edit-user-card"
+                          title="Exibir utilizador"
+                          aria-label="Exibir utilizador"
+                        >
+                          &#128065;
+                        </a>
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}#edit-user-card"
+                          title="Modificar utilizador"
+                          aria-label="Modificar utilizador"
+                        >
+                          &#9998;
+                        </a>
+                        <form method="post" action="/users/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este utilizador');">
+                          <input type="hidden" name="user_id" value="{{ row.id }}">
+                          <button
+                            type="submit"
+                            class="table-icon-btn table-icon-btn-danger"
+                            title="Eliminar utilizador"
+                            aria-label="Eliminar utilizador"
+                          >
+                            &#128465;
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <div id="admin-users-limiter" class="table-limiter">
+              <div class="table-limiter-left">
+                <select id="admin-users-page-size" class="table-limiter-select" aria-label="Entradas por página (utilizadores)">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </select>
+                <span>entradas por página</span>
+              </div>
+              <div class="table-limiter-right">
+                <button id="admin-users-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
+                <span id="admin-users-page" class="table-limiter-page">1</span>
+                <button id="admin-users-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+              </div>
+            </div>
+          {% else %}
+            <p class="empty">Sem utilizadores criados ainda.</p>
+          {% endif %}
+
+          <div class="admin-subsection">
+            <h3>SuperUsers de Entidade</h3>
+            {% if superuser_users %}
+              <ul class="superuser-list">
+                {% for row in superuser_users %}
+                  <li>
+                    <strong>{{ row.full_name }}</strong> | {{ row.login_email }} | {{ row.entity_name }} | {{ row.account_status }} | {{ row.created_at }}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="empty">Sem utilizadores SuperUser registados.</p>
+            {% endif %}
+          </div>
+        </section>
+
+        {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
+        <section id="create-entity-card" class="card entity-panel-card" data-menu-scope="administrativo">
+          {% if entity_success %}
+            <div class="alert ok">{{ entity_success }}</div>
+          {% endif %}
+          <details class="entity-create-collapse" {% if entity_error %}open{% endif %}>
+            <summary>
+              <span class="entity-create-toggle-icon" aria-hidden="true"></span>
+              <span>Criar entidade</span>
+            </summary>
+            <div class="entity-create-body">
+              {% if entity_error %}
+                <div class="alert error">{{ entity_error }}</div>
+              {% endif %}
+
+              <form method="post" action="/entities/new" enctype="multipart/form-data">
+                <div class="entity-first-row">
+                  <div class="field entity-first-row-client">
+                    <label for="entity_internal_number">Número do cliente</label>
+                    <input id="entity_internal_number" class="readonly-field" value="{{ next_entity_internal_number }}" readonly disabled>
+                  </div>
+                  <div class="field entity-first-row-name">
+                    <label for="entity_name">Nome da entidade *</label>
+                    <input id="entity_name" name="name" required value="{{ entity_form_data.name }}">
+                  </div>
+                  <div class="field entity-first-row-acronym">
+                    <label for="entity_acronym">Acrónimo (opcional)</label>
+                    <input id="entity_acronym" name="acronym" maxlength="5" value="{{ entity_form_data.acronym }}">
+                  </div>
+                </div>
+                <div class="entity-second-row">
+                  <div class="field entity-second-row-email">
+                    <label for="entity_email">Email *</label>
+                    <input id="entity_email" name="email" type="email" required value="{{ entity_form_data.email }}">
+                  </div>
+                  <div class="field entity-second-row-tax">
+                    <label for="entity_tax_id">Nº Identificação Fiscal *</label>
+                    <input id="entity_tax_id" name="tax_id" maxlength="20" required value="{{ entity_form_data.tax_id }}">
+                  </div>
+                  <div class="field entity-second-row-phone">
+                    <label for="entity_phone">Telefone *</label>
+                    <input id="entity_phone" name="phone" maxlength="15" required value="{{ entity_form_data.phone }}">
+                  </div>
+                </div>
+                <div class="entity-third-row">
+                  <div class="field entity-third-row-responsible">
+                    <label for="entity_responsible_name">Nome do responsavel *</label>
+                    <input id="entity_responsible_name" name="responsible_name" required value="{{ entity_form_data.responsible_name }}">
+                  </div>
+                  <div class="field entity-third-row-address">
+                    <label for="entity_address">Morada *</label>
+                    <input id="entity_address" name="address" required value="{{ entity_form_data.address }}">
+                  </div>
+                  <div class="field entity-third-row-door">
+                    <label for="entity_door_number">Nº da porta *</label>
+                    <input id="entity_door_number" name="door_number" maxlength="15" required value="{{ entity_form_data.door_number }}">
+                  </div>
+                </div>
+                <div class="entity-fourth-row">
+                  <div class="field entity-fourth-row-freguesia">
+                    <label for="entity_freguesia">Freguesia *</label>
+                    <input id="entity_freguesia" name="freguesia" required value="{{ entity_form_data.freguesia }}">
+                  </div>
+                  <div class="field entity-fourth-row-postal">
+                    <label for="entity_postal_code">Código postal *</label>
+                    <input id="entity_postal_code" name="postal_code" maxlength="30" required value="{{ entity_form_data.postal_code }}">
+                  </div>
+                  <div class="field entity-fourth-row-country">
+                    <label for="entity_country">País *</label>
+                    <input id="entity_country" name="country" maxlength="50" required value="{{ entity_form_data.country }}">
+                  </div>
+                </div>
+                <div class="entity-scope-row">
+                  <div class="field">
+                    <label for="entity_profile_scope">Perfil da entidade *</label>
+                    <select id="entity_profile_scope" name="entity_profile_scope" required>
+                      <option value="owner" {% if entity_form_data.profile_scope == "owner" %}selected{% endif %}>Owner</option>
+                      <option value="legado" {% if entity_form_data.profile_scope != "owner" %}selected{% endif %}>Legado</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="entity-fifth-row">
+                  <div class="field entity-fifth-row-logo">
+                    <label for="entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
+                    <input id="entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+                  </div>
+                  <div class="field entity-fifth-row-created-at">
+                    <label for="entity_created_at">Data da criação</label>
+                    <input id="entity_created_at" class="readonly-field" value="{{ entity_form_data.created_at }}" readonly disabled>
+                  </div>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <button
+                    type="button"
+                    class="action-btn-cancel"
+                    onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                  >Cancelar</button>
+                </div>
+              </form>
+            </div>
+          </details>
+        </section>
+        {% endif %}
+
+        {% if entity_edit_data is defined and entity_edit_data.id %}
+        <section id="edit-entity-card" class="card entity-panel-card" data-menu-scope="administrativo" data-readonly-mode="{% if entity_readonly_mode %}1{% else %}0{% endif %}">
+          <h2>{% if entity_readonly_mode %}Exibir entidade{% else %}Editar entidade{% endif %}</h2>
+          <p>Atualize os dados principais da entidade selecionada.</p>
+
+          {% if entity_success %}
+            <div class="alert ok">{{ entity_success }}</div>
+          {% endif %}
+          {% if entity_error %}
+            <div class="alert error">{{ entity_error }}</div>
+          {% endif %}
+
+          <form method="post" action="/entities/update" enctype="multipart/form-data">
+            <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
+            <div class="entity-first-row">
+              <div class="field entity-first-row-client">
+                <label for="edit_entity_internal_number">Número do cliente</label>
+                <input id="edit_entity_internal_number" class="readonly-field" value="{{ entity_edit_data.internal_number }}" readonly disabled>
+              </div>
+              <div class="field entity-first-row-name">
+                <label for="edit_entity_name">Nome da entidade *</label>
+                <input id="edit_entity_name" name="name" required value="{{ entity_edit_data.name }}">
+              </div>
+              <div class="field entity-first-row-acronym">
+                <label for="edit_entity_acronym">Acrónimo (opcional)</label>
+                <input id="edit_entity_acronym" name="acronym" maxlength="5" value="{{ entity_edit_data.acronym }}">
+              </div>
+            </div>
+            <div class="entity-second-row">
+              <div class="field entity-second-row-email">
+                <label for="edit_entity_email">Email *</label>
+                <input id="edit_entity_email" name="email" type="email" required value="{{ entity_edit_data.email }}">
+              </div>
+              <div class="field entity-second-row-tax">
+                <label for="edit_entity_tax_id">Nº Identificação Fiscal *</label>
+                <input id="edit_entity_tax_id" name="tax_id" maxlength="20" required value="{{ entity_edit_data.tax_id }}">
+              </div>
+              <div class="field entity-second-row-phone">
+                <label for="edit_entity_phone">Telefone *</label>
+                <input id="edit_entity_phone" name="phone" maxlength="15" required value="{{ entity_edit_data.phone }}">
+              </div>
+            </div>
+            <div class="entity-third-row">
+              <div class="field entity-third-row-responsible">
+                <label for="edit_entity_responsible_name">Nome do responsavel *</label>
+                <input id="edit_entity_responsible_name" name="responsible_name" required value="{{ entity_edit_data.responsible_name }}">
+              </div>
+              <div class="field entity-third-row-address">
+                <label for="edit_entity_address">Morada *</label>
+                <input id="edit_entity_address" name="address" required value="{{ entity_edit_data.address }}">
+              </div>
+              <div class="field entity-third-row-door">
+                <label for="edit_entity_door_number">Nº da porta *</label>
+                <input id="edit_entity_door_number" name="door_number" maxlength="15" required value="{{ entity_edit_data.door_number }}">
+              </div>
+            </div>
+            <div class="entity-fourth-row">
+              <div class="field entity-fourth-row-freguesia">
+                <label for="edit_entity_freguesia">Freguesia *</label>
+                <input id="edit_entity_freguesia" name="freguesia" required value="{{ entity_edit_data.freguesia }}">
+              </div>
+              <div class="field entity-fourth-row-postal">
+                <label for="edit_entity_postal_code">Código postal *</label>
+                <input id="edit_entity_postal_code" name="postal_code" maxlength="30" required value="{{ entity_edit_data.postal_code }}">
+              </div>
+              <div class="field entity-fourth-row-country">
+                <label for="edit_entity_country">País *</label>
+                <input id="edit_entity_country" name="country" maxlength="50" required value="{{ entity_edit_data.country }}">
+              </div>
+            </div>
+            {% if current_user_can_manage_all_entities %}
+            <div class="entity-scope-row">
+              <div class="field">
+                <label for="edit_entity_profile_scope">Perfil da entidade *</label>
+                <select id="edit_entity_profile_scope" name="entity_profile_scope" required>
+                  <option value="owner" {% if entity_edit_data.profile_scope == "owner" %}selected{% endif %}>Owner</option>
+                  <option value="legado" {% if entity_edit_data.profile_scope != "owner" %}selected{% endif %}>Legado</option>
+                </select>
+              </div>
+            </div>
+            {% else %}
+            <input type="hidden" name="entity_profile_scope" value="{{ entity_edit_data.profile_scope }}">
+            {% endif %}
+            <div class="entity-fifth-row entity-fifth-row-edit">
+              <div class="field entity-fifth-row-logo">
+                <label for="edit_entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
+                <input id="edit_entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+              </div>
+              <div class="field entity-fifth-row-created-at">
+                <label for="edit_entity_created_at">Data da criação</label>
+                <input id="edit_entity_created_at" class="readonly-field" value="{{ entity_edit_data.created_at }}" readonly disabled>
+              </div>
+              <div class="field entity-edit-status-row">
+                <label for="edit_entity_status">Estado da entidade *</label>
+                {% if current_user_can_manage_all_entities %}
+                <select id="edit_entity_status" name="entity_status" required>
+                  <option value="active" {% if entity_edit_data.status == "active" %}selected{% endif %}>Ativa</option>
+                  <option value="inactive" {% if entity_edit_data.status == "inactive" %}selected{% endif %}>Inativa</option>
+                </select>
+                {% else %}
+                <input
+                  id="edit_entity_status"
+                  class="readonly-field"
+                  value="{% if entity_edit_data.status == 'active' %}Ativa{% else %}Inativa{% endif %}"
+                  readonly
+                  disabled
+                >
+                <input type="hidden" name="entity_status" value="{{ entity_edit_data.status }}">
+                {% endif %}
+              </div>
+            </div>
+            {% if entity_edit_data.logo_url %}
+              <div class="entity-edit-logo-row">
+                <div class="field entity-edit-current-logo">
+                  <label>Logo atual</label>
+                  <div class="entity-edit-current-logo-preview">
+                    <input
+                      id="remove_logo_checkbox"
+                      class="entity-edit-remove-logo-input"
+                      type="checkbox"
+                      name="remove_logo"
+                      value="1"
+                    >
+                    <label
+                      for="remove_logo_checkbox"
+                      class="entity-edit-remove-logo-btn"
+                      title="Remover logo atual"
+                      aria-label="Remover logo atual"
+                    >&#10005;</label>
+                    <img class="entity-edit-current-logo-image" src="{{ entity_edit_data.logo_url }}" alt="Logo atual da entidade">
+                    <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoção. Clique em Guardar para confirmar.</div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+            <div class="form-action-row">
+              {% if not entity_readonly_mode %}
+              <button type="submit" class="action-btn">Guardar</button>
+              {% endif %}
+              <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=entidade#create-entity-card">{% if entity_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+            </div>
+          </form>
+        </section>
+        {% endif %}
+
+        <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
+          <h2>{% if current_user_can_manage_all_entities %}Últimas entidades criadas{% else %}Dados gerais{% endif %}</h2>
+          {% set active_recent_entities = recent_entities | selectattr("is_active") | list %}
+          {% if not current_user_can_manage_all_entities %}
+            {% set active_recent_entities = active_recent_entities[:1] %}
+          {% endif %}
+          {% if active_recent_entities %}
+            <table id="recent-entities-table">
+              <thead>
+                <tr>
+                  {% if current_user_can_manage_all_entities %}
+                  <th>Número do cliente</th>
+                  {% endif %}
+                  <th>Nome</th>
+                  {% if current_user_can_manage_all_entities %}
+                  <th>Perfil</th>
+                  {% endif %}
+                  <th>Telefone</th>
+                  <th>Morada</th>
+                  <th>Estado</th>
+                  {% if current_user_can_manage_all_entities %}
+                  <th>Criado em</th>
+                  {% endif %}
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in active_recent_entities %}
+                  <tr>
+                    {% if current_user_can_manage_all_entities %}
+                    <td>{{ row.internal_number }}</td>
+                    {% endif %}
+                    <td>{{ row.name }}</td>
+                    {% if current_user_can_manage_all_entities %}
+                    <td>{{ row.profile_scope_label }}</td>
+                    {% endif %}
+                    <td>{{ row.phone if row.phone else '-' }}</td>
+                    <td>{{ row.address if row.address else '-' }}</td>
+                    <td>
+                      <span class="entity-status {% if row.is_active %}entity-status-active{% else %}entity-status-inactive{% endif %}">
+                        {{ row.status_label }}
+                      </span>
+                    </td>
+                    {% if current_user_can_manage_all_entities %}
+                    <td>{{ row.created_at }}</td>
+                    {% endif %}
+                    <td>
+                      <div class="table-actions">
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
+                          title="Exibir entidade"
+                          aria-label="Exibir entidade"
+                        >
+                          &#128065;
+                        </a>
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card"
+                          title="Modificar entidade"
+                          aria-label="Modificar entidade"
+                        >
+                          &#9998;
+                        </a>
+                        {% if current_user_can_manage_all_entities %}
+                        <form method="post" action="/entities/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar esta entidade');">
+                          <input type="hidden" name="entity_id" value="{{ row.id }}">
+                          <button
+                            type="submit"
+                            class="table-icon-btn table-icon-btn-danger"
+                            title="Eliminar entidade"
+                            aria-label="Eliminar entidade"
+                          >
+                            &#128465;
+                          </button>
+                        </form>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% if current_user_can_manage_all_entities %}
+            <div id="recent-entities-limiter" class="table-limiter">
+              <div class="table-limiter-left">
+                <select id="recent-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades ativas)">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </select>
+                <span>entradas por página</span>
+              </div>
+              <div class="table-limiter-right">
+                <button id="recent-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
+                <span id="recent-entities-page" class="table-limiter-page">1</span>
+                <button id="recent-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+              </div>
+            </div>
+            {% endif %}
+          {% else %}
+            <p class="empty">Sem entidades ativas criadas ainda.</p>
+          {% endif %}
+        </section>
+
+        {% if current_user_can_manage_all_entities %}
+        <section id="inactive-entities-card" class="card" data-menu-scope="administrativo">
+          <h2>Entidades inativas</h2>
+          {% set inactive_entities_rows = inactive_entities if inactive_entities else (recent_entities | rejectattr("is_active") | list) %}
+          {% if inactive_entities_rows %}
+            <table id="inactive-entities-table">
+              <thead>
+                <tr>
+                  {% if current_user_can_manage_all_entities %}
+                  <th>Número do cliente</th>
+                  {% endif %}
+                  <th>Nome</th>
+                  {% if current_user_can_manage_all_entities %}
+                  <th>Perfil</th>
+                  {% endif %}
+                  <th>Telefone</th>
+                  <th>Morada</th>
+                  <th>Estado</th>
+                  {% if current_user_can_manage_all_entities %}
+                  <th>Criado em</th>
+                  {% endif %}
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in inactive_entities_rows %}
+                  <tr>
+                    {% if current_user_can_manage_all_entities %}
+                    <td>{{ row.internal_number }}</td>
+                    {% endif %}
+                    <td>{{ row.name }}</td>
+                    {% if current_user_can_manage_all_entities %}
+                    <td>{{ row.profile_scope_label }}</td>
+                    {% endif %}
+                    <td>{{ row.phone if row.phone else '-' }}</td>
+                    <td>{{ row.address if row.address else '-' }}</td>
+                    <td>
+                      <span class="entity-status entity-status-inactive">
+                        {{ row.status_label }}
+                      </span>
+                    </td>
+                    {% if current_user_can_manage_all_entities %}
+                    <td>{{ row.created_at }}</td>
+                    {% endif %}
+                    <td>
+                      <div class="table-actions">
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
+                          title="Exibir entidade"
+                          aria-label="Exibir entidade"
+                        >
+                          &#128065;
+                        </a>
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card"
+                          title="Modificar entidade"
+                          aria-label="Modificar entidade"
+                        >
+                          &#9998;
+                        </a>
+                        {% if current_user_can_manage_all_entities %}
+                        <form method="post" action="/entities/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar esta entidade');">
+                          <input type="hidden" name="entity_id" value="{{ row.id }}">
+                          <button
+                            type="submit"
+                            class="table-icon-btn table-icon-btn-danger"
+                            title="Eliminar entidade"
+                            aria-label="Eliminar entidade"
+                          >
+                            &#128465;
+                          </button>
+                        </form>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <div id="inactive-entities-limiter" class="table-limiter">
+              <div class="table-limiter-left">
+                <select id="inactive-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades inativas)">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                </select>
+                <span>entradas por página</span>
+              </div>
+              <div class="table-limiter-right">
+                <button id="inactive-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
+                <span id="inactive-entities-page" class="table-limiter-page">1</span>
+                <button id="inactive-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+              </div>
+            </div>
+          {% else %}
+            <p class="empty">Sem entidades inativas.</p>
+          {% endif %}
+        </section>
+        {% endif %}
+
+        {% if settings_edit_data %}
+        {% set settings_edit_origin_menu = "administrativo" %}
+        {% set settings_edit_cancel_target = "#admin-account-status-card" %}
+        {% set settings_has_process_fields = settings_edit_data.process_field_options %}
+        {% set settings_owner_fields_enabled = current_user_can_manage_all_entities and settings_has_process_fields %}
+        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo">
+          <h2>Editar processo: {{ settings_edit_data.label }}</h2>
+          <p>Atualize as configurações deste processo.</p>
+          <p class="process-window-subtitle">
+            Ação selecionada:
+            {% if settings_action == "toggle" %}Alterar estado{% elif settings_action == "delete" %}Excluir{% else %}Editar{% endif %}
+          </p>
+          {% if settings_has_process_fields %}
+          <div class="process-edit-tabs" id="process-edit-tabs" role="tablist" aria-label="Abas de edição do processo">
+            <a href="#settings-tab-geral" role="tab" aria-selected="true" class="process-edit-tab-link active" data-process-edit-tab="geral">Geral</a>
+            <a href="#settings-tab-campos-config" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-config">Configuração dos campos</a>
+            {% if settings_owner_fields_enabled %}
+            <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if settings_success %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <div id="settings-tab-geral" class="process-edit-pane active" data-process-edit-pane="geral">
+            <div class="admin-subsection">
+              {% if current_user_can_manage_all_entities %}
+              <form method="post" action="/settings/menu/edit">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <div class="grid">
+                  <div class="field">
+                    <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                    <input
+                      id="settings_edit_menu_label"
+                      name="menu_label"
+                      value="{{ settings_edit_data.label }}"
+                      maxlength="100"
+                      required
+                    >
+                  </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_status">Estado atual</label>
+                    <select id="settings_edit_menu_status" name="menu_status">
+                      <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
+                      <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-cancel"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{% if settings_edit_origin_menu == 'administrativo' %}&admin_tab=contas{% endif %}{{ settings_edit_cancel_target }}"
+                  >Cancelar</a>
+                </div>
+              </form>
+              {% else %}
+              <div class="grid">
+                <div class="field">
+                  <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                  <input
+                    id="settings_edit_menu_label"
+                    value="{{ settings_edit_data.label }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_status">Estado atual</label>
+                  <input
+                    id="settings_edit_menu_status"
+                    value="{% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}Ativo{% else %}Inativo{% endif %}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+              </div>
+              <div class="form-action-row">
+                <a
+                  class="action-btn-cancel"
+                  href="/users/new?menu={{ settings_edit_origin_menu }}{% if settings_edit_origin_menu == 'administrativo' %}&admin_tab=contas{% endif %}{{ settings_edit_cancel_target }}"
+                >Cancelar</a>
+              </div>
+              {% endif %}
+            </div>
+            {% if settings_has_process_fields %}
+            <div class="admin-subsection">
+              <h3>Campos disponíveis</h3>
+              {% if settings_edit_data.process_visible_field_rows %}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ordem</th>
+                    <th>Campo</th>
+                    <th>Cabeçalho</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for field_row in settings_edit_data.process_visible_field_rows %}
+                  {% set field_ns = namespace(label=field_row.field_key) %}
+                  {% set header_ns = namespace(label="-") %}
+                  {% for option in settings_edit_data.process_field_options %}
+                    {% if option.key == field_row.field_key %}
+                      {% set field_ns.label = option.label %}
+                    {% endif %}
+                    {% if option.key == field_row.header_key %}
+                      {% set header_ns.label = option.label %}
+                    {% endif %}
+                  {% endfor %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ field_ns.label }}</td>
+                    <td>{{ header_ns.label }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              <p class="empty">Sem campos definidos para este processo.</p>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% if settings_has_process_fields %}
+          <div id="settings-tab-campos-config" class="process-edit-pane" data-process-edit-pane="campos-config">
+            <div class="admin-subsection">
+              <h3>Configuração dos campos</h3>
+              {% if settings_owner_fields_enabled %}
+              <form method="post" action="/settings/menu/process-fields">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                {% if settings_owner_fields_enabled %}
+                <div class="process-config-shortcut-row">
+                  <button
+                    type="button"
+                    id="process-add-header-shortcut-btn"
+                    class="table-icon-btn process-field-add-btn"
+                    title="Adicionar cabeçalho"
+                    aria-label="Adicionar cabeçalho"
+                  >
+                    &#43;
+                  </button>
+                  <span class="process-config-shortcut-label">Adicionar cabeçalho</span>
+                </div>
+                {% endif %}
+                <div
+                  id="process-fields-builder"
+                  class="process-fields-builder"
+                  data-field-options='{{ (settings_edit_data.process_selectable_field_options or settings_edit_data.process_field_options or [])|tojson }}'
+                  data-header-options='{{ (settings_edit_data.process_header_options or [])|tojson }}'
+                >
+                  <div id="process-visible-fields-container" class="process-visible-fields">
+                    {% for field_row in settings_edit_data.process_visible_field_rows %}
+                    <div class="process-field-row">
+                      <div class="field">
+                        <label>Campo</label>
+                        <select name="visible_fields" class="process-field-select">
+                          {% for option in settings_edit_data.process_selectable_field_options %}
+                          <option value="{{ option.key }}" {% if option.key == field_row.field_key %}selected{% endif %}>{{ option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Cabeçalho</label>
+                        <select name="visible_headers" class="process-field-header-select">
+                          <option value="">Sem cabeçalho</option>
+                          {% for header_option in settings_edit_data.process_header_options %}
+                          <option value="{{ header_option.key }}" {% if header_option.key == field_row.header_key %}selected{% endif %}>{{ header_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        class="table-icon-btn table-icon-btn-danger process-field-remove-btn"
+                        title="Remover campo"
+                        aria-label="Remover campo"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <button
+                    type="button"
+                    id="process-field-add-btn"
+                    class="table-icon-btn process-field-add-btn"
+                    title="Adicionar campo"
+                    aria-label="Adicionar campo"
+                  >
+                    &#43;
+                  </button>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar campos</button>
+                </div>
+              </form>
+              {% else %}
+              <p>Campos definidos pelo Owner para este processo.</p>
+              {% if settings_edit_data.process_visible_field_rows %}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ordem</th>
+                    <th>Campo</th>
+                    <th>Cabeçalho</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for field_row in settings_edit_data.process_visible_field_rows %}
+                  {% set field_ns = namespace(label=field_row.field_key) %}
+                  {% set header_ns = namespace(label="-") %}
+                  {% for option in settings_edit_data.process_field_options %}
+                    {% if option.key == field_row.field_key %}
+                      {% set field_ns.label = option.label %}
+                    {% endif %}
+                    {% if option.key == field_row.header_key %}
+                      {% set header_ns.label = option.label %}
+                    {% endif %}
+                  {% endfor %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ field_ns.label }}</td>
+                    <td>{{ header_ns.label }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              <p class="empty">Sem campos configurados pelo Owner para este processo.</p>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          {% if settings_owner_fields_enabled %}
+          <div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
+            <div class="admin-subsection">
+              <h3>Campos Adicionais</h3>
+              <form method="post" action="/settings/menu/process-additional-fields">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <div
+                  id="process-additional-fields-builder"
+                  class="process-fields-builder"
+                  data-field-types='{{ settings_edit_data.additional_field_type_options|tojson }}'
+                >
+                  <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid">
+                    {% for field in settings_edit_data.process_additional_fields %}
+                    <div class="process-field-row process-additional-field-row">
+                      <input type="hidden" name="additional_field_key" value="{{ field.key }}">
+                      <div class="field">
+                        <label>Nome do campo adicional</label>
+                        <input
+                          type="text"
+                          name="additional_field_label"
+                          value="{{ field.label }}"
+                          maxlength="80"
+                          placeholder="Ex.: Data de batismo"
+                        >
+                      </div>
+                      <div class="field">
+                        <label>Tipo do campo</label>
+                        <select name="additional_field_type" class="process-additional-field-type-select">
+                          {% for type_option in settings_edit_data.additional_field_type_options %}
+                          <option
+                            value="{{ type_option.key }}"
+                            {% if type_option.key == (field.field_type or "text") %}selected{% endif %}
+                          >{{ type_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Tamanho</label>
+                        <input
+                          type="number"
+                          name="additional_field_size"
+                          class="process-additional-field-size-input"
+                          min="1"
+                          max="255"
+                          value="{{ field.size if field.size is not none else '' }}"
+                          placeholder="Ex.: 30"
+                        >
+                      </div>
+                      <button
+                        type="button"
+                        class="table-icon-btn table-icon-btn-danger process-additional-field-remove-btn"
+                        title="Remover campo adicional"
+                        aria-label="Remover campo adicional"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <button
+                    type="button"
+                    id="process-additional-field-add-btn"
+                    class="table-icon-btn process-field-add-btn"
+                    title="Adicionar campo adicional"
+                    aria-label="Adicionar campo adicional"
+                  >
+                    &#43;
+                  </button>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar campos adicionais</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          {% endif %}
+          {% endif %}
+        </section>
+        {% endif %}
+
+        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo">
+          <h2>Definições</h2>
+          <p>Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.</p>
+          {% if settings_success %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <table id="menu-settings-table">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sidebar_menu_settings %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório"
+                      >
+                        &#128065;
+                      </span>
+                      {% else %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      {% endif %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete %}
+                      <a
+                        class="table-icon-btn table-icon-btn-danger"
+                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=delete#settings-menu-edit-card"
+                        title="Excluir menu"
+                        aria-label="Excluir menu"
+                      >
+                        &#128465;
+                      </a>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+
+        {% if current_user_can_manage_all_entities %}
+        <section id="documents-folder-settings-card" class="card" data-menu-scope="documentos">
+          <h2>Configuração da pasta Meu perfil</h2>
+          <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
+          {% if settings_success and initial_menu == "documentos" %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error and initial_menu == "documentos" %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          {% for row in sidebar_menu_settings %}
+            {% if row.key == "documentos" %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Pasta</th>
+                  <th>Estado</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar pasta"
+                        aria-label="Editar pasta"
+                      >
+                        &#9998;
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            {% endif %}
+          {% endfor %}
+        </section>
+        {% endif %}
+
+        <section id="recent-users-card" class="card" data-menu-scope="documentos,funcionarios,financeiro,relatorios,tutorial">
+          <h2>Últimos utilizadores criados</h2>
+          {% if recent_users %}
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Estado</th>
+                  <th>Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in recent_users %}
+                  <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.login_email }}</td>
+                    <td>{{ row.account_status }}</td>
+                    <td>{{ row.created_at }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p class="empty">Sem utilizadores criados ainda.</p>
+          {% endif %}
+        </section>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script>
+    const currentUserName = {{ current_user.full_name|tojson }};
+    const currentUserEmail = {{ current_user.login_email|tojson }};
+    const currentUserIsAdmin = {{ current_user_is_admin|tojson }};
+    const currentUserCanManageAllEntities = {{ current_user_can_manage_all_entities|tojson }};
+    const dashboardData = {{ dashboard_data|tojson }};
+    const currentUserPhone = {{ user_personal_data.primary_phone|tojson }};
+    const currentUserAccountStatus = {{ user_personal_data.account_status|tojson }};
+    const currentUserMemberStatus = {{ user_personal_data.member_status|tojson }};
+    const currentUserEntities = {{ user_personal_data.entities|tojson }};
+    const currentUserAddress = {{ user_personal_data.address|tojson }};
+    const currentUserCity = {{ user_personal_data.city|tojson }};
+    const currentUserFreguesia = {{ user_personal_data.freguesia|tojson }};
+    const currentUserPostalCode = {{ user_personal_data.postal_code|tojson }};
+    const profilePersonalSections = {{ profile_personal_sections|tojson }};
+    const initialProfileTab = {{ profile_tab|tojson }};
+    const initialMenu = {{ initial_menu|tojson }};
+    const initialAdminTab = {{ admin_tab|tojson }};
+    const settingsAction = {{ settings_action|tojson }};
+    const settingsEditKey = {{ settings_edit_key|tojson }};
+    const startupHash = window.location.hash || "";
+
+    const menuConfig = {
+      home: {
+        title: "Home",
+        description: "Resumo geral do sistema.",
+        singleView: true,
+        toggleOnMenuClick: true,
+        items: [{ label: "Resumo Geral", target: "#home-summary-card" }],
+        details: [
+          { label: "Entidades", value: String((dashboardData.totals || {}).entities || 0) },
+          { label: "Utilizadores", value: String((dashboardData.totals || {}).users || 0) }
+        ]
+      },
+      perfil: {
+        title: "Perfil",
+        description: "Opcoes do perfil do utilizador.",
+        singleView: true,
+        toggleOnMenuClick: true,
+        items: [
+          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
+          { label: "Dados de morada", target: "#perfil-morada-card" },
+          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
+        ],
+        details: [
+          { label: "Nome", value: currentUserName },
+          { label: "Email", value: currentUserEmail },
+          { label: "Telefone", value: currentUserPhone },
+          { label: "Conta", value: currentUserAccountStatus },
+          { label: "Membro", value: currentUserMemberStatus },
+          { label: "Entidades", value: currentUserEntities },
+          { label: "Tipo de acesso", value: "Utilizador" }
+        ]
+      },
+      links: {
+        title: "Links",
+        description: "Atalhos internos do painel.",
+        items: [{ label: "Sessão atual", target: "#sessao-card" }],
+        details: [
+          { label: "Modulo", value: "Links" },
+          { label: "Status", value: "Ativo" }
+        ]
+      },
+      contato: {
+        title: "Contacto",
+        description: "Informações e opções de contacto.",
+        items: [
+          { label: "Dados do utilizador ligado", target: "#sessao-card" }
+        ],
+        details: [
+          { label: "Email", value: currentUserEmail },
+          { label: "Canal", value: "Interno" }
+        ]
+      },
+      tutorial: {
+        title: "Tutorial",
+        description: "Guia rapido de uso desta tela.",
+        items: [{ label: "Passo 1: atualizar perfil", target: "#perfil-pessoal-card" }],
+        details: [
+          { label: "Modo", value: "Guiado" },
+          { label: "Dificuldade", value: "Basico" }
+        ]
+      }
+    };
+
+    if (currentUserIsAdmin) {
+      Object.assign(menuConfig, {
+        administrativo: {
+          title: "Administrativo",
+          description: "Ferramentas administrativas do utilizador.",
+          singleView: true,
+          items: [
+            { label: "Entidade", target: "#create-entity-card" },
+            { label: "Utilizador", target: "#create-user-card" },
+            { label: "Definições", target: "#admin-account-status-card" }
+          ],
+          details: [
+            { label: "Modulo", value: "Administrativo" },
+            { label: "Acesso", value: "Permitido" }
+          ]
+        },
+        documentos: {
+          title: "Meu perfil",
+          description: currentUserCanManageAllEntities
+            ? "Configuração da pasta Meu perfil."
+            : "Dados do meu perfil.",
+          singleView: true,
+          toggleOnMenuClick: true,
+          items: currentUserCanManageAllEntities
+            ? [{ label: "Configuração da pasta", target: "#documents-folder-settings-card" }]
+            : (
+              Array.isArray(profilePersonalSections) && profilePersonalSections.length
+                ? profilePersonalSections.map((section) => ({
+                    label: String(section.label || "Dados pessoais"),
+                    target: "#perfil-pessoal-card",
+                    profileSection: String(section.key || "geral")
+                  }))
+                : [{ label: "Dados pessoais", target: "#perfil-pessoal-card", profileSection: "geral" }]
+            ),
+          details: [
+            { label: "Modulo", value: "Meu perfil" },
+            { label: "Status", value: "Ativo" }
+          ]
+        },
+        funcionarios: {
+          title: "Funcionarios",
+          description: "Gestao de funcionarios e acessos.",
+          items: [
+            { label: "Criar registo de funcionario", target: "#create-user-card" },
+            { label: "Ver registos recentes", target: "#recent-users-card" }
+          ],
+          details: [
+            { label: "Modulo", value: "Funcionarios" },
+            { label: "Status", value: "Ativo" }
+          ]
+        },
+        financeiro: {
+          title: "Financeiro",
+          description: "Acesso a opções de conta e estado.",
+          items: [
+            { label: "Estado da conta", target: "#create-user-card" },
+            { label: "Histórico de criação", target: "#recent-users-card" }
+          ],
+          details: [
+            { label: "Modulo", value: "Financeiro" },
+            { label: "Status", value: "Ativo" }
+          ]
+        },
+        relatorios: {
+          title: "Relatorios",
+          description: "Relatorios e historico de utilizadores.",
+          items: [
+            { label: "Últimos criados", target: "#recent-users-card" },
+            { label: "Voltar ao formulario", target: "#create-user-card" }
+          ],
+          details: [
+            { label: "Modulo", value: "Relatorios" },
+            { label: "Status", value: "Ativo" }
+          ]
+        }
+      });
+
+      menuConfig.links.items.push({ label: "Criar utilizador", target: "#create-user-card" });
+      menuConfig.tutorial.items = [
+        { label: "Passo 1: criar utilizador", target: "#create-user-card" },
+        { label: "Passo 2: validar em historico", target: "#recent-users-card" }
+      ];
+    }
+
+    const itemsEl = document.getElementById("submenu-items");
+    const menuButtons = document.querySelectorAll(".menu-item");
+    const scopedCards = document.querySelectorAll("[data-menu-scope]");
+    const userMenuEl = document.getElementById("user-menu");
+    const userMenuTriggerEl = document.getElementById("user-menu-trigger");
+    const userDropdownEl = document.getElementById("user-dropdown");
+    const userAvatarImageEl = document.getElementById("user-avatar-image");
+    const dropdownAvatarImageEl = document.getElementById("dropdown-avatar-image");
+    const userDropdownLinks = document.querySelectorAll("[data-dropdown-target]");
+    const profileEditButtons = document.querySelectorAll("[data-edit-target]");
+    const profileEditCancelButtons = document.querySelectorAll("[data-edit-cancel]");
+    const trainingOutrosEnabledEl = document.getElementById("edit_training_outros_enabled");
+    const trainingOutrosInputEl = document.getElementById("edit_training_outros");
+    const processFieldsBuilderEl = document.getElementById("process-fields-builder");
+    let homeSelectedTarget = "#home-summary-card";
+    let profileSelectedTarget = "#perfil-pessoal-card";
+    if (initialProfileTab === "morada") {
+      profileSelectedTarget = "#perfil-morada-card";
+    } else if (initialProfileTab === "treinamento") {
+      profileSelectedTarget = "#dados-treinamento-card";
+    }
+    let adminSelectedTarget = "#create-entity-card";
+    let documentsSelectedTarget = currentUserCanManageAllEntities
+      ? "#documents-folder-settings-card"
+      : "#perfil-pessoal-card";
+    let documentsSelectedProfileSection = (
+      Array.isArray(profilePersonalSections) && profilePersonalSections.length
+    )
+      ? String(profilePersonalSections[0].key || "geral")
+      : "geral";
+    if (initialAdminTab === "entidade") {
+      adminSelectedTarget = "#create-entity-card";
+    } else if (initialAdminTab === "contas") {
+      adminSelectedTarget = "#admin-account-status-card";
+    }
+    if (startupHash === "#home-summary-card") {
+      homeSelectedTarget = startupHash;
+    }
+    if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
+      adminSelectedTarget = "#create-user-card";
+    } else if (startupHash === "#create-entity-card" || startupHash === "#edit-entity-card") {
+      adminSelectedTarget = "#create-entity-card";
+    } else if (startupHash === "#admin-account-status-card") {
+      adminSelectedTarget = "#admin-account-status-card";
+    } else if (startupHash === "#settings-menu-edit-card") {
+      adminSelectedTarget = "#settings-menu-edit-card";
+    }
+    if (!startupHash && settingsEditKey) {
+      adminSelectedTarget = "#settings-menu-edit-card";
+    }
+    const selectedTargetByMenu = {
+      home: homeSelectedTarget,
+      perfil: profileSelectedTarget,
+      administrativo: adminSelectedTarget,
+      documentos: documentsSelectedTarget
+    };
+    let activeMenuKey = "";
+
+    function renderHomeCharts() {
+      if (!window.Chart) {
+        return;
+      }
+
+      const entityCanvas = document.getElementById("home-entities-chart");
+      if (entityCanvas && !entityCanvas.dataset.chartReady) {
+        new Chart(entityCanvas, {
+          type: "doughnut",
+          data: {
+            labels: (dashboardData.entity_status || {}).labels || [],
+            datasets: [
+              {
+                data: (dashboardData.entity_status || {}).values || [],
+                backgroundColor: ["#1f7a49", "#d07a31"],
+                borderColor: "#ffffff",
+                borderWidth: 2
+              }
+            ]
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom" } }
+          }
+        });
+        entityCanvas.dataset.chartReady = "1";
+      }
+
+      const profileCanvas = document.getElementById("home-profiles-chart");
+      if (profileCanvas && !profileCanvas.dataset.chartReady) {
+        new Chart(profileCanvas, {
+          type: "bar",
+          data: {
+            labels: (dashboardData.users_by_profile || {}).labels || [],
+            datasets: [
+              {
+                label: "Utilizadores",
+                data: (dashboardData.users_by_profile || {}).values || [],
+                backgroundColor: ["#2f6db4", "#3f84d6", "#58a3ec"],
+                borderRadius: 7,
+                maxBarThickness: 62
+              }
+            ]
+          },
+          options: {
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
+              }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+        profileCanvas.dataset.chartReady = "1";
+      }
+    }
+
+    function getInitials(name) {
+      const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+      if (!parts.length) {
+        return "U";
+      }
+      if (parts.length === 1) {
+        return parts[0].slice(0, 2).toUpperCase();
+      }
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function buildAvatarDataUri(name) {
+      const initials = getInitials(name);
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#3777dc"/>
+              <stop offset="100%" stop-color="#244ea5"/>
+            </linearGradient>
+          </defs>
+          <rect width="96" height="96" rx="48" fill="url(#g)"/>
+          <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700">${initials}</text>
+        </svg>
+      `;
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    }
+
+    function closeUserDropdown() {
+      if (!userDropdownEl || !userMenuTriggerEl) {
+        return;
+      }
+      userDropdownEl.hidden = true;
+      userMenuTriggerEl.setAttribute("aria-expanded", "false");
+    }
+
+    function openUserDropdown() {
+      if (!userDropdownEl || !userMenuTriggerEl) {
+        return;
+      }
+      userDropdownEl.hidden = false;
+      userMenuTriggerEl.setAttribute("aria-expanded", "true");
+    }
+
+    function toggleUserDropdown() {
+      if (!userDropdownEl || !userMenuTriggerEl) {
+        return;
+      }
+      const expanded = userMenuTriggerEl.getAttribute("aria-expanded") === "true";
+      if (expanded) {
+        closeUserDropdown();
+      } else {
+        openUserDropdown();
+      }
+    }
+
+    function applyContentForMenu(menuKey) {
+      scopedCards.forEach((card) => {
+        const rawScope = card.getAttribute("data-menu-scope") || "";
+        const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
+        card.style.display = scopes.includes(menuKey) ? "" : "none";
+      });
+    }
+
+    function applyContentForMenuTarget(menuKey, targetSelector) {
+      scopedCards.forEach((card) => {
+        const rawScope = card.getAttribute("data-menu-scope") || "";
+        const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
+        if (!scopes.includes(menuKey)) {
+          card.style.display = "none";
+          return;
+        }
+        const isEntityGroupedBlock =
+          menuKey === "administrativo" &&
+          targetSelector === "#create-entity-card" &&
+          (
+            card.id === "create-entity-card" ||
+            card.id === "edit-entity-card" ||
+            card.id === "recent-entities-card" ||
+            card.id === "inactive-entities-card"
+          );
+        const isUserGroupedBlock =
+          menuKey === "administrativo" &&
+          targetSelector === "#create-user-card" &&
+          (
+            card.id === "create-user-card" ||
+            card.id === "edit-user-card" ||
+            card.id === "admin-users-created-card"
+          );
+        const isSettingsGroupedBlock =
+          menuKey === "administrativo" &&
+          targetSelector === "#settings-menu-edit-card" &&
+          (
+            card.id === "settings-menu-edit-card" ||
+            card.id === "admin-account-status-card"
+          );
+        card.style.display =
+          targetSelector === ("#" + card.id) ||
+          isEntityGroupedBlock ||
+          isUserGroupedBlock ||
+          isSettingsGroupedBlock
+            ? ""
+            : "none";
+      });
+    }
+
+    function clearSubmenuActiveLinks(links) {
+      links.forEach((link) => {
+        link.classList.remove("active");
+      });
+    }
+
+    function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
+      if (!itemsEl) {
+        return;
+      }
+      const links = itemsEl.querySelectorAll(".submenu-item");
+      clearSubmenuActiveLinks(links);
+      if (selectedLinkEl) {
+        selectedLinkEl.classList.add("active");
+        return;
+      }
+      const firstMatch = Array.from(links).find(
+        (link) => link.getAttribute("href") === targetSelector
+      );
+      if (firstMatch) {
+        firstMatch.classList.add("active");
+      }
+    }
+
+    function closeAllProfileEdits() {
+      const editingCards = document.querySelectorAll(".card.editing");
+      editingCards.forEach((card) => {
+        card.classList.remove("editing");
+        const form = card.querySelector(".profile-edit-form");
+        if (form) {
+          form.reset();
+        }
+      });
+      syncTrainingOutrosState();
+    }
+
+    function setupProfileProcessTabs() {
+      const personalCardEl = document.getElementById("perfil-pessoal-card");
+      if (!personalCardEl) {
+        return;
+      }
+      const sectionPanes = personalCardEl.querySelectorAll("[data-profile-section-pane]");
+      if (!sectionPanes.length) {
+        return;
+      }
+
+      function activateSection(sectionKey) {
+        const normalizedSection = String(sectionKey || "").trim().toLowerCase() || "geral";
+        const availableSections = new Set(
+          Array.from(sectionPanes).map((paneEl) =>
+            String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
+          )
+        );
+        const effectiveSection = availableSections.has(normalizedSection)
+          ? normalizedSection
+          : (Array.from(availableSections)[0] || "geral");
+
+        sectionPanes.forEach((paneEl) => {
+          const paneSection = String(
+            paneEl.getAttribute("data-profile-section-pane") || "geral"
+          ).trim().toLowerCase();
+          paneEl.style.display = paneSection === effectiveSection ? "" : "none";
+        });
+        documentsSelectedProfileSection = effectiveSection;
+      }
+
+      window.activateProfilePersonalSection = activateSection;
+      activateSection(documentsSelectedProfileSection);
+    }
+
+    function syncTrainingOutrosState() {
+      if (!trainingOutrosInputEl) {
+        return;
+      }
+      const isEnabled = trainingOutrosEnabledEl ? trainingOutrosEnabledEl.checked : false;
+      trainingOutrosInputEl.disabled = !isEnabled;
+      if (!isEnabled) {
+        trainingOutrosInputEl.value = "";
+      }
+    }
+
+    function setupTableLimiter(prefix) {
+      const tableEl = document.getElementById(`${prefix}-table`);
+      const limiterEl = document.getElementById(`${prefix}-limiter`);
+      const pageSizeEl = document.getElementById(`${prefix}-page-size`);
+      const prevEl = document.getElementById(`${prefix}-prev`);
+      const nextEl = document.getElementById(`${prefix}-next`);
+      const pageEl = document.getElementById(`${prefix}-page`);
+      if (!tableEl || !limiterEl || !pageSizeEl || !prevEl || !nextEl || !pageEl) {
+        return;
+      }
+
+      const rows = Array.from(tableEl.querySelectorAll("tbody tr"));
+      if (!rows.length) {
+        limiterEl.style.display = "none";
+        return;
+      }
+
+      let pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
+      let currentPage = 1;
+
+      function getTotalPages() {
+        return Math.max(1, Math.ceil(rows.length / pageSize));
+      }
+
+      function render() {
+        const totalPages = getTotalPages();
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        rows.forEach((row, index) => {
+          row.style.display = index >= start && index < end ? "" : "none";
+        });
+        pageEl.textContent = String(currentPage);
+        prevEl.disabled = currentPage <= 1;
+        nextEl.disabled = currentPage >= totalPages;
+      }
+
+      pageSizeEl.addEventListener("change", () => {
+        pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
+        currentPage = 1;
+        render();
+      });
+
+      prevEl.addEventListener("click", () => {
+        if (currentPage <= 1) {
+          return;
+        }
+        currentPage -= 1;
+        render();
+      });
+
+      nextEl.addEventListener("click", () => {
+        const totalPages = getTotalPages();
+        if (currentPage >= totalPages) {
+          return;
+        }
+        currentPage += 1;
+        render();
+      });
+
+      render();
+    }
+
+    function setupReadOnlyCards() {
+      const readonlyCards = document.querySelectorAll('.entity-panel-card[data-readonly-mode="1"]');
+      readonlyCards.forEach((card) => {
+        const controls = card.querySelectorAll("input, select, textarea, button");
+        controls.forEach((control) => {
+          if (control.tagName === "INPUT" && control.type === "hidden") {
+            return;
+          }
+          control.disabled = true;
+          control.required = false;
+          control.classList.add("readonly-field");
+        });
+        const formEl = card.querySelector("form");
+        if (formEl) {
+          formEl.addEventListener("submit", (event) => {
+            event.preventDefault();
+          });
+        }
+      });
+    }
+
+    function setupProcessFieldsBuilder() {
+      if (!processFieldsBuilderEl) {
+        return;
+      }
+      const optionsRaw = processFieldsBuilderEl.getAttribute("data-field-options") || "[]";
+      const headerOptionsRaw = processFieldsBuilderEl.getAttribute("data-header-options") || "[]";
+      let fieldOptions = [];
+      let headerOptions = [];
+      try {
+        fieldOptions = JSON.parse(optionsRaw);
+      } catch (error) {
+        fieldOptions = [];
+      }
+      try {
+        headerOptions = JSON.parse(headerOptionsRaw);
+      } catch (error) {
+        headerOptions = [];
+      }
+      if (!Array.isArray(fieldOptions) || !fieldOptions.length) {
+        return;
+      }
+      if (!Array.isArray(headerOptions)) {
+        headerOptions = [];
+      }
+
+      const containerEl = document.getElementById("process-visible-fields-container");
+      const addButtonEl = document.getElementById("process-field-add-btn");
+      const addHeaderShortcutEl = document.getElementById("process-add-header-shortcut-btn");
+      const formEl = processFieldsBuilderEl.closest("form");
+      if (!containerEl || !addButtonEl || !formEl) {
+        return;
+      }
+
+      function renderFieldOptions(selectedKey) {
+        return fieldOptions
+          .map((option) => {
+            const optionKey = String(option.key || "");
+            const optionLabel = String(option.label || optionKey);
+            const isSelected = optionKey === String(selectedKey || "");
+            return `<option value="${optionKey}"${isSelected ? " selected" : ""}>${optionLabel}</option>`;
+          })
+          .join("");
+      }
+
+      function renderHeaderOptions(selectedKey) {
+        const cleanSelectedKey = String(selectedKey || "").trim();
+        const optionsHtml = headerOptions
+          .map((option) => {
+            const optionKey = String(option.key || "");
+            const optionLabel = String(option.label || optionKey);
+            const isSelected = optionKey === cleanSelectedKey;
+            return `<option value="${optionKey}"${isSelected ? " selected" : ""}>${optionLabel}</option>`;
+          })
+          .join("");
+        return `<option value="">Sem cabeçalho</option>${optionsHtml}`;
+      }
+
+      function updateRemoveButtonsState() {
+        const removeButtons = containerEl.querySelectorAll(".process-field-remove-btn");
+        const isSingleRow = removeButtons.length <= 1;
+        removeButtons.forEach((button) => {
+          button.disabled = isSingleRow;
+          button.classList.toggle("table-icon-btn-disabled", isSingleRow);
+          button.setAttribute(
+            "title",
+            isSingleRow ? "É necessário manter pelo menos um campo" : "Remover campo"
+          );
+          button.setAttribute(
+            "aria-label",
+            isSingleRow ? "É necessário manter pelo menos um campo" : "Remover campo"
+          );
+        });
+      }
+
+      function bindRemoveButton(buttonEl) {
+        buttonEl.addEventListener("click", () => {
+          const rows = containerEl.querySelectorAll(".process-field-row");
+          if (rows.length <= 1) {
+            updateRemoveButtonsState();
+            return;
+          }
+          const rowEl = buttonEl.closest(".process-field-row");
+          if (rowEl) {
+            rowEl.remove();
+          }
+          updateRemoveButtonsState();
+        });
+      }
+
+      function createFieldRow(selectedKey, selectedHeaderKey) {
+        const rowEl = document.createElement("div");
+        rowEl.className = "process-field-row";
+        rowEl.innerHTML = `
+          <div class="field">
+            <label>Campo</label>
+            <select name="visible_fields" class="process-field-select">
+              ${renderFieldOptions(selectedKey || fieldOptions[0].key)}
+            </select>
+          </div>
+          <div class="field">
+            <label>Cabeçalho</label>
+            <select name="visible_headers" class="process-field-header-select">
+              ${renderHeaderOptions(selectedHeaderKey || "")}
+            </select>
+          </div>
+          <button
+            type="button"
+            class="table-icon-btn table-icon-btn-danger process-field-remove-btn"
+            title="Remover campo"
+            aria-label="Remover campo"
+          >
+            &#10005;
+          </button>
+        `;
+        const removeButtonEl = rowEl.querySelector(".process-field-remove-btn");
+        if (removeButtonEl) {
+          bindRemoveButton(removeButtonEl);
+        }
+        return rowEl;
+      }
+
+      containerEl.querySelectorAll(".process-field-remove-btn").forEach((buttonEl) => {
+        bindRemoveButton(buttonEl);
+      });
+
+      addButtonEl.addEventListener("click", () => {
+        containerEl.appendChild(createFieldRow(fieldOptions[0].key, ""));
+        updateRemoveButtonsState();
+      });
+
+      if (addHeaderShortcutEl) {
+        addHeaderShortcutEl.addEventListener("click", () => {
+          const additionalTabLinkEl = document.querySelector(
+            "[data-process-edit-tab='campos-adicionais']"
+          );
+          if (additionalTabLinkEl) {
+            additionalTabLinkEl.click();
+          }
+          const additionalAddButtonEl = document.getElementById("process-additional-field-add-btn");
+          if (additionalAddButtonEl) {
+            additionalAddButtonEl.click();
+          }
+          const additionalRows = document.querySelectorAll(
+            "#process-additional-fields-container .process-additional-field-row"
+          );
+          const lastRowEl = additionalRows.length ? additionalRows[additionalRows.length - 1] : null;
+          if (!lastRowEl) {
+            return;
+          }
+          const typeSelectEl = lastRowEl.querySelector("select[name='additional_field_type']");
+          if (typeSelectEl) {
+            typeSelectEl.value = "header";
+            typeSelectEl.dispatchEvent(new Event("change"));
+          }
+          const labelInputEl = lastRowEl.querySelector("input[name='additional_field_label']");
+          if (labelInputEl) {
+            labelInputEl.focus();
+          }
+        });
+      }
+
+      formEl.addEventListener("submit", () => {
+        const selects = containerEl.querySelectorAll("select[name='visible_fields']");
+        selects.forEach((selectEl) => {
+          const cleanValue = String(selectEl.value || "").trim();
+          if (!cleanValue) {
+            selectEl.removeAttribute("name");
+            const rowEl = selectEl.closest(".process-field-row");
+            if (rowEl) {
+              const headerSelectEl = rowEl.querySelector("select[name='visible_headers']");
+              if (headerSelectEl) {
+                headerSelectEl.removeAttribute("name");
+              }
+            }
+          }
+        });
+      });
+
+      if (!containerEl.querySelector(".process-field-row")) {
+        containerEl.appendChild(createFieldRow(fieldOptions[0].key, ""));
+      }
+      updateRemoveButtonsState();
+    }
+
+    function setupProcessAdditionalFieldsBuilder() {
+      const builderEl = document.getElementById("process-additional-fields-builder");
+      if (!builderEl) {
+        return;
+      }
+
+      const fieldTypesRaw = builderEl.getAttribute("data-field-types") || "[]";
+      let fieldTypes = [];
+      try {
+        fieldTypes = JSON.parse(fieldTypesRaw);
+      } catch (error) {
+        fieldTypes = [];
+      }
+      if (!Array.isArray(fieldTypes) || !fieldTypes.length) {
+        fieldTypes = [
+          { key: "text", label: "Texto" },
+          { key: "number", label: "Número" },
+          { key: "email", label: "Email" },
+          { key: "phone", label: "Telefone" },
+          { key: "date", label: "Data" },
+          { key: "flag", label: "Flag" }
+        ];
+      }
+
+      const containerEl = document.getElementById("process-additional-fields-container");
+      const addButtonEl = document.getElementById("process-additional-field-add-btn");
+      const formEl = builderEl.closest("form");
+      if (!containerEl || !addButtonEl || !formEl) {
+        return;
+      }
+
+      const sizedTypes = new Set(["text", "number", "email", "phone"]);
+
+      function renderTypeOptions(selectedType) {
+        return fieldTypes
+          .map((item) => {
+            const optionKey = String(item.key || "");
+            const optionLabel = String(item.label || optionKey);
+            const isSelected = optionKey === String(selectedType || "text");
+            return `<option value="${optionKey}"${isSelected ? " selected" : ""}>${optionLabel}</option>`;
+          })
+          .join("");
+      }
+
+      function syncRowState(rowEl) {
+        const typeSelectEl = rowEl.querySelector("select[name='additional_field_type']");
+        const sizeInputEl = rowEl.querySelector("input[name='additional_field_size']");
+        if (!typeSelectEl || !sizeInputEl) {
+          return;
+        }
+        const cleanType = String(typeSelectEl.value || "text").trim().toLowerCase();
+        const isSizeEnabled = sizedTypes.has(cleanType);
+        if (isSizeEnabled) {
+          sizeInputEl.readOnly = false;
+          sizeInputEl.classList.remove("process-additional-size-readonly");
+          if (!String(sizeInputEl.value || "").trim()) {
+            sizeInputEl.value = "30";
+          }
+        } else {
+          sizeInputEl.value = "";
+          sizeInputEl.readOnly = true;
+          sizeInputEl.classList.add("process-additional-size-readonly");
+        }
+      }
+
+      function bindRemoveButton(buttonEl) {
+        buttonEl.addEventListener("click", () => {
+          const rowEl = buttonEl.closest(".process-additional-field-row");
+          if (rowEl) {
+            rowEl.remove();
+          }
+        });
+      }
+
+      function bindRow(rowEl) {
+        const removeButtonEl = rowEl.querySelector(".process-additional-field-remove-btn");
+        if (removeButtonEl) {
+          bindRemoveButton(removeButtonEl);
+        }
+        const typeSelectEl = rowEl.querySelector("select[name='additional_field_type']");
+        if (typeSelectEl) {
+          typeSelectEl.addEventListener("change", () => {
+            syncRowState(rowEl);
+          });
+        }
+        syncRowState(rowEl);
+      }
+
+      function createAdditionalFieldRow(initialValue, initialType, initialSize) {
+        const rowEl = document.createElement("div");
+        rowEl.className = "process-field-row process-additional-field-row";
+        rowEl.innerHTML = `
+          <input type="hidden" name="additional_field_key" value="">
+          <div class="field">
+            <label>Nome do campo adicional</label>
+            <input
+              type="text"
+              name="additional_field_label"
+              maxlength="80"
+              placeholder="Ex.: Data de batismo"
+              value="${String(initialValue || "").replace(/"/g, "&quot;")}"
+            >
+          </div>
+          <div class="field">
+            <label>Tipo do campo</label>
+            <select name="additional_field_type" class="process-additional-field-type-select">
+              ${renderTypeOptions(initialType || "text")}
+            </select>
+          </div>
+          <div class="field">
+            <label>Tamanho</label>
+            <input
+              type="number"
+              name="additional_field_size"
+              class="process-additional-field-size-input"
+              min="1"
+              max="255"
+              placeholder="Ex.: 30"
+              value="${String(initialSize || "")}"
+            >
+          </div>
+          <button
+            type="button"
+            class="table-icon-btn table-icon-btn-danger process-additional-field-remove-btn"
+            title="Remover campo adicional"
+            aria-label="Remover campo adicional"
+          >
+            &#10005;
+          </button>
+        `;
+        bindRow(rowEl);
+        return rowEl;
+      }
+
+      containerEl.querySelectorAll(".process-additional-field-row").forEach((rowEl) => {
+        bindRow(rowEl);
+      });
+
+      addButtonEl.addEventListener("click", () => {
+        const rowEl = createAdditionalFieldRow("", "text", "30");
+        containerEl.appendChild(rowEl);
+        const inputEl = rowEl.querySelector("input[name='additional_field_label']");
+        if (inputEl) {
+          inputEl.focus();
+        }
+      });
+
+      formEl.addEventListener("submit", () => {
+        const rowEls = containerEl.querySelectorAll(".process-additional-field-row");
+        rowEls.forEach((rowEl) => {
+          const keyEl = rowEl.querySelector("input[name='additional_field_key']");
+          const labelEl = rowEl.querySelector("input[name='additional_field_label']");
+          const typeEl = rowEl.querySelector("select[name='additional_field_type']");
+          const sizeEl = rowEl.querySelector("input[name='additional_field_size']");
+          if (!labelEl || !typeEl || !sizeEl) {
+            return;
+          }
+          const cleanLabel = String(labelEl.value || "").trim();
+          labelEl.value = cleanLabel;
+          const cleanType = String(typeEl.value || "text").trim().toLowerCase();
+          const isSizeEnabled = sizedTypes.has(cleanType);
+          if (!isSizeEnabled) {
+            sizeEl.value = "";
+          }
+
+          if (!cleanLabel) {
+            if (keyEl) {
+              keyEl.removeAttribute("name");
+            }
+            labelEl.removeAttribute("name");
+            typeEl.removeAttribute("name");
+            sizeEl.removeAttribute("name");
+          }
+        });
+      });
+    }
+
+    function setupProcessEditTabs() {
+      const tabLinks = document.querySelectorAll("[data-process-edit-tab]");
+      const panes = document.querySelectorAll("[data-process-edit-pane]");
+      if (!tabLinks.length || !panes.length) {
+        return;
+      }
+
+      function activateProcessTab(tabKey) {
+        const hasTargetTab = Array.from(tabLinks).some(
+          (tabLink) => (tabLink.getAttribute("data-process-edit-tab") || "") === tabKey
+        );
+        const resolvedTabKey = hasTargetTab ? tabKey : "geral";
+        tabLinks.forEach((tabLink) => {
+          const isActive = tabLink.getAttribute("data-process-edit-tab") === resolvedTabKey;
+          tabLink.classList.toggle("active", isActive);
+          tabLink.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+        panes.forEach((pane) => {
+          const isActive = pane.getAttribute("data-process-edit-pane") === resolvedTabKey;
+          pane.classList.toggle("active", isActive);
+        });
+      }
+
+      tabLinks.forEach((tabLink) => {
+        tabLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          const tabKey = tabLink.getAttribute("data-process-edit-tab") || "geral";
+          activateProcessTab(tabKey);
+        });
+      });
+
+      if (settingsAction === "edit") {
+        activateProcessTab("campos-config");
+      } else {
+        activateProcessTab("geral");
+      }
+    }
+
+    function renderSubmenu(menuKey) {
+      const config = menuConfig[menuKey];
+      if (!config || !itemsEl) {
+        return;
+      }
+
+      itemsEl.innerHTML = "";
+      itemsEl.style.display = "flex";
+
+      config.items.forEach((item) => {
+        const link = document.createElement("a");
+        link.className = "submenu-item";
+        link.href = item.target;
+        link.textContent = item.label;
+        if (item.profileSection) {
+          link.dataset.profileSection = String(item.profileSection);
+        }
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          closeAllProfileEdits();
+          selectedTargetByMenu[menuKey] = item.target;
+          setActiveSubmenu(item.target, link);
+          applyContentForMenuTarget(menuKey, item.target);
+          if (
+            menuKey === "documentos" &&
+            !currentUserCanManageAllEntities &&
+            typeof window.activateProfilePersonalSection === "function"
+          ) {
+            const sectionKey = String(item.profileSection || "geral");
+            documentsSelectedProfileSection = sectionKey;
+            window.activateProfilePersonalSection(sectionKey);
+          }
+        });
+        itemsEl.appendChild(link);
+      });
+
+    }
+
+    function getDefaultTargetForMenu(menuKey, config) {
+      if (!Array.isArray(config.items) || !config.items.length) {
+        return "";
+      }
+      const savedTarget = selectedTargetByMenu[menuKey];
+      if (savedTarget) {
+        if (config.items.some((item) => item.target === savedTarget)) {
+          return savedTarget;
+        }
+        const savedCard = document.querySelector(savedTarget);
+        if (savedCard) {
+          const rawScope = savedCard.getAttribute("data-menu-scope") || "";
+          const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
+          if (scopes.includes(menuKey)) {
+            return savedTarget;
+          }
+        }
+      }
+      return config.items[0].target;
+    }
+
+    function activateMenu(menuKey) {
+      const config = menuConfig[menuKey];
+      if (!config) {
+        return;
+      }
+      const targetButton = Array.from(menuButtons).find((btn) => btn.dataset.menu === menuKey);
+
+      closeAllProfileEdits();
+      activeMenuKey = menuKey;
+      menuButtons.forEach((item) => item.classList.remove("active"));
+      if (targetButton) {
+        targetButton.classList.add("active");
+      }
+      renderSubmenu(menuKey);
+
+      const defaultTarget = getDefaultTargetForMenu(menuKey, config);
+      if (defaultTarget) {
+        selectedTargetByMenu[menuKey] = defaultTarget;
+        setActiveSubmenu(defaultTarget);
+        applyContentForMenuTarget(menuKey, defaultTarget);
+        if (
+          menuKey === "documentos" &&
+          !currentUserCanManageAllEntities &&
+          typeof window.activateProfilePersonalSection === "function"
+        ) {
+          const items = Array.isArray(config.items) ? config.items : [];
+          let selectedSectionItem = items.find(
+            (item) => String(item.profileSection || "") === documentsSelectedProfileSection
+          );
+          if (!selectedSectionItem) {
+            selectedSectionItem = items.find((item) => item.target === defaultTarget) || items[0];
+          }
+          if (selectedSectionItem) {
+            const selectedSectionKey = String(selectedSectionItem.profileSection || "geral");
+            documentsSelectedProfileSection = selectedSectionKey;
+            window.activateProfilePersonalSection(selectedSectionKey);
+            const selectedLinkEl = itemsEl
+              ? itemsEl.querySelector(
+                  `.submenu-item[data-profile-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
+                )
+              : null;
+            if (selectedLinkEl) {
+              setActiveSubmenu(defaultTarget, selectedLinkEl);
+            }
+          }
+        }
+        return;
+      }
+      applyContentForMenu(menuKey);
+      setActiveSubmenu("");
+    }
+
+    function activateMenuTarget(menuKey, targetSelector) {
+      const config = menuConfig[menuKey];
+      if (!config) {
+        return;
+      }
+      activateMenu(menuKey);
+      if (!targetSelector) {
+        return;
+      }
+      selectedTargetByMenu[menuKey] = targetSelector;
+      setActiveSubmenu(targetSelector);
+      applyContentForMenuTarget(menuKey, targetSelector);
+      const targetCard = document.querySelector(targetSelector);
+      if (targetCard) {
+        targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    const avatarDataUri = buildAvatarDataUri(currentUserName);
+    if (userAvatarImageEl) {
+      userAvatarImageEl.src = avatarDataUri;
+    }
+    if (dropdownAvatarImageEl) {
+      dropdownAvatarImageEl.src = avatarDataUri;
+    }
+
+    menuButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activateMenu(btn.dataset.menu);
+      });
+    });
+
+    profileEditButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const cardId = button.getAttribute("data-edit-target");
+        if (!cardId) {
+          return;
+        }
+        closeAllProfileEdits();
+        const card = document.getElementById(cardId);
+        if (!card) {
+          return;
+        }
+        card.classList.add("editing");
+      });
+    });
+
+    profileEditCancelButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const cardId = button.getAttribute("data-edit-cancel");
+        if (!cardId) {
+          return;
+        }
+        const card = document.getElementById(cardId);
+        if (!card) {
+          return;
+        }
+        card.classList.remove("editing");
+        const form = card.querySelector(".profile-edit-form");
+        if (form) {
+          form.reset();
+        }
+      });
+    });
+
+    if (trainingOutrosEnabledEl) {
+      trainingOutrosEnabledEl.addEventListener("change", () => {
+        syncTrainingOutrosState();
+      });
+    }
+
+    if (userMenuTriggerEl) {
+      userMenuTriggerEl.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleUserDropdown();
+      });
+    }
+
+    userDropdownLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const menuKey = link.getAttribute("data-dropdown-menu") || "perfil";
+        const targetSelector = link.getAttribute("data-dropdown-target") || "";
+        if (!menuConfig[menuKey]) {
+          closeUserDropdown();
+          return;
+        }
+        if (targetSelector) {
+          selectedTargetByMenu[menuKey] = targetSelector;
+        }
+        activateMenuTarget(menuKey, targetSelector);
+        closeUserDropdown();
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!userMenuEl || !userDropdownEl || userDropdownEl.hidden) {
+        return;
+      }
+      if (!userMenuEl.contains(event.target)) {
+        closeUserDropdown();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeUserDropdown();
+      }
+    });
+
+    syncTrainingOutrosState();
+    renderHomeCharts();
+    setupReadOnlyCards();
+    setupProfileProcessTabs();
+    setupProcessEditTabs();
+    setupProcessFieldsBuilder();
+    setupProcessAdditionalFieldsBuilder();
+    setupTableLimiter("recent-entities");
+    setupTableLimiter("inactive-entities");
+    setupTableLimiter("admin-users");
+    const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => btn.dataset.menu));
+    let startupMenu = menuConfig[initialMenu] ? initialMenu : "home";
+    if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
+      if (sidebarMenuKeys.has("home")) {
+        startupMenu = "home";
+      } else {
+        const firstSidebarMenu = Array.from(sidebarMenuKeys.values())[0];
+        startupMenu = firstSidebarMenu || "home";
+      }
+    }
+    activateMenu(startupMenu);
+  </script>
+</body>
+</html>
+
+

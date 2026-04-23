@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.env
+.git
+.gitignore
+migrations/__pycache__/
+migrations/versions/__pycache__/
