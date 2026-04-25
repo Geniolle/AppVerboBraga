@@ -1,309 +1,14 @@
-<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Acesso</title>
-  <style>
-    :root {
-      --page-bg: #eef1f8;
-      --card-bg: #ffffff;
-      --text: #17233a;
-      --muted: #7a879d;
-      --line: #d3dced;
-      --primary: #2f6ce5;
-      --primary-hover: #2458c3;
-      --ok: #1f7a49;
-      --ok-bg: #e8f7ef;
-      --error: #a22f2f;
-      --error-bg: #feefef;
-    }
+{% extends "base.html" %}
 
-    * {
-      box-sizing: border-box;
-    }
+{% block title %}Acesso{% endblock %}
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 24px;
-      display: grid;
-      place-items: center;
-      background:
-        radial-gradient(circle at -8% 40%, #dfe6f6 0, #dfe6f6 10%, transparent 10.5%),
-        radial-gradient(circle at 110% 30%, #e4e9f7 0, #e4e9f7 9%, transparent 9.5%),
-        var(--page-bg);
-      font-family: "Plus Jakarta Sans", "Segoe UI", Tahoma, sans-serif;
-      color: var(--text);
-    }
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/login.css?v=20260425a">
+{% endblock %}
 
-    body.is-admin {
-      background:
-        radial-gradient(circle at 12% 12%, #ffecc9 0, #ffecc9 8%, transparent 8.5%),
-        radial-gradient(circle at 90% 88%, #d9e6ff 0, #d9e6ff 10%, transparent 10.5%),
-        #f6f7fb;
-    }
+{% block body_class %}{% if mode == 'admin' %}is-admin{% endif %}{% endblock %}
 
-   .card {
-      width: min(540px, 100%);
-      background: var(--card-bg);
-      border-radius: 18px;
-      border: 1px solid #dde4f2;
-      padding: 36px 34px 30px;
-      box-shadow: 0 22px 40px rgba(20, 37, 70, 0.09);
-    }
-
-   .admin-card {
-      width: min(760px, 100%);
-    }
-
-    h1 {
-      margin: 0 0 28px;
-      font-size: clamp(32px, 5vw, 50px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-    }
-
-   .subtitle {
-      margin: -12px 0 22px;
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-   .admin-badge {
-      display: inline-block;
-      margin-bottom: 14px;
-      padding: 5px 11px;
-      border-radius: 999px;
-      border: 1px solid #d7e2fb;
-      color: #1a4eb7;
-      background: #edf3ff;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-    }
-
-   .alert {
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin: 0 0 14px;
-      border: 1px solid;
-      font-size: 14px;
-    }
-
-   .alert.ok {
-      color: var(--ok);
-      background: var(--ok-bg);
-      border-color: #bce6ce;
-    }
-
-   .alert.error {
-      color: var(--error);
-      background: var(--error-bg);
-      border-color: #f2c7c7;
-    }
-
-   .field {
-      margin-bottom: 18px;
-    }
-
-   .field label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-   .field input,
-   .field select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 12px 13px;
-      font-size: 16px;
-      color: var(--text);
-      background: #fff;
-      outline: none;
-    }
-
-   .field input::placeholder {
-      color: #98a4b8;
-    }
-
-   .field input:focus,
-   .field select:focus {
-      border-color: #9eb9f5;
-      box-shadow: 0 0 0 3px rgba(47, 108, 229, 0.14);
-    }
-
-   .field-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-
-   .field-row label {
-      margin: 0;
-    }
-
-   .inline-link {
-      font-size: 16px;
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-   .inline-link:hover {
-      text-decoration: underline;
-    }
-
-   .primary-btn {
-      width: 100%;
-      border: 0;
-      border-radius: 999px;
-      padding: 13px 18px;
-      font-size: 20px;
-      font-weight: 700;
-      color: #fff;
-      background: var(--primary);
-      cursor: pointer;
-      margin-top: 4px;
-      transition: background-color 0.18s ease;
-    }
-
-   .primary-btn:hover {
-      background: var(--primary-hover);
-    }
-
-   .providers {
-      margin-top: 16px;
-      display: grid;
-      gap: 12px;
-    }
-
-   .provider-btn {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 11px 16px;
-      background: #fff;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 17px;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-   .provider-btn:hover {
-      background: #f8faff;
-    }
-
-   .provider-btn.disabled {
-      opacity: 0.58;
-      pointer-events: none;
-      background: #f4f6fb;
-    }
-
-   .provider-icon {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1px solid #c9d4eb;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      color: #4d5b74;
-      background: #fff;
-      flex: 0 0 auto;
-    }
-
-   .switch-mode {
-      margin: 30px 0 0;
-      text-align: center;
-      font-size: 17px;
-      color: #1d2940;
-    }
-
-   .switch-mode.secondary {
-      margin-top: 10px;
-      font-size: 15px;
-      color: var(--muted);
-    }
-
-   .switch-mode a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-   .switch-mode a:hover {
-      text-decoration: underline;
-    }
-
-   .hint {
-      margin: 16px 0 0;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-   .metrics-grid {
-      margin: 8px 0 22px;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-   .metric-card {
-      border: 1px solid #dbe4f8;
-      border-radius: 12px;
-      padding: 12px;
-      background: #f9fbff;
-    }
-
-   .metric-label {
-      display: block;
-      font-size: 12px;
-      color: #5d6981;
-      margin-bottom: 6px;
-    }
-
-   .metric-value {
-      display: block;
-      font-size: 24px;
-      line-height: 1.1;
-      font-weight: 800;
-      color: #1b2f57;
-    }
-
-    @media (max-width: 560px) {
-      body {
-        padding: 14px;
-      }
-
-     .card {
-        padding: 26px 18px 22px;
-        border-radius: 14px;
-      }
-
-     .inline-link {
-        font-size: 14px;
-      }
-
-     .metrics-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-  </style>
-</head>
-<body class="{% if mode == 'admin' %}is-admin{% endif %}">
+{% block body %}
   <main class="card {% if mode == 'admin' %}admin-card{% endif %}">
     {% if mode == "admin" %}
       <span class="admin-badge">AREA ADMINISTRATIVA</span>
@@ -392,8 +97,26 @@
         </div>
 
         <div class="field">
+          <label for="country">País</label>
+          <select id="country" name="country" required>
+            <option value="" disabled {% if not signup_data.country %}selected{% endif %}>Selecione o país</option>
+            {% for option in signup_country_options %}
+              <option
+                value="{{ option.value }}"
+                data-calling-code="{{ option.calling_code }}"
+                data-phone-placeholder="{{ option.placeholder }}"
+                {% if signup_data.country == option.value %}selected{% endif %}
+              >
+                {{ option.label }} ({{ option.calling_code }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
           <label for="primary_phone">Telefone</label>
           <input id="primary_phone" name="primary_phone" required value="{{ signup_data.primary_phone }}" placeholder="+351 910 000 000">
+          <small class="field-help">O número deve começar com o indicativo do país selecionado.</small>
         </div>
 
         <div class="field">
@@ -403,6 +126,16 @@
 
         <div class="field">
           <label for="entity_id">Entidade</label>
+          {% if signup_data.entity_locked %}
+          <input type="hidden" name="entity_id" value="{{ signup_data.entity_id }}">
+          <input
+            id="entity_id"
+            class="readonly-field"
+            value="{{ signup_data.entity_name }}"
+            readonly
+            disabled
+          >
+          {% else %}
           <select id="entity_id" name="entity_id">
             <option value="">Selecionar automaticamente</option>
             {% for entity in entities %}
@@ -411,6 +144,7 @@
               </option>
             {% endfor %}
           </select>
+          {% endif %}
         </div>
 
         <div class="field">
@@ -499,75 +233,8 @@
       </p>
     {% endif %}
   </main>
-  <script>
-    (function () {
-      const emailInput = document.getElementById("email");
-      const entitySelect = document.getElementById("entity_id");
-      if (!emailInput || !entitySelect) {
-        return;
-      }
+{% endblock %}
 
-      function extractDomain(value) {
-        const email = String(value || "").trim().toLowerCase();
-        const atIndex = email.indexOf("@");
-        if (atIndex < 0) {
-          return "";
-        }
-        return email.slice(atIndex + 1).trim();
-      }
-
-      function resolveEntityIdByEmail(value) {
-        const email = String(value || "").trim().toLowerCase();
-        if (!email || email.indexOf("@") < 0) {
-          return "";
-        }
-
-        const options = Array.from(entitySelect.options).filter((option) => option.value);
-        const exactMatches = options.filter((option) => {
-          const candidate = String(option.dataset.entityEmail || "").trim().toLowerCase();
-          return candidate && candidate === email;
-        });
-        if (exactMatches.length === 1) {
-          return exactMatches[0].value;
-        }
-        if (exactMatches.length > 1) {
-          return "";
-        }
-
-        const domain = extractDomain(email);
-        if (!domain) {
-          return "";
-        }
-        const domainMatches = options.filter((option) => {
-          const candidate = String(option.dataset.entityEmail || "").trim().toLowerCase();
-          const candidateDomain = extractDomain(candidate);
-          return candidateDomain && candidateDomain === domain;
-        });
-        if (domainMatches.length === 1) {
-          return domainMatches[0].value;
-        }
-        if (domainMatches.length > 1) {
-          return "";
-        }
-
-        if (options.length === 1) {
-          return options[0].value;
-        }
-        return "";
-      }
-
-      function autoSelectEntity() {
-        const resolvedId = resolveEntityIdByEmail(emailInput.value);
-        if (!resolvedId) {
-          return;
-        }
-        entitySelect.value = resolvedId;
-      }
-
-      emailInput.addEventListener("input", autoSelectEntity);
-      emailInput.addEventListener("change", autoSelectEntity);
-      autoSelectEntity();
-    })();
-  </script>
-</body>
-</html>
+{% block scripts %}
+  <script src="/static/js/login.js"></script>
+{% endblock %}

@@ -1,0 +1,44 @@
+    {% set menu_icons = {
+      "home": "[H]",
+      "administrativo": "[*]",
+      "documentos": "[D]",
+      "funcionarios": "[F]",
+      "financeiro": "[$]",
+      "relatorios": "[R]",
+      "links": "[L]",
+      "contato": "[C]",
+      "tutorial": "[T]"
+    } %}
+    <aside class="sidebar">
+      <div class="menu-section">Geral</div>
+      <nav class="menu-list" aria-label="Menu principal">
+        {% for setting in sidebar_menu_settings %}
+          {% if setting.key in visible_sidebar_menu_keys and setting.key in ["home", "administrativo"] %}
+          <button
+            type="button"
+            class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
+            data-menu="{{ setting.key|lower }}"
+          >
+            <span class="menu-icon">{{ menu_icons.get(setting.key, "[ ]") }}</span>
+            <span>{{ setting.label }}</span>
+          </button>
+          {% endif %}
+        {% endfor %}
+      </nav>
+
+      <div class="menu-section">Igreja</div>
+      <nav class="menu-list" aria-label="Menu igreja">
+        {% for setting in sidebar_menu_settings %}
+          {% if setting.key in visible_sidebar_menu_keys and setting.key not in ["home", "administrativo"] %}
+          <button
+            type="button"
+            class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
+            data-menu="{{ setting.key|lower }}"
+          >
+            <span class="menu-icon">{{ menu_icons.get(setting.key, "[+]") }}</span>
+            <span>{{ setting.label }}</span>
+          </button>
+          {% endif %}
+        {% endfor %}
+      </nav>
+    </aside>

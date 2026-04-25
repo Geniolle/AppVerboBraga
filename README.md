@@ -1,5 +1,27 @@
 # AppVerboBraga
 
+## Estrutura do Projeto
+
+Organizacao principal apos refatoracao:
+
+- `appverbo/config/`: configuracoes e leitura de ambiente.
+- `appverbo/db/`: engine/session e bootstrap de base de dados.
+- `appverbo/models/`: modelos SQLAlchemy separados por dominio.
+- `appverbo/routes/`: rotas por dominio (`auth/`, `users/`, `entities/`, `profile/`, `webhooks/`).
+- `appverbo/services/`: servicos por responsabilidade (auth, perfil, permissoes, paginas, whatsapp).
+- `appverbo/repositories/`: camada de acesso a dados reutilizavel.
+- `appverbo/schemas/`: schemas de validacao para formularios e payloads.
+- `templates/`: templates Jinja com `base.html` e `partials/`.
+- `static/css` e `static/js`: assets movidos para ficheiros externos.
+- `scripts/`: comandos operacionais (`bootstrap_admin`, `init_db`, `smoke_test`, `validate_web_app`).
+
+## Padrao de UI
+
+Padrao de tamanhos e formatacao de campos/botoes:
+
+- Guia: `docs/ui-style-guide.md`
+- Tokens globais: `static/css/ui-standards.css`
+
 ## Docker
 
 Subir app web + PostgreSQL:

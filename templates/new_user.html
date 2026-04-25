@@ -1,1802 +1,64 @@
-﻿<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}</title>
-  <style>
-    :root {
-      --bg: #eceef2;
-      --topbar: #2f86d7;
-      --sidebar-bg: #f3f3f4;
-      --sidebar-line: #d7d9de;
-      --sidebar-active: #e4e6ea;
-      --panel-bg: #ffffff;
-      --line: #d8dce4;
-      --text: #2f3540;
-      --muted: #6b7483;
-      --primary: #3f51b5;
-      --primary-hover: #35449d;
-      --ok: #1f7a49;
-      --ok-bg: #e9f8ef;
-      --error: #a02a2a;
-      --error-bg: #fdeeee;
-    }
+{% extends "base.html" %}
 
-    * {
-      box-sizing: border-box;
-    }
+{% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-    }
+{% block head_extra %}
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260425c">
+{% endblock %}
 
-   .topbar {
-      height: 62px;
-      background: var(--topbar);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-   .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-   .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      line-height: 1;
-      font-weight: 700;
-    }
-
-   .brand-mark {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.15);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 19px;
-      overflow: hidden;
-      flex: 0 0 32px;
-    }
-
-   .brand-mark img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-   .brand-name {
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-    }
-
-   .topbar-action {
-      background: transparent;
-      border: 0;
-      color: #fff;
-      font-size: 22px;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
-
-   .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-   .topbar-meta {
-      opacity: 0.95;
-    }
-
-   .user-menu {
-      position: relative;
-    }
-
-   .user-menu-trigger {
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      padding: 5px 8px;
-      border-radius: 999px;
-      min-height: 38px;
-    }
-
-   .user-menu-trigger:hover {
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-   .user-name {
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-   .avatar-img {
-      width: 30px;
-      height: 30px;
-      border-radius: 999px;
-      border: 2px solid rgba(255, 255, 255, 0.75);
-      background: #dbeafe;
-      object-fit: cover;
-      flex: 0 0 auto;
-    }
-
-   .user-caret {
-      font-size: 11px;
-      opacity: 0.9;
-    }
-
-   .user-dropdown {
-      position: absolute;
-      top: calc(100% + 12px);
-      right: 0;
-      width: min(430px, calc(100vw - 24px));
-      background: #fff;
-      border: 1px solid #bfc7d4;
-      border-radius: 12px;
-      box-shadow: 0 18px 40px rgba(16, 24, 40, 0.2);
-      z-index: 40;
-      padding: 18px 18px 14px;
-    }
-
-   .user-dropdown::before {
-      content: "";
-      position: absolute;
-      top: -8px;
-      right: 30px;
-      width: 14px;
-      height: 14px;
-      background: #fff;
-      border-top: 1px solid #bfc7d4;
-      border-left: 1px solid #bfc7d4;
-      transform: rotate(45deg);
-    }
-
-   .user-dropdown-header {
-      padding: 0 0 14px;
-      text-align: center;
-      border-bottom: 1px solid #e1e6ef;
-    }
-
-   .dropdown-avatar {
-      width: 64px;
-      height: 64px;
-      border: 0;
-      margin: 0 auto 12px;
-      display: block;
-      background: #cbe6ff;
-    }
-
-   .dropdown-name {
-      margin: 0;
-      color: #0f2647;
-      font-size: clamp(24px, 2vw, 32px);
-      font-weight: 700;
-      line-height: 1.1;
-      word-break: break-word;
-    }
-
-   .dropdown-meta {
-      margin: 6px 0 0;
-      color: #5d6981;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-   .dropdown-email {
-      margin: 6px 0 0;
-      color: #1f2f4a;
-      font-size: 15px;
-      word-break: break-word;
-    }
-
-   .dropdown-entity {
-      margin: 4px 0 0;
-      color: #1f2f4a;
-      font-size: 14px;
-      word-break: break-word;
-    }
-
-   .user-dropdown-actions {
-      padding: 12px 0 8px;
-      display: grid;
-      gap: 0;
-    }
-
-   .dropdown-link {
-      text-decoration: none;
-      color: #102746;
-      font-size: 16px;
-      font-weight: 500;
-      padding: 10px 2px;
-      display: block;
-      border-bottom: 1px solid #e8ecf3;
-    }
-
-   .dropdown-link:hover {
-      color: #0e5abc;
-    }
-
-   .dropdown-logout-form {
-      padding: 10px 0 0;
-      margin: 0;
-    }
-
-   .dropdown-logout-btn {
-      width: 100%;
-      margin: 0;
-      background: transparent;
-      color: #102746;
-      border: 0;
-      padding: 8px 2px;
-      text-align: left;
-      font-size: 16px;
-      font-weight: 500;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: background-color 0.16s ease, color 0.16s ease;
-    }
-
-   .dropdown-logout-btn:hover,
-   .dropdown-logout-btn:focus-visible {
-      background: #5f79cf;
-      color: #ffffff;
-      outline: none;
-    }
-
-   .dropdown-logout-btn:active {
-      background: #4f68b8;
-      color: #ffffff;
-    }
-
-   .layout {
-      min-height: calc(100vh - 62px);
-      display: grid;
-      grid-template-columns: 234px minmax(0, 1fr);
-    }
-
-   .sidebar {
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--sidebar-line);
-      padding: 14px 0;
-    }
-
-   .menu-section {
-      margin: 10px 0 4px;
-      padding: 0 18px;
-      font-size: 13px;
-      color: #808792;
-      text-transform: uppercase;
-    }
-
-   .menu-list {
-      display: grid;
-      gap: 1px;
-      margin: 6px 0 14px;
-    }
-
-   .menu-item {
-      border: 0;
-      background: transparent;
-      width: 100%;
-      text-align: left;
-      padding: 11px 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #5c6572;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-   .menu-item:hover {
-      background: #eaecf0;
-    }
-
-   .menu-item.active {
-      background: var(--sidebar-active);
-      color: #2f333a;
-      font-weight: 700;
-    }
-
-   .menu-icon {
-      width: 20px;
-      text-align: center;
-      color: #7b8089;
-      font-size: 12px;
-    }
-
-   .menu-arrow {
-      margin-left: auto;
-      color: #8a9099;
-    }
-
-   .perfil-submenu {
-      padding: 4px 12px 10px 42px;
-      margin: -8px 0 10px;
-    }
-
-   .sidebar-submenu {
-      padding: 0 12px;
-      margin: -4px 0 10px;
-    }
-
-   .sidebar-address-card {
-      margin: 0 12px 14px;
-      border: 1px solid #dce3f2;
-      border-radius: 8px;
-      background: #f9fbff;
-      padding: 10px;
-      display: grid;
-      gap: 6px;
-    }
-
-   .sidebar-address-title {
-      margin: 0 0 4px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #2f3850;
-      text-transform: uppercase;
-    }
-
-   .sidebar-address-row {
-      font-size: 13px;
-      color: #344055;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-   .sidebar-address-label {
-      color: #667388;
-      font-weight: 600;
-    }
-
-   .submenu-items {
-      display: grid;
-      gap: 8px;
-    }
-
-   .submenu-item {
-      display: block;
-      text-decoration: none;
-      color: #2f3850;
-      background: #f9fbff;
-      border: 1px solid #dce3f2;
-      border-radius: 8px;
-      padding: 10px 11px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-   .submenu-item:hover {
-      background: #f2f6ff;
-      border-color: #becdf0;
-    }
-
-   .submenu-item.active {
-      background: #edf3ff;
-      border-color: #b5c7ee;
-      color: #22304f;
-    }
-
-   .menu-tabs-card {
-      padding: 0;
-      overflow: hidden;
-    }
-
-   .menu-tabs {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      overflow-x: auto;
-      border-bottom: 1px solid #dce3f2;
-      padding: 0 10px;
-    }
-
-   .menu-tabs.submenu-item {
-      background: transparent;
-      border: 0;
-      border-bottom: 3px solid transparent;
-      border-radius: 0;
-      padding: 13px 10px 11px;
-      white-space: nowrap;
-      color: #33425c;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-   .menu-tabs.submenu-item:hover {
-      background: #f4f7fd;
-      border-color: transparent;
-    }
-
-   .menu-tabs.submenu-item.active {
-      background: transparent;
-      border-color: #1c67c9;
-      color: #0e5abc;
-    }
-
-   .content {
-      padding: 24px;
-      min-width: 0;
-    }
-
-   .container {
-      width: 100%;
-      max-width: 100%;
-    }
-
-   .card {
-      background: var(--panel-bg);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 18px;
-      margin-bottom: 14px;
-    }
-
-   .entity-create-collapse {
-      border: 0;
-      text-align: left;
-    }
-
-   .entity-create-collapse summary {
-      list-style: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 40px;
-      font-size: 22px;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 8px;
-      width: auto;
-      border-radius: 10px;
-      padding: 8px 16px;
-      background: #0e5abc;
-      border: 1px solid #2458c3;
-      transition: background 0.15s ease, border-color 0.15s ease;
-    }
-
-   .entity-create-collapse summary:hover {
-      background: #1c67c9;
-      border-color: #1c67c9;
-    }
-
-   .entity-create-collapse summary::-webkit-details-marker {
-      display: none;
-    }
-
-   .entity-create-collapse[open] > summary {
-      display: none;
-    }
-
-   .entity-create-body {
-      margin-top: 10px;
-      text-align: left;
-    }
-
-   .entity-first-row {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-   .entity-first-row.field {
-      min-width: 0;
-    }
-
-   .entity-first-row.field label {
-      white-space: nowrap;
-      line-height: 1.2;
-    }
-
-   .entity-first-row.entity-first-row-client,
-   .entity-first-row.entity-first-row-acronym {
-      width: max-content;
-    }
-
-   .entity-first-row.entity-first-row-client input {
-      width: 100%;
-      min-width: 10ch;
-    }
-
-   .entity-first-row.entity-first-row-acronym input {
-      width: 100%;
-      min-width: 5ch;
-    }
-
-   .entity-second-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-   .entity-second-row.field {
-      min-width: 0;
-    }
-
-   .entity-second-row.field label {
-      white-space: nowrap;
-      line-height: 1.2;
-    }
-
-   .entity-second-row.entity-second-row-tax,
-   .entity-second-row.entity-second-row-phone {
-      width: max-content;
-    }
-
-   .entity-second-row.entity-second-row-tax input {
-      width: 100%;
-      min-width: 30ch;
-      max-width: 30ch;
-    }
-
-   .entity-second-row.entity-second-row-phone input {
-      width: 100%;
-      min-width: 30ch;
-      max-width: 30ch;
-    }
-
-   .entity-third-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-   .entity-third-row.field {
-      min-width: 0;
-    }
-
-   .entity-third-row.field label {
-      white-space: nowrap;
-      line-height: 1.2;
-    }
-
-   .entity-third-row.entity-third-row-door {
-      width: max-content;
-    }
-
-   .entity-third-row.entity-third-row-door input {
-      width: 100%;
-      min-width: 15ch;
-      max-width: 15ch;
-    }
-
-   .entity-fourth-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-   .entity-fourth-row.field {
-      min-width: 0;
-    }
-
-   .entity-fourth-row.field label {
-      white-space: nowrap;
-      line-height: 1.2;
-    }
-
-   .entity-fourth-row.entity-fourth-row-postal,
-   .entity-fourth-row.entity-fourth-row-country {
-      width: max-content;
-    }
-
-   .entity-fourth-row.entity-fourth-row-postal input {
-      width: 100%;
-      min-width: 30ch;
-      max-width: 30ch;
-    }
-
-   .entity-fourth-row.entity-fourth-row-country input {
-      width: 100%;
-      min-width: 50ch;
-      max-width: 50ch;
-    }
-
-   .entity-fifth-row-created-at {
-      width: max-content;
-    }
-
-   .entity-fifth-row-created-at input {
-      width: 100%;
-      min-width: 30ch;
-      max-width: 30ch;
-    }
-
-   .entity-fifth-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-   .entity-scope-row {
-      display: grid;
-      grid-template-columns: minmax(260px, 320px);
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-   .entity-fifth-row-edit {
-      grid-template-columns: minmax(0, 1fr) auto auto;
-    }
-
-   .entity-fifth-row.field {
-      min-width: 0;
-    }
-
-   .entity-edit-logo-row {
-      margin-bottom: 12px;
-    }
-
-   .entity-edit-status-row {
-      max-width: 240px;
-      min-width: 220px;
-    }
-
-   .entity-edit-current-logo {
-      min-width: 0;
-    }
-
-   .entity-edit-current-logo-preview {
-      position: relative;
-      width: 100%;
-      max-width: 360px;
-    }
-
-   .entity-edit-current-logo-image {
-      display: block;
-      width: 100%;
-      height: 120px;
-      object-fit: contain;
-      object-position: center;
-      border: 1px solid #d8deea;
-      border-radius: 10px;
-      background: #ffffff;
-      padding: 8px;
-    }
-
-   .entity-edit-remove-logo-placeholder {
-      display: none;
-      width: 100%;
-      height: 120px;
-      border: 1px dashed #d9a8a8;
-      border-radius: 10px;
-      background: #fff7f7;
-      color: #8f2f2f;
-      font-size: 13px;
-      font-weight: 600;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 8px 12px;
-    }
-
-   .entity-edit-remove-logo-input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-   .entity-edit-remove-logo-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      border: 1px solid #e4a8a8;
-      background: #ffffff;
-      color: #8f2f2f;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(36, 49, 74, 0.15);
-      user-select: none;
-    }
-
-   .entity-edit-remove-logo-btn:hover {
-      background: #fdeeee;
-      border-color: #d57a7a;
-      color: #7d2525;
-    }
-
-   .entity-edit-remove-logo-input:checked +.entity-edit-remove-logo-btn {
-      background: #fdeeee;
-      border-color: #d57a7a;
-      color: #7d2525;
-    }
-
-   .entity-edit-remove-logo-input:checked ~ .entity-edit-current-logo-image {
-      display: none;
-    }
-
-   .entity-edit-remove-logo-input:checked ~ .entity-edit-remove-logo-placeholder {
-      display: flex;
-    }
-
-   .entity-panel-card {
-      border-radius: 18px;
-      border: 1px solid #d6dde9;
-      background: #f5f7fb;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    }
-
-   .entity-panel-card h2 {
-      color: #0f2647;
-    }
-
-   .home-summary-head {
-      display: grid;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-   .home-summary-head h2 {
-      margin: 0;
-    }
-
-   .home-summary-head p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-   .home-kpis {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-   .home-kpi {
-      border: 1px solid #d6dce8;
-      background: #fafcff;
-      border-radius: 8px;
-      padding: 10px;
-    }
-
-   .home-kpi-label {
-      margin: 0;
-      color: #64728a;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-   .home-kpi-value {
-      margin: 8px 0 0;
-      font-size: 26px;
-      font-weight: 700;
-      line-height: 1;
-      color: #2f3850;
-    }
-
-   .home-chart-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-   .home-chart-box {
-      border: 1px solid #d6dce8;
-      background: #fcfdff;
-      border-radius: 8px;
-      padding: 12px;
-      min-height: 300px;
-      display: grid;
-      gap: 8px;
-      align-content: start;
-    }
-
-   .home-chart-box h3 {
-      margin: 0;
-      font-size: 16px;
-      color: #2f3850;
-    }
-
-   .home-chart-wrap {
-      position: relative;
-      height: 230px;
-    }
-
-   .personal-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 16px;
-    }
-
-   .profile-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-   .profile-card-header h2 {
-      margin: 0;
-    }
-
-   .profile-edit-toggle {
-      margin: 0;
-      padding: 8px 12px;
-      font-size: 13px;
-    }
-
-   .profile-edit-form {
-      display: none;
-    }
-
-   .card.editing .profile-readonly {
-      display: none;
-    }
-
-   .card.editing .profile-edit-form {
-      display: block;
-    }
-
-   .card.editing .profile-edit-toggle {
-      display: none;
-    }
-
-   .profile-edit-actions {
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-   .profile-edit-actions button {
-      margin-top: 0;
-      min-width: 132px;
-    }
-
-   .profile-process-tabs {
-      margin: 0 0 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid #d5deee;
-      padding-bottom: 8px;
-    }
-
-   .profile-process-tab-btn {
-      border: 1px solid #c4d1ec;
-      background: #eef3ff;
-      color: #233b66;
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-   .profile-process-tab-btn:hover {
-      background: #e3ecff;
-      border-color: #b4c6eb;
-    }
-
-   .profile-process-tab-btn.active {
-      background: #3f51b5;
-      border-color: #3f51b5;
-      color: #ffffff;
-    }
-
-   .profile-cancel-btn {
-      background: #8b95a7;
-    }
-
-   .profile-cancel-btn:hover {
-      background: #727d91;
-    }
-
-   .training-options-grid {
-      display: grid;
-      gap: 10px;
-    }
-
-   .training-option-row {
-      border: 1px solid #d6dce8;
-      background: #fafcff;
-      border-radius: 6px;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-   .training-option-row input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-    }
-
-   .training-option-row span {
-      font-weight: 600;
-      color: #2c3649;
-    }
-
-   .training-option-outros {
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-
-   .training-outros-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0;
-      color: #2c3649;
-      font-weight: 600;
-    }
-
-   .training-outros-input {
-      flex: 1 1 auto;
-      min-width: 220px;
-      margin: 0;
-      padding: 8px 10px;
-      border: 1px solid #cfd5df;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #313845;
-      background: #fff;
-    }
-
-   .training-outros-input:disabled {
-      background: #eef1f6;
-      color: #7b869a;
-    }
-
-   .training-selected-list {
-      margin: 8px 0 14px;
-      padding-left: 18px;
-      color: #2c3649;
-    }
-
-   .training-selected-list li {
-      margin-bottom: 4px;
-    }
-
-   .personal-item {
-      border: 1px solid #d6dce8;
-      background: #fafcff;
-      border-radius: 6px;
-      padding: 10px;
-    }
-
-   .personal-label {
-      display: block;
-      font-size: 12px;
-      text-transform: none;
-      color: #68748a;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-
-   .personal-value {
-      display: block;
-      font-size: 15px;
-      color: #2c3649;
-      word-break: break-word;
-    }
-
-    h1,
-    h2 {
-      margin: 0 0 12px;
-      font-weight: 700;
-      color: #2f3a4a;
-    }
-
-    p {
-      margin: 0 0 12px;
-      color: var(--muted);
-    }
-
-   .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-   .field {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-   .field.full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-size: 13px;
-      color: #586273;
-      text-transform: uppercase;
-    }
-
-   .profile-edit-form label {
-      text-transform: none;
-    }
-
-   .profile-edit-form input[type="checkbox"] {
-      width: auto;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-
-   .profile-custom-flag-control {
-      width: 100%;
-      min-height: 42px;
-      border: 1px solid #cfd5df;
-      border-radius: 4px;
-      background: #fff;
-      padding: 10px 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: #313845;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #cfd5df;
-      border-radius: 4px;
-      background: #fff;
-      color: #313845;
-      font-size: 14px;
-    }
-
-    textarea {
-      min-height: 92px;
-      resize: vertical;
-    }
-
-    button {
-      margin-top: 8px;
-      border: 0;
-      border-radius: 4px;
-      background: var(--primary);
-      color: #fff;
-      padding: 10px 15px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: var(--primary-hover);
-    }
-
-   .alert {
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      border: 1px solid;
-      font-size: 14px;
-    }
-
-   .alert.ok {
-      color: var(--ok);
-      background: var(--ok-bg);
-      border-color: #b8e7c9;
-    }
-
-   .alert.error {
-      color: var(--error);
-      background: var(--error-bg);
-      border-color: #f5c7c7;
-    }
-
-   .alert ul {
-      margin: 0;
-      padding-left: 18px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-      background: #fff;
-    }
-
-    th,
-    td {
-      border-bottom: 1px solid #d9dee8;
-      text-align: left;
-      padding: 10px 8px;
-    }
-
-    th {
-      color: #5f6877;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-   .empty {
-      color: var(--muted);
-    }
-
-   .table-limiter {
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-   .table-limiter-left {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: #5f6877;
-      font-size: 14px;
-    }
-
-   .readonly-field {
-      background: #eef1f6 !important;
-      border-color: #d6dce8 !important;
-      color: #5f6877 !important;
-      cursor: not-allowed;
-    }
-
-   .entity-panel-card[data-readonly-mode="1"] input:disabled,
-   .entity-panel-card[data-readonly-mode="1"] select:disabled,
-   .entity-panel-card[data-readonly-mode="1"] textarea:disabled {
-      background: #eef1f6 !important;
-      border-color: #d6dce8 !important;
-      color: #5f6877 !important;
-      cursor: not-allowed;
-    }
-
-   .table-limiter-select {
-      width: auto;
-      min-width: 84px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 14px;
-      color: #253046;
-    }
-
-   .table-limiter-right {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-   .table-limiter-nav-btn {
-      margin-top: 0;
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      border-radius: 999px;
-      background: transparent;
-      color: #2f6db4;
-      border: 1px solid #d3dced;
-      font-size: 18px;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-   .table-limiter-nav-btn:hover {
-      background: #eef3ff;
-      color: #1f4eb7;
-      border-color: #becdf0;
-    }
-
-   .table-limiter-nav-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-      background: transparent;
-      color: #7a879d;
-      border-color: #d9dee8;
-    }
-
-   .table-limiter-page {
-      min-width: 30px;
-      height: 30px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      background: #2f6db4;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-   .entity-status {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px solid transparent;
-      white-space: nowrap;
-    }
-
-   .entity-status-active {
-      color: #17663f;
-      background: #e9f8ef;
-      border-color: #b7e3c7;
-    }
-
-   .entity-status-inactive {
-      color: #7a2f2f;
-      background: #fdeeee;
-      border-color: #f2c2c2;
-    }
-
-   .table-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-   .table-actions form {
-      margin: 0;
-      display: inline-flex;
-      align-items: center;
-    }
-
-   .table-link-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      border: 1px solid #c5d2ed;
-      background: #eef3ff;
-      color: #25385e;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 10px;
-      cursor: pointer;
-    }
-
-   .table-link-btn:hover {
-      background: #e2eaff;
-      border-color: #afc0e7;
-    }
-
-   .table-icon-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-      margin-top: 0;
-      padding: 0;
-      text-decoration: none;
-      border: 1px solid #c5d2ed;
-      background: #eef3ff;
-      color: #25385e;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-   .table-icon-btn:hover {
-      background: #e2eaff;
-      border-color: #afc0e7;
-    }
-
-   .table-icon-btn-disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-   .table-icon-btn-danger {
-      border-color: #f0c0c0;
-      background: #fdeeee;
-      color: #8f2f2f;
-    }
-
-   .table-icon-btn-danger:hover {
-      border-color: #e4a8a8;
-      background: #fbdede;
-      color: #7d2525;
-    }
-
-   .entity-logo-preview {
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #5f6877;
-      font-size: 13px;
-    }
-
-   .entity-logo-preview img {
-      width: 58px;
-      height: 58px;
-      border-radius: 8px;
-      border: 1px solid #d8deea;
-      object-fit: cover;
-      background: #fff;
-    }
-
-   .form-action-row {
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-   .action-btn {
-      margin-top: 0;
-    }
-
-   .action-btn-cancel {
-      margin-top: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      border: 1px solid #c5d2ed;
-      background: #eef3ff;
-      color: #25385e;
-      border-radius: 4px;
-      padding: 10px 15px;
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.2;
-      cursor: pointer;
-    }
-
-   .action-btn-cancel:hover {
-      background: #e2eaff;
-      border-color: #afc0e7;
-    }
-
-   .form-action-row .action-btn,
-   .form-action-row .action-btn-cancel,
-   .form-action-row .action-btn-secondary,
-   .form-action-row .action-btn-danger {
-      min-width: 132px;
-    }
-
-   .process-window-card {
-      border: 1px solid #c7d4ef;
-      box-shadow: 0 10px 28px rgba(28, 53, 99, 0.15);
-    }
-
-   .process-window-subtitle {
-      margin-top: -4px;
-      margin-bottom: 12px;
-      color: #4b5f85;
-      font-weight: 600;
-    }
-
-   .process-edit-tabs {
-      margin: 6px 0 12px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid #cdd8ee;
-      padding-bottom: 0;
-    }
-
-   .process-edit-tab-link {
-      display: inline-flex;
-      align-items: center;
-      text-decoration: none;
-      margin: 0;
-      padding: 10px 14px;
-      border: 1px solid transparent;
-      border-bottom: 2px solid transparent;
-      border-radius: 8px 8px 0 0;
-      background: transparent;
-      color: #39527f;
-      font-size: 13px;
-      font-weight: 700;
-      line-height: 1.2;
-      cursor: pointer;
-      user-select: none;
-    }
-
-   .process-edit-tab-link:hover {
-      background: #eef3ff;
-      color: #25385e;
-    }
-
-   .process-edit-tab-link.active {
-      background: #ffffff;
-      color: #1f3660;
-      border-color: #cdd8ee;
-      border-bottom-color: #3f51b5;
-    }
-
-   .process-edit-pane {
-      display: none;
-    }
-
-   .process-edit-pane.active {
-      display: block;
-    }
-
-   .process-fields-builder {
-      display: grid;
-      gap: 10px;
-    }
-
-   .process-visible-fields {
-      display: grid;
-      gap: 8px;
-    }
-
-   .process-field-row {
-      display: grid;
-      grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) auto;
-      gap: 8px;
-      align-items: end;
-    }
-
-   .process-additional-fields-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-   .process-additional-field-row {
-      display: grid;
-      grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.8fr) minmax(140px, 0.4fr) auto;
-      gap: 8px;
-      align-items: end;
-    }
-
-   .process-additional-field-row .field {
-      min-width: 0;
-      margin-bottom: 0;
-    }
-
-   .process-additional-size-readonly {
-      background: #eef2fb;
-      color: #5a6580;
-    }
-
-   .process-field-row .field {
-      margin-bottom: 0;
-    }
-
-   .process-field-select {
-      margin-top: 0;
-    }
-
-   .process-field-add-btn {
-      width: 34px;
-    }
-
-   .process-config-shortcut-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-   .process-config-shortcut-label {
-      color: #3f4f70;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-   .action-btn-secondary {
-      background: #7f8aa1;
-    }
-
-   .action-btn-secondary:hover {
-      background: #6a768f;
-    }
-
-   .action-btn-danger {
-      background: #ad2d2d;
-    }
-
-   .action-btn-danger:hover {
-      background: #912525;
-    }
-
-   .action-btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-   .admin-subsection {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid #d9dee8;
-    }
-
-   .admin-subsection h3 {
-      margin-top: 0;
-    }
-
-   .superuser-list {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 8px;
-      color: #2f3850;
-      font-size: 14px;
-    }
-
-    @media (max-width: 1200px) {
-     .layout {
-        grid-template-columns: 210px minmax(0, 1fr);
-      }
-    }
-
-    @media (max-width: 900px) {
-     .layout {
-        grid-template-columns: 190px minmax(0, 1fr);
-      }
-    }
-
-    @media (max-width: 760px) {
-     .layout {
-        grid-template-columns: 1fr;
-      }
-
-     .sidebar {
-        border-right: 0;
-        border-bottom: 1px solid var(--line);
-      }
-    }
-
-    @media (max-width: 760px) {
-     .topbar-right {
-        gap: 8px;
-      }
-
-     .user-name {
-        display: none;
-      }
-
-     .user-dropdown {
-        right: 0;
-        width: min(430px, calc(100vw - 16px));
-      }
-
-     .content {
-        padding: 14px;
-      }
-
-     .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .process-field-row {
-        grid-template-columns: 1fr;
-      }
-
-      .process-additional-fields-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .process-additional-field-row {
-        grid-template-columns: 1fr;
-      }
-
-      .entity-first-row {
-        grid-template-columns: 1fr;
-      }
-
-     .entity-second-row {
-        grid-template-columns: 1fr;
-      }
-
-     .entity-third-row {
-        grid-template-columns: 1fr;
-      }
-
-     .entity-fourth-row {
-        grid-template-columns: 1fr;
-      }
-
-     .entity-fifth-row {
-        grid-template-columns: 1fr;
-      }
-
-     .entity-scope-row {
-        grid-template-columns: 1fr;
-      }
-
-     .personal-grid {
-        grid-template-columns: 1fr;
-      }
-
-     .home-kpis {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-     .home-chart-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 540px) {
-     .home-kpis {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <header class="topbar">
-    <div class="topbar-left">
-      <div class="brand">
-        <span class="brand-mark">
-          {% if user_personal_data.primary_entity_logo_url %}
-            <img src="{{ user_personal_data.primary_entity_logo_url }}" alt="Imagem da entidade">
-          {% else %}
-            <span>[+]</span>
-          {% endif %}
-        </span>
-        <span class="brand-name" title="{{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else user_personal_data.entities }}">
-          {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else (user_personal_data.entities if user_personal_data.entities != '-' else 'SOMA') }}
-        </span>
-      </div>
-      <button class="topbar-action" type="button" title="Voltar">&larr;</button>
-    </div>
-    <div class="topbar-right">
-      <div id="user-menu" class="user-menu">
-        <button id="user-menu-trigger" class="user-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="user-dropdown">
-          <img id="user-avatar-image" class="avatar-img" alt="Foto do utilizador">
-          <span class="user-name">{{ current_user.full_name }}</span>
-          <span class="user-caret">v</span>
-        </button>
-        <div id="user-dropdown" class="user-dropdown" hidden>
-          <div class="user-dropdown-header">
-            <img id="dropdown-avatar-image" class="avatar-img dropdown-avatar" alt="Foto do utilizador">
-            <p class="dropdown-name">{{ current_user.full_name }}</p>
-            <p class="dropdown-meta">ID {{ current_user.id }}</p>
-            <p class="dropdown-email">{{ current_user.login_email }}</p>
-            <p class="dropdown-entity">
-              {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else user_personal_data.entities }}
-            </p>
-          </div>
-          <div class="user-dropdown-actions">
-            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-pessoal-card" href="#perfil-pessoal-card">Minha conta</a>
-            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-morada-card" href="#perfil-morada-card">Minhas configurações</a>
-            <a class="dropdown-link" data-dropdown-menu="links" data-dropdown-target="#sessao-card" href="#sessao-card">Minhas informações sobre a entidade</a>
-            <a class="dropdown-link" data-dropdown-menu="home" data-dropdown-target="#home-summary-card" href="#home-summary-card">Quais são as novidades?</a>
-          </div>
-          <form class="dropdown-logout-form" method="post" action="/logout">
-            <button class="dropdown-logout-btn" type="submit">Efetuar logoff</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </header>
+{% block body %}
+  {% include "partials/new_user_topbar.html" %}
 
   <div class="layout">
-    <aside class="sidebar">
-      <div class="menu-section">Geral</div>
-      <nav class="menu-list" aria-label="Menu principal">
-        {% if "home" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item active" data-menu="home">
-          <span class="menu-icon">[H]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "home" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "administrativo" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="administrativo">
-          <span class="menu-icon">[*]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "administrativo" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-      </nav>
-
-      <div class="menu-section">Igreja</div>
-      <nav class="menu-list" aria-label="Menu igreja">
-        {% if "documentos" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="documentos">
-          <span class="menu-icon">[D]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "documentos" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "funcionarios" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="funcionarios">
-          <span class="menu-icon">[F]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "funcionarios" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "financeiro" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="financeiro">
-          <span class="menu-icon">[$]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "financeiro" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "relatorios" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="relatorios">
-          <span class="menu-icon">[R]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "relatorios" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "links" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="links">
-          <span class="menu-icon">[L]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "links" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "contato" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="contato">
-          <span class="menu-icon">[C]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "contato" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-        {% if "tutorial" in visible_sidebar_menu_keys %}
-        <button type="button" class="menu-item" data-menu="tutorial">
-          <span class="menu-icon">[T]</span>
-          <span>{% for setting in sidebar_menu_settings %}{% if setting.key == "tutorial" %}{{ setting.label }}{% endif %}{% endfor %}</span>
-        </button>
-        {% endif %}
-      </nav>
-    </aside>
+    {% include "partials/new_user_sidebar.html" %}
 
     <main class="content">
       <div class="container">
         <section id="menu-tabs-card" class="card menu-tabs-card">
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
+        </section>
+
+        <section id="dynamic-process-card" class="card" style="display: none;">
+          <div class="profile-card-header">
+            <h2 id="dynamic-process-title">Processo</h2>
+            <button
+              id="dynamic-process-edit-toggle"
+              type="button"
+              class="profile-edit-toggle"
+              data-edit-target="dynamic-process-card"
+            >
+              Editar
+            </button>
+          </div>
+          {% if profile_success and initial_menu not in ["perfil", "documentos"] %}
+            <div class="alert ok">{{ profile_success }}</div>
+          {% endif %}
+          {% if profile_error and initial_menu not in ["perfil", "documentos"] %}
+            <div class="alert error">{{ profile_error }}</div>
+          {% endif %}
+          <div id="dynamic-process-readonly" class="profile-readonly">
+            <div id="dynamic-process-readonly-grid" class="personal-grid"></div>
+          </div>
+          <form id="dynamic-process-edit-form" class="profile-edit-form" method="post" action="/users/profile/process-data">
+            <input id="dynamic-process-menu-key" type="hidden" name="menu_key" value="">
+            <input id="dynamic-process-section-key" type="hidden" name="section_key" value="">
+            <input id="dynamic-process-history-action" type="hidden" name="history_action" value="create">
+            <input id="dynamic-process-history-record-id" type="hidden" name="history_record_id" value="">
+            <div id="dynamic-process-edit-grid" class="personal-grid"></div>
+            <div class="profile-edit-actions">
+              <button id="dynamic-process-submit-btn" type="submit">Guardar</button>
+              <button type="button" class="profile-cancel-btn" data-edit-cancel="dynamic-process-card">Cancelar</button>
+            </div>
+          </form>
+          <div id="dynamic-process-history-block" class="admin-subsection" style="display: none;">
+            <h3 id="dynamic-process-history-title">Lista de registos criados</h3>
+            <table id="dynamic-process-history-table" style="display: none;">
+              <thead id="dynamic-process-history-head"></thead>
+              <tbody id="dynamic-process-history-body"></tbody>
+            </table>
+            <p id="dynamic-process-history-empty" class="empty" style="display: none;">Sem ausências criadas.</p>
+          </div>
+          <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
         </section>
 
         <section id="home-summary-card" class="card" data-menu-scope="home">
@@ -2023,9 +285,10 @@
               {% set custom_meta = profile_personal_custom_field_meta.get(field_key, {}) %}
               {% set custom_type = custom_meta.get("field_type", "text") %}
               {% set custom_size = custom_meta.get("size") %}
+              {% set custom_required = custom_meta.get("is_required", False) %}
               {% if custom_type != "header" %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, 'geral') }}">
-                <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}</label>
+                <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}{% if custom_required and custom_type != "flag" %} *{% endif %}</label>
                 {% if custom_type == "flag" %}
                 <label class="profile-custom-flag-control">
                   <input
@@ -2043,6 +306,7 @@
                   type="{% if custom_type == 'email' %}email{% elif custom_type == 'phone' %}tel{% elif custom_type == 'number' %}number{% elif custom_type == 'date' %}date{% else %}text{% endif %}"
                   name="custom_field__{{ field_key }}"
                   value="{{ user_personal_data.custom_fields.get(field_key, '') }}"
+                  {% if custom_required %}required{% endif %}
                   {% if custom_size and custom_type in ["text", "email", "phone"] %}maxlength="{{ custom_size }}"{% endif %}
                 >
                 {% endif %}
@@ -2240,7 +504,8 @@
               <div class="alert ok">{{ success }}</div>
             {% endif %}
 
-            <details class="entity-create-collapse" {% if errors %}open{% endif %}>
+            <div class="entity-create-toolbar">
+            <details id="create-user-collapse" class="entity-create-collapse" {% if errors %}open{% endif %}>
               <summary>
                 <span>Criar utilizador</span>
               </summary>
@@ -2256,7 +521,7 @@
                 {% endif %}
 
                 <div class="admin-subsection">
-                  <form method="post" action="/users/new">
+                  <form id="create-user-form" method="post" action="/users/new">
                     <div class="grid">
                       <div class="field">
                         <label for="full_name">Nome completo *</label>
@@ -2297,7 +562,7 @@
                       </div>
                     </div>
                     <div class="form-action-row">
-                      <button type="submit" class="action-btn">Enviar convite</button>
+                      <button type="submit" name="invite_delivery" value="email" class="action-btn">Enviar convite</button>
                       <button
                         type="button"
                         class="action-btn-cancel"
@@ -2308,6 +573,31 @@
                 </div>
               </div>
             </details>
+            <button
+              id="create-user-generate-link-shortcut-btn"
+              type="button"
+              class="action-btn-secondary entity-create-link-shortcut"
+            >Gerar link</button>
+            <div class="entity-create-link-slot" aria-live="polite">
+              {% if generated_invite_link %}
+              <div class="entity-create-link-output">
+                <input
+                  id="generated-invite-link-input"
+                  type="text"
+                  class="readonly-field"
+                  value="{{ generated_invite_link }}"
+                  readonly
+                >
+                <button
+                  id="generated-invite-link-copy-btn"
+                  type="button"
+                  class="action-btn-secondary entity-create-link-copy-btn"
+                  data-copy-target="generated-invite-link-input"
+                >Copiar</button>
+              </div>
+              {% endif %}
+            </div>
+            </div>
         </section>
         {% endif %}
 
@@ -2419,15 +709,16 @@
                     <td>
                       <div class="table-actions">
                         {% if row.account_status == "pending" %}
-                        <form method="post" action="/users/resend-invite">
+                        <form method="post" action="/users/generate-invite">
                           <input type="hidden" name="user_id" value="{{ row.id }}">
+                          <input type="hidden" name="entity_id" value="{{ row.entity_id or '' }}">
                           <button
                             type="submit"
-                            class="table-icon-btn"
-                            title="Reenviar convite"
-                            aria-label="Reenviar convite"
+                            class="table-link-btn"
+                            title="Gerar convite"
+                            aria-label="Gerar convite"
                           >
-                            &#9993;
+                            Gerar convite
                           </button>
                         </form>
                         {% endif %}
@@ -2957,17 +1248,24 @@
         {% endif %}
 
         {% if settings_edit_data %}
-        {% set settings_edit_origin_menu = "administrativo" %}
-        {% set settings_edit_cancel_target = "#admin-account-status-card" %}
-        {% set settings_has_process_fields = settings_edit_data.process_field_options %}
+        {% set settings_edit_origin_menu = "configuracao" %}
+        {% set settings_edit_cancel_target = "#configuracao-account-status-card" %}
+        {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
+        {% if settings_edit_data.key == "configuracao" and not settings_process_field_options %}
+          {% set settings_process_field_options = [
+            {"key": "geral", "label": "Geral"},
+            {"key": "configuracao_campos", "label": "Configuração dos campos"},
+            {"key": "campos_adicionais", "label": "Campos Adicionais"}
+          ] %}
+        {% endif %}
+        {% set settings_process_select_options = settings_edit_data.process_selectable_field_options or [] %}
+        {% set settings_process_header_options = settings_edit_data.process_header_options or [] %}
+        {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
+        {% set settings_has_process_fields = settings_process_field_options %}
         {% set settings_owner_fields_enabled = current_user_can_manage_all_entities and settings_has_process_fields %}
-        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo">
+        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,configuracao">
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
-          <p class="process-window-subtitle">
-            Ação selecionada:
-            {% if settings_action == "toggle" %}Alterar estado{% elif settings_action == "delete" %}Excluir{% else %}Editar{% endif %}
-          </p>
           {% if settings_has_process_fields %}
           <div class="process-edit-tabs" id="process-edit-tabs" role="tablist" aria-label="Abas de edição do processo">
             <a href="#settings-tab-geral" role="tab" aria-selected="true" class="process-edit-tab-link active" data-process-edit-tab="geral">Geral</a>
@@ -2990,7 +1288,7 @@
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <div class="grid">
+                <div class="grid settings-general-grid">
                   <div class="field">
                     <label for="settings_edit_menu_label">Nome no menu lateral *</label>
                     <input
@@ -3008,17 +1306,25 @@
                       <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
                     </select>
                   </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_visibility_scope">Exibir no sistema</label>
+                    <select id="settings_edit_menu_visibility_scope" name="menu_visibility_scope">
+                      <option value="all" {% if settings_edit_data.visibility_scope_mode == "all" %}selected{% endif %}>Owner e Legado</option>
+                      <option value="owner" {% if settings_edit_data.visibility_scope_mode == "owner" %}selected{% endif %}>Owner</option>
+                      <option value="legado" {% if settings_edit_data.visibility_scope_mode == "legado" %}selected{% endif %}>Legado</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="form-action-row">
                   <button type="submit" class="action-btn">Guardar</button>
                   <a
                     class="action-btn-cancel"
-                    href="/users/new?menu={{ settings_edit_origin_menu }}{% if settings_edit_origin_menu == 'administrativo' %}&admin_tab=contas{% endif %}{{ settings_edit_cancel_target }}"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                   >Cancelar</a>
                 </div>
               </form>
               {% else %}
-              <div class="grid">
+              <div class="grid settings-general-grid">
                 <div class="field">
                   <label for="settings_edit_menu_label">Nome no menu lateral *</label>
                   <input
@@ -3039,11 +1345,21 @@
                     class="readonly-field"
                   >
                 </div>
+                <div class="field">
+                  <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema</label>
+                  <input
+                    id="settings_edit_menu_visibility_scope_readonly"
+                    value="{{ settings_edit_data.visibility_scope_label }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
               </div>
               <div class="form-action-row">
                 <a
                   class="action-btn-cancel"
-                  href="/users/new?menu={{ settings_edit_origin_menu }}{% if settings_edit_origin_menu == 'administrativo' %}&admin_tab=contas{% endif %}{{ settings_edit_cancel_target }}"
+                  href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                 >Cancelar</a>
               </div>
               {% endif %}
@@ -3051,7 +1367,7 @@
             {% if settings_has_process_fields %}
             <div class="admin-subsection">
               <h3>Campos disponíveis</h3>
-              {% if settings_edit_data.process_visible_field_rows %}
+              {% if settings_process_visible_field_rows %}
               <table>
                 <thead>
                   <tr>
@@ -3061,10 +1377,10 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for field_row in settings_edit_data.process_visible_field_rows %}
+                  {% for field_row in settings_process_visible_field_rows %}
                   {% set field_ns = namespace(label=field_row.field_key) %}
                   {% set header_ns = namespace(label="-") %}
-                  {% for option in settings_edit_data.process_field_options %}
+                  {% for option in settings_process_field_options %}
                     {% if option.key == field_row.field_key %}
                       {% set field_ns.label = option.label %}
                     {% endif %}
@@ -3091,37 +1407,24 @@
             <div class="admin-subsection">
               <h3>Configuração dos campos</h3>
               {% if settings_owner_fields_enabled %}
+              {% if settings_process_select_options %}
               <form method="post" action="/settings/menu/process-fields">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                {% if settings_owner_fields_enabled %}
-                <div class="process-config-shortcut-row">
-                  <button
-                    type="button"
-                    id="process-add-header-shortcut-btn"
-                    class="table-icon-btn process-field-add-btn"
-                    title="Adicionar cabeçalho"
-                    aria-label="Adicionar cabeçalho"
-                  >
-                    &#43;
-                  </button>
-                  <span class="process-config-shortcut-label">Adicionar cabeçalho</span>
-                </div>
-                {% endif %}
                 <div
                   id="process-fields-builder"
                   class="process-fields-builder"
-                  data-field-options='{{ (settings_edit_data.process_selectable_field_options or settings_edit_data.process_field_options or [])|tojson }}'
-                  data-header-options='{{ (settings_edit_data.process_header_options or [])|tojson }}'
+                  data-field-options='{{ settings_process_select_options|tojson }}'
+                  data-header-options='{{ settings_process_header_options|tojson }}'
                 >
                   <div id="process-visible-fields-container" class="process-visible-fields">
-                    {% for field_row in settings_edit_data.process_visible_field_rows %}
+                    {% for field_row in settings_process_visible_field_rows %}
                     <div class="process-field-row">
                       <div class="field">
                         <label>Campo</label>
                         <select name="visible_fields" class="process-field-select">
-                          {% for option in settings_edit_data.process_selectable_field_options %}
+                          {% for option in settings_process_select_options %}
                           <option value="{{ option.key }}" {% if option.key == field_row.field_key %}selected{% endif %}>{{ option.label }}</option>
                           {% endfor %}
                         </select>
@@ -3130,7 +1433,7 @@
                         <label>Cabeçalho</label>
                         <select name="visible_headers" class="process-field-header-select">
                           <option value="">Sem cabeçalho</option>
-                          {% for header_option in settings_edit_data.process_header_options %}
+                          {% for header_option in settings_process_header_options %}
                           <option value="{{ header_option.key }}" {% if header_option.key == field_row.header_key %}selected{% endif %}>{{ header_option.label }}</option>
                           {% endfor %}
                         </select>
@@ -3157,12 +1460,19 @@
                   </button>
                 </div>
                 <div class="form-action-row">
-                  <button type="submit" class="action-btn">Guardar campos</button>
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-cancel"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  >Cancelar</a>
                 </div>
               </form>
               {% else %}
+              <p class="empty">Sem campos disponíveis nesta aba.</p>
+              {% endif %}
+              {% else %}
               <p>Campos definidos pelo Owner para este processo.</p>
-              {% if settings_edit_data.process_visible_field_rows %}
+              {% if settings_process_visible_field_rows %}
               <table>
                 <thead>
                   <tr>
@@ -3172,10 +1482,10 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for field_row in settings_edit_data.process_visible_field_rows %}
+                  {% for field_row in settings_process_visible_field_rows %}
                   {% set field_ns = namespace(label=field_row.field_key) %}
                   {% set header_ns = namespace(label="-") %}
-                  {% for option in settings_edit_data.process_field_options %}
+                  {% for option in settings_process_field_options %}
                     {% if option.key == field_row.field_key %}
                       {% set field_ns.label = option.label %}
                     {% endif %}
@@ -3212,7 +1522,7 @@
                 >
                   <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid">
                     {% for field in settings_edit_data.process_additional_fields %}
-                    <div class="process-field-row process-additional-field-row">
+                    <div class="process-field-row process-additional-field-row{% if (field.field_type or 'text') == 'header' %} process-additional-field-row-header{% endif %}">
                       <input type="hidden" name="additional_field_key" value="{{ field.key }}">
                       <div class="field">
                         <label>Nome do campo adicional</label>
@@ -3233,6 +1543,13 @@
                             {% if type_option.key == (field.field_type or "text") %}selected{% endif %}
                           >{{ type_option.label }}</option>
                           {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Obrigatório</label>
+                        <select name="additional_field_required" class="process-additional-field-required-select">
+                          <option value="0" {% if not field.is_required %}selected{% endif %}>Não</option>
+                          <option value="1" {% if field.is_required %}selected{% endif %}>Sim</option>
                         </select>
                       </div>
                       <div class="field">
@@ -3269,7 +1586,11 @@
                   </button>
                 </div>
                 <div class="form-action-row">
-                  <button type="submit" class="action-btn">Guardar campos adicionais</button>
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-cancel"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  >Cancelar</a>
                 </div>
               </form>
             </div>
@@ -3279,8 +1600,49 @@
         </section>
         {% endif %}
 
+        {% if current_user_can_manage_all_entities %}
+        <section id="admin-account-create-card" class="card" data-menu-scope="administrativo,configuracao">
+          <div class="profile-card-header">
+            <h2>Criar pasta no menu lateral</h2>
+            <a class="table-link-btn" href="#configuracao-account-status-card">Ver lista</a>
+          </div>
+          <form method="post" action="/settings/menu/create">
+            <input type="hidden" name="redirect_menu" value="configuracao">
+            <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+            <div class="grid settings-general-grid">
+              <div class="field">
+                <label for="settings_create_menu_label">Nome da pasta *</label>
+                <input
+                  id="settings_create_menu_label"
+                  name="menu_label"
+                  maxlength="100"
+                  placeholder="Ex.: Assiduidade"
+                  required
+                >
+              </div>
+              <div class="field">
+                <label for="settings_create_menu_visibility_scope">Exibir no sistema</label>
+                <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
+                  <option value="all" selected>Owner e Legado</option>
+                  <option value="owner">Owner</option>
+                  <option value="legado">Legado</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-action-row">
+              <button type="submit" class="action-btn">Criar pasta</button>
+            </div>
+          </form>
+        </section>
+        {% endif %}
+
         <section id="admin-account-status-card" class="card" data-menu-scope="administrativo">
-          <h2>Definições</h2>
+          <div class="profile-card-header">
+            <h2>Definições</h2>
+            {% if current_user_can_manage_all_entities %}
+            <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+            {% endif %}
+          </div>
           <p>Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.</p>
           {% if settings_success %}
             <div class="alert ok">{{ settings_success }}</div>
@@ -3292,14 +1654,21 @@
             <thead>
               <tr>
                 <th>Menu lateral</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
                 <th>Estado</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {% for row in sidebar_menu_settings %}
+                {% if not row.is_deleted %}
                 <tr>
                   <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
                   <td>
                     {% if row.is_active and not row.is_deleted %}
                       <span class="entity-status entity-status-active">Ativo</span>
@@ -3309,6 +1678,56 @@
                   </td>
                   <td>
                     <div class="table-actions">
+                      {% if current_user_can_manage_all_entities %}
+                      {% if row.can_move_up %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="up">
+                        <input type="hidden" name="redirect_menu" value="configuracao">
+                        <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Subir pasta"
+                          aria-label="Subir pasta"
+                        >
+                          &#8593;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Já está no topo"
+                        aria-label="Já está no topo"
+                      >
+                        &#8593;
+                      </span>
+                      {% endif %}
+                      {% if row.can_move_down %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="down">
+                        <input type="hidden" name="redirect_menu" value="configuracao">
+                        <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Descer pasta"
+                          aria-label="Descer pasta"
+                        >
+                          &#8595;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Já está no fim"
+                        aria-label="Já está no fim"
+                      >
+                        &#8595;
+                      </span>
+                      {% endif %}
+                      {% endif %}
                       {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
@@ -3320,7 +1739,7 @@
                       {% else %}
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        href="/users/new?menu=configuracao&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
                         title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
                         aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
                       >
@@ -3329,25 +1748,173 @@
                       {% endif %}
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu=configuracao&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar menu"
                         aria-label="Editar menu"
                       >
                         &#9998;
                       </a>
-                      {% if current_user_can_manage_all_entities and row.can_delete %}
-                      <a
-                        class="table-icon-btn table-icon-btn-danger"
-                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=delete#settings-menu-edit-card"
-                        title="Excluir menu"
-                        aria-label="Excluir menu"
-                      >
-                        &#128465;
-                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="redirect_menu" value="configuracao">
+                        <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn table-icon-btn-danger"
+                          title="Excluir menu"
+                          aria-label="Excluir menu"
+                        >
+                          &#128465;
+                        </button>
+                      </form>
                       {% endif %}
                     </div>
                   </td>
                 </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+
+        <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
+          <div class="profile-card-header">
+            <h2>Configuração</h2>
+            {% if current_user_can_manage_all_entities %}
+            <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+            {% endif %}
+          </div>
+          <p>Processos disponíveis nesta pasta do menu lateral.</p>
+          {% if settings_success and initial_menu == "configuracao" %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error and initial_menu == "configuracao" %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <table id="menu-settings-table-configuracao">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sidebar_menu_settings %}
+                {% if not row.is_deleted %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      {% if current_user_can_manage_all_entities %}
+                      {% if row.can_move_up %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="up">
+                        <input type="hidden" name="redirect_menu" value="configuracao">
+                        <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Subir pasta"
+                          aria-label="Subir pasta"
+                        >
+                          &#8593;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Já está no topo"
+                        aria-label="Já está no topo"
+                      >
+                        &#8593;
+                      </span>
+                      {% endif %}
+                      {% if row.can_move_down %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="down">
+                        <input type="hidden" name="redirect_menu" value="configuracao">
+                        <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Descer pasta"
+                          aria-label="Descer pasta"
+                        >
+                          &#8595;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Já está no fim"
+                        aria-label="Já está no fim"
+                      >
+                        &#8595;
+                      </span>
+                      {% endif %}
+                      {% endif %}
+                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório"
+                      >
+                        &#128065;
+                      </span>
+                      {% else %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=configuracao&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      {% endif %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=configuracao&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="redirect_menu" value="configuracao">
+                        <input type="hidden" name="redirect_target" value="#configuracao-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn table-icon-btn-danger"
+                          title="Excluir menu"
+                          aria-label="Excluir menu"
+                        >
+                          &#128465;
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
               {% endfor %}
             </tbody>
           </table>
@@ -3369,6 +1936,9 @@
               <thead>
                 <tr>
                   <th>Pasta</th>
+                  {% if current_entity_scope == "owner" %}
+                  <th>Sistema</th>
+                  {% endif %}
                   <th>Estado</th>
                   <th>Ações</th>
                 </tr>
@@ -3376,6 +1946,9 @@
               <tbody>
                 <tr>
                   <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
                   <td>
                     {% if row.is_active and not row.is_deleted %}
                       <span class="entity-status entity-status-active">Ativo</span>
@@ -3387,7 +1960,7 @@
                     <div class="table-actions">
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        href="/users/new?menu=configuracao&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
                         title="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
                         aria-label="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
                       >
@@ -3395,7 +1968,7 @@
                       </a>
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu=configuracao&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar pasta"
                         aria-label="Editar pasta"
                       >
@@ -3432,10 +2005,10 @@
                     <td>{{ row.login_email }}</td>
                     <td>{{ row.account_status }}</td>
                     <td>{{ row.created_at }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
           {% else %}
             <p class="empty">Sem utilizadores criados ainda.</p>
           {% endif %}
@@ -3444,1210 +2017,44 @@
       </div>
     </main>
   </div>
+{% endblock %}
 
+{% block scripts %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
   <script>
-    const currentUserName = {{ current_user.full_name|tojson }};
-    const currentUserEmail = {{ current_user.login_email|tojson }};
-    const currentUserIsAdmin = {{ current_user_is_admin|tojson }};
-    const currentUserCanManageAllEntities = {{ current_user_can_manage_all_entities|tojson }};
-    const dashboardData = {{ dashboard_data|tojson }};
-    const currentUserPhone = {{ user_personal_data.primary_phone|tojson }};
-    const currentUserAccountStatus = {{ user_personal_data.account_status|tojson }};
-    const currentUserMemberStatus = {{ user_personal_data.member_status|tojson }};
-    const currentUserEntities = {{ user_personal_data.entities|tojson }};
-    const currentUserAddress = {{ user_personal_data.address|tojson }};
-    const currentUserCity = {{ user_personal_data.city|tojson }};
-    const currentUserFreguesia = {{ user_personal_data.freguesia|tojson }};
-    const currentUserPostalCode = {{ user_personal_data.postal_code|tojson }};
-    const profilePersonalSections = {{ profile_personal_sections|tojson }};
-    const initialProfileTab = {{ profile_tab|tojson }};
-    const initialMenu = {{ initial_menu|tojson }};
-    const initialAdminTab = {{ admin_tab|tojson }};
-    const settingsAction = {{ settings_action|tojson }};
-    const settingsEditKey = {{ settings_edit_key|tojson }};
-    const startupHash = window.location.hash || "";
-
-    const menuConfig = {
-      home: {
-        title: "Home",
-        description: "Resumo geral do sistema.",
-        singleView: true,
-        toggleOnMenuClick: true,
-        items: [{ label: "Resumo Geral", target: "#home-summary-card" }],
-        details: [
-          { label: "Entidades", value: String((dashboardData.totals || {}).entities || 0) },
-          { label: "Utilizadores", value: String((dashboardData.totals || {}).users || 0) }
-        ]
-      },
-      perfil: {
-        title: "Perfil",
-        description: "Opcoes do perfil do utilizador.",
-        singleView: true,
-        toggleOnMenuClick: true,
-        items: [
-          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
-          { label: "Dados de morada", target: "#perfil-morada-card" },
-          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
-        ],
-        details: [
-          { label: "Nome", value: currentUserName },
-          { label: "Email", value: currentUserEmail },
-          { label: "Telefone", value: currentUserPhone },
-          { label: "Conta", value: currentUserAccountStatus },
-          { label: "Membro", value: currentUserMemberStatus },
-          { label: "Entidades", value: currentUserEntities },
-          { label: "Tipo de acesso", value: "Utilizador" }
-        ]
-      },
-      links: {
-        title: "Links",
-        description: "Atalhos internos do painel.",
-        items: [{ label: "Sessão atual", target: "#sessao-card" }],
-        details: [
-          { label: "Modulo", value: "Links" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
-      contato: {
-        title: "Contacto",
-        description: "Informações e opções de contacto.",
-        items: [
-          { label: "Dados do utilizador ligado", target: "#sessao-card" }
-        ],
-        details: [
-          { label: "Email", value: currentUserEmail },
-          { label: "Canal", value: "Interno" }
-        ]
-      },
-      tutorial: {
-        title: "Tutorial",
-        description: "Guia rapido de uso desta tela.",
-        items: [{ label: "Passo 1: atualizar perfil", target: "#perfil-pessoal-card" }],
-        details: [
-          { label: "Modo", value: "Guiado" },
-          { label: "Dificuldade", value: "Basico" }
-        ]
-      }
+    window.__APPVERBO_BOOTSTRAP__ = {
+      currentUserName: {{ current_user.full_name|tojson }},
+      currentUserEmail: {{ current_user.login_email|tojson }},
+      currentUserIsAdmin: {{ current_user_is_admin|tojson }},
+      currentUserCanManageAllEntities: {{ current_user_can_manage_all_entities|tojson }},
+      dashboardData: {{ dashboard_data|tojson }},
+      currentUserPhone: {{ user_personal_data.primary_phone|tojson }},
+      currentUserAccountStatus: {{ user_personal_data.account_status|tojson }},
+      currentUserMemberStatus: {{ user_personal_data.member_status|tojson }},
+      currentUserEntities: {{ user_personal_data.entities|tojson }},
+      currentUserAddress: {{ user_personal_data.address|tojson }},
+      currentUserCity: {{ user_personal_data.city|tojson }},
+      currentUserFreguesia: {{ user_personal_data.freguesia|tojson }},
+      currentUserPostalCode: {{ user_personal_data.postal_code|tojson }},
+      profilePersonalSections: {{ profile_personal_sections|tojson }},
+      initialProfileTab: {{ profile_tab|tojson }},
+      initialMenu: {{ initial_menu|tojson }},
+      initialMenuTarget: {{ initial_menu_target|tojson }},
+      initialDynamicProcessSection: {{ initial_dynamic_process_section|tojson }},
+      initialAdminTab: {{ admin_tab|tojson }},
+      currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
+      settingsAction: {{ settings_action|tojson }},
+      settingsTab: {{ settings_tab|tojson }},
+      settingsEditKey: {{ settings_edit_key|tojson }},
+      sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
+      visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
+      menuProcessValuesMap: {{ menu_process_values_map|tojson }},
+      menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
     };
-
-    if (currentUserIsAdmin) {
-      Object.assign(menuConfig, {
-        administrativo: {
-          title: "Administrativo",
-          description: "Ferramentas administrativas do utilizador.",
-          singleView: true,
-          items: [
-            { label: "Entidade", target: "#create-entity-card" },
-            { label: "Utilizador", target: "#create-user-card" },
-            { label: "Definições", target: "#admin-account-status-card" }
-          ],
-          details: [
-            { label: "Modulo", value: "Administrativo" },
-            { label: "Acesso", value: "Permitido" }
-          ]
-        },
-        documentos: {
-          title: "Meu perfil",
-          description: currentUserCanManageAllEntities
-            ? "Configuração da pasta Meu perfil."
-            : "Dados do meu perfil.",
-          singleView: true,
-          toggleOnMenuClick: true,
-          items: currentUserCanManageAllEntities
-            ? [{ label: "Configuração da pasta", target: "#documents-folder-settings-card" }]
-            : (
-              Array.isArray(profilePersonalSections) && profilePersonalSections.length
-                ? profilePersonalSections.map((section) => ({
-                    label: String(section.label || "Dados pessoais"),
-                    target: "#perfil-pessoal-card",
-                    profileSection: String(section.key || "geral")
-                  }))
-                : [{ label: "Dados pessoais", target: "#perfil-pessoal-card", profileSection: "geral" }]
-            ),
-          details: [
-            { label: "Modulo", value: "Meu perfil" },
-            { label: "Status", value: "Ativo" }
-          ]
-        },
-        funcionarios: {
-          title: "Funcionarios",
-          description: "Gestao de funcionarios e acessos.",
-          items: [
-            { label: "Criar registo de funcionario", target: "#create-user-card" },
-            { label: "Ver registos recentes", target: "#recent-users-card" }
-          ],
-          details: [
-            { label: "Modulo", value: "Funcionarios" },
-            { label: "Status", value: "Ativo" }
-          ]
-        },
-        financeiro: {
-          title: "Financeiro",
-          description: "Acesso a opções de conta e estado.",
-          items: [
-            { label: "Estado da conta", target: "#create-user-card" },
-            { label: "Histórico de criação", target: "#recent-users-card" }
-          ],
-          details: [
-            { label: "Modulo", value: "Financeiro" },
-            { label: "Status", value: "Ativo" }
-          ]
-        },
-        relatorios: {
-          title: "Relatorios",
-          description: "Relatorios e historico de utilizadores.",
-          items: [
-            { label: "Últimos criados", target: "#recent-users-card" },
-            { label: "Voltar ao formulario", target: "#create-user-card" }
-          ],
-          details: [
-            { label: "Modulo", value: "Relatorios" },
-            { label: "Status", value: "Ativo" }
-          ]
-        }
-      });
-
-      menuConfig.links.items.push({ label: "Criar utilizador", target: "#create-user-card" });
-      menuConfig.tutorial.items = [
-        { label: "Passo 1: criar utilizador", target: "#create-user-card" },
-        { label: "Passo 2: validar em historico", target: "#recent-users-card" }
-      ];
-    }
-
-    const itemsEl = document.getElementById("submenu-items");
-    const menuButtons = document.querySelectorAll(".menu-item");
-    const scopedCards = document.querySelectorAll("[data-menu-scope]");
-    const userMenuEl = document.getElementById("user-menu");
-    const userMenuTriggerEl = document.getElementById("user-menu-trigger");
-    const userDropdownEl = document.getElementById("user-dropdown");
-    const userAvatarImageEl = document.getElementById("user-avatar-image");
-    const dropdownAvatarImageEl = document.getElementById("dropdown-avatar-image");
-    const userDropdownLinks = document.querySelectorAll("[data-dropdown-target]");
-    const profileEditButtons = document.querySelectorAll("[data-edit-target]");
-    const profileEditCancelButtons = document.querySelectorAll("[data-edit-cancel]");
-    const trainingOutrosEnabledEl = document.getElementById("edit_training_outros_enabled");
-    const trainingOutrosInputEl = document.getElementById("edit_training_outros");
-    const processFieldsBuilderEl = document.getElementById("process-fields-builder");
-    let homeSelectedTarget = "#home-summary-card";
-    let profileSelectedTarget = "#perfil-pessoal-card";
-    if (initialProfileTab === "morada") {
-      profileSelectedTarget = "#perfil-morada-card";
-    } else if (initialProfileTab === "treinamento") {
-      profileSelectedTarget = "#dados-treinamento-card";
-    }
-    let adminSelectedTarget = "#create-entity-card";
-    let documentsSelectedTarget = currentUserCanManageAllEntities
-      ? "#documents-folder-settings-card"
-      : "#perfil-pessoal-card";
-    let documentsSelectedProfileSection = (
-      Array.isArray(profilePersonalSections) && profilePersonalSections.length
-    )
-      ? String(profilePersonalSections[0].key || "geral")
-      : "geral";
-    if (initialAdminTab === "entidade") {
-      adminSelectedTarget = "#create-entity-card";
-    } else if (initialAdminTab === "contas") {
-      adminSelectedTarget = "#admin-account-status-card";
-    }
-    if (startupHash === "#home-summary-card") {
-      homeSelectedTarget = startupHash;
-    }
-    if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
-      adminSelectedTarget = "#create-user-card";
-    } else if (startupHash === "#create-entity-card" || startupHash === "#edit-entity-card") {
-      adminSelectedTarget = "#create-entity-card";
-    } else if (startupHash === "#admin-account-status-card") {
-      adminSelectedTarget = "#admin-account-status-card";
-    } else if (startupHash === "#settings-menu-edit-card") {
-      adminSelectedTarget = "#settings-menu-edit-card";
-    }
-    if (!startupHash && settingsEditKey) {
-      adminSelectedTarget = "#settings-menu-edit-card";
-    }
-    const selectedTargetByMenu = {
-      home: homeSelectedTarget,
-      perfil: profileSelectedTarget,
-      administrativo: adminSelectedTarget,
-      documentos: documentsSelectedTarget
-    };
-    let activeMenuKey = "";
-
-    function renderHomeCharts() {
-      if (!window.Chart) {
-        return;
-      }
-
-      const entityCanvas = document.getElementById("home-entities-chart");
-      if (entityCanvas && !entityCanvas.dataset.chartReady) {
-        new Chart(entityCanvas, {
-          type: "doughnut",
-          data: {
-            labels: (dashboardData.entity_status || {}).labels || [],
-            datasets: [
-              {
-                data: (dashboardData.entity_status || {}).values || [],
-                backgroundColor: ["#1f7a49", "#d07a31"],
-                borderColor: "#ffffff",
-                borderWidth: 2
-              }
-            ]
-          },
-          options: {
-            maintainAspectRatio: false,
-            plugins: { legend: { position: "bottom" } }
-          }
-        });
-        entityCanvas.dataset.chartReady = "1";
-      }
-
-      const profileCanvas = document.getElementById("home-profiles-chart");
-      if (profileCanvas && !profileCanvas.dataset.chartReady) {
-        new Chart(profileCanvas, {
-          type: "bar",
-          data: {
-            labels: (dashboardData.users_by_profile || {}).labels || [],
-            datasets: [
-              {
-                label: "Utilizadores",
-                data: (dashboardData.users_by_profile || {}).values || [],
-                backgroundColor: ["#2f6db4", "#3f84d6", "#58a3ec"],
-                borderRadius: 7,
-                maxBarThickness: 62
-              }
-            ]
-          },
-          options: {
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { precision: 0 }
-              }
-            },
-            plugins: { legend: { display: false } }
-          }
-        });
-        profileCanvas.dataset.chartReady = "1";
-      }
-    }
-
-    function getInitials(name) {
-      const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-      if (!parts.length) {
-        return "U";
-      }
-      if (parts.length === 1) {
-        return parts[0].slice(0, 2).toUpperCase();
-      }
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-
-    function buildAvatarDataUri(name) {
-      const initials = getInitials(name);
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-          <defs>
-            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#3777dc"/>
-              <stop offset="100%" stop-color="#244ea5"/>
-            </linearGradient>
-          </defs>
-          <rect width="96" height="96" rx="48" fill="url(#g)"/>
-          <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700">${initials}</text>
-        </svg>
-      `;
-      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-    }
-
-    function closeUserDropdown() {
-      if (!userDropdownEl || !userMenuTriggerEl) {
-        return;
-      }
-      userDropdownEl.hidden = true;
-      userMenuTriggerEl.setAttribute("aria-expanded", "false");
-    }
-
-    function openUserDropdown() {
-      if (!userDropdownEl || !userMenuTriggerEl) {
-        return;
-      }
-      userDropdownEl.hidden = false;
-      userMenuTriggerEl.setAttribute("aria-expanded", "true");
-    }
-
-    function toggleUserDropdown() {
-      if (!userDropdownEl || !userMenuTriggerEl) {
-        return;
-      }
-      const expanded = userMenuTriggerEl.getAttribute("aria-expanded") === "true";
-      if (expanded) {
-        closeUserDropdown();
-      } else {
-        openUserDropdown();
-      }
-    }
-
-    function applyContentForMenu(menuKey) {
-      scopedCards.forEach((card) => {
-        const rawScope = card.getAttribute("data-menu-scope") || "";
-        const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
-        card.style.display = scopes.includes(menuKey) ? "" : "none";
-      });
-    }
-
-    function applyContentForMenuTarget(menuKey, targetSelector) {
-      scopedCards.forEach((card) => {
-        const rawScope = card.getAttribute("data-menu-scope") || "";
-        const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
-        if (!scopes.includes(menuKey)) {
-          card.style.display = "none";
-          return;
-        }
-        const isEntityGroupedBlock =
-          menuKey === "administrativo" &&
-          targetSelector === "#create-entity-card" &&
-          (
-            card.id === "create-entity-card" ||
-            card.id === "edit-entity-card" ||
-            card.id === "recent-entities-card" ||
-            card.id === "inactive-entities-card"
-          );
-        const isUserGroupedBlock =
-          menuKey === "administrativo" &&
-          targetSelector === "#create-user-card" &&
-          (
-            card.id === "create-user-card" ||
-            card.id === "edit-user-card" ||
-            card.id === "admin-users-created-card"
-          );
-        const isSettingsGroupedBlock =
-          menuKey === "administrativo" &&
-          targetSelector === "#settings-menu-edit-card" &&
-          (
-            card.id === "settings-menu-edit-card" ||
-            card.id === "admin-account-status-card"
-          );
-        card.style.display =
-          targetSelector === ("#" + card.id) ||
-          isEntityGroupedBlock ||
-          isUserGroupedBlock ||
-          isSettingsGroupedBlock
-            ? ""
-            : "none";
-      });
-    }
-
-    function clearSubmenuActiveLinks(links) {
-      links.forEach((link) => {
-        link.classList.remove("active");
-      });
-    }
-
-    function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
-      if (!itemsEl) {
-        return;
-      }
-      const links = itemsEl.querySelectorAll(".submenu-item");
-      clearSubmenuActiveLinks(links);
-      if (selectedLinkEl) {
-        selectedLinkEl.classList.add("active");
-        return;
-      }
-      const firstMatch = Array.from(links).find(
-        (link) => link.getAttribute("href") === targetSelector
-      );
-      if (firstMatch) {
-        firstMatch.classList.add("active");
-      }
-    }
-
-    function closeAllProfileEdits() {
-      const editingCards = document.querySelectorAll(".card.editing");
-      editingCards.forEach((card) => {
-        card.classList.remove("editing");
-        const form = card.querySelector(".profile-edit-form");
-        if (form) {
-          form.reset();
-        }
-      });
-      syncTrainingOutrosState();
-    }
-
-    function setupProfileProcessTabs() {
-      const personalCardEl = document.getElementById("perfil-pessoal-card");
-      if (!personalCardEl) {
-        return;
-      }
-      const sectionPanes = personalCardEl.querySelectorAll("[data-profile-section-pane]");
-      if (!sectionPanes.length) {
-        return;
-      }
-
-      function activateSection(sectionKey) {
-        const normalizedSection = String(sectionKey || "").trim().toLowerCase() || "geral";
-        const availableSections = new Set(
-          Array.from(sectionPanes).map((paneEl) =>
-            String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
-          )
-        );
-        const effectiveSection = availableSections.has(normalizedSection)
-          ? normalizedSection
-          : (Array.from(availableSections)[0] || "geral");
-
-        sectionPanes.forEach((paneEl) => {
-          const paneSection = String(
-            paneEl.getAttribute("data-profile-section-pane") || "geral"
-          ).trim().toLowerCase();
-          paneEl.style.display = paneSection === effectiveSection ? "" : "none";
-        });
-        documentsSelectedProfileSection = effectiveSection;
-      }
-
-      window.activateProfilePersonalSection = activateSection;
-      activateSection(documentsSelectedProfileSection);
-    }
-
-    function syncTrainingOutrosState() {
-      if (!trainingOutrosInputEl) {
-        return;
-      }
-      const isEnabled = trainingOutrosEnabledEl ? trainingOutrosEnabledEl.checked : false;
-      trainingOutrosInputEl.disabled = !isEnabled;
-      if (!isEnabled) {
-        trainingOutrosInputEl.value = "";
-      }
-    }
-
-    function setupTableLimiter(prefix) {
-      const tableEl = document.getElementById(`${prefix}-table`);
-      const limiterEl = document.getElementById(`${prefix}-limiter`);
-      const pageSizeEl = document.getElementById(`${prefix}-page-size`);
-      const prevEl = document.getElementById(`${prefix}-prev`);
-      const nextEl = document.getElementById(`${prefix}-next`);
-      const pageEl = document.getElementById(`${prefix}-page`);
-      if (!tableEl || !limiterEl || !pageSizeEl || !prevEl || !nextEl || !pageEl) {
-        return;
-      }
-
-      const rows = Array.from(tableEl.querySelectorAll("tbody tr"));
-      if (!rows.length) {
-        limiterEl.style.display = "none";
-        return;
-      }
-
-      let pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-      let currentPage = 1;
-
-      function getTotalPages() {
-        return Math.max(1, Math.ceil(rows.length / pageSize));
-      }
-
-      function render() {
-        const totalPages = getTotalPages();
-        if (currentPage > totalPages) {
-          currentPage = totalPages;
-        }
-        const start = (currentPage - 1) * pageSize;
-        const end = start + pageSize;
-        rows.forEach((row, index) => {
-          row.style.display = index >= start && index < end ? "" : "none";
-        });
-        pageEl.textContent = String(currentPage);
-        prevEl.disabled = currentPage <= 1;
-        nextEl.disabled = currentPage >= totalPages;
-      }
-
-      pageSizeEl.addEventListener("change", () => {
-        pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-        currentPage = 1;
-        render();
-      });
-
-      prevEl.addEventListener("click", () => {
-        if (currentPage <= 1) {
-          return;
-        }
-        currentPage -= 1;
-        render();
-      });
-
-      nextEl.addEventListener("click", () => {
-        const totalPages = getTotalPages();
-        if (currentPage >= totalPages) {
-          return;
-        }
-        currentPage += 1;
-        render();
-      });
-
-      render();
-    }
-
-    function setupReadOnlyCards() {
-      const readonlyCards = document.querySelectorAll('.entity-panel-card[data-readonly-mode="1"]');
-      readonlyCards.forEach((card) => {
-        const controls = card.querySelectorAll("input, select, textarea, button");
-        controls.forEach((control) => {
-          if (control.tagName === "INPUT" && control.type === "hidden") {
-            return;
-          }
-          control.disabled = true;
-          control.required = false;
-          control.classList.add("readonly-field");
-        });
-        const formEl = card.querySelector("form");
-        if (formEl) {
-          formEl.addEventListener("submit", (event) => {
-            event.preventDefault();
-          });
-        }
-      });
-    }
-
-    function setupProcessFieldsBuilder() {
-      if (!processFieldsBuilderEl) {
-        return;
-      }
-      const optionsRaw = processFieldsBuilderEl.getAttribute("data-field-options") || "[]";
-      const headerOptionsRaw = processFieldsBuilderEl.getAttribute("data-header-options") || "[]";
-      let fieldOptions = [];
-      let headerOptions = [];
-      try {
-        fieldOptions = JSON.parse(optionsRaw);
-      } catch (error) {
-        fieldOptions = [];
-      }
-      try {
-        headerOptions = JSON.parse(headerOptionsRaw);
-      } catch (error) {
-        headerOptions = [];
-      }
-      if (!Array.isArray(fieldOptions) || !fieldOptions.length) {
-        return;
-      }
-      if (!Array.isArray(headerOptions)) {
-        headerOptions = [];
-      }
-
-      const containerEl = document.getElementById("process-visible-fields-container");
-      const addButtonEl = document.getElementById("process-field-add-btn");
-      const addHeaderShortcutEl = document.getElementById("process-add-header-shortcut-btn");
-      const formEl = processFieldsBuilderEl.closest("form");
-      if (!containerEl || !addButtonEl || !formEl) {
-        return;
-      }
-
-      function renderFieldOptions(selectedKey) {
-        return fieldOptions
-          .map((option) => {
-            const optionKey = String(option.key || "");
-            const optionLabel = String(option.label || optionKey);
-            const isSelected = optionKey === String(selectedKey || "");
-            return `<option value="${optionKey}"${isSelected ? " selected" : ""}>${optionLabel}</option>`;
-          })
-          .join("");
-      }
-
-      function renderHeaderOptions(selectedKey) {
-        const cleanSelectedKey = String(selectedKey || "").trim();
-        const optionsHtml = headerOptions
-          .map((option) => {
-            const optionKey = String(option.key || "");
-            const optionLabel = String(option.label || optionKey);
-            const isSelected = optionKey === cleanSelectedKey;
-            return `<option value="${optionKey}"${isSelected ? " selected" : ""}>${optionLabel}</option>`;
-          })
-          .join("");
-        return `<option value="">Sem cabeçalho</option>${optionsHtml}`;
-      }
-
-      function updateRemoveButtonsState() {
-        const removeButtons = containerEl.querySelectorAll(".process-field-remove-btn");
-        const isSingleRow = removeButtons.length <= 1;
-        removeButtons.forEach((button) => {
-          button.disabled = isSingleRow;
-          button.classList.toggle("table-icon-btn-disabled", isSingleRow);
-          button.setAttribute(
-            "title",
-            isSingleRow ? "É necessário manter pelo menos um campo" : "Remover campo"
-          );
-          button.setAttribute(
-            "aria-label",
-            isSingleRow ? "É necessário manter pelo menos um campo" : "Remover campo"
-          );
-        });
-      }
-
-      function bindRemoveButton(buttonEl) {
-        buttonEl.addEventListener("click", () => {
-          const rows = containerEl.querySelectorAll(".process-field-row");
-          if (rows.length <= 1) {
-            updateRemoveButtonsState();
-            return;
-          }
-          const rowEl = buttonEl.closest(".process-field-row");
-          if (rowEl) {
-            rowEl.remove();
-          }
-          updateRemoveButtonsState();
-        });
-      }
-
-      function createFieldRow(selectedKey, selectedHeaderKey) {
-        const rowEl = document.createElement("div");
-        rowEl.className = "process-field-row";
-        rowEl.innerHTML = `
-          <div class="field">
-            <label>Campo</label>
-            <select name="visible_fields" class="process-field-select">
-              ${renderFieldOptions(selectedKey || fieldOptions[0].key)}
-            </select>
-          </div>
-          <div class="field">
-            <label>Cabeçalho</label>
-            <select name="visible_headers" class="process-field-header-select">
-              ${renderHeaderOptions(selectedHeaderKey || "")}
-            </select>
-          </div>
-          <button
-            type="button"
-            class="table-icon-btn table-icon-btn-danger process-field-remove-btn"
-            title="Remover campo"
-            aria-label="Remover campo"
-          >
-            &#10005;
-          </button>
-        `;
-        const removeButtonEl = rowEl.querySelector(".process-field-remove-btn");
-        if (removeButtonEl) {
-          bindRemoveButton(removeButtonEl);
-        }
-        return rowEl;
-      }
-
-      containerEl.querySelectorAll(".process-field-remove-btn").forEach((buttonEl) => {
-        bindRemoveButton(buttonEl);
-      });
-
-      addButtonEl.addEventListener("click", () => {
-        containerEl.appendChild(createFieldRow(fieldOptions[0].key, ""));
-        updateRemoveButtonsState();
-      });
-
-      if (addHeaderShortcutEl) {
-        addHeaderShortcutEl.addEventListener("click", () => {
-          const additionalTabLinkEl = document.querySelector(
-            "[data-process-edit-tab='campos-adicionais']"
-          );
-          if (additionalTabLinkEl) {
-            additionalTabLinkEl.click();
-          }
-          const additionalAddButtonEl = document.getElementById("process-additional-field-add-btn");
-          if (additionalAddButtonEl) {
-            additionalAddButtonEl.click();
-          }
-          const additionalRows = document.querySelectorAll(
-            "#process-additional-fields-container .process-additional-field-row"
-          );
-          const lastRowEl = additionalRows.length ? additionalRows[additionalRows.length - 1] : null;
-          if (!lastRowEl) {
-            return;
-          }
-          const typeSelectEl = lastRowEl.querySelector("select[name='additional_field_type']");
-          if (typeSelectEl) {
-            typeSelectEl.value = "header";
-            typeSelectEl.dispatchEvent(new Event("change"));
-          }
-          const labelInputEl = lastRowEl.querySelector("input[name='additional_field_label']");
-          if (labelInputEl) {
-            labelInputEl.focus();
-          }
-        });
-      }
-
-      formEl.addEventListener("submit", () => {
-        const selects = containerEl.querySelectorAll("select[name='visible_fields']");
-        selects.forEach((selectEl) => {
-          const cleanValue = String(selectEl.value || "").trim();
-          if (!cleanValue) {
-            selectEl.removeAttribute("name");
-            const rowEl = selectEl.closest(".process-field-row");
-            if (rowEl) {
-              const headerSelectEl = rowEl.querySelector("select[name='visible_headers']");
-              if (headerSelectEl) {
-                headerSelectEl.removeAttribute("name");
-              }
-            }
-          }
-        });
-      });
-
-      if (!containerEl.querySelector(".process-field-row")) {
-        containerEl.appendChild(createFieldRow(fieldOptions[0].key, ""));
-      }
-      updateRemoveButtonsState();
-    }
-
-    function setupProcessAdditionalFieldsBuilder() {
-      const builderEl = document.getElementById("process-additional-fields-builder");
-      if (!builderEl) {
-        return;
-      }
-
-      const fieldTypesRaw = builderEl.getAttribute("data-field-types") || "[]";
-      let fieldTypes = [];
-      try {
-        fieldTypes = JSON.parse(fieldTypesRaw);
-      } catch (error) {
-        fieldTypes = [];
-      }
-      if (!Array.isArray(fieldTypes) || !fieldTypes.length) {
-        fieldTypes = [
-          { key: "text", label: "Texto" },
-          { key: "number", label: "Número" },
-          { key: "email", label: "Email" },
-          { key: "phone", label: "Telefone" },
-          { key: "date", label: "Data" },
-          { key: "flag", label: "Flag" }
-        ];
-      }
-
-      const containerEl = document.getElementById("process-additional-fields-container");
-      const addButtonEl = document.getElementById("process-additional-field-add-btn");
-      const formEl = builderEl.closest("form");
-      if (!containerEl || !addButtonEl || !formEl) {
-        return;
-      }
-
-      const sizedTypes = new Set(["text", "number", "email", "phone"]);
-
-      function renderTypeOptions(selectedType) {
-        return fieldTypes
-          .map((item) => {
-            const optionKey = String(item.key || "");
-            const optionLabel = String(item.label || optionKey);
-            const isSelected = optionKey === String(selectedType || "text");
-            return `<option value="${optionKey}"${isSelected ? " selected" : ""}>${optionLabel}</option>`;
-          })
-          .join("");
-      }
-
-      function syncRowState(rowEl) {
-        const typeSelectEl = rowEl.querySelector("select[name='additional_field_type']");
-        const sizeInputEl = rowEl.querySelector("input[name='additional_field_size']");
-        if (!typeSelectEl || !sizeInputEl) {
-          return;
-        }
-        const cleanType = String(typeSelectEl.value || "text").trim().toLowerCase();
-        const isSizeEnabled = sizedTypes.has(cleanType);
-        if (isSizeEnabled) {
-          sizeInputEl.readOnly = false;
-          sizeInputEl.classList.remove("process-additional-size-readonly");
-          if (!String(sizeInputEl.value || "").trim()) {
-            sizeInputEl.value = "30";
-          }
-        } else {
-          sizeInputEl.value = "";
-          sizeInputEl.readOnly = true;
-          sizeInputEl.classList.add("process-additional-size-readonly");
-        }
-      }
-
-      function bindRemoveButton(buttonEl) {
-        buttonEl.addEventListener("click", () => {
-          const rowEl = buttonEl.closest(".process-additional-field-row");
-          if (rowEl) {
-            rowEl.remove();
-          }
-        });
-      }
-
-      function bindRow(rowEl) {
-        const removeButtonEl = rowEl.querySelector(".process-additional-field-remove-btn");
-        if (removeButtonEl) {
-          bindRemoveButton(removeButtonEl);
-        }
-        const typeSelectEl = rowEl.querySelector("select[name='additional_field_type']");
-        if (typeSelectEl) {
-          typeSelectEl.addEventListener("change", () => {
-            syncRowState(rowEl);
-          });
-        }
-        syncRowState(rowEl);
-      }
-
-      function createAdditionalFieldRow(initialValue, initialType, initialSize) {
-        const rowEl = document.createElement("div");
-        rowEl.className = "process-field-row process-additional-field-row";
-        rowEl.innerHTML = `
-          <input type="hidden" name="additional_field_key" value="">
-          <div class="field">
-            <label>Nome do campo adicional</label>
-            <input
-              type="text"
-              name="additional_field_label"
-              maxlength="80"
-              placeholder="Ex.: Data de batismo"
-              value="${String(initialValue || "").replace(/"/g, "&quot;")}"
-            >
-          </div>
-          <div class="field">
-            <label>Tipo do campo</label>
-            <select name="additional_field_type" class="process-additional-field-type-select">
-              ${renderTypeOptions(initialType || "text")}
-            </select>
-          </div>
-          <div class="field">
-            <label>Tamanho</label>
-            <input
-              type="number"
-              name="additional_field_size"
-              class="process-additional-field-size-input"
-              min="1"
-              max="255"
-              placeholder="Ex.: 30"
-              value="${String(initialSize || "")}"
-            >
-          </div>
-          <button
-            type="button"
-            class="table-icon-btn table-icon-btn-danger process-additional-field-remove-btn"
-            title="Remover campo adicional"
-            aria-label="Remover campo adicional"
-          >
-            &#10005;
-          </button>
-        `;
-        bindRow(rowEl);
-        return rowEl;
-      }
-
-      containerEl.querySelectorAll(".process-additional-field-row").forEach((rowEl) => {
-        bindRow(rowEl);
-      });
-
-      addButtonEl.addEventListener("click", () => {
-        const rowEl = createAdditionalFieldRow("", "text", "30");
-        containerEl.appendChild(rowEl);
-        const inputEl = rowEl.querySelector("input[name='additional_field_label']");
-        if (inputEl) {
-          inputEl.focus();
-        }
-      });
-
-      formEl.addEventListener("submit", () => {
-        const rowEls = containerEl.querySelectorAll(".process-additional-field-row");
-        rowEls.forEach((rowEl) => {
-          const keyEl = rowEl.querySelector("input[name='additional_field_key']");
-          const labelEl = rowEl.querySelector("input[name='additional_field_label']");
-          const typeEl = rowEl.querySelector("select[name='additional_field_type']");
-          const sizeEl = rowEl.querySelector("input[name='additional_field_size']");
-          if (!labelEl || !typeEl || !sizeEl) {
-            return;
-          }
-          const cleanLabel = String(labelEl.value || "").trim();
-          labelEl.value = cleanLabel;
-          const cleanType = String(typeEl.value || "text").trim().toLowerCase();
-          const isSizeEnabled = sizedTypes.has(cleanType);
-          if (!isSizeEnabled) {
-            sizeEl.value = "";
-          }
-
-          if (!cleanLabel) {
-            if (keyEl) {
-              keyEl.removeAttribute("name");
-            }
-            labelEl.removeAttribute("name");
-            typeEl.removeAttribute("name");
-            sizeEl.removeAttribute("name");
-          }
-        });
-      });
-    }
-
-    function setupProcessEditTabs() {
-      const tabLinks = document.querySelectorAll("[data-process-edit-tab]");
-      const panes = document.querySelectorAll("[data-process-edit-pane]");
-      if (!tabLinks.length || !panes.length) {
-        return;
-      }
-
-      function activateProcessTab(tabKey) {
-        const hasTargetTab = Array.from(tabLinks).some(
-          (tabLink) => (tabLink.getAttribute("data-process-edit-tab") || "") === tabKey
-        );
-        const resolvedTabKey = hasTargetTab ? tabKey : "geral";
-        tabLinks.forEach((tabLink) => {
-          const isActive = tabLink.getAttribute("data-process-edit-tab") === resolvedTabKey;
-          tabLink.classList.toggle("active", isActive);
-          tabLink.setAttribute("aria-selected", isActive ? "true" : "false");
-        });
-        panes.forEach((pane) => {
-          const isActive = pane.getAttribute("data-process-edit-pane") === resolvedTabKey;
-          pane.classList.toggle("active", isActive);
-        });
-      }
-
-      tabLinks.forEach((tabLink) => {
-        tabLink.addEventListener("click", (event) => {
-          event.preventDefault();
-          const tabKey = tabLink.getAttribute("data-process-edit-tab") || "geral";
-          activateProcessTab(tabKey);
-        });
-      });
-
-      if (settingsAction === "edit") {
-        activateProcessTab("campos-config");
-      } else {
-        activateProcessTab("geral");
-      }
-    }
-
-    function renderSubmenu(menuKey) {
-      const config = menuConfig[menuKey];
-      if (!config || !itemsEl) {
-        return;
-      }
-
-      itemsEl.innerHTML = "";
-      itemsEl.style.display = "flex";
-
-      config.items.forEach((item) => {
-        const link = document.createElement("a");
-        link.className = "submenu-item";
-        link.href = item.target;
-        link.textContent = item.label;
-        if (item.profileSection) {
-          link.dataset.profileSection = String(item.profileSection);
-        }
-        link.addEventListener("click", (event) => {
-          event.preventDefault();
-          closeAllProfileEdits();
-          selectedTargetByMenu[menuKey] = item.target;
-          setActiveSubmenu(item.target, link);
-          applyContentForMenuTarget(menuKey, item.target);
-          if (
-            menuKey === "documentos" &&
-            !currentUserCanManageAllEntities &&
-            typeof window.activateProfilePersonalSection === "function"
-          ) {
-            const sectionKey = String(item.profileSection || "geral");
-            documentsSelectedProfileSection = sectionKey;
-            window.activateProfilePersonalSection(sectionKey);
-          }
-        });
-        itemsEl.appendChild(link);
-      });
-
-    }
-
-    function getDefaultTargetForMenu(menuKey, config) {
-      if (!Array.isArray(config.items) || !config.items.length) {
-        return "";
-      }
-      const savedTarget = selectedTargetByMenu[menuKey];
-      if (savedTarget) {
-        if (config.items.some((item) => item.target === savedTarget)) {
-          return savedTarget;
-        }
-        const savedCard = document.querySelector(savedTarget);
-        if (savedCard) {
-          const rawScope = savedCard.getAttribute("data-menu-scope") || "";
-          const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
-          if (scopes.includes(menuKey)) {
-            return savedTarget;
-          }
-        }
-      }
-      return config.items[0].target;
-    }
-
-    function activateMenu(menuKey) {
-      const config = menuConfig[menuKey];
-      if (!config) {
-        return;
-      }
-      const targetButton = Array.from(menuButtons).find((btn) => btn.dataset.menu === menuKey);
-
-      closeAllProfileEdits();
-      activeMenuKey = menuKey;
-      menuButtons.forEach((item) => item.classList.remove("active"));
-      if (targetButton) {
-        targetButton.classList.add("active");
-      }
-      renderSubmenu(menuKey);
-
-      const defaultTarget = getDefaultTargetForMenu(menuKey, config);
-      if (defaultTarget) {
-        selectedTargetByMenu[menuKey] = defaultTarget;
-        setActiveSubmenu(defaultTarget);
-        applyContentForMenuTarget(menuKey, defaultTarget);
-        if (
-          menuKey === "documentos" &&
-          !currentUserCanManageAllEntities &&
-          typeof window.activateProfilePersonalSection === "function"
-        ) {
-          const items = Array.isArray(config.items) ? config.items : [];
-          let selectedSectionItem = items.find(
-            (item) => String(item.profileSection || "") === documentsSelectedProfileSection
-          );
-          if (!selectedSectionItem) {
-            selectedSectionItem = items.find((item) => item.target === defaultTarget) || items[0];
-          }
-          if (selectedSectionItem) {
-            const selectedSectionKey = String(selectedSectionItem.profileSection || "geral");
-            documentsSelectedProfileSection = selectedSectionKey;
-            window.activateProfilePersonalSection(selectedSectionKey);
-            const selectedLinkEl = itemsEl
-              ? itemsEl.querySelector(
-                  `.submenu-item[data-profile-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
-                )
-              : null;
-            if (selectedLinkEl) {
-              setActiveSubmenu(defaultTarget, selectedLinkEl);
-            }
-          }
-        }
-        return;
-      }
-      applyContentForMenu(menuKey);
-      setActiveSubmenu("");
-    }
-
-    function activateMenuTarget(menuKey, targetSelector) {
-      const config = menuConfig[menuKey];
-      if (!config) {
-        return;
-      }
-      activateMenu(menuKey);
-      if (!targetSelector) {
-        return;
-      }
-      selectedTargetByMenu[menuKey] = targetSelector;
-      setActiveSubmenu(targetSelector);
-      applyContentForMenuTarget(menuKey, targetSelector);
-      const targetCard = document.querySelector(targetSelector);
-      if (targetCard) {
-        targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-
-    const avatarDataUri = buildAvatarDataUri(currentUserName);
-    if (userAvatarImageEl) {
-      userAvatarImageEl.src = avatarDataUri;
-    }
-    if (dropdownAvatarImageEl) {
-      dropdownAvatarImageEl.src = avatarDataUri;
-    }
-
-    menuButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        activateMenu(btn.dataset.menu);
-      });
-    });
-
-    profileEditButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const cardId = button.getAttribute("data-edit-target");
-        if (!cardId) {
-          return;
-        }
-        closeAllProfileEdits();
-        const card = document.getElementById(cardId);
-        if (!card) {
-          return;
-        }
-        card.classList.add("editing");
-      });
-    });
-
-    profileEditCancelButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const cardId = button.getAttribute("data-edit-cancel");
-        if (!cardId) {
-          return;
-        }
-        const card = document.getElementById(cardId);
-        if (!card) {
-          return;
-        }
-        card.classList.remove("editing");
-        const form = card.querySelector(".profile-edit-form");
-        if (form) {
-          form.reset();
-        }
-      });
-    });
-
-    if (trainingOutrosEnabledEl) {
-      trainingOutrosEnabledEl.addEventListener("change", () => {
-        syncTrainingOutrosState();
-      });
-    }
-
-    if (userMenuTriggerEl) {
-      userMenuTriggerEl.addEventListener("click", (event) => {
-        event.stopPropagation();
-        toggleUserDropdown();
-      });
-    }
-
-    userDropdownLinks.forEach((link) => {
-      link.addEventListener("click", (event) => {
-        event.preventDefault();
-        const menuKey = link.getAttribute("data-dropdown-menu") || "perfil";
-        const targetSelector = link.getAttribute("data-dropdown-target") || "";
-        if (!menuConfig[menuKey]) {
-          closeUserDropdown();
-          return;
-        }
-        if (targetSelector) {
-          selectedTargetByMenu[menuKey] = targetSelector;
-        }
-        activateMenuTarget(menuKey, targetSelector);
-        closeUserDropdown();
-      });
-    });
-
-    document.addEventListener("click", (event) => {
-      if (!userMenuEl || !userDropdownEl || userDropdownEl.hidden) {
-        return;
-      }
-      if (!userMenuEl.contains(event.target)) {
-        closeUserDropdown();
-      }
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeUserDropdown();
-      }
-    });
-
-    syncTrainingOutrosState();
-    renderHomeCharts();
-    setupReadOnlyCards();
-    setupProfileProcessTabs();
-    setupProcessEditTabs();
-    setupProcessFieldsBuilder();
-    setupProcessAdditionalFieldsBuilder();
-    setupTableLimiter("recent-entities");
-    setupTableLimiter("inactive-entities");
-    setupTableLimiter("admin-users");
-    const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => btn.dataset.menu));
-    let startupMenu = menuConfig[initialMenu] ? initialMenu : "home";
-    if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
-      if (sidebarMenuKeys.has("home")) {
-        startupMenu = "home";
-      } else {
-        const firstSidebarMenu = Array.from(sidebarMenuKeys.values())[0];
-        startupMenu = firstSidebarMenu || "home";
-      }
-    }
-    activateMenu(startupMenu);
   </script>
-</body>
-</html>
+  <script src="/static/js/new_user.js?v=20260425c"></script>
+{% endblock %}
+
 
 

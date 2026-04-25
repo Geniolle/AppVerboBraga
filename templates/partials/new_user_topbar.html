@@ -1,0 +1,46 @@
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand">
+        <span class="brand-mark">
+          {% if user_personal_data.primary_entity_logo_url %}
+            <img src="{{ user_personal_data.primary_entity_logo_url }}" alt="Imagem da entidade">
+          {% else %}
+            <span>[+]</span>
+          {% endif %}
+        </span>
+        <span class="brand-name" title="{{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else user_personal_data.entities }}">
+          {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else (user_personal_data.entities if user_personal_data.entities != '-' else 'SOMA') }}
+        </span>
+      </div>
+      <button class="topbar-action" type="button" title="Voltar">&larr;</button>
+    </div>
+    <div class="topbar-right">
+      <div id="user-menu" class="user-menu">
+        <button id="user-menu-trigger" class="user-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="user-dropdown">
+          <img id="user-avatar-image" class="avatar-img" alt="Foto do utilizador">
+          <span class="user-name">{{ current_user.full_name }}</span>
+          <span class="user-caret">v</span>
+        </button>
+        <div id="user-dropdown" class="user-dropdown" hidden>
+          <div class="user-dropdown-header">
+            <img id="dropdown-avatar-image" class="avatar-img dropdown-avatar" alt="Foto do utilizador">
+            <p class="dropdown-name">{{ current_user.full_name }}</p>
+            <p class="dropdown-meta">ID {{ current_user.id }}</p>
+            <p class="dropdown-email">{{ current_user.login_email }}</p>
+            <p class="dropdown-entity">
+              {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else user_personal_data.entities }}
+            </p>
+          </div>
+          <div class="user-dropdown-actions">
+            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-pessoal-card" href="#perfil-pessoal-card">Minha conta</a>
+            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-morada-card" href="#perfil-morada-card">Minhas configurações</a>
+            <a class="dropdown-link" data-dropdown-menu="links" data-dropdown-target="#sessao-card" href="#sessao-card">Minhas informações sobre a entidade</a>
+            <a class="dropdown-link" data-dropdown-menu="home" data-dropdown-target="#home-summary-card" href="#home-summary-card">Quais são as novidades?</a>
+          </div>
+          <form class="dropdown-logout-form" method="post" action="/logout">
+            <button class="dropdown-logout-btn" type="submit">Efetuar logoff</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </header>

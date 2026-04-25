@@ -13,7 +13,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
-from membrisia import Base  # noqa: E402
+from appverbo.models import Base  # noqa: E402
 
 config = context.config
 
