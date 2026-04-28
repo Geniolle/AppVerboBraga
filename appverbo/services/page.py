@@ -6,11 +6,13 @@ from urllib.parse import urlencode
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
+    MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_DOCUMENTOS_FIELD_LABELS,
     MENU_DOCUMENTOS_FIELD_OPTIONS,
     MENU_DOCUMENTOS_FIELDS_DEFAULT,
     get_sidebar_menu_settings,
     get_visible_sidebar_menu_keys,
+    normalize_sidebar_sections,
 )
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import (
@@ -59,6 +61,17 @@ def get_page_data(
         sidebar_menu_settings,
         current_user_is_admin=current_user_is_admin,
         current_entity_scope=current_entity_scope,
+    )
+    administrativo_menu = next(
+        (
+            row
+            for row in sidebar_menu_settings
+            if str(row.get("key") or "").strip().lower() == "administrativo"
+        ),
+        None,
+    )
+    sidebar_section_options = normalize_sidebar_sections(
+        (administrativo_menu or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
     )
     actor_profile_fields: dict[str, str] = {}
     if actor_user_id is not None:
@@ -245,6 +258,50 @@ def get_page_data(
                 profile_personal_sections = [
                     section for section in profile_personal_sections if section.get("key") != "geral"
                 ]
+
+
+    required_profile_fields = ["nome", "telefone", "email", "pais"]
+
+    for required_field in required_profile_fields:
+        if required_field not in profile_personal_field_labels:
+            profile_personal_field_labels[required_field] = {
+                "nome": "Nome",
+                "telefone": "Telefone",
+                "email": "Email",
+                "pais": "País",
+            }[required_field]
+
+        if required_field not in profile_personal_visible_fields:
+            if required_field == "pais" and "telefone" in profile_personal_visible_fields:
+                profile_personal_visible_fields.insert(
+                    profile_personal_visible_fields.index("telefone") + 1,
+                    required_field,
+                )
+            elif required_field == "email" and "telefone" in profile_personal_visible_fields:
+                profile_personal_visible_fields.insert(
+                    profile_personal_visible_fields.index("telefone") + 1,
+                    required_field,
+                )
+            elif required_field == "telefone" and "nome" in profile_personal_visible_fields:
+                profile_personal_visible_fields.insert(
+                    profile_personal_visible_fields.index("nome") + 1,
+                    required_field,
+                )
+            else:
+                profile_personal_visible_fields.append(required_field)
+
+    if "pais" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["pais"] = profile_personal_field_section_map.get("telefone", "geral")
+
+    if "nome" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["nome"] = "geral"
+
+    if "telefone" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["telefone"] = profile_personal_field_section_map.get("nome", "geral")
+
+    if "email" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["email"] = profile_personal_field_section_map.get("telefone", "geral")
+
 
     scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
     apply_scope_filter = allowed_entity_ids is not None
@@ -483,6 +540,7 @@ def get_page_data(
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
         "current_entity_scope": current_entity_scope,
         "sidebar_menu_settings": sidebar_menu_settings,
+        "sidebar_section_options": sidebar_section_options,
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
         "menu_process_values_map": menu_process_values_map,
         "menu_process_history_map": menu_process_history_map,

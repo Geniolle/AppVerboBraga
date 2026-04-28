@@ -19,6 +19,7 @@ class Member(Base, TimestampMixin):
     birth_date: Mapped[Optional[date]] = mapped_column(Date)
 
     primary_phone: Mapped[str] = mapped_column(String(30), nullable=False)
+    country: Mapped[Optional[str]] = mapped_column(String(120))
     secondary_phone: Mapped[Optional[str]] = mapped_column(String(30))
     email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
 

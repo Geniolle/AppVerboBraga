@@ -1137,6 +1137,10 @@ p {
   grid-template-columns: minmax(280px, 2fr) minmax(220px, 1fr) minmax(220px, 1fr);
 }
 
+   .settings-general-grid-menu-geral {
+  grid-template-columns: minmax(260px, 1.6fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr);
+}
+
    .field {
   display: flex;
   flex-direction: column;
@@ -1176,6 +1180,45 @@ label {
   color: #313845;
   font-size: var(--ui-control-font-size);
   font-weight: 500;
+}
+
+   .profile-multi-value-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+   .profile-multi-value-list {
+  display: grid;
+  gap: 6px;
+}
+
+   .profile-multi-value-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+   .profile-multi-value-row input,
+   .profile-multi-value-row select,
+   .profile-multi-value-row textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+   .profile-multi-value-add-btn,
+   .profile-multi-value-remove-btn {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 input,
@@ -1670,6 +1713,34 @@ th {
   margin-top: 0;
 }
 
+   .sidebar-sections-subtitle {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: #2f3a4a;
+}
+
+   .sidebar-sections-block {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d9dee8;
+  border-radius: 8px;
+  background: #fafcff;
+}
+
+   .sidebar-sections-create-actions {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+   .sidebar-sections-created-table td:last-child,
+   .sidebar-sections-created-table th:last-child {
+  width: 132px;
+}
+
+   .sidebar-sections-actions {
+  justify-content: flex-end;
+}
+
    .superuser-list {
   margin: 0;
   padding-left: 18px;
@@ -1685,6 +1756,10 @@ th {
   }
 
   .settings-general-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-general-grid-menu-geral {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1781,5 +1856,250 @@ th {
 @media (max-width: 540px) {
  .home-kpis {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ###################################################################################
+   (PERFIL) Dados pessoais: Nome, Telefone e Email na primeira linha
+################################################################################### */
+
+#perfil-pessoal-card .profile-edit-form .personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#perfil-pessoal-card .profile-edit-form .field.full {
+  grid-column: 1 / -1;
+}
+
+#perfil-pessoal-card .profile-edit-form #edit_login_email {
+  background: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  #perfil-pessoal-card .profile-edit-form .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  #perfil-pessoal-card .profile-edit-form .personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ###################################################################################
+   (PERFIL) Ordem dos campos: Nome | Telefone | Email
+################################################################################### */
+
+#perfil-pessoal-card .profile-edit-form .personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#perfil-pessoal-card .profile-edit-form .profile-field-name {
+  order: 1;
+}
+
+#perfil-pessoal-card .profile-edit-form .profile-field-phone {
+  order: 2;
+}
+
+#perfil-pessoal-card .profile-edit-form .profile-field-email {
+  order: 3;
+}
+
+#perfil-pessoal-card .profile-edit-form .profile-field-country {
+  order: 4;
+}
+
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_full_name) {
+  order: 1;
+}
+
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_primary_phone) {
+  order: 2;
+}
+
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_login_email) {
+  order: 3;
+}
+
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_country) {
+  order: 4;
+}
+
+#perfil-pessoal-card .profile-edit-form .field.full:has(#edit_login_email) {
+  grid-column: auto;
+}
+
+@media (max-width: 1100px) {
+  #perfil-pessoal-card .profile-edit-form .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  #perfil-pessoal-card .profile-edit-form .personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ###################################################################################
+   (CONFIG) Campos adicionais com Hierarquia visível ao lado do Tamanho
+################################################################################### */
+
+.additional-field-row-equalized {
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 2.05fr)
+    minmax(220px, 1.35fr)
+    minmax(145px, 0.75fr)
+    minmax(120px, 0.6fr)
+    minmax(135px, 0.65fr)
+    42px;
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.additional-field-row-equalized > .field,
+.additional-field-row-equalized > div {
+  min-width: 0;
+}
+
+.additional-field-name-col {
+  grid-column: 1;
+}
+
+.additional-field-type-col {
+  grid-column: 2;
+}
+
+.additional-field-required-col {
+  grid-column: 3;
+}
+
+.additional-field-size-col {
+  grid-column: 4;
+}
+
+.additional-field-hierarchy-col {
+  grid-column: 5;
+  min-height: 38px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.additional-field-hierarchy-col.is-empty {
+  visibility: hidden;
+}
+
+.additional-field-action-col {
+  grid-column: 6;
+  align-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+}
+
+.additional-field-row-equalized label {
+  min-height: 16px;
+}
+
+.additional-field-row-equalized input,
+.additional-field-row-equalized select {
+  width: 100%;
+}
+
+.header-hierarchy-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-hierarchy-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4b5b7a;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.header-hierarchy-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.header-hierarchy-btn {
+  width: 30px;
+  height: 28px;
+  border: 1px solid #b8cdf8;
+  border-radius: 7px;
+  background: #eff5ff;
+  color: #1f4fa3;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.header-hierarchy-btn:hover {
+  background: #dfeaff;
+  border-color: #8fb0f2;
+}
+
+.header-hierarchy-btn:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 1300px) {
+  .additional-field-row-equalized {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(135px, 0.75fr) 42px;
+  }
+
+  .additional-field-name-col {
+    grid-column: 1;
+  }
+
+  .additional-field-type-col {
+    grid-column: 2;
+  }
+
+  .additional-field-required-col {
+    grid-column: 1;
+  }
+
+  .additional-field-size-col {
+    grid-column: 2;
+  }
+
+  .additional-field-hierarchy-col {
+    grid-column: 3;
+  }
+
+  .additional-field-action-col {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .additional-field-row-equalized {
+    grid-template-columns: 1fr;
+  }
+
+  .additional-field-name-col,
+  .additional-field-type-col,
+  .additional-field-required-col,
+  .additional-field-size-col,
+  .additional-field-hierarchy-col,
+  .additional-field-action-col {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .additional-field-action-col {
+    justify-content: flex-start;
   }
 }

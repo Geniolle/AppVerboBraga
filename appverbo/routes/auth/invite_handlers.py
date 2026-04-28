@@ -168,6 +168,7 @@ def invite_accept_submit(
     token: str = Form(""),
     full_name: str = Form(...),
     primary_phone: str = Form(...),
+    country: str = Form(""),
     address: str = Form(...),
     city: str = Form(...),
     freguesia: str = Form(...),
@@ -179,6 +180,7 @@ def invite_accept_submit(
     clean_token = token.strip()
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
+    clean_country = country.strip()
     clean_address = address.strip()
     clean_city = city.strip()
     clean_freguesia = freguesia.strip()

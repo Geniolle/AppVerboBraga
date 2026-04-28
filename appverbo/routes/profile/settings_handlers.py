@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import re
+
+import json
+
 from datetime import date, datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Form, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -18,6 +22,7 @@ from appverbo.menu_settings import (
     set_sidebar_menu_visibility,
     update_sidebar_menu_additional_fields,
     update_sidebar_menu_label,
+    update_sidebar_menu_sidebar_sections,
     update_sidebar_menu_process_fields,
 )
 from appverbo.services import *  # noqa: F403,F401
@@ -35,6 +40,28 @@ from appverbo.models import (
 
 from appverbo.routes.profile.router import router
 
+
+def _normalize_settings_tab_key(raw_tab: str) -> str:
+    clean_tab = str(raw_tab or "").strip().lower()
+    clean_tab = clean_tab.replace("_", "-")
+    clean_tab = clean_tab.replace(" ", "-")
+    clean_tab = re.sub(r"-+", "-", clean_tab).strip("-")
+
+    aliases = {
+        "geral": "geral",
+        "configuracao-campos": "campos-config",
+        "configuracao-dos-campos": "campos-config",
+        "campos-configuracao": "campos-config",
+        "campos-config": "campos-config",
+        "config-fields": "campos-config",
+        "campos-adicionais": "campos-adicionais",
+        "additional-fields": "campos-adicionais",
+        "adicionais": "campos-adicionais",
+    }
+
+    return aliases.get(clean_tab, "")
+
+
 def _build_settings_redirect_url(
     success_message: str = "",
     error_message: str = "",
@@ -45,9 +72,10 @@ def _build_settings_redirect_url(
     settings_tab: str = "",
 ) -> str:
     clean_menu = (redirect_menu or "").strip().lower()
+    if clean_menu == "configuracao":
+        clean_menu = "administrativo"
     if clean_menu not in {
         "administrativo",
-        "configuracao",
         "documentos",
         "funcionarios",
         "financeiro",
@@ -59,19 +87,13 @@ def _build_settings_redirect_url(
         "perfil",
     }:
         clean_menu = "administrativo"
-    if clean_menu in {"administrativo", "configuracao"}:
-        clean_menu = "configuracao"
-
     clean_target = (redirect_target or "").strip()
     if not clean_target:
         clean_target = "#admin-account-status-card"
     if not clean_target.startswith("#"):
         clean_target = f"#{clean_target}"
-    if clean_menu == "configuracao" and clean_target in {
-        "#admin-account-status-card",
-        "#admin-account-create-card",
-    }:
-        clean_target = "#configuracao-account-status-card"
+    if clean_target == "#configuracao-account-status-card":
+        clean_target = "#admin-account-status-card"
 
     query_params: dict[str, str] = {
         "menu": clean_menu,
@@ -84,12 +106,78 @@ def _build_settings_redirect_url(
     clean_settings_action = (settings_action or "").strip().lower()
     if clean_settings_action in {"toggle", "edit", "delete", "create"}:
         query_params["settings_action"] = clean_settings_action
-    clean_settings_tab = (settings_tab or "").strip().lower()
-    if clean_settings_tab in {"geral", "campos-config", "campos-adicionais"}:
+    clean_settings_tab = _normalize_settings_tab_key(settings_tab)
+    if clean_settings_tab:
         query_params["settings_tab"] = clean_settings_tab
     if clean_menu == "administrativo":
         query_params["admin_tab"] = "contas"
     return build_users_new_url(**query_params) + clean_target
+
+
+def _normalize_sidebar_menu_section(raw_section: str) -> str:
+    clean_section = str(raw_section or "").strip().lower()
+    clean_section = clean_section.replace("-", "_").replace(" ", "_")
+    clean_section = "".join(
+        char for char in clean_section
+        if char.isalnum() or char == "_"
+    )
+    clean_section = "_".join(part for part in clean_section.split("_") if part)
+
+    allowed_sections = {"sistema", "geral", "dados_gerais", "igreja", "tesouraria"}
+
+    if clean_section in allowed_sections:
+        return clean_section
+
+    return "igreja"
+
+
+def _update_sidebar_menu_section(session: Session, menu_key: str, menu_section: str) -> None:
+    clean_menu_key = str(menu_key or "").strip().lower()
+
+    if not clean_menu_key:
+        return
+
+    clean_menu_section = _normalize_sidebar_menu_section(menu_section)
+
+    raw_config = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": clean_menu_key},
+    ).scalar_one_or_none()
+
+    menu_config: dict[str, Any] = {}
+
+    if isinstance(raw_config, str) and raw_config.strip():
+        try:
+            parsed_config = json.loads(raw_config)
+            if isinstance(parsed_config, dict):
+                menu_config = parsed_config
+        except json.JSONDecodeError:
+            menu_config = {}
+
+    menu_config["menu_section"] = clean_menu_section
+
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+    session.commit()
+
 
 @router.post("/settings/menu/toggle", response_class=HTMLResponse)
 def toggle_sidebar_menu(
@@ -164,6 +252,9 @@ def edit_sidebar_menu_label(
     menu_label: str = Form(...),
     menu_status: str = Form(""),
     menu_visibility_scope: str = Form("all"),
+    menu_section: str = Form(""),
+    menu_sidebar_section: str = Form(""),
+    sidebar_section_key: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-account-status-card"),
 ) -> RedirectResponse:
@@ -207,11 +298,16 @@ def edit_sidebar_menu_label(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        effective_sidebar_section = str(menu_sidebar_section or "").strip()
+        if not effective_sidebar_section:
+            effective_sidebar_section = str(sidebar_section_key or "").strip()
+
         ok, error_message = update_sidebar_menu_label(
             session,
             clean_menu_key,
             menu_label,
             visibility_scope_mode=menu_visibility_scope,
+            sidebar_section_key=effective_sidebar_section,
         )
         if not ok:
             return RedirectResponse(
@@ -225,6 +321,9 @@ def edit_sidebar_menu_label(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+
+        if menu_section.strip():
+            _update_sidebar_menu_section(session, clean_menu_key, menu_section)
 
         clean_status = menu_status.strip().lower()
         if clean_status in {"ativo", "active", "1", "true", "sim", "yes", "on"}:
@@ -287,6 +386,7 @@ def create_sidebar_menu(
     request: Request,
     menu_label: str = Form(...),
     menu_visibility_scope: str = Form("all"),
+    menu_section: str = Form("igreja"),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-account-status-card"),
 ) -> RedirectResponse:
@@ -341,6 +441,8 @@ def create_sidebar_menu(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+
+        _update_sidebar_menu_section(session, created_menu_key, menu_section)
 
         return RedirectResponse(
             url=_build_settings_redirect_url(
@@ -432,6 +534,136 @@ def edit_sidebar_menu_process_fields(
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
+
+@router.post("/settings/menu/sidebar-sections", response_class=HTMLResponse)
+def edit_sidebar_sections(
+    request: Request,
+    sidebar_section_definition_key: list[str] = Form(default=[]),
+    sidebar_section_definition_label: list[str] = Form(default=[]),
+    sidebar_section_definition_scope: list[str] = Form(default=[]),
+    new_sidebar_section_label: str = Form(""),
+    new_sidebar_section_scope: str = Form("all"),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#admin-sidebar-sections-card"),
+) -> RedirectResponse:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas administradores podem alterar definições do menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_tab="sessoes-sidebar",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+        if not permissions["can_manage_all_entities"]:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas Owner pode configurar as sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_tab="sessoes-sidebar",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        def _clean_scope_mode(raw_scope_mode: Any) -> str:
+            clean_scope_mode = str(raw_scope_mode or "").strip().lower()
+            if clean_scope_mode in {"owner", "legado", "all"}:
+                return clean_scope_mode
+            return "all"
+
+        sidebar_sections_payload: list[dict[str, str]] = []
+        definitions_count = max(
+            len(sidebar_section_definition_key),
+            len(sidebar_section_definition_label),
+            len(sidebar_section_definition_scope),
+        )
+        for row_index in range(definitions_count):
+            clean_key = str(
+                sidebar_section_definition_key[row_index]
+                if row_index < len(sidebar_section_definition_key)
+                else ""
+            ).strip().lower()
+            clean_label = str(
+                sidebar_section_definition_label[row_index]
+                if row_index < len(sidebar_section_definition_label)
+                else ""
+            ).strip()
+            if not clean_label:
+                continue
+            sidebar_sections_payload.append(
+                {
+                    "key": clean_key,
+                    "label": clean_label,
+                    "visibility_scope_mode": _clean_scope_mode(
+                        sidebar_section_definition_scope[row_index]
+                        if row_index < len(sidebar_section_definition_scope)
+                        else "all"
+                    ),
+                }
+            )
+
+        clean_new_label = str(new_sidebar_section_label or "").strip()
+        if clean_new_label:
+            sidebar_sections_payload.append(
+                {
+                    "label": clean_new_label,
+                    "visibility_scope_mode": _clean_scope_mode(new_sidebar_section_scope),
+                }
+            )
+
+        if not sidebar_sections_payload:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Informe ao menos uma sessão para o sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_tab="sessoes-sidebar",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        ok, error_message = update_sidebar_menu_sidebar_sections(
+            session,
+            sidebar_sections=sidebar_sections_payload,
+        )
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível atualizar as sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_tab="sessoes-sidebar",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                success_message="Sessões do sidebar atualizadas com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_tab="sessoes-sidebar",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
 
 @router.post("/settings/menu/move", response_class=HTMLResponse)
 def move_sidebar_menu(

@@ -182,6 +182,8 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
     clean_full_name = str(submitted_form.get("full_name") or "").strip()
     clean_primary_phone = str(submitted_form.get("primary_phone") or "").strip()
+    clean_login_email = str(submitted_form.get("login_email") or submitted_form.get("email") or "").strip().lower()
+    clean_country = str(submitted_form.get("country") or "").strip()
     clean_birth_date = str(submitted_form.get("birth_date") or "").strip()
     whatsapp_notice_opt_in = str(submitted_form.get("whatsapp_notice_opt_in") or "").strip()
 
@@ -215,6 +217,24 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    if not clean_login_email:
+        return RedirectResponse(
+            url=build_users_new_url(
+                profile_error="Email é obrigatório.",
+                profile_tab="pessoal",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    if "@" not in clean_login_email:
+        return RedirectResponse(
+            url=build_users_new_url(
+                profile_error="Email inválido.",
+                profile_tab="pessoal",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
         if current_user is None:
@@ -230,6 +250,44 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             return RedirectResponse(
                 url=build_users_new_url(
                     profile_error="Membro associado ao utilizador não encontrado.",
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        user_account = session.get(User, current_user["id"])
+        if user_account is None:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    profile_error="Conta de utilizador não encontrada.",
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        email_already_exists = session.execute(
+            select(User.id)
+            .join(Member, Member.id == User.member_id)
+            .where(
+                func.lower(User.login_email) == clean_login_email,
+                User.id != current_user["id"],
+            )
+            .limit(1)
+        ).scalar_one_or_none()
+
+        member_email_already_exists = session.execute(
+            select(Member.id)
+            .where(
+                func.lower(Member.email) == clean_login_email,
+                Member.id != member.id,
+            )
+            .limit(1)
+        ).scalar_one_or_none()
+
+        if email_already_exists is not None or member_email_already_exists is not None:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    profile_error="Este email já está associado a outro utilizador.",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -316,9 +374,18 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 updated_custom_fields[custom_key] = "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
                 continue
 
-            clean_custom_value = str(submitted_form.get(field_name) or "").strip()
+            if hasattr(submitted_form, "getlist"):
+                raw_submitted_values = submitted_form.getlist(field_name)
+            else:
+                raw_submitted_values = [submitted_form.get(field_name)]
+            submitted_values = [
+                str(raw_value or "").strip()
+                for raw_value in raw_submitted_values
+            ]
+            clean_values = [value for value in submitted_values if value]
             if isinstance(field_size, int) and field_size > 0:
-                clean_custom_value = clean_custom_value[:field_size]
+                clean_values = [value[:field_size] for value in clean_values]
+            clean_custom_value = ", ".join(clean_values)
             if field_required and not clean_custom_value:
                 field_label = option_labels_by_key.get(custom_key) or custom_key
                 if field_label not in missing_required_custom_labels:
@@ -339,6 +406,9 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         previous_phone = (member.primary_phone or "").strip()
         member.full_name = clean_full_name
         member.primary_phone = clean_primary_phone
+        member.email = clean_login_email
+        user_account.login_email = clean_login_email
+        member.country = clean_country or None
         member.birth_date = parsed_birth_date
         member.whatsapp_notice_opt_in = parsed_whatsapp_notice_opt_in
         for existing_key in list(existing_profile_fields.keys()):
@@ -366,6 +436,8 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             )
 
     request.session["user_name"] = clean_full_name
+    request.session["login_email"] = clean_login_email
+    request.session["user_email"] = clean_login_email
     return RedirectResponse(
         url=build_users_new_url(
             profile_success="Dados pessoais atualizados com sucesso.",

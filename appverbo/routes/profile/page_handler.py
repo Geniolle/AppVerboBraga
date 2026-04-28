@@ -100,7 +100,7 @@ def _resolve_initial_menu_target(
     if clean_menu_key == "configuracao":
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
-        return "#configuracao-account-status-card", ""
+        return "#admin-account-status-card", ""
     if clean_menu_key == "documentos":
         return "#perfil-pessoal-card", ""
 
@@ -139,6 +139,8 @@ def new_user_page(
     resolved_menu = menu.strip().lower()
     if not resolved_menu:
         resolved_menu = "home"
+    if resolved_menu == "configuracao":
+        resolved_menu = "administrativo"
     resolved_admin_tab = admin_tab.strip().lower()
     if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes"}:
         resolved_admin_tab = "utilizador"
@@ -166,7 +168,7 @@ def new_user_page(
     if clean_settings_action not in {"toggle", "edit", "delete", "create"}:
         clean_settings_action = "edit"
     clean_settings_tab = settings_tab.strip().lower()
-    if clean_settings_tab not in {"geral", "campos-config", "campos-adicionais"}:
+    if clean_settings_tab not in {"geral", "campos-config", "campos-adicionais", "sessoes-sidebar"}:
         clean_settings_tab = ""
 
     with SessionLocal() as session:

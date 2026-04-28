@@ -38,7 +38,7 @@ const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "
 const initialAdminTab = bootstrap.initialAdminTab || "utilizador";
 const currentEntityId = Number.parseInt(String(bootstrap.currentEntityId || "").trim(), 10);
 const settingsAction = bootstrap.settingsAction || "";
-const settingsTab = bootstrap.settingsTab || "";
+const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
 const settingsEditKey = bootstrap.settingsEditKey || "";
 const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
 const visibleSidebarMenuKeys = new Set(
@@ -65,6 +65,31 @@ const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
 const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag"]);
+
+
+function normalizeSettingsTabKey(value) {
+  const cleanTab = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const aliases = {
+    "geral": "geral",
+    "configuracao-campos": "campos-config",
+    "configuracao-dos-campos": "campos-config",
+    "campos-configuracao": "campos-config",
+    "campos-config": "campos-config",
+    "config-fields": "campos-config",
+    "campos-adicionais": "campos-adicionais",
+    "additional-fields": "campos-adicionais",
+    "adicionais": "campos-adicionais"
+  };
+
+  return aliases[cleanTab] || "";
+}
 
 function normalizeMenuKey(value) {
   return String(value || "").trim().toLowerCase();
@@ -433,19 +458,6 @@ if (currentUserIsAdmin) {
         { label: "Acesso", value: "Permitido" }
       ]
     },
-    configuracao: {
-      title: "Configuração",
-      description: "Configuração de processos de sistema.",
-      singleView: true,
-      toggleOnMenuClick: true,
-      items: [
-        { label: "Configuração", target: "#configuracao-account-status-card" }
-      ],
-      details: [
-        { label: "Modulo", value: "Configuração" },
-        { label: "Acesso", value: "Permitido" }
-      ]
-    },
     documentos: {
       title: "Meu perfil",
       description: "Dados do meu perfil.",
@@ -581,7 +593,8 @@ function mergeDynamicProcessMenus() {
         const baseItems = [
           { label: "Utilizador", target: "#create-user-card" },
           { label: "Entidade", target: "#create-entity-card" },
-          { label: "Configuração", target: "#admin-account-status-card" }
+          { label: "Menu", target: "#admin-account-status-card" },
+          { label: "Sessões", target: "#admin-sidebar-sections-card" }
         ];
         const mergedItems = dynamicItems.filter((item) => {
           const sectionKey = String(item.dynamicProcessSectionKey || "").trim().toLowerCase();
@@ -603,17 +616,6 @@ function mergeDynamicProcessMenus() {
         menuConfig[menuKey] = {
           ...existingConfig,
           items: resolvedItems
-        };
-        return;
-      }
-      if (menuKey === "configuracao") {
-        menuConfig[menuKey] = {
-          ...existingConfig,
-          title: cleanMenuLabel || existingConfig.title,
-          items: [
-            { label: "Configuração", target: "#configuracao-account-status-card" },
-            ...dynamicItems
-          ]
         };
         return;
       }
@@ -718,9 +720,6 @@ const selectedTargetByMenu = {
 };
 Object.keys(dynamicProcessDataByMenu).forEach((menuKey) => {
   if (menuKey === "administrativo" && selectedTargetByMenu[menuKey] === "#settings-menu-edit-card") {
-    return;
-  }
-  if (menuKey === "configuracao") {
     return;
   }
   selectedTargetByMenu[menuKey] = "#dynamic-process-card";
@@ -1478,19 +1477,11 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "settings-menu-edit-card" ||
         card.id === "admin-account-status-card"
       );
-    const isConfiguracaoSettingsGroupedBlock =
-      menuKey === "configuracao" &&
-      targetSelector === "#settings-menu-edit-card" &&
-      (
-        card.id === "configuracao-account-status-card" ||
-        card.id === "settings-menu-edit-card"
-      );
     card.style.display =
       targetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock ||
-      isConfiguracaoSettingsGroupedBlock
+      isSettingsGroupedBlock
         ? ""
         : "none";
   });
@@ -1535,6 +1526,152 @@ function closeAllProfileEdits() {
   syncTrainingOutrosState();
 }
 
+function normalizeProfileMultiValueList(rawValue) {
+  return String(rawValue || "")
+    .split(/\r?\n|,/)
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+}
+
+function isAllocationProfileSection(sectionKey) {
+  const cleanSection = normalizeLookupText(sectionKey);
+  if (!cleanSection) {
+    return false;
+  }
+  return cleanSection.includes("alocacao");
+}
+
+function setProfileControlValue(controlEl, value) {
+  if (!controlEl) {
+    return;
+  }
+  const cleanValue = String(value || "").trim();
+  if (controlEl.tagName === "SELECT") {
+    const options = Array.from(controlEl.options || []);
+    const hasExactValue = options.some((option) => String(option.value || "") === cleanValue);
+    if (hasExactValue) {
+      controlEl.value = cleanValue;
+      return;
+    }
+    const matchingOption = options.find(
+      (option) => String(option.textContent || "").trim().toLowerCase() === cleanValue.toLowerCase()
+    );
+    controlEl.value = matchingOption ? String(matchingOption.value || "") : "";
+    return;
+  }
+  controlEl.value = cleanValue;
+}
+
+function setupAllocationFieldMultiValue(fieldEl) {
+  if (!fieldEl || fieldEl.getAttribute("data-allocation-multi-ready") === "1") {
+    return;
+  }
+  const baseControlEl = fieldEl.querySelector(
+    "input[name^='custom_field__']:not([type='checkbox']):not([type='hidden']), select[name^='custom_field__'], textarea[name^='custom_field__']"
+  );
+  if (!baseControlEl) {
+    return;
+  }
+  const baseFieldName = String(baseControlEl.getAttribute("name") || "").trim();
+  if (!baseFieldName) {
+    return;
+  }
+
+  const baseLabelEl = fieldEl.querySelector("label");
+  if (baseLabelEl && !baseLabelEl.classList.contains("profile-multi-value-label")) {
+    baseLabelEl.classList.add("profile-multi-value-label");
+  }
+
+  const valuesListEl = document.createElement("div");
+  valuesListEl.className = "profile-multi-value-list";
+
+  const addButtonEl = document.createElement("button");
+  addButtonEl.type = "button";
+  addButtonEl.className = "table-icon-btn profile-multi-value-add-btn";
+  addButtonEl.title = "Adicionar linha";
+  addButtonEl.setAttribute("aria-label", "Adicionar linha");
+  addButtonEl.innerHTML = "&#43;";
+  if (baseLabelEl) {
+    baseLabelEl.appendChild(addButtonEl);
+  } else {
+    fieldEl.appendChild(addButtonEl);
+  }
+
+  function createControlRow(controlEl, isRemovable) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "profile-multi-value-row";
+    rowEl.appendChild(controlEl);
+    if (isRemovable) {
+      const removeButtonEl = document.createElement("button");
+      removeButtonEl.type = "button";
+      removeButtonEl.className = "table-icon-btn table-icon-btn-danger profile-multi-value-remove-btn";
+      removeButtonEl.title = "Remover linha";
+      removeButtonEl.setAttribute("aria-label", "Remover linha");
+      removeButtonEl.innerHTML = "&#10005;";
+      removeButtonEl.addEventListener("click", () => {
+        rowEl.remove();
+      });
+      rowEl.appendChild(removeButtonEl);
+    }
+    valuesListEl.appendChild(rowEl);
+    return rowEl;
+  }
+
+  function createExtraControl(initialValue = "") {
+    const clonedControlEl = baseControlEl.cloneNode(true);
+    clonedControlEl.removeAttribute("id");
+    clonedControlEl.name = baseFieldName;
+    clonedControlEl.required = false;
+    setProfileControlValue(clonedControlEl, initialValue);
+    if (clonedControlEl.tagName !== "SELECT") {
+      clonedControlEl.defaultValue = clonedControlEl.value;
+    }
+    return clonedControlEl;
+  }
+
+  const initialValues = normalizeProfileMultiValueList(baseControlEl.value);
+  if (initialValues.length) {
+    setProfileControlValue(baseControlEl, initialValues[0]);
+  }
+  baseControlEl.name = baseFieldName;
+
+  fieldEl.insertBefore(valuesListEl, baseControlEl);
+  createControlRow(baseControlEl, false);
+
+  const extraValues = initialValues.slice(1);
+  extraValues.forEach((value) => {
+    createControlRow(createExtraControl(value), true);
+  });
+
+  addButtonEl.addEventListener("click", () => {
+    const rowEl = createControlRow(createExtraControl(""), true);
+    const inputEl = rowEl.querySelector("input, select, textarea");
+    if (inputEl) {
+      inputEl.focus();
+    }
+  });
+
+  fieldEl.setAttribute("data-allocation-multi-ready", "1");
+}
+
+function setupAllocationSectionMultiValue(personalCardEl, sectionKey) {
+  if (!personalCardEl || !isAllocationProfileSection(sectionKey)) {
+    return;
+  }
+  const formEl = personalCardEl.querySelector(".profile-edit-form");
+  if (!formEl) {
+    return;
+  }
+  const cleanSection = String(sectionKey || "").trim().toLowerCase();
+  const sectionFields = Array.from(formEl.querySelectorAll(".field[data-profile-section-pane]")).filter(
+    (fieldEl) =>
+      String(fieldEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase() === cleanSection
+  );
+  sectionFields.forEach((fieldEl) => {
+    setupAllocationFieldMultiValue(fieldEl);
+  });
+}
+
 function setupProfileProcessTabs() {
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   if (!personalCardEl) {
@@ -1562,6 +1699,7 @@ function setupProfileProcessTabs() {
       ).trim().toLowerCase();
       paneEl.style.display = paneSection === effectiveSection ? "" : "none";
     });
+    setupAllocationSectionMultiValue(personalCardEl, effectiveSection);
     documentsSelectedProfileSection = effectiveSection;
   }
 
@@ -2279,17 +2417,17 @@ function handleHashNavigation(rawHash) {
     normalizedHash = "#create-user-card";
   } else if (normalizedHash === "#edit-entity-card") {
     normalizedHash = "#create-entity-card";
+  } else if (normalizedHash === "#configuracao-account-status-card") {
+    normalizedHash = "#admin-account-status-card";
   }
 
-  const params = new URLSearchParams(window.location.search || "");
-  const currentQueryMenu = normalizeMenuKey(params.get("menu") || "");
   const hashTargetMenuMap = {
     "#create-user-card": "administrativo",
     "#create-entity-card": "administrativo",
     "#admin-account-status-card": "administrativo",
-    "#admin-account-create-card": currentQueryMenu === "configuracao" ? "configuracao" : "administrativo",
-    "#configuracao-account-status-card": "configuracao",
-    "#settings-menu-edit-card": currentQueryMenu === "configuracao" ? "configuracao" : "administrativo"
+    "#admin-sidebar-sections-card": "administrativo",
+    "#admin-account-create-card": "administrativo",
+    "#settings-menu-edit-card": "administrativo"
   };
   const targetMenu = hashTargetMenuMap[normalizedHash];
   if (targetMenu) {
@@ -2508,6 +2646,74 @@ function setupCreateUserGenerateLinkShortcut() {
   });
 }
 
+function setupSidebarSectionsEditor() {
+  const sectionsBodyEl = document.getElementById("sidebar-sections-created-body");
+  if (!sectionsBodyEl) {
+    return;
+  }
+
+  const refreshActionStates = () => {
+    const rows = Array.from(sectionsBodyEl.querySelectorAll("[data-sidebar-section-row]"));
+    rows.forEach((rowEl, index) => {
+      const upBtn = rowEl.querySelector("[data-sidebar-section-action='up']");
+      const downBtn = rowEl.querySelector("[data-sidebar-section-action='down']");
+      const removeBtn = rowEl.querySelector("[data-sidebar-section-action='remove']");
+      const sectionKey = String(rowEl.getAttribute("data-sidebar-section-key") || "").trim().toLowerCase();
+      const isProtected = sectionKey === "geral" || sectionKey === "igreja";
+
+      if (upBtn) {
+        upBtn.disabled = index === 0;
+        upBtn.classList.toggle("table-icon-btn-disabled", upBtn.disabled);
+      }
+      if (downBtn) {
+        downBtn.disabled = index === rows.length - 1;
+        downBtn.classList.toggle("table-icon-btn-disabled", downBtn.disabled);
+      }
+      if (removeBtn) {
+        removeBtn.disabled = rows.length <= 1 || isProtected;
+        removeBtn.classList.toggle("table-icon-btn-disabled", removeBtn.disabled);
+      }
+    });
+  };
+
+  sectionsBodyEl.addEventListener("click", (event) => {
+    const actionBtn = event.target.closest("[data-sidebar-section-action]");
+    if (!actionBtn) {
+      return;
+    }
+    const actionType = String(actionBtn.getAttribute("data-sidebar-section-action") || "").trim().toLowerCase();
+    const rowEl = actionBtn.closest("[data-sidebar-section-row]");
+    if (!rowEl || actionBtn.disabled) {
+      return;
+    }
+
+    if (actionType === "up") {
+      const previousRow = rowEl.previousElementSibling;
+      if (previousRow) {
+        sectionsBodyEl.insertBefore(rowEl, previousRow);
+      }
+      refreshActionStates();
+      return;
+    }
+
+    if (actionType === "down") {
+      const nextRow = rowEl.nextElementSibling;
+      if (nextRow) {
+        sectionsBodyEl.insertBefore(nextRow, rowEl);
+      }
+      refreshActionStates();
+      return;
+    }
+
+    if (actionType === "remove") {
+      rowEl.remove();
+      refreshActionStates();
+    }
+  });
+
+  refreshActionStates();
+}
+
 window.addEventListener("hashchange", () => {
   handleHashNavigation(window.location.hash || "");
 });
@@ -2521,6 +2727,7 @@ setupProcessFieldsBuilder();
 setupProcessAdditionalFieldsBuilder();
 setupGeneratedInviteLinkCopy();
 setupCreateUserGenerateLinkShortcut();
+setupSidebarSectionsEditor();
 setupTableLimiter("recent-entities");
 setupTableLimiter("inactive-entities");
 setupTableLimiter("admin-users");

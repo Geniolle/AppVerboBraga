@@ -7,38 +7,68 @@
       "relatorios": "[R]",
       "links": "[L]",
       "contato": "[C]",
-      "tutorial": "[T]"
+      "tutorial": "[T]",
+      "tesouraria": "[T]"
     } %}
-    <aside class="sidebar">
-      <div class="menu-section">Geral</div>
-      <nav class="menu-list" aria-label="Menu principal">
-        {% for setting in sidebar_menu_settings %}
-          {% if setting.key in visible_sidebar_menu_keys and setting.key in ["home", "administrativo"] %}
-          <button
-            type="button"
-            class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
-            data-menu="{{ setting.key|lower }}"
-          >
-            <span class="menu-icon">{{ menu_icons.get(setting.key, "[ ]") }}</span>
-            <span>{{ setting.label }}</span>
-          </button>
-          {% endif %}
-        {% endfor %}
-      </nav>
 
-      <div class="menu-section">Igreja</div>
-      <nav class="menu-list" aria-label="Menu igreja">
+    {% set sidebar_sections = [
+      ("sistema", "Sistema"),
+      ("geral", "Geral"),
+      ("dados_gerais", "Dados gerais"),
+      ("igreja", "Igreja"),
+      ("tesouraria", "Tesouraria")
+    ] %}
+
+    <aside class="sidebar">
+      {% for section_key, section_label in sidebar_sections %}
+        {% set section_state = namespace(has_items=false) %}
+
         {% for setting in sidebar_menu_settings %}
-          {% if setting.key in visible_sidebar_menu_keys and setting.key not in ["home", "administrativo"] %}
-          <button
-            type="button"
-            class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
-            data-menu="{{ setting.key|lower }}"
-          >
-            <span class="menu-icon">{{ menu_icons.get(setting.key, "[+]") }}</span>
-            <span>{{ setting.label }}</span>
-          </button>
+          {% set current_section = setting.menu_section|default("", true) %}
+
+          {% if not current_section %}
+            {% if setting.key == "administrativo" %}
+              {% set current_section = "sistema" %}
+            {% elif setting.key == "home" %}
+              {% set current_section = "geral" %}
+            {% else %}
+              {% set current_section = "igreja" %}
+            {% endif %}
+          {% endif %}
+
+          {% if setting.key in visible_sidebar_menu_keys and current_section == section_key %}
+            {% set section_state.has_items = true %}
           {% endif %}
         {% endfor %}
-      </nav>
+
+        {% if section_state.has_items %}
+          <div class="menu-section">{{ section_label }}</div>
+          <nav class="menu-list" aria-label="Menu {{ section_label|lower }}">
+            {% for setting in sidebar_menu_settings %}
+              {% set current_section = setting.menu_section|default("", true) %}
+
+              {% if not current_section %}
+                {% if setting.key == "administrativo" %}
+                  {% set current_section = "sistema" %}
+                {% elif setting.key == "home" %}
+                  {% set current_section = "geral" %}
+                {% else %}
+                  {% set current_section = "igreja" %}
+                {% endif %}
+              {% endif %}
+
+              {% if setting.key in visible_sidebar_menu_keys and current_section == section_key %}
+                <button
+                  type="button"
+                  class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
+                  data-menu="{{ setting.key|lower }}"
+                >
+                  <span class="menu-icon">{{ menu_icons.get(setting.key, "[+]") }}</span>
+                  <span>{{ setting.label }}</span>
+                </button>
+              {% endif %}
+            {% endfor %}
+          </nav>
+        {% endif %}
+      {% endfor %}
     </aside>

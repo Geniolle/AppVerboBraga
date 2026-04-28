@@ -1,0 +1,45 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260428074555
+Username: SALSAJEANS\clayton.silva
+RunAs User: SALSAJEANS\clayton.silva
+Configuration Name: 
+Machine: SLS-PC11JSVQ (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noexit -command try { . "c:\Users\clayton.silva\AppData\Local\Programs\Microsoft VS Code\10c8e557c8\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 9852
+PSVersion: 5.1.22621.6133
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6133
+BuildVersion: 10.0.22621.6133
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+
+Validando sintaxe atual de appverbo/menu_settings.py...
+
+OK: Sintaxe atual valida.
+OK: Backup criado: appverbo/menu_settings.py.bak_hotfix_v2_20260428_074556
+OK: create_sidebar_menu_setting_v2 acrescentada.
+
+Validando sintaxe final...
+
+OK: Sintaxe final valida.
+
+Reiniciando Docker web...
+
+
+
+Validando import dentro do container web...
+
+
+Estado atual da pasta Teste:
+
+
+Git status:
+
+**********************
+Windows PowerShell transcript end
+End time: 20260428074604
+**********************

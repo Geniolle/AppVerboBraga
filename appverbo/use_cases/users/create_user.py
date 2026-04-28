@@ -176,6 +176,7 @@ def normalize_create_user_input(
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
+    clean_country = country.strip()
     clean_email = email.strip().lower()
     clean_profile_id = profile_id.strip()
     clean_invite_delivery = invite_delivery.strip().lower()
