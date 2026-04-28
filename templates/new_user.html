@@ -1,9 +1,9 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260427h">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260428-menu-active-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
 {% endblock %}
 
@@ -1303,3 +1303,999 @@
             {% if settings_owner_fields_enabled %}
             <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
               <a href="#settings-tab-lista" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="lista">Listas</a>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if settings_success %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <div id="settings-tab-geral" class="process-edit-pane active" data-process-edit-pane="geral">
+            <div class="admin-subsection">
+              {% if current_user_can_manage_all_entities %}
+              <form method="post" action="/settings/menu/edit">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <div class="grid settings-general-grid settings-general-grid-menu-geral">
+                  <div class="field">
+                    <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                    <input
+                      id="settings_edit_menu_label"
+                      name="menu_label"
+                      value="{{ settings_edit_data.label }}"
+                      maxlength="100"
+                      required
+                    >
+                  </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_status">Estado atual</label>
+                    <select id="settings_edit_menu_status" name="menu_status">
+                      <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
+                      <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_visibility_scope">Exibir no sistema</label>
+                    <select id="settings_edit_menu_visibility_scope" name="menu_visibility_scope">
+                      <option value="all" {% if settings_edit_data.visibility_scope_mode == "all" %}selected{% endif %}>Owner e Legado</option>
+                      <option value="owner" {% if settings_edit_data.visibility_scope_mode == "owner" %}selected{% endif %}>Owner</option>
+                      <option value="legado" {% if settings_edit_data.visibility_scope_mode == "legado" %}selected{% endif %}>Legado</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_sidebar_section">Sessão</label>
+                    <select id="settings_edit_menu_sidebar_section" name="menu_sidebar_section">
+                      {% for section_option in sidebar_section_options %}
+                      <option value="{{ section_option.key }}" {% if section_option.key == settings_edit_data.sidebar_section_key %}selected{% endif %}>{{ section_option.label }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-cancel"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  >Cancelar</a>
+                </div>
+              </form>
+              {% else %}
+              <div class="grid settings-general-grid settings-general-grid-menu-geral">
+                <div class="field">
+                  <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                  <input
+                    id="settings_edit_menu_label"
+                    value="{{ settings_edit_data.label }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_status">Estado atual</label>
+                  <input
+                    id="settings_edit_menu_status"
+                    value="{% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}Ativo{% else %}Inativo{% endif %}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema</label>
+                  <input
+                    id="settings_edit_menu_visibility_scope_readonly"
+                    value="{{ settings_edit_data.visibility_scope_label }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_sidebar_section_readonly">Sessão</label>
+                  <input
+                    id="settings_edit_menu_sidebar_section_readonly"
+                    value="{{ settings_edit_data.sidebar_section_label if settings_edit_data.sidebar_section_label else '-' }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+              </div>
+              <div class="form-action-row">
+                <a
+                  class="action-btn-cancel"
+                  href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                >Cancelar</a>
+              </div>
+              {% endif %}
+            </div>
+            {% if settings_has_process_fields %}
+            <div class="admin-subsection">
+              <h3>Campos disponíveis</h3>
+              {% if settings_process_visible_field_rows %}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ordem</th>
+                    <th>Campo</th>
+                    <th>Cabeçalho</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for field_row in settings_process_visible_field_rows %}
+                  {% set field_ns = namespace(label=field_row.field_key) %}
+                  {% set header_ns = namespace(label="-") %}
+                  {% for option in settings_process_field_options %}
+                    {% if option.key == field_row.field_key %}
+                      {% set field_ns.label = option.label %}
+                    {% endif %}
+                    {% if option.key == field_row.header_key %}
+                      {% set header_ns.label = option.label %}
+                    {% endif %}
+                  {% endfor %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ field_ns.label }}</td>
+                    <td>{{ header_ns.label }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              <p class="empty">Sem campos definidos para este processo.</p>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% if settings_has_process_fields %}
+          <div id="settings-tab-campos-config" class="process-edit-pane" data-process-edit-pane="campos-config">
+            <div class="admin-subsection">
+              <h3>Configuração dos campos</h3>
+              {% if settings_owner_fields_enabled %}
+              {% if settings_process_select_options %}
+              <form method="post" action="/settings/menu/process-fields">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <div
+                  id="process-fields-builder"
+                  class="process-fields-builder"
+                  data-field-options='{{ settings_process_select_options|tojson }}'
+                  data-header-options='{{ settings_process_header_options|tojson }}'
+                >
+                  <div id="process-visible-fields-container" class="process-visible-fields">
+                    {% for field_row in settings_process_visible_field_rows %}
+                    <div class="process-field-row">
+                      <div class="field">
+                        <label>Campo</label>
+                        <select name="visible_fields" class="process-field-select">
+                          {% for option in settings_process_select_options %}
+                          <option value="{{ option.key }}" {% if option.key == field_row.field_key %}selected{% endif %}>{{ option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Cabeçalho</label>
+                        <select name="visible_headers" class="process-field-header-select">
+                          <option value="">Sem cabeçalho</option>
+                          {% for header_option in settings_process_header_options %}
+                          <option value="{{ header_option.key }}" {% if header_option.key == field_row.header_key %}selected{% endif %}>{{ header_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        class="table-icon-btn table-icon-btn-danger process-field-remove-btn"
+                        title="Remover campo"
+                        aria-label="Remover campo"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <button
+                    type="button"
+                    id="process-field-add-btn"
+                    class="table-icon-btn process-field-add-btn"
+                    title="Adicionar campo"
+                    aria-label="Adicionar campo"
+                  >
+                    &#43;
+                  </button>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-cancel"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  >Cancelar</a>
+                </div>
+              </form>
+              {% else %}
+              <p class="empty">Sem campos disponÃ­veis nesta aba.</p>
+              {% endif %}
+              {% else %}
+              <p>Campos definidos pelo Owner para este processo.</p>
+              {% if settings_process_visible_field_rows %}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ordem</th>
+                    <th>Campo</th>
+                    <th>Cabeçalho</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for field_row in settings_process_visible_field_rows %}
+                  {% set field_ns = namespace(label=field_row.field_key) %}
+                  {% set header_ns = namespace(label="-") %}
+                  {% for option in settings_process_field_options %}
+                    {% if option.key == field_row.field_key %}
+                      {% set field_ns.label = option.label %}
+                    {% endif %}
+                    {% if option.key == field_row.header_key %}
+                      {% set header_ns.label = option.label %}
+                    {% endif %}
+                  {% endfor %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ field_ns.label }}</td>
+                    <td>{{ header_ns.label }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              <p class="empty">Sem campos configurados pelo Owner para este processo.</p>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          {% if settings_owner_fields_enabled %}
+          
+          
+          
+          <div id="settings-tab-lista" class="process-edit-pane" data-process-edit-pane="lista">
+            <div class="admin-subsection process-lists-panel-v7" id="settings-process-lists-card">
+              <h3>Listas</h3>
+              <p class="muted">
+                Crie listas reutilizáveis para usar no tipo de campo Lista.
+              </p>
+
+              <form method="post" action="/settings/menu/process-lists">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+
+                <div class="process-lists-rows-v7">
+                  {% set process_lists = settings_edit_data.process_lists|default([]) %}
+                  {% for process_list in process_lists %}
+                  <div class="process-list-row-v7">
+                    <input type="hidden" name="process_list_key" value="{{ process_list.key }}">
+                    <div class="field">
+                      <label>Nome da lista</label>
+<input
+                        name="process_list_label"
+                        value="{{ process_list.label }}"
+                      >
+                    </div>
+                    <div class="field">
+                      <label>Conteúdo da lista</label>
+<input
+                        name="process_list_items_csv"
+                        value="{{ process_list.items_csv }}"
+                      >
+                    </div>
+                  </div>
+                  {% endfor %}
+
+                  <div class="process-list-row-v7">
+                    <input type="hidden" name="process_list_key" value="">
+                    <div class="field">
+                      <label>Nome da lista</label>
+<input name="process_list_label">
+                    </div>
+                    <div class="field">
+                      <label>Conteúdo da lista</label>
+<input name="process_list_items_csv">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-action-row process-lists-actions-v7">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-secondary process-lists-cancel-v7"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}&settings_edit_key={{ settings_edit_data.key }}&settings_action=edit&settings_tab=geral#settings-menu-edit-card"
+                  >Cancelar</a>
+                </div>
+              </form>
+            </div>
+          </div>
+
+<div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
+            <div class="admin-subsection">
+<h3>Campos Adicionais</h3>
+              <form method="post" action="/settings/menu/process-additional-fields">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <div
+                  id="process-additional-fields-builder"
+                  class="process-fields-builder"
+                  data-field-types='{{ settings_edit_data.additional_field_type_options|tojson }}'
+                >
+                  <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid">
+                    {% for field in settings_edit_data.process_additional_fields %}
+                    <div class="process-field-row process-additional-field-row{% if (field.field_type or 'text') == 'header' %} process-additional-field-row-header{% endif %}">
+                      <input type="hidden" name="additional_field_key" value="{{ field.key }}">
+                      <div class="field">
+                        <label>Nome do campo adicional</label>
+                        <input
+                          type="text"
+                          name="additional_field_label"
+                          value="{{ field.label }}"
+                          maxlength="80"
+                          placeholder="Ex.: Data de batismo"
+                        >
+                      </div>
+                      <div class="field">
+                        <label>Tipo do campo</label>
+                        <select name="additional_field_type" class="process-additional-field-type-select">
+                          {% for type_option in settings_edit_data.additional_field_type_options %}
+                          <option
+                            value="{{ type_option.key }}"
+                            {% if type_option.key == (field.field_type or "text") %}selected{% endif %}
+                          >{{ type_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>ObrigatÃ³rio</label>
+                        <select name="additional_field_required" class="process-additional-field-required-select">
+                          <option value="0" {% if not field.is_required %}selected{% endif %}>Não</option>
+                          <option value="1" {% if field.is_required %}selected{% endif %}>Sim</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Tamanho</label>
+                        <input
+                          type="number"
+                          name="additional_field_size"
+                          class="process-additional-field-size-input"
+                          min="1"
+                          max="255"
+                          value="{{ field.size if field.size is not none else '' }}"
+                          placeholder="Ex.: 30"
+                        >
+                      </div>
+                      <button
+                        type="button"
+                        class="table-icon-btn table-icon-btn-danger process-additional-field-remove-btn"
+                        title="Remover campo adicional"
+                        aria-label="Remover campo adicional"
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <button
+                    type="button"
+                    id="process-additional-field-add-btn"
+                    class="table-icon-btn process-field-add-btn"
+                    title="Adicionar campo adicional"
+                    aria-label="Adicionar campo adicional"
+                  >
+                    &#43;
+                  </button>
+                </div>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a
+                    class="action-btn-cancel"
+                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  >Cancelar</a>
+                </div>
+              </form>
+            </div>
+          </div>
+          {% endif %}
+          {% endif %}
+        </section>
+        {% endif %}
+
+        {% if current_user_can_manage_all_entities %}
+        <section id="admin-account-create-card" class="card" data-menu-scope="administrativo">
+          <div class="profile-card-header">
+            <h2>Criar pasta no menu lateral</h2>
+            <a class="table-link-btn" href="#admin-account-status-card">Ver lista</a>
+          </div>
+          <form method="post" action="/settings/menu/create">
+            <input type="hidden" name="redirect_menu" value="administrativo">
+            <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+            <div class="grid settings-general-grid">
+              <div class="field">
+                <label for="settings_create_menu_label">Nome da pasta *</label>
+                <input
+                  id="settings_create_menu_label"
+                  name="menu_label"
+                  maxlength="100"
+                  placeholder="Ex.: Assiduidade"
+                  required
+                >
+              </div>
+              <div class="field">
+                <label for="settings_create_menu_visibility_scope">Exibir no sistema</label>
+                <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
+                  <option value="all" selected>Owner e Legado</option>
+                  <option value="owner">Owner</option>
+                  <option value="legado">Legado</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-action-row">
+              <button type="submit" class="action-btn">Criar pasta</button>
+            </div>
+          </form>
+        </section>
+        {% endif %}
+
+        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo">
+          <div class="profile-card-header">
+            <h2>Definições</h2>
+            {% if current_user_can_manage_all_entities %}
+            <div class="table-actions">
+              <a class="table-link-btn" href="#admin-sidebar-sections-card">Sessoes do sidebar</a>
+              <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+            </div>
+            {% endif %}
+          </div>
+          <p>Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.</p>
+          {% if settings_success %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <table id="menu-settings-table">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sidebar_menu_settings %}
+                {% if not row.is_deleted %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      {% if current_user_can_manage_all_entities %}
+                      {% if row.can_move_up %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="up">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Subir pasta"
+                          aria-label="Subir pasta"
+                        >
+                          &#8593;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="JÃ¡ estÃ¡ no topo"
+                        aria-label="JÃ¡ estÃ¡ no topo"
+                      >
+                        &#8593;
+                      </span>
+                      {% endif %}
+                      {% if row.can_move_down %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="down">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Descer pasta"
+                          aria-label="Descer pasta"
+                        >
+                          &#8595;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="JÃ¡ estÃ¡ no fim"
+                        aria-label="JÃ¡ estÃ¡ no fim"
+                      >
+                        &#8595;
+                      </span>
+                      {% endif %}
+                      {% endif %}
+                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatÃ³rio"
+                        aria-label="Menu obrigatÃ³rio"
+                      >
+                        &#128065;
+                      </span>
+                      {% else %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      {% endif %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn table-icon-btn-danger"
+                          title="Excluir menu"
+                          aria-label="Excluir menu"
+                        >
+                          &#128465;
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+
+        <section id="admin-sidebar-sections-card" class="card" data-menu-scope="administrativo">
+          <div class="profile-card-header">
+            <h2>Sessoes do sidebar</h2>
+            <a class="table-link-btn" href="#admin-account-status-card">Voltar a lista</a>
+          </div>
+          <p>Defina e organize apenas as sessoes do menu lateral.</p>
+          {% if settings_success and initial_menu == "administrativo" %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error and initial_menu == "administrativo" %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          {% if current_user_can_manage_all_entities %}
+          <form method="post" action="/settings/menu/sidebar-sections" id="sidebar-sections-form">
+            <input type="hidden" name="redirect_menu" value="administrativo">
+            <input type="hidden" name="redirect_target" value="#admin-sidebar-sections-card">
+
+            <div class="sidebar-sections-block">
+              <h3 class="sidebar-sections-subtitle">Criar sessao</h3>
+              <div class="form-action-row sidebar-sections-create-actions">
+                <button type="submit" class="action-btn">Guardar</button>
+                <a class="action-btn-cancel" href="/users/new?menu=administrativo#admin-account-status-card">Cancelar</a>
+              </div>
+              <div class="grid settings-general-grid">
+                <div class="field">
+                  <label for="new_sidebar_section_label">Nome da sessao</label>
+                  <input
+                    id="new_sidebar_section_label"
+                    name="new_sidebar_section_label"
+                    maxlength="100"
+                  >
+                </div>
+                <div class="field">
+                  <label for="new_sidebar_section_scope">Exibir no sistema</label>
+                  <select id="new_sidebar_section_scope" name="new_sidebar_section_scope">
+                    <option value="all" selected>Owner e Legado</option>
+                    <option value="owner">Owner</option>
+                    <option value="legado">Legado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-sections-block">
+              <h3 class="sidebar-sections-subtitle">Sessoes criadas</h3>
+              <table class="sidebar-sections-created-table">
+                <thead>
+                  <tr>
+                    <th>Sessao</th>
+                    <th>Sistema</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody id="sidebar-sections-created-body">
+                  {% for section_option in sidebar_section_options %}
+                    <tr data-sidebar-section-row data-sidebar-section-key="{{ section_option.key }}">
+                      <td>
+                        <input
+                          type="hidden"
+                          name="sidebar_section_definition_key"
+                          value="{{ section_option.key }}"
+                        >
+                        <input
+                          name="sidebar_section_definition_label"
+                          value="{{ section_option.label }}"
+                          required
+                        >
+                      </td>
+                      <td>
+                        <select name="sidebar_section_definition_scope">
+                          <option value="all" {% if section_option.visibility_scope_mode == "all" %}selected{% endif %}>Owner e Legado</option>
+                          <option value="owner" {% if section_option.visibility_scope_mode == "owner" %}selected{% endif %}>Owner</option>
+                          <option value="legado" {% if section_option.visibility_scope_mode == "legado" %}selected{% endif %}>Legado</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div class="table-actions sidebar-sections-actions">
+                          <button
+                            type="button"
+                            class="table-icon-btn"
+                            title="Subir sessao"
+                            aria-label="Subir sessao"
+                            data-sidebar-section-action="up"
+                          >
+                            &#8593;
+                          </button>
+                          <button
+                            type="button"
+                            class="table-icon-btn"
+                            title="Descer sessao"
+                            aria-label="Descer sessao"
+                            data-sidebar-section-action="down"
+                          >
+                            &#8595;
+                          </button>
+                          <button
+                            type="button"
+                            class="table-icon-btn table-icon-btn-danger"
+                            title="Remover sessao"
+                            aria-label="Remover sessao"
+                            data-sidebar-section-action="remove"
+                          >
+                            &#10005;
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </form>
+          {% else %}
+          <p>Apenas Owner pode alterar as sessoes do sidebar.</p>
+          {% endif %}
+        </section>
+
+        <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
+          <div class="profile-card-header">
+            <h2>Configuração</h2>
+            {% if current_user_can_manage_all_entities %}
+            <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+            {% endif %}
+          </div>
+          <p>Processos disponíveis nesta pasta do menu lateral.</p>
+          {% if settings_success and initial_menu == "configuracao" %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error and initial_menu == "configuracao" %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <table id="menu-settings-table-configuracao">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sidebar_menu_settings %}
+                {% if not row.is_deleted %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      {% if current_user_can_manage_all_entities %}
+                      {% if row.can_move_up %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="up">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Subir pasta"
+                          aria-label="Subir pasta"
+                        >
+                          &#8593;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="JÃ¡ estÃ¡ no topo"
+                        aria-label="JÃ¡ estÃ¡ no topo"
+                      >
+                        &#8593;
+                      </span>
+                      {% endif %}
+                      {% if row.can_move_down %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="down">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Descer pasta"
+                          aria-label="Descer pasta"
+                        >
+                          &#8595;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="JÃ¡ estÃ¡ no fim"
+                        aria-label="JÃ¡ estÃ¡ no fim"
+                      >
+                        &#8595;
+                      </span>
+                      {% endif %}
+                      {% endif %}
+                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatÃ³rio"
+                        aria-label="Menu obrigatÃ³rio"
+                      >
+                        &#128065;
+                      </span>
+                      {% else %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      {% endif %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn table-icon-btn-danger"
+                          title="Excluir menu"
+                          aria-label="Excluir menu"
+                        >
+                          &#128465;
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+
+        {% if current_user_can_manage_all_entities %}
+        <section id="documents-folder-settings-card" class="card" data-menu-scope="documentos">
+          <h2>Configuração da pasta Meu perfil</h2>
+          <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
+          {% if settings_success and initial_menu == "documentos" %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error and initial_menu == "documentos" %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          {% for row in sidebar_menu_settings %}
+            {% if row.key == "documentos" %}
+            <table>
+              <thead>
+                <tr>
+                  <th>Pasta</th>
+                  {% if current_entity_scope == "owner" %}
+                  <th>Sistema</th>
+                  {% endif %}
+                  <th>Estado</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar pasta"
+                        aria-label="Editar pasta"
+                      >
+                        &#9998;
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            {% endif %}
+          {% endfor %}
+        </section>
+        {% endif %}
+
+        <section id="recent-users-card" class="card" data-menu-scope="documentos,funcionarios,financeiro,relatorios,tutorial">
+          <h2>Ãšltimos utilizadores criados</h2>
+          {% if recent_users %}
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Email</th>
+                  <th>Estado</th>
+                  <th>Criado em</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in recent_users %}
+                  <tr>
+                    <td>{{ row.id }}</td>
+                    <td>{{ row.full_name }}</td>
+                    <td>{{ row.login_email }}</td>
+                    <td>{{ row.account_status }}</td>
+                    <td>{{ row.created_at }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+            <p class="empty">Sem utilizadores criados ainda.</p>
+          {% endif %}
+        </section>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+<script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <script>
+    window.__APPVERBO_BOOTSTRAP__ = {
+      currentUserName: {{ current_user.full_name|tojson }},
+      currentUserEmail: {{ current_user.login_email|tojson }},
+      currentUserIsAdmin: {{ current_user_is_admin|tojson }},
+      currentUserCanManageAllEntities: {{ current_user_can_manage_all_entities|tojson }},
+      dashboardData: {{ dashboard_data|tojson }},
+      currentUserPhone: {{ user_personal_data.primary_phone|tojson }},
+      currentUserAccountStatus: {{ user_personal_data.account_status|tojson }},
+      currentUserMemberStatus: {{ user_personal_data.member_status|tojson }},
+      currentUserEntities: {{ user_personal_data.entities|tojson }},
+      currentUserAddress: {{ user_personal_data.address|tojson }},
+      currentUserCity: {{ user_personal_data.city|tojson }},
+      currentUserFreguesia: {{ user_personal_data.freguesia|tojson }},
+      currentUserPostalCode: {{ user_personal_data.postal_code|tojson }},
+      profilePersonalSections: {{ profile_personal_sections|tojson }},
+      initialProfileTab: {{ profile_tab|tojson }},
+      initialMenu: {{ initial_menu|tojson }},
+      initialMenuTarget: {{ initial_menu_target|tojson }},
+      initialDynamicProcessSection: {{ initial_dynamic_process_section|tojson }},
+      initialAdminTab: {{ admin_tab|tojson }},
+      currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
+      settingsAction: {{ settings_action|tojson }},
+      settingsTab: {{ settings_tab|tojson }},
+      settingsEditKey: {{ settings_edit_key|tojson }},
+      sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
+      visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
+      menuProcessValuesMap: {{ menu_process_values_map|tojson }},
+      menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
+    };
+  </script>
+  <script src="/static/js/new_user.js?v=20260427h"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
+  <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260428d"></script>
+<script src="/static/js/modules/additional_fields_hierarchy_v2.js?v=20260427c"></script>
+<script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
+  <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
+  <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
+  <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>
+  <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
+  <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
+<script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+{% endblock %}
+
+
+

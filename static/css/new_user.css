@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #eceef2;
   --topbar: #2f86d7;
   --sidebar-bg: #f3f3f4;
@@ -2140,5 +2140,258 @@ th {
   .process-list-row-v3 {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* ###################################################################################
+   Processo Listas V5
+################################################################################### */
+
+.process-lists-panel-v5 {
+  margin-top: 16px;
+}
+
+.process-lists-rows-v5 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.process-list-row-v5 {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 2fr) auto;
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.process-list-actions-v5 {
+  display: flex;
+  align-items: end;
+  justify-content: flex-start;
+}
+
+.additional-field-list-col-v5 {
+  min-width: 180px;
+}
+
+@media (max-width: 900px) {
+  .process-list-row-v5 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ###################################################################################
+   Processo Listas Layout V1
+################################################################################### */
+
+.process-lists-panel-v6 {
+  margin-top: 16px;
+}
+
+.process-lists-panel-v6 .muted {
+  margin-bottom: 14px;
+}
+
+.process-lists-rows-v6 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.process-list-row-v6 {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(420px, 1.75fr);
+  gap: 14px;
+  align-items: end;
+  width: 100%;
+}
+
+.process-list-row-v6 .field {
+  min-width: 0;
+}
+
+.process-list-row-v6 input {
+  width: 100%;
+}
+
+.process-lists-actions-v6 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  .process-list-row-v6 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ###################################################################################
+   Processo Listas Layout V2
+################################################################################### */
+
+.process-lists-panel-v7 {
+  margin-top: 16px;
+}
+
+.process-lists-panel-v7 .muted {
+  margin-bottom: 14px;
+}
+
+.process-lists-rows-v7 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.process-list-row-v7 {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(420px, 1.75fr);
+  gap: 14px;
+  align-items: end;
+  width: 100%;
+}
+
+.process-list-row-v7 .field {
+  min-width: 0;
+}
+
+.process-list-row-v7 input {
+  width: 100%;
+}
+
+.field-example-v7 {
+  display: block;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.process-lists-actions-v7 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.process-lists-cancel-v7 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 104px;
+  height: 38px;
+  padding: 0 18px;
+  border: 1px solid #b8cdf8;
+  border-radius: 7px;
+  background: #eef4ff;
+  color: #1f4fa3;
+  font-weight: 700;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.process-lists-cancel-v7:hover {
+  background: #dfeaff;
+  border-color: #8fb0f2;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .process-list-row-v7 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ###################################################################################
+   Aba superior ativa com destaque azul escuro
+################################################################################### */
+
+.admin-tab.active,
+.admin-tab-link.active,
+.admin-top-tab.active,
+.top-admin-tab.active,
+.nav-tab.active,
+.tab-button.active,
+.tab-link.active,
+[data-admin-tab].active,
+[data-settings-admin-tab].active,
+a[href*="admin_tab"].active,
+button[data-admin-tab].active {
+  background: #1f4fa3 !important;
+  border-color: #1f4fa3 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(31, 79, 163, 0.28);
+}
+
+.admin-tab.active:hover,
+.admin-tab-link.active:hover,
+.admin-top-tab.active:hover,
+.top-admin-tab.active:hover,
+.nav-tab.active:hover,
+.tab-button.active:hover,
+.tab-link.active:hover,
+[data-admin-tab].active:hover,
+[data-settings-admin-tab].active:hover,
+a[href*="admin_tab"].active:hover,
+button[data-admin-tab].active:hover {
+  background: #183f82 !important;
+  border-color: #183f82 !important;
+  color: #ffffff !important;
+}
+
+.admin-tab.active *,
+.admin-tab-link.active *,
+.admin-top-tab.active *,
+.top-admin-tab.active *,
+.nav-tab.active *,
+.tab-button.active *,
+.tab-link.active *,
+[data-admin-tab].active *,
+[data-settings-admin-tab].active *,
+a[href*="admin_tab"].active *,
+button[data-admin-tab].active * {
+  color: #ffffff !important;
+}
+
+
+/* ###################################################################################
+   Menu superior - aba ativa com destaque azul escuro V1
+################################################################################### */
+
+#submenu-items.menu-tabs .submenu-item.active,
+#submenu-items.menu-tabs .submenu-item[aria-selected="true"],
+.menu-tabs .submenu-item.active,
+.menu-tabs .submenu-item[aria-selected="true"] {
+  background: #1f4fa3 !important;
+  border: 1px solid #1f4fa3 !important;
+  border-bottom-color: #1f4fa3 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 7px rgba(31, 79, 163, 0.28);
+}
+
+#submenu-items.menu-tabs .submenu-item.active:hover,
+#submenu-items.menu-tabs .submenu-item[aria-selected="true"]:hover,
+.menu-tabs .submenu-item.active:hover,
+.menu-tabs .submenu-item[aria-selected="true"]:hover {
+  background: #183f82 !important;
+  border-color: #183f82 !important;
+  color: #ffffff !important;
+}
+
+#submenu-items.menu-tabs .submenu-item.active *,
+#submenu-items.menu-tabs .submenu-item[aria-selected="true"] *,
+.menu-tabs .submenu-item.active *,
+.menu-tabs .submenu-item[aria-selected="true"] * {
+  color: #ffffff !important;
 }
 
