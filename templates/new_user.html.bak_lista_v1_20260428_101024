@@ -2223,8 +2223,6 @@
     };
   </script>
   <script src="/static/js/new_user.js?v=20260427h"></script>
-  <script src="/static/js/modules/process_lists_v1.js?v=20260428a"></script>
-  <script src="/static/js/modules/force_lista_tab_v1.js?v=20260428a"></script>
   <script src="/static/js/modules/additional_fields_hierarchy_v2.js?v=20260427c"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>

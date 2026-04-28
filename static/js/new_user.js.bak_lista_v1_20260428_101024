@@ -64,7 +64,7 @@ const startupHash = window.location.hash || "";
 const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
-const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
+const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag"]);
 
 
 function normalizeSettingsTabKey(value) {
@@ -219,7 +219,6 @@ function buildProcessSections(setting, processValuesByField = {}) {
       label: optionLabel,
       fieldType: optionType,
       size: optionSize,
-      listKey: normalizeMenuKey(option.list_key || option.listKey),
       isRequired: normalizeProcessFieldRequired(option.is_required ?? option.required)
     });
   });
@@ -234,7 +233,6 @@ function buildProcessSections(setting, processValuesByField = {}) {
       fieldType: normalizedFieldType === "header" ? "text" : normalizedFieldType,
       size: normalizeProcessFieldSize(fieldMeta.size, normalizedFieldType),
       isRequired: Boolean(fieldMeta.isRequired),
-      listKey: normalizeMenuKey(fieldMeta.listKey),
       value: typeof fieldValue === "string" ? fieldValue : "",
       storageKey
     };

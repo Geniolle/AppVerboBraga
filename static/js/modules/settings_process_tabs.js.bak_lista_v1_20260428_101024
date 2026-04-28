@@ -51,8 +51,7 @@
       "campos-config": "campos-config",
       "campos-adicionais": "campos-adicionais",
       "additional-fields": "campos-adicionais",
-      "adicionais": "campos-adicionais",
-      "lista": "lista"
+      "adicionais": "campos-adicionais"
     };
 
     return aliases[cleanValue] || "";
@@ -139,11 +138,6 @@
         text === "campo adicionais"
       ) {
         element.textContent = "Campos adicionais";
-        return;
-      }
-
-      if (text === "lista") {
-        element.textContent = "Lista";
       }
     });
   }
