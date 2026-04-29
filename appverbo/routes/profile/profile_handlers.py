@@ -340,6 +340,14 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 "size": size_value,
                 "is_required": is_required,
             }
+        visible_field_section_map: dict[str, str] = {}
+        for raw_row in (documentos_setting or {}).get("process_visible_field_rows", []):
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            if not field_key:
+                continue
+            visible_field_section_map[field_key] = str(raw_row.get("header_key") or "").strip().lower()
         visible_custom_keys = [
             clean_key
             for clean_key in (
@@ -350,7 +358,44 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             and clean_key in option_keys
             and str((custom_field_meta.get(clean_key) or {}).get("field_type") or "") != "header"
         ]
+        current_documents_values: dict[str, str] = {
+            "nome": clean_full_name,
+            "telefone": clean_primary_phone,
+            "email": clean_login_email,
+            "pais": clean_country,
+            "data_nascimento": clean_birth_date,
+            "autorizacao_whatsapp": "1" if parsed_whatsapp_notice_opt_in else "0",
+        }
+        for custom_key in visible_custom_keys:
+            field_name = f"custom_field__{custom_key}"
+            field_meta = custom_field_meta.get(custom_key) or {}
+            field_type = str(field_meta.get("field_type") or "text").strip().lower()
+            if field_type == "flag":
+                current_documents_values[custom_key] = (
+                    "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
+                )
+                continue
+            if hasattr(submitted_form, "getlist"):
+                raw_submitted_values = submitted_form.getlist(field_name)
+            else:
+                raw_submitted_values = [submitted_form.get(field_name)]
+            submitted_values = [
+                str(raw_value or "").strip()
+                for raw_value in raw_submitted_values
+            ]
+            clean_values = [value for value in submitted_values if value]
+            current_documents_values[custom_key] = ", ".join(clean_values)
+        hidden_document_targets = get_hidden_process_targets_from_rules(
+            (documentos_setting or {}).get("process_subsequent_fields"),
+            current_documents_values,
+        )
         visible_custom_keys_set = set(visible_custom_keys)
+        active_custom_keys = filter_process_fields_by_hidden_targets(
+            visible_custom_keys,
+            hidden_document_targets,
+            visible_field_section_map,
+        )
+        active_custom_keys_set = set(active_custom_keys)
 
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         existing_custom_fields = {
@@ -364,7 +409,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if key not in visible_custom_keys_set
         }
         missing_required_custom_labels: list[str] = []
-        for custom_key in visible_custom_keys:
+        for custom_key in active_custom_keys:
             field_name = f"custom_field__{custom_key}"
             field_meta = custom_field_meta.get(custom_key) or {}
             field_type = str(field_meta.get("field_type") or "text").strip().lower()
@@ -393,6 +438,12 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 continue
             if clean_custom_value:
                 updated_custom_fields[custom_key] = clean_custom_value
+
+        for hidden_custom_key in visible_custom_keys:
+            if hidden_custom_key in active_custom_keys_set:
+                continue
+            if hidden_custom_key in existing_custom_fields:
+                updated_custom_fields[hidden_custom_key] = existing_custom_fields[hidden_custom_key]
 
         if missing_required_custom_labels:
             return RedirectResponse(
@@ -526,6 +577,14 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             )
 
         field_meta_by_key: dict[str, dict[str, Any]] = {}
+        field_section_map: dict[str, str] = {}
+        for raw_row in process_setting.get("process_visible_field_rows") or []:
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            if not field_key:
+                continue
+            field_section_map[field_key] = str(raw_row.get("header_key") or "").strip().lower()
         for raw_option in process_setting.get("process_field_options") or []:
             option_key = str(raw_option.get("key") or "").strip().lower()
             if not option_key:
@@ -549,6 +608,31 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             parse_menu_process_records(existing_profile_fields.get(records_storage_key))
             if records_storage_key
             else []
+        )
+        current_process_values_by_field: dict[str, str] = {}
+        for option_key in field_meta_by_key.keys():
+            storage_key = build_menu_process_field_storage_key(clean_menu_key, option_key)
+            if not storage_key:
+                continue
+            current_process_values_by_field[option_key] = str(existing_profile_fields.get(storage_key) or "").strip()
+        for field_key in section_field_keys:
+            field_meta = field_meta_by_key.get(field_key) or {}
+            field_type = _normalize_process_field_type(field_meta.get("field_type"))
+            input_name = f"process_field__{field_key}"
+            if field_type == "flag":
+                current_process_values_by_field[field_key] = (
+                    "1" if str(submitted_form.get(input_name) or "").strip() == "1" else "0"
+                )
+                continue
+            current_process_values_by_field[field_key] = str(submitted_form.get(input_name) or "").strip()
+        hidden_process_targets = get_hidden_process_targets_from_rules(
+            process_setting.get("process_subsequent_fields"),
+            current_process_values_by_field,
+        )
+        active_section_field_keys = filter_process_fields_by_hidden_targets(
+            section_field_keys,
+            hidden_process_targets,
+            field_section_map,
         )
 
         if history_process_mode and requested_history_action == "delete":
@@ -581,7 +665,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                     existing_profile_fields[records_storage_key] = serialized_records
                 else:
                     existing_profile_fields.pop(records_storage_key, None)
-            for field_key in section_field_keys:
+            for field_key in active_section_field_keys:
                 storage_key = build_menu_process_field_storage_key(clean_menu_key, field_key)
                 if storage_key:
                     existing_profile_fields.pop(storage_key, None)
@@ -608,7 +692,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             )
 
         missing_required_labels: list[str] = []
-        for field_key in section_field_keys:
+        for field_key in active_section_field_keys:
             field_meta = field_meta_by_key.get(field_key) or {}
             field_type = _normalize_process_field_type(field_meta.get("field_type"))
             if field_type == "flag":
@@ -631,13 +715,13 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        for field_key in section_field_keys:
+        for field_key in active_section_field_keys:
             storage_key = build_menu_process_field_storage_key(clean_menu_key, field_key)
             if storage_key:
                 existing_profile_fields.pop(storage_key, None)
 
         submitted_section_values: dict[str, str] = {}
-        for field_key in section_field_keys:
+        for field_key in active_section_field_keys:
             field_meta = field_meta_by_key.get(field_key) or {}
             field_type = _normalize_process_field_type(field_meta.get("field_type"))
             field_size = _normalize_process_field_size(field_meta.get("size"), field_type)
@@ -677,7 +761,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         if absence_process_mode:
             start_date_value: date | None = None
             end_date_value: date | None = None
-            for field_key in section_field_keys:
+            for field_key in active_section_field_keys:
                 field_meta = field_meta_by_key.get(field_key) or {}
                 field_type = _normalize_process_field_type(field_meta.get("field_type"))
                 if field_type != "date":

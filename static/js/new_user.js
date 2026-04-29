@@ -41,6 +41,7 @@ const settingsAction = bootstrap.settingsAction || "";
 const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
 const settingsEditKey = bootstrap.settingsEditKey || "";
 const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
+const sidebarMenuSettingsByKey = new Map();
 const visibleSidebarMenuKeys = new Set(
   (Array.isArray(bootstrap.visibleSidebarMenuKeys) ? bootstrap.visibleSidebarMenuKeys : [])
     .map((menuKey) => String(menuKey || "").trim().toLowerCase())
@@ -65,6 +66,7 @@ const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
 const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
+const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 
 
 function normalizeSettingsTabKey(value) {
@@ -101,6 +103,14 @@ function normalizeSettingsTabKey(value) {
 function normalizeMenuKey(value) {
   return String(value || "").trim().toLowerCase();
 }
+
+sidebarMenuSettings.forEach((setting) => {
+  const menuKey = normalizeMenuKey(setting && setting.key);
+  if (!menuKey) {
+    return;
+  }
+  sidebarMenuSettingsByKey.set(menuKey, setting);
+});
 
 function normalizeProcessFieldType(value) {
   const cleanType = String(value || "text").trim().toLowerCase();
@@ -158,6 +168,91 @@ function normalizeLookupText(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+function getSidebarMenuSetting(menuKey) {
+  return sidebarMenuSettingsByKey.get(normalizeMenuKey(menuKey)) || null;
+}
+
+function normalizeProcessSubsequentOperator(value) {
+  const cleanOperator = String(value || "equals").trim().toLowerCase();
+  return processSubsequentOperators.has(cleanOperator) ? cleanOperator : "equals";
+}
+
+function normalizeProcessSubsequentRules(rawRules) {
+  if (!Array.isArray(rawRules)) {
+    return [];
+  }
+  return rawRules
+    .map((rawRule) => {
+      if (!rawRule || typeof rawRule !== "object") {
+        return null;
+      }
+      const triggerField = normalizeMenuKey(rawRule.trigger_field);
+      const targetField = normalizeMenuKey(rawRule.field_key || rawRule.subsequent_field);
+      if (!triggerField || !targetField) {
+        return null;
+      }
+      const operator = normalizeProcessSubsequentOperator(rawRule.operator || rawRule.condition);
+      return {
+        key: normalizeMenuKey(rawRule.key),
+        triggerField,
+        targetField,
+        operator,
+        triggerValue: operator === "is_empty" || operator === "is_not_empty"
+          ? ""
+          : String(rawRule.trigger_value || "").trim()
+      };
+    })
+    .filter(Boolean);
+}
+
+function isProcessSubsequentRuleSatisfied(rule, valuesByField = {}) {
+  const currentValue = String(valuesByField[rule.triggerField] || "").trim();
+  const normalizedCurrentValue = normalizeLookupText(currentValue);
+  const normalizedRuleValue = normalizeLookupText(rule.triggerValue);
+  switch (normalizeProcessSubsequentOperator(rule.operator)) {
+    case "is_empty":
+      return currentValue === "";
+    case "is_not_empty":
+      return currentValue !== "";
+    case "not_equals":
+      return normalizedCurrentValue !== normalizedRuleValue;
+    default:
+      return normalizedCurrentValue === normalizedRuleValue;
+  }
+}
+
+function getHiddenProcessTargets(rules, valuesByField = {}) {
+  const groupedRules = new Map();
+  normalizeProcessSubsequentRules(rules).forEach((rule) => {
+    if (!groupedRules.has(rule.targetField)) {
+      groupedRules.set(rule.targetField, []);
+    }
+    groupedRules.get(rule.targetField).push(rule);
+  });
+  const hiddenTargets = new Set();
+  groupedRules.forEach((targetRules, targetField) => {
+    if (!targetRules.every((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField))) {
+      hiddenTargets.add(targetField);
+    }
+  });
+  return hiddenTargets;
+}
+
+function getFieldSectionMap(setting) {
+  const sectionMap = new Map();
+  const rows = Array.isArray(setting && setting.process_visible_field_rows)
+    ? setting.process_visible_field_rows
+    : [];
+  rows.forEach((row) => {
+    const fieldKey = normalizeMenuKey(row && row.field_key);
+    if (!fieldKey) {
+      return;
+    }
+    sectionMap.set(fieldKey, normalizeMenuKey(row && row.header_key));
+  });
+  return sectionMap;
+}
+
 function isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) {
   const joined = [
     normalizeLookupText(menuKey),
@@ -211,6 +306,18 @@ function buildProcessSections(setting, processValuesByField = {}) {
     ? setting.process_visible_fields
     : [];
   const optionMetaByKey = new Map();
+  const processListsByKey = new Map();
+  const processLists = Array.isArray(setting.process_lists) ? setting.process_lists : [];
+  processLists.forEach((processList) => {
+    const listKey = normalizeMenuKey(processList && processList.key);
+    if (!listKey) {
+      return;
+    }
+    processListsByKey.set(
+      listKey,
+      Array.isArray(processList.items) ? processList.items.map((item) => String(item || "").trim()).filter(Boolean) : []
+    );
+  });
   const processOptions = Array.isArray(setting.process_field_options)
     ? setting.process_field_options
     : [];
@@ -227,6 +334,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       fieldType: optionType,
       size: optionSize,
       listKey: normalizeMenuKey(option.list_key || option.listKey),
+      listOptions: processListsByKey.get(normalizeMenuKey(option.list_key || option.listKey)) || [],
       isRequired: normalizeProcessFieldRequired(option.is_required ?? option.required)
     });
   });
@@ -242,6 +350,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       size: normalizeProcessFieldSize(fieldMeta.size, normalizedFieldType),
       isRequired: Boolean(fieldMeta.isRequired),
       listKey: normalizeMenuKey(fieldMeta.listKey),
+      listOptions: Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions.slice() : [],
       value: typeof fieldValue === "string" ? fieldValue : "",
       storageKey
     };
@@ -698,6 +807,7 @@ let documentsSelectedProfileSection = (
 )
   ? String(profilePersonalSections[0].key || "geral")
   : "geral";
+let hiddenDocumentSectionKeys = new Set();
 if (initialAdminTab === "entidade") {
   adminSelectedTarget = "#create-entity-card";
 } else if (initialAdminTab === "contas") {
@@ -1164,12 +1274,42 @@ function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionF
   }
 }
 
+function collectCurrentDynamicProcessValues(menuKey) {
+  const cleanMenuKey = normalizeMenuKey(menuKey);
+  const baseValues = (
+    menuProcessValuesMap &&
+    menuProcessValuesMap[cleanMenuKey] &&
+    typeof menuProcessValuesMap[cleanMenuKey] === "object"
+  )
+    ? { ...menuProcessValuesMap[cleanMenuKey] }
+    : {};
+  if (!dynamicProcessEditFormEl) {
+    return baseValues;
+  }
+
+  const controls = dynamicProcessEditFormEl.querySelectorAll("[name^='process_field__']");
+  controls.forEach((controlEl) => {
+    const fieldKey = normalizeMenuKey(String(controlEl.getAttribute("name") || "").replace(/^process_field__/, ""));
+    if (!fieldKey) {
+      return;
+    }
+    if (controlEl.type === "checkbox") {
+      baseValues[fieldKey] = controlEl.checked ? "1" : "0";
+      return;
+    }
+    baseValues[fieldKey] = String(controlEl.value || "").trim();
+  });
+
+  return baseValues;
+}
+
 function renderDynamicProcessCard(menuKey, sectionKey) {
   if (!dynamicProcessCardEl) {
     return;
   }
   const cleanMenuKey = normalizeMenuKey(menuKey);
   const menuData = dynamicProcessDataByMenu[cleanMenuKey];
+  const processSetting = getSidebarMenuSetting(cleanMenuKey);
   dynamicProcessCardEl.classList.remove("editing");
   dynamicProcessCardEl.classList.remove("dynamic-process-open");
 
@@ -1220,13 +1360,37 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     return;
   }
 
+  const hiddenTargets = getHiddenProcessTargets(
+    processSetting ? processSetting.process_subsequent_fields : [],
+    collectCurrentDynamicProcessValues(cleanMenuKey)
+  );
+  const fieldSectionMap = getFieldSectionMap(processSetting);
+  const visibleSections = menuData.sections.filter(
+    (section) => !hiddenTargets.has(normalizeMenuKey(section && section.key))
+  );
+  if (itemsEl) {
+    const submenuLinks = itemsEl.querySelectorAll(".submenu-item[data-dynamic-process-section]");
+    submenuLinks.forEach((linkEl) => {
+      const linkSectionKey = normalizeMenuKey(linkEl.dataset.dynamicProcessSection);
+      linkEl.style.display = hiddenTargets.has(linkSectionKey) ? "none" : "";
+    });
+  }
+
   const cleanSectionKey = String(sectionKey || selectedDynamicSectionByMenu[cleanMenuKey] || "").trim();
-  let selectedSection = menuData.sections.find((section) => String(section.key || "") === cleanSectionKey);
+  let selectedSection = visibleSections.find((section) => String(section.key || "") === cleanSectionKey);
   if (!selectedSection) {
-    selectedSection = menuData.sections[0];
+    selectedSection = visibleSections[0];
   }
   if (selectedSection) {
     selectedDynamicSectionByMenu[cleanMenuKey] = String(selectedSection.key || "");
+    if (itemsEl) {
+      const selectedLinkEl = itemsEl.querySelector(
+        `.submenu-item[data-dynamic-process-section="${String(selectedSection.key || "").replace(/"/g, '\\"')}"]`
+      );
+      if (selectedLinkEl) {
+        setActiveSubmenu("#dynamic-process-card", selectedLinkEl);
+      }
+    }
   }
 
   const menuLabel = toSentenceCaseText(menuData.menuLabel || "Processo");
@@ -1267,8 +1431,13 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     dynamicProcessSubmitBtnEl.textContent = "Guardar";
   }
 
+  const selectedSectionKey = normalizeMenuKey(selectedSection ? selectedSection.key : "");
   const sectionFields = selectedSection && Array.isArray(selectedSection.fields)
-    ? selectedSection.fields
+    ? selectedSection.fields.filter((field) => {
+        const fieldKey = normalizeMenuKey(field && field.key);
+        const fieldSectionKey = fieldSectionMap.get(fieldKey) || selectedSectionKey;
+        return !hiddenTargets.has(fieldKey) && !hiddenTargets.has(fieldSectionKey);
+      })
     : [];
   if (!sectionFields.length) {
     if (dynamicProcessEditToggleEl) {
@@ -1312,6 +1481,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     if (dynamicProcessReadOnlyGridEl) {
       const readOnlyItemEl = document.createElement("div");
       readOnlyItemEl.className = "personal-item";
+      readOnlyItemEl.dataset.processFieldKey = fieldKey;
 
       const labelEl = document.createElement("span");
       labelEl.className = "personal-label";
@@ -1333,6 +1503,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     if (dynamicProcessEditGridEl) {
       const fieldContainerEl = document.createElement("div");
       fieldContainerEl.className = "field";
+      fieldContainerEl.dataset.processFieldKey = fieldKey;
 
       const inputId = `dynamic_process_${cleanMenuKey}_${String(selectedSection ? (selectedSection.key || "") : "")}_${fieldKey}`
         .replace(/[^a-z0-9_]+/gi, "_");
@@ -1363,6 +1534,31 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
 
         fieldContainerEl.appendChild(labelEl);
         fieldContainerEl.appendChild(wrapperEl);
+      } else if (fieldType === "list") {
+        const selectEl = document.createElement("select");
+        selectEl.id = inputId;
+        selectEl.name = inputName;
+        selectEl.required = fieldRequired;
+
+        const defaultOptionEl = document.createElement("option");
+        defaultOptionEl.value = "";
+        defaultOptionEl.textContent = "Selecione";
+        selectEl.appendChild(defaultOptionEl);
+
+        const listOptions = Array.isArray(field.listOptions) ? field.listOptions : [];
+        listOptions.forEach((optionValue) => {
+          const optionEl = document.createElement("option");
+          optionEl.value = String(optionValue || "");
+          optionEl.textContent = String(optionValue || "");
+          if (String(optionValue || "") === editDefaultValue) {
+            optionEl.selected = true;
+          }
+          selectEl.appendChild(optionEl);
+        });
+
+        renderedInputsByFieldKey.set(fieldKey, selectEl);
+        fieldContainerEl.appendChild(labelEl);
+        fieldContainerEl.appendChild(selectEl);
       } else {
         const inputEl = document.createElement("input");
         const inputValue = fieldType === "date"
@@ -1694,9 +1890,11 @@ function setupProfileProcessTabs() {
   function activateSection(sectionKey) {
     const normalizedSection = String(sectionKey || "").trim().toLowerCase() || "geral";
     const availableSections = new Set(
-      Array.from(sectionPanes).map((paneEl) =>
-        String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
-      )
+      Array.from(sectionPanes)
+        .map((paneEl) =>
+          String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
+        )
+        .filter((section) => !hiddenDocumentSectionKeys.has(section))
     );
     const effectiveSection = availableSections.has(normalizedSection)
       ? normalizedSection
@@ -1706,7 +1904,7 @@ function setupProfileProcessTabs() {
       const paneSection = String(
         paneEl.getAttribute("data-profile-section-pane") || "geral"
       ).trim().toLowerCase();
-      paneEl.style.display = paneSection === effectiveSection ? "" : "none";
+      paneEl.style.display = !hiddenDocumentSectionKeys.has(paneSection) && paneSection === effectiveSection ? "" : "none";
     });
     setupAllocationSectionMultiValue(personalCardEl, effectiveSection);
     documentsSelectedProfileSection = effectiveSection;
@@ -1714,6 +1912,114 @@ function setupProfileProcessTabs() {
 
   window.activateProfilePersonalSection = activateSection;
   activateSection(documentsSelectedProfileSection);
+}
+
+function collectCurrentDocumentProcessValues() {
+  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
+  const valuesByField = {};
+  if (!formEl) {
+    return valuesByField;
+  }
+
+  const fixedFieldMap = {
+    full_name: "nome",
+    primary_phone: "telefone",
+    login_email: "email",
+    country: "pais",
+    birth_date: "data_nascimento",
+    whatsapp_notice_opt_in: "autorizacao_whatsapp"
+  };
+
+  formEl.querySelectorAll("[name]").forEach((controlEl) => {
+    const rawName = String(controlEl.getAttribute("name") || "").trim();
+    let fieldKey = "";
+    if (rawName.startsWith("custom_field__")) {
+      fieldKey = normalizeMenuKey(rawName.replace(/^custom_field__/, ""));
+    } else {
+      fieldKey = normalizeMenuKey(fixedFieldMap[rawName] || "");
+    }
+    if (!fieldKey) {
+      return;
+    }
+    if (controlEl.type === "checkbox") {
+      valuesByField[fieldKey] = controlEl.checked ? "1" : "0";
+      return;
+    }
+    valuesByField[fieldKey] = String(controlEl.value || "").trim();
+  });
+
+  return valuesByField;
+}
+
+function applyDocumentProcessSubsequentVisibility() {
+  const setting = getSidebarMenuSetting("documentos");
+  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  if (!setting || !personalCardEl) {
+    return;
+  }
+
+  hiddenDocumentSectionKeys = getHiddenProcessTargets(
+    setting.process_subsequent_fields,
+    collectCurrentDocumentProcessValues()
+  );
+
+  if (itemsEl) {
+    const submenuLinks = itemsEl.querySelectorAll(".submenu-item[data-profile-section]");
+    submenuLinks.forEach((linkEl) => {
+      const sectionKey = normalizeMenuKey(linkEl.dataset.profileSection);
+      linkEl.style.display = hiddenDocumentSectionKeys.has(sectionKey) ? "none" : "";
+    });
+  }
+
+  if (typeof window.activateProfilePersonalSection === "function") {
+    window.activateProfilePersonalSection(documentsSelectedProfileSection);
+  }
+  if (itemsEl) {
+    const selectedLinkEl = itemsEl.querySelector(
+      `.submenu-item[data-profile-section="${String(documentsSelectedProfileSection || "geral").replace(/"/g, '\\"')}"]`
+    );
+    if (selectedLinkEl && selectedLinkEl.style.display !== "none") {
+      setActiveSubmenu("#perfil-pessoal-card", selectedLinkEl);
+      return;
+    }
+    const firstVisibleLinkEl = Array.from(itemsEl.querySelectorAll(".submenu-item[data-profile-section]")).find(
+      (linkEl) => linkEl.style.display !== "none"
+    );
+    if (firstVisibleLinkEl) {
+      documentsSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "geral");
+      setActiveSubmenu("#perfil-pessoal-card", firstVisibleLinkEl);
+    }
+  }
+}
+
+function setupConditionalProcessVisibility() {
+  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalFormEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
+  if (personalFormEl && personalFormEl.dataset.boundSubsequentVisibility !== "1") {
+    personalFormEl.dataset.boundSubsequentVisibility = "1";
+    ["input", "change"].forEach((eventName) => {
+      personalFormEl.addEventListener(eventName, () => {
+        applyDocumentProcessSubsequentVisibility();
+      });
+    });
+  }
+
+  if (dynamicProcessEditFormEl && dynamicProcessEditFormEl.dataset.boundSubsequentVisibility !== "1") {
+    dynamicProcessEditFormEl.dataset.boundSubsequentVisibility = "1";
+    ["input", "change"].forEach((eventName) => {
+      dynamicProcessEditFormEl.addEventListener(eventName, () => {
+        const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
+        if (!cleanMenuKey) {
+          return;
+        }
+        renderDynamicProcessCard(
+          cleanMenuKey,
+          selectedDynamicSectionByMenu[cleanMenuKey] || (dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
+        );
+      });
+    });
+  }
 }
 
 function syncTrainingOutrosState() {
@@ -2292,6 +2598,7 @@ function renderSubmenu(menuKey) {
         const sectionKey = String(item.profileSection || "geral");
         documentsSelectedProfileSection = sectionKey;
         window.activateProfilePersonalSection(sectionKey);
+        applyDocumentProcessSubsequentVisibility();
       }
     });
     itemsEl.appendChild(link);
@@ -2402,6 +2709,7 @@ function activateMenu(menuKey, options = {}) {
         const selectedSectionKey = String(selectedSectionItem.profileSection || "geral");
         documentsSelectedProfileSection = selectedSectionKey;
         window.activateProfilePersonalSection(selectedSectionKey);
+        applyDocumentProcessSubsequentVisibility();
         const selectedLinkEl = itemsEl
           ? itemsEl.querySelector(
               `.submenu-item[data-profile-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
@@ -2754,6 +3062,7 @@ syncTrainingOutrosState();
 renderHomeCharts();
 setupReadOnlyCards();
 setupProfileProcessTabs();
+setupConditionalProcessVisibility();
 setupProcessEditTabs();
 setupProcessFieldsBuilder();
 setupProcessAdditionalFieldsBuilder();

@@ -4,7 +4,7 @@
 
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260428-menu-active-v1">
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 {% endblock %}
 
 {% block body %}
@@ -1318,6 +1318,7 @@
             {% if settings_owner_fields_enabled %}
             <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
               <a href="#settings-tab-lista" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="lista">Listas</a>
+              <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
             {% endif %}
           </div>
           {% endif %}
@@ -1628,6 +1629,104 @@
                     class="action-btn-secondary process-lists-cancel-v7"
                     href="/users/new?menu={{ settings_edit_origin_menu }}&settings_edit_key={{ settings_edit_data.key }}&settings_action=edit&settings_tab=geral#settings-menu-edit-card"
                   >Cancelar</a>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div id="settings-tab-campos-subsequentes" class="process-edit-pane" data-process-edit-pane="campos-subsequentes">
+            <div class="admin-subsection">
+              <h3>Campos Subsequentes</h3>
+              <p class="muted">
+                Configure campos que aparecem após outros campos específicos.
+              </p>
+
+              <form method="post" action="/settings/menu/process-subsequent-fields">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+
+                <div class="process-subsequent-fields-grid">
+                  {% set subsequent_fields = settings_edit_data.process_subsequent_fields|default([]) %}
+                  {% for sub_field in subsequent_fields %}
+                  <div class="process-subsequent-field-row">
+                    <input type="hidden" name="subsequent_field_key" value="{{ sub_field.key }}">
+                    <div class="field">
+                      <label>Campo acionador</label>
+                      <select name="subsequent_trigger_field">
+                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                        <option value="{{ field.key }}" {% if sub_field.trigger_field == field.key %}selected{% endif %}>{{ field.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Campo subsequente</label>
+                      <select name="subsequent_field">
+                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                        <option value="{{ field.key }}" {% if sub_field.field_key == field.key %}selected{% endif %}>{{ field.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Condição</label>
+                      {% set subsequent_operator = sub_field.operator|default('equals') %}
+                      <select name="subsequent_operator">
+                        <option value="equals" {% if subsequent_operator == "equals" %}selected{% endif %}>Igual a</option>
+                        <option value="not_equals" {% if subsequent_operator == "not_equals" %}selected{% endif %}>Diferente de</option>
+                        <option value="is_empty" {% if subsequent_operator == "is_empty" %}selected{% endif %}>Vazio</option>
+                        <option value="is_not_empty" {% if subsequent_operator == "is_not_empty" %}selected{% endif %}>Diferente de vazio</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Valor acionador</label>
+                      <input type="text" name="subsequent_trigger_value" value="{{ sub_field.trigger_value|default('') }}">
+                    </div>
+                    <button type="button" class="table-icon-btn table-icon-btn-danger process-subsequent-field-remove-btn" title="Remover">&#10005;</button>
+                  </div>
+                  {% endfor %}
+
+                  <div class="process-subsequent-field-row">
+                    <input type="hidden" name="subsequent_field_key" value="">
+                    <div class="field">
+                      <label>Campo acionador</label>
+                      <select name="subsequent_trigger_field">
+                        <option value="">Selecione...</option>
+                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                        <option value="{{ field.key }}">{{ field.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Campo subsequente</label>
+                      <select name="subsequent_field">
+                        <option value="">Selecione...</option>
+                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                        <option value="{{ field.key }}">{{ field.label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Condição</label>
+                      <select name="subsequent_operator">
+                        <option value="equals" selected>Igual a</option>
+                        <option value="not_equals">Diferente de</option>
+                        <option value="is_empty">Vazio</option>
+                        <option value="is_not_empty">Diferente de vazio</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Valor acionador</label>
+                      <input type="text" name="subsequent_trigger_value" placeholder="Ex.: Outro">
+                    </div>
+                    <button type="button" class="table-icon-btn table-icon-btn-danger process-subsequent-field-remove-btn" title="Remover">&#10005;</button>
+                  </div>
+                </div>
+
+                <button type="button" id="process-subsequent-field-add-btn" class="table-icon-btn process-field-add-btn" title="Adicionar">&#43;</button>
+
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <a class="action-btn-cancel" href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}">Cancelar</a>
                 </div>
               </form>
             </div>
@@ -2304,7 +2403,7 @@
       </div>
     </main>
   </div>
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 {% endblock %}
 
 {% block scripts %}
@@ -2341,16 +2440,16 @@
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
     };
   </script>
-  <script src="/static/js/new_user.js?v=20260429b"></script>
+  <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
-  <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429c"></script>
+  <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 {% endblock %}
 
 

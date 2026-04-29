@@ -4,6 +4,7 @@ import json
 import re
 import unicodedata
 from typing import Any
+from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -590,6 +591,7 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         return []
 
     normalized: list[dict[str, Any]] = []
+    allowed_operators = {"equals", "not_equals", "is_empty", "is_not_empty"}
     seen_labels: set[str] = set()
     seen_keys: set[str] = set()
 
@@ -1011,6 +1013,7 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
 
         menu_config = _parse_menu_config(None if row is None else row.menu_config)
         process_additional_fields = get_menu_process_additional_fields(menu_config)
+        process_subsequent_fields = menu_config.get("subsequent_fields", [])
         explicit_display_order = _normalize_menu_display_order(
             menu_config.get(MENU_CONFIG_DISPLAY_ORDER_KEY)
         )
@@ -1045,6 +1048,7 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
                 "visibility_scope_mode": get_menu_visibility_scope_mode(menu_config),
                 "visibility_scope_label": get_menu_visibility_scope_label(menu_config),
                 "process_additional_fields": process_additional_fields,
+                "process_subsequent_fields": process_subsequent_fields,
                 "process_visible_fields": process_visible_fields,
                 "process_visible_field_header_map": process_visible_field_header_map,
                 "process_visible_field_rows": process_visible_field_rows,
@@ -2624,7 +2628,9 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
         clean_key = _normalize_menu_key(item.get("key"))
         menu_config = config_by_key.get(clean_key, {})
         process_lists = normalize_menu_process_lists_v3(menu_config.get("process_lists"))
+        process_subsequent_fields = normalize_menu_process_subsequent_fields(menu_config.get("subsequent_fields"))
         item["process_lists"] = process_lists
+        item["process_subsequent_fields"] = process_subsequent_fields
         item["process_list_options"] = [
             {"key": process_list["key"], "label": process_list["label"]}
             for process_list in process_lists
@@ -2896,6 +2902,105 @@ def update_sidebar_menu_additional_fields(
         menu_key=menu_key,
         raw_fields=raw_fields,
     )
+
+
+# //###################################################################################
+# (3) CAMPOS SUBSEQUENTES - V1
+# //###################################################################################
+
+def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, Any]]:
+    """Normaliza campos subsequentes que aparecem após outros campos específicos."""
+    if not isinstance(raw_fields, (list, tuple, set)):
+        return []
+
+    normalized: list[dict[str, Any]] = []
+
+    for raw_item in raw_fields:
+        if not isinstance(raw_item, dict):
+            continue
+
+        subsequent_key = str(raw_item.get("key") or "").strip().lower()
+        trigger_field = str(raw_item.get("trigger_field") or "").strip().lower()
+        field_key = str(raw_item.get("field_key") or raw_item.get("subsequent_field") or "").strip().lower()
+        operator = str(raw_item.get("operator") or raw_item.get("condition") or "equals").strip().lower()
+        trigger_value = str(raw_item.get("trigger_value") or "").strip()
+        if operator not in allowed_operators:
+            operator = "equals"
+        if operator in {"is_empty", "is_not_empty"}:
+            trigger_value = ""
+
+        if not trigger_field or not field_key:
+            continue
+
+        normalized.append({
+            "key": subsequent_key or uuid4().hex,
+            "trigger_field": trigger_field,
+            "field_key": field_key,
+            "operator": operator,
+            "trigger_value": trigger_value,
+        })
+
+    return normalized
+
+
+def update_sidebar_menu_subsequent_fields(
+    session: Session,
+    menu_key: str,
+    raw_fields: Any,
+) -> tuple[bool, str]:
+    """Atualiza os campos subsequentes de um menu."""
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if not clean_menu_key:
+        return False, "Menu inválido."
+
+    if clean_menu_key in SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS:
+        return False, "Este processo não permite campos subsequentes."
+
+    if not _menu_exists(session, clean_menu_key):
+        return False, "Menu não encontrado."
+
+    raw_config = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": clean_menu_key},
+    ).scalar_one_or_none()
+
+    menu_config: dict[str, Any] = {}
+
+    if isinstance(raw_config, str) and raw_config.strip():
+        try:
+            parsed_config = json.loads(raw_config)
+            if isinstance(parsed_config, dict):
+                menu_config = parsed_config
+        except json.JSONDecodeError:
+            menu_config = {}
+
+    normalized_fields = normalize_menu_process_subsequent_fields(raw_fields)
+    menu_config["subsequent_fields"] = normalized_fields
+
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+    session.commit()
+
+    return True, ""
 
 
 # //###################################################################################

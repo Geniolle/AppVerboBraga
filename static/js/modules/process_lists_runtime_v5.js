@@ -299,10 +299,249 @@
     formulario.dataset.processListsV7Bound = "1";
   }
 
+  function limparLinhaSubsequenteV7(linha) {
+    if (!linha) {
+      return;
+    }
+
+    const keyInput = linha.querySelector("input[name='subsequent_field_key']");
+    const triggerSelect = linha.querySelector("select[name='subsequent_trigger_field']");
+    const fieldSelect = linha.querySelector("select[name='subsequent_field']");
+    const operatorSelect = linha.querySelector("select[name='subsequent_operator']");
+    const valueInput = linha.querySelector("input[name='subsequent_trigger_value']");
+
+    if (keyInput) {
+      keyInput.value = "";
+    }
+    if (triggerSelect) {
+      triggerSelect.value = "";
+    }
+    if (fieldSelect) {
+      fieldSelect.value = "";
+    }
+    if (operatorSelect) {
+      operatorSelect.value = "equals";
+    }
+    if (valueInput) {
+      valueInput.value = "";
+    }
+  }
+
+  function syncSubsequenteOperatorStateV7(linha) {
+    if (!linha) {
+      return;
+    }
+
+    const operatorSelect = linha.querySelector("select[name='subsequent_operator']");
+    const valueField = linha.querySelector("input[name='subsequent_trigger_value']");
+    if (!operatorSelect || !valueField) {
+      return;
+    }
+
+    const operator = String(operatorSelect.value || "").trim().toLowerCase();
+    const requiresValue = operator !== "is_empty" && operator !== "is_not_empty";
+    const valueFieldWrap = valueField.closest(".field");
+
+    valueField.disabled = !requiresValue;
+    valueField.required = false;
+    if (!requiresValue) {
+      valueField.value = "";
+    }
+    if (valueFieldWrap) {
+      valueFieldWrap.classList.toggle("is-disabled", !requiresValue);
+    }
+  }
+
+  function bindSubsequenteOperatorV7(linha) {
+    const operatorSelect = linha ? linha.querySelector("select[name='subsequent_operator']") : null;
+    if (!operatorSelect || operatorSelect.dataset.boundOperatorSubsequenteV7 === "1") {
+      syncSubsequenteOperatorStateV7(linha);
+      return;
+    }
+
+    operatorSelect.dataset.boundOperatorSubsequenteV7 = "1";
+    operatorSelect.addEventListener("change", function () {
+      syncSubsequenteOperatorStateV7(linha);
+    });
+    syncSubsequenteOperatorStateV7(linha);
+  }
+
+  function ensureReadonlyMirrorInputV7(control, mirrorName) {
+    if (!control || !mirrorName) {
+      return;
+    }
+
+    let mirror = control.parentNode ? control.parentNode.querySelector(`input[type='hidden'][data-readonly-mirror='${mirrorName}']`) : null;
+    if (!mirror) {
+      mirror = document.createElement("input");
+      mirror.type = "hidden";
+      mirror.name = mirrorName;
+      mirror.dataset.readonlyMirror = mirrorName;
+      if (control.parentNode) {
+        control.parentNode.appendChild(mirror);
+      }
+    }
+    mirror.value = String(control.value || "");
+  }
+
+  function bloquearLinhaSubsequenteCriadaV7(linha) {
+    if (!linha) {
+      return;
+    }
+
+    const keyInput = linha.querySelector("input[name='subsequent_field_key']");
+    const triggerSelect = linha.querySelector("select[name='subsequent_trigger_field']");
+    const fieldSelect = linha.querySelector("select[name='subsequent_field']");
+    const operatorSelect = linha.querySelector("select[name='subsequent_operator']");
+    const valueInput = linha.querySelector("input[name='subsequent_trigger_value']");
+
+    linha.classList.add("process-subsequent-field-row-readonly-v7");
+
+    if (keyInput) {
+      keyInput.readOnly = true;
+    }
+    if (triggerSelect) {
+      ensureReadonlyMirrorInputV7(triggerSelect, "subsequent_trigger_field");
+      triggerSelect.disabled = true;
+    }
+    if (fieldSelect) {
+      ensureReadonlyMirrorInputV7(fieldSelect, "subsequent_field");
+      fieldSelect.disabled = true;
+    }
+    if (operatorSelect) {
+      ensureReadonlyMirrorInputV7(operatorSelect, "subsequent_operator");
+      operatorSelect.disabled = true;
+    }
+    if (valueInput) {
+      valueInput.readOnly = true;
+    }
+
+    syncSubsequenteOperatorStateV7(linha);
+  }
+
+  function garantirBotaoRemoverSubsequenteV7(linha) {
+    const botao = linha ? linha.querySelector(".process-subsequent-field-remove-btn") : null;
+    if (!botao || botao.dataset.boundRemoveSubsequenteV7 === "1") {
+      return;
+    }
+
+    botao.dataset.boundRemoveSubsequenteV7 = "1";
+    botao.addEventListener("click", function () {
+      linha.remove();
+    });
+  }
+
+  function montarBlocoSubsequentesV7(formulario) {
+    if (!formulario || formulario.dataset.processSubsequentesV7Bound === "1") {
+      return;
+    }
+
+    const containerOriginal = formulario.querySelector(".process-subsequent-fields-grid");
+    if (!containerOriginal) {
+      return;
+    }
+
+    const linhas = Array.from(containerOriginal.querySelectorAll(".process-subsequent-field-row"));
+    if (!linhas.length) {
+      return;
+    }
+
+    const blocoCriacao = document.createElement("div");
+    blocoCriacao.className = "process-subsequent-block-v7";
+    blocoCriacao.innerHTML = '<h4>Criar novo campo subsequente</h4><div class="process-subsequent-fields-grid"></div>';
+
+    const blocoExistentes = document.createElement("div");
+    blocoExistentes.className = "process-subsequent-block-v7 process-subsequent-existing-block-v7";
+    blocoExistentes.innerHTML = '<h4>Campos subsequentes criados</h4><div class="process-subsequent-fields-grid"></div>';
+
+    const containerCriacao = blocoCriacao.querySelector(".process-subsequent-fields-grid");
+    const containerExistentes = blocoExistentes.querySelector(".process-subsequent-fields-grid");
+    const botaoAdicionar = formulario.querySelector("#process-subsequent-field-add-btn");
+    const acoes = formulario.querySelector(".form-action-row");
+
+    let linhaCriacao = null;
+
+    linhas.forEach(function (linha) {
+      const keyInput = linha.querySelector("input[name='subsequent_field_key']");
+      const keyValue = String(keyInput ? keyInput.value : "").trim();
+
+      if (!keyValue && !linhaCriacao) {
+        linhaCriacao = linha;
+        linha.classList.add("process-subsequent-field-row-create-v7");
+        const botao = linha.querySelector(".process-subsequent-field-remove-btn");
+        if (botao) {
+          botao.remove();
+        }
+        limparLinhaSubsequenteV7(linha);
+        bindSubsequenteOperatorV7(linha);
+        containerCriacao.appendChild(linha);
+        return;
+      }
+
+      linha.classList.remove("process-subsequent-field-row-create-v7");
+      garantirBotaoRemoverSubsequenteV7(linha);
+      bloquearLinhaSubsequenteCriadaV7(linha);
+      containerExistentes.appendChild(linha);
+    });
+
+    if (!linhaCriacao) {
+      linhaCriacao = linhas[0].cloneNode(true);
+      linhaCriacao.classList.add("process-subsequent-field-row-create-v7");
+      limparLinhaSubsequenteV7(linhaCriacao);
+      const botao = linhaCriacao.querySelector(".process-subsequent-field-remove-btn");
+      if (botao) {
+        botao.remove();
+      }
+      bindSubsequenteOperatorV7(linhaCriacao);
+      containerCriacao.appendChild(linhaCriacao);
+    }
+
+    if (botaoAdicionar && botaoAdicionar.dataset.boundAddSubsequenteV7 !== "1") {
+      botaoAdicionar.dataset.boundAddSubsequenteV7 = "1";
+      botaoAdicionar.addEventListener("click", function () {
+        const novaLinha = linhaCriacao.cloneNode(true);
+        limparLinhaSubsequenteV7(novaLinha);
+
+        const colunaAcao = document.createElement("button");
+        colunaAcao.type = "button";
+        colunaAcao.className = "table-icon-btn table-icon-btn-danger process-subsequent-field-remove-btn";
+        colunaAcao.title = "Remover";
+        colunaAcao.setAttribute("aria-label", "Remover");
+        colunaAcao.innerHTML = "&#10005;";
+        novaLinha.appendChild(colunaAcao);
+        garantirBotaoRemoverSubsequenteV7(novaLinha);
+        bindSubsequenteOperatorV7(novaLinha);
+
+        containerCriacao.appendChild(novaLinha);
+      });
+    }
+
+    const parent = containerOriginal.parentNode;
+    parent.insertBefore(blocoCriacao, containerOriginal);
+    if (botaoAdicionar) {
+      blocoCriacao.appendChild(botaoAdicionar);
+    }
+    if (acoes) {
+      blocoCriacao.appendChild(acoes);
+    }
+    parent.insertBefore(blocoExistentes, containerOriginal);
+    containerOriginal.remove();
+
+    if (!containerExistentes.children.length) {
+      const vazio = document.createElement("p");
+      vazio.className = "empty process-subsequent-empty-v7";
+      vazio.textContent = "Sem campos subsequentes criados ainda.";
+      blocoExistentes.appendChild(vazio);
+    }
+
+    formulario.dataset.processSubsequentesV7Bound = "1";
+  }
+
   function inicializar_v5() {
     ligarBotaoAdicionarLista_v5();
     melhorarFormularioCamposAdicionais_v5();
     Array.from(document.querySelectorAll("form[action*='/settings/menu/process-lists']")).forEach(montarBlocoListasV7);
+    Array.from(document.querySelectorAll("form[action*='/settings/menu/process-subsequent-fields']")).forEach(montarBlocoSubsequentesV7);
   }
 
   if (document.readyState === "loading") {

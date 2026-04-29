@@ -2391,8 +2391,81 @@ th {
   text-decoration: none;
 }
 
+.process-subsequent-block-v7 {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #d8e0f1;
+}
+
+.process-subsequent-block-v7:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.process-subsequent-block-v7 h4 {
+  margin: 0 0 12px;
+  color: #1f3660;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.process-subsequent-block-v7 .process-subsequent-fields-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.process-subsequent-field-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 0.9fr) minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.process-subsequent-field-row .field {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.process-subsequent-field-row .field input,
+.process-subsequent-field-row .field select {
+  width: 100%;
+}
+
+.process-subsequent-field-row .field.is-disabled input {
+  background: #eef2fb;
+  color: #5a6580;
+  cursor: not-allowed;
+}
+
+.process-subsequent-field-row-create-v7 {
+  align-items: end;
+}
+
+.process-subsequent-field-row-readonly-v7 .field input,
+.process-subsequent-field-row-readonly-v7 .field select {
+  background: #eef2fb;
+  color: #334155;
+}
+
+.process-subsequent-block-v7 .process-field-add-btn {
+  margin-top: 12px;
+}
+
+.process-subsequent-block-v7 .form-action-row {
+  margin-top: 14px;
+}
+
+.process-subsequent-empty-v7 {
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   .process-list-row-v7 {
+    grid-template-columns: 1fr;
+  }
+
+  .process-subsequent-field-row {
     grid-template-columns: 1fr;
   }
 }

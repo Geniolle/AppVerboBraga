@@ -2,11 +2,133 @@ from __future__ import annotations
 
 import hashlib
 import json
+import unicodedata
 from datetime import date, datetime, timezone
 from typing import Any
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import get_sidebar_menu_settings
+
+PROCESS_SUBSEQUENT_ALLOWED_OPERATORS = {
+    "equals",
+    "not_equals",
+    "is_empty",
+    "is_not_empty",
+}
+
+
+def _normalize_process_rule_lookup_text(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    if not clean_value:
+        return ""
+    normalized = unicodedata.normalize("NFD", clean_value)
+    return "".join(char for char in normalized if unicodedata.category(char) != "Mn")
+
+
+def normalize_process_subsequent_operator(raw_value: Any) -> str:
+    clean_value = str(raw_value or "equals").strip().lower()
+    if clean_value in PROCESS_SUBSEQUENT_ALLOWED_OPERATORS:
+        return clean_value
+    return "equals"
+
+
+def normalize_process_subsequent_rules(raw_rules: Any) -> list[dict[str, str]]:
+    if not isinstance(raw_rules, (list, tuple, set)):
+        return []
+
+    normalized_rules: list[dict[str, str]] = []
+    for raw_rule in raw_rules:
+        if not isinstance(raw_rule, dict):
+            continue
+        rule_key = str(raw_rule.get("key") or "").strip().lower()
+        trigger_field = str(raw_rule.get("trigger_field") or "").strip().lower()
+        target_field = str(raw_rule.get("field_key") or raw_rule.get("subsequent_field") or "").strip().lower()
+        operator = normalize_process_subsequent_operator(
+            raw_rule.get("operator") or raw_rule.get("condition")
+        )
+        trigger_value = str(raw_rule.get("trigger_value") or "").strip()
+        if operator in {"is_empty", "is_not_empty"}:
+            trigger_value = ""
+        if not trigger_field or not target_field:
+            continue
+        normalized_rules.append(
+            {
+                "key": rule_key,
+                "trigger_field": trigger_field,
+                "field_key": target_field,
+                "operator": operator,
+                "trigger_value": trigger_value,
+            }
+        )
+    return normalized_rules
+
+
+def is_process_subsequent_rule_met(
+    rule: dict[str, Any],
+    values_by_field: dict[str, Any] | None,
+) -> bool:
+    current_values = values_by_field or {}
+    trigger_field = str(rule.get("trigger_field") or "").strip().lower()
+    if not trigger_field:
+        return True
+    operator = normalize_process_subsequent_operator(rule.get("operator"))
+    current_value = str(current_values.get(trigger_field) or "").strip()
+    normalized_current_value = _normalize_process_rule_lookup_text(current_value)
+    normalized_rule_value = _normalize_process_rule_lookup_text(rule.get("trigger_value"))
+
+    if operator == "is_empty":
+        return current_value == ""
+    if operator == "is_not_empty":
+        return current_value != ""
+    if operator == "not_equals":
+        return normalized_current_value != normalized_rule_value
+    return normalized_current_value == normalized_rule_value
+
+
+def get_hidden_process_targets_from_rules(
+    raw_rules: Any,
+    values_by_field: dict[str, Any] | None,
+) -> set[str]:
+    rules = normalize_process_subsequent_rules(raw_rules)
+    grouped_rules: dict[str, list[dict[str, str]]] = {}
+    for rule in rules:
+        target_field = str(rule.get("field_key") or "").strip().lower()
+        if not target_field:
+            continue
+        grouped_rules.setdefault(target_field, []).append(rule)
+
+    hidden_targets: set[str] = set()
+    for target_field, target_rules in grouped_rules.items():
+        if not all(is_process_subsequent_rule_met(rule, values_by_field) for rule in target_rules):
+            hidden_targets.add(target_field)
+    return hidden_targets
+
+
+def filter_process_fields_by_hidden_targets(
+    field_keys: list[str] | tuple[str, ...],
+    hidden_targets: set[str] | None,
+    field_section_map: dict[str, str] | None = None,
+) -> list[str]:
+    hidden = {
+        str(field_key or "").strip().lower()
+        for field_key in (hidden_targets or set())
+        if str(field_key or "").strip()
+    }
+    section_map = {
+        str(field_key or "").strip().lower(): str(section_key or "").strip().lower()
+        for field_key, section_key in (field_section_map or {}).items()
+        if str(field_key or "").strip()
+    }
+    filtered_fields: list[str] = []
+    for raw_field_key in field_keys or []:
+        field_key = str(raw_field_key or "").strip().lower()
+        if not field_key:
+            continue
+        section_key = section_map.get(field_key, "")
+        if field_key in hidden or (section_key and section_key in hidden):
+            continue
+        filtered_fields.append(field_key)
+    return filtered_fields
 
 def _normalize_profile_field_value(raw_field_value: Any) -> str:
     if raw_field_value is None:
@@ -380,6 +502,11 @@ def get_user_personal_data(
     }
 
 __all__ = [
+    "normalize_process_subsequent_operator",
+    "normalize_process_subsequent_rules",
+    "is_process_subsequent_rule_met",
+    "get_hidden_process_targets_from_rules",
+    "filter_process_fields_by_hidden_targets",
     "parse_member_profile_fields",
     "serialize_member_profile_fields",
     "build_menu_process_field_storage_key",

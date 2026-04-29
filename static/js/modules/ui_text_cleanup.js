@@ -36,6 +36,13 @@
     ["Entidades criadas", "Entidades criadas"]
   ]);
 
+  replacements.set("ObrigatÃ³rio", "Obrigatório");
+  replacements.set("obrigatÃ³rio", "obrigatório");
+  replacements.set("ObrigatÃƒÂ³rio", "Obrigatório");
+  replacements.set("obrigatÃƒÂ³rio", "obrigatório");
+  replacements.set("NÃ£o", "Não");
+  replacements.set("nÃ£o", "não");
+
   //###################################################################################
   // (3) FUNCOES AUXILIARES
   //###################################################################################
