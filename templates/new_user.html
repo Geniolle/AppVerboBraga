@@ -5,7 +5,6 @@
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260428-menu-active-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
-<script src="/static/js/modules/additional_fields_hierarchy_v3.js?v=20260428-menu-hierarchy-v1"></script>
 {% endblock %}
 
 {% block body %}
@@ -317,6 +316,7 @@
               {% set custom_type = custom_meta.get("field_type", "text") %}
               {% set custom_size = custom_meta.get("size") %}
               {% set custom_required = custom_meta.get("is_required", False) %}
+              {% set custom_list_options = custom_meta.get("list_options", []) %}
               {% if custom_type != "header" %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, 'geral') }}">
                 <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}{% if custom_required and custom_type != "flag" %} *{% endif %}</label>
@@ -331,6 +331,20 @@
                   >
                   <span>Ativo</span>
                 </label>
+                {% elif custom_type == "list" %}
+                <select
+                  id="edit_{{ field_key }}"
+                  name="custom_field__{{ field_key }}"
+                  {% if custom_required %}required{% endif %}
+                >
+                  <option value="">Selecione</option>
+                  {% for option_value in custom_list_options %}
+                  <option
+                    value="{{ option_value }}"
+                    {% if user_personal_data.custom_fields.get(field_key, '') == option_value %}selected{% endif %}
+                  >{{ option_value }}</option>
+                  {% endfor %}
+                </select>
                 {% else %}
                 <input
                   id="edit_{{ field_key }}"
@@ -1657,7 +1671,7 @@
                         </select>
                       </div>
                       <div class="field">
-                        <label>ObrigatÃ³rio</label>
+                        <label>Obrigatório</label>
                         <select name="additional_field_required" class="process-additional-field-required-select">
                           <option value="0" {% if not field.is_required %}selected{% endif %}>Não</option>
                           <option value="1" {% if field.is_required %}selected{% endif %}>Sim</option>
@@ -1676,36 +1690,34 @@
                         >
                       </div>
                       <div class="field field-move-buttons">
-                        <form method="post" action="/settings/menu/field-move">
-                          <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
-                          <input type="hidden" name="field_key" value="{{ field.key }}">
-                          <input type="hidden" name="direction" value="up">
-                          <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                          <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                        <div class="field-move-buttons-row">
                           <button
-                            type="submit"
-                            class="table-icon-btn"
+                            type="button"
+                            class="table-icon-btn process-additional-field-move-btn"
+                            data-move-direction="up"
+                            data-menu-key="{{ settings_edit_data.key }}"
+                            data-field-key="{{ field.key }}"
+                            data-redirect-menu="{{ settings_edit_origin_menu }}"
+                            data-redirect-target="#settings-menu-edit-card"
                             title="Mover para cima"
                             aria-label="Mover para cima"
                           >
                             &#8593;
                           </button>
-                        </form>
-                        <form method="post" action="/settings/menu/field-move">
-                          <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
-                          <input type="hidden" name="field_key" value="{{ field.key }}">
-                          <input type="hidden" name="direction" value="down">
-                          <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                          <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
                           <button
-                            type="submit"
-                            class="table-icon-btn"
+                            type="button"
+                            class="table-icon-btn process-additional-field-move-btn"
+                            data-move-direction="down"
+                            data-menu-key="{{ settings_edit_data.key }}"
+                            data-field-key="{{ field.key }}"
+                            data-redirect-menu="{{ settings_edit_origin_menu }}"
+                            data-redirect-target="#settings-menu-edit-card"
                             title="Mover para baixo"
                             aria-label="Mover para baixo"
                           >
                             &#8595;
                           </button>
-                        </form>
+                        </div>
                       </div>
                       <button
                         type="button"
@@ -1735,6 +1747,18 @@
                     href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                   >Cancelar</a>
                 </div>
+              </form>
+              <form
+                id="process-additional-field-move-form"
+                method="post"
+                action="/settings/menu/field-move"
+                style="display: none;"
+              >
+                <input type="hidden" name="menu_key" value="">
+                <input type="hidden" name="field_key" value="">
+                <input type="hidden" name="direction" value="">
+                <input type="hidden" name="redirect_menu" value="">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
               </form>
             </div>
           </div>
@@ -1877,8 +1901,8 @@
                       {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
-                        title="Menu obrigatÃ³rio"
-                        aria-label="Menu obrigatÃ³rio"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório"
                       >
                         &#128065;
                       </span>
@@ -2136,8 +2160,8 @@
                       {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
-                        title="Menu obrigatÃ³rio"
-                        aria-label="Menu obrigatÃ³rio"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório"
                       >
                         &#128065;
                       </span>
@@ -2281,7 +2305,6 @@
     </main>
   </div>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
-<script src="/static/js/modules/additional_fields_hierarchy_v3.js?v=20260428-menu-hierarchy-v1"></script>
 {% endblock %}
 
 {% block scripts %}
@@ -2318,10 +2341,9 @@
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
     };
   </script>
-  <script src="/static/js/new_user.js?v=20260427h"></script>
+  <script src="/static/js/new_user.js?v=20260429b"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
-  <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260428d"></script>
-<script src="/static/js/modules/additional_fields_hierarchy_v2.js?v=20260427c"></script>
+  <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429c"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
@@ -2329,7 +2351,6 @@
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
-<script src="/static/js/modules/additional_fields_hierarchy_v3.js?v=20260428-menu-hierarchy-v1"></script>
 {% endblock %}
 
 

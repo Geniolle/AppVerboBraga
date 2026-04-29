@@ -1639,6 +1639,40 @@ def update_sidebar_menu_process_fields(
     return True, ""
 
 
+def update_sidebar_menu_process_lists(
+    session: Session,
+    menu_key: str,
+    raw_lists: Any,
+) -> tuple[bool, str]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if not clean_menu_key:
+        return False, "Menu inválido."
+
+    if not _menu_exists(session, clean_menu_key):
+        return False, "Menu não encontrado."
+
+    menu_config = _load_menu_config(session, clean_menu_key)
+    normalized_lists = normalize_menu_process_lists_v3(raw_lists)
+    menu_config["process_lists"] = normalized_lists
+
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+    session.commit()
+    return True, ""
+
+
 def update_sidebar_menu_additional_fields(
     session: Session,
     menu_key: str,

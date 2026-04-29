@@ -1,15 +1,15 @@
-//###################################################################################
-// (1) CAMPOS ADICIONAIS - HIERARQUIA GLOBAL POR SETAS - V3
+﻿//###################################################################################
+// (1) CAMPOS ADICIONAIS - HIERARQUIA GLOBAL POR SETAS - V5
 //###################################################################################
 
 (function () {
   "use strict";
 
   //###################################################################################
-  // (2) FUNÇÕES AUXILIARES
+  // (2) NORMALIZAÇÃO E LOCALIZAÇÃO DO FORMULÁRIO
   //###################################################################################
 
-  function normalizarTexto_v3(valor) {
+  function normalizarTexto_v5(valor) {
     return String(valor || "")
       .trim()
       .toLowerCase()
@@ -17,7 +17,7 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  function obterFormularioCamposAdicionais_v3() {
+  function obterFormularioCamposAdicionais_v5() {
     const formularios = Array.from(document.querySelectorAll("form"));
 
     return formularios.find(function (formulario) {
@@ -27,7 +27,7 @@
         return true;
       }
 
-      const texto = normalizarTexto_v3(formulario.textContent);
+      const texto = normalizarTexto_v5(formulario.textContent);
 
       return (
         texto.includes("campos adicionais") &&
@@ -38,53 +38,7 @@
     }) || null;
   }
 
-  function obterTextoLabel_v3(elemento) {
-    const label = elemento ? elemento.querySelector("label") : null;
-    return normalizarTexto_v3(label ? label.textContent : "");
-  }
-
-  function ehCampoNome_v3(elemento) {
-    return obterTextoLabel_v3(elemento).includes("nome do campo adicional");
-  }
-
-  function ehCampoTipo_v3(elemento) {
-    return obterTextoLabel_v3(elemento).includes("tipo do campo");
-  }
-
-  function ehCampoObrigatorio_v3(elemento) {
-    return obterTextoLabel_v3(elemento).includes("obrigatorio");
-  }
-
-  function ehCampoTamanho_v3(elemento) {
-    return obterTextoLabel_v3(elemento).includes("tamanho");
-  }
-
-  function ehBotaoRemover_v3(elemento) {
-    if (!elemento) {
-      return false;
-    }
-
-    const botao = elemento.matches && elemento.matches("button")
-      ? elemento
-      : elemento.querySelector("button");
-
-    if (!botao) {
-      return false;
-    }
-
-    const texto = normalizarTexto_v3(botao.textContent);
-    const titulo = normalizarTexto_v3(botao.getAttribute("title"));
-
-    return (
-      texto === "x" ||
-      texto === "×" ||
-      titulo.includes("remover") ||
-      titulo.includes("excluir") ||
-      botao.classList.contains("btn-danger")
-    );
-  }
-
-  function obterContainerCampos_v3(formulario) {
+  function obterContainerCampos_v5(formulario) {
     return (
       formulario.querySelector(".additional-fields-grid") ||
       formulario.querySelector(".form-grid") ||
@@ -93,7 +47,80 @@
     );
   }
 
-  function obterCampoTipoDaLinha_v3(linha) {
+  function obterTextoLabel_v5(elemento) {
+    const label = elemento ? elemento.querySelector("label") : null;
+    return normalizarTexto_v5(label ? label.textContent : "");
+  }
+
+  //###################################################################################
+  // (3) IDENTIFICAÇÃO DAS COLUNAS
+  //###################################################################################
+
+  function ehCampoNome_v5(elemento) {
+    return obterTextoLabel_v5(elemento).includes("nome do campo adicional");
+  }
+
+  function ehCampoTipo_v5(elemento) {
+    return obterTextoLabel_v5(elemento).includes("tipo do campo");
+  }
+
+  function ehCampoObrigatorio_v5(elemento) {
+    return obterTextoLabel_v5(elemento).includes("obrigatorio");
+  }
+
+  function ehCampoTamanho_v5(elemento) {
+    return obterTextoLabel_v5(elemento).includes("tamanho");
+  }
+
+  function obterBotao_v5(elemento) {
+    if (!elemento) {
+      return null;
+    }
+
+    if (elemento.matches && elemento.matches("button")) {
+      return elemento;
+    }
+
+    return elemento.querySelector("button");
+  }
+
+  function ehBotaoRemover_v5(elemento) {
+    const botao = obterBotao_v5(elemento);
+
+    if (!botao) {
+      return false;
+    }
+
+    const texto = normalizarTexto_v5(botao.textContent);
+    const titulo = normalizarTexto_v5(botao.getAttribute("title"));
+
+    return (
+      texto === "x" ||
+      texto === "×" ||
+      titulo.includes("remover") ||
+      titulo.includes("excluir") ||
+      botao.classList.contains("remove-field-btn") ||
+      botao.classList.contains("btn-danger")
+    );
+  }
+
+  function ehFormularioMovimentoAntigo_v5(elemento) {
+    if (!elemento || !elemento.matches) {
+      return false;
+    }
+
+    if (!elemento.matches('form[action*="/settings/menu/field-move"]')) {
+      return false;
+    }
+
+    return true;
+  }
+
+  //###################################################################################
+  // (4) TIPO DO CAMPO E CABEÇALHO
+  //###################################################################################
+
+  function obterCampoTipoDaLinha_v5(linha) {
     const colunaTipo = linha.querySelector(".additional-field-type-col");
 
     if (colunaTipo) {
@@ -104,20 +131,20 @@
 
     return selects.find(function (select) {
       const field = select.closest(".field");
-      return obterTextoLabel_v3(field).includes("tipo do campo");
+      return obterTextoLabel_v5(field).includes("tipo do campo");
     }) || null;
   }
 
-  function ehLinhaCabecalho_v3(linha) {
-    const selectTipo = obterCampoTipoDaLinha_v3(linha);
+  function ehLinhaCabecalho_v5(linha) {
+    const selectTipo = obterCampoTipoDaLinha_v5(linha);
 
     if (!selectTipo) {
       return false;
     }
 
     const opcaoSelecionada = selectTipo.options[selectTipo.selectedIndex];
-    const textoSelecionado = normalizarTexto_v3(opcaoSelecionada ? opcaoSelecionada.textContent : "");
-    const valorSelecionado = normalizarTexto_v3(selectTipo.value);
+    const textoSelecionado = normalizarTexto_v5(opcaoSelecionada ? opcaoSelecionada.textContent : "");
+    const valorSelecionado = normalizarTexto_v5(selectTipo.value);
 
     return (
       textoSelecionado.includes("cabecalho") ||
@@ -126,22 +153,137 @@
     );
   }
 
-  function obterLinhas_v3(formulario) {
-    return Array.from(formulario.querySelectorAll(".additional-field-row-equalized"));
+  //###################################################################################
+  // (5) CSS DEFINITIVO DAS SETAS
+  //###################################################################################
+
+  function injetarCssHierarquia_v5() {
+    const styleId = "additional-fields-hierarchy-style-v5";
+
+    if (document.getElementById(styleId)) {
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.id = styleId;
+
+    style.textContent = [
+      'form[action*="/settings/menu/field-move"] {',
+      '  display: none !important;',
+      '}',
+
+      ".additional-field-row-equalized {",
+      "  display: grid !important;",
+      "  grid-template-columns: minmax(190px, 1.4fr) minmax(140px, 1fr) minmax(110px, 0.8fr) minmax(90px, 0.7fr) auto auto !important;",
+      "  align-items: end !important;",
+      "  gap: 6px !important;",
+      "  margin-bottom: 10px !important;",
+      "}",
+
+      ".additional-field-hierarchy-col {",
+      "  display: inline-flex !important;",
+      "  align-items: end !important;",
+      "  justify-content: flex-start !important;",
+      "  width: auto !important;",
+      "  min-width: 62px !important;",
+      "  margin: 0 !important;",
+      "  padding: 0 !important;",
+      "}",
+
+      ".header-hierarchy-controls {",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: flex-start !important;",
+      "  margin: 0 !important;",
+      "  padding: 0 !important;",
+      "  width: auto !important;",
+      "}",
+
+      ".header-hierarchy-label {",
+      "  display: none !important;",
+      "}",
+
+      ".header-hierarchy-buttons {",
+      "  display: inline-flex !important;",
+      "  flex-direction: row !important;",
+      "  align-items: center !important;",
+      "  justify-content: flex-start !important;",
+      "  flex-wrap: nowrap !important;",
+      "  gap: 4px !important;",
+      "  margin: 0 !important;",
+      "  padding: 0 !important;",
+      "  width: auto !important;",
+      "}",
+
+      ".header-hierarchy-btn {",
+      "  width: 28px !important;",
+      "  height: 28px !important;",
+      "  min-width: 28px !important;",
+      "  min-height: 28px !important;",
+      "  max-width: 28px !important;",
+      "  max-height: 28px !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "  margin: 0 !important;",
+      "  padding: 0 !important;",
+      "  border: 1px solid #b8c8ed !important;",
+      "  border-radius: 7px !important;",
+      "  background: #eef4ff !important;",
+      "  color: #1f4f9d !important;",
+      "  font-size: 14px !important;",
+      "  font-weight: 700 !important;",
+      "  line-height: 1 !important;",
+      "  cursor: pointer !important;",
+      "}",
+
+      ".header-hierarchy-btn:hover:not(:disabled) {",
+      "  background: #dfeaff !important;",
+      "  border-color: #8ea9e0 !important;",
+      "}",
+
+      ".header-hierarchy-btn:disabled {",
+      "  opacity: 0.45 !important;",
+      "  cursor: not-allowed !important;",
+      "}",
+
+      ".additional-field-action-col {",
+      "  display: inline-flex !important;",
+      "  align-items: end !important;",
+      "  justify-content: flex-start !important;",
+      "  margin: 0 !important;",
+      "  padding: 0 !important;",
+      "}",
+
+      ".additional-field-action-col button,",
+      ".remove-field-btn {",
+      "  width: 28px !important;",
+      "  height: 28px !important;",
+      "  min-width: 28px !important;",
+      "  min-height: 28px !important;",
+      "  display: inline-flex !important;",
+      "  align-items: center !important;",
+      "  justify-content: center !important;",
+      "  margin: 0 !important;",
+      "  padding: 0 !important;",
+      "}"
+    ].join("\n");
+
+    document.head.appendChild(style);
   }
 
   //###################################################################################
-  // (3) EQUALIZAR LINHAS PARA QUE A ORDEM DO DOM SEJA A ORDEM GRAVADA
+  // (6) MONTAGEM DAS LINHAS
   //###################################################################################
 
-  function montarLinhasEqualizadas_v3() {
-    const formulario = obterFormularioCamposAdicionais_v3();
+  function montarLinhasEqualizadas_v5() {
+    const formulario = obterFormularioCamposAdicionais_v5();
 
     if (!formulario) {
       return;
     }
 
-    const container = obterContainerCampos_v3(formulario);
+    const container = obterContainerCampos_v5(formulario);
 
     if (container.querySelector(".additional-field-row-equalized")) {
       return;
@@ -153,7 +295,7 @@
     while (indice < filhos.length) {
       const elementoAtual = filhos[indice];
 
-      if (!elementoAtual || !ehCampoNome_v3(elementoAtual)) {
+      if (!elementoAtual || !ehCampoNome_v5(elementoAtual)) {
         indice += 1;
         continue;
       }
@@ -168,14 +310,14 @@
           break;
         }
 
-        if (ehCampoNome_v3(proximoElemento)) {
+        if (ehCampoNome_v5(proximoElemento)) {
           break;
         }
 
         elementosDaLinha.push(proximoElemento);
         proximoIndice += 1;
 
-        if (ehBotaoRemover_v3(proximoElemento)) {
+        if (ehBotaoRemover_v5(proximoElemento)) {
           break;
         }
       }
@@ -195,10 +337,10 @@
   }
 
   //###################################################################################
-  // (4) CLASSIFICAR COLUNAS
+  // (7) CLASSIFICAÇÃO DAS COLUNAS
   //###################################################################################
 
-  function classificarColunas_v3() {
+  function classificarColunas_v5() {
     const linhas = Array.from(document.querySelectorAll(".additional-field-row-equalized"));
 
     linhas.forEach(function (linha) {
@@ -212,27 +354,32 @@
           "additional-field-action-col"
         );
 
-        if (ehCampoNome_v3(coluna)) {
+        if (ehFormularioMovimentoAntigo_v5(coluna)) {
+          coluna.style.display = "none";
+          return;
+        }
+
+        if (ehCampoNome_v5(coluna)) {
           coluna.classList.add("additional-field-name-col");
           return;
         }
 
-        if (ehCampoTipo_v3(coluna)) {
+        if (ehCampoTipo_v5(coluna)) {
           coluna.classList.add("additional-field-type-col");
           return;
         }
 
-        if (ehCampoObrigatorio_v3(coluna)) {
+        if (ehCampoObrigatorio_v5(coluna)) {
           coluna.classList.add("additional-field-required-col");
           return;
         }
 
-        if (ehCampoTamanho_v3(coluna)) {
+        if (ehCampoTamanho_v5(coluna)) {
           coluna.classList.add("additional-field-size-col");
           return;
         }
 
-        if (ehBotaoRemover_v3(coluna)) {
+        if (ehBotaoRemover_v5(coluna)) {
           coluna.classList.add("additional-field-action-col");
         }
       });
@@ -240,10 +387,10 @@
   }
 
   //###################################################################################
-  // (5) COLUNA DAS SETAS
+  // (8) COLUNA NOVA DAS SETAS
   //###################################################################################
 
-  function obterOuCriarColunaHierarquia_v3(linha) {
+  function obterOuCriarColunaHierarquia_v5(linha) {
     let colunaHierarquia = linha.querySelector(".additional-field-hierarchy-col");
 
     if (colunaHierarquia) {
@@ -271,11 +418,11 @@
   }
 
   //###################################################################################
-  // (6) BLOCOS DE HIERARQUIA
+  // (9) BLOCOS DE CABEÇALHO
   //###################################################################################
 
-  function obterBlocoDaLinha_v3(linha) {
-    if (!ehLinhaCabecalho_v3(linha)) {
+  function obterBlocoDaLinha_v5(linha) {
+    if (!ehLinhaCabecalho_v5(linha)) {
       return [linha];
     }
 
@@ -283,7 +430,7 @@
     let proxima = linha.nextElementSibling;
 
     while (proxima && proxima.classList.contains("additional-field-row-equalized")) {
-      if (ehLinhaCabecalho_v3(proxima)) {
+      if (ehLinhaCabecalho_v5(proxima)) {
         break;
       }
 
@@ -294,14 +441,14 @@
     return bloco;
   }
 
-  function obterPrimeiraLinhaDoBlocoAnterior_v3(linha) {
+  function obterPrimeiraLinhaDoBlocoAnterior_v5(linha) {
     let anterior = linha.previousElementSibling;
 
     if (!anterior || !anterior.classList.contains("additional-field-row-equalized")) {
       return null;
     }
 
-    if (!ehLinhaCabecalho_v3(linha)) {
+    if (!ehLinhaCabecalho_v5(linha)) {
       return anterior;
     }
 
@@ -311,7 +458,7 @@
     ) {
       const candidato = anterior.previousElementSibling;
 
-      if (ehLinhaCabecalho_v3(candidato)) {
+      if (ehLinhaCabecalho_v5(candidato)) {
         anterior = candidato;
         break;
       }
@@ -322,8 +469,8 @@
     return anterior;
   }
 
-  function obterUltimaLinhaDoProximoBloco_v3(linha) {
-    const blocoAtual = obterBlocoDaLinha_v3(linha);
+  function obterUltimaLinhaDoProximoBloco_v5(linha) {
+    const blocoAtual = obterBlocoDaLinha_v5(linha);
     const ultimaAtual = blocoAtual[blocoAtual.length - 1];
     const primeiraProxima = ultimaAtual.nextElementSibling;
 
@@ -331,28 +478,26 @@
       return null;
     }
 
-    if (!ehLinhaCabecalho_v3(linha)) {
+    if (!ehLinhaCabecalho_v5(linha)) {
       return primeiraProxima;
     }
 
-    const blocoProximo = obterBlocoDaLinha_v3(primeiraProxima);
+    const blocoProximo = obterBlocoDaLinha_v5(primeiraProxima);
     return blocoProximo[blocoProximo.length - 1] || primeiraProxima;
   }
 
   //###################################################################################
-  // (7) MOVER LINHAS OU BLOCOS
+  // (10) MOVIMENTO DAS LINHAS
   //###################################################################################
 
-  function moverLinhaParaCima_v3(linha) {
-    const formulario = obterFormularioCamposAdicionais_v3();
-
-    if (!formulario || !linha) {
+  function moverLinhaParaCima_v5(linha) {
+    if (!linha) {
       return;
     }
 
     const container = linha.parentNode;
-    const bloco = obterBlocoDaLinha_v3(linha);
-    const primeiraAnterior = obterPrimeiraLinhaDoBlocoAnterior_v3(linha);
+    const bloco = obterBlocoDaLinha_v5(linha);
+    const primeiraAnterior = obterPrimeiraLinhaDoBlocoAnterior_v5(linha);
 
     if (!primeiraAnterior) {
       return;
@@ -362,19 +507,17 @@
       container.insertBefore(item, primeiraAnterior);
     });
 
-    atualizarHierarquia_v3();
+    atualizarHierarquia_v5();
   }
 
-  function moverLinhaParaBaixo_v3(linha) {
-    const formulario = obterFormularioCamposAdicionais_v3();
-
-    if (!formulario || !linha) {
+  function moverLinhaParaBaixo_v5(linha) {
+    if (!linha) {
       return;
     }
 
     const container = linha.parentNode;
-    const bloco = obterBlocoDaLinha_v3(linha);
-    const ultimaProxima = obterUltimaLinhaDoProximoBloco_v3(linha);
+    const bloco = obterBlocoDaLinha_v5(linha);
+    const ultimaProxima = obterUltimaLinhaDoProximoBloco_v5(linha);
 
     if (!ultimaProxima) {
       return;
@@ -386,26 +529,23 @@
       container.insertBefore(item, referencia);
     });
 
-    atualizarHierarquia_v3();
+    atualizarHierarquia_v5();
   }
 
   //###################################################################################
-  // (8) CRIAR CONTROLES DE SETAS
+  // (11) CRIAÇÃO DOS BOTÕES HORIZONTAIS
   //###################################################################################
 
-  function criarControlesNaLinha_v3(linha, indice, total) {
-    const colunaHierarquia = obterOuCriarColunaHierarquia_v3(linha);
+  function criarControlesNaLinha_v5(linha, indice, total) {
+    const colunaHierarquia = obterOuCriarColunaHierarquia_v5(linha);
 
-    colunaHierarquia.classList.remove("is-empty");
     colunaHierarquia.innerHTML = "";
-
-    const isCabecalho = ehLinhaCabecalho_v3(linha);
-    const label = isCabecalho ? "Hierarquia" : "Ordem";
 
     const controles = document.createElement("div");
     controles.className = "header-hierarchy-controls";
+
     controles.innerHTML = [
-      '<span class="header-hierarchy-label">' + label + '</span>',
+      '<span class="header-hierarchy-label">Hierarquia</span>',
       '<div class="header-hierarchy-buttons">',
       '  <button type="button" class="header-hierarchy-btn" data-header-move="up" title="Subir">↑</button>',
       '  <button type="button" class="header-hierarchy-btn" data-header-move="down" title="Descer">↓</button>',
@@ -435,11 +575,11 @@
       const direcao = botao.getAttribute("data-header-move");
 
       if (direcao === "up") {
-        moverLinhaParaCima_v3(linha);
+        moverLinhaParaCima_v5(linha);
       }
 
       if (direcao === "down") {
-        moverLinhaParaBaixo_v3(linha);
+        moverLinhaParaBaixo_v5(linha);
       }
     });
 
@@ -447,49 +587,51 @@
   }
 
   //###################################################################################
-  // (9) ATUALIZAR HIERARQUIA
+  // (12) ATUALIZAÇÃO GERAL
   //###################################################################################
 
-  function atualizarHierarquia_v3() {
-    const formulario = obterFormularioCamposAdicionais_v3();
+  function atualizarHierarquia_v5() {
+    const formulario = obterFormularioCamposAdicionais_v5();
 
     if (!formulario) {
       return;
     }
 
-    montarLinhasEqualizadas_v3();
-    classificarColunas_v3();
+    injetarCssHierarquia_v5();
+    montarLinhasEqualizadas_v5();
+    classificarColunas_v5();
 
-    const linhas = obterLinhas_v3(formulario);
+    const linhas = Array.from(formulario.querySelectorAll(".additional-field-row-equalized"));
 
     linhas.forEach(function (linha, indice) {
-      criarControlesNaLinha_v3(linha, indice, linhas.length);
+      criarControlesNaLinha_v5(linha, indice, linhas.length);
 
-      const selectTipo = obterCampoTipoDaLinha_v3(linha);
+      const selectTipo = obterCampoTipoDaLinha_v5(linha);
 
-      if (selectTipo && selectTipo.dataset.hierarchyBoundV3 !== "1") {
-        selectTipo.dataset.hierarchyBoundV3 = "1";
-        selectTipo.addEventListener("change", atualizarHierarquia_v3);
+      if (selectTipo && selectTipo.dataset.hierarchyBoundV5 !== "1") {
+        selectTipo.dataset.hierarchyBoundV5 = "1";
+        selectTipo.addEventListener("change", atualizarHierarquia_v5);
       }
     });
   }
 
   //###################################################################################
-  // (10) INICIALIZAÇÃO
+  // (13) INICIALIZAÇÃO
   //###################################################################################
 
-  function inicializar_v3() {
-    atualizarHierarquia_v3();
+  function inicializar_v5() {
+    injetarCssHierarquia_v5();
+    atualizarHierarquia_v5();
 
-    window.setTimeout(atualizarHierarquia_v3, 100);
-    window.setTimeout(atualizarHierarquia_v3, 400);
-    window.setTimeout(atualizarHierarquia_v3, 1000);
-    window.setTimeout(atualizarHierarquia_v3, 1800);
+    window.setTimeout(atualizarHierarquia_v5, 100);
+    window.setTimeout(atualizarHierarquia_v5, 400);
+    window.setTimeout(atualizarHierarquia_v5, 1000);
+    window.setTimeout(atualizarHierarquia_v5, 1800);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", inicializar_v3);
+    document.addEventListener("DOMContentLoaded", inicializar_v5);
   } else {
-    inicializar_v3();
+    inicializar_v5();
   }
 })();

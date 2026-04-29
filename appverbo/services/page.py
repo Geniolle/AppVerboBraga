@@ -122,6 +122,11 @@ def get_page_data(
     for sidebar_item in sidebar_menu_settings:
         if str(sidebar_item.get("key") or "") != "documentos":
             continue
+        process_lists_by_key = {
+            str(item.get("key") or "").strip().lower(): list(item.get("items") or [])
+            for item in (sidebar_item.get("process_lists") or [])
+            if str(item.get("key") or "").strip()
+        }
         options = sidebar_item.get("process_field_options") or []
         option_labels = {
             str(item.get("key") or "").strip().lower(): str(item.get("label") or "").strip()
@@ -149,7 +154,7 @@ def get_page_data(
             if not clean_key.startswith("custom_"):
                 continue
             field_type = str(custom_field.get("field_type") or "text").strip().lower()
-            if field_type not in {"text", "number", "email", "phone", "date", "flag", "header"}:
+            if field_type not in {"text", "number", "email", "phone", "date", "flag", "header", "list"}:
                 field_type = "text"
             try:
                 parsed_size = int(str(custom_field.get("size") or "").strip())
@@ -166,10 +171,13 @@ def get_page_data(
                 is_required = str(raw_required or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
             if field_type == "header":
                 is_required = False
+            list_key = str(custom_field.get("list_key") or "").strip().lower()
             profile_personal_custom_field_meta[clean_key] = {
                 "field_type": field_type,
                 "size": field_size,
                 "is_required": is_required,
+                "list_key": list_key,
+                "list_options": list(process_lists_by_key.get(list_key, [])) if field_type == "list" else [],
             }
         visible_raw = sidebar_item.get("process_visible_fields") or []
         visible_fields = [

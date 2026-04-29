@@ -1641,32 +1641,71 @@ th {
   gap: 10px;
 }
 
-   .process-additional-field-row {
+.process-additional-field-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.8fr) minmax(140px, 0.5fr) minmax(140px, 0.4fr) auto auto;
+  grid-template-columns:
+    minmax(260px, 1.2fr)
+    minmax(180px, 0.8fr)
+    minmax(140px, 0.5fr)
+    minmax(140px, 0.4fr)
+    minmax(180px, 0.8fr)
+    auto
+    auto;
   gap: 8px;
   align-items: end;
 }
 
 .process-additional-field-row .field-move-buttons {
   display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  align-self: end;
+  min-width: 76px;
+}
+
+.process-additional-field-row .field-move-buttons-row {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 4px;
   align-items: center;
+  justify-content: flex-start;
+  white-space: nowrap;
 }
 
 .process-additional-field-row .field-move-buttons form {
   margin: 0;
   padding: 0;
+  display: inline-flex;
+  flex: 0 0 auto;
 }
 
 .process-additional-field-row .field-move-buttons .table-icon-btn {
-  padding: 4px 8px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
   font-size: 14px;
 }
 
-   .process-additional-field-row .field {
+.process-additional-field-row .field {
   min-width: 0;
   margin-bottom: 0;
+}
+
+.process-additional-field-row .additional-field-list-col-v5 {
+  min-width: 0;
+}
+
+.process-additional-field-row .additional-field-list-col-v5 select {
+  width: 100%;
+}
+
+.process-additional-field-row .additional-field-list-col-v5.is-disabled select {
+  background: #eef2fb;
+  color: #5a6580;
+  cursor: not-allowed;
 }
 
    .process-additional-field-row.process-additional-field-row-header,
@@ -2258,6 +2297,25 @@ th {
   margin-bottom: 14px;
 }
 
+.process-lists-block-v7 {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #d9e3f8;
+}
+
+.process-lists-block-v7:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.process-lists-block-v7 h4 {
+  margin: 0 0 12px;
+  color: #1f2f4d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .process-lists-rows-v7 {
   display: flex;
   flex-direction: column;
@@ -2266,10 +2324,14 @@ th {
 
 .process-list-row-v7 {
   display: grid;
-  grid-template-columns: minmax(220px, 0.75fr) minmax(420px, 1.75fr);
+  grid-template-columns: minmax(220px, 0.75fr) minmax(420px, 1.75fr) auto;
   gap: 14px;
   align-items: end;
   width: 100%;
+}
+
+.process-list-row-create-v7 {
+  grid-template-columns: minmax(220px, 0.75fr) minmax(420px, 1.75fr);
 }
 
 .process-list-row-v7 .field {
@@ -2278,6 +2340,16 @@ th {
 
 .process-list-row-v7 input {
   width: 100%;
+}
+
+.process-list-actions-col-v7 {
+  display: inline-flex;
+  align-items: end;
+  justify-content: flex-start;
+}
+
+.process-lists-empty-v7 {
+  margin: 0;
 }
 
 .field-example-v7 {

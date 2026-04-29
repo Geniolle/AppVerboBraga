@@ -155,10 +155,25 @@
         colunaLista.appendChild(label);
         colunaLista.appendChild(criarSelectLista_v5(meta.list_key || meta.listKey || ""));
 
-        linha.appendChild(colunaLista);
+        const colunaMover = linha.querySelector(".field-move-buttons");
+        const botaoRemover = linha.querySelector(".process-additional-field-remove-btn");
+
+        if (colunaMover) {
+          linha.insertBefore(colunaLista, colunaMover);
+        } else if (botaoRemover) {
+          linha.insertBefore(colunaLista, botaoRemover);
+        } else {
+          linha.appendChild(colunaLista);
+        }
+
+        const selectLista = colunaLista.querySelector("select[name='additional_field_list_key']");
 
         function atualizarVisibilidade() {
-          colunaLista.style.display = selectTipo.value === "list" ? "" : "none";
+          const isLista = selectTipo.value === "list";
+          colunaLista.classList.toggle("is-disabled", !isLista);
+          if (selectLista) {
+            selectLista.disabled = !isLista;
+          }
         }
 
         selectTipo.addEventListener("change", atualizarVisibilidade);
@@ -167,9 +182,127 @@
     });
   }
 
+  function criarLinhaListaVazia_v7() {
+    const linha = document.createElement("div");
+    linha.className = "process-list-row-v7 process-list-row-create-v7";
+    linha.innerHTML = [
+      '<input type="hidden" name="process_list_key" value="">',
+      '<div class="field">',
+      '  <label>Nome da lista</label>',
+      '  <input name="process_list_label">',
+      '</div>',
+      '<div class="field">',
+      '  <label>Conteúdo da lista</label>',
+      '  <input name="process_list_items_csv">',
+      '</div>'
+    ].join("");
+    return linha;
+  }
+
+  function garantirBotaoRemoverLista_v7(linha) {
+    if (!linha || linha.querySelector(".process-list-remove-btn-v7")) {
+      return;
+    }
+
+    const coluna = document.createElement("div");
+    coluna.className = "process-list-actions-col-v7";
+    coluna.innerHTML = [
+      '<button',
+      '  type="button"',
+      '  class="table-icon-btn table-icon-btn-danger process-list-remove-btn-v7"',
+      '  title="Eliminar lista"',
+      '  aria-label="Eliminar lista"',
+      '>',
+      '  &#10005;',
+      '</button>'
+    ].join("");
+
+    const botao = coluna.querySelector(".process-list-remove-btn-v7");
+    if (botao) {
+      botao.addEventListener("click", function () {
+        linha.remove();
+      });
+    }
+
+    linha.appendChild(coluna);
+  }
+
+  function montarBlocoListasV7(formulario) {
+    if (!formulario || formulario.dataset.processListsV7Bound === "1") {
+      return;
+    }
+
+    const containerOriginal = formulario.querySelector(".process-lists-rows-v7");
+    if (!containerOriginal) {
+      return;
+    }
+
+    const linhas = Array.from(containerOriginal.querySelectorAll(".process-list-row-v7"));
+    if (!linhas.length) {
+      return;
+    }
+
+    const blocoCriacao = document.createElement("div");
+    blocoCriacao.className = "process-lists-block-v7";
+    blocoCriacao.innerHTML = '<h4>Criar nova lista</h4><div class="process-lists-rows-v7"></div>';
+
+    const blocoExistentes = document.createElement("div");
+    blocoExistentes.className = "process-lists-block-v7 process-lists-existing-block-v7";
+    blocoExistentes.innerHTML = '<h4>Listas criadas</h4><div class="process-lists-rows-v7"></div>';
+    const acoes = formulario.querySelector(".process-lists-actions-v7");
+
+    const containerCriacao = blocoCriacao.querySelector(".process-lists-rows-v7");
+    const containerExistentes = blocoExistentes.querySelector(".process-lists-rows-v7");
+
+    let linhaCriacao = null;
+
+    linhas.forEach(function (linha) {
+      const keyInput = linha.querySelector("input[name='process_list_key']");
+      const keyValue = String(keyInput ? keyInput.value : "").trim();
+
+      if (!keyValue && !linhaCriacao) {
+        linhaCriacao = linha;
+        linha.classList.add("process-list-row-create-v7");
+        const colunaAcao = linha.querySelector(".process-list-actions-col-v7");
+        if (colunaAcao) {
+          colunaAcao.remove();
+        }
+        containerCriacao.appendChild(linha);
+        return;
+      }
+
+      linha.classList.remove("process-list-row-create-v7");
+      garantirBotaoRemoverLista_v7(linha);
+      containerExistentes.appendChild(linha);
+    });
+
+    if (!linhaCriacao) {
+      linhaCriacao = criarLinhaListaVazia_v7();
+      containerCriacao.appendChild(linhaCriacao);
+    }
+
+    const parent = containerOriginal.parentNode;
+    parent.insertBefore(blocoCriacao, containerOriginal);
+    if (acoes) {
+      blocoCriacao.appendChild(acoes);
+    }
+    parent.insertBefore(blocoExistentes, containerOriginal);
+    containerOriginal.remove();
+
+    if (!containerExistentes.children.length) {
+      const vazio = document.createElement("p");
+      vazio.className = "empty process-lists-empty-v7";
+      vazio.textContent = "Sem listas criadas ainda.";
+      blocoExistentes.appendChild(vazio);
+    }
+
+    formulario.dataset.processListsV7Bound = "1";
+  }
+
   function inicializar_v5() {
     ligarBotaoAdicionarLista_v5();
     melhorarFormularioCamposAdicionais_v5();
+    Array.from(document.querySelectorAll("form[action*='/settings/menu/process-lists']")).forEach(montarBlocoListasV7);
   }
 
   if (document.readyState === "loading") {

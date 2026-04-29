@@ -2,7 +2,7 @@
 # (1) ATUALIZAÇÃO DOS CAMPOS ADICIONAIS DO PROCESSO MENU - V1
 # ###################################################################################
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.requests import Request as RequestType
 
@@ -12,7 +12,12 @@ from appverbo.routes.profile.router import router
 # (2) MOVER CAMPO ADICIONAL NO FORMULÁRIO - V1
 # ###################################################################################
 
-from appverbo.menu_settings import move_sidebar_menu_additional_field
+from appverbo.menu_settings import (
+    move_sidebar_menu_additional_field,
+    update_sidebar_menu_additional_fields_v1,
+    update_sidebar_menu_process_fields,
+    update_sidebar_menu_process_lists,
+)
 from appverbo.core import SessionLocal
 from appverbo.services.session import get_current_user
 from appverbo.services.auth import is_admin_user
@@ -243,6 +248,207 @@ def edit_sidebar_menu_process_additional_fields_v1(
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
                 settings_tab="campos-adicionais",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/process-fields", response_class=HTMLResponse)
+def edit_sidebar_menu_process_fields_handler(
+    request: Request,
+    menu_key: str = Form(...),
+    visible_fields: list[str] = Form(default=[]),
+    visible_headers: list[str] = Form(default=[]),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#settings-menu-edit-card"),
+) -> RedirectResponse:
+    clean_menu_key = menu_key.strip().lower()
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas administradores podem alterar definições do menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="campos-config",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions["can_manage_all_entities"]:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas Owner pode configurar campos do processo.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="campos-config",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        ok, error_message = update_sidebar_menu_process_fields(
+            session=session,
+            menu_key=clean_menu_key,
+            visible_fields=visible_fields,
+            visible_headers=visible_headers,
+        )
+
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível atualizar a configuração dos campos.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="campos-config",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                success_message="Configuração dos campos atualizada com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_edit_key=clean_menu_key,
+                settings_action="edit",
+                settings_tab="campos-config",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/process-lists", response_class=HTMLResponse)
+def edit_sidebar_menu_process_lists_handler(
+    request: Request,
+    menu_key: str = Form(...),
+    process_list_key: list[str] = Form(default=[]),
+    process_list_label: list[str] = Form(default=[]),
+    process_list_items_csv: list[str] = Form(default=[]),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#settings-menu-edit-card"),
+) -> RedirectResponse:
+    clean_menu_key = menu_key.strip().lower()
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas administradores podem alterar listas do processo.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="lista",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions["can_manage_all_entities"]:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas Owner pode configurar listas do processo.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="lista",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        rows_count = max(
+            len(process_list_key),
+            len(process_list_label),
+            len(process_list_items_csv),
+        )
+
+        payload_lists: list[dict[str, str]] = []
+
+        for row_index in range(rows_count):
+            label = process_list_label[row_index] if row_index < len(process_list_label) else ""
+            items_csv = (
+                process_list_items_csv[row_index]
+                if row_index < len(process_list_items_csv)
+                else ""
+            )
+
+            if not str(label or "").strip() and not str(items_csv or "").strip():
+                continue
+
+            payload_lists.append(
+                {
+                    "key": process_list_key[row_index] if row_index < len(process_list_key) else "",
+                    "label": label,
+                    "items_csv": items_csv,
+                }
+            )
+
+        ok, error_message = update_sidebar_menu_process_lists(
+            session=session,
+            menu_key=clean_menu_key,
+            raw_lists=payload_lists,
+        )
+
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível atualizar as listas do processo.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="lista",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                success_message="Listas do processo atualizadas com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_edit_key=clean_menu_key,
+                settings_action="edit",
+                settings_tab="lista",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )

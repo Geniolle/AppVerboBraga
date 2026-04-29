@@ -1994,6 +1994,7 @@ function setupProcessAdditionalFieldsBuilder() {
   const containerEl = document.getElementById("process-additional-fields-container");
   const addButtonEl = document.getElementById("process-additional-field-add-btn");
   const formEl = builderEl.closest("form");
+  const moveFormEl = document.getElementById("process-additional-field-move-form");
   if (!containerEl || !addButtonEl || !formEl) {
     return;
   }
@@ -2023,12 +2024,6 @@ function setupProcessAdditionalFieldsBuilder() {
       requiredSelectEl.value = "0";
     }
     rowEl.classList.toggle("process-additional-field-row-header", cleanType === "header");
-    if (cleanType === "header" && rowEl.parentElement === containerEl) {
-      const firstRowEl = containerEl.querySelector(".process-additional-field-row");
-      if (firstRowEl && firstRowEl !== rowEl) {
-        containerEl.insertBefore(rowEl, firstRowEl);
-      }
-    }
     const isSizeEnabled = sizedTypes.has(cleanType);
     if (isSizeEnabled) {
       sizeInputEl.readOnly = false;
@@ -2052,11 +2047,54 @@ function setupProcessAdditionalFieldsBuilder() {
     });
   }
 
+  function submitMoveRequest(buttonEl) {
+    if (!moveFormEl || !buttonEl) {
+      return;
+    }
+
+    const menuKey = String(buttonEl.getAttribute("data-menu-key") || "").trim();
+    const fieldKey = String(buttonEl.getAttribute("data-field-key") || "").trim();
+    const direction = String(buttonEl.getAttribute("data-move-direction") || "").trim().toLowerCase();
+    const redirectMenu = String(buttonEl.getAttribute("data-redirect-menu") || "").trim();
+    const redirectTarget = String(buttonEl.getAttribute("data-redirect-target") || "#settings-menu-edit-card").trim();
+
+    if (!menuKey || !fieldKey || (direction !== "up" && direction !== "down")) {
+      return;
+    }
+
+    const menuKeyEl = moveFormEl.querySelector('input[name="menu_key"]');
+    const fieldKeyEl = moveFormEl.querySelector('input[name="field_key"]');
+    const directionEl = moveFormEl.querySelector('input[name="direction"]');
+    const redirectMenuEl = moveFormEl.querySelector('input[name="redirect_menu"]');
+    const redirectTargetEl = moveFormEl.querySelector('input[name="redirect_target"]');
+
+    if (!menuKeyEl || !fieldKeyEl || !directionEl || !redirectMenuEl || !redirectTargetEl) {
+      return;
+    }
+
+    menuKeyEl.value = menuKey;
+    fieldKeyEl.value = fieldKey;
+    directionEl.value = direction;
+    redirectMenuEl.value = redirectMenu;
+    redirectTargetEl.value = redirectTarget;
+
+    moveFormEl.submit();
+  }
+
   function bindRow(rowEl) {
     const removeButtonEl = rowEl.querySelector(".process-additional-field-remove-btn");
     if (removeButtonEl) {
       bindRemoveButton(removeButtonEl);
     }
+    rowEl.querySelectorAll(".process-additional-field-move-btn").forEach((buttonEl) => {
+      if (buttonEl.dataset.moveBound === "1") {
+        return;
+      }
+      buttonEl.dataset.moveBound = "1";
+      buttonEl.addEventListener("click", () => {
+        submitMoveRequest(buttonEl);
+      });
+    });
     const typeSelectEl = rowEl.querySelector("select[name='additional_field_type']");
     if (typeSelectEl) {
       typeSelectEl.addEventListener("change", () => {
@@ -2133,21 +2171,6 @@ function setupProcessAdditionalFieldsBuilder() {
   });
 
   formEl.addEventListener("submit", () => {
-    const headerRows = [];
-    const nonHeaderRows = [];
-    containerEl.querySelectorAll(".process-additional-field-row").forEach((rowEl) => {
-      const typeEl = rowEl.querySelector("select[name='additional_field_type']");
-      const cleanType = String(typeEl ? typeEl.value : "text").trim().toLowerCase();
-      if (cleanType === "header") {
-        headerRows.push(rowEl);
-      } else {
-        nonHeaderRows.push(rowEl);
-      }
-    });
-    [...headerRows, ...nonHeaderRows].forEach((rowEl) => {
-      containerEl.appendChild(rowEl);
-    });
-
     const rowEls = containerEl.querySelectorAll(".process-additional-field-row");
     rowEls.forEach((rowEl) => {
       const keyEl = rowEl.querySelector("input[name='additional_field_key']");
