@@ -2140,7 +2140,7 @@ function setupProcessAdditionalFieldsBuilder() {
           class="process-additional-field-size-input"
           min="1"
           max="255"
-          placeholder="Ex.: 30"
+          placeholder=""
           value="${String(initialSize || "")}"
         >
       </div>
