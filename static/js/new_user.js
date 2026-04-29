@@ -85,7 +85,14 @@ function normalizeSettingsTabKey(value) {
     "config-fields": "campos-config",
     "campos-adicionais": "campos-adicionais",
     "additional-fields": "campos-adicionais",
-    "adicionais": "campos-adicionais"
+    "adicionais": "campos-adicionais",
+    "lista": "lista",
+    "listas": "lista",
+    "campos-subsequentes": "campos-subsequentes",
+    "campos_subsequentes": "campos-subsequentes",
+    "subsequentes": "campos-subsequentes",
+    "subsequent": "campos-subsequentes",
+    "subsequent-rules": "campos-subsequentes"
   };
 
   return aliases[cleanTab] || "";
