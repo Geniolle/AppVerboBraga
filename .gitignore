@@ -1,8 +1,46 @@
+# Ambiente / variáveis locais
 .env
+.env.*
+!.env.example
+
+# Python cache
 __pycache__/
-*.pyc
-app.db
+*.py[cod]
+*$py.class
 
+# Ambientes virtuais
 .venv/
+venv/
+env/
+ENV/
 
+# Base de dados local
+app.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads / ficheiros gerados pelo utilizador
+static/entities/
+
+# Logs
+*.log
+logs/
+
+# Testes / coverage / caches
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Backups locais
 *.bak_*
+*.backup
+*.tmp
+
+# IDE / sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

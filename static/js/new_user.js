@@ -605,9 +605,9 @@ function mergeDynamicProcessMenus() {
           }
           return sectionKey !== "__geral__" && !sectionKey.startsWith("field:");
         });
-        const seenTargets = new Set(baseItems.map((item) => String(item.target || "")));
+        const seenTargets = new Set(baseItems.map((item) => buildMenuItemUniqueKey_v1(item)));
         const dynamicExtraItems = mergedItems.filter((item) => {
-          const targetKey = String(item.target || "");
+          const targetKey = buildMenuItemUniqueKey_v1(item);
           if (!targetKey || seenTargets.has(targetKey)) {
             return false;
           }
@@ -2746,3 +2746,17 @@ if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
 activateMenu(startupMenu, { resetDynamicToFirst: false });
 handleHashNavigation(window.location.hash || "");
 
+
+
+//###################################################################################
+// (MENU) CHAVE ÚNICA PARA ITENS DINÂMICOS DO PROCESSO - V1
+//###################################################################################
+
+function buildMenuItemUniqueKey_v1(item) {
+  const target = String(item && item.target ? item.target : "").trim();
+  const sectionKey = String(item && item.dynamicProcessSectionKey ? item.dynamicProcessSectionKey : "").trim();
+  const profileSection = String(item && item.profileSection ? item.profileSection : "").trim();
+  const label = String(item && item.label ? item.label : "").trim();
+
+  return `${target}::${sectionKey}::${profileSection}::${label}`;
+}

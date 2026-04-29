@@ -2601,3 +2601,421 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
 
 get_sidebar_menu_settings = get_sidebar_menu_settings_v4
 
+# //###################################################################################
+# (MENU) HIERARQUIA DOS CAMPOS ADICIONAIS - PATCH SEGURO V2
+# //###################################################################################
+
+def normalize_menu_process_additional_fields_v1(raw_fields: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_fields, (list, tuple, set)):
+        return []
+
+    normalized: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+    seen_labels: set[str] = set()
+
+    for row_index, raw_item in enumerate(raw_fields):
+        item_label = ""
+        item_key = ""
+        item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+        item_size: int | None = None
+        item_is_required = False
+        item_list_key = ""
+
+        if isinstance(raw_item, dict):
+            item_label = _normalize_additional_field_label(raw_item.get("label"))
+            item_key = _normalize_custom_field_key(str(raw_item.get("key") or ""))
+            item_type = _normalize_additional_field_type(
+                raw_item.get("field_type", raw_item.get("type"))
+            )
+            item_size = _normalize_additional_field_size(
+                raw_item.get("size", raw_item.get("max_length")),
+                item_type,
+            )
+            item_is_required = _normalize_additional_field_required(
+                raw_item.get("is_required", raw_item.get("required"))
+            )
+            item_list_key = _normalize_menu_key(
+                raw_item.get("list_key", raw_item.get("listKey", ""))
+            )
+        else:
+            item_label = _normalize_additional_field_label(raw_item)
+            item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+            item_size = _normalize_additional_field_size(
+                ADDITIONAL_FIELD_DEFAULT_SIZE,
+                item_type,
+            )
+            item_is_required = False
+
+        if not item_label:
+            continue
+
+        normalized_label_key = item_label.lower()
+        if normalized_label_key in seen_labels:
+            continue
+
+        seen_labels.add(normalized_label_key)
+
+        candidate_key = item_key or _build_custom_field_key_from_label(item_label)
+        unique_key = candidate_key
+        suffix_index = 2
+
+        while unique_key in seen_keys:
+            unique_key = f"{candidate_key}_{suffix_index}"
+            suffix_index += 1
+
+        seen_keys.add(unique_key)
+
+        normalized_item: dict[str, Any] = {
+            "key": unique_key,
+            "label": item_label,
+            "field_type": item_type,
+            "is_required": bool(item_is_required and item_type != "header"),
+            "display_order": row_index,
+        }
+
+        if item_size is not None:
+            normalized_item["size"] = item_size
+
+        if item_type == "list" and item_list_key:
+            normalized_item["list_key"] = item_list_key
+
+        normalized.append(normalized_item)
+
+    return normalized
+
+
+def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, Any]]:
+    return normalize_menu_process_additional_fields_v1(raw_fields)
+
+
+def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
+    menu_config: dict[str, Any],
+    normalized_fields: list[dict[str, Any]],
+) -> dict[str, Any]:
+    previous_additional_fields = normalize_menu_process_additional_fields_v1(
+        menu_config.get("additional_fields")
+    )
+
+    previous_field_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in previous_additional_fields
+        if str(item.get("key") or "").strip()
+    }
+
+    existing_visible_raw = menu_config.get("process_visible_fields")
+    has_existing_visible_config = isinstance(existing_visible_raw, list) and bool(existing_visible_raw)
+
+    existing_visible_keys = {
+        str(raw_key or "").strip().lower()
+        for raw_key in (existing_visible_raw or [])
+        if str(raw_key or "").strip()
+    }
+
+    visible_order: list[str] = []
+    visible_headers: list[str] = []
+    visible_rows: list[dict[str, Any]] = []
+    field_header_map: dict[str, str] = {}
+
+    active_header_key = ""
+
+    for field_index, field_item in enumerate(normalized_fields):
+        field_key = str(field_item.get("key") or "").strip().lower()
+
+        if not field_key:
+            continue
+
+        field_type = str(field_item.get("field_type") or "").strip().lower()
+        is_new_field = field_key not in previous_field_keys
+
+        should_be_visible = (
+            not has_existing_visible_config
+            or field_key in existing_visible_keys
+            or is_new_field
+            or field_type == "header"
+        )
+
+        if field_type == "header":
+            active_header_key = field_key
+
+            if should_be_visible and field_key not in visible_order:
+                visible_order.append(field_key)
+
+            if should_be_visible and field_key not in visible_headers:
+                visible_headers.append(field_key)
+
+            continue
+
+        if not should_be_visible:
+            continue
+
+        if field_key not in visible_order:
+            visible_order.append(field_key)
+
+        if active_header_key:
+            field_header_map[field_key] = active_header_key
+
+        visible_rows.append(
+            {
+                "field_key": field_key,
+                "header_key": active_header_key,
+                "display_order": field_index,
+            }
+        )
+
+    used_headers = {
+        str(row.get("header_key") or "").strip().lower()
+        for row in visible_rows
+        if str(row.get("header_key") or "").strip()
+    }
+
+    visible_order = [
+        field_key
+        for field_key in visible_order
+        if field_key not in visible_headers or field_key in used_headers
+    ]
+
+    visible_headers = [
+        header_key
+        for header_key in visible_headers
+        if header_key in used_headers
+    ]
+
+    menu_config["additional_fields"] = normalized_fields
+    menu_config["process_visible_fields"] = visible_order
+    menu_config["process_visible_headers"] = visible_headers
+    menu_config["process_visible_field_rows"] = visible_rows
+    menu_config["process_visible_field_header_map"] = field_header_map
+
+    return menu_config
+
+
+def update_sidebar_menu_additional_fields_v1(
+    session: Session,
+    menu_key: str,
+    raw_fields: Any,
+) -> tuple[bool, str]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if not clean_menu_key:
+        return False, "Menu invalido."
+
+    if clean_menu_key in SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS:
+        return False, "Este processo nao permite campos adicionais."
+
+    if not _menu_exists(session, clean_menu_key):
+        return False, "Menu nao encontrado."
+
+    raw_config = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": clean_menu_key},
+    ).scalar_one_or_none()
+
+    menu_config: dict[str, Any] = {}
+
+    if isinstance(raw_config, str) and raw_config.strip():
+        try:
+            parsed_config = json.loads(raw_config)
+            if isinstance(parsed_config, dict):
+                menu_config = parsed_config
+        except json.JSONDecodeError:
+            menu_config = {}
+
+    normalized_fields = normalize_menu_process_additional_fields_v1(raw_fields)
+
+    menu_config = _rebuild_menu_process_hierarchy_from_additional_fields_v1(
+        menu_config,
+        normalized_fields,
+    )
+
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+    session.commit()
+
+    return True, ""
+
+
+def update_sidebar_menu_additional_fields(
+    session: Session,
+    menu_key: str,
+    raw_fields: Any,
+) -> tuple[bool, str]:
+    return update_sidebar_menu_additional_fields_v1(
+        session=session,
+        menu_key=menu_key,
+        raw_fields=raw_fields,
+    )
+
+
+# //###################################################################################
+# (2) MOVER CAMPO ADICIONAL NO FORMULÁRIO - V1
+# //###################################################################################
+
+def move_sidebar_menu_additional_field(
+    session: Session,
+    menu_key: str,
+    field_key: str,
+    direction: str,
+) -> tuple[bool, str]:
+    """
+    Move um campo adicional para cima ou para baixo no formulário.
+    Se o campo for do tipo 'header' (Cabeçalho), move o bloco inteiro junto com os campos abaixo.
+    """
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if not clean_menu_key:
+        return False, "Menu inválido."
+
+    if clean_menu_key in SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS:
+        return False, "Este processo não permite mover campos."
+
+    clean_direction = str(direction or "").strip().lower()
+    if clean_direction not in {"up", "down"}:
+        return False, "Direção inválida."
+
+    if not _menu_exists(session, clean_menu_key):
+        return False, "Menu não encontrado."
+
+    raw_config = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": clean_menu_key},
+    ).scalar_one_or_none()
+
+    menu_config: dict[str, Any] = {}
+
+    if isinstance(raw_config, str) and raw_config.strip():
+        try:
+            parsed_config = json.loads(raw_config)
+            if isinstance(parsed_config, dict):
+                menu_config = parsed_config
+        except json.JSONDecodeError:
+            menu_config = {}
+
+    normalized_fields = normalize_menu_process_additional_fields_v1(
+        menu_config.get("additional_fields")
+    )
+
+    if not normalized_fields:
+        return False, "Nenhum campo adicional encontrado."
+
+    clean_field_key = str(field_key or "").strip().lower()
+
+    # Encontrar o índice do campo
+    field_index = None
+    for idx, field in enumerate(normalized_fields):
+        if str(field.get("key") or "").strip().lower() == clean_field_key:
+            field_index = idx
+            break
+
+    if field_index is None:
+        return False, "Campo não encontrado."
+
+    field_type = str(normalized_fields[field_index].get("field_type") or "").strip().lower()
+
+    # Determinar o bloco a mover
+    if field_type == "header":
+        # Se for header, mover o bloco inteiro (header + campos seguintes até próximo header)
+        block_start = field_index
+        block_end = field_index
+        for idx in range(field_index + 1, len(normalized_fields)):
+            next_field_type = str(normalized_fields[idx].get("field_type") or "").strip().lower()
+            if next_field_type == "header":
+                break
+            block_end = idx
+        block_size = block_end - block_start + 1
+    else:
+        # Campo normal, mover apenas ele
+        block_start = field_index
+        block_end = field_index
+        block_size = 1
+
+    # Calcular o alvo
+    if clean_direction == "up":
+        if block_start <= 0:
+            return False, "Este campo já está no topo."
+        target_index = block_start - 1
+    else:
+        if block_end >= len(normalized_fields) - 1:
+            return False, "Este campo já está no fim."
+        target_index = block_end + 1
+
+    # Se o alvo é um header, ajustar
+    target_type = str(normalized_fields[target_index].get("field_type") or "").strip().lower()
+    if target_type == "header":
+        if clean_direction == "up":
+            # Mover para antes do header
+            target_index = target_index
+        else:
+            # Mover para depois do bloco do header
+            for idx in range(target_index + 1, len(normalized_fields)):
+                next_field_type = str(normalized_fields[idx].get("field_type") or "").strip().lower()
+                if next_field_type == "header":
+                    break
+                target_index = idx
+            target_index = min(target_index + 1, len(normalized_fields) - 1)
+
+    # Executar a troca
+    if clean_direction == "up":
+        # Remover bloco atual e inserir antes do alvo
+        block = normalized_fields[block_start:block_end + 1]
+        normalized_fields = (
+            normalized_fields[:target_index] +
+            block +
+            normalized_fields[block_end + 1:]
+        )
+    else:
+        # Remover bloco atual e inserir depois do alvo
+        block = normalized_fields[block_start:block_end + 1]
+        normalized_fields = (
+            normalized_fields[:block_start] +
+            normalized_fields[block_end + 1:target_index + 1] +
+            block +
+            normalized_fields[target_index + 1:]
+        )
+
+    # Reconstruir a hierarquia e salvar
+    menu_config = _rebuild_menu_process_hierarchy_from_additional_fields_v1(
+        menu_config,
+        normalized_fields,
+    )
+
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+    session.commit()
+
+    return True, ""

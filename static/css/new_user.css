@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #eceef2;
   --topbar: #2f86d7;
   --sidebar-bg: #f3f3f4;
@@ -1643,9 +1643,25 @@ th {
 
    .process-additional-field-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.8fr) minmax(140px, 0.5fr) minmax(140px, 0.4fr) auto;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(180px, 0.8fr) minmax(140px, 0.5fr) minmax(140px, 0.4fr) auto auto;
   gap: 8px;
   align-items: end;
+}
+
+.process-additional-field-row .field-move-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.process-additional-field-row .field-move-buttons form {
+  margin: 0;
+  padding: 0;
+}
+
+.process-additional-field-row .field-move-buttons .table-icon-btn {
+  padding: 4px 8px;
+  font-size: 14px;
 }
 
    .process-additional-field-row .field {
@@ -2395,3 +2411,65 @@ button[data-admin-tab].active * {
   color: #ffffff !important;
 }
 
+/* //###################################################################################
+   (MENU) CAMPOS ADICIONAIS - HIERARQUIA GLOBAL POR SETAS - V1
+   //################################################################################### */
+
+.additional-field-row-equalized {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1.5fr)
+    minmax(180px, 1fr)
+    minmax(130px, 0.7fr)
+    minmax(110px, 0.6fr)
+    minmax(90px, 0.45fr)
+    auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.additional-field-hierarchy-col {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 38px;
+}
+
+.additional-field-hierarchy-col.is-empty {
+  visibility: hidden;
+}
+
+.header-hierarchy-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-hierarchy-label {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.header-hierarchy-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.header-hierarchy-btn {
+  min-width: 28px;
+  min-height: 28px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.header-hierarchy-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

@@ -1,10 +1,11 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260428-menu-active-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+<script src="/static/js/modules/additional_fields_hierarchy_v3.js?v=20260428-menu-hierarchy-v1"></script>
 {% endblock %}
 
 {% block body %}
@@ -1632,7 +1633,7 @@
                 >
                   <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid">
                     {% for field in settings_edit_data.process_additional_fields %}
-                    <div class="process-field-row process-additional-field-row{% if (field.field_type or 'text') == 'header' %} process-additional-field-row-header{% endif %}">
+                    <div class="process-field-row process-additional-field-row{% if (field.field_type or 'text') == 'header' %} process-additional-field-row-header{% endif %}" data-field-key="{{ field.key }}">
                       <input type="hidden" name="additional_field_key" value="{{ field.key }}">
                       <div class="field">
                         <label>Nome do campo adicional</label>
@@ -1673,6 +1674,38 @@
                           value="{{ field.size if field.size is not none else '' }}"
                           placeholder="Ex.: 30"
                         >
+                      </div>
+                      <div class="field field-move-buttons">
+                        <form method="post" action="/settings/menu/field-move">
+                          <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                          <input type="hidden" name="field_key" value="{{ field.key }}">
+                          <input type="hidden" name="direction" value="up">
+                          <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                          <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                          <button
+                            type="submit"
+                            class="table-icon-btn"
+                            title="Mover para cima"
+                            aria-label="Mover para cima"
+                          >
+                            &#8593;
+                          </button>
+                        </form>
+                        <form method="post" action="/settings/menu/field-move">
+                          <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                          <input type="hidden" name="field_key" value="{{ field.key }}">
+                          <input type="hidden" name="direction" value="down">
+                          <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                          <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                          <button
+                            type="submit"
+                            class="table-icon-btn"
+                            title="Mover para baixo"
+                            aria-label="Mover para baixo"
+                          >
+                            &#8595;
+                          </button>
+                        </form>
                       </div>
                       <button
                         type="button"
@@ -2248,6 +2281,7 @@
     </main>
   </div>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+<script src="/static/js/modules/additional_fields_hierarchy_v3.js?v=20260428-menu-hierarchy-v1"></script>
 {% endblock %}
 
 {% block scripts %}
@@ -2295,6 +2329,7 @@
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260427a"></script>
+<script src="/static/js/modules/additional_fields_hierarchy_v3.js?v=20260428-menu-hierarchy-v1"></script>
 {% endblock %}
 
 
