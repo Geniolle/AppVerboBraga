@@ -320,7 +320,7 @@
       fieldSelect.value = "";
     }
     if (operatorSelect) {
-      operatorSelect.value = "equals";
+      operatorSelect.value = "is_empty";
     }
     if (valueInput) {
       valueInput.value = "";

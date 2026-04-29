@@ -2924,6 +2924,19 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
         field_key = str(raw_item.get("field_key") or raw_item.get("subsequent_field") or "").strip().lower()
         operator = str(raw_item.get("operator") or raw_item.get("condition") or "equals").strip().lower()
         trigger_value = str(raw_item.get("trigger_value") or "").strip()
+        allowed_operators = {
+            "preenchido",
+            "vazio",
+            "igual",
+            "diferente",
+            "contem",
+            "nao_contem",
+            "maior",
+            "menor",
+            "maior_igual",
+            "menor_igual",
+        }
+
         if operator not in allowed_operators:
             operator = "equals"
         if operator in {"is_empty", "is_not_empty"}:
@@ -3158,3 +3171,417 @@ def move_sidebar_menu_additional_field(
     session.commit()
 
     return True, ""
+
+
+####################################################################################
+# (CAMPOS SUBSEQUENTES V2) NORMALIZAR CONDICAO DE CAMPOS SUBSEQUENTES
+####################################################################################
+
+def _normalize_subsequent_field_operator_v2(raw_operator: Any) -> str:
+    clean_operator = str(raw_operator or "").strip().lower()
+    clean_operator = clean_operator.replace("-", "_")
+    clean_operator = clean_operator.replace(" ", "_")
+
+    operator_aliases = {
+        "": "vazio",
+        "vazio": "vazio",
+        "empty": "vazio",
+        "blank": "vazio",
+        "is_empty": "vazio",
+        "esta_vazio": "vazio",
+
+        "preenchido": "preenchido",
+        "not_empty": "preenchido",
+        "filled": "preenchido",
+        "is_filled": "preenchido",
+        "esta_preenchido": "preenchido",
+
+        "igual": "igual",
+        "igual_a": "igual",
+        "equals": "igual",
+        "equal": "igual",
+        "eq": "igual",
+
+        "diferente": "diferente",
+        "diferente_de": "diferente",
+        "not_equal": "diferente",
+        "neq": "diferente",
+
+        "contem": "contem",
+        "contém": "contem",
+        "contains": "contem",
+
+        "nao_contem": "nao_contem",
+        "não_contém": "nao_contem",
+        "not_contains": "nao_contem",
+    }
+
+    return operator_aliases.get(clean_operator, "vazio")
+
+
+####################################################################################
+# (CAMPOS SUBSEQUENTES V2) NORMALIZAR LISTA DE CAMPOS SUBSEQUENTES
+####################################################################################
+
+def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, str]]:
+    if not isinstance(raw_fields, (list, tuple)):
+        return []
+
+    allowed_operators = {
+        "vazio",
+        "preenchido",
+        "igual",
+        "diferente",
+        "contem",
+        "nao_contem",
+    }
+
+    normalized_fields: list[dict[str, str]] = []
+    seen_fields: set[tuple[str, str, str, str]] = set()
+
+    for raw_field in raw_fields:
+        if not isinstance(raw_field, dict):
+            continue
+
+        trigger_field_key = _normalize_menu_key(
+            raw_field.get("trigger_field_key")
+            or raw_field.get("triggerFieldKey")
+            or raw_field.get("field_key")
+            or raw_field.get("fieldKey")
+            or raw_field.get("campo_acionador")
+            or raw_field.get("campoAcionador")
+        )
+
+        subsequent_field_key = _normalize_menu_key(
+            raw_field.get("subsequent_field_key")
+            or raw_field.get("subsequentFieldKey")
+            or raw_field.get("target_field_key")
+            or raw_field.get("targetFieldKey")
+            or raw_field.get("campo_subsequente")
+            or raw_field.get("campoSubsequente")
+        )
+
+        operator = _normalize_subsequent_field_operator_v2(
+            raw_field.get("operator")
+            or raw_field.get("condition")
+            or raw_field.get("condicao")
+            or raw_field.get("condição")
+        )
+
+        trigger_value = str(
+            raw_field.get("trigger_value")
+            or raw_field.get("triggerValue")
+            or raw_field.get("value")
+            or raw_field.get("valor_acionador")
+            or raw_field.get("valorAcionador")
+            or ""
+        ).strip()
+
+        if operator not in allowed_operators:
+            operator = "vazio"
+
+        if operator == "igual" and not trigger_value:
+            operator = "vazio"
+
+        if operator in {"vazio", "preenchido"}:
+            trigger_value = ""
+
+        if not trigger_field_key or not subsequent_field_key:
+            continue
+
+        field_key = (
+            trigger_field_key,
+            subsequent_field_key,
+            operator,
+            trigger_value,
+        )
+
+        if field_key in seen_fields:
+            continue
+
+        seen_fields.add(field_key)
+
+        normalized_fields.append(
+            {
+                "trigger_field_key": trigger_field_key,
+                "subsequent_field_key": subsequent_field_key,
+                "operator": operator,
+                "condition": operator,
+                "trigger_value": trigger_value,
+            }
+        )
+
+    return normalized_fields
+
+
+####################################################################################
+# (CAMPOS SUBSEQUENTES V3) NORMALIZAR E GRAVAR CAMPOS SUBSEQUENTES
+####################################################################################
+
+def _normalize_subsequent_field_operator_v3(raw_operator: Any) -> str:
+    clean_operator = str(raw_operator or "").strip().lower()
+    clean_operator = clean_operator.replace("-", "_")
+    clean_operator = clean_operator.replace(" ", "_")
+
+    operator_aliases = {
+        "": "is_empty",
+
+        "vazio": "is_empty",
+        "empty": "is_empty",
+        "blank": "is_empty",
+        "is_empty": "is_empty",
+        "esta_vazio": "is_empty",
+
+        "preenchido": "is_not_empty",
+        "not_empty": "is_not_empty",
+        "filled": "is_not_empty",
+        "is_filled": "is_not_empty",
+        "is_not_empty": "is_not_empty",
+        "esta_preenchido": "is_not_empty",
+
+        "igual": "equals",
+        "igual_a": "equals",
+        "equals": "equals",
+        "equal": "equals",
+        "eq": "equals",
+
+        "diferente": "not_equals",
+        "diferente_de": "not_equals",
+        "not_equal": "not_equals",
+        "not_equals": "not_equals",
+        "neq": "not_equals",
+    }
+
+    return operator_aliases.get(clean_operator, "is_empty")
+
+
+def _build_subsequent_field_key_v3(
+    trigger_field_key: str,
+    subsequent_field_key: str,
+    operator: str,
+    trigger_value: str,
+) -> str:
+    base_key = "_".join(
+        [
+            str(trigger_field_key or "").strip().lower(),
+            str(subsequent_field_key or "").strip().lower(),
+            str(operator or "").strip().lower(),
+            str(trigger_value or "").strip().lower(),
+        ]
+    )
+    base_key = re.sub(r"[^a-z0-9_]+", "_", base_key)
+    base_key = re.sub(r"_+", "_", base_key).strip("_")
+
+    if not base_key:
+        return ""
+
+    return f"subseq_{base_key}"
+
+
+def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, str]]:
+    if not isinstance(raw_fields, (list, tuple)):
+        return []
+
+    allowed_operators = {
+        "is_empty",
+        "is_not_empty",
+        "equals",
+        "not_equals",
+    }
+
+    normalized_fields: list[dict[str, str]] = []
+    seen_fields: set[tuple[str, str, str, str]] = set()
+
+    for raw_field in raw_fields:
+        if not isinstance(raw_field, dict):
+            continue
+
+        trigger_field_key = _normalize_menu_key(
+            raw_field.get("trigger_field")
+            or raw_field.get("trigger_field_key")
+            or raw_field.get("triggerField")
+            or raw_field.get("triggerFieldKey")
+            or raw_field.get("campo_acionador")
+            or raw_field.get("campoAcionador")
+        )
+
+        subsequent_field_key = _normalize_menu_key(
+            raw_field.get("field_key")
+            or raw_field.get("subsequent_field")
+            or raw_field.get("subsequent_field_key")
+            or raw_field.get("subsequentField")
+            or raw_field.get("subsequentFieldKey")
+            or raw_field.get("target_field_key")
+            or raw_field.get("targetFieldKey")
+            or raw_field.get("campo_subsequente")
+            or raw_field.get("campoSubsequente")
+        )
+
+        operator = _normalize_subsequent_field_operator_v3(
+            raw_field.get("operator")
+            or raw_field.get("condition")
+            or raw_field.get("condicao")
+            or raw_field.get("condição")
+        )
+
+        trigger_value = str(
+            raw_field.get("trigger_value")
+            or raw_field.get("triggerValue")
+            or raw_field.get("value")
+            or raw_field.get("valor_acionador")
+            or raw_field.get("valorAcionador")
+            or ""
+        ).strip()
+
+        if operator not in allowed_operators:
+            operator = "is_empty"
+
+        if operator in {"is_empty", "is_not_empty"}:
+            trigger_value = ""
+
+        if operator in {"equals", "not_equals"} and not trigger_value:
+            operator = "is_empty"
+            trigger_value = ""
+
+        if not trigger_field_key or not subsequent_field_key:
+            continue
+
+        clean_key = _normalize_menu_key(
+            raw_field.get("key")
+            or raw_field.get("subsequent_field_key")
+            or raw_field.get("id")
+        )
+
+        if not clean_key:
+            clean_key = _build_subsequent_field_key_v3(
+                trigger_field_key,
+                subsequent_field_key,
+                operator,
+                trigger_value,
+            )
+
+        field_signature = (
+            trigger_field_key,
+            subsequent_field_key,
+            operator,
+            trigger_value,
+        )
+
+        if field_signature in seen_fields:
+            continue
+
+        seen_fields.add(field_signature)
+
+        normalized_fields.append(
+            {
+                "key": clean_key,
+                "trigger_field": trigger_field_key,
+                "trigger_field_key": trigger_field_key,
+                "field_key": subsequent_field_key,
+                "subsequent_field": subsequent_field_key,
+                "subsequent_field_key": subsequent_field_key,
+                "operator": operator,
+                "condition": operator,
+                "trigger_value": trigger_value,
+            }
+        )
+
+    return normalized_fields
+
+
+####################################################################################
+# (LISTAS V8) PRESERVAR LIST_KEY NOS CAMPOS ADICIONAIS
+####################################################################################
+
+def _normalize_process_list_key_v8(raw_key: Any) -> str:
+    clean_value = str(raw_key or "").strip().lower()
+    clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
+    clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
+    clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+    return clean_value
+
+
+def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_fields, (list, tuple, set)):
+        return []
+
+    normalized: list[dict[str, Any]] = []
+    seen_labels: set[str] = set()
+    seen_keys: set[str] = set()
+
+    for raw_item in raw_fields:
+        item_label = ""
+        item_key = ""
+        item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+        item_size: int | None = None
+        item_is_required = False
+        item_list_key = ""
+
+        if isinstance(raw_item, dict):
+            item_label = _normalize_additional_field_label(raw_item.get("label"))
+            item_key = _normalize_custom_field_key(str(raw_item.get("key") or ""))
+            item_type = _normalize_additional_field_type(
+                raw_item.get("field_type", raw_item.get("type"))
+            )
+            item_size = _normalize_additional_field_size(
+                raw_item.get("size", raw_item.get("max_length")),
+                item_type,
+            )
+            item_is_required = _normalize_additional_field_required(
+                raw_item.get("is_required", raw_item.get("required"))
+            )
+            item_list_key = _normalize_process_list_key_v8(
+                raw_item.get("list_key")
+                or raw_item.get("listKey")
+                or raw_item.get("process_list_key")
+                or raw_item.get("processListKey")
+            )
+        else:
+            item_label = _normalize_additional_field_label(raw_item)
+            item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+            item_size = _normalize_additional_field_size(
+                ADDITIONAL_FIELD_DEFAULT_SIZE,
+                item_type,
+            )
+            item_is_required = False
+
+        if not item_label:
+            continue
+
+        normalized_label_key = item_label.lower()
+
+        if normalized_label_key in seen_labels:
+            continue
+
+        seen_labels.add(normalized_label_key)
+
+        candidate_key = item_key or _build_custom_field_key_from_label(item_label)
+        unique_key = candidate_key
+        suffix_index = 2
+
+        while unique_key in seen_keys:
+            unique_key = f"{candidate_key}_{suffix_index}"
+            suffix_index += 1
+
+        seen_keys.add(unique_key)
+
+        if item_type == "list" and not item_list_key:
+            item_list_key = _normalize_process_list_key_v8(item_label)
+
+        normalized_item: dict[str, Any] = {
+            "key": unique_key,
+            "label": item_label,
+            "field_type": item_type,
+            "is_required": bool(item_is_required and item_type != "header"),
+        }
+
+        if item_size is not None:
+            normalized_item["size"] = item_size
+
+        if item_type == "list":
+            normalized_item["list_key"] = item_list_key
+
+        normalized.append(normalized_item)
+
+    return normalized
+

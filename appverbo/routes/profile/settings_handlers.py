@@ -490,7 +490,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
-                    settings_tab="campos-subsequentes",
+                    settings_tab="campos_subsequentes",
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -511,7 +511,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
-                    settings_tab="campos-subsequentes",
+                    settings_tab="campos_subsequentes",
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -552,7 +552,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
-                    settings_tab="campos-subsequentes",
+                    settings_tab="campos_subsequentes",
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -564,7 +564,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                 redirect_target=redirect_target,
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
-                settings_tab="campos-subsequentes",
+                settings_tab="campos_subsequentes",
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
