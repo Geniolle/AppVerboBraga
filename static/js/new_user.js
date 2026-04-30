@@ -2734,7 +2734,7 @@ function setupProcessAdditionalFieldsManagerV2() {
     editorRequiredEl.value = "0";
     editorSizeEl.value = "30";
     editorListKeyEl.value = "";
-    addButtonEl.textContent = "Adicionar campo";
+    addButtonEl.textContent = "Guardar";
     setEditorFeedback("");
     syncEditorState();
   }

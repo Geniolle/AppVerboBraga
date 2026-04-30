@@ -1871,8 +1871,8 @@
                       </div>
                     </div>
                     <div class="form-action-row">
-                      <button type="button" id="process-additional-field-add-btn" class="action-btn" onclick="if (window.__appverboAddAdditionalFieldV2) { window.__appverboAddAdditionalFieldV2(); }">Adicionar campo</button>
-                      <button type="button" id="process-additional-field-clear-btn" class="action-btn-secondary" onclick="if (window.__appverboClearAdditionalFieldV2) { window.__appverboClearAdditionalFieldV2(); }">Limpar</button>
+                      <button type="button" id="process-additional-field-add-btn" class="action-btn" onclick="if (window.__appverboAddAdditionalFieldV2) { window.__appverboAddAdditionalFieldV2(); }">Guardar</button>
+                      <button type="button" id="process-additional-field-clear-btn" class="action-btn-secondary" onclick="if (window.__appverboClearAdditionalFieldV2) { window.__appverboClearAdditionalFieldV2(); }">Cancelar</button>
                     </div>
                     <p id="process-additional-field-editor-feedback" class="empty" style="display: none;"></p>
                   </section>
@@ -1918,13 +1918,6 @@
                   >
                     &#43;
                   </button>
-                </div>
-                <div class="form-action-row">
-                  <button type="submit" class="action-btn">Guardar</button>
-                  <a
-                    class="action-btn-cancel"
-                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
-                  >Cancelar</a>
                 </div>
               </form>
               <form
