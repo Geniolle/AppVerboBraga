@@ -3570,16 +3570,16 @@ setupProfileProcessTabs();
 setupConditionalProcessVisibility();
 setupProcessEditTabs();
 setupProcessFieldsBuilder();
-setupProcessAdditionalFieldsManagerV2();
+setupProcessAdditionalFieldsManagerV2_guard_v1();
 window.setTimeout(() => {
   try {
-    setupProcessAdditionalFieldsManagerV2();
+    setupProcessAdditionalFieldsManagerV2_guard_v1();
   } catch (_error) {
   }
 }, 150);
 window.setTimeout(() => {
   try {
-    setupProcessAdditionalFieldsManagerV2();
+    setupProcessAdditionalFieldsManagerV2_guard_v1();
   } catch (_error) {
   }
 }, 600);
@@ -3615,4 +3615,18 @@ function buildMenuItemUniqueKey_v1(item) {
   const label = String(item && item.label ? item.label : "").trim();
 
   return `${target}::${sectionKey}::${profileSection}::${label}`;
+}
+
+//###################################################################################
+// (99) COMPATIBILIDADE - BLOQUEIO DO MANAGER V2 QUANDO O V3 ESTIVER ATIVO
+//###################################################################################
+
+function setupProcessAdditionalFieldsManagerV2_guard_v1() {
+  if (document.querySelector("[data-process-additional-fields-manager-v3='1']")) {
+    return;
+  }
+
+  if (typeof setupProcessAdditionalFieldsManagerV2 === "function") {
+    setupProcessAdditionalFieldsManagerV2();
+  }
 }

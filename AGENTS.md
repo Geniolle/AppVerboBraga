@@ -1,4 +1,4 @@
-﻿# AGENTS.md - Regras Locais do Projeto AppVerboBraga
+# AGENTS.md - Regras Locais do Projeto AppVerboBraga
 
 Estas regras são obrigatórias para qualquer alteração no projeto AppVerboBraga.
 
@@ -207,3 +207,44 @@ Antes de concluir qualquer alteração, validar:
 - migrations sincronizadas;
 - menu não quebrou;
 - módulos pagos continuam protegidos.
+
+<!-- APPVERBO_CONFIGURABLE_ITEMS_LAYOUT_V1_START -->
+
+## 13) Layout obrigatório para listas configuráveis
+
+Sempre que uma funcionalidade permitir criar múltiplos itens configuráveis, como campos adicionais, listas, regras, abas, sessões, opções, permissões ou estruturas semelhantes, a interface deve seguir obrigatoriamente o padrão abaixo:
+
+1. Um bloco superior para criar ou editar apenas um item por vez.
+2. Uma tabela ou lista inferior com os itens já criados.
+3. Paginação obrigatória na tabela ou lista.
+4. A tabela ou lista visível deve ser a fonte visual principal para o utilizador.
+5. Containers antigos podem existir apenas como compatibilidade temporária e devem ficar ocultos.
+6. O submit deve reconstruir os inputs no formato esperado pelo backend atual.
+7. Não criar formulários longos com todos os itens abertos simultaneamente.
+8. A lógica genérica deve ser extraída para um manager reutilizável sempre que houver repetição de comportamento.
+9. O ficheiro `new_user.js` deve apenas inicializar managers sempre que possível, evitando concentrar lógica extensa de layout.
+10. Cada ajuste relevante em função existente deve criar uma nova função com sufixo sequencial.
+
+Exemplo de versionamento obrigatório:
+
+    setupProcessAdditionalFieldsManagerV2()
+    setupProcessAdditionalFieldsManagerV3()
+
+Estrutura recomendada para listas configuráveis:
+
+    Editor superior
+    Tabela ou lista paginada inferior
+    Container legado oculto, se necessário
+    Sincronização dos inputs antes do submit
+
+Exemplos de funcionalidades que devem seguir este padrão:
+
+- Campos adicionais
+- Listas do processo
+- Campos subsequentes
+- Sessões do menu lateral
+- Opções configuráveis
+- Permissões configuráveis
+- Regras administrativas
+
+<!-- APPVERBO_CONFIGURABLE_ITEMS_LAYOUT_V1_END -->

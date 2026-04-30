@@ -4,6 +4,7 @@
 
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260428-menu-active-v1">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-step3">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 {% endblock %}
 
@@ -1735,189 +1736,193 @@
 <div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
             <div class="admin-subsection">
 <h3>Campos Adicionais</h3>
-              <form method="post" action="/settings/menu/process-additional-fields" data-additional-fields-manager-v2="1">
+                            <form
+                method="post"
+                action="/settings/menu/process-additional-fields"
+                data-process-additional-fields-manager-v3="1"
+              >
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+
                 <div
-                  id="process-additional-fields-builder"
-                  class="process-fields-builder"
+                  id="process-additional-fields-builder-v3"
+                  class="process-fields-builder configurable-items-manager-v1"
                   data-field-types='{{ settings_edit_data.additional_field_type_options|tojson }}'
                   data-process-lists='{{ settings_edit_data.process_lists|default([])|tojson }}'
                 >
-                  <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid" style="display: none;">
+                  <div
+                    id="process-additional-fields-container"
+                    class="configurable-items-hidden-v1"
+                    data-additional-fields-legacy-container
+                  >
                     {% for field in settings_edit_data.process_additional_fields %}
-                    <div class="process-field-row process-additional-field-row{% if (field.field_type or 'text') == 'header' %} process-additional-field-row-header{% endif %}" data-field-key="{{ field.key }}">
-                      <input type="hidden" name="additional_field_key" value="{{ field.key }}">
-                      <div class="field">
-                        <label>Nome do campo adicional</label>
-                        <input
-                          type="text"
-                          name="additional_field_label"
-                          value="{{ field.label }}"
-                          maxlength="80"
-                          placeholder="Ex.: Data de batismo"
-                        >
-                      </div>
-                      <div class="field">
-                        <label>Tipo do campo</label>
-                        <select name="additional_field_type" class="process-additional-field-type-select">
-                          {% for type_option in settings_edit_data.additional_field_type_options %}
-                          <option
-                            value="{{ type_option.key }}"
-                            {% if type_option.key == (field.field_type or "text") %}selected{% endif %}
-                          >{{ type_option.label }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div class="field">
-                        <label>Obrigatório</label>
-                        <select name="additional_field_required" class="process-additional-field-required-select">
-                          <option value="0" {% if not field.is_required %}selected{% endif %}>Não</option>
-                          <option value="1" {% if field.is_required %}selected{% endif %}>Sim</option>
-                        </select>
-                      </div>
-                      <div class="field">
-                        <label>Tamanho</label>
-                        <input
-                          type="number"
-                          name="additional_field_size"
-                          class="process-additional-field-size-input"
-                          min="1"
-                          max="255"
-                          value="{{ field.size if field.size is not none else '' }}"
-                          placeholder=""
-                        >
-                      </div>
-                      <div class="field field-move-buttons">
-                        <div class="field-move-buttons-row">
-                          <button
-                            type="button"
-                            class="table-icon-btn process-additional-field-move-btn"
-                            data-move-direction="up"
-                            data-menu-key="{{ settings_edit_data.key }}"
-                            data-field-key="{{ field.key }}"
-                            data-redirect-menu="{{ settings_edit_origin_menu }}"
-                            data-redirect-target="#settings-menu-edit-card"
-                            title="Mover para cima"
-                            aria-label="Mover para cima"
-                          >
-                            &#8593;
-                          </button>
-                          <button
-                            type="button"
-                            class="table-icon-btn process-additional-field-move-btn"
-                            data-move-direction="down"
-                            data-menu-key="{{ settings_edit_data.key }}"
-                            data-field-key="{{ field.key }}"
-                            data-redirect-menu="{{ settings_edit_origin_menu }}"
-                            data-redirect-target="#settings-menu-edit-card"
-                            title="Mover para baixo"
-                            aria-label="Mover para baixo"
-                          >
-                            &#8595;
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        class="table-icon-btn table-icon-btn-danger process-additional-field-remove-btn"
-                        title="Remover campo adicional"
-                        aria-label="Remover campo adicional"
-                      >
-                        &#10005;
-                      </button>
+                    {% set additional_field_type = field.field_type|default("text") %}
+                    {% set additional_field_required = field.is_required|default(field.required|default(false)) %}
+                    <div
+                      class="process-field-row process-additional-field-row{% if additional_field_type == 'header' %} process-additional-field-row-header{% endif %}"
+                      data-field-key="{{ field.key }}"
+                    >
+                      <input type="hidden" name="additional_field_key" value="{{ field.key }}" disabled>
+                      <input type="hidden" name="additional_field_label" value="{{ field.label }}" disabled>
+                      <input type="hidden" name="additional_field_type" value="{{ additional_field_type }}" disabled>
+                      <input type="hidden" name="additional_field_required" value="{% if additional_field_required %}1{% else %}{% endif %}" disabled>
+                      <input type="hidden" name="additional_field_size" value="{{ field.size|default('') }}" disabled>
+                      <input type="hidden" name="additional_field_list_key" value="{{ field.list_key|default('') }}" disabled>
                     </div>
                     {% endfor %}
                   </div>
-                  <section class="card entity-panel-card">
-                    <h4>Novo campo adicional</h4>
-                    <input type="hidden" id="process-additional-field-editor-key" value="">
-                    <div class="process-additional-fields-grid">
-                      <div class="process-field-row process-additional-field-row" id="process-additional-field-editor-row">
-                        <div class="field">
-                          <label for="process-additional-field-editor-label">Nome do campo adicional</label>
-                          <input id="process-additional-field-editor-label" type="text" maxlength="80" placeholder="Ex.: Data de batismo">
-                        </div>
-                        <div class="field">
-                          <label for="process-additional-field-editor-type">Tipo do campo</label>
-                          <select id="process-additional-field-editor-type" class="process-additional-field-type-select">
-                            {% for type_option in settings_edit_data.additional_field_type_options %}
-                            <option value="{{ type_option.key }}">{{ type_option.label }}</option>
-                            {% endfor %}
-                            <option value="list">Lista</option>
-                          </select>
-                        </div>
-                        <div class="field">
-                          <label for="process-additional-field-editor-required">Obrigatório</label>
-                          <select id="process-additional-field-editor-required" class="process-additional-field-required-select">
-                            <option value="0" selected>Não</option>
-                            <option value="1">Sim</option>
-                          </select>
-                        </div>
-                        <div class="field" id="process-additional-field-editor-size-field">
-                          <label for="process-additional-field-editor-size">Tamanho</label>
-                          <input id="process-additional-field-editor-size" type="number" class="process-additional-field-size-input" min="1" max="255" value="30">
-                        </div>
-                        <div class="field" id="process-additional-field-editor-list-field">
-                          <label for="process-additional-field-editor-list-key">Lista</label>
-                          <select id="process-additional-field-editor-list-key">
-                            <option value="">Selecione a lista</option>
-                            {% for process_list in settings_edit_data.process_lists|default([]) %}
-                            <option value="{{ process_list.key }}">{{ process_list.label }}</option>
-                            {% endfor %}
-                          </select>
+
+                  <div data-additional-fields-hidden-container></div>
+
+                  <div class="configurable-items-editor-v1">
+                    <h4 class="configurable-items-editor-title-v1">Novo campo adicional</h4>
+
+                    <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                      <div class="field">
+                        <label for="process-additional-field-editor-label">Nome do campo adicional</label>
+                        <input
+                          id="process-additional-field-editor-label"
+                          type="text"
+                          maxlength="80"
+                          placeholder="Ex.: Data de batismo"
+                          data-additional-field-editor-label
+                        >
+                      </div>
+
+                      <div class="field">
+                        <label for="process-additional-field-editor-key">Chave técnica</label>
+                        <input
+                          id="process-additional-field-editor-key"
+                          type="text"
+                          maxlength="80"
+                          placeholder="Ex.: data_batismo"
+                          data-additional-field-editor-key
+                        >
+                      </div>
+
+                      <div class="field">
+                        <label for="process-additional-field-editor-type">Tipo do campo</label>
+                        <select
+                          id="process-additional-field-editor-type"
+                          data-additional-field-editor-type
+                        >
+                          {% for type_option in settings_edit_data.additional_field_type_options %}
+                          <option value="{{ type_option.key }}">{{ type_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div
+                        class="field"
+                        id="process-additional-field-editor-size-field"
+                        data-additional-field-size-wrap
+                      >
+                        <label for="process-additional-field-editor-size">Tamanho máximo</label>
+                        <input
+                          id="process-additional-field-editor-size"
+                          type="number"
+                          min="1"
+                          max="255"
+                          value="255"
+                          data-additional-field-editor-size
+                        >
+                      </div>
+
+                      <div
+                        class="field"
+                        id="process-additional-field-editor-list-field"
+                        data-additional-field-list-wrap
+                        style="display: none;"
+                      >
+                        <label for="process-additional-field-editor-list-key">Lista associada</label>
+                        <select
+                          id="process-additional-field-editor-list-key"
+                          data-additional-field-editor-list-key
+                        >
+                          <option value="">Selecione a lista</option>
+                          {% for process_list in settings_edit_data.process_lists|default([]) %}
+                          <option value="{{ process_list.key }}">{{ process_list.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div
+                        class="field"
+                        id="process-additional-field-editor-required-field"
+                        data-additional-field-required-wrap
+                      >
+                        <label class="profile-custom-flag-control">
+                          <input
+                            id="process-additional-field-editor-required"
+                            type="checkbox"
+                            value="1"
+                            data-additional-field-editor-required
+                          >
+                          <span>Campo obrigatório</span>
+                        </label>
+                      </div>
+
+                      <div class="field full">
+                        <div class="form-action-row">
+                          <button
+                            type="button"
+                            class="action-btn"
+                            data-additional-field-editor-submit
+                          >Adicionar campo</button>
+                          <button
+                            type="button"
+                            class="action-btn-cancel"
+                            data-additional-field-editor-cancel
+                          >Cancelar edição</button>
                         </div>
                       </div>
                     </div>
-                    <div class="form-action-row">
-                      <button type="button" id="process-additional-field-add-btn" class="action-btn" onclick="if (window.__appverboAddAdditionalFieldV2) { window.__appverboAddAdditionalFieldV2(); }">Guardar</button>
-                      <button type="button" id="process-additional-field-clear-btn" class="action-btn-secondary" onclick="if (window.__appverboClearAdditionalFieldV2) { window.__appverboClearAdditionalFieldV2(); }">Cancelar</button>
+                  </div>
+
+                  <div class="configurable-items-list-v1">
+                    <div class="configurable-items-list-head-v1">
+                      <h4 class="configurable-items-list-title-v1">Campos criados</h4>
+                      <span class="configurable-items-total-v1" data-configurable-total-label>0 campos</span>
                     </div>
-                    <p id="process-additional-field-editor-feedback" class="empty" style="display: none;"></p>
-                  </section>
-                  <section class="card entity-panel-card">
-                    <h4>Campos criados</h4>
-                    <table id="process-additional-fields-created-table">
-                      <thead>
-                        <tr>
-                          <th>Nome</th>
-                          <th>Tipo</th>
-                          <th>Obrigatório</th>
-                          <th>Tamanho</th>
-                          <th>Lista</th>
-                          <th>Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody id="process-additional-fields-created-body"></tbody>
-                    </table>
-                    <p id="process-additional-fields-empty" class="empty" style="display: none;">Sem campos adicionais criados.</p>
-                  <div id="process-additional-fields-limiter" class="table-limiter">
-                    <div class="table-limiter-left">
-                      <select id="process-additional-fields-page-size" class="table-limiter-select" aria-label="Entradas por página (campos adicionais)">
-                        <option value="5" selected>5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                      </select>
-                      <span>entradas por página</span>
+
+                    <div class="configurable-items-table-wrap-v1">
+                      <table
+                        id="process-additional-fields-created-table"
+                        class="configurable-items-table-v1"
+                        data-configurable-table
+                      >
+                        <tbody data-configurable-table-body></tbody>
+                      </table>
                     </div>
-                    <div class="table-limiter-right">
-                      <button id="process-additional-fields-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
-                      <span id="process-additional-fields-page" class="table-limiter-page">1</span>
-                      <button id="process-additional-fields-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+
+                    <p
+                      id="process-additional-fields-empty"
+                      class="configurable-items-empty-v1"
+                      data-configurable-empty
+                      style="display: none;"
+                    >Sem campos criados.</p>
+
+                    <div class="configurable-items-pagination-row-v1">
+                      <label class="configurable-items-page-size-v1">
+                        Entradas por página
+                        <select
+                          id="process-additional-fields-page-size"
+                          data-configurable-page-size
+                        ></select>
+                      </label>
+
+                      <div
+                        class="configurable-items-pagination-v1"
+                        data-configurable-pagination
+                      ></div>
                     </div>
                   </div>
-                  </section>
-                  <button
-                    type="button"
-                    id="process-additional-field-add-btn-legacy"
-                    class="table-icon-btn process-field-add-btn"
-                    title="Adicionar campo adicional"
-                    aria-label="Adicionar campo adicional"
-                    style="display: none;"
-                  >
-                    &#43;
-                  </button>
+                </div>
+
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar campos adicionais</button>
+                  <a class="action-btn-cancel" href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}">Cancelar</a>
                 </div>
               </form>
               <form
@@ -2513,264 +2518,11 @@
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
     };
   </script>
-  <script>
-    (function () {
-      "use strict";
-
-      function setupAdditionalFieldsInlineV2() {
-        const formEl = document.querySelector("form[data-additional-fields-manager-v2='1']");
-        if (!formEl || formEl.dataset.inlineAdditionalFieldsBound === "1") {
-          return;
-        }
-
-        const containerEl = document.getElementById("process-additional-fields-container");
-        const labelEl = document.getElementById("process-additional-field-editor-label");
-        const keyEl = document.getElementById("process-additional-field-editor-key");
-        const typeEl = document.getElementById("process-additional-field-editor-type");
-        const requiredEl = document.getElementById("process-additional-field-editor-required");
-        const sizeWrapEl = document.getElementById("process-additional-field-editor-size-field");
-        const sizeEl = document.getElementById("process-additional-field-editor-size");
-        const listWrapEl = document.getElementById("process-additional-field-editor-list-field");
-        const listEl = document.getElementById("process-additional-field-editor-list-key");
-        const feedbackEl = document.getElementById("process-additional-field-editor-feedback");
-        const tableBodyEl = document.getElementById("process-additional-fields-created-body");
-        const emptyEl = document.getElementById("process-additional-fields-empty");
-        const pageSizeEl = document.getElementById("process-additional-fields-page-size");
-        const prevEl = document.getElementById("process-additional-fields-prev");
-        const nextEl = document.getElementById("process-additional-fields-next");
-        const pageEl = document.getElementById("process-additional-fields-page");
-        const limiterEl = document.getElementById("process-additional-fields-limiter");
-
-        if (!containerEl || !labelEl || !keyEl || !typeEl || !requiredEl || !sizeWrapEl || !sizeEl || !listWrapEl || !listEl || !feedbackEl || !tableBodyEl || !emptyEl || !pageSizeEl || !prevEl || !nextEl || !pageEl || !limiterEl) {
-          return;
-        }
-
-        let currentPage = 1;
-        let tempIndex = 1;
-        const sizedTypes = new Set(["text", "number", "email", "phone"]);
-
-        function setFeedback(message, type) {
-          feedbackEl.textContent = String(message || "");
-          feedbackEl.style.display = feedbackEl.textContent ? "" : "none";
-          feedbackEl.classList.toggle("error", type !== "ok");
-          feedbackEl.classList.toggle("ok", type === "ok");
-        }
-
-        function normalizeKey(value) {
-          return String(value || "").trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
-        }
-
-        function escapeHtml(value) {
-          return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        }
-
-        function syncEditorState() {
-          const cleanType = String(typeEl.value || "text").trim().toLowerCase();
-          const sizeEnabled = sizedTypes.has(cleanType);
-          const isHeader = cleanType === "header";
-          const isList = cleanType === "list";
-
-          requiredEl.disabled = isHeader;
-          if (isHeader) {
-            requiredEl.value = "0";
-          }
-
-          sizeWrapEl.style.display = sizeEnabled ? "" : "none";
-          if (!sizeEnabled) {
-            sizeEl.value = "";
-          } else if (!String(sizeEl.value || "").trim()) {
-            sizeEl.value = "30";
-          }
-
-          listWrapEl.style.display = isList ? "" : "none";
-          listEl.disabled = !isList;
-          if (!isList) {
-            listEl.value = "";
-          }
-        }
-
-        function clearEditor() {
-          keyEl.value = "";
-          labelEl.value = "";
-          typeEl.value = "text";
-          requiredEl.value = "0";
-          sizeEl.value = "30";
-          listEl.value = "";
-          setFeedback("");
-          syncEditorState();
-        }
-
-        function readRows() {
-          return Array.from(containerEl.querySelectorAll(".process-additional-field-row")).map((rowEl) => {
-            const rowKeyEl = rowEl.querySelector("input[name='additional_field_key']");
-            const rowLabelEl = rowEl.querySelector("input[name='additional_field_label']");
-            const rowTypeEl = rowEl.querySelector("select[name='additional_field_type'], input[name='additional_field_type']");
-            const rowRequiredEl = rowEl.querySelector("select[name='additional_field_required'], input[name='additional_field_required']");
-            const rowSizeEl = rowEl.querySelector("input[name='additional_field_size']");
-            const rowListEl = rowEl.querySelector("select[name='additional_field_list_key'], input[name='additional_field_list_key']");
-            return {
-              key: String(rowKeyEl ? rowKeyEl.value : "").trim(),
-              label: String(rowLabelEl ? rowLabelEl.value : "").trim(),
-              fieldType: String(rowTypeEl ? rowTypeEl.value : "text").trim().toLowerCase(),
-              isRequired: String(rowRequiredEl ? rowRequiredEl.value : "0").trim() === "1",
-              size: String(rowSizeEl ? rowSizeEl.value : "").trim(),
-              listKey: String(rowListEl ? rowListEl.value : "").trim(),
-              rowEl: rowEl
-            };
-          }).filter((row) => row.label);
-        }
-
-        function renderPagination() {
-          const rowEls = Array.from(tableBodyEl.querySelectorAll("tr"));
-          const pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-          if (!rowEls.length) {
-            limiterEl.style.display = "none";
-            return;
-          }
-          const totalPages = Math.max(1, Math.ceil(rowEls.length / pageSize));
-          if (currentPage > totalPages) {
-            currentPage = totalPages;
-          }
-          const start = (currentPage - 1) * pageSize;
-          const end = start + pageSize;
-          rowEls.forEach((rowEl, index) => {
-            rowEl.style.display = index >= start && index < end ? "" : "none";
-          });
-          pageEl.textContent = String(currentPage);
-          prevEl.disabled = currentPage <= 1;
-          nextEl.disabled = currentPage >= totalPages;
-          limiterEl.style.display = rowEls.length > pageSize ? "flex" : "none";
-        }
-
-        function renderTable() {
-          const rows = readRows();
-          tableBodyEl.innerHTML = "";
-          if (!rows.length) {
-            emptyEl.style.display = "";
-            limiterEl.style.display = "none";
-            return;
-          }
-          emptyEl.style.display = "none";
-          rows.forEach((row) => {
-            const trEl = document.createElement("tr");
-            trEl.setAttribute("data-field-key", row.key);
-            trEl.innerHTML = [
-              "<td>" + escapeHtml(row.label) + "</td>",
-              "<td>" + escapeHtml(row.fieldType || "-") + "</td>",
-              "<td>" + (row.isRequired ? "Sim" : "Não") + "</td>",
-              "<td>" + escapeHtml(row.size || "-") + "</td>",
-              "<td>" + escapeHtml(row.fieldType === "list" ? (row.listKey || "-") : "-") + "</td>",
-              '<td><div class="table-actions"><button type="button" class="table-icon-btn" data-inline-af-action="edit">&#9998;</button><button type="button" class="table-icon-btn table-icon-btn-danger" data-inline-af-action="delete">&#128465;</button></div></td>'
-            ].join("");
-            tableBodyEl.appendChild(trEl);
-          });
-          renderPagination();
-        }
-
-        function addOrUpdateField() {
-          const cleanLabel = String(labelEl.value || "").trim();
-          if (!cleanLabel) {
-            setFeedback("Informe o nome do campo adicional.");
-            return;
-          }
-
-          const rows = readRows();
-          const currentKey = String(keyEl.value || "").trim() || ("tmp_" + (normalizeKey(cleanLabel) || "campo") + "_" + tempIndex++);
-          const duplicate = rows.some((row) => row.key !== currentKey && row.label.toLowerCase() === cleanLabel.toLowerCase());
-          if (duplicate) {
-            setFeedback("Já existe um campo adicional com esse nome.");
-            return;
-          }
-
-          let targetRow = rows.find((row) => row.key === currentKey);
-          if (!targetRow) {
-            targetRow = {
-              rowEl: document.createElement("div")
-            };
-            targetRow.rowEl.className = "process-field-row process-additional-field-row";
-            targetRow.rowEl.setAttribute("data-field-key", currentKey);
-            targetRow.rowEl.innerHTML = '<input type="hidden" name="additional_field_key"><input type="hidden" name="additional_field_label"><input type="hidden" name="additional_field_type"><input type="hidden" name="additional_field_required"><input type="hidden" name="additional_field_size"><input type="hidden" name="additional_field_list_key">';
-            containerEl.appendChild(targetRow.rowEl);
-          }
-
-          targetRow.rowEl.querySelector("input[name='additional_field_key']").value = currentKey;
-          targetRow.rowEl.querySelector("input[name='additional_field_label']").value = cleanLabel;
-          targetRow.rowEl.querySelector("input[name='additional_field_type']").value = String(typeEl.value || "text").trim().toLowerCase();
-          targetRow.rowEl.querySelector("input[name='additional_field_required']").value = String(requiredEl.value || "0").trim();
-          targetRow.rowEl.querySelector("input[name='additional_field_size']").value = sizedTypes.has(String(typeEl.value || "").trim().toLowerCase()) ? String(sizeEl.value || "30").trim() : "";
-          targetRow.rowEl.querySelector("input[name='additional_field_list_key']").value = String(listEl.value || "").trim();
-
-          clearEditor();
-          setFeedback("Campo adicional preparado para guardar.", "ok");
-          currentPage = Math.max(1, Math.ceil(readRows().length / (Number.parseInt(pageSizeEl.value, 10) || 5)));
-          renderTable();
-        }
-
-        window.__appverboAddAdditionalFieldV2 = addOrUpdateField;
-        window.__appverboClearAdditionalFieldV2 = clearEditor;
-
-        tableBodyEl.addEventListener("click", function (event) {
-          const actionBtn = event.target.closest("[data-inline-af-action]");
-          if (!actionBtn) {
-            return;
-          }
-          const rowEl = actionBtn.closest("tr[data-field-key]");
-          const fieldKey = String(rowEl ? rowEl.getAttribute("data-field-key") || "" : "").trim();
-          const rows = readRows();
-          const targetRow = rows.find((row) => row.key === fieldKey);
-          if (!targetRow) {
-            return;
-          }
-
-          if (actionBtn.getAttribute("data-inline-af-action") === "delete") {
-            targetRow.rowEl.remove();
-            renderTable();
-            return;
-          }
-
-          keyEl.value = targetRow.key;
-          labelEl.value = targetRow.label;
-          typeEl.value = targetRow.fieldType || "text";
-          requiredEl.value = targetRow.isRequired ? "1" : "0";
-          sizeEl.value = targetRow.size || "30";
-          listEl.value = targetRow.listKey || "";
-          setFeedback("");
-          syncEditorState();
-        });
-
-        pageSizeEl.addEventListener("change", function () {
-          currentPage = 1;
-          renderPagination();
-        });
-        prevEl.addEventListener("click", function () {
-          if (currentPage > 1) {
-            currentPage -= 1;
-            renderPagination();
-          }
-        });
-        nextEl.addEventListener("click", function () {
-          currentPage += 1;
-          renderPagination();
-        });
-
-        syncEditorState();
-        renderTable();
-        formEl.dataset.inlineAdditionalFieldsBound = "1";
-      }
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", setupAdditionalFieldsInlineV2);
-      } else {
-        setupAdditionalFieldsInlineV2();
-      }
-      window.setTimeout(setupAdditionalFieldsInlineV2, 200);
-      window.setTimeout(setupAdditionalFieldsInlineV2, 800);
-    })();
-  </script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260430-step3"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-step4"></script>
   <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
-  <script src="/static/js/modules/additional_fields_table_mode_v1.js?v=20260429-table-mode-v1"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
