@@ -1735,7 +1735,7 @@
 <div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
             <div class="admin-subsection">
 <h3>Campos Adicionais</h3>
-              <form method="post" action="/settings/menu/process-additional-fields">
+              <form method="post" action="/settings/menu/process-additional-fields" data-additional-fields-manager-v2="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
@@ -1743,8 +1743,9 @@
                   id="process-additional-fields-builder"
                   class="process-fields-builder"
                   data-field-types='{{ settings_edit_data.additional_field_type_options|tojson }}'
+                  data-process-lists='{{ settings_edit_data.process_lists|default([])|tojson }}'
                 >
-                  <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid">
+                  <div id="process-additional-fields-container" class="process-visible-fields process-additional-fields-grid" style="display: none;">
                     {% for field in settings_edit_data.process_additional_fields %}
                     <div class="process-field-row process-additional-field-row{% if (field.field_type or 'text') == 'header' %} process-additional-field-row-header{% endif %}" data-field-key="{{ field.key }}">
                       <input type="hidden" name="additional_field_key" value="{{ field.key }}">
@@ -1829,12 +1830,91 @@
                     </div>
                     {% endfor %}
                   </div>
+                  <section class="card entity-panel-card">
+                    <h4>Novo campo adicional</h4>
+                    <input type="hidden" id="process-additional-field-editor-key" value="">
+                    <div class="process-additional-fields-grid">
+                      <div class="process-field-row process-additional-field-row" id="process-additional-field-editor-row">
+                        <div class="field">
+                          <label for="process-additional-field-editor-label">Nome do campo adicional</label>
+                          <input id="process-additional-field-editor-label" type="text" maxlength="80" placeholder="Ex.: Data de batismo">
+                        </div>
+                        <div class="field">
+                          <label for="process-additional-field-editor-type">Tipo do campo</label>
+                          <select id="process-additional-field-editor-type" class="process-additional-field-type-select">
+                            {% for type_option in settings_edit_data.additional_field_type_options %}
+                            <option value="{{ type_option.key }}">{{ type_option.label }}</option>
+                            {% endfor %}
+                            <option value="list">Lista</option>
+                          </select>
+                        </div>
+                        <div class="field">
+                          <label for="process-additional-field-editor-required">Obrigatório</label>
+                          <select id="process-additional-field-editor-required" class="process-additional-field-required-select">
+                            <option value="0" selected>Não</option>
+                            <option value="1">Sim</option>
+                          </select>
+                        </div>
+                        <div class="field" id="process-additional-field-editor-size-field">
+                          <label for="process-additional-field-editor-size">Tamanho</label>
+                          <input id="process-additional-field-editor-size" type="number" class="process-additional-field-size-input" min="1" max="255" value="30">
+                        </div>
+                        <div class="field" id="process-additional-field-editor-list-field">
+                          <label for="process-additional-field-editor-list-key">Lista</label>
+                          <select id="process-additional-field-editor-list-key">
+                            <option value="">Selecione a lista</option>
+                            {% for process_list in settings_edit_data.process_lists|default([]) %}
+                            <option value="{{ process_list.key }}">{{ process_list.label }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-action-row">
+                      <button type="button" id="process-additional-field-add-btn" class="action-btn" onclick="if (window.__appverboAddAdditionalFieldV2) { window.__appverboAddAdditionalFieldV2(); }">Adicionar campo</button>
+                      <button type="button" id="process-additional-field-clear-btn" class="action-btn-secondary" onclick="if (window.__appverboClearAdditionalFieldV2) { window.__appverboClearAdditionalFieldV2(); }">Limpar</button>
+                    </div>
+                    <p id="process-additional-field-editor-feedback" class="empty" style="display: none;"></p>
+                  </section>
+                  <section class="card entity-panel-card">
+                    <h4>Campos criados</h4>
+                    <table id="process-additional-fields-created-table">
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th>Tipo</th>
+                          <th>Obrigatório</th>
+                          <th>Tamanho</th>
+                          <th>Lista</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="process-additional-fields-created-body"></tbody>
+                    </table>
+                    <p id="process-additional-fields-empty" class="empty" style="display: none;">Sem campos adicionais criados.</p>
+                  <div id="process-additional-fields-limiter" class="table-limiter">
+                    <div class="table-limiter-left">
+                      <select id="process-additional-fields-page-size" class="table-limiter-select" aria-label="Entradas por página (campos adicionais)">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                      </select>
+                      <span>entradas por página</span>
+                    </div>
+                    <div class="table-limiter-right">
+                      <button id="process-additional-fields-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
+                      <span id="process-additional-fields-page" class="table-limiter-page">1</span>
+                      <button id="process-additional-fields-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+                    </div>
+                  </div>
+                  </section>
                   <button
                     type="button"
-                    id="process-additional-field-add-btn"
+                    id="process-additional-field-add-btn-legacy"
                     class="table-icon-btn process-field-add-btn"
                     title="Adicionar campo adicional"
                     aria-label="Adicionar campo adicional"
+                    style="display: none;"
                   >
                     &#43;
                   </button>
@@ -2443,6 +2523,7 @@
   <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
+  <script src="/static/js/modules/additional_fields_table_mode_v1.js?v=20260429-table-mode-v1"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>

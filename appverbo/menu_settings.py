@@ -3137,6 +3137,7 @@ def move_sidebar_menu_additional_field(
         normalized_fields = (
             normalized_fields[:target_index] +
             block +
+            normalized_fields[target_index:block_start] +
             normalized_fields[block_end + 1:]
         )
     else:

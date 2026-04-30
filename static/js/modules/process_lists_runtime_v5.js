@@ -127,6 +127,9 @@
     const campos = obterCamposProcesso_v5();
 
     formularios.forEach(function (formulario) {
+      if (formulario.hasAttribute("data-additional-fields-manager-v2")) {
+        return;
+      }
       const selectsTipo = Array.from(formulario.querySelectorAll("select[name='additional_field_type']"));
 
       selectsTipo.forEach(function (selectTipo, indice) {
