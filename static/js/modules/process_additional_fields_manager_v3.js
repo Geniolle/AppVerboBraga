@@ -516,35 +516,36 @@
     parentForm.submit();
   }
 
-  function submitEditorItem_v4(root, manager) {
-    if (hasEditorDraft_v4(root, manager)) {
-      const item = readEditorItem_v3({
-        manager,
-        root,
-        elements: manager.elements,
-        state: manager.state
-      });
-
-      const validationResult = validateEditorItem_v3(item, {
-        manager,
-        root,
-        elements: manager.elements,
-        state: manager.state,
-        items: manager.getItems()
-      });
-
-      if (validationResult && validationResult.valid === false) {
-        if (validationResult.message) {
-          window.alert(validationResult.message);
-        }
-
-        return;
-      }
-
-      manager.addOrUpdate(item);
+  function submitEditorDraft_v4(root, manager) {
+    if (!hasEditorDraft_v4(root, manager)) {
+      return true;
     }
 
-    submitAdditionalFieldsForm_v4(root, manager);
+    const item = readEditorItem_v3({
+      manager,
+      root,
+      elements: manager.elements,
+      state: manager.state
+    });
+
+    const validationResult = validateEditorItem_v3(item, {
+      manager,
+      root,
+      elements: manager.elements,
+      state: manager.state,
+      items: manager.getItems()
+    });
+
+    if (validationResult && validationResult.valid === false) {
+      if (validationResult.message) {
+        window.alert(validationResult.message);
+      }
+
+      return false;
+    }
+
+    manager.addOrUpdate(item);
+    return true;
   }
 
   function bindEditorExtras_v4(root, manager) {
@@ -555,6 +556,7 @@
     root.dataset.additionalFieldsExtrasBoundV4 = "1";
 
     const editor = getEditorRoot_v3(root);
+    const parentForm = root.closest("form");
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
     const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
     const cancelButton = editor.querySelector("[data-additional-field-editor-cancel]");
@@ -565,10 +567,6 @@
 
     if (submitButton) {
       submitButton.textContent = "Guardar";
-      submitButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        submitEditorItem_v4(root, manager);
-      });
     }
 
     if (cancelButton) {
@@ -577,6 +575,32 @@
         event.preventDefault();
         manager.clearEditing();
         clearEditor_v4({ root });
+      });
+    }
+
+    if (parentForm && parentForm.dataset.additionalFieldsTopSubmitBoundV4 !== "1") {
+      parentForm.dataset.additionalFieldsTopSubmitBoundV4 = "1";
+
+      parentForm.addEventListener("submit", (event) => {
+        const submitter = event.submitter || document.activeElement;
+
+        if (!submitter || submitter !== submitButton) {
+          return;
+        }
+
+        try {
+          const canSubmit = submitEditorDraft_v4(root, manager);
+
+          if (canSubmit === false) {
+            event.preventDefault();
+            return;
+          }
+
+          manager.syncHiddenInputs();
+        } catch (error) {
+          event.preventDefault();
+          throw error;
+        }
       });
     }
 

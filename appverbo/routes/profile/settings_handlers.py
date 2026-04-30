@@ -403,6 +403,8 @@ def edit_sidebar_menu_process_fields_handler(
     visible_headers: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    selected_visible_field: str = Form(""),
+    selected_visible_header: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = menu_key.strip().lower()
 
@@ -448,6 +450,30 @@ def edit_sidebar_menu_process_fields_handler(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+
+
+                # APPVERBO_PROCESS_FIELDS_SELECTED_SUBMIT_V6_START
+        # ###################################################################################
+        # (PROCESS_FIELDS_SELECTED_SUBMIT_V6) ACRESCENTAR CAMPO SELECIONADO AO PAYLOAD
+        # ###################################################################################
+
+        clean_selected_visible_field = str(selected_visible_field or "").strip().lower()
+        clean_selected_visible_header = str(selected_visible_header or "").strip().lower()
+
+        if clean_selected_visible_field:
+            visible_fields = list(visible_fields or [])
+            visible_headers = list(visible_headers or [])
+            existing_visible_fields = {
+                str(field_key or "").strip().lower()
+                for field_key in visible_fields
+                if str(field_key or "").strip()
+            }
+
+            if clean_selected_visible_field not in existing_visible_fields:
+                visible_fields.append(clean_selected_visible_field)
+                visible_headers.append(clean_selected_visible_header)
+
+        # APPVERBO_PROCESS_FIELDS_SELECTED_SUBMIT_V6_END
 
         ok, error_message = update_sidebar_menu_process_fields(
             session=session,

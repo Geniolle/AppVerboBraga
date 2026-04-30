@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260430-global-responsive-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-tab-desc-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
+  <link rel="stylesheet" href="/static/css/modules/process_fields_header_alignment_v1.css?v=20260430-fields-header-align-v1">
 {% endblock %}
 
 {% block body %}
@@ -1505,9 +1506,9 @@
                   <div data-process-fields-config-hidden-container></div>
 
                   <div class="configurable-items-editor-v1 process-fields-config-editor-v1">
-                    <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1">
+                    <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1 process-fields-picker-row-v4">
                       <div class="field">
-                        <label for="process-fields-config-editor-key">Campo do processo</label>
+                        <label for="process-fields-config-editor-key">Nome do campo</label>
                         <select id="process-fields-config-editor-key" data-process-fields-config-editor-key>
                           <option value="">Selecione</option>
                           {% for header_option in settings_process_header_options|default([]) %}
@@ -1527,9 +1528,19 @@
                         </select>
                       </div>
 
+                      <div class="field process-field-header-picker-v4">
+                        <label for="process-fields-config-editor-header">Cabeçalho do campo</label>
+                        <select id="process-fields-config-editor-header" data-process-fields-config-header-editor-v3>
+                          <option value="">Sem cabeçalho</option>
+                          {% for header_option in settings_process_header_options|default([]) %}
+                          <option value="{{ header_option.key }}">{{ header_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
                       <div class="field full">
                         <div class="form-action-row">
-                          <button type="button" class="action-btn" data-process-fields-config-submit>Guardar</button>
+                          <button type="submit" class="action-btn" data-process-fields-config-submit>Guardar</button>
                           <button type="button" class="action-btn-cancel" data-process-fields-config-cancel>Cancelar</button>
                         </div>
                       </div>
@@ -1929,7 +1940,7 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button
-                            type="button"
+                            type="submit"
                             class="action-btn"
                             data-additional-field-editor-submit
                           >Guardar</button>
@@ -2580,7 +2591,7 @@
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v1.js?v=20260430-fields-config-v1"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v2.js?v=20260430-fields-config-v2"></script>
   <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
