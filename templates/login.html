@@ -181,17 +181,7 @@
           <input id="email" name="email" type="email" required value="{{ email }}" placeholder="exemplo: joao@dominio.com">
         </div>
 
-        <div class="field">
-          <label for="entity_id">Entidade</label>
-          <select id="entity_id" name="entity_id" required>
-            <option value="" disabled {% if not login_data.entity_id %}selected{% endif %}>Selecione</option>
-            {% for entity in entities %}
-              <option value="{{ entity.id }}" data-entity-email="{{ entity.email }}" {% if login_data.entity_id == entity.id|string %}selected{% endif %}>
-                {{ entity.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
+        {# Entidade definida automaticamente no backend pelo email do utilizador. #}
 
         <div class="field-row">
           <label for="password">Palavra-passe</label>

@@ -54,6 +54,7 @@ MENU_SECTION_BY_SYSTEM_MENU_KEY = {
 }
 MENU_CONFIG_SIDEBAR_SECTION_KEY = "sidebar_section"
 MENU_CONFIG_SIDEBAR_SECTIONS_KEY = "sidebar_sections"
+MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY = "sidebar_global_refresh_version"
 MENU_LEGACY_KEY_ALIAS = {
     "configuracao": "administrativo",
 }
@@ -3586,3 +3587,221 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
     return normalized
 
+
+# ###################################################################################
+# (SIDEBAR_GLOBAL_REFRESH_V1) VERSAO GLOBAL PARA REFRESH DOS UTILIZADORES LOGADOS
+# ###################################################################################
+
+def build_sidebar_global_refresh_version_v1() -> str:
+    from time import time as _appverbo_time
+
+    return str(int(_appverbo_time() * 1000))
+
+
+def get_sidebar_global_refresh_version_v1(session: Session) -> str:
+    row = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": "administrativo"},
+    ).mappings().one_or_none()
+
+    if row is None:
+        return ""
+
+    try:
+        menu_config = json.loads(row.get("menu_config") or "{}")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        menu_config = {}
+
+    if not isinstance(menu_config, dict):
+        return ""
+
+    return str(menu_config.get(MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY) or "")
+
+# APPVERBO_SIDEBAR_SECTIONS_UPDATE_V2_START
+
+# ###################################################################################
+# (SIDEBAR_SECTIONS_UPDATE_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
+# ###################################################################################
+
+def _parse_sidebar_menu_config_v2(raw_menu_config: Any) -> dict[str, Any]:
+    try:
+        parsed_config = json.loads(raw_menu_config or "{}")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        parsed_config = {}
+
+    if not isinstance(parsed_config, dict):
+        return {}
+
+    return parsed_config
+
+
+def _resolve_menu_sidebar_section_key_v2(
+    menu_key: Any,
+    menu_config: dict[str, Any],
+    section_keys: set[str],
+    ordered_section_keys: list[str],
+) -> str:
+    raw_section_key = (
+        menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
+        or menu_config.get("menu_section")
+        or menu_config.get("section_key")
+        or menu_config.get("section")
+    )
+
+    clean_section_key = _normalize_sidebar_section_key(raw_section_key)
+    if clean_section_key in section_keys:
+        return clean_section_key
+
+    normalized_section_key = normalize_menu_section_key(raw_section_key, menu_key)
+    if normalized_section_key in section_keys:
+        return normalized_section_key
+
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    default_system_section = MENU_SECTION_BY_SYSTEM_MENU_KEY.get(clean_menu_key, "")
+
+    if default_system_section in section_keys:
+        return default_system_section
+
+    return _resolve_default_sidebar_section_key(
+        clean_menu_key,
+        section_keys,
+        ordered_section_keys,
+    )
+
+
+def update_sidebar_sections_v2(
+    session: Session,
+    raw_sections: list[dict[str, Any]],
+) -> tuple[bool, str]:
+    payload_sections: list[dict[str, Any]] = []
+
+    for raw_section in raw_sections:
+        if not isinstance(raw_section, dict):
+            continue
+
+        clean_label = _normalize_sidebar_section_label(raw_section.get("label"))
+        if not clean_label:
+            continue
+
+        clean_key = _normalize_sidebar_section_key(raw_section.get("key"))
+        if not clean_key:
+            clean_key = _build_sidebar_section_key_from_label(clean_label)
+
+        if not clean_key:
+            continue
+
+        scope_mode = (
+            raw_section.get("visibility_scope_mode")
+            or raw_section.get("scope_mode")
+            or raw_section.get("scope")
+            or raw_section.get("visibility")
+            or MENU_VISIBILITY_SCOPE_ALL
+        )
+
+        payload_sections.append(
+            _build_sidebar_section_payload(
+                clean_key,
+                clean_label,
+                _visibility_scope_mode_to_scopes(scope_mode),
+            )
+        )
+
+    normalized_sections = normalize_sidebar_sections(payload_sections)
+
+    if not normalized_sections:
+        return False, "Informe pelo menos uma sessão válida."
+
+    section_keys = {
+        str(section.get("key") or "").strip().lower()
+        for section in normalized_sections
+        if str(section.get("key") or "").strip()
+    }
+    ordered_section_keys = [
+        str(section.get("key") or "").strip().lower()
+        for section in normalized_sections
+        if str(section.get("key") or "").strip()
+    ]
+    section_scope_map = {
+        str(section.get("key") or "").strip().lower(): normalize_menu_visibility_scopes(
+            section.get("visibility_scopes")
+        )
+        for section in normalized_sections
+        if str(section.get("key") or "").strip()
+    }
+
+    menu_rows = session.execute(
+        text(
+            """
+            SELECT menu_key, menu_config
+            FROM sidebar_menu_settings
+            """
+        )
+    ).mappings().all()
+
+    if not menu_rows:
+        return False, "Não existem menus para atualizar."
+
+    updated_menus_count = 0
+
+    for menu_row in menu_rows:
+        clean_menu_key = _normalize_menu_key(menu_row.get("menu_key"))
+        if not clean_menu_key:
+            continue
+
+        menu_config = _parse_sidebar_menu_config_v2(menu_row.get("menu_config"))
+        sidebar_section_key = _resolve_menu_sidebar_section_key_v2(
+            clean_menu_key,
+            menu_config,
+            section_keys,
+            ordered_section_keys,
+        )
+
+        if sidebar_section_key not in section_scope_map:
+            continue
+
+        inherited_scopes = normalize_menu_visibility_scopes(
+            section_scope_map.get(sidebar_section_key)
+        )
+        inherited_scope_mode = _resolve_visibility_scope_mode_from_scopes(inherited_scopes)
+
+        menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = sidebar_section_key
+        menu_config["visibility_scopes"] = inherited_scopes
+        menu_config["visibility_scope_mode"] = inherited_scope_mode
+        menu_config["visibility_scope_label"] = _resolve_visibility_scope_label_from_mode(
+            inherited_scope_mode
+        )
+
+        if clean_menu_key == "administrativo":
+            menu_config[MENU_CONFIG_SIDEBAR_SECTIONS_KEY] = normalized_sections
+            menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = build_sidebar_global_refresh_version_v1()
+
+        session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": clean_menu_key,
+                "menu_config": json.dumps(menu_config, ensure_ascii=False),
+            },
+        )
+        updated_menus_count += 1
+
+    session.commit()
+
+    if updated_menus_count <= 0:
+        return False, "Nenhum menu foi atualizado com a visibilidade das sessões."
+
+    return True, ""
+
+# APPVERBO_SIDEBAR_SECTIONS_UPDATE_V2_END

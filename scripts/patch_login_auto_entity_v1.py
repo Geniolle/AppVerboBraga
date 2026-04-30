@@ -1,31 +1,85 @@
-from __future__ import annotations
+﻿from pathlib import Path
+import ast
+import re
+import sys
 
-from datetime import date, datetime, timezone
-from typing import Any
+ROOT = Path.cwd()
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+SESSION_PATH = ROOT / "appverbo" / "routes" / "auth" / "session_handlers.py"
+LOGIN_TEMPLATE_PATH = ROOT / "templates" / "login.html"
 
-from appverbo.core import *  # noqa: F403,F401
-from appverbo.services import *  # noqa: F403,F401
-from appverbo.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    Profile,
-    User,
-    UserAccountStatus,
-    UserProfile,
-)
 
-from appverbo.routes.auth.router import router
+def fail(message: str) -> None:
+    print(f"ERRO: {message}")
+    sys.exit(1)
 
-@router.post("/login", response_class=HTMLResponse)
+
+if not SESSION_PATH.exists():
+    fail(f"ficheiro nao encontrado: {SESSION_PATH}")
+
+if not LOGIN_TEMPLATE_PATH.exists():
+    fail(f"ficheiro nao encontrado: {LOGIN_TEMPLATE_PATH}")
+
+
+####################################################################################
+# (1) LER FICHEIROS
+####################################################################################
+
+session_text = SESSION_PATH.read_text(encoding="utf-8")
+login_text = LOGIN_TEMPLATE_PATH.read_text(encoding="utf-8")
+
+
+####################################################################################
+# (2) REMOVER CAMPO ENTIDADE DO LOGIN COMUM
+####################################################################################
+
+login_entity_block = '''        <div class="field">
+          <label for="entity_id">Entidade</label>
+          <select id="entity_id" name="entity_id" required>
+            <option value="" disabled {% if not login_data.entity_id %}selected{% endif %}>Selecione</option>
+            {% for entity in entities %}
+              <option value="{{ entity.id }}" data-entity-email="{{ entity.email }}" {% if login_data.entity_id == entity.id|string %}selected{% endif %}>
+                {{ entity.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+'''
+
+common_login_marker = '''    {% else %}
+      <h1>Entrar na sua conta</h1>'''
+
+password_marker = '''        <div class="field-row">
+          <label for="password">Palavra-passe</label>'''
+
+common_start = login_text.find(common_login_marker)
+if common_start == -1:
+    fail("nao encontrei o bloco do login comum em templates/login.html")
+
+password_start = login_text.find(password_marker, common_start)
+if password_start == -1:
+    fail("nao encontrei o bloco da palavra-passe no login comum")
+
+entity_block_start = login_text.find(login_entity_block, common_start)
+
+if entity_block_start != -1 and entity_block_start < password_start:
+    entity_block_end = entity_block_start + len(login_entity_block)
+    login_text = (
+        login_text[:entity_block_start]
+        + "        {# Entidade definida automaticamente no backend pelo email do utilizador. #}\n\n"
+        + login_text[entity_block_end:]
+    )
+    print("OK: campo Entidade removido do login comum.")
+else:
+    print("AVISO: campo Entidade do login comum nao encontrado ou ja removido.")
+
+
+####################################################################################
+# (3) SUBSTITUIR FUNCAO DE LOGIN POR login_v1
+####################################################################################
+
+new_login_function = '''@router.post("/login", response_class=HTMLResponse)
 def login_v1(
     request: Request,
     email: str = Form(...),
@@ -203,117 +257,39 @@ def login_v1(
 
     return RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
 
-@router.post("/signup", response_class=HTMLResponse)
-def signup(
-    request: Request,
-    full_name: str = Form(...),
-    country: str = Form(...),
-    primary_phone: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    confirm_password: str = Form(...),
-    entity_id: str = Form(""),
-) -> HTMLResponse:
-    errors: list[str] = []
-    clean_full_name = full_name.strip()
-    clean_country = country.strip().upper()
-    clean_primary_phone = primary_phone.strip()
-    clean_email = email.strip().lower()
-    clean_entity_id = entity_id.strip()
+'''
 
-    signup_data = {
-        "full_name": clean_full_name,
-        "country": clean_country,
-        "primary_phone": clean_primary_phone,
-        "email": clean_email,
-        "entity_id": clean_entity_id,
-        "entity_name": "",
-        "entity_locked": "",
-    }
+login_route_pattern = re.compile(
+    r'@router\.post\("/login", response_class=HTMLResponse\)\n'
+    r'def login(?:_v\d+)?\(\n'
+    r'.*?\n'
+    r'(?=@router\.post\("/signup", response_class=HTMLResponse\))',
+    re.S,
+)
 
-    if not clean_full_name:
-        errors.append("Nome completo é obrigatório.")
-    phone_country_error = validate_signup_phone_country(clean_country, clean_primary_phone)
-    if phone_country_error:
-        errors.append(phone_country_error)
-    if not clean_email:
-        errors.append("Email é obrigatório.")
-    if len(password) < 8:
-        errors.append("A palavra-passe deve ter no minimo 8 caracteres.")
-    if password != confirm_password:
-        errors.append("A confirmação da palavra-passe não confere.")
+session_text_new, count = login_route_pattern.subn(new_login_function, session_text, count=1)
 
-    parsed_entity_id: int | None = None
-    if clean_entity_id:
-        try:
-            parsed_entity_id = int(clean_entity_id)
-        except ValueError:
-            errors.append("Entidade inválida.")
+if count != 1:
+    fail("nao consegui substituir a funcao de login em session_handlers.py")
 
-    with SessionLocal() as session:
-        current_user = get_current_user(request, session)
-        if current_user is not None:
-            return RedirectResponse(url="/users/new", status_code=status.HTTP_302_FOUND)
 
-        existing_user = session.execute(
-            select(User.id).where(func.lower(User.login_email) == clean_email)
-        ).scalar_one_or_none()
-        if existing_user:
-            errors.append("Já existe conta com este email. Use o login.")
+####################################################################################
+# (4) VALIDAR SINTAXE PYTHON
+####################################################################################
 
-        if parsed_entity_id is not None:
-            existing_entity = session.get(Entity, parsed_entity_id)
-            if existing_entity is None:
-                errors.append("Entidade selecionada não existe.")
-            elif existing_entity.is_active:
-                signup_data["entity_name"] = existing_entity.name or ""
-                signup_data["entity_locked"] = "1"
+try:
+    ast.parse(session_text_new)
+except SyntaxError as exc:
+    fail(f"session_handlers.py ficaria com erro de sintaxe: {exc}")
 
-        if errors:
-            return render_login(
-                request,
-                error=" ".join(errors),
-                mode="signup",
-                signup_data=signup_data,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
 
-        user = upsert_user_by_email(
-            session=session,
-            email=clean_email,
-            full_name=clean_full_name,
-            primary_phone=clean_primary_phone,
-            entity_id=parsed_entity_id,
-        )
-        user.password_hash = hash_password(password)
-        user.account_status = UserAccountStatus.ACTIVE.value
+####################################################################################
+# (5) GRAVAR FICHEIROS
+####################################################################################
 
-        try:
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return render_login(
-                request,
-                error="Falha ao criar conta. Tente novamente.",
-                mode="signup",
-                signup_data=signup_data,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+SESSION_PATH.write_text(session_text_new, encoding="utf-8")
+LOGIN_TEMPLATE_PATH.write_text(login_text, encoding="utf-8")
 
-        request.session["user_id"] = user.id
-        request.session["user_name"] = clean_full_name
-        request.session["user_email"] = clean_email
-        set_session_entity_context(
-            request,
-            get_entity_context_for_user(session, user.id, user.login_email, parsed_entity_id),
-        )
-
-    return RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
-
-@router.post("/logout")
-def logout(request: Request) -> RedirectResponse:
-    request.session.clear()
-    return RedirectResponse(
-        url="/login?success=Sessão encerrada com sucesso.",
-        status_code=status.HTTP_303_SEE_OTHER,
-    )
+print("OK: session_handlers.py atualizado com login_v1.")
+print("OK: login.html atualizado.")
+print("OK: patch_login_auto_entity_v1 concluido.")

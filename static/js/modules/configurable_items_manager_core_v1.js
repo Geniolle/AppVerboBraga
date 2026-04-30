@@ -294,11 +294,20 @@
 
   function createActionButton_v1(action, label, itemId, disabled) {
     const button = document.createElement("button");
+    const icons = {
+      edit: "&#9998;",
+      up: "&#8593;",
+      down: "&#8595;",
+      remove: "&#128465;"
+    };
+
     button.type = "button";
     button.className = "configurable-items-action-btn-v1";
     button.dataset.configurableAction = action;
     button.dataset.configurableItemId = itemId;
-    button.textContent = label;
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.innerHTML = icons[action] || label;
 
     if (disabled) {
       button.disabled = true;
@@ -353,21 +362,25 @@
       });
 
       const actionsTd = document.createElement("td");
-      actionsTd.className = "configurable-items-actions-v1";
+      const actionsWrap = document.createElement("div");
+
+      actionsTd.className = "configurable-items-actions-cell-v1";
+      actionsWrap.className = "configurable-items-actions-v1";
 
       if (manager.config.actions.edit) {
-        actionsTd.appendChild(createActionButton_v1("edit", "Editar", itemId, false));
+        actionsWrap.appendChild(createActionButton_v1("edit", "Editar", itemId, false));
       }
 
       if (manager.config.actions.move) {
-        actionsTd.appendChild(createActionButton_v1("up", "Subir", itemId, absoluteIndex === 0));
-        actionsTd.appendChild(createActionButton_v1("down", "Descer", itemId, absoluteIndex === totalItems - 1));
+        actionsWrap.appendChild(createActionButton_v1("up", "Subir", itemId, absoluteIndex === 0));
+        actionsWrap.appendChild(createActionButton_v1("down", "Descer", itemId, absoluteIndex === totalItems - 1));
       }
 
       if (manager.config.actions.remove) {
-        actionsTd.appendChild(createActionButton_v1("remove", "Remover", itemId, false));
+        actionsWrap.appendChild(createActionButton_v1("remove", "Remover", itemId, false));
       }
 
+      actionsTd.appendChild(actionsWrap);
       row.appendChild(actionsTd);
       tableBody.appendChild(row);
     });

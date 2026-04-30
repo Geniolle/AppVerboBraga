@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #eceef2;
   --topbar: #2f86d7;
   --sidebar-bg: #f3f3f4;
@@ -2618,3 +2618,269 @@ button[data-admin-tab].active * {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* APPVERBO_GLOBAL_PAGE_RESPONSIVE_V1_START */
+
+/* ###################################################################################
+   PAGINA GLOBAL - RESPONSIVIDADE DO LAYOUT, CARDS E TABELAS
+   ################################################################################### */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.layout,
+.content,
+.container {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.layout {
+  width: 100%;
+  grid-template-columns: clamp(150px, 18vw, 234px) minmax(0, 1fr);
+}
+
+.content {
+  padding: clamp(10px, 1.8vw, 24px);
+  overflow-x: hidden;
+}
+
+.card {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.card,
+.entity-panel-card,
+.menu-tabs-card {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card table,
+.entity-panel-card table,
+#settings-menu-edit-card table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.card th,
+.card td,
+.entity-panel-card th,
+.entity-panel-card td {
+  white-space: nowrap;
+}
+
+.card td:last-child,
+.entity-panel-card td:last-child,
+.card th:last-child,
+.entity-panel-card th:last-child {
+  width: 1%;
+  min-width: 112px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.table-actions,
+.card td:last-child .table-actions,
+.entity-panel-card td:last-child .table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.table-icon-btn,
+.card td:last-child .table-icon-btn,
+.entity-panel-card td:last-child .table-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+.menu-tabs-card {
+  max-width: 100%;
+}
+
+.menu-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+}
+
+.menu-tabs .submenu-item,
+#submenu-items .submenu-item {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.topbar,
+.topbar-left,
+.topbar-right {
+  min-width: 0;
+}
+
+.brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-action-row,
+.profile-edit-actions,
+.entity-create-toolbar {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 170px minmax(0, 1fr);
+  }
+
+  .content {
+    padding: 12px;
+  }
+
+  .sidebar {
+    min-width: 0;
+  }
+
+  .menu-section {
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .menu-item {
+    padding: 10px 10px;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .menu-icon {
+    width: 16px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .card table,
+  .entity-panel-card table,
+  #settings-menu-edit-card table {
+    min-width: 680px;
+  }
+}
+
+@media (max-width: 820px) {
+  .layout {
+    grid-template-columns: 132px minmax(0, 1fr);
+  }
+
+  .content {
+    padding: 10px;
+  }
+
+  .brand-name {
+    max-width: 210px;
+  }
+
+  .sidebar {
+    overflow-x: hidden;
+  }
+
+  .menu-section {
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .menu-item {
+    padding: 9px 8px;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .menu-icon {
+    width: 14px;
+    font-size: 11px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .card table,
+  .entity-panel-card table,
+  #settings-menu-edit-card table {
+    min-width: 640px;
+  }
+
+  .table-icon-btn {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .content {
+    padding: 8px;
+  }
+
+  .topbar {
+    padding: 0 10px;
+  }
+
+  .brand-name {
+    max-width: 160px;
+    font-size: 17px;
+  }
+
+  .user-name {
+    max-width: 100px;
+  }
+
+  .card table,
+  .entity-panel-card table,
+  #settings-menu-edit-card table {
+    min-width: 600px;
+  }
+
+  .form-action-row .action-btn,
+  .form-action-row .action-btn-secondary,
+  .form-action-row .action-btn-cancel,
+  .profile-edit-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* APPVERBO_GLOBAL_PAGE_RESPONSIVE_V1_END */
+

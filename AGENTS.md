@@ -248,3 +248,48 @@ Exemplos de funcionalidades que devem seguir este padrão:
 - Regras administrativas
 
 <!-- APPVERBO_CONFIGURABLE_ITEMS_LAYOUT_V1_END -->
+## 14) Padrão obrigatório para abas configuráveis do processo
+
+Toda nova aba configurável dentro do editor de processo deve seguir o padrão visual e técnico abaixo:
+
+1. A aba deve ter apenas dois blocos visuais principais:
+   - bloco superior de criação/edição;
+   - bloco inferior com tabela ou lista paginada dos itens criados.
+
+2. Não deve existir um terceiro bloco visual externo envolvendo os dois blocos principais.
+   O container principal do manager deve ser apenas estrutural, sem borda, fundo ou padding visual.
+
+3. O bloco superior deve editar apenas um item por vez.
+
+4. A tabela inferior deve ser a fonte visual principal dos itens já criados.
+
+5. As ações da tabela devem usar ícones alinhados lado a lado:
+   - editar;
+   - subir;
+   - descer;
+   - remover.
+
+6. Toda aba configurável deve ter um manager JavaScript próprio em `static/js/modules`.
+
+Exemplos de nomes esperados:
+
+```text
+process_lists_manager_v1.js
+process_subsequent_fields_manager_v1.js
+process_fields_config_manager_v1.js
+process_additional_fields_manager_v3.js
+
+
+E eu também acrescentaria uma pequena seção operacional:
+
+```markdown
+## 15) Validação de alterações em templates e assets
+
+Sempre que alterar `templates/new_user.html` ou assets usados por ele:
+
+1. Atualizar o cache buster dos ficheiros CSS/JS alterados.
+2. Validar JavaScript com:
+
+```bash
+node --check static/js/new_user.js
+node --check static/js/modules/<ficheiro_alterado>.js

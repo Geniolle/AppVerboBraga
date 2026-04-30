@@ -1,4 +1,4 @@
-/* ###################################################################################
+﻿/* ###################################################################################
    APPVERBOBRAGA - CONFIGURABLE ITEMS MANAGER V1
    ################################################################################### */
 
@@ -188,3 +188,674 @@
     flex-direction: column;
   }
 }
+
+/* APPVERBO_ADDITIONAL_FIELDS_FINAL_LAYOUT_V1_START */
+
+/* ###################################################################################
+   CAMPOS ADICIONAIS - EDITOR FINAL E ACOES EM ICONES
+   ################################################################################### */
+
+[data-process-additional-fields-manager-v3="1"] .configurable-items-editor-v1 {
+  padding: 16px;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] {
+  display: grid;
+  grid-template-columns:
+    minmax(260px, 1.35fr)
+    minmax(170px, 0.8fr)
+    minmax(150px, 0.7fr)
+    minmax(120px, 0.55fr)
+    minmax(180px, 0.9fr);
+  gap: 12px;
+  align-items: end;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .field {
+  min-width: 0;
+  margin: 0;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .field.full {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] input,
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] select {
+  width: 100%;
+  min-height: 38px;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-required-wrap] {
+  align-self: end;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-required-wrap] .profile-custom-flag-control {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #0f2647;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-required-wrap] .profile-custom-flag-control input {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .form-action-row {
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+.configurable-items-table-v1 th.configurable-items-actions-col-v1,
+.configurable-items-actions-cell-v1 {
+  width: 1%;
+  min-width: 148px;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.configurable-items-actions-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.configurable-items-action-btn-v1 {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.configurable-items-action-btn-v1[data-configurable-action="remove"] {
+  border-color: #f0b4b4;
+  background: #fff5f5;
+  color: #9f1d1d;
+}
+
+.configurable-items-action-btn-v1[data-configurable-action="remove"]:hover {
+  background: #ffe8e8;
+  border-color: #e18a8a;
+}
+
+@media (max-width: 1180px) {
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .field.full {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] {
+    grid-template-columns: 1fr;
+  }
+
+  .configurable-items-actions-cell-v1 {
+    min-width: 132px;
+  }
+
+  .configurable-items-action-btn-v1 {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+  }
+}
+
+/* APPVERBO_ADDITIONAL_FIELDS_FINAL_LAYOUT_V1_END */
+
+/* APPVERBO_PROCESS_TABS_GLOBAL_LAYOUT_V1_START */
+
+/* ###################################################################################
+   EDITOR DE PROCESSO - ESTRUTURA GLOBAL DAS ABAS
+   ################################################################################### */
+
+#settings-menu-edit-card .process-edit-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  border-bottom: 1px solid #cbd5e1;
+  margin-top: 14px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+
+#settings-menu-edit-card .process-edit-tab-link {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  color: #0f2647;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+#settings-menu-edit-card .process-edit-tab-link:hover {
+  background: #f8fafc;
+  border-color: #d7e0ee;
+}
+
+#settings-menu-edit-card .process-edit-tab-link.active,
+#settings-menu-edit-card .process-edit-tab-link[aria-selected="true"] {
+  background: #ffffff;
+  border-color: #b8c9e6;
+  color: #0f2647;
+  position: relative;
+  top: 1px;
+}
+
+#settings-menu-edit-card .process-edit-pane {
+  padding-top: 6px;
+}
+
+#settings-menu-edit-card .process-edit-pane > .admin-subsection {
+  margin-top: 0;
+}
+
+#settings-menu-edit-card .process-edit-pane h3 {
+  margin: 8px 0 20px;
+  color: #0f2647;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+#settings-menu-edit-card .process-edit-pane .muted {
+  margin: -10px 0 16px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+#settings-menu-edit-card .process-edit-pane form:not([style*="display: none"]) {
+  max-width: 100%;
+}
+
+#settings-menu-edit-card .process-edit-pane .grid,
+#settings-menu-edit-card .process-edit-pane .process-visible-fields,
+#settings-menu-edit-card .process-edit-pane .process-subsequent-fields-grid,
+#settings-menu-edit-card .process-edit-pane .process-lists-grid,
+#settings-menu-edit-card .process-edit-pane .process-fields-builder {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+#settings-menu-edit-card .process-edit-pane .field {
+  margin-bottom: 12px;
+}
+
+#settings-menu-edit-card .process-edit-pane .field label {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+#settings-menu-edit-card .process-edit-pane input,
+#settings-menu-edit-card .process-edit-pane select,
+#settings-menu-edit-card .process-edit-pane textarea {
+  min-height: 38px;
+}
+
+#settings-menu-edit-card .process-edit-pane .form-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#settings-menu-edit-card .process-edit-pane .action-btn,
+#settings-menu-edit-card .process-edit-pane .action-btn-secondary,
+#settings-menu-edit-card .process-edit-pane .action-btn-cancel {
+  min-width: 118px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#settings-menu-edit-card .process-edit-pane table {
+  width: 100%;
+}
+
+#settings-menu-edit-card .process-edit-pane th {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+#settings-menu-edit-card .process-edit-pane td {
+  vertical-align: middle;
+}
+
+@media (max-width: 900px) {
+  #settings-menu-edit-card .process-edit-tab-link {
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  #settings-menu-edit-card .process-edit-pane .form-action-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* APPVERBO_PROCESS_TABS_GLOBAL_LAYOUT_V1_END */
+
+/* APPVERBO_PROCESS_LISTS_MANAGER_V1_START */
+
+/* ###################################################################################
+   ABA LISTAS - EDITOR SUPERIOR E LISTA PAGINADA
+   ################################################################################### */
+
+.process-lists-manager-v1 {
+  display: grid;
+  gap: 12px;
+}
+
+.process-lists-editor-grid-v1 {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.process-lists-editor-grid-v1 .field {
+  min-width: 0;
+  margin: 0;
+}
+
+.process-lists-editor-grid-v1 .field.full {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.process-lists-editor-grid-v1 input {
+  width: 100%;
+  min-height: 38px;
+}
+
+.process-lists-created-v1 {
+  margin-top: 0;
+}
+
+.process-lists-table-v1 td:nth-child(2) {
+  max-width: 720px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .process-lists-editor-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+
+  .process-lists-editor-grid-v1 .field.full {
+    grid-column: 1 / -1;
+  }
+}
+
+/* APPVERBO_PROCESS_LISTS_MANAGER_V1_END */
+
+/* APPVERBO_PROCESS_SUBSEQUENT_FIELDS_MANAGER_V1_START */
+
+/* ###################################################################################
+   ABA CAMPOS SUBSEQUENTES - EDITOR SUPERIOR E LISTA PAGINADA
+   ################################################################################### */
+
+.process-subsequent-fields-manager-v1 {
+  display: grid;
+  gap: 12px;
+}
+
+.process-subsequent-fields-editor-grid-v1 {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1fr)
+    minmax(220px, 1fr)
+    minmax(170px, 0.75fr)
+    minmax(180px, 0.85fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.process-subsequent-fields-editor-grid-v1 .field {
+  min-width: 0;
+  margin: 0;
+}
+
+.process-subsequent-fields-editor-grid-v1 .field.full {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.process-subsequent-fields-editor-grid-v1 input,
+.process-subsequent-fields-editor-grid-v1 select {
+  width: 100%;
+  min-height: 38px;
+}
+
+.process-subsequent-fields-created-v1 {
+  margin-top: 0;
+}
+
+.process-subsequent-fields-table-v1 td {
+  white-space: normal;
+  word-break: break-word;
+}
+
+@media (max-width: 1180px) {
+  .process-subsequent-fields-editor-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .process-subsequent-fields-editor-grid-v1 .field.full {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .process-subsequent-fields-editor-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* APPVERBO_PROCESS_SUBSEQUENT_FIELDS_MANAGER_V1_END */
+
+/* APPVERBO_REMOVE_OUTER_MANAGER_BOX_V1_START */
+
+/* ###################################################################################
+   LISTAS CONFIGURAVEIS - REMOVER BLOCO VISUAL EXTERNO
+   ################################################################################### */
+
+/*
+  O manager principal deve ser apenas estrutural.
+  Visualmente devem aparecer somente:
+  1) bloco editor superior
+  2) bloco lista/tabela inferior
+*/
+
+#settings-menu-edit-card .process-edit-pane .configurable-items-manager-v1 {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#settings-menu-edit-card .process-edit-pane .process-fields-builder.configurable-items-manager-v1 {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#settings-menu-edit-card .process-edit-pane .configurable-items-editor-v1,
+#settings-menu-edit-card .process-edit-pane .configurable-items-list-v1 {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+#settings-menu-edit-card .process-edit-pane .configurable-items-editor-v1 + .configurable-items-list-v1 {
+  margin-top: 12px;
+}
+
+/* APPVERBO_REMOVE_OUTER_MANAGER_BOX_V1_END */
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_MANAGER_V1_START */
+
+/* ###################################################################################
+   ABA CONFIGURACAO DOS CAMPOS - EDITOR SUPERIOR E LISTA PAGINADA
+   ################################################################################### */
+
+.process-fields-config-manager-v1 {
+  display: grid;
+  gap: 12px;
+}
+
+.process-fields-config-editor-grid-v1 {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.8fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.process-fields-config-editor-grid-v1 .field {
+  min-width: 0;
+  margin: 0;
+}
+
+.process-fields-config-editor-grid-v1 .field.full {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.process-fields-config-editor-grid-v1 select {
+  width: 100%;
+  min-height: 38px;
+}
+
+.process-fields-config-created-v1 {
+  margin-top: 0;
+}
+
+.process-fields-config-table-v1 td {
+  white-space: normal;
+  word-break: break-word;
+}
+
+@media (max-width: 720px) {
+  .process-fields-config-editor-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_MANAGER_V1_END */
+
+/* APPVERBO_PROCESS_EDITOR_RESPONSIVE_V1_START */
+
+/* ###################################################################################
+   EDITOR DE PROCESSO - RESPONSIVIDADE GLOBAL
+   ################################################################################### */
+
+#settings-menu-edit-card,
+#settings-menu-edit-card *,
+.configurable-items-manager-v1,
+.configurable-items-manager-v1 * {
+  box-sizing: border-box;
+}
+
+#settings-menu-edit-card {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+#settings-menu-edit-card .admin-subsection,
+#settings-menu-edit-card .process-edit-pane,
+#settings-menu-edit-card form,
+.configurable-items-manager-v1,
+.configurable-items-editor-v1,
+.configurable-items-list-v1,
+.configurable-items-table-wrap-v1 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#settings-menu-edit-card .process-edit-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+#settings-menu-edit-card .process-edit-tab-link {
+  flex: 0 0 auto;
+}
+
+#settings-menu-edit-card input,
+#settings-menu-edit-card select,
+#settings-menu-edit-card textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.configurable-items-editor-v1,
+.configurable-items-list-v1 {
+  overflow: hidden;
+}
+
+.configurable-items-table-wrap-v1 {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.configurable-items-table-v1 {
+  width: 100%;
+  min-width: 720px;
+}
+
+.configurable-items-pagination-row-v1 {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.configurable-items-actions-v1 {
+  max-width: 100%;
+}
+
+#settings-menu-edit-card .form-action-row {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 980px) {
+  #settings-menu-edit-card {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block],
+  .process-fields-config-editor-grid-v1,
+  .process-lists-editor-grid-v1,
+  .process-subsequent-fields-editor-grid-v1 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .field.full,
+  .process-fields-config-editor-grid-v1 .field.full,
+  .process-lists-editor-grid-v1 .field.full,
+  .process-subsequent-fields-editor-grid-v1 .field.full {
+    grid-column: 1 / -1;
+  }
+
+  .configurable-items-table-v1 {
+    min-width: 680px;
+  }
+}
+
+@media (max-width: 720px) {
+  #settings-menu-edit-card {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block],
+  .process-fields-config-editor-grid-v1,
+  .process-lists-editor-grid-v1,
+  .process-subsequent-fields-editor-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+
+  #settings-menu-edit-card .action-btn,
+  #settings-menu-edit-card .action-btn-secondary,
+  #settings-menu-edit-card .action-btn-cancel {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .configurable-items-table-v1 {
+    min-width: 640px;
+  }
+
+  .configurable-items-actions-cell-v1 {
+    min-width: 128px;
+  }
+
+  .configurable-items-action-btn-v1 {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+  }
+}
+
+@media (max-width: 520px) {
+  .configurable-items-table-v1 {
+    min-width: 600px;
+  }
+
+  .configurable-items-pagination-row-v1 {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* APPVERBO_PROCESS_EDITOR_RESPONSIVE_V1_END */
+
+/* APPVERBO_PROCESS_TAB_DESCRIPTIONS_V1_START */
+
+/* ###################################################################################
+   EDITOR DE PROCESSO - DESCRICOES CURTAS DAS ABAS
+   ################################################################################### */
+
+#settings-menu-edit-card .process-tab-description-v1 {
+  margin: -8px 0 16px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* APPVERBO_PROCESS_TAB_DESCRIPTIONS_V1_END */
+

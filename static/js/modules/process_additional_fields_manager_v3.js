@@ -267,7 +267,7 @@
     const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
 
     if (submitButton) {
-      submitButton.textContent = "Adicionar campo";
+      submitButton.textContent = "Guardar";
     }
   }
 
@@ -287,7 +287,7 @@
     const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
 
     if (submitButton) {
-      submitButton.textContent = "Atualizar campo";
+      submitButton.textContent = "Guardar";
     }
   }
 
@@ -450,6 +450,141 @@
     });
   }
 
+
+// APPVERBO_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_START
+
+  //###################################################################################
+  // (8) EDITOR SUPERIOR - GUARDAR E SUBMIT PELO BLOCO DE CIMA
+  //###################################################################################
+
+  function setEditorSubmitLabel_v4(root) {
+    const editor = getEditorRoot_v3(root);
+    const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
+
+    if (submitButton) {
+      submitButton.textContent = "Guardar";
+    }
+  }
+
+  function clearEditor_v4(context) {
+    clearEditor_v3(context);
+    setEditorSubmitLabel_v4(context.root);
+  }
+
+  function loadEditorItem_v4(item, context) {
+    loadEditorItem_v3(item, context);
+    setEditorSubmitLabel_v4(context.root);
+  }
+
+  function hasEditorDraft_v4(root, manager) {
+    const editor = getEditorRoot_v3(root);
+    const label = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-label]")).trim();
+    const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const size = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]")).trim();
+    const listKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]")).trim();
+    const isRequired = normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]"));
+
+    if (manager && manager.state && manager.state.editingId) {
+      return true;
+    }
+
+    return Boolean(
+      label ||
+      listKey ||
+      isRequired ||
+      fieldType !== "text" ||
+      (size && size !== "255" && size !== "30")
+    );
+  }
+
+  function submitAdditionalFieldsForm_v4(root, manager) {
+    const parentForm = root.closest("form");
+
+    if (manager && typeof manager.syncHiddenInputs === "function") {
+      manager.syncHiddenInputs();
+    }
+
+    if (!parentForm) {
+      return;
+    }
+
+    if (typeof parentForm.requestSubmit === "function") {
+      parentForm.requestSubmit();
+      return;
+    }
+
+    parentForm.submit();
+  }
+
+  function submitEditorItem_v4(root, manager) {
+    if (hasEditorDraft_v4(root, manager)) {
+      const item = readEditorItem_v3({
+        manager,
+        root,
+        elements: manager.elements,
+        state: manager.state
+      });
+
+      const validationResult = validateEditorItem_v3(item, {
+        manager,
+        root,
+        elements: manager.elements,
+        state: manager.state,
+        items: manager.getItems()
+      });
+
+      if (validationResult && validationResult.valid === false) {
+        if (validationResult.message) {
+          window.alert(validationResult.message);
+        }
+
+        return;
+      }
+
+      manager.addOrUpdate(item);
+    }
+
+    submitAdditionalFieldsForm_v4(root, manager);
+  }
+
+  function bindEditorExtras_v4(root, manager) {
+    if (root.dataset.additionalFieldsExtrasBoundV4 === "1") {
+      return;
+    }
+
+    root.dataset.additionalFieldsExtrasBoundV4 = "1";
+
+    const editor = getEditorRoot_v3(root);
+    const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
+    const cancelButton = editor.querySelector("[data-additional-field-editor-cancel]");
+
+    if (typeSelect) {
+      typeSelect.addEventListener("change", () => updateEditorVisibility_v3(root));
+    }
+
+    if (submitButton) {
+      submitButton.textContent = "Guardar";
+      submitButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        submitEditorItem_v4(root, manager);
+      });
+    }
+
+    if (cancelButton) {
+      cancelButton.textContent = "Cancelar";
+      cancelButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        manager.clearEditing();
+        clearEditor_v4({ root });
+      });
+    }
+
+    updateEditorVisibility_v3(root);
+  }
+
+// APPVERBO_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_END
+
   //###################################################################################
   // (6) CRIAR MANAGER
   //###################################################################################
@@ -486,23 +621,12 @@
       },
       columns: [
         {
-          key: "order",
-          label: "Ordem",
-          render: function (_item, index) {
-            return String(index + 1);
-          }
-        },
-        {
           key: "label",
-          label: "Nome"
-        },
-        {
-          key: "key",
-          label: "Chave"
+          label: "Nome do campo adicional"
         },
         {
           key: "fieldType",
-          label: "Tipo",
+          label: "Tipo do campo",
           render: function (item) {
             return getFieldTypeLabel_v3(item.fieldType);
           }
@@ -533,8 +657,8 @@
         return item.key || item.id || `custom_field_${index + 1}`;
       },
       readEditorItem: readEditorItem_v3,
-      loadEditorItem: loadEditorItem_v3,
-      clearEditor: clearEditor_v3,
+      loadEditorItem: loadEditorItem_v4,
+      clearEditor: clearEditor_v4,
       validateItem: validateEditorItem_v3,
       syncHiddenInputs: syncHiddenInputs_v3
     });
@@ -544,7 +668,7 @@
     }
 
     root.dataset.additionalFieldsManagerReadyV3 = "1";
-    bindEditorExtras_v3(root, manager);
+    bindEditorExtras_v4(root, manager);
     manager.syncHiddenInputs();
 
     return manager;

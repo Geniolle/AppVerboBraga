@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260428-menu-active-v1">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-step3">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260430-global-responsive-v1">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-tab-desc-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 {% endblock %}
 
@@ -1331,7 +1331,8 @@
           {% endif %}
           <div id="settings-tab-geral" class="process-edit-pane active" data-process-edit-pane="geral">
             <div class="admin-subsection">
-              {% if current_user_can_manage_all_entities %}
+                            <p class="muted process-tab-description-v1">Atualize os dados principais do processo no menu lateral.</p>
+{% if current_user_can_manage_all_entities %}
               <form method="post" action="/settings/menu/edit">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
@@ -1469,274 +1470,350 @@
             {% endif %}
           </div>
           {% if settings_has_process_fields %}
+          
           <div id="settings-tab-campos-config" class="process-edit-pane" data-process-edit-pane="campos-config">
-            <div class="admin-subsection">
+            <div class="admin-subsection process-fields-config-panel-v1" id="settings-process-fields-config-card">
               <h3>Configuração dos campos</h3>
-              {% if settings_owner_fields_enabled %}
-              {% if settings_process_select_options %}
-              <form method="post" action="/settings/menu/process-fields">
+
+                            <p class="muted process-tab-description-v1">Defina quais campos ficam visíveis no processo e a ordem de exibição.</p>
+{% if settings_owner_fields_enabled %}
+              {% if settings_process_select_options or settings_process_header_options %}
+              <form method="post" action="/settings/menu/process-fields" data-process-fields-config-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <div
-                  id="process-fields-builder"
-                  class="process-fields-builder"
-                  data-field-options='{{ settings_process_select_options|tojson }}'
-                  data-header-options='{{ settings_process_header_options|tojson }}'
-                >
-                  <div id="process-visible-fields-container" class="process-visible-fields">
+
+                <div class="configurable-items-manager-v1 process-fields-config-manager-v1">
+                  <div class="configurable-items-hidden-v1" data-process-fields-config-legacy-container>
                     {% for field_row in settings_process_visible_field_rows %}
-                    <div class="process-field-row">
-                      <div class="field">
-                        <label>Campo</label>
-                        <select name="visible_fields" class="process-field-select">
-                          {% for option in settings_process_select_options %}
-                          <option value="{{ option.key }}" {% if option.key == field_row.field_key %}selected{% endif %}>{{ option.label }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div class="field">
-                        <label>Cabeçalho</label>
-                        <select name="visible_headers" class="process-field-header-select">
-                          <option value="">Sem cabeçalho</option>
-                          {% for header_option in settings_process_header_options %}
-                          <option value="{{ header_option.key }}" {% if header_option.key == field_row.header_key %}selected{% endif %}>{{ header_option.label }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <button
-                        type="button"
-                        class="table-icon-btn table-icon-btn-danger process-field-remove-btn"
-                        title="Remover campo"
-                        aria-label="Remover campo"
-                      >
-                        &#10005;
-                      </button>
+                    {% set config_field_key = field_row.key|default('') %}
+                    {% set config_field_label = field_row.label|default(config_field_key) %}
+                    {% set config_field_type = field_row.field_type|default(field_row.type|default('field')) %}
+                    {% if config_field_type == "header" %}
+                    {% set config_field_kind = "header" %}
+                    {% else %}
+                    {% set config_field_kind = "field" %}
+                    {% endif %}
+                    <div class="process-config-field-row-v1" data-process-config-field-row>
+                      <input type="hidden" data-process-config-key value="{{ config_field_key }}" disabled>
+                      <input type="hidden" data-process-config-label value="{{ config_field_label }}" disabled>
+                      <input type="hidden" data-process-config-kind value="{{ config_field_kind }}" disabled>
                     </div>
                     {% endfor %}
                   </div>
-                  <button
-                    type="button"
-                    id="process-field-add-btn"
-                    class="table-icon-btn process-field-add-btn"
-                    title="Adicionar campo"
-                    aria-label="Adicionar campo"
-                  >
-                    &#43;
-                  </button>
-                </div>
-                <div class="form-action-row">
-                  <button type="submit" class="action-btn">Guardar</button>
-                  <a
-                    class="action-btn-cancel"
-                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
-                  >Cancelar</a>
+
+                  <div data-process-fields-config-hidden-container></div>
+
+                  <div class="configurable-items-editor-v1 process-fields-config-editor-v1">
+                    <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1">
+                      <div class="field">
+                        <label for="process-fields-config-editor-key">Campo do processo</label>
+                        <select id="process-fields-config-editor-key" data-process-fields-config-editor-key>
+                          <option value="">Selecione</option>
+                          {% for header_option in settings_process_header_options|default([]) %}
+                          <option
+                            value="{{ header_option.key }}"
+                            data-process-config-kind="header"
+                            data-process-config-label="{{ header_option.label }}"
+                          >{{ header_option.label }} - Cabeçalho</option>
+                          {% endfor %}
+                          {% for field_option in settings_process_select_options|default([]) %}
+                          <option
+                            value="{{ field_option.key }}"
+                            data-process-config-kind="field"
+                            data-process-config-label="{{ field_option.label }}"
+                          >{{ field_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field full">
+                        <div class="form-action-row">
+                          <button type="button" class="action-btn" data-process-fields-config-submit>Guardar</button>
+                          <button type="button" class="action-btn-cancel" data-process-fields-config-cancel>Cancelar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="configurable-items-list-v1 process-fields-config-created-v1">
+                    <div class="configurable-items-list-head-v1">
+                      <h4 class="configurable-items-list-title-v1">Campos configurados</h4>
+                      <span class="configurable-items-total-v1" data-process-fields-config-total-label>0 campos</span>
+                    </div>
+
+                    <div class="configurable-items-table-wrap-v1">
+                      <table class="configurable-items-table-v1 process-fields-config-table-v1" data-process-fields-config-table>
+                        <thead>
+                          <tr>
+                            <th>Nome do campo</th>
+                            <th>Tipo</th>
+                            <th class="configurable-items-actions-col-v1">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody data-process-fields-config-table-body></tbody>
+                      </table>
+                    </div>
+
+                    <p
+                      class="configurable-items-empty-v1"
+                      data-process-fields-config-empty
+                      style="display: none;"
+                    >Sem campos configurados.</p>
+
+                    <div class="configurable-items-pagination-row-v1">
+                      <label class="configurable-items-page-size-v1">
+                        Entradas por página
+                        <select data-process-fields-config-page-size>
+                          <option value="5" selected>5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                      </label>
+
+                      <div class="configurable-items-pagination-v1" data-process-fields-config-pagination></div>
+                    </div>
+                  </div>
                 </div>
               </form>
               {% else %}
-              <p class="empty">Sem campos disponÃ­veis nesta aba.</p>
+              <p class="empty">Sem campos disponíveis para configurar neste processo.</p>
               {% endif %}
               {% else %}
-              <p>Campos definidos pelo Owner para este processo.</p>
-              {% if settings_process_visible_field_rows %}
-              <table>
-                <thead>
-                  <tr>
-                    <th>Ordem</th>
-                    <th>Campo</th>
-                    <th>Cabeçalho</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for field_row in settings_process_visible_field_rows %}
-                  {% set field_ns = namespace(label=field_row.field_key) %}
-                  {% set header_ns = namespace(label="-") %}
-                  {% for option in settings_process_field_options %}
-                    {% if option.key == field_row.field_key %}
-                      {% set field_ns.label = option.label %}
-                    {% endif %}
-                    {% if option.key == field_row.header_key %}
-                      {% set header_ns.label = option.label %}
-                    {% endif %}
-                  {% endfor %}
-                  <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ field_ns.label }}</td>
-                    <td>{{ header_ns.label }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-              {% else %}
-              <p class="empty">Sem campos configurados pelo Owner para este processo.</p>
-              {% endif %}
+              <p class="empty">Apenas Owner pode configurar os campos do processo.</p>
               {% endif %}
             </div>
           </div>
           {% if settings_owner_fields_enabled %}
-          
-          
-          
           <div id="settings-tab-lista" class="process-edit-pane" data-process-edit-pane="lista">
-            <div class="admin-subsection process-lists-panel-v7" id="settings-process-lists-card">
+            <div class="admin-subsection process-lists-panel-v8" id="settings-process-lists-card">
               <h3>Listas</h3>
-              <p class="muted">
-                Crie listas reutilizáveis para usar no tipo de campo Lista.
-              </p>
-
-              <form method="post" action="/settings/menu/process-lists">
+                            <p class="muted process-tab-description-v1">Crie listas reutilizáveis para usar no tipo de campo Lista.</p>
+<form method="post" action="/settings/menu/process-lists" data-process-lists-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
 
-                <div class="process-lists-rows-v7">
-                  {% set process_lists = settings_edit_data.process_lists|default([]) %}
-                  {% for process_list in process_lists %}
-                  <div class="process-list-row-v7">
-                    <input type="hidden" name="process_list_key" value="{{ process_list.key }}">
-                    <div class="field">
-                      <label>Nome da lista</label>
-<input
-                        name="process_list_label"
-                        value="{{ process_list.label }}"
-                      >
+                <div class="configurable-items-manager-v1 process-lists-manager-v1">
+                  <div class="configurable-items-hidden-v1" data-process-lists-legacy-container>
+                    {% set process_lists = settings_edit_data.process_lists|default([]) %}
+                    {% for process_list in process_lists %}
+                    <div class="process-list-row-v8" data-process-list-row>
+                      <input type="hidden" name="process_list_key" value="{{ process_list.key }}" disabled>
+                      <input type="hidden" name="process_list_label" value="{{ process_list.label }}" disabled>
+                      <input type="hidden" name="process_list_items_csv" value="{{ process_list.items_csv }}" disabled>
                     </div>
-                    <div class="field">
-                      <label>Conteúdo da lista</label>
-<input
-                        name="process_list_items_csv"
-                        value="{{ process_list.items_csv }}"
-                      >
+                    {% endfor %}
+                  </div>
+
+                  <div data-process-lists-hidden-container></div>
+
+                  <div class="configurable-items-editor-v1 process-lists-editor-v1">
+                    <div data-process-list-editor-block class="configurable-items-editor-grid-v1 process-lists-editor-grid-v1">
+                      <input type="hidden" data-process-list-editor-key>
+
+                      <div class="field">
+                        <label for="process-list-editor-label">Nome da lista</label>
+                        <input
+                          id="process-list-editor-label"
+                          type="text"
+                          maxlength="80"
+                          data-process-list-editor-label
+                        >
+                      </div>
+
+                      <div class="field">
+                        <label for="process-list-editor-items">Conteúdo da lista</label>
+                        <input
+                          id="process-list-editor-items"
+                          type="text"
+                          data-process-list-editor-items
+                        >
+                      </div>
+
+                      <div class="field full">
+                        <div class="form-action-row">
+                          <button
+                            type="button"
+                            class="action-btn"
+                            data-process-list-editor-submit
+                          >Guardar</button>
+                          <button
+                            type="button"
+                            class="action-btn-cancel"
+                            data-process-list-editor-cancel
+                          >Cancelar</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {% endfor %}
 
-                  <div class="process-list-row-v7">
-                    <input type="hidden" name="process_list_key" value="">
-                    <div class="field">
-                      <label>Nome da lista</label>
-<input name="process_list_label">
+                  <div class="configurable-items-list-v1 process-lists-created-v1">
+                    <div class="configurable-items-list-head-v1">
+                      <h4 class="configurable-items-list-title-v1">Listas criadas</h4>
+                      <span class="configurable-items-total-v1" data-process-lists-total-label>0 listas</span>
                     </div>
-                    <div class="field">
-                      <label>Conteúdo da lista</label>
-<input name="process_list_items_csv">
+
+                    <div class="configurable-items-table-wrap-v1">
+                      <table class="configurable-items-table-v1 process-lists-table-v1" data-process-lists-table>
+                        <thead>
+                          <tr>
+                            <th>Nome da lista</th>
+                            <th>Conteúdo da lista</th>
+                            <th class="configurable-items-actions-col-v1">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody data-process-lists-table-body></tbody>
+                      </table>
+                    </div>
+
+                    <p
+                      class="configurable-items-empty-v1"
+                      data-process-lists-empty
+                      style="display: none;"
+                    >Sem listas criadas.</p>
+
+                    <div class="configurable-items-pagination-row-v1">
+                      <label class="configurable-items-page-size-v1">
+                        Entradas por página
+                        <select data-process-lists-page-size>
+                          <option value="5" selected>5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                      </label>
+
+                      <div class="configurable-items-pagination-v1" data-process-lists-pagination></div>
                     </div>
                   </div>
-                </div>
-
-                <div class="form-action-row process-lists-actions-v7">
-                  <button type="submit" class="action-btn">Guardar</button>
-                  <a
-                    class="action-btn-secondary process-lists-cancel-v7"
-                    href="/users/new?menu={{ settings_edit_origin_menu }}&settings_edit_key={{ settings_edit_data.key }}&settings_action=edit&settings_tab=geral#settings-menu-edit-card"
-                  >Cancelar</a>
                 </div>
               </form>
             </div>
           </div>
 
           <div id="settings-tab-campos-subsequentes" class="process-edit-pane" data-process-edit-pane="campos-subsequentes">
-            <div class="admin-subsection">
+            <div class="admin-subsection process-subsequent-fields-panel-v1" id="settings-process-subsequent-fields-card">
               <h3>Campos Subsequentes</h3>
-              <p class="muted">
-                Configure campos que aparecem após outros campos específicos.
-              </p>
-
-              <form method="post" action="/settings/menu/process-subsequent-fields">
+                            <p class="muted process-tab-description-v1">Configure campos que aparecem conforme a resposta de outro campo.</p>
+<form method="post" action="/settings/menu/process-subsequent-fields" data-process-subsequent-fields-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
 
-                <div class="process-subsequent-fields-grid">
-                  {% set subsequent_fields = settings_edit_data.process_subsequent_fields|default([]) %}
-                  {% for sub_field in subsequent_fields %}
-                  <div class="process-subsequent-field-row">
-                    <input type="hidden" name="subsequent_field_key" value="{{ sub_field.key }}">
-                    <div class="field">
-                      <label>Campo acionador</label>
-                      <select name="subsequent_trigger_field">
-                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
-                        <option value="{{ field.key }}" {% if sub_field.trigger_field == field.key %}selected{% endif %}>{{ field.label }}</option>
-                        {% endfor %}
-                      </select>
+                <div class="configurable-items-manager-v1 process-subsequent-fields-manager-v1">
+                  <div class="configurable-items-hidden-v1" data-process-subsequent-fields-legacy-container>
+                    {% set subsequent_fields = settings_edit_data.process_subsequent_fields|default([]) %}
+                    {% for sub_field in subsequent_fields %}
+                    {% set subsequent_operator = sub_field.operator|default('equals') %}
+                    <div class="process-subsequent-field-row-v1" data-process-subsequent-field-row>
+                      <input type="hidden" name="subsequent_field_key" value="{{ sub_field.key }}" disabled>
+                      <input type="hidden" name="subsequent_trigger_field" value="{{ sub_field.trigger_field }}" disabled>
+                      <input type="hidden" name="subsequent_field" value="{{ sub_field.field_key }}" disabled>
+                      <input type="hidden" name="subsequent_operator" value="{{ subsequent_operator }}" disabled>
+                      <input type="hidden" name="subsequent_trigger_value" value="{{ sub_field.trigger_value|default('') }}" disabled>
                     </div>
-                    <div class="field">
-                      <label>Campo subsequente</label>
-                      <select name="subsequent_field">
-                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
-                        <option value="{{ field.key }}" {% if sub_field.field_key == field.key %}selected{% endif %}>{{ field.label }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label>Condição</label>
-                      {% set subsequent_operator = sub_field.operator|default('equals') %}
-                      <select name="subsequent_operator">
-                        <option value="equals" {% if subsequent_operator == "equals" %}selected{% endif %}>Igual a</option>
-                        <option value="not_equals" {% if subsequent_operator == "not_equals" %}selected{% endif %}>Diferente de</option>
-                        <option value="is_empty" {% if subsequent_operator == "is_empty" %}selected{% endif %}>Vazio</option>
-                        <option value="is_not_empty" {% if subsequent_operator == "is_not_empty" %}selected{% endif %}>Diferente de vazio</option>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label>Valor acionador</label>
-                      <input type="text" name="subsequent_trigger_value" value="{{ sub_field.trigger_value|default('') }}">
-                    </div>
-                    <button type="button" class="table-icon-btn table-icon-btn-danger process-subsequent-field-remove-btn" title="Remover">&#10005;</button>
+                    {% endfor %}
                   </div>
-                  {% endfor %}
 
-                  <div class="process-subsequent-field-row">
-                    <input type="hidden" name="subsequent_field_key" value="">
-                    <div class="field">
-                      <label>Campo acionador</label>
-                      <select name="subsequent_trigger_field">
-                        <option value="">Selecione...</option>
-                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
-                        <option value="{{ field.key }}">{{ field.label }}</option>
-                        {% endfor %}
-                      </select>
+                  <div data-process-subsequent-fields-hidden-container></div>
+
+                  <div class="configurable-items-editor-v1 process-subsequent-fields-editor-v1">
+                    <div data-process-subsequent-field-editor-block class="configurable-items-editor-grid-v1 process-subsequent-fields-editor-grid-v1">
+                      <input type="hidden" data-process-subsequent-field-editor-key>
+
+                      <div class="field">
+                        <label for="process-subsequent-trigger-field">Campo acionador</label>
+                        <select id="process-subsequent-trigger-field" data-process-subsequent-trigger-field>
+                          <option value="">Selecione</option>
+                          {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                          <option value="{{ field.key }}">{{ field.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-subsequent-field">Campo subsequente</label>
+                        <select id="process-subsequent-field" data-process-subsequent-field>
+                          <option value="">Selecione</option>
+                          {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                          <option value="{{ field.key }}">{{ field.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-subsequent-operator">Condição</label>
+                        <select id="process-subsequent-operator" data-process-subsequent-operator>
+                          <option value="equals" selected>Igual a</option>
+                          <option value="not_equals">Diferente de</option>
+                          <option value="is_empty">Vazio</option>
+                          <option value="is_not_empty">Diferente de vazio</option>
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-subsequent-trigger-value">Valor acionador</label>
+                        <input id="process-subsequent-trigger-value" type="text" data-process-subsequent-trigger-value>
+                      </div>
+
+                      <div class="field full">
+                        <div class="form-action-row">
+                          <button type="button" class="action-btn" data-process-subsequent-field-submit>Guardar</button>
+                          <button type="button" class="action-btn-cancel" data-process-subsequent-field-cancel>Cancelar</button>
+                        </div>
+                      </div>
                     </div>
-                    <div class="field">
-                      <label>Campo subsequente</label>
-                      <select name="subsequent_field">
-                        <option value="">Selecione...</option>
-                        {% for field in settings_edit_data.process_additional_fields|default([]) %}
-                        <option value="{{ field.key }}">{{ field.label }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label>Condição</label>
-                      <select name="subsequent_operator">
-                        <option value="equals" selected>Igual a</option>
-                        <option value="not_equals">Diferente de</option>
-                        <option value="is_empty">Vazio</option>
-                        <option value="is_not_empty">Diferente de vazio</option>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label>Valor acionador</label>
-                      <input type="text" name="subsequent_trigger_value" placeholder="Ex.: Outro">
-                    </div>
-                    <button type="button" class="table-icon-btn table-icon-btn-danger process-subsequent-field-remove-btn" title="Remover">&#10005;</button>
                   </div>
-                </div>
 
-                <button type="button" id="process-subsequent-field-add-btn" class="table-icon-btn process-field-add-btn" title="Adicionar">&#43;</button>
+                  <div class="configurable-items-list-v1 process-subsequent-fields-created-v1">
+                    <div class="configurable-items-list-head-v1">
+                      <h4 class="configurable-items-list-title-v1">Campos subsequentes criados</h4>
+                      <span class="configurable-items-total-v1" data-process-subsequent-fields-total-label>0 regras</span>
+                    </div>
 
-                <div class="form-action-row">
-                  <button type="submit" class="action-btn">Guardar</button>
-                  <a class="action-btn-cancel" href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}">Cancelar</a>
+                    <div class="configurable-items-table-wrap-v1">
+                      <table class="configurable-items-table-v1 process-subsequent-fields-table-v1" data-process-subsequent-fields-table>
+                        <thead>
+                          <tr>
+                            <th>Campo acionador</th>
+                            <th>Campo subsequente</th>
+                            <th>Condição</th>
+                            <th>Valor acionador</th>
+                            <th class="configurable-items-actions-col-v1">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody data-process-subsequent-fields-table-body></tbody>
+                      </table>
+                    </div>
+
+                    <p
+                      class="configurable-items-empty-v1"
+                      data-process-subsequent-fields-empty
+                      style="display: none;"
+                    >Sem campos subsequentes criados.</p>
+
+                    <div class="configurable-items-pagination-row-v1">
+                      <label class="configurable-items-page-size-v1">
+                        Entradas por página
+                        <select data-process-subsequent-fields-page-size>
+                          <option value="5" selected>5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                      </label>
+
+                      <div class="configurable-items-pagination-v1" data-process-subsequent-fields-pagination></div>
+                    </div>
+                  </div>
                 </div>
               </form>
             </div>
           </div>
-
 <div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
             <div class="admin-subsection">
 <h3>Campos Adicionais</h3>
-                            <form
+                                          <p class="muted process-tab-description-v1">Crie, edite, ordene e remova campos adicionais exibidos neste processo.</p>
+<form
                 method="post"
                 action="/settings/menu/process-additional-fields"
                 data-process-additional-fields-manager-v3="1"
@@ -1776,32 +1853,18 @@
                   <div data-additional-fields-hidden-container></div>
 
                   <div class="configurable-items-editor-v1">
-                    <h4 class="configurable-items-editor-title-v1">Novo campo adicional</h4>
-
-                    <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+<div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
                       <div class="field">
                         <label for="process-additional-field-editor-label">Nome do campo adicional</label>
                         <input
                           id="process-additional-field-editor-label"
                           type="text"
                           maxlength="80"
-                          placeholder="Ex.: Data de batismo"
                           data-additional-field-editor-label
                         >
                       </div>
 
-                      <div class="field">
-                        <label for="process-additional-field-editor-key">Chave técnica</label>
-                        <input
-                          id="process-additional-field-editor-key"
-                          type="text"
-                          maxlength="80"
-                          placeholder="Ex.: data_batismo"
-                          data-additional-field-editor-key
-                        >
-                      </div>
-
-                      <div class="field">
+                                            <div class="field">
                         <label for="process-additional-field-editor-type">Tipo do campo</label>
                         <select
                           id="process-additional-field-editor-type"
@@ -1869,12 +1932,12 @@
                             type="button"
                             class="action-btn"
                             data-additional-field-editor-submit
-                          >Adicionar campo</button>
+                          >Guardar</button>
                           <button
                             type="button"
                             class="action-btn-cancel"
                             data-additional-field-editor-cancel
-                          >Cancelar edição</button>
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -1918,11 +1981,6 @@
                       ></div>
                     </div>
                   </div>
-                </div>
-
-                <div class="form-action-row">
-                  <button type="submit" class="action-btn">Guardar campos adicionais</button>
-                  <a class="action-btn-cancel" href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}">Cancelar</a>
                 </div>
               </form>
               <form
@@ -2518,10 +2576,13 @@
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
     };
   </script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260430-step3"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-step4"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260430-final-buttons-v1"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
+  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v1.js?v=20260430-fields-config-v1"></script>
   <script src="/static/js/new_user.js?v=20260429c"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
@@ -2530,7 +2591,14 @@
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
+  <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
+  <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"></script>
 {% endblock %}
+
+
+
+
+
 
 
 

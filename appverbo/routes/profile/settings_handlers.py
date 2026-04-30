@@ -3,7 +3,7 @@
 # ###################################################################################
 
 from fastapi import APIRouter, Request, Form, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.requests import Request as RequestType
 
 from appverbo.routes.profile.router import router
@@ -18,6 +18,8 @@ from appverbo.menu_settings import (
     update_sidebar_menu_process_fields,
     update_sidebar_menu_process_lists,
     update_sidebar_menu_subsequent_fields,
+    update_sidebar_sections_v2,
+    get_sidebar_global_refresh_version_v1,
 )
 from appverbo.core import SessionLocal
 from appverbo.services.session import get_current_user
@@ -53,6 +55,145 @@ def _build_settings_redirect_url(
         params.append(f"settings_tab={settings_tab}")
     return f"/users/new?{chr(38).join(params)}"
 
+
+# APPVERBO_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_START
+
+# ###################################################################################
+# (SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1) CONSULTAR VERSAO GLOBAL DO SIDEBAR
+# ###################################################################################
+
+@router.get("/settings/menu/sidebar-refresh-version")
+def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return JSONResponse(
+                {"authenticated": False, "version": ""},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        refresh_version = get_sidebar_global_refresh_version_v1(session)
+
+        return JSONResponse(
+            {
+                "authenticated": True,
+                "version": refresh_version,
+            }
+        )
+
+# APPVERBO_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_END
+
+# APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_START
+
+# ###################################################################################
+# (SIDEBAR_SECTIONS_HANDLER_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
+# ###################################################################################
+
+@router.post("/settings/menu/sidebar-sections", response_class=HTMLResponse)
+def edit_sidebar_sections_v2(
+    request: Request,
+    section_key: list[str] = Form(default=[]),
+    section_label: list[str] = Form(default=[]),
+    section_visibility_scope_mode: list[str] = Form(default=[]),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#settings-menu-edit-card"),
+) -> RedirectResponse:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas administradores podem alterar sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions["can_manage_all_entities"]:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas Owner pode alterar sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        rows_count = max(
+            len(section_key),
+            len(section_label),
+            len(section_visibility_scope_mode),
+        )
+
+        payload_sections: list[dict[str, str]] = []
+
+        for row_index in range(rows_count):
+            payload_sections.append(
+                {
+                    "key": section_key[row_index] if row_index < len(section_key) else "",
+                    "label": section_label[row_index] if row_index < len(section_label) else "",
+                    "visibility_scope_mode": (
+                        section_visibility_scope_mode[row_index]
+                        if row_index < len(section_visibility_scope_mode)
+                        else ""
+                    ),
+                }
+            )
+
+        ok, error_message = update_sidebar_sections_v2(
+            session,
+            payload_sections,
+        )
+
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível gravar as sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                success_message="Sessões do sidebar e visibilidade dos menus atualizadas com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_edit_key="administrativo",
+                settings_action="edit",
+                settings_tab="sessoes",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+# APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_END
 
 @router.post("/settings/menu/field-move", response_class=HTMLResponse)
 def move_sidebar_menu_additional_field_handler(
