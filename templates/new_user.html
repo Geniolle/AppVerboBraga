@@ -2520,6 +2520,260 @@
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
     };
   </script>
+  <script>
+    (function () {
+      "use strict";
+
+      function setupAdditionalFieldsInlineV2() {
+        const formEl = document.querySelector("form[data-additional-fields-manager-v2='1']");
+        if (!formEl || formEl.dataset.inlineAdditionalFieldsBound === "1") {
+          return;
+        }
+
+        const containerEl = document.getElementById("process-additional-fields-container");
+        const labelEl = document.getElementById("process-additional-field-editor-label");
+        const keyEl = document.getElementById("process-additional-field-editor-key");
+        const typeEl = document.getElementById("process-additional-field-editor-type");
+        const requiredEl = document.getElementById("process-additional-field-editor-required");
+        const sizeWrapEl = document.getElementById("process-additional-field-editor-size-field");
+        const sizeEl = document.getElementById("process-additional-field-editor-size");
+        const listWrapEl = document.getElementById("process-additional-field-editor-list-field");
+        const listEl = document.getElementById("process-additional-field-editor-list-key");
+        const feedbackEl = document.getElementById("process-additional-field-editor-feedback");
+        const tableBodyEl = document.getElementById("process-additional-fields-created-body");
+        const emptyEl = document.getElementById("process-additional-fields-empty");
+        const pageSizeEl = document.getElementById("process-additional-fields-page-size");
+        const prevEl = document.getElementById("process-additional-fields-prev");
+        const nextEl = document.getElementById("process-additional-fields-next");
+        const pageEl = document.getElementById("process-additional-fields-page");
+        const limiterEl = document.getElementById("process-additional-fields-limiter");
+
+        if (!containerEl || !labelEl || !keyEl || !typeEl || !requiredEl || !sizeWrapEl || !sizeEl || !listWrapEl || !listEl || !feedbackEl || !tableBodyEl || !emptyEl || !pageSizeEl || !prevEl || !nextEl || !pageEl || !limiterEl) {
+          return;
+        }
+
+        let currentPage = 1;
+        let tempIndex = 1;
+        const sizedTypes = new Set(["text", "number", "email", "phone"]);
+
+        function setFeedback(message, type) {
+          feedbackEl.textContent = String(message || "");
+          feedbackEl.style.display = feedbackEl.textContent ? "" : "none";
+          feedbackEl.classList.toggle("error", type !== "ok");
+          feedbackEl.classList.toggle("ok", type === "ok");
+        }
+
+        function normalizeKey(value) {
+          return String(value || "").trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+        }
+
+        function escapeHtml(value) {
+          return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function syncEditorState() {
+          const cleanType = String(typeEl.value || "text").trim().toLowerCase();
+          const sizeEnabled = sizedTypes.has(cleanType);
+          const isHeader = cleanType === "header";
+          const isList = cleanType === "list";
+
+          requiredEl.disabled = isHeader;
+          if (isHeader) {
+            requiredEl.value = "0";
+          }
+
+          sizeWrapEl.style.display = sizeEnabled ? "" : "none";
+          if (!sizeEnabled) {
+            sizeEl.value = "";
+          } else if (!String(sizeEl.value || "").trim()) {
+            sizeEl.value = "30";
+          }
+
+          listWrapEl.style.display = isList ? "" : "none";
+          listEl.disabled = !isList;
+          if (!isList) {
+            listEl.value = "";
+          }
+        }
+
+        function clearEditor() {
+          keyEl.value = "";
+          labelEl.value = "";
+          typeEl.value = "text";
+          requiredEl.value = "0";
+          sizeEl.value = "30";
+          listEl.value = "";
+          setFeedback("");
+          syncEditorState();
+        }
+
+        function readRows() {
+          return Array.from(containerEl.querySelectorAll(".process-additional-field-row")).map((rowEl) => {
+            const rowKeyEl = rowEl.querySelector("input[name='additional_field_key']");
+            const rowLabelEl = rowEl.querySelector("input[name='additional_field_label']");
+            const rowTypeEl = rowEl.querySelector("select[name='additional_field_type'], input[name='additional_field_type']");
+            const rowRequiredEl = rowEl.querySelector("select[name='additional_field_required'], input[name='additional_field_required']");
+            const rowSizeEl = rowEl.querySelector("input[name='additional_field_size']");
+            const rowListEl = rowEl.querySelector("select[name='additional_field_list_key'], input[name='additional_field_list_key']");
+            return {
+              key: String(rowKeyEl ? rowKeyEl.value : "").trim(),
+              label: String(rowLabelEl ? rowLabelEl.value : "").trim(),
+              fieldType: String(rowTypeEl ? rowTypeEl.value : "text").trim().toLowerCase(),
+              isRequired: String(rowRequiredEl ? rowRequiredEl.value : "0").trim() === "1",
+              size: String(rowSizeEl ? rowSizeEl.value : "").trim(),
+              listKey: String(rowListEl ? rowListEl.value : "").trim(),
+              rowEl: rowEl
+            };
+          }).filter((row) => row.label);
+        }
+
+        function renderPagination() {
+          const rowEls = Array.from(tableBodyEl.querySelectorAll("tr"));
+          const pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
+          if (!rowEls.length) {
+            limiterEl.style.display = "none";
+            return;
+          }
+          const totalPages = Math.max(1, Math.ceil(rowEls.length / pageSize));
+          if (currentPage > totalPages) {
+            currentPage = totalPages;
+          }
+          const start = (currentPage - 1) * pageSize;
+          const end = start + pageSize;
+          rowEls.forEach((rowEl, index) => {
+            rowEl.style.display = index >= start && index < end ? "" : "none";
+          });
+          pageEl.textContent = String(currentPage);
+          prevEl.disabled = currentPage <= 1;
+          nextEl.disabled = currentPage >= totalPages;
+          limiterEl.style.display = rowEls.length > pageSize ? "flex" : "none";
+        }
+
+        function renderTable() {
+          const rows = readRows();
+          tableBodyEl.innerHTML = "";
+          if (!rows.length) {
+            emptyEl.style.display = "";
+            limiterEl.style.display = "none";
+            return;
+          }
+          emptyEl.style.display = "none";
+          rows.forEach((row) => {
+            const trEl = document.createElement("tr");
+            trEl.setAttribute("data-field-key", row.key);
+            trEl.innerHTML = [
+              "<td>" + escapeHtml(row.label) + "</td>",
+              "<td>" + escapeHtml(row.fieldType || "-") + "</td>",
+              "<td>" + (row.isRequired ? "Sim" : "Não") + "</td>",
+              "<td>" + escapeHtml(row.size || "-") + "</td>",
+              "<td>" + escapeHtml(row.fieldType === "list" ? (row.listKey || "-") : "-") + "</td>",
+              '<td><div class="table-actions"><button type="button" class="table-icon-btn" data-inline-af-action="edit">&#9998;</button><button type="button" class="table-icon-btn table-icon-btn-danger" data-inline-af-action="delete">&#128465;</button></div></td>'
+            ].join("");
+            tableBodyEl.appendChild(trEl);
+          });
+          renderPagination();
+        }
+
+        function addOrUpdateField() {
+          const cleanLabel = String(labelEl.value || "").trim();
+          if (!cleanLabel) {
+            setFeedback("Informe o nome do campo adicional.");
+            return;
+          }
+
+          const rows = readRows();
+          const currentKey = String(keyEl.value || "").trim() || ("tmp_" + (normalizeKey(cleanLabel) || "campo") + "_" + tempIndex++);
+          const duplicate = rows.some((row) => row.key !== currentKey && row.label.toLowerCase() === cleanLabel.toLowerCase());
+          if (duplicate) {
+            setFeedback("Já existe um campo adicional com esse nome.");
+            return;
+          }
+
+          let targetRow = rows.find((row) => row.key === currentKey);
+          if (!targetRow) {
+            targetRow = {
+              rowEl: document.createElement("div")
+            };
+            targetRow.rowEl.className = "process-field-row process-additional-field-row";
+            targetRow.rowEl.setAttribute("data-field-key", currentKey);
+            targetRow.rowEl.innerHTML = '<input type="hidden" name="additional_field_key"><input type="hidden" name="additional_field_label"><input type="hidden" name="additional_field_type"><input type="hidden" name="additional_field_required"><input type="hidden" name="additional_field_size"><input type="hidden" name="additional_field_list_key">';
+            containerEl.appendChild(targetRow.rowEl);
+          }
+
+          targetRow.rowEl.querySelector("input[name='additional_field_key']").value = currentKey;
+          targetRow.rowEl.querySelector("input[name='additional_field_label']").value = cleanLabel;
+          targetRow.rowEl.querySelector("input[name='additional_field_type']").value = String(typeEl.value || "text").trim().toLowerCase();
+          targetRow.rowEl.querySelector("input[name='additional_field_required']").value = String(requiredEl.value || "0").trim();
+          targetRow.rowEl.querySelector("input[name='additional_field_size']").value = sizedTypes.has(String(typeEl.value || "").trim().toLowerCase()) ? String(sizeEl.value || "30").trim() : "";
+          targetRow.rowEl.querySelector("input[name='additional_field_list_key']").value = String(listEl.value || "").trim();
+
+          clearEditor();
+          setFeedback("Campo adicional preparado para guardar.", "ok");
+          currentPage = Math.max(1, Math.ceil(readRows().length / (Number.parseInt(pageSizeEl.value, 10) || 5)));
+          renderTable();
+        }
+
+        window.__appverboAddAdditionalFieldV2 = addOrUpdateField;
+        window.__appverboClearAdditionalFieldV2 = clearEditor;
+
+        tableBodyEl.addEventListener("click", function (event) {
+          const actionBtn = event.target.closest("[data-inline-af-action]");
+          if (!actionBtn) {
+            return;
+          }
+          const rowEl = actionBtn.closest("tr[data-field-key]");
+          const fieldKey = String(rowEl ? rowEl.getAttribute("data-field-key") || "" : "").trim();
+          const rows = readRows();
+          const targetRow = rows.find((row) => row.key === fieldKey);
+          if (!targetRow) {
+            return;
+          }
+
+          if (actionBtn.getAttribute("data-inline-af-action") === "delete") {
+            targetRow.rowEl.remove();
+            renderTable();
+            return;
+          }
+
+          keyEl.value = targetRow.key;
+          labelEl.value = targetRow.label;
+          typeEl.value = targetRow.fieldType || "text";
+          requiredEl.value = targetRow.isRequired ? "1" : "0";
+          sizeEl.value = targetRow.size || "30";
+          listEl.value = targetRow.listKey || "";
+          setFeedback("");
+          syncEditorState();
+        });
+
+        pageSizeEl.addEventListener("change", function () {
+          currentPage = 1;
+          renderPagination();
+        });
+        prevEl.addEventListener("click", function () {
+          if (currentPage > 1) {
+            currentPage -= 1;
+            renderPagination();
+          }
+        });
+        nextEl.addEventListener("click", function () {
+          currentPage += 1;
+          renderPagination();
+        });
+
+        syncEditorState();
+        renderTable();
+        formEl.dataset.inlineAdditionalFieldsBound = "1";
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setupAdditionalFieldsInlineV2);
+      } else {
+        setupAdditionalFieldsInlineV2();
+      }
+      window.setTimeout(setupAdditionalFieldsInlineV2, 200);
+      window.setTimeout(setupAdditionalFieldsInlineV2, 800);
+    })();
+  </script>
   <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260428a"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
