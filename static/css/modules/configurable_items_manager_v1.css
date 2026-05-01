@@ -868,3 +868,454 @@
 
 /* APPVERBO_PROCESS_TAB_DESCRIPTIONS_V1_END */
 
+/* APPVERBO_PROCESS_FIELDS_CONFIG_SAME_GRID_V1_START */
+
+/* ###################################################################################
+   CONFIGURACAO DOS CAMPOS - MESMA LOGICA DE ALINHAMENTO DOS CAMPOS ADICIONAIS
+   ################################################################################### */
+
+/*
+  Regra equivalente a:
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block]
+
+  Objetivo:
+  - Nome do campo e Cabeçalho do campo lado a lado
+  - selects com mesma altura/largura
+  - botões abaixo dos campos
+*/
+
+.process-fields-config-editor-v1,
+.process-fields-config-editor-grid-v1 {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Bloco original da aba Configuração dos campos */
+.process-fields-config-editor-grid-v1 {
+  display: grid !important;
+  grid-template-columns:
+    minmax(260px, 1fr)
+    minmax(260px, 1fr) !important;
+  gap: 12px !important;
+  align-items: end !important;
+}
+
+/* Blocos criados pelas versões do gestor JS */
+.process-fields-config-editor-row-v5,
+.process-fields-config-editor-row-v4,
+.process-fields-config-editor-row-v3,
+.process-fields-config-editor-row-v2 {
+  display: grid !important;
+  grid-template-columns:
+    minmax(260px, 1fr)
+    minmax(260px, 1fr) !important;
+  gap: 12px !important;
+  align-items: end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* Campos dentro do grid */
+.process-fields-config-editor-grid-v1 .field,
+.process-fields-config-editor-row-v5 .field,
+.process-fields-config-editor-row-v4 .field,
+.process-fields-config-editor-row-v3 .field,
+.process-fields-config-editor-row-v2 .field {
+  min-width: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Nome do campo fica na primeira coluna */
+.process-fields-config-editor-row-v5 > .field,
+.process-fields-config-editor-row-v4 > .field,
+.process-fields-config-editor-row-v3 > .field,
+.process-fields-config-editor-row-v2 > .field {
+  grid-column: 1 !important;
+}
+
+/* Cabeçalho do campo fica na segunda coluna */
+.process-fields-config-header-editor-v5,
+.process-fields-config-header-editor-v4,
+.process-fields-config-header-editor-v3,
+.process-fields-config-header-editor-v2,
+.process-field-header-picker-v6,
+.process-field-header-picker-v5,
+.process-field-header-picker-v4,
+.process-field-header-picker-v3,
+.process-field-header-picker-v2,
+.process-field-header-picker-v1 {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+/* Labels com o mesmo comportamento visual dos campos adicionais */
+.process-fields-config-editor-grid-v1 label,
+.process-fields-config-editor-row-v5 label,
+.process-fields-config-editor-row-v4 label,
+.process-fields-config-editor-row-v3 label,
+.process-fields-config-editor-row-v2 label,
+.process-fields-config-header-editor-v5 label,
+.process-fields-config-header-editor-v4 label,
+.process-fields-config-header-editor-v3 label,
+.process-fields-config-header-editor-v2 label {
+  min-height: 14px !important;
+  line-height: 14px !important;
+  margin: 0 !important;
+  color: #334155 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+/* Selects iguais: largura total e mesma altura */
+.process-fields-config-editor-grid-v1 select,
+.process-fields-config-editor-row-v5 select,
+.process-fields-config-editor-row-v4 select,
+.process-fields-config-editor-row-v3 select,
+.process-fields-config-editor-row-v2 select,
+.process-fields-config-header-editor-v5 select,
+.process-fields-config-header-editor-v4 select,
+.process-fields-config-header-editor-v3 select,
+.process-fields-config-header-editor-v2 select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 38px !important;
+  height: 38px !important;
+  box-sizing: border-box !important;
+}
+
+/* Botões Guardar / Cancelar sempre abaixo das duas colunas */
+.process-fields-config-actions-v5,
+.process-fields-config-actions-v4,
+.process-fields-config-actions-v3,
+.process-fields-config-actions-v2,
+.process-fields-config-editor-grid-v1 .form-action-row,
+.process-fields-config-editor-v1 .form-action-row {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+}
+
+/* Garantir que botões não ficam escondidos */
+.process-fields-config-editor-v1 [data-process-fields-config-submit],
+.process-fields-config-editor-v1 [data-process-fields-config-cancel],
+.process-fields-config-actions-v5 button,
+.process-fields-config-actions-v4 button,
+.process-fields-config-actions-v3 button,
+.process-fields-config-actions-v2 button {
+  display: inline-flex !important;
+  visibility: visible !important;
+}
+
+/* Mesma lógica responsiva dos campos adicionais */
+@media (max-width: 1180px) {
+  .process-fields-config-editor-grid-v1,
+  .process-fields-config-editor-row-v5,
+  .process-fields-config-editor-row-v4,
+  .process-fields-config-editor-row-v3,
+  .process-fields-config-editor-row-v2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .process-fields-config-editor-grid-v1,
+  .process-fields-config-editor-row-v5,
+  .process-fields-config-editor-row-v4,
+  .process-fields-config-editor-row-v3,
+  .process-fields-config-editor-row-v2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .process-fields-config-editor-row-v5 > .field,
+  .process-fields-config-editor-row-v4 > .field,
+  .process-fields-config-editor-row-v3 > .field,
+  .process-fields-config-editor-row-v2 > .field,
+  .process-fields-config-header-editor-v5,
+  .process-fields-config-header-editor-v4,
+  .process-fields-config-header-editor-v3,
+  .process-fields-config-header-editor-v2,
+  .process-field-header-picker-v6,
+  .process-field-header-picker-v5,
+  .process-field-header-picker-v4,
+  .process-field-header-picker-v3,
+  .process-field-header-picker-v2,
+  .process-field-header-picker-v1 {
+    grid-column: 1 !important;
+  }
+}
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_SAME_GRID_V1_END */
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_LAYOUT_V2_START */
+
+/* ###################################################################################
+   CONFIGURACAO DOS CAMPOS - CORRECAO DEFINITIVA DO GRID
+   ################################################################################### */
+
+/*
+  Regra principal:
+  - O bloco externo NAO pode ser grid de duas colunas.
+  - O bloco interno .process-fields-config-editor-row-v5 e que deve ser o grid.
+*/
+
+.process-fields-config-editor-v1 {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Bloco externo: ocupa a largura total e nao divide os filhos em colunas */
+.process-fields-config-editor-grid-v1 {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Bloco interno criado pelo gestor V5: aqui sim ficam as duas colunas */
+.process-fields-config-editor-row-v5 {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 12px !important;
+  row-gap: 0 !important;
+  align-items: end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* Compatibilidade com tentativas anteriores */
+.process-fields-config-editor-row-v4,
+.process-fields-config-editor-row-v3,
+.process-fields-config-editor-row-v2 {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  column-gap: 12px !important;
+  row-gap: 0 !important;
+  align-items: end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Coluna 1: Nome do campo */
+.process-fields-config-editor-row-v5 > .field,
+.process-fields-config-editor-row-v4 > .field,
+.process-fields-config-editor-row-v3 > .field,
+.process-fields-config-editor-row-v2 > .field {
+  grid-column: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+/* Coluna 2: Cabeçalho do campo */
+.process-fields-config-editor-row-v5 > .process-fields-config-header-editor-v5,
+.process-fields-config-editor-row-v4 > .process-fields-config-header-editor-v4,
+.process-fields-config-editor-row-v3 > .process-fields-config-header-editor-v3,
+.process-fields-config-editor-row-v2 > .process-fields-config-header-editor-v2 {
+  grid-column: 2 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+/* Labels alinhadas */
+.process-fields-config-editor-row-v5 label,
+.process-fields-config-editor-row-v4 label,
+.process-fields-config-editor-row-v3 label,
+.process-fields-config-editor-row-v2 label,
+.process-fields-config-header-editor-v5 label,
+.process-fields-config-header-editor-v4 label,
+.process-fields-config-header-editor-v3 label,
+.process-fields-config-header-editor-v2 label {
+  min-height: 14px !important;
+  line-height: 14px !important;
+  margin: 0 !important;
+  color: #334155 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+/* Selects com mesma largura e altura */
+.process-fields-config-editor-row-v5 select,
+.process-fields-config-editor-row-v4 select,
+.process-fields-config-editor-row-v3 select,
+.process-fields-config-editor-row-v2 select,
+.process-fields-config-header-editor-v5 select,
+.process-fields-config-header-editor-v4 select,
+.process-fields-config-header-editor-v3 select,
+.process-fields-config-header-editor-v2 select {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+}
+
+/* Botões abaixo das duas colunas */
+.process-fields-config-actions-v5,
+.process-fields-config-actions-v4,
+.process-fields-config-actions-v3,
+.process-fields-config-actions-v2,
+.process-fields-config-editor-v1 .form-action-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-top: 12px !important;
+  grid-column: 1 / -1 !important;
+}
+
+/* Garantir que Guardar e Cancelar aparecem */
+.process-fields-config-editor-v1 [data-process-fields-config-submit],
+.process-fields-config-editor-v1 [data-process-fields-config-cancel],
+.process-fields-config-actions-v5 button,
+.process-fields-config-actions-v4 button,
+.process-fields-config-actions-v3 button,
+.process-fields-config-actions-v2 button {
+  display: inline-flex !important;
+  visibility: visible !important;
+}
+
+/* Responsivo */
+@media (max-width: 720px) {
+  .process-fields-config-editor-row-v5,
+  .process-fields-config-editor-row-v4,
+  .process-fields-config-editor-row-v3,
+  .process-fields-config-editor-row-v2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .process-fields-config-editor-row-v5 > .field,
+  .process-fields-config-editor-row-v4 > .field,
+  .process-fields-config-editor-row-v3 > .field,
+  .process-fields-config-editor-row-v2 > .field,
+  .process-fields-config-editor-row-v5 > .process-fields-config-header-editor-v5,
+  .process-fields-config-editor-row-v4 > .process-fields-config-header-editor-v4,
+  .process-fields-config-editor-row-v3 > .process-fields-config-header-editor-v3,
+  .process-fields-config-editor-row-v2 > .process-fields-config-header-editor-v2 {
+    grid-column: 1 !important;
+  }
+}
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_LAYOUT_V2_END */
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_STATIC_GRID_V6_START */
+
+/* ###################################################################################
+   ADMINISTRATIVO > MENU > CONFIGURACAO DOS CAMPOS
+   Mesmo modelo visual da aba Campos adicionais
+   ################################################################################### */
+
+.process-fields-config-editor-v1 {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.process-fields-config-editor-grid-v1[data-process-fields-config-editor-block],
+[data-process-fields-config-editor-block].process-fields-config-editor-grid-v1 {
+  display: grid !important;
+  grid-template-columns:
+    minmax(260px, 1fr)
+    minmax(260px, 1fr) !important;
+  gap: 12px !important;
+  align-items: end !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+[data-process-fields-config-editor-block] > .field,
+[data-process-fields-config-editor-block] > .process-fields-config-header-field-v6 {
+  min-width: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+[data-process-fields-config-editor-block] > .field {
+  grid-column: auto !important;
+}
+
+[data-process-fields-config-editor-block] > .process-fields-config-header-field-v6 {
+  grid-column: auto !important;
+}
+
+[data-process-fields-config-editor-block] label {
+  min-height: 14px !important;
+  line-height: 14px !important;
+  margin: 0 0 6px 0 !important;
+  color: #334155 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+[data-process-fields-config-editor-block] select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+}
+
+[data-process-fields-config-editor-block] .form-action-row,
+.process-fields-config-actions-v6 {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+}
+
+.process-fields-config-editor-v1 [data-process-fields-config-submit],
+.process-fields-config-editor-v1 [data-process-fields-config-cancel] {
+  display: inline-flex !important;
+  visibility: visible !important;
+}
+
+@media (max-width: 1180px) {
+  .process-fields-config-editor-grid-v1[data-process-fields-config-editor-block],
+  [data-process-fields-config-editor-block].process-fields-config-editor-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .process-fields-config-editor-grid-v1[data-process-fields-config-editor-block],
+  [data-process-fields-config-editor-block].process-fields-config-editor-grid-v1 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* APPVERBO_PROCESS_FIELDS_CONFIG_STATIC_GRID_V6_END */

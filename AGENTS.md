@@ -1,4 +1,4 @@
-# AGENTS.md - Regras Locais do Projeto AppVerboBraga
+﻿# AGENTS.md - Regras Locais do Projeto AppVerboBraga
 
 Estas regras são obrigatórias para qualquer alteração no projeto AppVerboBraga.
 
@@ -293,3 +293,83 @@ Sempre que alterar `templates/new_user.html` ou assets usados por ele:
 ```bash
 node --check static/js/new_user.js
 node --check static/js/modules/<ficheiro_alterado>.js
+
+<!-- APPVERBO_STATIC_GRID_RULE_V1_START -->
+
+## Regra obrigatoria para campos lado a lado em abas configuraveis
+
+Quando uma aba configuravel do processo precisar apresentar campos lado a lado, a logica deve seguir o mesmo padrao usado na aba Campos adicionais.
+
+Regra principal:
+
+- O HTML deve definir a estrutura.
+- O CSS deve definir o grid.
+- O JavaScript deve gerir apenas dados e acoes.
+
+Os campos que ficam lado a lado devem nascer como filhos diretos do mesmo bloco no template HTML.
+
+Exemplo correto em HTML:
+
+<div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1">
+  <div class="field">
+    <label>Nome do campo</label>
+    <select></select>
+  </div>
+
+  <div class="field">
+    <label>Cabecalho do campo</label>
+    <select></select>
+  </div>
+
+  <div class="form-action-row">
+    <button>Guardar</button>
+    <button>Cancelar</button>
+  </div>
+</div>
+
+Regra de CSS:
+
+[data-process-fields-config-editor-block] {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+[data-process-fields-config-editor-block] > .field {
+  min-width: 0;
+  width: 100%;
+}
+
+[data-process-fields-config-editor-block] select,
+[data-process-fields-config-editor-block] input {
+  width: 100%;
+  min-height: 38px;
+}
+
+[data-process-fields-config-editor-block] .form-action-row {
+  grid-column: 1 / -1;
+}
+
+Regra de JavaScript:
+
+- Pode ler valores.
+- Pode validar duplicados.
+- Pode criar hidden inputs.
+- Pode renderizar tabela/lista.
+- Pode controlar botoes de editar, subir, descer e remover.
+- Pode sincronizar o payload antes do submit.
+
+Nao deve:
+
+- criar wrappers visuais para alinhar campos;
+- mover campos existentes para outro container;
+- duplicar selects ja existentes no HTML;
+- criar a segunda coluna por script quando ela pode nascer no template.
+
+Na aba Configuracao dos campos, os campos Nome do campo e Cabecalho do campo devem existir diretamente em templates/new_user.html dentro do bloco data-process-fields-config-editor-block.
+
+Motivo: tentativas de criar o campo Cabecalho do campo por JavaScript causaram duplicacao de campo, conflito entre grid externo e grid interno, campos empilhados, desaparecimento dos botoes Guardar/Cancelar e dificuldade de manutencao.
+
+<!-- APPVERBO_STATIC_GRID_RULE_V1_END -->
+

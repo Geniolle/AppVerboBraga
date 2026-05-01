@@ -255,14 +255,17 @@
     row.className = "process-fields-config-editor-row-v5";
     row.style.display = "grid";
     row.style.gridTemplateColumns = "minmax(0, 1fr) minmax(0, 1fr)";
+    row.style.gridColumn = "1 / -1";
     row.style.columnGap = "12px";
     row.style.alignItems = "end";
     row.style.width = "100%";
     row.style.maxWidth = "100%";
+    row.style.minWidth = "0";
 
     const headerWrapper = document.createElement("div");
     headerWrapper.className = "process-fields-config-header-editor-v5";
     headerWrapper.style.gridColumn = "2";
+    headerWrapper.style.minWidth = "0";
 
     const headerLabel = document.createElement("label");
     headerLabel.textContent = "CABEÇALHO DO CAMPO";
@@ -286,6 +289,7 @@
 
     originalParent.insertBefore(row, editorField);
     editorField.style.gridColumn = "1";
+    editorField.style.minWidth = "0";
     editorField.style.width = "100%";
     editorField.style.maxWidth = "100%";
     row.appendChild(editorField);

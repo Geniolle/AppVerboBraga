@@ -4,7 +4,7 @@
 
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260501-process-fields-config-layout-v3">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260501-process-fields-config-layout-v3">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 {% endblock %}
 
@@ -1528,12 +1528,16 @@
                         </select>
                       </div>
 
-                      <div class="field process-field-header-picker-v4">
-                        <label for="process-fields-config-editor-header">Cabeçalho do campo</label>
-                        <select id="process-fields-config-editor-header" data-process-fields-config-header-editor-v3>
+                      <div class="field process-fields-config-header-field-v6">
+                        <label for="process-fields-config-header-key">Cabeçalho do campo</label>
+                        <select id="process-fields-config-header-key" data-process-fields-config-header-editor-key>
                           <option value="">Sem cabeçalho</option>
                           {% for header_option in settings_process_header_options|default([]) %}
-                          <option value="{{ header_option.key }}">{{ header_option.label }}</option>
+                          <option
+                            value="{{ header_option.key }}"
+                            data-process-config-kind="header"
+                            data-process-config-label="{{ header_option.label }}"
+                          >{{ header_option.label }}</option>
                           {% endfor %}
                         </select>
                       </div>
@@ -2591,7 +2595,7 @@
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v5.js?v=20260430-fields-config-v5b-legacy-header"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v6.js?v=20260430-fields-config-v6a-remove-duplicate-header"></script>
   <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
