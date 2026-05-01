@@ -598,9 +598,9 @@ if (currentUserIsAdmin) {
           ? profilePersonalSections.map((section) => ({
               label: String(section.label || "Dados pessoais"),
               target: "#perfil-pessoal-card",
-              profileSection: String(section.key || "geral")
+              profileSection: String(section.key || "")
             }))
-          : [{ label: "Dados pessoais", target: "#perfil-pessoal-card", profileSection: "geral" }]
+          : []
       ),
       details: [
         { label: "Modulo", value: "Meu perfil" },
@@ -817,8 +817,8 @@ let meuPerfilSelectedTarget = "#perfil-pessoal-card";
 let meuPerfilSelectedProfileSection = (
   Array.isArray(profilePersonalSections) && profilePersonalSections.length
 )
-  ? String(profilePersonalSections[0].key || "geral")
-  : "geral";
+  ? String(profilePersonalSections[0].key || "")
+  : "";
 let hiddenMeuPerfilSectionKeys = new Set();
 if (initialAdminTab === "entidade") {
   adminSelectedTarget = "#create-entity-card";
@@ -1989,7 +1989,7 @@ function applyMeuPerfilProcessSubsequentVisibility() {
   }
   if (itemsEl) {
     const selectedLinkEl = itemsEl.querySelector(
-      `.submenu-item[data-profile-section="${String(meuPerfilSelectedProfileSection || "geral").replace(/"/g, '\\"')}"]`
+      `.submenu-item[data-profile-section="${String(meuPerfilSelectedProfileSection || "").replace(/"/g, '\\"')}"]`
     );
     if (selectedLinkEl && selectedLinkEl.style.display !== "none") {
       setActiveSubmenu("#perfil-pessoal-card", selectedLinkEl);
@@ -1999,7 +1999,7 @@ function applyMeuPerfilProcessSubsequentVisibility() {
       (linkEl) => linkEl.style.display !== "none"
     );
     if (firstVisibleLinkEl) {
-      meuPerfilSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "geral");
+      meuPerfilSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "");
       setActiveSubmenu("#perfil-pessoal-card", firstVisibleLinkEl);
     }
   }
@@ -3112,7 +3112,7 @@ function renderSubmenu(menuKey) {
         menuKey === MEU_PERFIL_MENU_KEY &&
         typeof window.activateProfilePersonalSection === "function"
       ) {
-        const sectionKey = String(item.profileSection || "geral");
+        const sectionKey = String(item.profileSection || "");
         meuPerfilSelectedProfileSection = sectionKey;
         window.activateProfilePersonalSection(sectionKey);
         applyMeuPerfilProcessSubsequentVisibility();
@@ -3223,7 +3223,7 @@ function activateMenu(menuKey, options = {}) {
         selectedSectionItem = menuItems.find((item) => item.target === defaultTarget) || menuItems[0];
       }
       if (selectedSectionItem) {
-        const selectedSectionKey = String(selectedSectionItem.profileSection || "geral");
+        const selectedSectionKey = String(selectedSectionItem.profileSection || "");
         meuPerfilSelectedProfileSection = selectedSectionKey;
         window.activateProfilePersonalSection(selectedSectionKey);
         applyMeuPerfilProcessSubsequentVisibility();

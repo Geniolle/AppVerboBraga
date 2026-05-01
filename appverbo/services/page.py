@@ -199,75 +199,72 @@ def get_page_data(
                 profile_personal_visible_fields = [next(iter(profile_personal_field_labels.keys()))]
         break
 
-    profile_personal_sections: list[dict[str, str]] = [{"key": "geral", "label": "Geral"}]
+    # APPVERBO_MEU_PERFIL_HEADER_TABS_ONLY_V1_START
+    profile_personal_sections: list[dict[str, str]] = []
     profile_personal_field_section_map: dict[str, str] = {}
     header_section_order: list[str] = []
     header_section_seen: set[str] = set()
-    for field_key in profile_personal_visible_fields:
-        clean_field_key = str(field_key or "").strip().lower()
-        if not clean_field_key:
-            continue
-        field_type = str(profile_personal_field_types.get(clean_field_key) or "").strip().lower()
-        if field_type == "header" and clean_field_key not in header_section_seen:
-            header_section_order.append(clean_field_key)
-            header_section_seen.add(clean_field_key)
-    for header_key in profile_personal_field_header_map.values():
-        clean_header_key = str(header_key or "").strip().lower()
-        if not clean_header_key or clean_header_key in header_section_seen:
-            continue
-        if str(profile_personal_field_types.get(clean_header_key) or "").strip().lower() != "header":
-            continue
+
+    profile_header_field_keys = {
+        clean_key
+        for clean_key, meta in profile_personal_custom_field_meta.items()
+        if clean_key.startswith("custom_")
+        and str((meta or {}).get("field_type") or "").strip().lower() == "header"
+    }
+
+    def append_profile_header_section_v1(raw_header_key: Any) -> None:
+        clean_header_key = str(raw_header_key or "").strip().lower()
+
+        if not clean_header_key:
+            return
+
+        if clean_header_key in header_section_seen:
+            return
+
+        if clean_header_key not in profile_header_field_keys:
+            return
+
+        section_label = profile_personal_field_labels.get(clean_header_key, "Aba")
+
+        profile_personal_sections.append(
+            {
+                "key": clean_header_key,
+                "label": section_label,
+            }
+        )
         header_section_order.append(clean_header_key)
         header_section_seen.add(clean_header_key)
 
-    if header_section_order:
-        for section_key in header_section_order:
-            section_label = profile_personal_field_labels.get(section_key, "Aba")
-            profile_personal_sections.append({"key": section_key, "label": section_label})
-        for field_key in profile_personal_visible_fields:
-            clean_field_key = str(field_key or "").strip().lower()
-            if not clean_field_key:
-                continue
-            field_type = str(profile_personal_field_types.get(clean_field_key) or "").strip().lower()
-            if field_type == "header":
-                continue
-            header_key = str(profile_personal_field_header_map.get(clean_field_key) or "").strip().lower()
-            if header_key in header_section_seen:
-                profile_personal_field_section_map[clean_field_key] = header_key
-            else:
-                profile_personal_field_section_map[clean_field_key] = "geral"
-        has_geral_fields = any(
-            section_key == "geral" for section_key in profile_personal_field_section_map.values()
-        )
-        if not has_geral_fields:
-            profile_personal_sections = [
-                section for section in profile_personal_sections if section.get("key") != "geral"
-            ]
-    else:
-        active_section_key = "geral"
-        seen_section_keys = {"geral"}
-        for field_key in profile_personal_visible_fields:
-            clean_field_key = str(field_key or "").strip().lower()
-            if not clean_field_key:
-                continue
-            field_type = str(profile_personal_field_types.get(clean_field_key) or "").strip().lower()
-            if field_type == "header":
-                section_key = clean_field_key
-                section_label = profile_personal_field_labels.get(clean_field_key, "Aba")
-                if section_key not in seen_section_keys:
-                    profile_personal_sections.append({"key": section_key, "label": section_label})
-                    seen_section_keys.add(section_key)
-                active_section_key = section_key
-                continue
-            profile_personal_field_section_map[clean_field_key] = active_section_key
-        if len(profile_personal_sections) > 1:
-            has_geral_fields = any(
-                section_key == "geral" for section_key in profile_personal_field_section_map.values()
-            )
-            if not has_geral_fields:
-                profile_personal_sections = [
-                    section for section in profile_personal_sections if section.get("key") != "geral"
-                ]
+    for field_key in profile_personal_visible_fields:
+        clean_field_key = str(field_key or "").strip().lower()
+        append_profile_header_section_v1(clean_field_key)
+
+    for header_key in profile_personal_field_header_map.values():
+        append_profile_header_section_v1(header_key)
+
+    first_profile_header_key = header_section_order[0] if header_section_order else ""
+
+    for field_key in profile_personal_visible_fields:
+        clean_field_key = str(field_key or "").strip().lower()
+
+        if not clean_field_key:
+            continue
+
+        field_type = str(profile_personal_field_types.get(clean_field_key) or "").strip().lower()
+
+        if field_type == "header":
+            continue
+
+        configured_header_key = str(
+            profile_personal_field_header_map.get(clean_field_key) or ""
+        ).strip().lower()
+
+        if configured_header_key in header_section_seen:
+            profile_personal_field_section_map[clean_field_key] = configured_header_key
+            continue
+
+        profile_personal_field_section_map[clean_field_key] = first_profile_header_key
+    # APPVERBO_MEU_PERFIL_HEADER_TABS_ONLY_V1_END
 
 
     required_profile_fields = ["nome", "telefone", "email", "pais"]
@@ -278,7 +275,7 @@ def get_page_data(
                 "nome": "Nome",
                 "telefone": "Telefone",
                 "email": "Email",
-                "pais": "País",
+                "pais": "PaÃ­s",
             }[required_field]
 
         if required_field not in profile_personal_visible_fields:
@@ -300,17 +297,30 @@ def get_page_data(
             else:
                 profile_personal_visible_fields.append(required_field)
 
+    # APPVERBO_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_START
+    default_profile_header_section_v1 = header_section_order[0] if header_section_order else ""
+
     if "pais" not in profile_personal_field_section_map:
-        profile_personal_field_section_map["pais"] = profile_personal_field_section_map.get("telefone", "geral")
+        profile_personal_field_section_map["pais"] = profile_personal_field_section_map.get(
+            "telefone",
+            default_profile_header_section_v1,
+        )
 
     if "nome" not in profile_personal_field_section_map:
-        profile_personal_field_section_map["nome"] = "geral"
+        profile_personal_field_section_map["nome"] = default_profile_header_section_v1
 
     if "telefone" not in profile_personal_field_section_map:
-        profile_personal_field_section_map["telefone"] = profile_personal_field_section_map.get("nome", "geral")
+        profile_personal_field_section_map["telefone"] = profile_personal_field_section_map.get(
+            "nome",
+            default_profile_header_section_v1,
+        )
 
     if "email" not in profile_personal_field_section_map:
-        profile_personal_field_section_map["email"] = profile_personal_field_section_map.get("telefone", "geral")
+        profile_personal_field_section_map["email"] = profile_personal_field_section_map.get(
+            "telefone",
+            default_profile_header_section_v1,
+        )
+    # APPVERBO_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
 
 
     scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []

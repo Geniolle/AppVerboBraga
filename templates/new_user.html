@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
@@ -117,79 +117,79 @@
           <div class="profile-readonly">
             <div class="personal-grid">
               {% if "nome" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
                 <span class="personal-label">Nome</span>
                 <strong class="personal-value">{{ user_personal_data.full_name }}</strong>
               </div>
               {% endif %}
               {% if "email" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
                 <span class="personal-label">Email</span>
                 <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
               </div>
               {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
                 <span class="personal-label">Telefone</span>
                 <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
               </div>
               {% endif %}
               {% if "pais" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
                 <span class="personal-label">País</span>
                 <strong class="personal-value">{{ user_personal_data.country }}</strong>
               </div>
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
                 <span class="personal-label">Data de nascimento</span>
                 <strong class="personal-value">{{ user_personal_data.birth_date }}</strong>
               </div>
               {% endif %}
               {% if "whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
                 <span class="personal-label">WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_verification_status }}</strong>
               </div>
               {% endif %}
               {% if "autorizacao_whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
                 <span class="personal-label">Autorização para avisos por WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_notice_opt_in }}</strong>
               </div>
               {% endif %}
               {% if "conta" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', '') }}">
                 <span class="personal-label">Conta</span>
                 <strong class="personal-value">{{ user_personal_data.account_status }}</strong>
               </div>
               {% endif %}
               {% if "estado_membro" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', '') }}">
                 <span class="personal-label">Estado de membro</span>
                 <strong class="personal-value">{{ user_personal_data.member_status }}</strong>
               </div>
               {% endif %}
               {% if "colaborador" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', '') }}">
                 <span class="personal-label">Colaborador</span>
                 <strong class="personal-value">{{ user_personal_data.is_collaborator }}</strong>
               </div>
               {% endif %}
               {% if "entidades" in profile_personal_visible_fields %}
-              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', 'geral') }}">
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', '') }}">
                 <span class="personal-label">Entidades</span>
                 <strong class="personal-value">{{ user_personal_data.entities }}</strong>
               </div>
               {% endif %}
               {% if "ultima_verificacao_whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', '') }}">
                 <span class="personal-label">Última verificação WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_check_at }}</strong>
               </div>
               {% endif %}
               {% if "detalhe_verificacao" in profile_personal_visible_fields %}
-              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', 'geral') }}">
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', '') }}">
                 <span class="personal-label">Detalhe da verificação</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_error }}</strong>
               </div>
@@ -200,7 +200,7 @@
               {% set custom_type = custom_meta.get("field_type", "text") %}
               {% set custom_raw_value = user_personal_data.custom_fields.get(field_key, "") %}
               {% if custom_type != "header" %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, 'geral') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}">
                 <span class="personal-label">{{ profile_personal_field_labels.get(field_key, field_key) }}</span>
                 {% if custom_type == "flag" %}
                 <strong class="personal-value">
@@ -218,7 +218,7 @@
           <form class="profile-edit-form" method="post" action="/users/profile/personal">
             <div class="personal-grid">
               {% if "nome" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', 'geral') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
                 <label for="edit_full_name">Nome *</label>
                 <input
                   id="edit_full_name"
@@ -235,7 +235,7 @@
               >
               {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', 'geral') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
                 <label for="edit_primary_phone">Telefone *</label>
                 <input
                   id="edit_primary_phone"
@@ -252,7 +252,7 @@
               >
               {% endif %}
               {% if "pais" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', 'geral') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
                 <label for="edit_country">País</label>
                 <input
                   id="edit_country"
@@ -268,7 +268,7 @@
               >
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', 'geral') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
                 <label for="edit_birth_date">Data de nascimento (dd/mm/aaaa)</label>
                 <input
                   id="edit_birth_date"
@@ -284,7 +284,7 @@
                 value="{{ '' if user_personal_data.birth_date == '-' else user_personal_data.birth_date }}"
               >
               {% endif %}
-              <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', 'geral') }}">
+              <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
                 <label>
                   <input
                     type="checkbox"
@@ -295,7 +295,7 @@
                   Autorizo a igreja a enviar avisos por WhatsApp
                 </label>
               </div>              {% if "email" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', 'geral') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
                 <label for="edit_login_email">Email *</label>
                 <input
                   id="edit_login_email"
@@ -320,7 +320,7 @@
               {% set custom_required = custom_meta.get("is_required", False) %}
               {% set custom_list_options = custom_meta.get("list_options", []) %}
               {% if custom_type != "header" %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, 'geral') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}">
                 <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}{% if custom_required and custom_type != "flag" %} *{% endif %}</label>
                 {% if custom_type == "flag" %}
                 <label class="profile-custom-flag-control">
