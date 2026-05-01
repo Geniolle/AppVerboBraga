@@ -118,6 +118,132 @@
     };
   }
 
+  // APPVERBO_PROCESS_FIELDS_V6_ACTION_BUTTONS_V2_START
+
+  function criarBotaoFormulario_v6(kind, label) {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.textContent = label;
+
+    if (kind === "submit") {
+      button.dataset.processFieldsConfigSubmit = "1";
+      button.className = "action-btn process-fields-config-submit-v6";
+    }
+
+    if (kind === "cancel") {
+      button.dataset.processFieldsConfigCancel = "1";
+      button.className = "action-btn-cancel process-fields-config-cancel-v6";
+    }
+
+    button.hidden = false;
+    button.removeAttribute("hidden");
+    button.style.display = "inline-flex";
+    button.style.visibility = "visible";
+    button.style.opacity = "1";
+    button.style.alignItems = "center";
+    button.style.justifyContent = "center";
+    button.style.minWidth = "110px";
+    button.style.height = "38px";
+    button.style.borderRadius = "8px";
+    button.style.fontWeight = "700";
+    button.style.cursor = "pointer";
+
+    return button;
+  }
+
+  function mostrarElementoFormulario_v6(element) {
+    if (!element) {
+      return;
+    }
+
+    element.hidden = false;
+    element.removeAttribute("hidden");
+    element.style.display = "";
+    element.style.visibility = "visible";
+    element.style.opacity = "1";
+  }
+
+  function localizarLinhaEditorFormulario_v6(form, elements) {
+    const editorWrapper =
+      elements.editorKey.closest(".field") ||
+      elements.editorKey.closest(".form-field") ||
+      elements.editorKey.parentElement;
+
+    const headerWrapper =
+      elements.headerKey.closest(".field") ||
+      elements.headerKey.closest(".form-field") ||
+      elements.headerKey.parentElement;
+
+    if (editorWrapper && headerWrapper && editorWrapper.parentElement === headerWrapper.parentElement) {
+      return editorWrapper.parentElement;
+    }
+
+    return (
+      form.querySelector(".process-fields-config-editor-row-v6") ||
+      form.querySelector(".process-fields-config-editor-row-v4") ||
+      headerWrapper ||
+      editorWrapper ||
+      form
+    );
+  }
+
+  function garantirBotoesFormulario_v6(form, elements) {
+    if (!form || !elements || !elements.editorKey || !elements.headerKey) {
+      return;
+    }
+
+    let actionRow = form.querySelector("[data-process-fields-config-action-row-v6='1']");
+
+    if (!actionRow) {
+      actionRow = document.createElement("div");
+      actionRow.dataset.processFieldsConfigActionRowV6 = "1";
+      actionRow.className = "form-action-row process-fields-config-action-row-v6";
+    }
+
+    actionRow.hidden = false;
+    actionRow.removeAttribute("hidden");
+    actionRow.style.display = "flex";
+    actionRow.style.gap = "10px";
+    actionRow.style.alignItems = "center";
+    actionRow.style.justifyContent = "flex-start";
+    actionRow.style.marginTop = "12px";
+    actionRow.style.width = "100%";
+    actionRow.style.visibility = "visible";
+    actionRow.style.opacity = "1";
+
+    if (!elements.submitButton) {
+      elements.submitButton = criarBotaoFormulario_v6("submit", "Guardar");
+    }
+
+    if (!elements.cancelButton) {
+      elements.cancelButton = criarBotaoFormulario_v6("cancel", "Cancelar");
+    }
+
+    mostrarElementoFormulario_v6(elements.submitButton);
+    mostrarElementoFormulario_v6(elements.cancelButton);
+
+    if (!actionRow.contains(elements.submitButton)) {
+      actionRow.appendChild(elements.submitButton);
+    }
+
+    if (!actionRow.contains(elements.cancelButton)) {
+      actionRow.appendChild(elements.cancelButton);
+    }
+
+    const editorRow = localizarLinhaEditorFormulario_v6(form, elements);
+
+    if (editorRow && editorRow.parentElement && editorRow !== actionRow) {
+      editorRow.insertAdjacentElement("afterend", actionRow);
+      return;
+    }
+
+    form.insertBefore(actionRow, form.firstChild);
+  }
+
+  // APPVERBO_PROCESS_FIELDS_V6_ACTION_BUTTONS_V2_END
+
+
   function elementosValidos_v6(elements) {
     return Boolean(
       elements.legacyContainer &&
@@ -739,6 +865,8 @@
     }
 
     const elements = obterElementos_v6(form);
+
+    garantirBotoesFormulario_v6(form, elements);
 
     if (!elementosValidos_v6(elements)) {
       return;
