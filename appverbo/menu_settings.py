@@ -733,63 +733,162 @@ def get_menu_process_selectable_field_options(
     ]
 
 
+
+def get_menu_process_default_visible_fields_v4(
+    menu_key: str,
+    menu_config: dict[str, Any] | None = None,
+) -> list[str]:
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_DEFAULTS_START
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    clean_menu_config = menu_config if isinstance(menu_config, dict) else {}
+
+    selectable_options = get_menu_process_selectable_field_options(
+        clean_menu_key,
+        clean_menu_config,
+    )
+
+    selectable_keys = [
+        str(item.get("key") or "").strip().lower()
+        for item in selectable_options
+        if str(item.get("key") or "").strip()
+    ]
+
+    if not selectable_keys:
+        return []
+
+    allowed_keys = set(selectable_keys)
+    configured_defaults = MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY.get(
+        clean_menu_key,
+        [],
+    )
+
+    normalized_defaults: list[str] = []
+    seen_keys: set[str] = set()
+
+    for raw_key in configured_defaults:
+        field_key = str(raw_key or "").strip().lower()
+
+        if not field_key:
+            continue
+
+        if field_key in seen_keys:
+            continue
+
+        if field_key not in allowed_keys:
+            continue
+
+        seen_keys.add(field_key)
+        normalized_defaults.append(field_key)
+
+    if normalized_defaults:
+        return normalized_defaults
+
+    return [selectable_keys[0]]
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_DEFAULTS_END
+
+
 def get_menu_process_default_visible_fields(
     menu_key: str,
     menu_config: dict[str, Any] | None = None,
 ) -> list[str]:
+    return get_menu_process_default_visible_fields_v4(
+        menu_key,
+        menu_config,
+    )
+
+
+def normalize_menu_process_visible_fields_v4(
+    menu_key: str,
+    raw_fields: Any = None,
+    menu_config: dict[str, Any] | None = None,
+) -> list[str]:
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_NORMALIZE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
-    options = get_menu_process_field_options(clean_menu_key, menu_config)
-    available_option_keys = {
+
+    if isinstance(raw_fields, dict) and menu_config is None:
+        clean_menu_config = raw_fields
+        raw_visible_fields = clean_menu_config.get("process_visible_fields")
+    else:
+        clean_menu_config = menu_config if isinstance(menu_config, dict) else {}
+        raw_visible_fields = raw_fields
+
+    if raw_visible_fields is None:
+        raw_visible_fields = clean_menu_config.get("process_visible_fields")
+
+    selectable_options = get_menu_process_selectable_field_options(
+        clean_menu_key,
+        clean_menu_config,
+    )
+
+    allowed_field_keys = {
         str(item.get("key") or "").strip().lower()
-        for item in options
+        for item in selectable_options
         if str(item.get("key") or "").strip()
     }
-    defaults = MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY.get(clean_menu_key)
-    if isinstance(defaults, list) and defaults:
-        filtered_defaults = [
-            str(field_key).strip().lower()
-            for field_key in defaults
-            if str(field_key).strip().lower() in available_option_keys
-        ]
-        if filtered_defaults:
-            return filtered_defaults
-    if not options:
+
+    if not allowed_field_keys:
         return []
-    return [str(options[0].get("key") or "").strip().lower()]
+
+    has_explicit_config = (
+        isinstance(clean_menu_config, dict)
+        and (
+            "process_visible_fields" in clean_menu_config
+            or bool(clean_menu_config.get("process_visible_fields_configured"))
+        )
+    )
+
+    if isinstance(raw_visible_fields, str):
+        raw_items = [
+            chunk
+            for chunk in re.split(r"[,;\n\r]+", raw_visible_fields)
+            if str(chunk or "").strip()
+        ]
+    elif isinstance(raw_visible_fields, (list, tuple, set)):
+        raw_items = list(raw_visible_fields)
+    else:
+        raw_items = []
+
+    normalized_fields: list[str] = []
+    seen_fields: set[str] = set()
+
+    for raw_field in raw_items:
+        field_key = str(raw_field or "").strip().lower()
+
+        if not field_key:
+            continue
+
+        if field_key in seen_fields:
+            continue
+
+        if field_key not in allowed_field_keys:
+            continue
+
+        seen_fields.add(field_key)
+        normalized_fields.append(field_key)
+
+    if normalized_fields:
+        return normalized_fields
+
+    if has_explicit_config:
+        return []
+
+    return get_menu_process_default_visible_fields(
+        clean_menu_key,
+        clean_menu_config,
+    )
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_NORMALIZE_END
 
 
 def normalize_menu_process_visible_fields(
     menu_key: str,
-    raw_fields: Any,
+    raw_fields: Any = None,
     menu_config: dict[str, Any] | None = None,
 ) -> list[str]:
-    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
-    allowed_field_keys = {
-        str(item.get("key") or "").strip().lower()
-        for item in get_menu_process_field_options(clean_menu_key, menu_config)
-        if str(item.get("key") or "").strip()
-    }
-    if not allowed_field_keys:
-        return []
-
-    if not isinstance(raw_fields, (list, tuple, set)):
-        return get_menu_process_default_visible_fields(clean_menu_key, menu_config)
-
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for raw_field in raw_fields:
-        clean_field = str(raw_field or "").strip().lower()
-        if clean_field not in allowed_field_keys:
-            continue
-        if clean_field in seen:
-            continue
-        seen.add(clean_field)
-        normalized.append(clean_field)
-
-    if not normalized:
-        return get_menu_process_default_visible_fields(clean_menu_key, menu_config)
-    return normalized
-
+    return normalize_menu_process_visible_fields_v4(
+        menu_key,
+        raw_fields,
+        menu_config,
+    )
 
 def normalize_meu_perfil_visible_fields(raw_fields: Any) -> list[str]:
     return normalize_menu_process_visible_fields(MENU_MEU_PERFIL_KEY, raw_fields)
@@ -1563,137 +1662,141 @@ def update_sidebar_menu_sidebar_sections(
     return True, ""
 
 
-def update_sidebar_menu_process_fields(
+
+
+def update_sidebar_menu_process_fields_v4(
     session: Session,
     menu_key: str,
     visible_fields: list[str] | tuple[str, ...] | set[str],
     visible_headers: list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> tuple[bool, str]:
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
-    ensure_sidebar_menu_settings_defaults(session)
-    if not _menu_exists(session, clean_menu_key):
+
+    if not clean_menu_key:
         return False, "Menu inválido."
 
-    menu_config = _load_menu_config(session, clean_menu_key)
-    if not get_menu_process_field_options(clean_menu_key, menu_config):
-        return False, "Este processo não possui campos configuráveis."
 
-    types_map = get_menu_process_field_types_map(clean_menu_key, menu_config)
+    ensure_sidebar_menu_settings_defaults(session)
+
+    if not _menu_exists(session, clean_menu_key):
+        return False, "Menu não encontrado."
+
+    menu_config = _load_menu_config(session, clean_menu_key)
+
+    selectable_options = get_menu_process_selectable_field_options(
+        clean_menu_key,
+        menu_config,
+    )
+    header_options = get_menu_process_header_options(
+        clean_menu_key,
+        menu_config,
+    )
+
     selectable_keys = {
-        key for key, field_type in types_map.items() if field_type != "header"
+        str(item.get("key") or "").strip().lower()
+        for item in selectable_options
+        if str(item.get("key") or "").strip()
     }
     header_keys = {
-        key for key, field_type in types_map.items() if field_type == "header"
+        str(item.get("key") or "").strip().lower()
+        for item in header_options
+        if str(item.get("key") or "").strip()
     }
-    if not selectable_keys:
-        if not header_keys:
-            return False, "Este processo não possui campos configuráveis."
 
-        requested_header_keys: list[str] = []
-        requested_seen: set[str] = set()
-        for raw_field in list(visible_fields or []):
-            clean_field = str(raw_field or "").strip().lower()
-            if clean_field not in header_keys:
-                continue
-            if clean_field in requested_seen:
-                continue
-            requested_seen.add(clean_field)
-            requested_header_keys.append(clean_field)
+    if not selectable_keys and not header_keys:
+        return False, "Este processo não possui campos configuráveis."
 
-        ordered_header_keys = [
-            str(item.get("key") or "").strip().lower()
-            for item in get_menu_process_field_options(clean_menu_key, menu_config)
-            if str(item.get("key") or "").strip().lower() in header_keys
-        ]
-        if not ordered_header_keys:
-            ordered_header_keys = sorted(header_keys)
-        if requested_header_keys:
-            ordered_header_keys = requested_header_keys
-
-        menu_config["visible_fields"] = ordered_header_keys
-        menu_config["visible_field_headers"] = {}
-
-        session.execute(
-            text(
-                """
-                UPDATE sidebar_menu_settings
-                SET menu_config = :menu_config
-                WHERE lower(trim(menu_key)) = :menu_key
-                """
-            ),
-            {
-                "menu_key": clean_menu_key,
-                "menu_config": json.dumps(menu_config, ensure_ascii=False),
-            },
-        )
-        session.commit()
-        return True, ""
-
-    raw_visible_fields = list(visible_fields or [])
-    raw_visible_headers = list(visible_headers or [])
-    rows_count = max(len(raw_visible_fields), len(raw_visible_headers))
+    raw_visible_fields = (
+        list(visible_fields)
+        if isinstance(visible_fields, (list, tuple, set))
+        else []
+    )
+    raw_visible_headers = (
+        list(visible_headers)
+        if isinstance(visible_headers, (list, tuple, set))
+        else []
+    )
 
     normalized_rows: list[dict[str, str]] = []
-    seen_field_keys: set[str] = set()
-    for row_index in range(rows_count):
-        field_key = (
-            str(raw_visible_fields[row_index] if row_index < len(raw_visible_fields) else "")
-            .strip()
-            .lower()
-        )
+    seen_fields: set[str] = set()
+
+    for row_index, raw_field in enumerate(raw_visible_fields):
+        field_key = str(raw_field or "").strip().lower()
+
+        if not field_key:
+            continue
+
+        if field_key in seen_fields:
+            continue
+
+        if field_key not in selectable_keys:
+            continue
+
         header_key = (
             str(raw_visible_headers[row_index] if row_index < len(raw_visible_headers) else "")
             .strip()
             .lower()
         )
-        if field_key not in selectable_keys:
-            continue
-        if field_key in seen_field_keys:
-            continue
-        seen_field_keys.add(field_key)
+
+        if header_key not in header_keys:
+            header_key = ""
+
+        seen_fields.add(field_key)
         normalized_rows.append(
             {
                 "field_key": field_key,
-                "header_key": header_key if header_key in header_keys else "",
+                "header_key": header_key,
             }
         )
 
-    if not normalized_rows:
-        defaults = get_menu_process_default_visible_fields(clean_menu_key, menu_config)
-        for field_key in defaults:
-            if field_key not in selectable_keys:
-                continue
-            if field_key in seen_field_keys:
-                continue
-            seen_field_keys.add(field_key)
-            normalized_rows.append({"field_key": field_key, "header_key": ""})
-    if not normalized_rows:
-        first_field_key = next(iter(selectable_keys))
-        normalized_rows.append({"field_key": first_field_key, "header_key": ""})
+    process_visible_fields = [
+        row["field_key"]
+        for row in normalized_rows
+    ]
 
-    final_visible_fields: list[str] = []
-    emitted_keys: set[str] = set()
-    active_header_key = ""
-    for row in normalized_rows:
-        field_key = row["field_key"]
-        header_key = row["header_key"]
-        if header_key and header_key != active_header_key:
-            final_visible_fields.append(header_key)
-            emitted_keys.add(header_key)
-            active_header_key = header_key
-        if not header_key:
-            active_header_key = ""
-        if field_key in emitted_keys:
-            continue
-        final_visible_fields.append(field_key)
-        emitted_keys.add(field_key)
-
-    menu_config["visible_fields"] = final_visible_fields
-    menu_config["visible_field_headers"] = {
+    process_visible_field_header_map = {
         row["field_key"]: row["header_key"]
         for row in normalized_rows
         if row.get("header_key")
     }
+
+    legacy_visible_fields: list[str] = []
+    emitted_legacy_keys: set[str] = set()
+    active_header_key = ""
+
+    for row in normalized_rows:
+        field_key = row["field_key"]
+        header_key = row["header_key"]
+
+        if header_key and header_key != active_header_key:
+            if header_key not in emitted_legacy_keys:
+                legacy_visible_fields.append(header_key)
+                emitted_legacy_keys.add(header_key)
+
+            active_header_key = header_key
+
+        if not header_key:
+            active_header_key = ""
+
+        if field_key in emitted_legacy_keys:
+            continue
+
+        legacy_visible_fields.append(field_key)
+        emitted_legacy_keys.add(field_key)
+
+    refresh_token = str(uuid4())
+
+    menu_config["process_visible_fields"] = process_visible_fields
+    menu_config["process_visible_field_header_map"] = process_visible_field_header_map
+    menu_config["process_visible_field_rows"] = normalized_rows
+    menu_config["process_visible_fields_configured"] = True
+    menu_config["process_visible_fields_refresh_version"] = refresh_token
+
+    menu_config["visible_fields"] = legacy_visible_fields
+    menu_config["visible_field_headers"] = process_visible_field_header_map
+
+    menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
 
     session.execute(
         text(
@@ -1709,8 +1812,23 @@ def update_sidebar_menu_process_fields(
         },
     )
     session.commit()
-    return True, ""
 
+    return True, ""
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_END
+
+
+def update_sidebar_menu_process_fields(
+    session: Session,
+    menu_key: str,
+    visible_fields: list[str] | tuple[str, ...] | set[str],
+    visible_headers: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> tuple[bool, str]:
+    return update_sidebar_menu_process_fields_v4(
+        session,
+        menu_key,
+        visible_fields,
+        visible_headers,
+    )
 
 def update_sidebar_menu_process_lists(
     session: Session,
@@ -2898,50 +3016,168 @@ def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
     return menu_config
 
 
-def update_sidebar_menu_additional_fields_v1(
+
+def update_sidebar_menu_additional_fields_v4(
     session: Session,
     menu_key: str,
-    raw_fields: Any,
+    fields: list[dict[str, Any]],
 ) -> tuple[bool, str]:
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
     if not clean_menu_key:
-        return False, "Menu invalido."
+        return False, "Menu inválido."
 
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V6_PROTECTED_GUARD
     if clean_menu_key in SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS:
         return False, "Este processo nao permite campos adicionais."
 
+    ensure_sidebar_menu_settings_defaults(session)
+
     if not _menu_exists(session, clean_menu_key):
-        return False, "Menu nao encontrado."
+        return False, "Menu não encontrado."
 
-    raw_config = session.execute(
-        text(
-            """
-            SELECT menu_config
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = :menu_key
-            LIMIT 1
-            """
-        ),
-        {"menu_key": clean_menu_key},
-    ).scalar_one_or_none()
+    menu_config = _load_menu_config(session, clean_menu_key)
 
-    menu_config: dict[str, Any] = {}
+    old_header_map: dict[str, str] = {}
 
-    if isinstance(raw_config, str) and raw_config.strip():
-        try:
-            parsed_config = json.loads(raw_config)
-            if isinstance(parsed_config, dict):
-                menu_config = parsed_config
-        except json.JSONDecodeError:
-            menu_config = {}
+    old_rows = menu_config.get("process_visible_field_rows")
+    if isinstance(old_rows, list):
+        for old_row in old_rows:
+            if not isinstance(old_row, dict):
+                continue
 
-    normalized_fields = normalize_menu_process_additional_fields_v1(raw_fields)
+            field_key = str(old_row.get("field_key") or "").strip().lower()
+            header_key = str(old_row.get("header_key") or "").strip().lower()
 
-    menu_config = _rebuild_menu_process_hierarchy_from_additional_fields_v1(
+            if field_key and header_key:
+                old_header_map[field_key] = header_key
+
+    legacy_header_map = menu_config.get("visible_field_headers")
+    if isinstance(legacy_header_map, dict):
+        for raw_field_key, raw_header_key in legacy_header_map.items():
+            field_key = str(raw_field_key or "").strip().lower()
+            header_key = str(raw_header_key or "").strip().lower()
+
+            if field_key and header_key:
+                old_header_map[field_key] = header_key
+
+    normalized_fields = normalize_menu_process_additional_fields(fields)
+    menu_config["additional_fields"] = normalized_fields
+
+    selectable_options = get_menu_process_selectable_field_options(
+        clean_menu_key,
         menu_config,
-        normalized_fields,
     )
+    header_options = get_menu_process_header_options(
+        clean_menu_key,
+        menu_config,
+    )
+
+    selectable_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in selectable_options
+        if str(item.get("key") or "").strip()
+    }
+    header_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in header_options
+        if str(item.get("key") or "").strip()
+    }
+
+    raw_configured_fields = menu_config.get("process_visible_fields")
+    configured_flag = (
+        "process_visible_fields" in menu_config
+        or bool(menu_config.get("process_visible_fields_configured"))
+    )
+
+    if isinstance(raw_configured_fields, (list, tuple, set)):
+        raw_visible_fields = list(raw_configured_fields)
+    else:
+        raw_visible_fields = []
+
+    if not raw_visible_fields:
+        raw_rows = menu_config.get("process_visible_field_rows")
+
+        if isinstance(raw_rows, list):
+            for raw_row in raw_rows:
+                if not isinstance(raw_row, dict):
+                    continue
+
+                raw_visible_fields.append(raw_row.get("field_key"))
+
+    clean_visible_fields: list[str] = []
+    seen_fields: set[str] = set()
+
+    for raw_field in raw_visible_fields:
+        field_key = str(raw_field or "").strip().lower()
+
+        if not field_key:
+            continue
+
+        if field_key in seen_fields:
+            continue
+
+        if field_key not in selectable_keys:
+            continue
+
+        seen_fields.add(field_key)
+        clean_visible_fields.append(field_key)
+
+    process_visible_field_rows: list[dict[str, str]] = []
+    process_visible_field_header_map: dict[str, str] = {}
+
+    for field_key in clean_visible_fields:
+        header_key = old_header_map.get(field_key, "")
+
+        if header_key not in header_keys:
+            header_key = ""
+
+        if header_key:
+            process_visible_field_header_map[field_key] = header_key
+
+        process_visible_field_rows.append(
+            {
+                "field_key": field_key,
+                "header_key": header_key,
+            }
+        )
+
+    legacy_visible_fields: list[str] = []
+    emitted_legacy_keys: set[str] = set()
+    active_header_key = ""
+
+    for row in process_visible_field_rows:
+        field_key = row["field_key"]
+        header_key = row["header_key"]
+
+        if header_key and header_key != active_header_key:
+            if header_key not in emitted_legacy_keys:
+                legacy_visible_fields.append(header_key)
+                emitted_legacy_keys.add(header_key)
+
+            active_header_key = header_key
+
+        if not header_key:
+            active_header_key = ""
+
+        if field_key in emitted_legacy_keys:
+            continue
+
+        legacy_visible_fields.append(field_key)
+        emitted_legacy_keys.add(field_key)
+
+    if configured_flag:
+        menu_config["process_visible_fields"] = clean_visible_fields
+        menu_config["process_visible_field_header_map"] = process_visible_field_header_map
+        menu_config["process_visible_field_rows"] = process_visible_field_rows
+        menu_config["process_visible_fields_configured"] = True
+        menu_config["visible_fields"] = legacy_visible_fields
+        menu_config["visible_field_headers"] = process_visible_field_header_map
+
+    refresh_token = str(uuid4())
+    menu_config["process_additional_fields_refresh_version"] = refresh_token
+    menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
 
     session.execute(
         text(
@@ -2959,7 +3195,19 @@ def update_sidebar_menu_additional_fields_v1(
     session.commit()
 
     return True, ""
+    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_END
 
+
+def update_sidebar_menu_additional_fields_v1(
+    session: Session,
+    menu_key: str,
+    fields: list[dict[str, Any]],
+) -> tuple[bool, str]:
+    return update_sidebar_menu_additional_fields_v4(
+        session,
+        menu_key,
+        fields,
+    )
 
 def update_sidebar_menu_additional_fields(
     session: Session,

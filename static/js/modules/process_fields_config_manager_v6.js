@@ -423,14 +423,19 @@
     return item ? item.label : "";
   }
 
-  function reconstruirSelectCampo_v6(elements, state) {
+  function reconstruirSelectCampo_v7(elements, state) {
+    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_SELECT_EDIT_START
     const configuredKeys = new Set(
       state.items.map(function (item) {
         return normalizarChave_v6(item.key);
       })
     );
 
-    const currentValue = normalizarChave_v6(elements.editorKey.value);
+    const currentValue = normalizarChave_v6(
+      elements.editorKey.value ||
+      elements.editorKey.dataset.processFieldsConfigEditingKeyV7 ||
+      ""
+    );
 
     elements.editorKey.innerHTML = "";
     elements.editorKey.appendChild(criarOption_v6("", "Selecione", ""));
@@ -447,7 +452,14 @@
       option.dataset.processConfigLabel = item.label;
       elements.editorKey.appendChild(option);
     });
+    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_SELECT_EDIT_END
   }
+
+  function reconstruirSelectCampo_v6(elements, state) {
+    return reconstruirSelectCampo_v7(elements, state);
+  }
+
+
 
   function reconstruirSelectCabecalho_v6(elements, state) {
     const currentValue = normalizarChave_v6(elements.headerKey.value);
@@ -558,12 +570,40 @@
   // (5) EDITOR
   //###################################################################################
 
-  function limparEditor_v6(elements, state) {
+  function limparEditor_v7(elements, state) {
+    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_CLEAR_START
     state.editingId = "";
     elements.editorKey.value = "";
+    delete elements.editorKey.dataset.processFieldsConfigEditingKeyV7;
     elements.headerKey.value = "";
     reconstruirSelectCampo_v6(elements, state);
+    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_CLEAR_END
   }
+
+  function limparEditor_v6(elements, state) {
+    return limparEditor_v7(elements, state);
+  }
+
+  function carregarEditor_v7(elements, state, item) {
+    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_LOAD_START
+    state.editingId = item.managerId;
+    elements.editorKey.dataset.processFieldsConfigEditingKeyV7 = item.key || "";
+    elements.editorKey.value = item.key || "";
+    reconstruirSelectCampo_v6(elements, state);
+    elements.editorKey.value = item.key || "";
+    elements.headerKey.value = item.headerKey || "";
+
+    if (typeof elements.editorKey.focus === "function") {
+      elements.editorKey.focus();
+    }
+    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_LOAD_END
+  }
+
+  function carregarEditor_v6(elements, state, item) {
+    return carregarEditor_v7(elements, state, item);
+  }
+
+
 
   function lerDraft_v6(elements, state) {
     const selectedOption = elements.editorKey.options[elements.editorKey.selectedIndex];
@@ -629,14 +669,6 @@
     return Boolean(state.editingId || elements.editorKey.value);
   }
 
-  function carregarEditor_v6(elements, state, item) {
-    state.editingId = item.managerId;
-    reconstruirSelectCampo_v6(elements, state);
-
-    elements.editorKey.value = item.key || "";
-    elements.headerKey.value = item.headerKey || "";
-    elements.editorKey.focus();
-  }
 
   //###################################################################################
   // (6) HIDDEN INPUTS
