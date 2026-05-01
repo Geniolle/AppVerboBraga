@@ -2945,6 +2945,9 @@ textarea {
 }
 
 /* Coluna 2: Cabeçalho do campo */
+.process-fields-picker-row-v4 > .process-field-header-picker-v4,
+.process-fields-config-editor-row-v5 > .process-field-header-picker-v4,
+.process-fields-config-editor-row-v5 > .process-fields-config-header-editor-v5,
 .process-fields-config-header-editor-v5,
 .process-fields-config-header-editor-v4,
 .process-fields-config-header-editor-v3,
@@ -3042,6 +3045,9 @@ textarea {
   .process-fields-config-editor-row-v4 > .field,
   .process-fields-config-editor-row-v3 > .field,
   .process-fields-config-editor-row-v2 > .field,
+  .process-fields-picker-row-v4 > .process-field-header-picker-v4,
+  .process-fields-config-editor-row-v5 > .process-field-header-picker-v4,
+  .process-fields-config-editor-row-v5 > .process-fields-config-header-editor-v5,
   .process-fields-config-header-editor-v5,
   .process-fields-config-header-editor-v4,
   .process-fields-config-header-editor-v3,

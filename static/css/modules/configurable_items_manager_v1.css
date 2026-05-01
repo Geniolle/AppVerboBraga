@@ -654,9 +654,11 @@
 
 .process-fields-config-editor-grid-v1 {
   display: grid;
-  grid-template-columns: minmax(320px, 0.8fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   align-items: end;
+  width: 100%;
+  max-width: 100%;
 }
 
 .process-fields-config-editor-grid-v1 .field {
@@ -667,6 +669,13 @@
 .process-fields-config-editor-grid-v1 .field.full {
   grid-column: 1 / -1;
   margin-top: 4px;
+}
+
+.process-fields-config-editor-grid-v1 .process-field-header-picker-v4,
+.process-fields-config-editor-grid-v1 .process-fields-config-header-editor-v5 {
+  grid-column: 2 !important;
+  min-width: 0 !important;
+  width: 100% !important;
 }
 
 .process-fields-config-editor-grid-v1 select {
