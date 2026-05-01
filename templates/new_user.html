@@ -3,10 +3,9 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260430-global-responsive-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260501-process-fields-config-layout-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-tab-desc-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-  <link rel="stylesheet" href="/static/css/modules/process_fields_header_alignment_v1.css?v=20260430-fields-header-align-v1">
 {% endblock %}
 
 {% block body %}
@@ -1487,18 +1486,19 @@
                 <div class="configurable-items-manager-v1 process-fields-config-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-fields-config-legacy-container>
                     {% for field_row in settings_process_visible_field_rows %}
-                    {% set config_field_key = field_row.key|default('') %}
-                    {% set config_field_label = field_row.label|default(config_field_key) %}
-                    {% set config_field_type = field_row.field_type|default(field_row.type|default('field')) %}
-                    {% if config_field_type == "header" %}
-                    {% set config_field_kind = "header" %}
-                    {% else %}
-                    {% set config_field_kind = "field" %}
-                    {% endif %}
+                    {% set config_field_key = field_row.field_key|default(field_row.key|default('')) %}
+                    {% set config_header_key = field_row.header_key|default('') %}
+                    {% set config_field_ns = namespace(label=config_field_key) %}
+                    {% for option in settings_process_field_options %}
+                      {% if option.key == config_field_key %}
+                        {% set config_field_ns.label = option.label %}
+                      {% endif %}
+                    {% endfor %}
                     <div class="process-config-field-row-v1" data-process-config-field-row>
                       <input type="hidden" data-process-config-key value="{{ config_field_key }}" disabled>
-                      <input type="hidden" data-process-config-label value="{{ config_field_label }}" disabled>
-                      <input type="hidden" data-process-config-kind value="{{ config_field_kind }}" disabled>
+                      <input type="hidden" data-process-config-label value="{{ config_field_ns.label }}" disabled>
+                      <input type="hidden" data-process-config-kind value="field" disabled>
+                      <input type="hidden" data-process-config-header-key value="{{ config_header_key }}" disabled>
                     </div>
                     {% endfor %}
                   </div>
@@ -1506,7 +1506,7 @@
                   <div data-process-fields-config-hidden-container></div>
 
                   <div class="configurable-items-editor-v1 process-fields-config-editor-v1">
-                    <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1 process-fields-picker-row-v4">
+                    <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1 process-fields-picker-row-v4 process-fields-config-editor-row-v5">
                       <div class="field">
                         <label for="process-fields-config-editor-key">Nome do campo</label>
                         <select id="process-fields-config-editor-key" data-process-fields-config-editor-key>
@@ -2591,7 +2591,7 @@
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v2.js?v=20260430-fields-config-v2"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v5.js?v=20260430-fields-config-v5b-legacy-header"></script>
   <script src="/static/js/new_user.js?v=20260429c"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

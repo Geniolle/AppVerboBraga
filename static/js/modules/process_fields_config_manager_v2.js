@@ -189,6 +189,7 @@
       const key = readHiddenValue_v2(row, "[data-process-config-key]");
       const label = readHiddenValue_v2(row, "[data-process-config-label]") || key;
       const kind = readHiddenValue_v2(row, "[data-process-config-kind]") === "header" ? "header" : "field";
+      const explicitHeaderKey = readHiddenValue_v2(row, "[data-process-config-header-key]");
 
       if (!key) {
         return;
@@ -200,13 +201,15 @@
         return;
       }
 
+      const headerKey = explicitHeaderKey || currentHeaderKey;
+
       items.push({
         managerId: "config_" + index + "_" + key,
         key: key,
         label: label,
         kind: "field",
-        headerKey: currentHeaderKey,
-        headerLabel: currentHeaderLabel || getHeaderLabel_v2(headerOptions, currentHeaderKey)
+        headerKey: headerKey,
+        headerLabel: getHeaderLabel_v2(headerOptions, headerKey) || currentHeaderLabel
       });
     });
 
