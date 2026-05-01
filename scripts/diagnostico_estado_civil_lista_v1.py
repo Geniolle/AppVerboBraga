@@ -7,7 +7,7 @@ with SessionLocal() as session:
         text("""
             SELECT menu_config
             FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'documentos'
+            WHERE lower(trim(menu_key)) = 'meu_perfil'
             LIMIT 1
         """)
     ).one_or_none()

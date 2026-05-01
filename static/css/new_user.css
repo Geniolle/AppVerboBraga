@@ -3057,3 +3057,32 @@ textarea {
 }
 
 /* APPVERBO_PROCESS_FIELDS_CONFIG_LAYOUT_V1_END */
+
+/* APPVERBO: PROCESS TABS EQUAL WIDTH V1 */
+#menu-tabs-card #submenu-items.menu-tabs,
+.profile-process-tabs {
+  --appverbo-process-tab-equal-width: auto;
+}
+
+#menu-tabs-card #submenu-items.menu-tabs {
+  align-items: stretch;
+}
+
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item,
+.profile-process-tabs .profile-process-tab-btn {
+  width: var(--appverbo-process-tab-equal-width, auto);
+  min-width: var(--appverbo-process-tab-equal-width, auto);
+  text-align: center;
+  justify-content: center;
+}
+
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.profile-process-tabs .profile-process-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

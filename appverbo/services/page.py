@@ -7,12 +7,14 @@ from urllib.parse import urlencode
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
-    MENU_DOCUMENTOS_FIELD_LABELS,
-    MENU_DOCUMENTOS_FIELD_OPTIONS,
-    MENU_DOCUMENTOS_FIELDS_DEFAULT,
+    MENU_MEU_PERFIL_FIELD_LABELS,
+    MENU_MEU_PERFIL_FIELD_OPTIONS,
+    MENU_MEU_PERFIL_FIELDS_DEFAULT,
+    MENU_MEU_PERFIL_KEY,
     get_sidebar_menu_settings,
     get_visible_sidebar_menu_keys,
     normalize_sidebar_sections,
+    resolve_menu_key_alias,
 )
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import (
@@ -85,8 +87,8 @@ def get_page_data(
     menu_process_values_map: dict[str, dict[str, str]] = {}
     menu_process_history_map: dict[str, list[dict[str, Any]]] = {}
     for sidebar_item in sidebar_menu_settings:
-        menu_key = str(sidebar_item.get("key") or "").strip().lower()
-        if not menu_key or menu_key in {"home", "perfil", "administrativo", "documentos"}:
+        menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
+        if not menu_key or menu_key in {"home", "perfil", "administrativo", MENU_MEU_PERFIL_KEY}:
             continue
         visible_rows = (
             sidebar_item.get("process_visible_field_rows")
@@ -114,13 +116,13 @@ def get_page_data(
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
                 menu_process_history_map[menu_key] = menu_history_rows
-    profile_personal_visible_fields = list(MENU_DOCUMENTOS_FIELDS_DEFAULT)
-    profile_personal_field_labels = dict(MENU_DOCUMENTOS_FIELD_LABELS)
+    profile_personal_visible_fields = list(MENU_MEU_PERFIL_FIELDS_DEFAULT)
+    profile_personal_field_labels = dict(MENU_MEU_PERFIL_FIELD_LABELS)
     profile_personal_field_types: dict[str, str] = {}
     profile_personal_field_header_map: dict[str, str] = {}
     profile_personal_custom_field_meta: dict[str, dict[str, Any]] = {}
     for sidebar_item in sidebar_menu_settings:
-        if str(sidebar_item.get("key") or "") != "documentos":
+        if resolve_menu_key_alias(sidebar_item.get("key")) != MENU_MEU_PERFIL_KEY:
             continue
         process_lists_by_key = {
             str(item.get("key") or "").strip().lower(): list(item.get("items") or [])
@@ -190,7 +192,7 @@ def get_page_data(
         elif profile_personal_field_labels:
             profile_personal_visible_fields = [
                 field_key
-                for field_key in MENU_DOCUMENTOS_FIELDS_DEFAULT
+                for field_key in MENU_MEU_PERFIL_FIELDS_DEFAULT
                 if field_key in profile_personal_field_labels
             ]
             if not profile_personal_visible_fields:
@@ -557,8 +559,8 @@ def get_page_data(
         "profile_personal_field_section_map": profile_personal_field_section_map,
         "profile_personal_sections": profile_personal_sections,
         "profile_personal_custom_field_meta": profile_personal_custom_field_meta,
-        "menu_documentos_field_options": [dict(item) for item in MENU_DOCUMENTOS_FIELD_OPTIONS],
-        "menu_documentos_field_labels": dict(MENU_DOCUMENTOS_FIELD_LABELS),
+        "menu_meu_perfil_field_options": [dict(item) for item in MENU_MEU_PERFIL_FIELD_OPTIONS],
+        "menu_meu_perfil_field_labels": dict(MENU_MEU_PERFIL_FIELD_LABELS),
         "dashboard_data": get_home_dashboard_data(
             session,
             allowed_entity_ids=allowed_entity_ids,

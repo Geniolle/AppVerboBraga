@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260501-process-fields-config-layout-v3">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
 {% endblock %}
 
 {% block body %}
@@ -32,10 +33,10 @@
               Editar
             </button>
           </div>
-          {% if profile_success and initial_menu not in ["perfil", "documentos"] %}
+          {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert ok">{{ profile_success }}</div>
           {% endif %}
-          {% if profile_error and initial_menu not in ["perfil", "documentos"] %}
+          {% if profile_error and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert error">{{ profile_error }}</div>
           {% endif %}
           <div id="dynamic-process-readonly" class="profile-readonly">
@@ -58,7 +59,7 @@
               <thead id="dynamic-process-history-head"></thead>
               <tbody id="dynamic-process-history-body"></tbody>
             </table>
-            <p id="dynamic-process-history-empty" class="empty" style="display: none;">Sem ausÃªncias criadas.</p>
+            <p id="dynamic-process-history-empty" class="empty" style="display: none;">Sem ausências criadas.</p>
           </div>
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
         </section>
@@ -102,7 +103,7 @@
           </div>
         </section>
 
-        <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,documentos">
+        <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil">
           <div class="profile-card-header">
             <h2>Dados pessoais do utilizador</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-pessoal-card">Editar</button>
@@ -153,7 +154,7 @@
               {% endif %}
               {% if "autorizacao_whatsapp" in profile_personal_visible_fields %}
               <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', 'geral') }}">
-                <span class="personal-label">AutorizaÃ§Ã£o para avisos por WhatsApp</span>
+                <span class="personal-label">Autorização para avisos por WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_notice_opt_in }}</strong>
               </div>
               {% endif %}
@@ -183,13 +184,13 @@
               {% endif %}
               {% if "ultima_verificacao_whatsapp" in profile_personal_visible_fields %}
               <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', 'geral') }}">
-                <span class="personal-label">Ãšltima verificaÃ§Ã£o WhatsApp</span>
+                <span class="personal-label">Última verificação WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_check_at }}</strong>
               </div>
               {% endif %}
               {% if "detalhe_verificacao" in profile_personal_visible_fields %}
               <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', 'geral') }}">
-                <span class="personal-label">Detalhe da verificaÃ§Ã£o</span>
+                <span class="personal-label">Detalhe da verificação</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_error }}</strong>
               </div>
               {% endif %}
@@ -394,7 +395,7 @@
                 <strong class="personal-value">{{ user_personal_data.freguesia }}</strong>
               </div>
               <div class="personal-item">
-                <span class="personal-label">CÃ³digo postal</span>
+                <span class="personal-label">Código postal</span>
                 <strong class="personal-value">{{ user_personal_data.postal_code }}</strong>
               </div>
             </div>
@@ -426,7 +427,7 @@
                 >
               </div>
               <div class="field">
-                <label for="edit_postal_code">CÃ³digo postal</label>
+                <label for="edit_postal_code">Código postal</label>
                 <input
                   id="edit_postal_code"
                   name="postal_code"
@@ -510,7 +511,7 @@
                   value="1"
                   {% if user_personal_data.training_escola_missoes %}checked{% endif %}
                 >
-                <span>Escola de MissÃµes</span>
+                <span>Escola de Missões</span>
               </label>
               <div class="training-option-row training-option-outros">
                 <label for="edit_training_outros_enabled" class="training-outros-label">
@@ -527,7 +528,7 @@
                   id="edit_training_outros"
                   class="training-outros-input"
                   name="training_outros"
-                  placeholder="Indique qual Ã© o treinamento"
+                  placeholder="Indique qual é o treinamento"
                   value="{{ user_personal_data.training_outros }}"
                 >
               </div>
@@ -539,13 +540,13 @@
           </form>
         </section>
         <section id="sessao-card" class="card" data-menu-scope="links,contato">
-          <h2>SessÃ£o</h2>
+          <h2>Sessão</h2>
           <p>Ligado como <strong>{{ current_user.full_name }}</strong> ({{ current_user.login_email }})</p>
         </section>
 
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,documentos,funcionarios,financeiro,relatorios,links,tutorial">
+        <section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
             {% if success %}
               <div class="alert ok">{{ success }}</div>
             {% endif %}
@@ -586,10 +587,10 @@
                         <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
                       </div>
                       <div class="field">
-                        <label for="entity_auto_name">Entidade (automÃ¡tica pelo email)</label>
+                        <label for="entity_auto_name">Entidade (automática pelo email)</label>
                         <input
                           id="entity_auto_name"
-                          value="{{ form_data.entity_name if form_data.entity_name else 'SerÃ¡ definida automaticamente ao enviar o convite' }}"
+                          value="{{ form_data.entity_name if form_data.entity_name else 'Será definida automaticamente ao enviar o convite' }}"
                           readonly
                           disabled
                           class="readonly-field"
@@ -648,7 +649,7 @@
         {% endif %}
 
         {% if user_edit_data is defined and user_edit_data.id %}
-        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,documentos,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
+        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           {% if success %}
@@ -691,7 +692,7 @@
                   </select>
                 </div>
                 <div class="field">
-                  <label for="edit_user_entity_name">Entidade (automÃ¡tica pelo email)</label>
+                  <label for="edit_user_entity_name">Entidade (automática pelo email)</label>
                   <input
                     id="edit_user_entity_name"
                     value="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
@@ -813,7 +814,7 @@
               <div class="table-limiter-right">
                 <button id="admin-users-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
                 <span id="admin-users-page" class="table-limiter-page">1</span>
-                <button id="admin-users-next" class="table-limiter-nav-btn" type="button" aria-label="PrÃ³xima página">&#8250;</button>
+                <button id="admin-users-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
               </div>
             </div>
           {% else %}
@@ -854,7 +855,7 @@
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                 <div class="entity-first-row">
                   <div class="field entity-first-row-client">
-                    <label for="entity_internal_number">NÃºmero do cliente</label>
+                    <label for="entity_internal_number">Número do cliente</label>
                     <input id="entity_internal_number" class="readonly-field" value="{{ next_entity_internal_number }}" readonly disabled>
                   </div>
                   <div class="field entity-first-row-name">
@@ -862,7 +863,7 @@
                     <input id="entity_name" name="name" required value="{{ entity_form_data.name }}">
                   </div>
                   <div class="field entity-first-row-acronym">
-                    <label for="entity_acronym">AcrÃ³nimo (opcional)</label>
+                    <label for="entity_acronym">Acrónimo (opcional)</label>
                     <input id="entity_acronym" name="acronym" maxlength="5" value="{{ entity_form_data.acronym }}">
                   </div>
                 </div>
@@ -872,7 +873,7 @@
                     <input id="entity_email" name="email" type="email" required value="{{ entity_form_data.email }}">
                   </div>
                   <div class="field entity-second-row-tax">
-                    <label for="entity_tax_id">NÂº IdentificaÃ§Ã£o Fiscal *</label>
+                    <label for="entity_tax_id">Nº Identificação Fiscal *</label>
                     <input id="entity_tax_id" name="tax_id" maxlength="20" required value="{{ entity_form_data.tax_id }}">
                   </div>
                   <div class="field entity-second-row-phone">
@@ -890,7 +891,7 @@
                     <input id="entity_address" name="address" required value="{{ entity_form_data.address }}">
                   </div>
                   <div class="field entity-third-row-door">
-                    <label for="entity_door_number">NÂº da porta *</label>
+                    <label for="entity_door_number">Nº da porta *</label>
                     <input id="entity_door_number" name="door_number" maxlength="15" required value="{{ entity_form_data.door_number }}">
                   </div>
                 </div>
@@ -900,11 +901,11 @@
                     <input id="entity_freguesia" name="freguesia" required value="{{ entity_form_data.freguesia }}">
                   </div>
                   <div class="field entity-fourth-row-postal">
-                    <label for="entity_postal_code">CÃ³digo postal *</label>
+                    <label for="entity_postal_code">Código postal *</label>
                     <input id="entity_postal_code" name="postal_code" maxlength="30" required value="{{ entity_form_data.postal_code }}">
                   </div>
                   <div class="field entity-fourth-row-country">
-                    <label for="entity_country">PaÃ­s *</label>
+                    <label for="entity_country">País *</label>
                     <input id="entity_country" name="country" maxlength="50" required value="{{ entity_form_data.country }}">
                   </div>
                 </div>
@@ -919,11 +920,11 @@
                 </div>
                 <div class="entity-fifth-row">
                   <div class="field entity-fifth-row-logo">
-                    <label for="entity_logo_file">Imagem/Ã­cone da entidade (ficheiro opcional)</label>
+                    <label for="entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
                     <input id="entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
                   </div>
                   <div class="field entity-fifth-row-created-at">
-                    <label for="entity_created_at">Data da criaÃ§Ã£o</label>
+                    <label for="entity_created_at">Data da criação</label>
                     <input id="entity_created_at" class="readonly-field" value="{{ entity_form_data.created_at }}" readonly disabled>
                   </div>
                 </div>
@@ -957,7 +958,7 @@
             <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
             <div class="entity-first-row">
               <div class="field entity-first-row-client">
-                <label for="edit_entity_internal_number">NÃºmero do cliente</label>
+                <label for="edit_entity_internal_number">Número do cliente</label>
                 <input id="edit_entity_internal_number" class="readonly-field" value="{{ entity_edit_data.internal_number }}" readonly disabled>
               </div>
               <div class="field entity-first-row-name">
@@ -965,7 +966,7 @@
                 <input id="edit_entity_name" name="name" required value="{{ entity_edit_data.name }}">
               </div>
               <div class="field entity-first-row-acronym">
-                <label for="edit_entity_acronym">AcrÃ³nimo (opcional)</label>
+                <label for="edit_entity_acronym">Acrónimo (opcional)</label>
                 <input id="edit_entity_acronym" name="acronym" maxlength="5" value="{{ entity_edit_data.acronym }}">
               </div>
             </div>
@@ -975,7 +976,7 @@
                 <input id="edit_entity_email" name="email" type="email" required value="{{ entity_edit_data.email }}">
               </div>
               <div class="field entity-second-row-tax">
-                <label for="edit_entity_tax_id">NÂº IdentificaÃ§Ã£o Fiscal *</label>
+                <label for="edit_entity_tax_id">Nº Identificação Fiscal *</label>
                 <input id="edit_entity_tax_id" name="tax_id" maxlength="20" required value="{{ entity_edit_data.tax_id }}">
               </div>
               <div class="field entity-second-row-phone">
@@ -993,7 +994,7 @@
                 <input id="edit_entity_address" name="address" required value="{{ entity_edit_data.address }}">
               </div>
               <div class="field entity-third-row-door">
-                <label for="edit_entity_door_number">NÂº da porta *</label>
+                <label for="edit_entity_door_number">Nº da porta *</label>
                 <input id="edit_entity_door_number" name="door_number" maxlength="15" required value="{{ entity_edit_data.door_number }}">
               </div>
             </div>
@@ -1003,11 +1004,11 @@
                 <input id="edit_entity_freguesia" name="freguesia" required value="{{ entity_edit_data.freguesia }}">
               </div>
               <div class="field entity-fourth-row-postal">
-                <label for="edit_entity_postal_code">CÃ³digo postal *</label>
+                <label for="edit_entity_postal_code">Código postal *</label>
                 <input id="edit_entity_postal_code" name="postal_code" maxlength="30" required value="{{ entity_edit_data.postal_code }}">
               </div>
               <div class="field entity-fourth-row-country">
-                <label for="edit_entity_country">PaÃ­s *</label>
+                <label for="edit_entity_country">País *</label>
                 <input id="edit_entity_country" name="country" maxlength="50" required value="{{ entity_edit_data.country }}">
               </div>
             </div>
@@ -1026,11 +1027,11 @@
             {% endif %}
             <div class="entity-fifth-row entity-fifth-row-edit">
               <div class="field entity-fifth-row-logo">
-                <label for="edit_entity_logo_file">Imagem/Ã­cone da entidade (ficheiro opcional)</label>
+                <label for="edit_entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
                 <input id="edit_entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
               </div>
               <div class="field entity-fifth-row-created-at">
-                <label for="edit_entity_created_at">Data da criaÃ§Ã£o</label>
+                <label for="edit_entity_created_at">Data da criação</label>
                 <input id="edit_entity_created_at" class="readonly-field" value="{{ entity_edit_data.created_at }}" readonly disabled>
               </div>
               <div class="field entity-edit-status-row">
@@ -1071,7 +1072,7 @@
                       aria-label="Remover logo atual"
                     >&#10005;</label>
                     <img class="entity-edit-current-logo-image" src="{{ entity_edit_data.logo_url }}" alt="Logo atual da entidade">
-                    <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoÃ§Ã£o. Clique em Guardar para confirmar.</div>
+                    <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoção. Clique em Guardar para confirmar.</div>
                   </div>
                 </div>
               </div>
@@ -1097,7 +1098,7 @@
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>NÃºmero do cliente</th>
+                  <th>Número do cliente</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1182,7 +1183,7 @@
               <div class="table-limiter-right">
                 <button id="recent-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
                 <span id="recent-entities-page" class="table-limiter-page">1</span>
-                <button id="recent-entities-next" class="table-limiter-nav-btn" type="button" aria-label="PrÃ³xima página">&#8250;</button>
+                <button id="recent-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
               </div>
             </div>
             {% endif %}
@@ -1200,7 +1201,7 @@
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>NÃºmero do cliente</th>
+                  <th>Número do cliente</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1284,7 +1285,7 @@
               <div class="table-limiter-right">
                 <button id="inactive-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
                 <span id="inactive-entities-page" class="table-limiter-page">1</span>
-                <button id="inactive-entities-next" class="table-limiter-nav-btn" type="button" aria-label="PrÃ³xima página">&#8250;</button>
+                <button id="inactive-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
               </div>
             </div>
           {% else %}
@@ -2117,8 +2118,8 @@
                       {% else %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
-                        title="JÃ¡ estÃ¡ no topo"
-                        aria-label="JÃ¡ estÃ¡ no topo"
+                        title="Já está no topo"
+                        aria-label="Já está no topo"
                       >
                         &#8593;
                       </span>
@@ -2141,8 +2142,8 @@
                       {% else %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
-                        title="JÃ¡ estÃ¡ no fim"
-                        aria-label="JÃ¡ estÃ¡ no fim"
+                        title="Já está no fim"
+                        aria-label="Já está no fim"
                       >
                         &#8595;
                       </span>
@@ -2376,8 +2377,8 @@
                       {% else %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
-                        title="JÃ¡ estÃ¡ no topo"
-                        aria-label="JÃ¡ estÃ¡ no topo"
+                        title="Já está no topo"
+                        aria-label="Já está no topo"
                       >
                         &#8593;
                       </span>
@@ -2400,8 +2401,8 @@
                       {% else %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
-                        title="JÃ¡ estÃ¡ no fim"
-                        aria-label="JÃ¡ estÃ¡ no fim"
+                        title="Já está no fim"
+                        aria-label="Já está no fim"
                       >
                         &#8595;
                       </span>
@@ -2458,17 +2459,17 @@
         </section>
 
         {% if current_user_can_manage_all_entities %}
-        <section id="documents-folder-settings-card" class="card" data-menu-scope="documentos">
+        <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil">
           <h2>Configuração da pasta Meu perfil</h2>
           <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
-          {% if settings_success and initial_menu == "documentos" %}
+          {% if settings_success and initial_menu == "meu_perfil" %}
             <div class="alert ok">{{ settings_success }}</div>
           {% endif %}
-          {% if settings_error and initial_menu == "documentos" %}
+          {% if settings_error and initial_menu == "meu_perfil" %}
             <div class="alert error">{{ settings_error }}</div>
           {% endif %}
           {% for row in sidebar_menu_settings %}
-            {% if row.key == "documentos" %}
+            {% if row.key == "meu_perfil" %}
             <table>
               <thead>
                 <tr>
@@ -2521,8 +2522,8 @@
         </section>
         {% endif %}
 
-        <section id="recent-users-card" class="card" data-menu-scope="documentos,funcionarios,financeiro,relatorios,tutorial">
-          <h2>Ãšltimos utilizadores criados</h2>
+        <section id="recent-users-card" class="card" data-menu-scope="meu_perfil,funcionarios,financeiro,relatorios,tutorial">
+          <h2>Últimos utilizadores criados</h2>
           {% if recent_users %}
             <table>
               <thead>
@@ -2555,6 +2556,7 @@
     </main>
   </div>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
 {% endblock %}
 
 {% block scripts %}
@@ -2596,7 +2598,7 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/process_fields_config_manager_v6.js?v=20260430-fields-config-v6a-remove-duplicate-header"></script>
-  <script src="/static/js/new_user.js?v=20260429c"></script>
+  <script src="/static/js/new_user.js?v=20260501-menu-meu-perfil-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260427a"></script>
@@ -2606,6 +2608,7 @@
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
   <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"></script>
 {% endblock %}

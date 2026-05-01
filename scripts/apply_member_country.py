@@ -211,13 +211,13 @@ print("OK: appverbo/routes/profile/profile_handlers.py atualizado.")
 
 
 # ###################################################################################
-# (7) GARANTIR PAIS NAS CONFIGURACOES DO PROCESSO DOCUMENTOS / MEU PERFIL
+# (7) GARANTIR PAIS NAS CONFIGURACOES DO PROCESSO MEU PERFIL
 # ###################################################################################
 
 menu_settings = read_file(MENU_SETTINGS_PATH)
 
 default_block_match = re.search(
-    r"(MENU_DOCUMENTOS_FIELDS_DEFAULT\s*=\s*[\(\[])(.*?)([\)\]])",
+    r"(MENU_MEU_PERFIL_FIELDS_DEFAULT\s*=\s*[\(\[])(.*?)([\)\]])",
     menu_settings,
     flags=re.DOTALL,
 )
@@ -231,7 +231,7 @@ if default_block_match and '"pais"' not in default_block_match.group(2) and "'pa
         menu_settings = menu_settings.replace(block, new_block, 1)
 
 labels_block_match = re.search(
-    r"(MENU_DOCUMENTOS_FIELD_LABELS\s*=\s*\{)(.*?)(\})",
+    r"(MENU_MEU_PERFIL_FIELD_LABELS\s*=\s*\{)(.*?)(\})",
     menu_settings,
     flags=re.DOTALL,
 )
@@ -255,7 +255,7 @@ if labels_block_match and '"pais"' not in labels_block_match.group(2) and "'pais
         menu_settings = menu_settings.replace(block, new_block, 1)
 
 options_block_match = re.search(
-    r"(MENU_DOCUMENTOS_FIELD_OPTIONS\s*=\s*[\(\[])(.*?)([\)\]])",
+    r"(MENU_MEU_PERFIL_FIELD_OPTIONS\s*=\s*[\(\[])(.*?)([\)\]])",
     menu_settings,
     flags=re.DOTALL,
 )
@@ -433,7 +433,7 @@ def insert_after(values: list[str], after_key: str, new_key: str) -> list[str]:
 
 
 # ###################################################################################
-# (2) ATUALIZAR CONFIGURACAO DO MENU DOCUMENTOS
+# (2) ATUALIZAR CONFIGURACAO DO MENU MEU PERFIL
 # ###################################################################################
 
 inspector = inspect(engine)
@@ -448,14 +448,14 @@ with SessionLocal() as session:
             """
             SELECT id, menu_config
             FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'documentos'
+            WHERE lower(trim(menu_key)) = 'meu_perfil'
             LIMIT 1
             """
         )
     ).mappings().one_or_none()
 
     if row is None:
-        print("AVISO: menu_key=documentos nao encontrado em sidebar_menu_settings.")
+        print("AVISO: menu_key=meu_perfil nao encontrado em sidebar_menu_settings.")
         raise SystemExit(0)
 
     try:
@@ -568,7 +568,7 @@ with SessionLocal() as session:
 
     session.commit()
 
-print("OK: configuracao do menu documentos atualizada com o campo País.")
+print("OK: configuracao do menu Meu perfil atualizada com o campo País.")
 '''
 
 write_file(db_script_path, db_script_content)

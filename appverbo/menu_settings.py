@@ -9,10 +9,13 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+MENU_MEU_PERFIL_KEY = "meu_perfil"
+MENU_MEU_PERFIL_LEGACY_KEY = "documentos"
+
 SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "home", "label": "Home", "requires_admin": False},
     {"key": "administrativo", "label": "Administrativo", "requires_admin": True},
-    {"key": "documentos", "label": "Meu perfil", "requires_admin": True},
+    {"key": MENU_MEU_PERFIL_KEY, "label": "Meu perfil", "requires_admin": True},
     {"key": "funcionarios", "label": "Funcionarios", "requires_admin": True},
     {"key": "financeiro", "label": "Financeiro", "requires_admin": True},
     {"key": "relatorios", "label": "Relatorios", "requires_admin": True},
@@ -43,7 +46,7 @@ MENU_SECTION_LABELS = {
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
     "home": "geral",
-    "documentos": "igreja",
+    MENU_MEU_PERFIL_KEY: "igreja",
     "funcionarios": "igreja",
     "financeiro": "igreja",
     "relatorios": "igreja",
@@ -57,6 +60,7 @@ MENU_CONFIG_SIDEBAR_SECTIONS_KEY = "sidebar_sections"
 MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY = "sidebar_global_refresh_version"
 MENU_LEGACY_KEY_ALIAS = {
     "configuracao": "administrativo",
+    MENU_MEU_PERFIL_LEGACY_KEY: MENU_MEU_PERFIL_KEY,
 }
 SIDEBAR_SECTION_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "geral", "label": "Geral", "visibility_scopes": ["owner", "legado"]},
@@ -93,7 +97,7 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "utilizador", "label": "Utilizador"},
         {"key": "definicoes", "label": "Definições"},
     ),
-    "documentos": (
+    MENU_MEU_PERFIL_KEY: (
         {"key": "nome", "label": "Nome"},
         {"key": "telefone", "label": "Telefone"},
         {"key": "email", "label": "Email"},
@@ -140,7 +144,7 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "home": ["resumo_geral", "indicadores", "graficos"],
     "administrativo": ["entidade", "utilizador", "definicoes"],
-    "documentos": ["nome", "telefone", "email"],
+    MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email"],
     "funcionarios": ["nome", "telefone", "email"],
     "financeiro": ["nome", "estado", "criado_em"],
     "relatorios": ["nome", "estado", "criado_em"],
@@ -149,14 +153,14 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "tutorial": ["passos", "ajuda"],
 }
 
-MENU_DOCUMENTOS_FIELD_OPTIONS: tuple[dict[str, str], ...] = tuple(
-    MENU_PROCESS_FIELD_OPTIONS_BY_KEY["documentos"]
+MENU_MEU_PERFIL_FIELD_OPTIONS: tuple[dict[str, str], ...] = tuple(
+    MENU_PROCESS_FIELD_OPTIONS_BY_KEY[MENU_MEU_PERFIL_KEY]
 )
-MENU_DOCUMENTOS_FIELD_KEYS = tuple(item["key"] for item in MENU_DOCUMENTOS_FIELD_OPTIONS)
-MENU_DOCUMENTOS_FIELD_LABELS = {
-    item["key"]: item["label"] for item in MENU_DOCUMENTOS_FIELD_OPTIONS
+MENU_MEU_PERFIL_FIELD_KEYS = tuple(item["key"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS)
+MENU_MEU_PERFIL_FIELD_LABELS = {
+    item["key"]: item["label"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS
 }
-MENU_DOCUMENTOS_FIELDS_DEFAULT = ["nome", "telefone",
+MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "telefone",
     "pais", "email"]
 
 
@@ -173,8 +177,12 @@ def _resolve_legacy_menu_alias(menu_key: Any) -> str:
     return MENU_LEGACY_KEY_ALIAS.get(clean_menu_key, clean_menu_key)
 
 
+def resolve_menu_key_alias(menu_key: Any) -> str:
+    return _resolve_legacy_menu_alias(menu_key)
+
+
 def _is_menu_delete_protected(menu_key: Any, menu_label: Any = "") -> bool:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     if clean_menu_key in SIDEBAR_MENU_DELETE_PROTECTED_KEYS:
         return True
     clean_menu_label = _normalize_sentence_case_text(menu_label)
@@ -282,7 +290,7 @@ def get_menu_section_label(section_key: Any) -> str:
 
 
 def _menu_exists(session: Session, menu_key: str) -> bool:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     if not clean_menu_key:
         return False
     return (
@@ -498,7 +506,7 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
 def _resolve_default_sidebar_section_key(menu_key: str, section_keys: set[str], ordered_section_keys: list[str]) -> str:
     if not ordered_section_keys:
         return ""
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     if clean_menu_key in {"home", "administrativo"} and "geral" in section_keys:
         return "geral"
     if clean_menu_key not in {"home", "administrativo"} and "igreja" in section_keys:
@@ -755,7 +763,7 @@ def normalize_menu_process_visible_fields(
     raw_fields: Any,
     menu_config: dict[str, Any] | None = None,
 ) -> list[str]:
-    clean_menu_key = (menu_key or "").strip().lower()
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     allowed_field_keys = {
         str(item.get("key") or "").strip().lower()
         for item in get_menu_process_field_options(clean_menu_key, menu_config)
@@ -783,8 +791,8 @@ def normalize_menu_process_visible_fields(
     return normalized
 
 
-def normalize_documentos_visible_fields(raw_fields: Any) -> list[str]:
-    return normalize_menu_process_visible_fields("documentos", raw_fields)
+def normalize_meu_perfil_visible_fields(raw_fields: Any) -> list[str]:
+    return normalize_menu_process_visible_fields(MENU_MEU_PERFIL_KEY, raw_fields)
 
 
 def get_menu_process_visible_field_header_map(
@@ -794,7 +802,7 @@ def get_menu_process_visible_field_header_map(
     if not isinstance(menu_config, dict):
         return {}
 
-    clean_menu_key = (menu_key or "").strip().lower()
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     types_map = get_menu_process_field_types_map(clean_menu_key, menu_config)
     header_keys = {
         key for key, field_type in types_map.items() if field_type == "header"
@@ -835,7 +843,7 @@ def get_menu_process_visible_field_rows(
     menu_key: str,
     menu_config: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
-    clean_menu_key = (menu_key or "").strip().lower()
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     selectable_options = get_menu_process_selectable_field_options(clean_menu_key, menu_config)
     selectable_keys = {
         str(item.get("key") or "").strip().lower()
@@ -901,8 +909,66 @@ def _parse_menu_config(raw_menu_config: Any) -> dict[str, Any]:
 
 def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
     existing_rows = session.execute(text("SELECT menu_key FROM sidebar_menu_settings")).all()
-    existing_keys = {str(row.menu_key) for row in existing_rows}
+    existing_keys = {_normalize_menu_key(row.menu_key) for row in existing_rows}
     changed = False
+
+    if MENU_MEU_PERFIL_LEGACY_KEY in existing_keys:
+        if MENU_MEU_PERFIL_KEY not in existing_keys:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_key = :canonical_key,
+                        menu_label = CASE
+                            WHEN trim(menu_label) = '' OR trim(menu_label) = 'Documentos'
+                            THEN 'Meu perfil'
+                            ELSE menu_label
+                        END
+                    WHERE lower(trim(menu_key)) = :legacy_key
+                    """
+                ),
+                {
+                    "canonical_key": MENU_MEU_PERFIL_KEY,
+                    "legacy_key": MENU_MEU_PERFIL_LEGACY_KEY,
+                },
+            )
+            existing_keys.discard(MENU_MEU_PERFIL_LEGACY_KEY)
+            existing_keys.add(MENU_MEU_PERFIL_KEY)
+            changed = True
+        else:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings AS canonical
+                    SET menu_label = CASE
+                            WHEN trim(legacy.menu_label) = '' OR trim(legacy.menu_label) = 'Documentos'
+                            THEN canonical.menu_label
+                            ELSE legacy.menu_label
+                        END,
+                        is_active = legacy.is_active,
+                        is_deleted = legacy.is_deleted,
+                        menu_config = COALESCE(NULLIF(legacy.menu_config, ''), canonical.menu_config)
+                    FROM sidebar_menu_settings AS legacy
+                    WHERE lower(trim(canonical.menu_key)) = :canonical_key
+                      AND lower(trim(legacy.menu_key)) = :legacy_key
+                    """
+                ),
+                {
+                    "canonical_key": MENU_MEU_PERFIL_KEY,
+                    "legacy_key": MENU_MEU_PERFIL_LEGACY_KEY,
+                },
+            )
+            session.execute(
+                text(
+                    """
+                    DELETE FROM sidebar_menu_settings
+                    WHERE lower(trim(menu_key)) = :legacy_key
+                    """
+                ),
+                {"legacy_key": MENU_MEU_PERFIL_LEGACY_KEY},
+            )
+            existing_keys.discard(MENU_MEU_PERFIL_LEGACY_KEY)
+            changed = True
 
     for item in SIDEBAR_MENU_DEFAULTS:
         menu_key = str(item["key"])
@@ -924,26 +990,27 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
         )
         changed = True
 
-    documentos_label = session.execute(
+    meu_perfil_label = session.execute(
         text(
             """
             SELECT menu_label
             FROM sidebar_menu_settings
-            WHERE menu_key = 'documentos'
+            WHERE menu_key = :menu_key
             LIMIT 1
             """
-        )
+        ),
+        {"menu_key": MENU_MEU_PERFIL_KEY},
     ).scalar_one_or_none()
-    if isinstance(documentos_label, str) and documentos_label.strip() == "Documentos":
+    if isinstance(meu_perfil_label, str) and meu_perfil_label.strip() == "Documentos":
         session.execute(
             text(
                 """
                 UPDATE sidebar_menu_settings
                 SET menu_label = :menu_label
-                WHERE menu_key = 'documentos'
+                WHERE menu_key = :menu_key
                 """
             ),
-            {"menu_label": "Meu perfil"},
+            {"menu_key": MENU_MEU_PERFIL_KEY, "menu_label": "Meu perfil"},
         )
         changed = True
 
@@ -1232,7 +1299,7 @@ def move_sidebar_menu_setting(
     menu_key: str,
     direction: str,
 ) -> tuple[bool, str]:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     clean_direction = str(direction or "").strip().lower()
     if clean_direction not in {"up", "down"}:
         return False, "Direção inválida."
@@ -1287,6 +1354,7 @@ def get_visible_sidebar_menu_keys(
 
 
 def _load_menu_config(session: Session, menu_key: str) -> dict[str, Any]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     raw_menu_config = session.execute(
         text(
             """
@@ -1296,13 +1364,13 @@ def _load_menu_config(session: Session, menu_key: str) -> dict[str, Any]:
             LIMIT 1
             """
         ),
-        {"menu_key": menu_key},
+        {"menu_key": clean_menu_key},
     ).scalar_one_or_none()
     return _parse_menu_config(raw_menu_config)
 
 
 def set_sidebar_menu_visibility(session: Session, menu_key: str, make_visible: bool) -> tuple[bool, str]:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu inválido."
@@ -1335,7 +1403,7 @@ def update_sidebar_menu_label(
     visibility_scope_mode: str | None = None,
     sidebar_section_key: str | None = None,
 ) -> tuple[bool, str]:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     clean_menu_label = _normalize_sentence_case_text(menu_label)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
@@ -1501,7 +1569,7 @@ def update_sidebar_menu_process_fields(
     visible_fields: list[str] | tuple[str, ...] | set[str],
     visible_headers: list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> tuple[bool, str]:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu inválido."
@@ -1683,7 +1751,7 @@ def update_sidebar_menu_additional_fields(
     menu_key: str,
     additional_fields: list[dict[str, Any]] | tuple[dict[str, Any], ...] | set[Any] | list[str] | tuple[str, ...],
 ) -> tuple[bool, str]:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu inválido."
@@ -1774,7 +1842,7 @@ def create_sidebar_menu_setting(
     if not clean_menu_label:
         return False, "Nome da pasta é obrigatório.", ""
 
-    clean_menu_key = _build_menu_key_from_label(clean_menu_label)
+    clean_menu_key = _resolve_legacy_menu_alias(_build_menu_key_from_label(clean_menu_label))
     if not clean_menu_key:
         return False, "Nome da pasta inválido.", ""
     clean_menu_label = _normalize_system_menu_label(clean_menu_key, clean_menu_label)
@@ -1845,7 +1913,7 @@ def create_sidebar_menu_setting(
 
 
 def delete_sidebar_menu_setting(session: Session, menu_key: str) -> tuple[bool, str]:
-    clean_menu_key = _normalize_menu_key(menu_key)
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu inválido."
@@ -1897,7 +1965,7 @@ def create_sidebar_menu_setting_v2(
     if not clean_menu_label:
         return False, "Informe o nome da pasta.", ""
 
-    clean_menu_key = _build_menu_key_from_label(clean_menu_label)
+    clean_menu_key = _resolve_legacy_menu_alias(_build_menu_key_from_label(clean_menu_label))
     if not clean_menu_key:
         return False, "Informe um nome valido para a pasta.", ""
 

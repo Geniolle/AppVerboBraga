@@ -14,6 +14,7 @@ from appverbo.routes.profile.router import router
 
 from appverbo.menu_settings import (
     move_sidebar_menu_additional_field,
+    resolve_menu_key_alias,
     update_sidebar_menu_additional_fields_v1,
     update_sidebar_menu_process_fields,
     update_sidebar_menu_process_lists,
@@ -204,7 +205,7 @@ def move_sidebar_menu_additional_field_handler(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = menu_key.strip().lower()
+    clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -295,7 +296,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = menu_key.strip().lower()
+    clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -404,7 +405,7 @@ def edit_sidebar_menu_process_fields_handler(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = menu_key.strip().lower()
+    clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -494,7 +495,7 @@ def edit_sidebar_menu_process_lists_handler(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = menu_key.strip().lower()
+    clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -614,7 +615,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = menu_key.strip().lower()
+    clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)

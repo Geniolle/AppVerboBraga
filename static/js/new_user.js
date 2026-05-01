@@ -17,6 +17,8 @@ if (navigationType === "reload" && window.location.pathname === "/users/new") {
 }
 
 const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+const MEU_PERFIL_MENU_KEY = "meu_perfil";
+const LEGACY_DOCUMENTOS_MENU_KEY = "documentos";
 const currentUserName = bootstrap.currentUserName || "";
 const currentUserEmail = bootstrap.currentUserEmail || "";
 const currentUserIsAdmin = Boolean(bootstrap.currentUserIsAdmin);
@@ -32,19 +34,19 @@ const currentUserFreguesia = bootstrap.currentUserFreguesia || "";
 const currentUserPostalCode = bootstrap.currentUserPostalCode || "";
 const profilePersonalSections = Array.isArray(bootstrap.profilePersonalSections) ? bootstrap.profilePersonalSections : [];
 const initialProfileTab = bootstrap.initialProfileTab || "pessoal";
-const initialMenu = bootstrap.initialMenu || "home";
+const initialMenu = normalizeMenuKey(bootstrap.initialMenu || "home") || "home";
 const initialMenuTarget = bootstrap.initialMenuTarget || "";
 const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "";
 const initialAdminTab = bootstrap.initialAdminTab || "utilizador";
 const currentEntityId = Number.parseInt(String(bootstrap.currentEntityId || "").trim(), 10);
 const settingsAction = bootstrap.settingsAction || "";
 const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
-const settingsEditKey = bootstrap.settingsEditKey || "";
+const settingsEditKey = normalizeMenuKey(bootstrap.settingsEditKey || "");
 const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
 const sidebarMenuSettingsByKey = new Map();
 const visibleSidebarMenuKeys = new Set(
   (Array.isArray(bootstrap.visibleSidebarMenuKeys) ? bootstrap.visibleSidebarMenuKeys : [])
-    .map((menuKey) => String(menuKey || "").trim().toLowerCase())
+    .map((menuKey) => normalizeMenuKey(menuKey))
     .filter(Boolean)
 );
 const menuProcessValuesMap = (
@@ -101,7 +103,14 @@ function normalizeSettingsTabKey(value) {
 }
 
 function normalizeMenuKey(value) {
-  return String(value || "").trim().toLowerCase();
+  const cleanKey = String(value || "").trim().toLowerCase();
+  if (cleanKey === LEGACY_DOCUMENTOS_MENU_KEY) {
+    return MEU_PERFIL_MENU_KEY;
+  }
+  if (cleanKey === "configuracao") {
+    return "administrativo";
+  }
+  return cleanKey;
 }
 
 sidebarMenuSettings.forEach((setting) => {
@@ -329,13 +338,16 @@ function buildProcessSections(setting, processValuesByField = {}) {
     const optionLabel = toSentenceCaseText(option.label) || optionKey;
     const optionType = normalizeProcessFieldType(option.field_type);
     const optionSize = normalizeProcessFieldSize(option.size, optionType);
+    const optionRequiredRaw = Object.prototype.hasOwnProperty.call(option, "is_required")
+      ? option.is_required
+      : option.required;
     optionMetaByKey.set(optionKey, {
       label: optionLabel,
       fieldType: optionType,
       size: optionSize,
       listKey: normalizeMenuKey(option.list_key || option.listKey),
       listOptions: processListsByKey.get(normalizeMenuKey(option.list_key || option.listKey)) || [],
-      isRequired: normalizeProcessFieldRequired(option.is_required ?? option.required)
+      isRequired: normalizeProcessFieldRequired(optionRequiredRaw)
     });
   });
 
@@ -576,7 +588,7 @@ if (currentUserIsAdmin) {
         { label: "Acesso", value: "Permitido" }
       ]
     },
-    documentos: {
+    [MEU_PERFIL_MENU_KEY]: {
       title: "Meu perfil",
       description: "Dados do meu perfil.",
       singleView: true,
@@ -646,7 +658,7 @@ function mergeDynamicProcessMenus() {
     if (!menuKey || menuKey === "perfil") {
       return;
     }
-    if (menuKey === "documentos") {
+    if (menuKey === MEU_PERFIL_MENU_KEY) {
       return;
     }
     if (visibleSidebarMenuKeys.size && !visibleSidebarMenuKeys.has(menuKey)) {
@@ -801,13 +813,13 @@ if (initialProfileTab === "morada") {
   profileSelectedTarget = "#dados-treinamento-card";
 }
 let adminSelectedTarget = "#dynamic-process-card";
-let documentsSelectedTarget = "#perfil-pessoal-card";
-let documentsSelectedProfileSection = (
+let meuPerfilSelectedTarget = "#perfil-pessoal-card";
+let meuPerfilSelectedProfileSection = (
   Array.isArray(profilePersonalSections) && profilePersonalSections.length
 )
   ? String(profilePersonalSections[0].key || "geral")
   : "geral";
-let hiddenDocumentSectionKeys = new Set();
+let hiddenMeuPerfilSectionKeys = new Set();
 if (initialAdminTab === "entidade") {
   adminSelectedTarget = "#create-entity-card";
 } else if (initialAdminTab === "contas") {
@@ -835,7 +847,7 @@ const selectedTargetByMenu = {
   home: homeSelectedTarget,
   perfil: profileSelectedTarget,
   administrativo: adminSelectedTarget,
-  documentos: documentsSelectedTarget
+  [MEU_PERFIL_MENU_KEY]: meuPerfilSelectedTarget
 };
 Object.keys(dynamicProcessDataByMenu).forEach((menuKey) => {
   if (menuKey === "administrativo" && selectedTargetByMenu[menuKey] === "#settings-menu-edit-card") {
@@ -1641,7 +1653,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
 function applyContentForMenu(menuKey) {
   scopedCards.forEach((card) => {
     const rawScope = card.getAttribute("data-menu-scope") || "";
-    const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
+    const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
     card.style.display = scopes.includes(menuKey) ? "" : "none";
   });
   if (dynamicProcessCardEl) {
@@ -1652,7 +1664,7 @@ function applyContentForMenu(menuKey) {
 function applyContentForMenuTarget(menuKey, targetSelector) {
   scopedCards.forEach((card) => {
     const rawScope = card.getAttribute("data-menu-scope") || "";
-    const scopes = rawScope.split(",").map((value) => value.trim()).filter(Boolean);
+    const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
     if (!scopes.includes(menuKey)) {
       card.style.display = "none";
       return;
@@ -1894,7 +1906,7 @@ function setupProfileProcessTabs() {
         .map((paneEl) =>
           String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
         )
-        .filter((section) => !hiddenDocumentSectionKeys.has(section))
+        .filter((section) => !hiddenMeuPerfilSectionKeys.has(section))
     );
     const effectiveSection = availableSections.has(normalizedSection)
       ? normalizedSection
@@ -1904,17 +1916,17 @@ function setupProfileProcessTabs() {
       const paneSection = String(
         paneEl.getAttribute("data-profile-section-pane") || "geral"
       ).trim().toLowerCase();
-      paneEl.style.display = !hiddenDocumentSectionKeys.has(paneSection) && paneSection === effectiveSection ? "" : "none";
+      paneEl.style.display = !hiddenMeuPerfilSectionKeys.has(paneSection) && paneSection === effectiveSection ? "" : "none";
     });
     setupAllocationSectionMultiValue(personalCardEl, effectiveSection);
-    documentsSelectedProfileSection = effectiveSection;
+    meuPerfilSelectedProfileSection = effectiveSection;
   }
 
   window.activateProfilePersonalSection = activateSection;
-  activateSection(documentsSelectedProfileSection);
+  activateSection(meuPerfilSelectedProfileSection);
 }
 
-function collectCurrentDocumentProcessValues() {
+function collectCurrentMeuPerfilProcessValues() {
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const valuesByField = {};
@@ -1952,32 +1964,32 @@ function collectCurrentDocumentProcessValues() {
   return valuesByField;
 }
 
-function applyDocumentProcessSubsequentVisibility() {
-  const setting = getSidebarMenuSetting("documentos");
+function applyMeuPerfilProcessSubsequentVisibility() {
+  const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   if (!setting || !personalCardEl) {
     return;
   }
 
-  hiddenDocumentSectionKeys = getHiddenProcessTargets(
+  hiddenMeuPerfilSectionKeys = getHiddenProcessTargets(
     setting.process_subsequent_fields,
-    collectCurrentDocumentProcessValues()
+    collectCurrentMeuPerfilProcessValues()
   );
 
   if (itemsEl) {
     const submenuLinks = itemsEl.querySelectorAll(".submenu-item[data-profile-section]");
     submenuLinks.forEach((linkEl) => {
       const sectionKey = normalizeMenuKey(linkEl.dataset.profileSection);
-      linkEl.style.display = hiddenDocumentSectionKeys.has(sectionKey) ? "none" : "";
+      linkEl.style.display = hiddenMeuPerfilSectionKeys.has(sectionKey) ? "none" : "";
     });
   }
 
   if (typeof window.activateProfilePersonalSection === "function") {
-    window.activateProfilePersonalSection(documentsSelectedProfileSection);
+    window.activateProfilePersonalSection(meuPerfilSelectedProfileSection);
   }
   if (itemsEl) {
     const selectedLinkEl = itemsEl.querySelector(
-      `.submenu-item[data-profile-section="${String(documentsSelectedProfileSection || "geral").replace(/"/g, '\\"')}"]`
+      `.submenu-item[data-profile-section="${String(meuPerfilSelectedProfileSection || "geral").replace(/"/g, '\\"')}"]`
     );
     if (selectedLinkEl && selectedLinkEl.style.display !== "none") {
       setActiveSubmenu("#perfil-pessoal-card", selectedLinkEl);
@@ -1987,7 +1999,7 @@ function applyDocumentProcessSubsequentVisibility() {
       (linkEl) => linkEl.style.display !== "none"
     );
     if (firstVisibleLinkEl) {
-      documentsSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "geral");
+      meuPerfilSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "geral");
       setActiveSubmenu("#perfil-pessoal-card", firstVisibleLinkEl);
     }
   }
@@ -2000,7 +2012,7 @@ function setupConditionalProcessVisibility() {
     personalFormEl.dataset.boundSubsequentVisibility = "1";
     ["input", "change"].forEach((eventName) => {
       personalFormEl.addEventListener(eventName, () => {
-        applyDocumentProcessSubsequentVisibility();
+        applyMeuPerfilProcessSubsequentVisibility();
       });
     });
   }
@@ -3097,13 +3109,13 @@ function renderSubmenu(menuKey) {
         renderDynamicProcessCard(menuKey, item.dynamicProcessSectionKey);
       }
       if (
-        menuKey === "documentos" &&
+        menuKey === MEU_PERFIL_MENU_KEY &&
         typeof window.activateProfilePersonalSection === "function"
       ) {
         const sectionKey = String(item.profileSection || "geral");
-        documentsSelectedProfileSection = sectionKey;
+        meuPerfilSelectedProfileSection = sectionKey;
         window.activateProfilePersonalSection(sectionKey);
-        applyDocumentProcessSubsequentVisibility();
+        applyMeuPerfilProcessSubsequentVisibility();
       }
     });
     itemsEl.appendChild(link);
@@ -3147,7 +3159,7 @@ function activateMenu(menuKey, options = {}) {
     return;
   }
   const { resetDynamicToFirst = false } = options;
-  const targetButton = Array.from(menuButtons).find((btn) => btn.dataset.menu === menuKey);
+  const targetButton = Array.from(menuButtons).find((btn) => normalizeMenuKey(btn.dataset.menu) === menuKey);
   const menuItems = Array.isArray(config.items) ? config.items : [];
   if (resetDynamicToFirst) {
     const firstDynamicItem = menuItems.find((item) => item.dynamicProcessSectionKey);
@@ -3201,20 +3213,20 @@ function activateMenu(menuKey, options = {}) {
     }
     applyContentForMenuTarget(menuKey, defaultTarget);
     if (
-      menuKey === "documentos" &&
+      menuKey === MEU_PERFIL_MENU_KEY &&
       typeof window.activateProfilePersonalSection === "function"
     ) {
       let selectedSectionItem = menuItems.find(
-        (item) => String(item.profileSection || "") === documentsSelectedProfileSection
+        (item) => String(item.profileSection || "") === meuPerfilSelectedProfileSection
       );
       if (!selectedSectionItem) {
         selectedSectionItem = menuItems.find((item) => item.target === defaultTarget) || menuItems[0];
       }
       if (selectedSectionItem) {
         const selectedSectionKey = String(selectedSectionItem.profileSection || "geral");
-        documentsSelectedProfileSection = selectedSectionKey;
+        meuPerfilSelectedProfileSection = selectedSectionKey;
         window.activateProfilePersonalSection(selectedSectionKey);
-        applyDocumentProcessSubsequentVisibility();
+        applyMeuPerfilProcessSubsequentVisibility();
         const selectedLinkEl = itemsEl
           ? itemsEl.querySelector(
               `.submenu-item[data-profile-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
@@ -3290,7 +3302,7 @@ if (dropdownAvatarImageEl) {
 
 menuButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    activateMenu(btn.dataset.menu, { resetDynamicToFirst: true });
+    activateMenu(normalizeMenuKey(btn.dataset.menu), { resetDynamicToFirst: true });
   });
 });
 
@@ -3360,7 +3372,7 @@ if (userMenuTriggerEl) {
 userDropdownLinks.forEach((link) => {
   link.addEventListener("click", (event) => {
     event.preventDefault();
-    const menuKey = link.getAttribute("data-dropdown-menu") || "perfil";
+    const menuKey = normalizeMenuKey(link.getAttribute("data-dropdown-menu") || "perfil");
     const targetSelector = link.getAttribute("data-dropdown-target") || "";
     if (!menuConfig[menuKey]) {
       closeUserDropdown();
@@ -3589,7 +3601,7 @@ setupSidebarSectionsEditor();
 setupTableLimiter("recent-entities");
 setupTableLimiter("inactive-entities");
 setupTableLimiter("admin-users");
-const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => btn.dataset.menu));
+const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => normalizeMenuKey(btn.dataset.menu)));
 let startupMenu = menuConfig[initialMenu] ? initialMenu : "home";
 if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
   if (sidebarMenuKeys.has("home")) {
@@ -3605,7 +3617,7 @@ handleHashNavigation(window.location.hash || "");
 
 
 //###################################################################################
-// (MENU) CHAVE ÚNICA PARA ITENS DINÂMICOS DO PROCESSO - V1
+// (MENU) CHAVE UNICA PARA ITENS DINAMICOS DO PROCESSO - V1
 //###################################################################################
 
 function buildMenuItemUniqueKey_v1(item) {

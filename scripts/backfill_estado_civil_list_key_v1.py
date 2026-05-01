@@ -18,13 +18,13 @@ with SessionLocal() as session:
         text("""
             SELECT menu_key, menu_config
             FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'documentos'
+            WHERE lower(trim(menu_key)) = 'meu_perfil'
             LIMIT 1
         """)
     ).one_or_none()
 
     if row is None:
-        raise RuntimeError("Menu documentos não encontrado.")
+        raise RuntimeError("Menu Meu perfil não encontrado.")
 
     raw_config = row.menu_config
 
@@ -76,7 +76,7 @@ with SessionLocal() as session:
             text("""
                 UPDATE sidebar_menu_settings
                 SET menu_config = :menu_config
-                WHERE lower(trim(menu_key)) = 'documentos'
+                WHERE lower(trim(menu_key)) = 'meu_perfil'
             """),
             {"menu_config": json.dumps(config, ensure_ascii=False)}
         )

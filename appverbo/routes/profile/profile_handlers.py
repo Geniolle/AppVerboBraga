@@ -13,8 +13,10 @@ from sqlalchemy.orm import Session
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
+    MENU_MEU_PERFIL_KEY,
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
+    resolve_menu_key_alias,
     set_sidebar_menu_visibility,
     update_sidebar_menu_additional_fields,
     update_sidebar_menu_label,
@@ -294,15 +296,15 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             )
 
         sidebar_menu_settings = get_sidebar_menu_settings(session)
-        documentos_setting = next(
+        meu_perfil_setting = next(
             (
                 row
                 for row in sidebar_menu_settings
-                if str(row.get("key") or "").strip().lower() == "documentos"
+                if resolve_menu_key_alias(row.get("key")) == MENU_MEU_PERFIL_KEY
             ),
             None,
         )
-        process_options = (documentos_setting or {}).get("process_field_options", [])
+        process_options = (meu_perfil_setting or {}).get("process_field_options", [])
         option_keys = {
             str(item.get("key") or "").strip().lower()
             for item in process_options
@@ -314,7 +316,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if str(item.get("key") or "").strip()
         }
         custom_field_meta: dict[str, dict[str, Any]] = {}
-        for raw_item in (documentos_setting or {}).get("process_additional_fields", []):
+        for raw_item in (meu_perfil_setting or {}).get("process_additional_fields", []):
             clean_key = str(raw_item.get("key") or "").strip().lower()
             if not clean_key.startswith("custom_"):
                 continue
@@ -341,7 +343,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 "is_required": is_required,
             }
         visible_field_section_map: dict[str, str] = {}
-        for raw_row in (documentos_setting or {}).get("process_visible_field_rows", []):
+        for raw_row in (meu_perfil_setting or {}).get("process_visible_field_rows", []):
             if not isinstance(raw_row, dict):
                 continue
             field_key = str(raw_row.get("field_key") or "").strip().lower()
@@ -352,13 +354,13 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             clean_key
             for clean_key in (
                 str(raw_key or "").strip().lower()
-                for raw_key in (documentos_setting or {}).get("process_visible_fields", [])
+                for raw_key in (meu_perfil_setting or {}).get("process_visible_fields", [])
             )
             if clean_key.startswith("custom_")
             and clean_key in option_keys
             and str((custom_field_meta.get(clean_key) or {}).get("field_type") or "") != "header"
         ]
-        current_documents_values: dict[str, str] = {
+        current_meu_perfil_values: dict[str, str] = {
             "nome": clean_full_name,
             "telefone": clean_primary_phone,
             "email": clean_login_email,
@@ -371,7 +373,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             field_meta = custom_field_meta.get(custom_key) or {}
             field_type = str(field_meta.get("field_type") or "text").strip().lower()
             if field_type == "flag":
-                current_documents_values[custom_key] = (
+                current_meu_perfil_values[custom_key] = (
                     "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
                 )
                 continue
@@ -384,15 +386,15 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 for raw_value in raw_submitted_values
             ]
             clean_values = [value for value in submitted_values if value]
-            current_documents_values[custom_key] = ", ".join(clean_values)
-        hidden_document_targets = get_hidden_process_targets_from_rules(
-            (documentos_setting or {}).get("process_subsequent_fields"),
-            current_documents_values,
+            current_meu_perfil_values[custom_key] = ", ".join(clean_values)
+        hidden_meu_perfil_targets = get_hidden_process_targets_from_rules(
+            (meu_perfil_setting or {}).get("process_subsequent_fields"),
+            current_meu_perfil_values,
         )
         visible_custom_keys_set = set(visible_custom_keys)
         active_custom_keys = filter_process_fields_by_hidden_targets(
             visible_custom_keys,
-            hidden_document_targets,
+            hidden_meu_perfil_targets,
             visible_field_section_map,
         )
         active_custom_keys_set = set(active_custom_keys)
@@ -500,7 +502,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 @router.post("/users/profile/process-data")
 async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
-    clean_menu_key = str(submitted_form.get("menu_key") or "").strip().lower()
+    clean_menu_key = resolve_menu_key_alias(submitted_form.get("menu_key"))
     requested_section_key = str(submitted_form.get("section_key") or "").strip()
     requested_history_action = str(submitted_form.get("history_action") or "").strip().lower()
     requested_history_record_id = str(submitted_form.get("history_record_id") or "").strip()

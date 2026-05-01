@@ -46,7 +46,7 @@ MODULES: list[dict[str, Any]] = [
         "is_active": True,
     },
     {
-        "module_key": "documentos",
+        "module_key": "meu_perfil",
         "module_name": "Meu perfil",
         "description": "Area de perfil e dados pessoais do utilizador.",
         "menu_group": "igreja",
@@ -156,11 +156,11 @@ SIDEBAR_ITEMS: list[dict[str, Any]] = [
         "is_active": True,
     },
     {
-        "module_key": "documentos",
+        "module_key": "meu_perfil",
         "group_key": "igreja",
         "item_key": "meu_perfil",
         "label": "Meu perfil",
-        "route_path": "/users/new?menu=documentos",
+        "route_path": "/users/new?menu=meu_perfil",
         "icon": "[D]",
         "display_order": 100,
         "requires_admin": False,

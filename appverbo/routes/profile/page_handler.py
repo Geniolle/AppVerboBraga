@@ -11,8 +11,10 @@ from sqlalchemy.orm import Session
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
+    MENU_MEU_PERFIL_KEY,
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
+    resolve_menu_key_alias,
     set_sidebar_menu_visibility,
     update_sidebar_menu_additional_fields,
     update_sidebar_menu_label,
@@ -74,7 +76,7 @@ def _resolve_initial_menu_target(
     can_manage_all_entities: bool,
     sidebar_menu_settings: list[dict[str, Any]],
 ) -> tuple[str, str]:
-    clean_menu_key = str(resolved_menu or "").strip().lower()
+    clean_menu_key = resolve_menu_key_alias(resolved_menu)
     settings_by_key = {
         str(raw_row.get("key") or "").strip().lower(): raw_row
         for raw_row in sidebar_menu_settings
@@ -101,7 +103,7 @@ def _resolve_initial_menu_target(
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         return "#admin-account-status-card", ""
-    if clean_menu_key == "documentos":
+    if clean_menu_key == MENU_MEU_PERFIL_KEY:
         return "#perfil-pessoal-card", ""
 
     matched_menu_row = settings_by_key.get(clean_menu_key)
@@ -136,11 +138,9 @@ def new_user_page(
     resolved_profile_tab = profile_tab.strip().lower()
     if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
         resolved_profile_tab = "pessoal"
-    resolved_menu = menu.strip().lower()
+    resolved_menu = resolve_menu_key_alias(menu)
     if not resolved_menu:
         resolved_menu = "home"
-    if resolved_menu == "configuracao":
-        resolved_menu = "administrativo"
     resolved_admin_tab = admin_tab.strip().lower()
     if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes"}:
         resolved_admin_tab = "utilizador"
@@ -163,7 +163,7 @@ def new_user_page(
         user_view.strip().lower() in readonly_truthy_values
         and parsed_user_edit_id is not None
     )
-    clean_settings_edit_key = settings_edit_key.strip().lower()
+    clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_settings_action = settings_action.strip().lower()
     if clean_settings_action not in {"toggle", "edit", "delete", "create"}:
         clean_settings_action = "edit"

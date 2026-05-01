@@ -31,7 +31,7 @@ def insert_after(values: list[str], after_key: str, new_key: str) -> list[str]:
 
 
 # ###################################################################################
-# (2) ATUALIZAR CONFIGURACAO DO MENU DOCUMENTOS
+# (2) ATUALIZAR CONFIGURACAO DO MENU MEU PERFIL
 # ###################################################################################
 
 inspector = inspect(engine)
@@ -46,14 +46,14 @@ with SessionLocal() as session:
             """
             SELECT id, menu_config
             FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = 'documentos'
+            WHERE lower(trim(menu_key)) = 'meu_perfil'
             LIMIT 1
             """
         )
     ).mappings().one_or_none()
 
     if row is None:
-        print("AVISO: menu_key=documentos nao encontrado em sidebar_menu_settings.")
+        print("AVISO: menu_key=meu_perfil nao encontrado em sidebar_menu_settings.")
         raise SystemExit(0)
 
     try:
@@ -166,4 +166,4 @@ with SessionLocal() as session:
 
     session.commit()
 
-print("OK: configuracao do menu documentos atualizada com o campo País.")
+print("OK: configuracao do menu Meu perfil atualizada com o campo País.")
