@@ -15,6 +15,7 @@ PROCESS_SUBSEQUENT_ALLOWED_OPERATORS = {
     "is_empty",
     "is_not_empty",
 }
+PROCESS_QUANTITY_ALLOWED_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list"}
 
 
 def _normalize_process_rule_lookup_text(raw_value: Any) -> str:
@@ -260,6 +261,79 @@ def build_menu_process_records_storage_key(menu_key: str) -> str:
     if not clean_menu_key:
         return ""
     return f"process_records__{clean_menu_key}"
+
+
+def build_menu_process_quantity_storage_key(menu_key: str, rule_key: str) -> str:
+    clean_menu_key = str(menu_key or "").strip().lower()
+    clean_rule_key = str(rule_key or "").strip().lower()
+    if not clean_menu_key or not clean_rule_key:
+        return ""
+    return f"quantity__{clean_menu_key}__{clean_rule_key}"
+
+
+def parse_menu_process_quantity_values(raw_value: Any) -> list[dict[str, str]]:
+    if not isinstance(raw_value, str):
+        return []
+    clean_value = raw_value.strip()
+    if not clean_value:
+        return []
+    try:
+        parsed = json.loads(clean_value)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(parsed, list):
+        return []
+
+    normalized_items: list[dict[str, str]] = []
+    for raw_item in parsed:
+        if not isinstance(raw_item, dict):
+            continue
+        clean_item: dict[str, str] = {}
+        for raw_key, raw_field_value in raw_item.items():
+            clean_key = str(raw_key or "").strip().lower()
+            if not clean_key:
+                continue
+            clean_field_value = _normalize_profile_field_value(raw_field_value)
+            if not clean_field_value:
+                continue
+            clean_item[clean_key] = clean_field_value
+        normalized_items.append(clean_item)
+    return normalized_items
+
+
+def serialize_menu_process_quantity_values(
+    values: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+) -> str | None:
+    normalized_items: list[dict[str, str]] = []
+    for raw_item in values or []:
+        if not isinstance(raw_item, dict):
+            continue
+        clean_item: dict[str, str] = {}
+        for raw_key, raw_value in raw_item.items():
+            clean_key = str(raw_key or "").strip().lower()
+            if not clean_key:
+                continue
+            clean_field_value = _normalize_profile_field_value(raw_value)
+            if not clean_field_value:
+                continue
+            clean_item[clean_key] = clean_field_value
+        normalized_items.append(clean_item)
+    return json.dumps(normalized_items, ensure_ascii=False) if normalized_items else None
+
+
+def get_menu_process_quantity_repeated_field_keys(raw_rules: Any) -> set[str]:
+    if not isinstance(raw_rules, list):
+        return set()
+
+    repeated_field_keys: set[str] = set()
+    for raw_rule in raw_rules:
+        if not isinstance(raw_rule, dict):
+            continue
+        for raw_field_key in raw_rule.get("repeated_field_keys") or []:
+            clean_field_key = str(raw_field_key or "").strip().lower()
+            if clean_field_key:
+                repeated_field_keys.add(clean_field_key)
+    return repeated_field_keys
 
 def parse_menu_process_records(raw_value: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_value, str):
@@ -583,6 +657,10 @@ __all__ = [
     "serialize_member_profile_fields",
     "build_menu_process_field_storage_key",
     "build_menu_process_records_storage_key",
+    "build_menu_process_quantity_storage_key",
+    "get_menu_process_quantity_repeated_field_keys",
+    "parse_menu_process_quantity_values",
+    "serialize_menu_process_quantity_values",
     "parse_menu_process_records",
     "serialize_menu_process_records",
     "parse_profile_custom_fields",

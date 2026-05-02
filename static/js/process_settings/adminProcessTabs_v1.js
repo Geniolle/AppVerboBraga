@@ -13,6 +13,7 @@
     { key: "geral", label: "Geral" },
     { key: "configuracao_campos", label: "Configuração dos campos" },
     { key: "campos_adicionais", label: "Campos adicionais" },
+    { key: "campos_quantidade", label: "Campos Quantidade" },
     { key: "lista", label: "Listas" },
     { key: "campos_subsequentes", label: "Campos Subsequentes" }
   ];

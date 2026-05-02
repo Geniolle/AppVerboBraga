@@ -59,6 +59,11 @@
   }
 
   function getFormFieldByKey(form, fieldKey) {
+    const keyedField = form.querySelector(`[data-profile-field-key="${fieldKey}"]`);
+    if (keyedField) {
+      return keyedField.closest(".field") || keyedField;
+    }
+
     const selectorMap = {
       nome: ['#edit_full_name', '[name="full_name"]'],
       telefone: ['#edit_primary_phone', '[name="primary_phone"]'],
@@ -102,8 +107,27 @@
     profilePersonalVisibleFields.forEach((fieldKey, index) => {
       const element = resolveElement(fieldKey);
       if (element && element.parentNode === container) {
-        element.style.order = String(index + 1);
+        element.style.order = String((index + 1) * 10);
       }
+    });
+
+    const generatedBlocks = Array.from(
+      container.querySelectorAll('[data-meu-perfil-quantity-generated="1"][data-meu-perfil-quantity-source-key]')
+    );
+    const generatedCountBySource = new Map();
+
+    generatedBlocks.forEach((blockEl) => {
+      const sourceKey = String(blockEl.getAttribute("data-meu-perfil-quantity-source-key") || "")
+        .trim()
+        .toLowerCase();
+      if (!sourceKey) {
+        return;
+      }
+      const sourceIndex = profilePersonalVisibleFields.indexOf(sourceKey);
+      const baseOrder = sourceIndex >= 0 ? ((sourceIndex + 1) * 10) : ((profilePersonalVisibleFields.length + 1) * 10);
+      const sourceCount = generatedCountBySource.get(sourceKey) || 0;
+      generatedCountBySource.set(sourceKey, sourceCount + 1);
+      blockEl.style.order = String(baseOrder + sourceCount + 1);
     });
   }
 
@@ -131,7 +155,7 @@
 
     const actionsRow = form.querySelector(".profile-edit-actions");
     if (actionsRow) {
-      actionsRow.style.order = String(profilePersonalVisibleFields.length + 100);
+      actionsRow.style.order = String((profilePersonalVisibleFields.length + 1) * 10);
     }
   }
 
@@ -152,4 +176,6 @@
   } else {
     init();
   }
+
+  window.reorderMeuPerfilProfileFields = reorderProfileFields;
 })();

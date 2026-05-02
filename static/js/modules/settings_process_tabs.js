@@ -50,9 +50,12 @@
       "campos-configuracao": "campos-config",
       "campos-config": "campos-config",
       "campos-adicionais": "campos-adicionais",
+      "campos-quantidade": "campos-quantidade",
       "additional-fields": "campos-adicionais",
       "adicionais": "campos-adicionais",
-      "lista": "lista"
+      "quantity-fields": "campos-quantidade",
+      "lista": "lista",
+      "campos-subsequentes": "campos-subsequentes"
     };
 
     return aliases[cleanValue] || "";
@@ -139,6 +142,11 @@
         text === "campo adicionais"
       ) {
         element.textContent = "Campos adicionais";
+        return;
+      }
+
+      if (text === "campos quantidade" || text === "campos de quantidade") {
+        element.textContent = "Campos Quantidade";
         return;
       }
 

@@ -168,7 +168,15 @@ def new_user_page(
     if clean_settings_action not in {"toggle", "edit", "delete", "create"}:
         clean_settings_action = "edit"
     clean_settings_tab = settings_tab.strip().lower()
-    if clean_settings_tab not in {"geral", "campos-config", "campos-adicionais", "sessoes-sidebar"}:
+    if clean_settings_tab not in {
+        "geral",
+        "campos-config",
+        "campos-adicionais",
+        "campos-quantidade",
+        "lista",
+        "campos-subsequentes",
+        "sessoes-sidebar",
+    }:
         clean_settings_tab = ""
 
     with SessionLocal() as session:

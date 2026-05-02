@@ -1,6 +1,10 @@
 from appverbo.services.profile import (
+    build_menu_process_quantity_storage_key,
+    get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,
+    parse_menu_process_quantity_values,
     resolve_meu_perfil_builtin_duplicate_field_key,
+    serialize_menu_process_quantity_values,
     parse_profile_custom_fields,
     serialize_profile_custom_fields,
 )
@@ -50,3 +54,44 @@ def test_resolve_meu_perfil_builtin_duplicate_field_key_maps_custom_fields() -> 
     assert resolve_meu_perfil_builtin_duplicate_field_key("custom_nome", "Nome", builtin_labels) == "nome"
     assert resolve_meu_perfil_builtin_duplicate_field_key("custom_data_de_nascimento", "Data de nascimento", builtin_labels) == "data_nascimento"
     assert resolve_meu_perfil_builtin_duplicate_field_key("custom_cidade", "Cidade", builtin_labels) == ""
+
+
+def test_process_quantity_values_serialize_then_parse() -> None:
+    raw = [
+        {
+            "custom_nome_do_agregado": "João",
+            "custom_data_nascimento_do_agregado": "2018-04-10",
+        },
+        {
+            "custom_nome_do_agregado": "Maria",
+            "custom_data_nascimento_do_agregado": "2020-09-15",
+        },
+    ]
+
+    serialized = serialize_menu_process_quantity_values(raw)
+    assert serialized is not None
+    assert parse_menu_process_quantity_values(serialized) == raw
+
+
+def test_build_menu_process_quantity_storage_key() -> None:
+    assert build_menu_process_quantity_storage_key("empresa", "qty_agregados") == "quantity__empresa__qty_agregados"
+
+
+def test_get_menu_process_quantity_repeated_field_keys() -> None:
+    repeated_keys = get_menu_process_quantity_repeated_field_keys(
+        [
+            {
+                "key": "qty_agregados",
+                "repeated_field_keys": [
+                    "custom_nome_do_agregado",
+                    "custom_data_nascimento_do_agregado",
+                    "custom_nome_do_agregado",
+                ],
+            }
+        ]
+    )
+
+    assert repeated_keys == {
+        "custom_nome_do_agregado",
+        "custom_data_nascimento_do_agregado",
+    }

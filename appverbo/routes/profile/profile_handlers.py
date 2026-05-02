@@ -24,6 +24,12 @@ from appverbo.menu_settings import (
     update_sidebar_menu_process_fields,
 )
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.profile import (
+    build_menu_process_quantity_storage_key,
+    get_menu_process_quantity_repeated_field_keys,
+    parse_menu_process_quantity_values,
+    serialize_menu_process_quantity_values,
+)
 from appverbo.models import (
     Entity,
     Member,
@@ -38,7 +44,7 @@ from appverbo.models import (
 
 from appverbo.routes.profile.router import router
 
-PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag"}
+PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list"}
 PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
 MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
@@ -184,9 +190,105 @@ def _resolve_process_section_fields(
         if str(field_key or "").strip()
     ]
 
+
+def _normalize_process_quantity_rules(raw_rules: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_rules, list):
+        return []
+
+    normalized_rules: list[dict[str, Any]] = []
+    for raw_rule in raw_rules:
+        if not isinstance(raw_rule, dict):
+            continue
+        rule_key = str(raw_rule.get("key") or "").strip().lower()
+        quantity_field_key = str(raw_rule.get("quantity_field_key") or "").strip().lower()
+        header_key = str(raw_rule.get("header_key") or "").strip().lower()
+        item_label = str(raw_rule.get("item_label") or "").strip() or "Item"
+        try:
+            max_items = int(str(raw_rule.get("max_items") or "").strip())
+        except (TypeError, ValueError):
+            max_items = 1
+        repeated_field_keys: list[str] = []
+        seen_repeated_keys: set[str] = set()
+        for raw_field_key in raw_rule.get("repeated_field_keys") or []:
+            clean_field_key = str(raw_field_key or "").strip().lower()
+            if not clean_field_key or clean_field_key in seen_repeated_keys:
+                continue
+            seen_repeated_keys.add(clean_field_key)
+            repeated_field_keys.append(clean_field_key)
+        if not rule_key or not quantity_field_key or not repeated_field_keys:
+            continue
+        normalized_rules.append(
+            {
+                "key": rule_key,
+                "label": str(raw_rule.get("label") or rule_key).strip() or rule_key,
+                "quantity_field_key": quantity_field_key,
+                "repeated_field_keys": repeated_field_keys,
+                "header_key": header_key,
+                "max_items": max(1, min(max_items, 50)),
+                "item_label": item_label,
+            }
+        )
+    return normalized_rules
+
+
+def _collect_process_quantity_items_from_form(
+    submitted_form: Any,
+    rule_key: str,
+) -> list[dict[str, str]]:
+    clean_rule_key = str(rule_key or "").strip().lower()
+    if not clean_rule_key:
+        return []
+
+    prefix = f"process_quantity_field__{clean_rule_key}__"
+    indexed_items: dict[int, dict[str, str]] = {}
+    if hasattr(submitted_form, "multi_items"):
+        raw_items = list(submitted_form.multi_items())
+    else:
+        raw_items = list((submitted_form or {}).items())
+
+    for raw_name, raw_value in raw_items:
+        clean_name = str(raw_name or "").strip().lower()
+        if not clean_name.startswith(prefix):
+            continue
+        suffix = clean_name[len(prefix):]
+        index_part, separator, field_key = suffix.partition("__")
+        if not separator:
+            continue
+        try:
+            item_index = int(index_part)
+        except (TypeError, ValueError):
+            continue
+        clean_field_key = str(field_key or "").strip().lower()
+        clean_field_value = str(raw_value or "").strip()
+        if item_index < 0 or not clean_field_key or not clean_field_value:
+            continue
+        indexed_items.setdefault(item_index, {})[clean_field_key] = clean_field_value
+
+    return [
+        indexed_items[item_index]
+        for item_index in sorted(indexed_items.keys())
+        if indexed_items.get(item_index)
+    ]
+
+
+def _resolve_submitted_process_quantity_items(
+    submitted_form: Any,
+    rule_key: str,
+) -> list[dict[str, str]]:
+    payload_field_name = f"process_quantity_payload__{str(rule_key or '').strip().lower()}"
+    parsed_quantity_items = parse_menu_process_quantity_values(
+        str(submitted_form.get(payload_field_name) or "")
+    )
+    if parsed_quantity_items:
+        return parsed_quantity_items
+    return _collect_process_quantity_items_from_form(submitted_form, rule_key)
+
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
+    redirect_menu = str(submitted_form.get("menu") or MENU_MEU_PERFIL_KEY).strip().lower() or MENU_MEU_PERFIL_KEY
+    redirect_target = str(submitted_form.get("target") or "#perfil-pessoal-card").strip() or "#perfil-pessoal-card"
+    redirect_profile_section = str(submitted_form.get("profile_section") or "").strip().lower()
     clean_full_name = str(submitted_form.get("full_name") or "").strip()
     clean_primary_phone = str(submitted_form.get("primary_phone") or "").strip()
     clean_login_email = str(submitted_form.get("login_email") or submitted_form.get("email") or "").strip().lower()
@@ -310,6 +412,10 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             None,
         )
         process_options = (meu_perfil_setting or {}).get("process_field_options", [])
+        quantity_rules = _normalize_process_quantity_rules(
+            (meu_perfil_setting or {}).get("process_quantity_fields")
+        )
+        quantity_repeated_field_keys = get_menu_process_quantity_repeated_field_keys(quantity_rules)
         option_keys = {
             str(item.get("key") or "").strip().lower()
             for item in process_options
@@ -370,6 +476,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if clean_key.startswith("custom_")
             and clean_key in option_keys
             and clean_key in custom_field_meta
+            and clean_key not in quantity_repeated_field_keys
             and str((custom_field_meta.get(clean_key) or {}).get("field_type") or "") != "header"
         ]
         current_meu_perfil_values: dict[str, str] = {
@@ -422,6 +529,15 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             for key, value in existing_custom_fields.items()
             if key not in visible_custom_keys_set
         }
+        existing_quantity_values = {
+            key: value
+            for key, value in existing_profile_fields.items()
+            if key.startswith(f"quantity__{MENU_MEU_PERFIL_KEY}__")
+        }
+        updated_quantity_values = {
+            key: value
+            for key, value in existing_quantity_values.items()
+        }
         missing_required_custom_labels: list[str] = []
         for custom_key in active_custom_keys:
             field_name = f"custom_field__{custom_key}"
@@ -459,6 +575,35 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if hidden_custom_key in existing_custom_fields:
                 updated_custom_fields[hidden_custom_key] = existing_custom_fields[hidden_custom_key]
 
+        active_quantity_rule_keys: set[str] = set()
+        for quantity_rule in quantity_rules:
+            rule_key = str(quantity_rule.get("key") or "").strip().lower()
+            quantity_field_key = str(quantity_rule.get("quantity_field_key") or "").strip().lower()
+            if not rule_key or not quantity_field_key:
+                continue
+
+            if (
+                quantity_field_key in hidden_meu_perfil_targets
+                or visible_field_section_map.get(quantity_field_key) in hidden_meu_perfil_targets
+            ):
+                continue
+
+            parsed_quantity_items = _resolve_submitted_process_quantity_items(
+                submitted_form,
+                rule_key,
+            )
+            active_quantity_rule_keys.add(rule_key)
+
+            storage_key = build_menu_process_quantity_storage_key(MENU_MEU_PERFIL_KEY, rule_key)
+            if not storage_key:
+                continue
+
+            serialized_quantity_items = serialize_menu_process_quantity_values(parsed_quantity_items)
+            if serialized_quantity_items:
+                updated_quantity_values[storage_key] = serialized_quantity_items
+            else:
+                updated_quantity_values.pop(storage_key, None)
+
         if missing_required_custom_labels:
             return RedirectResponse(
                 url=build_users_new_url(
@@ -479,7 +624,10 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         for existing_key in list(existing_profile_fields.keys()):
             if existing_key.startswith("custom_"):
                 existing_profile_fields.pop(existing_key, None)
+            if existing_key.startswith(f"quantity__{MENU_MEU_PERFIL_KEY}__"):
+                existing_profile_fields.pop(existing_key, None)
         existing_profile_fields.update(updated_custom_fields)
+        existing_profile_fields.update(updated_quantity_values)
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
         if previous_phone != clean_primary_phone:
             member.whatsapp_verification_status = "unknown"
@@ -507,6 +655,9 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         url=build_users_new_url(
             profile_success="Dados pessoais atualizados com sucesso.",
             profile_tab="pessoal",
+            menu=redirect_menu,
+            target=redirect_target,
+            profile_section=redirect_profile_section,
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
@@ -565,6 +716,9 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+        quantity_rules = _normalize_process_quantity_rules(
+            process_setting.get("process_quantity_fields")
+        )
         absence_process_mode = _is_absence_process(clean_menu_key, process_setting)
         history_process_mode = _is_history_process(
             clean_menu_key,
@@ -581,6 +735,16 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             process_setting.get("process_visible_field_rows"),
             requested_section_key,
         )
+        quantity_repeated_field_keys = {
+            repeated_field_key
+            for rule in quantity_rules
+            for repeated_field_key in rule.get("repeated_field_keys", [])
+        }
+        section_field_keys = [
+            field_key
+            for field_key in section_field_keys
+            if field_key not in quantity_repeated_field_keys
+        ]
         if not section_field_keys:
             return RedirectResponse(
                 url=build_users_new_url(
@@ -639,6 +803,66 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 )
                 continue
             current_process_values_by_field[field_key] = str(submitted_form.get(input_name) or "").strip()
+
+        submitted_quantity_values_by_rule: dict[str, list[dict[str, str]]] = {}
+        for rule in quantity_rules:
+            rule_key = str(rule.get("key") or "").strip().lower()
+            header_key = str(rule.get("header_key") or "").strip().lower()
+            quantity_field_key = str(rule.get("quantity_field_key") or "").strip().lower()
+            repeated_field_keys = [
+                str(raw_field_key or "").strip().lower()
+                for raw_field_key in rule.get("repeated_field_keys", [])
+                if str(raw_field_key or "").strip()
+            ]
+            if not rule_key or not quantity_field_key or not repeated_field_keys:
+                continue
+
+            applies_to_current_section = False
+            if header_key:
+                applies_to_current_section = header_key == str(requested_section_key or "").strip().lower()
+            else:
+                applies_to_current_section = quantity_field_key in section_field_keys
+
+            if not applies_to_current_section:
+                continue
+
+            payload_name = f"process_quantity_payload__{rule_key}"
+            raw_payload = str(submitted_form.get(payload_name) or "").strip()
+            if not raw_payload:
+                submitted_quantity_values_by_rule[rule_key] = []
+                continue
+
+            parsed_payload = parse_menu_process_quantity_values(raw_payload)
+            if not parsed_payload:
+                submitted_quantity_values_by_rule[rule_key] = []
+                continue
+
+            try:
+                requested_quantity = int(str(current_process_values_by_field.get(quantity_field_key) or "").strip())
+            except (TypeError, ValueError):
+                requested_quantity = 0
+
+            limited_quantity = max(0, min(requested_quantity, int(rule.get("max_items") or 1)))
+            limited_items = parsed_payload[:limited_quantity]
+            normalized_items: list[dict[str, str]] = []
+
+            for raw_item in limited_items:
+                clean_item: dict[str, str] = {}
+                for repeated_field_key in repeated_field_keys:
+                    field_meta = field_meta_by_key.get(repeated_field_key) or {}
+                    field_type = _normalize_process_field_type(field_meta.get("field_type"))
+                    field_size = _normalize_process_field_size(field_meta.get("size"), field_type)
+                    clean_value = str(raw_item.get(repeated_field_key) or "").strip()
+                    if field_type == "flag":
+                        clean_item[repeated_field_key] = "1" if clean_value == "1" else "0"
+                        continue
+                    if isinstance(field_size, int) and field_size > 0:
+                        clean_value = clean_value[:field_size]
+                    if clean_value:
+                        clean_item[repeated_field_key] = clean_value
+                normalized_items.append(clean_item)
+
+            submitted_quantity_values_by_rule[rule_key] = normalized_items
         hidden_process_targets = get_hidden_process_targets_from_rules(
             process_setting.get("process_subsequent_fields"),
             current_process_values_by_field,
@@ -683,6 +907,13 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 storage_key = build_menu_process_field_storage_key(clean_menu_key, field_key)
                 if storage_key:
                     existing_profile_fields.pop(storage_key, None)
+            for rule in quantity_rules:
+                quantity_storage_key = build_menu_process_quantity_storage_key(
+                    clean_menu_key,
+                    str(rule.get("key") or "").strip().lower(),
+                )
+                if quantity_storage_key:
+                    existing_profile_fields.pop(quantity_storage_key, None)
 
             member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
             try:
@@ -729,10 +960,52 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        missing_required_quantity_labels: list[str] = []
+        for rule in quantity_rules:
+            rule_key = str(rule.get("key") or "").strip().lower()
+            if rule_key not in submitted_quantity_values_by_rule:
+                continue
+            repeated_field_keys = [
+                str(raw_field_key or "").strip().lower()
+                for raw_field_key in rule.get("repeated_field_keys", [])
+                if str(raw_field_key or "").strip()
+            ]
+            for item_index, item_values in enumerate(submitted_quantity_values_by_rule.get(rule_key, []), start=1):
+                for repeated_field_key in repeated_field_keys:
+                    field_meta = field_meta_by_key.get(repeated_field_key) or {}
+                    if not bool(field_meta.get("is_required")):
+                        continue
+                    field_type = _normalize_process_field_type(field_meta.get("field_type"))
+                    if field_type == "flag":
+                        continue
+                    clean_value = str(item_values.get(repeated_field_key) or "").strip()
+                    if clean_value:
+                        continue
+                    field_label = str(field_meta.get("label") or repeated_field_key).strip() or repeated_field_key
+                    composed_label = f"{rule.get('item_label') or 'Item'} {item_index} - {field_label}"
+                    if composed_label not in missing_required_quantity_labels:
+                        missing_required_quantity_labels.append(composed_label)
+
+        if missing_required_quantity_labels:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    menu=clean_menu_key,
+                    profile_error="Preencha os campos obrigatÃ³rios: " + ", ".join(missing_required_quantity_labels) + ".",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         for field_key in active_section_field_keys:
             storage_key = build_menu_process_field_storage_key(clean_menu_key, field_key)
             if storage_key:
                 existing_profile_fields.pop(storage_key, None)
+        for rule in quantity_rules:
+            rule_key = str(rule.get("key") or "").strip().lower()
+            if rule_key not in submitted_quantity_values_by_rule:
+                continue
+            quantity_storage_key = build_menu_process_quantity_storage_key(clean_menu_key, rule_key)
+            if quantity_storage_key:
+                existing_profile_fields.pop(quantity_storage_key, None)
 
         submitted_section_values: dict[str, str] = {}
         for field_key in active_section_field_keys:
@@ -758,6 +1031,21 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 if not absence_process_mode:
                     existing_profile_fields[storage_key] = clean_value
                 submitted_section_values[field_key] = clean_value
+
+        for rule in quantity_rules:
+            rule_key = str(rule.get("key") or "").strip().lower()
+            if rule_key not in submitted_quantity_values_by_rule:
+                continue
+            serialized_quantity_values = serialize_menu_process_quantity_values(
+                submitted_quantity_values_by_rule.get(rule_key, [])
+            )
+            quantity_storage_key = build_menu_process_quantity_storage_key(clean_menu_key, rule_key)
+            if history_process_mode:
+                if quantity_storage_key and serialized_quantity_values:
+                    submitted_section_values[quantity_storage_key] = serialized_quantity_values
+                continue
+            if quantity_storage_key and serialized_quantity_values:
+                existing_profile_fields[quantity_storage_key] = serialized_quantity_values
 
         if history_process_mode and not submitted_section_values:
             return RedirectResponse(

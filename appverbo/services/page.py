@@ -20,9 +20,12 @@ from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     build_menu_process_field_storage_key,
+    build_menu_process_quantity_storage_key,
+    get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,
     resolve_meu_perfil_builtin_duplicate_field_key,
     parse_menu_process_records,
+    parse_menu_process_quantity_values,
     parse_member_profile_fields,
 )
 
@@ -88,6 +91,7 @@ def get_page_data(
         actor_profile_fields = parse_member_profile_fields(raw_profile_fields)
     menu_process_values_map: dict[str, dict[str, str]] = {}
     menu_process_history_map: dict[str, list[dict[str, Any]]] = {}
+    menu_process_quantity_values_map: dict[str, dict[str, list[dict[str, str]]]] = {}
     for sidebar_item in sidebar_menu_settings:
         menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
         if not menu_key or menu_key in {"home", "perfil", "administrativo", MENU_MEU_PERFIL_KEY}:
@@ -113,6 +117,23 @@ def get_page_data(
             menu_values[field_key] = storage_value
         if menu_values:
             menu_process_values_map[menu_key] = menu_values
+        quantity_values_by_rule: dict[str, list[dict[str, str]]] = {}
+        for quantity_rule in sidebar_item.get("process_quantity_fields") or []:
+            if not isinstance(quantity_rule, dict):
+                continue
+            rule_key = str(quantity_rule.get("key") or "").strip().lower()
+            if not rule_key:
+                continue
+            quantity_storage_key = build_menu_process_quantity_storage_key(menu_key, rule_key)
+            if not quantity_storage_key:
+                continue
+            quantity_values = parse_menu_process_quantity_values(
+                actor_profile_fields.get(quantity_storage_key)
+            )
+            if quantity_values:
+                quantity_values_by_rule[rule_key] = quantity_values
+        if quantity_values_by_rule:
+            menu_process_quantity_values_map[menu_key] = quantity_values_by_rule
         history_storage_key = build_menu_process_records_storage_key(menu_key)
         if history_storage_key:
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
@@ -132,6 +153,9 @@ def get_page_data(
     for sidebar_item in sidebar_menu_settings:
         if resolve_menu_key_alias(sidebar_item.get("key")) != MENU_MEU_PERFIL_KEY:
             continue
+        quantity_repeated_field_keys = get_menu_process_quantity_repeated_field_keys(
+            sidebar_item.get("process_quantity_fields")
+        )
         process_lists_by_key = {
             str(item.get("key") or "").strip().lower(): list(item.get("items") or [])
             for item in (sidebar_item.get("process_lists") or [])
@@ -187,6 +211,8 @@ def get_page_data(
             )
             effective_field_key = resolved_builtin_key or clean_field_key
             if effective_field_key in seen_effective_field_keys:
+                continue
+            if clean_field_key in quantity_repeated_field_keys:
                 continue
             seen_effective_field_keys.add(effective_field_key)
             effective_visible_rows.append(
@@ -267,6 +293,8 @@ def get_page_data(
                 ):
                     continue
                 if effective_field_key in seen_visible_fields:
+                    continue
+                if clean_field_key in quantity_repeated_field_keys:
                     continue
                 seen_visible_fields.add(effective_field_key)
                 visible_fields.append(effective_field_key)
@@ -647,6 +675,7 @@ def get_page_data(
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
         "menu_process_values_map": menu_process_values_map,
         "menu_process_history_map": menu_process_history_map,
+        "menu_process_quantity_values_map": menu_process_quantity_values_map,
         "profile_personal_visible_fields": profile_personal_visible_fields,
         "profile_personal_field_labels": profile_personal_field_labels,
         "profile_personal_field_section_map": profile_personal_field_section_map,

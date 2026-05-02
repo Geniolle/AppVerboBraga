@@ -18,6 +18,9 @@ def test_get_admin_process_settings_tabs_v1():
         "geral",
         "configuracao_campos",
         "campos_adicionais",
+        "campos_quantidade",
+        "lista",
+        "campos_subsequentes",
     ]
 
 
@@ -29,6 +32,7 @@ def test_resolve_admin_process_settings_tab_v1():
     assert resolve_admin_process_settings_tab_v1("geral") == "geral"
     assert resolve_admin_process_settings_tab_v1("configuracao-campos") == "configuracao_campos"
     assert resolve_admin_process_settings_tab_v1("campos_adicionais") == "campos_adicionais"
+    assert resolve_admin_process_settings_tab_v1("campos-quantidade") == "campos_quantidade"
     assert resolve_admin_process_settings_tab_v1("invalida") == "geral"
 
 
@@ -74,4 +78,4 @@ def test_build_admin_process_settings_context_v1():
 
     assert context["settings_tabs_enabled"] is True
     assert context["settings_tab"] == "campos_adicionais"
-    assert len(context["settings_tabs"]) == 3
+    assert len(context["settings_tabs"]) == 6

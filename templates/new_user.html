@@ -200,7 +200,7 @@
               {% set custom_type = custom_meta.get("field_type", "text") %}
               {% set custom_raw_value = user_personal_data.custom_fields.get(field_key, "") %}
               {% if custom_type != "header" %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}">
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}" data-profile-field-key="{{ field_key }}">
                 <span class="personal-label">{{ profile_personal_field_labels.get(field_key, field_key) }}</span>
                 {% if custom_type == "flag" %}
                 <strong class="personal-value">
@@ -216,6 +216,9 @@
             </div>
           </div>
           <form class="profile-edit-form" method="post" action="/users/profile/personal">
+            <input type="hidden" name="menu" value="meu_perfil">
+            <input type="hidden" name="target" value="#perfil-pessoal-card">
+            <input type="hidden" name="profile_section" value="{{ profile_personal_sections[0].key if profile_personal_sections else '' }}" data-meu-perfil-section-input>
             <div class="personal-grid">
               {% if "nome" in profile_personal_visible_fields %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
@@ -320,7 +323,7 @@
               {% set custom_required = custom_meta.get("is_required", False) %}
               {% set custom_list_options = custom_meta.get("list_options", []) %}
               {% if custom_type != "header" %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}">
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}" data-profile-field-key="{{ field_key }}">
                 <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}{% if custom_required and custom_type != "flag" %} *{% endif %}</label>
                 {% if custom_type == "flag" %}
                 <label class="profile-custom-flag-control">
@@ -1319,6 +1322,7 @@
             <a href="#settings-tab-campos-config" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-config">Configuração dos campos</a>
             {% if settings_owner_fields_enabled %}
             <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
+              <a href="#settings-tab-campos-quantidade" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-quantidade">Campos Quantidade</a>
               <a href="#settings-tab-lista" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="lista">Listas</a>
               <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
             {% endif %}
@@ -1601,6 +1605,138 @@
             </div>
           </div>
           {% if settings_owner_fields_enabled %}
+          <div id="settings-tab-campos-quantidade" class="process-edit-pane" data-process-edit-pane="campos-quantidade">
+            <div class="admin-subsection process-quantity-fields-panel-v1" id="settings-process-quantity-fields-card">
+              <h3>Campos Quantidade</h3>
+              <p class="muted process-tab-description-v1">Configure regras onde um campo numérico controla quantos blocos de outros campos serão exibidos no processo.</p>
+              <form method="post" action="/settings/menu/process-quantity-fields" data-process-quantity-fields-manager-v1="1">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+
+                <div class="configurable-items-manager-v1 process-quantity-fields-manager-v1">
+                  <div class="configurable-items-hidden-v1" data-process-quantity-fields-legacy-container>
+                    {% for quantity_rule in settings_edit_data.process_quantity_fields|default([]) %}
+                    <div class="process-quantity-field-row-v1" data-process-quantity-field-row>
+                      <input type="hidden" name="quantity_rule_key" value="{{ quantity_rule.key }}" disabled>
+                      <input type="hidden" name="quantity_rule_label" value="{{ quantity_rule.label }}" disabled>
+                      <input type="hidden" name="quantity_field_key" value="{{ quantity_rule.quantity_field_key }}" disabled>
+                      <input type="hidden" name="quantity_repeated_field_keys_json" value='{{ quantity_rule.repeated_field_keys|default([])|tojson }}' disabled>
+                      <input type="hidden" name="quantity_header_key" value="{{ quantity_rule.header_key|default('') }}" disabled>
+                      <input type="hidden" name="quantity_max_items" value="{{ quantity_rule.max_items|default(10) }}" disabled>
+                      <input type="hidden" name="quantity_item_label" value="{{ quantity_rule.item_label|default('Item') }}" disabled>
+                    </div>
+                    {% endfor %}
+                  </div>
+
+                  <div data-process-quantity-fields-hidden-container></div>
+
+                  <div class="configurable-items-editor-v1 process-quantity-fields-editor-v1">
+                    <div class="configurable-items-editor-grid-v1 process-quantity-fields-editor-grid-v1">
+                      <input type="hidden" data-process-quantity-editor-key>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-label">Nome da regra</label>
+                        <input id="process-quantity-editor-label" type="text" maxlength="80" data-process-quantity-editor-label>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-field">Campo origem da quantidade</label>
+                        <select id="process-quantity-editor-field" data-process-quantity-editor-field>
+                          <option value="">Selecione</option>
+                          {% for field in settings_edit_data.process_selectable_field_options|default([]) %}
+                            {% if field.field_type|default('text') == 'number' %}
+                            <option value="{{ field.key }}">{{ field.label }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-header-key">Cabeçalho do grupo</label>
+                        <select id="process-quantity-editor-header-key" data-process-quantity-editor-header-key>
+                          <option value="">Sem cabeçalho</option>
+                          {% for field in settings_edit_data.process_header_options|default([]) %}
+                            <option value="{{ field.key }}">{{ field.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-max-items">Quantidade máxima</label>
+                        <input id="process-quantity-editor-max-items" type="number" min="1" max="50" value="10" data-process-quantity-editor-max-items>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-item-label">Nome do item repetido</label>
+                        <input id="process-quantity-editor-item-label" type="text" maxlength="40" value="Item" data-process-quantity-editor-item-label>
+                      </div>
+
+                      <div class="field full">
+                        <label for="process-quantity-editor-repeated-fields">Campos repetidos</label>
+                        <select id="process-quantity-editor-repeated-fields" multiple size="6" data-process-quantity-editor-repeated-fields>
+                          {% for field in settings_edit_data.process_selectable_field_options|default([]) %}
+                            <option value="{{ field.key }}">{{ field.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field full">
+                        <div class="form-action-row">
+                          <button type="button" class="action-btn" data-process-quantity-editor-submit>Guardar</button>
+                          <button type="button" class="action-btn-cancel" data-process-quantity-editor-cancel>Cancelar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="configurable-items-list-v1 process-quantity-fields-created-v1">
+                    <div class="configurable-items-list-head-v1">
+                      <h4 class="configurable-items-list-title-v1">Regras criadas</h4>
+                      <span class="configurable-items-total-v1" data-process-quantity-total-label>0 regras</span>
+                    </div>
+
+                    <div class="configurable-items-table-wrap-v1">
+                      <table class="configurable-items-table-v1 process-quantity-fields-table-v1" data-process-quantity-table>
+                        <thead>
+                          <tr>
+                            <th>Regra</th>
+                            <th>Campo origem</th>
+                            <th>Campos repetidos</th>
+                            <th>Cabeçalho</th>
+                            <th>Limite</th>
+                            <th>Item</th>
+                            <th class="configurable-items-actions-col-v1">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody data-process-quantity-table-body></tbody>
+                      </table>
+                    </div>
+
+                    <p
+                      class="configurable-items-empty-v1"
+                      data-process-quantity-empty
+                      style="display: none;"
+                    >Sem regras criadas.</p>
+
+                    <div class="configurable-items-pagination-row-v1">
+                      <label class="configurable-items-page-size-v1">
+                        Entradas por página
+                        <select data-process-quantity-page-size>
+                          <option value="5" selected>5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                      </label>
+
+                      <div class="configurable-items-pagination-v1" data-process-quantity-pagination></div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
           <div id="settings-tab-lista" class="process-edit-pane" data-process-edit-pane="lista">
             <div class="admin-subsection process-lists-panel-v8" id="settings-process-lists-card">
               <h3>Listas</h3>
@@ -2592,17 +2728,19 @@
       sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
       visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
       menuProcessValuesMap: {{ menu_process_values_map|tojson }},
-      menuProcessHistoryMap: {{ menu_process_history_map|tojson }}
+      menuProcessHistoryMap: {{ menu_process_history_map|tojson }},
+      menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
     };
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260430-final-buttons-v1"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/new_user.js?v=20260501-menu-meu-perfil-v1"></script>
+  <script src="/static/js/new_user.js?v=20260502-process-quantity-v3"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
-<script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v3"></script>
+<script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>
