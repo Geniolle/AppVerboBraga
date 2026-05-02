@@ -604,25 +604,109 @@
   }
 
 
+  // APPVERBO_PROCESS_FIELDS_HEADER_RESOLVE_V3_START
 
-  function lerDraft_v6(elements, state) {
-    const selectedOption = elements.editorKey.options[elements.editorKey.selectedIndex];
-
-    if (!selectedOption || !selectedOption.value) {
-      return null;
+  function resolverHeaderKeyAtual_v9(elements) {
+    if (!elements) {
+      return "";
     }
 
-    const key = textoSeguro_v6(selectedOption.value).trim().toLowerCase();
-    const headerKey = textoSeguro_v6(elements.headerKey.value).trim().toLowerCase();
+    const candidates = [];
+
+    if (elements.headerKey) {
+      candidates.push(elements.headerKey);
+    }
+
+    const form = elements.editorKey ? elements.editorKey.closest("form") : null;
+
+    if (form) {
+      form.querySelectorAll("select").forEach(function (select) {
+        const name = normalizarChave_v6(select.name || "");
+        const id = normalizarChave_v6(select.id || "");
+        const dataMarker = String(select.getAttribute("data-process-fields-config-header-editor-key") || "");
+        const wrapperText = normalizarChave_v6(
+          select.closest(".field, .form-field, label, div")
+            ? select.closest(".field, .form-field, label, div").textContent
+            : ""
+        );
+
+        if (
+          dataMarker ||
+          name.includes("header") ||
+          id.includes("header") ||
+          wrapperText.includes("cabecalho") ||
+          wrapperText.includes("cabeçalho")
+        ) {
+          candidates.push(select);
+        }
+      });
+    }
+
+    for (const candidate of candidates) {
+      const value = normalizarChave_v6(candidate.value || "");
+
+      if (value) {
+        if (elements.headerKey && elements.headerKey !== candidate) {
+          elements.headerKey.value = value;
+        }
+
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  // APPVERBO_PROCESS_FIELDS_HEADER_RESOLVE_V3_END
+
+  // APPVERBO_PROCESS_FIELDS_HEADER_SAVE_FIX_V1_START
+
+  function obterHeaderLabelSelecionado_v8(elements, headerKey) {
+    if (!elements || !elements.headerKey || !headerKey) {
+      return "";
+    }
+
+    const option = Array.from(elements.headerKey.options || []).find(function (item) {
+      return normalizarChave_v6(item.value) === normalizarChave_v6(headerKey);
+    });
+
+    return option ? String(option.textContent || "").trim() : "";
+  }
+
+  function lerDraft_v8(elements, state) {
+    const selectedOption = elements.editorKey.options[elements.editorKey.selectedIndex];
+
+    const fieldKey = normalizarChave_v6(elements.editorKey.value);
+    const headerKey = resolverHeaderKeyAtual_v9(elements);
+
+    const fieldLabel = String(
+      selectedOption
+        ? (
+          selectedOption.dataset.processConfigLabel ||
+          selectedOption.textContent ||
+          fieldKey
+        )
+        : fieldKey
+    ).trim();
+
+    const headerLabel = obterHeaderLabelSelecionado_v8(elements, headerKey);
 
     return {
-      managerId: state.editingId || "item_" + Date.now() + "_" + key,
-      key: key,
-      label: textoSeguro_v6(selectedOption.dataset.processConfigLabel || selectedOption.textContent),
+      managerId: state.editingId || fieldKey,
+      key: fieldKey,
+      label: fieldLabel || fieldKey,
       headerKey: headerKey,
-      headerLabel: labelCabecalho_v6(state, headerKey)
+      headerLabel: headerLabel
     };
   }
+
+  function lerDraft_v6(elements, state) {
+    return lerDraft_v8(elements, state);
+  }
+
+  // APPVERBO_PROCESS_FIELDS_HEADER_SAVE_FIX_V1_END
+
+
 
   function validarDraft_v6(state, item) {
     if (!item || !item.key) {
@@ -674,27 +758,667 @@
   // (6) HIDDEN INPUTS
   //###################################################################################
 
-  function sincronizarHiddenInputs_v6(elements, state) {
-    elements.hiddenContainer.innerHTML = "";
+  // APPVERBO_PROCESS_FIELDS_HIDDEN_HEADERS_FIX_V1_START
 
-    state.items.forEach(function (item) {
-      const fieldInput = document.createElement("input");
-      fieldInput.type = "hidden";
-      fieldInput.name = "visible_fields";
-      fieldInput.value = item.key || "";
-      elements.hiddenContainer.appendChild(fieldInput);
+  function criarHiddenProcessField_v8(container, name, value) {
+    const input = document.createElement("input");
 
-      const headerInput = document.createElement("input");
-      headerInput.type = "hidden";
-      headerInput.name = "visible_headers";
-      headerInput.value = item.headerKey || "";
-      elements.hiddenContainer.appendChild(headerInput);
+    input.type = "hidden";
+    input.name = name;
+    input.value = value || "";
+    input.dataset.processFieldsGeneratedHiddenV8 = "1";
+
+    container.appendChild(input);
+  }
+
+  function obterHiddenContainerProcessFields_v8(elements, state) {
+    const form = elements && elements.editorKey ? elements.editorKey.closest("form") : null;
+
+    let container =
+      elements.hiddenContainer ||
+      elements.hiddenInputsContainer ||
+      elements.hiddenFieldsContainer ||
+      null;
+
+    if (!container && form) {
+      container = form.querySelector("[data-process-fields-hidden-container-v8='1']");
+    }
+
+    if (!container && form) {
+      container = document.createElement("div");
+      container.dataset.processFieldsHiddenContainerV8 = "1";
+      container.hidden = true;
+      form.appendChild(container);
+    }
+
+    return container;
+  }
+
+  function reconstruirHiddenInputs_v8(elements, state) {
+    const form = elements && elements.editorKey ? elements.editorKey.closest("form") : null;
+    const container = obterHiddenContainerProcessFields_v8(elements, state);
+
+    if (!container) {
+      return;
+    }
+
+    if (form) {
+      form.querySelectorAll("input[type='hidden'][name='visible_fields'], input[type='hidden'][name='visible_headers'], input[type='hidden'][name='visible_rows_json']").forEach(function (input) {
+        input.remove();
+      });
+    }
+
+    container.innerHTML = "";
+
+    // APPVERBO_PROCESS_FIELDS_ROWS_JSON_V3_START
+    const visibleRowsJson_v9 = [];
+
+    (state.items || []).forEach(function (item) {
+      const fieldKey = normalizarChave_v6(item.key);
+      const headerKey = normalizarChave_v6(item.headerKey || item.header_key || item.header || "");
+
+      if (!fieldKey) {
+        return;
+      }
+
+      visibleRowsJson_v9.push({
+        field_key: fieldKey,
+        header_key: headerKey
+      });
+
+      criarHiddenProcessField_v8(container, "visible_fields", fieldKey);
+      criarHiddenProcessField_v8(container, "visible_headers", headerKey);
     });
+
+    criarHiddenProcessField_v8(
+      container,
+      "visible_rows_json",
+      JSON.stringify(visibleRowsJson_v9)
+    );
+    // APPVERBO_PROCESS_FIELDS_ROWS_JSON_V3_END
+  }
+
+  function reconstruirHiddenInputs_v6(elements, state) {
+    return reconstruirHiddenInputs_v8(elements, state);
+  }
+
+  // APPVERBO_PROCESS_FIELDS_HIDDEN_HEADERS_FIX_V1_END
+
+
+
+
+  // APPVERBO_PROCESS_FIELDS_SYNC_ALIAS_V2_START
+
+  function sincronizarHiddenInputs_v6(elements, state) {
+    return reconstruirHiddenInputs_v8(elements, state);
+  }
+
+  // APPVERBO_PROCESS_FIELDS_SYNC_ALIAS_V2_END
+
+
+  // APPVERBO_PROCESS_FIELDS_HEADER_PERSIST_V4_START
+
+  function resolverHeaderKeyAtual_v10(elements) {
+    if (!elements) {
+      return "";
+    }
+
+    const candidates = [];
+
+    if (elements.headerKey) {
+      candidates.push(elements.headerKey);
+    }
+
+    const form = elements.editorKey ? elements.editorKey.closest("form") : null;
+
+    if (form) {
+      form.querySelectorAll("select").forEach(function (select) {
+        const name = normalizarChave_v6(select.name || "");
+        const id = normalizarChave_v6(select.id || "");
+        const marker = String(select.getAttribute("data-process-fields-config-header-editor-key") || "");
+        const wrapperText = normalizarChave_v6(
+          select.closest(".field, .form-field, label, div")
+            ? select.closest(".field, .form-field, label, div").textContent
+            : ""
+        );
+
+        if (
+          marker ||
+          name.includes("header") ||
+          id.includes("header") ||
+          wrapperText.includes("cabecalho") ||
+          wrapperText.includes("cabeçalho")
+        ) {
+          candidates.push(select);
+        }
+      });
+    }
+
+    for (const candidate of candidates) {
+      const value = normalizarChave_v6(candidate.value || "");
+
+      if (!value) {
+        continue;
+      }
+
+      if (elements.headerKey && elements.headerKey !== candidate) {
+        elements.headerKey.value = value;
+      }
+
+      return value;
+    }
+
+    return "";
+  }
+
+  function resolverHeaderLabelAtual_v10(elements, headerKey) {
+    if (!elements || !headerKey) {
+      return "";
+    }
+
+    const form = elements.editorKey ? elements.editorKey.closest("form") : null;
+    const candidates = [];
+
+    if (elements.headerKey) {
+      candidates.push(elements.headerKey);
+    }
+
+    if (form) {
+      form.querySelectorAll("select").forEach(function (select) {
+        candidates.push(select);
+      });
+    }
+
+    for (const select of candidates) {
+      const option = Array.from(select.options || []).find(function (item) {
+        return normalizarChave_v6(item.value || "") === normalizarChave_v6(headerKey);
+      });
+
+      if (option) {
+        return String(option.textContent || "").trim();
+      }
+    }
+
+    return labelCabecalho_v6 ? labelCabecalho_v6({}, headerKey) : "";
+  }
+
+  function lerDraft_v10(elements, state) {
+    const fieldKey = normalizarChave_v6(elements.editorKey ? elements.editorKey.value : "");
+    const headerKey = resolverHeaderKeyAtual_v10(elements);
+
+    const selectedOption = elements.editorKey
+      ? elements.editorKey.options[elements.editorKey.selectedIndex]
+      : null;
+
+    const fieldLabel = String(
+      selectedOption
+        ? (
+          selectedOption.dataset.processConfigLabel ||
+          selectedOption.textContent ||
+          fieldKey
+        )
+        : fieldKey
+    ).trim();
+
+    const headerLabel = resolverHeaderLabelAtual_v10(elements, headerKey);
+
+    return {
+      managerId: state.editingId || fieldKey,
+      key: fieldKey,
+      label: fieldLabel || fieldKey,
+      headerKey: headerKey,
+      headerLabel: headerLabel || "Sem cabeçalho"
+    };
+  }
+
+  function lerDraft_v6(elements, state) {
+    return lerDraft_v10(elements, state);
+  }
+
+  function criarHiddenProcessField_v10(container, name, value) {
+    const input = document.createElement("input");
+
+    input.type = "hidden";
+    input.name = name;
+    input.value = value || "";
+    input.dataset.processFieldsHeaderPersistV4 = "1";
+
+    container.appendChild(input);
+  }
+
+  function obterHiddenContainerProcessFields_v10(elements) {
+    const form = elements && elements.editorKey ? elements.editorKey.closest("form") : null;
+
+    let container =
+      elements.hiddenContainer ||
+      elements.hiddenInputsContainer ||
+      elements.hiddenFieldsContainer ||
+      null;
+
+    if (!container && form) {
+      container = form.querySelector("[data-process-fields-config-hidden-container]");
+    }
+
+    if (!container && form) {
+      container = form.querySelector("[data-process-fields-hidden-container-v10='1']");
+    }
+
+    if (!container && form) {
+      container = document.createElement("div");
+      container.hidden = true;
+      container.dataset.processFieldsHiddenContainerV10 = "1";
+      form.appendChild(container);
+    }
+
+    return container;
+  }
+
+  function sincronizarHiddenInputs_v10(elements, state) {
+    const form = elements && elements.editorKey ? elements.editorKey.closest("form") : null;
+    const container = obterHiddenContainerProcessFields_v10(elements);
+
+    if (!container) {
+      return;
+    }
+
+    if (form) {
+      form
+        .querySelectorAll("input[type='hidden'][name='visible_fields'], input[type='hidden'][name='visible_headers'], input[type='hidden'][name='visible_rows_json']")
+        .forEach(function (input) {
+          input.remove();
+        });
+    }
+
+    container.innerHTML = "";
+
+    const visibleRows = [];
+
+    (state.items || []).forEach(function (item) {
+      const fieldKey = normalizarChave_v6(item.key);
+      const headerKey = normalizarChave_v6(item.headerKey || item.header_key || item.header || "");
+
+      if (!fieldKey) {
+        return;
+      }
+
+      visibleRows.push({
+        field_key: fieldKey,
+        header_key: headerKey
+      });
+
+      criarHiddenProcessField_v10(container, "visible_fields", fieldKey);
+      criarHiddenProcessField_v10(container, "visible_headers", headerKey);
+    });
+
+    criarHiddenProcessField_v10(
+      container,
+      "visible_rows_json",
+      JSON.stringify(visibleRows)
+    );
+  }
+
+  function sincronizarHiddenInputs_v6(elements, state) {
+    return sincronizarHiddenInputs_v10(elements, state);
+  }
+
+  function reconstruirHiddenInputs_v6(elements, state) {
+    return sincronizarHiddenInputs_v10(elements, state);
+  }
+
+  // APPVERBO_PROCESS_FIELDS_HEADER_PERSIST_V4_END
+
+  // APPVERBO_PROCESS_FIELDS_NATIVE_SUBMIT_V12_START
+
+  function garantirAcaoFormularioProcessFields_v12(form) {
+    if (!form) {
+      return;
+    }
+
+    const actionText = String(form.getAttribute("action") || "");
+
+    if (!actionText || !actionText.includes("/settings/menu/process-fields")) {
+      form.setAttribute("action", "/settings/menu/process-fields");
+    }
+
+    const methodText = String(form.getAttribute("method") || "");
+
+    if (!methodText || methodText.toUpperCase() !== "POST") {
+      form.setAttribute("method", "post");
+    }
   }
 
   function submitNativo_v6(form) {
+    if (!form) {
+      return;
+    }
+
+    if (form.dataset.processFieldsNativeSubmitV12 === "1") {
+      return;
+    }
+
+    form.dataset.processFieldsNativeSubmitV12 = "1";
+
+    garantirAcaoFormularioProcessFields_v12(form);
+
     HTMLFormElement.prototype.submit.call(form);
   }
+
+  // APPVERBO_PROCESS_FIELDS_NATIVE_SUBMIT_V12_END
+
+
+
+  // APPVERBO_PROCESS_FIELDS_NO_NATIVE_DOUBLE_POST_V12_START
+
+  function formularioConfiguracaoCampos_v12(form) {
+    if (!form || typeof form.querySelector !== "function") {
+      return false;
+    }
+
+    const actionText = String(form.getAttribute("action") || form.action || "");
+
+    return (
+      actionText.includes("/settings/menu/process-fields") ||
+      Boolean(form.querySelector("[data-process-fields-config-hidden-container]")) ||
+      Boolean(form.querySelector("[data-process-fields-config-table]")) ||
+      Boolean(form.querySelector("[data-process-fields-config-submit]"))
+    );
+  }
+
+  function botaoConfiguracaoCampos_v12(event) {
+    if (!event || !event.target || typeof event.target.closest !== "function") {
+      return null;
+    }
+
+    return event.target.closest("button, input[type='submit'], input[type='button']");
+  }
+
+  document.addEventListener(
+    "click",
+    function (event) {
+      const button = botaoConfiguracaoCampos_v12(event);
+
+      if (!button) {
+        return;
+      }
+
+      const form = button.closest("form");
+
+      if (!formularioConfiguracaoCampos_v12(form)) {
+        return;
+      }
+
+      if (button.dataset.processFieldsAllowNativeV12 === "1") {
+        return;
+      }
+
+      event.preventDefault();
+    },
+    true
+  );
+
+  document.addEventListener(
+    "submit",
+    function (event) {
+      const form = event.target;
+
+      if (!formularioConfiguracaoCampos_v12(form)) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (form.dataset.processFieldsConfirmSaveActiveV11 === "1") {
+        return;
+      }
+
+      if (typeof submitNativo_v6 === "function") {
+        submitNativo_v6(form);
+      }
+    },
+    true
+  );
+
+  // APPVERBO_PROCESS_FIELDS_NO_NATIVE_DOUBLE_POST_V12_END
+
+
+  // APPVERBO_PROCESS_FIELDS_KEY_BASED_HEADER_SAVE_V14_START
+
+  function obterItemExistentePorCampo_v14(state, fieldKey) {
+    const cleanFieldKey = normalizarChave_v6(fieldKey);
+
+    if (!cleanFieldKey || !state || !Array.isArray(state.items)) {
+      return null;
+    }
+
+    return state.items.find(function (item) {
+      return normalizarChave_v6(item.key) === cleanFieldKey;
+    }) || null;
+  }
+
+  function obterHeaderKeyEditor_v14(elements) {
+    if (!elements || !elements.headerKey) {
+      return "";
+    }
+
+    return normalizarChave_v6(elements.headerKey.value || "");
+  }
+
+  function obterLabelCampoEditor_v14(elements, fieldKey) {
+    if (!elements || !elements.editorKey) {
+      return fieldKey || "";
+    }
+
+    const selectedOption = elements.editorKey.options[elements.editorKey.selectedIndex];
+
+    if (selectedOption) {
+      return String(
+        selectedOption.dataset.processConfigLabel ||
+        selectedOption.textContent ||
+        fieldKey ||
+        ""
+      ).trim();
+    }
+
+    return fieldKey || "";
+  }
+
+  function obterLabelCabecalhoEditor_v14(elements, state, headerKey) {
+    const cleanHeaderKey = normalizarChave_v6(headerKey);
+
+    if (!cleanHeaderKey) {
+      return "Sem cabeçalho";
+    }
+
+    if (state && Array.isArray(state.headerOptions)) {
+      const stateOption = state.headerOptions.find(function (item) {
+        return normalizarChave_v6(item.key) === cleanHeaderKey;
+      });
+
+      if (stateOption && stateOption.label) {
+        return String(stateOption.label || "").trim();
+      }
+    }
+
+    if (elements && elements.headerKey) {
+      const option = Array.from(elements.headerKey.options || []).find(function (item) {
+        return normalizarChave_v6(item.value) === cleanHeaderKey;
+      });
+
+      if (option) {
+        return String(option.textContent || "").trim();
+      }
+    }
+
+    return cleanHeaderKey;
+  }
+
+  function lerDraft_v14(elements, state) {
+    const fieldKey = normalizarChave_v6(elements && elements.editorKey ? elements.editorKey.value : "");
+    const headerKey = obterHeaderKeyEditor_v14(elements);
+    const existingItem = obterItemExistentePorCampo_v14(state, fieldKey);
+
+    if (!fieldKey) {
+      return null;
+    }
+
+    return {
+      managerId: existingItem && existingItem.managerId ? existingItem.managerId : fieldKey,
+      key: fieldKey,
+      label: obterLabelCampoEditor_v14(elements, fieldKey) || fieldKey,
+      headerKey: headerKey,
+      headerLabel: obterLabelCabecalhoEditor_v14(elements, state, headerKey)
+    };
+  }
+
+  function lerDraft_v6(elements, state) {
+    return lerDraft_v14(elements, state);
+  }
+
+  function normalizarItensPorCampo_v14(state) {
+    if (!state || !Array.isArray(state.items)) {
+      return [];
+    }
+
+    const normalizedItems = [];
+    const indexByFieldKey = new Map();
+
+    state.items.forEach(function (item) {
+      const fieldKey = normalizarChave_v6(item && item.key ? item.key : "");
+
+      if (!fieldKey) {
+        return;
+      }
+
+      const headerKey = normalizarChave_v6(
+        item.headerKey ||
+        item.header_key ||
+        item.header ||
+        ""
+      );
+
+      const normalizedItem = {
+        managerId: item.managerId || fieldKey,
+        key: fieldKey,
+        label: item.label || fieldKey,
+        headerKey: headerKey,
+        headerLabel: headerKey
+          ? (item.headerLabel || item.header_label || headerKey)
+          : "Sem cabeçalho"
+      };
+
+      if (indexByFieldKey.has(fieldKey)) {
+        const existingIndex = indexByFieldKey.get(fieldKey);
+        const existingItem = normalizedItems[existingIndex];
+
+        if (headerKey || !existingItem.headerKey) {
+          normalizedItems[existingIndex] = normalizedItem;
+        }
+
+        return;
+      }
+
+      indexByFieldKey.set(fieldKey, normalizedItems.length);
+      normalizedItems.push(normalizedItem);
+    });
+
+    state.items = normalizedItems;
+
+    return normalizedItems;
+  }
+
+  function criarHiddenProcessField_v14(container, name, value) {
+    const input = document.createElement("input");
+
+    input.type = "hidden";
+    input.name = name;
+    input.value = value || "";
+    input.dataset.processFieldsKeyBasedHeaderSaveV14 = "1";
+
+    container.appendChild(input);
+  }
+
+  function obterHiddenContainerProcessFields_v14(elements) {
+    const form = elements && elements.editorKey ? elements.editorKey.closest("form") : null;
+
+    let container =
+      elements.hiddenContainer ||
+      elements.hiddenInputsContainer ||
+      elements.hiddenFieldsContainer ||
+      null;
+
+    if (!container && form) {
+      container = form.querySelector("[data-process-fields-config-hidden-container]");
+    }
+
+    if (!container && form) {
+      container = form.querySelector("[data-process-fields-hidden-container-v14='1']");
+    }
+
+    if (!container && form) {
+      container = document.createElement("div");
+      container.hidden = true;
+      container.dataset.processFieldsHiddenContainerV14 = "1";
+      form.appendChild(container);
+    }
+
+    return container;
+  }
+
+  function sincronizarHiddenInputs_v14(elements, state) {
+    const form = elements && elements.editorKey ? elements.editorKey.closest("form") : null;
+    const container = obterHiddenContainerProcessFields_v14(elements);
+
+    if (!container) {
+      return;
+    }
+
+    if (form) {
+      form
+        .querySelectorAll("input[type='hidden'][name='visible_fields'], input[type='hidden'][name='visible_headers'], input[type='hidden'][name='visible_rows_json']")
+        .forEach(function (input) {
+          input.remove();
+        });
+    }
+
+    container.innerHTML = "";
+
+    const visibleRows = [];
+    const normalizedItems = normalizarItensPorCampo_v14(state);
+
+    normalizedItems.forEach(function (item) {
+      const fieldKey = normalizarChave_v6(item.key);
+      const headerKey = normalizarChave_v6(item.headerKey || "");
+
+      if (!fieldKey) {
+        return;
+      }
+
+      visibleRows.push({
+        field_key: fieldKey,
+        header_key: headerKey
+      });
+
+      criarHiddenProcessField_v14(container, "visible_fields", fieldKey);
+      criarHiddenProcessField_v14(container, "visible_headers", headerKey);
+    });
+
+    criarHiddenProcessField_v14(
+      container,
+      "visible_rows_json",
+      JSON.stringify(visibleRows)
+    );
+  }
+
+  function sincronizarHiddenInputs_v6(elements, state) {
+    return sincronizarHiddenInputs_v14(elements, state);
+  }
+
+  function reconstruirHiddenInputs_v6(elements, state) {
+    return sincronizarHiddenInputs_v14(elements, state);
+  }
+
+  // APPVERBO_PROCESS_FIELDS_KEY_BASED_HEADER_SAVE_V14_END
 
   //###################################################################################
   // (7) TABELA
