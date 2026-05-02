@@ -90,20 +90,6 @@
     return null;
   }
 
-  function getReadonlyFieldByKey(card, fieldKey) {
-    const readonlyGrid = card.querySelector(".profile-readonly .personal-grid");
-    if (!readonlyGrid) {
-      return null;
-    }
-
-    const targetLabel = normalizeLookupText(getBuiltinFieldLabel(fieldKey));
-
-    return Array.from(readonlyGrid.querySelectorAll(".personal-item")).find((item) => {
-      const label = item.querySelector(".personal-label");
-      return normalizeLookupText(label ? label.textContent : "") === targetLabel;
-    }) || null;
-  }
-
   function reorderContainerByFieldOrder(container, resolveElement, itemSelector) {
     if (!container || !profilePersonalVisibleFields.length) {
       return;
@@ -132,7 +118,6 @@
       return;
     }
 
-    const card = document.getElementById("perfil-pessoal-card");
     const formGrid =
       form.querySelector(".personal-grid") ||
       form.querySelector(".form-grid") ||
@@ -147,15 +132,6 @@
     const actionsRow = form.querySelector(".profile-edit-actions");
     if (actionsRow) {
       actionsRow.style.order = String(profilePersonalVisibleFields.length + 100);
-    }
-
-    if (card) {
-      const readonlyGrid = card.querySelector(".profile-readonly .personal-grid");
-      reorderContainerByFieldOrder(
-        readonlyGrid,
-        (fieldKey) => getReadonlyFieldByKey(card, fieldKey),
-        ".personal-item"
-      );
     }
   }
 
