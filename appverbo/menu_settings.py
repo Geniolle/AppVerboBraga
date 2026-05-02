@@ -1718,6 +1718,50 @@ def update_sidebar_menu_process_fields_v4(
         else []
     )
 
+    # APPVERBO_PROCESS_FIELDS_PRESERVE_HEADERS_V13_START
+    existing_header_map: dict[str, str] = {}
+
+    existing_rows = menu_config.get("process_visible_field_rows")
+    if isinstance(existing_rows, list):
+        for existing_row in existing_rows:
+            if not isinstance(existing_row, dict):
+                continue
+
+            existing_field_key = str(existing_row.get("field_key") or "").strip().lower()
+            existing_header_key = str(existing_row.get("header_key") or "").strip().lower()
+
+            if existing_field_key and existing_header_key:
+                existing_header_map[existing_field_key] = existing_header_key
+
+    existing_process_header_map = menu_config.get("process_visible_field_header_map")
+    if isinstance(existing_process_header_map, dict):
+        for raw_field_key, raw_header_key in existing_process_header_map.items():
+            existing_field_key = str(raw_field_key or "").strip().lower()
+            existing_header_key = str(raw_header_key or "").strip().lower()
+
+            if existing_field_key and existing_header_key:
+                existing_header_map[existing_field_key] = existing_header_key
+
+    existing_legacy_header_map = menu_config.get("visible_field_headers")
+    if isinstance(existing_legacy_header_map, dict):
+        for raw_field_key, raw_header_key in existing_legacy_header_map.items():
+            existing_field_key = str(raw_field_key or "").strip().lower()
+            existing_header_key = str(raw_header_key or "").strip().lower()
+
+            if existing_field_key and existing_header_key:
+                existing_header_map[existing_field_key] = existing_header_key
+
+    incoming_has_any_header = any(
+        str(raw_header_key or "").strip()
+        for raw_header_key in raw_visible_headers
+    )
+
+    should_preserve_existing_headers = (
+        not incoming_has_any_header
+        and bool(existing_header_map)
+    )
+    # APPVERBO_PROCESS_FIELDS_PRESERVE_HEADERS_V13_END
+
     normalized_rows: list[dict[str, str]] = []
     seen_fields: set[str] = set()
 
@@ -1741,6 +1785,14 @@ def update_sidebar_menu_process_fields_v4(
 
         if header_key not in header_keys:
             header_key = ""
+
+        # APPVERBO_PROCESS_FIELDS_RESTORE_HEADER_ON_BLANK_SUBMIT_V13_START
+        if not header_key and should_preserve_existing_headers:
+            header_key = existing_header_map.get(field_key, "")
+
+            if header_key not in header_keys:
+                header_key = ""
+        # APPVERBO_PROCESS_FIELDS_RESTORE_HEADER_ON_BLANK_SUBMIT_V13_END
 
         seen_fields.add(field_key)
         normalized_rows.append(

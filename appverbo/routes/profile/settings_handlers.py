@@ -926,6 +926,7 @@ def edit_sidebar_menu_process_fields_handler(
     menu_key: str = Form(...),
     visible_fields: list[str] = Form(default=[]),
     visible_headers: list[str] = Form(default=[]),
+    visible_rows_json: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
@@ -976,11 +977,82 @@ def edit_sidebar_menu_process_fields_handler(
 
 
 
+
+
+        # APPVERBO_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_START
+        clean_visible_fields: list[str] = []
+        clean_visible_headers: list[str] = []
+        seen_visible_fields: set[str] = set()
+
+        raw_rows_json_text = str(visible_rows_json or "").strip()
+
+        if raw_rows_json_text:
+            try:
+                parsed_visible_rows = json.loads(raw_rows_json_text)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                parsed_visible_rows = []
+        else:
+            parsed_visible_rows = []
+
+        if isinstance(parsed_visible_rows, list):
+            for raw_row in parsed_visible_rows:
+                if not isinstance(raw_row, dict):
+                    continue
+
+                field_key = str(
+                    raw_row.get("field_key")
+                    or raw_row.get("fieldKey")
+                    or raw_row.get("key")
+                    or ""
+                ).strip().lower()
+
+                header_key = str(
+                    raw_row.get("header_key")
+                    or raw_row.get("headerKey")
+                    or raw_row.get("header")
+                    or ""
+                ).strip().lower()
+
+                if not field_key:
+                    continue
+
+                if field_key in seen_visible_fields:
+                    continue
+
+                seen_visible_fields.add(field_key)
+                clean_visible_fields.append(field_key)
+                clean_visible_headers.append(header_key)
+
+        if not clean_visible_fields:
+            raw_visible_fields_list = list(visible_fields or [])
+            raw_visible_headers_list = list(visible_headers or [])
+
+            for row_index, raw_field_key in enumerate(raw_visible_fields_list):
+                field_key = str(raw_field_key or "").strip().lower()
+
+                if not field_key:
+                    continue
+
+                if field_key in seen_visible_fields:
+                    continue
+
+                raw_header_key = (
+                    raw_visible_headers_list[row_index]
+                    if row_index < len(raw_visible_headers_list)
+                    else ""
+                )
+                header_key = str(raw_header_key or "").strip().lower()
+
+                seen_visible_fields.add(field_key)
+                clean_visible_fields.append(field_key)
+                clean_visible_headers.append(header_key)
+        # APPVERBO_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_END
+
         ok, error_message = update_sidebar_menu_process_fields(
             session=session,
             menu_key=clean_menu_key,
-            visible_fields=visible_fields,
-            visible_headers=visible_headers,
+            visible_fields=clean_visible_fields,
+            visible_headers=clean_visible_headers,
         )
 
         if not ok:
