@@ -20,6 +20,8 @@ from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     build_menu_process_field_storage_key,
+    is_meu_perfil_builtin_duplicate_field,
+    resolve_meu_perfil_builtin_duplicate_field_key,
     parse_menu_process_records,
     parse_member_profile_fields,
 )
@@ -121,6 +123,12 @@ def get_page_data(
     profile_personal_field_types: dict[str, str] = {}
     profile_personal_field_header_map: dict[str, str] = {}
     profile_personal_custom_field_meta: dict[str, dict[str, Any]] = {}
+    profile_personal_duplicate_custom_keys: set[str] = set()
+    profile_personal_effective_visible_rows: list[dict[str, str]] = []
+    meu_perfil_builtin_duplicate_labels = {
+        **dict(MENU_MEU_PERFIL_FIELD_LABELS),
+        "pais": "País",
+    }
     for sidebar_item in sidebar_menu_settings:
         if resolve_menu_key_alias(sidebar_item.get("key")) != MENU_MEU_PERFIL_KEY:
             continue
@@ -146,14 +154,64 @@ def get_page_data(
             profile_personal_field_types = option_types
         raw_header_map = sidebar_item.get("process_visible_field_header_map")
         if isinstance(raw_header_map, dict):
+            mapped_header_map: dict[str, str] = {}
+            for raw_key, raw_value in raw_header_map.items():
+                clean_field_key = str(raw_key or "").strip().lower()
+                clean_header_key = str(raw_value or "").strip().lower()
+                if not clean_field_key or not clean_header_key:
+                    continue
+                resolved_builtin_key = resolve_meu_perfil_builtin_duplicate_field_key(
+                    clean_field_key,
+                    option_labels.get(clean_field_key, ""),
+                    meu_perfil_builtin_duplicate_labels,
+                )
+                mapped_header_map[resolved_builtin_key or clean_field_key] = clean_header_key
+            profile_personal_field_header_map = mapped_header_map
+        raw_visible_rows = (
+            sidebar_item.get("process_visible_field_rows")
+            if isinstance(sidebar_item.get("process_visible_field_rows"), list)
+            else []
+        )
+        effective_visible_rows: list[dict[str, str]] = []
+        seen_effective_field_keys: set[str] = set()
+        for raw_row in raw_visible_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            clean_field_key = str(raw_row.get("field_key") or "").strip().lower()
+            if not clean_field_key:
+                continue
+            resolved_builtin_key = resolve_meu_perfil_builtin_duplicate_field_key(
+                clean_field_key,
+                option_labels.get(clean_field_key, ""),
+                meu_perfil_builtin_duplicate_labels,
+            )
+            effective_field_key = resolved_builtin_key or clean_field_key
+            if effective_field_key in seen_effective_field_keys:
+                continue
+            seen_effective_field_keys.add(effective_field_key)
+            effective_visible_rows.append(
+                {
+                    "field_key": effective_field_key,
+                    "header_key": str(raw_row.get("header_key") or "").strip().lower(),
+                }
+            )
+        if effective_visible_rows:
+            profile_personal_effective_visible_rows = effective_visible_rows
             profile_personal_field_header_map = {
-                str(raw_key or "").strip().lower(): str(raw_value or "").strip().lower()
-                for raw_key, raw_value in raw_header_map.items()
-                if str(raw_key or "").strip() and str(raw_value or "").strip()
+                str(row.get("field_key") or "").strip().lower(): str(row.get("header_key") or "").strip().lower()
+                for row in effective_visible_rows
+                if str(row.get("field_key") or "").strip() and str(row.get("header_key") or "").strip()
             }
         for custom_field in sidebar_item.get("process_additional_fields") or []:
             clean_key = str(custom_field.get("key") or "").strip().lower()
             if not clean_key.startswith("custom_"):
+                continue
+            if is_meu_perfil_builtin_duplicate_field(
+                clean_key,
+                custom_field.get("label"),
+                meu_perfil_builtin_duplicate_labels,
+            ):
+                profile_personal_duplicate_custom_keys.add(clean_key)
                 continue
             field_type = str(custom_field.get("field_type") or "text").strip().lower()
             if field_type not in {"text", "number", "email", "phone", "date", "flag", "header", "list"}:
@@ -182,11 +240,36 @@ def get_page_data(
                 "list_options": list(process_lists_by_key.get(list_key, [])) if field_type == "list" else [],
             }
         visible_raw = sidebar_item.get("process_visible_fields") or []
-        visible_fields = [
-            str(raw_key or "").strip().lower()
-            for raw_key in visible_raw
-            if str(raw_key or "").strip().lower() in profile_personal_field_labels
-        ]
+        visible_fields: list[str] = []
+        if profile_personal_effective_visible_rows:
+            visible_fields = [
+                str(row.get("field_key") or "").strip().lower()
+                for row in profile_personal_effective_visible_rows
+                if str(row.get("field_key") or "").strip()
+            ]
+        else:
+            seen_visible_fields: set[str] = set()
+            for raw_key in visible_raw:
+                clean_field_key = str(raw_key or "").strip().lower()
+                if not clean_field_key:
+                    continue
+                resolved_builtin_key = resolve_meu_perfil_builtin_duplicate_field_key(
+                    clean_field_key,
+                    option_labels.get(clean_field_key, ""),
+                    meu_perfil_builtin_duplicate_labels,
+                )
+                effective_field_key = resolved_builtin_key or clean_field_key
+                if (
+                    clean_field_key not in profile_personal_field_labels
+                    and effective_field_key not in profile_personal_field_labels
+                    and effective_field_key not in MENU_MEU_PERFIL_FIELD_LABELS
+                    and effective_field_key != "pais"
+                ):
+                    continue
+                if effective_field_key in seen_visible_fields:
+                    continue
+                seen_visible_fields.add(effective_field_key)
+                visible_fields.append(effective_field_key)
         if visible_fields:
             profile_personal_visible_fields = visible_fields
         elif profile_personal_field_labels:

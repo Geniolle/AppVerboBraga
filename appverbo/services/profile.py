@@ -25,6 +25,77 @@ def _normalize_process_rule_lookup_text(raw_value: Any) -> str:
     return "".join(char for char in normalized if unicodedata.category(char) != "Mn")
 
 
+def _normalize_meu_perfil_duplicate_lookup_text(raw_value: Any) -> str:
+    normalized = _normalize_process_rule_lookup_text(raw_value)
+    if not normalized:
+        return ""
+    return " ".join(normalized.replace("_", " ").replace("-", " ").split())
+
+
+def is_meu_perfil_builtin_duplicate_field(
+    field_key: Any,
+    field_label: Any,
+    builtin_field_labels: dict[str, str] | None = None,
+) -> bool:
+    clean_key = str(field_key or "").strip().lower()
+    if not clean_key.startswith("custom_"):
+        return False
+
+    builtin_labels = builtin_field_labels or {}
+    builtin_lookup_values: set[str] = set()
+
+    for builtin_key, builtin_label in builtin_labels.items():
+        normalized_key = _normalize_meu_perfil_duplicate_lookup_text(builtin_key)
+        normalized_label = _normalize_meu_perfil_duplicate_lookup_text(builtin_label)
+
+        if normalized_key:
+            builtin_lookup_values.add(normalized_key)
+        if normalized_label:
+            builtin_lookup_values.add(normalized_label)
+
+    if not builtin_lookup_values:
+        return False
+
+    normalized_custom_key = _normalize_meu_perfil_duplicate_lookup_text(clean_key.removeprefix("custom_"))
+    normalized_custom_label = _normalize_meu_perfil_duplicate_lookup_text(field_label)
+
+    return (
+        (normalized_custom_key in builtin_lookup_values if normalized_custom_key else False)
+        or (normalized_custom_label in builtin_lookup_values if normalized_custom_label else False)
+    )
+
+
+def resolve_meu_perfil_builtin_duplicate_field_key(
+    field_key: Any,
+    field_label: Any,
+    builtin_field_labels: dict[str, str] | None = None,
+) -> str:
+    clean_key = str(field_key or "").strip().lower()
+    if not clean_key.startswith("custom_"):
+        return ""
+
+    builtin_labels = builtin_field_labels or {}
+    builtin_lookup_by_key: dict[str, str] = {}
+
+    for builtin_key, builtin_label in builtin_labels.items():
+        normalized_key = _normalize_meu_perfil_duplicate_lookup_text(builtin_key)
+        normalized_label = _normalize_meu_perfil_duplicate_lookup_text(builtin_label)
+
+        if normalized_key:
+            builtin_lookup_by_key[normalized_key] = str(builtin_key or "").strip().lower()
+        if normalized_label:
+            builtin_lookup_by_key[normalized_label] = str(builtin_key or "").strip().lower()
+
+    normalized_custom_key = _normalize_meu_perfil_duplicate_lookup_text(clean_key.removeprefix("custom_"))
+    normalized_custom_label = _normalize_meu_perfil_duplicate_lookup_text(field_label)
+
+    if normalized_custom_key and normalized_custom_key in builtin_lookup_by_key:
+        return builtin_lookup_by_key[normalized_custom_key]
+    if normalized_custom_label and normalized_custom_label in builtin_lookup_by_key:
+        return builtin_lookup_by_key[normalized_custom_label]
+    return ""
+
+
 def normalize_process_subsequent_operator(raw_value: Any) -> str:
     clean_value = str(raw_value or "equals").strip().lower()
     if clean_value in PROCESS_SUBSEQUENT_ALLOWED_OPERATORS:
@@ -507,6 +578,7 @@ __all__ = [
     "is_process_subsequent_rule_met",
     "get_hidden_process_targets_from_rules",
     "filter_process_fields_by_hidden_targets",
+    "is_meu_perfil_builtin_duplicate_field",
     "parse_member_profile_fields",
     "serialize_member_profile_fields",
     "build_menu_process_field_storage_key",

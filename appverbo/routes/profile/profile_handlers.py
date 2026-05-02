@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
+    MENU_MEU_PERFIL_FIELD_LABELS,
     MENU_MEU_PERFIL_KEY,
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
@@ -40,6 +41,10 @@ from appverbo.routes.profile.router import router
 PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag"}
 PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
+MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
+    **dict(MENU_MEU_PERFIL_FIELD_LABELS),
+    "pais": "País",
+}
 
 def _normalize_process_field_type(raw_field_type: Any) -> str:
     clean_field_type = str(raw_field_type or PROCESS_DEFAULT_FIELD_TYPE).strip().lower()
@@ -322,6 +327,12 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 continue
             if clean_key not in option_keys:
                 continue
+            if is_meu_perfil_builtin_duplicate_field(
+                clean_key,
+                raw_item.get("label"),
+                MEU_PERFIL_BUILTIN_DUPLICATE_LABELS,
+            ):
+                continue
             field_type = str(raw_item.get("field_type") or "text").strip().lower()
             if field_type not in {"text", "number", "email", "phone", "date", "flag", "header"}:
                 field_type = "text"
@@ -358,6 +369,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             )
             if clean_key.startswith("custom_")
             and clean_key in option_keys
+            and clean_key in custom_field_meta
             and str((custom_field_meta.get(clean_key) or {}).get("field_type") or "") != "header"
         ]
         current_meu_perfil_values: dict[str, str] = {
