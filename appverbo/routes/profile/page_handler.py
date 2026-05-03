@@ -134,6 +134,11 @@ def new_user_page(
     settings_edit_key: str = "",
     settings_action: str = "",
     settings_tab: str = "",
+    target: str = "",
+    profile_section: str = "",
+    dynamic_process_section: str = "",
+    section_key: str = "",
+    appverbo_after_save: str = "",
 ) -> HTMLResponse:
     resolved_profile_tab = profile_tab.strip().lower()
     if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
@@ -207,8 +212,16 @@ def new_user_page(
             for raw_key in page_data.get("visible_sidebar_menu_keys", [])
             if str(raw_key or "").strip()
         }
-        if resolved_menu != "perfil" and resolved_menu not in visible_menu_keys:
+        # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_START
+        # O menu "meu_perfil" e um processo especial que pode nao aparecer em
+        # visible_sidebar_menu_keys, mas deve ser aceite quando vem no redirect
+        # pos-save. Caso contrario, /users/new?menu=meu_perfil cai em Home.
+        if (
+            resolved_menu not in {"perfil", MENU_MEU_PERFIL_KEY}
+            and resolved_menu not in visible_menu_keys
+        ):
             resolved_menu = "home"
+        # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
         next_entity_internal_number = get_next_entity_internal_number(session)
         entity_edit_data = get_entity_edit_data(
@@ -239,6 +252,26 @@ def new_user_page(
         sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
     )
 
+    # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
+    clean_target_from_query = str(target or "").strip()
+    clean_profile_section_from_query = str(profile_section or "").strip().lower()
+    clean_dynamic_section_from_query = str(
+        dynamic_process_section or section_key or ""
+    ).strip()
+
+    if clean_target_from_query:
+        initial_menu_target = clean_target_from_query
+
+    if resolved_menu == MENU_MEU_PERFIL_KEY:
+        initial_menu_target = "#perfil-pessoal-card"
+
+    if clean_dynamic_section_from_query:
+        initial_dynamic_process_section = clean_dynamic_section_from_query
+
+    is_post_save_return = str(appverbo_after_save or "").strip() == "1"
+    # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
+
+
     context = {
         "request": request,
         "errors": [error] if error else [],
@@ -268,6 +301,10 @@ def new_user_page(
         "initial_menu": resolved_menu,
         "initial_menu_target": initial_menu_target,
         "initial_dynamic_process_section": initial_dynamic_process_section,
+        "initial_profile_section": clean_profile_section_from_query,
+        "requested_profile_section": clean_profile_section_from_query,
+        "requested_dynamic_process_section": clean_dynamic_section_from_query,
+        "appverbo_after_save": is_post_save_return,
         "admin_tab": resolved_admin_tab,
         "current_user_can_manage_all_entities": bool(
             entity_permissions["can_manage_all_entities"]
