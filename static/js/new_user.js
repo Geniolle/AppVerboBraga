@@ -7221,6 +7221,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   function getCurrentMenuReturnUrlV6(form) {
     const currentUrl = getCurrentUrlReturnUrlV6();
 
+    const urlMenu = normalizeReturnUrlKeyV6(currentUrl.searchParams.get("menu"));
+
+    if (urlMenu) {
+      return urlMenu;
+    }
+
     const formMenu = normalizeReturnUrlKeyV6(
       getFormValueReturnUrlV6(form, [
         "menu",
@@ -7232,12 +7238,6 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
     if (formMenu) {
       return formMenu;
-    }
-
-    const urlMenu = normalizeReturnUrlKeyV6(currentUrl.searchParams.get("menu"));
-
-    if (urlMenu) {
-      return urlMenu;
     }
 
     if (typeof initialMenu !== "undefined") {

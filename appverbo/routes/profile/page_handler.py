@@ -216,9 +216,13 @@ def new_user_page(
         # O menu "meu_perfil" e um processo especial que pode nao aparecer em
         # visible_sidebar_menu_keys, mas deve ser aceite quando vem no redirect
         # pos-save. Caso contrario, /users/new?menu=meu_perfil cai em Home.
+        # Tambem permite menus nao visiveis se for retorno pos-save, para manter
+        # o contexto de edicao.
+        is_post_save_return = str(appverbo_after_save or "").strip() == "1"
         if (
             resolved_menu not in {"perfil", MENU_MEU_PERFIL_KEY}
             and resolved_menu not in visible_menu_keys
+            and not is_post_save_return
         ):
             resolved_menu = "home"
         # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
