@@ -275,13 +275,54 @@ def _resolve_submitted_process_quantity_items(
     submitted_form: Any,
     rule_key: str,
 ) -> list[dict[str, str]]:
-    payload_field_name = f"process_quantity_payload__{str(rule_key or '').strip().lower()}"
-    parsed_quantity_items = parse_menu_process_quantity_values(
-        str(submitted_form.get(payload_field_name) or "")
+    clean_rule_key = str(rule_key or "").strip().lower()
+    if not clean_rule_key:
+        return []
+
+    payload_field_name = f"process_quantity_payload__{clean_rule_key}"
+
+    if hasattr(submitted_form, "getlist"):
+        raw_payload_values = [
+            str(raw_value or "").strip()
+            for raw_value in submitted_form.getlist(payload_field_name)
+        ]
+    else:
+        raw_payload_value = (
+            submitted_form.get(payload_field_name)
+            if hasattr(submitted_form, "get")
+            else ""
+        )
+        raw_payload_values = [str(raw_payload_value or "").strip()]
+
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_START
+    # Pode existir mais de um input process_quantity_payload__<rule_key>.
+    # Starlette FormData.get() pode apanhar o primeiro, que por vezes e "[]".
+    # Por isso lemos todos os valores e usamos o ultimo payload preenchido valido.
+    for raw_payload_value in reversed(raw_payload_values):
+        if not raw_payload_value or raw_payload_value == "[]":
+            continue
+
+        parsed_quantity_items = parse_menu_process_quantity_values(raw_payload_value)
+
+        if parsed_quantity_items:
+            return parsed_quantity_items
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_END
+
+    collected_quantity_items = _collect_process_quantity_items_from_form(
+        submitted_form,
+        clean_rule_key,
     )
-    if parsed_quantity_items:
-        return parsed_quantity_items
-    return _collect_process_quantity_items_from_form(submitted_form, rule_key)
+
+    if collected_quantity_items:
+        return collected_quantity_items
+
+    # Se o payload "[]" foi submetido explicitamente, isto significa que o utilizador
+    # limpou a quantidade ou removeu todos os pares.
+    if any(raw_payload_value == "[]" for raw_payload_value in raw_payload_values):
+        return []
+
+    return []
+
 
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
@@ -612,6 +653,85 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+
+
+        # APPVERBO_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_START
+        # Reforco de persistencia dos Campos Quantidade do Meu perfil.
+        #
+        # O frontend envia:
+        #   process_quantity_payload__<rule_key> = JSON array
+        #
+        # O valor deve ficar em Member.profile_custom_fields com a chave:
+        #   quantity__meu_perfil__<rule_key>
+        #
+        # Este bloco e intencionalmente executado imediatamente antes de regravar
+        # existing_profile_fields, para garantir que o ultimo payload submetido
+        # prevalece sobre valores antigos.
+        for quantity_rule in quantity_rules:
+            rule_key = str(quantity_rule.get("key") or "").strip().lower()
+            if not rule_key:
+                continue
+
+            storage_key = build_menu_process_quantity_storage_key(
+                MENU_MEU_PERFIL_KEY,
+                rule_key,
+            )
+            if not storage_key:
+                continue
+
+            payload_field_name = f"process_quantity_payload__{rule_key}"
+            payload_was_submitted = payload_field_name in submitted_form
+
+            parsed_quantity_items = _resolve_submitted_process_quantity_items(
+                submitted_form,
+                rule_key,
+            )
+
+            allowed_repeated_fields = {
+                str(field_key or "").strip().lower()
+                for field_key in quantity_rule.get("repeated_field_keys", [])
+                if str(field_key or "").strip()
+            }
+
+            try:
+                max_quantity_items = int(str(quantity_rule.get("max_items") or "1").strip())
+            except (TypeError, ValueError):
+                max_quantity_items = 1
+
+            max_quantity_items = max(1, min(max_quantity_items, 50))
+
+            cleaned_quantity_items: list[dict[str, str]] = []
+
+            for raw_item in parsed_quantity_items[:max_quantity_items]:
+                if not isinstance(raw_item, dict):
+                    continue
+
+                clean_item: dict[str, str] = {}
+
+                for raw_field_key, raw_field_value in raw_item.items():
+                    clean_field_key = str(raw_field_key or "").strip().lower()
+                    clean_field_value = str(raw_field_value or "").strip()
+
+                    if not clean_field_key or clean_field_key not in allowed_repeated_fields:
+                        continue
+
+                    if not clean_field_value:
+                        continue
+
+                    clean_item[clean_field_key] = clean_field_value
+
+                if clean_item:
+                    cleaned_quantity_items.append(clean_item)
+
+            serialized_quantity_items = serialize_menu_process_quantity_values(
+                cleaned_quantity_items
+            )
+
+            if serialized_quantity_items:
+                updated_quantity_values[storage_key] = serialized_quantity_items
+            elif payload_was_submitted:
+                updated_quantity_values.pop(storage_key, None)
+        # APPVERBO_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_END
 
         previous_phone = (member.primary_phone or "").strip()
         member.full_name = clean_full_name

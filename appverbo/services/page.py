@@ -94,7 +94,7 @@ def get_page_data(
     menu_process_quantity_values_map: dict[str, dict[str, list[dict[str, str]]]] = {}
     for sidebar_item in sidebar_menu_settings:
         menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
-        if not menu_key or menu_key in {"home", "perfil", "administrativo", MENU_MEU_PERFIL_KEY}:
+        if not menu_key or menu_key in {"home", "perfil", "administrativo"}:
             continue
         visible_rows = (
             sidebar_item.get("process_visible_field_rows")

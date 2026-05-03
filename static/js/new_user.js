@@ -4524,3 +4524,689 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     setupProcessAdditionalFieldsManagerV2();
   }
 }
+
+// APPVERBO_MEU_PERFIL_QUANTITY_RENDERER_V1_START
+//###################################################################################
+// (MEU_PERFIL_QUANTITY_RENDERER_V1) CAMPOS QUANTIDADE NO FORMULARIO MEU PERFIL
+//###################################################################################
+
+(function setupMeuPerfilQuantityRendererV1() {
+  "use strict";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function toSafeStringMeuPerfilQuantityV1(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function getMeuPerfilSettingQuantityV1() {
+    if (typeof getSidebarMenuSetting === "function") {
+      const foundSetting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
+      if (foundSetting) {
+        return foundSetting;
+      }
+    }
+
+    return (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
+      return normalizeMenuKey(setting && setting.key) === MEU_PERFIL_MENU_KEY;
+    }) || null;
+  }
+
+  function getFormControlByNameQuantityV1(form, name) {
+    const cleanName = toSafeStringMeuPerfilQuantityV1(name);
+    if (!form || !cleanName) {
+      return null;
+    }
+
+    return Array.from(form.elements || []).find((element) => {
+      return toSafeStringMeuPerfilQuantityV1(element.name) === cleanName;
+    }) || null;
+  }
+
+  function getMeuPerfilQuantityFormV1() {
+    return document.querySelector("form[action='/users/profile/personal']")
+      || document.querySelector('form[action="/users/profile/personal"]');
+  }
+
+  function getMeuPerfilQuantityValuesV1(ruleKey) {
+    const cleanRuleKey = normalizeMenuKey(ruleKey);
+    const valuesByMenu = (
+      menuProcessQuantityValuesMap &&
+      typeof menuProcessQuantityValuesMap === "object" &&
+      !Array.isArray(menuProcessQuantityValuesMap)
+    )
+      ? menuProcessQuantityValuesMap[MEU_PERFIL_MENU_KEY]
+      : null;
+
+    if (!valuesByMenu || typeof valuesByMenu !== "object" || Array.isArray(valuesByMenu)) {
+      return [];
+    }
+
+    return normalizeProcessQuantityItems(valuesByMenu[cleanRuleKey]);
+  }
+
+  function buildListOptionsMapQuantityV1(setting) {
+    const optionsMap = new Map();
+
+    (Array.isArray(setting && setting.process_lists) ? setting.process_lists : []).forEach((processList) => {
+      const listKey = normalizeMenuKey(processList && processList.key);
+      if (!listKey) {
+        return;
+      }
+
+      optionsMap.set(
+        listKey,
+        Array.isArray(processList.items)
+          ? processList.items.map((item) => toSafeStringMeuPerfilQuantityV1(item).trim()).filter(Boolean)
+          : []
+      );
+    });
+
+    return optionsMap;
+  }
+
+  function buildFieldMetaMapQuantityV1(setting) {
+    const listOptionsByKey = buildListOptionsMapQuantityV1(setting);
+    const fieldMetaMap = new Map();
+
+    (Array.isArray(setting && setting.process_field_options) ? setting.process_field_options : []).forEach((option) => {
+      const fieldKey = normalizeMenuKey(option && option.key);
+      if (!fieldKey) {
+        return;
+      }
+
+      const fieldType = normalizeProcessFieldType(option.field_type);
+      const listKey = normalizeMenuKey(option.list_key || option.listKey);
+
+      fieldMetaMap.set(fieldKey, {
+        key: fieldKey,
+        label: toSentenceCaseText(option.label || fieldKey),
+        fieldType,
+        size: normalizeProcessFieldSize(option.size, fieldType),
+        isRequired: normalizeProcessFieldRequired(
+          Object.prototype.hasOwnProperty.call(option, "is_required")
+            ? option.is_required
+            : option.required
+        ),
+        listKey,
+        listOptions: listOptionsByKey.get(listKey) || []
+      });
+    });
+
+    return fieldMetaMap;
+  }
+
+  function resolveQuantityControlNameV1(fieldKey) {
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+    if (!cleanFieldKey) {
+      return "";
+    }
+
+    if (cleanFieldKey.startsWith("custom_")) {
+      return "custom_field__" + cleanFieldKey;
+    }
+
+    const builtinNames = {
+      nome: "full_name",
+      telefone: "primary_phone",
+      email: "login_email",
+      pais: "country",
+      data_nascimento: "birth_date",
+      autorizacao_whatsapp: "whatsapp_notice_opt_in"
+    };
+
+    return builtinNames[cleanFieldKey] || cleanFieldKey;
+  }
+
+  function parseQuantityCountV1(rawValue, maxItems) {
+    const parsedValue = Number.parseInt(toSafeStringMeuPerfilQuantityV1(rawValue).trim(), 10);
+    const parsedMaxItems = Number.parseInt(toSafeStringMeuPerfilQuantityV1(maxItems || "1").trim(), 10);
+    const safeMaxItems = Number.isFinite(parsedMaxItems) ? Math.min(Math.max(parsedMaxItems, 1), 50) : 1;
+
+    if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+      return 0;
+    }
+
+    return Math.min(parsedValue, safeMaxItems);
+  }
+
+  function readQuantityControlValueV1(control, fieldType) {
+    if (!control) {
+      return "";
+    }
+
+    if (fieldType === "flag") {
+      return control.checked ? "1" : "0";
+    }
+
+    return toSafeStringMeuPerfilQuantityV1(control.value).trim();
+  }
+
+  function createQuantityFieldControlV1(rule, itemIndex, fieldMeta, existingValue) {
+    const fieldType = normalizeProcessFieldType(fieldMeta.fieldType);
+    const fieldName = "process_quantity_field__" + rule.key + "__" + itemIndex + "__" + fieldMeta.key;
+    let control = null;
+
+    if (fieldType === "list") {
+      control = document.createElement("select");
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "Selecione";
+      control.appendChild(emptyOption);
+
+      (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : []).forEach((optionValue) => {
+        const option = document.createElement("option");
+        option.value = optionValue;
+        option.textContent = optionValue;
+        if (toSafeStringMeuPerfilQuantityV1(existingValue) === toSafeStringMeuPerfilQuantityV1(optionValue)) {
+          option.selected = true;
+        }
+        control.appendChild(option);
+      });
+    } else {
+      control = document.createElement("input");
+      if (fieldType === "email") {
+        control.type = "email";
+      } else if (fieldType === "phone") {
+        control.type = "tel";
+      } else if (fieldType === "number") {
+        control.type = "number";
+      } else if (fieldType === "date") {
+        control.type = "date";
+      } else if (fieldType === "flag") {
+        control.type = "checkbox";
+        control.value = "1";
+        control.checked = ["1", "true", "sim", "yes", "on"].includes(
+          toSafeStringMeuPerfilQuantityV1(existingValue).trim().toLowerCase()
+        );
+      } else {
+        control.type = "text";
+      }
+
+      if (fieldType !== "flag") {
+        control.value = toSafeStringMeuPerfilQuantityV1(existingValue);
+      }
+    }
+
+    control.name = fieldName;
+    control.dataset.processQuantityRuleKey = rule.key;
+    control.dataset.processQuantityItemIndex = String(itemIndex);
+    control.dataset.processQuantityFieldKey = fieldMeta.key;
+
+    if (fieldMeta.isRequired && fieldType !== "flag") {
+      control.required = true;
+    }
+
+    if (fieldMeta.size && ["text", "email", "phone"].includes(fieldType)) {
+      control.maxLength = fieldMeta.size;
+    }
+
+    return control;
+  }
+
+  function syncQuantityPayloadV1(rule, host) {
+    const rows = Array.from(host.querySelectorAll("[data-process-quantity-item-index]"));
+    const payload = [];
+
+    rows.forEach((row) => {
+      const item = {};
+
+      Array.from(row.querySelectorAll("[data-process-quantity-field-key]")).forEach((control) => {
+        const fieldKey = normalizeMenuKey(control.dataset.processQuantityFieldKey);
+        if (!fieldKey) {
+          return;
+        }
+
+        const fieldType = normalizeProcessFieldType(control.dataset.processQuantityFieldType || control.type);
+        const value = readQuantityControlValueV1(control, fieldType);
+
+        if (value) {
+          item[fieldKey] = value;
+        }
+      });
+
+      payload.push(item);
+    });
+
+    const payloadInput = host.querySelector("input[name='process_quantity_payload__" + rule.key + "']");
+    if (payloadInput) {
+      payloadInput.value = JSON.stringify(payload);
+    }
+  }
+
+  //###################################################################################
+  // (2) RENDERIZAR UMA REGRA
+  //###################################################################################
+
+  function setupMeuPerfilQuantityRuleV1(form, setting, rule, fieldMetaMap) {
+    const quantityControlName = resolveQuantityControlNameV1(rule.quantityFieldKey);
+    const quantityControl = getFormControlByNameQuantityV1(form, quantityControlName);
+
+    if (!quantityControl) {
+      return;
+    }
+
+    const quantityFieldWrapper = quantityControl.closest(".field") || quantityControl.parentElement;
+    const personalGrid = quantityControl.closest(".personal-grid") || form.querySelector(".personal-grid") || form;
+    const sectionPane = rule.headerKey
+      || toSafeStringMeuPerfilQuantityV1(quantityFieldWrapper && quantityFieldWrapper.dataset.profileSectionPane)
+      || "";
+
+    let host = form.querySelector("[data-profile-quantity-rule-key='" + rule.key + "']");
+
+    if (!host) {
+      host = document.createElement("div");
+      host.className = "field full profile-quantity-rule-v1";
+      host.dataset.profileQuantityRuleKey = rule.key;
+      host.dataset.profileSectionPane = sectionPane;
+
+      if (quantityFieldWrapper && quantityFieldWrapper.parentElement) {
+        quantityFieldWrapper.insertAdjacentElement("afterend", host);
+      } else {
+        personalGrid.appendChild(host);
+      }
+    }
+
+    let payloadInput = host.querySelector("input[name='process_quantity_payload__" + rule.key + "']");
+
+    if (!payloadInput) {
+      payloadInput = document.createElement("input");
+      payloadInput.type = "hidden";
+      payloadInput.name = "process_quantity_payload__" + rule.key;
+      payloadInput.value = "[]";
+      host.appendChild(payloadInput);
+    }
+
+    function renderQuantityBlocksV1() {
+      const existingItems = getMeuPerfilQuantityValuesV1(rule.key);
+      const requestedCount = parseQuantityCountV1(quantityControl.value, rule.maxItems);
+      const fallbackCount = requestedCount || existingItems.length;
+      const count = parseQuantityCountV1(String(fallbackCount), rule.maxItems);
+
+      Array.from(host.querySelectorAll(".profile-quantity-items-wrap-v1")).forEach((element) => {
+        element.remove();
+      });
+
+      if (!count) {
+        payloadInput.value = "[]";
+        return;
+      }
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "profile-quantity-items-wrap-v1";
+      wrapper.dataset.processQuantityRuleKey = rule.key;
+
+      for (let itemIndex = 0; itemIndex < count; itemIndex += 1) {
+        const itemValues = existingItems[itemIndex] || {};
+        const itemBlock = document.createElement("div");
+        itemBlock.className = "profile-quantity-item-v1";
+        itemBlock.dataset.processQuantityItemIndex = String(itemIndex);
+
+        const itemTitle = document.createElement("h4");
+        itemTitle.className = "profile-quantity-item-title-v1";
+        itemTitle.textContent = (rule.itemLabel || "Item") + " " + (itemIndex + 1);
+        itemBlock.appendChild(itemTitle);
+
+        const fieldsGrid = document.createElement("div");
+        fieldsGrid.className = "personal-grid profile-quantity-item-grid-v1";
+
+        rule.repeatedFieldKeys.forEach((fieldKey) => {
+          const fieldMeta = fieldMetaMap.get(fieldKey);
+
+          if (!fieldMeta) {
+            return;
+          }
+
+          const fieldWrapper = document.createElement("div");
+          fieldWrapper.className = "field";
+          fieldWrapper.dataset.profileSectionPane = sectionPane;
+          fieldWrapper.dataset.profileFieldKey = fieldKey;
+
+          const label = document.createElement("label");
+          label.textContent = fieldMeta.label + (fieldMeta.isRequired ? " *" : "");
+
+          const control = createQuantityFieldControlV1(
+            rule,
+            itemIndex,
+            fieldMeta,
+            itemValues[fieldKey] || ""
+          );
+
+          control.dataset.processQuantityFieldType = fieldMeta.fieldType;
+
+          control.addEventListener("input", function () {
+            syncQuantityPayloadV1(rule, host);
+          });
+          control.addEventListener("change", function () {
+            syncQuantityPayloadV1(rule, host);
+          });
+
+          fieldWrapper.appendChild(label);
+          fieldWrapper.appendChild(control);
+          fieldsGrid.appendChild(fieldWrapper);
+        });
+
+        itemBlock.appendChild(fieldsGrid);
+        wrapper.appendChild(itemBlock);
+      }
+
+      host.appendChild(wrapper);
+      syncQuantityPayloadV1(rule, host);
+    }
+
+    quantityControl.addEventListener("input", renderQuantityBlocksV1);
+    quantityControl.addEventListener("change", renderQuantityBlocksV1);
+
+    if (!toSafeStringMeuPerfilQuantityV1(quantityControl.value).trim()) {
+      const existingItems = getMeuPerfilQuantityValuesV1(rule.key);
+      if (existingItems.length) {
+        quantityControl.value = String(Math.min(existingItems.length, rule.maxItems || existingItems.length));
+      }
+    }
+
+    renderQuantityBlocksV1();
+  }
+
+  //###################################################################################
+  // (3) INICIALIZAR TODAS AS REGRAS
+  //###################################################################################
+
+  function setupMeuPerfilQuantityRulesV1() {
+    const form = getMeuPerfilQuantityFormV1();
+    const setting = getMeuPerfilSettingQuantityV1();
+
+    if (!form || !setting || form.dataset.meuPerfilQuantityRendererBoundV1 === "1") {
+      return;
+    }
+
+    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
+
+    if (!rules.length) {
+      return;
+    }
+
+    const fieldMetaMap = buildFieldMetaMapQuantityV1(setting);
+
+    form.dataset.meuPerfilQuantityRendererBoundV1 = "1";
+
+    rules.forEach((rule) => {
+      setupMeuPerfilQuantityRuleV1(form, setting, rule, fieldMetaMap);
+    });
+
+    form.addEventListener("submit", function () {
+      Array.from(form.querySelectorAll("[data-profile-quantity-rule-key]")).forEach((host) => {
+        const ruleKey = normalizeMenuKey(host.dataset.profileQuantityRuleKey);
+        const rule = rules.find((item) => item.key === ruleKey);
+        if (rule) {
+          syncQuantityPayloadV1(rule, host);
+        }
+      });
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupMeuPerfilQuantityRulesV1);
+  } else {
+    setupMeuPerfilQuantityRulesV1();
+  }
+
+  window.setTimeout(setupMeuPerfilQuantityRulesV1, 150);
+  window.setTimeout(setupMeuPerfilQuantityRulesV1, 600);
+})();
+
+// APPVERBO_MEU_PERFIL_QUANTITY_RENDERER_V1_END
+
+// APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_START
+//###################################################################################
+// (MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1) VISUALIZACAO DOS CAMPOS QUANTIDADE
+//###################################################################################
+
+(function setupMeuPerfilQuantityReadonlyRendererV1() {
+  "use strict";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function safeTextQuantityReadonlyV1(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function getMeuPerfilSettingQuantityReadonlyV1() {
+    if (typeof getSidebarMenuSetting === "function") {
+      const foundSetting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
+      if (foundSetting) {
+        return foundSetting;
+      }
+    }
+
+    return (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
+      return normalizeMenuKey(setting && setting.key) === MEU_PERFIL_MENU_KEY;
+    }) || null;
+  }
+
+  function getReadonlyGridQuantityReadonlyV1() {
+    return document.querySelector("#perfil-pessoal-card .profile-readonly .personal-grid");
+  }
+
+  function getQuantityReadonlyValuesV1(ruleKey) {
+    const cleanRuleKey = normalizeMenuKey(ruleKey);
+    const valuesByMenu = (
+      menuProcessQuantityValuesMap &&
+      typeof menuProcessQuantityValuesMap === "object" &&
+      !Array.isArray(menuProcessQuantityValuesMap)
+    )
+      ? menuProcessQuantityValuesMap[MEU_PERFIL_MENU_KEY]
+      : null;
+
+    if (!valuesByMenu || typeof valuesByMenu !== "object" || Array.isArray(valuesByMenu)) {
+      return [];
+    }
+
+    return normalizeProcessQuantityItems(valuesByMenu[cleanRuleKey]);
+  }
+
+  function buildFieldMetaMapQuantityReadonlyV1(setting) {
+    const metaMap = new Map();
+
+    (Array.isArray(setting && setting.process_field_options) ? setting.process_field_options : []).forEach((option) => {
+      const fieldKey = normalizeMenuKey(option && option.key);
+
+      if (!fieldKey) {
+        return;
+      }
+
+      metaMap.set(fieldKey, {
+        key: fieldKey,
+        label: toSentenceCaseText(option.label || fieldKey),
+        fieldType: normalizeProcessFieldType(option.field_type)
+      });
+    });
+
+    return metaMap;
+  }
+
+  function formatReadonlyValueQuantityReadonlyV1(value, fieldType) {
+    const cleanValue = safeTextQuantityReadonlyV1(value).trim();
+
+    if (!cleanValue) {
+      return "-";
+    }
+
+    if (fieldType === "flag") {
+      return ["1", "true", "sim", "yes", "on"].includes(cleanValue.toLowerCase())
+        ? "Sim"
+        : "Não";
+    }
+
+    return cleanValue;
+  }
+
+  function applyCurrentProfileSectionToQuantityReadonlyV1(host) {
+    if (!host) {
+      return;
+    }
+
+    const sectionInput = document.querySelector("[data-meu-perfil-section-input]");
+    const currentSection = normalizeMenuKey(sectionInput ? sectionInput.value : "");
+    const hostSection = normalizeMenuKey(host.dataset.profileSectionPane);
+
+    if (!currentSection || !hostSection) {
+      return;
+    }
+
+    host.style.display = currentSection === hostSection ? "" : "none";
+  }
+
+  function findInsertionPointQuantityReadonlyV1(grid, rule) {
+    if (!grid || !rule) {
+      return null;
+    }
+
+    const quantityFieldKey = normalizeMenuKey(rule.quantityFieldKey);
+
+    if (!quantityFieldKey) {
+      return null;
+    }
+
+    return grid.querySelector("[data-profile-field-key='" + quantityFieldKey + "']");
+  }
+
+  //###################################################################################
+  // (2) RENDERIZAR REGRA READONLY
+  //###################################################################################
+
+  function renderReadonlyRuleQuantityReadonlyV1(grid, setting, rule, fieldMetaMap) {
+    const values = getQuantityReadonlyValuesV1(rule.key);
+
+    if (!Array.isArray(values) || !values.length) {
+      return;
+    }
+
+    const host = document.createElement("div");
+
+    host.className = "personal-item profile-quantity-readonly-v1";
+    host.style.gridColumn = "1 / -1";
+    host.dataset.profileQuantityReadonlyRuleKey = rule.key;
+    host.dataset.profileSectionPane = rule.headerKey || "";
+
+    const mainLabel = document.createElement("span");
+    mainLabel.className = "personal-label";
+    mainLabel.textContent = rule.label || rule.itemLabel || "Itens";
+    host.appendChild(mainLabel);
+
+    const listWrapper = document.createElement("div");
+    listWrapper.className = "profile-quantity-readonly-list-v1";
+
+    values.forEach((itemValues, itemIndex) => {
+      const itemBlock = document.createElement("div");
+      itemBlock.className = "profile-quantity-readonly-item-v1";
+
+      const itemTitle = document.createElement("strong");
+      itemTitle.className = "personal-value profile-quantity-readonly-title-v1";
+      itemTitle.textContent = (rule.itemLabel || "Item") + " " + (itemIndex + 1);
+      itemBlock.appendChild(itemTitle);
+
+      const fieldsList = document.createElement("div");
+      fieldsList.className = "profile-quantity-readonly-fields-v1";
+
+      rule.repeatedFieldKeys.forEach((fieldKey) => {
+        const cleanFieldKey = normalizeMenuKey(fieldKey);
+        const fieldMeta = fieldMetaMap.get(cleanFieldKey) || {
+          label: cleanFieldKey,
+          fieldType: "text"
+        };
+
+        const row = document.createElement("div");
+        row.className = "profile-quantity-readonly-field-v1";
+
+        const label = document.createElement("span");
+        label.className = "personal-label";
+        label.textContent = fieldMeta.label || cleanFieldKey;
+
+        const value = document.createElement("strong");
+        value.className = "personal-value";
+        value.textContent = formatReadonlyValueQuantityReadonlyV1(
+          itemValues ? itemValues[cleanFieldKey] : "",
+          fieldMeta.fieldType
+        );
+
+        row.appendChild(label);
+        row.appendChild(value);
+        fieldsList.appendChild(row);
+      });
+
+      itemBlock.appendChild(fieldsList);
+      listWrapper.appendChild(itemBlock);
+    });
+
+    host.appendChild(listWrapper);
+
+    const insertionPoint = findInsertionPointQuantityReadonlyV1(grid, rule);
+
+    if (insertionPoint && insertionPoint.parentElement === grid) {
+      insertionPoint.insertAdjacentElement("afterend", host);
+    } else {
+      grid.appendChild(host);
+    }
+
+    applyCurrentProfileSectionToQuantityReadonlyV1(host);
+  }
+
+  //###################################################################################
+  // (3) RENDERIZAR TODAS AS REGRAS
+  //###################################################################################
+
+  function renderMeuPerfilQuantityReadonlyV1() {
+    const grid = getReadonlyGridQuantityReadonlyV1();
+    const setting = getMeuPerfilSettingQuantityReadonlyV1();
+
+    if (!grid || !setting) {
+      return;
+    }
+
+    Array.from(grid.querySelectorAll("[data-profile-quantity-readonly-rule-key]")).forEach((element) => {
+      element.remove();
+    });
+
+    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
+
+    if (!rules.length) {
+      return;
+    }
+
+    const fieldMetaMap = buildFieldMetaMapQuantityReadonlyV1(setting);
+
+    rules.forEach((rule) => {
+      renderReadonlyRuleQuantityReadonlyV1(grid, setting, rule, fieldMetaMap);
+    });
+  }
+
+  //###################################################################################
+  // (4) SINCRONIZAR COM AS ABAS DO MEU PERFIL
+  //###################################################################################
+
+  function refreshMeuPerfilQuantityReadonlyVisibilityV1() {
+    document
+      .querySelectorAll("[data-profile-quantity-readonly-rule-key]")
+      .forEach(applyCurrentProfileSectionToQuantityReadonlyV1);
+  }
+
+  document.addEventListener("click", function () {
+    window.setTimeout(refreshMeuPerfilQuantityReadonlyVisibilityV1, 0);
+    window.setTimeout(refreshMeuPerfilQuantityReadonlyVisibilityV1, 80);
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderMeuPerfilQuantityReadonlyV1);
+  } else {
+    renderMeuPerfilQuantityReadonlyV1();
+  }
+
+  window.setTimeout(renderMeuPerfilQuantityReadonlyV1, 150);
+  window.setTimeout(renderMeuPerfilQuantityReadonlyV1, 600);
+})();
+
+// APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
