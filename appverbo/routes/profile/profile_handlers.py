@@ -4,6 +4,7 @@ import unicodedata
 from datetime import date, datetime, timezone
 from typing import Any
 from uuid import uuid4
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from fastapi import APIRouter, Form, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
@@ -324,6 +325,204 @@ def _resolve_submitted_process_quantity_items(
     return []
 
 
+
+# APPVERBO_RETURN_URL_POST_SAVE_V4_START
+def _sanitize_users_new_return_url_post_save_v4(
+    raw_return_url: Any,
+    extra_params: dict[str, Any] | None = None,
+) -> str:
+    clean_return_url = str(raw_return_url or "").strip()
+
+    if not clean_return_url:
+        return ""
+
+    try:
+        parsed_url = urlsplit(clean_return_url)
+    except Exception:
+        return ""
+
+    if parsed_url.scheme or parsed_url.netloc:
+        return ""
+
+    path = parsed_url.path or "/users/new"
+
+    if path != "/users/new":
+        return ""
+
+    query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
+    query_params["appverbo_after_save"] = "1"
+
+    for raw_key, raw_value in (extra_params or {}).items():
+        clean_key = str(raw_key or "").strip()
+        clean_value = str(raw_value or "").strip()
+
+        if clean_key and clean_value:
+            query_params[clean_key] = clean_value
+
+    query_string = urlencode(query_params)
+    fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+
+    return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
+
+
+def _append_after_save_marker_to_users_new_url_v4(raw_url: str) -> str:
+    clean_url = str(raw_url or "").strip()
+
+    if not clean_url:
+        return clean_url
+
+    try:
+        parsed_url = urlsplit(clean_url)
+    except Exception:
+        return clean_url
+
+    if parsed_url.scheme or parsed_url.netloc:
+        return clean_url
+
+    path = parsed_url.path or "/users/new"
+
+    if path != "/users/new":
+        return clean_url
+
+    query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
+    query_params["appverbo_after_save"] = "1"
+
+    query_string = urlencode(query_params)
+    fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+
+    return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
+
+
+def _build_users_new_url_with_return_context_v4(
+    submitted_form: Any,
+    **params: Any,
+) -> str:
+    raw_return_url = ""
+
+    if hasattr(submitted_form, "get"):
+        raw_return_url = str(submitted_form.get("return_url") or "").strip()
+
+    safe_return_url = _sanitize_users_new_return_url_post_save_v4(
+        raw_return_url,
+        params,
+    )
+
+    if safe_return_url:
+        return safe_return_url
+
+    return _append_after_save_marker_to_users_new_url_v4(
+        build_users_new_url(**params)
+    )
+# APPVERBO_RETURN_URL_POST_SAVE_V4_END
+
+
+# APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_START
+def _sanitize_users_new_return_url_post_save_v6(
+    raw_return_url: Any,
+    extra_params: dict[str, Any] | None = None,
+) -> str:
+    clean_return_url = str(raw_return_url or "").strip()
+
+    if not clean_return_url:
+        return ""
+
+    try:
+        parsed_url = urlsplit(clean_return_url)
+    except Exception:
+        return ""
+
+    if parsed_url.scheme or parsed_url.netloc:
+        return ""
+
+    path = parsed_url.path or "/users/new"
+
+    if path != "/users/new":
+        return ""
+
+    query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
+
+    for raw_key, raw_value in (extra_params or {}).items():
+        clean_key = str(raw_key or "").strip()
+        clean_value = str(raw_value or "").strip()
+
+        if clean_key and clean_value:
+            query_params[clean_key] = clean_value
+
+    query_params["appverbo_after_save"] = "1"
+
+    query_string = urlencode(query_params)
+    fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+
+    return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
+
+
+def _append_after_save_marker_to_users_new_url_v6(raw_url: str) -> str:
+    clean_url = str(raw_url or "").strip()
+
+    if not clean_url:
+        return clean_url
+
+    try:
+        parsed_url = urlsplit(clean_url)
+    except Exception:
+        return clean_url
+
+    if parsed_url.scheme or parsed_url.netloc:
+        return clean_url
+
+    path = parsed_url.path or "/users/new"
+
+    if path != "/users/new":
+        return clean_url
+
+    query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
+    query_params["appverbo_after_save"] = "1"
+
+    query_string = urlencode(query_params)
+    fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+
+    return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
+
+
+def _build_post_save_redirect_url_v6(
+    submitted_form: Any,
+    **params: Any,
+) -> str:
+    raw_return_url = ""
+
+    if hasattr(submitted_form, "get"):
+        raw_return_url = str(submitted_form.get("return_url") or "").strip()
+
+    safe_return_url = _sanitize_users_new_return_url_post_save_v6(
+        raw_return_url,
+        params,
+    )
+
+    if safe_return_url:
+        return safe_return_url
+
+    normalized_params = dict(params)
+
+    has_profile_context = any(
+        str(normalized_params.get(key) or "").strip()
+        for key in (
+            "profile_success",
+            "profile_error",
+            "profile_tab",
+            "profile_section",
+        )
+    )
+
+    if has_profile_context:
+        normalized_params.setdefault("menu", MENU_MEU_PERFIL_KEY)
+        normalized_params.setdefault("target", "#perfil-pessoal-card")
+        normalized_params.setdefault("profile_tab", "pessoal")
+
+    return _append_after_save_marker_to_users_new_url_v6(
+        build_users_new_url(**normalized_params)
+    )
+# APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_END
+
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
@@ -345,8 +544,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         parsed_birth_date = parse_optional_date_pt(clean_birth_date)
     except ValueError:
         return RedirectResponse(
-            url=build_users_new_url(
-                profile_error="Data de nascimento inválida. Use o formato dd/mm/aaaa.",
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Data de nascimento inválida. Use o formato dd/mm/aaaa.",
                 profile_tab="pessoal",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -356,16 +554,14 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
     if not clean_full_name:
         return RedirectResponse(
-            url=build_users_new_url(
-                profile_error="Nome completo é obrigatório.",
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Nome completo é obrigatório.",
                 profile_tab="pessoal",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
     if not clean_primary_phone:
         return RedirectResponse(
-            url=build_users_new_url(
-                profile_error="Telefone principal é obrigatório.",
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Telefone principal é obrigatório.",
                 profile_tab="pessoal",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -373,8 +569,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
     if not clean_login_email:
         return RedirectResponse(
-            url=build_users_new_url(
-                profile_error="Email é obrigatório.",
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Email é obrigatório.",
                 profile_tab="pessoal",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -382,8 +577,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
     if "@" not in clean_login_email:
         return RedirectResponse(
-            url=build_users_new_url(
-                profile_error="Email inválido.",
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Email inválido.",
                 profile_tab="pessoal",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -402,8 +596,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         ).scalar_one_or_none()
         if member is None:
             return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Membro associado ao utilizador não encontrado.",
+                url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Membro associado ao utilizador não encontrado.",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -412,8 +605,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         user_account = session.get(User, current_user["id"])
         if user_account is None:
             return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Conta de utilizador não encontrada.",
+                url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Conta de utilizador não encontrada.",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -440,8 +632,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
         if email_already_exists is not None or member_email_already_exists is not None:
             return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Este email já está associado a outro utilizador.",
+                url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Este email já está associado a outro utilizador.",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -651,8 +842,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
         if missing_required_custom_labels:
             return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_custom_labels) + ".",
+                url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_custom_labels) + ".",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -765,8 +955,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Falha ao gravar dados pessoais.",
+                url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Falha ao gravar dados pessoais.",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -776,8 +965,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
     request.session["login_email"] = clean_login_email
     request.session["user_email"] = clean_login_email
     return RedirectResponse(
-        url=build_users_new_url(
-            profile_success="Dados pessoais atualizados com sucesso.",
+        url=_build_post_save_redirect_url_v6(submitted_form, profile_success="Dados pessoais atualizados com sucesso.",
             profile_tab="pessoal",
             menu=redirect_menu,
             target=redirect_target,
@@ -796,8 +984,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
 
     if not clean_menu_key:
         return RedirectResponse(
-            url=build_users_new_url(
-                menu="home",
+            url=_build_post_save_redirect_url_v6(submitted_form, menu="home",
                 profile_error="Processo inválido.",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -816,8 +1003,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         ).scalar_one_or_none()
         if member is None:
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_error="Membro associado ao utilizador não encontrado.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -834,8 +1020,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         )
         if process_setting is None:
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu="home",
+                url=_build_post_save_redirect_url_v6(submitted_form, menu="home",
                     profile_error="Processo não encontrado.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -871,8 +1056,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         ]
         if not section_field_keys:
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_error="Sem campos configurados para esta aba.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -1000,8 +1184,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         if history_process_mode and requested_history_action == "delete":
             if not requested_history_record_id:
                 return RedirectResponse(
-                    url=build_users_new_url(
-                        menu=clean_menu_key,
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                         profile_error=f"{record_label_singular.capitalize()} inválido para eliminar.",
                     ),
                     status_code=status.HTTP_303_SEE_OTHER,
@@ -1014,8 +1197,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             ]
             if len(filtered_records) == len(existing_records):
                 return RedirectResponse(
-                    url=build_users_new_url(
-                        menu=clean_menu_key,
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                         profile_error=f"{record_label_singular.capitalize()} não encontrado para eliminar.",
                     ),
                     status_code=status.HTTP_303_SEE_OTHER,
@@ -1045,16 +1227,14 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             except IntegrityError:
                 session.rollback()
                 return RedirectResponse(
-                    url=build_users_new_url(
-                        menu=clean_menu_key,
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                         profile_error=f"Falha ao eliminar o {record_label_singular}.",
                     ),
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
 
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_success=f"{record_label_singular.capitalize()} eliminado com sucesso.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -1077,8 +1257,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 missing_required_labels.append(field_label)
         if missing_required_labels:
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_labels) + ".",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -1112,8 +1291,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
 
         if missing_required_quantity_labels:
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_error="Preencha os campos obrigatÃ³rios: " + ", ".join(missing_required_quantity_labels) + ".",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -1173,8 +1351,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
 
         if history_process_mode and not submitted_section_values:
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_error=f"Preencha ao menos um campo do {record_label_singular}.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -1210,8 +1387,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 and end_date_value < start_date_value
             ):
                 return RedirectResponse(
-                    url=build_users_new_url(
-                        menu=clean_menu_key,
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                         profile_error="Data fim não pode ser menor que a data início.",
                     ),
                     status_code=status.HTTP_303_SEE_OTHER,
@@ -1230,8 +1406,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                     break
                 if not updated:
                     return RedirectResponse(
-                        url=build_users_new_url(
-                            menu=clean_menu_key,
+                        url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                             profile_error=f"{record_label_singular.capitalize()} não encontrado para editar.",
                         ),
                         status_code=status.HTTP_303_SEE_OTHER,
@@ -1262,16 +1437,14 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
-                    menu=clean_menu_key,
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                     profile_error="Falha ao gravar os dados do processo.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
     return RedirectResponse(
-        url=build_users_new_url(
-            menu=clean_menu_key,
+        url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
             profile_success=success_message,
         ),
         status_code=status.HTTP_303_SEE_OTHER,

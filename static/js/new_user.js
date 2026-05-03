@@ -1,9 +1,12 @@
-// APPVERBO_SAVE_RETURN_REFRESH_GUARD_V2_START
+// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_START
 //###################################################################################
-// (SAVE_RETURN_REFRESH_GUARD_V2) DIFERENCIAR RETORNO DE GRAVACAO DE REFRESH MANUAL
+// (POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3) RETORNO POS-SAVE VS REFRESH MANUAL
 //###################################################################################
 
-function getAppVerboCurrentUrlV2() {
+const APPVERBO_POST_SAVE_CONTEXT_KEY_V3 = "appverbo:post-save-context-v3";
+const APPVERBO_POST_SAVE_CONTEXT_MAX_AGE_MS_V3 = 120000;
+
+function getAppVerboCurrentUrlPostSaveV3() {
   try {
     return new URL(window.location.href);
   } catch (error) {
@@ -11,9 +14,7 @@ function getAppVerboCurrentUrlV2() {
   }
 }
 
-function isAppVerboSaveReturnUrlV2() {
-  const url = getAppVerboCurrentUrlV2();
-
+function isAppVerboPostSaveFeedbackUrlV3(url) {
   if (!url) {
     return false;
   }
@@ -22,16 +23,15 @@ function isAppVerboSaveReturnUrlV2() {
     return true;
   }
 
-  const feedbackSuffixes = ["_success", "_error"];
-
   for (const rawKey of url.searchParams.keys()) {
     const key = String(rawKey || "").trim().toLowerCase();
 
-    if (key === "success" || key === "error") {
-      return true;
-    }
-
-    if (feedbackSuffixes.some((suffix) => key.endsWith(suffix))) {
+    if (
+      key === "success" ||
+      key === "error" ||
+      key.endsWith("_success") ||
+      key.endsWith("_error")
+    ) {
       return true;
     }
   }
@@ -39,8 +39,54 @@ function isAppVerboSaveReturnUrlV2() {
   return false;
 }
 
-function clearAppVerboSaveReturnMarkersV2() {
-  const url = getAppVerboCurrentUrlV2();
+function readAndClearAppVerboPostSaveContextV3() {
+  try {
+    const rawValue = window.sessionStorage.getItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3) || "";
+
+    if (!rawValue) {
+      return null;
+    }
+
+    window.sessionStorage.removeItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3);
+
+    const parsedValue = JSON.parse(rawValue);
+    const createdAt = Number(parsedValue && parsedValue.createdAt || 0);
+
+    if (!createdAt || Date.now() - createdAt > APPVERBO_POST_SAVE_CONTEXT_MAX_AGE_MS_V3) {
+      return null;
+    }
+
+    if (!parsedValue || typeof parsedValue.url !== "string" || !parsedValue.url.trim()) {
+      return null;
+    }
+
+    return parsedValue;
+  } catch (error) {
+    return null;
+  }
+}
+
+function copyPostSaveFeedbackParamsV3(sourceUrl, targetUrl) {
+  if (!sourceUrl || !targetUrl) {
+    return;
+  }
+
+  Array.from(sourceUrl.searchParams.keys()).forEach((rawKey) => {
+    const key = String(rawKey || "").trim().toLowerCase();
+
+    if (
+      key === "success" ||
+      key === "error" ||
+      key.endsWith("_success") ||
+      key.endsWith("_error")
+    ) {
+      targetUrl.searchParams.set(rawKey, sourceUrl.searchParams.get(rawKey) || "");
+    }
+  });
+}
+
+function clearPostSaveFeedbackMarkersFromUrlV3() {
+  const url = getAppVerboCurrentUrlPostSaveV3();
 
   if (!url) {
     return;
@@ -51,13 +97,7 @@ function clearAppVerboSaveReturnMarkersV2() {
   Array.from(url.searchParams.keys()).forEach((rawKey) => {
     const key = String(rawKey || "").trim().toLowerCase();
 
-    if (
-      key === "appverbo_after_save" ||
-      key === "success" ||
-      key === "error" ||
-      key.endsWith("_success") ||
-      key.endsWith("_error")
-    ) {
+    if (key === "appverbo_after_save") {
       url.searchParams.delete(rawKey);
       changed = true;
     }
@@ -73,37 +113,77 @@ function clearAppVerboSaveReturnMarkersV2() {
   window.history.replaceState(window.history.state, document.title, cleanUrl);
 }
 
-const navigationEntries = (
-  typeof window !== "undefined" &&
-  window.performance &&
-  typeof window.performance.getEntriesByType === "function"
-)
-  ? window.performance.getEntriesByType("navigation")
-  : [];
+function redirectToStoredPostSaveContextV3(storedContext) {
+  const currentUrl = getAppVerboCurrentUrlPostSaveV3();
 
-const navigationType = navigationEntries.length
-  ? String(navigationEntries[0].type || "")
-  : "";
+  if (!storedContext || !storedContext.url || !currentUrl || currentUrl.pathname !== "/users/new") {
+    return false;
+  }
 
-const appverboIsSaveReturnUrlV2 = isAppVerboSaveReturnUrlV2();
+  let targetUrl = null;
 
-if (
-  navigationType === "reload" &&
-  window.location.pathname === "/users/new" &&
-  !appverboIsSaveReturnUrlV2
-) {
-  const homeUrl = "/users/new?menu=home";
-  const currentPathAndQuery = `${window.location.pathname}${window.location.search}`;
+  try {
+    targetUrl = new URL(storedContext.url, window.location.origin);
+  } catch (error) {
+    return false;
+  }
 
-  if (currentPathAndQuery !== homeUrl || window.location.hash) {
-    window.location.replace(homeUrl);
+  if (targetUrl.pathname !== "/users/new") {
+    return false;
+  }
+
+  targetUrl.searchParams.set("appverbo_after_save", "1");
+  copyPostSaveFeedbackParamsV3(currentUrl, targetUrl);
+
+  const targetPath = targetUrl.pathname + targetUrl.search + targetUrl.hash;
+  const currentPath = currentUrl.pathname + currentUrl.search + currentUrl.hash;
+
+  if (targetPath === currentPath) {
+    return false;
+  }
+
+  window.location.replace(targetPath);
+  return true;
+}
+
+const appverboStoredPostSaveContextV3 = readAndClearAppVerboPostSaveContextV3();
+
+if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
+  // A navegacao continua no mesmo processo/aba onde o POST foi executado.
+} else {
+  const navigationEntries = (
+    typeof window !== "undefined" &&
+    window.performance &&
+    typeof window.performance.getEntriesByType === "function"
+  )
+    ? window.performance.getEntriesByType("navigation")
+    : [];
+
+  const navigationType = navigationEntries.length
+    ? String(navigationEntries[0].type || "")
+    : "";
+
+  const currentUrlForRefreshGuard = getAppVerboCurrentUrlPostSaveV3();
+  const isPostSaveFeedbackUrl = isAppVerboPostSaveFeedbackUrlV3(currentUrlForRefreshGuard);
+
+  if (
+    navigationType === "reload" &&
+    window.location.pathname === "/users/new" &&
+    !isPostSaveFeedbackUrl
+  ) {
+    const homeUrl = "/users/new?menu=home";
+    const currentPathAndQuery = `${window.location.pathname}${window.location.search}`;
+
+    if (currentPathAndQuery !== homeUrl || window.location.hash) {
+      window.location.replace(homeUrl);
+    }
+  }
+
+  if (isPostSaveFeedbackUrl) {
+    window.setTimeout(clearPostSaveFeedbackMarkersFromUrlV3, 600);
   }
 }
-
-if (appverboIsSaveReturnUrlV2) {
-  window.setTimeout(clearAppVerboSaveReturnMarkersV2, 250);
-}
-// APPVERBO_SAVE_RETURN_REFRESH_GUARD_V2_END
+// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_END
 
 const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
 const MEU_PERFIL_MENU_KEY = "meu_perfil";
@@ -6109,3 +6189,1172 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 })();
 
 // APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
+
+// APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_START
+//###################################################################################
+// (POST_SAVE_CONTEXT_CAPTURE_V3) GUARDAR PROCESSO/ABA ANTES DE QUALQUER POST
+//###################################################################################
+
+(function setupAppVerboPostSaveContextCaptureV3() {
+  "use strict";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function safePostSaveTextV3(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function normalizePostSaveKeyV3(value) {
+    if (typeof normalizeMenuKey === "function") {
+      return normalizeMenuKey(value);
+    }
+
+    return safePostSaveTextV3(value).trim().toLowerCase();
+  }
+
+  function normalizePostSaveLookupV3(value) {
+    if (typeof normalizeLookupText === "function") {
+      return normalizeLookupText(value);
+    }
+
+    return safePostSaveTextV3(value)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function ensureHiddenPostSaveInputV3(form, name) {
+    let input = form.querySelector("input[name='" + name + "']");
+
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      form.appendChild(input);
+    }
+
+    return input;
+  }
+
+  function getFormActionPostSaveV3(form) {
+    return safePostSaveTextV3(form && (form.getAttribute("action") || form.action));
+  }
+
+  function getFormMethodPostSaveV3(form) {
+    return safePostSaveTextV3(form && (form.getAttribute("method") || form.method || "post"))
+      .trim()
+      .toLowerCase();
+  }
+
+  function readFirstFormValuePostSaveV3(form, names) {
+    if (!form) {
+      return "";
+    }
+
+    for (const name of names) {
+      const control = form.querySelector("[name='" + name + "']");
+
+      if (!control) {
+        continue;
+      }
+
+      const value = safePostSaveTextV3(control.value).trim();
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentUrlPostSaveV3() {
+    try {
+      return new URL(window.location.href);
+    } catch (error) {
+      return new URL("/users/new", window.location.origin);
+    }
+  }
+
+  function getProfileSectionFromInputPostSaveV3() {
+    const selectors = [
+      "#perfil-pessoal-card input[name='profile_section']",
+      "#perfil-pessoal-card [data-meu-perfil-section-input]",
+      "#perfil-pessoal-card [data-profile-section-input]",
+      "input[name='profile_section']",
+      "[data-meu-perfil-section-input]",
+      "[data-profile-section-input]"
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      const value = normalizePostSaveKeyV3(input ? input.value : "");
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromActiveTabPostSaveV3() {
+    const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
+
+    const activeSelectors = [
+      "#perfil-pessoal-card [data-profile-section-tab].active",
+      "#perfil-pessoal-card [data-profile-section-tab][aria-selected='true']",
+      "#perfil-pessoal-card [data-profile-section-button].active",
+      "#perfil-pessoal-card [data-profile-section-button][aria-selected='true']",
+      "#perfil-pessoal-card .profile-section-tab.active",
+      "#perfil-pessoal-card .profile-section-tab[aria-selected='true']",
+      "#perfil-pessoal-card .active"
+    ];
+
+    for (const selector of activeSelectors) {
+      const activeElement = document.querySelector(selector);
+
+      if (!activeElement) {
+        continue;
+      }
+
+      const datasetSection = normalizePostSaveKeyV3(
+        activeElement.dataset.profileSection ||
+        activeElement.dataset.profileSectionKey ||
+        activeElement.dataset.profileSectionTab ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      if (datasetSection) {
+        return datasetSection;
+      }
+
+      const activeLabel = normalizePostSaveLookupV3(activeElement.textContent);
+
+      if (!activeLabel) {
+        continue;
+      }
+
+      for (const section of sections) {
+        const sectionLabel = normalizePostSaveLookupV3(section && section.label);
+
+        if (sectionLabel && sectionLabel === activeLabel) {
+          return normalizePostSaveKeyV3(section && section.key);
+        }
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromVisiblePanePostSaveV3() {
+    const panes = Array.from(
+      document.querySelectorAll("#perfil-pessoal-card [data-profile-section-pane]")
+    );
+
+    for (const pane of panes) {
+      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
+
+      if (
+        pane.hidden ||
+        pane.style.display === "none" ||
+        (style && style.display === "none")
+      ) {
+        continue;
+      }
+
+      const sectionKey = normalizePostSaveKeyV3(pane.dataset.profileSectionPane);
+
+      if (sectionKey) {
+        return sectionKey;
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentProfileSectionPostSaveV3() {
+    return (
+      getProfileSectionFromInputPostSaveV3() ||
+      getProfileSectionFromActiveTabPostSaveV3() ||
+      getProfileSectionFromVisiblePanePostSaveV3() ||
+      (
+        Array.isArray(profilePersonalSections) && profilePersonalSections.length
+          ? normalizePostSaveKeyV3(profilePersonalSections[0].key)
+          : ""
+      )
+    );
+  }
+
+  function getDynamicSectionPostSaveV3(menuKey) {
+    const formValue = readFirstFormValuePostSaveV3(document, [
+      "dynamic_process_section",
+      "section_key",
+      "process_section",
+      "active_section",
+      "settings_tab"
+    ]);
+
+    if (formValue) {
+      return normalizePostSaveKeyV3(formValue);
+    }
+
+    if (
+      typeof selectedDynamicSectionByMenu === "object" &&
+      selectedDynamicSectionByMenu !== null &&
+      menuKey &&
+      selectedDynamicSectionByMenu[menuKey]
+    ) {
+      return normalizePostSaveKeyV3(selectedDynamicSectionByMenu[menuKey]);
+    }
+
+    const activeElement = document.querySelector(
+      "#dynamic-process-card .active, " +
+      "#dynamic-process-card [aria-selected='true'], " +
+      "[data-dynamic-process-section-key].active, " +
+      "[data-dynamic-process-section-key][aria-selected='true']"
+    );
+
+    if (activeElement) {
+      const datasetSection = normalizePostSaveKeyV3(
+        activeElement.dataset.dynamicProcessSectionKey ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      if (datasetSection) {
+        return datasetSection;
+      }
+    }
+
+    return "";
+  }
+
+  function currentMenuFromUrlOrBootstrapPostSaveV3(form) {
+    const currentUrl = getCurrentUrlPostSaveV3();
+
+    const formMenu = normalizePostSaveKeyV3(
+      readFirstFormValuePostSaveV3(form, [
+        "menu",
+        "menu_key",
+        "process_menu_key",
+        "dynamic_menu_key",
+        "settings_edit_key"
+      ])
+    );
+
+    if (formMenu) {
+      return formMenu;
+    }
+
+    const urlMenu = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
+
+    if (urlMenu) {
+      return urlMenu;
+    }
+
+    if (typeof initialMenu !== "undefined") {
+      const bootstrapMenu = normalizePostSaveKeyV3(initialMenu);
+
+      if (bootstrapMenu) {
+        return bootstrapMenu;
+      }
+    }
+
+    return "";
+  }
+
+  //###################################################################################
+  // (2) CONSTRUIR URL DE RETORNO
+  //###################################################################################
+
+  function buildPostSaveReturnUrlV3(form) {
+    const currentUrl = getCurrentUrlPostSaveV3();
+
+    currentUrl.pathname = "/users/new";
+
+    const action = getFormActionPostSaveV3(form);
+    const actionLookup = normalizePostSaveLookupV3(action);
+    let menuKey = currentMenuFromUrlOrBootstrapPostSaveV3(form);
+
+    if (actionLookup.includes("/users/profile/personal")) {
+      menuKey = MEU_PERFIL_MENU_KEY;
+      currentUrl.searchParams.set("menu", MEU_PERFIL_MENU_KEY);
+      currentUrl.searchParams.set("target", "#perfil-pessoal-card");
+      currentUrl.searchParams.set("profile_tab", "pessoal");
+
+      const profileSection = getCurrentProfileSectionPostSaveV3();
+
+      if (profileSection) {
+        currentUrl.searchParams.set("profile_section", profileSection);
+      }
+    } else {
+      if (menuKey) {
+        currentUrl.searchParams.set("menu", menuKey);
+      }
+
+      const formTarget = readFirstFormValuePostSaveV3(form, ["target", "return_target"]);
+
+      if (formTarget) {
+        currentUrl.searchParams.set("target", formTarget);
+      }
+
+      const settingsEditKey = normalizePostSaveKeyV3(
+        readFirstFormValuePostSaveV3(form, ["settings_edit_key", "menu_key"])
+      );
+      const settingsAction = normalizePostSaveKeyV3(
+        readFirstFormValuePostSaveV3(form, ["settings_action"])
+      );
+      const settingsTab = normalizePostSaveKeyV3(
+        readFirstFormValuePostSaveV3(form, ["settings_tab"])
+      );
+
+      if (settingsEditKey && currentUrl.searchParams.get("menu") === "administrativo") {
+        currentUrl.searchParams.set("settings_edit_key", settingsEditKey);
+        currentUrl.searchParams.set("settings_action", settingsAction || "edit");
+
+        if (settingsTab) {
+          currentUrl.searchParams.set("settings_tab", settingsTab);
+        }
+
+        if (!currentUrl.searchParams.get("target")) {
+          currentUrl.searchParams.set("target", "#settings-menu-edit-card");
+        }
+      }
+
+      const dynamicSection = getDynamicSectionPostSaveV3(menuKey);
+
+      if (dynamicSection) {
+        currentUrl.searchParams.set("dynamic_process_section", dynamicSection);
+      }
+    }
+
+    currentUrl.searchParams.set("appverbo_after_save", "1");
+
+    return currentUrl.pathname + currentUrl.search + currentUrl.hash;
+  }
+
+  //###################################################################################
+  // (3) GUARDAR CONTEXTO
+  //###################################################################################
+
+  function storePostSaveContextV3(form) {
+    if (!form) {
+      return;
+    }
+
+    const method = getFormMethodPostSaveV3(form);
+
+    if (method && method !== "post") {
+      return;
+    }
+
+    const returnUrl = buildPostSaveReturnUrlV3(form);
+
+    try {
+      window.sessionStorage.setItem(
+        APPVERBO_POST_SAVE_CONTEXT_KEY_V3,
+        JSON.stringify({
+          url: returnUrl,
+          createdAt: Date.now()
+        })
+      );
+    } catch (error) {
+      // Ignora falhas de sessionStorage.
+    }
+
+    ensureHiddenPostSaveInputV3(form, "appverbo_after_save").value = "1";
+    ensureHiddenPostSaveInputV3(form, "return_url").value = returnUrl;
+  }
+
+  function bindPostSaveContextCaptureV3() {
+    document.addEventListener("submit", function (event) {
+      storePostSaveContextV3(event.target);
+    }, true);
+
+    document.addEventListener("click", function (event) {
+      const submitControl = event.target && event.target.closest
+        ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
+        : null;
+
+      if (!submitControl || !submitControl.form) {
+        return;
+      }
+
+      storePostSaveContextV3(submitControl.form);
+    }, true);
+
+    if (
+      window.HTMLFormElement &&
+      window.HTMLFormElement.prototype &&
+      !window.HTMLFormElement.prototype.__appverboPostSaveContextPatchedV3
+    ) {
+      const nativeSubmit = window.HTMLFormElement.prototype.submit;
+
+      window.HTMLFormElement.prototype.submit = function patchedSubmitPostSaveContextV3() {
+        storePostSaveContextV3(this);
+        return nativeSubmit.call(this);
+      };
+
+      window.HTMLFormElement.prototype.__appverboPostSaveContextPatchedV3 = true;
+    }
+  }
+
+  bindPostSaveContextCaptureV3();
+})();
+
+// APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_END
+
+// APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_START
+//###################################################################################
+// (RETURN_URL_POST_SAVE_CAPTURE_V4) ENVIAR CONTEXTO ATUAL ANTES DO POST
+//###################################################################################
+
+(function setupReturnUrlPostSaveCaptureV4() {
+  "use strict";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function safeReturnUrlTextV4(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function normalizeReturnUrlKeyV4(value) {
+    if (typeof normalizeMenuKey === "function") {
+      return normalizeMenuKey(value);
+    }
+
+    return safeReturnUrlTextV4(value).trim().toLowerCase();
+  }
+
+  function normalizeReturnUrlLookupV4(value) {
+    if (typeof normalizeLookupText === "function") {
+      return normalizeLookupText(value);
+    }
+
+    return safeReturnUrlTextV4(value)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function ensureHiddenReturnUrlInputV4(form, name) {
+    let input = form.querySelector("input[name='" + name + "']");
+
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      form.appendChild(input);
+    }
+
+    return input;
+  }
+
+  function getCurrentUrlReturnUrlV4() {
+    try {
+      return new URL(window.location.href);
+    } catch (error) {
+      return new URL("/users/new", window.location.origin);
+    }
+  }
+
+  function getFormActionReturnUrlV4(form) {
+    return safeReturnUrlTextV4(form && (form.getAttribute("action") || form.action));
+  }
+
+  function getFormMethodReturnUrlV4(form) {
+    return safeReturnUrlTextV4(form && (form.getAttribute("method") || form.method || "post"))
+      .trim()
+      .toLowerCase();
+  }
+
+  function getFormValueReturnUrlV4(form, names) {
+    if (!form) {
+      return "";
+    }
+
+    for (const name of names) {
+      const control = form.querySelector("[name='" + name + "']");
+
+      if (!control) {
+        continue;
+      }
+
+      const value = safeReturnUrlTextV4(control.value).trim();
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  //###################################################################################
+  // (2) DETECTAR ABA DO MEU PERFIL
+  //###################################################################################
+
+  function getProfileSectionFromInputReturnUrlV4() {
+    const selectors = [
+      "#perfil-pessoal-card input[name='profile_section']",
+      "#perfil-pessoal-card [data-meu-perfil-section-input]",
+      "#perfil-pessoal-card [data-profile-section-input]",
+      "input[name='profile_section']",
+      "[data-meu-perfil-section-input]",
+      "[data-profile-section-input]"
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      const value = normalizeReturnUrlKeyV4(input ? input.value : "");
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromActiveTabReturnUrlV4() {
+    const sections = Array.isArray(window.profilePersonalSections || profilePersonalSections)
+      ? (window.profilePersonalSections || profilePersonalSections)
+      : [];
+
+    const activeSelectors = [
+      "#perfil-pessoal-card [data-profile-section-tab].active",
+      "#perfil-pessoal-card [data-profile-section-tab][aria-selected='true']",
+      "#perfil-pessoal-card [data-profile-section-button].active",
+      "#perfil-pessoal-card [data-profile-section-button][aria-selected='true']",
+      "#perfil-pessoal-card .profile-section-tab.active",
+      "#perfil-pessoal-card .profile-section-tab[aria-selected='true']",
+      "#perfil-pessoal-card .active"
+    ];
+
+    for (const selector of activeSelectors) {
+      const activeElement = document.querySelector(selector);
+
+      if (!activeElement) {
+        continue;
+      }
+
+      const dataSection = normalizeReturnUrlKeyV4(
+        activeElement.dataset.profileSection ||
+        activeElement.dataset.profileSectionKey ||
+        activeElement.dataset.profileSectionTab ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      if (dataSection) {
+        return dataSection;
+      }
+
+      const activeLabel = normalizeReturnUrlLookupV4(activeElement.textContent);
+
+      if (!activeLabel) {
+        continue;
+      }
+
+      for (const section of sections) {
+        const sectionLabel = normalizeReturnUrlLookupV4(section && section.label);
+
+        if (sectionLabel && sectionLabel === activeLabel) {
+          return normalizeReturnUrlKeyV4(section && section.key);
+        }
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromVisiblePaneReturnUrlV4() {
+    const panes = Array.from(
+      document.querySelectorAll("#perfil-pessoal-card [data-profile-section-pane]")
+    );
+
+    for (const pane of panes) {
+      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
+
+      if (
+        pane.hidden ||
+        pane.style.display === "none" ||
+        (style && style.display === "none")
+      ) {
+        continue;
+      }
+
+      const sectionKey = normalizeReturnUrlKeyV4(pane.dataset.profileSectionPane);
+
+      if (sectionKey) {
+        return sectionKey;
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentProfileSectionReturnUrlV4() {
+    return (
+      getProfileSectionFromInputReturnUrlV4() ||
+      getProfileSectionFromActiveTabReturnUrlV4() ||
+      getProfileSectionFromVisiblePaneReturnUrlV4()
+    );
+  }
+
+  //###################################################################################
+  // (3) DETECTAR PROCESSO DINAMICO
+  //###################################################################################
+
+  function getCurrentMenuReturnUrlV4(form) {
+    const url = getCurrentUrlReturnUrlV4();
+
+    const formMenu = normalizeReturnUrlKeyV4(
+      getFormValueReturnUrlV4(form, [
+        "menu",
+        "menu_key",
+        "process_menu_key",
+        "dynamic_menu_key"
+      ])
+    );
+
+    if (formMenu) {
+      return formMenu;
+    }
+
+    const urlMenu = normalizeReturnUrlKeyV4(url.searchParams.get("menu"));
+
+    if (urlMenu) {
+      return urlMenu;
+    }
+
+    if (typeof initialMenu !== "undefined") {
+      return normalizeReturnUrlKeyV4(initialMenu);
+    }
+
+    return "";
+  }
+
+  function getCurrentDynamicSectionReturnUrlV4(menuKey) {
+    const formSection = normalizeReturnUrlKeyV4(
+      getFormValueReturnUrlV4(document, [
+        "dynamic_process_section",
+        "section_key",
+        "process_section",
+        "active_section"
+      ])
+    );
+
+    if (formSection) {
+      return formSection;
+    }
+
+    if (
+      typeof selectedDynamicSectionByMenu === "object" &&
+      selectedDynamicSectionByMenu !== null &&
+      menuKey &&
+      selectedDynamicSectionByMenu[menuKey]
+    ) {
+      return normalizeReturnUrlKeyV4(selectedDynamicSectionByMenu[menuKey]);
+    }
+
+    const activeElement = document.querySelector(
+      "#dynamic-process-card .active, " +
+      "#dynamic-process-card [aria-selected='true'], " +
+      "[data-dynamic-process-section-key].active, " +
+      "[data-dynamic-process-section-key][aria-selected='true']"
+    );
+
+    if (activeElement) {
+      return normalizeReturnUrlKeyV4(
+        activeElement.dataset.dynamicProcessSectionKey ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+    }
+
+    return "";
+  }
+
+  //###################################################################################
+  // (4) CONSTRUIR return_url
+  //###################################################################################
+
+  function buildReturnUrlPostSaveV4(form) {
+    const url = getCurrentUrlReturnUrlV4();
+    const action = getFormActionReturnUrlV4(form);
+    const actionLookup = normalizeReturnUrlLookupV4(action);
+
+    url.pathname = "/users/new";
+
+    if (actionLookup.includes("/users/profile/personal")) {
+      const profileSection = getCurrentProfileSectionReturnUrlV4();
+
+      url.searchParams.set("menu", "meu_perfil");
+      url.searchParams.set("target", "#perfil-pessoal-card");
+      url.searchParams.set("profile_tab", "pessoal");
+
+      if (profileSection) {
+        url.searchParams.set("profile_section", profileSection);
+      }
+    } else {
+      const menuKey = getCurrentMenuReturnUrlV4(form);
+
+      if (menuKey) {
+        url.searchParams.set("menu", menuKey);
+      }
+
+      const target = getFormValueReturnUrlV4(form, ["target", "return_target"]);
+
+      if (target) {
+        url.searchParams.set("target", target);
+      }
+
+      const dynamicSection = getCurrentDynamicSectionReturnUrlV4(menuKey);
+
+      if (dynamicSection) {
+        url.searchParams.set("dynamic_process_section", dynamicSection);
+      }
+    }
+
+    url.searchParams.set("appverbo_after_save", "1");
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  //###################################################################################
+  // (5) SINCRONIZAR NO FORMULARIO
+  //###################################################################################
+
+  function syncReturnUrlPostSaveV4(form) {
+    if (!form) {
+      return;
+    }
+
+    const method = getFormMethodReturnUrlV4(form);
+
+    if (method && method !== "post") {
+      return;
+    }
+
+    const returnUrl = buildReturnUrlPostSaveV4(form);
+
+    ensureHiddenReturnUrlInputV4(form, "return_url").value = returnUrl;
+    ensureHiddenReturnUrlInputV4(form, "appverbo_after_save").value = "1";
+
+    try {
+      window.sessionStorage.setItem(
+        "appverbo:return-url-post-save-v4",
+        JSON.stringify({
+          url: returnUrl,
+          createdAt: Date.now()
+        })
+      );
+    } catch (error) {
+      // Ignora sessionStorage indisponivel.
+    }
+  }
+
+  document.addEventListener("submit", function (event) {
+    syncReturnUrlPostSaveV4(event.target);
+  }, true);
+
+  document.addEventListener("click", function (event) {
+    const submitControl = event.target && event.target.closest
+      ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
+      : null;
+
+    if (!submitControl || !submitControl.form) {
+      return;
+    }
+
+    syncReturnUrlPostSaveV4(submitControl.form);
+  }, true);
+
+  document.addEventListener("formdata", function (event) {
+    if (!event || !event.formData || !event.target) {
+      return;
+    }
+
+    syncReturnUrlPostSaveV4(event.target);
+
+    const returnUrlInput = event.target.querySelector("input[name='return_url']");
+    const afterSaveInput = event.target.querySelector("input[name='appverbo_after_save']");
+
+    if (returnUrlInput) {
+      event.formData.set("return_url", returnUrlInput.value);
+    }
+
+    if (afterSaveInput) {
+      event.formData.set("appverbo_after_save", afterSaveInput.value);
+    }
+  }, true);
+
+  if (
+    window.HTMLFormElement &&
+    window.HTMLFormElement.prototype &&
+    !window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV4
+  ) {
+    const nativeSubmit = window.HTMLFormElement.prototype.submit;
+
+    window.HTMLFormElement.prototype.submit = function patchedSubmitReturnUrlPostSaveV4() {
+      syncReturnUrlPostSaveV4(this);
+      return nativeSubmit.call(this);
+    };
+
+    window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV4 = true;
+  }
+})();
+
+// APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_END
+
+// APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_START
+//###################################################################################
+// (FRONTEND_RETURN_URL_POST_SAVE_V6) ENVIAR RETURN_URL SEGURO ANTES DO POST
+//###################################################################################
+
+(function setupFrontendReturnUrlPostSaveV6() {
+  "use strict";
+
+  function safeReturnUrlTextV6(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function normalizeReturnUrlKeyV6(value) {
+    if (typeof normalizeMenuKey === "function") {
+      return normalizeMenuKey(value);
+    }
+
+    return safeReturnUrlTextV6(value).trim().toLowerCase();
+  }
+
+  function normalizeReturnUrlLookupV6(value) {
+    if (typeof normalizeLookupText === "function") {
+      return normalizeLookupText(value);
+    }
+
+    return safeReturnUrlTextV6(value)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function ensureHiddenReturnUrlInputV6(form, name) {
+    let input = form.querySelector("input[name='" + name + "']");
+
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      form.appendChild(input);
+    }
+
+    return input;
+  }
+
+  function getCurrentUrlReturnUrlV6() {
+    try {
+      return new URL(window.location.href);
+    } catch (error) {
+      return new URL("/users/new", window.location.origin);
+    }
+  }
+
+  function getFormActionReturnUrlV6(form) {
+    return safeReturnUrlTextV6(form && (form.getAttribute("action") || form.action));
+  }
+
+  function getFormMethodReturnUrlV6(form) {
+    return safeReturnUrlTextV6(form && (form.getAttribute("method") || form.method || "post"))
+      .trim()
+      .toLowerCase();
+  }
+
+  function getFormValueReturnUrlV6(form, names) {
+    if (!form) {
+      return "";
+    }
+
+    for (const name of names) {
+      const control = form.querySelector("[name='" + name + "']");
+
+      if (!control) {
+        continue;
+      }
+
+      const value = safeReturnUrlTextV6(control.value).trim();
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromInputsReturnUrlV6() {
+    const selectors = [
+      "#perfil-pessoal-card input[name='profile_section']",
+      "#perfil-pessoal-card [data-meu-perfil-section-input]",
+      "#perfil-pessoal-card [data-profile-section-input]",
+      "input[name='profile_section']",
+      "[data-meu-perfil-section-input]",
+      "[data-profile-section-input]"
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      const value = normalizeReturnUrlKeyV6(input ? input.value : "");
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromActiveTabReturnUrlV6() {
+    const sections = (typeof profilePersonalSections !== "undefined" && Array.isArray(profilePersonalSections))
+      ? profilePersonalSections
+      : [];
+
+    const activeSelectors = [
+      "#perfil-pessoal-card [data-profile-section-tab].active",
+      "#perfil-pessoal-card [data-profile-section-tab][aria-selected='true']",
+      "#perfil-pessoal-card [data-profile-section-button].active",
+      "#perfil-pessoal-card [data-profile-section-button][aria-selected='true']",
+      "#perfil-pessoal-card .profile-section-tab.active",
+      "#perfil-pessoal-card .profile-section-tab[aria-selected='true']",
+      "#perfil-pessoal-card .active"
+    ];
+
+    for (const selector of activeSelectors) {
+      const activeElement = document.querySelector(selector);
+
+      if (!activeElement) {
+        continue;
+      }
+
+      const dataSection = normalizeReturnUrlKeyV6(
+        activeElement.dataset.profileSection ||
+        activeElement.dataset.profileSectionKey ||
+        activeElement.dataset.profileSectionTab ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      if (dataSection) {
+        return dataSection;
+      }
+
+      const activeLabel = normalizeReturnUrlLookupV6(activeElement.textContent);
+
+      if (!activeLabel) {
+        continue;
+      }
+
+      for (const section of sections) {
+        const sectionLabel = normalizeReturnUrlLookupV6(section && section.label);
+
+        if (sectionLabel && sectionLabel === activeLabel) {
+          return normalizeReturnUrlKeyV6(section && section.key);
+        }
+      }
+    }
+
+    return "";
+  }
+
+  function getProfileSectionFromVisiblePaneReturnUrlV6() {
+    const panes = Array.from(
+      document.querySelectorAll("#perfil-pessoal-card [data-profile-section-pane]")
+    );
+
+    for (const pane of panes) {
+      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
+
+      if (
+        pane.hidden ||
+        pane.style.display === "none" ||
+        (style && style.display === "none")
+      ) {
+        continue;
+      }
+
+      const sectionKey = normalizeReturnUrlKeyV6(pane.dataset.profileSectionPane);
+
+      if (sectionKey) {
+        return sectionKey;
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentProfileSectionReturnUrlV6() {
+    return (
+      getProfileSectionFromInputsReturnUrlV6() ||
+      getProfileSectionFromActiveTabReturnUrlV6() ||
+      getProfileSectionFromVisiblePaneReturnUrlV6()
+    );
+  }
+
+  function getCurrentMenuReturnUrlV6(form) {
+    const currentUrl = getCurrentUrlReturnUrlV6();
+
+    const formMenu = normalizeReturnUrlKeyV6(
+      getFormValueReturnUrlV6(form, [
+        "menu",
+        "menu_key",
+        "process_menu_key",
+        "dynamic_menu_key"
+      ])
+    );
+
+    if (formMenu) {
+      return formMenu;
+    }
+
+    const urlMenu = normalizeReturnUrlKeyV6(currentUrl.searchParams.get("menu"));
+
+    if (urlMenu) {
+      return urlMenu;
+    }
+
+    if (typeof initialMenu !== "undefined") {
+      return normalizeReturnUrlKeyV6(initialMenu);
+    }
+
+    return "";
+  }
+
+  function buildReturnUrlPostSaveV6(form) {
+    const url = getCurrentUrlReturnUrlV6();
+    const actionLookup = normalizeReturnUrlLookupV6(getFormActionReturnUrlV6(form));
+
+    url.pathname = "/users/new";
+    url.searchParams.set("appverbo_after_save", "1");
+
+    if (actionLookup.includes("/users/profile/personal")) {
+      const profileSection = getCurrentProfileSectionReturnUrlV6();
+
+      url.searchParams.set("menu", "meu_perfil");
+      url.searchParams.set("target", "#perfil-pessoal-card");
+      url.searchParams.set("profile_tab", "pessoal");
+
+      if (profileSection) {
+        url.searchParams.set("profile_section", profileSection);
+      }
+
+      return url.pathname + url.search + url.hash;
+    }
+
+    const menuKey = getCurrentMenuReturnUrlV6(form);
+
+    if (menuKey) {
+      url.searchParams.set("menu", menuKey);
+    }
+
+    const target = getFormValueReturnUrlV6(form, ["target", "return_target"]);
+
+    if (target) {
+      url.searchParams.set("target", target);
+    }
+
+    const sectionKey = normalizeReturnUrlKeyV6(
+      getFormValueReturnUrlV6(form, [
+        "section_key",
+        "dynamic_process_section",
+        "process_section",
+        "active_section",
+        "settings_tab"
+      ])
+    );
+
+    if (sectionKey) {
+      url.searchParams.set("dynamic_process_section", sectionKey);
+      url.searchParams.set("section_key", sectionKey);
+    }
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  function syncReturnUrlPostSaveV6(form) {
+    if (!form) {
+      return;
+    }
+
+    const method = getFormMethodReturnUrlV6(form);
+
+    if (method && method !== "post") {
+      return;
+    }
+
+    const returnUrl = buildReturnUrlPostSaveV6(form);
+
+    ensureHiddenReturnUrlInputV6(form, "return_url").value = returnUrl;
+    ensureHiddenReturnUrlInputV6(form, "appverbo_after_save").value = "1";
+  }
+
+  document.addEventListener("submit", function (event) {
+    syncReturnUrlPostSaveV6(event.target);
+  }, true);
+
+  document.addEventListener("click", function (event) {
+    const submitControl = event.target && event.target.closest
+      ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
+      : null;
+
+    if (!submitControl || !submitControl.form) {
+      return;
+    }
+
+    syncReturnUrlPostSaveV6(submitControl.form);
+  }, true);
+
+  document.addEventListener("formdata", function (event) {
+    if (!event || !event.formData || !event.target) {
+      return;
+    }
+
+    syncReturnUrlPostSaveV6(event.target);
+
+    const returnUrlInput = event.target.querySelector("input[name='return_url']");
+    const afterSaveInput = event.target.querySelector("input[name='appverbo_after_save']");
+
+    if (returnUrlInput) {
+      event.formData.set("return_url", returnUrlInput.value);
+    }
+
+    if (afterSaveInput) {
+      event.formData.set("appverbo_after_save", afterSaveInput.value);
+    }
+  }, true);
+
+  if (
+    window.HTMLFormElement &&
+    window.HTMLFormElement.prototype &&
+    !window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV6
+  ) {
+    const nativeSubmit = window.HTMLFormElement.prototype.submit;
+
+    window.HTMLFormElement.prototype.submit = function patchedSubmitReturnUrlPostSaveV6() {
+      syncReturnUrlPostSaveV6(this);
+      return nativeSubmit.call(this);
+    };
+
+    window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV6 = true;
+  }
+})();
+
+// APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_END
