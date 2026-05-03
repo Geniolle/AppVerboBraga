@@ -5277,3 +5277,565 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 })();
 
 // APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
+
+// APPVERBO_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_START
+//###################################################################################
+// (MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1) EVITAR DUPLICACAO DO CAMPO ORIGEM
+//###################################################################################
+
+(function setupMeuPerfilQuantityOriginDedupV1() {
+  "use strict";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function safeQuantityOriginDedupTextV1(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function getMeuPerfilQuantityOriginSettingV1() {
+    if (typeof getSidebarMenuSetting === "function") {
+      const foundSetting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
+      if (foundSetting) {
+        return foundSetting;
+      }
+    }
+
+    return (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
+      return normalizeMenuKey(setting && setting.key) === MEU_PERFIL_MENU_KEY;
+    }) || null;
+  }
+
+  function getMeuPerfilQuantityOriginFormV1() {
+    return document.querySelector("form[action='/users/profile/personal']")
+      || document.querySelector('form[action="/users/profile/personal"]');
+  }
+
+  function resolveQuantityOriginControlNameV1(fieldKey) {
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+
+    if (!cleanFieldKey) {
+      return "";
+    }
+
+    if (cleanFieldKey.startsWith("custom_")) {
+      return "custom_field__" + cleanFieldKey;
+    }
+
+    const builtinNames = {
+      nome: "full_name",
+      telefone: "primary_phone",
+      email: "login_email",
+      pais: "country",
+      data_nascimento: "birth_date",
+      autorizacao_whatsapp: "whatsapp_notice_opt_in"
+    };
+
+    return builtinNames[cleanFieldKey] || cleanFieldKey;
+  }
+
+  function getQuantityOriginCurrentSectionV1() {
+    const sectionInput = document.querySelector("[data-meu-perfil-section-input]");
+    return normalizeMenuKey(sectionInput ? sectionInput.value : "");
+  }
+
+  function getQuantityOriginWrapperV1(control) {
+    if (!control) {
+      return null;
+    }
+
+    return control.closest(".field")
+      || control.closest("[data-profile-field-key]")
+      || control.parentElement;
+  }
+
+  function getControlsByNameV1(form, controlName) {
+    if (!form || !controlName) {
+      return [];
+    }
+
+    return Array.from(form.elements || []).filter((control) => {
+      return safeQuantityOriginDedupTextV1(control.name) === controlName;
+    });
+  }
+
+  function disableDuplicateWrapperV1(wrapper, fieldKey) {
+    if (!wrapper) {
+      return;
+    }
+
+    wrapper.dataset.profileQuantityOriginDuplicateV1 = "1";
+    wrapper.dataset.profileFieldKey = normalizeMenuKey(fieldKey);
+    wrapper.hidden = true;
+    wrapper.style.display = "none";
+
+    Array.from(wrapper.querySelectorAll("input, select, textarea, button")).forEach((control) => {
+      control.disabled = true;
+      control.dataset.profileQuantityOriginDuplicateDisabledV1 = "1";
+    });
+  }
+
+  function enableKeptWrapperV1(wrapper, rule) {
+    if (!wrapper || !rule) {
+      return;
+    }
+
+    wrapper.dataset.profileQuantityOriginKeepV1 = "1";
+    wrapper.dataset.profileFieldKey = normalizeMenuKey(rule.quantityFieldKey);
+
+    if (rule.headerKey) {
+      wrapper.dataset.profileSectionPane = rule.headerKey;
+    }
+
+    wrapper.hidden = false;
+
+    Array.from(wrapper.querySelectorAll("input, select, textarea, button")).forEach((control) => {
+      if (control.dataset.profileQuantityOriginDuplicateDisabledV1 === "1") {
+        return;
+      }
+
+      control.disabled = false;
+    });
+  }
+
+  function applyQuantityOriginVisibilityV1(wrapper, rule) {
+    if (!wrapper || !rule) {
+      return;
+    }
+
+    const currentSection = getQuantityOriginCurrentSectionV1();
+    const targetSection = normalizeMenuKey(rule.headerKey || wrapper.dataset.profileSectionPane || "");
+
+    if (!currentSection || !targetSection) {
+      wrapper.style.display = "";
+      return;
+    }
+
+    wrapper.style.display = currentSection === targetSection ? "" : "none";
+  }
+
+  //###################################################################################
+  // (2) DEDUP POR REGRA
+  //###################################################################################
+
+  function dedupQuantityOriginRuleV1(form, rule) {
+    const quantityFieldKey = normalizeMenuKey(rule && rule.quantityFieldKey);
+    const controlName = resolveQuantityOriginControlNameV1(quantityFieldKey);
+
+    if (!quantityFieldKey || !controlName) {
+      return;
+    }
+
+    const controls = getControlsByNameV1(form, controlName);
+
+    if (!controls.length) {
+      return;
+    }
+
+    const wrappers = [];
+    const seenWrappers = new Set();
+
+    controls.forEach((control) => {
+      const wrapper = getQuantityOriginWrapperV1(control);
+
+      if (!wrapper || seenWrappers.has(wrapper)) {
+        return;
+      }
+
+      seenWrappers.add(wrapper);
+      wrappers.push(wrapper);
+    });
+
+    if (!wrappers.length) {
+      return;
+    }
+
+    const targetSection = normalizeMenuKey(rule.headerKey);
+
+    let keepWrapper = null;
+
+    if (targetSection) {
+      keepWrapper = wrappers.find((wrapper) => {
+        return normalizeMenuKey(wrapper.dataset.profileSectionPane) === targetSection;
+      }) || null;
+    }
+
+    if (!keepWrapper) {
+      keepWrapper = wrappers[0];
+    }
+
+    enableKeptWrapperV1(keepWrapper, rule);
+
+    wrappers.forEach((wrapper) => {
+      if (wrapper === keepWrapper) {
+        return;
+      }
+
+      disableDuplicateWrapperV1(wrapper, quantityFieldKey);
+    });
+
+    applyQuantityOriginVisibilityV1(keepWrapper, rule);
+  }
+
+  //###################################################################################
+  // (3) DEDUP GLOBAL
+  //###################################################################################
+
+  function dedupMeuPerfilQuantityOriginsV1() {
+    const form = getMeuPerfilQuantityOriginFormV1();
+    const setting = getMeuPerfilQuantityOriginSettingV1();
+
+    if (!form || !setting) {
+      return;
+    }
+
+    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
+
+    if (!rules.length) {
+      return;
+    }
+
+    rules.forEach((rule) => {
+      dedupQuantityOriginRuleV1(form, rule);
+    });
+  }
+
+  function scheduleDedupMeuPerfilQuantityOriginsV1() {
+    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 0);
+    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 80);
+    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 250);
+  }
+
+  document.addEventListener("click", scheduleDedupMeuPerfilQuantityOriginsV1, true);
+  document.addEventListener("input", scheduleDedupMeuPerfilQuantityOriginsV1, true);
+  document.addEventListener("change", scheduleDedupMeuPerfilQuantityOriginsV1, true);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleDedupMeuPerfilQuantityOriginsV1);
+  } else {
+    scheduleDedupMeuPerfilQuantityOriginsV1();
+  }
+
+  window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 150);
+  window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 600);
+})();
+
+// APPVERBO_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_END
+
+// APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_START
+//###################################################################################
+// (MEU_PERFIL_EDIT_SECTION_FILTER_V1) FILTRAR CAMPOS DO EDITAR POR ABA/CABECALHO
+//###################################################################################
+
+(function setupMeuPerfilEditSectionFilterV1() {
+  "use strict";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function safeEditSectionTextV1(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function normalizeEditSectionKeyV1(value) {
+    if (typeof normalizeMenuKey === "function") {
+      return normalizeMenuKey(value);
+    }
+
+    return safeEditSectionTextV1(value).trim().toLowerCase();
+  }
+
+  function normalizeEditSectionLookupV1(value) {
+    if (typeof normalizeLookupText === "function") {
+      return normalizeLookupText(value);
+    }
+
+    return safeEditSectionTextV1(value)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function getMeuPerfilEditFormV1() {
+    return document.querySelector("form[action='/users/profile/personal']")
+      || document.querySelector('form[action="/users/profile/personal"]');
+  }
+
+  function sectionKeyFromLabelV1(label) {
+    const cleanLabel = normalizeEditSectionLookupV1(label);
+
+    if (!cleanLabel) {
+      return "";
+    }
+
+    const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
+
+    for (const section of sections) {
+      const sectionLabel = normalizeEditSectionLookupV1(section && section.label);
+
+      if (sectionLabel && sectionLabel === cleanLabel) {
+        return normalizeEditSectionKeyV1(section && section.key);
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentProfileSectionFromInputV1() {
+    const selectors = [
+      "input[name='profile_section']",
+      "[data-meu-perfil-section-input]",
+      "[data-profile-section-input]"
+    ];
+
+    for (const selector of selectors) {
+      const input = document.querySelector(selector);
+      const value = normalizeEditSectionKeyV1(input ? input.value : "");
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentProfileSectionFromActiveTabV1() {
+    const activeSelectors = [
+      "[data-profile-section-tab].active",
+      "[data-profile-section-tab][aria-selected='true']",
+      "[data-profile-section-button].active",
+      "[data-profile-section-button][aria-selected='true']",
+      ".profile-section-tab.active",
+      ".profile-section-tab[aria-selected='true']",
+      "#perfil-pessoal-card .tab.active",
+      "#perfil-pessoal-card .active"
+    ];
+
+    for (const selector of activeSelectors) {
+      const activeElement = document.querySelector(selector);
+
+      if (!activeElement) {
+        continue;
+      }
+
+      const datasetValue = (
+        activeElement.dataset.profileSection ||
+        activeElement.dataset.profileSectionKey ||
+        activeElement.dataset.profileSectionTab ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      const datasetSection = normalizeEditSectionKeyV1(datasetValue);
+
+      if (datasetSection) {
+        return datasetSection;
+      }
+
+      const textSection = sectionKeyFromLabelV1(activeElement.textContent);
+
+      if (textSection) {
+        return textSection;
+      }
+    }
+
+    return "";
+  }
+
+  function getCurrentProfileSectionV1() {
+    return (
+      getCurrentProfileSectionFromInputV1() ||
+      getCurrentProfileSectionFromActiveTabV1() ||
+      (
+        Array.isArray(profilePersonalSections) &&
+        profilePersonalSections.length
+          ? normalizeEditSectionKeyV1(profilePersonalSections[0].key)
+          : ""
+      )
+    );
+  }
+
+  function getElementSectionPaneV1(element) {
+    if (!element) {
+      return "";
+    }
+
+    return normalizeEditSectionKeyV1(
+      element.dataset.profileSectionPane ||
+      element.dataset.profileSection ||
+      element.dataset.sectionKey ||
+      ""
+    );
+  }
+
+  function getVisibilityWrapperV1(element) {
+    if (!element) {
+      return null;
+    }
+
+    if (
+      element.classList &&
+      (
+        element.classList.contains("field") ||
+        element.classList.contains("profile-quantity-rule-v1") ||
+        element.classList.contains("profile-quantity-readonly-v1")
+      )
+    ) {
+      return element;
+    }
+
+    return (
+      element.closest(".field") ||
+      element.closest("[data-profile-quantity-rule-key]") ||
+      element.closest("[data-profile-quantity-readonly-rule-key]") ||
+      element
+    );
+  }
+
+  function isDuplicateOriginWrapperV1(wrapper) {
+    if (!wrapper || !wrapper.dataset) {
+      return false;
+    }
+
+    return wrapper.dataset.profileQuantityOriginDuplicateV1 === "1";
+  }
+
+  function setWrapperVisibleBySectionV1(wrapper, currentSection, expectedSection) {
+    if (!wrapper || !currentSection || !expectedSection) {
+      return;
+    }
+
+    if (isDuplicateOriginWrapperV1(wrapper)) {
+      wrapper.hidden = true;
+      wrapper.style.display = "none";
+      return;
+    }
+
+    if (currentSection === expectedSection) {
+      wrapper.hidden = false;
+      wrapper.style.display = "";
+      return;
+    }
+
+    wrapper.hidden = true;
+    wrapper.style.display = "none";
+  }
+
+  function applyQuantityHostsSectionV1(form) {
+    if (!form || typeof getSidebarMenuSetting !== "function" || typeof normalizeProcessQuantityRules !== "function") {
+      return;
+    }
+
+    const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
+
+    if (!setting) {
+      return;
+    }
+
+    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
+
+    rules.forEach((rule) => {
+      const ruleKey = normalizeEditSectionKeyV1(rule.key);
+      const headerKey = normalizeEditSectionKeyV1(rule.headerKey);
+
+      if (!ruleKey || !headerKey) {
+        return;
+      }
+
+      const hosts = form.querySelectorAll(
+        "[data-profile-quantity-rule-key='" + ruleKey + "'], " +
+        "[data-profile-quantity-readonly-rule-key='" + ruleKey + "']"
+      );
+
+      hosts.forEach((host) => {
+        host.dataset.profileSectionPane = headerKey;
+      });
+    });
+  }
+
+  //###################################################################################
+  // (2) APLICAR FILTRO NO FORMULARIO EDITAR
+  //###################################################################################
+
+  function applyMeuPerfilEditSectionFilterV1() {
+    const form = getMeuPerfilEditFormV1();
+
+    if (!form) {
+      return;
+    }
+
+    const currentSection = getCurrentProfileSectionV1();
+
+    if (!currentSection) {
+      return;
+    }
+
+    applyQuantityHostsSectionV1(form);
+
+    const wrappers = new Set();
+
+    Array.from(
+      form.querySelectorAll("[data-profile-section-pane], [data-profile-section], [data-section-key]")
+    ).forEach((element) => {
+      const wrapper = getVisibilityWrapperV1(element);
+
+      if (!wrapper || !form.contains(wrapper)) {
+        return;
+      }
+
+      wrappers.add(wrapper);
+    });
+
+    Array.from(
+      form.querySelectorAll("[data-profile-quantity-rule-key]")
+    ).forEach((element) => {
+      const wrapper = getVisibilityWrapperV1(element);
+
+      if (!wrapper || !form.contains(wrapper)) {
+        return;
+      }
+
+      wrappers.add(wrapper);
+    });
+
+    wrappers.forEach((wrapper) => {
+      const wrapperSection = getElementSectionPaneV1(wrapper);
+
+      if (!wrapperSection) {
+        return;
+      }
+
+      setWrapperVisibleBySectionV1(wrapper, currentSection, wrapperSection);
+    });
+  }
+
+  function scheduleMeuPerfilEditSectionFilterV1() {
+    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 0);
+    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 80);
+    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 250);
+  }
+
+  //###################################################################################
+  // (3) EVENTOS
+  //###################################################################################
+
+  document.addEventListener("click", scheduleMeuPerfilEditSectionFilterV1, true);
+  document.addEventListener("input", scheduleMeuPerfilEditSectionFilterV1, true);
+  document.addEventListener("change", scheduleMeuPerfilEditSectionFilterV1, true);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleMeuPerfilEditSectionFilterV1);
+  } else {
+    scheduleMeuPerfilEditSectionFilterV1();
+  }
+
+  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 150);
+  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 600);
+  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 1200);
+})();
+
+// APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
