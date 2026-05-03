@@ -327,9 +327,13 @@ def _resolve_submitted_process_quantity_items(
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
-    redirect_menu = str(submitted_form.get("menu") or MENU_MEU_PERFIL_KEY).strip().lower() or MENU_MEU_PERFIL_KEY
+    # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
+    # Este endpoint grava sempre dados do Meu perfil. Depois de gravar,
+    # o utilizador deve continuar no Meu perfil e na aba onde estava.
+    redirect_menu = MENU_MEU_PERFIL_KEY
     redirect_target = str(submitted_form.get("target") or "#perfil-pessoal-card").strip() or "#perfil-pessoal-card"
     redirect_profile_section = str(submitted_form.get("profile_section") or "").strip().lower()
+    # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
     clean_full_name = str(submitted_form.get("full_name") or "").strip()
     clean_primary_phone = str(submitted_form.get("primary_phone") or "").strip()
     clean_login_email = str(submitted_form.get("login_email") or submitted_form.get("email") or "").strip().lower()
