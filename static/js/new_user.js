@@ -1,3 +1,64 @@
+// APPVERBO_FORM_SAVE_NAVIGATION_GUARD_V1_START
+const APPVERBO_FORM_SAVE_NAVIGATION_MARKER_V1 = "appverbo:form-save-navigation-v1";
+
+function readAndClearAppVerboFormSaveNavigationMarkerV1() {
+  try {
+    const markerValue = window.sessionStorage.getItem(APPVERBO_FORM_SAVE_NAVIGATION_MARKER_V1) || "";
+    if (markerValue) {
+      window.sessionStorage.removeItem(APPVERBO_FORM_SAVE_NAVIGATION_MARKER_V1);
+    }
+    return markerValue;
+  } catch (error) {
+    return "";
+  }
+}
+
+function markAppVerboFormSaveNavigationV1(form) {
+  if (!form) {
+    return;
+  }
+
+  const method = String(form.getAttribute("method") || form.method || "").trim().toLowerCase();
+
+  if (method && method !== "post") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(APPVERBO_FORM_SAVE_NAVIGATION_MARKER_V1, "1");
+
+    window.setTimeout(() => {
+      try {
+        if (document.visibilityState !== "hidden") {
+          window.sessionStorage.removeItem(APPVERBO_FORM_SAVE_NAVIGATION_MARKER_V1);
+        }
+      } catch (error) {
+        // Ignora falhas de sessionStorage.
+      }
+    }, 5000);
+  } catch (error) {
+    // Ignora falhas de sessionStorage.
+  }
+}
+
+document.addEventListener("submit", (event) => {
+  markAppVerboFormSaveNavigationV1(event.target);
+}, true);
+
+document.addEventListener("click", (event) => {
+  const submitControl = event.target && event.target.closest
+    ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
+    : null;
+
+  if (!submitControl || !submitControl.form) {
+    return;
+  }
+
+  markAppVerboFormSaveNavigationV1(submitControl.form);
+}, true);
+
+const appverboFormSaveNavigationMarkerV1 = readAndClearAppVerboFormSaveNavigationMarkerV1();
+
 const navigationEntries = (
   typeof window !== "undefined" &&
   window.performance &&
@@ -8,13 +69,19 @@ const navigationEntries = (
 const navigationType = navigationEntries.length
   ? String(navigationEntries[0].type || "")
   : "";
-if (navigationType === "reload" && window.location.pathname === "/users/new") {
+
+if (
+  navigationType === "reload" &&
+  window.location.pathname === "/users/new" &&
+  appverboFormSaveNavigationMarkerV1 !== "1"
+) {
   const homeUrl = "/users/new?menu=home";
   const currentPathAndQuery = `${window.location.pathname}${window.location.search}`;
   if (currentPathAndQuery !== homeUrl || window.location.hash) {
     window.location.replace(homeUrl);
   }
 }
+// APPVERBO_FORM_SAVE_NAVIGATION_GUARD_V1_END
 
 const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
 const MEU_PERFIL_MENU_KEY = "meu_perfil";
