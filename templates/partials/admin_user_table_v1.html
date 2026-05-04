@@ -1,0 +1,90 @@
+{% macro render_admin_user_table_v1(rows, table_id, empty_message, allow_delete=False) %}
+{% if rows %}
+<table id="{{ table_id }}">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nome</th>
+      <th>Email</th>
+      <th>Telefone</th>
+      <th>Entidade</th>
+      <th>Perfil</th>
+      <th>Estado</th>
+      <th>Criado em</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row.id }}</td>
+      <td>{{ row.full_name }}</td>
+      <td>{{ row.login_email }}</td>
+      <td>{{ row.primary_phone }}</td>
+      <td>{{ row.entity_name }}</td>
+      <td>{{ row.profile_name }}</td>
+      <td>
+        {% if row.account_status_is_active or row.account_status == "active" %}
+        <span class="entity-status entity-status-active">
+          {{ row.account_status_label if row.account_status_label is defined else "Ativo" }}
+        </span>
+        {% elif row.account_status_is_inactive or row.account_status == "inactive" %}
+        <span class="entity-status entity-status-inactive">
+          {{ row.account_status_label if row.account_status_label is defined else "Inativo" }}
+        </span>
+        {% else %}
+        <span class="entity-status entity-status-inactive">
+          {{ row.account_status_label if row.account_status_label is defined else row.account_status }}
+        </span>
+        {% endif %}
+      </td>
+      <td>{{ row.created_at }}</td>
+      <td>
+        <div class="table-actions">
+          <a
+            class="table-icon-btn"
+            href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}&user_view=1#edit-user-card"
+            title="Exibir utilizador"
+          >
+            &#128065;
+          </a>
+          <a
+            class="table-icon-btn"
+            href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}#edit-user-card"
+            title="Modificar utilizador"
+          >
+            &#9998;
+          </a>
+          {% if allow_delete %}
+          <form method="post" action="/users/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este utilizador');">
+            <input type="hidden" name="user_id" value="{{ row.id }}">
+            <button
+              type="submit"
+              class="table-icon-btn table-icon-btn-danger"
+              title="Eliminar utilizador"
+            >
+              &#128465;
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="table-footer admin-status-table-footer-v1">
+  <select aria-label="Entradas por página">
+    <option selected>5</option>
+  </select>
+  <span>entradas por página</span>
+  <div class="pagination">
+    <button type="button" disabled>&lsaquo;</button>
+    <button type="button" class="active">1</button>
+    <button type="button" disabled>&rsaquo;</button>
+  </div>
+</div>
+{% else %}
+<p class="empty">{{ empty_message }}</p>
+{% endif %}
+{% endmacro %}

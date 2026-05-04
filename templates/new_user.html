@@ -1,9 +1,11 @@
 {% extends "base.html" %}
+{% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260504-users-footer-entity-like-v10">
+  <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260504-pagination-second-image-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
@@ -593,7 +595,7 @@
                         <label for="entity_auto_name">Entidade (automática pelo email)</label>
                         <input
                           id="entity_auto_name"
-                          value="{{ form_data.entity_name if form_data.entity_name else 'Será definida automaticamente ao enviar o convite' }}"
+                          value="{{ form_data.entity_name if form_data.entity_name else 'Será definida pelo email; se não encontrar domínio, usa a entidade atual' }}"
                           readonly
                           disabled
                           class="readonly-field"
@@ -727,159 +729,29 @@
           </div>
         </section>
         {% endif %}
-        <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V7_START -->
+        <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_START -->
         <section id="admin-users-created-card" class="card" data-menu-scope="administrativo">
           <h2>Utilizadores criados</h2>
-          {% if active_created_users %}
-          <table id="admin-users-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Telefone</th>
-                <th>Entidade</th>
-                <th>Perfil</th>
-                <th>Estado</th>
-                <th>Criado em</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in active_created_users %}
-              <tr>
-                <td>{{ row.id }}</td>
-                <td>{{ row.full_name }}</td>
-                <td>{{ row.login_email }}</td>
-                <td>{{ row.primary_phone }}</td>
-                <td>{{ row.entity_name }}</td>
-                <td>{{ row.profile_name }}</td>
-                <td>
-                  <span class="entity-status entity-status-active">
-                    {{ row.account_status_label if row.account_status_label is defined else "Ativo" }}
-                  </span>
-                </td>
-                <td>{{ row.created_at }}</td>
-                <td>
-                  <div class="table-actions">
-                    <a
-                      class="table-icon-btn"
-                      href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}&user_view=1#edit-user-card"
-                      title="Exibir utilizador"
-                    >
-                      &#128065;
-                    </a>
-                    <a
-                      class="table-icon-btn"
-                      href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}#edit-user-card"
-                      title="Modificar utilizador"
-                    >
-                      &#9998;
-                    </a>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          <div class="table-footer admin-users-table-footer">
-            <select aria-label="Entradas por página">
-              <option selected>5</option>
-            </select>
-            <span>entradas por página</span>
-            <div class="pagination">
-              <button type="button" disabled>&lsaquo;</button>
-              <button type="button" class="active">1</button>
-              <button type="button" disabled>&rsaquo;</button>
-            </div>
-          </div>
-          {% else %}
-          <p class="empty">Sem utilizadores ativos.</p>
-          {% endif %}
+          {{ render_admin_user_table_v1(
+            active_created_users,
+            "admin-users-table",
+            "Sem utilizadores ativos.",
+            false
+          ) }}
         </section>
-        <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V7_END -->
+        <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_END -->
 
-        <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V7_START -->
+        <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_START -->
         <section id="inactive-users-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores inativos</h2>
-          {% if inactive_users %}
-          <table id="inactive-users-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Telefone</th>
-                <th>Entidade</th>
-                <th>Perfil</th>
-                <th>Estado</th>
-                <th>Criado em</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in inactive_users %}
-              <tr>
-                <td>{{ row.id }}</td>
-                <td>{{ row.full_name }}</td>
-                <td>{{ row.login_email }}</td>
-                <td>{{ row.primary_phone }}</td>
-                <td>{{ row.entity_name }}</td>
-                <td>{{ row.profile_name }}</td>
-                <td>
-                  <span class="entity-status entity-status-inactive">
-                    {{ row.account_status_label if row.account_status_label is defined else "Inativo" }}
-                  </span>
-                </td>
-                <td>{{ row.created_at }}</td>
-                <td>
-                  <div class="table-actions">
-                    <a
-                      class="table-icon-btn"
-                      href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}&user_view=1#edit-user-card"
-                      title="Exibir utilizador"
-                    >
-                      &#128065;
-                    </a>
-                    <a
-                      class="table-icon-btn"
-                      href="/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id={{ row.id }}#edit-user-card"
-                      title="Modificar utilizador"
-                    >
-                      &#9998;
-                    </a>
-                    <form method="post" action="/users/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este utilizador');">
-                      <input type="hidden" name="user_id" value="{{ row.id }}">
-                      <button
-                        type="submit"
-                        class="table-icon-btn table-icon-btn-danger"
-                        title="Eliminar utilizador"
-                      >
-                        &#128465;
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          <div class="table-footer admin-users-table-footer">
-            <select aria-label="Entradas por página">
-              <option selected>5</option>
-            </select>
-            <span>entradas por página</span>
-            <div class="pagination">
-              <button type="button" disabled>&lsaquo;</button>
-              <button type="button" class="active">1</button>
-              <button type="button" disabled>&rsaquo;</button>
-            </div>
-          </div>
-          {% else %}
-          <p class="empty">Sem utilizadores inativos.</p>
-          {% endif %}
+          <h2>Utilizadores não ativos</h2>
+          {{ render_admin_user_table_v1(
+            inactive_users,
+            "inactive-users-table",
+            "Sem Utilizadores não ativos.",
+            true
+          ) }}
         </section>
-        <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V7_END -->
+        <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_END -->
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
         <section id="create-entity-card" class="card entity-panel-card" data-menu-scope="administrativo">
@@ -2806,7 +2678,7 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/new_user.js?v=20260504-users-inactive-visible-v9"></script>
+  <script src="/static/js/new_user.js?v=20260504-users-refactor-v9"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

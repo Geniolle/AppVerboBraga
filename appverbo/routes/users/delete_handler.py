@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from appverbo.core import *  # noqa: F403,F401
+from appverbo.services.user_status import is_user_account_status_inactive_v1
 from appverbo.services import *  # noqa: F403,F401
 from appverbo.models import (
     Entity,
@@ -113,7 +114,7 @@ def delete_user(
             )
 
         # APPVERBO_DELETE_ONLY_INACTIVE_USER_V1_START
-        if str(user.account_status or "").strip().lower() != UserAccountStatus.INACTIVE.value:
+        if not is_user_account_status_inactive_v1(user.account_status):
             return RedirectResponse(
                 url=build_users_new_url(
                     error="Só é permitido eliminar utilizadores inativos.",

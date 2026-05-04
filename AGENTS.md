@@ -1,4 +1,4 @@
-﻿# AGENTS.md - Regras Locais do Projeto AppVerboBraga
+# AGENTS.md - Regras Locais do Projeto AppVerboBraga
 
 Estas regras são obrigatórias para qualquer alteração no projeto AppVerboBraga.
 
@@ -398,3 +398,25 @@ Sempre que existir uma listagem administrativa com estado ativo/inativo, o layou
    - não existe bloco legado misturando ativos e inativos.
 <!-- APPVERBO_RULE_LAYOUT_ATIVOS_INATIVOS_V1_END -->
 
+<!-- APPVERBO_RULE_USER_STATUS_REFACTOR_V1_START -->
+## Regra padrão: reutilização de status e tabelas administrativas
+
+Sempre que houver listagens administrativas com status de utilizador:
+
+1. A normalização e tradução visual do status do utilizador devem ficar em `appverbo/services/user_status.py`.
+2. Não duplicar lógica de status diretamente em `page.py`, handlers ou templates.
+3. O banco deve guardar valores canónicos em inglês:
+   - `active`
+   - `inactive`
+   - `pending`
+   - `blocked`
+4. O português deve ser apenas label visual:
+   - `Ativo`
+   - `Inativo`
+   - `Pendente`
+   - `Bloqueado`
+5. Tabelas administrativas de utilizadores devem usar partial reutilizável em `templates/partials/admin_user_table_v1.html`.
+6. CSS de rodapé, paginação e badges de status deve ficar em módulo reutilizável dentro de `static/css/modules`.
+7. Não criar guard JavaScript para reexibir card oculto se a causa puder ser corrigida na lista principal de cards da aba.
+8. Se uma nova listagem tiver ativos/inativos, usar cards separados e reutilizar a estrutura existente antes de criar novo HTML duplicado.
+<!-- APPVERBO_RULE_USER_STATUS_REFACTOR_V1_END -->

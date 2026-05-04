@@ -49,6 +49,7 @@ def update_user(
     clean_email = email.strip().lower()
     clean_account_status = account_status.strip().lower()
     clean_profile_id = profile_id.strip()
+    clean_entity_id = entity_id.strip()
 
     if not clean_user_id.isdigit():
         return RedirectResponse(
@@ -142,16 +143,36 @@ def update_user(
             clean_email,
             entity_permissions,
         )
-        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V1_START
+        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_START
+        # Ao editar um utilizador existente, não devemos bloquear a atualização só porque
+        # o domínio do email do utilizador não corresponde ao domínio/email da entidade.
+        #
+        # Regra:
+        # 1. Se vier entity_id explícito e permitido, usa essa entidade.
+        # 2. Se não for possível resolver pelo email, mantém a entidade já ligada ao membro.
+        # 3. A entidade atual pode estar inativa; ainda assim deve ser mantida para permitir
+        #    alteração de estado do utilizador sem forçar nova resolução por domínio.
+        if selected_entity is None and clean_entity_id.isdigit():
+            explicit_entity = session.get(Entity, int(clean_entity_id))
+
+            if explicit_entity is not None:
+                can_use_explicit_entity = bool(entity_permissions.get("can_manage_all_entities"))
+
+                if not can_use_explicit_entity:
+                    allowed_entity_ids = sorted(
+                        set(entity_permissions.get("allowed_entity_ids") or set())
+                    )
+                    can_use_explicit_entity = int(explicit_entity.id) in allowed_entity_ids
+
+                if can_use_explicit_entity:
+                    selected_entity = explicit_entity
+                    entity_resolution_error = ""
+
         if selected_entity is None:
-            fallback_entity_stmt = (
+            current_entity_stmt = (
                 select(Entity)
                 .join(MemberEntity, MemberEntity.entity_id == Entity.id)
-                .where(
-                    MemberEntity.member_id == member.id,
-                    MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                    Entity.is_active.is_(True),
-                )
+                .where(MemberEntity.member_id == member.id)
                 .order_by(MemberEntity.id.asc())
             )
 
@@ -161,19 +182,20 @@ def update_user(
                 )
 
                 if allowed_entity_ids:
-                    fallback_entity_stmt = fallback_entity_stmt.where(
+                    current_entity_stmt = current_entity_stmt.where(
                         Entity.id.in_(allowed_entity_ids)
                     )
                 else:
-                    fallback_entity_stmt = fallback_entity_stmt.where(Entity.id == -1)
+                    current_entity_stmt = current_entity_stmt.where(Entity.id == -1)
 
             selected_entity = session.execute(
-                fallback_entity_stmt.limit(1)
+                current_entity_stmt.limit(1)
             ).scalar_one_or_none()
 
             if selected_entity is not None:
                 entity_resolution_error = ""
-        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V1_END
+        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_END
+
 
         if selected_entity is None and entity_resolution_error:
             errors.append(entity_resolution_error)

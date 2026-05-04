@@ -1,0 +1,271 @@
+﻿
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:49940 - "GET 
+/users/new?menu=home HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49940 - "GET 
+/static/js/new_user.js?v=20260503-global-post-save-context-v3 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39986 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:39986 - "GET /users/ne
+w?profile_success=Dados+pessoais+atualizados+com+sucesso.&profil
+e_tab=pessoal&menu=meu_perfil&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39986 - "GET 
+/static/js/new_user.js?v=20260503-global-post-save-context-v3 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:39986 - "GET /users/ne
+w?menu=meu_perfil&target=%23perfil-pessoal-card&profile_tab=pess
+oal&profile_section=custom_dados_pessoais&appverbo_after_save=1&
+profile_success=Dados+pessoais+atualizados+com+sucesso. 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39986 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:52790 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52790 - "GET 
+/static/js/new_user.js?v=20260503-return-url-post-save-v4 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET 
+/static/js/new_user.js?v=20260503-return-url-post-save-v4 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET 
+/static/js/new_user.js?v=20260503-return-url-post-save-v4 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52806 - "GET 
+/static/js/new_user.js?v=20260503-return-url-post-save-v4 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /static/j
+s/new_user.js?v=20260503-backend-return-url-post-save-v6 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&appverbo_after_save=1&target=%23pe
+rfil-pessoal-card&profile_section=custom_dados_pessoais 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /static/j
+s/new_user.js?v=20260503-backend-return-url-post-save-v6 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56874 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:38232 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38232 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55844 - "GET /users/ne
+w?menu=meu_perfil&target=%23perfil-pessoal-card&profile_tab=pess
+oal&profile_section=custom_dados_de_agregados&appverbo_after_sav
+e=1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55858 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55858 - "GET /users/ne
+w?menu=meu_perfil&target=%23perfil-pessoal-card&profile_tab=pess
+oal&profile_section=custom_dados_de_agregados&appverbo_after_sav
+e=1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55858 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:55858 - "POST /logout 
+HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&appverbo_after_save=1&target=%23pe
+rfil-pessoal-card&profile_section=custom_dados_pessoais 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58214 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&appverbo_after_save=1&target=%23pe
+rfil-pessoal-card&profile_section=custom_dados_pessoais 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50264 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50264 - "GET /static/j
+s/new_user.js?v=20260503-page-handler-post-save-context-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:50382 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50382 - "GET 
+/static/js/new_user.js?v=20260503-fix-post-save-menu-return-v1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50382 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:50382 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&appverbo_after_save=1&target=%23pe
+rfil-pessoal-card&profile_section=custom_dados_pessoais 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39164 - "GET 
+/static/js/new_user.js?v=20260503-fix-post-save-menu-return-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:39164 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39164 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context 
+impl PostgresqlImpl.
+appverbobraga-web  | Database migrated to head: 
+postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "GET 
+/static/js/new_user.js?v=20260503-fix-post-save-menu-return-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&appverbo_after_save=1&target=%23pe
+rfil-pessoal-card&profile_section=custom_dados_pessoais 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49270 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44636 - "GET /users/ne
+w?menu=meu_perfil&target=%23perfil-pessoal-card&profile_tab=pess
+oal&nav_debug=1 HTTP/1.1" 302 Found
+appverbobraga-web  | INFO:     172.19.0.1:44640 - "POST /login 
+HTTP/1.1" 401 Unauthorized
+appverbobraga-web  | INFO:     172.19.0.1:42896 - "POST /login 
+HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:42896 - "GET 
+/users/new HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42896 - "GET 
+/static/js/new_user.js?v=20260503-fix-post-save-menu-return-v1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36452 - "POST 
+/users/profile/personal HTTP/1.1" 303 See Other
+appverbobraga-web  | INFO:     172.19.0.1:36452 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&appverbo_after_save=1&target=%23pe
+rfil-pessoal-card&profile_section=custom_dados_pessoais 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44324 - "GET 
+/static/js/new_user.js?v=20260503-fix-post-save-menu-return-v1 
+HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:36452 - "GET /users/ne
+w?menu=meu_perfil&profile_success=Dados+pessoais+atualizados+com
++sucesso.&profile_tab=pessoal&target=%23perfil-pessoal-card&prof
+ile_section=custom_dados_pessoais&appverbo_after_save=1 
+HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36452 - "GET /users/ne
+w?menu=home&profile_success=Dados+pessoais+atualizados+com+suces
+so.&profile_tab=pessoal HTTP/1.1" 200 OK
+
+

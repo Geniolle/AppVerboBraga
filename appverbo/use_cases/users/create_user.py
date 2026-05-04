@@ -50,63 +50,116 @@ def _extract_email_domain(raw_email: str) -> str:
     return domain.strip()
 
 
-def _resolve_entity_from_user_email(
+def _resolve_selected_entity_fallback_v2(
+    session: Session,
+    selected_entity_id: int | None,
+    permissions: dict[str, Any],
+) -> Entity | None:
+    clean_selected_entity_id: int | None = None
+
+    if selected_entity_id is not None:
+        try:
+            clean_selected_entity_id = int(selected_entity_id)
+        except (TypeError, ValueError):
+            clean_selected_entity_id = None
+
+    if clean_selected_entity_id is not None and clean_selected_entity_id > 0:
+        if not permissions.get("can_manage_all_entities"):
+            allowed_entity_ids = {
+                int(raw_id)
+                for raw_id in (permissions.get("allowed_entity_ids") or set())
+                if str(raw_id).strip().isdigit()
+            }
+            if clean_selected_entity_id not in allowed_entity_ids:
+                return None
+
+        selected_entity = session.execute(
+            select(Entity).where(
+                Entity.id == clean_selected_entity_id,
+                Entity.is_active.is_(True),
+            )
+        ).scalar_one_or_none()
+        if selected_entity is not None:
+            return selected_entity
+
+    query = select(Entity).where(Entity.is_active.is_(True)).order_by(Entity.name.asc())
+
+    if not permissions.get("can_manage_all_entities"):
+        allowed_entity_ids = sorted(
+            {
+                int(raw_id)
+                for raw_id in (permissions.get("allowed_entity_ids") or set())
+                if str(raw_id).strip().isdigit()
+            }
+        )
+        if not allowed_entity_ids:
+            return None
+        query = query.where(Entity.id.in_(allowed_entity_ids))
+
+    return session.execute(query.limit(1)).scalars().first()
+
+
+def _resolve_entity_from_user_email_v2(
     session: Session,
     user_email: str,
     permissions: dict[str, Any],
+    selected_entity_id: int | None = None,
 ) -> tuple[Entity | None, str]:
     clean_email = (user_email or "").strip().lower()
-    if not clean_email or "@" not in clean_email:
-        return None, "Email inválido para determinar entidade."
 
-    query = select(Entity).where(Entity.is_active.is_(True)).order_by(Entity.name.asc())
-    if not permissions.get("can_manage_all_entities"):
-        allowed_entity_ids = sorted(set(permissions.get("allowed_entity_ids") or set()))
-        if not allowed_entity_ids:
-            return None, "Sem entidades disponíveis para este utilizador."
-        query = query.where(Entity.id.in_(allowed_entity_ids))
+    if clean_email and "@" in clean_email:
+        query = select(Entity).where(Entity.is_active.is_(True)).order_by(Entity.name.asc())
 
-    scoped_entities = list(session.execute(query).scalars().all())
-    if not scoped_entities:
-        return None, "Sem entidades ativas disponíveis para atribuição."
+        if not permissions.get("can_manage_all_entities"):
+            allowed_entity_ids = sorted(set(permissions.get("allowed_entity_ids") or set()))
+            if allowed_entity_ids:
+                query = query.where(Entity.id.in_(allowed_entity_ids))
 
-    exact_matches = [
-        entity
-        for entity in scoped_entities
-        if (entity.email or "").strip().lower() == clean_email
-    ]
-    if len(exact_matches) == 1:
-        return exact_matches[0], ""
-    if len(exact_matches) > 1:
-        return (
-            None,
-            "Existem múltiplas entidades com o mesmo email. Corrija os dados das entidades.",
-        )
+        scoped_entities = list(session.execute(query).scalars().all())
 
-    email_domain = _extract_email_domain(clean_email)
-    if email_domain:
-        domain_matches = [
+        exact_matches = [
             entity
             for entity in scoped_entities
-            if _extract_email_domain((entity.email or "").strip().lower()) == email_domain
+            if (entity.email or "").strip().lower() == clean_email
         ]
-        if len(domain_matches) == 1:
-            return domain_matches[0], ""
-        if len(domain_matches) > 1:
+        if len(exact_matches) == 1:
+            return exact_matches[0], ""
+        if len(exact_matches) > 1:
             return (
                 None,
-                "Existem múltiplas entidades com este domínio de email. Ajuste o email das entidades.",
+                "Existem multiplas entidades com o mesmo email. Corrija os dados das entidades.",
             )
 
-    if not permissions.get("can_manage_all_entities") and len(scoped_entities) == 1:
-        return scoped_entities[0], ""
+        email_domain = _extract_email_domain(clean_email)
+        if email_domain:
+            domain_matches = [
+                entity
+                for entity in scoped_entities
+                if _extract_email_domain((entity.email or "").strip().lower()) == email_domain
+            ]
+            if len(domain_matches) == 1:
+                return domain_matches[0], ""
+            if len(domain_matches) > 1:
+                return (
+                    None,
+                    "Existem multiplas entidades com este dominio de email. Ajuste o email das entidades.",
+                )
+
+    selected_fallback_entity = _resolve_selected_entity_fallback_v2(
+        session,
+        selected_entity_id,
+        permissions,
+    )
+    if selected_fallback_entity is not None:
+        return selected_fallback_entity, ""
 
     return (
         None,
-        "Não foi possível determinar a entidade pelo email. "
-        "Verifique o email da entidade (domínio) ou ajuste os dados.",
+        "Nao foi possivel determinar uma entidade ativa para este convite.",
     )
 
+
+_resolve_entity_from_user_email = _resolve_entity_from_user_email_v2
 
 def _get_primary_entity_for_member(session: Session, member_id: int) -> tuple[int | None, str]:
     entity_row = session.execute(
@@ -166,7 +219,7 @@ class CreateUserOutcome:
     template_status_code: int = 400
 
 
-def normalize_create_user_input(
+def normalize_create_user_input_v1(
     *,
     full_name: str,
     primary_phone: str,
@@ -176,7 +229,6 @@ def normalize_create_user_input(
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
-    clean_country = country.strip()
     clean_email = email.strip().lower()
     clean_profile_id = profile_id.strip()
     clean_invite_delivery = invite_delivery.strip().lower()
@@ -211,6 +263,8 @@ def normalize_create_user_input(
     )
 
 
+normalize_create_user_input = normalize_create_user_input_v1
+
 def _build_error_context(
     *,
     request: Request,
@@ -227,10 +281,13 @@ def _build_error_context(
         "request": request,
         "errors": errors,
         "success": "",
+        "generated_invite_link": "",
         "form_data": form_data,
         "entity_form_data": get_entity_form_defaults(),
         "entity_edit_data": get_entity_edit_defaults(),
         "user_edit_data": get_user_edit_defaults(),
+        "entity_readonly_mode": False,
+        "user_readonly_mode": False,
         "current_user": current_user,
         "current_user_is_admin": current_user_is_admin,
         "current_user_can_manage_all_entities": bool(can_manage_all_entities),
@@ -240,8 +297,20 @@ def _build_error_context(
         "next_entity_internal_number": str(next_entity_internal_number),
         "profile_success": "",
         "profile_error": "",
+        "settings_success": "",
+        "settings_error": "",
+        "settings_edit_data": None,
+        "settings_edit_key": "",
+        "settings_action": "edit",
+        "settings_tab": "",
         "profile_tab": "pessoal",
         "initial_menu": "administrativo",
+        "initial_menu_target": "#create-user-card",
+        "initial_dynamic_process_section": "",
+        "initial_profile_section": "",
+        "requested_profile_section": "",
+        "requested_dynamic_process_section": "",
+        "appverbo_after_save": False,
         "admin_tab": "utilizador",
         **page_data,
     }
@@ -292,10 +361,11 @@ def execute_create_user(
     form_data = dict(payload.form_data)
     selected_entity = None
 
-    selected_entity, entity_resolution_error = _resolve_entity_from_user_email(
+    selected_entity, entity_resolution_error = _resolve_entity_from_user_email_v2(
         session,
         payload.clean_email,
         entity_permissions,
+        selected_entity_id,
     )
     if selected_entity is not None:
         form_data["entity_id"] = str(selected_entity.id)

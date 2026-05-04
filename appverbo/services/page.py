@@ -17,6 +17,12 @@ from appverbo.menu_settings import (
     resolve_menu_key_alias,
 )
 from appverbo.services.permissions import get_user_entity_permissions
+from appverbo.services.user_status import (
+    is_user_account_status_active_v1,
+    is_user_account_status_inactive_v1,
+    normalize_user_account_status_v1,
+    user_account_status_label_pt_v1,
+)
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     build_menu_process_field_storage_key,
@@ -938,21 +944,6 @@ def get_page_data(
         ).all()
         superuser_user_ids = {int(row.user_id) for row in superuser_rows}
 
-    # APPVERBO_USER_STATUS_LABEL_PT_V1_START
-    def normalize_user_account_status_v1(raw_status: Any) -> str:
-        return str(raw_status or "").strip().lower()
-
-    def user_account_status_label_pt_v1(raw_status: Any) -> str:
-        normalized_status = normalize_user_account_status_v1(raw_status)
-        status_label_map = {
-            UserAccountStatus.ACTIVE.value: "Ativo",
-            UserAccountStatus.PENDING.value: "Pendente",
-            UserAccountStatus.INACTIVE.value: "Inativo",
-            UserAccountStatus.BLOCKED.value: "Bloqueado",
-        }
-        return status_label_map.get(normalized_status, normalized_status or "-")
-    # APPVERBO_USER_STATUS_LABEL_PT_V1_END
-
     all_users = [
         {
             "id": row.id,
@@ -962,8 +953,8 @@ def get_page_data(
             "login_email": row.login_email,
             "account_status": normalize_user_account_status_v1(row.account_status),
             "account_status_label": user_account_status_label_pt_v1(row.account_status),
-            "account_status_is_active": normalize_user_account_status_v1(row.account_status) == UserAccountStatus.ACTIVE.value,
-            "account_status_is_inactive": normalize_user_account_status_v1(row.account_status) == UserAccountStatus.INACTIVE.value,
+            "account_status_is_active": is_user_account_status_active_v1(row.account_status),
+            "account_status_is_inactive": is_user_account_status_inactive_v1(row.account_status),
             "entity_id": entity_id_by_member_id.get(int(row.member_id)),
             "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
             "profile_name": profile_name_by_user_id.get(int(row.id), "-"),
@@ -979,11 +970,17 @@ def get_page_data(
         row for row in all_users if row["account_status"] != UserAccountStatus.PENDING.value
     ]
     active_created_users = [
-        row for row in created_users if row["account_status"] == UserAccountStatus.ACTIVE.value
+        row for row in created_users if is_user_account_status_active_v1(row["account_status"])
     ]
+    # APPVERBO_NON_ACTIVE_USERS_LIST_V1_START
+    # Mostra no bloco inferior todos os utilizadores cujo estado seja diferente de Ativo.
+    # Assim entram Pendente, Inativo, Bloqueado e outros estados futuros n?o ativos.
     inactive_users = [
-        row for row in all_users if row["account_status"] == UserAccountStatus.INACTIVE.value
+        row
+        for row in all_users
+        if row["account_status"] != UserAccountStatus.ACTIVE.value
     ]
+    # APPVERBO_NON_ACTIVE_USERS_LIST_V1_END
     superuser_users = [row for row in all_users if row["is_entity_superuser"]]
     recent_users = all_users[:10]
 
