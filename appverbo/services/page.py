@@ -21,6 +21,8 @@ from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     build_menu_process_field_storage_key,
     build_menu_process_quantity_storage_key,
+    filter_process_fields_by_hidden_targets,
+    get_hidden_process_targets_from_rules,
     get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,
     resolve_meu_perfil_builtin_duplicate_field_key,
@@ -28,6 +30,364 @@ from appverbo.services.profile import (
     parse_menu_process_quantity_values,
     parse_member_profile_fields,
 )
+
+
+# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_START
+def _format_profile_visibility_date_v1(raw_value: Any) -> str:
+    if raw_value is None:
+        return ""
+
+    if hasattr(raw_value, "strftime"):
+        return raw_value.strftime("%d/%m/%Y")
+
+    return str(raw_value or "").strip()
+
+
+def _collect_meu_perfil_subsequent_rules_v1(sidebar_item: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(sidebar_item, dict):
+        return []
+
+    collected_rules: list[dict[str, Any]] = []
+
+    for storage_key in (
+        "process_subsequent_fields",
+        "subsequent_fields",
+        "process_subsequent_rules",
+    ):
+        raw_rules = sidebar_item.get(storage_key)
+
+        if not isinstance(raw_rules, list):
+            continue
+
+        for raw_rule in raw_rules:
+            if isinstance(raw_rule, dict):
+                collected_rules.append(raw_rule)
+
+    return collected_rules
+
+
+def _build_meu_perfil_visibility_values_v1(
+    session: Session,
+    actor_user_id: int | None,
+    actor_profile_fields: dict[str, str],
+) -> dict[str, str]:
+    values_by_field: dict[str, str] = dict(actor_profile_fields or {})
+
+    if actor_user_id is None:
+        return values_by_field
+
+    row = session.execute(
+        select(
+            Member.full_name,
+            Member.primary_phone,
+            Member.email,
+            Member.country,
+            Member.birth_date,
+            User.login_email,
+        )
+        .join(User, User.member_id == Member.id)
+        .where(User.id == actor_user_id)
+        .limit(1)
+    ).one_or_none()
+
+    if row is None:
+        return values_by_field
+
+    values_by_field["nome"] = str(row.full_name or "").strip()
+    values_by_field["telefone"] = str(row.primary_phone or "").strip()
+    values_by_field["email"] = str(row.login_email or row.email or "").strip().lower()
+    values_by_field["pais"] = str(row.country or "").strip()
+    values_by_field["data_nascimento"] = _format_profile_visibility_date_v1(row.birth_date)
+
+    return values_by_field
+
+
+def _apply_meu_perfil_subsequent_visibility_v2(
+    session: Session,
+    actor_user_id: int | None,
+    sidebar_item: dict[str, Any] | None,
+    actor_profile_fields: dict[str, str],
+    visible_fields: list[str],
+    field_header_map: dict[str, str],
+) -> list[str]:
+    if not visible_fields:
+        return []
+
+    rules = _collect_meu_perfil_subsequent_rules_v1(sidebar_item)
+
+    if not rules:
+        return visible_fields
+
+    values_by_field = _build_meu_perfil_visibility_values_v1(
+        session,
+        actor_user_id,
+        actor_profile_fields,
+    )
+
+    hidden_targets = get_hidden_process_targets_from_rules(
+        rules,
+        values_by_field,
+    )
+
+    if not hidden_targets:
+        return visible_fields
+
+    return filter_process_fields_by_hidden_targets(
+        visible_fields,
+        hidden_targets,
+        field_header_map,
+    )
+# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_END
+
+
+
+# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_START
+def _normalize_subsequent_key_v2(raw_value: Any) -> str:
+    return str(raw_value or "").strip().lower()
+
+
+def _normalize_subsequent_lookup_v2(raw_value: Any) -> str:
+    return str(raw_value or "").strip().lower()
+
+
+def _collect_meu_perfil_subsequent_rules_v2(sidebar_item: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not isinstance(sidebar_item, dict):
+        return []
+
+    collected_rules: list[dict[str, Any]] = []
+
+    for storage_key in (
+        "process_subsequent_fields",
+        "subsequent_fields",
+        "process_subsequent_rules",
+    ):
+        raw_rules = sidebar_item.get(storage_key)
+
+        if not isinstance(raw_rules, list):
+            continue
+
+        for raw_rule in raw_rules:
+            if isinstance(raw_rule, dict):
+                collected_rules.append(raw_rule)
+
+    return collected_rules
+
+
+def _get_subsequent_rule_trigger_field_v2(rule: dict[str, Any]) -> str:
+    return _normalize_subsequent_key_v2(
+        rule.get("trigger_field")
+        or rule.get("trigger_field_key")
+        or rule.get("subsequent_trigger_field")
+        or rule.get("triggerField")
+        or rule.get("triggerFieldKey")
+    )
+
+
+def _get_subsequent_rule_target_field_v2(rule: dict[str, Any]) -> str:
+    return _normalize_subsequent_key_v2(
+        rule.get("field_key")
+        or rule.get("subsequent_field")
+        or rule.get("subsequent_field_key")
+        or rule.get("fieldKey")
+        or rule.get("target_field")
+        or rule.get("targetFieldKey")
+    )
+
+
+def _get_subsequent_rule_operator_v2(rule: dict[str, Any]) -> str:
+    return _normalize_subsequent_key_v2(
+        rule.get("operator")
+        or rule.get("condition")
+        or rule.get("subsequent_operator")
+        or "equals"
+    )
+
+
+def _get_subsequent_rule_trigger_value_v2(rule: dict[str, Any]) -> str:
+    operator = _get_subsequent_rule_operator_v2(rule)
+
+    if operator in {"is_empty", "is_not_empty"}:
+        return ""
+
+    return str(
+        rule.get("trigger_value")
+        or rule.get("subsequent_trigger_value")
+        or rule.get("triggerValue")
+        or ""
+    ).strip()
+
+
+def _is_subsequent_rule_met_v2(rule: dict[str, Any], values_by_field: dict[str, str]) -> bool:
+    trigger_field = _get_subsequent_rule_trigger_field_v2(rule)
+    operator = _get_subsequent_rule_operator_v2(rule)
+    trigger_value = _get_subsequent_rule_trigger_value_v2(rule)
+
+    current_value = str(values_by_field.get(trigger_field) or "").strip()
+
+    if operator == "is_empty":
+        return current_value == ""
+
+    if operator == "is_not_empty":
+        return current_value != ""
+
+    normalized_current = _normalize_subsequent_lookup_v2(current_value)
+    normalized_trigger = _normalize_subsequent_lookup_v2(trigger_value)
+
+    if operator == "not_equals":
+        return normalized_current != normalized_trigger
+
+    return normalized_current == normalized_trigger
+
+
+def _target_has_specific_rule_v2(target_field: str, rules: list[dict[str, Any]]) -> bool:
+    clean_target_field = _normalize_subsequent_key_v2(target_field)
+
+    return any(
+        _get_subsequent_rule_target_field_v2(rule) == clean_target_field
+        for rule in rules
+    )
+
+
+def _target_has_specific_rule_met_v2(
+    target_field: str,
+    rules: list[dict[str, Any]],
+    values_by_field: dict[str, str],
+) -> bool:
+    clean_target_field = _normalize_subsequent_key_v2(target_field)
+
+    return any(
+        _get_subsequent_rule_target_field_v2(rule) == clean_target_field
+        and _is_subsequent_rule_met_v2(rule, values_by_field)
+        for rule in rules
+    )
+
+
+def _format_profile_visibility_date_v2(raw_value: Any) -> str:
+    if raw_value is None:
+        return ""
+
+    if hasattr(raw_value, "strftime"):
+        return raw_value.strftime("%d/%m/%Y")
+
+    return str(raw_value or "").strip()
+
+
+def _build_meu_perfil_visibility_values_v2(
+    session: Session,
+    actor_user_id: int | None,
+    actor_profile_fields: dict[str, str],
+) -> dict[str, str]:
+    values_by_field: dict[str, str] = dict(actor_profile_fields or {})
+
+    if actor_user_id is None:
+        return values_by_field
+
+    row = session.execute(
+        select(
+            Member.full_name,
+            Member.primary_phone,
+            Member.email,
+            Member.country,
+            Member.birth_date,
+            User.login_email,
+        )
+        .join(User, User.member_id == Member.id)
+        .where(User.id == actor_user_id)
+        .limit(1)
+    ).one_or_none()
+
+    if row is None:
+        return values_by_field
+
+    values_by_field["nome"] = str(row.full_name or "").strip()
+    values_by_field["telefone"] = str(row.primary_phone or "").strip()
+    values_by_field["email"] = str(row.login_email or row.email or "").strip().lower()
+    values_by_field["pais"] = str(row.country or "").strip()
+    values_by_field["data_nascimento"] = _format_profile_visibility_date_v2(row.birth_date)
+
+    return values_by_field
+
+
+def _filter_meu_perfil_fields_by_subsequent_rules_v2(
+    visible_fields: list[str],
+    hidden_targets: set[str],
+    field_header_map: dict[str, str],
+    rules: list[dict[str, Any]],
+    values_by_field: dict[str, str],
+) -> list[str]:
+    clean_hidden_targets = {
+        _normalize_subsequent_key_v2(hidden_target)
+        for hidden_target in hidden_targets
+        if _normalize_subsequent_key_v2(hidden_target)
+    }
+
+    filtered_fields: list[str] = []
+
+    for raw_field_key in visible_fields:
+        field_key = _normalize_subsequent_key_v2(raw_field_key)
+
+        if not field_key:
+            continue
+
+        header_key = _normalize_subsequent_key_v2(field_header_map.get(field_key))
+
+        field_has_specific_rule = _target_has_specific_rule_v2(field_key, rules)
+        field_has_specific_rule_met = _target_has_specific_rule_met_v2(
+            field_key,
+            rules,
+            values_by_field,
+        )
+
+        if field_has_specific_rule and not field_has_specific_rule_met:
+            continue
+
+        if field_key in clean_hidden_targets and not field_has_specific_rule_met:
+            continue
+
+        if header_key in clean_hidden_targets and not field_has_specific_rule_met:
+            continue
+
+        filtered_fields.append(field_key)
+
+    return filtered_fields
+
+
+def _apply_meu_perfil_subsequent_visibility_v2(
+    session: Session,
+    actor_user_id: int | None,
+    sidebar_item: dict[str, Any] | None,
+    actor_profile_fields: dict[str, str],
+    visible_fields: list[str],
+    field_header_map: dict[str, str],
+) -> list[str]:
+    if not visible_fields:
+        return []
+
+    rules = _collect_meu_perfil_subsequent_rules_v2(sidebar_item)
+
+    if not rules:
+        return visible_fields
+
+    values_by_field = _build_meu_perfil_visibility_values_v2(
+        session,
+        actor_user_id,
+        actor_profile_fields,
+    )
+
+    hidden_targets = get_hidden_process_targets_from_rules(
+        rules,
+        values_by_field,
+    )
+
+    return _filter_meu_perfil_fields_by_subsequent_rules_v2(
+        visible_fields=visible_fields,
+        hidden_targets=set(hidden_targets or set()),
+        field_header_map=field_header_map,
+        rules=rules,
+        values_by_field=values_by_field,
+    )
+# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_END
+
 
 def get_page_data(
     session: Session,
@@ -299,6 +659,14 @@ def get_page_data(
                 seen_visible_fields.add(effective_field_key)
                 visible_fields.append(effective_field_key)
         if visible_fields:
+            visible_fields = _apply_meu_perfil_subsequent_visibility_v2(
+                session=session,
+                actor_user_id=actor_user_id,
+                sidebar_item=sidebar_item,
+                actor_profile_fields=actor_profile_fields,
+                visible_fields=visible_fields,
+                field_header_map=profile_personal_field_header_map,
+            )
             profile_personal_visible_fields = visible_fields
         elif profile_personal_field_labels:
             profile_personal_visible_fields = [
@@ -463,6 +831,7 @@ def get_page_data(
             Entity.door_number,
             Entity.phone,
             Entity.address,
+            Entity.city,
             Entity.freguesia,
             Entity.postal_code,
             Entity.country,
@@ -569,6 +938,21 @@ def get_page_data(
         ).all()
         superuser_user_ids = {int(row.user_id) for row in superuser_rows}
 
+    # APPVERBO_USER_STATUS_LABEL_PT_V1_START
+    def normalize_user_account_status_v1(raw_status: Any) -> str:
+        return str(raw_status or "").strip().lower()
+
+    def user_account_status_label_pt_v1(raw_status: Any) -> str:
+        normalized_status = normalize_user_account_status_v1(raw_status)
+        status_label_map = {
+            UserAccountStatus.ACTIVE.value: "Ativo",
+            UserAccountStatus.PENDING.value: "Pendente",
+            UserAccountStatus.INACTIVE.value: "Inativo",
+            UserAccountStatus.BLOCKED.value: "Bloqueado",
+        }
+        return status_label_map.get(normalized_status, normalized_status or "-")
+    # APPVERBO_USER_STATUS_LABEL_PT_V1_END
+
     all_users = [
         {
             "id": row.id,
@@ -576,7 +960,10 @@ def get_page_data(
             "full_name": row.full_name,
             "primary_phone": row.primary_phone or "-",
             "login_email": row.login_email,
-            "account_status": row.account_status,
+            "account_status": normalize_user_account_status_v1(row.account_status),
+            "account_status_label": user_account_status_label_pt_v1(row.account_status),
+            "account_status_is_active": normalize_user_account_status_v1(row.account_status) == UserAccountStatus.ACTIVE.value,
+            "account_status_is_inactive": normalize_user_account_status_v1(row.account_status) == UserAccountStatus.INACTIVE.value,
             "entity_id": entity_id_by_member_id.get(int(row.member_id)),
             "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
             "profile_name": profile_name_by_user_id.get(int(row.id), "-"),
@@ -590,6 +977,12 @@ def get_page_data(
     ]
     created_users = [
         row for row in all_users if row["account_status"] != UserAccountStatus.PENDING.value
+    ]
+    active_created_users = [
+        row for row in created_users if row["account_status"] == UserAccountStatus.ACTIVE.value
+    ]
+    inactive_users = [
+        row for row in all_users if row["account_status"] == UserAccountStatus.INACTIVE.value
     ]
     superuser_users = [row for row in all_users if row["is_entity_superuser"]]
     recent_users = all_users[:10]
@@ -624,6 +1017,7 @@ def get_page_data(
             "door_number": row.door_number or "",
             "phone": row.phone or "",
             "address": row.address or "",
+            "city": row.city or "",
             "freguesia": row.freguesia or "",
             "postal_code": row.postal_code or "",
             "country": row.country or "",
@@ -659,12 +1053,15 @@ def get_page_data(
                 "full_name": row["full_name"],
                 "login_email": row["login_email"],
                 "account_status": row["account_status"],
+                "account_status_label": row.get("account_status_label", user_account_status_label_pt_v1(row["account_status"])),
                 "created_at": row["created_at"],
             }
             for row in recent_users
         ],
         "all_users": all_users,
         "created_users": created_users,
+        "active_created_users": active_created_users,
+        "inactive_users": inactive_users,
         "pending_users": pending_users,
         "superuser_users": superuser_users,
         "entity_permissions": permissions,
@@ -801,6 +1198,7 @@ def get_entity_form_defaults() -> dict[str, str]:
         "responsible_name": "",
         "door_number": "",
         "address": "",
+        "city": "",
         "freguesia": "",
         "postal_code": "",
         "country": "",
@@ -821,6 +1219,7 @@ def get_entity_edit_defaults() -> dict[str, str]:
         "responsible_name": "",
         "door_number": "",
         "address": "",
+        "city": "",
         "freguesia": "",
         "postal_code": "",
         "country": "",
@@ -858,6 +1257,7 @@ def get_entity_edit_data(
         "responsible_name": entity.responsible_name or "",
         "door_number": entity.door_number or "",
         "address": entity.address or "",
+        "city": entity.city or "",
         "freguesia": entity.freguesia or "",
         "postal_code": entity.postal_code or "",
         "country": entity.country or "",

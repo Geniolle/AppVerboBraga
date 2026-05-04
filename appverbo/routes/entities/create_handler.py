@@ -35,6 +35,7 @@ def create_entity(
     responsible_name: str = Form(...),
     door_number: str = Form(...),
     address: str = Form(...),
+    city: str = Form(...),
     freguesia: str = Form(...),
     postal_code: str = Form(...),
     country: str = Form(...),
@@ -43,38 +44,25 @@ def create_entity(
     entity_logo_file: UploadFile | None = File(default=None),
     description: str | None = Form(default=None),
 ) -> HTMLResponse:
-    clean_name = name.strip()
-    clean_acronym = acronym.strip()
-    clean_tax_id = tax_id.strip()
-    clean_email = email.strip()
-    clean_responsible_name = responsible_name.strip()
-    clean_door_number = door_number.strip()
-    clean_address = address.strip()
-    clean_freguesia = freguesia.strip()
-    clean_postal_code = postal_code.strip()
-    clean_country = country.strip()
-    clean_phone = phone.strip()
-    clean_profile_scope = entity_profile_scope.strip().lower()
-    clean_description = description.strip() if isinstance(description, str) else ""
-    invalid_profile_scope = clean_profile_scope not in ALLOWED_ENTITY_PROFILE_SCOPE
-    if invalid_profile_scope:
-        clean_profile_scope = ENTITY_PROFILE_SCOPE_LEGADO
-    entity_form_data = {
-        "name": clean_name,
-        "acronym": clean_acronym,
-        "tax_id": clean_tax_id,
-        "email": clean_email,
-        "responsible_name": clean_responsible_name,
-        "door_number": clean_door_number,
-        "address": clean_address,
-        "freguesia": clean_freguesia,
-        "postal_code": clean_postal_code,
-        "country": clean_country,
-        "phone": clean_phone,
-        "profile_scope": clean_profile_scope,
-        "description": clean_description,
-        "created_at": date.today().strftime("%d/%m/%Y"),
-    }
+    entity_form_data, invalid_profile_scope = clean_entity_form_data_v1(
+        name=name,
+        acronym=acronym,
+        tax_id=tax_id,
+        email=email,
+        responsible_name=responsible_name,
+        door_number=door_number,
+        address=address,
+        city=city,
+        freguesia=freguesia,
+        postal_code=postal_code,
+        country=country,
+        phone=phone,
+        entity_profile_scope=entity_profile_scope,
+        description=description,
+        created_at_text=date.today().strftime("%d/%m/%Y"),
+    )
+    clean_name = entity_form_data["name"]
+    clean_profile_scope = entity_form_data["profile_scope"]
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -123,27 +111,7 @@ def create_entity(
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
         next_entity_internal_number = get_next_entity_internal_number(session)
 
-        required_field_labels = []
-        if not clean_name:
-            required_field_labels.append("Nome da entidade")
-        if not clean_email:
-            required_field_labels.append("Email")
-        if not clean_tax_id:
-            required_field_labels.append("Nº Identificacao Fiscal")
-        if not clean_phone:
-            required_field_labels.append("Telefone")
-        if not clean_responsible_name:
-            required_field_labels.append("Nome do responsavel")
-        if not clean_address:
-            required_field_labels.append("Morada")
-        if not clean_door_number:
-            required_field_labels.append("Nº da porta")
-        if not clean_freguesia:
-            required_field_labels.append("Freguesia")
-        if not clean_postal_code:
-            required_field_labels.append("Código postal")
-        if not clean_country:
-            required_field_labels.append("País")
+        required_field_labels = validate_entity_required_fields_v1(entity_form_data)
         if invalid_profile_scope:
             required_field_labels.append("Perfil de partilha")
 
@@ -177,9 +145,7 @@ def create_entity(
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-        existing_entity = session.scalar(
-            select(Entity.id).where(func.lower(Entity.name) == clean_name.lower())
-        )
+        existing_entity = get_duplicate_entity_name_id_v1(session, clean_name)
         if existing_entity is not None:
             context = {
                 "request": request,
@@ -209,11 +175,7 @@ def create_entity(
             )
 
         if clean_profile_scope == ENTITY_PROFILE_SCOPE_OWNER:
-            existing_owner_id = session.scalar(
-                select(Entity.id)
-               .where(Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER)
-               .limit(1)
-            )
+            existing_owner_id = get_existing_owner_entity_id_v1(session)
             if existing_owner_id is not None:
                 context = {
                     "request": request,
@@ -273,22 +235,10 @@ def create_entity(
 
         entity = Entity(
             internal_number=next_entity_internal_number,
-            name=clean_name,
-            acronym=clean_acronym or None,
-            tax_id=clean_tax_id or None,
-            email=clean_email or None,
-            responsible_name=clean_responsible_name or None,
-            door_number=clean_door_number or None,
-            address=clean_address or None,
-            freguesia=clean_freguesia or None,
-            postal_code=clean_postal_code or None,
-            country=clean_country or None,
-            phone=clean_phone or None,
             logo_url=stored_logo_url or None,
-            description=clean_description or None,
-            profile_scope=clean_profile_scope,
             is_active=True,
         )
+        apply_entity_form_data_v1(entity, entity_form_data)
         session.add(entity)
 
         try:

@@ -1,4 +1,4 @@
-﻿//###################################################################################
+//###################################################################################
 // (1) MANTER PAGINA / ABA APOS CLICAR EM GRAVAR
 //###################################################################################
 
@@ -91,6 +91,15 @@
     }
 
     return true;
+  }
+
+  function isBackendPostSaveReturnUrl(value) {
+    try {
+      const url = new URL(String(value || ""), window.location.origin);
+      return url.searchParams.get("appverbo_after_save") === "1";
+    } catch (error) {
+      return false;
+    }
   }
 
   function mergeMessageParams(targetUrl, currentUrl) {
@@ -199,6 +208,16 @@
 
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_TIME_KEY);
+
+    //###################################################################################
+    // (5.1) BACKEND COMO FONTE DE VERDADE POS-SAVE
+    //###################################################################################
+    // Quando o backend ja devolveu appverbo_after_save=1, a pagina atual e a correta.
+    // Nao devemos restaurar URL antiga do sessionStorage, pois ela pode ter sido capturada
+    // antes da navegacao interna do menu lateral e apontar para menu=home.
+    if (isBackendPostSaveReturnUrl(currentUrl)) {
+      return;
+    }
 
     if (!savedUrl || !savedTime) {
       return;

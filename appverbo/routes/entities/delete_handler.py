@@ -94,6 +94,20 @@ def delete_entity(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_START
+        if entity.is_active:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    entity_error="Só é permitido eliminar entidades inativas.",
+                    menu="administrativo",
+                    admin_tab="entidade",
+                    entity_edit_id=str(parsed_entity_id),
+                )
+                + "#edit-entity-card",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_END
+
         linked_users_count = session.scalar(
             select(func.count(User.id))
            .join(MemberEntity, MemberEntity.member_id == User.member_id)

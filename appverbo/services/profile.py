@@ -113,12 +113,32 @@ def normalize_process_subsequent_rules(raw_rules: Any) -> list[dict[str, str]]:
         if not isinstance(raw_rule, dict):
             continue
         rule_key = str(raw_rule.get("key") or "").strip().lower()
-        trigger_field = str(raw_rule.get("trigger_field") or "").strip().lower()
-        target_field = str(raw_rule.get("field_key") or raw_rule.get("subsequent_field") or "").strip().lower()
+        trigger_field = str(
+            raw_rule.get("trigger_field")
+            or raw_rule.get("trigger_field_key")
+            or raw_rule.get("subsequent_trigger_field")
+            or raw_rule.get("triggerField")
+            or raw_rule.get("triggerFieldKey")
+            or ""
+        ).strip().lower()
+        target_field = str(
+            raw_rule.get("field_key")
+            or raw_rule.get("subsequent_field")
+            or raw_rule.get("subsequent_field_key")
+            or raw_rule.get("fieldKey")
+            or raw_rule.get("target_field")
+            or raw_rule.get("targetFieldKey")
+            or ""
+        ).strip().lower()
         operator = normalize_process_subsequent_operator(
             raw_rule.get("operator") or raw_rule.get("condition")
         )
-        trigger_value = str(raw_rule.get("trigger_value") or "").strip()
+        trigger_value = str(
+            raw_rule.get("trigger_value")
+            or raw_rule.get("subsequent_trigger_value")
+            or raw_rule.get("triggerValue")
+            or ""
+        ).strip()
         if operator in {"is_empty", "is_not_empty"}:
             trigger_value = ""
         if not trigger_field or not target_field:

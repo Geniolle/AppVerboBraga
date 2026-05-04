@@ -142,6 +142,39 @@ def update_user(
             clean_email,
             entity_permissions,
         )
+        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V1_START
+        if selected_entity is None:
+            fallback_entity_stmt = (
+                select(Entity)
+                .join(MemberEntity, MemberEntity.entity_id == Entity.id)
+                .where(
+                    MemberEntity.member_id == member.id,
+                    MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                    Entity.is_active.is_(True),
+                )
+                .order_by(MemberEntity.id.asc())
+            )
+
+            if not entity_permissions.get("can_manage_all_entities"):
+                allowed_entity_ids = sorted(
+                    set(entity_permissions.get("allowed_entity_ids") or set())
+                )
+
+                if allowed_entity_ids:
+                    fallback_entity_stmt = fallback_entity_stmt.where(
+                        Entity.id.in_(allowed_entity_ids)
+                    )
+                else:
+                    fallback_entity_stmt = fallback_entity_stmt.where(Entity.id == -1)
+
+            selected_entity = session.execute(
+                fallback_entity_stmt.limit(1)
+            ).scalar_one_or_none()
+
+            if selected_entity is not None:
+                entity_resolution_error = ""
+        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V1_END
+
         if selected_entity is None and entity_resolution_error:
             errors.append(entity_resolution_error)
 

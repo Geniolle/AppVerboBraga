@@ -53,7 +53,7 @@ Parar containers:
 ```bash
 docker compose down
 ```
-
+ç
 Parar e remover dados do PostgreSQL:
 
 ```bash

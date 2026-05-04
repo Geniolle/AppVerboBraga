@@ -20,6 +20,7 @@ class Entity(Base, TimestampMixin):
     responsible_name: Mapped[Optional[str]] = mapped_column(String(200))
     door_number: Mapped[Optional[str]] = mapped_column(String(30))
     address: Mapped[Optional[str]] = mapped_column(String(255))
+    city: Mapped[Optional[str]] = mapped_column(String(120))
     freguesia: Mapped[Optional[str]] = mapped_column(String(120))
     postal_code: Mapped[Optional[str]] = mapped_column(String(30))
     country: Mapped[Optional[str]] = mapped_column(String(120))
@@ -39,4 +40,3 @@ class Entity(Base, TimestampMixin):
             name="ck_entities_profile_scope",
         ),
     )
-

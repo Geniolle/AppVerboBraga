@@ -112,6 +112,19 @@ def delete_user(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        # APPVERBO_DELETE_ONLY_INACTIVE_USER_V1_START
+        if str(user.account_status or "").strip().lower() != UserAccountStatus.INACTIVE.value:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    error="Só é permitido eliminar utilizadores inativos.",
+                    menu="administrativo",
+                    admin_tab="utilizador",
+                )
+                + "#create-user-card",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        # APPVERBO_DELETE_ONLY_INACTIVE_USER_V1_END
+
         target_is_active_admin = (
             str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
             and is_admin_user(session, int(user.id), str(user.login_email or ""))

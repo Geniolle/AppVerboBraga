@@ -192,6 +192,34 @@ def _resolve_process_section_fields(
     ]
 
 
+
+# APPVERBO_MEU_PERFIL_SUBSEQUENT_RULES_RESOLVER_V1_START
+def _resolve_process_subsequent_rules_from_setting_v1(
+    process_setting: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    if not isinstance(process_setting, dict):
+        return []
+
+    resolved_rules: list[dict[str, Any]] = []
+
+    for storage_key in (
+        "process_subsequent_fields",
+        "subsequent_fields",
+        "process_subsequent_rules",
+    ):
+        raw_rules = process_setting.get(storage_key)
+
+        if not isinstance(raw_rules, list):
+            continue
+
+        for raw_rule in raw_rules:
+            if isinstance(raw_rule, dict):
+                resolved_rules.append(raw_rule)
+
+    return resolved_rules
+# APPVERBO_MEU_PERFIL_SUBSEQUENT_RULES_RESOLVER_V1_END
+
+
 def _normalize_process_quantity_rules(raw_rules: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_rules, list):
         return []
@@ -742,8 +770,11 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             ]
             clean_values = [value for value in submitted_values if value]
             current_meu_perfil_values[custom_key] = ", ".join(clean_values)
+        meu_perfil_subsequent_rules = _resolve_process_subsequent_rules_from_setting_v1(
+            meu_perfil_setting
+        )
         hidden_meu_perfil_targets = get_hidden_process_targets_from_rules(
-            (meu_perfil_setting or {}).get("process_subsequent_fields"),
+            meu_perfil_subsequent_rules,
             current_meu_perfil_values,
         )
         visible_custom_keys_set = set(visible_custom_keys)
@@ -805,11 +836,15 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if clean_custom_value:
                 updated_custom_fields[custom_key] = clean_custom_value
 
+        # APPVERBO_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_START
+        # Quando um campo fica oculto por regra de Campos Subsequentes,
+        # o valor antigo deve ser removido para não apresentar informação incorreta.
         for hidden_custom_key in visible_custom_keys:
             if hidden_custom_key in active_custom_keys_set:
                 continue
-            if hidden_custom_key in existing_custom_fields:
-                updated_custom_fields[hidden_custom_key] = existing_custom_fields[hidden_custom_key]
+
+            updated_custom_fields.pop(hidden_custom_key, None)
+        # APPVERBO_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_END
 
         active_quantity_rule_keys: set[str] = set()
         for quantity_rule in quantity_rules:
@@ -822,6 +857,11 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 quantity_field_key in hidden_meu_perfil_targets
                 or visible_field_section_map.get(quantity_field_key) in hidden_meu_perfil_targets
             ):
+                storage_key = build_menu_process_quantity_storage_key(MENU_MEU_PERFIL_KEY, rule_key)
+
+                if storage_key:
+                    updated_quantity_values.pop(storage_key, None)
+
                 continue
 
             parsed_quantity_items = _resolve_submitted_process_quantity_items(

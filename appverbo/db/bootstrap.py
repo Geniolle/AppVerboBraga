@@ -32,6 +32,8 @@ def ensure_entities_optional_columns() -> None:
             connection.execute(text("ALTER TABLE entities ADD COLUMN door_number VARCHAR(30)"))
         if "address" not in existing_columns:
             connection.execute(text("ALTER TABLE entities ADD COLUMN address VARCHAR(255)"))
+        if "city" not in existing_columns:
+            connection.execute(text("ALTER TABLE entities ADD COLUMN city VARCHAR(120)"))
         if "freguesia" not in existing_columns:
             connection.execute(text("ALTER TABLE entities ADD COLUMN freguesia VARCHAR(120)"))
         if "postal_code" not in existing_columns:
@@ -287,4 +289,3 @@ def get_allowed_global_profiles_for_form(session: Session) -> list[dict[str, Any
             continue
         profiles_for_form.append({"id": row.id, "name": choice["name"]})
     return profiles_for_form
-

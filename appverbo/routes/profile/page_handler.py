@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from typing import Any
@@ -126,7 +126,7 @@ def new_user_page(
     settings_error: str | None = None,
     profile_tab: str = "pessoal",
     menu: str = "home",
-    admin_tab: str = "utilizador",
+    admin_tab: str = "entidade",
     entity_edit_id: str = "",
     user_edit_id: str = "",
     entity_view: str = "",
@@ -148,7 +148,7 @@ def new_user_page(
         resolved_menu = "home"
     resolved_admin_tab = admin_tab.strip().lower()
     if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes"}:
-        resolved_admin_tab = "utilizador"
+        resolved_admin_tab = "entidade"
     if resolved_admin_tab == "definicoes":
         resolved_admin_tab = "contas"
     parsed_entity_edit_id: int | None = None

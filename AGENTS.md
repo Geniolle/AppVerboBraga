@@ -373,3 +373,28 @@ Motivo: tentativas de criar o campo Cabecalho do campo por JavaScript causaram d
 
 <!-- APPVERBO_STATIC_GRID_RULE_V1_END -->
 
+<!-- APPVERBO_RULE_LAYOUT_ATIVOS_INATIVOS_V1_START -->
+## Regra padrão: blocos separados para registos ativos/criados e inativos
+
+Sempre que existir uma listagem administrativa com estado ativo/inativo, o layout padrão do AppVerboBraga deve manter os registos em blocos/cards separados:
+
+1. O bloco principal deve listar apenas registos ativos/criados.
+2. O bloco de inativos deve ser um card separado, abaixo do bloco principal.
+3. Nunca colocar registos inativos dentro do mesmo card/tabela dos registos ativos/criados.
+4. O estado deve usar badge visual:
+   - Ativo: `entity-status entity-status-active`, com cor verde.
+   - Inativo: `entity-status entity-status-inactive`, com cor vermelha.
+5. O botão de eliminar deve aparecer apenas no bloco de inativos.
+6. O backend também deve validar a regra de eliminação, impedindo eliminar registos ativos.
+7. O rodapé das tabelas deve seguir o padrão visual da aba Entidade:
+   - seletor de entradas por página com espaçamento da linha superior;
+   - paginação alinhada à direita;
+   - botões de paginação com layout arredondado e consistente.
+8. Esta regra aplica-se, no mínimo, aos blocos de Utilizadores, Entidades e qualquer nova listagem com estados ativo/inativo.
+9. Quando ajustar uma listagem existente, validar que:
+   - o contexto/backend separa ativos e inativos;
+   - o template possui sections/cards separados;
+   - o CSS mantém o layout padrão;
+   - não existe bloco legado misturando ativos e inativos.
+<!-- APPVERBO_RULE_LAYOUT_ATIVOS_INATIVOS_V1_END -->
+

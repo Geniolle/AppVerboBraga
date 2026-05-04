@@ -36,6 +36,7 @@ def update_entity(
     responsible_name: str = Form(...),
     door_number: str = Form(...),
     address: str = Form(...),
+    city: str = Form(...),
     freguesia: str = Form(...),
     postal_code: str = Form(...),
     country: str = Form(...),
@@ -47,21 +48,25 @@ def update_entity(
     entity_logo_file: UploadFile | None = File(default=None),
 ) -> HTMLResponse:
     clean_entity_id = entity_id.strip()
-    clean_name = name.strip()
-    clean_acronym = acronym.strip()
-    clean_tax_id = tax_id.strip()
-    clean_email = email.strip()
-    clean_responsible_name = responsible_name.strip()
-    clean_door_number = door_number.strip()
-    clean_address = address.strip()
-    clean_freguesia = freguesia.strip()
-    clean_postal_code = postal_code.strip()
-    clean_country = country.strip()
-    clean_phone = phone.strip()
-    clean_profile_scope = entity_profile_scope.strip().lower()
-    clean_description = description.strip() if isinstance(description, str) else None
+    entity_form_data, invalid_profile_scope = clean_entity_form_data_v1(
+        name=name,
+        acronym=acronym,
+        tax_id=tax_id,
+        email=email,
+        responsible_name=responsible_name,
+        door_number=door_number,
+        address=address,
+        city=city,
+        freguesia=freguesia,
+        postal_code=postal_code,
+        country=country,
+        phone=phone,
+        entity_profile_scope=entity_profile_scope,
+        description=description,
+    )
+    clean_name = entity_form_data["name"]
+    clean_profile_scope = entity_form_data["profile_scope"]
     clean_status = entity_status.strip().lower()
-    invalid_profile_scope = clean_profile_scope not in ALLOWED_ENTITY_PROFILE_SCOPE
 
     if not clean_entity_id.isdigit():
         return RedirectResponse(
@@ -132,27 +137,9 @@ def update_entity(
         if not can_manage_all_entities:
             clean_status = "active" if entity.is_active else "inactive"
 
-        required_field_labels = []
-        if not clean_name:
-            required_field_labels.append("Nome da entidade")
-        if not clean_email:
-            required_field_labels.append("Email")
-        if not clean_tax_id:
-            required_field_labels.append("Nº Identificacao Fiscal")
-        if not clean_phone:
-            required_field_labels.append("Telefone")
-        if not clean_responsible_name:
-            required_field_labels.append("Nome do responsavel")
-        if not clean_address:
-            required_field_labels.append("Morada")
-        if not clean_door_number:
-            required_field_labels.append("Nº da porta")
-        if not clean_freguesia:
-            required_field_labels.append("Freguesia")
-        if not clean_postal_code:
-            required_field_labels.append("Código postal")
-        if not clean_country:
-            required_field_labels.append("País")
+        required_field_labels = validate_entity_required_fields_v1(entity_form_data)
+        if invalid_profile_scope:
+            required_field_labels.append("Perfil de partilha")
 
         if required_field_labels:
             return RedirectResponse(
@@ -181,10 +168,10 @@ def update_entity(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        duplicate_id = session.scalar(
-            select(Entity.id)
-           .where(func.lower(Entity.name) == clean_name.lower(), Entity.id != parsed_entity_id)
-           .limit(1)
+        duplicate_id = get_duplicate_entity_name_id_v1(
+            session,
+            clean_name,
+            ignore_entity_id=parsed_entity_id,
         )
         if duplicate_id is not None:
             return RedirectResponse(
@@ -210,13 +197,9 @@ def update_entity(
                     + "#edit-entity-card",
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
-            existing_owner_id = session.scalar(
-                select(Entity.id)
-               .where(
-                    Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER,
-                    Entity.id != parsed_entity_id,
-                )
-               .limit(1)
+            existing_owner_id = get_existing_owner_entity_id_v1(
+                session,
+                ignore_entity_id=parsed_entity_id,
             )
             if existing_owner_id is not None:
                 return RedirectResponse(
@@ -254,20 +237,11 @@ def update_entity(
             if current_logo_url.startswith("/static/entities/"):
                 delete_old_logo_after_commit = current_logo_url
 
-        entity.name = clean_name
-        entity.acronym = clean_acronym or None
-        entity.tax_id = clean_tax_id or None
-        entity.email = clean_email or None
-        entity.responsible_name = clean_responsible_name or None
-        entity.door_number = clean_door_number or None
-        entity.address = clean_address or None
-        entity.freguesia = clean_freguesia or None
-        entity.postal_code = clean_postal_code or None
-        entity.country = clean_country or None
-        entity.phone = clean_phone or None
-        entity.profile_scope = clean_profile_scope
-        if clean_description is not None:
-            entity.description = clean_description or None
+        apply_entity_form_data_v1(
+            entity,
+            entity_form_data,
+            include_description=isinstance(description, str),
+        )
         if can_manage_all_entities:
             entity.is_active = clean_status == "active"
 
