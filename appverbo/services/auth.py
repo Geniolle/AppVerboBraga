@@ -201,6 +201,164 @@ def send_user_invite_email(
 
     return True, ""
 
+
+# APPVERBO_PASSWORD_RESET_FLOW_V1_START
+PASSWORD_RESET_TTL_SECONDS = 2 * 60 * 60
+
+
+def _password_reset_hash_fingerprint(password_hash: str) -> str:
+    return hashlib.sha256((password_hash or "").encode("utf-8")).hexdigest()[:24]
+
+
+def build_password_reset_token(
+    user_id: int,
+    login_email: str,
+    password_hash: str,
+) -> str:
+    issued_at = int(time.time())
+    payload = {
+        "purpose": "password_reset",
+        "uid": int(user_id),
+        "email": (login_email or "").strip().lower(),
+        "iat": issued_at,
+        "pwd": _password_reset_hash_fingerprint(password_hash),
+    }
+
+    payload_json = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    payload_encoded = _urlsafe_b64encode(payload_json)
+    signature = hmac.new(
+        APP_SECRET_KEY.encode("utf-8"),
+        payload_encoded.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    signature_encoded = _urlsafe_b64encode(signature)
+    return f"{payload_encoded}.{signature_encoded}"
+
+
+def parse_password_reset_token(token: str) -> dict[str, Any] | None:
+    clean_token = (token or "").strip()
+    if "." not in clean_token:
+        return None
+
+    payload_encoded, signature_encoded = clean_token.split(".", 1)
+    if not payload_encoded or not signature_encoded:
+        return None
+
+    expected_signature = hmac.new(
+        APP_SECRET_KEY.encode("utf-8"),
+        payload_encoded.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+
+    try:
+        received_signature = _urlsafe_b64decode(signature_encoded)
+    except ValueError:
+        return None
+
+    if not hmac.compare_digest(expected_signature, received_signature):
+        return None
+
+    try:
+        payload_raw = _urlsafe_b64decode(payload_encoded)
+        payload = json.loads(payload_raw.decode("utf-8"))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    if payload.get("purpose") != "password_reset":
+        return None
+
+    user_id = payload.get("uid")
+    login_email = str(payload.get("email") or "").strip().lower()
+    issued_at = payload.get("iat")
+    password_fingerprint = str(payload.get("pwd") or "").strip()
+
+    if not isinstance(user_id, int) or user_id <= 0:
+        return None
+    if not login_email:
+        return None
+    if not isinstance(issued_at, int) or issued_at <= 0:
+        return None
+    if not password_fingerprint:
+        return None
+
+    if int(time.time()) - issued_at > PASSWORD_RESET_TTL_SECONDS:
+        return None
+
+    return {
+        "uid": int(user_id),
+        "email": login_email,
+        "iat": int(issued_at),
+        "pwd": password_fingerprint,
+    }
+
+
+def is_password_reset_token_valid_for_user(token_payload: dict[str, Any], password_hash: str) -> bool:
+    expected_fingerprint = _password_reset_hash_fingerprint(password_hash)
+    received_fingerprint = str(token_payload.get("pwd") or "").strip()
+    return hmac.compare_digest(expected_fingerprint, received_fingerprint)
+
+
+def build_password_reset_link(request: Request, token: str) -> str:
+    base_url = APP_PUBLIC_URL or str(request.base_url).rstrip("/")
+    return f"{base_url}/password/reset?token={quote(token, safe='')}"
+
+
+def send_password_reset_email(
+    recipient_email: str,
+    recipient_name: str,
+    reset_link: str,
+) -> tuple[bool, str]:
+    if not SMTP_HOST or not SMTP_FROM_EMAIL:
+        return False, "Configuracao de email incompleta. Defina SMTP_HOST e SMTP_FROM_EMAIL."
+
+    recipient = (recipient_email or "").strip().lower()
+    if not recipient:
+        return False, "Email do destinatario invalido."
+
+    display_name = (recipient_name or "").strip() or recipient
+    subject = "Redefinicao de palavra-passe no AppVerboBraga"
+
+    html_body = (
+        f"<p>Ola, <strong>{display_name}</strong>.</p>"
+        "<p>Recebemos um pedido para redefinir a palavra-passe da sua conta no AppVerboBraga.</p>"
+        "<p>Use o link abaixo para criar uma nova palavra-passe:</p>"
+        f"<p><a href=\"{reset_link}\">{reset_link}</a></p>"
+        "<p>Este link expira em 2 horas.</p>"
+        "<p>Se nao pediu esta redefinicao, ignore este email.</p>"
+    )
+
+    text_body = (
+        f"Ola, {display_name}.\n\n"
+        "Recebemos um pedido para redefinir a palavra-passe da sua conta no AppVerboBraga.\n"
+        "Use o link abaixo para criar uma nova palavra-passe:\n"
+        f"{reset_link}\n\n"
+        "Este link expira em 2 horas.\n"
+        "Se nao pediu esta redefinicao, ignore este email.\n"
+    )
+
+    message = EmailMessage()
+    message["Subject"] = subject
+    message["From"] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
+    message["To"] = recipient
+    message.set_content(text_body)
+    message.add_alternative(html_body, subtype="html")
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as smtp_client:
+            if SMTP_USE_TLS:
+                smtp_client.starttls()
+            if SMTP_USERNAME:
+                smtp_client.login(SMTP_USERNAME, SMTP_PASSWORD)
+            smtp_client.send_message(message)
+    except Exception as exc:
+        return False, f"Falha ao enviar email de redefinicao: {exc!s}"
+
+    return True, ""
+# APPVERBO_PASSWORD_RESET_FLOW_V1_END
+
 def get_signup_defaults() -> dict[str, str]:
     return {
         "full_name": "",
@@ -328,10 +486,6 @@ def resolve_active_entity_by_email(
     return None, "Não foi possível determinar automaticamente a entidade pelo email."
 
 def is_admin_user(session: Session, user_id: int, login_email: str) -> bool:
-    email = (login_email or "").strip().lower()
-    if ADMIN_LOGIN_EMAIL and email == ADMIN_LOGIN_EMAIL:
-        return True
-
     if not ADMIN_PROFILE_NAMES:
         return False
 
@@ -374,41 +528,6 @@ def get_or_create_entity_superuser_profile(session: Session) -> Profile:
     session.add(profile)
     session.flush()
     return profile
-
-def get_admin_login_metrics(session: Session) -> dict[str, int]:
-    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
-
-    total_users = session.execute(select(func.count(User.id))).scalar_one() or 0
-    active_users = (
-        session.execute(
-            select(func.count(User.id)).where(User.account_status == UserAccountStatus.ACTIVE.value)
-        ).scalar_one()
-        or 0
-    )
-    pending_users = (
-        session.execute(
-            select(func.count(User.id)).where(User.account_status == UserAccountStatus.PENDING.value)
-        ).scalar_one()
-        or 0
-    )
-    total_members = session.execute(select(func.count(Member.id))).scalar_one() or 0
-    active_entities = (
-        session.execute(select(func.count(Entity.id)).where(Entity.is_active.is_(True))).scalar_one()
-        or 0
-    )
-    users_last_7_days = (
-        session.execute(select(func.count(User.id)).where(User.created_at >= seven_days_ago)).scalar_one()
-        or 0
-    )
-
-    return {
-        "total_users": int(total_users),
-        "active_users": int(active_users),
-        "pending_users": int(pending_users),
-        "total_members": int(total_members),
-        "active_entities": int(active_entities),
-        "users_last_7_days": int(users_last_7_days),
-    }
 
 def get_oauth_client(provider: str):
     if provider == "google" and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
@@ -567,9 +686,7 @@ def render_login(
 ) -> HTMLResponse:
     with SessionLocal() as session:
         entities = get_entities_for_auth(session)
-        admin_metrics = get_admin_login_metrics(session) if mode == "admin" else {}
-
-    if mode not in {"login", "signup", "admin"}:
+    if mode not in {"login", "signup"}:
         mode = "login"
 
     context = {
@@ -582,7 +699,6 @@ def render_login(
         "signup_data": signup_data or get_signup_defaults(),
         "signup_country_options": get_signup_country_options(),
         "entities": entities,
-        "admin_metrics": admin_metrics,
         "oauth_providers": get_oauth_buttons(),
         **get_oauth_flags(),
     }
@@ -608,7 +724,6 @@ __all__ = [
     "is_admin_user",
     "is_allowed_global_profile",
     "get_or_create_entity_superuser_profile",
-    "get_admin_login_metrics",
     "get_oauth_client",
     "fetch_oauth_userinfo",
     "upsert_user_by_email",

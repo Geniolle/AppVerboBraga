@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import ast
 import re
 import sys
@@ -96,21 +96,17 @@ print("OK: login comum contem Email, Palavra-passe e login_mode=login.")
 # (5) VALIDAR QUE LOGIN ADMIN CONTINUA COM ENTIDADE
 ####################################################################################
 
-admin_login_pattern = re.compile(
     r'\{%\s*if mode == "admin"\s*%\}'
     r'(?P<body>[\s\S]*?)'
     r'\{%\s*elif mode == "signup"\s*%\}',
     re.S,
 )
 
-admin_match = admin_login_pattern.search(login_text)
 
 if not admin_match:
     fail("nao consegui localizar o bloco de login admin no template login.html.")
 
-admin_login_body = admin_match.group("body")
 
-if 'name="entity_id"' not in admin_login_body:
     fail("campo Entidade nao encontrado no login admin. O admin deve continuar a selecionar entidade.")
 
 print("OK: login admin continua com campo Entidade.")

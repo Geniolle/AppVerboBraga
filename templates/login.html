@@ -185,7 +185,7 @@
 
         <div class="field-row">
           <label for="password">Palavra-passe</label>
-          <a class="inline-link" href="/login?error=Recuperacao+de+palavra-passe+indisponivel.+Contacte+o+administrador.&mode=login">Esqueceu a palavra-passe</a>
+          <a class="inline-link" href="/password/forgot">Esqueceu a palavra-passe</a>
         </div>
         <div class="field">
           <input id="password" name="password" type="password" required placeholder="Digite sua palavra-passe">
@@ -212,11 +212,6 @@
         Não tem conta
         <a href="/login?mode=signup">Criar conta</a>
       </p>
-      <p class="switch-mode secondary">
-        E administrador
-        <a href="/login/admin">Aceder login admin</a>
-      </p>
-
       <p class="hint">
         Se os botoes de provedor estiverem desativados, configure `GOOGLE_CLIENT_ID/SECRET`,
         `MICROSOFT_CLIENT_ID/SECRET`.

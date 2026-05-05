@@ -51,6 +51,8 @@ def login_page(
         return RedirectResponse(url="/users/new", status_code=status.HTTP_302_FOUND)
     signup_data = None
     clean_entity_id = entity_id.strip()
+    if mode.strip().lower() == "admin":
+        mode = "login"
     if mode.strip().lower() == "signup" and clean_entity_id.isdigit():
         signup_data = get_signup_defaults()
         with SessionLocal() as session:
@@ -65,21 +67,4 @@ def login_page(
         success=success or "",
         mode=mode,
         signup_data=signup_data,
-    )
-
-@router.get("/login/admin", response_class=HTMLResponse)
-def admin_login_page(
-    request: Request,
-    error: str | None = None,
-    success: str | None = None,
-) -> HTMLResponse:
-    with SessionLocal() as session:
-        current_user = get_current_user(request, session)
-    if current_user is not None:
-        return RedirectResponse(url="/users/new", status_code=status.HTTP_302_FOUND)
-    return render_login(
-        request,
-        error=error or "",
-        success=success or "",
-        mode="admin",
     )

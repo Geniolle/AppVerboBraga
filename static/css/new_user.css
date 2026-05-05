@@ -5456,3 +5456,44 @@ textarea {
   pointer-events: none !important;
 }
 /* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_END */
+/* APPVERBO_ADMIN_USER_FORM_3_COLUMNS_V1_START */
+/* Subprocesso Utilizador: usa 3 campos por linha para ganhar espaço visual. */
+
+#create-user-card .grid,
+#edit-user-card .grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#create-user-card .field,
+#edit-user-card .field {
+  min-width: 0;
+}
+
+#create-user-card .field.full,
+#edit-user-card .field.full {
+  grid-column: auto;
+}
+
+#create-user-card input,
+#create-user-card select,
+#edit-user-card input,
+#edit-user-card select {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1200px) {
+  #create-user-card .grid,
+  #edit-user-card .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  #create-user-card .grid,
+  #edit-user-card .grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* APPVERBO_ADMIN_USER_FORM_3_COLUMNS_V1_END */
