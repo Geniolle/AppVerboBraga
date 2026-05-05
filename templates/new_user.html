@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260505-sessoes-campos-bd-v4">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
-  <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-backend-split-entidade-v22">
+  <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-corrigir-ativos-split-backend-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
 {% endblock %}
@@ -38,6 +38,251 @@
           }|tojson
         }}</script>
         <!-- APPVERBO_SESSOES_BACKEND_SPLIT_JSON_V22_END -->
+<!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START -->
+        {% set sessoes_return_url = "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card" %}
+        {% set sessoes_edit = sidebar_section_edit_data if sidebar_section_edit_data else none %}
+        {% set sessoes_edit_scope = sessoes_edit.get("visibility_scope_mode", "all") if sessoes_edit else "all" %}
+        {% set sessoes_edit_status = "inativo" if sessoes_edit and (sessoes_edit.get("is_active") == false or sessoes_edit.get("status") == "inativo") else "ativo" %}
+
+        <section
+          id="admin-sidebar-sections-form-card"
+          class="card appverbo-sessoes-card-v25 appverbo-sessoes-form-card-v25"
+          data-menu-scope="administrativo"
+          data-admin-tab-pane="sessoes"
+        >
+          {% if settings_success and admin_tab == "sessoes" %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error and admin_tab == "sessoes" %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+
+          {% if sessoes_edit %}
+            <h2 class="appverbo-sessoes-form-title-v25">Editar sessão</h2>
+            <form method="post" action="/settings/menu/sidebar-section-save" class="appverbo-sessoes-form-v25">
+              <input type="hidden" name="section_mode" value="edit">
+              <input type="hidden" name="original_section_key" value="{{ sessoes_edit.get('key', '') }}">
+              <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
+
+              <div class="appverbo-sessoes-grid-v25">
+                <div class="field">
+                  <label for="edit_sidebar_section_label_v25">Nome da sessão *</label>
+                  <input
+                    id="edit_sidebar_section_label_v25"
+                    name="section_label"
+                    required
+                    maxlength="80"
+                    value="{{ sessoes_edit.get('label', '') }}"
+                  >
+                </div>
+
+                <div class="field">
+                  <label for="edit_sidebar_section_scope_v25">Sistema *</label>
+                  <select id="edit_sidebar_section_scope_v25" name="section_visibility_scope_mode">
+                    <option value="all" {% if sessoes_edit_scope == "all" %}selected{% endif %}>Owner e Legado</option>
+                    <option value="owner" {% if sessoes_edit_scope == "owner" %}selected{% endif %}>Owner</option>
+                    <option value="legado" {% if sessoes_edit_scope == "legado" %}selected{% endif %}>Legado</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="edit_sidebar_section_status_v25">Estado *</label>
+                  <select id="edit_sidebar_section_status_v25" name="section_status">
+                    <option value="ativo" {% if sessoes_edit_status == "ativo" %}selected{% endif %}>Ativo</option>
+                    <option value="inativo" {% if sessoes_edit_status == "inativo" %}selected{% endif %}>Inativo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-action-row appverbo-sessoes-actions-v25">
+                <button type="submit" class="action-btn">Guardar</button>
+                <a class="action-btn-cancel appverbo-sessoes-cancel-link-v25" href="{{ sessoes_return_url }}">Cancelar</a>
+              </div>
+            </form>
+          {% else %}
+            <details id="create-sidebar-section-collapse-v25" class="entity-create-collapse appverbo-sessoes-create-collapse-v25">
+              <summary>
+                <span>Criar sessão</span>
+              </summary>
+
+              <div class="entity-create-body">
+                <form method="post" action="/settings/menu/sidebar-section-save" class="appverbo-sessoes-form-v25">
+                  <input type="hidden" name="section_mode" value="create">
+                  <input type="hidden" name="original_section_key" value="">
+                  <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
+
+                  <div class="appverbo-sessoes-grid-v25">
+                    <div class="field">
+                      <label for="create_sidebar_section_label_v25">Nome da sessão *</label>
+                      <input
+                        id="create_sidebar_section_label_v25"
+                        name="section_label"
+                        required
+                        maxlength="80"
+                        placeholder="Informe o nome da sessão"
+                      >
+                    </div>
+
+                    <div class="field">
+                      <label for="create_sidebar_section_scope_v25">Sistema *</label>
+                      <select id="create_sidebar_section_scope_v25" name="section_visibility_scope_mode">
+                        <option value="all" selected>Owner e Legado</option>
+                        <option value="owner">Owner</option>
+                        <option value="legado">Legado</option>
+                      </select>
+                    </div>
+
+                    <div class="field">
+                      <label for="create_sidebar_section_status_v25">Estado *</label>
+                      <select id="create_sidebar_section_status_v25" name="section_status">
+                        <option value="ativo" selected>Ativo</option>
+                        <option value="inativo">Inativo</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-action-row appverbo-sessoes-actions-v25">
+                    <button type="submit" class="action-btn">Guardar</button>
+                    <button
+                      type="button"
+                      class="action-btn-cancel"
+                      onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                    >Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+          {% endif %}
+        </section>
+
+        <section
+          id="admin-sidebar-sections-card"
+          class="card appverbo-sessoes-card-v25 appverbo-sessoes-list-card-v25"
+          data-menu-scope="administrativo"
+          data-admin-tab-pane="sessoes"
+        >
+          <h2>Sessões do sidebar</h2>
+          <p class="appverbo-sessoes-card-description-v25">Defina e organize apenas as sessões do menu lateral.</p>
+
+          {% if active_sidebar_sections %}
+            <div class="appverbo-sessoes-table-wrap-v25">
+              <table class="appverbo-sessoes-table-v25">
+                <thead>
+                  <tr>
+                    <th>MENU LATERAL</th>
+                    <th>SISTEMA</th>
+                    <th>ESTADO</th>
+                    <th>AÇÕES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in active_sidebar_sections %}
+                    <tr>
+                      <td>{{ row.label }}</td>
+                      <td>{{ row.visibility_scope_label or "Owner e Legado" }}</td>
+                      <td><span class="appverbo-sessoes-badge-v25 appverbo-sessoes-badge-ativo-v25">Ativo</span></td>
+                      <td>
+                        <div class="appverbo-sessoes-row-actions-v25">
+                          <form method="post" action="/settings/menu/sidebar-section-move-one" class="appverbo-sessoes-inline-form-v25">
+                            <input type="hidden" name="section_key" value="{{ row.key }}">
+                            <input type="hidden" name="direction" value="up">
+                            <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
+                            <button type="submit" class="appverbo-sessoes-action-btn-v25" title="Subir sessão" aria-label="Subir sessão">↑</button>
+                          </form>
+
+                          <form method="post" action="/settings/menu/sidebar-section-move-one" class="appverbo-sessoes-inline-form-v25">
+                            <input type="hidden" name="section_key" value="{{ row.key }}">
+                            <input type="hidden" name="direction" value="down">
+                            <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
+                            <button type="submit" class="appverbo-sessoes-action-btn-v25" title="Descer sessão" aria-label="Descer sessão">↓</button>
+                          </form>
+
+                          <button
+                            type="button"
+                            class="appverbo-sessoes-action-btn-v25"
+                            title="Visualizar detalhes"
+                            aria-label="Visualizar detalhes"
+                            data-sessao-view-v25
+                            data-sessao-label="{{ row.label }}"
+                            data-sessao-sistema="{{ row.visibility_scope_label or 'Owner e Legado' }}"
+                            data-sessao-estado="Ativo"
+                          >👁</button>
+
+                          <a
+                            class="appverbo-sessoes-action-btn-v25 appverbo-sessoes-action-link-v25"
+                            title="Editar sessão"
+                            aria-label="Editar sessão"
+                            href="/users/new?menu=administrativo&amp;admin_tab=sessoes&amp;sidebar_sections_tab=sessoes&amp;target=admin-sidebar-sections-form-card&amp;sidebar_section_edit_key={{ row.key }}#admin-sidebar-sections-form-card"
+                          >✎</a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="empty">Sem sessões ativas.</p>
+          {% endif %}
+        </section>
+
+        <section
+          id="admin-sidebar-sections-inactive-card"
+          class="card appverbo-sessoes-card-v25 appverbo-sessoes-inactive-card-v25"
+          data-menu-scope="administrativo"
+          data-admin-tab-pane="sessoes"
+        >
+          <h2>Sessões inativas</h2>
+
+          {% if inactive_sidebar_sections %}
+            <div class="appverbo-sessoes-table-wrap-v25">
+              <table class="appverbo-sessoes-table-v25">
+                <thead>
+                  <tr>
+                    <th>MENU LATERAL</th>
+                    <th>SISTEMA</th>
+                    <th>ESTADO</th>
+                    <th>AÇÕES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in inactive_sidebar_sections %}
+                    <tr>
+                      <td>{{ row.label }}</td>
+                      <td>{{ row.visibility_scope_label or "Owner e Legado" }}</td>
+                      <td><span class="appverbo-sessoes-badge-v25 appverbo-sessoes-badge-inativo-v25">Inativo</span></td>
+                      <td>
+                        <div class="appverbo-sessoes-row-actions-v25">
+                          <button
+                            type="button"
+                            class="appverbo-sessoes-action-btn-v25"
+                            title="Visualizar detalhes"
+                            aria-label="Visualizar detalhes"
+                            data-sessao-view-v25
+                            data-sessao-label="{{ row.label }}"
+                            data-sessao-sistema="{{ row.visibility_scope_label or 'Owner e Legado' }}"
+                            data-sessao-estado="Inativo"
+                          >👁</button>
+
+                          <a
+                            class="appverbo-sessoes-action-btn-v25 appverbo-sessoes-action-link-v25"
+                            title="Editar sessão"
+                            aria-label="Editar sessão"
+                            href="/users/new?menu=administrativo&amp;admin_tab=sessoes&amp;sidebar_sections_tab=sessoes&amp;target=admin-sidebar-sections-form-card&amp;sidebar_section_edit_key={{ row.key }}#admin-sidebar-sections-form-card"
+                          >✎</a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="empty">Sem sessões inativas.</p>
+          {% endif %}
+        </section>
+        <!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END -->
+
 <section id="dynamic-process-card" class="card" style="display: none;">
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
@@ -2291,121 +2536,7 @@
           </table>
         </section>
 
-        <section id="admin-sidebar-sections-card" class="card" data-menu-scope="administrativo">
-          <div class="profile-card-header">
-            <h2>Sessoes do sidebar</h2>
-            <a class="table-link-btn" href="#admin-account-status-card">Voltar a lista</a>
-          </div>
-          {% if settings_success and initial_menu == "administrativo" %}
-            <div class="alert ok">{{ settings_success }}</div>
-          {% endif %}
-          {% if settings_error and initial_menu == "administrativo" %}
-            <div class="alert error">{{ settings_error }}</div>
-          {% endif %}
-          {% if current_user_can_manage_all_entities %}
-          <form method="post" action="/settings/menu/sidebar-sections" id="sidebar-sections-form">
-            <input type="hidden" name="redirect_menu" value="administrativo">
-            <input type="hidden" name="redirect_target" value="#admin-sidebar-sections-card">
-
-            <div class="sidebar-sections-block">
-              <h3 class="sidebar-sections-subtitle">Criar sessao</h3>
-              <div class="form-action-row sidebar-sections-create-actions">
-                <button type="submit" class="action-btn">Guardar</button>
-                <a class="action-btn-cancel" href="/users/new?menu=administrativo#admin-account-status-card">Cancelar</a>
-              </div>
-              <div class="grid settings-general-grid">
-                <div class="field">
-                  <label for="new_sidebar_section_label">Nome da sessao</label>
-                  <input
-                    id="new_sidebar_section_label"
-                    name="new_sidebar_section_label"
-                    maxlength="100"
-                  >
-                </div>
-                <div class="field">
-                  <label for="new_sidebar_section_scope">Exibir no sistema</label>
-                  <select id="new_sidebar_section_scope" name="new_sidebar_section_scope">
-                    <option value="all" selected>Owner e Legado</option>
-                    <option value="owner">Owner</option>
-                    <option value="legado">Legado</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="sidebar-sections-block">
-              <h3 class="sidebar-sections-subtitle">Sessoes criadas</h3>
-              <table class="sidebar-sections-created-table">
-                <thead>
-                  <tr>
-                    <th>Sessao</th>
-                    <th>Sistema</th>
-                    <th>Acoes</th>
-                  </tr>
-                </thead>
-                <tbody id="sidebar-sections-created-body">
-                  {% for section_option in sidebar_section_options %}
-                    <tr data-sidebar-section-row data-sidebar-section-key="{{ section_option.key }}">
-                      <td>
-                        <input
-                          type="hidden"
-                          name="sidebar_section_definition_key"
-                          value="{{ section_option.key }}"
-                        >
-                        <input
-                          name="sidebar_section_definition_label"
-                          value="{{ section_option.label }}"
-                          required
-                        >
-                      </td>
-                      <td>
-                        <select name="sidebar_section_definition_scope">
-                          <option value="all" {% if section_option.visibility_scope_mode == "all" %}selected{% endif %}>Owner e Legado</option>
-                          <option value="owner" {% if section_option.visibility_scope_mode == "owner" %}selected{% endif %}>Owner</option>
-                          <option value="legado" {% if section_option.visibility_scope_mode == "legado" %}selected{% endif %}>Legado</option>
-                        </select>
-                      </td>
-                      <td>
-                        <div class="table-actions sidebar-sections-actions">
-                          <button
-                            type="button"
-                            class="table-icon-btn"
-                            title="Subir sessao"
-                            aria-label="Subir sessao"
-                            data-sidebar-section-action="up"
-                          >
-                            &#8593;
-                          </button>
-                          <button
-                            type="button"
-                            class="table-icon-btn"
-                            title="Descer sessao"
-                            aria-label="Descer sessao"
-                            data-sidebar-section-action="down"
-                          >
-                            &#8595;
-                          </button>
-                          <button
-                            type="button"
-                            class="table-icon-btn table-icon-btn-danger"
-                            title="Remover sessao"
-                            aria-label="Remover sessao"
-                            data-sidebar-section-action="remove"
-                          >
-                            &#10005;
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </form>
-          {% else %}
-          <p>Apenas Owner pode alterar as sessoes do sidebar.</p>
-          {% endif %}
-        </section>
+        
 
         <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
           <div class="profile-card-header">
@@ -2694,7 +2825,7 @@
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/new_user.js?v=20260504-success-auto-dismiss-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
-<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-sessoes-backend-split-entidade-v22"></script>
+<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-sessoes-corrigir-ativos-split-backend-v26"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260503-respect-backend-post-save-v1"></script>

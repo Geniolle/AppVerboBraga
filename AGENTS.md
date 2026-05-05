@@ -802,3 +802,85 @@ Regras:
 9. A ação **Editar** deve permanecer no fluxo dedicado de Sessões, com `sidebar_section_edit_key`, sem usar parâmetros do subprocesso Menu.
 10. O backend de gravação não deve preservar `dynamic_process_section`, `settings_edit_key`, `settings_action` ou `settings_tab`.
 <!-- APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END -->
+
+<!-- APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_START -->
+## Regra definitiva para Sessões sem piscar
+
+A aba **Sessões** deve ter apenas um controlador visual ativo.
+
+Regras:
+
+1. Não usar `MutationObserver` para renderizar continuamente os cards de Sessões.
+2. Não reescrever `innerHTML` repetidamente se os dados não mudaram.
+3. Não forçar a URL para `admin_tab=sessoes` quando o utilizador clicar noutro subprocesso.
+4. O renderizador de Sessões só pode atuar quando a aba **Sessões** estiver realmente ativa.
+5. O split ativo/inativo deve vir do backend, igual ao padrão da Entidade.
+6. O card **Sessões do sidebar** deve renderizar apenas sessões ativas.
+7. O card **Sessões inativas** deve renderizar apenas sessões inativas.
+8. O card **Sessões inativas** deve permanecer visível mesmo vazio.
+9. Os blocos antigos V15, V18, V20, V21 e V22 não podem continuar a observar/mexer no DOM.
+10. A ação **Editar** deve usar `sidebar_section_edit_key`, sem `dynamic_process_section`.
+<!-- APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_END -->
+
+<!-- APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START -->
+## Regra para ações visíveis nas Sessões inativas
+
+Na aba **Sessões**:
+
+1. O bloco **Sessões inativas** deve mostrar ações visíveis.
+2. Cada linha inativa deve apresentar, no mínimo:
+   - ação **Visualizar**;
+   - ação **Editar**.
+3. Os botões não podem aparecer vazios.
+4. As ações de inativas devem usar o mesmo padrão visual das ações de ativas.
+5. O botão **Editar** de uma sessão inativa deve continuar usando `sidebar_section_edit_key`.
+6. Não usar `dynamic_process_section` nas ações da aba Sessões.
+<!-- APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END -->
+
+<!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START -->
+## Regra definitiva: Sessões igual ao subprocesso Entidade
+
+A aba **Sessões** deve seguir o mesmo procedimento do subprocesso **Entidade**.
+
+Fluxo obrigatório:
+
+1. A ação **Editar** navega para `/users/new` com:
+   - `menu=administrativo`;
+   - `admin_tab=sessoes`;
+   - `sidebar_sections_tab=sessoes`;
+   - `sidebar_section_edit_key=<key>`.
+2. O `page_handler.py` carrega `sidebar_section_edit_data` no backend.
+3. O template `new_user.html` renderiza o formulário de edição diretamente no HTML, como acontece com `entity_edit_data`.
+4. O formulário envia para `/settings/menu/sidebar-section-save`.
+5. O backend grava no BD/JSON `sidebar_menu_settings.menu_config.sidebar_sections`.
+6. Depois do commit, redireciona para a aba **Sessões**.
+7. O backend separa e entrega:
+   - `active_sidebar_sections`;
+   - `inactive_sidebar_sections`.
+8. O template renderiza diretamente:
+   - card de criar/editar sessão;
+   - card **Sessões do sidebar**;
+   - card **Sessões inativas**.
+9. JavaScript não pode reconstruir listas nem formulários de Sessões.
+10. JavaScript só pode atuar em comportamento auxiliar, como visualizar detalhes ou controlar visibilidade da aba.
+<!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END -->
+
+<!-- APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START -->
+## Correção do split backend das Sessões
+
+Na aba **Sessões**, as listas devem ser separadas no backend antes do template.
+
+Regras:
+
+1. Recalcular sempre `active_sidebar_sections` e `inactive_sidebar_sections` a partir da configuração normalizada.
+2. Uma sessão deve ser considerada inativa quando:
+   - `is_active` for `false`; ou
+   - `status` for `inativo`.
+3. Uma sessão deve ser considerada ativa quando:
+   - `is_active` for `true`; ou
+   - `status` for `ativo`; ou
+   - não existir estado explícito de inativo.
+4. O template não deve depender de JavaScript para reconstruir as linhas.
+5. O card **Sessões do sidebar** deve mostrar todas as sessões ativas.
+6. O card **Sessões inativas** deve mostrar apenas as sessões inativas.
+<!-- APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END -->

@@ -343,6 +343,35 @@ def new_user_page(
             sidebar_section_edit_key,
         )
 
+        # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START
+        # Recalcula a separação diretamente da configuração normalizada.
+        # Isto evita que o template receba a lista de ativos vazia quando houver fallback antigo.
+        all_sidebar_sections_v26 = _resolve_sidebar_sections_from_page_data_v22(page_data)
+        
+        if all_sidebar_sections_v26:
+            active_sidebar_sections_v22 = [
+                section
+                for section in all_sidebar_sections_v26
+                if _sidebar_section_is_active_for_page_v22(section)
+            ]
+            inactive_sidebar_sections_v22 = [
+                section
+                for section in all_sidebar_sections_v26
+                if not _sidebar_section_is_active_for_page_v22(section)
+            ]
+        
+            clean_sidebar_section_edit_key_v26 = str(sidebar_section_edit_key or "").strip().lower()
+        
+            if clean_sidebar_section_edit_key_v26:
+                sidebar_section_edit_data_v22 = next(
+                    (
+                        dict(section)
+                        for section in all_sidebar_sections_v26
+                        if str(section.get("key") or "").strip().lower() == clean_sidebar_section_edit_key_v26
+                    ),
+                    sidebar_section_edit_data_v22,
+                )
+        # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
     settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
@@ -377,7 +406,10 @@ def new_user_page(
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
     if resolved_admin_tab == "sessoes":
-        initial_menu_target = "#admin-sidebar-sections-card"
+        if str(sidebar_section_edit_key or "").strip():
+            initial_menu_target = "#admin-sidebar-sections-form-card"
+        else:
+            initial_menu_target = "#admin-sidebar-sections-card"
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 

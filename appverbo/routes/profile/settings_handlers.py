@@ -695,6 +695,136 @@ def save_one_sidebar_section_v19(
 # APPVERBO_SESSOES_SAVE_ONE_V19_END
 
 
+# APPVERBO_SESSOES_SERVER_MOVE_ONE_V25_START
+
+# ###################################################################################
+# (SIDEBAR_SECTION_MOVE_ONE_V25) MOVER SESSAO COM FLUXO SERVER-SIDE
+# ###################################################################################
+
+@router.post("/settings/menu/sidebar-section-move-one", response_class=HTMLResponse)
+def move_one_sidebar_section_v25(
+    request: Request,
+    section_key: str = Form(""),
+    direction: str = Form(""),
+    sidebar_section_return_url: str = Form(""),
+) -> RedirectResponse:
+    safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                "Apenas administradores podem alterar sessões do sidebar.",
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions["can_manage_all_entities"]:
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                "Apenas Owner pode alterar sessões do sidebar.",
+            )
+
+        clean_section_key = _slugify_sidebar_section_key_v19(section_key)
+        clean_direction = str(direction or "").strip().lower()
+
+        if clean_direction not in {"up", "down"}:
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                "Direção inválida para mover a sessão.",
+            )
+
+        current_sections = _read_sidebar_sections_for_save_one_v19(session)
+        payload_sections: list[dict[str, str]] = []
+
+        for section in current_sections:
+            payload_sections.append(
+                {
+                    "key": _slugify_sidebar_section_key_v19(section.get("key")),
+                    "label": _normalize_sidebar_section_text_v19(section.get("label")),
+                    "visibility_scope_mode": _normalize_sidebar_section_scope_v19(
+                        section.get("visibility_scope_mode")
+                    ),
+                    "status": _normalize_sidebar_section_status_v19(section.get("status")),
+                }
+            )
+
+        current_index = next(
+            (
+                index
+                for index, section in enumerate(payload_sections)
+                if _slugify_sidebar_section_key_v19(section.get("key")) == clean_section_key
+            ),
+            -1,
+        )
+
+        if current_index < 0:
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                "Sessão não encontrada para mover.",
+            )
+
+        target_index = current_index - 1 if clean_direction == "up" else current_index + 1
+
+        if target_index < 0 or target_index >= len(payload_sections):
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "success",
+                "Sessão já está no limite da hierarquia.",
+            )
+
+        payload_sections[current_index], payload_sections[target_index] = (
+            payload_sections[target_index],
+            payload_sections[current_index],
+        )
+
+        ok, error_message = update_sidebar_sections_v2(
+            session,
+            payload_sections,
+        )
+
+        if not ok:
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                error_message or "Não foi possível mover a sessão.",
+            )
+
+        target_status = payload_sections[target_index].get("status", "ativo")
+        _persist_sidebar_sections_status_v19(
+            session=session,
+            payload_sections=payload_sections,
+            target_section_key=clean_section_key,
+            target_status=target_status,
+        )
+
+        return _redirect_sidebar_section_message_v19(
+            safe_return_url,
+            "success",
+            "Hierarquia da sessão atualizada com sucesso.",
+        )
+
+# APPVERBO_SESSOES_SERVER_MOVE_ONE_V25_END
+
+
 # APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_START
 
 # ###################################################################################
