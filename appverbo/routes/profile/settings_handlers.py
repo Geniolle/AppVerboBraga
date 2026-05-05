@@ -214,6 +214,299 @@ def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
 # APPVERBO_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_END
 
 
+# APPVERBO_SESSOES_RETURN_URL_V17_START
+
+# ###################################################################################
+# (SIDEBAR_SECTION_RETURN_URL_V17) URL SEGURA DE RETORNO PARA A ABA SESSOES
+# ###################################################################################
+
+def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
+    raw_url = str(return_url or "").strip()
+
+    if not raw_url:
+        return "/users/new?menu=administrativo#admin-sidebar-sections-card"
+
+    if raw_url.startswith("http://") or raw_url.startswith("https://") or raw_url.startswith("//"):
+        return "/users/new?menu=administrativo#admin-sidebar-sections-card"
+
+    if not raw_url.startswith("/users/new"):
+        return "/users/new?menu=administrativo#admin-sidebar-sections-card"
+
+    return raw_url
+
+# APPVERBO_SESSOES_RETURN_URL_V17_END
+
+
+# APPVERBO_SESSOES_SAVE_ONE_V16_START
+
+# ###################################################################################
+# (SIDEBAR_SECTION_SAVE_ONE_V16) CRIAR/EDITAR UMA SESSAO COM FLUXO IGUAL ENTIDADE
+# ###################################################################################
+
+def _normalize_sidebar_section_text_v16(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _slugify_sidebar_section_key_v16(value: object) -> str:
+    import re
+    import unicodedata
+
+    raw_value = _normalize_sidebar_section_text_v16(value).lower()
+    raw_value = unicodedata.normalize("NFD", raw_value)
+    raw_value = "".join(char for char in raw_value if unicodedata.category(char) != "Mn")
+    raw_value = re.sub(r"[^a-z0-9]+", "_", raw_value)
+    raw_value = re.sub(r"_+", "_", raw_value).strip("_")
+    return raw_value or "nova_sessao"
+
+
+def _normalize_sidebar_section_status_v16(value: object) -> str:
+    clean_value = _normalize_sidebar_section_text_v16(value).lower()
+
+    if clean_value in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}:
+        return "inativo"
+
+    return "ativo"
+
+
+def _normalize_sidebar_section_scope_v16(value: object) -> str:
+    clean_value = _normalize_sidebar_section_text_v16(value).lower()
+
+    if clean_value in {"owner", "legado"}:
+        return clean_value
+
+    return "all"
+
+
+def _make_unique_sidebar_section_key_v16(base_key: str, used_keys: set[str]) -> str:
+    clean_base_key = _slugify_sidebar_section_key_v16(base_key)
+
+    if clean_base_key not in used_keys:
+        return clean_base_key
+
+    counter = 2
+    candidate = f"{clean_base_key}_{counter}"
+
+    while candidate in used_keys:
+        counter += 1
+        candidate = f"{clean_base_key}_{counter}"
+
+    return candidate
+
+
+def _read_sidebar_sections_for_save_one_v16(session) -> list[dict[str, str]]:
+    from appverbo.menu_settings import (
+        MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
+        normalize_sidebar_sections,
+    )
+
+    raw_menu_config = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": "administrativo"},
+    ).scalar_one_or_none()
+
+    try:
+        menu_config = json.loads(raw_menu_config or "{}")
+    except (TypeError, ValueError):
+        menu_config = {}
+
+    if not isinstance(menu_config, dict):
+        menu_config = {}
+
+    return normalize_sidebar_sections(
+        menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+
+
+@router.post("/settings/menu/sidebar-section-save", response_class=HTMLResponse)
+def save_one_sidebar_section_v16(
+    request: Request,
+    section_mode: str = Form("create"),
+    original_section_key: str = Form(""),
+    section_label: str = Form(""),
+    section_visibility_scope_mode: str = Form("all"),
+    section_status: str = Form("ativo"),
+    sidebar_section_return_url: str = Form(""),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#admin-sidebar-sections-card"),
+) -> RedirectResponse:
+    safe_return_url_v17 = _sanitize_sidebar_section_return_url_v17(sidebar_section_return_url)
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas administradores podem alterar sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions["can_manage_all_entities"]:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Apenas Owner pode alterar sessões do sidebar.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        clean_mode = _normalize_sidebar_section_text_v16(section_mode).lower()
+        clean_original_key = _slugify_sidebar_section_key_v16(original_section_key)
+        clean_label = _normalize_sidebar_section_text_v16(section_label)
+        clean_scope = _normalize_sidebar_section_scope_v16(section_visibility_scope_mode)
+        clean_status = _normalize_sidebar_section_status_v16(section_status)
+
+        if not clean_label:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Informe o nome da sessão.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        current_sections = _read_sidebar_sections_for_save_one_v16(session)
+        payload_sections: list[dict[str, str]] = []
+
+        if clean_mode == "edit":
+            found_section = False
+
+            for section in current_sections:
+                section_key = _slugify_sidebar_section_key_v16(section.get("key"))
+
+                if section_key == clean_original_key:
+                    found_section = True
+                    payload_sections.append(
+                        {
+                            "key": section_key,
+                            "label": clean_label,
+                            "visibility_scope_mode": clean_scope,
+                            "status": clean_status,
+                        }
+                    )
+                else:
+                    payload_sections.append(
+                        {
+                            "key": section_key,
+                            "label": _normalize_sidebar_section_text_v16(section.get("label")),
+                            "visibility_scope_mode": _normalize_sidebar_section_scope_v16(
+                                section.get("visibility_scope_mode")
+                            ),
+                            "status": _normalize_sidebar_section_status_v16(section.get("status")),
+                        }
+                    )
+
+            if not found_section:
+                return RedirectResponse(
+                    url=_build_settings_redirect_url(
+                        error_message="Sessão não encontrada para edição.",
+                        redirect_menu=redirect_menu,
+                        redirect_target=redirect_target,
+                        settings_edit_key="administrativo",
+                        settings_action="edit",
+                        settings_tab="sessoes",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+        else:
+            used_keys = {
+                _slugify_sidebar_section_key_v16(section.get("key"))
+                for section in current_sections
+            }
+            new_key = _make_unique_sidebar_section_key_v16(clean_label, used_keys)
+
+            for section in current_sections:
+                payload_sections.append(
+                    {
+                        "key": _slugify_sidebar_section_key_v16(section.get("key")),
+                        "label": _normalize_sidebar_section_text_v16(section.get("label")),
+                        "visibility_scope_mode": _normalize_sidebar_section_scope_v16(
+                            section.get("visibility_scope_mode")
+                        ),
+                        "status": _normalize_sidebar_section_status_v16(section.get("status")),
+                    }
+                )
+
+            payload_sections.append(
+                {
+                    "key": new_key,
+                    "label": clean_label,
+                    "visibility_scope_mode": clean_scope,
+                    "status": clean_status,
+                }
+            )
+
+        ok, error_message = update_sidebar_sections_v2(
+            session,
+            payload_sections,
+        )
+
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível gravar a sessão.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key="administrativo",
+                    settings_action="edit",
+                    settings_tab="sessoes",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        success_separator = "&" if "?" in safe_return_url_v17 else "?"
+        success_url = (
+            f"{safe_return_url_v17}{success_separator}success="
+            + (
+                "Sessão atualizada com sucesso."
+                if clean_mode == "edit"
+                else "Sessão criada com sucesso."
+            )
+        )
+
+        return RedirectResponse(
+            url=success_url,
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+# APPVERBO_SESSOES_SAVE_ONE_V16_END
+
+
 # APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_START
 
 # ###################################################################################

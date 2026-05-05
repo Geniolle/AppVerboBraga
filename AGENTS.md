@@ -634,3 +634,80 @@ Regras:
 5. A validação deve considerar o botão/tab ativo pelo texto **Sessões**, classes de estado ativo e visibilidade real do card de sessões.
 6. Não usar apenas URL/hash como critério, porque a URL pode manter hash de outro card mesmo com a aba Sessões ativa.
 <!-- APPVERBO_SESSOES_SCOPE_CORRETO_V12_END -->
+
+<!-- APPVERBO_SESSOES_RELOAD_ON_RETURN_V13_START -->
+## Regra para retorno à aba Sessões
+
+Na área administrativa, ao navegar entre as abas do subprocesso e voltar para **Sessões**:
+
+1. O card **Criar sessão** deve reaparecer automaticamente dentro da aba **Sessões**.
+2. O card **Sessões inativas** deve reaparecer automaticamente dentro da aba **Sessões**.
+3. A lista de sessões deve ser reidratada novamente a partir do BD/configuração.
+4. Blocos de Sessões continuam proibidos fora da aba **Sessões**.
+5. Ao sair para **Entidade**, **Utilizador** ou **Menu**, qualquer bloco órfão de Sessões deve ser removido.
+6. Ao retornar para **Sessões**, a montagem da aba deve ser executada novamente mesmo sem reload da página.
+<!-- APPVERBO_SESSOES_RELOAD_ON_RETURN_V13_END -->
+
+<!-- APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_START -->
+## Regra de recriação do card Criar sessão
+
+Na aba **Sessões**, o card **Criar sessão** deve ser resiliente à navegação entre abas.
+
+1. Ao entrar inicialmente em **Sessões**, o card **Criar sessão** deve aparecer acima da listagem.
+2. Ao sair de **Sessões**, o card pode ser removido para não aparecer em outras abas.
+3. Ao retornar para **Sessões**, o card **Criar sessão** deve ser recriado automaticamente.
+4. Nenhum guard antigo pode remover o card **Criar sessão** quando a aba **Sessões** estiver ativa.
+5. A detecção de aba ativa deve usar o botão/tab ativo pelo texto **Sessões** e a visibilidade real do card de sessões.
+6. A URL/hash não deve ser usada como único critério, pois pode continuar apontando para outro card.
+7. O card deve continuar permitindo criar com os campos: Nome da sessão, Sistema e Estado.
+<!-- APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END -->
+
+<!-- APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START -->
+## Regra visual para Sessões inativas
+
+Na aba **Sessões**, a área **Sessões inativas** deve ficar sempre em card/bloco próprio, separado abaixo do card **Sessões do sidebar**.
+
+Regras:
+
+1. **Sessões do sidebar** deve conter somente a listagem das sessões ativas.
+2. **Sessões inativas** deve ficar em outro card abaixo, com borda, fundo e espaçamento iguais ao padrão de **Entidades inativas**.
+3. Quando não houver sessões inativas, o card deve permanecer visível com a mensagem **Sem sessões inativas.**
+4. O bloco de inativas não pode ficar dentro do mesmo card visual das sessões ativas.
+5. Ao retornar para a aba **Sessões**, a separação em cards deve ser reaplicada automaticamente.
+<!-- APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END -->
+
+<!-- APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START -->
+## Regra do subprocesso Sessões igual ao fluxo da Entidade
+
+Na aba **Sessões**, a ação **Editar** deve seguir o mesmo padrão funcional da aba **Entidade**.
+
+Regras:
+
+1. O botão **Editar** da linha não deve editar inline.
+2. Ao clicar em **Editar**, deve navegar/recarregar para a aba **Sessões** com o parâmetro técnico da sessão em edição.
+3. Após o reload, o bloco superior da aba deve abrir em modo **Editar sessão**, com os campos preenchidos.
+4. Os campos editáveis são:
+   - **Nome da sessão**;
+   - **Sistema**;
+   - **Estado**.
+5. O botão **Guardar** deve submeter um formulário dedicado para backend, semelhante ao fluxo de atualização da Entidade.
+6. O botão **Cancelar** deve sair do modo edição e retornar para a lista da aba **Sessões**.
+7. O botão **Criar sessão** continua pertencendo ao bloco superior da aba **Sessões**.
+8. O bloco **Sessões inativas** deve permanecer separado abaixo, como card próprio.
+9. A chave técnica da sessão deve ser preservada na edição.
+<!-- APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END -->
+
+<!-- APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START -->
+## Regra para editar Sessões sem saltar para Menu
+
+Na aba **Sessões**, a ação **Editar** deve permanecer sempre no subprocesso **Sessões**.
+
+Regras:
+
+1. O clique em **Editar** deve usar a URL atual como base.
+2. Deve adicionar apenas o parâmetro técnico `sidebar_section_edit_key`.
+3. Não deve adicionar `settings_edit_key`, `settings_action` ou `settings_tab`, porque esses parâmetros pertencem ao fluxo de Menu e podem abrir o subprocesso errado.
+4. O botão **Cancelar** deve remover apenas `sidebar_section_edit_key` e retornar para a própria aba Sessões.
+5. Após **Guardar**, o backend deve redirecionar para a URL de retorno enviada pelo formulário, preservando a aba Sessões.
+6. A edição deve abrir o bloco superior como **Editar sessão**, com Nome da sessão, Sistema e Estado preenchidos.
+<!-- APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END -->

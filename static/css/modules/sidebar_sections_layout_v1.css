@@ -872,3 +872,216 @@ body.appverbo-admin-sessoes-active-v12 #admin-sidebar-sections-inactive-card {
 }
 
 /* APPVERBO_SESSOES_SCOPE_CORRETO_V12_END */
+
+/* APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_START */
+
+body.appverbo-admin-sessoes-active-v14 #admin-sidebar-sections-create-card {
+  display: block !important;
+  visibility: visible !important;
+}
+
+body.appverbo-admin-sessoes-inactive-v14 #admin-sidebar-sections-create-card {
+  display: none !important;
+}
+
+.appverbo-sessoes-create-card-v14 {
+  margin-bottom: 12px !important;
+  min-height: 64px !important;
+}
+
+.appverbo-create-entry-panel-v14[hidden] {
+  display: none !important;
+}
+
+.appverbo-create-entry-block-v14 {
+  width: 100%;
+}
+
+.appverbo-create-entry-toolbar-v14 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.appverbo-create-entry-grid-v14 {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(220px, 260px) minmax(160px, 220px);
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.appverbo-create-entry-actions-v14 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.appverbo-create-entry-actions-v14 .action-btn,
+.appverbo-create-entry-actions-v14 .action-btn-cancel {
+  min-width: 112px !important;
+  width: 112px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+}
+
+@media (max-width: 1100px) {
+  .appverbo-create-entry-grid-v14 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END */
+
+/* APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START */
+
+#admin-sidebar-sections-inactive-card.appverbo-sidebar-sections-inactive-card-v15 {
+  display: block !important;
+  visibility: visible !important;
+  margin-top: 12px !important;
+  padding: 16px !important;
+  border: 1px solid #d5dceb !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+}
+
+#admin-sidebar-sections-inactive-card .appverbo-sidebar-section-list-main-title-v15 {
+  margin: 0 0 12px !important;
+  color: #12213a !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+}
+
+#admin-sidebar-sections-inactive-card .appverbo-sidebar-section-empty-text-v15 {
+  margin: 0 !important;
+  color: #52607a !important;
+  font-size: 14px !important;
+}
+
+#admin-sidebar-sections-card .appverbo-sidebar-section-list-block-inativo-v9,
+#admin-sidebar-sections-card .appverbo-sidebar-section-list-block-inativo-v10 {
+  display: none !important;
+}
+
+#admin-sidebar-sections-inactive-card .appverbo-sidebar-sections-table-wrap-v2,
+#admin-sidebar-sections-inactive-card .appverbo-sidebar-sections-table-wrap-v9,
+#admin-sidebar-sections-inactive-card .appverbo-sidebar-sections-table-wrap-v10 {
+  width: 100% !important;
+}
+
+#admin-sidebar-sections-inactive-card table {
+  width: 100% !important;
+}
+
+/* APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END */
+
+/* APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START */
+
+.appverbo-sessoes-create-card-v16 {
+  display: block !important;
+  visibility: visible !important;
+  min-height: 64px !important;
+  margin-bottom: 12px !important;
+  padding: 16px !important;
+  border: 1px solid #d5dceb !important;
+  border-radius: 8px !important;
+  background: #f3f6fb !important;
+  box-sizing: border-box !important;
+}
+
+.appverbo-sessoes-server-form-container-v16 {
+  width: 100%;
+}
+
+.appverbo-sessoes-server-toolbar-v16 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.appverbo-sessoes-server-toolbar-v16[hidden],
+.appverbo-sessoes-server-form-wrap-v16[hidden] {
+  display: none !important;
+}
+
+.appverbo-sessoes-server-form-title-v16 {
+  margin: 0 0 14px !important;
+  color: #12213a !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+.appverbo-sessoes-server-grid-v16 {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(220px, 260px) minmax(160px, 220px);
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid #d5dceb;
+}
+
+.appverbo-sessoes-server-field-v16 label {
+  display: block;
+  margin-bottom: 6px;
+  color: #12213a;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.appverbo-sessoes-server-field-v16 input,
+.appverbo-sessoes-server-field-v16 select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #c6d0e2;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #12213a;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.appverbo-sessoes-server-field-v16 input:focus,
+.appverbo-sessoes-server-field-v16 select:focus {
+  border-color: #2454b0;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(36, 84, 176, 0.12);
+}
+
+.appverbo-sessoes-server-actions-v16 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.appverbo-sessoes-server-actions-v16 .action-btn,
+.appverbo-sessoes-server-actions-v16 .action-btn-cancel {
+  min-width: 112px !important;
+  width: 112px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+}
+
+@media (max-width: 1100px) {
+  .appverbo-sessoes-server-grid-v16 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END */
+
+/* APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START */
+
+#admin-sidebar-sections-create-card.appverbo-sessoes-create-card-v16 {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END */
