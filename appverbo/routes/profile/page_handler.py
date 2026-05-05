@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from typing import Any
@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
+    MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_KEY,
+    normalize_sidebar_sections,
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
     resolve_menu_key_alias,
@@ -112,6 +114,102 @@ def _resolve_initial_menu_target(
     return "", ""
 
 
+# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
+
+def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_active: object = None) -> str:
+    if raw_is_active is False:
+        return "inativo"
+
+    clean_status = str(raw_status or "").strip().lower()
+
+    if clean_status in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}:
+        return "inativo"
+
+    return "ativo"
+
+
+def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
+    if not isinstance(section, dict):
+        return True
+
+    return _normalize_sidebar_section_status_for_page_v22(
+        section.get("status"),
+        section.get("is_active"),
+    ) == "ativo"
+
+
+def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_sections = page_data.get("sidebar_section_options")
+
+    if isinstance(raw_sections, list):
+        return normalize_sidebar_sections(raw_sections)
+
+    for menu_row in page_data.get("sidebar_menu_settings", []):
+        if not isinstance(menu_row, dict):
+            continue
+
+        row_key = str(menu_row.get("key") or menu_row.get("menu_key") or "").strip().lower()
+
+        if row_key != "administrativo":
+            continue
+
+        for possible_key in (
+            MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
+            "sidebar_sections",
+            "sections",
+            "admin_sidebar_sections",
+        ):
+            possible_sections = menu_row.get(possible_key)
+
+            if isinstance(possible_sections, list):
+                return normalize_sidebar_sections(possible_sections)
+
+        menu_config = menu_row.get("menu_config")
+
+        if isinstance(menu_config, dict):
+            possible_sections = menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+
+            if isinstance(possible_sections, list):
+                return normalize_sidebar_sections(possible_sections)
+
+    return []
+
+
+def _split_sidebar_sections_for_page_v22(
+    page_data: dict[str, Any],
+    sidebar_section_edit_key: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]:
+    all_sections = _resolve_sidebar_sections_from_page_data_v22(page_data)
+
+    active_sections = [
+        section
+        for section in all_sections
+        if _sidebar_section_is_active_for_page_v22(section)
+    ]
+
+    inactive_sections = [
+        section
+        for section in all_sections
+        if not _sidebar_section_is_active_for_page_v22(section)
+    ]
+
+    clean_edit_key = str(sidebar_section_edit_key or "").strip().lower()
+    edit_data = None
+
+    if clean_edit_key:
+        for section in all_sections:
+            section_key = str(section.get("key") or "").strip().lower()
+
+            if section_key == clean_edit_key:
+                edit_data = dict(section)
+                break
+
+    return active_sections, inactive_sections, edit_data
+
+# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
+
+
+
 @router.get("/users/new", response_class=HTMLResponse)
 def new_user_page(
     request: Request,
@@ -138,6 +236,7 @@ def new_user_page(
     profile_section: str = "",
     dynamic_process_section: str = "",
     section_key: str = "",
+    sidebar_section_edit_key: str = "",
     appverbo_after_save: str = "",
 ) -> HTMLResponse:
     resolved_profile_tab = profile_tab.strip().lower()
@@ -147,7 +246,7 @@ def new_user_page(
     if not resolved_menu:
         resolved_menu = "home"
     resolved_admin_tab = admin_tab.strip().lower()
-    if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes"}:
+    if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes"}:
         resolved_admin_tab = "entidade"
     if resolved_admin_tab == "definicoes":
         resolved_admin_tab = "contas"
@@ -239,6 +338,11 @@ def new_user_page(
             allowed_entity_ids=entity_permissions["allowed_entity_ids"],
         )
 
+        active_sidebar_sections_v22, inactive_sidebar_sections_v22, sidebar_section_edit_data_v22 = _split_sidebar_sections_for_page_v22(
+            page_data,
+            sidebar_section_edit_key,
+        )
+
     settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
@@ -271,6 +375,11 @@ def new_user_page(
 
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
+
+    if resolved_admin_tab == "sessoes":
+        initial_menu_target = "#admin-sidebar-sections-card"
+        initial_dynamic_process_section = ""
+        clean_dynamic_section_from_query = ""
 
     is_post_save_return = str(appverbo_after_save or "").strip() == "1"
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
@@ -309,6 +418,10 @@ def new_user_page(
         "requested_profile_section": clean_profile_section_from_query,
         "requested_dynamic_process_section": clean_dynamic_section_from_query,
         "appverbo_after_save": is_post_save_return,
+        "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
+        "sidebar_section_edit_data": sidebar_section_edit_data_v22,
+        "active_sidebar_sections": active_sidebar_sections_v22,
+        "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "current_user_can_manage_all_entities": bool(
             entity_permissions["can_manage_all_entities"]

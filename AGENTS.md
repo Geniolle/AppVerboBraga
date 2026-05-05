@@ -779,3 +779,26 @@ Na aba **Sessões**:
 4. O card **Sessões inativas** deve ser renderizado pelo BD sempre que `admin_tab=sessoes` ou `sidebar_sections_tab=sessoes`.
 5. Uma sessão com `status=inativo` ou `is_active=false` deve aparecer no card **Sessões inativas**.
 <!-- APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END -->
+
+<!-- APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START -->
+## Regra definitiva para Sessões no padrão Entidade
+
+A aba **Sessões** deve tratar itens **Ativos** e **Inativos** no mesmo padrão do subprocesso **Entidade**.
+
+Regras:
+
+1. A separação entre ativos e inativos deve acontecer no backend/contexto da página.
+2. A página deve receber:
+   - `active_sidebar_sections`;
+   - `inactive_sidebar_sections`;
+   - `sidebar_section_edit_key`;
+   - `sidebar_section_edit_data`.
+3. O `admin_tab=sessoes` deve ser aceito no page handler, sem cair para `entidade`.
+4. Quando `admin_tab=sessoes`, o target inicial deve ser `#admin-sidebar-sections-card`.
+5. Quando `admin_tab=sessoes`, limpar qualquer `dynamic_process_section`, especialmente `field:entidade`.
+6. A sessão com `status=inativo` ou `is_active=false` deve aparecer em **Sessões inativas**.
+7. A sessão inativa não pode aparecer na lista principal **Sessões do sidebar**.
+8. O card **Sessões inativas** deve existir mesmo vazio, mostrando **Sem sessões inativas.**
+9. A ação **Editar** deve permanecer no fluxo dedicado de Sessões, com `sidebar_section_edit_key`, sem usar parâmetros do subprocesso Menu.
+10. O backend de gravação não deve preservar `dynamic_process_section`, `settings_edit_key`, `settings_action` ou `settings_tab`.
+<!-- APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END -->

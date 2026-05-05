@@ -5399,3 +5399,547 @@ tituloBloco.appendChild(descricao);
 })();
 // APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END
 
+// APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function normalizarTextoSessoesV22(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function criarChaveSessoesV22(valor) {
+    return normalizarTextoSessoesV22(valor)
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function estadoSessaoV22(sessao) {
+    if (sessao && sessao.is_active === false) {
+      return "inativo";
+    }
+
+    const status = normalizarTextoSessoesV22(
+      sessao ? (sessao.status || sessao.status_label || "") : ""
+    );
+
+    if (["inativo", "inactive", "0", "false", "nao", "não", "off"].includes(status)) {
+      return "inativo";
+    }
+
+    return "ativo";
+  }
+
+  function labelSistemaSessoesV22(valor, fallback) {
+    const sistema = normalizarTextoSessoesV22(valor);
+
+    if (sistema === "owner") {
+      return "Owner";
+    }
+
+    if (sistema === "legado") {
+      return "Legado";
+    }
+
+    return fallback || "Owner e Legado";
+  }
+
+  //###################################################################################
+  // (2) LER DADOS BACKEND
+  //###################################################################################
+
+  function lerSplitBackendSessoesV22() {
+    const script = document.getElementById("appverbo-sidebar-section-split-v22");
+
+    if (!script) {
+      return {
+        active: [],
+        inactive: [],
+        edit_key: "",
+        edit_data: null
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(script.textContent || "{}");
+
+      return {
+        active: Array.isArray(parsed.active) ? parsed.active : [],
+        inactive: Array.isArray(parsed.inactive) ? parsed.inactive : [],
+        edit_key: parsed.edit_key || "",
+        edit_data: parsed.edit_data || null
+      };
+    }
+    catch (error) {
+      console.warn("APPVERBO V22: não foi possível ler split backend de Sessões.", error);
+
+      return {
+        active: [],
+        inactive: [],
+        edit_key: "",
+        edit_data: null
+      };
+    }
+  }
+
+  function normalizarSessaoV22(sessao) {
+    if (!sessao || typeof sessao !== "object") {
+      return null;
+    }
+
+    const label = String(sessao.label || sessao.name || sessao.title || "").trim();
+    const key = criarChaveSessoesV22(sessao.key || sessao.section_key || label);
+
+    if (!label || !key) {
+      return null;
+    }
+
+    const status = estadoSessaoV22(sessao);
+    const sistema = String(sessao.visibility_scope_mode || sessao.scope_mode || "all").trim() || "all";
+
+    return {
+      key: key,
+      label: label,
+      visibility_scope_mode: sistema,
+      visibility_scope_label: sessao.visibility_scope_label || labelSistemaSessoesV22(sistema, ""),
+      status: status,
+      is_active: status === "ativo",
+      status_label: status === "inativo" ? "Inativo" : "Ativo"
+    };
+  }
+
+  //###################################################################################
+  // (3) URL SEM CONTEXTO DE ENTIDADE
+  //###################################################################################
+
+  function limparUrlSessoesV22() {
+    const url = new URL(window.location.href);
+
+    const contextoSessoes = url.searchParams.get("admin_tab") === "sessoes" ||
+      url.searchParams.get("sidebar_sections_tab") === "sessoes" ||
+      url.searchParams.get("target") === "admin-sidebar-sections-card" ||
+      url.searchParams.has("sidebar_section_edit_key") ||
+      window.location.hash === "#admin-sidebar-sections-card";
+
+    if (!contextoSessoes) {
+      return;
+    }
+
+    let mudou = false;
+
+    [
+      "dynamic_process_section",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "sidebar_section_return_url",
+      "appverbo_after_save"
+    ].forEach(function (parametro) {
+      if (url.searchParams.has(parametro)) {
+        url.searchParams.delete(parametro);
+        mudou = true;
+      }
+    });
+
+    if (url.searchParams.get("menu") !== "administrativo") {
+      url.searchParams.set("menu", "administrativo");
+      mudou = true;
+    }
+
+    if (url.searchParams.get("admin_tab") !== "sessoes") {
+      url.searchParams.set("admin_tab", "sessoes");
+      mudou = true;
+    }
+
+    if (url.searchParams.get("sidebar_sections_tab") !== "sessoes") {
+      url.searchParams.set("sidebar_sections_tab", "sessoes");
+      mudou = true;
+    }
+
+    if (url.searchParams.get("target") !== "admin-sidebar-sections-card") {
+      url.searchParams.set("target", "admin-sidebar-sections-card");
+      mudou = true;
+    }
+
+    if (url.hash !== "#admin-sidebar-sections-card") {
+      url.hash = "admin-sidebar-sections-card";
+      mudou = true;
+    }
+
+    if (mudou) {
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    }
+  }
+
+  function urlEditarSessaoV22(chave) {
+    const url = new URL(window.location.href);
+
+    [
+      "dynamic_process_section",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "sidebar_section_return_url",
+      "appverbo_after_save",
+      "success",
+      "error"
+    ].forEach(function (parametro) {
+      url.searchParams.delete(parametro);
+    });
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.searchParams.set("sidebar_section_edit_key", criarChaveSessoesV22(chave));
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  function urlRetornoSessoesV22() {
+    const url = new URL(window.location.href);
+
+    [
+      "dynamic_process_section",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "sidebar_section_return_url",
+      "sidebar_section_edit_key",
+      "appverbo_after_save",
+      "success",
+      "error"
+    ].forEach(function (parametro) {
+      url.searchParams.delete(parametro);
+    });
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  //###################################################################################
+  // (4) COMPONENTES
+  //###################################################################################
+
+  function criarBotaoAcaoSessoesV22(tipo, titulo, texto) {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "appverbo-sidebar-section-action-btn-v2 appverbo-sidebar-section-action-btn-v22";
+    botao.dataset.sidebarSectionActionV22 = tipo;
+    botao.title = titulo;
+    botao.setAttribute("aria-label", titulo);
+    botao.textContent = texto;
+    return botao;
+  }
+
+  function criarBadgeEstadoSessoesV22(status) {
+    const badge = document.createElement("span");
+    badge.className = "appverbo-sidebar-section-state-badge-v2";
+
+    if (status === "inativo") {
+      badge.classList.add("appverbo-sidebar-section-state-badge-inativo-v22");
+      badge.textContent = "Inativo";
+    }
+    else {
+      badge.classList.add("appverbo-sidebar-section-state-badge-ativo-v22");
+      badge.textContent = "Ativo";
+    }
+
+    return badge;
+  }
+
+  function criarLinhaSessoesV22(sessao, grupo) {
+    const tr = document.createElement("tr");
+    tr.className = "appverbo-sidebar-section-row-v2 appverbo-sidebar-section-row-v22";
+    tr.dataset.sectionKeyV22 = sessao.key;
+    tr.dataset.sectionKeyV10 = sessao.key;
+    tr.dataset.sectionStatusV22 = grupo;
+
+    const tdMenu = document.createElement("td");
+    tdMenu.className = "appverbo-sidebar-section-menu-cell-v2";
+    tdMenu.textContent = sessao.label;
+
+    const tdSistema = document.createElement("td");
+    tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
+    tdSistema.textContent = sessao.visibility_scope_label || labelSistemaSessoesV22(sessao.visibility_scope_mode, "");
+
+    const tdEstado = document.createElement("td");
+    tdEstado.className = "appverbo-sidebar-section-state-cell-v2";
+    tdEstado.appendChild(criarBadgeEstadoSessoesV22(grupo));
+
+    const tdAcoes = document.createElement("td");
+    tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
+
+    const actions = document.createElement("div");
+    actions.className = "appverbo-sidebar-section-actions-v2";
+
+    if (grupo === "ativo") {
+      actions.appendChild(criarBotaoAcaoSessoesV22("up", "Subir sessão", "↑"));
+      actions.appendChild(criarBotaoAcaoSessoesV22("down", "Descer sessão", "↓"));
+    }
+
+    actions.appendChild(criarBotaoAcaoSessoesV22("view", "Visualizar detalhes", "👁"));
+    actions.appendChild(criarBotaoAcaoSessoesV22("edit", "Editar sessão", "✎"));
+
+    tdAcoes.appendChild(actions);
+
+    tr.appendChild(tdMenu);
+    tr.appendChild(tdSistema);
+    tr.appendChild(tdEstado);
+    tr.appendChild(tdAcoes);
+
+    return tr;
+  }
+
+  function criarTabelaSessoesV22(sessoes, grupo) {
+    const wrap = document.createElement("div");
+    wrap.className = "appverbo-sidebar-sections-table-wrap-v2 appverbo-sidebar-sections-table-wrap-v22";
+
+    const table = document.createElement("table");
+    table.className = "appverbo-sidebar-sections-table-v2 appverbo-sidebar-sections-table-v22";
+
+    const thead = document.createElement("thead");
+    thead.innerHTML = "<tr><th>MENU LATERAL</th><th>SISTEMA</th><th>ESTADO</th><th>AÇÕES</th></tr>";
+
+    const tbody = document.createElement("tbody");
+    tbody.className = "appverbo-sidebar-sections-body-v2 appverbo-sidebar-sections-body-v22";
+    tbody.dataset.statusGroupV22 = grupo;
+
+    sessoes.forEach(function (sessao) {
+      tbody.appendChild(criarLinhaSessoesV22(sessao, grupo));
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    return wrap;
+  }
+
+  //###################################################################################
+  // (5) RENDERIZAR LISTAS A PARTIR DO BACKEND
+  //###################################################################################
+
+  function obterCardAtivasV22() {
+    return document.getElementById("admin-sidebar-sections-card");
+  }
+
+  function obterOuCriarCardInativasV22(cardAtivas) {
+    let cardInativas = document.getElementById("admin-sidebar-sections-inactive-card");
+
+    if (!cardInativas) {
+      cardInativas = document.createElement("section");
+      cardInativas.id = "admin-sidebar-sections-inactive-card";
+    }
+
+    cardInativas.className = "card appverbo-sidebar-sections-inactive-card-v22";
+    cardInativas.hidden = false;
+    cardInativas.style.display = "";
+    cardInativas.style.visibility = "";
+
+    if (cardInativas.parentElement !== cardAtivas.parentElement) {
+      cardAtivas.parentElement.insertBefore(cardInativas, cardAtivas.nextSibling);
+    }
+    else if (cardInativas.previousElementSibling !== cardAtivas) {
+      cardAtivas.parentElement.insertBefore(cardInativas, cardAtivas.nextSibling);
+    }
+
+    return cardInativas;
+  }
+
+  function renderizarCardsBackendV22() {
+    limparUrlSessoesV22();
+
+    const split = lerSplitBackendSessoesV22();
+    const ativas = split.active.map(normalizarSessaoV22).filter(Boolean).filter(function (sessao) {
+      return sessao.status === "ativo";
+    });
+    const inativas = split.inactive.map(normalizarSessaoV22).filter(Boolean).filter(function (sessao) {
+      return sessao.status !== "ativo" || sessao.is_active === false;
+    });
+
+    const cardAtivas = obterCardAtivasV22();
+
+    if (!cardAtivas || !cardAtivas.parentElement) {
+      return;
+    }
+
+    const cardInativas = obterOuCriarCardInativasV22(cardAtivas);
+
+    cardAtivas.classList.add("appverbo-sidebar-sections-active-card-v22");
+
+    const tituloAtivas = document.createElement("h2");
+    tituloAtivas.className = "appverbo-sidebar-section-list-main-title-v22";
+    tituloAtivas.textContent = "Sessões do sidebar";
+
+    const descricaoAtivas = document.createElement("p");
+    descricaoAtivas.className = "appverbo-sidebar-section-list-description-v22";
+    descricaoAtivas.textContent = "Defina e organize apenas as sessões do menu lateral.";
+
+    const preserveForms = Array.from(cardAtivas.querySelectorAll("form")).filter(function (form) {
+      return String(form.getAttribute("action") || "").includes("/settings/menu/sidebar-sections");
+    });
+
+    cardAtivas.innerHTML = "";
+    cardAtivas.appendChild(tituloAtivas);
+    cardAtivas.appendChild(descricaoAtivas);
+
+    if (ativas.length) {
+      cardAtivas.appendChild(criarTabelaSessoesV22(ativas, "ativo"));
+    }
+    else {
+      const vazioAtivas = document.createElement("p");
+      vazioAtivas.className = "appverbo-sidebar-section-empty-text-v22";
+      vazioAtivas.textContent = "Sem sessões ativas.";
+      cardAtivas.appendChild(vazioAtivas);
+    }
+
+    preserveForms.forEach(function (form) {
+      form.hidden = true;
+      cardAtivas.appendChild(form);
+    });
+
+    cardInativas.innerHTML = "";
+
+    const tituloInativas = document.createElement("h2");
+    tituloInativas.className = "appverbo-sidebar-section-list-main-title-v22";
+    tituloInativas.textContent = "Sessões inativas";
+    cardInativas.appendChild(tituloInativas);
+
+    if (inativas.length) {
+      cardInativas.appendChild(criarTabelaSessoesV22(inativas, "inativo"));
+    }
+    else {
+      const vazioInativas = document.createElement("p");
+      vazioInativas.className = "appverbo-sidebar-section-empty-text-v22";
+      vazioInativas.textContent = "Sem sessões inativas.";
+      cardInativas.appendChild(vazioInativas);
+    }
+  }
+
+  //###################################################################################
+  // (6) EVENTOS
+  //###################################################################################
+
+  function instalarEventosSessoesV22() {
+    if (window.__appverboSessoesBackendSplitEventosV22 === true) {
+      return;
+    }
+
+    window.__appverboSessoesBackendSplitEventosV22 = true;
+
+    document.addEventListener("click", function (event) {
+      const botao = event.target.closest("[data-sidebar-section-action-v22]");
+
+      if (!botao) {
+        return;
+      }
+
+      const linha = botao.closest("tr.appverbo-sidebar-section-row-v22");
+
+      if (!linha) {
+        return;
+      }
+
+      const acao = botao.dataset.sidebarSectionActionV22;
+      const chave = linha.dataset.sectionKeyV22 || "";
+      const nome = linha.querySelector(".appverbo-sidebar-section-menu-cell-v2");
+      const sistema = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
+      const estado = linha.querySelector(".appverbo-sidebar-section-state-cell-v2");
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (acao === "view") {
+        alert(
+          "Nome da sessão: " + (nome ? nome.textContent.trim() : "") +
+          "\nSistema: " + (sistema ? sistema.textContent.trim() : "") +
+          "\nEstado: " + (estado ? estado.textContent.trim() : "")
+        );
+        return;
+      }
+
+      if (acao === "edit") {
+        window.location.href = urlEditarSessaoV22(chave);
+      }
+    }, true);
+
+    document.addEventListener("submit", function (event) {
+      const form = event.target;
+
+      if (!form || !String(form.getAttribute("action") || "").includes("/settings/menu/sidebar-section-save")) {
+        return;
+      }
+
+      let returnInput = form.querySelector('input[name="sidebar_section_return_url"]');
+
+      if (!returnInput) {
+        returnInput = document.createElement("input");
+        returnInput.type = "hidden";
+        returnInput.name = "sidebar_section_return_url";
+        form.appendChild(returnInput);
+      }
+
+      returnInput.value = urlRetornoSessoesV22();
+    }, true);
+  }
+
+  //###################################################################################
+  // (7) INSTALAR
+  //###################################################################################
+
+  function agendarRenderSessoesV22() {
+    window.setTimeout(renderizarCardsBackendV22, 80);
+    window.setTimeout(renderizarCardsBackendV22, 250);
+    window.setTimeout(renderizarCardsBackendV22, 700);
+    window.setTimeout(renderizarCardsBackendV22, 1400);
+  }
+
+  function instalarSessoesBackendSplitV22() {
+    instalarEventosSessoesV22();
+    agendarRenderSessoesV22();
+
+    document.addEventListener("click", function () {
+      agendarRenderSessoesV22();
+    });
+
+    window.addEventListener("hashchange", agendarRenderSessoesV22);
+    window.addEventListener("popstate", agendarRenderSessoesV22);
+
+    const observer = new MutationObserver(function () {
+      window.clearTimeout(window.__appverboSessoesBackendSplitTimerV22);
+      window.__appverboSessoesBackendSplitTimerV22 = window.setTimeout(renderizarCardsBackendV22, 180);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "hidden", "style", "aria-selected", "aria-hidden"]
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", instalarSessoesBackendSplitV22);
+  }
+  else {
+    instalarSessoesBackendSplitV22();
+  }
+})();
+// APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
+
