@@ -4226,3 +4226,4 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 = aplicarVisibilidadeSessoesSemPiscarV26;
 }());
 // APPVERBO_SESSOES_SEM_PISCAR_V26_END
+

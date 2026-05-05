@@ -440,3 +440,252 @@
     aplicarActiveInicial_v4();
   });
 })();
+
+// APPVERBO_SESSOES_ABAS_ACIMA_V29_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function normalizarTextoAbasSessoes_v7(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function obterUrlAtualAbasSessoes_v7() {
+    try {
+      return new URL(window.location.href);
+    } catch (erro) {
+      return null;
+    }
+  }
+
+  function estaNoAdministrativoAbasSessoes_v7() {
+    const url = obterUrlAtualAbasSessoes_v7();
+
+    if (!url) {
+      return false;
+    }
+
+    return normalizarTextoAbasSessoes_v7(url.searchParams.get("menu")) === "administrativo";
+  }
+
+  function contextoSessoesNaUrlAbasSessoes_v7() {
+    const url = obterUrlAtualAbasSessoes_v7();
+
+    if (!url) {
+      return false;
+    }
+
+    const adminTab = normalizarTextoAbasSessoes_v7(url.searchParams.get("admin_tab"));
+    const sidebarTab = normalizarTextoAbasSessoes_v7(url.searchParams.get("sidebar_sections_tab"));
+    const hash = normalizarTextoAbasSessoes_v7(window.location.hash);
+
+    return adminTab === "sessoes" ||
+      sidebarTab === "sessoes" ||
+      url.searchParams.has("sidebar_section_edit_key") ||
+      hash === "#admin-sidebar-sections-card" ||
+      hash === "#admin-sidebar-sections-form-card";
+  }
+
+  function obterUrlSessoesCorreta_v7() {
+    return "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card";
+  }
+
+  //###################################################################################
+  // (2) LOCALIZAR ABAS
+  //###################################################################################
+
+  function obterContainerAbasSessoes_v7() {
+    return document.getElementById("submenu-items");
+  }
+
+  function obterCardAbasSessoes_v7() {
+    return document.getElementById("menu-tabs-card");
+  }
+
+  function obterAbasSuperioresSessoes_v7() {
+    const container = obterContainerAbasSessoes_v7();
+
+    if (!container) {
+      return [];
+    }
+
+    return Array.from(container.querySelectorAll("a, button, .submenu-item, [role='tab']"));
+  }
+
+  function obterTextoAbaSessoes_v7(aba) {
+    return normalizarTextoAbasSessoes_v7(aba ? aba.textContent : "");
+  }
+
+  function localizarAbaSessoes_v7() {
+    return obterAbasSuperioresSessoes_v7().find(function (aba) {
+      return obterTextoAbaSessoes_v7(aba) === "sessoes";
+    }) || null;
+  }
+
+  //###################################################################################
+  // (3) LOCALIZAR PRIMEIRO BLOCO DE SESSOES
+  //###################################################################################
+
+  function contemTextoSessoes_v7(elemento) {
+    const texto = normalizarTextoAbasSessoes_v7(elemento ? elemento.textContent : "");
+
+    return texto.indexOf("sessoes ativas") >= 0 ||
+      texto.indexOf("sessoes do sidebar") >= 0 ||
+      texto.indexOf("sessoes inativas") >= 0 ||
+      texto.indexOf("criar sessao") >= 0 ||
+      texto.indexOf("editar sessao") >= 0;
+  }
+
+  function obterPrimeiroCardSessoes_v7() {
+    const porIdOuAtributo = document.querySelector('[data-admin-tab-pane="sessoes"]') ||
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.getElementById("admin-sidebar-sections-inactive-card");
+
+    if (porIdOuAtributo) {
+      return porIdOuAtributo;
+    }
+
+    return Array.from(document.querySelectorAll("section.card, section, .card")).find(function (elemento) {
+      return contemTextoSessoes_v7(elemento);
+    }) || null;
+  }
+
+  //###################################################################################
+  // (4) GARANTIR ABAS ACIMA DO BLOCO SESSOES
+  //###################################################################################
+
+  function garantirAbasAcimaDoBlocoSessoes_v7() {
+    if (!estaNoAdministrativoAbasSessoes_v7()) {
+      return;
+    }
+
+    const cardAbas = obterCardAbasSessoes_v7();
+    const primeiroCardSessoes = obterPrimeiroCardSessoes_v7();
+
+    if (!cardAbas || !primeiroCardSessoes || !primeiroCardSessoes.parentElement) {
+      return;
+    }
+
+    if (cardAbas.nextElementSibling !== primeiroCardSessoes) {
+      primeiroCardSessoes.parentElement.insertBefore(cardAbas, primeiroCardSessoes);
+    }
+  }
+
+  //###################################################################################
+  // (5) ACTIVE DA ABA SESSOES
+  //###################################################################################
+
+  function aplicarActiveSessoes_v7() {
+    if (!estaNoAdministrativoAbasSessoes_v7() || !contextoSessoesNaUrlAbasSessoes_v7()) {
+      return;
+    }
+
+    const abaSessoes = localizarAbaSessoes_v7();
+
+    if (!abaSessoes) {
+      return;
+    }
+
+    obterAbasSuperioresSessoes_v7().forEach(function (aba) {
+      aba.classList.remove("active");
+      aba.classList.remove("is-active");
+      aba.classList.remove("selected");
+      aba.setAttribute("aria-selected", "false");
+    });
+
+    abaSessoes.classList.add("active");
+    abaSessoes.setAttribute("aria-selected", "true");
+  }
+
+  //###################################################################################
+  // (6) CLIQUE NA ABA SESSOES
+  //###################################################################################
+
+  function tratarCliqueAbaSessoes_v7(event) {
+    if (!estaNoAdministrativoAbasSessoes_v7()) {
+      return;
+    }
+
+    const container = obterContainerAbasSessoes_v7();
+
+    if (!container) {
+      return;
+    }
+
+    const aba = event.target.closest("a, button, .submenu-item, [role='tab']");
+
+    if (!aba || !container.contains(aba)) {
+      return;
+    }
+
+    if (obterTextoAbaSessoes_v7(aba) !== "sessoes") {
+      return;
+    }
+
+    const destino = obterUrlSessoesCorreta_v7();
+    const atual = String(window.location.pathname || "") +
+      String(window.location.search || "") +
+      String(window.location.hash || "");
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (typeof event.stopImmediatePropagation === "function") {
+      event.stopImmediatePropagation();
+    }
+
+    if (atual !== destino) {
+      window.location.assign(destino);
+      return;
+    }
+
+    aplicarCorrecaoSessoesAbas_v7();
+  }
+
+  //###################################################################################
+  // (7) INICIALIZACAO
+  //###################################################################################
+
+  function aplicarCorrecaoSessoesAbas_v7() {
+    garantirAbasAcimaDoBlocoSessoes_v7();
+    aplicarActiveSessoes_v7();
+  }
+
+  function inicializarSessoesAbasAcima_v7() {
+    if (window.__appverboSessoesAbasAcimaV29 === "1") {
+      aplicarCorrecaoSessoesAbas_v7();
+      return;
+    }
+
+    window.__appverboSessoesAbasAcimaV29 = "1";
+
+    document.addEventListener("click", tratarCliqueAbaSessoes_v7, true);
+
+    aplicarCorrecaoSessoesAbas_v7();
+
+    window.setTimeout(aplicarCorrecaoSessoesAbas_v7, 80);
+    window.setTimeout(aplicarCorrecaoSessoesAbas_v7, 180);
+    window.setTimeout(aplicarCorrecaoSessoesAbas_v7, 420);
+    window.setTimeout(aplicarCorrecaoSessoesAbas_v7, 820);
+    window.setTimeout(aplicarCorrecaoSessoesAbas_v7, 1320);
+    window.setTimeout(aplicarCorrecaoSessoesAbas_v7, 1820);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inicializarSessoesAbasAcima_v7);
+  } else {
+    inicializarSessoesAbasAcima_v7();
+  }
+
+  window.addEventListener("popstate", aplicarCorrecaoSessoesAbas_v7);
+  window.addEventListener("hashchange", aplicarCorrecaoSessoesAbas_v7);
+})();
+// APPVERBO_SESSOES_ABAS_ACIMA_V29_END

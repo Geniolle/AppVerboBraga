@@ -117,20 +117,6 @@
     ];
   }
 
-
-  //###################################################################################
-  // APPVERBO_SESSOES_SERVER_RENDER_GUARD_V32
-  //###################################################################################
-
-  function existeServerRenderSessoes_v32() {
-    return Boolean(
-      document.getElementById("admin-sidebar-sections-form-card") ||
-      document.getElementById("admin-sidebar-sections-card") ||
-      document.getElementById("admin-sidebar-sections-inactive-card") ||
-      document.querySelector('[data-admin-tab-pane="sessoes"]')
-    );
-  }
-
   //###################################################################################
   // (3) LOCALIZAR CARD E FORMULARIO
   //###################################################################################
@@ -828,13 +814,19 @@ tituloBloco.appendChild(descricao);
 
   // APPVERBO_SESSOES_CREATE_CARD_SEPARADO_V3_START
   function obterOuCriarCardCriacaoSessoes_v3(cardLista) {
-    // APPVERBO_GUARD_OBTER_CARD_CRIACAO_SESSOES_V32
-    if (typeof existeServerRenderSessoes_v32 === "function" && existeServerRenderSessoes_v32()) {
+    // APPVERBO_GUARD_OBTER_CARD_CRIACAO_SESSOES_V29
+    if (document.getElementById("admin-sidebar-sections-form-card") ||
+      document.querySelector('[data-admin-tab-pane="sessoes"]')) {
       return null;
     }
 
+    // APPVERBO_GUARD_OBTER_CARD_CRIACAO_SESSOES_V28
+    if (document.getElementById("admin-sidebar-sections-form-card") ||
+      document.querySelector('[data-admin-tab-pane="sessoes"]')) {
+      return null;
+    }
 
-if (!cardLista || !cardLista.parentElement) {
+    if (!cardLista || !cardLista.parentElement) {
       return null;
     }
 
@@ -852,13 +844,19 @@ if (!cardLista || !cardLista.parentElement) {
   }
 
   function moverBlocoCriacaoParaCardSeparadoSessoes_v3(cardLista, wrapper) {
-    // APPVERBO_GUARD_MOVER_CARD_CRIACAO_SESSOES_V32
-    if (typeof existeServerRenderSessoes_v32 === "function" && existeServerRenderSessoes_v32()) {
+    // APPVERBO_GUARD_MOVER_CARD_CRIACAO_SESSOES_V29
+    if (document.getElementById("admin-sidebar-sections-form-card") ||
+      document.querySelector('[data-admin-tab-pane="sessoes"]')) {
       return;
     }
 
+    // APPVERBO_GUARD_MOVER_CARD_CRIACAO_SESSOES_V28
+    if (document.getElementById("admin-sidebar-sections-form-card") ||
+      document.querySelector('[data-admin-tab-pane="sessoes"]')) {
+      return;
+    }
 
-const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-block-v1");
+    const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-block-v1");
 
     if (!cardLista || !wrapper || !createBlock) {
       return;
@@ -4226,3 +4224,105 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 = aplicarVisibilidadeSessoesSemPiscarV26;
 }());
 // APPVERBO_SESSOES_SEM_PISCAR_V26_END
+
+// APPVERBO_SESSOES_LEGADO_NAO_REPOSICIONAR_V29_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function normalizarTextoSessoesLegado_v29(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  //###################################################################################
+  // (2) LOCALIZAR ELEMENTOS
+  //###################################################################################
+
+  function obterCardAbasSessoesLegado_v29() {
+    return document.getElementById("menu-tabs-card");
+  }
+
+  function contemTextoSessoesLegado_v29(elemento) {
+    const texto = normalizarTextoSessoesLegado_v29(elemento ? elemento.textContent : "");
+
+    return texto.indexOf("sessoes ativas") >= 0 ||
+      texto.indexOf("sessoes do sidebar") >= 0 ||
+      texto.indexOf("sessoes inativas") >= 0 ||
+      texto.indexOf("criar sessao") >= 0 ||
+      texto.indexOf("editar sessao") >= 0;
+  }
+
+  function obterPrimeiroCardSessoesLegado_v29() {
+    const porIdOuAtributo = document.querySelector('[data-admin-tab-pane="sessoes"]') ||
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.getElementById("admin-sidebar-sections-inactive-card");
+
+    if (porIdOuAtributo) {
+      return porIdOuAtributo;
+    }
+
+    return Array.from(document.querySelectorAll("section.card, section, .card")).find(function (elemento) {
+      return contemTextoSessoesLegado_v29(elemento);
+    }) || null;
+  }
+
+  //###################################################################################
+  // (3) REMOVER CARD LEGADO
+  //###################################################################################
+
+  function removerCardCriacaoLegadoSessoes_v29() {
+    const cardLegado = document.getElementById("admin-sidebar-sections-create-card");
+
+    if (cardLegado) {
+      cardLegado.remove();
+    }
+  }
+
+  //###################################################################################
+  // (4) GARANTIR ORDEM VISUAL
+  //###################################################################################
+
+  function garantirOrdemVisualSessoes_v29() {
+    const cardAbas = obterCardAbasSessoesLegado_v29();
+    const primeiroCardSessoes = obterPrimeiroCardSessoesLegado_v29();
+
+    if (!cardAbas || !primeiroCardSessoes || !primeiroCardSessoes.parentElement) {
+      return;
+    }
+
+    if (cardAbas.nextElementSibling !== primeiroCardSessoes) {
+      primeiroCardSessoes.parentElement.insertBefore(cardAbas, primeiroCardSessoes);
+    }
+  }
+
+  //###################################################################################
+  // (5) INICIALIZACAO
+  //###################################################################################
+
+  function inicializarSessoesLegadoNaoReposicionar_v29() {
+    removerCardCriacaoLegadoSessoes_v29();
+    garantirOrdemVisualSessoes_v29();
+
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v29, 120);
+    window.setTimeout(garantirOrdemVisualSessoes_v29, 140);
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v29, 520);
+    window.setTimeout(garantirOrdemVisualSessoes_v29, 540);
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v29, 1220);
+    window.setTimeout(garantirOrdemVisualSessoes_v29, 1240);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inicializarSessoesLegadoNaoReposicionar_v29);
+  } else {
+    inicializarSessoesLegadoNaoReposicionar_v29();
+  }
+})();
+// APPVERBO_SESSOES_LEGADO_NAO_REPOSICIONAR_V29_END

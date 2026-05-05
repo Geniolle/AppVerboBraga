@@ -117,20 +117,6 @@
     ];
   }
 
-
-  //###################################################################################
-  // APPVERBO_SESSOES_SERVER_RENDER_GUARD_V32
-  //###################################################################################
-
-  function existeServerRenderSessoes_v32() {
-    return Boolean(
-      document.getElementById("admin-sidebar-sections-form-card") ||
-      document.getElementById("admin-sidebar-sections-card") ||
-      document.getElementById("admin-sidebar-sections-inactive-card") ||
-      document.querySelector('[data-admin-tab-pane="sessoes"]')
-    );
-  }
-
   //###################################################################################
   // (3) LOCALIZAR CARD E FORMULARIO
   //###################################################################################
@@ -828,13 +814,7 @@ tituloBloco.appendChild(descricao);
 
   // APPVERBO_SESSOES_CREATE_CARD_SEPARADO_V3_START
   function obterOuCriarCardCriacaoSessoes_v3(cardLista) {
-    // APPVERBO_GUARD_OBTER_CARD_CRIACAO_SESSOES_V32
-    if (typeof existeServerRenderSessoes_v32 === "function" && existeServerRenderSessoes_v32()) {
-      return null;
-    }
-
-
-if (!cardLista || !cardLista.parentElement) {
+    if (!cardLista || !cardLista.parentElement) {
       return null;
     }
 
@@ -852,13 +832,7 @@ if (!cardLista || !cardLista.parentElement) {
   }
 
   function moverBlocoCriacaoParaCardSeparadoSessoes_v3(cardLista, wrapper) {
-    // APPVERBO_GUARD_MOVER_CARD_CRIACAO_SESSOES_V32
-    if (typeof existeServerRenderSessoes_v32 === "function" && existeServerRenderSessoes_v32()) {
-      return;
-    }
-
-
-const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-block-v1");
+    const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-block-v1");
 
     if (!cardLista || !wrapper || !createBlock) {
       return;
@@ -4226,3 +4200,87 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 = aplicarVisibilidadeSessoesSemPiscarV26;
 }());
 // APPVERBO_SESSOES_SEM_PISCAR_V26_END
+
+// APPVERBO_SESSOES_LEGADO_NAO_REPOSICIONAR_V27_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function existeServerRenderSessoes_v27() {
+    return Boolean(
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.querySelector('[data-admin-tab-pane="sessoes"]')
+    );
+  }
+
+  function obterCardAbasSessoes_v27() {
+    return document.getElementById("menu-tabs-card");
+  }
+
+  function obterPrimeiroCardSessoes_v27() {
+    return document.querySelector('[data-admin-tab-pane="sessoes"]') ||
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.getElementById("admin-sidebar-sections-inactive-card");
+  }
+
+  //###################################################################################
+  // (2) REMOVER BLOCO ORFAO LEGADO
+  //###################################################################################
+
+  function removerCardCriacaoLegadoSessoes_v27() {
+    if (!existeServerRenderSessoes_v27()) {
+      return;
+    }
+
+    const cardLegado = document.getElementById("admin-sidebar-sections-create-card");
+
+    if (cardLegado) {
+      cardLegado.remove();
+    }
+  }
+
+  //###################################################################################
+  // (3) GARANTIR ORDEM VISUAL
+  //###################################################################################
+
+  function garantirOrdemVisualSessoes_v27() {
+    const cardAbas = obterCardAbasSessoes_v27();
+    const primeiroCardSessoes = obterPrimeiroCardSessoes_v27();
+
+    if (!cardAbas || !primeiroCardSessoes || !primeiroCardSessoes.parentElement) {
+      return;
+    }
+
+    if (cardAbas.nextElementSibling !== primeiroCardSessoes) {
+      primeiroCardSessoes.parentElement.insertBefore(cardAbas, primeiroCardSessoes);
+    }
+  }
+
+  //###################################################################################
+  // (4) INICIALIZACAO
+  //###################################################################################
+
+  function inicializarSessoesLegadoNaoReposicionar_v27() {
+    removerCardCriacaoLegadoSessoes_v27();
+    garantirOrdemVisualSessoes_v27();
+
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v27, 120);
+    window.setTimeout(garantirOrdemVisualSessoes_v27, 140);
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v27, 520);
+    window.setTimeout(garantirOrdemVisualSessoes_v27, 540);
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v27, 1220);
+    window.setTimeout(garantirOrdemVisualSessoes_v27, 1240);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inicializarSessoesLegadoNaoReposicionar_v27);
+  } else {
+    inicializarSessoesLegadoNaoReposicionar_v27();
+  }
+})();
+// APPVERBO_SESSOES_LEGADO_NAO_REPOSICIONAR_V27_END

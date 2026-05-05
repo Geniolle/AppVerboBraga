@@ -6,7 +6,219 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
+
+
+<!-- APPVERBO_SESSOES_ANTI_FLICKER_V26_START -->
+  <script>
+    (function () {
+      "use strict";
+
+      function normalizarTextoSessaoAntiFlickerV26(valor) {
+        return String(valor || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .toLowerCase();
+      }
+
+      function obterTextoSubprocessoAtivoSessaoAntiFlickerV26() {
+        var candidatos = Array.prototype.slice.call(
+          document.querySelectorAll("button, a, [role='tab']")
+        );
+
+        for (var index = 0; index < candidatos.length; index += 1) {
+          var elemento = candidatos[index];
+          var texto = normalizarTextoSessaoAntiFlickerV26(elemento.textContent);
+
+          if (["entidade", "utilizador", "menu", "sessoes"].indexOf(texto) === -1) {
+            continue;
+          }
+
+          var className = String(elemento.className || "");
+          var ariaSelected = elemento.getAttribute("aria-selected");
+          var ariaCurrent = elemento.getAttribute("aria-current");
+
+          if (
+            className.indexOf("active") >= 0 ||
+            className.indexOf("is-active") >= 0 ||
+            className.indexOf("selected") >= 0 ||
+            ariaSelected === "true" ||
+            ariaCurrent === "page"
+          ) {
+            return texto;
+          }
+        }
+
+        return "";
+      }
+
+      function estaNoSubprocessoSessoesAntiFlickerV26() {
+        var textoAtivo = obterTextoSubprocessoAtivoSessaoAntiFlickerV26();
+
+        if (textoAtivo) {
+          return textoAtivo === "sessoes";
+        }
+
+        var url = new URL(window.location.href);
+        var adminTab = normalizarTextoSessaoAntiFlickerV26(url.searchParams.get("admin_tab"));
+        var sidebarTab = normalizarTextoSessaoAntiFlickerV26(url.searchParams.get("sidebar_sections_tab"));
+
+        return adminTab === "sessoes" && sidebarTab === "sessoes";
+      }
+
+      function cardEhDeSessoesAntiFlickerV26(elemento) {
+        if (!elemento || !elemento.querySelectorAll) {
+          return false;
+        }
+
+        if (
+          elemento.id === "admin-sidebar-sections-active-card-v23" ||
+          elemento.id === "admin-sidebar-sections-inactive-card" ||
+          elemento.classList.contains("appverbo-sidebar-sections-active-card-v23")
+        ) {
+          return true;
+        }
+
+        var titulos = Array.prototype.slice.call(
+          elemento.querySelectorAll("h1, h2, h3, .card-title")
+        );
+
+        for (var index = 0; index < titulos.length; index += 1) {
+          var titulo = normalizarTextoSessaoAntiFlickerV26(titulos[index].textContent);
+
+          if (titulo === "sessoes ativas" || titulo === "sessoes inativas") {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      function obterCardsSessoesAntiFlickerV26(raiz) {
+        var base = raiz && raiz.querySelectorAll ? raiz : document;
+        var cards = Array.prototype.slice.call(
+          base.querySelectorAll("section.card, div.card, .card")
+        );
+
+        if (raiz && raiz.nodeType === 1 && raiz.matches && raiz.matches("section.card, div.card, .card")) {
+          cards.unshift(raiz);
+        }
+
+        return cards.filter(cardEhDeSessoesAntiFlickerV26);
+      }
+
+      function aplicarClasseSubprocessoSessoesAntiFlickerV26() {
+        var deveMostrar = estaNoSubprocessoSessoesAntiFlickerV26();
+        document.documentElement.classList.toggle("appverbo-subprocesso-sessoes-v26", deveMostrar);
+        document.documentElement.classList.toggle("appverbo-subprocesso-nao-sessoes-v26", !deveMostrar);
+        return deveMostrar;
+      }
+
+      function aplicarVisibilidadeSessoesAntiFlickerV26(raiz) {
+        var deveMostrar = aplicarClasseSubprocessoSessoesAntiFlickerV26();
+        var cards = obterCardsSessoesAntiFlickerV26(raiz);
+
+        cards.forEach(function (card) {
+          card.setAttribute("data-appverbo-sessoes-card-v26", "1");
+
+          if (deveMostrar) {
+            card.removeAttribute("hidden");
+            card.style.removeProperty("display");
+            card.style.removeProperty("visibility");
+          }
+          else {
+            card.setAttribute("hidden", "hidden");
+            card.style.setProperty("display", "none", "important");
+            card.style.setProperty("visibility", "hidden", "important");
+          }
+        });
+      }
+
+      function limparUrlSessoesQuandoSaiDoSubprocessoV26(textoSubprocesso) {
+        var texto = normalizarTextoSessaoAntiFlickerV26(textoSubprocesso);
+
+        if (!texto || texto === "sessoes") {
+          return;
+        }
+
+        var url = new URL(window.location.href);
+        var alterou = false;
+
+        ["sidebar_sections_tab", "sidebar_section_edit_key", "target"].forEach(function (parametro) {
+          if (url.searchParams.has(parametro)) {
+            url.searchParams.delete(parametro);
+            alterou = true;
+          }
+        });
+
+        if (normalizarTextoSessaoAntiFlickerV26(url.searchParams.get("admin_tab")) === "sessoes") {
+          url.searchParams.set("admin_tab", texto);
+          alterou = true;
+        }
+
+        if (url.hash === "#admin-sidebar-sections-card") {
+          url.hash = "";
+          alterou = true;
+        }
+
+        if (alterou) {
+          window.history.replaceState(window.history.state, document.title, url.pathname + url.search + url.hash);
+        }
+      }
+
+      var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          Array.prototype.slice.call(mutation.addedNodes || []).forEach(function (node) {
+            if (node && node.nodeType === 1) {
+              aplicarVisibilidadeSessoesAntiFlickerV26(node);
+            }
+          });
+        });
+      });
+
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+
+      document.addEventListener("click", function (event) {
+        var target = event.target instanceof Element ? event.target : null;
+
+        if (!target) {
+          return;
+        }
+
+        var tab = target.closest("button, a, [role='tab']");
+
+        if (!tab) {
+          return;
+        }
+
+        var texto = normalizarTextoSessaoAntiFlickerV26(tab.textContent);
+
+        if (["entidade", "utilizador", "menu", "sessoes"].indexOf(texto) >= 0) {
+          limparUrlSessoesQuandoSaiDoSubprocessoV26(texto);
+          aplicarVisibilidadeSessoesAntiFlickerV26(document);
+          window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 0);
+          window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 50);
+          window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 200);
+        }
+      }, true);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        aplicarVisibilidadeSessoesAntiFlickerV26(document);
+        window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 0);
+        window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 100);
+        window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 400);
+      });
+
+      aplicarClasseSubprocessoSessoesAntiFlickerV26();
+      window.AppVerboAplicarVisibilidadeSessoesAntiFlickerV26 = aplicarVisibilidadeSessoesAntiFlickerV26;
+    }());
+  </script>
+  <!-- APPVERBO_SESSOES_ANTI_FLICKER_V26_END -->
+
+  <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260505-sessoes-campos-bd-v4">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
@@ -2587,8 +2799,8 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/new_user.js?v=20260504-success-auto-dismiss-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
-<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-topcentral-antes-criar-v31"></script>
+<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-topcentral-antes-criar-v31"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260503-respect-backend-post-save-v1"></script>
