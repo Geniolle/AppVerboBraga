@@ -1,15 +1,230 @@
 {% extends "base.html" %}
+
+{% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
+
+  <!-- APPVERBO_SESSOES_ANTI_FLICKER_V26_START -->
+  <script>
+    (function () {
+      "use strict";
+
+      function normalizarTextoSessaoAntiFlickerV26(valor) {
+        return String(valor || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .toLowerCase();
+      }
+
+      function obterTextoSubprocessoAtivoSessaoAntiFlickerV26() {
+        var candidatos = Array.prototype.slice.call(
+          document.querySelectorAll("button, a, [role='tab']")
+        );
+
+        for (var index = 0; index < candidatos.length; index += 1) {
+          var elemento = candidatos[index];
+          var texto = normalizarTextoSessaoAntiFlickerV26(elemento.textContent);
+
+          if (["entidade", "utilizador", "menu", "sessoes"].indexOf(texto) === -1) {
+            continue;
+          }
+
+          var className = String(elemento.className || "");
+          var ariaSelected = elemento.getAttribute("aria-selected");
+          var ariaCurrent = elemento.getAttribute("aria-current");
+
+          if (
+            className.indexOf("active") >= 0 ||
+            className.indexOf("is-active") >= 0 ||
+            className.indexOf("selected") >= 0 ||
+            ariaSelected === "true" ||
+            ariaCurrent === "page"
+          ) {
+            return texto;
+          }
+        }
+
+        return "";
+      }
+
+      function estaNoSubprocessoSessoesAntiFlickerV26() {
+        var textoAtivo = obterTextoSubprocessoAtivoSessaoAntiFlickerV26();
+
+        if (textoAtivo) {
+          return textoAtivo === "sessoes";
+        }
+
+        var url = new URL(window.location.href);
+        var adminTab = normalizarTextoSessaoAntiFlickerV26(url.searchParams.get("admin_tab"));
+        var sidebarTab = normalizarTextoSessaoAntiFlickerV26(url.searchParams.get("sidebar_sections_tab"));
+
+        return adminTab === "sessoes" && sidebarTab === "sessoes";
+      }
+
+      function cardEhDeSessoesAntiFlickerV26(elemento) {
+        if (!elemento || !elemento.querySelectorAll) {
+          return false;
+        }
+
+        if (
+          elemento.id === "admin-sidebar-sections-active-card-v23" ||
+          elemento.id === "admin-sidebar-sections-inactive-card" ||
+          elemento.classList.contains("appverbo-sidebar-sections-active-card-v23")
+        ) {
+          return true;
+        }
+
+        var titulos = Array.prototype.slice.call(
+          elemento.querySelectorAll("h1, h2, h3, .card-title")
+        );
+
+        for (var index = 0; index < titulos.length; index += 1) {
+          var titulo = normalizarTextoSessaoAntiFlickerV26(titulos[index].textContent);
+
+          if (titulo === "sessoes ativas" || titulo === "sessoes inativas") {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      function obterCardsSessoesAntiFlickerV26(raiz) {
+        var base = raiz && raiz.querySelectorAll ? raiz : document;
+        var cards = Array.prototype.slice.call(
+          base.querySelectorAll("section.card, div.card, .card")
+        );
+
+        if (raiz && raiz.nodeType === 1 && raiz.matches && raiz.matches("section.card, div.card, .card")) {
+          cards.unshift(raiz);
+        }
+
+        return cards.filter(cardEhDeSessoesAntiFlickerV26);
+      }
+
+      function aplicarClasseSubprocessoSessoesAntiFlickerV26() {
+        var deveMostrar = estaNoSubprocessoSessoesAntiFlickerV26();
+        document.documentElement.classList.toggle("appverbo-subprocesso-sessoes-v26", deveMostrar);
+        document.documentElement.classList.toggle("appverbo-subprocesso-nao-sessoes-v26", !deveMostrar);
+        return deveMostrar;
+      }
+
+      function aplicarVisibilidadeSessoesAntiFlickerV26(raiz) {
+        var deveMostrar = aplicarClasseSubprocessoSessoesAntiFlickerV26();
+        var cards = obterCardsSessoesAntiFlickerV26(raiz);
+
+        cards.forEach(function (card) {
+          card.setAttribute("data-appverbo-sessoes-card-v26", "1");
+
+          if (deveMostrar) {
+            card.removeAttribute("hidden");
+            card.style.removeProperty("display");
+            card.style.removeProperty("visibility");
+          }
+          else {
+            card.setAttribute("hidden", "hidden");
+            card.style.setProperty("display", "none", "important");
+            card.style.setProperty("visibility", "hidden", "important");
+          }
+        });
+      }
+
+      function limparUrlSessoesQuandoSaiDoSubprocessoV26(textoSubprocesso) {
+        var texto = normalizarTextoSessaoAntiFlickerV26(textoSubprocesso);
+
+        if (!texto || texto === "sessoes") {
+          return;
+        }
+
+        var url = new URL(window.location.href);
+        var alterou = false;
+
+        ["sidebar_sections_tab", "sidebar_section_edit_key", "target"].forEach(function (parametro) {
+          if (url.searchParams.has(parametro)) {
+            url.searchParams.delete(parametro);
+            alterou = true;
+          }
+        });
+
+        if (normalizarTextoSessaoAntiFlickerV26(url.searchParams.get("admin_tab")) === "sessoes") {
+          url.searchParams.set("admin_tab", texto);
+          alterou = true;
+        }
+
+        if (url.hash === "#admin-sidebar-sections-card") {
+          url.hash = "";
+          alterou = true;
+        }
+
+        if (alterou) {
+          window.history.replaceState(window.history.state, document.title, url.pathname + url.search + url.hash);
+        }
+      }
+
+      var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          Array.prototype.slice.call(mutation.addedNodes || []).forEach(function (node) {
+            if (node && node.nodeType === 1) {
+              aplicarVisibilidadeSessoesAntiFlickerV26(node);
+            }
+          });
+        });
+      });
+
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+
+      document.addEventListener("click", function (event) {
+        var target = event.target instanceof Element ? event.target : null;
+
+        if (!target) {
+          return;
+        }
+
+        var tab = target.closest("button, a, [role='tab']");
+
+        if (!tab) {
+          return;
+        }
+
+        var texto = normalizarTextoSessaoAntiFlickerV26(tab.textContent);
+
+        if (["entidade", "utilizador", "menu", "sessoes"].indexOf(texto) >= 0) {
+          limparUrlSessoesQuandoSaiDoSubprocessoV26(texto);
+          aplicarVisibilidadeSessoesAntiFlickerV26(document);
+          window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 0);
+          window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 50);
+          window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 200);
+        }
+      }, true);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        aplicarVisibilidadeSessoesAntiFlickerV26(document);
+        window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 0);
+        window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 100);
+        window.setTimeout(function () { aplicarVisibilidadeSessoesAntiFlickerV26(document); }, 400);
+      });
+
+      aplicarClasseSubprocessoSessoesAntiFlickerV26();
+      window.AppVerboAplicarVisibilidadeSessoesAntiFlickerV26 = aplicarVisibilidadeSessoesAntiFlickerV26;
+    }());
+  </script>
+  <!-- APPVERBO_SESSOES_ANTI_FLICKER_V26_END -->
+
   <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260505-sessoes-campos-bd-v4">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
-  <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-corrigir-ativos-split-backend-v26">
+  <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260505-corrigir-ordem-abas-sessoes-v5">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-corrigir-ordem-abas-sessoes-v5" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -23,265 +238,23 @@
         <section id="menu-tabs-card" class="card menu-tabs-card">
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
         </section>
+        <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
+        {% if admin_tab == "sessoes" and admin_subprocess_state %}
+          {{ render_admin_subprocess_state(admin_subprocess_state) }}
+        {% endif %}
+        <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
 
-        
+
+
+
+
         <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
-        <script id="appverbo-sidebar-section-options-v2" type="application/json">{{ sidebar_section_options|default([])|tojson }}</script>
         <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_END -->
-<!-- APPVERBO_SESSOES_BACKEND_SPLIT_JSON_V22_START -->
-        <script id="appverbo-sidebar-section-split-v22" type="application/json">{{
-          {
-            "active": active_sidebar_sections|default([]),
-            "inactive": inactive_sidebar_sections|default([]),
-            "edit_key": sidebar_section_edit_key|default(""),
-            "edit_data": sidebar_section_edit_data|default(none)
-          }|tojson
-        }}</script>
-        <!-- APPVERBO_SESSOES_BACKEND_SPLIT_JSON_V22_END -->
-<!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START -->
-        {% set sessoes_return_url = "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card" %}
-        {% set sessoes_edit = sidebar_section_edit_data if sidebar_section_edit_data else none %}
-        {% set sessoes_edit_scope = sessoes_edit.get("visibility_scope_mode", "all") if sessoes_edit else "all" %}
-        {% set sessoes_edit_status = "inativo" if sessoes_edit and (sessoes_edit.get("is_active") == false or sessoes_edit.get("status") == "inativo") else "ativo" %}
 
-        <section
-          id="admin-sidebar-sections-form-card"
-          class="card appverbo-sessoes-card-v25 appverbo-sessoes-form-card-v25"
-          data-menu-scope="administrativo"
-          data-admin-tab-pane="sessoes"
-        >
-          {% if settings_success and admin_tab == "sessoes" %}
-            <div class="alert ok">{{ settings_success }}</div>
-          {% endif %}
-          {% if settings_error and admin_tab == "sessoes" %}
-            <div class="alert error">{{ settings_error }}</div>
-          {% endif %}
 
-          {% if sessoes_edit %}
-            <h2 class="appverbo-sessoes-form-title-v25">Editar sessão</h2>
-            <form method="post" action="/settings/menu/sidebar-section-save" class="appverbo-sessoes-form-v25">
-              <input type="hidden" name="section_mode" value="edit">
-              <input type="hidden" name="original_section_key" value="{{ sessoes_edit.get('key', '') }}">
-              <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
 
-              <div class="appverbo-sessoes-grid-v25">
-                <div class="field">
-                  <label for="edit_sidebar_section_label_v25">Nome da sessão *</label>
-                  <input
-                    id="edit_sidebar_section_label_v25"
-                    name="section_label"
-                    required
-                    maxlength="80"
-                    value="{{ sessoes_edit.get('label', '') }}"
-                  >
-                </div>
 
-                <div class="field">
-                  <label for="edit_sidebar_section_scope_v25">Sistema *</label>
-                  <select id="edit_sidebar_section_scope_v25" name="section_visibility_scope_mode">
-                    <option value="all" {% if sessoes_edit_scope == "all" %}selected{% endif %}>Owner e Legado</option>
-                    <option value="owner" {% if sessoes_edit_scope == "owner" %}selected{% endif %}>Owner</option>
-                    <option value="legado" {% if sessoes_edit_scope == "legado" %}selected{% endif %}>Legado</option>
-                  </select>
-                </div>
 
-                <div class="field">
-                  <label for="edit_sidebar_section_status_v25">Estado *</label>
-                  <select id="edit_sidebar_section_status_v25" name="section_status">
-                    <option value="ativo" {% if sessoes_edit_status == "ativo" %}selected{% endif %}>Ativo</option>
-                    <option value="inativo" {% if sessoes_edit_status == "inativo" %}selected{% endif %}>Inativo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-action-row appverbo-sessoes-actions-v25">
-                <button type="submit" class="action-btn">Guardar</button>
-                <a class="action-btn-cancel appverbo-sessoes-cancel-link-v25" href="{{ sessoes_return_url }}">Cancelar</a>
-              </div>
-            </form>
-          {% else %}
-            <details id="create-sidebar-section-collapse-v25" class="entity-create-collapse appverbo-sessoes-create-collapse-v25">
-              <summary>
-                <span>Criar sessão</span>
-              </summary>
-
-              <div class="entity-create-body">
-                <form method="post" action="/settings/menu/sidebar-section-save" class="appverbo-sessoes-form-v25">
-                  <input type="hidden" name="section_mode" value="create">
-                  <input type="hidden" name="original_section_key" value="">
-                  <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
-
-                  <div class="appverbo-sessoes-grid-v25">
-                    <div class="field">
-                      <label for="create_sidebar_section_label_v25">Nome da sessão *</label>
-                      <input
-                        id="create_sidebar_section_label_v25"
-                        name="section_label"
-                        required
-                        maxlength="80"
-                        placeholder="Informe o nome da sessão"
-                      >
-                    </div>
-
-                    <div class="field">
-                      <label for="create_sidebar_section_scope_v25">Sistema *</label>
-                      <select id="create_sidebar_section_scope_v25" name="section_visibility_scope_mode">
-                        <option value="all" selected>Owner e Legado</option>
-                        <option value="owner">Owner</option>
-                        <option value="legado">Legado</option>
-                      </select>
-                    </div>
-
-                    <div class="field">
-                      <label for="create_sidebar_section_status_v25">Estado *</label>
-                      <select id="create_sidebar_section_status_v25" name="section_status">
-                        <option value="ativo" selected>Ativo</option>
-                        <option value="inativo">Inativo</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="form-action-row appverbo-sessoes-actions-v25">
-                    <button type="submit" class="action-btn">Guardar</button>
-                    <button
-                      type="button"
-                      class="action-btn-cancel"
-                      onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
-                    >Cancelar</button>
-                  </div>
-                </form>
-              </div>
-            </details>
-          {% endif %}
-        </section>
-
-        <section
-          id="admin-sidebar-sections-card"
-          class="card appverbo-sessoes-card-v25 appverbo-sessoes-list-card-v25"
-          data-menu-scope="administrativo"
-          data-admin-tab-pane="sessoes"
-        >
-          <h2>Sessões do sidebar</h2>
-          <p class="appverbo-sessoes-card-description-v25">Defina e organize apenas as sessões do menu lateral.</p>
-
-          {% if active_sidebar_sections %}
-            <div class="appverbo-sessoes-table-wrap-v25">
-              <table class="appverbo-sessoes-table-v25">
-                <thead>
-                  <tr>
-                    <th>MENU LATERAL</th>
-                    <th>SISTEMA</th>
-                    <th>ESTADO</th>
-                    <th>AÇÕES</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for row in active_sidebar_sections %}
-                    <tr>
-                      <td>{{ row.label }}</td>
-                      <td>{{ row.visibility_scope_label or "Owner e Legado" }}</td>
-                      <td><span class="appverbo-sessoes-badge-v25 appverbo-sessoes-badge-ativo-v25">Ativo</span></td>
-                      <td>
-                        <div class="appverbo-sessoes-row-actions-v25">
-                          <form method="post" action="/settings/menu/sidebar-section-move-one" class="appverbo-sessoes-inline-form-v25">
-                            <input type="hidden" name="section_key" value="{{ row.key }}">
-                            <input type="hidden" name="direction" value="up">
-                            <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
-                            <button type="submit" class="appverbo-sessoes-action-btn-v25" title="Subir sessão" aria-label="Subir sessão">↑</button>
-                          </form>
-
-                          <form method="post" action="/settings/menu/sidebar-section-move-one" class="appverbo-sessoes-inline-form-v25">
-                            <input type="hidden" name="section_key" value="{{ row.key }}">
-                            <input type="hidden" name="direction" value="down">
-                            <input type="hidden" name="sidebar_section_return_url" value="{{ sessoes_return_url }}">
-                            <button type="submit" class="appverbo-sessoes-action-btn-v25" title="Descer sessão" aria-label="Descer sessão">↓</button>
-                          </form>
-
-                          <button
-                            type="button"
-                            class="appverbo-sessoes-action-btn-v25"
-                            title="Visualizar detalhes"
-                            aria-label="Visualizar detalhes"
-                            data-sessao-view-v25
-                            data-sessao-label="{{ row.label }}"
-                            data-sessao-sistema="{{ row.visibility_scope_label or 'Owner e Legado' }}"
-                            data-sessao-estado="Ativo"
-                          >👁</button>
-
-                          <a
-                            class="appverbo-sessoes-action-btn-v25 appverbo-sessoes-action-link-v25"
-                            title="Editar sessão"
-                            aria-label="Editar sessão"
-                            href="/users/new?menu=administrativo&amp;admin_tab=sessoes&amp;sidebar_sections_tab=sessoes&amp;target=admin-sidebar-sections-form-card&amp;sidebar_section_edit_key={{ row.key }}#admin-sidebar-sections-form-card"
-                          >✎</a>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <p class="empty">Sem sessões ativas.</p>
-          {% endif %}
-        </section>
-
-        <section
-          id="admin-sidebar-sections-inactive-card"
-          class="card appverbo-sessoes-card-v25 appverbo-sessoes-inactive-card-v25"
-          data-menu-scope="administrativo"
-          data-admin-tab-pane="sessoes"
-        >
-          <h2>Sessões inativas</h2>
-
-          {% if inactive_sidebar_sections %}
-            <div class="appverbo-sessoes-table-wrap-v25">
-              <table class="appverbo-sessoes-table-v25">
-                <thead>
-                  <tr>
-                    <th>MENU LATERAL</th>
-                    <th>SISTEMA</th>
-                    <th>ESTADO</th>
-                    <th>AÇÕES</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for row in inactive_sidebar_sections %}
-                    <tr>
-                      <td>{{ row.label }}</td>
-                      <td>{{ row.visibility_scope_label or "Owner e Legado" }}</td>
-                      <td><span class="appverbo-sessoes-badge-v25 appverbo-sessoes-badge-inativo-v25">Inativo</span></td>
-                      <td>
-                        <div class="appverbo-sessoes-row-actions-v25">
-                          <button
-                            type="button"
-                            class="appverbo-sessoes-action-btn-v25"
-                            title="Visualizar detalhes"
-                            aria-label="Visualizar detalhes"
-                            data-sessao-view-v25
-                            data-sessao-label="{{ row.label }}"
-                            data-sessao-sistema="{{ row.visibility_scope_label or 'Owner e Legado' }}"
-                            data-sessao-estado="Inativo"
-                          >👁</button>
-
-                          <a
-                            class="appverbo-sessoes-action-btn-v25 appverbo-sessoes-action-link-v25"
-                            title="Editar sessão"
-                            aria-label="Editar sessão"
-                            href="/users/new?menu=administrativo&amp;admin_tab=sessoes&amp;sidebar_sections_tab=sessoes&amp;target=admin-sidebar-sections-form-card&amp;sidebar_section_edit_key={{ row.key }}#admin-sidebar-sections-form-card"
-                          >✎</a>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <p class="empty">Sem sessões inativas.</p>
-          {% endif %}
-        </section>
-        <!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END -->
 
 <section id="dynamic-process-card" class="card" style="display: none;">
           <div class="profile-card-header">
@@ -2536,7 +2509,7 @@
           </table>
         </section>
 
-        
+
 
         <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
           <div class="profile-card-header">
@@ -2824,8 +2797,8 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/new_user.js?v=20260504-success-auto-dismiss-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260430-admin-clean-v4"></script>
-<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-sessoes-corrigir-ativos-split-backend-v26"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-sessoes-abas-acima-v27"></script>
+<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-sessoes-abas-acima-v27"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260503-respect-backend-post-save-v1"></script>

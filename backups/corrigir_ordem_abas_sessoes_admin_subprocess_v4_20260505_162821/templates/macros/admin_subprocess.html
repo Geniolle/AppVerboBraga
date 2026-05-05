@@ -1,0 +1,201 @@
+
+{% macro admin_subprocess_get_value(row, key, default="") %}
+  {{ row.get(key, default) if row else default }}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_field(field, value="") %}
+  <div class="field admin-subprocess-field-v1 {{ field.css_class }}">
+    <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+
+    {% if field.field_type == "select" %}
+      <select
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        {% if field.required %}required{% endif %}
+      >
+        {% for option_value, option_label in field.options %}
+          <option value="{{ option_value }}" {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
+        {% endfor %}
+      </select>
+    {% else %}
+      <input
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        type="{{ field.field_type }}"
+        value="{{ value }}"
+        {% if field.required %}required{% endif %}
+        {% if field.max_length %}maxlength="{{ field.max_length }}"{% endif %}
+        {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+      >
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_form(state) %}
+  <section
+    id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
+    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
+    data-admin-subprocess="{{ state.config.key }}"
+  >
+    {% if state.success %}
+      <div class="alert ok">{{ state.success }}</div>
+    {% endif %}
+
+    {% if state.error %}
+      <div class="alert error">{{ state.error }}</div>
+    {% endif %}
+
+    {% if state.is_editing %}
+      <h2>{{ state.config.edit_title }}</h2>
+
+      <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+        <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.edit_mode_value }}">
+        <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ state.edit_key }}">
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+
+        <div class="admin-subprocess-grid-v1">
+          {% for field in state.config.fields %}
+            {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else "" %}
+            {{ render_admin_subprocess_field(field, field_value) }}
+          {% endfor %}
+        </div>
+
+        <div class="form-action-row admin-subprocess-actions-v1">
+          <button type="submit" class="action-btn">Guardar</button>
+          <a class="action-btn-cancel" href="{{ state.return_url }}">Cancelar</a>
+        </div>
+      </form>
+    {% else %}
+      <details class="entity-create-collapse admin-subprocess-create-collapse-v1">
+        <summary>
+          <span>{{ state.config.create_title }}</span>
+        </summary>
+
+        <div class="entity-create-body">
+          <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+            <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
+            <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
+            <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+
+            <div class="admin-subprocess-grid-v1">
+              {% for field in state.config.fields %}
+                {{ render_admin_subprocess_field(field, "") }}
+              {% endfor %}
+            </div>
+
+            <div class="form-action-row admin-subprocess-actions-v1">
+              <button type="submit" class="action-btn">Guardar</button>
+              <button
+                type="button"
+                class="action-btn-cancel"
+                onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+              >Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </details>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_row_actions(state, row, status_value) %}
+  {% set row_key = row.get(state.config.identity_field, row.get("key", row.get("id", ""))) %}
+  {% set row_label = row.get(state.config.label_field, row.get("label", row.get("name", ""))) %}
+  {% set row_status_label = row.get("status_label", "Ativo" if status_value == state.config.active_value else "Inativo") %}
+  {% set row_system_label = row.get("visibility_scope_label", "") %}
+
+  <div class="admin-subprocess-row-actions-v1">
+    {% if status_value == state.config.active_value and state.config.move_endpoint %}
+      <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+        <input type="hidden" name="section_key" value="{{ row_key }}">
+        <input type="hidden" name="direction" value="up">
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+        <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">↑</button>
+      </form>
+
+      <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+        <input type="hidden" name="section_key" value="{{ row_key }}">
+        <input type="hidden" name="direction" value="down">
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+        <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">↓</button>
+      </form>
+    {% endif %}
+
+    <button
+      type="button"
+      class="admin-subprocess-action-btn-v1"
+      title="Visualizar detalhes"
+      aria-label="Visualizar detalhes"
+      data-admin-subprocess-view
+      data-view-title="{{ state.config.singular_label }}"
+      data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
+    >👁</button>
+
+    <a
+      class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+      title="Editar"
+      aria-label="Editar"
+      href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
+    >✎</a>
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_table(state, rows, title, status_value) %}
+  <section
+    id="{{ state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
+    class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
+    data-admin-subprocess="{{ state.config.key }}"
+    data-admin-subprocess-status="{{ status_value }}"
+  >
+    <h2>{{ title }}</h2>
+
+    {% if rows %}
+      <div class="admin-subprocess-table-wrap-v1">
+        <table class="admin-subprocess-table-v1">
+          <thead>
+            <tr>
+              {% for column in state.config.columns %}
+                <th class="{{ column.css_class }}">{{ column.label }}</th>
+              {% endfor %}
+              <th>AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                {% for column in state.config.columns %}
+                  {% set cell_value = row.get(column.source, "") %}
+                  <td class="{{ column.css_class }}">
+                    {% if column.key == "status" %}
+                      <span class="admin-subprocess-badge-v1 {% if status_value == state.config.active_value %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
+                        {{ cell_value or ("Ativo" if status_value == state.config.active_value else "Inativo") }}
+                      </span>
+                    {% else %}
+                      {{ cell_value }}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+                <td>
+                  {{ render_admin_subprocess_row_actions(state, row, status_value) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">Sem registos.</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_state(state) %}
+  {{ render_admin_subprocess_form(state) }}
+  {{ render_admin_subprocess_table(state, state.active_rows, state.config.active_title, state.config.active_value) }}
+  {{ render_admin_subprocess_table(state, state.inactive_rows, state.config.inactive_title, state.config.inactive_value) }}
+{% endmacro %}

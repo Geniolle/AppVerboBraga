@@ -884,3 +884,107 @@ Regras:
 5. O card **Sessões do sidebar** deve mostrar todas as sessões ativas.
 6. O card **Sessões inativas** deve mostrar apenas as sessões inativas.
 <!-- APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END -->
+
+<!-- APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_START -->
+## Regra de persistência visual do card Criar sessão
+
+Na aba **Sessões**:
+
+1. O card de criação/edição `admin-sidebar-sections-form-card` deve permanecer visível sempre que a aba **Sessões** estiver ativa.
+2. Ao alternar para Entidade, Utilizador ou Menu, os cards de Sessões podem ser ocultados.
+3. Ao retornar para Sessões, devem reaparecer juntos:
+   - `admin-sidebar-sections-form-card`;
+   - `admin-sidebar-sections-card`;
+   - `admin-sidebar-sections-inactive-card`.
+4. O card de criação não deve depender de reconstrução por JavaScript.
+5. O JavaScript só pode controlar visibilidade, sem recriar listas, formulários ou linhas.
+6. Não usar `MutationObserver` para este comportamento.
+<!-- APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_END -->
+
+<!-- APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START -->
+## Regra definitiva: Sessões no fluxo nativo igual ao subprocesso Entidade
+
+A aba **Sessões** deve seguir o mesmo padrão de renderização da aba **Entidade**.
+
+Regras obrigatórias:
+
+1. O template só deve renderizar os cards de Sessões quando `admin_tab == "sessoes"`.
+2. Não usar `data-admin-tab-pane="sessoes"` como mecanismo paralelo de visibilidade.
+3. Não usar JavaScript para forçar aparecer/desaparecer o card **Criar sessão**.
+4. O card **Criar sessão** deve existir no HTML apenas quando a aba Sessões for carregada pelo backend.
+5. Ao navegar para Entidade/Menu/Utilizador, os cards de Sessões não devem existir no HTML da resposta.
+6. Ao voltar para Sessões, o backend deve renderizar novamente:
+   - `admin-sidebar-sections-form-card`;
+   - `admin-sidebar-sections-card`;
+   - `admin-sidebar-sections-inactive-card`.
+7. O JavaScript de Sessões só pode tratar ação auxiliar de visualizar detalhes.
+8. As listas de sessões ativas e inativas devem ser renderizadas pelo template com dados do backend.
+9. A ação **Editar** deve navegar com `sidebar_section_edit_key`, igual ao fluxo da Entidade com `entity_edit_id`.
+10. Não usar `MutationObserver` no subprocesso Sessões.
+<!-- APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END -->
+
+<!-- APPVERBO_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->
+## Motor reutilizável de subprocessos administrativos
+
+A partir desta configuração, todo subprocesso administrativo deve seguir o contrato comum `AdminSubprocess`.
+
+Arquivos principais:
+
+- `appverbo/admin_subprocesses/models.py`
+- `appverbo/admin_subprocesses/registry.py`
+- `appverbo/admin_subprocesses/service.py`
+- `appverbo/admin_subprocesses/repositories/base.py`
+- `templates/macros/admin_subprocess.html`
+- `static/css/modules/admin_subprocesses_v1.css`
+- `static/js/modules/admin_subprocesses_v1.js`
+
+Configurações atribuídas inicialmente:
+
+- `entidade`: subprocesso de referência, mantendo o padrão atual server-render.
+- `sessoes`: próximo subprocesso a migrar para o padrão nativo reutilizável.
+- `utilizador`, `menu` e `contas`: registados como `legacy_pending` para migração posterior.
+
+Regras obrigatórias:
+
+1. URL define `admin_tab` e o parâmetro de edição.
+2. Registry identifica a configuração do subprocesso.
+3. Repository carrega dados da origem correta.
+4. Service monta `AdminSubprocessState`.
+5. Template/macro renderiza criar, editar, ativos e inativos.
+6. Endpoint grava e redireciona para o `admin_tab` correto.
+7. JavaScript não renderiza listas, formulários ou cards.
+8. JavaScript só pode executar ações auxiliares.
+9. Novos subprocessos devem ser criados adicionando uma configuração no registry e, quando necessário, um repository.
+<!-- APPVERBO_ADMIN_SUBPROCESS_CONFIG_BASE_V1_END -->
+
+<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_START -->
+## Ordem definitiva da aba Sessões
+
+Na aba **Sessões**, a ordem visual correta é:
+
+1. Primeiro o card central de ABAS (`menu-tabs-card`);
+2. Depois o bloco do subprocesso renderizado por `render_admin_subprocess_state(admin_subprocess_state)`;
+3. Nenhum bloco de Sessões pode ficar antes do card de ABAS;
+4. Não devem existir sections manuais antigas com:
+   - `admin-sidebar-sections-form-card`;
+   - `admin-sidebar-sections-card`;
+   - `admin-sidebar-sections-inactive-card`;
+   - classes `appverbo-sessoes-*`;
+5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
+<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_END -->
+
+<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
+## Ordem definitiva da aba Sessões
+
+Na aba **Sessões**, a ordem visual correta é:
+
+1. Primeiro o card central de ABAS (`menu-tabs-card`);
+2. Depois o bloco do subprocesso renderizado por `render_admin_subprocess_state(admin_subprocess_state)`;
+3. Nenhum bloco manual antigo de Sessões pode ficar antes do card de ABAS;
+4. Não devem existir sections manuais antigas com:
+   - `admin-sidebar-sections-form-card`;
+   - `admin-sidebar-sections-card`;
+   - `admin-sidebar-sections-inactive-card`;
+   - classes `appverbo-sessoes-*`;
+5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
+<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->

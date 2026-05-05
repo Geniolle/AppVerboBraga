@@ -9,6 +9,10 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+# APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
+from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
+from appverbo.admin_subprocesses.service import build_admin_subprocess_state
+# APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
@@ -372,7 +376,7 @@ def new_user_page(
                     sidebar_section_edit_data_v22,
                 )
         # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
-    settings_edit_data: dict[str, Any] | None = None
+            settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
             row_key = str(row.get("key", "")).strip().lower()
@@ -417,6 +421,26 @@ def new_user_page(
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
 
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
+    admin_subprocess_state_v2 = None
+
+    if resolved_admin_tab == "sessoes":
+        sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
+
+        if sessoes_subprocess_config_v2 is not None:
+            all_sidebar_sections_for_subprocess_v2 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
+            clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip()
+
+            admin_subprocess_state_v2 = build_admin_subprocess_state(
+                config=sessoes_subprocess_config_v2,
+                rows=all_sidebar_sections_for_subprocess_v2,
+                edit_key=clean_sidebar_section_edit_key_v2,
+                success=settings_success if resolved_admin_tab == "sessoes" else "",
+                error=settings_error if resolved_admin_tab == "sessoes" else "",
+                return_url="/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
+            )
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
+
     context = {
         "request": request,
         "errors": [error] if error else [],
@@ -455,6 +479,7 @@ def new_user_page(
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
+        "admin_subprocess_state": admin_subprocess_state_v2,
         "current_user_can_manage_all_entities": bool(
             entity_permissions["can_manage_all_entities"]
         ),

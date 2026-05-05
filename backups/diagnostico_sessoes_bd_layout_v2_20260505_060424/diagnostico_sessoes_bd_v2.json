@@ -1,0 +1,212 @@
+{
+  "timestamp": 1777957474,
+  "table": "sidebar_menu_settings",
+  "sidebar_sections_key": "sidebar_sections",
+  "admin_row_found": true,
+  "valid_raw_sections_count": 2,
+  "db_correction_applied": false,
+  "db_correction_reason": "BD contém sessões válidas. O desaparecimento era de renderização no JS/layout.",
+  "raw_admin_sidebar_sections": [
+    {
+      "key": "geral",
+      "label": "Geral",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "igreja",
+      "label": "Igreja",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    }
+  ],
+  "normalized_sidebar_sections": [
+    {
+      "key": "geral",
+      "label": "Geral",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "igreja",
+      "label": "Igreja",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    }
+  ],
+  "menu_rows": [
+    {
+      "menu_key": "home",
+      "menu_label": "Home",
+      "sidebar_section": "geral",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "relatorios",
+      "menu_label": "Relatorios",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "administrativo",
+      "menu_label": "Administrativo",
+      "sidebar_section": "geral",
+      "menu_config_keys": [
+        "sidebar_global_refresh_version",
+        "sidebar_section",
+        "sidebar_sections",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "contato",
+      "menu_label": "Contacto",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "links",
+      "menu_label": "Links",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "teste",
+      "menu_label": "Teste",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "additional_fields",
+        "display_order",
+        "menu_section",
+        "requires_admin",
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes",
+        "visible_field_headers",
+        "visible_fields"
+      ]
+    },
+    {
+      "menu_key": "financeiro",
+      "menu_label": "Financeiro",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "tutorial",
+      "menu_label": "Tutorial",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "funcionarios",
+      "menu_label": "Funcionarios",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes"
+      ]
+    },
+    {
+      "menu_key": "meu_perfil",
+      "menu_label": "Meu perfil",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "additional_fields",
+        "process_additional_fields_refresh_version",
+        "process_lists",
+        "process_quantity_fields",
+        "process_visible_field_header_map",
+        "process_visible_field_rows",
+        "process_visible_fields",
+        "process_visible_fields_configured",
+        "process_visible_fields_refresh_version",
+        "process_visible_headers",
+        "sidebar_global_refresh_version",
+        "sidebar_section",
+        "subsequent_fields",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes",
+        "visible_field_headers",
+        "visible_fields"
+      ]
+    },
+    {
+      "menu_key": "empresa",
+      "menu_label": "Empresa",
+      "sidebar_section": "igreja",
+      "menu_config_keys": [
+        "additional_fields",
+        "display_order",
+        "menu_section",
+        "process_additional_fields_refresh_version",
+        "process_quantity_fields",
+        "process_visible_field_header_map",
+        "process_visible_field_rows",
+        "process_visible_fields",
+        "process_visible_fields_configured",
+        "process_visible_fields_refresh_version",
+        "requires_admin",
+        "sidebar_global_refresh_version",
+        "sidebar_section",
+        "visibility_scope_label",
+        "visibility_scope_mode",
+        "visibility_scopes",
+        "visible_field_headers",
+        "visible_fields"
+      ]
+    }
+  ]
+}

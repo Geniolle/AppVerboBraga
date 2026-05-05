@@ -1,0 +1,113 @@
+:root {
+  --ui-control-height: 42px;
+  --ui-control-padding-x: 12px;
+  --ui-control-border-radius: 6px;
+  --ui-control-border-color: #cfd5df;
+  --ui-control-bg: #ffffff;
+  --ui-control-font-size: 14px;
+  --ui-control-focus-border: #8fb4e7;
+  --ui-control-focus-ring: 0 0 0 3px rgba(47, 108, 229, 0.14);
+
+  --ui-button-padding-x: 15px;
+  --ui-button-border-radius: 6px;
+  --ui-button-font-size: 14px;
+  --ui-button-font-weight: 600;
+  --ui-button-line-height: 1.2;
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+  select
+) {
+  min-height: var(--ui-control-height);
+  padding: 0 var(--ui-control-padding-x);
+  border-radius: var(--ui-control-border-radius);
+  border: 1px solid var(--ui-control-border-color);
+  background: var(--ui-control-bg);
+  font-size: var(--ui-control-font-size);
+}
+
+:where(textarea) {
+  padding: 10px var(--ui-control-padding-x);
+  border-radius: var(--ui-control-border-radius);
+  border: 1px solid var(--ui-control-border-color);
+  background: var(--ui-control-bg);
+  font-size: var(--ui-control-font-size);
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+  select,
+  textarea
+):focus {
+  outline: none;
+  border-color: var(--ui-control-focus-border);
+  box-shadow: var(--ui-control-focus-ring);
+}
+
+:where(button, .action-btn, .action-btn-cancel, .primary-btn, .link-btn) {
+  border-radius: var(--ui-button-border-radius);
+  font-size: var(--ui-button-font-size);
+  font-weight: var(--ui-button-font-weight);
+  line-height: var(--ui-button-line-height);
+}
+
+/* APPVERBO_SAVE_CANCEL_BUTTON_STANDARD_V1_START */
+
+:root {
+  --appverbo-save-cancel-button-width-v1: 112px;
+  --appverbo-save-cancel-button-height-v1: 38px;
+}
+
+.action-btn,
+.action-btn-cancel,
+button.action-btn,
+button.action-btn-cancel,
+input.action-btn,
+input.action-btn-cancel,
+.profile-edit-actions > button[type="submit"],
+.profile-edit-actions > .profile-cancel-btn,
+.form-action-row > button[type="submit"],
+.form-action-row > .action-btn,
+.form-action-row > .action-btn-cancel,
+.appverbo-sidebar-sections-footer-v2 > .action-btn,
+.appverbo-sidebar-sections-footer-v2 > .action-btn-cancel {
+  min-width: var(--appverbo-save-cancel-button-width-v1) !important;
+  width: var(--appverbo-save-cancel-button-width-v1) !important;
+  height: var(--appverbo-save-cancel-button-height-v1) !important;
+  min-height: var(--appverbo-save-cancel-button-height-v1) !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+}
+
+.profile-edit-actions,
+.form-action-row,
+.entity-form-actions,
+.appverbo-sidebar-sections-footer-v2 {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+}
+
+.appverbo-sidebar-sections-footer-v2 .appverbo-sidebar-section-change-note-v2 {
+  order: 3 !important;
+  margin-left: 10px !important;
+}
+
+.appverbo-sidebar-sections-footer-v2 > .action-btn {
+  order: 1 !important;
+}
+
+.appverbo-sidebar-sections-footer-v2 > .action-btn-cancel {
+  order: 2 !important;
+}
+
+/* APPVERBO_SAVE_CANCEL_BUTTON_STANDARD_V1_END */

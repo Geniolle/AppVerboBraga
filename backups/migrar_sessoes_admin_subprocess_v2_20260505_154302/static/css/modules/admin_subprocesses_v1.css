@@ -1,0 +1,66 @@
+
+/* APPVERBO_ADMIN_SUBPROCESSES_V1_START */
+
+.admin-subprocess-card-v1 {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-subprocess-form-v1 {
+  width: 100%;
+}
+
+.admin-subprocess-grid-v1 {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(220px, 260px) minmax(160px, 220px);
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.admin-subprocess-field-v1 label {
+  display: block;
+  margin-bottom: 6px;
+  color: #12213a;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-subprocess-field-v1 input,
+.admin-subprocess-field-v1 select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #c6d0e2;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #12213a;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.admin-subprocess-actions-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-subprocess-actions-v1 .action-btn,
+.admin-subprocess-actions-v1 .action-btn-cancel {
+  min-width: 112px;
+  width: 112px;
+  height: 38px;
+  min-height: 38px;
+}
+
+@media (max-width: 1100px) {
+  .admin-subprocess-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* APPVERBO_ADMIN_SUBPROCESSES_V1_END */

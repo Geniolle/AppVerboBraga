@@ -1,4 +1,4 @@
-﻿//###################################################################################
+//###################################################################################
 // APPVERBOBRAGA - ACTIVE UNICO E NAVEGACAO LIMPA NAS ABAS SUPERIORES - V4
 //###################################################################################
 
@@ -121,7 +121,7 @@
       utilizador: "/users/new?menu=administrativo&admin_tab=utilizador",
       entidade: "/users/new?menu=administrativo&admin_tab=entidade",
       menu: "/users/new?menu=administrativo&admin_tab=contas",
-      sessoes: "/users/new?menu=administrativo&admin_tab=contas#admin-sidebar-sections-card"
+      sessoes: "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     };
 
     return mapa[texto] || "";
@@ -434,3 +434,231 @@
     aplicarActiveInicial_v4();
   });
 })();
+
+// APPVERBO_SESSOES_ABAS_ACIMA_V27_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function normalizarTextoAbasSessoes_v5(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function obterUrlAtualAbasSessoes_v5() {
+    try {
+      return new URL(window.location.href);
+    } catch (erro) {
+      return null;
+    }
+  }
+
+  function estaNoAdministrativoAbasSessoes_v5() {
+    const url = obterUrlAtualAbasSessoes_v5();
+
+    if (!url) {
+      return false;
+    }
+
+    return normalizarTextoAbasSessoes_v5(url.searchParams.get("menu")) === "administrativo";
+  }
+
+  function urlSessaoCorretaAbasSessoes_v5() {
+    return "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card";
+  }
+
+  function contextoSessoesNaUrlAbasSessoes_v5() {
+    const url = obterUrlAtualAbasSessoes_v5();
+
+    if (!url) {
+      return false;
+    }
+
+    return normalizarTextoAbasSessoes_v5(url.searchParams.get("admin_tab")) === "sessoes" ||
+      normalizarTextoAbasSessoes_v5(url.searchParams.get("sidebar_sections_tab")) === "sessoes" ||
+      url.searchParams.has("sidebar_section_edit_key") ||
+      normalizarTextoAbasSessoes_v5(window.location.hash) === "#admin-sidebar-sections-card" ||
+      normalizarTextoAbasSessoes_v5(window.location.hash) === "#admin-sidebar-sections-form-card";
+  }
+
+  //###################################################################################
+  // (2) LOCALIZAR ABAS
+  //###################################################################################
+
+  function obterContainerAbasSessoes_v5() {
+    return document.getElementById("submenu-items");
+  }
+
+  function obterCardAbasSessoes_v5() {
+    return document.getElementById("menu-tabs-card");
+  }
+
+  function obterAbasSessoes_v5() {
+    const container = obterContainerAbasSessoes_v5();
+
+    if (!container) {
+      return [];
+    }
+
+    return Array.from(container.querySelectorAll("a, button, .submenu-item, [role='tab']"));
+  }
+
+  function obterTextoAbaSessoes_v5(aba) {
+    return normalizarTextoAbasSessoes_v5(aba ? aba.textContent : "");
+  }
+
+  function localizarAbaSessoes_v5() {
+    return obterAbasSessoes_v5().find(function (aba) {
+      return obterTextoAbaSessoes_v5(aba) === "sessoes";
+    }) || null;
+  }
+
+  //###################################################################################
+  // (3) ACTIVE CORRETO PARA SESSOES
+  //###################################################################################
+
+  function aplicarActiveSessoes_v5() {
+    if (!estaNoAdministrativoAbasSessoes_v5() || !contextoSessoesNaUrlAbasSessoes_v5()) {
+      return;
+    }
+
+    const abaSessoes = localizarAbaSessoes_v5();
+
+    if (!abaSessoes) {
+      return;
+    }
+
+    obterAbasSessoes_v5().forEach(function (aba) {
+      aba.classList.remove("active");
+      aba.classList.remove("is-active");
+      aba.classList.remove("selected");
+      aba.setAttribute("aria-selected", "false");
+    });
+
+    abaSessoes.classList.add("active");
+    abaSessoes.setAttribute("aria-selected", "true");
+  }
+
+  //###################################################################################
+  // (4) GARANTIR ABAS ACIMA DO BLOCO SESSOES
+  //###################################################################################
+
+  function obterPrimeiroCardSessoes_v5() {
+    return document.querySelector('[data-admin-tab-pane="sessoes"]') ||
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.getElementById("admin-sidebar-sections-inactive-card");
+  }
+
+  function garantirAbasAcimaDoBlocoSessoes_v5() {
+    if (!estaNoAdministrativoAbasSessoes_v5()) {
+      return;
+    }
+
+    const cardAbas = obterCardAbasSessoes_v5();
+    const primeiroCardSessoes = obterPrimeiroCardSessoes_v5();
+
+    if (!cardAbas || !primeiroCardSessoes || !primeiroCardSessoes.parentElement) {
+      return;
+    }
+
+    if (cardAbas.compareDocumentPosition(primeiroCardSessoes) & Node.DOCUMENT_POSITION_PRECEDING) {
+      primeiroCardSessoes.parentElement.insertBefore(cardAbas, primeiroCardSessoes);
+    }
+
+    if (cardAbas.nextElementSibling !== primeiroCardSessoes) {
+      primeiroCardSessoes.parentElement.insertBefore(cardAbas, primeiroCardSessoes);
+    }
+  }
+
+  //###################################################################################
+  // (5) INTERCETAR CLIQUE EM SESSOES ANTES DO CONTROLADOR ANTIGO
+  //###################################################################################
+
+  function tratarCliqueSessoes_v5(event) {
+    if (!estaNoAdministrativoAbasSessoes_v5()) {
+      return;
+    }
+
+    const container = obterContainerAbasSessoes_v5();
+
+    if (!container) {
+      return;
+    }
+
+    const aba = event.target.closest("a, button, .submenu-item, [role='tab']");
+
+    if (!aba || !container.contains(aba)) {
+      return;
+    }
+
+    if (obterTextoAbaSessoes_v5(aba) !== "sessoes") {
+      return;
+    }
+
+    const destino = urlSessaoCorretaAbasSessoes_v5();
+    const atual = String(window.location.pathname || "") +
+      String(window.location.search || "") +
+      String(window.location.hash || "");
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (typeof event.stopImmediatePropagation === "function") {
+      event.stopImmediatePropagation();
+    }
+
+    if (atual !== destino) {
+      window.location.assign(destino);
+      return;
+    }
+
+    aplicarActiveSessoes_v5();
+    garantirAbasAcimaDoBlocoSessoes_v5();
+  }
+
+  //###################################################################################
+  // (6) INICIALIZACAO
+  //###################################################################################
+
+  function aplicarCorrecaoSessoes_v5() {
+    garantirAbasAcimaDoBlocoSessoes_v5();
+    aplicarActiveSessoes_v5();
+  }
+
+  function inicializarSessoesAbasAcima_v5() {
+    if (window.__appverboSessoesAbasAcimaV27 === "1") {
+      aplicarCorrecaoSessoes_v5();
+      return;
+    }
+
+    window.__appverboSessoesAbasAcimaV27 = "1";
+
+    document.addEventListener("click", tratarCliqueSessoes_v5, true);
+
+    aplicarCorrecaoSessoes_v5();
+
+    window.setTimeout(aplicarCorrecaoSessoes_v5, 80);
+    window.setTimeout(aplicarCorrecaoSessoes_v5, 180);
+    window.setTimeout(aplicarCorrecaoSessoes_v5, 420);
+    window.setTimeout(aplicarCorrecaoSessoes_v5, 820);
+    window.setTimeout(aplicarCorrecaoSessoes_v5, 1320);
+    window.setTimeout(aplicarCorrecaoSessoes_v5, 1820);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", inicializarSessoesAbasAcima_v5);
+  } else {
+    inicializarSessoesAbasAcima_v5();
+  }
+
+  window.addEventListener("popstate", aplicarCorrecaoSessoes_v5);
+  window.addEventListener("hashchange", aplicarCorrecaoSessoes_v5);
+})();
+// APPVERBO_SESSOES_ABAS_ACIMA_V27_END

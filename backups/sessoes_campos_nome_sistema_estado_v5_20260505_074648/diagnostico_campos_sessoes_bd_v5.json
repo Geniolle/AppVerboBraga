@@ -1,0 +1,132 @@
+{
+  "timestamp": 1777963613,
+  "table": "sidebar_menu_settings",
+  "menu_key": "administrativo",
+  "db_available": true,
+  "raw_sidebar_sections": [
+    {
+      "key": "sistema",
+      "label": "Sistema",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "geral",
+      "label": "Geral",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "igreja",
+      "label": "Igreja",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "dados_gerais",
+      "label": "Dados gerais",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "tesouraria",
+      "label": "Tesouraria",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    }
+  ],
+  "normalized_sidebar_sections": [
+    {
+      "key": "sistema",
+      "label": "Sistema",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "geral",
+      "label": "Geral",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "igreja",
+      "label": "Igreja",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "dados_gerais",
+      "label": "Dados gerais",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    },
+    {
+      "key": "tesouraria",
+      "label": "Tesouraria",
+      "visibility_scopes": [
+        "owner",
+        "legado"
+      ],
+      "visibility_scope_mode": "all",
+      "visibility_scope_label": "Owner e Legado"
+    }
+  ],
+  "detected_section_fields": [
+    "key",
+    "label",
+    "visibility_scopes",
+    "visibility_scope_mode",
+    "visibility_scope_label"
+  ],
+  "requested_create_fields": [
+    "label",
+    "visibility_scope_mode",
+    "status"
+  ],
+  "requested_create_labels": [
+    "Nome da sessão",
+    "Sistema",
+    "Estado"
+  ],
+  "notes": [
+    "O campo chave continua a existir no BD, mas passa a ser gerado automaticamente a partir do Nome da sessão.",
+    "O campo Sistema usa visibility_scope_mode/visibility_scope_label.",
+    "O campo Estado será persistido como status, is_active e status_label."
+  ]
+}

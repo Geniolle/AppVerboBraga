@@ -1,0 +1,53 @@
+:root {
+  --ui-control-height: 42px;
+  --ui-control-padding-x: 12px;
+  --ui-control-border-radius: 6px;
+  --ui-control-border-color: #cfd5df;
+  --ui-control-bg: #ffffff;
+  --ui-control-font-size: 14px;
+  --ui-control-focus-border: #8fb4e7;
+  --ui-control-focus-ring: 0 0 0 3px rgba(47, 108, 229, 0.14);
+
+  --ui-button-padding-x: 15px;
+  --ui-button-border-radius: 6px;
+  --ui-button-font-size: 14px;
+  --ui-button-font-weight: 600;
+  --ui-button-line-height: 1.2;
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+  select
+) {
+  min-height: var(--ui-control-height);
+  padding: 0 var(--ui-control-padding-x);
+  border-radius: var(--ui-control-border-radius);
+  border: 1px solid var(--ui-control-border-color);
+  background: var(--ui-control-bg);
+  font-size: var(--ui-control-font-size);
+}
+
+:where(textarea) {
+  padding: 10px var(--ui-control-padding-x);
+  border-radius: var(--ui-control-border-radius);
+  border: 1px solid var(--ui-control-border-color);
+  background: var(--ui-control-bg);
+  font-size: var(--ui-control-font-size);
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]),
+  select,
+  textarea
+):focus {
+  outline: none;
+  border-color: var(--ui-control-focus-border);
+  box-shadow: var(--ui-control-focus-ring);
+}
+
+:where(button, .action-btn, .action-btn-cancel, .primary-btn, .link-btn) {
+  border-radius: var(--ui-button-border-radius);
+  font-size: var(--ui-button-font-size);
+  font-weight: var(--ui-button-font-weight);
+  line-height: var(--ui-button-line-height);
+}

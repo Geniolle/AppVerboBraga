@@ -486,7 +486,7 @@ tituloBloco.appendChild(descricao);
     cancelar.className = "action-btn-cancel appverbo-sidebar-section-cancel-btn-v3";
     cancelar.textContent = "Cancelar";
     cancelar.addEventListener("click", function () {
-      window.location.assign("/users/new?menu=administrativo&admin_tab=contas#admin-sidebar-sections-card");
+      window.location.assign("/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card");
     });
 
     footer.appendChild(gravar);
@@ -3204,8 +3204,8 @@ tituloBloco.appendChild(descricao);
 // APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END
 
 // APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START
-// Desativado pelo fluxo server-render V25.
-// Motivo: renderizava card por JS.
+// Desativado pelo fluxo nativo V30.
+// Motivo: renderizava card antigo por JS.
 // APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END
 
 // APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START
@@ -3219,8 +3219,8 @@ tituloBloco.appendChild(descricao);
 // APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END
 
 // APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_START
-// Desativado pelo fluxo server-render V25.
-// Motivo: controlava fluxo visual por JS.
+// Desativado pelo fluxo nativo V30.
+// Motivo: controlava fluxo visual antigo.
 // APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_END
 
 // APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_START
@@ -3349,39 +3349,44 @@ tituloBloco.appendChild(descricao);
 // APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_END
 
 // APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_START
-// Desativado pelo fluxo server-render V25.
-// Motivo: reconstruía listas por fetch.
+// Desativado pelo fluxo nativo V30.
+// Motivo: recriava lista por fetch.
 // APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_END
 
 // APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START
-// Desativado pelo fluxo server-render V25.
-// Motivo: forçava URL da aba Sessões.
+// Desativado pelo fluxo nativo V30.
+// Motivo: forçava URL/aba de Sessões.
 // APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END
 
 // APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
-// Desativado pelo fluxo server-render V25.
+// Desativado pelo fluxo nativo V30.
 // Motivo: reconstruía cards por JS.
 // APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
 // APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_START
-// Desativado pelo fluxo server-render V25.
-// Motivo: renderizava formulário/listas por JS.
+// Desativado pelo fluxo nativo V30.
+// Motivo: reconstruía formulários/listas por JS.
 // APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_END
 
 // APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START
-// Desativado pelo fluxo server-render V25.
-// Motivo: hidratava ações que agora vêm do template.
+// Desativado pelo fluxo nativo V30.
+// Motivo: hidratava ações antigas.
 // APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END
 
 // APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START
+// Desativado pelo fluxo nativo V30.
+// Motivo: controlava visibilidade paralela.
+// APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END
+
+// APPVERBO_SESSOES_ATIVAS_CARD_V23_START
 (function () {
   "use strict";
 
   //###################################################################################
-  // (1) UTILITARIOS
+  // (1) NORMALIZAÇÃO
   //###################################################################################
 
-  function normalizarTextoV25(valor) {
+  function normalizarTextoSessoesAtivasV23(valor) {
     return String(valor || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -3389,70 +3394,582 @@ tituloBloco.appendChild(descricao);
       .toLowerCase();
   }
 
-  function getSessoesCardsV25() {
-    return Array.from(document.querySelectorAll('[data-admin-tab-pane="sessoes"]'));
+  function criarChaveSessoesAtivasV23(valor) {
+    return normalizarTextoSessoesAtivasV23(valor)
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
   }
 
-  function tabSessoesAtivaV25() {
-    const url = new URL(window.location.href);
+  function estadoSessaoAtivaV23(sessao) {
+    if (sessao && sessao.is_active === false) {
+      return "inativo";
+    }
 
-    if (
-      url.searchParams.get("admin_tab") === "sessoes" ||
-      url.searchParams.get("sidebar_sections_tab") === "sessoes" ||
-      url.searchParams.has("sidebar_section_edit_key")
-    ) {
+    const estado = normalizarTextoSessoesAtivasV23(
+      sessao ? (sessao.status || sessao.status_label || sessao.estado || "") : ""
+    );
+
+    if (["inativo", "inactive", "0", "false", "nao", "não", "off", "disabled"].includes(estado)) {
+      return "inativo";
+    }
+
+    return "ativo";
+  }
+
+  function labelSistemaSessoesAtivasV23(valor, fallback) {
+    const sistema = normalizarTextoSessoesAtivasV23(valor);
+
+    if (sistema === "owner") {
+      return "Owner";
+    }
+
+    if (sistema === "legado") {
+      return "Legado";
+    }
+
+    return fallback || "Owner e Legado";
+  }
+
+  function normalizarSessaoAtivaV23(sessao) {
+    if (!sessao || typeof sessao !== "object") {
+      return null;
+    }
+
+    const label = String(sessao.label || sessao.name || sessao.title || sessao.menu_label || "").trim();
+    const key = criarChaveSessoesAtivasV23(sessao.key || sessao.section_key || sessao.slug || label);
+
+    if (!label || !key) {
+      return null;
+    }
+
+    const status = estadoSessaoAtivaV23(sessao);
+    const sistemaValor = String(sessao.visibility_scope_mode || sessao.scope_mode || sessao.system || sessao.sistema || "all").trim() || "all";
+
+    return {
+      key: key,
+      label: label,
+      visibility_scope_mode: sistemaValor,
+      visibility_scope_label: sessao.visibility_scope_label || labelSistemaSessoesAtivasV23(sistemaValor, ""),
+      status: status,
+      status_label: status === "ativo" ? "Ativo" : "Inativo",
+      is_active: status === "ativo"
+    };
+  }
+
+  //###################################################################################
+  // (2) DETETAR ABA SESSÕES
+  //###################################################################################
+
+  function abaSessoesAtivaV24() {
+    const url = new URL(window.location.href);
+    const adminTab = normalizarTextoSessoesAtivasV23(url.searchParams.get("admin_tab"));
+    const sidebarTab = normalizarTextoSessoesAtivasV23(url.searchParams.get("sidebar_sections_tab"));
+
+    if (adminTab === "sessoes") {
       return true;
     }
 
-    const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab'], [data-admin-tab]"));
+    if (sidebarTab === "sessoes") {
+      return true;
+    }
 
-    return candidatos.some(function (elemento) {
-      const texto = normalizarTextoV25(elemento.textContent);
-      const classe = normalizarTextoV25(elemento.className);
-      const ariaSelected = elemento.getAttribute("aria-selected") === "true";
+    const activeTab = Array.from(document.querySelectorAll("button, a, [role='tab']"))
+      .find((element) => {
+        const text = normalizarTextoSessoesAtivasV23(element.textContent);
+        const className = String(element.className || "");
+        return text === "sessoes" && (
+          className.includes("active") ||
+          element.getAttribute("aria-selected") === "true"
+        );
+      });
 
-      return texto === "sessoes" &&
-        (ariaSelected || classe.includes("active") || classe.includes("selected") || classe.includes("ativo"));
-    });
+    return Boolean(activeTab);
   }
 
-  //###################################################################################
-  // (2) CONTROLAR VISIBILIDADE SEM RENDERIZAR CONTEUDO
-  //###################################################################################
-
-  function aplicarVisibilidadeSessoesV25() {
-    const mostrar = tabSessoesAtivaV25();
-
-    getSessoesCardsV25().forEach(function (card) {
-      if (mostrar) {
-        card.hidden = false;
-        card.style.display = "";
-        card.style.visibility = "";
-      }
-      else {
-        card.hidden = true;
-        card.style.display = "none";
-      }
-    });
-  }
-
-  //###################################################################################
-  // (3) VISUALIZAR DETALHES
-  //###################################################################################
-
-  function instalarVisualizarV25() {
-    if (window.__appverboSessoesServerRenderV25 === true) {
+  function removerCardSessoesAtivasForaDoSubprocessoV24() {
+    if (abaSessoesAtivaV24()) {
       return;
     }
 
-    window.__appverboSessoesServerRenderV25 = true;
+    document.querySelectorAll("#admin-sidebar-sections-active-card-v23").forEach((element) => {
+      element.remove();
+    });
+  }
+
+  //###################################################################################
+  // (3) LER DADOS DO BACKEND/HTML
+  //###################################################################################
+
+  function lerSplitBackendSessoesAtivasV23() {
+    const script = document.getElementById("appverbo-sidebar-section-split-v22");
+
+    if (!script) {
+      return {
+        active: [],
+        inactive: []
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(script.textContent || "{}");
+
+      return {
+        active: Array.isArray(parsed.active) ? parsed.active : [],
+        inactive: Array.isArray(parsed.inactive) ? parsed.inactive : []
+      };
+    }
+    catch (error) {
+      console.warn("APPVERBO V23: falha ao ler split backend de Sessões.", error);
+      return {
+        active: [],
+        inactive: []
+      };
+    }
+  }
+
+  function lerOptionsBackendSessoesAtivasV23() {
+    const script = document.getElementById("appverbo-sidebar-section-options-v2");
+
+    if (!script) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(script.textContent || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    catch (error) {
+      console.warn("APPVERBO V23: falha ao ler opções de Sessões.", error);
+      return [];
+    }
+  }
+
+  function separarSessoesAtivasV23(lista) {
+    const normalizadas = (Array.isArray(lista) ? lista : [])
+      .map(normalizarSessaoAtivaV23)
+      .filter(Boolean);
+
+    return {
+      active: normalizadas.filter((sessao) => sessao.status === "ativo"),
+      inactive: normalizadas.filter((sessao) => sessao.status !== "ativo")
+    };
+  }
+
+  function obterSessoesIniciaisV23() {
+    const split = lerSplitBackendSessoesAtivasV23();
+    const active = split.active.map(normalizarSessaoAtivaV23).filter(Boolean);
+    const inactive = split.inactive.map(normalizarSessaoAtivaV23).filter(Boolean);
+
+    if (active.length > 0 || inactive.length > 0) {
+      return {
+        active: active,
+        inactive: inactive
+      };
+    }
+
+    return separarSessoesAtivasV23(lerOptionsBackendSessoesAtivasV23());
+  }
+
+  function extrairListaRespostaSessoesAtivasV23(payload) {
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (!payload || typeof payload !== "object") {
+      return [];
+    }
+
+    const possibleKeys = [
+      "sidebar_sections",
+      "sections",
+      "items",
+      "data",
+      "results",
+      "sidebar_section_options"
+    ];
+
+    for (const key of possibleKeys) {
+      if (Array.isArray(payload[key])) {
+        return payload[key];
+      }
+    }
+
+    if (payload.data && typeof payload.data === "object") {
+      for (const key of possibleKeys) {
+        if (Array.isArray(payload.data[key])) {
+          return payload.data[key];
+        }
+      }
+    }
+
+    return [];
+  }
+
+  //###################################################################################
+  // (4) URL DE EDIÇÃO
+  //###################################################################################
+
+  function urlEditarSessaoAtivaV23(chave) {
+    const url = new URL(window.location.href);
+
+    [
+      "dynamic_process_section",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "sidebar_section_return_url",
+      "appverbo_after_save",
+      "success",
+      "error"
+    ].forEach((parametro) => {
+      url.searchParams.delete(parametro);
+    });
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.searchParams.set("sidebar_section_edit_key", criarChaveSessoesAtivasV23(chave));
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  //###################################################################################
+  // (5) RENDERIZAR CARD DE SESSÕES ATIVAS
+  //###################################################################################
+
+  function encontrarCardInativasSessoesV23() {
+    const direct = document.getElementById("admin-sidebar-sections-inactive-card");
+
+    if (direct) {
+      return direct;
+    }
+
+    return Array.from(document.querySelectorAll("section.card, .card"))
+      .find((element) => normalizarTextoSessoesAtivasV23(element.textContent).includes("sessoes inativas")) || null;
+  }
+
+  function encontrarAncoraSessoesV23() {
+    const inactiveCard = encontrarCardInativasSessoesV23();
+
+    if (inactiveCard) {
+      return inactiveCard;
+    }
+
+    return document.getElementById("admin-sidebar-sections-card") ||
+      document.querySelector("[data-sidebar-sections-card]") ||
+      document.querySelector(".appverbo-sidebar-sections-card") ||
+      document.querySelector(".content .container");
+  }
+
+  function criarBotaoEditarSessaoAtivaV23(sessao) {
+    const link = document.createElement("a");
+    link.className = "appverbo-sidebar-section-action-btn-v23";
+    link.href = urlEditarSessaoAtivaV23(sessao.key);
+    link.title = "Editar sessão";
+    link.setAttribute("aria-label", "Editar sessão");
+    link.textContent = "✎";
+    return link;
+  }
+
+  function criarBadgeSessaoAtivaV23() {
+    const badge = document.createElement("span");
+    badge.className = "appverbo-sidebar-section-state-badge-v23 appverbo-sidebar-section-state-badge-ativo-v23";
+    badge.textContent = "Ativo";
+    return badge;
+  }
+
+  function renderizarCardSessoesAtivasV23(sessoesAtivas) {
+    if (!abaSessoesAtivaV24()) {
+      return;
+    }
+
+    const anchor = encontrarAncoraSessoesV23();
+
+    if (!anchor || !anchor.parentElement) {
+      return;
+    }
+
+    document.querySelectorAll("#admin-sidebar-sections-active-card-v23").forEach((element) => {
+      element.remove();
+    });
+
+    const card = document.createElement("section");
+    card.id = "admin-sidebar-sections-active-card-v23";
+    card.className = "card appverbo-sidebar-sections-active-card-v23";
+    card.dataset.menuScope = "administrativo";
+
+    const title = document.createElement("h2");
+    title.textContent = "Sessões ativas";
+    card.appendChild(title);
+
+    if (!Array.isArray(sessoesAtivas) || sessoesAtivas.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "empty appverbo-sidebar-section-empty-v23";
+      empty.textContent = "Sem sessões ativas.";
+      card.appendChild(empty);
+    }
+    else {
+      const table = document.createElement("table");
+      table.className = "appverbo-sidebar-sections-table-v23";
+
+      const thead = document.createElement("thead");
+      thead.innerHTML = "<tr><th>Menu lateral</th><th>Sistema</th><th>Estado</th><th>Ações</th></tr>";
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+
+      sessoesAtivas.forEach((sessao) => {
+        const row = document.createElement("tr");
+
+        const tdName = document.createElement("td");
+        tdName.textContent = sessao.label;
+
+        const tdSystem = document.createElement("td");
+        tdSystem.textContent = sessao.visibility_scope_label || labelSistemaSessoesAtivasV23(sessao.visibility_scope_mode, "");
+
+        const tdStatus = document.createElement("td");
+        tdStatus.appendChild(criarBadgeSessaoAtivaV23());
+
+        const tdActions = document.createElement("td");
+        tdActions.className = "appverbo-sidebar-section-actions-cell-v23";
+        tdActions.appendChild(criarBotaoEditarSessaoAtivaV23(sessao));
+
+        row.appendChild(tdName);
+        row.appendChild(tdSystem);
+        row.appendChild(tdStatus);
+        row.appendChild(tdActions);
+
+        tbody.appendChild(row);
+      });
+
+      table.appendChild(tbody);
+      card.appendChild(table);
+    }
+
+    anchor.parentElement.insertBefore(card, anchor);
+  }
+
+  //###################################################################################
+  // (6) EXECUÇÃO
+  //###################################################################################
+
+  function iniciarSessoesAtivasV23() {
+    if (!abaSessoesAtivaV24()) {
+      removerCardSessoesAtivasForaDoSubprocessoV24();
+      return;
+    }
+
+    const initial = obterSessoesIniciaisV23();
+    renderizarCardSessoesAtivasV23(initial.active);
+
+    fetch("/settings/menu/sidebar-sections-data", {
+      method: "GET",
+      credentials: "same-origin",
+      headers: {
+        "Accept": "application/json"
+      }
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((payload) => {
+        const lista = extrairListaRespostaSessoesAtivasV23(payload);
+        const split = separarSessoesAtivasV23(lista);
+
+        if (split.active.length > 0 || split.inactive.length > 0) {
+          renderizarCardSessoesAtivasV23(split.active);
+        }
+      })
+      .catch((error) => {
+        console.warn("APPVERBO V23: fallback usado para sessões ativas.", error);
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", iniciarSessoesAtivasV23);
+
+  window.addEventListener("popstate", () => {
+    window.setTimeout(iniciarSessoesAtivasV23, 100);
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+
+    if (!target) {
+      return;
+    }
+
+    const tab = target.closest("button, a, [role='tab']");
+
+    if (!tab) {
+      return;
+    }
+
+    if (normalizarTextoSessoesAtivasV23(tab.textContent) === "sessoes") {
+      window.setTimeout(iniciarSessoesAtivasV23, 250);
+    }
+  });
+}());
+// APPVERBO_SESSOES_ATIVAS_CARD_V23_END
+
+// APPVERBO_SESSOES_APENAS_SUBPROCESSO_V25_START
+(function () {
+  "use strict";
+
+  function normalizarTextoSessaoOnlyV25(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function obterTextoBotaoAdminAtivoV25() {
+    const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab']"));
+
+    const ativo = candidatos.find((elemento) => {
+      const texto = normalizarTextoSessaoOnlyV25(elemento.textContent);
+
+      if (!["entidade", "utilizador", "menu", "sessoes"].includes(texto)) {
+        return false;
+      }
+
+      const className = String(elemento.className || "");
+      const ariaSelected = elemento.getAttribute("aria-selected");
+      const ariaCurrent = elemento.getAttribute("aria-current");
+
+      return (
+        className.includes("active") ||
+        className.includes("is-active") ||
+        className.includes("selected") ||
+        ariaSelected === "true" ||
+        ariaCurrent === "page"
+      );
+    });
+
+    return ativo ? normalizarTextoSessaoOnlyV25(ativo.textContent) : "";
+  }
+
+  function estaNoSubprocessoSessoesRealV25() {
+    const textoAtivo = obterTextoBotaoAdminAtivoV25();
+
+    if (textoAtivo) {
+      return textoAtivo === "sessoes";
+    }
+
+    const url = new URL(window.location.href);
+    const adminTab = normalizarTextoSessaoOnlyV25(url.searchParams.get("admin_tab"));
+    const sidebarTab = normalizarTextoSessaoOnlyV25(url.searchParams.get("sidebar_sections_tab"));
+
+    return adminTab === "sessoes" && sidebarTab === "sessoes";
+  }
+
+  function obterCardsSessoesV25() {
+    const cards = Array.from(document.querySelectorAll("section.card, div.card, .card"));
+
+    return cards.filter((card) => {
+      const titulo = Array.from(card.querySelectorAll("h1, h2, h3, .card-title"))
+        .map((elemento) => normalizarTextoSessaoOnlyV25(elemento.textContent))
+        .find(Boolean) || "";
+
+      return titulo === "sessoes ativas" || titulo === "sessoes inativas";
+    });
+  }
+
+  function aplicarVisibilidadeCardsSessoesV25() {
+    const deveMostrar = estaNoSubprocessoSessoesRealV25();
+
+    obterCardsSessoesV25().forEach((card) => {
+      if (deveMostrar) {
+        card.removeAttribute("hidden");
+        card.style.display = "";
+      }
+      else {
+        card.setAttribute("hidden", "hidden");
+        card.style.display = "none";
+      }
+    });
+
+    if (!deveMostrar) {
+      document.querySelectorAll("#admin-sidebar-sections-active-card-v23").forEach((card) => {
+        card.remove();
+      });
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    aplicarVisibilidadeCardsSessoesV25();
+    window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 100);
+    window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 400);
+    window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 900);
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+
+    if (!target) {
+      return;
+    }
+
+    const tab = target.closest("button, a, [role='tab']");
+
+    if (!tab) {
+      return;
+    }
+
+    const texto = normalizarTextoSessaoOnlyV25(tab.textContent);
+
+    if (["entidade", "utilizador", "menu", "sessoes"].includes(texto)) {
+      window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 50);
+      window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 250);
+      window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 700);
+    }
+  });
+
+  window.addEventListener("popstate", () => {
+    window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 100);
+  });
+
+  window.AppVerboAplicarVisibilidadeCardsSessoesV25 = aplicarVisibilidadeCardsSessoesV25;
+}());
+// APPVERBO_SESSOES_APENAS_SUBPROCESSO_V25_END
+
+
+// APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_START
+// Desativado pelo fluxo nativo V30.
+// Motivo: forçava reaparecimento por JS.
+// APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_END
+
+// APPVERBO_SESSOES_CORRIGIR_V28_REMOVER_DUPLICADOS_V29_START
+// Desativado pelo fluxo nativo V30.
+// Motivo: controlava visibilidade paralela.
+// APPVERBO_SESSOES_CORRIGIR_V28_REMOVER_DUPLICADOS_V29_END
+
+// APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) VISUALIZAR DETALHES
+  //###################################################################################
+
+  function instalarVisualizarSessaoV30() {
+    if (window.__appverboSessoesVisualizarV30 === true) {
+      return;
+    }
+
+    window.__appverboSessoesVisualizarV30 = true;
 
     document.addEventListener("click", function (event) {
-      const botao = event.target.closest("[data-sessao-view-v25]");
+      const botao = event.target.closest("[data-sessao-view-v30]");
 
       if (!botao) {
-        window.setTimeout(aplicarVisibilidadeSessoesV25, 120);
-        window.setTimeout(aplicarVisibilidadeSessoesV25, 350);
         return;
       }
 
@@ -3463,30 +3980,307 @@ tituloBloco.appendChild(descricao);
         "\nSistema: " + (botao.dataset.sessaoSistema || "") +
         "\nEstado: " + (botao.dataset.sessaoEstado || "")
       );
-    }, true);
-
-    window.addEventListener("hashchange", aplicarVisibilidadeSessoesV25);
-    window.addEventListener("popstate", aplicarVisibilidadeSessoesV25);
+    });
   }
 
   //###################################################################################
-  // (4) INICIAR
+  // (2) INICIAR
   //###################################################################################
 
-  function iniciarV25() {
-    instalarVisualizarV25();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", instalarVisualizarSessaoV30);
+  }
+  else {
+    instalarVisualizarSessaoV30();
+  }
+})();
+// APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END
 
-    window.setTimeout(aplicarVisibilidadeSessoesV25, 80);
-    window.setTimeout(aplicarVisibilidadeSessoesV25, 250);
-    window.setTimeout(aplicarVisibilidadeSessoesV25, 700);
+// APPVERBO_SESSOES_SEM_PISCAR_V26_START
+(function () {
+  "use strict";
+
+  function normalizarTextoSessoesSemPiscarV26(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function obterSubprocessoAtivoSessoesSemPiscarV26() {
+    const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab']"));
+
+    const ativo = candidatos.find((elemento) => {
+      const texto = normalizarTextoSessoesSemPiscarV26(elemento.textContent);
+
+      if (!["entidade", "utilizador", "menu", "sessoes"].includes(texto)) {
+        return false;
+      }
+
+      const className = String(elemento.className || "");
+      return (
+        className.includes("active") ||
+        className.includes("is-active") ||
+        className.includes("selected") ||
+        elemento.getAttribute("aria-selected") === "true" ||
+        elemento.getAttribute("aria-current") === "page"
+      );
+    });
+
+    return ativo ? normalizarTextoSessoesSemPiscarV26(ativo.textContent) : "";
+  }
+
+  function estaNoSubprocessoSessoesSemPiscarV26() {
+    const subprocessoAtivo = obterSubprocessoAtivoSessoesSemPiscarV26();
+
+    if (subprocessoAtivo) {
+      return subprocessoAtivo === "sessoes";
+    }
+
+    const url = new URL(window.location.href);
+    const adminTab = normalizarTextoSessoesSemPiscarV26(url.searchParams.get("admin_tab"));
+    const sidebarTab = normalizarTextoSessoesSemPiscarV26(url.searchParams.get("sidebar_sections_tab"));
+
+    return adminTab === "sessoes" && sidebarTab === "sessoes";
+  }
+
+  function cardEhSessoesSemPiscarV26(card) {
+    if (!card || !card.querySelectorAll) {
+      return false;
+    }
+
+    if (
+      card.id === "admin-sidebar-sections-active-card-v23" ||
+      card.id === "admin-sidebar-sections-inactive-card" ||
+      card.classList.contains("appverbo-sidebar-sections-active-card-v23") ||
+      card.getAttribute("data-appverbo-sessoes-card-v26") === "1"
+    ) {
+      return true;
+    }
+
+    const titulo = Array.from(card.querySelectorAll("h1, h2, h3, .card-title"))
+      .map((elemento) => normalizarTextoSessoesSemPiscarV26(elemento.textContent))
+      .find(Boolean) || "";
+
+    return titulo === "sessoes ativas" || titulo === "sessoes inativas";
+  }
+
+  function obterCardsSessoesSemPiscarV26(root) {
+    const base = root && root.querySelectorAll ? root : document;
+    const cards = Array.from(base.querySelectorAll("section.card, div.card, .card"));
+
+    if (root && root.matches && root.matches("section.card, div.card, .card")) {
+      cards.unshift(root);
+    }
+
+    return cards.filter(cardEhSessoesSemPiscarV26);
+  }
+
+  function aplicarClassesHtmlSessoesSemPiscarV26() {
+    const deveMostrar = estaNoSubprocessoSessoesSemPiscarV26();
+
+    document.documentElement.classList.toggle("appverbo-subprocesso-sessoes-v26", deveMostrar);
+    document.documentElement.classList.toggle("appverbo-subprocesso-nao-sessoes-v26", !deveMostrar);
+
+    return deveMostrar;
+  }
+
+  function aplicarVisibilidadeSessoesSemPiscarV26(root) {
+    const deveMostrar = aplicarClassesHtmlSessoesSemPiscarV26();
+    const cards = obterCardsSessoesSemPiscarV26(root);
+
+    cards.forEach((card) => {
+      card.setAttribute("data-appverbo-sessoes-card-v26", "1");
+
+      if (deveMostrar) {
+        card.removeAttribute("hidden");
+        card.style.removeProperty("display");
+        card.style.removeProperty("visibility");
+      }
+      else {
+        card.setAttribute("hidden", "hidden");
+        card.style.setProperty("display", "none", "important");
+        card.style.setProperty("visibility", "hidden", "important");
+      }
+    });
+  }
+
+  function removerParametrosSessoesQuandoNaoSessoesV26(nomeSubprocesso) {
+    const subprocesso = normalizarTextoSessoesSemPiscarV26(nomeSubprocesso);
+
+    if (!subprocesso || subprocesso === "sessoes") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    let alterou = false;
+
+    ["sidebar_sections_tab", "sidebar_section_edit_key", "target"].forEach((parametro) => {
+      if (url.searchParams.has(parametro)) {
+        url.searchParams.delete(parametro);
+        alterou = true;
+      }
+    });
+
+    if (normalizarTextoSessoesSemPiscarV26(url.searchParams.get("admin_tab")) === "sessoes") {
+      url.searchParams.set("admin_tab", subprocesso);
+      alterou = true;
+    }
+
+    if (url.hash === "#admin-sidebar-sections-card") {
+      url.hash = "";
+      alterou = true;
+    }
+
+    if (alterou) {
+      window.history.replaceState(window.history.state, document.title, url.pathname + url.search + url.hash);
+    }
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      Array.from(mutation.addedNodes || []).forEach((node) => {
+        if (node && node.nodeType === 1) {
+          aplicarVisibilidadeSessoesSemPiscarV26(node);
+        }
+      });
+    });
+  });
+
+  function iniciarSessoesSemPiscarV26() {
+    aplicarVisibilidadeSessoesSemPiscarV26(document);
+
+    if (!observer.__appverboStartedV26) {
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+      observer.__appverboStartedV26 = true;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    iniciarSessoesSemPiscarV26();
+    window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 0);
+    window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 50);
+    window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 150);
+    window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 400);
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+
+    if (!target) {
+      return;
+    }
+
+    const tab = target.closest("button, a, [role='tab']");
+
+    if (!tab) {
+      return;
+    }
+
+    const texto = normalizarTextoSessoesSemPiscarV26(tab.textContent);
+
+    if (["entidade", "utilizador", "menu", "sessoes"].includes(texto)) {
+      removerParametrosSessoesQuandoNaoSessoesV26(texto);
+      aplicarVisibilidadeSessoesSemPiscarV26(document);
+      window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 0);
+      window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 50);
+      window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 200);
+    }
+  }, true);
+
+  window.addEventListener("popstate", () => {
+    window.setTimeout(() => aplicarVisibilidadeSessoesSemPiscarV26(document), 50);
+  });
+
+  iniciarSessoesSemPiscarV26();
+  window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 = aplicarVisibilidadeSessoesSemPiscarV26;
+}());
+// APPVERBO_SESSOES_SEM_PISCAR_V26_END
+
+// APPVERBO_SESSOES_LEGADO_NAO_REPOSICIONAR_V27_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function existeServerRenderSessoes_v27() {
+    return Boolean(
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.querySelector('[data-admin-tab-pane="sessoes"]')
+    );
+  }
+
+  function obterCardAbasSessoes_v27() {
+    return document.getElementById("menu-tabs-card");
+  }
+
+  function obterPrimeiroCardSessoes_v27() {
+    return document.querySelector('[data-admin-tab-pane="sessoes"]') ||
+      document.getElementById("admin-sidebar-sections-form-card") ||
+      document.getElementById("admin-sidebar-sections-card") ||
+      document.getElementById("admin-sidebar-sections-inactive-card");
+  }
+
+  //###################################################################################
+  // (2) REMOVER BLOCO ORFAO LEGADO
+  //###################################################################################
+
+  function removerCardCriacaoLegadoSessoes_v27() {
+    if (!existeServerRenderSessoes_v27()) {
+      return;
+    }
+
+    const cardLegado = document.getElementById("admin-sidebar-sections-create-card");
+
+    if (cardLegado) {
+      cardLegado.remove();
+    }
+  }
+
+  //###################################################################################
+  // (3) GARANTIR ORDEM VISUAL
+  //###################################################################################
+
+  function garantirOrdemVisualSessoes_v27() {
+    const cardAbas = obterCardAbasSessoes_v27();
+    const primeiroCardSessoes = obterPrimeiroCardSessoes_v27();
+
+    if (!cardAbas || !primeiroCardSessoes || !primeiroCardSessoes.parentElement) {
+      return;
+    }
+
+    if (cardAbas.nextElementSibling !== primeiroCardSessoes) {
+      primeiroCardSessoes.parentElement.insertBefore(cardAbas, primeiroCardSessoes);
+    }
+  }
+
+  //###################################################################################
+  // (4) INICIALIZACAO
+  //###################################################################################
+
+  function inicializarSessoesLegadoNaoReposicionar_v27() {
+    removerCardCriacaoLegadoSessoes_v27();
+    garantirOrdemVisualSessoes_v27();
+
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v27, 120);
+    window.setTimeout(garantirOrdemVisualSessoes_v27, 140);
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v27, 520);
+    window.setTimeout(garantirOrdemVisualSessoes_v27, 540);
+    window.setTimeout(removerCardCriacaoLegadoSessoes_v27, 1220);
+    window.setTimeout(garantirOrdemVisualSessoes_v27, 1240);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", iniciarV25);
-  }
-  else {
-    iniciarV25();
+    document.addEventListener("DOMContentLoaded", inicializarSessoesLegadoNaoReposicionar_v27);
+  } else {
+    inicializarSessoesLegadoNaoReposicionar_v27();
   }
 })();
-// APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END
-
+// APPVERBO_SESSOES_LEGADO_NAO_REPOSICIONAR_V27_END
