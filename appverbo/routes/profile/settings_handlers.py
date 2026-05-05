@@ -148,6 +148,72 @@ def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
 
 # APPVERBO_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_END
 
+# APPVERBO_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_START
+
+# ###################################################################################
+# (SIDEBAR_SECTIONS_DATA_ENDPOINT_V6) LER SESSOES DO SIDEBAR DIRETO DO BD
+# ###################################################################################
+
+@router.get("/settings/menu/sidebar-sections-data")
+def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return JSONResponse(
+                {"ok": False, "sections": [], "error": "Efetue login para continuar."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            from appverbo.menu_settings import (
+                MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
+                normalize_sidebar_sections,
+            )
+
+            raw_menu_config = session.execute(
+                text(
+                    """
+                    SELECT menu_config
+                    FROM sidebar_menu_settings
+                    WHERE lower(trim(menu_key)) = :menu_key
+                    LIMIT 1
+                    """
+                ),
+                {"menu_key": "administrativo"},
+            ).scalar_one_or_none()
+
+            try:
+                menu_config = json.loads(raw_menu_config or "{}")
+            except (TypeError, ValueError):
+                menu_config = {}
+
+            if not isinstance(menu_config, dict):
+                menu_config = {}
+
+            sections = normalize_sidebar_sections(
+                menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+            )
+
+            return JSONResponse(
+                {
+                    "ok": True,
+                    "sections": sections,
+                }
+            )
+        except Exception as exc:
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "sections": [],
+                    "error": str(exc),
+                },
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+# APPVERBO_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_END
+
+
 # APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_START
 
 # ###################################################################################
@@ -160,6 +226,7 @@ def edit_sidebar_sections_v2(
     section_key: list[str] = Form(default=[]),
     section_label: list[str] = Form(default=[]),
     section_visibility_scope_mode: list[str] = Form(default=[]),
+    section_status: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
@@ -210,6 +277,7 @@ def edit_sidebar_sections_v2(
             len(section_key),
             len(section_label),
             len(section_visibility_scope_mode),
+            len(section_status),
         )
 
         payload_sections: list[dict[str, str]] = []
@@ -223,6 +291,11 @@ def edit_sidebar_sections_v2(
                         section_visibility_scope_mode[row_index]
                         if row_index < len(section_visibility_scope_mode)
                         else ""
+                    ),
+                    "status": (
+                        section_status[row_index]
+                        if row_index < len(section_status)
+                        else "ativo"
                     ),
                 }
             )

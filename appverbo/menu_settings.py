@@ -63,8 +63,11 @@ MENU_LEGACY_KEY_ALIAS = {
     MENU_MEU_PERFIL_LEGACY_KEY: MENU_MEU_PERFIL_KEY,
 }
 SIDEBAR_SECTION_DEFAULTS: tuple[dict[str, Any], ...] = (
+    {"key": "sistema", "label": "Sistema", "visibility_scopes": ["owner", "legado"]},
     {"key": "geral", "label": "Geral", "visibility_scopes": ["owner", "legado"]},
+    {"key": "dados_gerais", "label": "Dados gerais", "visibility_scopes": ["owner", "legado"]},
     {"key": "igreja", "label": "Igreja", "visibility_scopes": ["owner", "legado"]},
+    {"key": "tesouraria", "label": "Tesouraria", "visibility_scopes": ["owner", "legado"]},
 )
 SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
     str(item["key"]).strip().lower(): str(item["label"])
@@ -428,19 +431,41 @@ def get_sidebar_section_visibility_scope_label(section_config: dict[str, Any] | 
     )
 
 
+def _normalize_sidebar_section_status_v5(raw_status: Any) -> str:
+    if isinstance(raw_status, bool):
+        return "ativo" if raw_status else "inativo"
+
+    clean_status = str(raw_status or "").strip().lower()
+
+    if clean_status in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}:
+        return "inativo"
+
+    return "ativo"
+
+
+def _sidebar_section_status_label_v5(raw_status: Any) -> str:
+    return "Inativo" if _normalize_sidebar_section_status_v5(raw_status) == "inativo" else "Ativo"
+
+
 def _build_sidebar_section_payload(
     section_key: str,
     section_label: str,
     visibility_scopes: Any,
+    status: Any = "ativo",
 ) -> dict[str, Any]:
     normalized_scopes = _normalize_sidebar_section_visibility_scopes(visibility_scopes)
     visibility_scope_mode = _resolve_visibility_scope_mode_from_scopes(normalized_scopes)
+    normalized_status = _normalize_sidebar_section_status_v5(status)
+
     return {
         "key": section_key,
         "label": section_label,
         "visibility_scopes": normalized_scopes,
         "visibility_scope_mode": visibility_scope_mode,
         "visibility_scope_label": _resolve_visibility_scope_label_from_mode(visibility_scope_mode),
+        "status": normalized_status,
+        "is_active": normalized_status == "ativo",
+        "status_label": _sidebar_section_status_label_v5(normalized_status),
     }
 
 
@@ -459,10 +484,12 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
             clean_label = _normalize_sidebar_section_label(raw_item.get("label"))
             clean_key = _normalize_sidebar_section_key(raw_item.get("key"))
             clean_visibility_scopes = get_sidebar_section_visibility_scopes(raw_item)
+            clean_status = raw_item.get("status", raw_item.get("is_active", "ativo"))
         else:
             clean_label = _normalize_sidebar_section_label(raw_item)
             clean_key = ""
             clean_visibility_scopes = list(MENU_VISIBILITY_SCOPES)
+            clean_status = "ativo"
         if not clean_label:
             continue
         if not clean_key:
@@ -473,7 +500,7 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
             continue
         seen_keys.add(clean_key)
         normalized_sections.append(
-            _build_sidebar_section_payload(clean_key, clean_label, clean_visibility_scopes)
+            _build_sidebar_section_payload(clean_key, clean_label, clean_visibility_scopes, clean_status)
         )
 
     for default_item in SIDEBAR_SECTION_DEFAULTS:
@@ -506,12 +533,21 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
 def _resolve_default_sidebar_section_key(menu_key: str, section_keys: set[str], ordered_section_keys: list[str]) -> str:
     if not ordered_section_keys:
         return ""
+
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    preferred_section_key = MENU_SECTION_BY_SYSTEM_MENU_KEY.get(clean_menu_key, "")
+
+    if preferred_section_key in section_keys:
+        return preferred_section_key
+
     if clean_menu_key in {"home", "administrativo"} and "geral" in section_keys:
         return "geral"
+
     if clean_menu_key not in {"home", "administrativo"} and "igreja" in section_keys:
         return "igreja"
+
     return ordered_section_keys[0]
+
 
 
 PT_PT_LABEL_REPLACEMENTS: tuple[tuple[str, str], ...] = (

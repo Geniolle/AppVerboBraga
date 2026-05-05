@@ -11,13 +11,30 @@
       "tesouraria": "[T]"
     } %}
 
-    {% set sidebar_sections = [
+    {# APPVERBO_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_START #}
+    {% set fallback_sidebar_sections = [
       ("sistema", "Sistema"),
       ("geral", "Geral"),
       ("dados_gerais", "Dados gerais"),
       ("igreja", "Igreja"),
       ("tesouraria", "Tesouraria")
     ] %}
+
+    {% set dynamic_sidebar_sections = namespace(items=[]) %}
+
+    {% if sidebar_section_options is defined and sidebar_section_options %}
+      {% for section in sidebar_section_options %}
+        {% set section_key = section.key|default("", true)|lower %}
+        {% set section_label = section.label|default(section_key, true) %}
+
+        {% if section_key %}
+          {% set dynamic_sidebar_sections.items = dynamic_sidebar_sections.items + [(section_key, section_label)] %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% set sidebar_sections = dynamic_sidebar_sections.items if dynamic_sidebar_sections.items else fallback_sidebar_sections %}
+    {# APPVERBO_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_END #}
 
     <aside class="sidebar">
       {% for section_key, section_label in sidebar_sections %}
