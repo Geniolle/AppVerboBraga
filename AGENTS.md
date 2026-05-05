@@ -711,3 +711,71 @@ Regras:
 5. Após **Guardar**, o backend deve redirecionar para a URL de retorno enviada pelo formulário, preservando a aba Sessões.
 6. A edição deve abrir o bloco superior como **Editar sessão**, com Nome da sessão, Sistema e Estado preenchidos.
 <!-- APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END -->
+
+<!-- APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_START -->
+## Regra definitiva do subprocesso Sessões no padrão Entidade
+
+O subprocesso **Sessões** deve seguir o mesmo padrão funcional do subprocesso **Entidade**.
+
+Regras:
+
+1. O botão **Editar** da linha não deve editar inline.
+2. Ao clicar em **Editar**, a página deve navegar/recarregar para a mesma aba **Sessões** com o parâmetro `sidebar_section_edit_key`.
+3. Depois do reload, o bloco superior deve abrir em modo **Editar sessão**, com os campos preenchidos.
+4. Os campos editáveis são:
+   - **Nome da sessão**;
+   - **Sistema**;
+   - **Estado**.
+5. O botão **Guardar** deve enviar um formulário dedicado para o backend.
+6. O botão **Cancelar** deve remover o modo edição e voltar para a lista da aba **Sessões**.
+7. O botão **Criar sessão** permanece no mesmo bloco superior, quando não houver sessão em edição.
+8. O endpoint dedicado deve gravar somente a sessão criada/editada, preservando as demais sessões existentes.
+9. Não usar `settings_edit_key`, `settings_action` ou `settings_tab` para editar Sessões, pois esses parâmetros pertencem ao fluxo do subprocesso Menu.
+10. A listagem de ativos e o card de **Sessões inativas** continuam separados.
+<!-- APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_END -->
+
+<!-- APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_START -->
+## Regra para persistência do Estado em Sessões
+
+Na aba **Sessões**, quando o campo **Estado** for alterado em modo criação ou edição:
+
+1. O valor selecionado deve ser enviado explicitamente ao backend.
+2. O backend deve gravar `status`, `is_active` e `status_label` na configuração da sessão.
+3. Ao gravar **Inativo**, a sessão deve voltar como **Inativo** após o reload.
+4. Ao gravar **Ativo**, a sessão deve voltar como **Ativo** após o reload.
+5. O endpoint dedicado de Sessões deve ser único para `/settings/menu/sidebar-section-save`.
+6. A gravação não pode cair no fluxo antigo em lote nem no fluxo do subprocesso Menu.
+7. A sessão editada deve preservar a chave técnica original.
+<!-- APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_END -->
+
+<!-- APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_START -->
+## Regra para renderização das Sessões inativas a partir do BD
+
+Na aba **Sessões**:
+
+1. O card **Sessões inativas** deve ser montado a partir dos dados reais retornados por `/settings/menu/sidebar-sections-data`.
+2. Toda sessão com `status` diferente de **ativo** deve aparecer no card **Sessões inativas**.
+3. Toda sessão com `is_active` igual a `false` deve aparecer no card **Sessões inativas**.
+4. Após alterar uma sessão de **Ativo** para **Inativo** e gravar, ela deve aparecer no card inferior após o reload.
+5. O card deve permanecer visível mesmo quando não houver inativas, mostrando **Sem sessões inativas.**
+6. O botão **Editar** dentro do card de inativas deve continuar usando o fluxo padrão Entidade da aba Sessões.
+7. O card **Sessões inativas** não pode aparecer fora da aba **Sessões**.
+<!-- APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_END -->
+
+<!-- APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START -->
+## Regra para não contaminar Sessões com contexto da Entidade
+
+Na aba **Sessões**:
+
+1. A URL não pode manter `dynamic_process_section=field:entidade`.
+2. Ao editar, guardar, cancelar ou retornar para **Sessões**, remover sempre:
+   - `dynamic_process_section`;
+   - `settings_edit_key`;
+   - `settings_action`;
+   - `settings_tab`;
+   - `sidebar_section_return_url`;
+   - `appverbo_after_save`.
+3. O backend de `/settings/menu/sidebar-section-save` também não pode preservar `dynamic_process_section` no redirect.
+4. O card **Sessões inativas** deve ser renderizado pelo BD sempre que `admin_tab=sessoes` ou `sidebar_sections_tab=sessoes`.
+5. Uma sessão com `status=inativo` ou `is_active=false` deve aparecer no card **Sessões inativas**.
+<!-- APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END -->

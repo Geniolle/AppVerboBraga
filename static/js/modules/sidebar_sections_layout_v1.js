@@ -3199,543 +3199,8 @@ tituloBloco.appendChild(descricao);
 // APPVERBO_SESSOES_SCOPE_CORRETO_V12_END
 
 // APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_START
-(function () {
-  "use strict";
-
-  //###################################################################################
-  // (1) NORMALIZACAO E DETECCAO DA ABA ATIVA
-  //###################################################################################
-
-  function normalizarTextoSessoesV14(valor) {
-    return String(valor || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .trim()
-      .toLowerCase();
-  }
-
-  function elementoVisivelSessoesV14(elemento) {
-    if (!elemento) {
-      return false;
-    }
-
-    if (elemento.hidden || elemento.getAttribute("aria-hidden") === "true") {
-      return false;
-    }
-
-    const estilo = window.getComputedStyle(elemento);
-
-    if (estilo.display === "none" || estilo.visibility === "hidden") {
-      return false;
-    }
-
-    return Boolean(elemento.offsetWidth || elemento.offsetHeight || elemento.getClientRects().length);
-  }
-
-  function elementoComEstadoAtivoSessoesV14(elemento) {
-    const className = normalizarTextoSessoesV14(elemento.className || "");
-
-    if (elemento.getAttribute("aria-selected") === "true") {
-      return true;
-    }
-
-    if (
-      className.includes("active") ||
-      className.includes("ativo") ||
-      className.includes("selected") ||
-      className.includes("current") ||
-      className.includes("is-active")
-    ) {
-      return true;
-    }
-
-    const parent = elemento.parentElement;
-    const parentClass = parent ? normalizarTextoSessoesV14(parent.className || "") : "";
-
-    if (
-      parentClass.includes("active") ||
-      parentClass.includes("ativo") ||
-      parentClass.includes("selected") ||
-      parentClass.includes("current") ||
-      parentClass.includes("is-active")
-    ) {
-      return true;
-    }
-
-    const estilo = window.getComputedStyle(elemento);
-    const corTexto = normalizarTextoSessoesV14(estilo.color);
-    const corFundo = normalizarTextoSessoesV14(estilo.backgroundColor);
-
-    if (
-      corTexto.includes("255, 255, 255") &&
-      !corFundo.includes("rgba(0, 0, 0, 0)") &&
-      !corFundo.includes("transparent")
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
-  function tabAtivaPorTextoSessoesV14(textoEsperado) {
-    const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab'], [data-admin-tab], .tab-button, .admin-tab"));
-
-    return candidatos.some(function (elemento) {
-      const texto = normalizarTextoSessoesV14(elemento.textContent);
-
-      if (texto !== textoEsperado) {
-        return false;
-      }
-
-      if (!elementoVisivelSessoesV14(elemento)) {
-        return false;
-      }
-
-      return elementoComEstadoAtivoSessoesV14(elemento);
-    });
-  }
-
-  function outraAbaAdministrativaAtivaSessoesV14() {
-    return ["entidade", "utilizador", "menu"].some(function (texto) {
-      return tabAtivaPorTextoSessoesV14(texto);
-    });
-  }
-
-  function cardListaSessoesVisivelV14() {
-    const card = document.getElementById("admin-sidebar-sections-card");
-
-    if (!card || !elementoVisivelSessoesV14(card)) {
-      return false;
-    }
-
-    const textoCard = normalizarTextoSessoesV14(card.textContent);
-
-    return textoCard.includes("sessoes do sidebar") ||
-      textoCard.includes("menu lateral") ||
-      Boolean(card.querySelector(".appverbo-sidebar-section-row-v10, .appverbo-sidebar-section-row-v9, .appverbo-sidebar-section-row-v6, .appverbo-sidebar-section-row-v2"));
-  }
-
-  function abaSessoesAtivaV14() {
-    if (tabAtivaPorTextoSessoesV14("sessoes")) {
-      return true;
-    }
-
-    if (outraAbaAdministrativaAtivaSessoesV14()) {
-      return false;
-    }
-
-    return cardListaSessoesVisivelV14();
-  }
-
-  //###################################################################################
-  // (2) PROTEGER CARD CONTRA REMOCAO INDEVIDA QUANDO SESSOES ESTA ATIVA
-  //###################################################################################
-
-  function instalarProtecaoRemoveSessoesV14() {
-    if (window.__appverboSessoesRemoveProtectedV14 === true) {
-      return;
-    }
-
-    window.__appverboSessoesRemoveProtectedV14 = true;
-
-    const originalRemove = Element.prototype.remove;
-
-    Element.prototype.remove = function () {
-      const id = this && this.id ? this.id : "";
-
-      if (
-        (id === "admin-sidebar-sections-create-card" || id === "admin-sidebar-sections-inactive-card") &&
-        abaSessoesAtivaV14()
-      ) {
-        return;
-      }
-
-      return originalRemove.call(this);
-    };
-  }
-
-  //###################################################################################
-  // (3) CAMPOS E PAYLOAD
-  //###################################################################################
-
-  function criarCampoOcultoSessoesV14(nome, valor) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = nome;
-    input.value = valor || "";
-    return input;
-  }
-
-  function criarChaveSessoesV14(valor) {
-    return normalizarTextoSessoesV14(valor)
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/_+/g, "_")
-      .replace(/^_+|_+$/g, "");
-  }
-
-  function normalizarEstadoSessoesCriacaoV14(valor) {
-    const clean = normalizarTextoSessoesV14(valor);
-
-    if (["inativo", "inactive", "0", "false", "nao", "não", "off"].includes(clean)) {
-      return "inativo";
-    }
-
-    return "ativo";
-  }
-
-  function obterFormularioSessoesV14() {
-    const cardLista = document.getElementById("admin-sidebar-sections-card");
-
-    if (!cardLista) {
-      return null;
-    }
-
-    let formulario = cardLista.querySelector('form[action*="/settings/menu/sidebar-sections"], form[action*="sidebar-sections"]');
-
-    if (!formulario) {
-      formulario = document.createElement("form");
-      formulario.method = "post";
-      formulario.action = "/settings/menu/sidebar-sections";
-      cardLista.appendChild(formulario);
-    }
-
-    formulario.method = "post";
-    formulario.action = "/settings/menu/sidebar-sections";
-
-    return formulario;
-  }
-
-  function obterChavesExistentesSessoesV14() {
-    const chaves = new Set();
-
-    Array.from(document.querySelectorAll('[name="section_key"]')).forEach(function (input) {
-      const chave = criarChaveSessoesV14(input.value);
-
-      if (chave) {
-        chaves.add(chave);
-      }
-    });
-
-    Array.from(document.querySelectorAll("[data-section-key-v10], [data-section-key-v9], [data-section-key-v6]")).forEach(function (linha) {
-      const chave = criarChaveSessoesV14(
-        linha.dataset.sectionKeyV10 ||
-        linha.dataset.sectionKeyV9 ||
-        linha.dataset.sectionKeyV6 ||
-        ""
-      );
-
-      if (chave) {
-        chaves.add(chave);
-      }
-    });
-
-    return chaves;
-  }
-
-  function criarChaveUnicaSessoesV14(nomeSessao) {
-    const baseKey = criarChaveSessoesV14(nomeSessao) || "nova_sessao";
-    const usadas = obterChavesExistentesSessoesV14();
-
-    if (!usadas.has(baseKey)) {
-      return baseKey;
-    }
-
-    let contador = 2;
-    let chaveFinal = baseKey + "_" + contador;
-
-    while (usadas.has(chaveFinal)) {
-      contador += 1;
-      chaveFinal = baseKey + "_" + contador;
-    }
-
-    return chaveFinal;
-  }
-
-  function submeterNovaSessaoV14(dados) {
-    const formulario = obterFormularioSessoesV14();
-
-    if (!formulario) {
-      return;
-    }
-
-    if (!formulario.querySelector('[name="redirect_menu"]')) {
-      formulario.appendChild(criarCampoOcultoSessoesV14("redirect_menu", "administrativo"));
-    }
-
-    if (!formulario.querySelector('[name="redirect_target"]')) {
-      formulario.appendChild(criarCampoOcultoSessoesV14("redirect_target", "#admin-sidebar-sections-card"));
-    }
-
-    formulario.appendChild(criarCampoOcultoSessoesV14("section_key", dados.key));
-    formulario.appendChild(criarCampoOcultoSessoesV14("section_label", dados.label));
-    formulario.appendChild(criarCampoOcultoSessoesV14("section_visibility_scope_mode", dados.system));
-    formulario.appendChild(criarCampoOcultoSessoesV14("section_status", dados.status));
-
-    if (typeof formulario.requestSubmit === "function") {
-      formulario.requestSubmit();
-    }
-    else {
-      formulario.submit();
-    }
-  }
-
-  //###################################################################################
-  // (4) CRIAR OU RECRIAR CARD CRIAR SESSAO
-  //###################################################################################
-
-  function criarOpcaoSelectSessoesV14(valor, texto) {
-    const option = document.createElement("option");
-    option.value = valor;
-    option.textContent = texto;
-    return option;
-  }
-
-  function obterOuCriarCreateCardSessoesV14() {
-    const cardLista = document.getElementById("admin-sidebar-sections-card");
-
-    if (!cardLista || !cardLista.parentElement) {
-      return null;
-    }
-
-    let createCard = document.getElementById("admin-sidebar-sections-create-card");
-
-    if (!createCard) {
-      createCard = document.createElement("section");
-      createCard.id = "admin-sidebar-sections-create-card";
-      cardLista.parentElement.insertBefore(createCard, cardLista);
-    }
-
-    createCard.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v3 appverbo-sessoes-create-card-v14";
-    createCard.hidden = false;
-    createCard.style.display = "";
-    createCard.style.visibility = "";
-
-    return createCard;
-  }
-
-  function montarConteudoCreateCardSessoesV14(createCard) {
-    if (!createCard || createCard.dataset.appverboSessoesCreateV14 === "1") {
-      return;
-    }
-
-    createCard.dataset.appverboSessoesCreateV14 = "1";
-    createCard.innerHTML = "";
-
-    const block = document.createElement("div");
-    block.className = "appverbo-create-entry-block-v1 appverbo-create-entry-block-v14";
-
-    const toolbar = document.createElement("div");
-    toolbar.className = "appverbo-create-entry-toolbar-v1 appverbo-create-entry-toolbar-v14";
-
-    const abrirBtn = document.createElement("button");
-    abrirBtn.type = "button";
-    abrirBtn.className = "action-btn appverbo-create-entry-open-btn-v1";
-    abrirBtn.textContent = "Criar sessão";
-
-    toolbar.appendChild(abrirBtn);
-
-    const panel = document.createElement("div");
-    panel.className = "appverbo-create-entry-panel-v1 appverbo-create-entry-panel-v14";
-    panel.hidden = true;
-
-    const grid = document.createElement("div");
-    grid.className = "appverbo-create-entry-grid-v5 appverbo-create-entry-grid-v14";
-
-    const nomeField = document.createElement("div");
-    nomeField.className = "field appverbo-create-entry-field-v5";
-
-    const nomeLabel = document.createElement("label");
-    nomeLabel.textContent = "Nome da sessão *";
-
-    const nomeInput = document.createElement("input");
-    nomeInput.type = "text";
-    nomeInput.maxLength = 80;
-    nomeInput.placeholder = "Informe o nome da sessão";
-
-    nomeField.appendChild(nomeLabel);
-    nomeField.appendChild(nomeInput);
-
-    const sistemaField = document.createElement("div");
-    sistemaField.className = "field appverbo-create-entry-field-v5";
-
-    const sistemaLabel = document.createElement("label");
-    sistemaLabel.textContent = "Sistema *";
-
-    const sistemaSelect = document.createElement("select");
-    sistemaSelect.appendChild(criarOpcaoSelectSessoesV14("all", "Owner e Legado"));
-    sistemaSelect.appendChild(criarOpcaoSelectSessoesV14("owner", "Owner"));
-    sistemaSelect.appendChild(criarOpcaoSelectSessoesV14("legado", "Legado"));
-
-    sistemaField.appendChild(sistemaLabel);
-    sistemaField.appendChild(sistemaSelect);
-
-    const estadoField = document.createElement("div");
-    estadoField.className = "field appverbo-create-entry-field-v5";
-
-    const estadoLabel = document.createElement("label");
-    estadoLabel.textContent = "Estado *";
-
-    const estadoSelect = document.createElement("select");
-    estadoSelect.appendChild(criarOpcaoSelectSessoesV14("ativo", "Ativo"));
-    estadoSelect.appendChild(criarOpcaoSelectSessoesV14("inativo", "Inativo"));
-
-    estadoField.appendChild(estadoLabel);
-    estadoField.appendChild(estadoSelect);
-
-    grid.appendChild(nomeField);
-    grid.appendChild(sistemaField);
-    grid.appendChild(estadoField);
-
-    const erro = document.createElement("p");
-    erro.className = "appverbo-create-entry-error-v5 appverbo-create-entry-error-v14";
-    erro.hidden = true;
-
-    const actions = document.createElement("div");
-    actions.className = "appverbo-create-entry-actions-v5 appverbo-create-entry-actions-v14";
-
-    const guardarBtn = document.createElement("button");
-    guardarBtn.type = "button";
-    guardarBtn.className = "action-btn";
-    guardarBtn.textContent = "Guardar";
-
-    const cancelarBtn = document.createElement("button");
-    cancelarBtn.type = "button";
-    cancelarBtn.className = "action-btn-cancel";
-    cancelarBtn.textContent = "Cancelar";
-
-    actions.appendChild(guardarBtn);
-    actions.appendChild(cancelarBtn);
-
-    panel.appendChild(grid);
-    panel.appendChild(erro);
-    panel.appendChild(actions);
-
-    block.appendChild(toolbar);
-    block.appendChild(panel);
-    createCard.appendChild(block);
-
-    function limparFormulario() {
-      nomeInput.value = "";
-      sistemaSelect.value = "all";
-      estadoSelect.value = "ativo";
-      erro.hidden = true;
-      erro.textContent = "";
-      panel.hidden = true;
-      abrirBtn.hidden = false;
-    }
-
-    abrirBtn.addEventListener("click", function () {
-      erro.hidden = true;
-      erro.textContent = "";
-      panel.hidden = false;
-      abrirBtn.hidden = true;
-      nomeInput.focus();
-    });
-
-    cancelarBtn.addEventListener("click", limparFormulario);
-
-    guardarBtn.addEventListener("click", function () {
-      const nome = String(nomeInput.value || "").trim();
-
-      if (!nome) {
-        erro.textContent = "Informe o nome da sessão.";
-        erro.hidden = false;
-        nomeInput.focus();
-        return;
-      }
-
-      const dados = {
-        key: criarChaveUnicaSessoesV14(nome),
-        label: nome,
-        system: sistemaSelect.value || "all",
-        status: normalizarEstadoSessoesCriacaoV14(estadoSelect.value || "ativo")
-      };
-
-      limparFormulario();
-      submeterNovaSessaoV14(dados);
-    });
-  }
-
-  function garantirCreateCardSessoesV14() {
-    if (!abaSessoesAtivaV14()) {
-      Array.from(document.querySelectorAll("#admin-sidebar-sections-create-card")).forEach(function (card) {
-        card.remove();
-      });
-
-      document.body.classList.remove("appverbo-admin-sessoes-active-v14");
-      document.body.classList.add("appverbo-admin-sessoes-inactive-v14");
-      return;
-    }
-
-    document.body.classList.add("appverbo-admin-sessoes-active-v14");
-    document.body.classList.remove("appverbo-admin-sessoes-inactive-v14");
-    document.body.classList.add("appverbo-admin-sessoes-active-v12");
-    document.body.classList.remove("appverbo-admin-sessoes-inactive-v12");
-    document.body.classList.add("appverbo-admin-sessoes-active-v13");
-    document.body.classList.remove("appverbo-admin-sessoes-inactive-v13");
-
-    const createCard = obterOuCriarCreateCardSessoesV14();
-
-    if (!createCard) {
-      return;
-    }
-
-    montarConteudoCreateCardSessoesV14(createCard);
-  }
-
-  //###################################################################################
-  // (5) OBSERVAR RETORNO A ABA SESSOES
-  //###################################################################################
-
-  function agendarGarantiaCreateCardSessoesV14() {
-    window.setTimeout(garantirCreateCardSessoesV14, 50);
-    window.setTimeout(garantirCreateCardSessoesV14, 160);
-    window.setTimeout(garantirCreateCardSessoesV14, 360);
-    window.setTimeout(garantirCreateCardSessoesV14, 750);
-    window.setTimeout(garantirCreateCardSessoesV14, 1300);
-  }
-
-  function instalarObserverSessoesV14() {
-    if (window.__appverboSessoesCreateCardObserverV14 === true) {
-      return;
-    }
-
-    window.__appverboSessoesCreateCardObserverV14 = true;
-
-    instalarProtecaoRemoveSessoesV14();
-
-    document.addEventListener("click", function () {
-      agendarGarantiaCreateCardSessoesV14();
-    });
-
-    window.addEventListener("hashchange", agendarGarantiaCreateCardSessoesV14);
-    window.addEventListener("popstate", agendarGarantiaCreateCardSessoesV14);
-
-    const observer = new MutationObserver(function () {
-      window.clearTimeout(window.__appverboSessoesCreateCardObserverTimerV14);
-
-      window.__appverboSessoesCreateCardObserverTimerV14 = window.setTimeout(function () {
-        garantirCreateCardSessoesV14();
-      }, 80);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "hidden", "style", "aria-selected", "aria-hidden"]
-    });
-
-    agendarGarantiaCreateCardSessoesV14();
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", instalarObserverSessoesV14);
-  }
-  else {
-    instalarObserverSessoesV14();
-  }
-})();
+// Desativado pela refatoração V18.
+// Motivo: V18 controla o card Criar/Editar sessão no padrão Entidade.
 // APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END
 
 // APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START
@@ -4082,6 +3547,16 @@ tituloBloco.appendChild(descricao);
 // APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END
 
 // APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START
+// Desativado pela refatoração V18.
+// Motivo: V16 criava conflito de URL com o subprocesso Menu.
+// APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END
+
+// APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START
+// Desativado pela refatoração V18.
+// Motivo: V17 era apenas interceptador; V18 passa a ser o controlador único do fluxo.
+// APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END
+
+// APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_START
 (function () {
   "use strict";
 
@@ -4089,7 +3564,7 @@ tituloBloco.appendChild(descricao);
   // (1) NORMALIZACAO
   //###################################################################################
 
-  function normalizarTextoSessoesV16(valor) {
+  function normalizarTextoSessoesV18(valor) {
     return String(valor || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -4097,15 +3572,15 @@ tituloBloco.appendChild(descricao);
       .toLowerCase();
   }
 
-  function criarChaveSessoesV16(valor) {
-    return normalizarTextoSessoesV16(valor)
+  function criarChaveSessoesV18(valor) {
+    return normalizarTextoSessoesV18(valor)
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/_+/g, "_")
       .replace(/^_+|_+$/g, "");
   }
 
-  function normalizarEstadoSessoesV16(valor) {
-    const cleanValor = normalizarTextoSessoesV16(valor);
+  function normalizarEstadoSessoesV18(valor) {
+    const cleanValor = normalizarTextoSessoesV18(valor);
 
     if (["inativo", "inactive", "0", "false", "nao", "não", "off"].includes(cleanValor)) {
       return "inativo";
@@ -4114,8 +3589,8 @@ tituloBloco.appendChild(descricao);
     return "ativo";
   }
 
-  function normalizarSistemaSessoesV16(valor) {
-    const cleanValor = normalizarTextoSessoesV16(valor);
+  function normalizarSistemaSessoesV18(valor) {
+    const cleanValor = normalizarTextoSessoesV18(valor);
 
     if (["owner", "legado"].includes(cleanValor)) {
       return cleanValor;
@@ -4125,10 +3600,62 @@ tituloBloco.appendChild(descricao);
   }
 
   //###################################################################################
-  // (2) DETETAR ABA SESSOES
+  // (2) URL DA ABA SESSOES SEM PARAMETROS DO MENU
   //###################################################################################
 
-  function elementoVisivelSessoesV16(elemento) {
+  function limparParametrosMenuSessoesV18(url) {
+    url.searchParams.delete("settings_edit_key");
+    url.searchParams.delete("settings_action");
+    url.searchParams.delete("settings_tab");
+    url.searchParams.delete("sidebar_section_return_url");
+    url.searchParams.delete("success");
+    url.searchParams.delete("error");
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.hash = "admin-sidebar-sections-card";
+    return url;
+  }
+
+  function obterUrlBaseSessaoV18() {
+    const url = new URL(window.location.href);
+    limparParametrosMenuSessoesV18(url);
+    return url;
+  }
+
+  function obterUrlRetornoSessaoV18() {
+    const url = obterUrlBaseSessaoV18();
+    url.searchParams.delete("sidebar_section_edit_key");
+    return url.pathname + url.search + url.hash;
+  }
+
+  function obterEditKeySessaoV18() {
+    const url = new URL(window.location.href);
+    return criarChaveSessoesV18(url.searchParams.get("sidebar_section_edit_key") || "");
+  }
+
+  function navegarEditarSessaoV18(chave) {
+    const cleanChave = criarChaveSessoesV18(chave);
+
+    if (!cleanChave) {
+      return;
+    }
+
+    const url = obterUrlBaseSessaoV18();
+    url.searchParams.set("sidebar_section_edit_key", cleanChave);
+    window.location.href = url.pathname + url.search + url.hash;
+  }
+
+  function cancelarEdicaoSessaoV18() {
+    window.location.href = obterUrlRetornoSessaoV18();
+  }
+
+  //###################################################################################
+  // (3) DETETAR E FORCAR ABA SESSOES
+  //###################################################################################
+
+  function elementoVisivelSessoesV18(elemento) {
     if (!elemento) {
       return false;
     }
@@ -4146,10 +3673,10 @@ tituloBloco.appendChild(descricao);
     return Boolean(elemento.offsetWidth || elemento.offsetHeight || elemento.getClientRects().length);
   }
 
-  function elementoAtivoSessoesV16(elemento) {
-    const className = normalizarTextoSessoesV16(elemento.className || "");
+  function elementoAtivoSessoesV18(elemento) {
+    const className = normalizarTextoSessoesV18(elemento.className || "");
     const parentClass = elemento.parentElement
-      ? normalizarTextoSessoesV16(elemento.parentElement.className || "")
+      ? normalizarTextoSessoesV18(elemento.parentElement.className || "")
       : "";
 
     return elemento.getAttribute("aria-selected") === "true" ||
@@ -4157,53 +3684,93 @@ tituloBloco.appendChild(descricao);
       className.includes("ativo") ||
       className.includes("selected") ||
       className.includes("current") ||
+      className.includes("is-active") ||
       parentClass.includes("active") ||
       parentClass.includes("ativo") ||
       parentClass.includes("selected") ||
-      parentClass.includes("current");
+      parentClass.includes("current") ||
+      parentClass.includes("is-active");
   }
 
-  function tabAtivaPorTextoSessoesV16(textoEsperado) {
+  function encontrarTabPorTextoSessoesV18(textoEsperado) {
     const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab'], [data-admin-tab], .tab-button, .admin-tab"));
 
-    return candidatos.some(function (elemento) {
-      return normalizarTextoSessoesV16(elemento.textContent) === textoEsperado &&
-        elementoVisivelSessoesV16(elemento) &&
-        elementoAtivoSessoesV16(elemento);
+    return candidatos.find(function (elemento) {
+      return normalizarTextoSessoesV18(elemento.textContent) === textoEsperado &&
+        elementoVisivelSessoesV18(elemento);
+    }) || null;
+  }
+
+  function tabAtivaPorTextoSessoesV18(textoEsperado) {
+    const tab = encontrarTabPorTextoSessoesV18(textoEsperado);
+    return Boolean(tab && elementoAtivoSessoesV18(tab));
+  }
+
+  function outraAbaAdministrativaAtivaSessoesV18() {
+    return ["entidade", "utilizador", "menu"].some(function (texto) {
+      return tabAtivaPorTextoSessoesV18(texto);
     });
   }
 
-  function abaSessoesAtivaV16() {
-    if (tabAtivaPorTextoSessoesV16("sessoes")) {
-      return true;
-    }
-
-    if (
-      tabAtivaPorTextoSessoesV16("entidade") ||
-      tabAtivaPorTextoSessoesV16("utilizador") ||
-      tabAtivaPorTextoSessoesV16("menu")
-    ) {
-      return false;
-    }
-
+  function cardListaSessoesVisivelV18() {
     const card = document.getElementById("admin-sidebar-sections-card");
 
-    if (!card || !elementoVisivelSessoesV16(card)) {
+    if (!card || !elementoVisivelSessoesV18(card)) {
       return false;
     }
 
-    const textoCard = normalizarTextoSessoesV16(card.textContent);
+    const textoCard = normalizarTextoSessoesV18(card.textContent);
 
     return textoCard.includes("sessoes do sidebar") ||
       textoCard.includes("menu lateral") ||
       Boolean(card.querySelector(".appverbo-sidebar-section-row-v10, .appverbo-sidebar-section-row-v9, .appverbo-sidebar-section-row-v6, .appverbo-sidebar-section-row-v2"));
   }
 
+  function deveForcarAbaSessoesV18() {
+    const url = new URL(window.location.href);
+    return Boolean(
+      url.searchParams.get("sidebar_section_edit_key") ||
+      url.searchParams.get("sidebar_sections_tab") === "sessoes" ||
+      url.searchParams.get("admin_tab") === "sessoes"
+    );
+  }
+
+  function abaSessoesAtivaV18() {
+    if (tabAtivaPorTextoSessoesV18("sessoes")) {
+      return true;
+    }
+
+    if (outraAbaAdministrativaAtivaSessoesV18()) {
+      return false;
+    }
+
+    if (deveForcarAbaSessoesV18()) {
+      return true;
+    }
+
+    return cardListaSessoesVisivelV18();
+  }
+
+  function forcarAbaSessoesV18() {
+    if (!deveForcarAbaSessoesV18()) {
+      return;
+    }
+
+    const tabSessoes = encontrarTabPorTextoSessoesV18("sessoes");
+
+    if (tabSessoes && !elementoAtivoSessoesV18(tabSessoes)) {
+      tabSessoes.click();
+    }
+
+    document.body.classList.add("appverbo-admin-sessoes-active-v18");
+    document.body.classList.remove("appverbo-admin-sessoes-inactive-v18");
+  }
+
   //###################################################################################
-  // (3) LER SESSOES
+  // (4) LER SESSOES DO BD/TEMPLATE
   //###################################################################################
 
-  function lerSessoesTemplateV16() {
+  function lerSessoesTemplateV18() {
     const script = document.getElementById("appverbo-sidebar-section-options-v2") ||
       document.getElementById("appverbo-sidebar-section-options-v1");
 
@@ -4220,7 +3787,7 @@ tituloBloco.appendChild(descricao);
     }
   }
 
-  async function carregarSessoesV16() {
+  async function carregarSessoesV18() {
     try {
       const response = await fetch("/settings/menu/sidebar-sections-data", {
         headers: {
@@ -4238,19 +3805,19 @@ tituloBloco.appendChild(descricao);
       }
     }
     catch (error) {
-      console.warn("APPVERBO V16: falha ao carregar sessões do BD.", error);
+      console.warn("APPVERBO V18: falha ao carregar sessões do BD.", error);
     }
 
-    return lerSessoesTemplateV16();
+    return lerSessoesTemplateV18();
   }
 
-  function normalizarSessaoV16(sessao) {
+  function normalizarSessaoV18(sessao) {
     if (!sessao || typeof sessao !== "object") {
       return null;
     }
 
     const label = String(sessao.label || sessao.name || sessao.title || "").trim();
-    const key = criarChaveSessoesV16(sessao.key || sessao.section_key || label);
+    const key = criarChaveSessoesV18(sessao.key || sessao.section_key || label);
 
     if (!label || !key) {
       return null;
@@ -4259,62 +3826,33 @@ tituloBloco.appendChild(descricao);
     return {
       key: key,
       label: label,
-      visibility_scope_mode: normalizarSistemaSessoesV16(sessao.visibility_scope_mode || sessao.scope_mode || "all"),
-      status: normalizarEstadoSessoesV16(sessao.status || (sessao.is_active === false ? "inativo" : "ativo"))
+      visibility_scope_mode: normalizarSistemaSessoesV18(sessao.visibility_scope_mode || sessao.scope_mode || "all"),
+      status: normalizarEstadoSessoesV18(sessao.status || (sessao.is_active === false ? "inativo" : "ativo"))
     };
   }
 
-  async function obterSessaoPorChaveV16(chave) {
-    const cleanChave = criarChaveSessoesV16(chave);
-    const sessoes = await carregarSessoesV16();
+  async function obterSessaoPorChaveV18(chave) {
+    const cleanChave = criarChaveSessoesV18(chave);
+    const sessoes = await carregarSessoesV18();
 
     return sessoes
-      .map(normalizarSessaoV16)
+      .map(normalizarSessaoV18)
       .filter(Boolean)
       .find(function (sessao) {
-        return criarChaveSessoesV16(sessao.key) === cleanChave;
+        return criarChaveSessoesV18(sessao.key) === cleanChave;
       }) || null;
   }
 
   //###################################################################################
-  // (4) URLS
+  // (5) CARD SUPERIOR PADRAO ENTIDADE
   //###################################################################################
 
-  function obterParametroV16(nome) {
-    const params = new URLSearchParams(window.location.search);
-    return params.get(nome) || "";
-  }
-
-  function urlBaseSessoesV16() {
-    return "/users/new?menu=administrativo&admin_tab=sessoes&settings_edit_key=administrativo&settings_action=edit&settings_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card";
-  }
-
-  function navegarParaEditarSessaoV16(chave) {
-    const cleanChave = criarChaveSessoesV16(chave);
-
-    if (!cleanChave) {
-      return;
-    }
-
-    window.location.href = "/users/new?menu=administrativo&admin_tab=sessoes&settings_edit_key=administrativo&settings_action=edit&settings_tab=sessoes&sidebar_section_edit_key=" +
-      encodeURIComponent(cleanChave) +
-      "&target=admin-sidebar-sections-card#admin-sidebar-sections-card";
-  }
-
-  function cancelarEdicaoSessaoV16() {
-    window.location.href = urlBaseSessoesV16();
-  }
-
-  //###################################################################################
-  // (5) CARD SUPERIOR CRIAR/EDITAR
-  //###################################################################################
-
-  function obterCardListaSessoesV16() {
+  function obterCardListaSessoesV18() {
     return document.getElementById("admin-sidebar-sections-card");
   }
 
-  function obterOuCriarCardSuperiorSessoesV16() {
-    const cardLista = obterCardListaSessoesV16();
+  function obterOuCriarCardSuperiorSessoesV18() {
+    const cardLista = obterCardListaSessoesV18();
 
     if (!cardLista || !cardLista.parentElement) {
       return null;
@@ -4327,8 +3865,11 @@ tituloBloco.appendChild(descricao);
       cardSuperior.id = "admin-sidebar-sections-create-card";
       cardLista.parentElement.insertBefore(cardSuperior, cardLista);
     }
+    else if (cardSuperior.parentElement !== cardLista.parentElement) {
+      cardLista.parentElement.insertBefore(cardSuperior, cardLista);
+    }
 
-    cardSuperior.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v16";
+    cardSuperior.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v18";
     cardSuperior.hidden = false;
     cardSuperior.style.display = "";
     cardSuperior.style.visibility = "";
@@ -4336,7 +3877,15 @@ tituloBloco.appendChild(descricao);
     return cardSuperior;
   }
 
-  function criarOpcaoV16(valor, texto, valorAtual) {
+  function criarCampoHiddenV18(nome, valor) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = nome;
+    input.value = valor || "";
+    return input;
+  }
+
+  function criarOpcaoV18(valor, texto, valorAtual) {
     const option = document.createElement("option");
     option.value = valor;
     option.textContent = texto;
@@ -4348,60 +3897,61 @@ tituloBloco.appendChild(descricao);
     return option;
   }
 
-  function criarCampoHiddenV16(nome, valor) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = nome;
-    input.value = valor || "";
-    return input;
-  }
-
-  function renderizarFormularioSessoesV16(cardSuperior, modo, sessao) {
+  function renderizarFormularioSuperiorSessoesV18(cardSuperior, modo, sessao) {
     const isEdit = modo === "edit";
+    const editKey = isEdit && sessao ? sessao.key : "";
 
+    if (
+      cardSuperior.dataset.appverboSessoesModeV18 === modo &&
+      cardSuperior.dataset.appverboSessoesKeyV18 === editKey &&
+      cardSuperior.querySelector(".appverbo-sessoes-form-wrapper-v18")
+    ) {
+      return;
+    }
+
+    cardSuperior.dataset.appverboSessoesModeV18 = modo;
+    cardSuperior.dataset.appverboSessoesKeyV18 = editKey;
     cardSuperior.innerHTML = "";
-    cardSuperior.dataset.appverboSessoesServerModeV16 = isEdit ? "edit" : "create";
 
     const container = document.createElement("div");
-    container.className = "appverbo-sessoes-server-form-container-v16";
+    container.className = "appverbo-sessoes-form-wrapper-v18";
 
     const toolbar = document.createElement("div");
-    toolbar.className = "appverbo-sessoes-server-toolbar-v16";
+    toolbar.className = "appverbo-sessoes-toolbar-v18";
 
     const abrirBtn = document.createElement("button");
     abrirBtn.type = "button";
-    abrirBtn.className = "action-btn appverbo-sessoes-server-open-btn-v16";
+    abrirBtn.className = "action-btn appverbo-sessoes-open-create-v18";
     abrirBtn.textContent = "Criar sessão";
 
     toolbar.appendChild(abrirBtn);
 
-    const formWrap = document.createElement("div");
-    formWrap.className = "appverbo-sessoes-server-form-wrap-v16";
-    formWrap.hidden = !isEdit;
+    const panel = document.createElement("div");
+    panel.className = "appverbo-sessoes-panel-v18";
+    panel.hidden = !isEdit;
 
     if (isEdit) {
       toolbar.hidden = true;
     }
 
     const title = document.createElement("h2");
-    title.className = "appverbo-sessoes-server-form-title-v16";
+    title.className = "appverbo-sessoes-form-title-v18";
     title.textContent = isEdit ? "Editar sessão" : "Criar sessão";
 
     const form = document.createElement("form");
     form.method = "post";
     form.action = "/settings/menu/sidebar-section-save";
-    form.className = "appverbo-sessoes-server-form-v16";
+    form.className = "appverbo-sessoes-form-v18";
 
-    form.appendChild(criarCampoHiddenV16("section_mode", isEdit ? "edit" : "create"));
-    form.appendChild(criarCampoHiddenV16("original_section_key", isEdit && sessao ? sessao.key : ""));
-    form.appendChild(criarCampoHiddenV16("redirect_menu", "administrativo"));
-    form.appendChild(criarCampoHiddenV16("redirect_target", "#admin-sidebar-sections-card"));
+    form.appendChild(criarCampoHiddenV18("section_mode", isEdit ? "edit" : "create"));
+    form.appendChild(criarCampoHiddenV18("original_section_key", isEdit && sessao ? sessao.key : ""));
+    form.appendChild(criarCampoHiddenV18("sidebar_section_return_url", obterUrlRetornoSessaoV18()));
 
     const grid = document.createElement("div");
-    grid.className = "appverbo-sessoes-server-grid-v16";
+    grid.className = "appverbo-sessoes-grid-v18";
 
     const nomeField = document.createElement("div");
-    nomeField.className = "field appverbo-sessoes-server-field-v16";
+    nomeField.className = "field appverbo-sessoes-field-v18";
 
     const nomeLabel = document.createElement("label");
     nomeLabel.textContent = "Nome da sessão *";
@@ -4417,7 +3967,7 @@ tituloBloco.appendChild(descricao);
     nomeField.appendChild(nomeInput);
 
     const sistemaField = document.createElement("div");
-    sistemaField.className = "field appverbo-sessoes-server-field-v16";
+    sistemaField.className = "field appverbo-sessoes-field-v18";
 
     const sistemaLabel = document.createElement("label");
     sistemaLabel.textContent = "Sistema *";
@@ -4425,16 +3975,16 @@ tituloBloco.appendChild(descricao);
     const sistemaSelect = document.createElement("select");
     sistemaSelect.name = "section_visibility_scope_mode";
 
-    const sistemaAtual = sessao ? normalizarSistemaSessoesV16(sessao.visibility_scope_mode) : "all";
-    sistemaSelect.appendChild(criarOpcaoV16("all", "Owner e Legado", sistemaAtual));
-    sistemaSelect.appendChild(criarOpcaoV16("owner", "Owner", sistemaAtual));
-    sistemaSelect.appendChild(criarOpcaoV16("legado", "Legado", sistemaAtual));
+    const sistemaAtual = sessao ? normalizarSistemaSessoesV18(sessao.visibility_scope_mode) : "all";
+    sistemaSelect.appendChild(criarOpcaoV18("all", "Owner e Legado", sistemaAtual));
+    sistemaSelect.appendChild(criarOpcaoV18("owner", "Owner", sistemaAtual));
+    sistemaSelect.appendChild(criarOpcaoV18("legado", "Legado", sistemaAtual));
 
     sistemaField.appendChild(sistemaLabel);
     sistemaField.appendChild(sistemaSelect);
 
     const estadoField = document.createElement("div");
-    estadoField.className = "field appverbo-sessoes-server-field-v16";
+    estadoField.className = "field appverbo-sessoes-field-v18";
 
     const estadoLabel = document.createElement("label");
     estadoLabel.textContent = "Estado *";
@@ -4442,9 +3992,9 @@ tituloBloco.appendChild(descricao);
     const estadoSelect = document.createElement("select");
     estadoSelect.name = "section_status";
 
-    const estadoAtual = sessao ? normalizarEstadoSessoesV16(sessao.status) : "ativo";
-    estadoSelect.appendChild(criarOpcaoV16("ativo", "Ativo", estadoAtual));
-    estadoSelect.appendChild(criarOpcaoV16("inativo", "Inativo", estadoAtual));
+    const estadoAtual = sessao ? normalizarEstadoSessoesV18(sessao.status) : "ativo";
+    estadoSelect.appendChild(criarOpcaoV18("ativo", "Ativo", estadoAtual));
+    estadoSelect.appendChild(criarOpcaoV18("inativo", "Inativo", estadoAtual));
 
     estadoField.appendChild(estadoLabel);
     estadoField.appendChild(estadoSelect);
@@ -4454,7 +4004,7 @@ tituloBloco.appendChild(descricao);
     grid.appendChild(estadoField);
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sessoes-server-actions-v16";
+    actions.className = "appverbo-sessoes-actions-v18";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "submit";
@@ -4472,28 +4022,36 @@ tituloBloco.appendChild(descricao);
     form.appendChild(grid);
     form.appendChild(actions);
 
-    formWrap.appendChild(title);
-    formWrap.appendChild(form);
+    panel.appendChild(title);
+    panel.appendChild(form);
 
     container.appendChild(toolbar);
-    container.appendChild(formWrap);
+    container.appendChild(panel);
     cardSuperior.appendChild(container);
 
     abrirBtn.addEventListener("click", function () {
       toolbar.hidden = true;
-      formWrap.hidden = false;
+      panel.hidden = false;
       nomeInput.focus();
     });
 
     cancelarBtn.addEventListener("click", function () {
       if (isEdit) {
-        cancelarEdicaoSessaoV16();
+        cancelarEdicaoSessaoV18();
         return;
       }
 
       form.reset();
-      formWrap.hidden = true;
+      panel.hidden = true;
       toolbar.hidden = false;
+    });
+
+    form.addEventListener("submit", function () {
+      const returnInput = form.querySelector('[name="sidebar_section_return_url"]');
+
+      if (returnInput) {
+        returnInput.value = obterUrlRetornoSessaoV18();
+      }
     });
 
     if (isEdit) {
@@ -4504,36 +4062,43 @@ tituloBloco.appendChild(descricao);
     }
   }
 
-  async function montarCardSuperiorSessoesV16() {
-    if (!abaSessoesAtivaV16()) {
+  async function montarCardSuperiorSessoesV18() {
+    forcarAbaSessoesV18();
+
+    if (!abaSessoesAtivaV18()) {
+      document.body.classList.remove("appverbo-admin-sessoes-active-v18");
+      document.body.classList.add("appverbo-admin-sessoes-inactive-v18");
       return;
     }
 
-    const cardSuperior = obterOuCriarCardSuperiorSessoesV16();
+    document.body.classList.add("appverbo-admin-sessoes-active-v18");
+    document.body.classList.remove("appverbo-admin-sessoes-inactive-v18");
+
+    const cardSuperior = obterOuCriarCardSuperiorSessoesV18();
 
     if (!cardSuperior) {
       return;
     }
 
-    const editKey = obterParametroV16("sidebar_section_edit_key");
+    const editKey = obterEditKeySessaoV18();
 
     if (editKey) {
-      const sessao = await obterSessaoPorChaveV16(editKey);
+      const sessao = await obterSessaoPorChaveV18(editKey);
 
       if (sessao) {
-        renderizarFormularioSessoesV16(cardSuperior, "edit", sessao);
+        renderizarFormularioSuperiorSessoesV18(cardSuperior, "edit", sessao);
         return;
       }
     }
 
-    renderizarFormularioSessoesV16(cardSuperior, "create", null);
+    renderizarFormularioSuperiorSessoesV18(cardSuperior, "create", null);
   }
 
   //###################################################################################
-  // (6) CAPTURAR EDITAR E TROCAR INLINE POR NAVEGACAO
+  // (6) CAPTURAR EDITAR E IMPEDIR INLINE
   //###################################################################################
 
-  function obterChaveDaLinhaSessoesV16(linha) {
+  function obterChaveLinhaSessoesV18(linha) {
     if (!linha) {
       return "";
     }
@@ -4545,45 +4110,79 @@ tituloBloco.appendChild(descricao);
       "";
 
     if (datasetKey) {
-      return criarChaveSessoesV16(datasetKey);
+      return criarChaveSessoesV18(datasetKey);
     }
 
     const hiddenKey = linha.querySelector('[name="section_key"]');
 
     if (hiddenKey && hiddenKey.value) {
-      return criarChaveSessoesV16(hiddenKey.value);
+      return criarChaveSessoesV18(hiddenKey.value);
     }
 
     const primeiraCelula = linha.querySelector("td");
 
-    return primeiraCelula ? criarChaveSessoesV16(primeiraCelula.textContent) : "";
+    return primeiraCelula ? criarChaveSessoesV18(primeiraCelula.textContent) : "";
   }
 
-  function instalarCapturaEditarSessoesV16() {
-    if (window.__appverboSessoesEditServerCaptureV16 === true) {
+  function encontrarBotaoEditarSessoesV18(target) {
+    if (!target || !target.closest) {
+      return null;
+    }
+
+    const explicitButton = target.closest(
+      '[data-sidebar-section-action-v10="edit"], ' +
+      '[data-sidebar-section-action-v9="edit"], ' +
+      '[data-sidebar-section-action-v6="edit"], ' +
+      '[data-sidebar-section-action-v2="edit"], ' +
+      '[data-sidebar-section-action="edit"]'
+    );
+
+    if (explicitButton) {
+      return explicitButton;
+    }
+
+    const possibleButton = target.closest("button, a");
+
+    if (!possibleButton) {
+      return null;
+    }
+
+    const label = normalizarTextoSessoesV18(
+      possibleButton.getAttribute("title") ||
+      possibleButton.getAttribute("aria-label") ||
+      possibleButton.textContent ||
+      ""
+    );
+
+    if (label.includes("editar") || label === "✎") {
+      return possibleButton;
+    }
+
+    return null;
+  }
+
+  function instalarCapturaEditarSessoesV18() {
+    if (window.__appverboSessoesEditCaptureV18 === true) {
       return;
     }
 
-    window.__appverboSessoesEditServerCaptureV16 = true;
+    window.__appverboSessoesEditCaptureV18 = true;
 
     document.addEventListener("click", function (event) {
-      const botaoEditar = event.target.closest(
-        '[data-sidebar-section-action-v10="edit"], ' +
-        '[data-sidebar-section-action-v9="edit"], ' +
-        '[data-sidebar-section-action-v6="edit"], ' +
-        '[data-sidebar-section-action="edit"]'
-      );
+      const botaoEditar = encontrarBotaoEditarSessoesV18(event.target);
 
       if (!botaoEditar) {
         return;
       }
 
-      if (!abaSessoesAtivaV16()) {
+      const card = botaoEditar.closest("#admin-sidebar-sections-card, #admin-sidebar-sections-inactive-card");
+
+      if (!card) {
         return;
       }
 
       const linha = botaoEditar.closest("tr");
-      const chave = obterChaveDaLinhaSessoesV16(linha);
+      const chave = obterChaveLinhaSessoesV18(linha);
 
       if (!chave) {
         return;
@@ -4593,43 +4192,39 @@ tituloBloco.appendChild(descricao);
       event.stopPropagation();
       event.stopImmediatePropagation();
 
-      navegarParaEditarSessaoV16(chave);
+      navegarEditarSessaoV18(chave);
     }, true);
   }
 
   //###################################################################################
-  // (7) OBSERVAR NAVEGACAO ENTRE ABAS
+  // (7) INSTALAR OBSERVADORES
   //###################################################################################
 
-  function agendarMontagemSessoesV16() {
-    window.setTimeout(montarCardSuperiorSessoesV16, 80);
-    window.setTimeout(montarCardSuperiorSessoesV16, 250);
-    window.setTimeout(montarCardSuperiorSessoesV16, 600);
-    window.setTimeout(montarCardSuperiorSessoesV16, 1200);
+  function agendarMontagemSessoesV18() {
+    window.setTimeout(montarCardSuperiorSessoesV18, 80);
+    window.setTimeout(montarCardSuperiorSessoesV18, 250);
+    window.setTimeout(montarCardSuperiorSessoesV18, 600);
+    window.setTimeout(montarCardSuperiorSessoesV18, 1200);
   }
 
-  function instalarFluxoSessoesV16() {
-    instalarCapturaEditarSessoesV16();
+  function instalarSessoesPadraoEntidadeV18() {
+    instalarCapturaEditarSessoesV18();
 
     document.addEventListener("click", function () {
-      agendarMontagemSessoesV16();
+      agendarMontagemSessoesV18();
     });
 
-    window.addEventListener("hashchange", agendarMontagemSessoesV16);
-    window.addEventListener("popstate", agendarMontagemSessoesV16);
+    window.addEventListener("hashchange", agendarMontagemSessoesV18);
+    window.addEventListener("popstate", agendarMontagemSessoesV18);
 
     const observer = new MutationObserver(function () {
-      window.clearTimeout(window.__appverboSessoesServerModeTimerV16);
+      window.clearTimeout(window.__appverboSessoesPadraoEntidadeTimerV18);
 
-      window.__appverboSessoesServerModeTimerV16 = window.setTimeout(function () {
-        if (abaSessoesAtivaV16()) {
-          const cardSuperior = document.getElementById("admin-sidebar-sections-create-card");
-
-          if (!cardSuperior || !cardSuperior.dataset.appverboSessoesServerModeV16) {
-            montarCardSuperiorSessoesV16();
-          }
+      window.__appverboSessoesPadraoEntidadeTimerV18 = window.setTimeout(function () {
+        if (abaSessoesAtivaV18() || deveForcarAbaSessoesV18()) {
+          montarCardSuperiorSessoesV18();
         }
-      }, 150);
+      }, 140);
     });
 
     observer.observe(document.body, {
@@ -4639,19 +4234,19 @@ tituloBloco.appendChild(descricao);
       attributeFilter: ["class", "hidden", "style", "aria-selected", "aria-hidden"]
     });
 
-    agendarMontagemSessoesV16();
+    agendarMontagemSessoesV18();
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", instalarFluxoSessoesV16);
+    document.addEventListener("DOMContentLoaded", instalarSessoesPadraoEntidadeV18);
   }
   else {
-    instalarFluxoSessoesV16();
+    instalarSessoesPadraoEntidadeV18();
   }
 })();
-// APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END
+// APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_END
 
-// APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START
+// APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_START
 (function () {
   "use strict";
 
@@ -4659,7 +4254,7 @@ tituloBloco.appendChild(descricao);
   // (1) NORMALIZACAO
   //###################################################################################
 
-  function normalizarTextoSessoesV17(valor) {
+  function normalizarTextoSessoesPersistirEstadoV19(valor) {
     return String(valor || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -4667,226 +4262,621 @@ tituloBloco.appendChild(descricao);
       .toLowerCase();
   }
 
-  function criarChaveSessoesV17(valor) {
-    return normalizarTextoSessoesV17(valor)
+  function normalizarEstadoSessoesPersistirEstadoV19(valor) {
+    const cleanValor = normalizarTextoSessoesPersistirEstadoV19(valor);
+
+    if (["inativo", "inactive", "0", "false", "nao", "não", "off"].includes(cleanValor)) {
+      return "inativo";
+    }
+
+    return "ativo";
+  }
+
+  //###################################################################################
+  // (2) URL DE RETORNO SEGURA DA ABA SESSOES
+  //###################################################################################
+
+  function obterReturnUrlSessoesPersistirEstadoV19() {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete("settings_edit_key");
+    url.searchParams.delete("settings_action");
+    url.searchParams.delete("settings_tab");
+    url.searchParams.delete("sidebar_section_edit_key");
+    url.searchParams.delete("sidebar_section_return_url");
+    url.searchParams.delete("success");
+    url.searchParams.delete("error");
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  //###################################################################################
+  // (3) FORCAR STATUS NO FORMULARIO DEDICADO
+  //###################################################################################
+
+  function prepararFormularioSessaoPersistirEstadoV19(formulario) {
+    if (!formulario) {
+      return;
+    }
+
+    const action = String(formulario.getAttribute("action") || "");
+
+    if (!action.includes("/settings/menu/sidebar-section-save")) {
+      return;
+    }
+
+    const estadoSelect = formulario.querySelector('select[name="section_status"]');
+    const estadoValue = normalizarEstadoSessoesPersistirEstadoV19(
+      estadoSelect ? estadoSelect.value : "ativo"
+    );
+
+    Array.from(formulario.querySelectorAll('input[name="section_status_override_v19"]')).forEach(function (input) {
+      input.remove();
+    });
+
+    const estadoOverride = document.createElement("input");
+    estadoOverride.type = "hidden";
+    estadoOverride.name = "section_status_override_v19";
+    estadoOverride.value = estadoValue;
+    formulario.appendChild(estadoOverride);
+
+    let returnInput = formulario.querySelector('input[name="sidebar_section_return_url"]');
+
+    if (!returnInput) {
+      returnInput = document.createElement("input");
+      returnInput.type = "hidden";
+      returnInput.name = "sidebar_section_return_url";
+      formulario.appendChild(returnInput);
+    }
+
+    returnInput.value = obterReturnUrlSessoesPersistirEstadoV19();
+  }
+
+  function instalarSubmitPersistirEstadoV19() {
+    if (window.__appverboSessoesPersistirEstadoV19 === true) {
+      return;
+    }
+
+    window.__appverboSessoesPersistirEstadoV19 = true;
+
+    document.addEventListener("submit", function (event) {
+      prepararFormularioSessaoPersistirEstadoV19(event.target);
+    }, true);
+
+    document.addEventListener("click", function (event) {
+      const botaoSubmit = event.target.closest('button[type="submit"], input[type="submit"]');
+
+      if (!botaoSubmit) {
+        return;
+      }
+
+      const formulario = botaoSubmit.form || botaoSubmit.closest("form");
+
+      prepararFormularioSessaoPersistirEstadoV19(formulario);
+    }, true);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", instalarSubmitPersistirEstadoV19);
+  }
+  else {
+    instalarSubmitPersistirEstadoV19();
+  }
+})();
+// APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_END
+
+// APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function normalizarTextoSessoesInativasV20(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function criarChaveSessoesInativasV20(valor) {
+    return normalizarTextoSessoesInativasV20(valor)
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/_+/g, "_")
       .replace(/^_+|_+$/g, "");
   }
 
-  //###################################################################################
-  // (2) URL CORRETA DO SUBPROCESSO SESSOES
-  //###################################################################################
-
-  function limparParametrosMenuDaUrlV17(url) {
-    url.searchParams.delete("settings_edit_key");
-    url.searchParams.delete("settings_action");
-    url.searchParams.delete("settings_tab");
-    url.searchParams.delete("sidebar_section_return_url");
-    url.searchParams.set("menu", "administrativo");
-    return url;
-  }
-
-  function obterUrlSessaoAtualV17() {
-    const url = new URL(window.location.href);
-    limparParametrosMenuDaUrlV17(url);
-    url.hash = "admin-sidebar-sections-card";
-    return url;
-  }
-
-  function obterUrlRetornoSessaoV17() {
-    const url = obterUrlSessaoAtualV17();
-    url.searchParams.delete("sidebar_section_edit_key");
-    return url.pathname + url.search + url.hash;
-  }
-
-  function navegarParaEditarSessaoV17(chave) {
-    const cleanChave = criarChaveSessoesV17(chave);
-
-    if (!cleanChave) {
-      return;
+  function normalizarEstadoSessoesInativasV20(sessao) {
+    if (sessao && sessao.is_active === false) {
+      return "inativo";
     }
 
-    const url = obterUrlSessaoAtualV17();
-    url.searchParams.set("sidebar_section_edit_key", cleanChave);
-    window.location.href = url.pathname + url.search + url.hash;
-  }
-
-  function cancelarEdicaoSessaoV17() {
-    window.location.href = obterUrlRetornoSessaoV17();
-  }
-
-  //###################################################################################
-  // (3) CORRIGIR FORMULARIO GERADO PELO V16
-  //###################################################################################
-
-  function garantirReturnUrlFormularioSessoesV17() {
-    const cardSuperior = document.getElementById("admin-sidebar-sections-create-card");
-
-    if (!cardSuperior) {
-      return;
-    }
-
-    const form = cardSuperior.querySelector('form[action="/settings/menu/sidebar-section-save"], form[action*="/settings/menu/sidebar-section-save"]');
-
-    if (!form) {
-      return;
-    }
-
-    Array.from(form.querySelectorAll('[name="sidebar_section_return_url"]')).forEach(function (input) {
-      input.remove();
-    });
-
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = "sidebar_section_return_url";
-    input.value = obterUrlRetornoSessaoV17();
-    form.appendChild(input);
-  }
-
-  function corrigirCancelarFormularioSessoesV17() {
-    const cardSuperior = document.getElementById("admin-sidebar-sections-create-card");
-
-    if (!cardSuperior) {
-      return;
-    }
-
-    const cancelButtons = Array.from(cardSuperior.querySelectorAll(".action-btn-cancel"));
-
-    cancelButtons.forEach(function (botao) {
-      if (botao.dataset.appverboCancelV17 === "1") {
-        return;
-      }
-
-      botao.dataset.appverboCancelV17 = "1";
-
-      botao.addEventListener("click", function (event) {
-        const url = new URL(window.location.href);
-
-        if (!url.searchParams.get("sidebar_section_edit_key")) {
-          return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        cancelarEdicaoSessaoV17();
-      }, true);
-    });
-  }
-
-  function corrigirFormularioSessoesV17() {
-    garantirReturnUrlFormularioSessoesV17();
-    corrigirCancelarFormularioSessoesV17();
-  }
-
-  //###################################################################################
-  // (4) CAPTURAR EDITAR ANTES DOS HANDLERS ANTIGOS
-  //###################################################################################
-
-  function obterChaveLinhaSessoesV17(linha) {
-    if (!linha) {
-      return "";
-    }
-
-    const datasetKey = linha.dataset.sectionKeyV10 ||
-      linha.dataset.sectionKeyV9 ||
-      linha.dataset.sectionKeyV6 ||
-      linha.dataset.sectionKeyV2 ||
-      "";
-
-    if (datasetKey) {
-      return criarChaveSessoesV17(datasetKey);
-    }
-
-    const hiddenKey = linha.querySelector('[name="section_key"]');
-
-    if (hiddenKey && hiddenKey.value) {
-      return criarChaveSessoesV17(hiddenKey.value);
-    }
-
-    const primeiraCelula = linha.querySelector("td");
-
-    return primeiraCelula ? criarChaveSessoesV17(primeiraCelula.textContent) : "";
-  }
-
-  function cliqueEhEditarSessaoV17(event) {
-    const botaoEditar = event.target.closest(
-      '[data-sidebar-section-action-v10="edit"], ' +
-      '[data-sidebar-section-action-v9="edit"], ' +
-      '[data-sidebar-section-action-v6="edit"], ' +
-      '[data-sidebar-section-action="edit"]'
+    const status = normalizarTextoSessoesInativasV20(
+      sessao ? (sessao.status || sessao.status_label || "") : ""
     );
 
-    if (!botaoEditar) {
+    if (["inativo", "inactive", "0", "false", "nao", "não", "off"].includes(status)) {
+      return "inativo";
+    }
+
+    return "ativo";
+  }
+
+  function labelEstadoSessoesInativasV20(sessao) {
+    return normalizarEstadoSessoesInativasV20(sessao) === "inativo" ? "Inativo" : "Ativo";
+  }
+
+  function normalizarSistemaSessoesInativasV20(valor) {
+    const sistema = normalizarTextoSessoesInativasV20(valor);
+
+    if (sistema === "owner") {
+      return "Owner";
+    }
+
+    if (sistema === "legado") {
+      return "Legado";
+    }
+
+    return "Owner e Legado";
+  }
+
+  //###################################################################################
+  // (2) DETETAR ABA SESSOES
+  //###################################################################################
+
+  function elementoVisivelSessoesInativasV20(elemento) {
+    if (!elemento) {
+      return false;
+    }
+
+    if (elemento.hidden || elemento.getAttribute("aria-hidden") === "true") {
+      return false;
+    }
+
+    const estilo = window.getComputedStyle(elemento);
+
+    if (estilo.display === "none" || estilo.visibility === "hidden") {
+      return false;
+    }
+
+    return Boolean(elemento.offsetWidth || elemento.offsetHeight || elemento.getClientRects().length);
+  }
+
+  function elementoAtivoSessoesInativasV20(elemento) {
+    const className = normalizarTextoSessoesInativasV20(elemento.className || "");
+    const parentClass = elemento.parentElement
+      ? normalizarTextoSessoesInativasV20(elemento.parentElement.className || "")
+      : "";
+
+    return elemento.getAttribute("aria-selected") === "true" ||
+      className.includes("active") ||
+      className.includes("ativo") ||
+      className.includes("selected") ||
+      className.includes("current") ||
+      className.includes("is-active") ||
+      parentClass.includes("active") ||
+      parentClass.includes("ativo") ||
+      parentClass.includes("selected") ||
+      parentClass.includes("current") ||
+      parentClass.includes("is-active");
+  }
+
+  function tabAtivaSessoesInativasV20(textoEsperado) {
+    const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab'], [data-admin-tab], .tab-button, .admin-tab"));
+
+    return candidatos.some(function (elemento) {
+      return normalizarTextoSessoesInativasV20(elemento.textContent) === textoEsperado &&
+        elementoVisivelSessoesInativasV20(elemento) &&
+        elementoAtivoSessoesInativasV20(elemento);
+    });
+  }
+
+  function abaSessoesAtivaInativasV20() {
+    if (tabAtivaSessoesInativasV20("sessoes")) {
+      return true;
+    }
+
+    if (
+      tabAtivaSessoesInativasV20("entidade") ||
+      tabAtivaSessoesInativasV20("utilizador") ||
+      tabAtivaSessoesInativasV20("menu")
+    ) {
+      return false;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (
+      url.searchParams.get("admin_tab") === "sessoes" ||
+      url.searchParams.get("sidebar_sections_tab") === "sessoes" ||
+      url.searchParams.get("target") === "admin-sidebar-sections-card"
+    ) {
+      return true;
+    }
+
+    const card = document.getElementById("admin-sidebar-sections-card");
+
+    if (!card || !elementoVisivelSessoesInativasV20(card)) {
+      return false;
+    }
+
+    const textoCard = normalizarTextoSessoesInativasV20(card.textContent);
+
+    return textoCard.includes("sessoes do sidebar") ||
+      textoCard.includes("menu lateral") ||
+      Boolean(card.querySelector(".appverbo-sidebar-section-row-v10, .appverbo-sidebar-section-row-v9, .appverbo-sidebar-section-row-v6, .appverbo-sidebar-section-row-v2"));
+  }
+
+  //###################################################################################
+  // (3) CARREGAR SESSOES DO BD/TEMPLATE
+  //###################################################################################
+
+  function lerSessoesTemplateInativasV20() {
+    const script = document.getElementById("appverbo-sidebar-section-options-v2") ||
+      document.getElementById("appverbo-sidebar-section-options-v1");
+
+    if (!script) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(script.textContent || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    catch (error) {
+      return [];
+    }
+  }
+
+  async function carregarSessoesInativasV20() {
+    try {
+      const response = await fetch("/settings/menu/sidebar-sections-data", {
+        headers: {
+          Accept: "application/json"
+        },
+        credentials: "same-origin"
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+
+        if (payload && Array.isArray(payload.sections)) {
+          return payload.sections;
+        }
+      }
+    }
+    catch (error) {
+      console.warn("APPVERBO V20: falha ao carregar sessões para card de inativas.", error);
+    }
+
+    return lerSessoesTemplateInativasV20();
+  }
+
+  function normalizarSessaoInativasV20(sessao) {
+    if (!sessao || typeof sessao !== "object") {
       return null;
     }
 
-    const linha = botaoEditar.closest("tr");
-    const chave = obterChaveLinhaSessoesV17(linha);
+    const label = String(sessao.label || sessao.name || sessao.title || "").trim();
+    const key = criarChaveSessoesInativasV20(sessao.key || sessao.section_key || label);
 
-    if (!chave) {
+    if (!label || !key) {
       return null;
     }
 
-    const card = botaoEditar.closest("#admin-sidebar-sections-card, #admin-sidebar-sections-inactive-card");
-
-    if (!card) {
-      return null;
-    }
+    const sistema = String(sessao.visibility_scope_mode || sessao.scope_mode || "all").trim() || "all";
+    const estado = normalizarEstadoSessoesInativasV20(sessao);
 
     return {
-      chave: chave
+      key: key,
+      label: label,
+      visibility_scope_mode: sistema,
+      visibility_scope_label: sessao.visibility_scope_label || normalizarSistemaSessoesInativasV20(sistema),
+      status: estado,
+      is_active: estado === "ativo",
+      status_label: labelEstadoSessoesInativasV20(sessao)
     };
   }
 
-  function instalarCapturaEditarSessoesV17() {
-    if (window.__appverboSessoesEditNoMenuV17 === true) {
+  //###################################################################################
+  // (4) CRIAR COMPONENTES DO CARD DE INATIVAS
+  //###################################################################################
+
+  function criarBotaoAcaoInativasV20(tipo, titulo, texto) {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "appverbo-sidebar-section-action-btn-v2 appverbo-sidebar-section-action-btn-v20";
+    botao.dataset.sidebarSectionActionV10 = tipo;
+    botao.dataset.sidebarSectionActionV20 = tipo;
+    botao.title = titulo;
+    botao.setAttribute("aria-label", titulo);
+    botao.textContent = texto;
+    return botao;
+  }
+
+  function criarBadgeEstadoInativasV20(sessao) {
+    const badge = document.createElement("span");
+    badge.className = "appverbo-sidebar-section-state-badge-v2 appverbo-sidebar-section-state-badge-inativo-v20";
+    badge.textContent = labelEstadoSessoesInativasV20(sessao);
+    return badge;
+  }
+
+  function criarLinhaInativaV20(sessao) {
+    const tr = document.createElement("tr");
+    tr.className = "appverbo-sidebar-section-row-v2 appverbo-sidebar-section-row-v10 appverbo-sidebar-section-row-v20";
+    tr.dataset.sectionKeyV10 = sessao.key;
+    tr.dataset.sectionKeyV20 = sessao.key;
+    tr.dataset.sectionStatusV20 = sessao.status;
+
+    const tdMenu = document.createElement("td");
+    tdMenu.className = "appverbo-sidebar-section-menu-cell-v2";
+    tdMenu.textContent = sessao.label;
+
+    const tdSistema = document.createElement("td");
+    tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
+    tdSistema.textContent = sessao.visibility_scope_label || normalizarSistemaSessoesInativasV20(sessao.visibility_scope_mode);
+
+    const tdEstado = document.createElement("td");
+    tdEstado.className = "appverbo-sidebar-section-state-cell-v2";
+    tdEstado.appendChild(criarBadgeEstadoInativasV20(sessao));
+
+    const tdAcoes = document.createElement("td");
+    tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
+
+    const actions = document.createElement("div");
+    actions.className = "appverbo-sidebar-section-actions-v2";
+    actions.appendChild(criarBotaoAcaoInativasV20("view", "Visualizar detalhes", "👁"));
+    actions.appendChild(criarBotaoAcaoInativasV20("edit", "Editar sessão", "✎"));
+
+    tdAcoes.appendChild(actions);
+
+    tr.appendChild(tdMenu);
+    tr.appendChild(tdSistema);
+    tr.appendChild(tdEstado);
+    tr.appendChild(tdAcoes);
+
+    return tr;
+  }
+
+  function criarTabelaInativasV20(sessoesInativas) {
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "appverbo-sidebar-sections-table-wrap-v2 appverbo-sidebar-sections-table-wrap-v20";
+
+    const table = document.createElement("table");
+    table.className = "appverbo-sidebar-sections-table-v2 appverbo-sidebar-sections-table-v20";
+
+    const thead = document.createElement("thead");
+    thead.innerHTML = "<tr><th>MENU LATERAL</th><th>SISTEMA</th><th>ESTADO</th><th>AÇÕES</th></tr>";
+
+    const tbody = document.createElement("tbody");
+    tbody.className = "appverbo-sidebar-sections-body-v2 appverbo-sidebar-sections-body-v20";
+    tbody.dataset.statusGroupV20 = "inativo";
+
+    sessoesInativas.forEach(function (sessao) {
+      tbody.appendChild(criarLinhaInativaV20(sessao));
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+
+    return tableWrap;
+  }
+
+  function obterOuCriarCardInativasV20(cardAtivas) {
+    let cardInativas = document.getElementById("admin-sidebar-sections-inactive-card");
+
+    if (!cardInativas) {
+      cardInativas = document.createElement("section");
+      cardInativas.id = "admin-sidebar-sections-inactive-card";
+    }
+
+    cardInativas.className = "card appverbo-sidebar-sections-inactive-card-v20";
+    cardInativas.hidden = false;
+    cardInativas.style.display = "";
+    cardInativas.style.visibility = "";
+
+    if (cardInativas.parentElement !== cardAtivas.parentElement) {
+      cardAtivas.parentElement.insertBefore(cardInativas, cardAtivas.nextSibling);
+    }
+    else if (cardInativas.previousElementSibling !== cardAtivas) {
+      cardAtivas.parentElement.insertBefore(cardInativas, cardAtivas.nextSibling);
+    }
+
+    return cardInativas;
+  }
+
+  function removerInativasDoCardPrincipalV20(sessoesInativas) {
+    const cardAtivas = document.getElementById("admin-sidebar-sections-card");
+
+    if (!cardAtivas) {
       return;
     }
 
-    window.__appverboSessoesEditNoMenuV17 = true;
+    const chavesInativas = new Set(
+      sessoesInativas.map(function (sessao) {
+        return criarChaveSessoesInativasV20(sessao.key);
+      })
+    );
+
+    Array.from(cardAtivas.querySelectorAll("tr")).forEach(function (linha) {
+      const datasetKey = linha.dataset.sectionKeyV10 ||
+        linha.dataset.sectionKeyV9 ||
+        linha.dataset.sectionKeyV6 ||
+        linha.dataset.sectionKeyV2 ||
+        linha.dataset.sectionKeyV20 ||
+        "";
+
+      const hiddenKey = linha.querySelector('[name="section_key"]');
+      const key = criarChaveSessoesInativasV20(datasetKey || (hiddenKey ? hiddenKey.value : ""));
+
+      if (key && chavesInativas.has(key)) {
+        linha.remove();
+      }
+    });
+
+    Array.from(cardAtivas.querySelectorAll(".appverbo-sidebar-section-list-block-inativo-v9, .appverbo-sidebar-section-list-block-inativo-v10")).forEach(function (bloco) {
+      bloco.remove();
+    });
+
+    Array.from(cardAtivas.querySelectorAll("h1, h2, h3, h4, strong")).forEach(function (titulo) {
+      if (normalizarTextoSessoesInativasV20(titulo.textContent) === "sessoes inativas") {
+        titulo.remove();
+      }
+    });
+  }
+
+  //###################################################################################
+  // (5) RENDERIZAR CARD DE INATIVAS
+  //###################################################################################
+
+  async function renderizarCardInativasDoBdV20() {
+    if (!abaSessoesAtivaInativasV20()) {
+      const cardInativasFora = document.getElementById("admin-sidebar-sections-inactive-card");
+
+      if (cardInativasFora) {
+        cardInativasFora.remove();
+      }
+
+      return;
+    }
+
+    const cardAtivas = document.getElementById("admin-sidebar-sections-card");
+
+    if (!cardAtivas || !cardAtivas.parentElement) {
+      return;
+    }
+
+    const sessoesRaw = await carregarSessoesInativasV20();
+    const sessoes = sessoesRaw.map(normalizarSessaoInativasV20).filter(Boolean);
+
+    const sessoesInativas = sessoes.filter(function (sessao) {
+      return normalizarEstadoSessoesInativasV20(sessao) !== "ativo";
+    });
+
+    removerInativasDoCardPrincipalV20(sessoesInativas);
+
+    const cardInativas = obterOuCriarCardInativasV20(cardAtivas);
+    cardInativas.innerHTML = "";
+
+    const titulo = document.createElement("h2");
+    titulo.className = "appverbo-sidebar-section-list-main-title-v20";
+    titulo.textContent = "Sessões inativas";
+    cardInativas.appendChild(titulo);
+
+    if (sessoesInativas.length) {
+      cardInativas.appendChild(criarTabelaInativasV20(sessoesInativas));
+    }
+    else {
+      const vazio = document.createElement("p");
+      vazio.className = "appverbo-sidebar-section-empty-text-v20";
+      vazio.textContent = "Sem sessões inativas.";
+      cardInativas.appendChild(vazio);
+    }
+  }
+
+  //###################################################################################
+  // (6) EVENTOS DO CARD DE INATIVAS
+  //###################################################################################
+
+  function instalarEventosInativasV20() {
+    if (window.__appverboSessoesInativasEventosV20 === true) {
+      return;
+    }
+
+    window.__appverboSessoesInativasEventosV20 = true;
 
     document.addEventListener("click", function (event) {
-      const resultado = cliqueEhEditarSessaoV17(event);
+      const botao = event.target.closest("[data-sidebar-section-action-v20]");
 
-      if (!resultado) {
+      if (!botao) {
         return;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
+      const linha = botao.closest("tr.appverbo-sidebar-section-row-v20");
 
-      navegarParaEditarSessaoV17(resultado.chave);
+      if (!linha) {
+        return;
+      }
+
+      const acao = botao.dataset.sidebarSectionActionV20;
+      const chave = linha.dataset.sectionKeyV20 || linha.dataset.sectionKeyV10 || "";
+      const nome = linha.querySelector(".appverbo-sidebar-section-menu-cell-v2");
+      const sistema = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
+      const estado = linha.querySelector(".appverbo-sidebar-section-state-cell-v2");
+
+      if (acao === "view") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        alert(
+          "Nome da sessão: " + (nome ? nome.textContent.trim() : "") +
+          "\nSistema: " + (sistema ? sistema.textContent.trim() : "") +
+          "\nEstado: " + (estado ? estado.textContent.trim() : "")
+        );
+      }
+
+      if (acao === "edit") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete("settings_edit_key");
+        url.searchParams.delete("settings_action");
+        url.searchParams.delete("settings_tab");
+        url.searchParams.delete("success");
+        url.searchParams.delete("error");
+        url.searchParams.set("menu", "administrativo");
+        url.searchParams.set("admin_tab", "sessoes");
+        url.searchParams.set("sidebar_sections_tab", "sessoes");
+        url.searchParams.set("target", "admin-sidebar-sections-card");
+        url.searchParams.set("sidebar_section_edit_key", criarChaveSessoesInativasV20(chave));
+        url.hash = "admin-sidebar-sections-card";
+
+        window.location.href = url.pathname + url.search + url.hash;
+      }
     }, true);
   }
 
   //###################################################################################
-  // (5) INSTALAR E OBSERVAR
+  // (7) INSTALAR OBSERVADORES
   //###################################################################################
 
-  function agendarCorrecoesSessoesV17() {
-    window.setTimeout(corrigirFormularioSessoesV17, 80);
-    window.setTimeout(corrigirFormularioSessoesV17, 250);
-    window.setTimeout(corrigirFormularioSessoesV17, 600);
-    window.setTimeout(corrigirFormularioSessoesV17, 1200);
+  function agendarRenderInativasV20() {
+    window.setTimeout(renderizarCardInativasDoBdV20, 100);
+    window.setTimeout(renderizarCardInativasDoBdV20, 350);
+    window.setTimeout(renderizarCardInativasDoBdV20, 800);
+    window.setTimeout(renderizarCardInativasDoBdV20, 1600);
+    window.setTimeout(renderizarCardInativasDoBdV20, 2600);
   }
 
-  function instalarSessoesV17() {
-    instalarCapturaEditarSessoesV17();
-    agendarCorrecoesSessoesV17();
+  function instalarRenderInativasV20() {
+    instalarEventosInativasV20();
+    agendarRenderInativasV20();
 
     document.addEventListener("click", function () {
-      agendarCorrecoesSessoesV17();
+      agendarRenderInativasV20();
     });
 
-    window.addEventListener("hashchange", agendarCorrecoesSessoesV17);
-    window.addEventListener("popstate", agendarCorrecoesSessoesV17);
+    window.addEventListener("hashchange", agendarRenderInativasV20);
+    window.addEventListener("popstate", agendarRenderInativasV20);
 
     const observer = new MutationObserver(function () {
-      window.clearTimeout(window.__appverboSessoesNoMenuTimerV17);
-      window.__appverboSessoesNoMenuTimerV17 = window.setTimeout(corrigirFormularioSessoesV17, 120);
+      window.clearTimeout(window.__appverboSessoesInativasTimerV20);
+
+      window.__appverboSessoesInativasTimerV20 = window.setTimeout(function () {
+        renderizarCardInativasDoBdV20();
+      }, 180);
     });
 
     observer.observe(document.body, {
@@ -4898,11 +4888,514 @@ tituloBloco.appendChild(descricao);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", instalarSessoesV17);
+    document.addEventListener("DOMContentLoaded", instalarRenderInativasV20);
   }
   else {
-    instalarSessoesV17();
+    instalarRenderInativasV20();
   }
 })();
-// APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END
+// APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_END
+
+// APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZACAO
+  //###################################################################################
+
+  function normalizarTextoSessoesV21(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function criarChaveSessoesV21(valor) {
+    return normalizarTextoSessoesV21(valor)
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function normalizarEstadoSessoesV21(sessao) {
+    if (sessao && sessao.is_active === false) {
+      return "inativo";
+    }
+
+    const status = normalizarTextoSessoesV21(
+      sessao ? (sessao.status || sessao.status_label || "") : ""
+    );
+
+    if (["inativo", "inactive", "0", "false", "nao", "não", "off"].includes(status)) {
+      return "inativo";
+    }
+
+    return "ativo";
+  }
+
+  function labelSistemaSessoesV21(valor, fallback) {
+    const sistema = normalizarTextoSessoesV21(valor);
+
+    if (sistema === "owner") {
+      return "Owner";
+    }
+
+    if (sistema === "legado") {
+      return "Legado";
+    }
+
+    return fallback || "Owner e Legado";
+  }
+
+  //###################################################################################
+  // (2) LIMPAR URL DE SESSOES
+  //###################################################################################
+
+  function urlEhContextoSessoesV21(url) {
+    return url.searchParams.get("admin_tab") === "sessoes" ||
+      url.searchParams.get("sidebar_sections_tab") === "sessoes" ||
+      url.searchParams.get("target") === "admin-sidebar-sections-card" ||
+      url.searchParams.has("sidebar_section_edit_key") ||
+      window.location.hash === "#admin-sidebar-sections-card";
+  }
+
+  function limparUrlSessoesV21() {
+    const url = new URL(window.location.href);
+
+    if (!urlEhContextoSessoesV21(url)) {
+      return;
+    }
+
+    let alterou = false;
+
+    [
+      "dynamic_process_section",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "sidebar_section_return_url",
+      "appverbo_after_save"
+    ].forEach(function (parametro) {
+      if (url.searchParams.has(parametro)) {
+        url.searchParams.delete(parametro);
+        alterou = true;
+      }
+    });
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+
+    if (url.hash !== "#admin-sidebar-sections-card") {
+      url.hash = "admin-sidebar-sections-card";
+      alterou = true;
+    }
+
+    if (alterou) {
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    }
+  }
+
+  function obterUrlEditarSessaoV21(chave) {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete("dynamic_process_section");
+    url.searchParams.delete("settings_edit_key");
+    url.searchParams.delete("settings_action");
+    url.searchParams.delete("settings_tab");
+    url.searchParams.delete("sidebar_section_return_url");
+    url.searchParams.delete("appverbo_after_save");
+    url.searchParams.delete("success");
+    url.searchParams.delete("error");
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.searchParams.set("sidebar_section_edit_key", criarChaveSessoesV21(chave));
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  function obterUrlRetornoSessaoV21() {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete("dynamic_process_section");
+    url.searchParams.delete("settings_edit_key");
+    url.searchParams.delete("settings_action");
+    url.searchParams.delete("settings_tab");
+    url.searchParams.delete("sidebar_section_return_url");
+    url.searchParams.delete("sidebar_section_edit_key");
+    url.searchParams.delete("appverbo_after_save");
+    url.searchParams.delete("success");
+    url.searchParams.delete("error");
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  //###################################################################################
+  // (3) CARREGAR SESSOES DO BD
+  //###################################################################################
+
+  async function carregarSessoesDoBdV21() {
+    try {
+      const response = await fetch("/settings/menu/sidebar-sections-data", {
+        headers: {
+          Accept: "application/json"
+        },
+        credentials: "same-origin"
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+
+        if (payload && Array.isArray(payload.sections)) {
+          return payload.sections;
+        }
+      }
+    }
+    catch (error) {
+      console.warn("APPVERBO V21: falha ao carregar sessões do BD.", error);
+    }
+
+    const script = document.getElementById("appverbo-sidebar-section-options-v2") ||
+      document.getElementById("appverbo-sidebar-section-options-v1");
+
+    if (!script) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(script.textContent || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    catch (error) {
+      return [];
+    }
+  }
+
+  function normalizarSessaoV21(sessao) {
+    if (!sessao || typeof sessao !== "object") {
+      return null;
+    }
+
+    const label = String(sessao.label || sessao.name || sessao.title || "").trim();
+    const key = criarChaveSessoesV21(sessao.key || sessao.section_key || label);
+
+    if (!label || !key) {
+      return null;
+    }
+
+    const status = normalizarEstadoSessoesV21(sessao);
+    const sistema = String(sessao.visibility_scope_mode || sessao.scope_mode || "all").trim() || "all";
+
+    return {
+      key: key,
+      label: label,
+      visibility_scope_mode: sistema,
+      visibility_scope_label: sessao.visibility_scope_label || labelSistemaSessoesV21(sistema, ""),
+      status: status,
+      is_active: status === "ativo",
+      status_label: status === "inativo" ? "Inativo" : "Ativo"
+    };
+  }
+
+  //###################################################################################
+  // (4) RENDERIZAR CARD DE INATIVAS
+  //###################################################################################
+
+  function criarBotaoAcaoV21(tipo, titulo, texto) {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "appverbo-sidebar-section-action-btn-v2 appverbo-sidebar-section-action-btn-v21";
+    botao.dataset.sidebarSectionActionV21 = tipo;
+    botao.title = titulo;
+    botao.setAttribute("aria-label", titulo);
+    botao.textContent = texto;
+    return botao;
+  }
+
+  function criarLinhaInativaV21(sessao) {
+    const tr = document.createElement("tr");
+    tr.className = "appverbo-sidebar-section-row-v2 appverbo-sidebar-section-row-v10 appverbo-sidebar-section-row-v21";
+    tr.dataset.sectionKeyV21 = sessao.key;
+    tr.dataset.sectionKeyV10 = sessao.key;
+
+    const tdMenu = document.createElement("td");
+    tdMenu.className = "appverbo-sidebar-section-menu-cell-v2";
+    tdMenu.textContent = sessao.label;
+
+    const tdSistema = document.createElement("td");
+    tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
+    tdSistema.textContent = sessao.visibility_scope_label || labelSistemaSessoesV21(sessao.visibility_scope_mode, "");
+
+    const tdEstado = document.createElement("td");
+    tdEstado.className = "appverbo-sidebar-section-state-cell-v2";
+
+    const badge = document.createElement("span");
+    badge.className = "appverbo-sidebar-section-state-badge-v2 appverbo-sidebar-section-state-badge-inativo-v21";
+    badge.textContent = "Inativo";
+
+    tdEstado.appendChild(badge);
+
+    const tdAcoes = document.createElement("td");
+    tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
+
+    const actions = document.createElement("div");
+    actions.className = "appverbo-sidebar-section-actions-v2";
+    actions.appendChild(criarBotaoAcaoV21("view", "Visualizar detalhes", "👁"));
+    actions.appendChild(criarBotaoAcaoV21("edit", "Editar sessão", "✎"));
+
+    tdAcoes.appendChild(actions);
+
+    tr.appendChild(tdMenu);
+    tr.appendChild(tdSistema);
+    tr.appendChild(tdEstado);
+    tr.appendChild(tdAcoes);
+
+    return tr;
+  }
+
+  function criarTabelaInativasV21(sessoesInativas) {
+    const wrap = document.createElement("div");
+    wrap.className = "appverbo-sidebar-sections-table-wrap-v2 appverbo-sidebar-sections-table-wrap-v21";
+
+    const table = document.createElement("table");
+    table.className = "appverbo-sidebar-sections-table-v2 appverbo-sidebar-sections-table-v21";
+
+    const thead = document.createElement("thead");
+    thead.innerHTML = "<tr><th>MENU LATERAL</th><th>SISTEMA</th><th>ESTADO</th><th>AÇÕES</th></tr>";
+
+    const tbody = document.createElement("tbody");
+    tbody.className = "appverbo-sidebar-sections-body-v2 appverbo-sidebar-sections-body-v21";
+
+    sessoesInativas.forEach(function (sessao) {
+      tbody.appendChild(criarLinhaInativaV21(sessao));
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    return wrap;
+  }
+
+  function removerInativasDoCardPrincipalV21(sessoesInativas) {
+    const cardAtivas = document.getElementById("admin-sidebar-sections-card");
+
+    if (!cardAtivas) {
+      return;
+    }
+
+    const chavesInativas = new Set(
+      sessoesInativas.map(function (sessao) {
+        return criarChaveSessoesV21(sessao.key);
+      })
+    );
+
+    Array.from(cardAtivas.querySelectorAll("tr")).forEach(function (linha) {
+      const datasetKey = linha.dataset.sectionKeyV21 ||
+        linha.dataset.sectionKeyV20 ||
+        linha.dataset.sectionKeyV10 ||
+        linha.dataset.sectionKeyV9 ||
+        linha.dataset.sectionKeyV6 ||
+        linha.dataset.sectionKeyV2 ||
+        "";
+
+      const hiddenKey = linha.querySelector('[name="section_key"]');
+      const key = criarChaveSessoesV21(datasetKey || (hiddenKey ? hiddenKey.value : ""));
+
+      if (key && chavesInativas.has(key)) {
+        linha.remove();
+      }
+    });
+  }
+
+  async function renderizarInativasV21() {
+    limparUrlSessoesV21();
+
+    const url = new URL(window.location.href);
+    const contextoSessoes = url.searchParams.get("admin_tab") === "sessoes" ||
+      url.searchParams.get("sidebar_sections_tab") === "sessoes" ||
+      url.searchParams.get("target") === "admin-sidebar-sections-card" ||
+      document.getElementById("admin-sidebar-sections-card");
+
+    if (!contextoSessoes) {
+      return;
+    }
+
+    const cardAtivas = document.getElementById("admin-sidebar-sections-card");
+
+    if (!cardAtivas || !cardAtivas.parentElement) {
+      return;
+    }
+
+    const sessoesRaw = await carregarSessoesDoBdV21();
+    const sessoes = sessoesRaw.map(normalizarSessaoV21).filter(Boolean);
+    const sessoesInativas = sessoes.filter(function (sessao) {
+      return sessao.status !== "ativo" || sessao.is_active === false;
+    });
+
+    removerInativasDoCardPrincipalV21(sessoesInativas);
+
+    let cardInativas = document.getElementById("admin-sidebar-sections-inactive-card");
+
+    if (!cardInativas) {
+      cardInativas = document.createElement("section");
+      cardInativas.id = "admin-sidebar-sections-inactive-card";
+    }
+
+    cardInativas.className = "card appverbo-sidebar-sections-inactive-card-v21";
+    cardInativas.hidden = false;
+    cardInativas.style.display = "";
+    cardInativas.style.visibility = "";
+
+    if (cardInativas.parentElement !== cardAtivas.parentElement) {
+      cardAtivas.parentElement.insertBefore(cardInativas, cardAtivas.nextSibling);
+    }
+    else if (cardInativas.previousElementSibling !== cardAtivas) {
+      cardAtivas.parentElement.insertBefore(cardInativas, cardAtivas.nextSibling);
+    }
+
+    cardInativas.innerHTML = "";
+
+    const titulo = document.createElement("h2");
+    titulo.className = "appverbo-sidebar-section-list-main-title-v21";
+    titulo.textContent = "Sessões inativas";
+    cardInativas.appendChild(titulo);
+
+    if (sessoesInativas.length) {
+      cardInativas.appendChild(criarTabelaInativasV21(sessoesInativas));
+    }
+    else {
+      const vazio = document.createElement("p");
+      vazio.className = "appverbo-sidebar-section-empty-text-v21";
+      vazio.textContent = "Sem sessões inativas.";
+      cardInativas.appendChild(vazio);
+    }
+  }
+
+  //###################################################################################
+  // (5) EVENTOS DO CARD
+  //###################################################################################
+
+  function instalarEventosSessoesV21() {
+    if (window.__appverboSessoesEventosV21 === true) {
+      return;
+    }
+
+    window.__appverboSessoesEventosV21 = true;
+
+    document.addEventListener("click", function (event) {
+      const botao = event.target.closest("[data-sidebar-section-action-v21]");
+
+      if (!botao) {
+        return;
+      }
+
+      const linha = botao.closest("tr.appverbo-sidebar-section-row-v21");
+
+      if (!linha) {
+        return;
+      }
+
+      const acao = botao.dataset.sidebarSectionActionV21;
+      const chave = linha.dataset.sectionKeyV21 || "";
+      const nome = linha.querySelector(".appverbo-sidebar-section-menu-cell-v2");
+      const sistema = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
+      const estado = linha.querySelector(".appverbo-sidebar-section-state-cell-v2");
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (acao === "view") {
+        alert(
+          "Nome da sessão: " + (nome ? nome.textContent.trim() : "") +
+          "\nSistema: " + (sistema ? sistema.textContent.trim() : "") +
+          "\nEstado: " + (estado ? estado.textContent.trim() : "")
+        );
+        return;
+      }
+
+      if (acao === "edit") {
+        window.location.href = obterUrlEditarSessaoV21(chave);
+      }
+    }, true);
+
+    document.addEventListener("submit", function (event) {
+      const form = event.target;
+
+      if (!form || !String(form.getAttribute("action") || "").includes("/settings/menu/sidebar-section-save")) {
+        return;
+      }
+
+      let returnInput = form.querySelector('input[name="sidebar_section_return_url"]');
+
+      if (!returnInput) {
+        returnInput = document.createElement("input");
+        returnInput.type = "hidden";
+        returnInput.name = "sidebar_section_return_url";
+        form.appendChild(returnInput);
+      }
+
+      returnInput.value = obterUrlRetornoSessaoV21();
+    }, true);
+  }
+
+  //###################################################################################
+  // (6) INSTALAR
+  //###################################################################################
+
+  function agendarRenderV21() {
+    window.setTimeout(renderizarInativasV21, 80);
+    window.setTimeout(renderizarInativasV21, 250);
+    window.setTimeout(renderizarInativasV21, 650);
+    window.setTimeout(renderizarInativasV21, 1300);
+    window.setTimeout(renderizarInativasV21, 2400);
+  }
+
+  function instalarV21() {
+    limparUrlSessoesV21();
+    instalarEventosSessoesV21();
+    agendarRenderV21();
+
+    document.addEventListener("click", function () {
+      agendarRenderV21();
+    });
+
+    window.addEventListener("hashchange", agendarRenderV21);
+    window.addEventListener("popstate", agendarRenderV21);
+
+    const observer = new MutationObserver(function () {
+      window.clearTimeout(window.__appverboSessoesRenderV21Timer);
+      window.__appverboSessoesRenderV21Timer = window.setTimeout(renderizarInativasV21, 160);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "hidden", "style", "aria-selected", "aria-hidden"]
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", instalarV21);
+  }
+  else {
+    instalarV21();
+  }
+})();
+// APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END
 
