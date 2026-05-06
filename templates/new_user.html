@@ -2117,13 +2117,13 @@
 
         {% if current_user_can_manage_all_entities %}
         <section id="admin-account-create-card" class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1" data-menu-scope="administrativo">
-          <details class="admin-create-collapse">
-            <summary class="appverbo-subprocess-create-trigger-v1">
-              <span class="admin-create-toggle-icon" aria-hidden="true"></span>
-              <span>Criar menu</span>
-            </summary>
-            <div class="admin-create-body">
-              <form method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
+          <div id="btn-create-menu-container">
+            <button type="button" class="appverbo-subprocess-create-trigger-v1" id="btn-create-menu" onclick="document.getElementById('btn-create-menu-container').style.display='none'; document.getElementById('admin-menu-form-container').style.display='block'; document.getElementById('admin-menu-form').reset();">
+              Criar menu
+            </button>
+          </div>
+          <div id="admin-menu-form-container" style="display: none;">
+            <form id="admin-menu-form" method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
                 <input type="hidden" name="redirect_menu" value="administrativo">
                 <input type="hidden" name="redirect_target" value="#admin-account-status-card">
                 <div class="admin-subprocess-grid-v1">
@@ -2146,17 +2146,16 @@
                     </select>
                   </div>
                 </div>
-                <div class="form-action-row admin-subprocess-actions-v1">
+                <div class="form-action-row admin-subprocess-actions-v1" style="justify-content: flex-start;">
                   <button type="submit" class="action-btn">Guardar</button>
                   <button
                     type="button"
                     class="action-btn-cancel"
-                    onclick="const detailsEl = this.closest('details'); if(detailsEl){detailsEl.open=false;} const form=this.closest('form'); if(form){form.reset();}"
+                    onclick="document.getElementById('admin-menu-form-container').style.display='none'; document.getElementById('btn-create-menu-container').style.display='block';"
                   >Cancelar</button>
                 </div>
               </form>
             </div>
-          </details>
         </section>
         {% endif %}
 
@@ -2165,9 +2164,9 @@
 
         <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
           <div class="profile-card-header">
-            <h2>Menus criados</h2>
+            <h2>Menus do sistema</h2>
           </div>
-          <p>Processos disponíveis nesta pasta do menu lateral.</p>
+          <p>Processos ativos e disponíveis nesta pasta do menu lateral.</p>
           {% if settings_success and initial_menu == "configuracao" %}
             <div class="alert ok">{{ settings_success }}</div>
           {% endif %}
@@ -2187,18 +2186,14 @@
             </thead>
             <tbody>
               {% for row in sidebar_menu_settings %}
-                {% if not row.is_deleted %}
+                {% if not row.is_deleted and row.is_active %}
                 <tr>
                   <td>{{ row.label }}</td>
                   {% if current_entity_scope == "owner" %}
                   <td>{{ row.visibility_scope_label }}</td>
                   {% endif %}
                   <td>
-                    {% if row.is_active and not row.is_deleted %}
-                      <span class="entity-status entity-status-active">Ativo</span>
-                    {% else %}
-                      <span class="entity-status entity-status-inactive">Inativo</span>
-                    {% endif %}
+                    <span class="entity-status entity-status-active">Ativo</span>
                   </td>
                   <td>
                     <div class="table-actions">
@@ -2252,7 +2247,7 @@
                       </span>
                       {% endif %}
                       {% endif %}
-                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      {% if row.key in ['home', 'administrativo'] %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
                         title="Menu obrigatório"
@@ -2264,8 +2259,8 @@
                       <a
                         class="table-icon-btn"
                         href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
-                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
-                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        title="Ocultar menu"
+                        aria-label="Ocultar menu"
                       >
                         &#128065;
                       </a>
@@ -2278,19 +2273,65 @@
                       >
                         &#9998;
                       </a>
-                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+
+        <section id="admin-menu-inactive-card" class="card" data-menu-scope="administrativo,configuracao">
+          <div class="profile-card-header">
+            <h2>Menus inativos</h2>
+          </div>
+          <table id="menu-settings-inactive-table">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sidebar_menu_settings %}
+                {% if not row.is_deleted and not row.is_active %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    <span class="entity-status entity-status-inactive">Inativo</span>
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="Exibir menu"
+                        aria-label="Exibir menu"
+                      >
+                        &#128065;
+                      </a>
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete %}
                       <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="redirect_menu" value="administrativo">
-                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
-                        <button
-                          type="submit"
-                          class="table-icon-btn table-icon-btn-danger"
-                          title="Excluir menu"
-                          aria-label="Excluir menu"
-                        >
-                          &#128465;
-                        </button>
+                        <input type="hidden" name="redirect_target" value="#admin-menu-inactive-card">
+                        <button type="submit" class="table-icon-btn table-icon-btn-danger" title="Excluir menu" aria-label="Excluir menu">&#128465;</button>
                       </form>
                       {% endif %}
                     </div>
