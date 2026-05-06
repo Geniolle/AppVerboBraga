@@ -2679,11 +2679,19 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "settings-menu-edit-card" ||
         card.id === "admin-account-status-card"
       );
+    const isMenuGroupedBlock =
+      menuKey === "administrativo" &&
+      (targetSelector === "#admin-account-status-card" || targetSelector === "#admin-account-create-card") &&
+      (
+        card.id === "admin-account-create-card" ||
+        card.id === "admin-account-status-card"
+      );
     card.style.display =
       targetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock
+      isSettingsGroupedBlock ||
+      isMenuGroupedBlock
         ? ""
         : "none";
   });
@@ -4179,6 +4187,19 @@ function renderSubmenu(menuKey) {
     }
     link.addEventListener("click", (event) => {
       event.preventDefault();
+
+      if (menuKey === "administrativo" && item.target === "#admin-sidebar-sections-card") {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.pathname = "/users/new";
+        nextUrl.searchParams.set("menu", "administrativo");
+        nextUrl.searchParams.set("admin_tab", "sessoes");
+        nextUrl.searchParams.set("sidebar_sections_tab", "sessoes");
+        nextUrl.searchParams.set("target", "admin-sidebar-sections-card");
+        nextUrl.hash = "#admin-sidebar-sections-card";
+        window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
+        return;
+      }
+
       closeAllProfileEdits();
       selectedTargetByMenu[menuKey] = item.target;
       setActiveSubmenu(item.target, link);

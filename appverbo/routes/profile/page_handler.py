@@ -250,9 +250,9 @@ def new_user_page(
     if not resolved_menu:
         resolved_menu = "home"
     resolved_admin_tab = admin_tab.strip().lower()
-    if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes"}:
+    if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "menu"}:
         resolved_admin_tab = "entidade"
-    if resolved_admin_tab == "definicoes":
+    if resolved_admin_tab in {"definicoes", "menu"}:
         resolved_admin_tab = "contas"
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()

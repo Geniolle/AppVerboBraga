@@ -2116,17 +2116,14 @@
         {% endif %}
 
         {% if current_user_can_manage_all_entities %}
-        <section id="admin-account-create-card" class="card" data-menu-scope="administrativo">
-          <div class="profile-card-header">
-            <h2>Criar pasta no menu lateral</h2>
-            <a class="table-link-btn" href="#admin-account-status-card">Ver lista</a>
-          </div>
-          <form method="post" action="/settings/menu/create">
+        <section id="admin-account-create-card" class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1" data-menu-scope="administrativo">
+          <h2>Criar menu</h2>
+          <form method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
             <input type="hidden" name="redirect_menu" value="administrativo">
             <input type="hidden" name="redirect_target" value="#admin-account-status-card">
-            <div class="grid settings-general-grid">
-              <div class="field">
-                <label for="settings_create_menu_label">Nome da pasta *</label>
+            <div class="admin-subprocess-grid-v1">
+              <div class="field admin-subprocess-field-v1">
+                <label for="settings_create_menu_label">Nome do menu *</label>
                 <input
                   id="settings_create_menu_label"
                   name="menu_label"
@@ -2135,8 +2132,8 @@
                   required
                 >
               </div>
-              <div class="field">
-                <label for="settings_create_menu_visibility_scope">Exibir no sistema</label>
+              <div class="field admin-subprocess-field-v1">
+                <label for="settings_create_menu_visibility_scope">Sistema *</label>
                 <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
                   <option value="all" selected>Owner e Legado</option>
                   <option value="owner">Owner</option>
@@ -2144,8 +2141,13 @@
                 </select>
               </div>
             </div>
-            <div class="form-action-row">
-              <button type="submit" class="action-btn">Criar pasta</button>
+            <div class="form-action-row admin-subprocess-actions-v1">
+              <button type="submit" class="action-btn">Guardar</button>
+              <button
+                type="button"
+                class="action-btn-cancel"
+                onclick="const form=this.closest('form'); if(form){form.reset();} window.location.hash='#admin-account-status-card';"
+              >Cancelar</button>
             </div>
           </form>
         </section>
@@ -2154,12 +2156,9 @@
 
 
 
-        <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
+        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
           <div class="profile-card-header">
-            <h2>Configuração</h2>
-            {% if current_user_can_manage_all_entities %}
-            <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
-            {% endif %}
+            <h2>Menus criados</h2>
           </div>
           <p>Processos disponíveis nesta pasta do menu lateral.</p>
           {% if settings_success and initial_menu == "configuracao" %}
@@ -2439,8 +2438,8 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v1"></script>
-  <script src="/static/js/new_user.js?v=20260506-admin-table-search-pagination-v3"></script>
+  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
+  <script src="/static/js/new_user.js?v=20260506-menu-create-block-v5"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

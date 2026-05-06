@@ -47,7 +47,7 @@
     const inputEl = document.createElement("input");
     inputEl.type = "search";
     inputEl.className = "admin-list-search-input-v1";
-    inputEl.placeholder = "Pesquisar por nome";
+    inputEl.placeholder = "Procurar";
     inputEl.setAttribute("aria-label", "Pesquisar por nome");
 
     searchWrapEl.appendChild(inputEl);
