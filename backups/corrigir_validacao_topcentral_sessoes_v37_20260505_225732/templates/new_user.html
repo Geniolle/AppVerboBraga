@@ -7,13 +7,13 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260505-sessoes-campos-bd-v4">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260505-bloquear-sessoes-sidebar-legado-v39">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260505-topcentral-acima-sessoes-v36">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-topcentral-acima-sessoes-v36" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -27,11 +27,11 @@
         <section id="menu-tabs-card" class="card menu-tabs-card">
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
         </section>
-        <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_START -->
+        <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V36_START -->
         {% if admin_tab == "sessoes" and admin_subprocess_state %}
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
         {% endif %}
-        <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
+        <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V36_END -->
 
 
 <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
@@ -577,7 +577,7 @@
 
             <div class="entity-create-toolbar">
             <details id="create-user-collapse" class="entity-create-collapse" {% if errors %}open{% endif %}>
-              <summary class="appverbo-subprocess-create-trigger-v1">
+              <summary>
                 <span>Criar utilizador</span>
               </summary>
               <div class="entity-create-body">
@@ -778,7 +778,7 @@
             <div class="alert ok">{{ entity_success }}</div>
           {% endif %}
           <details class="entity-create-collapse" {% if entity_error %}open{% endif %}>
-            <summary class="appverbo-subprocess-create-trigger-v1">
+            <summary>
               <span class="entity-create-toggle-icon" aria-hidden="true"></span>
               <span>Criar entidade</span>
             </summary>
@@ -2439,7 +2439,8 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/new_user.js?v=20260504-success-auto-dismiss-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-topcentral-acima-sessoes-v36"></script>
+<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-topcentral-acima-sessoes-v36"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260503-respect-backend-post-save-v1"></script>

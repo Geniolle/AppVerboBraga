@@ -473,6 +473,11 @@ body {
   align-items: flex-start;
   gap: 8px;
   flex-wrap: wrap;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
 }
 
    .entity-create-toolbar > * {
@@ -5560,7 +5565,6 @@ input.action-btn-cancel,
 
 /* APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_V2_START */
 
-.entity-create-toolbar,
 .appverbo-create-entry-block-v1 {
   border: 1px solid #d5dceb;
   background: #f7faff;
@@ -5597,7 +5601,6 @@ input.action-btn-cancel,
 }
 
 .appverbo-standard-create-card-v4,
-.entity-create-toolbar,
 .appverbo-sessoes-create-card-v3,
 #admin-sidebar-sections-create-card {
   width: 100% !important;
@@ -5614,14 +5617,12 @@ input.action-btn-cancel,
 }
 
 .appverbo-standard-create-card-v4 > *,
-.entity-create-toolbar > *,
 .appverbo-sessoes-create-card-v3 > *,
 #admin-sidebar-sections-create-card > * {
   flex: 0 0 auto;
 }
 
 .appverbo-standard-create-card-v4 .action-btn,
-.entity-create-toolbar .action-btn,
 .appverbo-sessoes-create-card-v3 .action-btn,
 #admin-sidebar-sections-create-card .action-btn {
   align-self: center !important;

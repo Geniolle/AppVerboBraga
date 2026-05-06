@@ -36,18 +36,7 @@
 }
 
 .admin-subprocess-create-collapse-v1 > summary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 112px;
-  min-height: 38px;
-  padding: 0 16px;
-  border-radius: 7px;
-  background: #0f56c5;
-  color: #ffffff;
-  font-weight: 800;
-  cursor: pointer;
-  list-style: none;
+  min-width: 0;
 }
 
 .admin-subprocess-create-collapse-v1 > summary::-webkit-details-marker {

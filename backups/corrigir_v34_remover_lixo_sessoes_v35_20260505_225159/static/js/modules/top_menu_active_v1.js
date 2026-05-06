@@ -120,7 +120,7 @@
     const mapa = {
       utilizador: "/users/new?menu=administrativo&admin_tab=utilizador",
       entidade: "/users/new?menu=administrativo&admin_tab=entidade",
-      menu: "/users/new?menu=administrativo&admin_tab=menu",
+      menu: "/users/new?menu=administrativo&admin_tab=contas",
       sessoes: "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     };
 
@@ -154,7 +154,7 @@
       return "sessoes";
     }
 
-    if (adminTab === "menu" || adminTab === "contas" || adminTab === "definicoes") {
+    if (adminTab === "contas" || adminTab === "definicoes") {
       return "menu";
     }
 

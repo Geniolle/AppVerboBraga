@@ -7,13 +7,13 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260505-sessoes-campos-bd-v4">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260505-bloquear-sessoes-sidebar-legado-v39">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260505-corrigir-ordem-abas-sessoes-v5">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-corrigir-ordem-abas-sessoes-v5" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -27,14 +27,18 @@
         <section id="menu-tabs-card" class="card menu-tabs-card">
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
         </section>
-        <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_START -->
+
+<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
         {% if admin_tab == "sessoes" and admin_subprocess_state %}
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
         {% endif %}
-        <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
+        <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
 
 
-<!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
+
+
+
+        <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
         <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_END -->
 
 
@@ -577,7 +581,7 @@
 
             <div class="entity-create-toolbar">
             <details id="create-user-collapse" class="entity-create-collapse" {% if errors %}open{% endif %}>
-              <summary class="appverbo-subprocess-create-trigger-v1">
+              <summary>
                 <span>Criar utilizador</span>
               </summary>
               <div class="entity-create-body">
@@ -778,7 +782,7 @@
             <div class="alert ok">{{ entity_success }}</div>
           {% endif %}
           <details class="entity-create-collapse" {% if entity_error %}open{% endif %}>
-            <summary class="appverbo-subprocess-create-trigger-v1">
+            <summary>
               <span class="entity-create-toggle-icon" aria-hidden="true"></span>
               <span>Criar entidade</span>
             </summary>
@@ -2150,6 +2154,150 @@
         </section>
         {% endif %}
 
+        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo">
+          <div class="profile-card-header">
+            <h2>Definições</h2>
+            {% if current_user_can_manage_all_entities %}
+            <div class="table-actions">
+              <a class="table-link-btn" href="#admin-sidebar-sections-card">Sessoes do sidebar</a>
+              <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+            </div>
+            {% endif %}
+          </div>
+          <p>Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.</p>
+          {% if settings_success %}
+            <div class="alert ok">{{ settings_success }}</div>
+          {% endif %}
+          {% if settings_error %}
+            <div class="alert error">{{ settings_error }}</div>
+          {% endif %}
+          <table id="menu-settings-table">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sidebar_menu_settings %}
+                {% if not row.is_deleted %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    {% if row.is_active and not row.is_deleted %}
+                      <span class="entity-status entity-status-active">Ativo</span>
+                    {% else %}
+                      <span class="entity-status entity-status-inactive">Inativo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      {% if current_user_can_manage_all_entities %}
+                      {% if row.can_move_up %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="up">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Subir pasta"
+                          aria-label="Subir pasta"
+                        >
+                          &#8593;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Já está no topo"
+                        aria-label="Já está no topo"
+                      >
+                        &#8593;
+                      </span>
+                      {% endif %}
+                      {% if row.can_move_down %}
+                      <form method="post" action="/settings/menu/move">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="direction" value="down">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn"
+                          title="Descer pasta"
+                          aria-label="Descer pasta"
+                        >
+                          &#8595;
+                        </button>
+                      </form>
+                      {% else %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Já está no fim"
+                        aria-label="Já está no fim"
+                      >
+                        &#8595;
+                      </span>
+                      {% endif %}
+                      {% endif %}
+                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      <span
+                        class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório"
+                      >
+                        &#128065;
+                      </span>
+                      {% else %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                      >
+                        &#128065;
+                      </a>
+                      {% endif %}
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                        <input type="hidden" name="menu_key" value="{{ row.key }}">
+                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <button
+                          type="submit"
+                          class="table-icon-btn table-icon-btn-danger"
+                          title="Excluir menu"
+                          aria-label="Excluir menu"
+                        >
+                          &#128465;
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
 
 
 
@@ -2439,7 +2587,8 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/new_user.js?v=20260504-success-auto-dismiss-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
+<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260503-respect-backend-post-save-v1"></script>

@@ -988,3 +988,27 @@ Na aba **Sessões**, a ordem visual correta é:
    - classes `appverbo-sessoes-*`;
 5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
 <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
+
+<!-- APPVERBO_SUBPROCESS_CREATE_TRIGGER_STANDARD_V1_START -->
+## Regra global para botao Criar dos subprocessos administrativos
+
+Todo subprocesso administrativo deve usar o mesmo padrao visual e tecnico no botao de criacao.
+
+Regras obrigatorias:
+
+1. O texto do botao deve seguir sempre `Criar + nome do subprocesso`.
+2. O trigger visual de criacao deve usar a classe `appverbo-subprocess-create-trigger-v1`.
+3. Esse trigger deve ficar no bloco/card superior de criacao, separado da tabela/lista inferior.
+4. O trigger deve manter o padrao:
+   - altura: `var(--ui-control-height)`;
+   - largura: automatica pelo texto;
+   - padding horizontal: `var(--ui-button-padding-x)`;
+   - fundo: `#0e5abc`;
+   - borda: `1px solid #2458c3`;
+   - texto branco.
+5. O hover deve manter o padrao:
+   - fundo e borda `#1c67c9`.
+6. Em novos subprocessos, nao criar estilo local novo para esse trigger sem necessidade funcional real.
+7. O macro `templates/macros/admin_subprocess.html` deve ser a referencia para novos subprocessos server-render.
+8. Subprocessos legados fora do macro devem convergir para esse mesmo trigger padrao.
+<!-- APPVERBO_SUBPROCESS_CREATE_TRIGGER_STANDARD_V1_END -->

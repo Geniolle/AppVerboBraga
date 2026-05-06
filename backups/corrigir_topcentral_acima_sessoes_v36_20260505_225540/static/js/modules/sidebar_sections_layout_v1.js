@@ -1,42 +1,6 @@
 (function () {
   "use strict";
 
-// APPVERBO_SESSOES_HARD_STOP_LEGADO_V39_START
-  function devePararLayoutLegadoSessoes_v39() {
-    try {
-      const url = new URL(window.location.href);
-      const adminTab = String(url.searchParams.get("admin_tab") || "").trim().toLowerCase();
-      const sidebarTab = String(url.searchParams.get("sidebar_sections_tab") || "").trim().toLowerCase();
-      const nativeSessoesCards = document.querySelectorAll('[data-admin-subprocess="sessoes"]');
-      const nativeSessoesAtiva = Array.prototype.some.call(nativeSessoesCards, function (card) {
-        if (!card) {
-          return false;
-        }
-
-        if (!card.hidden) {
-          return true;
-        }
-
-        if (typeof window.getComputedStyle === "function") {
-          const style = window.getComputedStyle(card);
-          return style.display !== "none" && style.visibility !== "hidden";
-        }
-
-        return false;
-      });
-
-      return adminTab === "sessoes" || sidebarTab === "sessoes" || nativeSessoesAtiva;
-    } catch (erro) {
-      return false;
-    }
-  }
-
-  if (devePararLayoutLegadoSessoes_v39()) {
-    return;
-  }
-  // APPVERBO_SESSOES_HARD_STOP_LEGADO_V39_END
-
-
   //###################################################################################
   // (1) NORMALIZACAO
   //###################################################################################
@@ -159,6 +123,16 @@
   //###################################################################################
 
   function existeServerRenderSessoes_v32() {
+    const porEstruturaNova = Boolean(
+      document.querySelector('[data-admin-tab-pane="sessoes"]') ||
+      document.querySelector('[data-admin-subprocess-key="sessoes"]') ||
+      document.querySelector('[data-subprocess-key="sessoes"]')
+    );
+
+    if (porEstruturaNova) {
+      return true;
+    }
+
     try {
       const url = new URL(window.location.href);
       const adminTab = String(url.searchParams.get("admin_tab") || "").trim().toLowerCase();
@@ -170,12 +144,18 @@
     } catch (erro) {
     }
 
-    return Boolean(
-      document.querySelector('[data-admin-subprocess="sessoes"]') ||
-      document.querySelector('[data-admin-subprocess-key="sessoes"]') ||
-      document.querySelector('[data-subprocess-key="sessoes"]') ||
-      document.querySelector('[data-admin-tab-pane="sessoes"]')
-    );
+    const cards = Array.from(document.querySelectorAll("section.card, section, .card"));
+
+    return cards.some(function (card) {
+      const texto = String(card && card.textContent || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+
+      return texto.indexOf("sessoes ativas") >= 0 ||
+        texto.indexOf("sessoes inativas") >= 0;
+    });
   }
 
   //###################################################################################

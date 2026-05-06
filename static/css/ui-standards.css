@@ -124,7 +124,6 @@ input.action-btn-cancel,
 }
 
 .appverbo-standard-create-card-v4,
-.entity-create-toolbar,
 .appverbo-sessoes-create-card-v3,
 #admin-sidebar-sections-create-card {
   width: 100% !important;
@@ -141,14 +140,12 @@ input.action-btn-cancel,
 }
 
 .appverbo-standard-create-card-v4 > *,
-.entity-create-toolbar > *,
 .appverbo-sessoes-create-card-v3 > *,
 #admin-sidebar-sections-create-card > * {
   flex: 0 0 auto;
 }
 
 .appverbo-standard-create-card-v4 .action-btn,
-.entity-create-toolbar .action-btn,
 .appverbo-sessoes-create-card-v3 .action-btn,
 #admin-sidebar-sections-create-card .action-btn {
   align-self: center !important;
@@ -183,3 +180,38 @@ input.action-btn-cancel,
 }
 
 /* APPVERBO_CREATE_CARD_STANDARD_V4_END */
+
+/* APPVERBO_SUBPROCESS_CREATE_TRIGGER_STANDARD_V1_START */
+
+.appverbo-subprocess-create-trigger-v1 {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ui-control-height);
+  min-height: var(--ui-control-height);
+  width: auto;
+  margin: 0;
+  padding: 0 var(--ui-button-padding-x);
+  border-radius: var(--ui-button-border-radius);
+  border: 1px solid #2458c3;
+  background: #0e5abc;
+  color: #ffffff;
+  font-size: var(--ui-button-font-size);
+  font-weight: var(--ui-button-font-weight);
+  line-height: var(--ui-button-line-height);
+  transition: background 0.15s ease, border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.appverbo-subprocess-create-trigger-v1:hover {
+  background: #1c67c9;
+  border-color: #1c67c9;
+}
+
+.appverbo-subprocess-create-trigger-v1::-webkit-details-marker {
+  display: none;
+}
+
+/* APPVERBO_SUBPROCESS_CREATE_TRIGGER_STANDARD_V1_END */
