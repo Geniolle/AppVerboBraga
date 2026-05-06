@@ -2146,7 +2146,7 @@
               <button
                 type="button"
                 class="action-btn-cancel"
-                onclick="const form=this.closest('form'); if(form){form.reset();} window.location.hash='#admin-account-status-card';"
+                onclick="const form=this.closest('form'); if(form){form.reset();} if(window.menuConfig && window.activateMenuTarget){window.activateMenuTarget('administrativo', '#admin-account-status-card');} else {window.location.hash='#admin-account-status-card';}"
               >Cancelar</button>
             </div>
           </form>

@@ -2679,19 +2679,11 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "settings-menu-edit-card" ||
         card.id === "admin-account-status-card"
       );
-    const isMenuGroupedBlock =
-      menuKey === "administrativo" &&
-      (targetSelector === "#admin-account-status-card" || targetSelector === "#admin-account-create-card") &&
-      (
-        card.id === "admin-account-create-card" ||
-        card.id === "admin-account-status-card"
-      );
     card.style.display =
       targetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock ||
-      isMenuGroupedBlock
+      isSettingsGroupedBlock
         ? ""
         : "none";
   });
