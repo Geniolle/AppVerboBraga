@@ -2117,39 +2117,46 @@
 
         {% if current_user_can_manage_all_entities %}
         <section id="admin-account-create-card" class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1" data-menu-scope="administrativo">
-          <h2>Criar menu</h2>
-          <form method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
-            <input type="hidden" name="redirect_menu" value="administrativo">
-            <input type="hidden" name="redirect_target" value="#admin-account-status-card">
-            <div class="admin-subprocess-grid-v1">
-              <div class="field admin-subprocess-field-v1">
-                <label for="settings_create_menu_label">Nome do menu *</label>
-                <input
-                  id="settings_create_menu_label"
-                  name="menu_label"
-                  maxlength="100"
-                  placeholder="Ex.: Assiduidade"
-                  required
-                >
-              </div>
-              <div class="field admin-subprocess-field-v1">
-                <label for="settings_create_menu_visibility_scope">Sistema *</label>
-                <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
-                  <option value="all" selected>Owner e Legado</option>
-                  <option value="owner">Owner</option>
-                  <option value="legado">Legado</option>
-                </select>
-              </div>
+          <details class="admin-create-collapse">
+            <summary class="appverbo-subprocess-create-trigger-v1">
+              <span class="admin-create-toggle-icon" aria-hidden="true"></span>
+              <span>Criar menu</span>
+            </summary>
+            <div class="admin-create-body">
+              <form method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
+                <input type="hidden" name="redirect_menu" value="administrativo">
+                <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                <div class="admin-subprocess-grid-v1">
+                  <div class="field admin-subprocess-field-v1">
+                    <label for="settings_create_menu_label">Nome do menu *</label>
+                    <input
+                      id="settings_create_menu_label"
+                      name="menu_label"
+                      maxlength="100"
+                      placeholder="Ex.: Assiduidade"
+                      required
+                    >
+                  </div>
+                  <div class="field admin-subprocess-field-v1">
+                    <label for="settings_create_menu_visibility_scope">Sistema *</label>
+                    <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
+                      <option value="all" selected>Owner e Legado</option>
+                      <option value="owner">Owner</option>
+                      <option value="legado">Legado</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-action-row admin-subprocess-actions-v1">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <button
+                    type="button"
+                    class="action-btn-cancel"
+                    onclick="const detailsEl = this.closest('details'); if(detailsEl){detailsEl.open=false;} const form=this.closest('form'); if(form){form.reset();}"
+                  >Cancelar</button>
+                </div>
+              </form>
             </div>
-            <div class="form-action-row admin-subprocess-actions-v1">
-              <button type="submit" class="action-btn">Guardar</button>
-              <button
-                type="button"
-                class="action-btn-cancel"
-                onclick="const form=this.closest('form'); if(form){form.reset();} if(window.menuConfig && window.activateMenuTarget){window.activateMenuTarget('administrativo', '#admin-account-status-card');} else {window.location.hash='#admin-account-status-card';}"
-              >Cancelar</button>
-            </div>
-          </form>
+          </details>
         </section>
         {% endif %}
 
@@ -2159,9 +2166,6 @@
         <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
           <div class="profile-card-header">
             <h2>Menus criados</h2>
-            {% if current_user_can_manage_all_entities %}
-            <a class="table-link-btn" href="#admin-account-create-card">Criar menu</a>
-            {% endif %}
           </div>
           <p>Processos disponíveis nesta pasta do menu lateral.</p>
           {% if settings_success and initial_menu == "configuracao" %}
