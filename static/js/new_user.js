@@ -1012,8 +1012,8 @@ function mergeDynamicProcessMenus() {
         const baseItems = [
           { label: "Entidade", target: "#create-entity-card" },
           { label: "Utilizador", target: "#create-user-card" },
-          { label: "Menu", target: "#admin-account-status-card" },
-          { label: "Sessões", target: "#admin-sidebar-sections-card" }
+          { label: "Sessões", target: "#admin-sidebar-sections-card" },
+          { label: "Menu", target: "#admin-account-status-card" }
         ];
         const mergedItems = dynamicItems.filter((item) => {
           const sectionKey = String(item.dynamicProcessSectionKey || "").trim().toLowerCase();
@@ -1872,7 +1872,7 @@ function renderMeuPerfilQuantityGroups() {
           const valueTextEl = document.createElement("strong");
           valueTextEl.className = "personal-value";
           valueTextEl.textContent = normalizeProcessFieldType(fieldMeta.fieldType) === "flag"
-            ? (isTruthyFlagValue(rawValue) ? "Sim" : "NÃ£o")
+            ? (isTruthyFlagValue(rawValue) ? "Sim" : "Não")
             : (rawValue || "-");
 
           valueRowEl.appendChild(valueLabelEl);
@@ -3125,18 +3125,32 @@ function setupTableLimiter(prefix) {
   let pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
   let currentPage = 1;
 
+  function getFilteredRows() {
+    return rows.filter((row) => row.dataset.adminSearchMatchV1 !== "0");
+  }
+
   function getTotalPages() {
-    return Math.max(1, Math.ceil(rows.length / pageSize));
+    const filteredRows = getFilteredRows();
+    return Math.max(1, Math.ceil(filteredRows.length / pageSize));
   }
 
   function render() {
+    const filteredRows = getFilteredRows();
     const totalPages = getTotalPages();
     if (currentPage > totalPages) {
       currentPage = totalPages;
     }
     const start = (currentPage - 1) * pageSize;
     const end = start + pageSize;
-    rows.forEach((row, index) => {
+
+    const filteredRowSet = new Set(filteredRows);
+    rows.forEach((row) => {
+      if (!filteredRowSet.has(row)) {
+        row.style.display = "none";
+      }
+    });
+
+    filteredRows.forEach((row, index) => {
       row.style.display = index >= start && index < end ? "" : "none";
     });
     pageEl.textContent = String(currentPage);
@@ -3164,6 +3178,11 @@ function setupTableLimiter(prefix) {
       return;
     }
     currentPage += 1;
+    render();
+  });
+
+  tableEl.addEventListener("admin-table-filter-changed", () => {
+    currentPage = 1;
     render();
   });
 
@@ -6485,6 +6504,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   function buildPostSaveReturnUrlV3(form) {
     const currentUrl = getCurrentUrlPostSaveV3();
 
+    [
+      "entity_edit_id",
+      "user_edit_id",
+      "settings_edit_key",
+      "settings_action",
+      "sidebar_section_edit_key",
+      "sidebar_section_return_url",
+      "account_edit_id",
+      "entity_view",
+      "user_view"
+    ].forEach(function (paramName) {
+      currentUrl.searchParams.delete(paramName);
+    });
+
     currentUrl.pathname = "/users/new";
 
     const action = getFormActionPostSaveV3(form);
@@ -6541,6 +6574,37 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       if (dynamicSection) {
         currentUrl.searchParams.set("dynamic_process_section", dynamicSection);
       }
+    }
+
+    if (actionLookup.includes("/entities/update")) {
+      currentUrl.searchParams.set("menu", "administrativo");
+      currentUrl.searchParams.set("admin_tab", "entidade");
+      currentUrl.searchParams.set("target", "#create-entity-card");
+      currentUrl.searchParams.delete("dynamic_process_section");
+      currentUrl.searchParams.delete("section_key");
+      currentUrl.hash = "#create-entity-card";
+    } else if (actionLookup.includes("/users/update")) {
+      currentUrl.searchParams.set("menu", "administrativo");
+      currentUrl.searchParams.set("admin_tab", "utilizador");
+      currentUrl.searchParams.set("target", "#create-user-card");
+      currentUrl.searchParams.delete("dynamic_process_section");
+      currentUrl.searchParams.delete("section_key");
+      currentUrl.hash = "#create-user-card";
+    } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
+      currentUrl.searchParams.set("menu", "administrativo");
+      currentUrl.searchParams.set("admin_tab", "sessoes");
+      currentUrl.searchParams.set("sidebar_sections_tab", "sessoes");
+      currentUrl.searchParams.set("target", "#admin-sidebar-sections-card");
+      currentUrl.searchParams.delete("dynamic_process_section");
+      currentUrl.searchParams.delete("section_key");
+      currentUrl.hash = "#admin-sidebar-sections-card";
+    } else if (actionLookup.includes("/settings/menu/save")) {
+      currentUrl.searchParams.set("menu", "administrativo");
+      currentUrl.searchParams.set("admin_tab", "menu");
+      currentUrl.searchParams.set("target", "#admin-account-status-card");
+      currentUrl.searchParams.delete("dynamic_process_section");
+      currentUrl.searchParams.delete("section_key");
+      currentUrl.hash = "#admin-account-status-card";
     }
 
     currentUrl.searchParams.set("appverbo_after_save", "1");
@@ -6903,6 +6967,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const action = getFormActionReturnUrlV4(form);
     const actionLookup = normalizeReturnUrlLookupV4(action);
 
+    [
+      "entity_edit_id",
+      "user_edit_id",
+      "settings_edit_key",
+      "settings_action",
+      "sidebar_section_edit_key",
+      "sidebar_section_return_url",
+      "account_edit_id",
+      "entity_view",
+      "user_view"
+    ].forEach(function (paramName) {
+      url.searchParams.delete(paramName);
+    });
+
     url.pathname = "/users/new";
 
     if (actionLookup.includes("/users/profile/personal")) {
@@ -6933,6 +7011,37 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       if (dynamicSection) {
         url.searchParams.set("dynamic_process_section", dynamicSection);
       }
+    }
+
+    if (actionLookup.includes("/entities/update")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "entidade");
+      url.searchParams.set("target", "#create-entity-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#create-entity-card";
+    } else if (actionLookup.includes("/users/update")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "utilizador");
+      url.searchParams.set("target", "#create-user-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#create-user-card";
+    } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "sessoes");
+      url.searchParams.set("sidebar_sections_tab", "sessoes");
+      url.searchParams.set("target", "#admin-sidebar-sections-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#admin-sidebar-sections-card";
+    } else if (actionLookup.includes("/settings/menu/save")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "menu");
+      url.searchParams.set("target", "#admin-account-status-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#admin-account-status-card";
     }
 
     url.searchParams.set("appverbo_after_save", "1");
@@ -7252,6 +7361,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const url = getCurrentUrlReturnUrlV6();
     const actionLookup = normalizeReturnUrlLookupV6(getFormActionReturnUrlV6(form));
 
+    [
+      "entity_edit_id",
+      "user_edit_id",
+      "settings_edit_key",
+      "settings_action",
+      "sidebar_section_edit_key",
+      "sidebar_section_return_url",
+      "account_edit_id",
+      "entity_view",
+      "user_view"
+    ].forEach(function (paramName) {
+      url.searchParams.delete(paramName);
+    });
+
     url.pathname = "/users/new";
     url.searchParams.set("appverbo_after_save", "1");
 
@@ -7294,6 +7417,37 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (sectionKey) {
       url.searchParams.set("dynamic_process_section", sectionKey);
       url.searchParams.set("section_key", sectionKey);
+    }
+
+    if (actionLookup.includes("/entities/update")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "entidade");
+      url.searchParams.set("target", "#create-entity-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#create-entity-card";
+    } else if (actionLookup.includes("/users/update")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "utilizador");
+      url.searchParams.set("target", "#create-user-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#create-user-card";
+    } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "sessoes");
+      url.searchParams.set("sidebar_sections_tab", "sessoes");
+      url.searchParams.set("target", "#admin-sidebar-sections-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#admin-sidebar-sections-card";
+    } else if (actionLookup.includes("/settings/menu/save")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "menu");
+      url.searchParams.set("target", "#admin-account-status-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#admin-account-status-card";
     }
 
     return url.pathname + url.search + url.hash;

@@ -157,6 +157,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     update_endpoint="/settings/menu/sidebar-section-save",
     save_endpoint="/settings/menu/sidebar-section-save",
     move_endpoint="/settings/menu/sidebar-section-move-one",
+    delete_endpoint="/settings/menu/sidebar-section-delete-one",
     repository_name="sidebar_section",
     repository_class="appverbo.admin_subprocesses.repositories.sidebar_section_repository.SidebarSectionAdminRepository",
     status_field="status",

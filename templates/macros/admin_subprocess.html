@@ -113,14 +113,14 @@
         <input type="hidden" name="section_key" value="{{ row_key }}">
         <input type="hidden" name="direction" value="up">
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">↑</button>
+        <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">&#8593;</button>
       </form>
 
       <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
         <input type="hidden" name="section_key" value="{{ row_key }}">
         <input type="hidden" name="direction" value="down">
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">↓</button>
+        <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">&#8595;</button>
       </form>
     {% endif %}
 
@@ -132,14 +132,36 @@
       data-admin-subprocess-view
       data-view-title="{{ state.config.singular_label }}"
       data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
-    >👁</button>
+    >&#128065;</button>
 
     <a
       class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
       title="Editar"
       aria-label="Editar"
       href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
-    >✎</a>
+    >&#9998;</a>
+
+    {% if status_value != state.config.active_value and state.config.delete_endpoint %}
+      <form
+        method="post"
+        action="{{ state.config.delete_endpoint }}"
+        class="admin-subprocess-inline-form-v1"
+        onsubmit="return confirm('Tem a certeza que pretende eliminar esta sessao?');"
+      >
+        <input
+          type="hidden"
+          name="{% if state.config.key == 'sessoes' %}section_key{% else %}{{ state.config.identity_field }}{% endif %}"
+          value="{{ row_key }}"
+        >
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+        <button
+          type="submit"
+          class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1"
+          title="Eliminar"
+          aria-label="Eliminar"
+        >&#128465;</button>
+      </form>
+    {% endif %}
   </div>
 {% endmacro %}
 
@@ -161,7 +183,7 @@
               {% for column in state.config.columns %}
                 <th class="{{ column.css_class }}">{{ column.label }}</th>
               {% endfor %}
-              <th>AÇÕES</th>
+              <th>A&Ccedil;&Otilde;ES</th>
             </tr>
           </thead>
           <tbody>

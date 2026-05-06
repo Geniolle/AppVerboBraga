@@ -102,6 +102,28 @@
     }
   }
 
+  function hasBackendSuccessMessage(value) {
+    try {
+      const url = new URL(String(value || ""), window.location.origin);
+
+      for (const paramName of url.searchParams.keys()) {
+        const cleanName = normalizeText(paramName);
+
+        if (cleanName === "success" || cleanName.endsWith("_success")) {
+          const paramValue = String(url.searchParams.get(paramName) || "").trim();
+
+          if (paramValue) {
+            return true;
+          }
+        }
+      }
+    } catch (error) {
+      return false;
+    }
+
+    return false;
+  }
+
   function mergeMessageParams(targetUrl, currentUrl) {
     const target = new URL(targetUrl, window.location.origin);
     const current = new URL(currentUrl, window.location.origin);
@@ -215,7 +237,7 @@
     // Quando o backend ja devolveu appverbo_after_save=1, a pagina atual e a correta.
     // Nao devemos restaurar URL antiga do sessionStorage, pois ela pode ter sido capturada
     // antes da navegacao interna do menu lateral e apontar para menu=home.
-    if (isBackendPostSaveReturnUrl(currentUrl)) {
+    if (isBackendPostSaveReturnUrl(currentUrl) || hasBackendSuccessMessage(currentUrl)) {
       return;
     }
 

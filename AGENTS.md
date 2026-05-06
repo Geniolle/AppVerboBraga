@@ -1012,3 +1012,15 @@ Regras obrigatorias:
 7. O macro `templates/macros/admin_subprocess.html` deve ser a referencia para novos subprocessos server-render.
 8. Subprocessos legados fora do macro devem convergir para esse mesmo trigger padrao.
 <!-- APPVERBO_SUBPROCESS_CREATE_TRIGGER_STANDARD_V1_END -->
+
+<!-- APPVERBO_CLOSE_EDIT_AFTER_SAVE_SUCCESS_V1_START -->
+## Regra global de pos-save para modos de edicao
+
+Em qualquer subprocesso administrativo com modo de edicao:
+
+1. Ao clicar em `Guardar` e o backend concluir com sucesso, a UI deve sair do modo edicao automaticamente.
+2. O bloco de edicao nao deve permanecer aberto apos sucesso.
+3. A tela deve retornar ao bloco/lista padrao do subprocesso (modo nao-edicao), sem exigir clique manual em `Cancelar`.
+4. Parametros de URL de edicao (ex.: `entity_edit_id`, `user_edit_id`, `settings_edit_key`, `sidebar_section_edit_key`) nao devem ser reidratados apos sucesso.
+5. Em caso de erro de validacao, o modo de edicao pode permanecer aberto para correcao.
+<!-- APPVERBO_CLOSE_EDIT_AFTER_SAVE_SUCCESS_V1_END -->

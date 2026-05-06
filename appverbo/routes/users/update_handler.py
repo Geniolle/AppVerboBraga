@@ -248,10 +248,7 @@ def update_user(
             str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
             and is_admin_user(session, int(user.id), str(user.login_email or ""))
         )
-        resulting_is_admin = (
-            (bool(ADMIN_LOGIN_EMAIL) and clean_email == ADMIN_LOGIN_EMAIL)
-            or _is_admin_profile(selected_profile)
-        )
+        resulting_is_admin = _is_admin_profile(selected_profile)
         resulting_is_active_admin = (
             clean_account_status == UserAccountStatus.ACTIVE.value and resulting_is_admin
         )

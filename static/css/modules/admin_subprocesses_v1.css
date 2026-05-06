@@ -9,24 +9,25 @@
 }
 
 .admin-subprocess-form-card-v1 {
-  background: #f3f6fb;
-  border: 1px solid #d5dceb;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
+  background: #f5f7fb;
+  border: 1px solid #d6dde9;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .admin-subprocess-table-card-v1 {
   background: #ffffff;
-  border: 1px solid #d5dceb;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border: 1px solid #d8dce4;
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 14px;
 }
 
 .admin-subprocess-card-v1 h2 {
   margin: 0 0 12px;
-  color: #12213a;
+  color: #0f2647;
   font-size: 22px;
   font-weight: 800;
 }
@@ -124,13 +125,13 @@
 
 .admin-subprocess-table-v1 th:last-child,
 .admin-subprocess-table-v1 td:last-child {
-  text-align: right;
+  text-align: center;
 }
 
 .admin-subprocess-row-actions-v1 {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 6px;
 }
 
@@ -164,6 +165,17 @@
 .admin-subprocess-action-btn-v1:hover {
   background: #dfeaff;
   border-color: #7fa8f2;
+}
+
+.admin-subprocess-action-btn-danger-v1 {
+  border-color: #f2b9b9;
+  background: #fff1f1;
+  color: #a61b1b;
+}
+
+.admin-subprocess-action-btn-danger-v1:hover {
+  background: #ffe3e3;
+  border-color: #e08b8b;
 }
 
 .admin-subprocess-badge-v1 {
