@@ -2159,6 +2159,9 @@
         <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
           <div class="profile-card-header">
             <h2>Menus criados</h2>
+            {% if current_user_can_manage_all_entities %}
+            <a class="table-link-btn" href="#admin-account-create-card">Criar menu</a>
+            {% endif %}
           </div>
           <p>Processos disponíveis nesta pasta do menu lateral.</p>
           {% if settings_success and initial_menu == "configuracao" %}
