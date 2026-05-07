@@ -12,6 +12,9 @@ from sqlalchemy.orm import Session
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
+# APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_START
+from appverbo.admin_subprocesses.v2_service import build_admin_subprocess_state_v2
+# APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_END
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
@@ -104,6 +107,10 @@ def _resolve_initial_menu_target(
             return "#admin-account-status-card", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
+        if resolved_admin_tab == "sessoes":
+            return "#admin-sidebar-sections-card", ""
+        if resolved_admin_tab == "entidade":
+            return "#admin-subprocess-v2-entidade", ""
         return "#create-entity-card", ""
     if clean_menu_key == "configuracao":
         if settings_edit_key:
@@ -423,6 +430,20 @@ def new_user_page(
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
+
+        # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
+    if resolved_admin_tab == "entidade":
+        admin_subprocess_state_v2 = build_admin_subprocess_state_v2(
+            key="entidade",
+            session=session,
+            request=request,
+            current_user=current_user,
+            edit_key=clean_entity_edit_id,
+            success=entity_success or "",
+            error=entity_error or "",
+            return_url="/users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade",
+        )
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_END
 
     if resolved_admin_tab == "sessoes":
         sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")

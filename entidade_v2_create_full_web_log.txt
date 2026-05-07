@@ -1,0 +1,1600 @@
+﻿appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:48820 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48820 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48820 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48820 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48820 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48820 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48834 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34258 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34258 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34258 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44370 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44370 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44370 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44370 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44370 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56252 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34972 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34972 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34972 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57898 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32926 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32926 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32926 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44492 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44492 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53882 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42072 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42072 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57422 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50434 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40706 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50592 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50592 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50592 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43160 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43160 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43160 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43160 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37342 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37342 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37342 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37342 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37342 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37342 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42634 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51114 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53460 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47552 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35806 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51292 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51298 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51298 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51298 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51298 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51298 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:33942 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:33948 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57354 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57354 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57354 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44068 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38136 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35288 - "GET /static/js/new_user.js?v=20260506-menu-create-block-v5 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:35302 - "GET /static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48772 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39586 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47678 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53662 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35698 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35698 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35698 - "GET /static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:35704 - "GET /static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:35704 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35704 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32802 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:38700 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34936 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34936 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46130 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46130 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52398 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52398 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52398 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:54392 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:54392 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:54392 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:54392 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:54392 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50792 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50792 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50792 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50792 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50792 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58712 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46048 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:58268 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52720 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52720 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52720 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52720 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52720 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46646 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46646 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46646 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46646 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:46646 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53544 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53544 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43328 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57310 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57310 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57310 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57310 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57310 - "GET /static/css/ui-standards.css?v=20260506-subprocess-create-trigger-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52968 - "GET /static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52998 - "GET /static/js/new_user.js?v=20260506-menu-create-block-v5 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52978 - "GET /static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52976 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET / HTTP/1.1" 302 Found
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /users/new HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /static/css/ui-standards.css?v=20260506-subprocess-create-trigger-v1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47484 - "GET /static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47460 - "GET /static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47476 - "GET /static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47494 - "GET /static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47484 - "GET /static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /static/js/modules/ui_text_cleanup.js?v=20260429b HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47494 - "GET /static/entities/entity_logo_ec2174a1761870810485.jpg HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47476 - "GET /static/js/modules/configurable_items_manager_core_v1.js?v=20260430-final-buttons-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /static/js/new_user.js?v=20260506-menu-create-block-v5 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47476 - "GET /static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47494 - "GET /static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47460 - "GET /static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47484 - "GET /static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47460 - "GET /static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47476 - "GET /static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47484 - "GET /static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/process_lists_runtime_v5.js?v=20260429e HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/settings_edit_focus_mode.js?v=20260427a HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47460 - "GET /static/js/modules/settings_process_tabs.js?v=20260427a HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/menu_section_form.js?v=20260427c HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/settings_default_tab.js?v=20260427b HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47460 - "GET /static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47504 - "GET /static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:47476 - "GET /static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47458 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:53076 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53086 - "GET /static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53076 - "GET /static/css/ui-standards.css?v=20260506-subprocess-create-trigger-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53106 - "GET /static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53100 - "GET /static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53078 - "GET /static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53076 - "GET /static/js/modules/ui_text_cleanup.js?v=20260429b HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53086 - "GET /static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /static/entities/entity_logo_54d58bba646a108c4b0f.png HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53086 - "GET /static/js/modules/configurable_items_manager_core_v1.js?v=20260430-final-buttons-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53106 - "GET /static/js/new_user.js?v=20260506-menu-create-block-v5 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53076 - "GET /static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53086 - "GET /static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53100 - "GET /static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53078 - "GET /static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53076 - "GET /static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53100 - "GET /static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53086 - "GET /static/js/modules/process_lists_runtime_v5.js?v=20260429e HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53078 - "GET /static/js/modules/settings_edit_focus_mode.js?v=20260427a HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53106 - "GET /static/js/modules/settings_process_tabs.js?v=20260427a HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53078 - "GET /static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53086 - "GET /static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53106 - "GET /static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53102 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56106 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56106 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56106 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37504 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37504 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51160 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51160 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59946 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59946 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59946 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59946 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59946 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:33632 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40144 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40144 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:40156 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42504 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42504 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51722 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51722 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47440 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59078 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45636 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36886 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34506 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52396 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52382 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53498 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:53152 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55942 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42188 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /static/css/ui-standards.css?v=20260506-subprocess-create-trigger-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48644 - "GET /static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:42188 - "GET /static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48646 - "GET /static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48676 - "GET /static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48674 - "GET /static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48676 - "GET /static/js/new_user.js?v=20260506-menu-create-block-v5 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48674 - "GET /static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48676 - "GET /static/js/modules/menu_section_form.js?v=20260427c HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48646 - "GET /static/js/modules/settings_default_tab.js?v=20260427b HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:42188 - "GET /static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48644 - "GET /static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48674 - "GET /static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42190 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48080 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48080 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48080 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48080 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:32840 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34922 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:60572 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:60572 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:60572 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:60572 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:60572 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:60572 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260506-entidade-v2-users-new-v2 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48074 - "GET /static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48058 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&entity_edit_id=8&target=%23admin-subprocess-v2-entidade-edit HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57256 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59270 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52076 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52076 - "POST /admin/subprocess-v2/entidade/update HTTP/1.1" 500 Internal Server Error
+appverbobraga-web  | ERROR:    Exception in ASGI application
+appverbobraga-web  | Traceback (most recent call last):
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+appverbobraga-web  |     result = await app(  # type: ignore[func-returns-value]
+appverbobraga-web  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+appverbobraga-web  |     return await self.app(scope, receive, send)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+appverbobraga-web  |     await super().__call__(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+appverbobraga-web  |     await self.app(scope, receive, _send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/sessions.py", line 88, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send_wrapper)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+appverbobraga-web  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 680, in app
+appverbobraga-web  |     await route.handle(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+appverbobraga-web  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+appverbobraga-web  |     response = await f(request)
+appverbobraga-web  |                ^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+appverbobraga-web  |     raw_response = await run_endpoint_function(
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+appverbobraga-web  |     return await dependant.call(**values)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 203, in update_admin_subprocess_record_v2
+appverbobraga-web  |     current_user, redirect_response = get_current_admin_user_or_redirect_v2(request, session)
+appverbobraga-web  |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 26, in get_current_admin_user_or_redirect_v2
+appverbobraga-web  |     current_user = get_current_user(request, session)
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^
+appverbobraga-web  | NameError: name 'get_current_user' is not defined
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade&appverbo_after_save=1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36738 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36750 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36750 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36750 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36750 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36750 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36750 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35478 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55464 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:55464 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43482 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36508 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56142 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56142 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56142 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50418 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50418 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50418 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50418 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37468 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59796 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59796 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:59796 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:47320 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [7]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260507-admin-subprocess-v2-search-v1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42304 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51276 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51288 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51288 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51288 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51288 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57424 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:49986 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48466 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35126 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56338 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41056 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:52838 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52836 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52836 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260507-admin-subprocess-v2-search-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52838 - "GET /static/js/modules/settings_process_tabs.js?v=20260427a HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52836 - "GET /static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:52836 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52836 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56760 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56116 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56116 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34790 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39080 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:39080 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48364 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48364 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48364 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48364 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48364 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:48364 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:52748 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42928 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42928 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:35906 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51562 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51562 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51562 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51562 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:56754 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:44778 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51812 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51812 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51812 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51812 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51812 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:51812 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260507-card-title-style-v2 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:45622 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34000 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34000 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34000 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34000 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34000 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:34000 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:41206 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:50138 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36502 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36502 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36502 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:36502 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:43134 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:57140 - "POST /admin/subprocess-v2/entidade/create HTTP/1.1" 500 Internal Server Error
+appverbobraga-web  | ERROR:    Exception in ASGI application
+appverbobraga-web  | Traceback (most recent call last):
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+appverbobraga-web  |     result = await app(  # type: ignore[func-returns-value]
+appverbobraga-web  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+appverbobraga-web  |     return await self.app(scope, receive, send)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+appverbobraga-web  |     await super().__call__(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+appverbobraga-web  |     await self.app(scope, receive, _send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/sessions.py", line 88, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send_wrapper)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+appverbobraga-web  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 680, in app
+appverbobraga-web  |     await route.handle(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+appverbobraga-web  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+appverbobraga-web  |     response = await f(request)
+appverbobraga-web  |                ^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+appverbobraga-web  |     raw_response = await run_endpoint_function(
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+appverbobraga-web  |     return await dependant.call(**values)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 136, in create_admin_subprocess_record_v2
+appverbobraga-web  |     current_user, redirect_response = get_current_admin_user_or_redirect_v2(request, session)
+appverbobraga-web  |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 26, in get_current_admin_user_or_redirect_v2
+appverbobraga-web  |     current_user = get_current_user(request, session)
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^
+appverbobraga-web  | NameError: name 'get_current_user' is not defined
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:37774 - "POST /admin/subprocess-v2/entidade/create HTTP/1.1" 500 Internal Server Error
+appverbobraga-web  | ERROR:    Exception in ASGI application
+appverbobraga-web  | Traceback (most recent call last):
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+appverbobraga-web  |     result = await app(  # type: ignore[func-returns-value]
+appverbobraga-web  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+appverbobraga-web  |     return await self.app(scope, receive, send)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+appverbobraga-web  |     await super().__call__(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+appverbobraga-web  |     await self.app(scope, receive, _send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/sessions.py", line 88, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send_wrapper)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+appverbobraga-web  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 680, in app
+appverbobraga-web  |     await route.handle(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+appverbobraga-web  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+appverbobraga-web  |     response = await f(request)
+appverbobraga-web  |                ^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+appverbobraga-web  |     raw_response = await run_endpoint_function(
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+appverbobraga-web  |     return await dependant.call(**values)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 136, in create_admin_subprocess_record_v2
+appverbobraga-web  |     current_user, redirect_response = get_current_admin_user_or_redirect_v2(request, session)
+appverbobraga-web  |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 26, in get_current_admin_user_or_redirect_v2
+appverbobraga-web  |     current_user = get_current_user(request, session)
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^
+appverbobraga-web  | NameError: name 'get_current_user' is not defined
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:37776 - "POST /admin/subprocess-v2/entidade/create HTTP/1.1" 500 Internal Server Error
+appverbobraga-web  | ERROR:    Exception in ASGI application
+appverbobraga-web  | Traceback (most recent call last):
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+appverbobraga-web  |     result = await app(  # type: ignore[func-returns-value]
+appverbobraga-web  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+appverbobraga-web  |     return await self.app(scope, receive, send)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+appverbobraga-web  |     await super().__call__(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+appverbobraga-web  |     await self.app(scope, receive, _send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/sessions.py", line 88, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send_wrapper)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+appverbobraga-web  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 680, in app
+appverbobraga-web  |     await route.handle(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+appverbobraga-web  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+appverbobraga-web  |     response = await f(request)
+appverbobraga-web  |                ^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+appverbobraga-web  |     raw_response = await run_endpoint_function(
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+appverbobraga-web  |     return await dependant.call(**values)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 136, in create_admin_subprocess_record_v2
+appverbobraga-web  |     current_user, redirect_response = get_current_admin_user_or_redirect_v2(request, session)
+appverbobraga-web  |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 26, in get_current_admin_user_or_redirect_v2
+appverbobraga-web  |     current_user = get_current_user(request, session)
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^
+appverbobraga-web  | NameError: name 'get_current_user' is not defined
+appverbobraga-web  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+appverbobraga-web  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+appverbobraga-web  | Database migrated to head: postgresql+psycopg://postgres:***@db:5432/app_igreja
+appverbobraga-web  | /usr/local/lib/python3.12/site-packages/authlib/_joserfc_helpers.py:8: AuthlibDeprecationWarning: authlib.jose module is deprecated, please use joserfc instead.
+appverbobraga-web  | It will be compatible before version 2.0.0.
+appverbobraga-web  |   from authlib.jose import ECKey
+appverbobraga-web  | INFO:     Started server process [8]
+appverbobraga-web  | INFO:     Waiting for application startup.
+appverbobraga-web  | INFO:     Application startup complete.
+appverbobraga-web  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1 HTTP/1.1" 304 Not Modified
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade&appverbo_after_save=1 HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade&target=%23admin-subprocess-v2-entidade-edit&dynamic_process_section=field%3Aentidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=utilizador HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=menu HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /users/new?menu=administrativo&admin_tab=entidade HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "GET /settings/menu/sidebar-refresh-version HTTP/1.1" 200 OK
+appverbobraga-web  | INFO:     172.19.0.1:42154 - "POST /admin/subprocess-v2/entidade/create HTTP/1.1" 500 Internal Server Error
+appverbobraga-web  | ERROR:    Exception in ASGI application
+appverbobraga-web  | Traceback (most recent call last):
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 415, in run_asgi
+appverbobraga-web  |     result = await app(  # type: ignore[func-returns-value]
+appverbobraga-web  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 56, in __call__
+appverbobraga-web  |     return await self.app(scope, receive, send)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1159, in __call__
+appverbobraga-web  |     await super().__call__(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 90, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+appverbobraga-web  |     await self.app(scope, receive, _send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/sessions.py", line 88, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send_wrapper)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+appverbobraga-web  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 660, in __call__
+appverbobraga-web  |     await self.middleware_stack(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 680, in app
+appverbobraga-web  |     await route.handle(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 276, in handle
+appverbobraga-web  |     await self.app(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 134, in app
+appverbobraga-web  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+appverbobraga-web  |     raise exc
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+appverbobraga-web  |     await app(scope, receive, sender)
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 120, in app
+appverbobraga-web  |     response = await f(request)
+appverbobraga-web  |                ^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 674, in app
+appverbobraga-web  |     raw_response = await run_endpoint_function(
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 328, in run_endpoint_function
+appverbobraga-web  |     return await dependant.call(**values)
+appverbobraga-web  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 136, in create_admin_subprocess_record_v2
+appverbobraga-web  |     current_user, redirect_response = get_current_admin_user_or_redirect_v2(request, session)
+appverbobraga-web  |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+appverbobraga-web  |   File "/app/appverbo/routes/profile/admin_subprocess_handlers_v2.py", line 26, in get_current_admin_user_or_redirect_v2
+appverbobraga-web  |     current_user = get_current_user(request, session)
+appverbobraga-web  |                    ^^^^^^^^^^^^^^^^
+appverbobraga-web  | NameError: name 'get_current_user' is not defined

@@ -1,0 +1,269 @@
+{% macro admin_subprocess_v2_get_value(row, field, default="") %}
+  {{ row.get(field.resolved_source, default) if row else default }}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_v2_field(field, value="", mode="create") %}
+  {% set is_visible = field.visible_on_edit if mode == "edit" else field.visible_on_create %}
+  {% if is_visible %}
+    {% set is_readonly = field.readonly_on_edit if mode == "edit" else field.readonly_on_create %}
+    <div
+      class="admin-subprocess-field-v2 {{ field.css_class }} {% if field.full_width %}admin-subprocess-field-full-v2{% endif %}"
+      style="--admin-field-span: {{ field.grid_span if field.grid_span else 1 }};"
+    >
+      {% if field.field_type != "hidden" %}
+        <label for="admin_subprocess_v2_{{ field.key }}">
+          {{ field.label }}{% if field.required %} *{% endif %}
+        </label>
+      {% endif %}
+
+      {% if field.field_type == "hidden" %}
+        <input type="hidden" name="{{ field.resolved_input_name }}" value="{{ value or field.default_value }}">
+      {% elif field.field_type == "readonly" or is_readonly %}
+        <input
+          id="admin_subprocess_v2_{{ field.key }}"
+          name="{{ field.resolved_input_name }}"
+          type="text"
+          value="{{ value or field.default_value }}"
+          readonly
+        >
+      {% elif field.field_type == "textarea" %}
+        <textarea
+          id="admin_subprocess_v2_{{ field.key }}"
+          name="{{ field.resolved_input_name }}"
+          {% if field.required %}required{% endif %}
+          {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+        >{{ value or field.default_value }}</textarea>
+      {% elif field.field_type == "select" %}
+        <select
+          id="admin_subprocess_v2_{{ field.key }}"
+          name="{{ field.resolved_input_name }}"
+          {% if field.required %}required{% endif %}
+        >
+          {% for option in field.options %}
+            <option value="{{ option.value }}" {% if (value or field.default_value) == option.value %}selected{% endif %}>
+              {{ option.label }}
+            </option>
+          {% endfor %}
+        </select>
+      {% elif field.field_type == "file" or field.field_type == "image" %}
+        {% if value %}
+          <div class="admin-subprocess-current-file-v2">
+            Atual: {{ value }}
+          </div>
+        {% endif %}
+        <input
+          id="admin_subprocess_v2_{{ field.key }}"
+          name="{{ field.resolved_input_name }}"
+          type="file"
+          {% if field.field_type == "image" %}accept="image/*"{% endif %}
+        >
+      {% elif field.field_type == "checkbox" %}
+        <label class="admin-subprocess-checkbox-v2">
+          <input
+            id="admin_subprocess_v2_{{ field.key }}"
+            name="{{ field.resolved_input_name }}"
+            type="checkbox"
+            value="1"
+            {% if value in ["1", "true", "True", true] %}checked{% endif %}
+          >
+          <span>{{ field.help_text or field.label }}</span>
+        </label>
+      {% else %}
+        <input
+          id="admin_subprocess_v2_{{ field.key }}"
+          name="{{ field.resolved_input_name }}"
+          type="{{ field.field_type }}"
+          value="{{ value or field.default_value }}"
+          {% if field.required %}required{% endif %}
+          {% if field.max_length %}maxlength="{{ field.max_length }}"{% endif %}
+          {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+        >
+      {% endif %}
+
+      {% if field.help_text and field.field_type != "checkbox" %}
+        <small>{{ field.help_text }}</small>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_v2_form(state) %}
+  <section
+    id="{{ state.config.resolved_edit_target if state.is_editing else state.config.resolved_default_target }}"
+    class="card admin-subprocess-card-v2 admin-subprocess-form-card-v2"
+    data-admin-subprocess-v2="{{ state.config.key }}"
+  >
+    {% if state.success %}
+      <div class="alert ok">{{ state.success }}</div>
+    {% endif %}
+
+    {% if state.error %}
+      <div class="alert error">{{ state.error }}</div>
+    {% endif %}
+
+    {% if state.is_editing %}
+      <h2>{{ state.config.edit_title }}</h2>
+
+      <form method="post" enctype="multipart/form-data" action="{{ state.config.resolved_update_endpoint }}" class="admin-subprocess-form-v2">
+        <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.edit_mode_value }}">
+        <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ state.edit_key }}">
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+
+        <div class="admin-subprocess-grid-v2 admin-subprocess-grid-{{ state.config.grid_columns }}-v2">
+          {% for field in state.config.fields %}
+            {% set value = state.edit_data.get(field.resolved_source, "") if state.edit_data else "" %}
+            {{ render_admin_subprocess_v2_field(field, value, "edit") }}
+          {% endfor %}
+        </div>
+
+        <div class="form-action-row admin-subprocess-actions-v2">
+          <button type="submit" class="action-btn">Guardar</button>
+          <a class="action-btn-cancel" href="{{ state.return_url }}">Cancelar</a>
+        </div>
+      </form>
+    {% else %}
+      <details class="admin-subprocess-create-collapse-v2">
+        <summary>
+          <span>{{ state.config.create_title }}</span>
+        </summary>
+
+        <div class="admin-subprocess-create-body-v2">
+          <form method="post" enctype="multipart/form-data" action="{{ state.config.resolved_create_endpoint }}" class="admin-subprocess-form-v2">
+            <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
+            <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
+            <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+
+            <div class="admin-subprocess-grid-v2 admin-subprocess-grid-{{ state.config.grid_columns }}-v2">
+              {% for field in state.config.fields %}
+                {{ render_admin_subprocess_v2_field(field, "", "create") }}
+              {% endfor %}
+            </div>
+
+            <div class="form-action-row admin-subprocess-actions-v2">
+              <button type="submit" class="action-btn">Guardar</button>
+              <button type="button" class="action-btn-cancel" data-admin-subprocess-v2-cancel-create>Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </details>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_v2_row_actions(state, row, status_value) %}
+  {% set row_key = row.get(state.config.identity_field, row.get("id", "")) %}
+  {% set row_label = row.get(state.config.label_field, row.get("name", "")) %}
+
+  <div class="admin-subprocess-row-actions-v2">
+    {% for action in state.config.actions %}
+      {% set allowed = not action.allowed_statuses or status_value in action.allowed_statuses %}
+      {% if allowed and action.action_kind == "view" %}
+        <button
+          type="button"
+          class="admin-subprocess-action-btn-v2"
+          title="{{ action.label }}"
+          aria-label="{{ action.label }}"
+          data-admin-subprocess-v2-view
+          data-view-title="{{ state.config.singular_label }}"
+          data-view-details="{% for column in state.config.columns %}{{ column.label }}: {{ row.get(column.resolved_source, '') }}&#10;{% endfor %}"
+        >{{ action.icon }}</button>
+      {% elif allowed and action.action_kind == "edit" %}
+        <a
+          class="admin-subprocess-action-btn-v2 admin-subprocess-action-link-v2"
+          title="{{ action.label }}"
+          aria-label="{{ action.label }}"
+          href="{{ state.return_url }}{% if '?' in state.return_url %}&{% else %}?{% endif %}{{ state.config.edit_param }}={{ row_key }}&target=%23{{ state.config.resolved_edit_target }}#{{ state.config.resolved_edit_target }}"
+        >{{ action.icon }}</a>
+      {% elif allowed and action.action_kind == "delete" %}
+        <form method="post" action="{{ state.config.resolved_delete_endpoint }}" class="admin-subprocess-inline-form-v2">
+          <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button
+            type="submit"
+            class="admin-subprocess-action-btn-v2"
+            title="{{ action.label }}"
+            aria-label="{{ action.label }}"
+            {% if action.confirm_message %}data-confirm-message="{{ action.confirm_message }}"{% endif %}
+          >{{ action.icon }}</button>
+        </form>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_v2_table(state, rows, title, status_value) %}
+  <section
+    class="card admin-subprocess-card-v2 admin-subprocess-table-card-v2"
+    data-admin-subprocess-v2="{{ state.config.key }}"
+    data-admin-subprocess-v2-status="{{ status_value }}"
+  >
+    <div class="admin-subprocess-table-header-v2">
+      <h2>{{ title }}</h2>
+
+      {% if rows %}
+        <div class="admin-subprocess-table-search-wrap-v2">
+          <label class="sr-only" for="admin_subprocess_v2_search_{{ state.config.key }}_{{ status_value }}">
+            Procurar
+          </label>
+          <input
+            id="admin_subprocess_v2_search_{{ state.config.key }}_{{ status_value }}"
+            class="admin-subprocess-search-v2"
+            type="search"
+            placeholder="Procurar"
+            autocomplete="off"
+            data-admin-subprocess-v2-search
+          >
+        </div>
+      {% endif %}
+    </div>
+
+    {% if rows %}
+      <div class="admin-subprocess-table-wrap-v2">
+        <table class="admin-subprocess-table-v2" data-admin-subprocess-v2-table>
+          <thead>
+            <tr>
+              {% for column in state.config.columns %}
+                <th class="{{ column.css_class }}">{{ column.label }}</th>
+              {% endfor %}
+              <th>AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                {% for column in state.config.columns %}
+                  {% set cell_value = row.get(column.resolved_source, "") %}
+                  <td class="{{ column.css_class }}">
+                    {% if column.column_type == "badge" %}
+                      <span class="admin-subprocess-badge-v2 {% if status_value == state.config.active_value %}admin-subprocess-badge-active-v2{% else %}admin-subprocess-badge-inactive-v2{% endif %}">
+                        {{ cell_value }}
+                      </span>
+                    {% else %}
+                      {{ cell_value }}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+                <td>
+                  {{ render_admin_subprocess_v2_row_actions(state, row, status_value) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">Sem registos.</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_v2_state(state) %}
+  {{ render_admin_subprocess_v2_form(state) }}
+  {{ render_admin_subprocess_v2_table(state, state.active_rows, state.config.active_title, state.config.active_value) }}
+  {{ render_admin_subprocess_v2_table(state, state.inactive_rows, state.config.inactive_title, state.config.inactive_value) }}
+{% endmacro %}
