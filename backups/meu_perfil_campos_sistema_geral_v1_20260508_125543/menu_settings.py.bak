@@ -28,7 +28,7 @@ SIDEBAR_MENU_KEYS = {item["key"] for item in SIDEBAR_MENU_DEFAULTS}
 SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
-MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", MENU_MEU_PERFIL_KEY}
+MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home"}
 MENU_VISIBILITY_SCOPES = ("owner", "legado")
 MENU_VISIBILITY_SCOPE_ALL = "all"
 MENU_CONFIG_DISPLAY_ORDER_KEY = "display_order"
@@ -104,7 +104,6 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "nome", "label": "Nome"},
         {"key": "telefone", "label": "Telefone"},
         {"key": "email", "label": "Email"},
-        {"key": "pais", "label": "País"},
         {"key": "data_nascimento", "label": "Data de nascimento"},
         {"key": "whatsapp", "label": "WhatsApp"},
         {"key": "autorizacao_whatsapp", "label": "Autorização para avisos por WhatsApp"},
@@ -148,7 +147,7 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "home": ["resumo_geral", "indicadores", "graficos"],
     "administrativo": ["entidade", "utilizador", "definicoes"],
-    MENU_MEU_PERFIL_KEY: ["nome", "email", "telefone", "pais"],
+    MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email"],
     "funcionarios": ["nome", "telefone", "email"],
     "financeiro": ["nome", "estado", "criado_em"],
     "relatorios": ["nome", "estado", "criado_em"],
@@ -164,7 +163,8 @@ MENU_MEU_PERFIL_FIELD_KEYS = tuple(item["key"] for item in MENU_MEU_PERFIL_FIELD
 MENU_MEU_PERFIL_FIELD_LABELS = {
     item["key"]: item["label"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS
 }
-MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "email", "telefone", "pais"]
+MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "telefone",
+    "pais", "email"]
 
 
 def _sidebar_menu_defaults_by_key() -> dict[str, dict[str, Any]]:
