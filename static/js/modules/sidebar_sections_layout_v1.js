@@ -2786,47 +2786,54 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   //###################################################################################
 
   function moverSessaoEstadoV9(chave, direcao) {
-    const indice = encontrarIndiceSessaoEstadoV9(chave);
+    const cleanKey = String(chave || "").trim();
+    const cleanDirection = String(direcao || "").trim().toLowerCase();
 
-    if (indice < 0) {
+    if (!cleanKey || (cleanDirection !== "up" && cleanDirection !== "down")) {
       return;
     }
 
-    const sessao = sessoesEstadoV9[indice];
-    const statusAtual = normalizarEstadoSessoesEstadoV9(sessao.status);
+    const url = new URL(window.location.href);
+    [
+      "success",
+      "error",
+      "appverbo_after_save",
+      "sidebar_section_edit_key",
+      "sidebar_section_return_url"
+    ].forEach(function (parametro) {
+      url.searchParams.delete(parametro);
+    });
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.hash = "admin-sidebar-sections-card";
 
-    const indicesMesmoGrupo = sessoesEstadoV9
-      .map(function (item, index) {
-        return {
-          item: item,
-          index: index
-        };
-      })
-      .filter(function (entry) {
-        return normalizarEstadoSessoesEstadoV9(entry.item.status) === statusAtual;
-      })
-      .map(function (entry) {
-        return entry.index;
-      });
+    const formulario = document.createElement("form");
+    formulario.method = "post";
+    formulario.action = "/settings/menu/sidebar-section-move-one";
+    formulario.hidden = true;
 
-    const posicaoGrupo = indicesMesmoGrupo.indexOf(indice);
+    const campos = [
+      ["section_key", cleanKey],
+      ["direction", cleanDirection],
+      ["sidebar_section_return_url", url.pathname + url.search + "#" + url.hash.replace(/^#/, "")]
+    ];
 
-    if (direcao === "up" && posicaoGrupo > 0) {
-      const indiceAnterior = indicesMesmoGrupo[posicaoGrupo - 1];
-      const temp = sessoesEstadoV9[indiceAnterior];
-      sessoesEstadoV9[indiceAnterior] = sessoesEstadoV9[indice];
-      sessoesEstadoV9[indice] = temp;
+    campos.forEach(function (entry) {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = entry[0];
+      input.value = entry[1];
+      formulario.appendChild(input);
+    });
+
+    document.body.appendChild(formulario);
+    if (typeof formulario.requestSubmit === "function") {
+      formulario.requestSubmit();
+    } else {
+      formulario.submit();
     }
-
-    if (direcao === "down" && posicaoGrupo < indicesMesmoGrupo.length - 1) {
-      const indiceProximo = indicesMesmoGrupo[posicaoGrupo + 1];
-      const temp = sessoesEstadoV9[indiceProximo];
-      sessoesEstadoV9[indiceProximo] = sessoesEstadoV9[indice];
-      sessoesEstadoV9[indice] = temp;
-    }
-
-    renderizarListaEstadoV9();
-    submeterFormularioEstadoV9();
   }
 
   function abrirEdicaoEstadoV9(linha) {

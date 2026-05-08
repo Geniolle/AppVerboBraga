@@ -25,8 +25,8 @@ ENTITY_FIELDS = (
         field_type="select",
         required=True,
         options=(
-            ("active", "Ativa"),
-            ("inactive", "Inativa"),
+            ("active", "Ativo"),
+            ("inactive", "Inativo"),
         ),
     ),
 )
@@ -72,6 +72,39 @@ DEFAULT_COLUMNS = (
     AdminColumnConfig(key="label", label="NOME", source="label"),
     AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
+)
+
+
+MENU_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Nome do menu",
+        input_name="menu_label",
+        field_type="text",
+        required=True,
+        max_length=100,
+        placeholder="Ex.: Assiduidade",
+    ),
+    AdminFieldConfig(
+        key="sidebar_section",
+        label="Sessão do menu",
+        input_name="menu_section",
+        field_type="select",
+        required=True,
+        options_source="sidebar_section_options",
+    ),
+    AdminFieldConfig(
+        key="visibility_scope_mode",
+        label="Sistema",
+        input_name="menu_visibility_scope",
+        field_type="select",
+        required=True,
+        options=(
+            ("all", "Owner e Legado"),
+            ("owner", "Owner"),
+            ("legado", "Legado"),
+        ),
+    ),
 )
 
 
@@ -164,6 +197,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     active_value="ativo",
     inactive_value="inativo",
     identity_field="key",
+    move_key_field="section_key",
     label_field="label",
     mode_field="section_mode",
     edit_key_field="original_section_key",
@@ -204,17 +238,28 @@ MENU_CONFIG = AdminSubprocessConfig(
     singular_label="Menu",
     plural_label="Menus",
     edit_param="settings_edit_key",
-    default_target="settings-card",
-    edit_target="settings-card",
+    default_target="admin-menu-card",
+    edit_target="settings-menu-edit-card",
     create_title="Criar menu",
     edit_title="Editar menu",
     active_title="Menus ativos",
     inactive_title="Menus inativos",
-    save_endpoint="/settings/menu/save",
+    create_endpoint="/settings/menu/admin-create",
+    move_endpoint="/settings/menu/admin-move",
+    delete_endpoint="/settings/menu/admin-delete",
+    save_endpoint="/settings/menu/admin-create",
     repository_name="menu",
     repository_class="",
-    enabled=False,
-    migration_status="legacy_pending",
+    identity_field="key",
+    label_field="label",
+    move_key_field="menu_key",
+    delete_key_field="menu_key",
+    return_url_field="subprocess_return_url",
+    enabled=True,
+    migration_status="native_menu",
+    fields=MENU_FIELDS,
+    columns=DEFAULT_COLUMNS,
+    actions=DEFAULT_ACTIVE_ACTIONS,
 )
 
 

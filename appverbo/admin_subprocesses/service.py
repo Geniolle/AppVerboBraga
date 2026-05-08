@@ -89,6 +89,7 @@ def build_admin_subprocess_state(
     success: str = "",
     error: str = "",
     return_url: str = "",
+    field_options: dict[str, tuple[tuple[str, str], ...]] | None = None,
 ) -> AdminSubprocessState:
     row_list = [dict(row) for row in rows]
     active_rows, inactive_rows = split_admin_subprocess_rows(row_list, config)
@@ -104,4 +105,5 @@ def build_admin_subprocess_state(
         success=success,
         error=error,
         return_url=return_url,
+        field_options=dict(field_options or {}),
     )

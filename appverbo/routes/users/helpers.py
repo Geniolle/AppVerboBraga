@@ -189,6 +189,12 @@ def _ensure_not_last_active_admin_for_member(
         return True, ""
 
     for entity_id in entity_ids:
+        entity_scope = session.scalar(
+            select(Entity.profile_scope).where(Entity.id == entity_id).limit(1)
+        )
+        if str(entity_scope or "").strip().lower() != str(ENTITY_PROFILE_SCOPE_OWNER).strip().lower():
+            continue
+
         if _has_other_active_admin_for_entity(session, entity_id, excluded_user_id):
             continue
         entity_name = session.scalar(

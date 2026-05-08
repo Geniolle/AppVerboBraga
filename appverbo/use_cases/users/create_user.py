@@ -105,6 +105,33 @@ def _resolve_entity_from_user_email_v2(
     permissions: dict[str, Any],
     selected_entity_id: int | None = None,
 ) -> tuple[Entity | None, str]:
+    if selected_entity_id is not None:
+        try:
+            clean_selected_entity_id = int(selected_entity_id)
+        except (TypeError, ValueError):
+            clean_selected_entity_id = None
+        else:
+            if clean_selected_entity_id > 0:
+                if permissions.get("can_manage_all_entities"):
+                    can_use_selected_entity = True
+                else:
+                    allowed_entity_ids = {
+                        int(raw_id)
+                        for raw_id in (permissions.get("allowed_entity_ids") or set())
+                        if str(raw_id).strip().isdigit()
+                    }
+                    can_use_selected_entity = clean_selected_entity_id in allowed_entity_ids
+
+                if can_use_selected_entity:
+                    selected_entity = session.execute(
+                        select(Entity).where(
+                            Entity.id == clean_selected_entity_id,
+                            Entity.is_active.is_(True),
+                        )
+                    ).scalar_one_or_none()
+                    if selected_entity is not None:
+                        return selected_entity, ""
+
     clean_email = (user_email or "").strip().lower()
 
     if clean_email and "@" in clean_email:
@@ -224,12 +251,14 @@ def normalize_create_user_input_v1(
     full_name: str,
     primary_phone: str,
     email: str,
+    entity_id: str,
     profile_id: str,
     invite_delivery: str,
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
     clean_email = email.strip().lower()
+    clean_entity_id = entity_id.strip()
     clean_profile_id = profile_id.strip()
     clean_invite_delivery = invite_delivery.strip().lower()
     if clean_invite_delivery not in {"email", "link"}:
@@ -239,7 +268,7 @@ def normalize_create_user_input_v1(
         "full_name": clean_full_name,
         "primary_phone": clean_primary_phone,
         "email": clean_email,
-        "entity_id": "",
+        "entity_id": clean_entity_id,
         "entity_name": "",
         "profile_id": clean_profile_id,
     }
@@ -322,6 +351,7 @@ def execute_create_user(
     request: Request,
     actor_user: dict[str, Any],
     selected_entity_id: int | None,
+    explicit_entity_id: int | None,
     payload: CreateUserInput,
 ) -> CreateUserOutcome:
     current_user_is_admin = bool(
@@ -365,7 +395,7 @@ def execute_create_user(
         session,
         payload.clean_email,
         entity_permissions,
-        selected_entity_id,
+        explicit_entity_id if explicit_entity_id is not None else selected_entity_id,
     )
     if selected_entity is not None:
         form_data["entity_id"] = str(selected_entity.id)

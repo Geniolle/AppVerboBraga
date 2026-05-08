@@ -37,6 +37,9 @@
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
         {% endif %}
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
+        {% if admin_tab == "menu" and admin_subprocess_state and admin_subprocess_state.config.key == "menu" %}
+          {{ render_admin_subprocess_state(admin_subprocess_state) }}
+        {% endif %}
 
 
 <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
@@ -624,14 +627,15 @@
                         <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
                       </div>
                       <div class="field">
-                        <label for="entity_auto_name">Entidade (automática pelo email)</label>
-                        <input
-                          id="entity_auto_name"
-                          value="{{ form_data.entity_name if form_data.entity_name else 'Será definida pelo email; se não encontrar domínio, usa a entidade atual' }}"
-                          readonly
-                          disabled
-                          class="readonly-field"
-                        >
+                        <label for="entity_id">Entidade</label>
+                        <select id="entity_id" name="entity_id">
+                          <option value="">Selecionar automaticamente pelo email</option>
+                          {% for entity in entities %}
+                            <option value="{{ entity.id }}" {% if form_data.entity_id == entity.id|string %}selected{% endif %}>
+                              {{ entity.name }}
+                            </option>
+                          {% endfor %}
+                        </select>
                       </div>
                       <div class="field full">
                         <label for="profile_id">Perfil global (opcional)</label>
@@ -869,7 +873,7 @@
                   </div>
                   <div class="field entity-fourth-row-status">
                     <label for="entity_status_readonly">Estado da entidade</label>
-                    <input id="entity_status_readonly" class="readonly-field" value="Ativa" readonly disabled>
+                    <input id="entity_status_readonly" class="readonly-field" value="Ativo" readonly disabled>
                   </div>
                   <div class="field entity-fourth-row-created-at">
                     <label for="entity_created_at">Data da criação</label>
@@ -995,14 +999,14 @@
                 <label for="edit_entity_status">Estado da entidade *</label>
                 {% if current_user_can_manage_all_entities %}
                 <select id="edit_entity_status" name="entity_status" required>
-                  <option value="active" {% if entity_edit_data.status == "active" %}selected{% endif %}>Ativa</option>
-                  <option value="inactive" {% if entity_edit_data.status == "inactive" %}selected{% endif %}>Inativa</option>
+                  <option value="active" {% if entity_edit_data.status == "active" %}selected{% endif %}>Ativo</option>
+                  <option value="inactive" {% if entity_edit_data.status == "inactive" %}selected{% endif %}>Inativo</option>
                 </select>
                 {% else %}
                 <input
                   id="edit_entity_status"
                   class="readonly-field"
-                  value="{% if entity_edit_data.status == 'active' %}Ativa{% else %}Inativa{% endif %}"
+                  value="{% if entity_edit_data.status == 'active' %}Ativo{% else %}Inativo{% endif %}"
                   readonly
                   disabled
                 >
@@ -2127,6 +2131,7 @@
         </section>
         {% endif %}
 
+        {% if false and admin_tab == "menu" %}
         {% if current_user_can_manage_all_entities %}
         <section id="admin-account-create-card" class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1" data-menu-scope="administrativo">
           <div id="btn-create-menu-container">
@@ -2137,7 +2142,7 @@
           <div id="admin-menu-form-container" style="display: none;">
             <form id="admin-menu-form" method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
                 <input type="hidden" name="redirect_menu" value="administrativo">
-                <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                <input type="hidden" name="redirect_target" value="#admin-account-create-card">
                 <div class="admin-subprocess-grid-v1">
                   <div class="field admin-subprocess-field-v1">
                     <label for="settings_create_menu_label">Nome do menu *</label>
@@ -2354,6 +2359,7 @@
             </tbody>
           </table>
         </section>
+        {% endif %}
 
         {% if current_user_can_manage_all_entities %}
         <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil">
@@ -2499,7 +2505,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260506-menu-create-block-v5"></script>
+  <script src="/static/js/new_user.js?v=20260507-menu-subprocess-standard-v6"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

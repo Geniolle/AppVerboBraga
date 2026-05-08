@@ -1,3 +1,15 @@
+{% macro normalize_status_label_v2(value) %}
+  {% set clean_value = (value|string).strip() %}
+  {% set normalized_value = clean_value|lower %}
+  {% if normalized_value in ['ativa', 'ativo', 'active'] %}
+    Ativo
+  {% elif normalized_value in ['inativa', 'inativo', 'inactive'] %}
+    Inativo
+  {% else %}
+    {{ clean_value }}
+  {% endif %}
+{% endmacro %}
+
 {% macro render_admin_subprocess_v2(subprocess) %}
 {% if subprocess %}
 <div
@@ -81,10 +93,10 @@
             <tr>
               {% for col in section.columns %}
                 {% set cell_value = row.get(col.key, '') %}
-                {% if col.key == 'status' %}
+                {% if col.key == 'status' or col.column_type == 'badge' %}
                 <td>
                   <span class="admin-subprocess-v2-status-pill {% if (cell_value|string|lower) in ['inactive', 'inativo', 'inativa'] %}admin-subprocess-v2-status-pill-inactive{% else %}admin-subprocess-v2-status-pill-active{% endif %}">
-                    {{ cell_value }}
+                    {{ normalize_status_label_v2(cell_value) }}
                   </span>
                 </td>
                 {% elif col.key == 'actions' %}
@@ -197,10 +209,10 @@
             <tr>
               {% for col in section.columns %}
                 {% set cell_value = row.get(col.key, '') %}
-                {% if col.key == 'status' %}
+                {% if col.key == 'status' or col.column_type == 'badge' %}
                 <td>
                   <span class="admin-subprocess-v2-status-pill {% if (cell_value|string|lower) in ['inactive', 'inativo', 'inativa'] %}admin-subprocess-v2-status-pill-inactive{% else %}admin-subprocess-v2-status-pill-active{% endif %}">
-                    {{ cell_value }}
+                    {{ normalize_status_label_v2(cell_value) }}
                   </span>
                 </td>
                 {% elif col.key == 'actions' %}

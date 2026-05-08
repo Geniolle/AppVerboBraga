@@ -22,6 +22,7 @@ class AdminFieldConfig:
     readonly_on_create: bool = False
     readonly_on_edit: bool = False
     css_class: str = ""
+    options_source: str = ""
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,8 @@ class AdminSubprocessConfig:
     inactive_value: str = "inativo"
     identity_field: str = "key"
     label_field: str = "label"
+    move_key_field: str = ""
+    delete_key_field: str = ""
     mode_field: str = "subprocess_mode"
     edit_key_field: str = "subprocess_edit_key"
     return_url_field: str = "subprocess_return_url"
@@ -93,6 +96,7 @@ class AdminSubprocessState:
     success: str = ""
     error: str = ""
     return_url: str = ""
+    field_options: dict[str, tuple[tuple[str, str], ...]] = field(default_factory=dict)
 
     @property
     def is_editing(self) -> bool:

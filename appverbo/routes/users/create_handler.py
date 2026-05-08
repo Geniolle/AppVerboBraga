@@ -9,7 +9,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from appverbo.core import SessionLocal, templates
 from appverbo.routes.users.router import router
 from appverbo.services.page import build_users_new_url
-from appverbo.services.session import get_current_user, get_session_entity_id
+from appverbo.services.session import (
+    get_current_user,
+    get_entity_context_for_user,
+    get_session_entity_id,
+    set_session_entity_context,
+)
 from appverbo.use_cases.users import execute_create_user, normalize_create_user_input_v1
 
 logger = logging.getLogger(__name__)
@@ -18,17 +23,20 @@ logger = logging.getLogger(__name__)
 @router.post("/users/new", response_class=HTMLResponse, response_model=None)
 def create_user_v1(
     request: Request,
-    full_name: str = Form(...),
-    primary_phone: str = Form(...),
-    email: str = Form(...),
+    full_name: str = Form(""),
+    primary_phone: str = Form(""),
+    email: str = Form(""),
+    entity_id: str = Form(""),
     profile_id: str = Form(""),
     invite_delivery: str = Form("email"),
 ):
     try:
+        explicit_entity_id = int(entity_id) if entity_id.strip().isdigit() else None
         payload = normalize_create_user_input_v1(
             full_name=full_name,
             primary_phone=primary_phone,
             email=email,
+            entity_id=entity_id,
             profile_id=profile_id,
             invite_delivery=invite_delivery,
         )
@@ -46,8 +54,19 @@ def create_user_v1(
                 request=request,
                 actor_user=current_user,
                 selected_entity_id=get_session_entity_id(request),
+                explicit_entity_id=explicit_entity_id,
                 payload=payload,
             )
+
+            if outcome.kind != "template" and explicit_entity_id is not None:
+                selected_entity_context = get_entity_context_for_user(
+                    session,
+                    int(current_user["id"]),
+                    str(current_user["login_email"]),
+                    explicit_entity_id,
+                )
+                if selected_entity_context is not None:
+                    set_session_entity_context(request, selected_entity_context)
 
         if outcome.kind == "template":
             return templates.TemplateResponse(

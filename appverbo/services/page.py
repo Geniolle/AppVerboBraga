@@ -1027,7 +1027,7 @@ def get_page_data(
             ),
             "logo_url": row.logo_url or "",
             "is_active": bool(row.is_active),
-            "status_label": "Ativa" if row.is_active else "Inativa",
+            "status_label": "Ativo" if row.is_active else "Inativo",
             "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
         }
 

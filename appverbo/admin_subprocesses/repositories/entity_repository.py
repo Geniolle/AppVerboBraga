@@ -36,7 +36,7 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
             "name": getattr(entity, "name", "") or getattr(entity, "legal_name", "") or "",
             "label": getattr(entity, "name", "") or getattr(entity, "legal_name", "") or "",
             "status": "active" if is_active else "inactive",
-            "status_label": "Ativa" if is_active else "Inativa",
+            "status_label": "Ativo" if is_active else "Inativo",
             "is_active": is_active,
         }
 

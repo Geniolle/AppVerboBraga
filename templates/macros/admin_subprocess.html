@@ -4,7 +4,7 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_field(field, value="") %}
+{% macro render_admin_subprocess_field(field, value="", field_options=()) %}
   <div class="field admin-subprocess-field-v1 {{ field.css_class }}">
     <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
@@ -14,7 +14,7 @@
         name="{{ field.input_name }}"
         {% if field.required %}required{% endif %}
       >
-        {% for option_value, option_label in field.options %}
+        {% for option_value, option_label in field_options or field.options %}
           <option value="{{ option_value }}" {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
         {% endfor %}
       </select>
@@ -58,7 +58,7 @@
         <div class="admin-subprocess-grid-v1">
           {% for field in state.config.fields %}
             {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else "" %}
-            {{ render_admin_subprocess_field(field, field_value) }}
+            {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ())) }}
           {% endfor %}
         </div>
 
@@ -74,14 +74,14 @@
         </summary>
 
         <div class="entity-create-body">
-          <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
-            <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
-            <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
-            <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+      <form method="post" action="{{ state.config.create_endpoint or state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+        <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
+        <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
             <div class="admin-subprocess-grid-v1">
               {% for field in state.config.fields %}
-                {{ render_admin_subprocess_field(field, "") }}
+                {{ render_admin_subprocess_field(field, "", state.field_options.get(field.key, ())) }}
               {% endfor %}
             </div>
 
@@ -106,22 +106,41 @@
   {% set row_label = row.get(state.config.label_field, row.get("label", row.get("name", ""))) %}
   {% set row_status_label = row.get("status_label", "Ativo" if status_value == state.config.active_value else "Inativo") %}
   {% set row_system_label = row.get("visibility_scope_label", "") %}
+  {% set move_key_field = state.config.move_key_field or state.config.identity_field %}
+  {% set delete_key_field = state.config.delete_key_field or state.config.identity_field %}
+  {% set can_move_up = row.get("can_move_up", true) %}
+  {% set can_move_down = row.get("can_move_down", true) %}
+  {% set can_delete = row.get("can_delete", true) %}
 
   <div class="admin-subprocess-row-actions-v1">
     {% if status_value == state.config.active_value and state.config.move_endpoint %}
-      <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
-        <input type="hidden" name="section_key" value="{{ row_key }}">
-        <input type="hidden" name="direction" value="up">
-        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">&#8593;</button>
-      </form>
+      {% if can_move_up %}
+        <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="{{ move_key_field }}" value="{{ row_key }}">
+          {% if move_key_field != "key" %}
+            <input type="hidden" name="key" value="{{ row_key }}">
+          {% endif %}
+          <input type="hidden" name="direction" value="up">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">&#8593;</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no topo" aria-label="Já está no topo">&#8593;</span>
+      {% endif %}
 
-      <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
-        <input type="hidden" name="section_key" value="{{ row_key }}">
-        <input type="hidden" name="direction" value="down">
-        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">&#8595;</button>
-      </form>
+      {% if can_move_down %}
+        <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="{{ move_key_field }}" value="{{ row_key }}">
+          {% if move_key_field != "key" %}
+            <input type="hidden" name="key" value="{{ row_key }}">
+          {% endif %}
+          <input type="hidden" name="direction" value="down">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">&#8595;</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no fim" aria-label="Já está no fim">&#8595;</span>
+      {% endif %}
     {% endif %}
 
     <button
@@ -141,18 +160,14 @@
       href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >&#9998;</a>
 
-    {% if status_value != state.config.active_value and state.config.delete_endpoint %}
+    {% if status_value != state.config.active_value and state.config.delete_endpoint and can_delete and not row.get('is_deleted') %}
       <form
         method="post"
         action="{{ state.config.delete_endpoint }}"
         class="admin-subprocess-inline-form-v1"
         onsubmit="return confirm('Tem a certeza que pretende eliminar esta sessao?');"
       >
-        <input
-          type="hidden"
-          name="{% if state.config.key == 'sessoes' %}section_key{% else %}{{ state.config.identity_field }}{% endif %}"
-          value="{{ row_key }}"
-        >
+        <input type="hidden" name="{{ delete_key_field }}" value="{{ row_key }}">
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
         <button
           type="submit"

@@ -105,6 +105,8 @@ def _resolve_initial_menu_target(
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "contas":
             return "#admin-account-status-card", ""
+        if resolved_admin_tab == "menu":
+            return "#admin-menu-card", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
         if resolved_admin_tab == "sessoes":
@@ -259,7 +261,7 @@ def new_user_page(
     resolved_admin_tab = admin_tab.strip().lower()
     if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "menu"}:
         resolved_admin_tab = "entidade"
-    if resolved_admin_tab in {"definicoes", "menu"}:
+    if resolved_admin_tab == "definicoes":
         resolved_admin_tab = "contas"
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
@@ -402,6 +404,8 @@ def new_user_page(
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
     clean_target_from_query = str(target or "").strip()
+    if clean_target_from_query and not clean_target_from_query.startswith("#"):
+        clean_target_from_query = f"#{clean_target_from_query}"
     clean_profile_section_from_query = str(profile_section or "").strip().lower()
     clean_dynamic_section_from_query = str(
         dynamic_process_section or section_key or ""
@@ -421,6 +425,13 @@ def new_user_page(
             initial_menu_target = "#admin-sidebar-sections-form-card"
         else:
             initial_menu_target = "#admin-sidebar-sections-card"
+        initial_dynamic_process_section = ""
+        clean_dynamic_section_from_query = ""
+    elif resolved_admin_tab == "menu":
+        if clean_settings_edit_key:
+            initial_menu_target = "#settings-menu-edit-card"
+        else:
+            initial_menu_target = "#admin-menu-card"
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
@@ -459,6 +470,33 @@ def new_user_page(
                 success=settings_success if resolved_admin_tab == "sessoes" else "",
                 error=settings_error if resolved_admin_tab == "sessoes" else "",
                 return_url="/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
+            )
+    elif resolved_admin_tab == "menu":
+        menu_subprocess_config = get_admin_subprocess_config("menu")
+
+        if menu_subprocess_config is not None:
+            menu_field_options: dict[str, tuple[tuple[str, str], ...]] = {
+                "sidebar_section": tuple(
+                    (
+                        str(option.get("key") or "").strip().lower(),
+                        str(option.get("label") or "").strip(),
+                    )
+                    for option in page_data.get("sidebar_section_options", [])
+                    if str(option.get("key") or "").strip() and str(option.get("label") or "").strip()
+                )
+            }
+            admin_subprocess_state_v2 = build_admin_subprocess_state(
+                config=menu_subprocess_config,
+                rows=[
+                    row
+                    for row in page_data.get("sidebar_menu_settings", [])
+                    if not bool(row.get("is_deleted"))
+                ],
+                edit_key="",
+                success=settings_success if resolved_admin_tab == "menu" else "",
+                error=settings_error if resolved_admin_tab == "menu" else "",
+                return_url="/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card",
+                field_options=menu_field_options,
             )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 

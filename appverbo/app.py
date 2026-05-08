@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -11,6 +13,8 @@ from appverbo.routes.profile import router as profile_router
 from appverbo.routes.users import router as user_router
 from appverbo.routes.webhooks import router as webhook_router
 
+logger = logging.getLogger(__name__)
+
 
 def create_app() -> FastAPI:
     app = FastAPI(title="AppVerboBraga User Admin")
@@ -21,6 +25,47 @@ def create_app() -> FastAPI:
         same_site="lax",
         https_only=False,
     )
+
+    @app.middleware("http")
+    async def log_create_user_request_v1(request, call_next):
+        if request.method.upper() != "POST" or request.url.path != "/users/new":
+            return await call_next(request)
+
+        raw_body = await request.body()
+        content_type = str(request.headers.get("content-type") or "")
+        preview_text = ""
+        if raw_body:
+            try:
+                preview_text = raw_body[:2000].decode("utf-8", errors="replace")
+            except Exception:
+                preview_text = "<decode-error>"
+
+        logger.warning(
+            "DEBUG /users/new request: query=%s content_type=%s content_length=%s referer=%s origin=%s body_preview=%r",
+            str(request.url.query or ""),
+            content_type,
+            str(request.headers.get("content-length") or ""),
+            str(request.headers.get("referer") or ""),
+            str(request.headers.get("origin") or ""),
+            preview_text,
+        )
+
+        async def receive():
+            return {
+                "type": "http.request",
+                "body": raw_body,
+                "more_body": False,
+            }
+
+        request._receive = receive
+        response = await call_next(request)
+
+        logger.warning(
+            "DEBUG /users/new response: status=%s location=%s",
+            getattr(response, "status_code", ""),
+            str(response.headers.get("location") or ""),
+        )
+        return response
 
     app.include_router(auth_router)
     app.include_router(profile_router)

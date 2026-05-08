@@ -120,6 +120,14 @@ function redirectToStoredPostSaveContextV3(storedContext) {
     return false;
   }
 
+  // Se o POST devolveu a propria pagina com erro inline (sem redirect e sem
+  // marcadores de feedback na URL), nao devemos navegar outra vez. Caso
+  // contrario, o utilizador ve a mensagem de erro por um instante e ela
+  // desaparece quando o JS reabre o contexto guardado.
+  if (!isAppVerboPostSaveFeedbackUrlV3(currentUrl)) {
+    return false;
+  }
+
   let targetUrl = null;
 
   try {
@@ -1013,7 +1021,7 @@ function mergeDynamicProcessMenus() {
           { label: "Entidade", target: "#create-entity-card" },
           { label: "Utilizador", target: "#create-user-card" },
           { label: "Sessões", target: "#admin-sidebar-sections-card" },
-          { label: "Menu", target: "#admin-account-status-card" }
+          { label: "Menu", target: "#admin-menu-card" }
         ];
         const mergedItems = dynamicItems.filter((item) => {
           const sectionKey = String(item.dynamicProcessSectionKey || "").trim().toLowerCase();
@@ -1116,6 +1124,12 @@ let meuPerfilSelectedProfileSection = (
 let hiddenMeuPerfilSectionKeys = new Set();
 if (initialAdminTab === "entidade") {
   adminSelectedTarget = "#create-entity-card";
+} else if (initialAdminTab === "utilizador") {
+  adminSelectedTarget = "#create-user-card";
+} else if (initialAdminTab === "sessoes") {
+  adminSelectedTarget = "#admin-sidebar-sections-card";
+} else if (initialAdminTab === "menu") {
+  adminSelectedTarget = "#admin-menu-card";
 } else if (initialAdminTab === "contas") {
   adminSelectedTarget = "#admin-account-status-card";
 }
@@ -1126,15 +1140,17 @@ if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
   adminSelectedTarget = "#create-user-card";
 } else if (startupHash === "#create-entity-card" || startupHash === "#edit-entity-card") {
   adminSelectedTarget = "#create-entity-card";
-} else if (startupHash === "#admin-account-status-card") {
-  adminSelectedTarget = "#admin-account-status-card";
+} else if (startupHash === "#admin-sidebar-sections-card") {
+  adminSelectedTarget = "#admin-sidebar-sections-card";
+} else if (startupHash === "#admin-menu-card" || startupHash === "#admin-menu-card-inactive") {
+  adminSelectedTarget = "#admin-menu-card";
 } else if (startupHash === "#settings-menu-edit-card") {
   adminSelectedTarget = "#settings-menu-edit-card";
 }
 if (!startupHash && settingsEditKey) {
   adminSelectedTarget = "#settings-menu-edit-card";
 }
-if (!startupHash && initialMenu === "administrativo" && !settingsEditKey) {
+if (!startupHash && initialMenu === "administrativo" && !settingsEditKey && !initialMenuTarget) {
   adminSelectedTarget = "#dynamic-process-card";
 }
 const selectedTargetByMenu = {
@@ -2671,19 +2687,24 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "admin-users-created-card" ||
         card.id === "inactive-users-card"
       );
-    const isSettingsGroupedBlock =
+    const isMenuGroupedBlock =
       menuKey === "administrativo" &&
-      targetSelector === "#settings-menu-edit-card" &&
       (
-        card.id === "admin-account-create-card" ||
+        targetSelector === "#admin-menu-card" ||
+        targetSelector === "#admin-menu-card-inactive" ||
+        targetSelector === "#settings-menu-edit-card"
+      ) &&
+      (
+        card.id === "admin-menu-card" ||
+        card.id === "admin-menu-card-inactive" ||
         card.id === "settings-menu-edit-card" ||
-        card.id === "admin-account-status-card"
+        card.id === "admin-menu-inactive-card"
       );
     card.style.display =
       targetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock
+      isMenuGroupedBlock
         ? ""
         : "none";
   });
@@ -4367,15 +4388,15 @@ function handleHashNavigation(rawHash) {
   } else if (normalizedHash === "#edit-entity-card") {
     normalizedHash = "#create-entity-card";
   } else if (normalizedHash === "#configuracao-account-status-card") {
-    normalizedHash = "#admin-account-status-card";
+    normalizedHash = "#admin-menu-card";
   }
 
   const hashTargetMenuMap = {
     "#create-user-card": "administrativo",
     "#create-entity-card": "administrativo",
-    "#admin-account-status-card": "administrativo",
+    "#admin-menu-card": "administrativo",
+    "#admin-menu-card-inactive": "administrativo",
     "#admin-sidebar-sections-card": "administrativo",
-    "#admin-account-create-card": "administrativo",
     "#settings-menu-edit-card": "administrativo"
   };
   const targetMenu = hashTargetMenuMap[normalizedHash];

@@ -706,6 +706,7 @@ def save_one_sidebar_section_v19(
 def move_one_sidebar_section_v25(
     request: Request,
     section_key: str = Form(""),
+    key: str = Form(""),
     direction: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
@@ -742,7 +743,7 @@ def move_one_sidebar_section_v25(
                 "Apenas Owner pode alterar sessões do sidebar.",
             )
 
-        clean_section_key = _slugify_sidebar_section_key_v19(section_key)
+        clean_section_key = _slugify_sidebar_section_key_v19(section_key or key)
         clean_direction = str(direction or "").strip().lower()
 
         if clean_direction not in {"up", "down"}:
@@ -1215,6 +1216,71 @@ def create_sidebar_menu_setting_handler_v1(
         )
 
 
+@router.post("/settings/menu/admin-create", response_class=HTMLResponse)
+def create_sidebar_menu_setting_admin_subprocess_handler(
+    request: Request,
+    menu_label: str = Form(...),
+    menu_visibility_scope: str = Form("all"),
+    menu_section: str = Form(""),
+    subprocess_return_url: str = Form(""),
+) -> RedirectResponse:
+    redirect_menu = "administrativo"
+    redirect_target = "#admin-menu-card"
+
+    with SessionLocal() as session:
+        blocked_response = _require_menu_settings_owner_v1(
+            session,
+            request,
+            redirect_menu,
+            redirect_target,
+            settings_action="create",
+        )
+        if blocked_response is not None:
+            return blocked_response
+
+        ok, error_message, new_menu_key = create_sidebar_menu_setting(
+            session,
+            menu_label,
+            menu_visibility_scope,
+        )
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível criar o menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                ),
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        if str(menu_section or "").strip():
+            ok, error_message = update_sidebar_menu_label(
+                session,
+                new_menu_key,
+                menu_label,
+                menu_visibility_scope,
+                menu_section,
+            )
+            if not ok:
+                return RedirectResponse(
+                    url=_build_settings_redirect_url(
+                        error_message=error_message or "Não foi possível configurar a sessão do menu.",
+                        redirect_menu=redirect_menu,
+                        redirect_target=redirect_target,
+                    ),
+                    status_code=HTTP_303_SEE_OTHER,
+                )
+
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                success_message="Menu criado com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+            ),
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+
 @router.post("/settings/menu/move", response_class=HTMLResponse)
 def move_sidebar_menu_setting_handler_v1(
     request: Request,
@@ -1260,6 +1326,52 @@ def move_sidebar_menu_setting_handler_v1(
         )
 
 
+@router.post("/settings/menu/admin-move", response_class=HTMLResponse)
+def move_sidebar_menu_setting_admin_subprocess_handler(
+    request: Request,
+    menu_key: str = Form(...),
+    direction: str = Form(...),
+    subprocess_return_url: str = Form(""),
+) -> RedirectResponse:
+    redirect_menu = "administrativo"
+    redirect_target = "#admin-menu-card"
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+
+    with SessionLocal() as session:
+        blocked_response = _require_menu_settings_owner_v1(
+            session,
+            request,
+            redirect_menu,
+            redirect_target,
+        )
+        if blocked_response is not None:
+            return blocked_response
+
+        ok, error_message = move_sidebar_menu_setting(
+            session,
+            clean_menu_key,
+            direction,
+        )
+        if not ok:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível mover o menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                ),
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                success_message="Ordem do menu atualizada com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+            ),
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+
 @router.post("/settings/menu/delete", response_class=HTMLResponse)
 def delete_sidebar_menu_setting_handler_v1(
     request: Request,
@@ -1293,6 +1405,47 @@ def delete_sidebar_menu_setting_handler_v1(
         return RedirectResponse(
             url=_build_settings_redirect_url(
                 success_message="Pasta eliminada com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+            ),
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/admin-delete", response_class=HTMLResponse)
+def delete_sidebar_menu_setting_admin_subprocess_handler(
+    request: Request,
+    menu_key: str = Form(...),
+    subprocess_return_url: str = Form(""),
+) -> RedirectResponse:
+    redirect_menu = "administrativo"
+    redirect_target = "#admin-menu-card"
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+
+    with SessionLocal() as session:
+        blocked_response = _require_menu_settings_owner_v1(
+            session,
+            request,
+            redirect_menu,
+            redirect_target,
+        )
+        if blocked_response is not None:
+            return blocked_response
+
+        ok, error_message = delete_sidebar_menu_setting(session, clean_menu_key)
+        if not ok:
+            return RedirectResponse(
+                url=subprocess_return_url or _build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível eliminar o menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                ),
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=subprocess_return_url or _build_settings_redirect_url(
+                success_message="Menu eliminado com sucesso.",
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,
             ),
