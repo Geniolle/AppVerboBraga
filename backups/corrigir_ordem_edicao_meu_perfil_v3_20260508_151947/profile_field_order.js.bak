@@ -1,0 +1,411 @@
+﻿// APPVERBO_PROFILE_FIELD_ORDER_V2_START
+//###################################################################################
+// (1) ORDENACAO DOS CAMPOS DO MEU PERFIL
+//###################################################################################
+
+(function () {
+  "use strict";
+
+  const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+
+  const profilePersonalVisibleFields = Array.isArray(bootstrap.profilePersonalVisibleFields)
+    ? bootstrap.profilePersonalVisibleFields
+      .map((fieldKey) => String(fieldKey || "").trim().toLowerCase())
+      .filter(Boolean)
+    : [];
+
+  const profilePersonalFieldLabels = (
+    bootstrap.profilePersonalFieldLabels &&
+    typeof bootstrap.profilePersonalFieldLabels === "object" &&
+    !Array.isArray(bootstrap.profilePersonalFieldLabels)
+  )
+    ? bootstrap.profilePersonalFieldLabels
+    : {};
+
+  //###################################################################################
+  // (2) MAPAS E NORMALIZACAO
+  //###################################################################################
+
+  const builtinLabelByKey = {
+    nome: "Nome",
+    email: "Email",
+    telefone: "Telefone",
+    pais: "País",
+    data_nascimento: "Data de nascimento",
+    whatsapp: "WhatsApp",
+    autorizacao_whatsapp: "Autorização para avisos por WhatsApp",
+    conta: "Conta",
+    estado_membro: "Estado de membro",
+    colaborador: "Colaborador",
+    entidades: "Entidades",
+    ultima_verificacao_whatsapp: "Última verificação WhatsApp",
+    detalhe_verificacao: "Detalhe da verificação"
+  };
+
+  const builtinKeyByInputName = {
+    full_name: "nome",
+    primary_phone: "telefone",
+    login_email: "email",
+    email: "email",
+    country: "pais",
+    birth_date: "data_nascimento",
+    whatsapp_notice_opt_in: "autorizacao_whatsapp"
+  };
+
+  function normalizeLookupText_v2(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function normalizeFieldKey_v2(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function getBuiltinFieldLabel_v2(fieldKey) {
+    return String(
+      profilePersonalFieldLabels[fieldKey] ||
+      builtinLabelByKey[fieldKey] ||
+      fieldKey ||
+      ""
+    ).trim();
+  }
+
+  function buildLabelToKeyMap_v2() {
+    const labelToKey = new Map();
+
+    Object.keys(builtinLabelByKey).forEach(function (fieldKey) {
+      labelToKey.set(normalizeLookupText_v2(builtinLabelByKey[fieldKey]), fieldKey);
+    });
+
+    Object.keys(profilePersonalFieldLabels).forEach(function (fieldKey) {
+      const cleanFieldKey = normalizeFieldKey_v2(fieldKey);
+      const label = String(profilePersonalFieldLabels[fieldKey] || "").trim();
+
+      if (cleanFieldKey && label) {
+        labelToKey.set(normalizeLookupText_v2(label), cleanFieldKey);
+      }
+    });
+
+    return labelToKey;
+  }
+
+  //###################################################################################
+  // (3) LOCALIZAR FORMULARIO E CONTAINERS
+  //###################################################################################
+
+  function getProfileCard_v2() {
+    return document.querySelector("#perfil-pessoal-card");
+  }
+
+  function getProfileForm_v2() {
+    return (
+      document.querySelector('form[action="/users/profile/personal"]') ||
+      document.querySelector("#perfil-pessoal-card form")
+    );
+  }
+
+  function getReadonlyGrid_v2() {
+    const card = getProfileCard_v2();
+
+    if (!card) {
+      return null;
+    }
+
+    return (
+      card.querySelector(".profile-readonly .personal-grid") ||
+      card.querySelector(".profile-readonly")
+    );
+  }
+
+  function getFormGrid_v2(form) {
+    if (!form) {
+      return null;
+    }
+
+    return (
+      form.querySelector(".personal-grid") ||
+      form.querySelector(".form-grid") ||
+      form
+    );
+  }
+
+  //###################################################################################
+  // (4) IDENTIFICAR CAMPOS NA TELA
+  //###################################################################################
+
+  function resolveReadonlyFieldKey_v2(item) {
+    if (!item) {
+      return "";
+    }
+
+    const explicitKey = normalizeFieldKey_v2(
+      item.getAttribute("data-profile-field-key") ||
+      item.dataset.profileFieldKey ||
+      ""
+    );
+
+    if (explicitKey) {
+      return explicitKey;
+    }
+
+    const labelElement = item.querySelector(".personal-label, label, span");
+    const labelText = normalizeLookupText_v2(labelElement ? labelElement.textContent : item.textContent);
+    const labelToKey = buildLabelToKeyMap_v2();
+
+    return labelToKey.get(labelText) || "";
+  }
+
+  function getFieldKeyFromFormField_v2(field) {
+    if (!field) {
+      return "";
+    }
+
+    const explicitKey = normalizeFieldKey_v2(
+      field.getAttribute("data-profile-field-key") ||
+      field.dataset.profileFieldKey ||
+      ""
+    );
+
+    if (explicitKey) {
+      return explicitKey;
+    }
+
+    const customInput = field.querySelector('[name^="custom_field__"]');
+
+    if (customInput) {
+      return normalizeFieldKey_v2(
+        String(customInput.getAttribute("name") || "").replace(/^custom_field__/, "")
+      );
+    }
+
+    const input = field.querySelector("input, select, textarea");
+
+    if (input) {
+      const inputName = normalizeFieldKey_v2(input.getAttribute("name") || "");
+
+      if (builtinKeyByInputName[inputName]) {
+        return builtinKeyByInputName[inputName];
+      }
+    }
+
+    const labelElement = field.querySelector("label");
+    const labelText = normalizeLookupText_v2(
+      String(labelElement ? labelElement.textContent : "")
+        .replace("*", "")
+        .trim()
+    );
+    const labelToKey = buildLabelToKeyMap_v2();
+
+    return labelToKey.get(labelText) || "";
+  }
+
+  function getFormFieldByKey_v2(form, fieldKey) {
+    const cleanFieldKey = normalizeFieldKey_v2(fieldKey);
+
+    if (!form || !cleanFieldKey) {
+      return null;
+    }
+
+    const keyedField = form.querySelector(`[data-profile-field-key="${cleanFieldKey}"]`);
+
+    if (keyedField) {
+      return keyedField.closest(".field") || keyedField;
+    }
+
+    const selectorMap = {
+      nome: ['#edit_full_name', '[name="full_name"]'],
+      telefone: ['#edit_primary_phone', '[name="primary_phone"]'],
+      email: ['#edit_login_email', '[name="login_email"]', '[name="email"]'],
+      pais: ['#edit_country', '[name="country"]'],
+      data_nascimento: ['#edit_birth_date', '[name="birth_date"]'],
+      autorizacao_whatsapp: ['[name="whatsapp_notice_opt_in"]']
+    };
+
+    const selectors = selectorMap[cleanFieldKey] || [];
+
+    for (const selector of selectors) {
+      const input = form.querySelector(selector);
+
+      if (!input) {
+        continue;
+      }
+
+      const field = input.closest(".field");
+
+      if (field) {
+        return field;
+      }
+    }
+
+    if (cleanFieldKey.startsWith("custom_")) {
+      const customInput = form.querySelector(`[name="custom_field__${cleanFieldKey}"]`);
+
+      if (customInput) {
+        return customInput.closest(".field");
+      }
+    }
+
+    return null;
+  }
+
+  //###################################################################################
+  // (5) OBTER ORDEM VISUAL DA LEITURA
+  //###################################################################################
+
+  function getReadonlyVisualOrder_v2() {
+    const readonlyGrid = getReadonlyGrid_v2();
+
+    if (!readonlyGrid) {
+      return [];
+    }
+
+    const order = [];
+    const seen = new Set();
+
+    Array.from(readonlyGrid.querySelectorAll(".personal-item")).forEach(function (item) {
+      const fieldKey = resolveReadonlyFieldKey_v2(item);
+
+      if (!fieldKey || seen.has(fieldKey)) {
+        return;
+      }
+
+      seen.add(fieldKey);
+      order.push(fieldKey);
+    });
+
+    return order;
+  }
+
+  function mergeOrder_v2(primaryOrder, fallbackOrder) {
+    const result = [];
+    const seen = new Set();
+
+    primaryOrder.concat(fallbackOrder).forEach(function (rawFieldKey) {
+      const fieldKey = normalizeFieldKey_v2(rawFieldKey);
+
+      if (!fieldKey || seen.has(fieldKey)) {
+        return;
+      }
+
+      seen.add(fieldKey);
+      result.push(fieldKey);
+    });
+
+    return result;
+  }
+
+  function getEffectiveProfileFieldOrder_v2() {
+    const readonlyOrder = getReadonlyVisualOrder_v2();
+
+    if (readonlyOrder.length) {
+      return mergeOrder_v2(readonlyOrder, profilePersonalVisibleFields);
+    }
+
+    return profilePersonalVisibleFields.slice();
+  }
+
+  //###################################################################################
+  // (6) REORDENAR CONTAINER
+  //###################################################################################
+
+  function clearOrder_v2(container, itemSelector) {
+    if (!container) {
+      return;
+    }
+
+    Array.from(container.querySelectorAll(itemSelector)).forEach(function (element) {
+      element.style.order = "";
+    });
+  }
+
+  function applyOrderToForm_v2(form, fieldOrder) {
+    const formGrid = getFormGrid_v2(form);
+
+    if (!form || !formGrid || !fieldOrder.length) {
+      return;
+    }
+
+    clearOrder_v2(formGrid, ".field");
+
+    const orderedKeys = new Set();
+
+    fieldOrder.forEach(function (fieldKey, index) {
+      const field = getFormFieldByKey_v2(form, fieldKey);
+
+      if (!field || field.parentNode !== formGrid) {
+        return;
+      }
+
+      field.style.order = String((index + 1) * 10);
+      orderedKeys.add(fieldKey);
+    });
+
+    let nextOrder = (fieldOrder.length + 1) * 10;
+
+    Array.from(formGrid.querySelectorAll(".field")).forEach(function (field) {
+      const fieldKey = getFieldKeyFromFormField_v2(field);
+
+      if (fieldKey && orderedKeys.has(fieldKey)) {
+        return;
+      }
+
+      field.style.order = String(nextOrder);
+      nextOrder += 10;
+    });
+
+    const actionsRow = form.querySelector(".profile-edit-actions");
+
+    if (actionsRow) {
+      actionsRow.style.order = String(nextOrder + 10);
+    }
+  }
+
+  //###################################################################################
+  // (7) SINCRONIZAR MODO EDICAO COM MODO LEITURA
+  //###################################################################################
+
+  function reorderProfileFields_v2() {
+    const form = getProfileForm_v2();
+
+    if (!form) {
+      return;
+    }
+
+    const effectiveOrder = getEffectiveProfileFieldOrder_v2();
+
+    if (!effectiveOrder.length) {
+      return;
+    }
+
+    applyOrderToForm_v2(form, effectiveOrder);
+  }
+
+  //###################################################################################
+  // (8) INICIALIZACAO
+  //###################################################################################
+
+  function init_v2() {
+    reorderProfileFields_v2();
+
+    window.setTimeout(reorderProfileFields_v2, 100);
+    window.setTimeout(reorderProfileFields_v2, 400);
+    window.setTimeout(reorderProfileFields_v2, 1000);
+    window.setTimeout(reorderProfileFields_v2, 1600);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init_v2);
+  }
+  else {
+    init_v2();
+  }
+
+  window.addEventListener("pageshow", init_v2);
+  window.reorderMeuPerfilProfileFields = reorderProfileFields_v2;
+})();
+// APPVERBO_PROFILE_FIELD_ORDER_V2_END

@@ -94,22 +94,6 @@ app.add_middleware(
     https_only=False,
 )
 
-
-# APPVERBO_DYNAMIC_NO_STORE_CORE_MIDDLEWARE_V2_START
-@app.middleware("http")
-async def appverbo_dynamic_no_store_core_middleware_v2(request, call_next):
-    response = await call_next(request)
-    request_path = str(request.url.path or "")
-
-    if not request_path.startswith("/static"):
-        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-        response.headers["X-AppVerbo-Dynamic-Sync"] = "no-store-core-v2"
-
-    return response
-# APPVERBO_DYNAMIC_NO_STORE_CORE_MIDDLEWARE_V2_END
-
 __all__ = [
     "OAuth",
     "OAuthError",

@@ -4,7 +4,9 @@
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
 {% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
 
-{% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
+{% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}  <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
+  <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260506-entidade-v2-users-new-v2" defer></script>
+{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
@@ -18,10 +20,7 @@
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2">
   <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
   <script src="/static/js/modules/menu_context_guard_v1.js?v=20260508-contexto-meu-perfil-v1" defer></script>
-  <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
-  <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260508-admin-menu-scope-v1" defer></script>
-  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260508-quantity-readonly-renderer-v2" defer></script>
-  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260508-quantity-edit-pairs-v4" defer></script>
+  <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v3" defer></script>
 {% endblock %}
 
 {% block body %}

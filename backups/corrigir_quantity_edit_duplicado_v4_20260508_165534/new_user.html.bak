@@ -21,7 +21,7 @@
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
   <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260508-admin-menu-scope-v1" defer></script>
   <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260508-quantity-readonly-renderer-v2" defer></script>
-  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260508-quantity-edit-pairs-v4" defer></script>
+  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260508-quantity-edit-pairs-v3" defer></script>
 {% endblock %}
 
 {% block body %}

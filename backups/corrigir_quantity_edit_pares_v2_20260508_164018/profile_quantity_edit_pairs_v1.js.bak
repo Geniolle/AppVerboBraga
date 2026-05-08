@@ -1,0 +1,668 @@
+﻿// APPVERBO_PROFILE_QUANTITY_EDIT_PAIRS_V1_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) BOOTSTRAP E CONSTANTES
+  //###################################################################################
+
+  const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+  const MEU_PERFIL_KEY_V1 = "meu_perfil";
+  const LEGACY_DOCUMENTOS_KEY_V1 = "documentos";
+
+  const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings)
+    ? bootstrap.sidebarMenuSettings
+    : [];
+
+  const menuProcessQuantityValuesMap = (
+    bootstrap.menuProcessQuantityValuesMap &&
+    typeof bootstrap.menuProcessQuantityValuesMap === "object" &&
+    !Array.isArray(bootstrap.menuProcessQuantityValuesMap)
+  )
+    ? bootstrap.menuProcessQuantityValuesMap
+    : {};
+
+  //###################################################################################
+  // (2) NORMALIZACAO
+  //###################################################################################
+
+  function normalizeKeyQuantityEditPairs_v1(value) {
+    const cleanValue = String(value || "").trim().toLowerCase();
+
+    if (cleanValue === LEGACY_DOCUMENTOS_KEY_V1) {
+      return MEU_PERFIL_KEY_V1;
+    }
+
+    return cleanValue;
+  }
+
+  function normalizeTextQuantityEditPairs_v1(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  function toSentenceCaseQuantityEditPairs_v1(value) {
+    const cleanText = String(value || "").trim().replace(/\s+/g, " ");
+
+    if (!cleanText) {
+      return "";
+    }
+
+    const loweredText = cleanText.toLocaleLowerCase("pt-PT");
+
+    return loweredText.charAt(0).toLocaleUpperCase("pt-PT") + loweredText.slice(1);
+  }
+
+  function normalizeFieldTypeQuantityEditPairs_v1(value) {
+    const cleanType = String(value || "text").trim().toLowerCase();
+    const allowedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
+
+    return allowedTypes.has(cleanType) ? cleanType : "text";
+  }
+
+  //###################################################################################
+  // (3) OBTER CONFIGURACAO DO MEU PERFIL
+  //###################################################################################
+
+  function getMeuPerfilSettingQuantityEditPairs_v1() {
+    return sidebarMenuSettings.find(function (setting) {
+      return normalizeKeyQuantityEditPairs_v1(setting && setting.key) === MEU_PERFIL_KEY_V1;
+    }) || null;
+  }
+
+  function getFieldMetaMapQuantityEditPairs_v1(setting) {
+    const metaMap = new Map();
+
+    const options = Array.isArray(setting && setting.process_field_options)
+      ? setting.process_field_options
+      : [];
+
+    options.forEach(function (option) {
+      const fieldKey = normalizeKeyQuantityEditPairs_v1(option && option.key);
+
+      if (!fieldKey) {
+        return;
+      }
+
+      metaMap.set(fieldKey, {
+        key: fieldKey,
+        label: toSentenceCaseQuantityEditPairs_v1(option.label || fieldKey),
+        fieldType: normalizeFieldTypeQuantityEditPairs_v1(option.field_type),
+        isRequired: Boolean(option.is_required || option.required),
+        listOptions: Array.isArray(option.list_options) ? option.list_options : []
+      });
+    });
+
+    return metaMap;
+  }
+
+  function normalizeQuantityRulesQuantityEditPairs_v1(rawRules) {
+    if (!Array.isArray(rawRules)) {
+      return [];
+    }
+
+    return rawRules
+      .map(function (rawRule, index) {
+        if (!rawRule || typeof rawRule !== "object") {
+          return null;
+        }
+
+        const key = normalizeKeyQuantityEditPairs_v1(
+          rawRule.key ||
+          rawRule.rule_key ||
+          rawRule.ruleKey ||
+          "qty_regra_" + String(index + 1)
+        );
+
+        const quantityFieldKey = normalizeKeyQuantityEditPairs_v1(
+          rawRule.quantity_field_key ||
+          rawRule.quantityFieldKey
+        );
+
+        const repeatedRaw = Array.isArray(rawRule.repeated_field_keys || rawRule.repeatedFieldKeys)
+          ? (rawRule.repeated_field_keys || rawRule.repeatedFieldKeys)
+          : [];
+
+        const repeatedFieldKeys = [];
+        const seen = new Set();
+
+        repeatedRaw.forEach(function (rawFieldKey) {
+          const fieldKey = normalizeKeyQuantityEditPairs_v1(rawFieldKey);
+
+          if (!fieldKey || seen.has(fieldKey)) {
+            return;
+          }
+
+          seen.add(fieldKey);
+          repeatedFieldKeys.push(fieldKey);
+        });
+
+        const parsedMax = Number.parseInt(String(rawRule.max_items || rawRule.maxItems || "50"), 10);
+
+        if (!key || !quantityFieldKey || !repeatedFieldKeys.length) {
+          return null;
+        }
+
+        return {
+          key: key,
+          label: toSentenceCaseQuantityEditPairs_v1(rawRule.label || rawRule.rule_label || rawRule.name || "Quantidade"),
+          quantityFieldKey: quantityFieldKey,
+          repeatedFieldKeys: repeatedFieldKeys,
+          headerKey: normalizeKeyQuantityEditPairs_v1(rawRule.header_key || rawRule.headerKey),
+          itemLabel: toSentenceCaseQuantityEditPairs_v1(rawRule.item_label || rawRule.itemLabel || "Item") || "Item",
+          maxItems: Number.isFinite(parsedMax) ? Math.max(1, Math.min(parsedMax, 50)) : 50
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function normalizeQuantityItemsQuantityEditPairs_v1(rawItems) {
+    if (!Array.isArray(rawItems)) {
+      return [];
+    }
+
+    return rawItems
+      .map(function (rawItem) {
+        if (!rawItem || typeof rawItem !== "object") {
+          return null;
+        }
+
+        const normalized = {};
+
+        Object.keys(rawItem).forEach(function (rawKey) {
+          const fieldKey = normalizeKeyQuantityEditPairs_v1(rawKey);
+
+          if (!fieldKey) {
+            return;
+          }
+
+          normalized[fieldKey] = String(rawItem[rawKey] || "").trim();
+        });
+
+        return normalized;
+      })
+      .filter(Boolean);
+  }
+
+  function getQuantityValuesQuantityEditPairs_v1(ruleKey) {
+    const valuesByMenu = menuProcessQuantityValuesMap[MEU_PERFIL_KEY_V1];
+
+    if (!valuesByMenu || typeof valuesByMenu !== "object" || Array.isArray(valuesByMenu)) {
+      return [];
+    }
+
+    return normalizeQuantityItemsQuantityEditPairs_v1(valuesByMenu[normalizeKeyQuantityEditPairs_v1(ruleKey)]);
+  }
+
+  //###################################################################################
+  // (4) LOCALIZAR FORMULARIO
+  //###################################################################################
+
+  function getPerfilCardQuantityEditPairs_v1() {
+    return document.querySelector("#perfil-pessoal-card");
+  }
+
+  function getEditFormQuantityEditPairs_v1() {
+    return (
+      document.querySelector('form[action="/users/profile/personal"]') ||
+      document.querySelector("#perfil-pessoal-card form.profile-edit-form") ||
+      document.querySelector("#perfil-pessoal-card form")
+    );
+  }
+
+  function getEditGridQuantityEditPairs_v1(form) {
+    if (!form) {
+      return null;
+    }
+
+    return form.querySelector(".personal-grid") ||
+      form.querySelector(".form-grid") ||
+      form;
+  }
+
+  function isEditFormVisibleQuantityEditPairs_v1(form) {
+    if (!form) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(form);
+
+    return style.display !== "none" && style.visibility !== "hidden";
+  }
+
+  //###################################################################################
+  // (5) LOCALIZAR CAMPO DE QUANTIDADE
+  //###################################################################################
+
+  function getFieldLabelQuantityEditPairs_v1(field) {
+    const label = field ? field.querySelector("label, .personal-label") : null;
+
+    return normalizeTextQuantityEditPairs_v1(label ? label.textContent : "");
+  }
+
+  function findFieldWrapperByFieldKeyQuantityEditPairs_v1(form, fieldKey, fieldMetaMap) {
+    const cleanFieldKey = normalizeKeyQuantityEditPairs_v1(fieldKey);
+
+    if (!form || !cleanFieldKey) {
+      return null;
+    }
+
+    const directSelectors = [
+      '[name="custom_field__' + cleanFieldKey + '"]',
+      '[name="' + cleanFieldKey + '"]',
+      '[data-profile-field-key="' + cleanFieldKey + '"]'
+    ];
+
+    for (const selector of directSelectors) {
+      const input = form.querySelector(selector);
+
+      if (input) {
+        return input.closest(".field") || input.parentElement;
+      }
+    }
+
+    const meta = fieldMetaMap.get(cleanFieldKey);
+    const expectedLabel = normalizeTextQuantityEditPairs_v1(meta ? meta.label : cleanFieldKey);
+
+    return Array.from(form.querySelectorAll(".field")).find(function (field) {
+      return getFieldLabelQuantityEditPairs_v1(field) === expectedLabel;
+    }) || null;
+  }
+
+  function findInputByFieldKeyQuantityEditPairs_v1(form, fieldKey, fieldMetaMap) {
+    const field = findFieldWrapperByFieldKeyQuantityEditPairs_v1(form, fieldKey, fieldMetaMap);
+
+    if (!field) {
+      return null;
+    }
+
+    return field.querySelector("input, select, textarea");
+  }
+
+  //###################################################################################
+  // (6) CRIAR INPUTS DOS PARES
+  //###################################################################################
+
+  function createLabelQuantityEditPairs_v1(text, required) {
+    const label = document.createElement("label");
+    label.textContent = text || "-";
+
+    if (required) {
+      const mark = document.createElement("span");
+      mark.textContent = " *";
+      label.appendChild(mark);
+    }
+
+    return label;
+  }
+
+  function createInputQuantityEditPairs_v1(rule, fieldKey, fieldMeta, index, value) {
+    const fieldType = normalizeFieldTypeQuantityEditPairs_v1(fieldMeta.fieldType);
+    const name = "process_quantity_field__" + rule.key + "__" + String(index) + "__" + fieldKey;
+    let input = null;
+
+    if (fieldType === "list" && Array.isArray(fieldMeta.listOptions) && fieldMeta.listOptions.length) {
+      input = document.createElement("select");
+
+      fieldMeta.listOptions.forEach(function (optionValue) {
+        const option = document.createElement("option");
+        option.value = String(optionValue || "").trim();
+        option.textContent = String(optionValue || "").trim();
+        input.appendChild(option);
+      });
+    }
+    else if (fieldType === "flag") {
+      input = document.createElement("select");
+
+      [
+        ["", ""],
+        ["1", "Sim"],
+        ["0", "Não"]
+      ].forEach(function (pair) {
+        const option = document.createElement("option");
+        option.value = pair[0];
+        option.textContent = pair[1];
+        input.appendChild(option);
+      });
+    }
+    else {
+      input = document.createElement("input");
+
+      if (fieldType === "date") {
+        input.type = "date";
+      }
+      else if (fieldType === "number") {
+        input.type = "number";
+      }
+      else if (fieldType === "email") {
+        input.type = "email";
+      }
+      else if (fieldType === "phone") {
+        input.type = "tel";
+      }
+      else {
+        input.type = "text";
+      }
+    }
+
+    input.name = name;
+    input.value = String(value || "");
+    input.dataset.appverboQuantityFieldKeyV1 = fieldKey;
+    input.dataset.appverboQuantityRuleKeyV1 = rule.key;
+    input.dataset.appverboQuantityIndexV1 = String(index);
+
+    if (fieldMeta.isRequired) {
+      input.required = true;
+    }
+
+    return input;
+  }
+
+  function createHeaderQuantityEditPairs_v1(rule, index) {
+    const header = document.createElement("div");
+    header.className = "appverbo-quantity-edit-header-v1";
+    header.setAttribute("data-appverbo-quantity-edit-generated-v1", "1");
+    header.setAttribute("data-appverbo-quantity-rule-key-v1", rule.key);
+    header.style.gridColumn = "1 / -1";
+    header.textContent = rule.itemLabel + " " + String(index + 1);
+
+    return header;
+  }
+
+  function createFieldQuantityEditPairs_v1(rule, fieldKey, fieldMeta, index, value) {
+    const field = document.createElement("div");
+    field.className = "field appverbo-quantity-edit-field-v1";
+    field.setAttribute("data-appverbo-quantity-edit-generated-v1", "1");
+    field.setAttribute("data-appverbo-quantity-rule-key-v1", rule.key);
+    field.setAttribute("data-profile-field-key", fieldKey);
+
+    const label = createLabelQuantityEditPairs_v1(fieldMeta.label || fieldKey, fieldMeta.isRequired);
+    const input = createInputQuantityEditPairs_v1(rule, fieldKey, fieldMeta, index, value);
+
+    field.appendChild(label);
+    field.appendChild(input);
+
+    return field;
+  }
+
+  //###################################################################################
+  // (7) PAYLOAD OCULTO
+  //###################################################################################
+
+  function collectRulePayloadQuantityEditPairs_v1(form, rule) {
+    const payload = [];
+    const generatedInputs = Array.from(
+      form.querySelectorAll('[data-appverbo-quantity-rule-key-v1="' + rule.key + '"] input, [data-appverbo-quantity-rule-key-v1="' + rule.key + '"] select, [data-appverbo-quantity-rule-key-v1="' + rule.key + '"] textarea')
+    );
+
+    generatedInputs.forEach(function (input) {
+      const index = Number.parseInt(String(input.dataset.appverboQuantityIndexV1 || "0"), 10);
+      const fieldKey = normalizeKeyQuantityEditPairs_v1(input.dataset.appverboQuantityFieldKeyV1 || "");
+
+      if (!Number.isFinite(index) || !fieldKey) {
+        return;
+      }
+
+      if (!payload[index]) {
+        payload[index] = {};
+      }
+
+      payload[index][fieldKey] = String(input.value || "").trim();
+    });
+
+    return payload.filter(function (item) {
+      return item && Object.keys(item).some(function (key) {
+        return String(item[key] || "").trim();
+      });
+    });
+  }
+
+  function syncHiddenPayloadQuantityEditPairs_v1(form, rule) {
+    if (!form || !rule) {
+      return;
+    }
+
+    const payloadName = "process_quantity_payload__" + rule.key;
+
+    Array.from(form.querySelectorAll('[name="' + payloadName + '"]')).forEach(function (input) {
+      input.remove();
+    });
+
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.name = payloadName;
+    hiddenInput.value = JSON.stringify(collectRulePayloadQuantityEditPairs_v1(form, rule));
+
+    form.appendChild(hiddenInput);
+  }
+
+  function bindPayloadSyncQuantityEditPairs_v1(form, rule) {
+    form.addEventListener("input", function (event) {
+      const target = event.target;
+
+      if (!target || !target.dataset || target.dataset.appverboQuantityRuleKeyV1 !== rule.key) {
+        return;
+      }
+
+      syncHiddenPayloadQuantityEditPairs_v1(form, rule);
+    }, true);
+
+    form.addEventListener("change", function (event) {
+      const target = event.target;
+
+      if (!target || !target.dataset || target.dataset.appverboQuantityRuleKeyV1 !== rule.key) {
+        return;
+      }
+
+      syncHiddenPayloadQuantityEditPairs_v1(form, rule);
+    }, true);
+
+    form.addEventListener("submit", function () {
+      syncHiddenPayloadQuantityEditPairs_v1(form, rule);
+    }, true);
+  }
+
+  //###################################################################################
+  // (8) RENDERIZAR PARES
+  //###################################################################################
+
+  function removeGeneratedPairsQuantityEditPairs_v1(form, ruleKey) {
+    if (!form) {
+      return;
+    }
+
+    Array.from(
+      form.querySelectorAll('[data-appverbo-quantity-edit-generated-v1="1"][data-appverbo-quantity-rule-key-v1="' + ruleKey + '"]')
+    ).forEach(function (element) {
+      element.remove();
+    });
+  }
+
+  function getQuantityCountQuantityEditPairs_v1(quantityInput, rule) {
+    const parsed = Number.parseInt(String(quantityInput ? quantityInput.value : "").trim(), 10);
+
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 0;
+    }
+
+    return Math.min(parsed, rule.maxItems || 50);
+  }
+
+  function renderRulePairsQuantityEditPairs_v1(form, grid, rule, fieldMetaMap) {
+    const quantityInput = findInputByFieldKeyQuantityEditPairs_v1(form, rule.quantityFieldKey, fieldMetaMap);
+    const quantityWrapper = quantityInput ? quantityInput.closest(".field") : null;
+
+    if (!quantityInput || !quantityWrapper || !grid) {
+      return;
+    }
+
+    removeGeneratedPairsQuantityEditPairs_v1(form, rule.key);
+
+    const quantityCount = getQuantityCountQuantityEditPairs_v1(quantityInput, rule);
+    const savedValues = getQuantityValuesQuantityEditPairs_v1(rule.key);
+
+    let insertionPoint = quantityWrapper;
+
+    for (let index = 0; index < quantityCount; index += 1) {
+      const header = createHeaderQuantityEditPairs_v1(rule, index);
+      insertionPoint.insertAdjacentElement("afterend", header);
+      insertionPoint = header;
+
+      const itemValues = savedValues[index] || {};
+
+      rule.repeatedFieldKeys.forEach(function (fieldKey) {
+        const fieldMeta = fieldMetaMap.get(fieldKey) || {
+          key: fieldKey,
+          label: toSentenceCaseQuantityEditPairs_v1(fieldKey),
+          fieldType: "text",
+          isRequired: false,
+          listOptions: []
+        };
+
+        const fieldElement = createFieldQuantityEditPairs_v1(
+          rule,
+          fieldKey,
+          fieldMeta,
+          index,
+          itemValues[fieldKey] || ""
+        );
+
+        insertionPoint.insertAdjacentElement("afterend", fieldElement);
+        insertionPoint = fieldElement;
+      });
+    }
+
+    syncHiddenPayloadQuantityEditPairs_v1(form, rule);
+
+    if (form.dataset.appverboQuantityPayloadBoundV1 !== "1") {
+      form.dataset.appverboQuantityPayloadBoundV1 = "1";
+    }
+  }
+
+  function renderAllPairsQuantityEditPairs_v1() {
+    const form = getEditFormQuantityEditPairs_v1();
+    const grid = getEditGridQuantityEditPairs_v1(form);
+    const setting = getMeuPerfilSettingQuantityEditPairs_v1();
+
+    if (!form || !grid || !setting || !isEditFormVisibleQuantityEditPairs_v1(form)) {
+      return;
+    }
+
+    const fieldMetaMap = getFieldMetaMapQuantityEditPairs_v1(setting);
+    const rules = normalizeQuantityRulesQuantityEditPairs_v1(setting.process_quantity_fields);
+
+    rules.forEach(function (rule) {
+      renderRulePairsQuantityEditPairs_v1(form, grid, rule, fieldMetaMap);
+      bindPayloadSyncQuantityEditPairs_v1(form, rule);
+    });
+
+    if (typeof window.reorderMeuPerfilProfileFields === "function") {
+      window.setTimeout(window.reorderMeuPerfilProfileFields, 50);
+    }
+  }
+
+  //###################################################################################
+  // (9) REAGIR A ALTERACAO DO CAMPO DE QUANTIDADE
+  //###################################################################################
+
+  function bindQuantityInputsQuantityEditPairs_v1() {
+    const form = getEditFormQuantityEditPairs_v1();
+    const setting = getMeuPerfilSettingQuantityEditPairs_v1();
+
+    if (!form || !setting || form.dataset.appverboQuantityEditPairsBoundV1 === "1") {
+      return;
+    }
+
+    const fieldMetaMap = getFieldMetaMapQuantityEditPairs_v1(setting);
+    const rules = normalizeQuantityRulesQuantityEditPairs_v1(setting.process_quantity_fields);
+
+    rules.forEach(function (rule) {
+      const quantityInput = findInputByFieldKeyQuantityEditPairs_v1(form, rule.quantityFieldKey, fieldMetaMap);
+
+      if (!quantityInput) {
+        return;
+      }
+
+      quantityInput.addEventListener("input", function () {
+        window.setTimeout(renderAllPairsQuantityEditPairs_v1, 0);
+      });
+
+      quantityInput.addEventListener("change", function () {
+        window.setTimeout(renderAllPairsQuantityEditPairs_v1, 0);
+      });
+    });
+
+    form.dataset.appverboQuantityEditPairsBoundV1 = "1";
+  }
+
+  //###################################################################################
+  // (10) ESTILO
+  //###################################################################################
+
+  function installStyleQuantityEditPairs_v1() {
+    if (document.getElementById("appverbo-profile-quantity-edit-pairs-style-v1")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "appverbo-profile-quantity-edit-pairs-style-v1";
+    style.textContent = [
+      ".appverbo-quantity-edit-header-v1 { margin: 14px 0 2px; font-size: 14px; font-weight: 800; color: #0f172a; }",
+      ".appverbo-quantity-edit-field-v1 { min-height: 54px; }"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  //###################################################################################
+  // (11) INICIAR
+  //###################################################################################
+
+  function startQuantityEditPairs_v1() {
+    installStyleQuantityEditPairs_v1();
+    bindQuantityInputsQuantityEditPairs_v1();
+    renderAllPairsQuantityEditPairs_v1();
+
+    window.setTimeout(function () {
+      bindQuantityInputsQuantityEditPairs_v1();
+      renderAllPairsQuantityEditPairs_v1();
+    }, 150);
+
+    window.setTimeout(function () {
+      bindQuantityInputsQuantityEditPairs_v1();
+      renderAllPairsQuantityEditPairs_v1();
+    }, 600);
+
+    window.setTimeout(function () {
+      bindQuantityInputsQuantityEditPairs_v1();
+      renderAllPairsQuantityEditPairs_v1();
+    }, 1200);
+  }
+
+  document.addEventListener("click", function (event) {
+    const button = event.target && event.target.closest
+      ? event.target.closest('[data-edit-target="perfil-pessoal-card"], .profile-edit-toggle')
+      : null;
+
+    if (!button) {
+      return;
+    }
+
+    window.setTimeout(startQuantityEditPairs_v1, 80);
+    window.setTimeout(startQuantityEditPairs_v1, 250);
+  }, true);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startQuantityEditPairs_v1);
+  }
+  else {
+    startQuantityEditPairs_v1();
+  }
+
+  window.addEventListener("pageshow", startQuantityEditPairs_v1);
+})();
+// APPVERBO_PROFILE_QUANTITY_EDIT_PAIRS_V1_END
