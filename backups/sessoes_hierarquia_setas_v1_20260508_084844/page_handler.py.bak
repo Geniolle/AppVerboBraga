@@ -460,28 +460,12 @@ def new_user_page(
         sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
 
         if sessoes_subprocess_config_v2 is not None:
-            # APPVERBO_SESSOES_HIERARQUIA_RENDER_BD_V1_START
-            # A hierarquia deve refletir a ordem persistida no menu_config do BD.
-            # O page_data pode trazer dados já preparados para outros blocos da página
-            # e, após o redirect do POST das setas, pode reconstruir a lista sem
-            # preservar a alteração visual esperada.
-            try:
-                from appverbo.admin_subprocesses.repositories.sidebar_section_repository import (
-                    SidebarSectionAdminRepository,
-                )
-
-                all_sidebar_sections_for_subprocess_v3 = SidebarSectionAdminRepository(
-                    sessoes_subprocess_config_v2
-                ).list_rows(session)
-            except Exception:
-                all_sidebar_sections_for_subprocess_v3 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
-            # APPVERBO_SESSOES_HIERARQUIA_RENDER_BD_V1_END
-
+            all_sidebar_sections_for_subprocess_v2 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
             clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip()
 
             admin_subprocess_state_v2 = build_admin_subprocess_state(
                 config=sessoes_subprocess_config_v2,
-                rows=all_sidebar_sections_for_subprocess_v3,
+                rows=all_sidebar_sections_for_subprocess_v2,
                 edit_key=clean_sidebar_section_edit_key_v2,
                 success=settings_success if resolved_admin_tab == "sessoes" else "",
                 error=settings_error if resolved_admin_tab == "sessoes" else "",

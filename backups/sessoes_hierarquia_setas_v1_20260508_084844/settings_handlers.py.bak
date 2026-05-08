@@ -390,17 +390,9 @@ def _append_sidebar_section_message_v19(return_url: str, message_key: str, messa
     params = [
         (key, value)
         for key, value in parse_qsl(parts.query, keep_blank_values=True)
-        if key not in {"success", "error", "settings_success", "settings_error"}
+        if key not in {"success", "error"}
     ]
-
-    clean_message_key = (
-        "settings_success"
-        if message_key == "success"
-        else "settings_error"
-        if message_key == "error"
-        else message_key
-    )
-    params.append((clean_message_key, message))
+    params.append((message_key, message))
 
     return urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
 
@@ -792,40 +784,9 @@ def move_one_sidebar_section_v25(
                 "Sessão não encontrada para mover.",
             )
 
-        # APPVERBO_SESSOES_HIERARQUIA_SETAS_V1_START
-        # Move apenas dentro do mesmo grupo visual da tabela.
-        # Na tela atual as setas aparecem nas sessões ativas; se houver sessões
-        # inativas intercaladas no JSON, trocar com a próxima linha física pode
-        # não alterar a ordem visível. Por isso procuramos o próximo item com o
-        # mesmo estado da sessão clicada.
-        current_status = _normalize_sidebar_section_status_v19(
-            payload_sections[current_index].get("status")
-        )
+        target_index = current_index - 1 if clean_direction == "up" else current_index + 1
 
-        if clean_direction == "up":
-            target_index = next(
-                (
-                    index
-                    for index in range(current_index - 1, -1, -1)
-                    if _normalize_sidebar_section_status_v19(
-                        payload_sections[index].get("status")
-                    ) == current_status
-                ),
-                -1,
-            )
-        else:
-            target_index = next(
-                (
-                    index
-                    for index in range(current_index + 1, len(payload_sections))
-                    if _normalize_sidebar_section_status_v19(
-                        payload_sections[index].get("status")
-                    ) == current_status
-                ),
-                -1,
-            )
-
-        if target_index < 0:
+        if target_index < 0 or target_index >= len(payload_sections):
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "success",
@@ -836,7 +797,6 @@ def move_one_sidebar_section_v25(
             payload_sections[target_index],
             payload_sections[current_index],
         )
-        # APPVERBO_SESSOES_HIERARQUIA_SETAS_V1_END
 
         ok, error_message = update_sidebar_sections_v2(
             session,
