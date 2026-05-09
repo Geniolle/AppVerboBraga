@@ -8375,17 +8375,15 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 250);
 window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
 // APPVERBO_MEU_PERFIL_QUANTITY_SUBMIT_SYNC_V1_END
 
-// APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_START
+// APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_V1_START
 //###################################################################################
-// (GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2) LOGGER E REMOCAO GLOBAL DE MENSAGENS EM 3S
+// (GLOBAL_MESSAGE_AUTO_DISMISS_V1) REMOVER MENSAGENS GLOBAIS APOS 3 SEGUNDOS
 //###################################################################################
 
 (function () {
   "use strict";
 
-  const startedAt = Date.now();
   const GLOBAL_MESSAGE_AUTO_DISMISS_MS = 3000;
-  const DEBUG_ENDPOINT = "/debug/global-message-auto-dismiss";
 
   const MESSAGE_PARAM_NAMES = [
     "success",
@@ -8402,8 +8400,6 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
   const MESSAGE_SELECTOR = [
     '[role="alert"]',
     ".alert",
-    ".alert-success",
-    ".alert-danger",
     ".flash",
     ".toast",
     ".notification",
@@ -8415,102 +8411,14 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     ".form-message",
     ".status-message",
     "[data-message]",
-    "[data-alert]",
-    "[class*='alert']",
-    "[class*='message']",
-    "[class*='success']",
-    "[class*='error']"
+    "[data-alert]"
   ].join(",");
-
-  window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS =
-    window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS || [];
-
-  function safeText(value, maxSize) {
-    const cleanValue = String(value || "");
-    const limit = maxSize || 500;
-
-    if (cleanValue.length > limit) {
-      return cleanValue.slice(0, limit) + "...[TRUNCATED]";
-    }
-
-    return cleanValue;
-  }
 
   function normalizeMessageText(value) {
     return String(value || "")
       .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
-  }
-
-  function getElementSnapshot(element) {
-    if (!element) {
-      return null;
-    }
-
-    let computedStyle = null;
-
-    try {
-      const style = window.getComputedStyle(element);
-      computedStyle = {
-        display: style.display,
-        visibility: style.visibility,
-        opacity: style.opacity,
-        backgroundColor: style.backgroundColor,
-        color: style.color
-      };
-    } catch (error) {
-      computedStyle = {
-        error: String(error && error.message ? error.message : error)
-      };
-    }
-
-    return {
-      tagName: String(element.tagName || ""),
-      id: String(element.id || ""),
-      className: String(element.className || ""),
-      role: String(element.getAttribute("role") || ""),
-      dataAutoDismissed: String(element.dataset ? element.dataset.appverboAutoDismissedV2 || "" : ""),
-      text: safeText(element.textContent || "", 700),
-      outerHTML: safeText(element.outerHTML || "", 900),
-      computedStyle: computedStyle
-    };
-  }
-
-  function debugGlobalMessageAutoDismiss(stage, data) {
-    const entry = {
-      stage: String(stage || ""),
-      elapsedMs: Date.now() - startedAt,
-      readyState: document.readyState,
-      location: {
-        href: window.location.href,
-        pathname: window.location.pathname,
-        search: window.location.search,
-        hash: window.location.hash
-      },
-      data: data || {}
-    };
-
-    window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS.push(entry);
-
-    try {
-      console.log("APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG", entry);
-    } catch (error) {
-      return;
-    }
-
-    try {
-      fetch(DEBUG_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(entry),
-        keepalive: true
-      }).catch(function () {});
-    } catch (error) {
-      return;
-    }
   }
 
   function getUrlMessageValues() {
@@ -8521,28 +8429,19 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
       const paramValue = params.get(paramName);
 
       if (paramValue && String(paramValue).trim() !== "") {
-        values.push({
-          paramName: paramName,
-          paramValue: String(paramValue).trim()
-        });
+        values.push(String(paramValue).trim());
       }
     });
 
     return values;
   }
 
-  function hasMessageSignal(element) {
-    if (!element) {
+  function hasMessageClass(element) {
+    if (!element || !element.classList) {
       return false;
     }
 
-    const role = String(element.getAttribute("role") || "").toLowerCase();
-
-    if (role === "alert") {
-      return true;
-    }
-
-    const classText = String(element.className || "").toLowerCase();
+    const classText = Array.from(element.classList).join(" ").toLowerCase();
 
     return (
       classText.includes("alert") ||
@@ -8554,45 +8453,17 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     );
   }
 
-  function findBestDismissTarget(element) {
-    if (!element) {
-      return null;
-    }
-
-    if (hasMessageSignal(element)) {
-      return element;
-    }
-
-    const closestMessage = element.closest(MESSAGE_SELECTOR);
-
-    if (closestMessage) {
-      return closestMessage;
-    }
-
-    let current = element.parentElement;
-
-    while (current && current !== document.body) {
-      if (hasMessageSignal(current)) {
-        return current;
-      }
-
-      current = current.parentElement;
-    }
-
-    return element;
-  }
-
   function findSmallestElementContainingText(messageText) {
     const normalizedNeedle = normalizeMessageText(messageText);
 
-    if (!normalizedNeedle || !document.body) {
+    if (!normalizedNeedle) {
       return null;
     }
 
     const candidates = Array.from(document.body.querySelectorAll("*")).filter(function (element) {
       const tagName = String(element.tagName || "").toLowerCase();
 
-      if (["script", "style", "svg", "path", "meta", "link", "option"].includes(tagName)) {
+      if (["script", "style", "svg", "path", "meta", "link"].includes(tagName)) {
         return false;
       }
 
@@ -8616,81 +8487,44 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
       return leftTextLength - rightTextLength;
     });
 
-    return candidates[0];
+    const directCandidate = candidates.find(function (element) {
+      return hasMessageClass(element) || element.getAttribute("role") === "alert";
+    });
+
+    return directCandidate || candidates[0];
   }
 
-  function collectGlobalMessageElements(reason) {
+  function collectGlobalMessageElements() {
     const elements = new Set();
-    const selectorMatches = [];
-
-    if (!document.body) {
-      debugGlobalMessageAutoDismiss("collect_no_body", {
-        reason: reason || ""
-      });
-      return [];
-    }
 
     document.querySelectorAll(MESSAGE_SELECTOR).forEach(function (element) {
       const text = normalizeMessageText(element.textContent || "");
 
-      if (!text) {
-        return;
+      if (text) {
+        elements.add(element);
       }
-
-      elements.add(findBestDismissTarget(element) || element);
-      selectorMatches.push(getElementSnapshot(element));
     });
 
-    const urlMessages = getUrlMessageValues();
-    const textMatches = [];
+    getUrlMessageValues().forEach(function (messageText) {
+      const element = findSmallestElementContainingText(messageText);
 
-    urlMessages.forEach(function (messageItem) {
-      const foundElement = findSmallestElementContainingText(messageItem.paramValue);
-      const targetElement = findBestDismissTarget(foundElement) || foundElement;
-
-      if (targetElement) {
-        elements.add(targetElement);
+      if (element) {
+        elements.add(element);
       }
-
-      textMatches.push({
-        paramName: messageItem.paramName,
-        paramValue: messageItem.paramValue,
-        foundElement: getElementSnapshot(foundElement),
-        targetElement: getElementSnapshot(targetElement)
-      });
     });
 
-    const finalElements = Array.from(elements).filter(function (element) {
-      return element && element.isConnected && element.dataset.appverboAutoDismissedV2 !== "1";
+    return Array.from(elements).filter(function (element) {
+      return element && element.isConnected && element.dataset.appverboAutoDismissedV1 !== "1";
     });
-
-    debugGlobalMessageAutoDismiss("collect_messages", {
-      reason: reason || "",
-      messageSelector: MESSAGE_SELECTOR,
-      urlMessages: urlMessages,
-      selectorMatchesCount: selectorMatches.length,
-      textMatchesCount: textMatches.length,
-      finalElementsCount: finalElements.length,
-      selectorMatches: selectorMatches.slice(0, 10),
-      textMatches: textMatches.slice(0, 10),
-      finalElements: finalElements.slice(0, 10).map(getElementSnapshot)
-    });
-
-    return finalElements;
   }
 
-  function cleanMessageParamsFromUrl(reason) {
+  function cleanMessageParamsFromUrl() {
     try {
       const url = new URL(window.location.href);
       let changed = false;
-      const removedParams = [];
 
       MESSAGE_PARAM_NAMES.forEach(function (paramName) {
         if (url.searchParams.has(paramName)) {
-          removedParams.push({
-            paramName: paramName,
-            paramValue: url.searchParams.get(paramName)
-          });
           url.searchParams.delete(paramName);
           changed = true;
         }
@@ -8699,40 +8533,18 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
       if (changed) {
         const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
         window.history.replaceState(window.history.state, document.title, cleanUrl);
-
-        debugGlobalMessageAutoDismiss("url_params_cleaned", {
-          reason: reason || "",
-          removedParams: removedParams,
-          cleanUrl: cleanUrl
-        });
-      } else {
-        debugGlobalMessageAutoDismiss("url_params_not_found", {
-          reason: reason || ""
-        });
       }
     } catch (error) {
-      debugGlobalMessageAutoDismiss("url_params_clean_error", {
-        reason: reason || "",
-        error: String(error && error.message ? error.message : error)
-      });
+      return;
     }
   }
 
-  function dismissElement(element, reason) {
+  function dismissElement(element) {
     if (!element || !element.isConnected) {
-      debugGlobalMessageAutoDismiss("dismiss_skip_not_connected", {
-        reason: reason || "",
-        element: getElementSnapshot(element)
-      });
       return;
     }
 
-    debugGlobalMessageAutoDismiss("dismiss_start", {
-      reason: reason || "",
-      elementBefore: getElementSnapshot(element)
-    });
-
-    element.dataset.appverboAutoDismissedV2 = "1";
+    element.dataset.appverboAutoDismissedV1 = "1";
     element.style.transition = "opacity 250ms ease, max-height 250ms ease, margin 250ms ease, padding 250ms ease";
     element.style.overflow = "hidden";
     element.style.opacity = "0";
@@ -8743,77 +8555,33 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     element.style.paddingBottom = "0";
 
     window.setTimeout(function () {
-      const stillConnectedBeforeRemove = Boolean(element && element.isConnected);
-
       if (element && element.isConnected) {
         element.remove();
       }
-
-      debugGlobalMessageAutoDismiss("dismiss_removed", {
-        reason: reason || "",
-        stillConnectedBeforeRemove: stillConnectedBeforeRemove,
-        stillConnectedAfterRemove: Boolean(element && element.isConnected)
-      });
     }, 300);
   }
 
-  function runGlobalMessageAutoDismiss(reason) {
-    debugGlobalMessageAutoDismiss("run_start", {
-      reason: reason || "",
-      urlMessages: getUrlMessageValues()
-    });
+  function scheduleGlobalMessageAutoDismiss() {
+    const elements = collectGlobalMessageElements();
 
-    const elements = collectGlobalMessageElements(reason);
-
-    if (!elements.length) {
-      debugGlobalMessageAutoDismiss("run_no_elements_found", {
-        reason: reason || "",
-        urlMessages: getUrlMessageValues()
-      });
-
-      cleanMessageParamsFromUrl(reason || "no_elements_found");
+    if (!elements.length && !getUrlMessageValues().length) {
       return;
     }
 
-    elements.forEach(function (element) {
-      dismissElement(element, reason || "auto");
-    });
-
-    cleanMessageParamsFromUrl(reason || "auto");
-  }
-
-  function scheduleGlobalMessageAutoDismiss(reason) {
-    debugGlobalMessageAutoDismiss("schedule", {
-      reason: reason || "",
-      timeoutMs: GLOBAL_MESSAGE_AUTO_DISMISS_MS,
-      urlMessages: getUrlMessageValues()
-    });
-
     window.setTimeout(function () {
-      runGlobalMessageAutoDismiss(reason || "scheduled_3000ms");
+      collectGlobalMessageElements().forEach(dismissElement);
+      cleanMessageParamsFromUrl();
     }, GLOBAL_MESSAGE_AUTO_DISMISS_MS);
   }
 
   function initGlobalMessageAutoDismiss() {
-    debugGlobalMessageAutoDismiss("init", {
-      bodyExists: Boolean(document.body),
-      urlMessages: getUrlMessageValues(),
-      scriptVersion: "GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2"
-    });
+    scheduleGlobalMessageAutoDismiss();
 
-    scheduleGlobalMessageAutoDismiss("init");
-
-    window.setTimeout(function () {
-      collectGlobalMessageElements("diagnostic_250ms");
-    }, 250);
-
-    window.setTimeout(function () {
-      collectGlobalMessageElements("diagnostic_1000ms");
-    }, 1000);
+    window.setTimeout(scheduleGlobalMessageAutoDismiss, 250);
+    window.setTimeout(scheduleGlobalMessageAutoDismiss, 1000);
 
     const observer = new MutationObserver(function () {
-      debugGlobalMessageAutoDismiss("mutation_observed", {});
-      scheduleGlobalMessageAutoDismiss("mutation_observed");
+      scheduleGlobalMessageAutoDismiss();
     });
 
     if (document.body) {
@@ -8824,19 +8592,8 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
 
       window.setTimeout(function () {
         observer.disconnect();
-        debugGlobalMessageAutoDismiss("observer_disconnected", {});
       }, 10000);
     }
-
-    window.appverboGlobalMessageDebugV2 = {
-      logs: window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS,
-      collect: function () {
-        return collectGlobalMessageElements("manual_collect");
-      },
-      runNow: function () {
-        return runGlobalMessageAutoDismiss("manual_run");
-      }
-    };
   }
 
   if (document.readyState === "loading") {
@@ -8845,4 +8602,4 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     initGlobalMessageAutoDismiss();
   }
 })();
-// APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_END
+// APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_V1_END
