@@ -55,193 +55,6 @@ MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
 
 
 
-
-# APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2_START
-def _safe_meu_perfil_logger_value_v2(raw_value: Any, max_size: int = 1500) -> Any:
-    clean_value = str(raw_value or "")
-
-    if len(clean_value) > max_size:
-        return clean_value[:max_size] + "...[TRUNCATED]"
-
-    return clean_value
-
-
-def _append_meu_perfil_logger_value_v2(target: dict[str, Any], key: str, value: Any) -> None:
-    clean_key = str(key or "").strip()
-
-    if not clean_key:
-        return
-
-    if clean_key in target:
-        if not isinstance(target[clean_key], list):
-            target[clean_key] = [target[clean_key]]
-        target[clean_key].append(value)
-        return
-
-    target[clean_key] = value
-
-
-def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, Any]:
-    import json
-
-    blocked_fragments = (
-        "password",
-        "senha",
-        "token",
-        "csrf",
-        "secret",
-        "cookie",
-        "authorization",
-    )
-
-    if hasattr(submitted_form, "multi_items"):
-        raw_items = list(submitted_form.multi_items())
-    elif hasattr(submitted_form, "items"):
-        raw_items = list(submitted_form.items())
-    else:
-        raw_items = []
-
-    general_fields: dict[str, Any] = {}
-    custom_fields: dict[str, Any] = {}
-    quantity_payloads: dict[str, Any] = {}
-    quantity_live_fields: dict[str, Any] = {}
-
-    for raw_name, raw_value in raw_items:
-        clean_name = str(raw_name or "").strip()
-        clean_name_lower = clean_name.lower()
-
-        if not clean_name:
-            continue
-
-        if any(fragment in clean_name_lower for fragment in blocked_fragments):
-            clean_value = "[FILTERED]"
-        else:
-            clean_value = _safe_meu_perfil_logger_value_v2(raw_value)
-
-        if clean_name.startswith("process_quantity_payload__"):
-            parsed_payload: Any = None
-            parsed_error = ""
-
-            try:
-                parsed_payload = json.loads(str(raw_value or "[]"))
-            except Exception as exc:
-                parsed_error = repr(exc)
-
-            _append_meu_perfil_logger_value_v2(
-                quantity_payloads,
-                clean_name,
-                {
-                    "raw": clean_value,
-                    "parsed": parsed_payload,
-                    "parse_error": parsed_error,
-                },
-            )
-            continue
-
-        if clean_name.startswith("process_quantity_field__"):
-            _append_meu_perfil_logger_value_v2(
-                quantity_live_fields,
-                clean_name,
-                clean_value,
-            )
-            continue
-
-        if clean_name.startswith("custom_field__"):
-            _append_meu_perfil_logger_value_v2(
-                custom_fields,
-                clean_name,
-                clean_value,
-            )
-            continue
-
-        _append_meu_perfil_logger_value_v2(
-            general_fields,
-            clean_name,
-            clean_value,
-        )
-
-    return {
-        "general_fields": general_fields,
-        "custom_fields": custom_fields,
-        "quantity_payloads": quantity_payloads,
-        "quantity_live_fields": quantity_live_fields,
-        "all_field_names": [
-            str(raw_name or "").strip()
-            for raw_name, _raw_value in raw_items
-            if str(raw_name or "").strip()
-        ],
-    }
-
-
-def _write_meu_perfil_save_debug_log_v2(
-    request: Request,
-    submitted_form: Any,
-    stage: str,
-    data: dict[str, Any] | None = None,
-) -> None:
-    import json
-    import os
-    from pathlib import Path
-    from datetime import datetime, timezone
-
-    try:
-        log_dir = Path(
-            os.environ.get(
-                "APPVERBO_PROFILE_SAVE_LOG_DIR",
-                "appverbo_runtime_logs",
-            )
-        )
-        log_dir.mkdir(parents=True, exist_ok=True)
-
-        request_url = ""
-        request_path = ""
-        request_method = ""
-        request_client = ""
-
-        try:
-            request_url = str(request.url)
-            request_path = str(request.url.path)
-            request_method = str(request.method)
-            request_client = str(getattr(request.client, "host", "") or "")
-        except Exception:
-            pass
-
-        log_entry = {
-            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-            "logger": "APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2",
-            "stage": str(stage or "").strip(),
-            "request": {
-                "method": request_method,
-                "path": request_path,
-                "url": request_url,
-                "client": request_client,
-            },
-            "form_snapshot": _build_meu_perfil_form_debug_snapshot_v2(submitted_form),
-            "data": data or {},
-        }
-
-        log_line = json.dumps(
-            log_entry,
-            ensure_ascii=False,
-            default=str,
-            sort_keys=True,
-        )
-
-        log_path = log_dir / "meu_perfil_save_debug.log"
-
-        with log_path.open("a", encoding="utf-8") as log_file:
-            log_file.write(log_line + "\n")
-
-        print("APPVERBO_MEU_PERFIL_SAVE_DEBUG " + log_line, flush=True)
-
-    except Exception as exc:
-        print(
-            "APPVERBO_MEU_PERFIL_SAVE_DEBUG_ERROR " + repr(exc),
-            flush=True,
-        )
-# APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2_END
-
-
 def _normalize_process_field_type(raw_field_type: Any) -> str:
     clean_field_type = str(raw_field_type or PROCESS_DEFAULT_FIELD_TYPE).strip().lower()
     if clean_field_type in PROCESS_FIELD_TYPES:
@@ -499,26 +312,6 @@ def _resolve_submitted_process_quantity_items(
 
     payload_field_name = f"process_quantity_payload__{clean_rule_key}"
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_LIVE_FIELDS_PRIORITY_V1_START
-    # O formulario pode submeter mais de um input oculto
-    # process_quantity_payload__<rule_key>.
-    #
-    # No caso dos Dados de agregados foi detetado conflito:
-    #   1) um payload oculto com valores novos
-    #   2) outro payload oculto duplicado com valores antigos
-    #
-    # Como os campos visiveis process_quantity_field__<rule_key>__<idx>__<field>
-    # sao a fonte mais fiel no momento do submit, o backend deve priorizar
-    # os campos vivos quando eles existem.
-    collected_quantity_items = _collect_process_quantity_items_from_form(
-        submitted_form,
-        clean_rule_key,
-    )
-
-    if collected_quantity_items:
-        return collected_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_LIVE_FIELDS_PRIORITY_V1_END
-
     if hasattr(submitted_form, "getlist"):
         raw_payload_values = [
             str(raw_value or "").strip()
@@ -532,11 +325,11 @@ def _resolve_submitted_process_quantity_items(
         )
         raw_payload_values = [str(raw_payload_value or "").strip()]
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V3_START
-    # Se ainda nao existem campos vivos, tentamos aproveitar os payloads ocultos.
-    # Para evitar que um payload antigo sobrescreva um payload novo, percorremos
-    # os valores na ordem recebida e escolhemos o primeiro payload preenchido valido.
-    for raw_payload_value in raw_payload_values:
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_START
+    # Pode existir mais de um input process_quantity_payload__<rule_key>.
+    # Starlette FormData.get() pode apanhar o primeiro, que por vezes e "[]".
+    # Por isso lemos todos os valores e usamos o ultimo payload preenchido valido.
+    for raw_payload_value in reversed(raw_payload_values):
         if not raw_payload_value or raw_payload_value == "[]":
             continue
 
@@ -544,7 +337,15 @@ def _resolve_submitted_process_quantity_items(
 
         if parsed_quantity_items:
             return parsed_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V3_END
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_END
+
+    collected_quantity_items = _collect_process_quantity_items_from_form(
+        submitted_form,
+        clean_rule_key,
+    )
+
+    if collected_quantity_items:
+        return collected_quantity_items
 
     # Se o payload "[]" foi submetido explicitamente, isto significa que o utilizador
     # limpou a quantidade ou removeu todos os pares.
@@ -755,17 +556,6 @@ def _build_post_save_redirect_url_v6(
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
-    # APPVERBO_MEU_PERFIL_SAVE_LOGGER_FORM_RECEIVED_V2_START
-    _write_meu_perfil_save_debug_log_v2(
-        request,
-        submitted_form,
-        "01_form_received",
-        {
-            "message": "Formulario recebido no endpoint /users/profile/personal antes de qualquer processamento.",
-        },
-    )
-    # APPVERBO_MEU_PERFIL_SAVE_LOGGER_FORM_RECEIVED_V2_END
-
 
     # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
     # Este endpoint grava sempre dados do Meu perfil. Depois de gravar,
@@ -893,21 +683,6 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             (meu_perfil_setting or {}).get("process_quantity_fields")
         )
         quantity_repeated_field_keys = get_menu_process_quantity_repeated_field_keys(quantity_rules)
-        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_QUANTITY_CONTEXT_V2_START
-        _write_meu_perfil_save_debug_log_v2(
-            request,
-            submitted_form,
-            "02_quantity_context_loaded",
-            {
-                "current_user_id": current_user.get("id") if isinstance(current_user, dict) else None,
-                "member_id": getattr(member, "id", None),
-                "quantity_rules": quantity_rules,
-                "quantity_repeated_field_keys": sorted(list(quantity_repeated_field_keys)),
-                "process_options_count": len(process_options),
-            },
-        )
-        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_QUANTITY_CONTEXT_V2_END
-
 
         option_keys = {
             str(item.get("key") or "").strip().lower()

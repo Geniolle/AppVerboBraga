@@ -499,26 +499,6 @@ def _resolve_submitted_process_quantity_items(
 
     payload_field_name = f"process_quantity_payload__{clean_rule_key}"
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_LIVE_FIELDS_PRIORITY_V1_START
-    # O formulario pode submeter mais de um input oculto
-    # process_quantity_payload__<rule_key>.
-    #
-    # No caso dos Dados de agregados foi detetado conflito:
-    #   1) um payload oculto com valores novos
-    #   2) outro payload oculto duplicado com valores antigos
-    #
-    # Como os campos visiveis process_quantity_field__<rule_key>__<idx>__<field>
-    # sao a fonte mais fiel no momento do submit, o backend deve priorizar
-    # os campos vivos quando eles existem.
-    collected_quantity_items = _collect_process_quantity_items_from_form(
-        submitted_form,
-        clean_rule_key,
-    )
-
-    if collected_quantity_items:
-        return collected_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_LIVE_FIELDS_PRIORITY_V1_END
-
     if hasattr(submitted_form, "getlist"):
         raw_payload_values = [
             str(raw_value or "").strip()
@@ -532,11 +512,11 @@ def _resolve_submitted_process_quantity_items(
         )
         raw_payload_values = [str(raw_payload_value or "").strip()]
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V3_START
-    # Se ainda nao existem campos vivos, tentamos aproveitar os payloads ocultos.
-    # Para evitar que um payload antigo sobrescreva um payload novo, percorremos
-    # os valores na ordem recebida e escolhemos o primeiro payload preenchido valido.
-    for raw_payload_value in raw_payload_values:
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_START
+    # Pode existir mais de um input process_quantity_payload__<rule_key>.
+    # Starlette FormData.get() pode apanhar o primeiro, que por vezes e "[]".
+    # Por isso lemos todos os valores e usamos o ultimo payload preenchido valido.
+    for raw_payload_value in reversed(raw_payload_values):
         if not raw_payload_value or raw_payload_value == "[]":
             continue
 
@@ -544,7 +524,15 @@ def _resolve_submitted_process_quantity_items(
 
         if parsed_quantity_items:
             return parsed_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V3_END
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_END
+
+    collected_quantity_items = _collect_process_quantity_items_from_form(
+        submitted_form,
+        clean_rule_key,
+    )
+
+    if collected_quantity_items:
+        return collected_quantity_items
 
     # Se o payload "[]" foi submetido explicitamente, isto significa que o utilizador
     # limpou a quantidade ou removeu todos os pares.

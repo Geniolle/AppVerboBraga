@@ -52,12 +52,8 @@ MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
     **dict(MENU_MEU_PERFIL_FIELD_LABELS),
     "pais": "País",
 }
-
-
-
-
-# APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2_START
-def _safe_meu_perfil_logger_value_v2(raw_value: Any, max_size: int = 1500) -> Any:
+# APPVERBO_MEU_PERFIL_SAVE_LOGGER_V1_START
+def _safe_meu_perfil_logger_value_v1(raw_value: Any, max_size: int = 1200) -> Any:
     clean_value = str(raw_value or "")
 
     if len(clean_value) > max_size:
@@ -66,7 +62,7 @@ def _safe_meu_perfil_logger_value_v2(raw_value: Any, max_size: int = 1500) -> An
     return clean_value
 
 
-def _append_meu_perfil_logger_value_v2(target: dict[str, Any], key: str, value: Any) -> None:
+def _append_meu_perfil_logger_value_v1(target: dict[str, Any], key: str, value: Any) -> None:
     clean_key = str(key or "").strip()
 
     if not clean_key:
@@ -81,7 +77,7 @@ def _append_meu_perfil_logger_value_v2(target: dict[str, Any], key: str, value: 
     target[clean_key] = value
 
 
-def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, Any]:
+def _build_meu_perfil_form_debug_snapshot_v1(submitted_form: Any) -> dict[str, Any]:
     import json
 
     blocked_fragments = (
@@ -116,7 +112,7 @@ def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, A
         if any(fragment in clean_name_lower for fragment in blocked_fragments):
             clean_value = "[FILTERED]"
         else:
-            clean_value = _safe_meu_perfil_logger_value_v2(raw_value)
+            clean_value = _safe_meu_perfil_logger_value_v1(raw_value)
 
         if clean_name.startswith("process_quantity_payload__"):
             parsed_payload: Any = None
@@ -127,7 +123,7 @@ def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, A
             except Exception as exc:
                 parsed_error = repr(exc)
 
-            _append_meu_perfil_logger_value_v2(
+            _append_meu_perfil_logger_value_v1(
                 quantity_payloads,
                 clean_name,
                 {
@@ -139,7 +135,7 @@ def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, A
             continue
 
         if clean_name.startswith("process_quantity_field__"):
-            _append_meu_perfil_logger_value_v2(
+            _append_meu_perfil_logger_value_v1(
                 quantity_live_fields,
                 clean_name,
                 clean_value,
@@ -147,14 +143,14 @@ def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, A
             continue
 
         if clean_name.startswith("custom_field__"):
-            _append_meu_perfil_logger_value_v2(
+            _append_meu_perfil_logger_value_v1(
                 custom_fields,
                 clean_name,
                 clean_value,
             )
             continue
 
-        _append_meu_perfil_logger_value_v2(
+        _append_meu_perfil_logger_value_v1(
             general_fields,
             clean_name,
             clean_value,
@@ -173,7 +169,7 @@ def _build_meu_perfil_form_debug_snapshot_v2(submitted_form: Any) -> dict[str, A
     }
 
 
-def _write_meu_perfil_save_debug_log_v2(
+def _write_meu_perfil_save_debug_log_v1(
     request: Request,
     submitted_form: Any,
     stage: str,
@@ -208,7 +204,7 @@ def _write_meu_perfil_save_debug_log_v2(
 
         log_entry = {
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-            "logger": "APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2",
+            "logger": "APPVERBO_MEU_PERFIL_SAVE_LOGGER_V1",
             "stage": str(stage or "").strip(),
             "request": {
                 "method": request_method,
@@ -216,7 +212,7 @@ def _write_meu_perfil_save_debug_log_v2(
                 "url": request_url,
                 "client": request_client,
             },
-            "form_snapshot": _build_meu_perfil_form_debug_snapshot_v2(submitted_form),
+            "form_snapshot": _build_meu_perfil_form_debug_snapshot_v1(submitted_form),
             "data": data or {},
         }
 
@@ -239,7 +235,8 @@ def _write_meu_perfil_save_debug_log_v2(
             "APPVERBO_MEU_PERFIL_SAVE_DEBUG_ERROR " + repr(exc),
             flush=True,
         )
-# APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2_END
+# APPVERBO_MEU_PERFIL_SAVE_LOGGER_V1_END
+
 
 
 def _normalize_process_field_type(raw_field_type: Any) -> str:
@@ -499,26 +496,6 @@ def _resolve_submitted_process_quantity_items(
 
     payload_field_name = f"process_quantity_payload__{clean_rule_key}"
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_LIVE_FIELDS_PRIORITY_V1_START
-    # O formulario pode submeter mais de um input oculto
-    # process_quantity_payload__<rule_key>.
-    #
-    # No caso dos Dados de agregados foi detetado conflito:
-    #   1) um payload oculto com valores novos
-    #   2) outro payload oculto duplicado com valores antigos
-    #
-    # Como os campos visiveis process_quantity_field__<rule_key>__<idx>__<field>
-    # sao a fonte mais fiel no momento do submit, o backend deve priorizar
-    # os campos vivos quando eles existem.
-    collected_quantity_items = _collect_process_quantity_items_from_form(
-        submitted_form,
-        clean_rule_key,
-    )
-
-    if collected_quantity_items:
-        return collected_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_LIVE_FIELDS_PRIORITY_V1_END
-
     if hasattr(submitted_form, "getlist"):
         raw_payload_values = [
             str(raw_value or "").strip()
@@ -532,11 +509,11 @@ def _resolve_submitted_process_quantity_items(
         )
         raw_payload_values = [str(raw_payload_value or "").strip()]
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V3_START
-    # Se ainda nao existem campos vivos, tentamos aproveitar os payloads ocultos.
-    # Para evitar que um payload antigo sobrescreva um payload novo, percorremos
-    # os valores na ordem recebida e escolhemos o primeiro payload preenchido valido.
-    for raw_payload_value in raw_payload_values:
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_START
+    # Pode existir mais de um input process_quantity_payload__<rule_key>.
+    # Starlette FormData.get() pode apanhar o primeiro, que por vezes e "[]".
+    # Por isso lemos todos os valores e usamos o ultimo payload preenchido valido.
+    for raw_payload_value in reversed(raw_payload_values):
         if not raw_payload_value or raw_payload_value == "[]":
             continue
 
@@ -544,7 +521,15 @@ def _resolve_submitted_process_quantity_items(
 
         if parsed_quantity_items:
             return parsed_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V3_END
+    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_END
+
+    collected_quantity_items = _collect_process_quantity_items_from_form(
+        submitted_form,
+        clean_rule_key,
+    )
+
+    if collected_quantity_items:
+        return collected_quantity_items
 
     # Se o payload "[]" foi submetido explicitamente, isto significa que o utilizador
     # limpou a quantidade ou removeu todos os pares.
@@ -755,8 +740,8 @@ def _build_post_save_redirect_url_v6(
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
-    # APPVERBO_MEU_PERFIL_SAVE_LOGGER_FORM_RECEIVED_V2_START
-    _write_meu_perfil_save_debug_log_v2(
+    # APPVERBO_MEU_PERFIL_SAVE_LOGGER_FORM_RECEIVED_V1_START
+    _write_meu_perfil_save_debug_log_v1(
         request,
         submitted_form,
         "01_form_received",
@@ -764,8 +749,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             "message": "Formulario recebido no endpoint /users/profile/personal antes de qualquer processamento.",
         },
     )
-    # APPVERBO_MEU_PERFIL_SAVE_LOGGER_FORM_RECEIVED_V2_END
-
+    # APPVERBO_MEU_PERFIL_SAVE_LOGGER_FORM_RECEIVED_V1_END
 
     # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
     # Este endpoint grava sempre dados do Meu perfil. Depois de gravar,
@@ -893,8 +877,8 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             (meu_perfil_setting or {}).get("process_quantity_fields")
         )
         quantity_repeated_field_keys = get_menu_process_quantity_repeated_field_keys(quantity_rules)
-        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_QUANTITY_CONTEXT_V2_START
-        _write_meu_perfil_save_debug_log_v2(
+        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_QUANTITY_CONTEXT_V1_START
+        _write_meu_perfil_save_debug_log_v1(
             request,
             submitted_form,
             "02_quantity_context_loaded",
@@ -906,8 +890,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 "process_options_count": len(process_options),
             },
         )
-        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_QUANTITY_CONTEXT_V2_END
-
+        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_QUANTITY_CONTEXT_V1_END
 
         option_keys = {
             str(item.get("key") or "").strip().lower()
@@ -1196,6 +1179,24 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 updated_quantity_values.pop(storage_key, None)
         # APPVERBO_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_END
 
+        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_BEFORE_UPDATE_V1_START
+        _write_meu_perfil_save_debug_log_v1(
+            request,
+            submitted_form,
+            "03_before_member_update",
+            {
+                "current_user_id": current_user.get("id") if isinstance(current_user, dict) else None,
+                "member_id": getattr(member, "id", None),
+                "existing_quantity_values": existing_quantity_values,
+                "updated_quantity_values": updated_quantity_values,
+                "updated_custom_fields": updated_custom_fields,
+                "visible_custom_keys": visible_custom_keys,
+                "active_custom_keys": active_custom_keys,
+                "hidden_meu_perfil_targets": hidden_meu_perfil_targets,
+                "missing_required_custom_labels": missing_required_custom_labels,
+            },
+        )
+        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_BEFORE_UPDATE_V1_END
 
         previous_phone = (member.primary_phone or "").strip()
         member.full_name = clean_full_name
@@ -1222,6 +1223,21 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
         try:
             session.commit()
+        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_AFTER_COMMIT_V1_START
+        _write_meu_perfil_save_debug_log_v1(
+            request,
+            submitted_form,
+            "04_after_session_commit",
+            {
+                "current_user_id": current_user.get("id") if isinstance(current_user, dict) else None,
+                "member_id": getattr(member, "id", None),
+                "stored_profile_custom_fields": getattr(member, "profile_custom_fields", None),
+                "stored_full_name": getattr(member, "full_name", None),
+                "stored_primary_phone": getattr(member, "primary_phone", None),
+                "stored_email": getattr(member, "email", None),
+            },
+        )
+        # APPVERBO_MEU_PERFIL_SAVE_LOGGER_AFTER_COMMIT_V1_END
 
         except IntegrityError:
             session.rollback()
