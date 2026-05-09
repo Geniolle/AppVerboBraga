@@ -103,14 +103,16 @@ def _resolve_initial_menu_target(
     if clean_menu_key == "administrativo":
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
-        if resolved_admin_tab == "menu":
-            return "#settings-card", ""
-        if resolved_admin_tab == "sessoes":
-            return "#admin-sidebar-sections-card", ""
         if resolved_admin_tab == "contas":
             return "#admin-account-status-card", ""
+        if resolved_admin_tab == "menu":
+            return "#admin-menu-card", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
+        if resolved_admin_tab == "sessoes":
+            return "#admin-sidebar-sections-card", ""
+        if resolved_admin_tab == "entidade":
+            return "#admin-subprocess-v2-entidade", ""
         return "#create-entity-card", ""
     if clean_menu_key == "configuracao":
         if settings_edit_key:
@@ -436,44 +438,6 @@ def new_user_page(
     is_post_save_return = str(appverbo_after_save or "").strip() == "1"
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
-
-
-    # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_START
-    # A aba Administrativo -> Menu usa o bloco legado settings-card.
-    # Sem esta normalização, a URL admin_tab=menu pode ficar sem conteúdo
-    # porque o backend voltava para o target padrão de Entidade.
-    if resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#settings-card"
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
-    # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_END
-
-
-    # APPVERBO_ADMIN_MENU_TARGET_RENDER_V3_START
-    if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#settings-card"
-
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
-    # APPVERBO_ADMIN_MENU_TARGET_RENDER_V3_END
-
-
-    # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_START
-    if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#settings-card"
-
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
-    # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_END
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None

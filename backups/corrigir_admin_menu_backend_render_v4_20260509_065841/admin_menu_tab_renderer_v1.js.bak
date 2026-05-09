@@ -1,0 +1,468 @@
+﻿// APPVERBO_ADMIN_MENU_TAB_RENDERER_V1_START
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) CONSTANTES E NORMALIZACAO
+  //###################################################################################
+
+  const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+  const MENU_RENDER_ID = "appverbo-admin-menu-tab-renderer-v1";
+
+  function normalizarTextoAdminMenuTabRenderer_v1(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  function obterUrlAdminMenuTabRenderer_v1() {
+    try {
+      return new URL(window.location.href);
+    }
+    catch (error) {
+      return null;
+    }
+  }
+
+  function obterParametroAdminMenuTabRenderer_v1(nome) {
+    const url = obterUrlAdminMenuTabRenderer_v1();
+
+    if (!url) {
+      return "";
+    }
+
+    return String(url.searchParams.get(nome) || "").trim().toLowerCase();
+  }
+
+  function paginaEhAdministrativoMenu_v1() {
+    return obterParametroAdminMenuTabRenderer_v1("menu") === "administrativo" &&
+      obterParametroAdminMenuTabRenderer_v1("admin_tab") === "menu";
+  }
+
+  //###################################################################################
+  // (2) OBTER DADOS DOS MENUS
+  //###################################################################################
+
+  function obterMenusBootstrap_v1() {
+    const rawMenus = Array.isArray(bootstrap.sidebarMenuSettings)
+      ? bootstrap.sidebarMenuSettings
+      : [];
+
+    return rawMenus.map(function (menuRow, index) {
+      const key = String(menuRow.key || menuRow.menu_key || menuRow.id || "").trim();
+      const label = String(menuRow.label || menuRow.menu_label || menuRow.name || key || "Menu").trim();
+      const rawStatus = normalizarTextoAdminMenuTabRenderer_v1(menuRow.status_label || menuRow.status || "");
+      const isInactive = rawStatus === "inativo" ||
+        rawStatus === "inactive" ||
+        rawStatus === "0" ||
+        rawStatus === "false" ||
+        rawStatus === "no" ||
+        rawStatus === "nao" ||
+        rawStatus === "não" ||
+        rawStatus === "off" ||
+        menuRow.is_active === false ||
+        menuRow.is_visible === false;
+
+      const scope = String(
+        menuRow.visibility_scope_label ||
+        menuRow.system_label ||
+        menuRow.scope_label ||
+        menuRow.visibility_scope ||
+        "Owner e Legado"
+      ).trim();
+
+      return {
+        key: key,
+        label: label,
+        scope: scope,
+        active: !isInactive,
+        index: index
+      };
+    });
+  }
+
+  function separarMenus_v1() {
+    const menus = obterMenusBootstrap_v1();
+
+    return {
+      activeMenus: menus.filter(function (item) { return item.active; }),
+      inactiveMenus: menus.filter(function (item) { return !item.active; })
+    };
+  }
+
+  //###################################################################################
+  // (3) LOCALIZAR AREA DE CONTEUDO
+  //###################################################################################
+
+  function localizarAbaMenuAtiva_v1() {
+    const candidatos = Array.from(document.querySelectorAll("button, a, [role='tab']"));
+
+    return candidatos.find(function (elemento) {
+      const texto = normalizarTextoAdminMenuTabRenderer_v1(elemento.textContent);
+      const classe = normalizarTextoAdminMenuTabRenderer_v1(elemento.className);
+      const ariaSelected = String(elemento.getAttribute("aria-selected") || "").toLowerCase();
+
+      return texto === "menu" &&
+        (classe.includes("active") || classe.includes("primary") || ariaSelected === "true");
+    }) || null;
+  }
+
+  function localizarContainerConteudo_v1() {
+    const activeTab = localizarAbaMenuAtiva_v1();
+
+    if (activeTab) {
+      const cardTabs = activeTab.closest(".card, section, div");
+
+      if (cardTabs && cardTabs.parentElement) {
+        return cardTabs.parentElement;
+      }
+    }
+
+    const perfilCard = document.querySelector("#perfil-pessoal-card");
+
+    if (perfilCard && perfilCard.parentElement) {
+      return perfilCard.parentElement;
+    }
+
+    const main = document.querySelector("main, .main-content, .content, #content");
+
+    if (main) {
+      return main;
+    }
+
+    return document.body;
+  }
+
+  //###################################################################################
+  // (4) OCULTAR CONTEUDOS DE OUTROS SUBPROCESSOS
+  //###################################################################################
+
+  function contemTextoDeOutroSubprocesso_v1(elemento) {
+    const texto = normalizarTextoAdminMenuTabRenderer_v1(elemento ? elemento.textContent : "");
+
+    return texto.includes("criar entidade") ||
+      texto.includes("entidades criadas") ||
+      texto.includes("entidades inativas") ||
+      texto.includes("criar utilizador") ||
+      texto.includes("utilizadores criados") ||
+      texto.includes("sessoes ativas") ||
+      texto.includes("sessões ativas") ||
+      texto.includes("sessoes inativas") ||
+      texto.includes("sessões inativas");
+  }
+
+  function devePreservarElemento_v1(elemento) {
+    if (!elemento) {
+      return true;
+    }
+
+    if (elemento.id === MENU_RENDER_ID) {
+      return true;
+    }
+
+    const texto = normalizarTextoAdminMenuTabRenderer_v1(elemento.textContent || "");
+
+    return texto.includes("entidade utilizador sessoes menu") ||
+      texto.includes("entidade utilizador sessões menu");
+  }
+
+  function ocultarOutrosSubprocessos_v1() {
+    const candidatos = Array.from(document.querySelectorAll("section, .card, article, div"));
+
+    candidatos.forEach(function (elemento) {
+      if (devePreservarElemento_v1(elemento)) {
+        return;
+      }
+
+      if (!contemTextoDeOutroSubprocesso_v1(elemento)) {
+        return;
+      }
+
+      const texto = normalizarTextoAdminMenuTabRenderer_v1(elemento.textContent || "");
+
+      if (texto.includes("menus ativos") || texto.includes("menus inativos")) {
+        return;
+      }
+
+      elemento.classList.add("appverbo-admin-menu-hide-foreign-v1");
+      elemento.setAttribute("data-appverbo-hidden-by-admin-menu-v1", "1");
+    });
+  }
+
+  //###################################################################################
+  // (5) ELEMENTOS HTML
+  //###################################################################################
+
+  function criarElemento_v1(tag, className, textContent) {
+    const elemento = document.createElement(tag);
+
+    if (className) {
+      elemento.className = className;
+    }
+
+    if (textContent !== undefined && textContent !== null) {
+      elemento.textContent = textContent;
+    }
+
+    return elemento;
+  }
+
+  function criarBotaoAcao_v1(texto, titulo) {
+    const button = criarElemento_v1("button", "admin-menu-tab-action-btn-v1", texto);
+    button.type = "button";
+    button.title = titulo || texto;
+    button.setAttribute("aria-label", titulo || texto);
+
+    return button;
+  }
+
+  function criarLinkAcao_v1(texto, titulo, href) {
+    const link = criarElemento_v1("a", "admin-menu-tab-action-btn-v1 admin-menu-tab-action-link-v1", texto);
+    link.title = titulo || texto;
+    link.setAttribute("aria-label", titulo || texto);
+    link.href = href || "#";
+
+    return link;
+  }
+
+  function criarBadge_v1(active) {
+    return criarElemento_v1(
+      "span",
+      active ? "admin-menu-tab-badge-active-v1" : "admin-menu-tab-badge-inactive-v1",
+      active ? "Ativo" : "Inativo"
+    );
+  }
+
+  function criarTabelaMenus_v1(menus, active) {
+    const wrap = criarElemento_v1("div", "admin-menu-tab-table-wrap-v1");
+    const table = criarElemento_v1("table", "admin-menu-tab-table-v1");
+    const thead = document.createElement("thead");
+    const tbody = document.createElement("tbody");
+
+    thead.innerHTML = [
+      "<tr>",
+      "<th>NOME</th>",
+      "<th>SISTEMA</th>",
+      "<th>ESTADO</th>",
+      "<th class='admin-menu-tab-actions-col-v1'>AÇÕES</th>",
+      "</tr>"
+    ].join("");
+
+    if (!menus.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      td.textContent = "Sem registos.";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+    else {
+      menus.forEach(function (menuRow) {
+        const tr = document.createElement("tr");
+
+        const tdName = document.createElement("td");
+        tdName.textContent = menuRow.label;
+
+        const tdScope = document.createElement("td");
+        tdScope.textContent = menuRow.scope;
+
+        const tdStatus = document.createElement("td");
+        tdStatus.appendChild(criarBadge_v1(active));
+
+        const tdActions = document.createElement("td");
+        const actions = criarElemento_v1("div", "admin-menu-tab-actions-v1");
+
+        if (active) {
+          actions.appendChild(criarBotaoAcao_v1("↑", "Subir"));
+          actions.appendChild(criarBotaoAcao_v1("↓", "Descer"));
+        }
+
+        const viewButton = criarBotaoAcao_v1("Ver", "Visualizar");
+        viewButton.addEventListener("click", function () {
+          alert(
+            "Menu: " + menuRow.label + "\n" +
+            "Sistema: " + menuRow.scope + "\n" +
+            "Estado: " + (active ? "Ativo" : "Inativo")
+          );
+        });
+        actions.appendChild(viewButton);
+
+        actions.appendChild(
+          criarLinkAcao_v1(
+            "Editar",
+            "Editar",
+            "/users/new?menu=administrativo&admin_tab=menu&settings_edit_key=" +
+              encodeURIComponent(menuRow.key) +
+              "&settings_action=edit&settings_tab=geral&target=settings-menu-edit-card#settings-menu-edit-card"
+          )
+        );
+
+        tdActions.appendChild(actions);
+
+        tr.appendChild(tdName);
+        tr.appendChild(tdScope);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    return wrap;
+  }
+
+  function criarCardCriarMenu_v1() {
+    const section = criarElemento_v1("section", "card admin-menu-tab-card-v1");
+    section.id = "settings-card";
+
+    const toolbar = criarElemento_v1("div", "entity-create-toolbar");
+    const link = criarElemento_v1("a", "action-btn", "Criar menu");
+
+    link.href = "/users/new?menu=administrativo&admin_tab=menu&settings_action=create&target=settings-menu-edit-card#settings-menu-edit-card";
+
+    toolbar.appendChild(link);
+    section.appendChild(toolbar);
+
+    return section;
+  }
+
+  function criarCardMenusAtivos_v1(activeMenus) {
+    const section = criarElemento_v1("section", "card admin-menu-tab-card-v1");
+    section.id = "settings-card-active";
+
+    const head = criarElemento_v1("div", "admin-menu-tab-head-v1");
+    const titleWrap = document.createElement("div");
+    const title = criarElemento_v1("h2", "", "Menus ativos");
+    const total = criarElemento_v1("p", "", "Total: " + String(activeMenus.length));
+    const search = criarElemento_v1("input", "admin-menu-tab-search-v1");
+
+    search.type = "search";
+    search.placeholder = "Procurar";
+    search.setAttribute("aria-label", "Procurar menu ativo");
+
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(total);
+
+    head.appendChild(titleWrap);
+    head.appendChild(search);
+
+    section.appendChild(head);
+    section.appendChild(criarTabelaMenus_v1(activeMenus, true));
+
+    return section;
+  }
+
+  function criarCardMenusInativos_v1(inactiveMenus) {
+    const section = criarElemento_v1("section", "card admin-menu-tab-card-v1");
+    section.id = "settings-card-inactive";
+
+    section.appendChild(criarElemento_v1("h2", "", "Menus inativos"));
+    section.appendChild(criarTabelaMenus_v1(inactiveMenus, false));
+
+    return section;
+  }
+
+  //###################################################################################
+  // (6) RENDERIZAR MENU
+  //###################################################################################
+
+  function removerRenderAnterior_v1() {
+    const anterior = document.getElementById(MENU_RENDER_ID);
+
+    if (anterior) {
+      anterior.remove();
+    }
+  }
+
+  function renderizarMenu_v1() {
+    if (!paginaEhAdministrativoMenu_v1()) {
+      return;
+    }
+
+    instalarEstilo_v1();
+    ocultarOutrosSubprocessos_v1();
+    removerRenderAnterior_v1();
+
+    const container = localizarContainerConteudo_v1();
+    const tabsCard = localizarAbaMenuAtiva_v1()
+      ? localizarAbaMenuAtiva_v1().closest(".card, section, div")
+      : null;
+
+    const wrapper = criarElemento_v1("div", "appverbo-admin-menu-render-wrapper-v1");
+    wrapper.id = MENU_RENDER_ID;
+
+    const separatedMenus = separarMenus_v1();
+
+    wrapper.appendChild(criarCardCriarMenu_v1());
+    wrapper.appendChild(criarCardMenusAtivos_v1(separatedMenus.activeMenus));
+    wrapper.appendChild(criarCardMenusInativos_v1(separatedMenus.inactiveMenus));
+
+    if (tabsCard && tabsCard.parentElement === container) {
+      tabsCard.insertAdjacentElement("afterend", wrapper);
+    }
+    else {
+      container.insertBefore(wrapper, container.firstChild);
+    }
+  }
+
+  //###################################################################################
+  // (7) ESTILO
+  //###################################################################################
+
+  function instalarEstilo_v1() {
+    if (document.getElementById("appverbo-admin-menu-tab-renderer-style-v1")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+    style.id = "appverbo-admin-menu-tab-renderer-style-v1";
+    style.textContent = [
+      ".appverbo-admin-menu-hide-foreign-v1 { display: none !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; border: 0 !important; }",
+      ".appverbo-admin-menu-render-wrapper-v1 { margin-top: 16px; }",
+      ".admin-menu-tab-card-v1 { margin-top: 16px; }",
+      ".admin-menu-tab-head-v1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }",
+      ".admin-menu-tab-search-v1 { min-width: 240px; max-width: 320px; padding: 8px 12px; border: 1px solid #bfcee6; border-radius: 999px; }",
+      ".admin-menu-tab-table-wrap-v1 { overflow-x: auto; }",
+      ".admin-menu-tab-table-v1 { width: 100%; border-collapse: collapse; }",
+      ".admin-menu-tab-table-v1 th, .admin-menu-tab-table-v1 td { padding: 12px 10px; border-bottom: 1px solid #d7e0ef; text-align: left; }",
+      ".admin-menu-tab-table-v1 th { font-size: 12px; font-weight: 800; color: #0f172a; }",
+      ".admin-menu-tab-actions-col-v1 { text-align: right !important; width: 240px; }",
+      ".admin-menu-tab-actions-v1 { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }",
+      ".admin-menu-tab-action-btn-v1 { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 28px; padding: 0 8px; border: 1px solid #9fc1ff; border-radius: 6px; background: #eef5ff; color: #0f4fb8; font-weight: 700; font-size: 12px; text-decoration: none; cursor: pointer; }",
+      ".admin-menu-tab-action-link-v1 { color: #0f4fb8; }",
+      ".admin-menu-tab-badge-active-v1 { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; border: 1px solid #9ad7b8; background: #e7f8ef; color: #08753f; font-weight: 800; font-size: 12px; }",
+      ".admin-menu-tab-badge-inactive-v1 { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; border: 1px solid #fecaca; background: #fef2f2; color: #b91c1c; font-weight: 800; font-size: 12px; }"
+    ].join("\n");
+
+    document.head.appendChild(style);
+  }
+
+  //###################################################################################
+  // (8) INICIAR
+  //###################################################################################
+
+  function iniciarAdminMenuTabRenderer_v1() {
+    renderizarMenu_v1();
+
+    window.setTimeout(renderizarMenu_v1, 100);
+    window.setTimeout(renderizarMenu_v1, 400);
+    window.setTimeout(renderizarMenu_v1, 1000);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciarAdminMenuTabRenderer_v1);
+  }
+  else {
+    iniciarAdminMenuTabRenderer_v1();
+  }
+
+  window.addEventListener("pageshow", iniciarAdminMenuTabRenderer_v1);
+})();
+// APPVERBO_ADMIN_MENU_TAB_RENDERER_V1_END
