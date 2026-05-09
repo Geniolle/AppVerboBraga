@@ -1,0 +1,108 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AppVerboBraga: Validar Python",
+      "type": "shell",
+      "command": ".\\.venv\\Scripts\\python.exe -m compileall appverbo",
+      "group": "test",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Git Diff Check",
+      "type": "shell",
+      "command": "git diff --check",
+      "group": "test",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Git Diff Resumo",
+      "type": "shell",
+      "command": "git diff --stat",
+      "group": "test",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Git Status",
+      "type": "shell",
+      "command": "git status --short",
+      "group": "build",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Docker Restart",
+      "type": "shell",
+      "command": "docker compose restart",
+      "group": "build",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Teste HTTP",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$url='http://localhost:8000/users/new?menu=administrativo'; for ($i=1; $i -le 20; $i++) { try { $r=Invoke-WebRequest $url -UseBasicParsing -MaximumRedirection 5; Write-Host ('StatusCode: ' + [int]$r.StatusCode); exit 0 } catch { Write-Host ('Aguardando web... tentativa ' + $i + '/20'); Start-Sleep -Seconds 2 } }; Write-Host 'ERRO: teste HTTP falhou apos 20 tentativas.'; exit 1"
+      ],
+      "group": "test",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Logs Docker Web",
+      "type": "shell",
+      "command": "docker compose logs --tail=80 web",
+      "group": "build",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "AppVerboBraga: Validacao Completa Local",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "AppVerboBraga: Validar Python",
+        "AppVerboBraga: Git Diff Check",
+        "AppVerboBraga: Git Diff Resumo",
+        "AppVerboBraga: Git Status"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "AppVerboBraga: Reiniciar e Testar Docker",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "AppVerboBraga: Docker Restart",
+        "AppVerboBraga: Teste HTTP",
+        "AppVerboBraga: Logs Docker Web"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

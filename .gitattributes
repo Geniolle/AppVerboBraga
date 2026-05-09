@@ -1,5 +1,14 @@
 ﻿* text=auto
 
+# Configurações do projeto
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.editorconfig text eol=lf
+.prettierignore text eol=lf
+.prettierrc.json text eol=lf
+pyproject.toml text eol=lf
+
+# Código e templates
 *.py text eol=lf
 *.html text eol=lf
 *.js text eol=lf
@@ -11,4 +20,5 @@
 *.toml text eol=lf
 *.ini text eol=lf
 
+# PowerShell no Windows
 *.ps1 text eol=crlf

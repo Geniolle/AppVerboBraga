@@ -35,12 +35,22 @@ htmlcov/
 .ruff_cache/
 
 # Backups locais
+backups/
 *.bak_*
 *.backup
 *.tmp
 
+# Scripts temporários de correção
+scripts/patch_*.py
+
 # IDE / sistema operativo
-.vscode/
+# VS Code - manter configs profissionais do projeto
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
 .idea/
 .DS_Store
 Thumbs.db

@@ -1,0 +1,96 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+
+  "files.eol": "\n",
+
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.indexing": true,
+
+  "ruff.enable": true,
+  "ruff.nativeServer": "on",
+  "ruff.lint.run": "onSave",
+  "ruff.format.args": [],
+  "ruff.lint.args": [],
+
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit",
+      "source.fixAll.ruff": "explicit"
+    },
+    "editor.tabSize": 4
+  },
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  "yaml.validate": true,
+  "yaml.format.enable": true,
+
+  "errorLens.enabled": true,
+  "errorLens.messageEnabled": true,
+  "errorLens.messageTemplate": "$message",
+  "errorLens.statusBarMessageEnabled": true,
+  "errorLens.excludeBySource": ["Ruff: E501"],
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/*.pyc": true,
+    "**/*.pyo": true
+  },
+
+  "search.exclude": {
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/appverbo_runtime_logs": true,
+    "**/backups": true
+  },
+
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.py": "${capture}.py.bak*, ${capture}.bak*, ${capture}_*.log, ${capture}_*.txt",
+    "*.js": "${capture}.js.bak*, ${capture}.bak*",
+    "*.html": "${capture}.html.bak*, ${capture}.bak*",
+    "AGENTS.md": "AGENTS.md.bak*"
+  },
+
+  "files.associations": {
+    "*.env": "dotenv",
+    ".env": "dotenv",
+    "docker-compose.yml": "dockercompose",
+    "*.yml": "yaml",
+    "*.yaml": "yaml"
+  }
+}

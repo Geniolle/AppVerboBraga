@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-azuretools.vscode-docker",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "pkief.material-icon-theme",
+    "redhat.vscode-yaml",
+    "mikestead.dotenv",
+    "usernamehw.errorlens"
+  ]
+}
