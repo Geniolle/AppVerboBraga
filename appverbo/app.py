@@ -67,7 +67,6 @@ def create_app() -> FastAPI:
         )
         return response
 
-
     # APPVERBO_DYNAMIC_NO_STORE_MIDDLEWARE_V2_START
     @app.middleware("http")
     async def appverbo_dynamic_no_store_middleware_v2(request, call_next):
@@ -81,6 +80,7 @@ def create_app() -> FastAPI:
             response.headers["X-AppVerbo-Dynamic-Sync"] = "no-store-v2"
 
         return response
+
     # APPVERBO_DYNAMIC_NO_STORE_MIDDLEWARE_V2_END
 
     app.include_router(auth_router)

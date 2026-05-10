@@ -56,6 +56,125 @@ MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
 
 
 
+def _safe_process_flow_debug_value_v1(raw_value: Any, max_size: int = 2000) -> str:
+    clean_value = str(raw_value or "")
+    if len(clean_value) > max_size:
+        return clean_value[:max_size] + "...[TRUNCATED]"
+    return clean_value
+
+
+def _build_process_flow_form_snapshot_v1(submitted_form: Any) -> dict[str, Any]:
+    import json
+
+    blocked_fragments = (
+        "password",
+        "senha",
+        "token",
+        "csrf",
+        "secret",
+        "cookie",
+        "authorization",
+    )
+
+    if hasattr(submitted_form, "multi_items"):
+        raw_items = list(submitted_form.multi_items())
+    elif hasattr(submitted_form, "items"):
+        raw_items = list(submitted_form.items())
+    else:
+        raw_items = []
+
+    general_fields: dict[str, Any] = {}
+    process_fields: dict[str, Any] = {}
+    quantity_payloads: dict[str, Any] = {}
+
+    for raw_name, raw_value in raw_items:
+        clean_name = str(raw_name or "").strip()
+        clean_name_lower = clean_name.lower()
+        if not clean_name:
+            continue
+
+        if any(fragment in clean_name_lower for fragment in blocked_fragments):
+            clean_value: Any = "[FILTERED]"
+        else:
+            clean_value = _safe_process_flow_debug_value_v1(raw_value)
+
+        if clean_name.startswith("process_quantity_payload__"):
+            parsed_payload: Any = None
+            parsed_error = ""
+            try:
+                parsed_payload = json.loads(str(raw_value or "[]"))
+            except Exception as exc:
+                parsed_error = repr(exc)
+
+            quantity_payloads[clean_name] = {
+                "raw": clean_value,
+                "parsed": parsed_payload,
+                "parse_error": parsed_error,
+            }
+            continue
+
+        if clean_name.startswith("process_field__"):
+            process_fields[clean_name] = clean_value
+            continue
+
+        general_fields[clean_name] = clean_value
+
+    return {
+        "general_fields": general_fields,
+        "process_fields": process_fields,
+        "quantity_payloads": quantity_payloads,
+    }
+
+
+def _write_meu_perfil_process_flow_debug_log_v1(
+    request: Request,
+    stage: str,
+    *,
+    submitted_form: Any | None = None,
+    data: dict[str, Any] | None = None,
+) -> None:
+    import json
+    import os
+    from pathlib import Path
+    from datetime import datetime, timezone
+
+    try:
+        log_dir = Path(
+            os.environ.get(
+                "APPVERBO_PROFILE_SAVE_LOG_DIR",
+                "appverbo_runtime_logs",
+            )
+        )
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        log_entry = {
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "logger": "APPVERBO_MEU_PERFIL_PROCESS_FLOW_DEBUG_V1",
+            "stage": str(stage or "").strip(),
+            "request": {
+                "method": str(getattr(request, "method", "") or ""),
+                "path": str(getattr(getattr(request, "url", None), "path", "") or ""),
+                "url": str(getattr(request, "url", "") or ""),
+                "client": str(getattr(getattr(request, "client", None), "host", "") or ""),
+            },
+            "form_snapshot": (
+                _build_process_flow_form_snapshot_v1(submitted_form)
+                if submitted_form is not None
+                else {}
+            ),
+            "data": data or {},
+        }
+
+        log_line = json.dumps(log_entry, ensure_ascii=False, default=str, sort_keys=True)
+        log_path = log_dir / "meu_perfil_process_flow.log"
+        with log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(log_line + "\n")
+
+        print("APPVERBO_MEU_PERFIL_PROCESS_FLOW_DEBUG " + log_line, flush=True)
+    except Exception as exc:
+        print("APPVERBO_MEU_PERFIL_PROCESS_FLOW_DEBUG_ERROR " + repr(exc), flush=True)
+
+
 # APPVERBO_MEU_PERFIL_SAVE_LOGGER_V2_START
 def _safe_meu_perfil_logger_value_v2(raw_value: Any, max_size: int = 1500) -> Any:
     clean_value = str(raw_value or "")
@@ -1252,6 +1371,19 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     requested_section_key = str(submitted_form.get("section_key") or "").strip()
     requested_history_action = str(submitted_form.get("history_action") or "").strip().lower()
     requested_history_record_id = str(submitted_form.get("history_record_id") or "").strip()
+    _write_meu_perfil_process_flow_debug_log_v1(
+        request,
+        "01_process_form_received",
+        submitted_form=submitted_form,
+        data={
+            "clean_menu_key": clean_menu_key,
+            "requested_section_key": requested_section_key,
+            "requested_history_action": requested_history_action,
+            "requested_history_record_id": requested_history_record_id,
+            "return_url": str(submitted_form.get("return_url") or "").strip(),
+            "target": str(submitted_form.get("target") or "").strip(),
+        },
+    )
 
     if not clean_menu_key:
         return RedirectResponse(
@@ -1702,6 +1834,25 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 else:
                     existing_profile_fields.pop(records_storage_key, None)
 
+        _write_meu_perfil_process_flow_debug_log_v1(
+            request,
+            "02_process_before_commit",
+            submitted_form=submitted_form,
+            data={
+                "clean_menu_key": clean_menu_key,
+                "requested_section_key": requested_section_key,
+                "history_process_mode": history_process_mode,
+                "absence_process_mode": absence_process_mode,
+                "record_label_singular": record_label_singular,
+                "active_section_field_keys": list(active_section_field_keys),
+                "hidden_process_targets": sorted(list(hidden_process_targets)),
+                "submitted_section_values": dict(submitted_section_values),
+                "submitted_quantity_values_by_rule": dict(submitted_quantity_values_by_rule),
+                "records_storage_key": records_storage_key,
+                "existing_records_count": len(existing_records),
+                "success_message": success_message,
+            },
+        )
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
         try:
             session.commit()
@@ -1714,10 +1865,24 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+    redirect_url = _build_post_save_redirect_url_v6(
+        submitted_form,
+        menu=clean_menu_key,
+        profile_success=success_message,
+    )
+    _write_meu_perfil_process_flow_debug_log_v1(
+        request,
+        "03_process_redirect_success",
+        submitted_form=submitted_form,
+        data={
+            "clean_menu_key": clean_menu_key,
+            "requested_section_key": requested_section_key,
+            "redirect_url": redirect_url,
+            "success_message": success_message,
+        },
+    )
     return RedirectResponse(
-        url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
-            profile_success=success_message,
-        ),
+        url=redirect_url,
         status_code=status.HTTP_303_SEE_OTHER,
     )
 

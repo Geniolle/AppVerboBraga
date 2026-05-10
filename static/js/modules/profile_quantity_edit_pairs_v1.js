@@ -2,6 +2,10 @@
 (function () {
   "use strict";
 
+  if (typeof window !== "undefined") {
+    window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE = true;
+  }
+
   //###################################################################################
   // (1) BOOTSTRAP E CONSTANTES
   //###################################################################################

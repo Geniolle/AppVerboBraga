@@ -1,15 +1,53 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
 {% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
+{# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_START #}
+{% block body_class %}appverbo-booting{% if admin_process_only %} appverbo-admin-process-only{% endif %}{% endblock %}
+{# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_END #}
 
 {% block head_extra %}
+{# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_START #}
+<script>
+(function () {
+  function liberarTelaAppVerboV2() {
+    if (!document.body) {
+      return;
+    }
+
+    document.body.classList.remove("appverbo-booting");
+    document.body.classList.add("appverbo-ready");
+  }
+
+  window.APPVERBO_LIBERAR_TELA_V2 = liberarTelaAppVerboV2;
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    window.requestAnimationFrame(liberarTelaAppVerboV2);
+  } else {
+    document.addEventListener("DOMContentLoaded", function () {
+      window.requestAnimationFrame(liberarTelaAppVerboV2);
+    }, { once: true });
+  }
+
+  window.addEventListener("load", liberarTelaAppVerboV2, { once: true });
+  window.setTimeout(liberarTelaAppVerboV2, 1400);
+})();
+</script>
+<noscript>
+  <style>
+    body.appverbo-booting .content {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+  </style>
+</noscript>
+{# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260506-utilizador-sem-card-interno-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260509-sessoes-visivel-v1">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
@@ -96,7 +134,9 @@
   }, true);
 })();
 </script>
-
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260509-render-sessoes-v1" defer></script>
+  <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
+  <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260509-sessoes-visivel-v1" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -160,6 +200,7 @@
           <form id="dynamic-process-edit-form" class="profile-edit-form" method="post" action="/users/profile/process-data">
             <input id="dynamic-process-menu-key" type="hidden" name="menu_key" value="">
             <input id="dynamic-process-section-key" type="hidden" name="section_key" value="">
+            <input type="hidden" name="target" value="#dynamic-process-card">
             <input id="dynamic-process-history-action" type="hidden" name="history_action" value="create">
             <input id="dynamic-process-history-record-id" type="hidden" name="history_record_id" value="">
             <div id="dynamic-process-edit-grid" class="personal-grid"></div>
@@ -2652,37 +2693,7 @@
           {% endfor %}
         </section>
         {% endif %}
-
-        <section id="recent-users-card" class="card" data-menu-scope="meu_perfil,funcionarios,financeiro,relatorios,tutorial">
-          <h2>Últimos utilizadores criados</h2>
-          {% if recent_users %}
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Estado</th>
-                  <th>Criado em</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in recent_users %}
-                  <tr>
-                    <td>{{ row.id }}</td>
-                    <td>{{ row.full_name }}</td>
-                    <td>{{ row.login_email }}</td>
-                    <td>{{ row.account_status_label if row.account_status_label is defined else row.account_status }}</td>
-                    <td>{{ row.created_at }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-            <p class="empty">Sem utilizadores criados ainda.</p>
-          {% endif %}
-        </section>
-        {% endif %}
+{% endif %}
       </div>
     </main>
   </div>
@@ -2733,7 +2744,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260509-global-message-auto-dismiss-debug-v2"></script>
+  <script src="/static/js/new_user.js?v=20260509-sessoes-visivel-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
@@ -2749,494 +2760,19 @@
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
 {% endblock %}
 
-<!-- APPVERBO_TEMPLATE_MESSAGE_AUTODISMISS_V3_START -->
-<script>
-(function () {
-  "use strict";
-
-  const AUTO_DISMISS_MS = 3000;
-  const REMOVE_ANIMATION_MS = 250;
-  const DEBUG_ENDPOINT = "/debug/global-message-auto-dismiss";
-
-  const MESSAGE_PARAM_NAMES = [
-    "success",
-    "error",
-    "entity_success",
-    "entity_error",
-    "profile_success",
-    "profile_error",
-    "settings_success",
-    "settings_error",
-    "invite_link"
-  ];
-
-  const MESSAGE_TEXT_HINTS = [
-    "sucesso",
-    "erro",
-    "atualizado",
-    "atualizada",
-    "atualizados",
-    "atualizadas",
-    "criado",
-    "criada",
-    "eliminado",
-    "eliminada",
-    "gravado",
-    "gravada",
-    "guardado",
-    "guardada",
-    "inválido",
-    "invalido",
-    "obrigatório",
-    "obrigatorio"
-  ];
-
-  const MESSAGE_SELECTOR = [
-    "[role='alert']",
-    ".alert",
-    ".alert-success",
-    ".alert-danger",
-    ".flash",
-    ".toast",
-    ".notification",
-    ".message",
-    ".success-message",
-    ".error-message",
-    ".appverbo-message",
-    ".appverbo-alert",
-    ".form-message",
-    ".status-message",
-    "[data-message]",
-    "[data-alert]",
-    "[class*='alert']",
-    "[class*='message']",
-    "[class*='success']",
-    "[class*='error']"
-  ].join(",");
-
-  const startedAt = Date.now();
-  let alreadyScheduled = false;
-  let observer = null;
-
-  function normalizeText(value) {
-    return String(value || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function safeText(value, maxSize) {
-    const cleanValue = String(value || "");
-    const limit = maxSize || 600;
-
-    if (cleanValue.length > limit) {
-      return cleanValue.slice(0, limit) + "...[TRUNCATED]";
-    }
-
-    return cleanValue;
-  }
-
-  function getUrlMessages() {
-    const urlMessages = [];
-    const params = new URLSearchParams(window.location.search || "");
-
-    MESSAGE_PARAM_NAMES.forEach(function (paramName) {
-      const value = params.get(paramName);
-
-      if (value && String(value).trim() !== "") {
-        urlMessages.push({
-          paramName: paramName,
-          value: String(value).trim(),
-          normalizedValue: normalizeText(value)
-        });
-      }
-    });
-
-    return urlMessages;
-  }
-
-  function getElementSnapshot(element) {
-    if (!element) {
-      return null;
-    }
-
-    let computed = {};
-
-    try {
-      const style = window.getComputedStyle(element);
-      computed = {
-        display: style.display,
-        visibility: style.visibility,
-        opacity: style.opacity,
-        backgroundColor: style.backgroundColor,
-        color: style.color,
-        borderColor: style.borderColor
-      };
-    } catch (error) {
-      computed = {
-        error: String(error && error.message ? error.message : error)
-      };
-    }
-
-    return {
-      tagName: String(element.tagName || ""),
-      id: String(element.id || ""),
-      className: String(element.className || ""),
-      role: String(element.getAttribute("role") || ""),
-      text: safeText(element.textContent || "", 700),
-      outerHTML: safeText(element.outerHTML || "", 900),
-      computedStyle: computed
-    };
-  }
-
-  function debugTemplateAutoDismiss(stage, data) {
-    const payload = {
-      stage: stage,
-      elapsedMs: Date.now() - startedAt,
-      location: {
-        href: window.location.href,
-        pathname: window.location.pathname,
-        search: window.location.search,
-        hash: window.location.hash
-      },
-      readyState: document.readyState,
-      data: data || {}
-    };
-
-    try {
-      console.log("APPVERBO_TEMPLATE_MESSAGE_AUTODISMISS_V3", payload);
-    } catch (error) {
-      return;
-    }
-
-    try {
-      fetch(DEBUG_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          logger: "APPVERBO_TEMPLATE_MESSAGE_AUTODISMISS_V3",
-          payload: payload
-        }),
-        keepalive: true
-      }).catch(function () {});
-    } catch (error) {
-      return;
-    }
-  }
-
-  function hasMessageSignal(element) {
-    if (!element) {
-      return false;
-    }
-
-    const role = String(element.getAttribute("role") || "").toLowerCase();
-
-    if (role === "alert") {
-      return true;
-    }
-
-    const classText = String(element.className || "").toLowerCase();
-
-    if (
-      classText.includes("alert") ||
-      classText.includes("message") ||
-      classText.includes("toast") ||
-      classText.includes("success") ||
-      classText.includes("error") ||
-      classText.includes("notification")
-    ) {
-      return true;
-    }
-
-    const text = normalizeText(element.textContent || "");
-
-    return MESSAGE_TEXT_HINTS.some(function (hint) {
-      return text.includes(normalizeText(hint));
-    });
-  }
-
-  function findBestContainer(element) {
-    if (!element) {
-      return null;
-    }
-
-    let current = element;
-
-    while (current && current !== document.body) {
-      if (hasMessageSignal(current)) {
-        return current;
-      }
-
-      current = current.parentElement;
-    }
-
-    return element;
-  }
-
-  function findElementsByUrlMessages(urlMessages) {
-    const found = [];
-
-    if (!document.body) {
-      return found;
-    }
-
-    const candidates = Array.from(document.body.querySelectorAll("*")).filter(function (element) {
-      const tagName = String(element.tagName || "").toLowerCase();
-
-      if (["script", "style", "svg", "path", "meta", "link", "option"].includes(tagName)) {
-        return false;
-      }
-
-      const text = normalizeText(element.textContent || "");
-
-      if (!text) {
-        return false;
-      }
-
-      return urlMessages.some(function (message) {
-        return message.normalizedValue && text.includes(message.normalizedValue);
-      });
-    });
-
-    candidates.sort(function (left, right) {
-      const leftLength = normalizeText(left.textContent || "").length;
-      const rightLength = normalizeText(right.textContent || "").length;
-      return leftLength - rightLength;
-    });
-
-    candidates.forEach(function (element) {
-      const container = findBestContainer(element);
-
-      if (container && !found.includes(container)) {
-        found.push(container);
-      }
-    });
-
-    return found;
-  }
-
-  function findElementsBySelectors() {
-    if (!document.body) {
-      return [];
-    }
-
-    return Array.from(document.body.querySelectorAll(MESSAGE_SELECTOR)).filter(function (element) {
-      const text = normalizeText(element.textContent || "");
-
-      if (!text) {
-        return false;
-      }
-
-      return (
-        MESSAGE_TEXT_HINTS.some(function (hint) {
-          return text.includes(normalizeText(hint));
-        }) ||
-        getUrlMessages().some(function (message) {
-          return message.normalizedValue && text.includes(message.normalizedValue);
-        })
-      );
-    });
-  }
-
-  function collectMessageElements(reason) {
-    const urlMessages = getUrlMessages();
-    const collected = [];
-
-    findElementsBySelectors().forEach(function (element) {
-      const container = findBestContainer(element);
-
-      if (container && !collected.includes(container)) {
-        collected.push(container);
-      }
-    });
-
-    findElementsByUrlMessages(urlMessages).forEach(function (element) {
-      if (element && !collected.includes(element)) {
-        collected.push(element);
-      }
-    });
-
-    const finalElements = collected.filter(function (element) {
-      return element && element.isConnected && element.dataset.appverboTemplateAutoDismissV3 !== "1";
-    });
-
-    debugTemplateAutoDismiss("collect", {
-      reason: reason || "",
-      urlMessages: urlMessages,
-      finalElementsCount: finalElements.length,
-      finalElements: finalElements.slice(0, 8).map(getElementSnapshot)
-    });
-
-    return finalElements;
-  }
-
-  function cleanMessageParamsFromUrl(reason) {
-    try {
-      const url = new URL(window.location.href);
-      const removed = [];
-
-      MESSAGE_PARAM_NAMES.forEach(function (paramName) {
-        if (url.searchParams.has(paramName)) {
-          removed.push({
-            paramName: paramName,
-            value: url.searchParams.get(paramName)
-          });
-          url.searchParams.delete(paramName);
-        }
-      });
-
-      if (removed.length) {
-        const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
-        window.history.replaceState(window.history.state, document.title, cleanUrl);
-
-        debugTemplateAutoDismiss("url_cleaned", {
-          reason: reason || "",
-          cleanUrl: cleanUrl,
-          removed: removed
-        });
-      }
-    } catch (error) {
-      debugTemplateAutoDismiss("url_clean_error", {
-        reason: reason || "",
-        error: String(error && error.message ? error.message : error)
-      });
-    }
-  }
-
-  function removeMessageElement(element, reason) {
-    if (!element || !element.isConnected) {
-      return;
-    }
-
-    element.dataset.appverboTemplateAutoDismissV3 = "1";
-
-    debugTemplateAutoDismiss("remove_start", {
-      reason: reason || "",
-      element: getElementSnapshot(element)
-    });
-
-    element.style.transition = "opacity 250ms ease, max-height 250ms ease, margin 250ms ease, padding 250ms ease";
-    element.style.overflow = "hidden";
-    element.style.opacity = "0";
-    element.style.maxHeight = "0";
-    element.style.marginTop = "0";
-    element.style.marginBottom = "0";
-    element.style.paddingTop = "0";
-    element.style.paddingBottom = "0";
-
-    window.setTimeout(function () {
-      const wasConnected = Boolean(element && element.isConnected);
-
-      if (element && element.isConnected) {
-        element.remove();
-      }
-
-      debugTemplateAutoDismiss("remove_done", {
-        reason: reason || "",
-        wasConnected: wasConnected,
-        isConnectedAfter: Boolean(element && element.isConnected)
-      });
-    }, REMOVE_ANIMATION_MS);
-  }
-
-  function runAutoDismiss(reason) {
-    const elements = collectMessageElements(reason || "run");
-
-    if (!elements.length) {
-      debugTemplateAutoDismiss("no_elements", {
-        reason: reason || "",
-        urlMessages: getUrlMessages()
-      });
-      cleanMessageParamsFromUrl(reason || "no_elements");
-      return;
-    }
-
-    elements.forEach(function (element) {
-      removeMessageElement(element, reason || "run");
-    });
-
-    cleanMessageParamsFromUrl(reason || "removed");
-  }
-
-  function scheduleAutoDismiss(reason) {
-    if (alreadyScheduled) {
-      return;
-    }
-
-    alreadyScheduled = true;
-
-    debugTemplateAutoDismiss("scheduled", {
-      reason: reason || "",
-      timeoutMs: AUTO_DISMISS_MS,
-      urlMessages: getUrlMessages()
-    });
-
-    window.setTimeout(function () {
-      runAutoDismiss(reason || "scheduled_3s");
-    }, AUTO_DISMISS_MS);
-  }
-
-  function init() {
-    debugTemplateAutoDismiss("init", {
-      urlMessages: getUrlMessages(),
-      bodyExists: Boolean(document.body)
-    });
-
-    scheduleAutoDismiss("init");
-
-    window.setTimeout(function () {
-      collectMessageElements("diagnostic_500ms");
-    }, 500);
-
-    window.setTimeout(function () {
-      collectMessageElements("diagnostic_1500ms");
-    }, 1500);
-
-    if (document.body) {
-      observer = new MutationObserver(function () {
-        const urlMessages = getUrlMessages();
-
-        if (urlMessages.length) {
-          debugTemplateAutoDismiss("mutation_with_url_message", {
-            urlMessages: urlMessages
-          });
-          scheduleAutoDismiss("mutation_with_url_message");
-        }
-      });
-
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
-
-      window.setTimeout(function () {
-        if (observer) {
-          observer.disconnect();
-        }
-
-        debugTemplateAutoDismiss("observer_disconnected", {});
-      }, 8000);
-    }
-
-    window.appverboTemplateMessageAutoDismissV3 = {
-      runNow: function () {
-        runAutoDismiss("manual_run");
-      },
-      collect: function () {
-        return collectMessageElements("manual_collect");
-      }
-    };
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-})();
-</script>
-<!-- APPVERBO_TEMPLATE_MESSAGE_AUTODISMISS_V3_END -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

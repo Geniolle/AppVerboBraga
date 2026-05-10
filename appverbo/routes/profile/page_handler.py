@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from typing import Any
@@ -43,6 +43,47 @@ from appverbo.models import (
 )
 
 from appverbo.routes.profile.router import router
+
+
+def _write_meu_perfil_page_flow_debug_log_v1(
+    request: Request,
+    stage: str,
+    data: dict[str, Any] | None = None,
+) -> None:
+    import json
+    import os
+    from pathlib import Path
+
+    try:
+        log_dir = Path(
+            os.environ.get(
+                "APPVERBO_PROFILE_SAVE_LOG_DIR",
+                "appverbo_runtime_logs",
+            )
+        )
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        log_entry = {
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "logger": "APPVERBO_MEU_PERFIL_PAGE_FLOW_DEBUG_V1",
+            "stage": str(stage or "").strip(),
+            "request": {
+                "method": str(getattr(request, "method", "") or ""),
+                "path": str(getattr(getattr(request, "url", None), "path", "") or ""),
+                "url": str(getattr(request, "url", "") or ""),
+                "client": str(getattr(getattr(request, "client", None), "host", "") or ""),
+            },
+            "data": data or {},
+        }
+
+        log_line = json.dumps(log_entry, ensure_ascii=False, default=str, sort_keys=True)
+        log_path = log_dir / "meu_perfil_process_flow.log"
+        with log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(log_line + "\n")
+
+        print("APPVERBO_MEU_PERFIL_PAGE_FLOW_DEBUG " + log_line, flush=True)
+    except Exception as exc:
+        print("APPVERBO_MEU_PERFIL_PAGE_FLOW_DEBUG_ERROR " + repr(exc), flush=True)
 
 
 def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
@@ -248,6 +289,7 @@ def new_user_page(
     dynamic_process_section: str = "",
     section_key: str = "",
     sidebar_section_edit_key: str = "",
+    sidebar_sections_tab: str = "",
     appverbo_after_save: str = "",
 ) -> HTMLResponse:
     resolved_profile_tab = profile_tab.strip().lower()
@@ -261,6 +303,40 @@ def new_user_page(
         resolved_admin_tab = "entidade"
     if resolved_admin_tab == "definicoes":
         resolved_admin_tab = "contas"
+
+    # APPVERBO_INFER_ADMIN_SESSOES_REFRESH_V1_START
+    # Quando o browser atualiza uma URL antiga/curta do subprocesso de sessoes,
+    # a query pode chegar apenas com target=admin-sidebar-sections-card,
+    # sem admin_tab=sessoes. Nesse caso, a página misturava o subprocesso
+    # com Home/Entidade. Forçamos o contexto correto no backend.
+    clean_target_for_admin_refresh = str(target or "").strip().lower()
+    clean_settings_tab_for_admin_refresh = (
+        str(settings_tab or "")
+        .strip()
+        .lower()
+        .replace("_", "-")
+    )
+    clean_sidebar_sections_tab_for_admin_refresh = (
+        str(sidebar_sections_tab or "")
+        .strip()
+        .lower()
+        .replace("_", "-")
+    )
+    clean_sidebar_section_edit_key_for_admin_refresh = str(sidebar_section_edit_key or "").strip()
+
+    if (
+        resolved_menu == "administrativo"
+        and resolved_admin_tab == "entidade"
+        and (
+            clean_settings_tab_for_admin_refresh in {"sessoes", "sessoes-sidebar"}
+            or clean_sidebar_sections_tab_for_admin_refresh in {"sessoes", "sessoes-sidebar"}
+            or bool(clean_sidebar_section_edit_key_for_admin_refresh)
+            or "admin-sidebar-sections" in clean_target_for_admin_refresh
+            or "sidebar-sections" in clean_target_for_admin_refresh
+        )
+    ):
+        resolved_admin_tab = "sessoes"
+    # APPVERBO_INFER_ADMIN_SESSOES_REFRESH_V1_END
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
     if clean_entity_edit_id.isdigit():
@@ -412,20 +488,31 @@ def new_user_page(
     if clean_target_from_query:
         initial_menu_target = clean_target_from_query
 
-    if resolved_menu == MENU_MEU_PERFIL_KEY:
+    if (
+        resolved_menu == MENU_MEU_PERFIL_KEY
+        and clean_target_from_query != "#dynamic-process-card"
+        and not clean_dynamic_section_from_query
+    ):
         initial_menu_target = "#perfil-pessoal-card"
+
+    if (
+        resolved_menu == MENU_MEU_PERFIL_KEY
+        and clean_dynamic_section_from_query
+        and not clean_target_from_query
+    ):
+        initial_menu_target = "#dynamic-process-card"
 
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
-    if resolved_admin_tab == "sessoes":
+    if resolved_menu == "administrativo" and resolved_admin_tab == "sessoes":
         if str(sidebar_section_edit_key or "").strip():
             initial_menu_target = "#admin-sidebar-sections-form-card"
         else:
             initial_menu_target = "#admin-sidebar-sections-card"
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
-    elif resolved_admin_tab == "menu":
+    elif resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         if clean_settings_edit_key:
             initial_menu_target = "#settings-menu-edit-card"
         else:
@@ -442,7 +529,7 @@ def new_user_page(
     # A aba Administrativo -> Menu usa o bloco legado settings-card.
     # Sem esta normalização, a URL admin_tab=menu pode ficar sem conteúdo
     # porque o backend voltava para o target padrão de Entidade.
-    if resolved_admin_tab == "menu":
+    if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         if clean_settings_edit_key:
             initial_menu_target = "#settings-menu-edit-card"
         else:
@@ -475,11 +562,41 @@ def new_user_page(
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_END
 
+    # APPVERBO_ADMIN_PROCESS_ONLY_V1_START
+    # Quando o utilizador clica apenas no processo "Administrativo",
+    # a tela deve mostrar somente o bloco central de subprocessos.
+    # Os cards de Entidade, Utilizador, Sessoes e Menu so aparecem
+    # depois do clique no subprocesso correspondente.
+    raw_admin_tab_param_for_process_only = str(request.query_params.get("admin_tab", "") or "").strip()
+    raw_target_param_for_process_only = str(request.query_params.get("target", "") or "").strip()
+    raw_hash_target_for_process_only = str(request.query_params.get("hash", "") or "").strip()
+    raw_settings_edit_key_for_process_only = str(request.query_params.get("settings_edit_key", "") or "").strip()
+    raw_sidebar_section_edit_key_for_process_only = str(request.query_params.get("sidebar_section_edit_key", "") or "").strip()
+    raw_settings_tab_for_process_only = str(request.query_params.get("settings_tab", "") or "").strip()
+    raw_sidebar_sections_tab_for_process_only = str(request.query_params.get("sidebar_sections_tab", "") or "").strip()
+
+    admin_process_only = (
+        resolved_menu == "administrativo"
+        and not raw_admin_tab_param_for_process_only
+        and not raw_target_param_for_process_only
+        and not raw_hash_target_for_process_only
+        and not raw_settings_edit_key_for_process_only
+        and not raw_sidebar_section_edit_key_for_process_only
+        and not raw_settings_tab_for_process_only
+        and not raw_sidebar_sections_tab_for_process_only
+    )
+
+    if admin_process_only:
+        initial_menu_target = "#menu-tabs-card"
+        initial_dynamic_process_section = ""
+        clean_dynamic_section_from_query = ""
+    # APPVERBO_ADMIN_PROCESS_ONLY_V1_END
+
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
 
         # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
-    if resolved_admin_tab == "entidade":
+    if resolved_menu == "administrativo" and resolved_admin_tab == "entidade":
         admin_subprocess_state_v2 = build_admin_subprocess_state_v2(
             key="entidade",
             session=session,
@@ -492,7 +609,7 @@ def new_user_page(
         )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_END
 
-    if resolved_admin_tab == "sessoes":
+    if resolved_menu == "administrativo" and resolved_admin_tab == "sessoes":
         sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
 
         if sessoes_subprocess_config_v2 is not None:
@@ -523,7 +640,7 @@ def new_user_page(
                 error=settings_error if resolved_admin_tab == "sessoes" else "",
                 return_url="/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
-    elif resolved_admin_tab == "menu":
+    elif resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         menu_subprocess_config = get_admin_subprocess_config("menu")
 
         if menu_subprocess_config is not None:
@@ -585,6 +702,7 @@ def new_user_page(
         "requested_profile_section": clean_profile_section_from_query,
         "requested_dynamic_process_section": clean_dynamic_section_from_query,
         "appverbo_after_save": is_post_save_return,
+        "admin_process_only": bool(admin_process_only),
         "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
@@ -596,4 +714,23 @@ def new_user_page(
         ),
         **page_data,
     }
+    _write_meu_perfil_page_flow_debug_log_v1(
+        request,
+        "04_users_new_render_context",
+        {
+            "resolved_menu": resolved_menu,
+            "resolved_profile_tab": resolved_profile_tab,
+            "resolved_admin_tab": resolved_admin_tab,
+            "clean_target_from_query": clean_target_from_query,
+            "clean_profile_section_from_query": clean_profile_section_from_query,
+            "clean_dynamic_section_from_query": clean_dynamic_section_from_query,
+            "initial_menu_target": initial_menu_target,
+            "initial_dynamic_process_section": initial_dynamic_process_section,
+            "is_post_save_return": is_post_save_return,
+            "profile_success": profile_success or "",
+            "profile_error": profile_error or "",
+        },
+    )
     return templates.TemplateResponse(request, "new_user.html", context)
+
+

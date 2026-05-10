@@ -1,4 +1,4 @@
-// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_START
+﻿// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_START
 //###################################################################################
 // (POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3) RETORNO POS-SAVE VS REFRESH MANUAL
 //###################################################################################
@@ -1776,6 +1776,10 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 
   formEl.querySelectorAll("[data-meu-perfil-quantity-payload='1']").forEach((inputEl) => inputEl.remove());
 
+  if (window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE) {
+    return;
+  }
+
   Object.keys(quantityValuesByRule || {}).forEach((rawRuleKey) => {
     const ruleKey = normalizeMenuKey(rawRuleKey);
     if (!ruleKey) {
@@ -1795,6 +1799,7 @@ function renderMeuPerfilQuantityGroups() {
   const readonlyGridEl = personalCardEl ? personalCardEl.querySelector(".profile-readonly .personal-grid") : null;
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const editGridEl = formEl ? formEl.querySelector(".personal-grid") : null;
+  const useV4QuantityEditor = Boolean(window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE);
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   const normalizedRules = normalizeProcessQuantityRules(setting && setting.process_quantity_fields);
   if (!readonlyGridEl && !editGridEl) {
@@ -1804,7 +1809,7 @@ function renderMeuPerfilQuantityGroups() {
   if (readonlyGridEl) {
     readonlyGridEl.querySelectorAll("[data-meu-perfil-quantity-generated='1']").forEach((node) => node.remove());
   }
-  if (editGridEl) {
+  if (editGridEl && !useV4QuantityEditor) {
     editGridEl.querySelectorAll("[data-meu-perfil-quantity-generated='1']").forEach((node) => node.remove());
   }
 
@@ -1906,7 +1911,7 @@ function renderMeuPerfilQuantityGroups() {
       }
     }
 
-    if (editGridEl && nextItems.length) {
+    if (editGridEl && !useV4QuantityEditor && nextItems.length) {
       const blockEl = document.createElement("div");
       blockEl.className = "field full dynamic-process-quantity-editor-block";
       blockEl.style.order = String(baseOrder + 1);
@@ -2023,7 +2028,9 @@ function renderMeuPerfilQuantityGroups() {
     }
   });
 
-  syncMeuPerfilQuantityHiddenInputs(nextQuantityValuesByRule);
+  if (!useV4QuantityEditor) {
+    syncMeuPerfilQuantityHiddenInputs(nextQuantityValuesByRule);
+  }
   if (typeof window.reorderMeuPerfilProfileFields === "function") {
     window.reorderMeuPerfilProfileFields();
   }
@@ -5149,7 +5156,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const form = getMeuPerfilQuantityFormV1();
     const setting = getMeuPerfilSettingQuantityV1();
 
-    if (!form || !setting || form.dataset.meuPerfilQuantityRendererBoundV1 === "1") {
+    if (
+      window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE ||
+      !form ||
+      !setting ||
+      form.dataset.meuPerfilQuantityRendererBoundV1 === "1"
+    ) {
       return;
     }
 
@@ -6539,6 +6551,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const currentUrl = getCurrentUrlPostSaveV3();
 
     [
+      "admin_tab",
+      "sidebar_sections_tab",
       "entity_edit_id",
       "user_edit_id",
       "settings_edit_key",
@@ -6563,6 +6577,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       currentUrl.searchParams.set("menu", MEU_PERFIL_MENU_KEY);
       currentUrl.searchParams.set("target", "#perfil-pessoal-card");
       currentUrl.searchParams.set("profile_tab", "pessoal");
+      currentUrl.searchParams.delete("admin_tab");
+      currentUrl.searchParams.delete("sidebar_sections_tab");
+      currentUrl.hash = "#perfil-pessoal-card";
 
       const profileSection = getCurrentProfileSectionPostSaveV3();
 
@@ -6570,6 +6587,11 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
         currentUrl.searchParams.set("profile_section", profileSection);
       }
     } else {
+      if (actionLookup.includes("/users/profile/process-data")) {
+        currentUrl.searchParams.set("target", "#dynamic-process-card");
+        currentUrl.hash = "#dynamic-process-card";
+      }
+
       if (menuKey) {
         currentUrl.searchParams.set("menu", menuKey);
       }
@@ -7002,6 +7024,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const actionLookup = normalizeReturnUrlLookupV4(action);
 
     [
+      "admin_tab",
+      "sidebar_sections_tab",
       "entity_edit_id",
       "user_edit_id",
       "settings_edit_key",
@@ -7418,12 +7442,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.set("menu", "meu_perfil");
       url.searchParams.set("target", "#perfil-pessoal-card");
       url.searchParams.set("profile_tab", "pessoal");
+      url.searchParams.delete("admin_tab");
+      url.searchParams.delete("sidebar_sections_tab");
+      url.hash = "#perfil-pessoal-card";
 
       if (profileSection) {
         url.searchParams.set("profile_section", profileSection);
       }
 
       return url.pathname + url.search + url.hash;
+    }
+
+    if (actionLookup.includes("/users/profile/process-data")) {
+      url.searchParams.set("target", "#dynamic-process-card");
+      url.hash = "#dynamic-process-card";
     }
 
     const menuKey = getCurrentMenuReturnUrlV6(form);
@@ -8375,17 +8407,19 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 250);
 window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
 // APPVERBO_MEU_PERFIL_QUANTITY_SUBMIT_SYNC_V1_END
 
-// APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_START
+// APPVERBO_MESSAGE_DISMISS_SAFE_V5_START
 //###################################################################################
-// (GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2) LOGGER E REMOCAO GLOBAL DE MENSAGENS EM 3S
+// (MESSAGE_DISMISS_SAFE_V5) REGRA GLOBAL SEGURA: MENSAGENS SOMEM EM 3 SEGUNDOS
 //###################################################################################
 
 (function () {
   "use strict";
 
-  const startedAt = Date.now();
-  const GLOBAL_MESSAGE_AUTO_DISMISS_MS = 3000;
+  const VERSION = "APPVERBO_MESSAGE_DISMISS_SAFE_V5";
+  const AUTO_DISMISS_MS = 3000;
+  const REMOVE_ANIMATION_MS = 250;
   const DEBUG_ENDPOINT = "/debug/global-message-auto-dismiss";
+  const startedAt = Date.now();
 
   const MESSAGE_PARAM_NAMES = [
     "success",
@@ -8399,35 +8433,19 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     "invite_link"
   ];
 
-  const MESSAGE_SELECTOR = [
-    '[role="alert"]',
-    ".alert",
-    ".alert-success",
-    ".alert-danger",
-    ".flash",
-    ".toast",
-    ".notification",
-    ".message",
-    ".success-message",
-    ".error-message",
-    ".appverbo-message",
-    ".appverbo-alert",
-    ".form-message",
-    ".status-message",
-    "[data-message]",
-    "[data-alert]",
-    "[class*='alert']",
-    "[class*='message']",
-    "[class*='success']",
-    "[class*='error']"
-  ].join(",");
-
-  window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS =
-    window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS || [];
+  function normalizeText(value) {
+    return String(value || "")
+      .replace(/\+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
 
   function safeText(value, maxSize) {
     const cleanValue = String(value || "");
-    const limit = maxSize || 500;
+    const limit = maxSize || 700;
 
     if (cleanValue.length > limit) {
       return cleanValue.slice(0, limit) + "...[TRUNCATED]";
@@ -8436,11 +8454,47 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     return cleanValue;
   }
 
-  function normalizeMessageText(value) {
-    return String(value || "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
+  function readMessageParams() {
+    const messages = [];
+    const params = new URLSearchParams(window.location.search || "");
+
+    MESSAGE_PARAM_NAMES.forEach(function (paramName) {
+      const value = params.get(paramName);
+
+      if (value && String(value).trim() !== "") {
+        messages.push({
+          paramName: paramName,
+          value: String(value).trim(),
+          normalizedValue: normalizeText(value)
+        });
+      }
+    });
+
+    return messages;
+  }
+
+  const initialMessageParams = readMessageParams();
+
+  function getActiveMessageParams() {
+    const currentMessageParams = readMessageParams();
+    const merged = [];
+
+    initialMessageParams.concat(currentMessageParams).forEach(function (messageItem) {
+      if (
+        messageItem &&
+        messageItem.normalizedValue &&
+        !merged.some(function (existing) {
+          return (
+            existing.paramName === messageItem.paramName &&
+            existing.normalizedValue === messageItem.normalizedValue
+          );
+        })
+      ) {
+        merged.push(messageItem);
+      }
+    });
+
+    return merged;
   }
 
   function getElementSnapshot(element) {
@@ -8448,7 +8502,7 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
       return null;
     }
 
-    let computedStyle = null;
+    let computedStyle = {};
 
     try {
       const style = window.getComputedStyle(element);
@@ -8457,7 +8511,10 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
         visibility: style.visibility,
         opacity: style.opacity,
         backgroundColor: style.backgroundColor,
-        color: style.color
+        color: style.color,
+        borderColor: style.borderColor,
+        height: style.height,
+        width: style.width
       };
     } catch (error) {
       computedStyle = {
@@ -8470,15 +8527,15 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
       id: String(element.id || ""),
       className: String(element.className || ""),
       role: String(element.getAttribute("role") || ""),
-      dataAutoDismissed: String(element.dataset ? element.dataset.appverboAutoDismissedV2 || "" : ""),
       text: safeText(element.textContent || "", 700),
       outerHTML: safeText(element.outerHTML || "", 900),
       computedStyle: computedStyle
     };
   }
 
-  function debugGlobalMessageAutoDismiss(stage, data) {
-    const entry = {
+  function debugSafeDismiss(stage, data) {
+    const payload = {
+      version: VERSION,
       stage: String(stage || ""),
       elapsedMs: Date.now() - startedAt,
       readyState: document.readyState,
@@ -8488,13 +8545,18 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
         search: window.location.search,
         hash: window.location.hash
       },
+      initialMessageParams: initialMessageParams,
+      currentMessageParams: readMessageParams(),
+      activeMessageParams: getActiveMessageParams(),
       data: data || {}
     };
 
-    window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS.push(entry);
+    window.__APPVERBO_MESSAGE_DISMISS_SAFE_V5_LOGS =
+      window.__APPVERBO_MESSAGE_DISMISS_SAFE_V5_LOGS || [];
+    window.__APPVERBO_MESSAGE_DISMISS_SAFE_V5_LOGS.push(payload);
 
     try {
-      console.log("APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG", entry);
+      console.log("APPVERBO_MESSAGE_DISMISS_SAFE_V5", payload);
     } catch (error) {
       return;
     }
@@ -8505,7 +8567,10 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(entry),
+        body: JSON.stringify({
+          logger: VERSION,
+          payload: payload
+        }),
         keepalive: true
       }).catch(function () {});
     } catch (error) {
@@ -8513,25 +8578,35 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     }
   }
 
-  function getUrlMessageValues() {
-    const values = [];
-    const params = new URLSearchParams(window.location.search || "");
+  function isVisibleElement(element) {
+    if (!element || !element.isConnected) {
+      return false;
+    }
 
-    MESSAGE_PARAM_NAMES.forEach(function (paramName) {
-      const paramValue = params.get(paramName);
+    try {
+      const style = window.getComputedStyle(element);
 
-      if (paramValue && String(paramValue).trim() !== "") {
-        values.push({
-          paramName: paramName,
-          paramValue: String(paramValue).trim()
-        });
+      if (
+        style.display === "none" ||
+        style.visibility === "hidden" ||
+        Number(style.opacity || "1") === 0
+      ) {
+        return false;
       }
-    });
 
-    return values;
+      const rect = element.getBoundingClientRect();
+
+      if (rect.width <= 0 || rect.height <= 0) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  function hasMessageSignal(element) {
+  function hasMessageStyleSignal(element) {
     if (!element) {
       return false;
     }
@@ -8550,129 +8625,110 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
       classText.includes("toast") ||
       classText.includes("success") ||
       classText.includes("error") ||
-      classText.includes("notification")
+      classText.includes("notification") ||
+      classText.includes("flash")
     );
   }
 
-  function findBestDismissTarget(element) {
+  function findBestMessageContainer(element, normalizedMessageText) {
     if (!element) {
       return null;
     }
 
-    if (hasMessageSignal(element)) {
-      return element;
-    }
+    let current = element;
+    let best = element;
+    let depth = 0;
 
-    const closestMessage = element.closest(MESSAGE_SELECTOR);
+    while (current && current !== document.body && depth < 6) {
+      const text = normalizeText(current.textContent || "");
 
-    if (closestMessage) {
-      return closestMessage;
-    }
+      if (!text || !text.includes(normalizedMessageText)) {
+        break;
+      }
 
-    let current = element.parentElement;
-
-    while (current && current !== document.body) {
-      if (hasMessageSignal(current)) {
+      if (hasMessageStyleSignal(current)) {
         return current;
       }
 
+      if (text.length <= 260) {
+        best = current;
+      }
+
       current = current.parentElement;
+      depth += 1;
     }
 
-    return element;
+    return best;
   }
 
-  function findSmallestElementContainingText(messageText) {
-    const normalizedNeedle = normalizeMessageText(messageText);
+  function collectMessageElements(reason) {
+    const activeMessageParams = getActiveMessageParams();
+    const found = [];
 
-    if (!normalizedNeedle || !document.body) {
-      return null;
-    }
-
-    const candidates = Array.from(document.body.querySelectorAll("*")).filter(function (element) {
-      const tagName = String(element.tagName || "").toLowerCase();
-
-      if (["script", "style", "svg", "path", "meta", "link", "option"].includes(tagName)) {
-        return false;
-      }
-
-      const normalizedText = normalizeMessageText(element.textContent || "");
-
-      if (!normalizedText || !normalizedText.includes(normalizedNeedle)) {
-        return false;
-      }
-
-      return true;
-    });
-
-    if (!candidates.length) {
-      return null;
-    }
-
-    candidates.sort(function (left, right) {
-      const leftTextLength = normalizeMessageText(left.textContent || "").length;
-      const rightTextLength = normalizeMessageText(right.textContent || "").length;
-
-      return leftTextLength - rightTextLength;
-    });
-
-    return candidates[0];
-  }
-
-  function collectGlobalMessageElements(reason) {
-    const elements = new Set();
-    const selectorMatches = [];
-
-    if (!document.body) {
-      debugGlobalMessageAutoDismiss("collect_no_body", {
+    if (!activeMessageParams.length) {
+      debugSafeDismiss("collect_skipped_no_message_params", {
         reason: reason || ""
       });
       return [];
     }
 
-    document.querySelectorAll(MESSAGE_SELECTOR).forEach(function (element) {
-      const text = normalizeMessageText(element.textContent || "");
+    if (!document.body) {
+      debugSafeDismiss("collect_skipped_no_body", {
+        reason: reason || ""
+      });
+      return [];
+    }
 
-      if (!text) {
+    const allElements = Array.from(document.body.querySelectorAll("*"));
+
+    activeMessageParams.forEach(function (messageItem) {
+      const normalizedMessageText = messageItem.normalizedValue;
+
+      if (!normalizedMessageText) {
         return;
       }
 
-      elements.add(findBestDismissTarget(element) || element);
-      selectorMatches.push(getElementSnapshot(element));
-    });
+      allElements.forEach(function (element) {
+        const tagName = String(element.tagName || "").toLowerCase();
 
-    const urlMessages = getUrlMessageValues();
-    const textMatches = [];
+        if (["script", "style", "svg", "path", "meta", "link", "option"].includes(tagName)) {
+          return;
+        }
 
-    urlMessages.forEach(function (messageItem) {
-      const foundElement = findSmallestElementContainingText(messageItem.paramValue);
-      const targetElement = findBestDismissTarget(foundElement) || foundElement;
+        if (!isVisibleElement(element)) {
+          return;
+        }
 
-      if (targetElement) {
-        elements.add(targetElement);
-      }
+        const normalizedElementText = normalizeText(element.textContent || "");
 
-      textMatches.push({
-        paramName: messageItem.paramName,
-        paramValue: messageItem.paramValue,
-        foundElement: getElementSnapshot(foundElement),
-        targetElement: getElementSnapshot(targetElement)
+        if (!normalizedElementText.includes(normalizedMessageText)) {
+          return;
+        }
+
+        if (normalizedElementText.length > 350) {
+          return;
+        }
+
+        const container = findBestMessageContainer(element, normalizedMessageText);
+
+        if (
+          container &&
+          isVisibleElement(container) &&
+          !found.includes(container) &&
+          normalizeText(container.textContent || "").includes(normalizedMessageText)
+        ) {
+          found.push(container);
+        }
       });
     });
 
-    const finalElements = Array.from(elements).filter(function (element) {
-      return element && element.isConnected && element.dataset.appverboAutoDismissedV2 !== "1";
+    const finalElements = found.filter(function (element) {
+      return element && element.isConnected && element.dataset.appverboMessageDismissSafeV5 !== "1";
     });
 
-    debugGlobalMessageAutoDismiss("collect_messages", {
+    debugSafeDismiss("collect", {
       reason: reason || "",
-      messageSelector: MESSAGE_SELECTOR,
-      urlMessages: urlMessages,
-      selectorMatchesCount: selectorMatches.length,
-      textMatchesCount: textMatches.length,
       finalElementsCount: finalElements.length,
-      selectorMatches: selectorMatches.slice(0, 10),
-      textMatches: textMatches.slice(0, 10),
       finalElements: finalElements.slice(0, 10).map(getElementSnapshot)
     });
 
@@ -8682,58 +8738,57 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
   function cleanMessageParamsFromUrl(reason) {
     try {
       const url = new URL(window.location.href);
-      let changed = false;
-      const removedParams = [];
+      const removed = [];
 
       MESSAGE_PARAM_NAMES.forEach(function (paramName) {
         if (url.searchParams.has(paramName)) {
-          removedParams.push({
+          removed.push({
             paramName: paramName,
-            paramValue: url.searchParams.get(paramName)
+            value: url.searchParams.get(paramName)
           });
           url.searchParams.delete(paramName);
-          changed = true;
         }
       });
 
-      if (changed) {
+      if (removed.length) {
         const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
         window.history.replaceState(window.history.state, document.title, cleanUrl);
 
-        debugGlobalMessageAutoDismiss("url_params_cleaned", {
+        debugSafeDismiss("url_cleaned", {
           reason: reason || "",
-          removedParams: removedParams,
+          removed: removed,
           cleanUrl: cleanUrl
         });
       } else {
-        debugGlobalMessageAutoDismiss("url_params_not_found", {
+        debugSafeDismiss("url_no_message_params", {
           reason: reason || ""
         });
       }
     } catch (error) {
-      debugGlobalMessageAutoDismiss("url_params_clean_error", {
+      debugSafeDismiss("url_clean_error", {
         reason: reason || "",
         error: String(error && error.message ? error.message : error)
       });
     }
   }
 
-  function dismissElement(element, reason) {
+  function removeMessageElement(element, reason) {
     if (!element || !element.isConnected) {
-      debugGlobalMessageAutoDismiss("dismiss_skip_not_connected", {
+      debugSafeDismiss("remove_skip_not_connected", {
         reason: reason || "",
         element: getElementSnapshot(element)
       });
       return;
     }
 
-    debugGlobalMessageAutoDismiss("dismiss_start", {
+    element.dataset.appverboMessageDismissSafeV5 = "1";
+
+    debugSafeDismiss("remove_start", {
       reason: reason || "",
-      elementBefore: getElementSnapshot(element)
+      element: getElementSnapshot(element)
     });
 
-    element.dataset.appverboAutoDismissedV2 = "1";
-    element.style.transition = "opacity 250ms ease, max-height 250ms ease, margin 250ms ease, padding 250ms ease";
+    element.style.transition = "opacity 250ms ease, max-height 250ms ease, margin 250ms ease, padding 250ms ease, border-width 250ms ease";
     element.style.overflow = "hidden";
     element.style.opacity = "0";
     element.style.maxHeight = "0";
@@ -8741,108 +8796,129 @@ window.setTimeout(attachMeuPerfilQuantitySubmitSync_v1, 1000);
     element.style.marginBottom = "0";
     element.style.paddingTop = "0";
     element.style.paddingBottom = "0";
+    element.style.borderTopWidth = "0";
+    element.style.borderBottomWidth = "0";
 
     window.setTimeout(function () {
-      const stillConnectedBeforeRemove = Boolean(element && element.isConnected);
+      const wasConnected = Boolean(element && element.isConnected);
 
       if (element && element.isConnected) {
         element.remove();
       }
 
-      debugGlobalMessageAutoDismiss("dismiss_removed", {
+      debugSafeDismiss("remove_done", {
         reason: reason || "",
-        stillConnectedBeforeRemove: stillConnectedBeforeRemove,
-        stillConnectedAfterRemove: Boolean(element && element.isConnected)
+        wasConnected: wasConnected,
+        isConnectedAfter: Boolean(element && element.isConnected)
       });
-    }, 300);
+    }, REMOVE_ANIMATION_MS);
   }
 
-  function runGlobalMessageAutoDismiss(reason) {
-    debugGlobalMessageAutoDismiss("run_start", {
+  function runSafeDismiss(reason) {
+    const activeMessageParams = getActiveMessageParams();
+
+    debugSafeDismiss("run_start", {
       reason: reason || "",
-      urlMessages: getUrlMessageValues()
+      activeMessageParamsCount: activeMessageParams.length
     });
 
-    const elements = collectGlobalMessageElements(reason);
+    if (!activeMessageParams.length) {
+      return;
+    }
+
+    const elements = collectMessageElements(reason || "run");
 
     if (!elements.length) {
-      debugGlobalMessageAutoDismiss("run_no_elements_found", {
-        reason: reason || "",
-        urlMessages: getUrlMessageValues()
+      debugSafeDismiss("run_no_elements", {
+        reason: reason || ""
       });
-
-      cleanMessageParamsFromUrl(reason || "no_elements_found");
+      cleanMessageParamsFromUrl(reason || "no_elements");
       return;
     }
 
     elements.forEach(function (element) {
-      dismissElement(element, reason || "auto");
+      removeMessageElement(element, reason || "run");
     });
 
-    cleanMessageParamsFromUrl(reason || "auto");
+    cleanMessageParamsFromUrl(reason || "removed");
   }
 
-  function scheduleGlobalMessageAutoDismiss(reason) {
-    debugGlobalMessageAutoDismiss("schedule", {
+  function scheduleSafeDismiss(reason, delayMs) {
+    debugSafeDismiss("schedule", {
       reason: reason || "",
-      timeoutMs: GLOBAL_MESSAGE_AUTO_DISMISS_MS,
-      urlMessages: getUrlMessageValues()
+      delayMs: delayMs
     });
 
     window.setTimeout(function () {
-      runGlobalMessageAutoDismiss(reason || "scheduled_3000ms");
-    }, GLOBAL_MESSAGE_AUTO_DISMISS_MS);
+      runSafeDismiss(reason || "scheduled");
+    }, delayMs);
   }
 
-  function initGlobalMessageAutoDismiss() {
-    debugGlobalMessageAutoDismiss("init", {
+  function initSafeDismiss() {
+    debugSafeDismiss("init", {
       bodyExists: Boolean(document.body),
-      urlMessages: getUrlMessageValues(),
-      scriptVersion: "GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2"
+      initialMessageParams: initialMessageParams
     });
 
-    scheduleGlobalMessageAutoDismiss("init");
-
-    window.setTimeout(function () {
-      collectGlobalMessageElements("diagnostic_250ms");
-    }, 250);
-
-    window.setTimeout(function () {
-      collectGlobalMessageElements("diagnostic_1000ms");
-    }, 1000);
-
-    const observer = new MutationObserver(function () {
-      debugGlobalMessageAutoDismiss("mutation_observed", {});
-      scheduleGlobalMessageAutoDismiss("mutation_observed");
-    });
-
-    if (document.body) {
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
-
-      window.setTimeout(function () {
-        observer.disconnect();
-        debugGlobalMessageAutoDismiss("observer_disconnected", {});
-      }, 10000);
+    if (!getActiveMessageParams().length) {
+      return;
     }
 
-    window.appverboGlobalMessageDebugV2 = {
-      logs: window.__APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_LOGS,
+    scheduleSafeDismiss("scheduled_3000ms", AUTO_DISMISS_MS);
+
+    window.setTimeout(function () {
+      collectMessageElements("diagnostic_500ms");
+    }, 500);
+
+    window.setTimeout(function () {
+      collectMessageElements("diagnostic_1500ms");
+    }, 1500);
+
+    window.setTimeout(function () {
+      runSafeDismiss("safety_3500ms");
+    }, 3500);
+
+    window.appverboMessageDismissSafeV5 = {
+      logs: window.__APPVERBO_MESSAGE_DISMISS_SAFE_V5_LOGS || [],
       collect: function () {
-        return collectGlobalMessageElements("manual_collect");
+        return collectMessageElements("manual_collect");
       },
       runNow: function () {
-        return runGlobalMessageAutoDismiss("manual_run");
+        return runSafeDismiss("manual_run");
       }
     };
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initGlobalMessageAutoDismiss);
+    document.addEventListener("DOMContentLoaded", initSafeDismiss);
   } else {
-    initGlobalMessageAutoDismiss();
+    initSafeDismiss();
   }
 })();
-// APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_V2_END
+// APPVERBO_MESSAGE_DISMISS_SAFE_V5_END
+
+// APPVERBO_MARK_READY_V1_START
+//###################################################################################
+// (ANTI_PISCAR) GARANTIR QUE A TELA E LIBERTADA APOS O JS PRINCIPAL
+//###################################################################################
+
+function appverboMarkReadyV1() {
+  if (!document.body) {
+    return;
+  }
+
+  document.body.classList.remove("appverbo-booting");
+  document.body.classList.add("appverbo-ready");
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", function () {
+    window.requestAnimationFrame(appverboMarkReadyV1);
+  }, { once: true });
+} else {
+  window.requestAnimationFrame(appverboMarkReadyV1);
+}
+
+window.addEventListener("load", appverboMarkReadyV1, { once: true });
+// APPVERBO_MARK_READY_V1_END
+
