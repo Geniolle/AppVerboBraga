@@ -6096,3 +6096,47 @@ body.appverbo-sessoes-render-ok.appverbo-admin-process-only [data-admin-subproce
 }
 /* APPVERBO_SESSOES_RENDER_GUARD_V1_END */
 
+/* APPVERBO_MENU_RENDER_GUARD_V1_START */
+/*
+  Corrige o estado em que a aba Menu fica selecionada,
+  mas os cards abaixo continuam escondidos ou o JS procura o target errado.
+  O subprocesso Menu deve usar settings-card, nao admin-account-status-card.
+*/
+body.appverbo-menu-render-ok #menu-tabs-card {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.appverbo-menu-render-ok [data-appverbo-menu-card="true"],
+body.appverbo-menu-render-ok #settings-card,
+body.appverbo-menu-render-ok [data-admin-subprocess="menu"] {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body.appverbo-menu-render-ok [data-appverbo-not-menu-card="true"],
+body.appverbo-menu-render-ok #home-summary-card {
+  display: none !important;
+}
+
+body.appverbo-menu-render-ok #admin-account-status-card:not([data-appverbo-menu-card="true"]) {
+  display: none !important;
+}
+
+body.appverbo-menu-render-ok #submenu-items [data-appverbo-menu-active="true"] {
+  background: #1557b7 !important;
+  background-color: #1557b7 !important;
+  border-color: #1557b7 !important;
+  color: #ffffff !important;
+}
+
+body.appverbo-menu-render-ok #submenu-items [data-appverbo-menu-inactive="true"] {
+  background: #f9fbff !important;
+  background-color: #f9fbff !important;
+  border-color: #dce3f2 !important;
+  color: #2f3850 !important;
+}
+/* APPVERBO_MENU_RENDER_GUARD_V1_END */
+

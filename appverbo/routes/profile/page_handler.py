@@ -1,19 +1,18 @@
 ﻿from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
+
 # APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_START
 from appverbo.admin_subprocesses.v2_service import build_admin_subprocess_state_v2
+
 # APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_END
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.core import *  # noqa: F403,F401
@@ -21,28 +20,10 @@ from appverbo.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_KEY,
     normalize_sidebar_sections,
-    delete_sidebar_menu_setting,
-    get_sidebar_menu_settings,
     resolve_menu_key_alias,
-    set_sidebar_menu_visibility,
-    update_sidebar_menu_additional_fields,
-    update_sidebar_menu_label,
-    update_sidebar_menu_process_fields,
 )
-from appverbo.services import *  # noqa: F403,F401
-from appverbo.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    Profile,
-    User,
-    UserAccountStatus,
-    UserProfile,
-)
-
 from appverbo.routes.profile.router import router
+from appverbo.services import *  # noqa: F403,F401
 
 
 def _write_meu_perfil_page_flow_debug_log_v1(
@@ -168,7 +149,10 @@ def _resolve_initial_menu_target(
 
 # APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
 
-def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_active: object = None) -> str:
+
+def _normalize_sidebar_section_status_for_page_v22(
+    raw_status: object, raw_is_active: object = None
+) -> str:
     if raw_is_active is False:
         return "inativo"
 
@@ -184,10 +168,13 @@ def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
     if not isinstance(section, dict):
         return True
 
-    return _normalize_sidebar_section_status_for_page_v22(
-        section.get("status"),
-        section.get("is_active"),
-    ) == "ativo"
+    return (
+        _normalize_sidebar_section_status_for_page_v22(
+            section.get("status"),
+            section.get("is_active"),
+        )
+        == "ativo"
+    )
 
 
 def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -234,15 +221,11 @@ def _split_sidebar_sections_for_page_v22(
     all_sections = _resolve_sidebar_sections_from_page_data_v22(page_data)
 
     active_sections = [
-        section
-        for section in all_sections
-        if _sidebar_section_is_active_for_page_v22(section)
+        section for section in all_sections if _sidebar_section_is_active_for_page_v22(section)
     ]
 
     inactive_sections = [
-        section
-        for section in all_sections
-        if not _sidebar_section_is_active_for_page_v22(section)
+        section for section in all_sections if not _sidebar_section_is_active_for_page_v22(section)
     ]
 
     clean_edit_key = str(sidebar_section_edit_key or "").strip().lower()
@@ -258,8 +241,8 @@ def _split_sidebar_sections_for_page_v22(
 
     return active_sections, inactive_sections, edit_data
 
-# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
+# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
 
 @router.get("/users/new", response_class=HTMLResponse)
@@ -299,7 +282,14 @@ def new_user_page(
     if not resolved_menu:
         resolved_menu = "home"
     resolved_admin_tab = admin_tab.strip().lower()
-    if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "menu"}:
+    if resolved_admin_tab not in {
+        "utilizador",
+        "entidade",
+        "contas",
+        "definicoes",
+        "sessoes",
+        "menu",
+    }:
         resolved_admin_tab = "entidade"
     if resolved_admin_tab == "definicoes":
         resolved_admin_tab = "contas"
@@ -310,32 +300,29 @@ def new_user_page(
     # sem admin_tab=sessoes. Nesse caso, a página misturava o subprocesso
     # com Home/Entidade. Forçamos o contexto correto no backend.
     clean_target_for_admin_refresh = str(target or "").strip().lower()
-    clean_settings_tab_for_admin_refresh = (
-        str(settings_tab or "")
-        .strip()
-        .lower()
-        .replace("_", "-")
-    )
+    clean_settings_tab_for_admin_refresh = str(settings_tab or "").strip().lower().replace("_", "-")
     clean_sidebar_sections_tab_for_admin_refresh = (
-        str(sidebar_sections_tab or "")
-        .strip()
-        .lower()
-        .replace("_", "-")
+        str(sidebar_sections_tab or "").strip().lower().replace("_", "-")
     )
     clean_sidebar_section_edit_key_for_admin_refresh = str(sidebar_section_edit_key or "").strip()
+    clean_settings_action_for_admin_refresh = str(settings_action or "").strip().lower()
 
-    if (
-        resolved_menu == "administrativo"
-        and resolved_admin_tab == "entidade"
-        and (
+    if resolved_menu == "administrativo" and resolved_admin_tab == "entidade":
+        if (
             clean_settings_tab_for_admin_refresh in {"sessoes", "sessoes-sidebar"}
             or clean_sidebar_sections_tab_for_admin_refresh in {"sessoes", "sessoes-sidebar"}
             or bool(clean_sidebar_section_edit_key_for_admin_refresh)
             or "admin-sidebar-sections" in clean_target_for_admin_refresh
             or "sidebar-sections" in clean_target_for_admin_refresh
-        )
-    ):
-        resolved_admin_tab = "sessoes"
+        ):
+            resolved_admin_tab = "sessoes"
+        elif (
+            clean_settings_tab_for_admin_refresh == "menu"
+            or bool(clean_settings_edit_key_for_admin_refresh)
+            or clean_settings_action_for_admin_refresh in {"create", "edit", "toggle"}
+            or clean_target_for_admin_refresh in {"settings-card", "settings-menu-edit-card"}
+        ):
+            resolved_admin_tab = "menu"
     # APPVERBO_INFER_ADMIN_SESSOES_REFRESH_V1_END
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
@@ -347,12 +334,10 @@ def new_user_page(
         parsed_user_edit_id = int(clean_user_edit_id)
     readonly_truthy_values = {"1", "true", "sim", "yes", "on"}
     entity_readonly_mode = (
-        entity_view.strip().lower() in readonly_truthy_values
-        and parsed_entity_edit_id is not None
+        entity_view.strip().lower() in readonly_truthy_values and parsed_entity_edit_id is not None
     )
     user_readonly_mode = (
-        user_view.strip().lower() in readonly_truthy_values
-        and parsed_user_edit_id is not None
+        user_view.strip().lower() in readonly_truthy_values and parsed_user_edit_id is not None
     )
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_settings_action = settings_action.strip().lower()
@@ -361,6 +346,7 @@ def new_user_page(
     clean_settings_tab = settings_tab.strip().lower()
     if clean_settings_tab not in {
         "geral",
+        "menu",
         "campos-config",
         "campos-adicionais",
         "campos-quantidade",
@@ -425,7 +411,11 @@ def new_user_page(
             allowed_entity_ids=entity_permissions["allowed_entity_ids"],
         )
 
-        active_sidebar_sections_v22, inactive_sidebar_sections_v22, sidebar_section_edit_data_v22 = _split_sidebar_sections_for_page_v22(
+        (
+            active_sidebar_sections_v22,
+            inactive_sidebar_sections_v22,
+            sidebar_section_edit_data_v22,
+        ) = _split_sidebar_sections_for_page_v22(
             page_data,
             sidebar_section_edit_key,
         )
@@ -434,7 +424,7 @@ def new_user_page(
         # Recalcula a separação diretamente da configuração normalizada.
         # Isto evita que o template receba a lista de ativos vazia quando houver fallback antigo.
         all_sidebar_sections_v26 = _resolve_sidebar_sections_from_page_data_v22(page_data)
-        
+
         if all_sidebar_sections_v26:
             active_sidebar_sections_v22 = [
                 section
@@ -446,19 +436,20 @@ def new_user_page(
                 for section in all_sidebar_sections_v26
                 if not _sidebar_section_is_active_for_page_v22(section)
             ]
-        
+
             clean_sidebar_section_edit_key_v26 = str(sidebar_section_edit_key or "").strip().lower()
-        
+
             if clean_sidebar_section_edit_key_v26:
                 sidebar_section_edit_data_v22 = next(
                     (
                         dict(section)
                         for section in all_sidebar_sections_v26
-                        if str(section.get("key") or "").strip().lower() == clean_sidebar_section_edit_key_v26
+                        if str(section.get("key") or "").strip().lower()
+                        == clean_sidebar_section_edit_key_v26
                     ),
                     sidebar_section_edit_data_v22,
                 )
-        # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
+            # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
             settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
@@ -481,9 +472,7 @@ def new_user_page(
     if clean_target_from_query and not clean_target_from_query.startswith("#"):
         clean_target_from_query = f"#{clean_target_from_query}"
     clean_profile_section_from_query = str(profile_section or "").strip().lower()
-    clean_dynamic_section_from_query = str(
-        dynamic_process_section or section_key or ""
-    ).strip()
+    clean_dynamic_section_from_query = str(dynamic_process_section or section_key or "").strip()
 
     if clean_target_from_query:
         initial_menu_target = clean_target_from_query
@@ -523,8 +512,6 @@ def new_user_page(
     is_post_save_return = str(appverbo_after_save or "").strip() == "1"
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
-
-
     # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_START
     # A aba Administrativo -> Menu usa o bloco legado settings-card.
     # Sem esta normalização, a URL admin_tab=menu pode ficar sem conteúdo
@@ -538,7 +525,6 @@ def new_user_page(
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_END
 
-
     # APPVERBO_ADMIN_MENU_TARGET_RENDER_V3_START
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         if clean_settings_edit_key:
@@ -549,7 +535,6 @@ def new_user_page(
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_TARGET_RENDER_V3_END
-
 
     # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_START
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
@@ -567,13 +552,25 @@ def new_user_page(
     # a tela deve mostrar somente o bloco central de subprocessos.
     # Os cards de Entidade, Utilizador, Sessoes e Menu so aparecem
     # depois do clique no subprocesso correspondente.
-    raw_admin_tab_param_for_process_only = str(request.query_params.get("admin_tab", "") or "").strip()
+    raw_admin_tab_param_for_process_only = str(
+        request.query_params.get("admin_tab", "") or ""
+    ).strip()
     raw_target_param_for_process_only = str(request.query_params.get("target", "") or "").strip()
     raw_hash_target_for_process_only = str(request.query_params.get("hash", "") or "").strip()
-    raw_settings_edit_key_for_process_only = str(request.query_params.get("settings_edit_key", "") or "").strip()
-    raw_sidebar_section_edit_key_for_process_only = str(request.query_params.get("sidebar_section_edit_key", "") or "").strip()
-    raw_settings_tab_for_process_only = str(request.query_params.get("settings_tab", "") or "").strip()
-    raw_sidebar_sections_tab_for_process_only = str(request.query_params.get("sidebar_sections_tab", "") or "").strip()
+    raw_settings_edit_key_for_process_only = str(
+        request.query_params.get("settings_edit_key", "") or ""
+    ).strip()
+    raw_sidebar_section_edit_key_for_process_only = str(
+        request.query_params.get("sidebar_section_edit_key", "") or ""
+    ).strip()
+    raw_settings_tab_for_process_only = str(
+        request.query_params.get("settings_tab", "") or ""
+    ).strip()
+    raw_sidebar_sections_tab_for_process_only = str(
+        request.query_params.get("sidebar_sections_tab", "") or ""
+    ).strip()
+    clean_settings_edit_key_for_admin_refresh = str(settings_edit_key or "").strip()
+    clean_settings_action_for_admin_refresh = str(settings_action or "").strip().lower()
 
     admin_process_only = (
         resolved_menu == "administrativo"
@@ -595,7 +592,7 @@ def new_user_page(
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
 
-        # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
     if resolved_menu == "administrativo" and resolved_admin_tab == "entidade":
         admin_subprocess_state_v2 = build_admin_subprocess_state_v2(
             key="entidade",
@@ -627,7 +624,9 @@ def new_user_page(
                     sessoes_subprocess_config_v2
                 ).list_rows(session)
             except Exception:
-                all_sidebar_sections_for_subprocess_v3 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
+                all_sidebar_sections_for_subprocess_v3 = list(
+                    active_sidebar_sections_v22 or []
+                ) + list(inactive_sidebar_sections_v22 or [])
             # APPVERBO_SESSOES_HIERARQUIA_RENDER_BD_V1_END
 
             clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip()
@@ -651,7 +650,8 @@ def new_user_page(
                         str(option.get("label") or "").strip(),
                     )
                     for option in page_data.get("sidebar_section_options", [])
-                    if str(option.get("key") or "").strip() and str(option.get("label") or "").strip()
+                    if str(option.get("key") or "").strip()
+                    and str(option.get("label") or "").strip()
                 )
             }
             admin_subprocess_state_v2 = build_admin_subprocess_state(
@@ -709,9 +709,7 @@ def new_user_page(
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
-        "current_user_can_manage_all_entities": bool(
-            entity_permissions["can_manage_all_entities"]
-        ),
+        "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
         **page_data,
     }
     _write_meu_perfil_page_flow_debug_log_v1(
@@ -732,5 +730,3 @@ def new_user_page(
         },
     )
     return templates.TemplateResponse(request, "new_user.html", context)
-
-
