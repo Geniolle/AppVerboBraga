@@ -3237,3 +3237,121 @@ html body #admin-users-created-card > h2 {
 }
 
 /* APPVERBO_ADMIN_ACTIVE_CARD_TITLE_PARITY_V1_END */
+
+/* APPVERBO_ADMIN_CARD_TYPOGRAPHY_REUSABLE_V1_START */
+/* Tokens reutilizaveis para cabecalho e itens dos cards administrativos.
+   Para alterar todos os cards, mudar apenas as variaveis abaixo. */
+
+:root {
+  --appverbo-admin-card-header-font-family-v1: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --appverbo-admin-card-header-font-size-v1: 16px;
+  --appverbo-admin-card-header-font-weight-v1: 700;
+  --appverbo-admin-card-header-line-height-v1: 1.25;
+  --appverbo-admin-card-header-color-v1: #25385a;
+  --appverbo-admin-card-header-margin-v1: 0 0 12px 0;
+
+  --appverbo-admin-card-item-font-family-v1: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --appverbo-admin-card-item-font-size-v1: 12px;
+  --appverbo-admin-card-item-font-weight-v1: 500;
+  --appverbo-admin-card-item-line-height-v1: 1.32;
+  --appverbo-admin-card-item-color-v1: #0f1f3a;
+
+  --appverbo-admin-card-table-head-font-family-v1: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --appverbo-admin-card-table-head-font-size-v1: 10.5px;
+  --appverbo-admin-card-table-head-font-weight-v1: 700;
+  --appverbo-admin-card-table-head-line-height-v1: 1.2;
+  --appverbo-admin-card-table-head-color-v1: #344563;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-entities-inactive-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #admin-account-status-card,
+  #settings-card,
+  .admin-page-card,
+  .admin-subprocess-card-v1,
+  .admin-subprocess-card-v2,
+  .admin-subprocess-table-card-v2
+) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  .card-title,
+  .admin-card-title,
+  .admin-section-title,
+  .admin-subprocess-title,
+  .settings-card-title,
+  .appverbo-card-header-text-v1
+) {
+  color: var(--appverbo-admin-card-header-color-v1) !important;
+  font-family: var(--appverbo-admin-card-header-font-family-v1) !important;
+  font-size: var(--appverbo-admin-card-header-font-size-v1) !important;
+  font-style: normal !important;
+  font-weight: var(--appverbo-admin-card-header-font-weight-v1) !important;
+  letter-spacing: 0 !important;
+  line-height: var(--appverbo-admin-card-header-line-height-v1) !important;
+  margin: var(--appverbo-admin-card-header-margin-v1) !important;
+  padding: 0 !important;
+  text-transform: none !important;
+}
+
+html body :is(
+  #admin-entities-created-table,
+  #admin-entities-inactive-table,
+  #active-entities-table,
+  #inactive-entities-table,
+  #admin-users-created-table,
+  #admin-users-inactive-table,
+  #recent-users-table,
+  #inactive-users-table
+) thead th {
+  color: var(--appverbo-admin-card-table-head-color-v1) !important;
+  font-family: var(--appverbo-admin-card-table-head-font-family-v1) !important;
+  font-size: var(--appverbo-admin-card-table-head-font-size-v1) !important;
+  font-weight: var(--appverbo-admin-card-table-head-font-weight-v1) !important;
+  letter-spacing: 0 !important;
+  line-height: var(--appverbo-admin-card-table-head-line-height-v1) !important;
+  text-transform: uppercase !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-entities-inactive-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #admin-account-status-card,
+  #settings-card,
+  .admin-page-card,
+  .admin-subprocess-card-v1,
+  .admin-subprocess-card-v2,
+  .admin-subprocess-table-card-v2
+) :is(
+  tbody td,
+  .table-cell,
+  .admin-table-cell,
+  .admin-card-item,
+  .appverbo-card-item-text-v1
+) {
+  color: var(--appverbo-admin-card-item-color-v1) !important;
+  font-family: var(--appverbo-admin-card-item-font-family-v1) !important;
+  font-size: var(--appverbo-admin-card-item-font-size-v1) !important;
+  font-weight: var(--appverbo-admin-card-item-font-weight-v1) !important;
+  line-height: var(--appverbo-admin-card-item-line-height-v1) !important;
+}
+
+/* APPVERBO_ADMIN_CARD_TYPOGRAPHY_REUSABLE_V1_END */
