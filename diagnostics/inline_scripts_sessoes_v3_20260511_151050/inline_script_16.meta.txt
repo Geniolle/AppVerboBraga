@@ -1,0 +1,3 @@
+SCRIPT #16
+ATTRS:  src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260510-sessoes-visivel-v2" defer
+TAMANHO: 0

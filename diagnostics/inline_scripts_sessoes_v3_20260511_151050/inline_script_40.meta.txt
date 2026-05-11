@@ -1,0 +1,3 @@
+SCRIPT #40
+ATTRS:  src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"
+TAMANHO: 0

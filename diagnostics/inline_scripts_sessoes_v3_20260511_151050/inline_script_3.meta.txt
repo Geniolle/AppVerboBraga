@@ -1,0 +1,3 @@
+SCRIPT #3
+ATTRS:  src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"
+TAMANHO: 0

@@ -1,0 +1,3 @@
+SCRIPT #10
+ATTRS:  src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260508-quantity-readonly-renderer-v2" defer
+TAMANHO: 0

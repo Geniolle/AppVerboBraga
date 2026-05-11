@@ -1,0 +1,3 @@
+SCRIPT #9
+ATTRS:  src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260508-admin-menu-scope-v1" defer
+TAMANHO: 0

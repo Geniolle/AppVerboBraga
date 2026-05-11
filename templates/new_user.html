@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% from "macros/admin_menu_subprocess.html" import render_admin_menu_state %}
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
@@ -137,9 +137,10 @@
   }, true);
 })();
 </script>
+    <script src="/static/js/modules/appverbo_admin_sessoes_tab_server_nav_v1.js?v=20260511-sessoes-server-nav-v1" defer></script>
   <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260511-entidade-cards-v2" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
-  <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260510-sessoes-visivel-v2" defer></script>
+  <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260511-sessoes-safe-no-loop-v2-final" defer></script>
   <script src="/static/js/modules/appverbo_admin_menu_native_v4.js?v=20260510-menu-isolado-v6" defer></script>
 {% endblock %}
 
@@ -163,14 +164,8 @@
           {{ render_admin_menu_state(admin_menu_state) }}
         {% endif %}
 
-
 <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
         <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_END -->
-
-
-
-
-
 
         <!-- APPVERBO_ADMIN_ENTIDADE_V2_USERS_NEW_START -->
         {% if admin_tab == "entidade" and admin_subprocess_state and admin_subprocess_state.config.key == "entidade" %}
@@ -262,7 +257,6 @@
             </div>
           </div>
         </section>
-
 
                 <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil">
           <div class="profile-card-header">
@@ -2301,9 +2295,6 @@
             </div>
         </section>
         {% endif %}
-
-
-
 
         {% if false %}
         <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
