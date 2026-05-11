@@ -121,10 +121,19 @@
     }
 
     if (
-      adminTab === "contas" ||
       adminTab === "menu" ||
+      target.includes("admin-menu-card") ||
+      target.includes("settings-menu-edit-card") ||
+      hash.includes("admin-menu-card") ||
+      hash.includes("settings-menu-edit-card")
+    ) {
+      return "menu";
+    }
+
+    if (
+      adminTab === "contas" ||
       target.includes("admin-account-status") ||
-      target.includes("menu")
+      hash.includes("admin-account-status")
     ) {
       return "contas";
     }
@@ -208,7 +217,11 @@
       return "sessoes";
     }
 
-    if (rawAdminTab === "contas" || rawAdminTab === "menu") {
+    if (rawAdminTab === "menu") {
+      return "menu";
+    }
+
+    if (rawAdminTab === "contas") {
       return "contas";
     }
 
@@ -231,7 +244,11 @@
       return "sessoes";
     }
 
-    if (rawTarget.includes("account") || rawTarget.includes("menu")) {
+    if (rawTarget.includes("admin-menu-card") || rawTarget.includes("settings-menu-edit-card")) {
+      return "menu";
+    }
+
+    if (rawTarget.includes("account")) {
       return "contas";
     }
 
@@ -255,7 +272,16 @@
       return "sessoes";
     }
 
-    if (lookup.includes("menu") || lookup.includes("conta") || lookup.includes("configuracao")) {
+    if (
+      lookup === "menu" ||
+      lookup === "menus" ||
+      lookup.includes(" menu ") ||
+      lookup.includes(" menus ")
+    ) {
+      return "menu";
+    }
+
+    if (lookup.includes("conta") || lookup.includes("configuracao")) {
       return "contas";
     }
 
@@ -365,6 +391,13 @@
       return url.pathname + url.search + url.hash;
     }
 
+    if (tab === "menu") {
+      url.searchParams.set("admin_tab", "menu");
+      url.searchParams.set("target", "admin-menu-card");
+      url.hash = "admin-menu-card";
+      return url.pathname + url.search + url.hash;
+    }
+
     if (tab === "contas") {
       url.searchParams.set("admin_tab", "contas");
       url.searchParams.set("target", "admin-account-status-card");
@@ -435,12 +468,24 @@
       );
     }
 
+    if (tab === "menu") {
+      return (
+        subprocess === "menu" ||
+        id === "admin-menu-card-create" ||
+        id === "admin-menu-card" ||
+        id === "admin-menu-card-inactive" ||
+        id === "settings-menu-edit-card" ||
+        text.includes("criar menu") ||
+        text.includes("menus ativos") ||
+        text.includes("menus inativos") ||
+        text.includes("editar menu")
+      );
+    }
+
     if (tab === "contas") {
       return (
         id.includes("admin-account-status") ||
         id.includes("account-status") ||
-        id.includes("menu") ||
-        text.includes("menu") ||
         text.includes("conta") ||
         text.includes("permissao") ||
         text.includes("permissão") ||
@@ -500,7 +545,7 @@
 
   function renderAdminSubprocessV7(tab, options) {
     const config = options || {};
-    const normalizedTab = tab === "menu" ? "contas" : tab;
+    const normalizedTab = tab;
 
     if (!normalizedTab) {
       renderAdminProcessOnlyV7();

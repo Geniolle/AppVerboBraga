@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -123,10 +123,14 @@ def _resolve_initial_menu_target(
             return "#dados-treinamento-card", ""
         return "#perfil-pessoal-card", ""
     if clean_menu_key == "administrativo":
+        # APPVERBO_ADMIN_MENU_TARGET_RESOLVE_V5_START
+        if resolved_admin_tab == "menu":
+            return "#admin-menu-card", ""
+        # APPVERBO_ADMIN_MENU_TARGET_RESOLVE_V5_END
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "menu":
-            return "#settings-card", ""
+            return "#admin-menu-card", ""
         if resolved_admin_tab == "sessoes":
             return "#admin-sidebar-sections-card", ""
         if resolved_admin_tab == "contas":
@@ -301,6 +305,10 @@ def new_user_page(
     # com Home/Entidade. Forçamos o contexto correto no backend.
     clean_target_for_admin_refresh = str(target or "").strip().lower()
     clean_settings_tab_for_admin_refresh = str(settings_tab or "").strip().lower().replace("_", "-")
+
+    # APPVERBO_FIX_CLEAN_SETTINGS_EDIT_KEY_REFRESH_V3_START
+    clean_settings_edit_key_for_admin_refresh = str(settings_edit_key or "").strip()
+    # APPVERBO_FIX_CLEAN_SETTINGS_EDIT_KEY_REFRESH_V3_END
     clean_sidebar_sections_tab_for_admin_refresh = (
         str(sidebar_sections_tab or "").strip().lower().replace("_", "-")
     )
@@ -513,14 +521,14 @@ def new_user_page(
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
     # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_START
-    # A aba Administrativo -> Menu usa o bloco legado settings-card.
+    # A aba Administrativo -> Menu usa o alvo canónico admin-menu-card.
     # Sem esta normalização, a URL admin_tab=menu pode ficar sem conteúdo
     # porque o backend voltava para o target padrão de Entidade.
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         if clean_settings_edit_key:
             initial_menu_target = "#settings-menu-edit-card"
         else:
-            initial_menu_target = "#settings-card"
+            initial_menu_target = "#admin-menu-card"
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_END
@@ -530,7 +538,7 @@ def new_user_page(
         if clean_settings_edit_key:
             initial_menu_target = "#settings-menu-edit-card"
         else:
-            initial_menu_target = "#settings-card"
+            initial_menu_target = "#admin-menu-card"
 
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
@@ -541,7 +549,7 @@ def new_user_page(
         if clean_settings_edit_key:
             initial_menu_target = "#settings-menu-edit-card"
         else:
-            initial_menu_target = "#settings-card"
+            initial_menu_target = "#admin-menu-card"
 
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
@@ -569,7 +577,6 @@ def new_user_page(
     raw_sidebar_sections_tab_for_process_only = str(
         request.query_params.get("sidebar_sections_tab", "") or ""
     ).strip()
-    clean_settings_edit_key_for_admin_refresh = str(settings_edit_key or "").strip()
     clean_settings_action_for_admin_refresh = str(settings_action or "").strip().lower()
 
     admin_process_only = (
@@ -588,6 +595,14 @@ def new_user_page(
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_PROCESS_ONLY_V1_END
+
+
+    # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_START
+    if resolved_admin_tab == "menu":
+        initial_menu_target = "#admin-menu-card"
+        initial_dynamic_process_section = ""
+        clean_dynamic_section_from_query = ""
+    # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_END
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None

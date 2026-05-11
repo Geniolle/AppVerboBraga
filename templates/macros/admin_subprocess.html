@@ -34,8 +34,12 @@
 
 
 {% macro render_admin_subprocess_form(state) %}
+  {% set create_form_card_id = state.config.default_target %}
+  {% if state.config.key in ("menu", "sessoes") %}
+    {% set create_form_card_id = state.config.default_target ~ "-create" %}
+  {% endif %}
   <section
-    id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
+    id="{{ state.config.edit_target if state.is_editing else create_form_card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
   >

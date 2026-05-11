@@ -95,14 +95,21 @@
     }
 
     if (
-      adminTab === "contas" ||
       adminTab === "menu" ||
+      target.includes("admin-menu-card") ||
+      target.includes("settings-menu-edit-card") ||
+      hash.includes("admin-menu-card") ||
+      hash.includes("settings-menu-edit-card")
+    ) {
+      return "menu";
+    }
+
+    if (
+      adminTab === "contas" ||
       target.includes("admin-account-status") ||
       target.includes("account-status") ||
-      target.includes("menu") ||
       hash.includes("admin-account-status") ||
-      hash.includes("account-status") ||
-      hash.includes("menu")
+      hash.includes("account-status")
     ) {
       return "contas";
     }
@@ -135,7 +142,11 @@
       return "sessoes";
     }
 
-    if (rawAdminTab === "contas" || rawAdminTab === "menu") {
+    if (rawAdminTab === "menu") {
+      return "menu";
+    }
+
+    if (rawAdminTab === "contas") {
       return "contas";
     }
 
@@ -158,7 +169,11 @@
       return "sessoes";
     }
 
-    if (rawTarget.includes("account") || rawTarget.includes("menu")) {
+    if (rawTarget.includes("admin-menu-card") || rawTarget.includes("settings-menu-edit-card")) {
+      return "menu";
+    }
+
+    if (rawTarget.includes("account")) {
       return "contas";
     }
 
@@ -181,7 +196,15 @@
           return "sessoes";
         }
 
-        if (adminTabFromHref === "contas" || adminTabFromHref === "menu" || targetFromHref.includes("account")) {
+        if (
+          adminTabFromHref === "menu" ||
+          targetFromHref.includes("admin-menu-card") ||
+          targetFromHref.includes("settings-menu-edit-card")
+        ) {
+          return "menu";
+        }
+
+        if (adminTabFromHref === "contas" || targetFromHref.includes("account")) {
           return "contas";
         }
       } catch (error) {
@@ -209,7 +232,16 @@
       return "sessoes";
     }
 
-    if (lookup.includes("menu") || lookup.includes("conta") || lookup.includes("configuracao")) {
+    if (
+      lookup === "menu" ||
+      lookup === "menus" ||
+      lookup.includes(" menu ") ||
+      lookup.includes(" menus ")
+    ) {
+      return "menu";
+    }
+
+    if (lookup.includes("conta") || lookup.includes("configuracao")) {
       return "contas";
     }
 
@@ -250,6 +282,12 @@
     if (activeTab === "sessoes") {
       document.body.classList.add("appverbo-admin-tab-sessoes");
       document.body.classList.add("appverbo-admin-sessoes");
+      return;
+    }
+
+    if (activeTab === "menu") {
+      document.body.classList.add("appverbo-admin-tab-menu");
+      document.body.classList.remove("appverbo-admin-sessoes");
       return;
     }
 

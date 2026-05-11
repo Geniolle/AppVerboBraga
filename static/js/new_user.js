@@ -2697,15 +2697,20 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
     const isMenuGroupedBlock =
       menuKey === "administrativo" &&
       (
-        targetSelector === "#admin-menu-card" ||
-        targetSelector === "#admin-menu-card-inactive" ||
-        targetSelector === "#settings-menu-edit-card"
-      ) &&
-      (
-        card.id === "admin-menu-card" ||
-        card.id === "admin-menu-card-inactive" ||
-        card.id === "settings-menu-edit-card" ||
-        card.id === "admin-menu-inactive-card"
+        (
+          (
+            targetSelector === "#admin-menu-card" ||
+            targetSelector === "#admin-menu-card-inactive"
+          ) &&
+          (
+            card.id === "admin-menu-card" ||
+            card.id === "admin-menu-card-inactive"
+          )
+        ) ||
+        (
+          targetSelector === "#settings-menu-edit-card" &&
+          card.id === "settings-menu-edit-card"
+        )
       );
     card.style.display =
       targetSelector === ("#" + card.id) ||
@@ -6657,10 +6662,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     } else if (actionLookup.includes("/settings/menu/save")) {
       currentUrl.searchParams.set("menu", "administrativo");
       currentUrl.searchParams.set("admin_tab", "menu");
-      currentUrl.searchParams.set("target", "#admin-account-status-card");
+      currentUrl.searchParams.set("target", "#admin-menu-card");
       currentUrl.searchParams.delete("dynamic_process_section");
       currentUrl.searchParams.delete("section_key");
-      currentUrl.hash = "#admin-account-status-card";
+      currentUrl.hash = "#admin-menu-card";
     }
 
     currentUrl.searchParams.set("appverbo_after_save", "1");
@@ -7096,10 +7101,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     } else if (actionLookup.includes("/settings/menu/save")) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "menu");
-      url.searchParams.set("target", "#admin-account-status-card");
+      url.searchParams.set("target", "#admin-menu-card");
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
-      url.hash = "#admin-account-status-card";
+      url.hash = "#admin-menu-card";
     }
 
     url.searchParams.set("appverbo_after_save", "1");
@@ -7510,10 +7515,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     } else if (actionLookup.includes("/settings/menu/save")) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "menu");
-      url.searchParams.set("target", "#admin-account-status-card");
+      url.searchParams.set("target", "#admin-menu-card");
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
-      url.hash = "#admin-account-status-card";
+      url.hash = "#admin-menu-card";
     }
 
     return url.pathname + url.search + url.hash;

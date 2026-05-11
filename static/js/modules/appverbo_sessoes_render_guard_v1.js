@@ -381,10 +381,24 @@
     }
 
     const directCard = document.getElementById("admin-sidebar-sections-card");
+    const createCard = document.getElementById("admin-sidebar-sections-card-create");
+    const inactiveCard = document.getElementById("admin-sidebar-sections-card-inactive");
 
     if (directCard) {
       directCard.setAttribute("data-appverbo-sessoes-card", "true");
       showElementV1(directCard);
+      shownCount += 1;
+    }
+
+    if (createCard) {
+      createCard.setAttribute("data-appverbo-sessoes-card", "true");
+      showElementV1(createCard);
+      shownCount += 1;
+    }
+
+    if (inactiveCard) {
+      inactiveCard.setAttribute("data-appverbo-sessoes-card", "true");
+      showElementV1(inactiveCard);
       shownCount += 1;
     }
 

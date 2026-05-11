@@ -47,7 +47,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260509-menu-visivel-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260510-sessoes-render-v1">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
@@ -134,10 +134,10 @@
   }, true);
 })();
 </script>
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260509-render-sessoes-v1" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260510-menu-nao-contas-v2" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
-  <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260509-sessoes-visivel-v1" defer></script>
-  <script src="/static/js/modules/appverbo_menu_render_guard_v1.js?v=20260509-menu-visivel-v1" defer></script>
+  <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260510-sessoes-visivel-v2" defer></script>
+  <script src="/static/js/modules/appverbo_admin_menu_native_v4.js?v=20260510-menu-isolado-v6" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -911,153 +911,6 @@
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_END -->
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
-
-        <!-- APPVERBO_ADMIN_MENU_RENDER_V4_START -->
-        {% if admin_tab == "menu" %}
-        <section id="settings-card" class="card admin-menu-backend-card-v4" data-admin-tab-content="menu">
-          <div class="entity-create-toolbar">
-            <a
-              class="action-btn"
-              href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;settings_action=create&amp;target=settings-menu-edit-card#settings-menu-edit-card"
-            >Criar menu</a>
-          </div>
-        </section>
-
-        <section id="settings-card-active" class="card admin-menu-backend-card-v4" data-admin-tab-content="menu">
-          <div class="admin-menu-backend-head-v4">
-            <div>
-              <h2>Menus ativos</h2>
-              {% set menu_rows_v4 = sidebar_menu_settings if sidebar_menu_settings is defined else [] %}
-              {% set active_counter_v4 = namespace(value=0) %}
-              {% for menu_row in menu_rows_v4 %}
-                {% set raw_status_v4 = (menu_row.get("status_label") or menu_row.get("status") or "")|string|lower %}
-                {% set row_is_inactive_v4 = raw_status_v4 in ["inativo", "inactive", "0", "false", "no", "nao", "não", "off"] or menu_row.get("is_active") is sameas false or menu_row.get("is_visible") is sameas false %}
-                {% if not row_is_inactive_v4 %}
-                  {% set active_counter_v4.value = active_counter_v4.value + 1 %}
-                {% endif %}
-              {% endfor %}
-              <p><strong>Total: {{ active_counter_v4.value }}</strong></p>
-            </div>
-            <input class="admin-menu-backend-search-v4" type="search" placeholder="Procurar" aria-label="Procurar menu ativo">
-          </div>
-
-          <div class="admin-menu-backend-table-wrap-v4">
-            <table class="admin-menu-backend-table-v4">
-              <thead>
-                <tr>
-                  <th>NOME</th>
-                  <th>SISTEMA</th>
-                  <th>ESTADO</th>
-                  <th class="admin-menu-backend-actions-col-v4">AÇÕES</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% set active_rows_v4 = namespace(found=False) %}
-                {% for menu_row in menu_rows_v4 %}
-                  {% set raw_status_v4 = (menu_row.get("status_label") or menu_row.get("status") or "")|string|lower %}
-                  {% set row_is_inactive_v4 = raw_status_v4 in ["inativo", "inactive", "0", "false", "no", "nao", "não", "off"] or menu_row.get("is_active") is sameas false or menu_row.get("is_visible") is sameas false %}
-                  {% if not row_is_inactive_v4 %}
-                    {% set active_rows_v4.found = True %}
-                    {% set row_key_v4 = menu_row.get("key") or menu_row.get("menu_key") or "" %}
-                    {% set row_label_v4 = menu_row.get("label") or menu_row.get("menu_label") or menu_row.get("name") or row_key_v4 %}
-                    {% set row_scope_v4 = menu_row.get("visibility_scope_label") or menu_row.get("system_label") or menu_row.get("scope_label") or menu_row.get("visibility_scope") or "Owner e Legado" %}
-                    <tr>
-                      <td>{{ row_label_v4 }}</td>
-                      <td>{{ row_scope_v4 }}</td>
-                      <td><span class="admin-menu-backend-badge-active-v4">Ativo</span></td>
-                      <td>
-                        <div class="admin-menu-backend-actions-v4">
-                          <button type="button" class="admin-menu-backend-action-btn-v4" title="Subir" aria-label="Subir">↑</button>
-                          <button type="button" class="admin-menu-backend-action-btn-v4" title="Descer" aria-label="Descer">↓</button>
-                          <button
-                            type="button"
-                            class="admin-menu-backend-action-btn-v4"
-                            title="Visualizar"
-                            aria-label="Visualizar"
-                            data-menu-view-label="{{ row_label_v4 }}"
-                            data-menu-view-scope="{{ row_scope_v4 }}"
-                            data-menu-view-status="Ativo"
-                          >Ver</button>
-                          <a
-                            class="admin-menu-backend-action-btn-v4 admin-menu-backend-action-link-v4"
-                            title="Editar"
-                            aria-label="Editar"
-                            href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;settings_edit_key={{ row_key_v4 }}&amp;settings_action=edit&amp;settings_tab=geral&amp;target=settings-menu-edit-card#settings-menu-edit-card"
-                          >Editar</a>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endif %}
-                {% endfor %}
-                {% if not active_rows_v4.found %}
-                  <tr>
-                    <td colspan="4">Sem registos.</td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="settings-card-inactive" class="card admin-menu-backend-card-v4" data-admin-tab-content="menu">
-          <h2>Menus inativos</h2>
-
-          <div class="admin-menu-backend-table-wrap-v4">
-            <table class="admin-menu-backend-table-v4">
-              <thead>
-                <tr>
-                  <th>NOME</th>
-                  <th>SISTEMA</th>
-                  <th>ESTADO</th>
-                  <th class="admin-menu-backend-actions-col-v4">AÇÕES</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% set inactive_rows_v4 = namespace(found=False) %}
-                {% for menu_row in menu_rows_v4 %}
-                  {% set raw_status_v4 = (menu_row.get("status_label") or menu_row.get("status") or "")|string|lower %}
-                  {% set row_is_inactive_v4 = raw_status_v4 in ["inativo", "inactive", "0", "false", "no", "nao", "não", "off"] or menu_row.get("is_active") is sameas false or menu_row.get("is_visible") is sameas false %}
-                  {% if row_is_inactive_v4 %}
-                    {% set inactive_rows_v4.found = True %}
-                    {% set row_key_v4 = menu_row.get("key") or menu_row.get("menu_key") or "" %}
-                    {% set row_label_v4 = menu_row.get("label") or menu_row.get("menu_label") or menu_row.get("name") or row_key_v4 %}
-                    {% set row_scope_v4 = menu_row.get("visibility_scope_label") or menu_row.get("system_label") or menu_row.get("scope_label") or menu_row.get("visibility_scope") or "Owner e Legado" %}
-                    <tr>
-                      <td>{{ row_label_v4 }}</td>
-                      <td>{{ row_scope_v4 }}</td>
-                      <td><span class="admin-menu-backend-badge-inactive-v4">Inativo</span></td>
-                      <td>
-                        <div class="admin-menu-backend-actions-v4">
-                          <button
-                            type="button"
-                            class="admin-menu-backend-action-btn-v4"
-                            title="Visualizar"
-                            aria-label="Visualizar"
-                            data-menu-view-label="{{ row_label_v4 }}"
-                            data-menu-view-scope="{{ row_scope_v4 }}"
-                            data-menu-view-status="Inativo"
-                          >Ver</button>
-                          <a
-                            class="admin-menu-backend-action-btn-v4 admin-menu-backend-action-link-v4"
-                            title="Editar"
-                            aria-label="Editar"
-                            href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;settings_edit_key={{ row_key_v4 }}&amp;settings_action=edit&amp;settings_tab=geral&amp;target=settings-menu-edit-card#settings-menu-edit-card"
-                          >Editar</a>
-                        </div>
-                      </td>
-                    </tr>
-                  {% endif %}
-                {% endfor %}
-                {% if not inactive_rows_v4.found %}
-                  <tr>
-                    <td colspan="4">Sem registos.</td>
-                  </tr>
-                {% endif %}
-              </tbody>
-            </table>
-          </div>
-        </section>
-        {% endif %}
         <!-- APPVERBO_ADMIN_MENU_RENDER_V4_END -->
 
         <section id="create-entity-card" class="card entity-panel-card" data-menu-scope="administrativo">
@@ -1546,7 +1399,7 @@
 
         {% if settings_edit_data %}
         {% set settings_edit_origin_menu = "administrativo" %}
-        {% set settings_edit_cancel_target = "#admin-account-status-card" %}
+        {% set settings_edit_cancel_target = "#admin-menu-card" %}
         {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
         {% if settings_edit_data.key == "administrativo" and not settings_process_field_options %}
           {% set settings_process_field_options = [
@@ -2449,6 +2302,7 @@
 
 
 
+        {% if false %}
         <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
           <div class="profile-card-header">
             <h2>Menus do sistema</h2>
@@ -2630,6 +2484,7 @@
           </table>
         </section>
         {% endif %}
+        {% endif %}
 
         {% if current_user_can_manage_all_entities %}
         <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil">
@@ -2745,7 +2600,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260509-menu-visivel-v1" defer></script>
+  <script src="/static/js/new_user.js?v=20260510-sessoes-render-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
@@ -2760,21 +2615,3 @@
   <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
 {% endblock %}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #eceef2;
   --topbar: #2f86d7;
   --sidebar-bg: #f3f3f4;
@@ -6018,7 +6018,13 @@ body.appverbo-admin-tab-sessoes #home-summary-card {
 
 body.appverbo-admin-tab-entidade #create-entity-card,
 body.appverbo-admin-tab-utilizador #create-user-card,
+body.appverbo-admin-tab-sessoes #admin-sidebar-sections-card-create,
 body.appverbo-admin-tab-sessoes #admin-sidebar-sections-card,
+body.appverbo-admin-tab-sessoes #admin-sidebar-sections-card-inactive,
+body.appverbo-admin-tab-menu #admin-menu-card-create,
+body.appverbo-admin-tab-menu #admin-menu-card,
+body.appverbo-admin-tab-menu #admin-menu-card-inactive,
+body.appverbo-admin-tab-menu #settings-menu-edit-card,
 body.appverbo-admin-tab-menu #admin-account-status-card,
 body.appverbo-admin-tab-contas #admin-account-status-card {
   display: block !important;
@@ -6075,7 +6081,9 @@ body.appverbo-sessoes-render-ok #menu-tabs-card {
 }
 
 body.appverbo-sessoes-render-ok [data-appverbo-sessoes-card="true"],
+body.appverbo-sessoes-render-ok #admin-sidebar-sections-card-create,
 body.appverbo-sessoes-render-ok #admin-sidebar-sections-card,
+body.appverbo-sessoes-render-ok #admin-sidebar-sections-card-inactive,
 body.appverbo-sessoes-render-ok [data-admin-subprocess="sessoes"] {
   display: block !important;
   visibility: visible !important;
@@ -6088,7 +6096,9 @@ body.appverbo-sessoes-render-ok #home-summary-card {
 }
 
 body.appverbo-sessoes-render-ok.appverbo-admin-process-only [data-appverbo-sessoes-card="true"],
+body.appverbo-sessoes-render-ok.appverbo-admin-process-only #admin-sidebar-sections-card-create,
 body.appverbo-sessoes-render-ok.appverbo-admin-process-only #admin-sidebar-sections-card,
+body.appverbo-sessoes-render-ok.appverbo-admin-process-only #admin-sidebar-sections-card-inactive,
 body.appverbo-sessoes-render-ok.appverbo-admin-process-only [data-admin-subprocess="sessoes"] {
   display: block !important;
   visibility: visible !important;
@@ -6096,47 +6106,93 @@ body.appverbo-sessoes-render-ok.appverbo-admin-process-only [data-admin-subproce
 }
 /* APPVERBO_SESSOES_RENDER_GUARD_V1_END */
 
-/* APPVERBO_MENU_RENDER_GUARD_V1_START */
+/* APPVERBO_ADMIN_MENU_NATIVE_V4_START */
 /*
-  Corrige o estado em que a aba Menu fica selecionada,
-  mas os cards abaixo continuam escondidos ou o JS procura o target errado.
-  O subprocesso Menu deve usar settings-card, nao admin-account-status-card.
+  Isolamento definitivo do subprocesso Administrativo > Menu.
+  Quando Menu estiver ativo, somente os cards canónicos do subprocesso ficam visiveis.
 */
-body.appverbo-menu-render-ok #menu-tabs-card {
+body.appverbo-menu-native-ok #menu-tabs-card,
+body.appverbo-menu-native-ok #admin-menu-card,
+body.appverbo-menu-native-ok #admin-menu-card-inactive,
+body.appverbo-menu-native-ok #admin-menu-card-create,
+body.appverbo-menu-native-ok #settings-menu-edit-card {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
 
-body.appverbo-menu-render-ok [data-appverbo-menu-card="true"],
-body.appverbo-menu-render-ok #settings-card,
-body.appverbo-menu-render-ok [data-admin-subprocess="menu"] {
+body.appverbo-menu-native-ok .content .card:not(#menu-tabs-card):not(#admin-menu-card):not(#admin-menu-card-inactive):not(#admin-menu-card-create):not(#settings-menu-edit-card),
+body.appverbo-menu-native-ok .content .admin-subprocess-card-v1:not(#menu-tabs-card):not(#admin-menu-card):not(#admin-menu-card-inactive):not(#admin-menu-card-create):not(#settings-menu-edit-card),
+body.appverbo-menu-native-ok main .card:not(#menu-tabs-card):not(#admin-menu-card):not(#admin-menu-card-inactive):not(#admin-menu-card-create):not(#settings-menu-edit-card),
+body.appverbo-menu-native-ok main .admin-subprocess-card-v1:not(#menu-tabs-card):not(#admin-menu-card):not(#admin-menu-card-inactive):not(#admin-menu-card-create):not(#settings-menu-edit-card) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+body.appverbo-menu-native-ok #home-summary-card,
+body.appverbo-menu-native-ok #create-entity-card,
+body.appverbo-menu-native-ok #create-user-card,
+body.appverbo-menu-native-ok #admin-sidebar-sections-card,
+body.appverbo-menu-native-ok #admin-account-status-card,
+body.appverbo-menu-native-ok [data-admin-subprocess="entidade"],
+body.appverbo-menu-native-ok [data-admin-subprocess="utilizador"],
+body.appverbo-menu-native-ok [data-admin-subprocess="sessoes"],
+body.appverbo-menu-native-ok [data-admin-subprocess="contas"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+body.appverbo-menu-native-ok [data-admin-subprocess="menu"]#admin-menu-card,
+body.appverbo-menu-native-ok [data-admin-subprocess="menu"]#admin-menu-card-inactive,
+body.appverbo-menu-native-ok [data-admin-subprocess="menu"]#admin-menu-card-create,
+body.appverbo-menu-native-ok [data-admin-subprocess="menu"]#settings-menu-edit-card {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
 
-body.appverbo-menu-render-ok [data-appverbo-not-menu-card="true"],
-body.appverbo-menu-render-ok #home-summary-card {
-  display: none !important;
+.appverbo-admin-menu-card-v3 .profile-card-header,
+.appverbo-admin-menu-card-v4 .profile-card-header {
+  align-items: flex-start;
 }
 
-body.appverbo-menu-render-ok #admin-account-status-card:not([data-appverbo-menu-card="true"]) {
-  display: none !important;
+.appverbo-admin-menu-subtitle-v3,
+.appverbo-admin-menu-subtitle-v4 {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 13px;
 }
 
-body.appverbo-menu-render-ok #submenu-items [data-appverbo-menu-active="true"] {
+.appverbo-admin-menu-list-v3,
+.appverbo-admin-menu-list-v4 {
+  margin-top: 14px;
+}
+
+.appverbo-admin-menu-table-v3 td,
+.appverbo-admin-menu-table-v3 th,
+.appverbo-admin-menu-table-v4 td,
+.appverbo-admin-menu-table-v4 th {
+  vertical-align: middle;
+}
+
+body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-active="true"] {
   background: #1557b7 !important;
   background-color: #1557b7 !important;
   border-color: #1557b7 !important;
   color: #ffffff !important;
 }
 
-body.appverbo-menu-render-ok #submenu-items [data-appverbo-menu-inactive="true"] {
+body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-active="true"] * {
+  color: #ffffff !important;
+}
+
+body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"] {
   background: #f9fbff !important;
   background-color: #f9fbff !important;
   border-color: #dce3f2 !important;
   color: #2f3850 !important;
+  box-shadow: none !important;
 }
-/* APPVERBO_MENU_RENDER_GUARD_V1_END */
-
+/* APPVERBO_ADMIN_MENU_NATIVE_V4_END */
