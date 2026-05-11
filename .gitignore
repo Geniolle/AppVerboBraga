@@ -1,4 +1,4 @@
-# Ambiente / variáveis locais
+# Ambiente / variaveis locais
 .env
 .env.*
 !.env.example
@@ -40,7 +40,7 @@ backups/
 *.backup
 *.tmp
 
-# Scripts temporários de correção
+# Scripts temporarios de correcao
 scripts/patch_*.py
 
 # IDE / sistema operativo
@@ -54,3 +54,7 @@ scripts/patch_*.py
 .idea/
 .DS_Store
 Thumbs.db
+
+# Backups e relatorios locais AppVerboBraga
+_backup_*/
+_relatorios_refatoracao/

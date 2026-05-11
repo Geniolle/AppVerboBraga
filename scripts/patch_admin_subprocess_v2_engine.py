@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 import shutil
@@ -623,7 +623,7 @@ class EntityAdminSubprocessRepositoryV2(BaseAdminSubprocessRepositoryV2):
 
         return {
             "ok": True,
-            "message": f"Entidade criada com sucesso. Número do cliente: {entity.internal_number}.",
+            "message": f"Entidade criada com sucesso. Nº Cliente: {entity.internal_number}.",
             "row": self.entity_to_row_v2(entity),
         }
 

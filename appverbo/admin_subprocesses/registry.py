@@ -4,7 +4,7 @@ from appverbo.admin_subprocesses.contas.config import CONTAS_CONFIG
 from appverbo.admin_subprocesses.entidade.config import ENTIDADE_CONFIG
 from appverbo.admin_subprocesses.menu.config import MENU_CONFIG
 from appverbo.admin_subprocesses.models import AdminSubprocessConfig
-from appverbo.admin_subprocesses.sessoes.config import SESSOES_CONFIG
+from appverbo.admin_subprocesses.sessoes import SESSOES_CONFIG
 from appverbo.admin_subprocesses.utilizador.config import UTILIZADOR_CONFIG
 
 

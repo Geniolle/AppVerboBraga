@@ -1,0 +1,35 @@
+/* APPVERBO_ADMIN_TABS_EMERGENCY_UNLOCK_V4 */
+
+body.appverbo-admin-tabs-emergency-unlock-active .menu-tabs,
+body.appverbo-admin-tabs-emergency-unlock-active .admin-tabs,
+body.appverbo-admin-tabs-emergency-unlock-active .admin-subprocess-tabs,
+body.appverbo-admin-tabs-emergency-unlock-active .tab-list,
+body.appverbo-admin-tabs-emergency-unlock-active #submenu-items,
+body.appverbo-admin-tabs-emergency-unlock-active [role="tablist"] {
+    position: relative !important;
+    z-index: 2147483000 !important;
+    pointer-events: auto !important;
+}
+
+body.appverbo-admin-tabs-emergency-unlock-active .menu-tabs *,
+body.appverbo-admin-tabs-emergency-unlock-active .admin-tabs *,
+body.appverbo-admin-tabs-emergency-unlock-active .admin-subprocess-tabs *,
+body.appverbo-admin-tabs-emergency-unlock-active #submenu-items *,
+body.appverbo-admin-tabs-emergency-unlock-active [role="tablist"] *,
+body.appverbo-admin-tabs-emergency-unlock-active a[href*="admin_tab="],
+body.appverbo-admin-tabs-emergency-unlock-active a[href*="menu=administrativo"],
+body.appverbo-admin-tabs-emergency-unlock-active button[data-admin-tab],
+body.appverbo-admin-tabs-emergency-unlock-active [data-admin-tab],
+body.appverbo-admin-tabs-emergency-unlock-active [data-admin-tab-target],
+body.appverbo-admin-tabs-emergency-unlock-active [data-tab],
+body.appverbo-admin-tabs-emergency-unlock-active [data-key],
+body.appverbo-admin-tabs-emergency-unlock-active [data-subprocess-key],
+body.appverbo-admin-tabs-emergency-unlock-active [role="tab"],
+body.appverbo-admin-tabs-emergency-unlock-active .admin-tab,
+body.appverbo-admin-tabs-emergency-unlock-active .admin-subprocess-tab,
+body.appverbo-admin-tabs-emergency-unlock-active .menu-tab {
+    position: relative !important;
+    z-index: 2147483100 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}

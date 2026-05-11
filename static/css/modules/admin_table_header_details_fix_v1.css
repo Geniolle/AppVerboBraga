@@ -1,0 +1,98 @@
+/* APPVERBO_ADMIN_TABLE_HEADER_DETAILS_FIX_V2 */
+
+/*####################################################################################
+# (1) CABEÇALHO DAS TABELAS DO PAINEL ADMINISTRATIVO
+####################################################################################*/
+
+.admin-page table thead tr,
+.admin-subprocess-table thead tr,
+.admin-status-table thead tr,
+.dynamic-process-table thead tr {
+    height: 36px;
+    background: #f8fafc;
+}
+
+/*####################################################################################
+# (2) CÉLULAS DO CABEÇALHO
+####################################################################################*/
+
+.admin-page table thead th,
+.admin-subprocess-table thead th,
+.admin-status-table thead th,
+.dynamic-process-table thead th {
+    height: 36px;
+    padding: 10px 8px;
+    background: #f8fafc;
+    border-top: 1px solid #d8e2ef;
+    border-bottom: 1px solid #d8e2ef;
+    color: #243b63;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: 0.025em;
+    text-align: left;
+    text-transform: uppercase;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/*####################################################################################
+# (3) PRIMEIRA E ÚLTIMA COLUNA
+####################################################################################*/
+
+.admin-page table thead th:first-child,
+.admin-subprocess-table thead th:first-child,
+.admin-status-table thead th:first-child,
+.dynamic-process-table thead th:first-child {
+    padding-left: 12px;
+}
+
+.admin-page table thead th:last-child,
+.admin-subprocess-table thead th:last-child,
+.admin-status-table thead th:last-child,
+.dynamic-process-table thead th:last-child {
+    padding-right: 12px;
+    text-align: center;
+}
+
+/*####################################################################################
+# (4) CORPO DA TABELA
+####################################################################################*/
+
+.admin-page table tbody td,
+.admin-subprocess-table tbody td,
+.admin-status-table tbody td,
+.dynamic-process-table tbody td {
+    vertical-align: middle;
+}
+
+/*####################################################################################
+# (5) TABELAS DENTRO DE CARDS
+####################################################################################*/
+
+.card table,
+.admin-card table,
+.admin-section-card table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.card table thead,
+.admin-card table thead,
+.admin-section-card table thead {
+    background: #f8fafc;
+}
+
+/*####################################################################################
+# (6) RESPONSIVO
+####################################################################################*/
+
+@media (max-width: 900px) {
+    .admin-page table thead th,
+    .admin-subprocess-table thead th,
+    .admin-status-table thead th,
+    .dynamic-process-table thead th {
+        font-size: 9px;
+        padding: 8px 6px;
+    }
+}

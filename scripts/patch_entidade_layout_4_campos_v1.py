@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -224,7 +224,7 @@ def patch_page_service_v1() -> None:
 
 CREATE_ENTITY_ROWS_V1 = '''                <div class="entity-first-row">
                   <div class="field entity-first-row-client">
-                    <label for="entity_internal_number">Número do cliente</label>
+                    <label for="entity_internal_number">Nº Cliente</label>
                     <input id="entity_internal_number" class="readonly-field" value="{{ next_entity_internal_number }}" readonly disabled>
                   </div>
                   <div class="field entity-first-row-name">
@@ -308,7 +308,7 @@ CREATE_ENTITY_ROWS_V1 = '''                <div class="entity-first-row">
 
 EDIT_ENTITY_ROWS_V1 = '''            <div class="entity-first-row">
               <div class="field entity-first-row-client">
-                <label for="edit_entity_internal_number">Número do cliente</label>
+                <label for="edit_entity_internal_number">Nº Cliente</label>
                 <input id="edit_entity_internal_number" class="readonly-field" value="{{ entity_edit_data.internal_number }}" readonly disabled>
               </div>
               <div class="field entity-first-row-name">

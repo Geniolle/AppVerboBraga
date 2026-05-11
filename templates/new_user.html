@@ -12,6 +12,10 @@
 
 {% block head_extra %}
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_START #}
+<link rel="stylesheet" href="/static/css/modules/appverbo_admin_tabs_emergency_unlock_v1.css?v=20260511-admin-tabs-emergency-unlock-v4">
+<link rel="stylesheet" href="/static/css/modules/appverbo_sessoes_entries_per_page_v1.css?v=20260511-sessoes-entries-per-page-v1">
+<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260511-admin-tabs-emergency-unlock-v4"></script>
+<script src="/static/js/modules/appverbo_sessoes_entries_per_page_v1.js?v=20260511-sessoes-entries-per-page-v1" defer></script>
 <script>
 (function () {
   function liberarTelaAppVerboV2() {
@@ -54,6 +58,7 @@
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
+
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2">
@@ -137,10 +142,9 @@
   }, true);
 })();
 </script>
-    <script src="/static/js/modules/appverbo_admin_sessoes_tab_server_nav_v1.js?v=20260511-sessoes-server-nav-v1" defer></script>
+      <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
   <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260511-entidade-cards-v2" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
-  <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260511-sessoes-safe-no-loop-v2-final" defer></script>
   <script src="/static/js/modules/appverbo_admin_menu_native_v4.js?v=20260510-menu-isolado-v6" defer></script>
 {% endblock %}
 
@@ -927,7 +931,7 @@
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                                 <div class="entity-first-row">
                   <div class="field entity-first-row-client">
-                    <label for="entity_internal_number">Número do cliente</label>
+                    <label for="entity_internal_number">Nº Cliente</label>
                     <input id="entity_internal_number" class="readonly-field" value="{{ next_entity_internal_number }}" readonly disabled>
                   </div>
                   <div class="field entity-first-row-name">
@@ -1037,7 +1041,7 @@
             <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
                         <div class="entity-first-row">
               <div class="field entity-first-row-client">
-                <label for="edit_entity_internal_number">Número do cliente</label>
+                <label for="edit_entity_internal_number">Nº Cliente</label>
                 <input id="edit_entity_internal_number" class="readonly-field" value="{{ entity_edit_data.internal_number }}" readonly disabled>
               </div>
               <div class="field entity-first-row-name">
@@ -1190,7 +1194,7 @@
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Número do cliente</th>
+                  <th>Nº Cliente</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1297,7 +1301,7 @@
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Número do cliente</th>
+                  <th>Nº Cliente</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -2606,6 +2610,6 @@
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
-  <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"></script>
+      <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
 {% endblock %}
