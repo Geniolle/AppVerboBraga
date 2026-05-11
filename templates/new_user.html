@@ -1,5 +1,6 @@
 ﻿{% extends "base.html" %}
 
+{% from "macros/admin_menu_subprocess.html" import render_admin_menu_state %}
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
 {% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
@@ -46,13 +47,15 @@
 </noscript>
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260510-sessoes-render-v1">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260511-admin-status-tables-active-title-v5">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260511-menu-refactor-v1">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
+<script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
+<script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260506-sessoes-inativas-delete-icon-v2">
   <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
   <script src="/static/js/modules/menu_context_guard_v1.js?v=20260508-contexto-meu-perfil-v1" defer></script>
@@ -134,7 +137,7 @@
   }, true);
 })();
 </script>
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260510-menu-nao-contas-v2" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260511-entidade-cards-v2" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
   <script src="/static/js/modules/appverbo_sessoes_render_guard_v1.js?v=20260510-sessoes-visivel-v2" defer></script>
   <script src="/static/js/modules/appverbo_admin_menu_native_v4.js?v=20260510-menu-isolado-v6" defer></script>
@@ -156,8 +159,8 @@
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
         {% endif %}
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
-        {% if admin_tab == "menu" and admin_subprocess_state and admin_subprocess_state.config.key == "menu" %}
-          {{ render_admin_subprocess_state(admin_subprocess_state) }}
+        {% if admin_tab == "menu" and admin_menu_state %}
+          {{ render_admin_menu_state(admin_menu_state) }}
         {% endif %}
 
 
@@ -888,7 +891,7 @@
         {% endif %}
         <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_START -->
         <section id="admin-users-created-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores criados</h2>
+          <h2 class="admin-subprocess-active-title-v1">Utilizadores ativos</h2>
           {{ render_admin_user_table_v1(
             active_created_users,
             "admin-users-table",
@@ -1183,8 +1186,8 @@
         {% endif %}
 
         <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
-          <h2>{% if current_user_can_manage_all_entities %}Entidades criadas{% else %}Dados gerais{% endif %}</h2>
-          {% set active_recent_entities = recent_entities | selectattr("is_active") | list %}
+          <h2 class="admin-subprocess-active-title-v1">{% if current_user_can_manage_all_entities %}Entidades ativas{% else %}Dados gerais{% endif %}</h2>
+          {% set active_recent_entities = recent_entities | list %}
           {% if not current_user_can_manage_all_entities %}
             {% set active_recent_entities = active_recent_entities[:1] %}
           {% endif %}
@@ -2600,7 +2603,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260510-sessoes-render-v1" defer></script>
+  <script src="/static/js/new_user.js?v=20260511-entidade-legado-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

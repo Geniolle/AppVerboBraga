@@ -1,289 +1,18 @@
-
 from __future__ import annotations
 
-from .models import (
-    AdminActionConfig,
-    AdminColumnConfig,
-    AdminFieldConfig,
-    AdminSubprocessConfig,
-)
+from appverbo.admin_subprocesses.contas.config import CONTAS_CONFIG
+from appverbo.admin_subprocesses.entidade.config import ENTIDADE_CONFIG
+from appverbo.admin_subprocesses.menu.config import MENU_CONFIG
+from appverbo.admin_subprocesses.models import AdminSubprocessConfig
+from appverbo.admin_subprocesses.sessoes.config import SESSOES_CONFIG
+from appverbo.admin_subprocesses.utilizador.config import UTILIZADOR_CONFIG
 
 
-ENTITY_FIELDS = (
-    AdminFieldConfig(
-        key="name",
-        label="Nome da entidade",
-        input_name="entity_name",
-        field_type="text",
-        required=True,
-        max_length=160,
-    ),
-    AdminFieldConfig(
-        key="status",
-        label="Estado",
-        input_name="entity_status",
-        field_type="select",
-        required=True,
-        options=(
-            ("active", "Ativo"),
-            ("inactive", "Inativo"),
-        ),
-    ),
-)
+# ###################################################################################
+# (1) REGISTO CENTRAL DOS SUBPROCESSOS ADMINISTRATIVOS
+# ###################################################################################
 
-
-SIDEBAR_SECTION_FIELDS = (
-    AdminFieldConfig(
-        key="label",
-        label="Nome da sessão",
-        input_name="section_label",
-        field_type="text",
-        required=True,
-        max_length=80,
-        placeholder="Informe o nome da sessão",
-    ),
-    AdminFieldConfig(
-        key="visibility_scope_mode",
-        label="Sistema",
-        input_name="section_visibility_scope_mode",
-        field_type="select",
-        required=True,
-        options=(
-            ("all", "Owner e Legado"),
-            ("owner", "Owner"),
-            ("legado", "Legado"),
-        ),
-    ),
-    AdminFieldConfig(
-        key="status",
-        label="Estado",
-        input_name="section_status",
-        field_type="select",
-        required=True,
-        options=(
-            ("ativo", "Ativo"),
-            ("inativo", "Inativo"),
-        ),
-    ),
-)
-
-
-DEFAULT_COLUMNS = (
-    AdminColumnConfig(key="label", label="NOME", source="label"),
-    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
-    AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
-)
-
-
-MENU_FIELDS = (
-    AdminFieldConfig(
-        key="label",
-        label="Nome do menu",
-        input_name="menu_label",
-        field_type="text",
-        required=True,
-        max_length=100,
-        placeholder="Ex.: Assiduidade",
-    ),
-    AdminFieldConfig(
-        key="sidebar_section",
-        label="Sessão do menu",
-        input_name="menu_section",
-        field_type="select",
-        required=True,
-        options_source="sidebar_section_options",
-    ),
-    AdminFieldConfig(
-        key="visibility_scope_mode",
-        label="Sistema",
-        input_name="menu_visibility_scope",
-        field_type="select",
-        required=True,
-        options=(
-            ("all", "Owner e Legado"),
-            ("owner", "Owner"),
-            ("legado", "Legado"),
-        ),
-    ),
-)
-
-
-DEFAULT_ACTIVE_ACTIONS = (
-    AdminActionConfig(
-        key="move_up",
-        label="Subir",
-        icon="↑",
-        action_type="post",
-        visible_when=("ativo",),
-    ),
-    AdminActionConfig(
-        key="move_down",
-        label="Descer",
-        icon="↓",
-        action_type="post",
-        visible_when=("ativo",),
-    ),
-    AdminActionConfig(
-        key="view",
-        label="Visualizar",
-        icon="👁",
-        action_type="button",
-        visible_when=("ativo", "inativo"),
-    ),
-    AdminActionConfig(
-        key="edit",
-        label="Editar",
-        icon="✎",
-        action_type="link",
-        visible_when=("ativo", "inativo"),
-    ),
-)
-
-
-ENTIDADE_CONFIG = AdminSubprocessConfig(
-    key="entidade",
-    label="Entidade",
-    singular_label="Entidade",
-    plural_label="Entidades",
-    edit_param="entity_edit_id",
-    default_target="create-entity-card",
-    edit_target="edit-entity-card",
-    create_title="Criar entidade",
-    edit_title="Editar entidade",
-    active_title="Entidades ativas",
-    inactive_title="Entidades inativas",
-    create_endpoint="/entities/new",
-    update_endpoint="/entities/update",
-    save_endpoint="/entities/update",
-    delete_endpoint="/entities/delete",
-    repository_name="entity",
-    repository_class="appverbo.admin_subprocesses.repositories.entity_repository.EntityAdminRepository",
-    status_field="entity_status",
-    active_value="active",
-    inactive_value="inactive",
-    identity_field="id",
-    label_field="name",
-    enabled=True,
-    migration_status="reference",
-    fields=ENTITY_FIELDS,
-    columns=(
-        AdminColumnConfig(key="name", label="ENTIDADE", source="name"),
-        AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
-    ),
-    actions=DEFAULT_ACTIVE_ACTIONS,
-)
-
-
-SESSOES_CONFIG = AdminSubprocessConfig(
-    key="sessoes",
-    label="Sessões",
-    singular_label="Sessão",
-    plural_label="Sessões",
-    edit_param="sidebar_section_edit_key",
-    default_target="admin-sidebar-sections-card",
-    edit_target="admin-sidebar-sections-form-card",
-    create_title="Criar sessão",
-    edit_title="Editar sessão",
-    active_title="Sessões ativas",
-    inactive_title="Sessões inativas",
-    create_endpoint="/settings/menu/sidebar-section-save",
-    update_endpoint="/settings/menu/sidebar-section-save",
-    save_endpoint="/settings/menu/sidebar-section-save",
-    move_endpoint="/settings/menu/sidebar-section-move-one",
-    delete_endpoint="/settings/menu/sidebar-section-delete-one",
-    repository_name="sidebar_section",
-    repository_class="appverbo.admin_subprocesses.repositories.sidebar_section_repository.SidebarSectionAdminRepository",
-    status_field="status",
-    active_value="ativo",
-    inactive_value="inativo",
-    identity_field="key",
-    move_key_field="section_key",
-    label_field="label",
-    mode_field="section_mode",
-    edit_key_field="original_section_key",
-    return_url_field="sidebar_section_return_url",
-    create_mode_value="create",
-    edit_mode_value="edit",
-    enabled=True,
-    migration_status="native_next",
-    fields=SIDEBAR_SECTION_FIELDS,
-    columns=DEFAULT_COLUMNS,
-    actions=DEFAULT_ACTIVE_ACTIONS,
-)
-
-
-UTILIZADOR_CONFIG = AdminSubprocessConfig(
-    key="utilizador",
-    label="Utilizador",
-    singular_label="Utilizador",
-    plural_label="Utilizadores",
-    edit_param="user_edit_id",
-    default_target="create-user-card",
-    edit_target="edit-user-card",
-    create_title="Criar utilizador",
-    edit_title="Editar utilizador",
-    active_title="Utilizadores ativos",
-    inactive_title="Utilizadores inativos",
-    save_endpoint="/users/update",
-    repository_name="user",
-    repository_class="",
-    enabled=False,
-    migration_status="legacy_pending",
-)
-
-
-MENU_CONFIG = AdminSubprocessConfig(
-    key="menu",
-    label="Menu",
-    singular_label="Menu",
-    plural_label="Menus",
-    edit_param="settings_edit_key",
-    default_target="admin-menu-card",
-    edit_target="settings-menu-edit-card",
-    create_title="Criar menu",
-    edit_title="Editar menu",
-    active_title="Menus ativos",
-    inactive_title="Menus inativos",
-    create_endpoint="/settings/menu/admin-create",
-    move_endpoint="/settings/menu/admin-move",
-    delete_endpoint="/settings/menu/admin-delete",
-    save_endpoint="/settings/menu/admin-create",
-    repository_name="menu",
-    repository_class="",
-    identity_field="key",
-    label_field="label",
-    move_key_field="menu_key",
-    delete_key_field="menu_key",
-    return_url_field="subprocess_return_url",
-    enabled=True,
-    migration_status="native_menu",
-    fields=MENU_FIELDS,
-    columns=DEFAULT_COLUMNS,
-    actions=DEFAULT_ACTIVE_ACTIONS,
-)
-
-
-CONTAS_CONFIG = AdminSubprocessConfig(
-    key="contas",
-    label="Contas",
-    singular_label="Conta",
-    plural_label="Contas",
-    edit_param="account_edit_id",
-    default_target="admin-account-status-card",
-    edit_target="admin-account-status-card",
-    create_title="Criar conta",
-    edit_title="Editar conta",
-    active_title="Contas ativas",
-    inactive_title="Contas inativas",
-    save_endpoint="",
-    repository_name="account",
-    repository_class="",
-    enabled=False,
-    migration_status="legacy_pending",
-)
-
-
-ADMIN_SUBPROCESS_REGISTRY = {
+ADMIN_SUBPROCESS_REGISTRY: dict[str, AdminSubprocessConfig] = {
     ENTIDADE_CONFIG.key: ENTIDADE_CONFIG,
     SESSOES_CONFIG.key: SESSOES_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
@@ -291,6 +20,10 @@ ADMIN_SUBPROCESS_REGISTRY = {
     CONTAS_CONFIG.key: CONTAS_CONFIG,
 }
 
+
+# ###################################################################################
+# (2) CONSULTA DE CONFIGURACOES
+# ###################################################################################
 
 def get_admin_subprocess_config(key: str) -> AdminSubprocessConfig | None:
     return ADMIN_SUBPROCESS_REGISTRY.get(str(key or "").strip().lower())
@@ -300,7 +33,7 @@ def require_admin_subprocess_config(key: str) -> AdminSubprocessConfig:
     config = get_admin_subprocess_config(key)
 
     if config is None:
-        raise KeyError(f"Subprocesso administrativo não configurado: {key}")
+        raise KeyError(f"Subprocesso administrativo n\u00e3o configurado: {key}")
 
     return config
 

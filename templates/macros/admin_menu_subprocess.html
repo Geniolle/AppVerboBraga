@@ -1,0 +1,196 @@
+{% macro render_admin_menu_create_card(state) %}
+  {% if state.can_manage_all_entities %}
+  <section
+    id="{{ state.create_target }}"
+    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
+    data-admin-subprocess="menu"
+    data-menu-scope="administrativo"
+  >
+    {% if state.success %}
+      <div class="alert ok">{{ state.success }}</div>
+    {% endif %}
+
+    {% if state.error %}
+      <div class="alert error">{{ state.error }}</div>
+    {% endif %}
+
+    <details class="entity-create-collapse admin-subprocess-create-collapse-v1">
+      <summary class="appverbo-subprocess-create-trigger-v1">
+        <span>{{ state.create_title }}</span>
+      </summary>
+
+      <div class="entity-create-body">
+        <form method="post" action="/settings/menu/admin-create" class="admin-subprocess-form-v1">
+          <input type="hidden" name="subprocess_return_url" value="{{ state.return_url }}">
+
+          <div class="admin-subprocess-grid-v1">
+            <div class="field admin-subprocess-field-v1">
+              <label for="admin_menu_create_label">Nome do menu *</label>
+              <input
+                id="admin_menu_create_label"
+                name="menu_label"
+                maxlength="100"
+                placeholder="Ex.: Assiduidade"
+                required
+              >
+            </div>
+
+            <div class="field admin-subprocess-field-v1">
+              <label for="admin_menu_create_visibility_scope">Sistema</label>
+              <select id="admin_menu_create_visibility_scope" name="menu_visibility_scope">
+                <option value="all" selected>Owner e Legado</option>
+                <option value="owner">Owner</option>
+                <option value="legado">Legado</option>
+              </select>
+            </div>
+
+            <div class="field admin-subprocess-field-v1">
+              <label for="admin_menu_create_section">Sessão</label>
+              <select id="admin_menu_create_section" name="menu_section">
+                <option value="">Sem sessão</option>
+                {% for section_key, section_label in state.section_options %}
+                  <option value="{{ section_key }}">{{ section_label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-action-row admin-subprocess-actions-v1">
+            <button type="submit" class="action-btn">Guardar</button>
+            <button
+              type="button"
+              class="action-btn-cancel"
+              onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+            >Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </section>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro render_admin_menu_actions(state, row, status_value) %}
+  {% set row_key = row.get("key", "") %}
+  {% set row_label = row.get("label", "") %}
+  {% set row_system_label = row.get("visibility_scope_label", "-") %}
+  {% set row_status_label = row.get("status_label", "Ativo" if status_value == "ativo" else "Inativo") %}
+  {% set can_move_up = row.get("can_move_up", true) %}
+  {% set can_move_down = row.get("can_move_down", true) %}
+  {% set can_delete = row.get("can_delete", true) %}
+
+  <div class="admin-subprocess-row-actions-v1">
+    {% if status_value == "ativo" and state.can_manage_all_entities %}
+      {% if can_move_up %}
+        <form method="post" action="/settings/menu/admin-move" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="menu_key" value="{{ row_key }}">
+          <input type="hidden" name="direction" value="up">
+          <input type="hidden" name="subprocess_return_url" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">&#8593;</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no topo" aria-label="Já está no topo">&#8593;</span>
+      {% endif %}
+
+      {% if can_move_down %}
+        <form method="post" action="/settings/menu/admin-move" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="menu_key" value="{{ row_key }}">
+          <input type="hidden" name="direction" value="down">
+          <input type="hidden" name="subprocess_return_url" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">&#8595;</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no fim" aria-label="Já está no fim">&#8595;</span>
+      {% endif %}
+    {% endif %}
+
+    <button
+      type="button"
+      class="admin-subprocess-action-btn-v1"
+      title="Visualizar detalhes"
+      aria-label="Visualizar detalhes"
+      data-menu-view-label="{{ row_label }}"
+      data-menu-view-scope="{{ row_system_label }}"
+      data-menu-view-status="{{ row_status_label }}"
+    >&#128065;</button>
+
+    {% if state.can_manage_all_entities %}
+      <a
+        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+        title="Editar"
+        aria-label="Editar"
+        href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;target={{ state.edit_target }}&amp;settings_edit_key={{ row_key }}&amp;settings_action=edit#{{ state.edit_target }}"
+      >&#9998;</a>
+    {% endif %}
+
+    {% if state.can_manage_all_entities and status_value != "ativo" and can_delete and not row.get("is_deleted") %}
+      <form
+        method="post"
+        action="/settings/menu/admin-delete"
+        class="admin-subprocess-inline-form-v1"
+        onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');"
+      >
+        <input type="hidden" name="menu_key" value="{{ row_key }}">
+        <input type="hidden" name="subprocess_return_url" value="{{ state.return_url }}">
+        <button
+          type="submit"
+          class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1"
+          title="Eliminar"
+          aria-label="Eliminar"
+        >&#128465;</button>
+      </form>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_menu_table(state, rows, title, status_value, empty_message) %}
+  <section
+    id="{{ state.active_target if status_value == 'ativo' else state.inactive_target }}"
+    class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
+    data-admin-subprocess="menu"
+    data-admin-subprocess-status="{{ status_value }}"
+    data-menu-scope="administrativo"
+  >
+    <h2>{{ title }}</h2>
+
+    {% if rows %}
+      <div class="admin-subprocess-table-wrap-v1">
+        <table class="admin-subprocess-table-v1">
+          <thead>
+            <tr>
+              <th>Menu lateral</th>
+              <th>Sistema</th>
+              <th>Estado</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td>{{ row.get("label", "") }}</td>
+                <td>{{ row.get("visibility_scope_label", "-") }}</td>
+                <td>
+                  <span class="admin-subprocess-badge-v1 {% if status_value == 'ativo' %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
+                    {{ row.get("status_label", "Ativo" if status_value == "ativo" else "Inativo") }}
+                  </span>
+                </td>
+                <td>{{ render_admin_menu_actions(state, row, status_value) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">{{ empty_message }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_menu_state(state) %}
+  {{ render_admin_menu_create_card(state) }}
+  {{ render_admin_menu_table(state, state.active_rows, state.active_title, "ativo", "Sem menus ativos.") }}
+  {{ render_admin_menu_table(state, state.inactive_rows, state.inactive_title, "inativo", "Sem menus inativos.") }}
+{% endmacro %}

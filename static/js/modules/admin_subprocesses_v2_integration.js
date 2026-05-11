@@ -35,12 +35,13 @@
       "#entities-card",
       "#active-entities-card",
       "#inactive-entities-card",
-      "#recent-entities-card",
       "#entity-list-card",
       "#entity-active-card",
       "#entity-inactive-card",
       "#entity-view-card"
     ];
+
+    const legacySummaryCardIds = new Set(["recent-entities-card", "inactive-entities-card"]);
 
     legacySelectors.forEach((selector) => {
       document.querySelectorAll(selector).forEach(hideElementV2);
@@ -53,11 +54,14 @@
         return;
       }
 
-      const isLegacyEntityCard = (
+      if (legacySummaryCardIds.has(elementId)) {
+        return;
+      }
+
+      const isLegacyEntityCard =
         elementId.includes("entity") ||
         elementId.includes("entities") ||
-        elementId.includes("entidade")
-      );
+        elementId.includes("entidade");
 
       if (!isLegacyEntityCard) {
         return;

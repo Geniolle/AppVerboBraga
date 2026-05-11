@@ -1,3 +1,4 @@
+{% from "partials/admin_table_pagination_v1.html" import render_admin_table_pagination_v1 %}
 {% macro render_admin_user_table_v1(rows, table_id, empty_message, allow_delete=False) %}
 {% if rows %}
 <table id="{{ table_id }}">
@@ -73,17 +74,7 @@
     {% endfor %}
   </tbody>
 </table>
-<div class="table-footer admin-status-table-footer-v1">
-  <select aria-label="Entradas por página">
-    <option selected>5</option>
-  </select>
-  <span>entradas por página</span>
-  <div class="pagination">
-    <button type="button" disabled>&lsaquo;</button>
-    <button type="button" class="active">1</button>
-    <button type="button" disabled>&rsaquo;</button>
-  </div>
-</div>
+{{ render_admin_table_pagination_v1(table_id) }}
 {% else %}
 <p class="empty">{{ empty_message }}</p>
 {% endif %}

@@ -6017,6 +6017,9 @@ body.appverbo-admin-tab-sessoes #home-summary-card {
 }
 
 body.appverbo-admin-tab-entidade #create-entity-card,
+body.appverbo-admin-tab-entidade #edit-entity-card,
+body.appverbo-admin-tab-entidade #recent-entities-card,
+body.appverbo-admin-tab-entidade #inactive-entities-card,
 body.appverbo-admin-tab-utilizador #create-user-card,
 body.appverbo-admin-tab-sessoes #admin-sidebar-sections-card-create,
 body.appverbo-admin-tab-sessoes #admin-sidebar-sections-card,
@@ -6025,7 +6028,6 @@ body.appverbo-admin-tab-menu #admin-menu-card-create,
 body.appverbo-admin-tab-menu #admin-menu-card,
 body.appverbo-admin-tab-menu #admin-menu-card-inactive,
 body.appverbo-admin-tab-menu #settings-menu-edit-card,
-body.appverbo-admin-tab-menu #admin-account-status-card,
 body.appverbo-admin-tab-contas #admin-account-status-card {
   display: block !important;
   visibility: visible !important;

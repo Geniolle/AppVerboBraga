@@ -1,0 +1,41 @@
+{% macro render_admin_table_pagination_v1(table_id, selected_page_size=5) %}
+<div
+  id="{{ table_id }}-limiter"
+  class="table-limiter"
+  data-admin-table-pagination="{{ table_id }}"
+>
+  <div class="table-limiter-left">
+    <select
+      id="{{ table_id }}-page-size"
+      class="table-limiter-select"
+      aria-label="Entradas por página"
+      data-admin-page-size="{{ table_id }}"
+    >
+      <option value="5"{% if selected_page_size == 5 %} selected{% endif %}>5</option>
+      <option value="10"{% if selected_page_size == 10 %} selected{% endif %}>10</option>
+      <option value="20"{% if selected_page_size == 20 %} selected{% endif %}>20</option>
+      <option value="25"{% if selected_page_size == 25 %} selected{% endif %}>25</option>
+      <option value="50"{% if selected_page_size == 50 %} selected{% endif %}>50</option>
+    </select>
+    <span>entradas por página</span>
+  </div>
+
+  <div class="table-limiter-right" data-table-pagination="{{ table_id }}">
+    <button
+      id="{{ table_id }}-prev"
+      class="table-limiter-nav-btn"
+      type="button"
+      disabled
+      aria-label="Página anterior"
+    >&#8249;</button>
+    <span id="{{ table_id }}-page" class="table-limiter-page">1</span>
+    <button
+      id="{{ table_id }}-next"
+      class="table-limiter-nav-btn"
+      type="button"
+      disabled
+      aria-label="Próxima página"
+    >&#8250;</button>
+  </div>
+</div>
+{% endmacro %}

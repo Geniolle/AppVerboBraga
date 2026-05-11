@@ -435,11 +435,18 @@
 
     if (tab === "entidade") {
       return (
+        id === "create-entity-card" ||
+        id === "edit-entity-card" ||
+        id === "recent-entities-card" ||
+        id === "inactive-entities-card" ||
         id.includes("entity") ||
+        id.includes("entities") ||
         id.includes("entidade") ||
         text.includes("criar entidade") ||
+        text.includes("entidades ativas") ||
         text.includes("entidades criadas") ||
-        text.includes("entidades inativas")
+        text.includes("entidades inativas") ||
+        text.includes("dados gerais")
       );
     }
 

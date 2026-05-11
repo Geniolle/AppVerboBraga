@@ -2253,3 +2253,987 @@
   pointer-events: none !important;
 }
 /* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_END */
+
+/* APPVERBO_ADMIN_TABLE_PAGINATION_V1_START */
+/* Componente reutilizavel para paginacao de tabelas administrativas.
+   A Entidade continua como referencia visual e o Utilizador passa a usar o mesmo padrao. */
+
+.admin-table-pagination-v1 {
+  align-items: center !important;
+  border-top: 1px solid #d8e0ec !important;
+  display: grid !important;
+  gap: 10px !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  justify-content: initial !important;
+  margin-top: 8px !important;
+  min-width: 100% !important;
+  padding-top: 8px !important;
+  width: 100% !important;
+}
+
+.admin-table-pagination-v1 .admin-table-pagination-page-size-v1,
+.admin-table-pagination-v1 .entries-per-page {
+  align-items: center !important;
+  display: inline-flex !important;
+  gap: 6px !important;
+  grid-column: 1 !important;
+  justify-self: start !important;
+  min-width: 0 !important;
+}
+
+.admin-table-pagination-v1 .admin-table-pagination-page-size-v1 select,
+.admin-table-pagination-v1 .entries-per-page select {
+  max-width: 76px !important;
+  min-width: 64px !important;
+  width: auto !important;
+}
+
+.admin-table-pagination-v1 .admin-table-pagination-buttons-v1,
+.admin-table-pagination-v1 .pagination {
+  align-items: center !important;
+  display: inline-flex !important;
+  gap: 8px !important;
+  grid-column: 2 !important;
+  justify-content: flex-end !important;
+  justify-self: end !important;
+  margin-left: auto !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+.admin-table-pagination-v1 .admin-table-pagination-buttons-v1 button,
+.admin-table-pagination-v1 .pagination button {
+  align-items: center !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  font-size: 12px !important;
+  height: 22px !important;
+  justify-content: center !important;
+  min-width: 26px !important;
+  padding: 0 8px !important;
+}
+
+/* APPVERBO_ADMIN_TABLE_PAGINATION_V1_END */
+
+/* APPVERBO_ADMIN_SUBPROCESS_TYPOGRAPHY_V1_START */
+/* Padrao global de fonte e tamanho para subprocessos administrativos.
+   Entidade e a referencia visual. Utilizador, Sessoes, Menu e Contas herdam o mesmo padrao. */
+
+:root {
+  --appverbo-admin-font-family-v1: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --appverbo-admin-card-font-size-v1: 13px;
+  --appverbo-admin-table-font-size-v1: 13px;
+  --appverbo-admin-table-head-font-size-v1: 11px;
+  --appverbo-admin-label-font-size-v1: 12px;
+  --appverbo-admin-field-font-size-v1: 13px;
+  --appverbo-admin-button-font-size-v1: 12px;
+  --appverbo-admin-helper-font-size-v1: 12px;
+  --appverbo-admin-line-height-v1: 1.35;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) {
+  color: #23324d !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-card-font-size-v1) !important;
+  line-height: var(--appverbo-admin-line-height-v1) !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  .card-title,
+  .admin-card-title,
+  .admin-section-title,
+  .admin-subprocess-title,
+  .settings-card-title
+) {
+  color: #23324d !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  label,
+  .form-label,
+  .field-label,
+  .admin-form-label,
+  .admin-field-label,
+  .settings-field-label
+) {
+  color: #5b6b84 !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-label-font-size-v1) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  line-height: 1.25 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  input,
+  select,
+  textarea,
+  .form-control,
+  .form-select,
+  .admin-input,
+  .admin-select,
+  .admin-textarea
+) {
+  color: #23324d !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-field-font-size-v1) !important;
+  line-height: 1.35 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  table,
+  .table,
+  .admin-table,
+  .admin-status-table,
+  .admin-users-table,
+  .admin-entities-table
+) {
+  color: #23324d !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-table-font-size-v1) !important;
+  line-height: 1.35 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  th,
+  thead th,
+  .table-head,
+  .admin-table-head,
+  .admin-table-header
+) {
+  color: #5b6b84 !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-table-head-font-size-v1) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.25 !important;
+  text-transform: uppercase !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  td,
+  tbody td,
+  .table-cell,
+  .admin-table-cell
+) {
+  color: #23324d !important;
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-table-font-size-v1) !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  button,
+  .btn,
+  .button,
+  .admin-btn,
+  .admin-action-button,
+  .admin-action-link
+) {
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-button-font-size-v1) !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  small,
+  .muted,
+  .text-muted,
+  .help-text,
+  .form-help,
+  .admin-helper-text,
+  .entries-per-page,
+  .table-footer,
+  .pagination,
+  .admin-table-pagination-v1
+) {
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: var(--appverbo-admin-helper-font-size-v1) !important;
+  line-height: 1.3 !important;
+}
+
+:is(
+  #create-entity-card,
+  #edit-entity-card,
+  #admin-entities-created-card,
+  #recent-entities-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card,
+  [data-admin-subprocess],
+  [data-admin-card],
+  .admin-subprocess-card-v1,
+  .admin-process-card-v1,
+  .admin-status-card-v1
+) :is(
+  .entity-status,
+  .user-status,
+  .status-badge,
+  .badge,
+  .admin-status-badge
+) {
+  font-family: var(--appverbo-admin-font-family-v1) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+/* APPVERBO_ADMIN_SUBPROCESS_TYPOGRAPHY_V1_END */
+
+/* APPVERBO_ADMIN_SUBPROCESS_VISUAL_PARITY_V2_START */
+/* Paridade visual final dos subprocessos administrativos.
+   Entidade e a referencia. Utilizador, Sessoes, Menu e Contas devem herdar a mesma escala visual. */
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) {
+  color: #0f1f3a !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.32 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(h1, h2, h3, h4, .card-title, .admin-card-title, .admin-section-title) {
+  color: #10203b !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.22 !important;
+  margin-bottom: 18px !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(.admin-total, .table-total, .total-count, strong) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+html body :is(
+  #admin-entities-created-table,
+  #admin-entities-inactive-table,
+  #active-entities-table,
+  #inactive-entities-table,
+  #admin-users-created-table,
+  #admin-users-inactive-table,
+  #recent-users-table,
+  #inactive-users-table,
+  #admin-sidebar-sections-table,
+  #admin-sidebar-sections-inactive-table,
+  #settings-menu-table,
+  #admin-account-status-table
+) {
+  border-collapse: collapse !important;
+  color: #0f1f3a !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.32 !important;
+  width: 100% !important;
+}
+
+html body :is(
+  #admin-entities-created-table,
+  #admin-entities-inactive-table,
+  #active-entities-table,
+  #inactive-entities-table,
+  #admin-users-created-table,
+  #admin-users-inactive-table,
+  #recent-users-table,
+  #inactive-users-table,
+  #admin-sidebar-sections-table,
+  #admin-sidebar-sections-inactive-table,
+  #settings-menu-table,
+  #admin-account-status-table
+) thead th {
+  color: #25385a !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  padding-bottom: 11px !important;
+  padding-top: 8px !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+html body :is(
+  #admin-entities-created-table,
+  #admin-entities-inactive-table,
+  #active-entities-table,
+  #inactive-entities-table,
+  #admin-users-created-table,
+  #admin-users-inactive-table,
+  #recent-users-table,
+  #inactive-users-table,
+  #admin-sidebar-sections-table,
+  #admin-sidebar-sections-inactive-table,
+  #settings-menu-table,
+  #admin-account-status-table
+) tbody td {
+  color: #0f1f3a !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.32 !important;
+  padding-bottom: 12px !important;
+  padding-top: 12px !important;
+  vertical-align: middle !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(input, select, textarea, .form-control, .form-select) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(input[type="search"], .table-search-input, .admin-table-search, .search-input) {
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  height: 28px !important;
+  line-height: 1.2 !important;
+  max-width: 260px !important;
+  padding: 0 14px !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(.entity-status, .user-status, .status-badge, .badge, .admin-status-badge) {
+  border-radius: 999px !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  padding: 4px 7px !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(.table-footer, .entries-per-page, .admin-table-pagination-v1, .pagination) {
+  color: #42526e !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(.table-footer select, .entries-per-page select, .admin-table-pagination-v1 select) {
+  font-size: 11px !important;
+  height: 28px !important;
+  min-width: 66px !important;
+  padding-bottom: 0 !important;
+  padding-top: 0 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(button, .btn, .admin-btn, .admin-action-button, .admin-action-link) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(.admin-action-button, .admin-action-link, .table-action-button, .icon-button) {
+  height: 28px !important;
+  min-height: 28px !important;
+  min-width: 28px !important;
+  width: 28px !important;
+}
+
+html body :is(
+  #create-entity-card,
+  #edit-entity-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(label, .form-label, .admin-form-label) {
+  color: #42526e !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+html body :is(
+  #create-entity-card,
+  #edit-entity-card,
+  #create-user-card,
+  #edit-user-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(input, select, textarea, .form-control, .form-select) {
+  color: #0f1f3a !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card
+) :is(.empty-state, .admin-empty-state, .muted, .text-muted, p) {
+  color: #42526e !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.35 !important;
+}
+
+/* APPVERBO_ADMIN_SUBPROCESS_VISUAL_PARITY_V2_END */
+
+/* APPVERBO_ADMIN_PAGINATION_TEXT_PARITY_V1_START */
+/* Paridade visual do texto "entradas por pagina".
+   Entidade e a referencia visual: texto menor, leve e cinzento-azulado. */
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(
+  .entries-per-page,
+  .admin-table-pagination-page-size-v1
+) {
+  align-items: center !important;
+  color: #42526e !important;
+  display: inline-flex !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  gap: 6px !important;
+  line-height: 1.2 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(
+  .entries-per-page span,
+  .admin-table-pagination-page-size-v1 span,
+  .table-footer .entries-per-page span,
+  .admin-table-pagination-v1 .entries-per-page span,
+  .admin-table-pagination-v1 .admin-table-pagination-page-size-v1 span
+) {
+  color: #42526e !important;
+  display: inline-flex !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) :is(
+  .entries-per-page select,
+  .admin-table-pagination-page-size-v1 select,
+  .table-footer .entries-per-page select,
+  .admin-table-pagination-v1 .entries-per-page select
+) {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  height: 28px !important;
+  line-height: 1.2 !important;
+}
+
+/* APPVERBO_ADMIN_PAGINATION_TEXT_PARITY_V1_END */
+
+/* APPVERBO_ADMIN_ENTRIES_PER_PAGE_EXACT_PARITY_V2_START */
+/* Paridade exata do texto "entradas por pagina" entre Entidade e Utilizador.
+   Este bloco deve ficar depois dos blocos globais para vencer estilos especificos anteriores. */
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) .table-footer {
+  align-items: center !important;
+  color: #6b778c !important;
+  display: flex !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) .table-footer .entries-per-page {
+  align-items: center !important;
+  color: #6b778c !important;
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  gap: 6px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) .table-footer .entries-per-page > span,
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) .table-footer .entries-per-page .entries-per-page-label {
+  color: #6b778c !important;
+  display: inline-block !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+}
+
+html body :is(
+  #admin-entities-created-card,
+  #active-entities-card,
+  #inactive-entities-card,
+  #admin-users-created-card,
+  #recent-users-card,
+  #inactive-users-card,
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-form-card,
+  #settings-card,
+  #admin-account-status-card
+) .table-footer .entries-per-page > select {
+  color: #25385a !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  height: 28px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  min-width: 64px !important;
+  padding-bottom: 0 !important;
+  padding-top: 0 !important;
+  vertical-align: middle !important;
+}
+
+html body #admin-users-created-card .table-footer .entries-per-page,
+html body #admin-users-created-card .table-footer .entries-per-page > span,
+html body #admin-users-created-card .table-footer .entries-per-page .entries-per-page-label,
+html body #recent-users-card .table-footer .entries-per-page,
+html body #recent-users-card .table-footer .entries-per-page > span,
+html body #recent-users-card .table-footer .entries-per-page .entries-per-page-label,
+html body #inactive-users-card .table-footer .entries-per-page,
+html body #inactive-users-card .table-footer .entries-per-page > span,
+html body #inactive-users-card .table-footer .entries-per-page .entries-per-page-label {
+  color: #6b778c !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+}
+
+/* APPVERBO_ADMIN_ENTRIES_PER_PAGE_EXACT_PARITY_V2_END */
+
+/* APPVERBO_ADMIN_ACTIVE_CARD_TITLE_PARITY_V1_START */
+/* Garante que o titulo do card ativo de Utilizador segue exatamente a escala visual
+   do titulo ativo de Entidade. */
+
+html body .admin-subprocess-active-title-v1,
+html body #recent-entities-card > h2,
+html body #admin-users-created-card > h2 {
+  color: #10203b !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.22 !important;
+  margin-bottom: 18px !important;
+}
+
+/* APPVERBO_ADMIN_ACTIVE_CARD_TITLE_PARITY_V1_END */

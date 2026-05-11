@@ -1138,7 +1138,11 @@ if (startupHash === "#home-summary-card") {
 }
 if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
   adminSelectedTarget = "#create-user-card";
-} else if (startupHash === "#create-entity-card" || startupHash === "#edit-entity-card") {
+} else if (
+  startupHash === "#create-entity-card" ||
+  startupHash === "#edit-entity-card" ||
+  startupHash === "#admin-subprocess-v2-entidade"
+) {
   adminSelectedTarget = "#create-entity-card";
 } else if (startupHash === "#admin-sidebar-sections-card") {
   adminSelectedTarget = "#admin-sidebar-sections-card";
@@ -2678,7 +2682,10 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
     }
     const isEntityGroupedBlock =
       menuKey === "administrativo" &&
-      targetSelector === "#create-entity-card" &&
+      (
+        targetSelector === "#create-entity-card" ||
+        targetSelector === "#admin-subprocess-v2-entidade"
+      ) &&
       (
         card.id === "create-entity-card" ||
         card.id === "edit-entity-card" ||
@@ -4406,6 +4413,7 @@ function handleHashNavigation(rawHash) {
   const hashTargetMenuMap = {
     "#create-user-card": "administrativo",
     "#create-entity-card": "administrativo",
+    "#admin-subprocess-v2-entidade": "administrativo",
     "#admin-menu-card": "administrativo",
     "#admin-menu-card-inactive": "administrativo",
     "#admin-sidebar-sections-card": "administrativo",

@@ -7,6 +7,7 @@ from fastapi import Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
+from appverbo.admin_subprocesses.menu.service import build_admin_menu_state
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
 
@@ -99,6 +100,13 @@ def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
     return section_order[0]
 
 
+def _resolve_admin_menu_target_v1(settings_edit_key: str) -> str:
+    if str(settings_edit_key or "").strip():
+        return "#settings-menu-edit-card"
+
+    return "#admin-menu-card"
+
+
 def _resolve_initial_menu_target(
     resolved_menu: str,
     resolved_profile_tab: str,
@@ -123,14 +131,10 @@ def _resolve_initial_menu_target(
             return "#dados-treinamento-card", ""
         return "#perfil-pessoal-card", ""
     if clean_menu_key == "administrativo":
-        # APPVERBO_ADMIN_MENU_TARGET_RESOLVE_V5_START
         if resolved_admin_tab == "menu":
-            return "#admin-menu-card", ""
-        # APPVERBO_ADMIN_MENU_TARGET_RESOLVE_V5_END
+            return _resolve_admin_menu_target_v1(settings_edit_key), ""
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
-        if resolved_admin_tab == "menu":
-            return "#admin-menu-card", ""
         if resolved_admin_tab == "sessoes":
             return "#admin-sidebar-sections-card", ""
         if resolved_admin_tab == "contas":
@@ -510,47 +514,19 @@ def new_user_page(
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     elif resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#admin-menu-card"
+        initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
     is_post_save_return = str(appverbo_after_save or "").strip() == "1"
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
-    # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_START
+    # ###################################################################################
     # A aba Administrativo -> Menu usa o alvo canónico admin-menu-card.
     # Sem esta normalização, a URL admin_tab=menu pode ficar sem conteúdo
     # porque o backend voltava para o target padrão de Entidade.
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#admin-menu-card"
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
-    # APPVERBO_ADMIN_MENU_TAB_TARGET_V1_END
-
-    # APPVERBO_ADMIN_MENU_TARGET_RENDER_V3_START
-    if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#admin-menu-card"
-
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
-    # APPVERBO_ADMIN_MENU_TARGET_RENDER_V3_END
-
-    # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_START
-    if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        if clean_settings_edit_key:
-            initial_menu_target = "#settings-menu-edit-card"
-        else:
-            initial_menu_target = "#admin-menu-card"
-
+        initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_END
@@ -599,26 +575,21 @@ def new_user_page(
 
     # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_START
     if resolved_admin_tab == "menu":
-        initial_menu_target = "#admin-menu-card"
+        initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_END
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
+    admin_menu_state = None
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
+    # Entidade permanece no fluxo legado em /users/new.
+    # O renderer V2 ainda nao entrega as secoes de listagem esperadas no template
+    # e acabava por mostrar apenas o botao "Criar entidade".
     if resolved_menu == "administrativo" and resolved_admin_tab == "entidade":
-        admin_subprocess_state_v2 = build_admin_subprocess_state_v2(
-            key="entidade",
-            session=session,
-            request=request,
-            current_user=current_user,
-            edit_key=clean_entity_edit_id,
-            success=entity_success or "",
-            error=entity_error or "",
-            return_url="/users/new?menu=administrativo&admin_tab=entidade&target=%23admin-subprocess-v2-entidade",
-        )
+        admin_subprocess_state_v2 = None
     # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_END
 
     if resolved_menu == "administrativo" and resolved_admin_tab == "sessoes":
@@ -655,33 +626,26 @@ def new_user_page(
                 return_url="/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
     elif resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        menu_subprocess_config = get_admin_subprocess_config("menu")
-
-        if menu_subprocess_config is not None:
-            menu_field_options: dict[str, tuple[tuple[str, str], ...]] = {
-                "sidebar_section": tuple(
-                    (
-                        str(option.get("key") or "").strip().lower(),
-                        str(option.get("label") or "").strip(),
-                    )
-                    for option in page_data.get("sidebar_section_options", [])
-                    if str(option.get("key") or "").strip()
-                    and str(option.get("label") or "").strip()
+        admin_menu_state = build_admin_menu_state(
+            rows=[
+                row
+                for row in page_data.get("sidebar_menu_settings", [])
+                if not bool(row.get("is_deleted"))
+            ],
+            section_options=tuple(
+                (
+                    str(option.get("key") or "").strip().lower(),
+                    str(option.get("label") or "").strip(),
                 )
-            }
-            admin_subprocess_state_v2 = build_admin_subprocess_state(
-                config=menu_subprocess_config,
-                rows=[
-                    row
-                    for row in page_data.get("sidebar_menu_settings", [])
-                    if not bool(row.get("is_deleted"))
-                ],
-                edit_key="",
-                success=settings_success if resolved_admin_tab == "menu" else "",
-                error=settings_error if resolved_admin_tab == "menu" else "",
-                return_url="/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card",
-                field_options=menu_field_options,
-            )
+                for option in page_data.get("sidebar_section_options", [])
+                if str(option.get("key") or "").strip()
+                and str(option.get("label") or "").strip()
+            ),
+            can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
+            success=settings_success if resolved_admin_tab == "menu" else "",
+            error=settings_error if resolved_admin_tab == "menu" else "",
+            return_url="/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card",
+        )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
     context = {
@@ -724,6 +688,7 @@ def new_user_page(
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
+        "admin_menu_state": admin_menu_state,
         "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
         **page_data,
     }
