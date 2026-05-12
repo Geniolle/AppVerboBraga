@@ -1,0 +1,164 @@
+﻿(function () {
+  "use strict";
+
+  const LOGGER_NAME = "APPVERBO_ADMIN_MENU_BLANK_DIAGNOSTIC_V2";
+
+  function getQueryParam(name) {
+    try {
+      return new URLSearchParams(window.location.search || "").get(name) || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function getElementDiagnostic(selector) {
+    const element = document.querySelector(selector);
+
+    if (!element) {
+      return {
+        selector: selector,
+        exists: false
+      };
+    }
+
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+
+    return {
+      selector: selector,
+      exists: true,
+      tagName: element.tagName,
+      id: element.id || "",
+      className: String(element.className || ""),
+      childElementCount: element.childElementCount,
+      textLength: (element.innerText || "").trim().length,
+      htmlLength: (element.innerHTML || "").trim().length,
+      display: style.display,
+      visibility: style.visibility,
+      opacity: style.opacity,
+      height: rect.height,
+      width: rect.width,
+      top: rect.top,
+      left: rect.left,
+      hiddenAttribute: element.hasAttribute("hidden"),
+      ariaHidden: element.getAttribute("aria-hidden") || "",
+      dataAdminTab: element.getAttribute("data-admin-tab") || "",
+      dataTab: element.getAttribute("data-tab") || "",
+      dataTarget: element.getAttribute("data-target") || "",
+      href: element.getAttribute("href") || ""
+    };
+  }
+
+  function collectDiagnostics(stage) {
+    const selectors = [
+      "#admin-menu-card",
+      "#settings-menu-edit-card",
+      "#submenu-items",
+      ".menu-tabs",
+      ".admin-tabs",
+      ".admin-tab-content",
+      ".admin-tab-panel",
+      "[data-admin-tab='menu']",
+      "[data-tab='menu']",
+      "[data-target='#admin-menu-card']",
+      "[href*='admin_tab=menu']",
+      "a[href*='admin_tab=menu']",
+      "button[data-admin-tab='menu']"
+    ];
+
+    const relatedElements = Array.from(
+      document.querySelectorAll("[id*='menu'], [class*='menu'], [data-admin-tab], [data-tab], [data-target]")
+    ).slice(0, 120).map(function (element) {
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+
+      return {
+        tagName: element.tagName,
+        id: element.id || "",
+        className: String(element.className || "").slice(0, 220),
+        dataAdminTab: element.getAttribute("data-admin-tab") || "",
+        dataTab: element.getAttribute("data-tab") || "",
+        dataTarget: element.getAttribute("data-target") || "",
+        href: element.getAttribute("href") || "",
+        text: (element.innerText || "").trim().slice(0, 160),
+        childElementCount: element.childElementCount,
+        display: style.display,
+        visibility: style.visibility,
+        opacity: style.opacity,
+        height: rect.height,
+        width: rect.width,
+        hiddenAttribute: element.hasAttribute("hidden"),
+        ariaHidden: element.getAttribute("aria-hidden") || ""
+      };
+    });
+
+    return {
+      logger: LOGGER_NAME,
+      stage: stage,
+      location: {
+        href: window.location.href,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash
+      },
+      query: {
+        menu: getQueryParam("menu"),
+        admin_tab: getQueryParam("admin_tab"),
+        target: getQueryParam("target")
+      },
+      readyState: document.readyState,
+      bodyTextLength: document.body ? (document.body.innerText || "").trim().length : 0,
+      bodyHtmlLength: document.body ? (document.body.innerHTML || "").trim().length : 0,
+      elements: selectors.map(getElementDiagnostic),
+      relatedElements: relatedElements
+    };
+  }
+
+  function sendDiagnostic(stage) {
+    const payload = collectDiagnostics(stage);
+
+    try {
+      console.log(LOGGER_NAME, payload);
+    } catch (error) {
+      /* noop */
+    }
+
+    try {
+      fetch("/debug/global-message-auto-dismiss", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      }).catch(function () {});
+    } catch (error) {
+      /* noop */
+    }
+  }
+
+  function run() {
+    const menu = getQueryParam("menu");
+    const adminTab = getQueryParam("admin_tab");
+
+    if (menu !== "administrativo" || adminTab !== "menu") {
+      return;
+    }
+
+    sendDiagnostic("01_dom_ready");
+
+    window.setTimeout(function () {
+      sendDiagnostic("02_after_500ms");
+    }, 500);
+
+    window.setTimeout(function () {
+      sendDiagnostic("03_after_1500ms");
+    }, 1500);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+})();

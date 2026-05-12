@@ -1,0 +1,327 @@
+################################################################################
+# (1) CONEXÃO
+################################################################################
+
+database_url: postgresql+psycopg://***:***@db:5432/app_igreja
+
+################################################################################
+# (2) TABELAS RELACIONADAS A MENU / SIDEBAR / SETTINGS
+################################################################################
+
+TABELA: sidebar_menu_items
+  - id | type=INTEGER | nullable=False | default="nextval('sidebar_menu_items_id_seq'::regclass)"
+  - module_key | type=VARCHAR(80) | nullable=False | default=None
+  - group_key | type=VARCHAR(80) | nullable=False | default=None
+  - item_key | type=VARCHAR(80) | nullable=False | default=None
+  - label | type=VARCHAR(120) | nullable=False | default=None
+  - route_path | type=VARCHAR(255) | nullable=False | default=None
+  - icon | type=VARCHAR(50) | nullable=True | default=None
+  - display_order | type=INTEGER | nullable=False | default=None
+  - requires_admin | type=BOOLEAN | nullable=False | default=None
+  - is_active | type=BOOLEAN | nullable=False | default=None
+  - created_at | type=TIMESTAMP | nullable=False | default='now()'
+  - updated_at | type=TIMESTAMP | nullable=False | default='now()'
+
+TABELA: sidebar_menu_settings
+  - id | type=INTEGER | nullable=False | default="nextval('sidebar_menu_settings_id_seq'::regclass)"
+  - menu_key | type=VARCHAR(80) | nullable=False | default=None
+  - menu_label | type=VARCHAR(120) | nullable=False | default=None
+  - is_active | type=BOOLEAN | nullable=False | default='true'
+  - is_deleted | type=BOOLEAN | nullable=False | default='false'
+  - menu_config | type=TEXT | nullable=True | default=None
+
+
+################################################################################
+# (3) AMOSTRA DAS TABELAS RELACIONADAS
+################################################################################
+
+AMOSTRA: sidebar_menu_items
+  Linha 1:
+    id: 1
+    module_key: 'home'
+    group_key: 'geral'
+    item_key: 'home'
+    label: 'Home'
+    route_path: '/users/new?menu=home'
+    icon: '[H]'
+    display_order: 10
+    requires_admin: False
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 2:
+    id: 2
+    module_key: 'administrativo'
+    group_key: 'geral'
+    item_key: 'administrativo'
+    label: 'Administrativo'
+    route_path: '/users/new?menu=administrativo'
+    icon: '[*]'
+    display_order: 20
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 3:
+    id: 4
+    module_key: 'funcionarios'
+    group_key: 'igreja'
+    item_key: 'funcionarios'
+    label: 'Funcionarios'
+    route_path: '/users/new?menu=funcionarios'
+    icon: '[F]'
+    display_order: 110
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 4:
+    id: 5
+    module_key: 'financeiro'
+    group_key: 'igreja'
+    item_key: 'financeiro'
+    label: 'Financeiro'
+    route_path: '/users/new?menu=financeiro'
+    icon: '[$]'
+    display_order: 120
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 5:
+    id: 6
+    module_key: 'relatorios'
+    group_key: 'igreja'
+    item_key: 'relatorios'
+    label: 'Relatorios'
+    route_path: '/users/new?menu=relatorios'
+    icon: '[R]'
+    display_order: 130
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 6:
+    id: 7
+    module_key: 'links'
+    group_key: 'igreja'
+    item_key: 'links'
+    label: 'Links'
+    route_path: '/users/new?menu=links'
+    icon: '[L]'
+    display_order: 140
+    requires_admin: False
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 7:
+    id: 8
+    module_key: 'contato'
+    group_key: 'igreja'
+    item_key: 'contato'
+    label: 'Contacto'
+    route_path: '/users/new?menu=contato'
+    icon: '[C]'
+    display_order: 150
+    requires_admin: False
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 8:
+    id: 9
+    module_key: 'tutorial'
+    group_key: 'igreja'
+    item_key: 'tutorial'
+    label: 'Tutorial'
+    route_path: '/users/new?menu=tutorial'
+    icon: '[T]'
+    display_order: 160
+    requires_admin: False
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 9:
+    id: 10
+    module_key: 'tesouraria'
+    group_key: 'tesouraria'
+    item_key: 'tesouraria_dashboard'
+    label: 'Dashboard'
+    route_path: '/tesouraria'
+    icon: '[T]'
+    display_order: 300
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 10:
+    id: 11
+    module_key: 'tesouraria'
+    group_key: 'tesouraria'
+    item_key: 'tesouraria_importar_extrato'
+    label: 'Importar extrato'
+    route_path: '/tesouraria/extratos/importar'
+    icon: '[I]'
+    display_order: 310
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 11:
+    id: 12
+    module_key: 'tesouraria'
+    group_key: 'tesouraria'
+    item_key: 'tesouraria_movimentos'
+    label: 'Movimentos'
+    route_path: '/tesouraria/movimentos'
+    icon: '[M]'
+    display_order: 320
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 12:
+    id: 13
+    module_key: 'tesouraria'
+    group_key: 'tesouraria'
+    item_key: 'tesouraria_relatorios'
+    label: 'Relatorios'
+    route_path: '/tesouraria/relatorios'
+    icon: '[R]'
+    display_order: 330
+    requires_admin: True
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+  Linha 13:
+    id: 3
+    module_key: 'meu_perfil'
+    group_key: 'igreja'
+    item_key: 'meu_perfil'
+    label: 'Meu perfil'
+    route_path: '/users/new?menu=meu_perfil'
+    icon: '[D]'
+    display_order: 100
+    requires_admin: False
+    is_active: True
+    created_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+    updated_at: datetime.datetime(2026, 4, 27, 8, 56, 18, 399785, tzinfo=datetime.timezone.utc)
+
+
+AMOSTRA: sidebar_menu_settings
+  Linha 1:
+    id: 7
+    menu_key: 'links'
+    menu_label: 'Links'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"visibility_scopes": ["owner", "legado"], "sidebar_section": "igreja", "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 6}'
+
+  Linha 2:
+    id: 8
+    menu_key: 'contato'
+    menu_label: 'Contacto'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"visibility_scopes": ["owner", "legado"], "sidebar_section": "igreja", "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 7}'
+
+  Linha 3:
+    id: 1
+    menu_key: 'home'
+    menu_label: 'Home'
+    is_active: True
+    is_deleted: False
+    menu_config: '{"sidebar_section": "geral", "visibility_scopes": ["owner", "legado"], "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 1}'
+
+  Linha 4:
+    id: 9
+    menu_key: 'tutorial'
+    menu_label: 'Tutorial'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"visibility_scopes": ["owner", "legado"], "sidebar_section": "igreja", "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 8}'
+
+  Linha 5:
+    id: 4
+    menu_key: 'funcionarios'
+    menu_label: 'Funcionarios'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"sidebar_section": "igreja", "visibility_scopes": ["owner", "legado"], "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 3}'
+
+  Linha 6:
+    id: 11
+    menu_key: 'teste'
+    menu_label: 'Teste'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"requires_admin": true, "visibility_scopes": ["owner", "legado"], "additional_fields": [], "visible_fields": [], "visible_field_headers": {}, "display_order": 10, "menu_section": "igreja", "sidebar_section": "igreja", "visibility_scope_mode": "all", "visibil...
+
+  Linha 7:
+    id: 5
+    menu_key: 'financeiro'
+    menu_label: 'Financeiro'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"visibility_scopes": ["owner", "legado"], "sidebar_section": "igreja", "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 4}'
+
+  Linha 8:
+    id: 6
+    menu_key: 'relatorios'
+    menu_label: 'Relatorios'
+    is_active: False
+    is_deleted: True
+    menu_config: '{"visibility_scopes": ["owner", "legado"], "sidebar_section": "igreja", "visibility_scope_mode": "all", "visibility_scope_label": "Owner e Legado", "display_order": 5}'
+
+  Linha 9:
+    id: 3
+    menu_key: 'meu_perfil'
+    menu_label: 'Meu perfil'
+    is_active: True
+    is_deleted: False
+    menu_config: '{"additional_fields": [{"key": "custom_dados_pessoais", "label": "Dados pessoais", "field_type": "header", "is_required": false}, {"key": "custom_dados_de_morada", "label": "Dados de morada", "field_type": "header", "is_required": false}, {"key": "custom_esta...
+
+  Linha 10:
+    id: 10
+    menu_key: 'empresa'
+    menu_label: 'Empresa'
+    is_active: True
+    is_deleted: False
+    menu_config: '{"requires_admin": true, "visibility_scopes": ["owner", "legado"], "additional_fields": [{"key": "custom_dados_agregados", "label": "Dados agregados", "field_type": "header", "is_required": false}, {"key": "custom_quantos_filhos_tens", "label": "Quantos filho...
+
+  Linha 11:
+    id: 2
+    menu_key: 'administrativo'
+    menu_label: 'Administrativo'
+    is_active: True
+    is_deleted: False
+    menu_config: '{"sidebar_sections": [{"key": "sistema", "label": "Sistema", "visibility_scopes": ["owner"], "visibility_scope_mode": "owner", "visibility_scope_label": "Owner", "status": "ativo", "is_active": true, "status_label": "Ativo"}, {"key": "dados_gerais", "label": ...
+
+
+
+################################################################################
+# (4) AVALIAÇÃO DOS ÍCONES DE AÇÃO
+################################################################################
+
+A tela já mostra os 4 menus ativos.
+Os ícones não aparecem porque o bloco APPVERBO_ADMIN_MENU_VISIBLE_RENDER_V1 renderiza somente:
+- MENU
+- CHAVE
+- GRUPO
+- ESTADO
+- ORDEM
+
+A correção é adicionar uma coluna AÇÕES no template usando row.key:
+- editar: settings_action=edit
+- ativar/desativar: settings_action=toggle

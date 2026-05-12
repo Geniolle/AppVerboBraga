@@ -23,46 +23,6 @@ from appverbo.services.session import get_current_user, get_session_entity_id
 ####################################################################################
 
 _build_settings_redirect_url = build_settings_redirect_url_v1
-
-# APPVERBO_ADMIN_MENU_REDIRECT_KEEP_MENU_TAB_V3
-def _build_admin_menu_redirect_url_v3(
-    success: str = "",
-    error: str = "",
-    redirect_menu: str = "administrativo",
-    redirect_target: str = "#admin-menu-card",
-    *,
-    error_message: str = "",
-    settings_edit_key: str = "",
-    settings_action: str = "",
-) -> str:
-    clean_error = error or error_message
-
-    base_url = _build_settings_redirect_url(
-        success,
-        clean_error,
-        redirect_menu,
-        redirect_target,
-        settings_edit_key=settings_edit_key,
-        settings_action=settings_action,
-    )
-
-    if "admin_tab=" not in base_url:
-        hash_part = ""
-        url_part = base_url
-
-        if "#" in base_url:
-            url_part, hash_value = base_url.split("#", 1)
-            hash_part = "#" + hash_value
-
-        separator = "&" if "?" in url_part else "?"
-        base_url = url_part + separator + "admin_tab=menu" + hash_part
-
-    clean_target = str(redirect_target or "").strip()
-    if clean_target.startswith("#") and "#" not in base_url:
-        base_url = base_url + clean_target
-
-    return base_url
-
 _require_menu_settings_owner_v1 = require_menu_settings_owner_v1
 
 
@@ -301,7 +261,7 @@ def move_sidebar_menu_setting_handler_v1(
         )
         if not ok:
             return RedirectResponse(
-                url=_build_admin_menu_redirect_url_v3(
+                url=_build_settings_redirect_url(
                     error_message=error_message or "Não foi possível mover a pasta.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
@@ -310,7 +270,7 @@ def move_sidebar_menu_setting_handler_v1(
             )
 
         return RedirectResponse(
-            url=_build_admin_menu_redirect_url_v3(
+            url=_build_settings_redirect_url(
                 success_message="Ordem da pasta atualizada com sucesso.",
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,
@@ -413,7 +373,7 @@ def move_sidebar_menu_setting_admin_subprocess_handler(
         )
         if not ok:
             return RedirectResponse(
-                url=_build_admin_menu_redirect_url_v3(
+                url=_build_settings_redirect_url(
                     error_message=error_message or "Não foi possível mover o menu.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
@@ -422,7 +382,7 @@ def move_sidebar_menu_setting_admin_subprocess_handler(
             )
 
         return RedirectResponse(
-            url=_build_admin_menu_redirect_url_v3(
+            url=_build_settings_redirect_url(
                 success_message="Ordem do menu atualizada com sucesso.",
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,

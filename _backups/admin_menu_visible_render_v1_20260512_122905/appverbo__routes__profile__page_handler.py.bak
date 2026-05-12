@@ -327,8 +327,7 @@ def new_user_page(
     )
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_settings_action = settings_action.strip().lower()
-    # APPVERBO_ADMIN_MENU_ALLOW_MOVE_ACTIONS_V1
-    if clean_settings_action not in {"toggle", "edit", "delete", "create", "move_up", "move_down"}:
+    if clean_settings_action not in {"toggle", "edit", "delete", "create"}:
         clean_settings_action = "edit"
     clean_settings_tab = settings_tab.strip().lower()
     if clean_settings_tab not in {
@@ -622,6 +621,45 @@ def new_user_page(
             return_url="/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card",
         )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
+
+
+    # APPVERBO_ADMIN_MENU_EMPTY_ROWS_DEBUG_V1_START
+    if resolved_admin_tab == "menu":
+        try:
+            active_rows_debug_v1 = getattr(admin_menu_state, "active_rows", None)
+            inactive_rows_debug_v1 = getattr(admin_menu_state, "inactive_rows", None)
+            edit_data_debug_v1 = getattr(admin_menu_state, "edit_data", None)
+            action_options_debug_v1 = getattr(admin_menu_state, "action_options", None)
+
+            active_count_debug_v1 = len(active_rows_debug_v1) if isinstance(active_rows_debug_v1, list) else None
+            inactive_count_debug_v1 = len(inactive_rows_debug_v1) if isinstance(inactive_rows_debug_v1, list) else None
+            action_options_count_debug_v1 = len(action_options_debug_v1) if isinstance(action_options_debug_v1, list) else None
+
+            sidebar_rows_debug_v1 = page_data.get("sidebar_menu_settings", [])
+            sidebar_rows_count_debug_v1 = len(sidebar_rows_debug_v1) if isinstance(sidebar_rows_debug_v1, list) else None
+
+            print(
+                "APPVERBO_ADMIN_MENU_EMPTY_ROWS_DEBUG_V1 "
+                + repr(
+                    {
+                        "resolved_menu": resolved_menu,
+                        "resolved_admin_tab": resolved_admin_tab,
+                        "initial_menu_target": initial_menu_target,
+                        "can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
+                        "admin_menu_state_type": type(admin_menu_state).__name__,
+                        "admin_menu_state_truthy": bool(admin_menu_state),
+                        "active_rows_count": active_count_debug_v1,
+                        "inactive_rows_count": inactive_count_debug_v1,
+                        "edit_data_truthy": bool(edit_data_debug_v1),
+                        "action_options_count": action_options_count_debug_v1,
+                        "page_data_sidebar_menu_settings_count": sidebar_rows_count_debug_v1,
+                    }
+                ),
+                flush=True,
+            )
+        except Exception as exc:
+            print("APPVERBO_ADMIN_MENU_EMPTY_ROWS_DEBUG_ERROR_V1 " + repr(exc), flush=True)
+    # APPVERBO_ADMIN_MENU_EMPTY_ROWS_DEBUG_V1_END
 
     context = {
         "request": request,

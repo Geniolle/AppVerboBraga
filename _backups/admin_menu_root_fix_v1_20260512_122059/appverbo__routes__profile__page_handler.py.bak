@@ -327,8 +327,7 @@ def new_user_page(
     )
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_settings_action = settings_action.strip().lower()
-    # APPVERBO_ADMIN_MENU_ALLOW_MOVE_ACTIONS_V1
-    if clean_settings_action not in {"toggle", "edit", "delete", "create", "move_up", "move_down"}:
+    if clean_settings_action not in {"toggle", "edit", "delete", "create"}:
         clean_settings_action = "edit"
     clean_settings_tab = settings_tab.strip().lower()
     if clean_settings_tab not in {
