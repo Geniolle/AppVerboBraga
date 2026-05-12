@@ -137,7 +137,7 @@ def _resolve_initial_menu_target(
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "sessoes":
             return "#admin-sidebar-sections-card", ""
-        if resolved_admin_tab == "contas":
+        if resolved_admin_tab in {"menu", "contas", "definicoes"}:
             return "#admin-account-status-card", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
@@ -153,6 +153,26 @@ def _resolve_initial_menu_target(
     if matched_menu_row is not None:
         return "#dynamic-process-card", _resolve_first_dynamic_section_key(matched_menu_row)
     return "", ""
+
+
+# APPVERBO_ADMIN_TAB_MENU_CANONICAL_V1_START
+
+def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
+    clean_admin_tab = str(raw_admin_tab or "").strip().lower()
+
+    legacy_aliases = {
+        "contas": "menu",
+        "definicoes": "menu",
+    }
+
+    clean_admin_tab = legacy_aliases.get(clean_admin_tab, clean_admin_tab)
+
+    if clean_admin_tab not in {"utilizador", "entidade", "menu", "sessoes"}:
+        return "entidade"
+
+    return clean_admin_tab
+
+# APPVERBO_ADMIN_TAB_MENU_CANONICAL_V1_END
 
 
 # APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
@@ -289,53 +309,7 @@ def new_user_page(
     resolved_menu = resolve_menu_key_alias(menu)
     if not resolved_menu:
         resolved_menu = "home"
-    resolved_admin_tab = admin_tab.strip().lower()
-    if resolved_admin_tab not in {
-        "utilizador",
-        "entidade",
-        "contas",
-        "definicoes",
-        "sessoes",
-        "menu",
-    }:
-        resolved_admin_tab = "entidade"
-    if resolved_admin_tab == "definicoes":
-        resolved_admin_tab = "contas"
-
-    # APPVERBO_INFER_ADMIN_SESSOES_REFRESH_V1_START
-    # Quando o browser atualiza uma URL antiga/curta do subprocesso de sessoes,
-    # a query pode chegar apenas com target=admin-sidebar-sections-card,
-    # sem admin_tab=sessoes. Nesse caso, a página misturava o subprocesso
-    # com Home/Entidade. Forçamos o contexto correto no backend.
-    clean_target_for_admin_refresh = str(target or "").strip().lower()
-    clean_settings_tab_for_admin_refresh = str(settings_tab or "").strip().lower().replace("_", "-")
-
-    # APPVERBO_FIX_CLEAN_SETTINGS_EDIT_KEY_REFRESH_V3_START
-    clean_settings_edit_key_for_admin_refresh = str(settings_edit_key or "").strip()
-    # APPVERBO_FIX_CLEAN_SETTINGS_EDIT_KEY_REFRESH_V3_END
-    clean_sidebar_sections_tab_for_admin_refresh = (
-        str(sidebar_sections_tab or "").strip().lower().replace("_", "-")
-    )
-    clean_sidebar_section_edit_key_for_admin_refresh = str(sidebar_section_edit_key or "").strip()
-    clean_settings_action_for_admin_refresh = str(settings_action or "").strip().lower()
-
-    if resolved_menu == "administrativo" and resolved_admin_tab == "entidade":
-        if (
-            clean_settings_tab_for_admin_refresh in {"sessoes", "sessoes-sidebar"}
-            or clean_sidebar_sections_tab_for_admin_refresh in {"sessoes", "sessoes-sidebar"}
-            or bool(clean_sidebar_section_edit_key_for_admin_refresh)
-            or "admin-sidebar-sections" in clean_target_for_admin_refresh
-            or "sidebar-sections" in clean_target_for_admin_refresh
-        ):
-            resolved_admin_tab = "sessoes"
-        elif (
-            clean_settings_tab_for_admin_refresh == "menu"
-            or bool(clean_settings_edit_key_for_admin_refresh)
-            or clean_settings_action_for_admin_refresh in {"create", "edit", "toggle"}
-            or clean_target_for_admin_refresh in {"settings-card", "settings-menu-edit-card"}
-        ):
-            resolved_admin_tab = "menu"
-    # APPVERBO_INFER_ADMIN_SESSOES_REFRESH_V1_END
+    resolved_admin_tab = _normalize_admin_tab_menu_v1(admin_tab)
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
     if clean_entity_edit_id.isdigit():
@@ -689,6 +663,8 @@ def new_user_page(
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
         "admin_menu_state": admin_menu_state,
+        "admin_menu_template_ready_v1": True,
+        "admin_menu_template_mode": (str(request.query_params.get("admin_menu_template_mode") or "native").strip().lower() or "native"),
         "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
         **page_data,
     }

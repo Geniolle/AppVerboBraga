@@ -52,7 +52,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260511-admin-status-tables-active-title-v5">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260511-menu-refactor-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260512-sidebar-fixed-v4">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
@@ -155,6 +155,17 @@
     {% include "partials/new_user_sidebar.html" %}
 
     <main class="content">
+{# APPVERBO_ADMIN_MENU_TEMPLATE_INCLUDE_READY_V1_START #}
+{# Fase 3H: include ativo por padrão para admin_tab=menu; fallback legacy por query param. #}
+{% set appverbo_current_admin_tab_v1 = resolved_admin_tab|default(admin_tab|default("", true), true) %}
+{% if admin_menu_template_ready_v1 and admin_menu_template_mode != "legacy" and appverbo_current_admin_tab_v1 == "menu" %}
+  {% include "admin_subprocesses/menu.html" %}
+{% endif %}
+{# APPVERBO_ADMIN_MENU_TEMPLATE_INCLUDE_READY_V1_END #}
+
+
+
+
       <div class="container">
         <section id="menu-tabs-card" class="card menu-tabs-card">
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
@@ -901,11 +912,11 @@
 
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_START -->
         <section id="inactive-users-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores não ativos</h2>
+          <h2>Utilizadores inativos</h2>
           {{ render_admin_user_table_v1(
             inactive_users,
             "inactive-users-table",
-            "Sem Utilizadores não ativos.",
+            "Sem Utilizadores inativos.",
             true
           ) }}
         </section>

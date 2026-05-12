@@ -1,0 +1,84 @@
+{# ################################################################################### #}
+{# (1) TEMPLATE DO SUBPROCESSO ADMINISTRATIVO MENU - V3 #}
+{# ################################################################################### #}
+
+{% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
+
+{# ################################################################################### #}
+{# (2) CONTRATO DE ENTRADA #}
+{# ################################################################################### #}
+{#
+  Este template recebe:
+  - admin_menu_state
+  - admin_menu_template_mode
+
+  Fase 3C:
+  - Native passa a ser o modo padrão para admin_tab=menu.
+  - admin_menu_template_mode=legacy mantém fallback temporário.
+#}
+
+{# ################################################################################### #}
+{# (3) RENDERIZAÇÃO NATIVA PADRÃO #}
+{# ################################################################################### #}
+
+{% set is_admin_menu_legacy_v1 = admin_menu_template_mode|default("native", true) == "legacy" %}
+{% set is_admin_menu_native_v1 = not is_admin_menu_legacy_v1 %}
+
+{% if admin_menu_state %}
+  <div
+    id="admin-menu-template-v1"
+    class="admin-menu-template-v1"
+    data-admin-subprocess-template="menu"
+    data-admin-subprocess-status="state-ready"
+    data-admin-template-mode="{{ admin_menu_template_mode|default('native', true) }}"
+    {% if not is_admin_menu_native_v1 %}hidden{% endif %}
+  >
+    {{ render_admin_subprocess_state(admin_menu_state) }}
+  </div>
+
+  {% if is_admin_menu_native_v1 %}
+    <script>
+      (function () {
+        function hideLegacyMenuCardsV1() {
+          var wrapper = document.getElementById("admin-menu-template-v1");
+
+          if (!wrapper) {
+            return;
+          }
+
+          var selectors = [
+            "#admin-menu-card",
+            "#settings-card",
+            "#settings-menu-edit-card",
+            "#admin-account-status-card"
+          ];
+
+          selectors.forEach(function (selector) {
+            document.querySelectorAll(selector).forEach(function (card) {
+              if (wrapper.contains(card)) {
+                return;
+              }
+
+              card.setAttribute("hidden", "hidden");
+              card.classList.add("appverbo-menu-legacy-hidden-v1");
+              card.setAttribute("data-admin-menu-legacy-hidden", "true");
+            });
+          });
+
+          document.documentElement.setAttribute("data-admin-menu-template-mode", "native");
+        }
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", hideLegacyMenuCardsV1, { once: true });
+        }
+        else {
+          hideLegacyMenuCardsV1();
+        }
+      })();
+    </script>
+  {% endif %}
+{% endif %}
+
+{# ################################################################################### #}
+{# FIM DO TEMPLATE DO SUBPROCESSO MENU #}
+{# ################################################################################### #}
