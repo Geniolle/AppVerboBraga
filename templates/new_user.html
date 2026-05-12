@@ -155,13 +155,6 @@
     {% include "partials/new_user_sidebar.html" %}
 
     <main class="content">
-{# APPVERBO_ADMIN_MENU_TEMPLATE_INCLUDE_READY_V1_START #}
-{# Fase 3H: include ativo por padrão para admin_tab=menu; fallback legacy por query param. #}
-{% set appverbo_current_admin_tab_v1 = resolved_admin_tab|default(admin_tab|default("", true), true) %}
-{% if admin_menu_template_ready_v1 and admin_menu_template_mode != "legacy" and appverbo_current_admin_tab_v1 == "menu" %}
-  {% include "admin_subprocesses/menu.html" %}
-{% endif %}
-{# APPVERBO_ADMIN_MENU_TEMPLATE_INCLUDE_READY_V1_END #}
 
 
 
