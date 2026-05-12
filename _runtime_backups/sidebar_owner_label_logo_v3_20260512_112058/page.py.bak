@@ -421,33 +421,6 @@ def get_page_data(
         selected_entity_id = permissions["selected_entity_id"]
     current_user_is_admin = bool(permissions["is_admin"])
     current_entity_scope = ""
-
-    # APPVERBO_SIDEBAR_OWNER_ENTITY_CONTEXT_V3_START
-    sidebar_owner_entity = {"name": "", "logo_url": ""}
-    try:
-        from sqlalchemy import select as _appverbo_sidebar_select
-        from appverbo.models.entity import Entity as _AppverboSidebarEntity
-
-        _appverbo_owner_stmt = (
-            _appverbo_sidebar_select(_AppverboSidebarEntity)
-            .where(_AppverboSidebarEntity.profile_scope == "owner")
-            .order_by(_AppverboSidebarEntity.id)
-        )
-
-        if hasattr(session, "exec"):
-            _appverbo_owner_entity = session.exec(_appverbo_owner_stmt).first()
-        else:
-            _appverbo_owner_result = session.execute(_appverbo_owner_stmt)
-            _appverbo_owner_entity = _appverbo_owner_result.scalars().first()
-
-        if _appverbo_owner_entity:
-            sidebar_owner_entity = {
-                "name": str(getattr(_appverbo_owner_entity, "name", "") or "").strip(),
-                "logo_url": str(getattr(_appverbo_owner_entity, "logo_url", "") or "").strip(),
-            }
-    except Exception:
-        sidebar_owner_entity = {"name": "", "logo_url": ""}
-    # APPVERBO_SIDEBAR_OWNER_ENTITY_CONTEXT_V3_END
     if selected_entity_id is not None:
         raw_entity_scope = session.execute(
             select(Entity.profile_scope)
@@ -1090,10 +1063,7 @@ def get_page_data(
         "superuser_users": superuser_users,
         "entity_permissions": permissions,
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
-        "sidebar_owner_entity": sidebar_owner_entity,
         "current_entity_scope": current_entity_scope,
-        "sidebar_owner_entity_name": sidebar_owner_entity.get("name", ""),
-        "sidebar_owner_entity_logo_url": sidebar_owner_entity.get("logo_url", ""),
         "sidebar_menu_settings": sidebar_menu_settings,
         "sidebar_section_options": sidebar_section_options,
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),

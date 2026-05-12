@@ -88,23 +88,39 @@
           </nav>
         {% endif %}
       {% endfor %}
-    {# APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_START #}
-    <footer class="appverbo-sidebar-owner-footer" aria-label="Rodape da entidade owner">
-      <div class="appverbo-sidebar-owner-card" aria-label="Entidade owner">
-        <div class="appverbo-sidebar-owner-logo-wrap">
-          {% if sidebar_owner_entity_logo_url %}
-            <img class="appverbo-sidebar-owner-logo" src="{{ sidebar_owner_entity_logo_url }}" alt="Logo da entidade owner">
-          {% else %}
-            <span class="appverbo-sidebar-owner-logo appverbo-sidebar-owner-logo-fallback" aria-hidden="true">
-              {{ (sidebar_owner_entity_name[:1] if sidebar_owner_entity_name else "A")|upper }}
-            </span>
-          {% endif %}
-        </div>
-        <div class="appverbo-sidebar-owner-text">
-          <span class="appverbo-sidebar-owner-name">{{ sidebar_owner_entity_name if sidebar_owner_entity_name else "Owner nao configurado" }}</span>
-        </div>
-      </div>
-    </footer>
-    {# APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_END #}
+    {# APPVERBO_SIDEBAR_OWNER_ENTITY_LABEL_V3_START #}
+{% set sidebar_owner_name = "" %}
+{% set sidebar_owner_logo_url = "" %}
 
+{% if sidebar_owner_entity is defined and sidebar_owner_entity %}
+    {% set sidebar_owner_name = sidebar_owner_entity.name if sidebar_owner_entity.name else "" %}
+    {% set sidebar_owner_logo_url = sidebar_owner_entity.logo_url if sidebar_owner_entity.logo_url else "" %}
+{% endif %}
+
+{% if not sidebar_owner_name and user_personal_data is defined and user_personal_data %}
+    {% set sidebar_owner_name = user_personal_data.primary_entity_name if user_personal_data.primary_entity_name is defined and user_personal_data.primary_entity_name else "" %}
+{% endif %}
+
+{% if not sidebar_owner_logo_url and user_personal_data is defined and user_personal_data %}
+    {% set sidebar_owner_logo_url = user_personal_data.primary_entity_logo_url if user_personal_data.primary_entity_logo_url is defined and user_personal_data.primary_entity_logo_url else "" %}
+{% endif %}
+
+{% if sidebar_owner_name or sidebar_owner_logo_url %}
+<div class="sidebar-address-card appverbo-sidebar-owner-card" data-sidebar-owner-entity="1">
+    <div class="appverbo-sidebar-owner-logo-box">
+        {% if sidebar_owner_logo_url %}
+        <img class="appverbo-sidebar-owner-logo" src="{{ sidebar_owner_logo_url }}" alt="Logo da entidade owner">
+        {% else %}
+        <span class="appverbo-sidebar-owner-logo-placeholder" aria-hidden="true">
+            {{ (sidebar_owner_name|string)[:1]|upper if sidebar_owner_name else "O" }}
+        </span>
+        {% endif %}
+    </div>
+    <div class="appverbo-sidebar-owner-text">
+        <span class="sidebar-address-label appverbo-sidebar-owner-label">Entidade Owner</span>
+        <strong class="sidebar-address-title appverbo-sidebar-owner-name">{{ sidebar_owner_name }}</strong>
+    </div>
+</div>
+{% endif %}
+{# APPVERBO_SIDEBAR_OWNER_ENTITY_LABEL_V3_END #}
 </aside>

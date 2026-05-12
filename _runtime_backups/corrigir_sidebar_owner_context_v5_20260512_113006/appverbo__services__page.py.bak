@@ -1,3 +1,4 @@
+﻿from sqlmodel import select
 from __future__ import annotations
 
 from datetime import date
@@ -427,19 +428,19 @@ def get_page_data(
     try:
         from sqlalchemy import select as _appverbo_sidebar_select
         from appverbo.models.entity import Entity as _AppverboSidebarEntity
-
+    
         _appverbo_owner_stmt = (
             _appverbo_sidebar_select(_AppverboSidebarEntity)
             .where(_AppverboSidebarEntity.profile_scope == "owner")
             .order_by(_AppverboSidebarEntity.id)
         )
-
+    
         if hasattr(session, "exec"):
             _appverbo_owner_entity = session.exec(_appverbo_owner_stmt).first()
         else:
             _appverbo_owner_result = session.execute(_appverbo_owner_stmt)
             _appverbo_owner_entity = _appverbo_owner_result.scalars().first()
-
+    
         if _appverbo_owner_entity:
             sidebar_owner_entity = {
                 "name": str(getattr(_appverbo_owner_entity, "name", "") or "").strip(),
@@ -1091,9 +1092,27 @@ def get_page_data(
         "entity_permissions": permissions,
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
         "sidebar_owner_entity": sidebar_owner_entity,
+                # APPVERBO_SIDEBAR_OWNER_ENTITY_CONTEXT_V4_START
+        sidebar_owner_entity = None
+        sidebar_owner_entity_name = ""
+        sidebar_owner_entity_logo_url = ""
+
+        try:
+            sidebar_owner_entity = session.exec(
+                select(Entity)
+                .where(Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER)
+                .order_by(Entity.id)
+            ).first()
+        except Exception:
+            sidebar_owner_entity = None
+
+        if sidebar_owner_entity is not None:
+            sidebar_owner_entity_name = str(getattr(sidebar_owner_entity, "name", "") or "").strip()
+            sidebar_owner_entity_logo_url = str(getattr(sidebar_owner_entity, "logo_url", "") or "").strip()
+        # APPVERBO_SIDEBAR_OWNER_ENTITY_CONTEXT_V4_END
         "current_entity_scope": current_entity_scope,
-        "sidebar_owner_entity_name": sidebar_owner_entity.get("name", ""),
-        "sidebar_owner_entity_logo_url": sidebar_owner_entity.get("logo_url", ""),
+        "sidebar_owner_entity_name": sidebar_owner_entity_name,
+        "sidebar_owner_entity_logo_url": sidebar_owner_entity_logo_url,
         "sidebar_menu_settings": sidebar_menu_settings,
         "sidebar_section_options": sidebar_section_options,
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
@@ -1412,3 +1431,5 @@ __all__ = [
     "get_next_entity_internal_number",
     "build_users_new_url",
 ]
+
+

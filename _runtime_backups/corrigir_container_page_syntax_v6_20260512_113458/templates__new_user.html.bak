@@ -52,7 +52,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260511-admin-status-tables-active-title-v5">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260512-sidebar-owner-footer-logo-v7">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260512-sidebar-owner-label-logo-v5">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">

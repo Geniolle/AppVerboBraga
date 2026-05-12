@@ -6200,27 +6200,16 @@ body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"]
 /* APPVERBO_ADMIN_MENU_NATIVE_V4_END */
 
 
-/* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_START */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-}
-
-.appverbo-sidebar-owner-footer {
-  margin-top: auto;
-  padding: 12px 14px 14px;
-  flex: 0 0 auto;
-}
-
+/* APPVERBO_SIDEBAR_OWNER_ENTITY_LABEL_V5_START */
 .appverbo-sidebar-owner-card {
-  margin: 0;
+  margin: auto 14px 14px;
   padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--sidebar-line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .appverbo-sidebar-owner-logo-wrap {
@@ -6258,6 +6247,15 @@ body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"]
   gap: 2px;
 }
 
+.appverbo-sidebar-owner-label {
+  font-size: 10px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 700;
+}
+
 .appverbo-sidebar-owner-name {
   font-size: 13px;
   line-height: 1.2;
@@ -6267,4 +6265,4 @@ body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"]
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_END */
+/* APPVERBO_SIDEBAR_OWNER_ENTITY_LABEL_V5_END */
