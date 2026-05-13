@@ -6659,6 +6659,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       currentUrl.searchParams.delete("dynamic_process_section");
       currentUrl.searchParams.delete("section_key");
       currentUrl.hash = "#create-user-card";
+    } else if (actionLookup.includes("/users/new")) {
+      currentUrl.searchParams.set("menu", "administrativo");
+      currentUrl.searchParams.set("admin_tab", "utilizador");
+      currentUrl.searchParams.set("target", "#create-user-card");
+      currentUrl.searchParams.delete("dynamic_process_section");
+      currentUrl.searchParams.delete("section_key");
+      currentUrl.hash = "#create-user-card";
     } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
       currentUrl.searchParams.set("menu", "administrativo");
       currentUrl.searchParams.set("admin_tab", "sessoes");
@@ -7098,6 +7105,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
       url.hash = "#create-user-card";
+    } else if (actionLookup.includes("/users/new")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "utilizador");
+      url.searchParams.set("target", "#create-user-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#create-user-card";
     } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "sessoes");
@@ -7506,6 +7520,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("section_key");
       url.hash = "#create-entity-card";
     } else if (actionLookup.includes("/users/update")) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "utilizador");
+      url.searchParams.set("target", "#create-user-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#create-user-card";
+    } else if (actionLookup.includes("/users/new")) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "utilizador");
       url.searchParams.set("target", "#create-user-card");

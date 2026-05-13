@@ -2,8 +2,11 @@
 {% macro render_admin_user_shadow_cell_v12(row, column) %}
   {% set value = row.get(column.source, "-") %}
   {% if column.source == "status_label" %}
-    {% if row.get('status') == "active" or row.get('status') == "ativo" %}
+    {% set normalized_status = (row.get('status') or '')|string|lower %}
+    {% if normalized_status == "active" or normalized_status == "ativo" %}
       <span class="entity-status entity-status-active">{{ value }}</span>
+    {% elif normalized_status == "pending" or normalized_status == "pendente" %}
+      <span class="entity-status entity-status-pending">{{ value }}</span>
     {% else %}
       <span class="entity-status entity-status-inactive">{{ value }}</span>
     {% endif %}
@@ -16,11 +19,13 @@
   {% set user_id = row.get('id', '') %}
 {% set view_url = row.get("view_url") or "" %}
 {% set edit_url = row.get("edit_url") or "" %}
-{% set close_url = row.get("close_url") or "/users/new?menu=administrativo&admin_tab=utilizador" %}
+{% set status_value = (row.get("status") or "")|string|lower %}
+{% set show_delete = status_value not in ["active", "ativo"] %}
   <div class="table-actions">
     <a
       class="table-icon-btn"
       href="{{ view_url }}"
+      data-admin-user-action-link="1"
       data-appverbo-user-action="view"
       data-appverbo-user-view="1"
       title="Exibir utilizador"
@@ -33,6 +38,7 @@
     <a
       class="table-icon-btn"
       href="{{ edit_url }}"
+      data-admin-user-action-link="1"
       data-appverbo-user-action="edit"
       data-appverbo-user-view="0"
       title="Modificar utilizador"
@@ -42,6 +48,19 @@
     >
       &#9998;
     </a>
+    {% if show_delete %}
+    <form method="post" action="/users/delete" style="display:inline;">
+      <input type="hidden" name="user_id" value="{{ user_id }}">
+      <button
+        type="submit"
+        class="table-icon-btn table-icon-btn-danger"
+        title="Eliminar utilizador"
+        aria-label="Eliminar utilizador"
+      >
+        &#128465;
+      </button>
+    </form>
+    {% endif %}
   </div>
 {% endmacro %}
 

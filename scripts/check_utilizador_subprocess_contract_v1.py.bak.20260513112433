@@ -53,18 +53,6 @@ def main() -> None:
         and "montar_url_fechar_utilizador_v1" in urls,
         "urls.py deve centralizar URLs de Exibir, Editar e Fechar",
     )
-    assert_true(
-        'f"?menu={USER_ADMIN_MENU_V1}"' in urls
-        and 'f"&admin_tab={USER_ADMIN_TAB_V1}"' in urls
-        and 'f"&user_edit_id={clean_user_id}"' in urls
-        and 'f"&target={USER_EDIT_TARGET_V1}"' in urls
-        and 'f"#{USER_EDIT_TARGET_V1}"' in urls,
-        "urls.py deve montar menu/admin_tab/user_edit_id/target/hash para o subprocesso Utilizador.",
-    )
-    assert_true(
-        'f"&user_view=1"' in urls and 'f"&user_view=0"' in urls,
-        "urls.py deve montar user_view=1 (Exibir) e user_view=0 (Editar).",
-    )
 
     assert_true(
         "montar_estado_pagina_utilizador_v1" in pagina,

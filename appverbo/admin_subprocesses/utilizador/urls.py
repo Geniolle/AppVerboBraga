@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import urlencode
 
 
-####################################################################################
-# (1) NORMALIZAÇÃO DO IDENTIFICADOR DO UTILIZADOR
-####################################################################################
+USER_ADMIN_BASE_URL_V1 = "/users/new"
+USER_ADMIN_MENU_V1 = "administrativo"
+USER_ADMIN_TAB_V1 = "utilizador"
+USER_EDIT_TARGET_V1 = "edit-user-card"
+
 
 def _normalizar_user_id_v1(user_id: Any) -> str:
     clean_user_id = str(user_id or "").strip()
@@ -17,64 +18,50 @@ def _normalizar_user_id_v1(user_id: Any) -> str:
     return clean_user_id
 
 
-####################################################################################
-# (2) URL BASE DO SUBPROCESSO UTILIZADOR
-####################################################################################
-
-def montar_url_base_utilizador_v1() -> str:
-    params = (
-        ("menu", "administrativo"),
-        ("admin_tab", "utilizador"),
-    )
-
-    return "/users/new?" + urlencode(params)
-
-
-####################################################################################
-# (3) URL DE EXIBIR UTILIZADOR
-####################################################################################
-
 def montar_url_exibir_utilizador_v1(user_id: Any) -> str:
     clean_user_id = _normalizar_user_id_v1(user_id)
 
     if not clean_user_id:
-        return montar_url_base_utilizador_v1()
+        return ""
 
-    params = (
-        ("menu", "administrativo"),
-        ("admin_tab", "utilizador"),
-        ("user_edit_id", clean_user_id),
-        ("user_view", "1"),
-        ("target", "edit-user-card"),
+    return (
+        f"{USER_ADMIN_BASE_URL_V1}"
+        f"?menu={USER_ADMIN_MENU_V1}"
+        f"&admin_tab={USER_ADMIN_TAB_V1}"
+        f"&user_edit_id={clean_user_id}"
+        f"&user_view=1"
+        f"&target={USER_EDIT_TARGET_V1}"
+        f"#{USER_EDIT_TARGET_V1}"
     )
 
-    return "/users/new?" + urlencode(params) + "#edit-user-card"
-
-
-####################################################################################
-# (4) URL DE EDITAR UTILIZADOR
-####################################################################################
 
 def montar_url_editar_utilizador_v1(user_id: Any) -> str:
     clean_user_id = _normalizar_user_id_v1(user_id)
 
     if not clean_user_id:
-        return montar_url_base_utilizador_v1()
+        return ""
 
-    params = (
-        ("menu", "administrativo"),
-        ("admin_tab", "utilizador"),
-        ("user_edit_id", clean_user_id),
-        ("user_view", "0"),
-        ("target", "edit-user-card"),
+    return (
+        f"{USER_ADMIN_BASE_URL_V1}"
+        f"?menu={USER_ADMIN_MENU_V1}"
+        f"&admin_tab={USER_ADMIN_TAB_V1}"
+        f"&user_edit_id={clean_user_id}"
+        f"&user_view=0"
+        f"&target={USER_EDIT_TARGET_V1}"
+        f"#{USER_EDIT_TARGET_V1}"
     )
 
-    return "/users/new?" + urlencode(params) + "#edit-user-card"
-
-
-####################################################################################
-# (5) URL DE FECHAR UTILIZADOR
-####################################################################################
 
 def montar_url_fechar_utilizador_v1() -> str:
-    return montar_url_base_utilizador_v1()
+    return f"{USER_ADMIN_BASE_URL_V1}?menu={USER_ADMIN_MENU_V1}&admin_tab={USER_ADMIN_TAB_V1}"
+
+
+__all__ = (
+    "USER_ADMIN_BASE_URL_V1",
+    "USER_ADMIN_MENU_V1",
+    "USER_ADMIN_TAB_V1",
+    "USER_EDIT_TARGET_V1",
+    "montar_url_exibir_utilizador_v1",
+    "montar_url_editar_utilizador_v1",
+    "montar_url_fechar_utilizador_v1",
+)

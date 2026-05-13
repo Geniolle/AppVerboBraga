@@ -931,8 +931,11 @@ def get_page_data(
         entity_name_stmt = (
             select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name)
            .join(Entity, Entity.id == MemberEntity.entity_id)
-           .where(MemberEntity.member_id.in_(member_ids))
-           .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
+           .where(
+                MemberEntity.member_id.in_(member_ids),
+                MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+            )
+           .order_by(MemberEntity.member_id.asc(), MemberEntity.id.desc())
         )
         if apply_scope_filter and scoped_entity_ids:
             entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
@@ -1334,8 +1337,11 @@ def get_user_edit_data(
 
     member_entity_stmt = (
         select(MemberEntity.entity_id)
-       .where(MemberEntity.member_id == row.member_id)
-       .order_by(MemberEntity.id.asc())
+       .where(
+            MemberEntity.member_id == row.member_id,
+            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+        )
+       .order_by(MemberEntity.id.desc())
     )
     if allowed_entity_ids is not None:
         if allowed_entity_ids:

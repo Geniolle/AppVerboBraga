@@ -6,7 +6,7 @@ from datetime import date
 from typing import Any
 
 from fastapi import Request
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -562,6 +562,15 @@ def execute_create_user(
         .order_by(MemberEntity.id.asc())
         .limit(1)
     ).scalar_one_or_none()
+    session.execute(
+        update(MemberEntity)
+        .where(
+            MemberEntity.member_id == member.id,
+            MemberEntity.entity_id != selected_entity.id,
+            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+        )
+        .values(status=MemberEntityStatus.INACTIVE.value)
+    )
     if existing_member_link is None:
         session.add(
             MemberEntity(

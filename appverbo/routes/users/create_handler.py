@@ -34,6 +34,45 @@ def create_user_v1(
     invite_delivery: str = Form("email"),
 ):
     try:
+        clean_entity_id = (entity_id or "").strip()
+        clean_profile_id = (profile_id or "").strip()
+
+        if not clean_entity_id:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    error="Entidade é obrigatória.",
+                    menu="administrativo",
+                    admin_tab="utilizador",
+                )
+                + "#create-user-card",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if not clean_profile_id:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    error="Perfil global é obrigatório.",
+                    menu="administrativo",
+                    admin_tab="utilizador",
+                )
+                + "#create-user-card",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        explicit_entity_id: int | None = None
+        if clean_entity_id.isdigit():
+            explicit_entity_id = int(clean_entity_id)
+        else:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    error="Entidade inválida.",
+                    menu="administrativo",
+                    admin_tab="utilizador",
+                )
+                + "#create-user-card",
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         payload = normalize_create_user_input_v1(
             full_name=full_name,
             primary_phone=primary_phone,
@@ -57,6 +96,7 @@ def create_user_v1(
                 request=request,
                 actor_user=current_user,
                 selected_entity_id=get_session_entity_id(request),
+                explicit_entity_id=explicit_entity_id,
                 payload=payload,
             )
 

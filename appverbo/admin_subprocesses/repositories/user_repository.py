@@ -130,16 +130,17 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             select(
                 MemberEntity.member_id.label("member_id"),
                 Entity.name.label("entity_name"),
+                MemberEntity.id.label("member_entity_id"),
             )
             .join(Entity, Entity.id == MemberEntity.entity_id)
             .where(
                 MemberEntity.status == MemberEntityStatus.ACTIVE.value,
                 MemberEntity.member_id.in_(member_ids),
             )
-            .order_by(Entity.name.asc())
+            .order_by(MemberEntity.member_id.asc(), MemberEntity.id.desc())
         ).all()
 
-        names_by_member_id: dict[int, list[str]] = {}
+        names_by_member_id: dict[int, str] = {}
 
         for row in rows:
             member_id = int(row.member_id)
@@ -148,15 +149,10 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             if not entity_name:
                 continue
 
-            names_by_member_id.setdefault(member_id, [])
+            if member_id not in names_by_member_id:
+                names_by_member_id[member_id] = entity_name
 
-            if entity_name not in names_by_member_id[member_id]:
-                names_by_member_id[member_id].append(entity_name)
-
-        return {
-            member_id: ", ".join(entity_names)
-            for member_id, entity_names in names_by_member_id.items()
-        }
+        return names_by_member_id
 
     def _build_profile_names_by_user_id(
         self,

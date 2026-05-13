@@ -2151,3 +2151,81 @@ async def appverbo_global_message_auto_dismiss_debug_v2(request: Request) -> JSO
             status_code=500,
         )
 # APPVERBO_GLOBAL_MESSAGE_AUTO_DISMISS_DEBUG_ENDPOINT_V2_END
+
+
+# APPVERBO_UTILIZADOR_ACTION_FLOW_DEBUG_ENDPOINT_V1_START
+@router.post("/debug/utilizador-action-flow")
+async def appverbo_utilizador_action_flow_debug_v1(request: Request) -> JSONResponse:
+    import json
+    import os
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    try:
+        try:
+            payload = await request.json()
+        except Exception as exc:
+            payload = {
+                "json_error": repr(exc),
+            }
+
+        request_url = ""
+        request_path = ""
+        request_client = ""
+
+        try:
+            request_url = str(request.url)
+            request_path = str(request.url.path)
+            request_client = str(getattr(request.client, "host", "") or "")
+        except Exception:
+            pass
+
+        log_entry = {
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+            "logger": "APPVERBO_UTILIZADOR_ACTION_FLOW_DEBUG_V1",
+            "request": {
+                "method": str(request.method),
+                "path": request_path,
+                "url": request_url,
+                "client": request_client,
+            },
+            "payload": payload,
+        }
+
+        log_dir = Path(
+            os.environ.get(
+                "APPVERBO_UTILIZADOR_ACTION_FLOW_LOG_DIR",
+                "appverbo_runtime_logs",
+            )
+        )
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        log_line = json.dumps(
+            log_entry,
+            ensure_ascii=False,
+            default=str,
+            sort_keys=True,
+        )
+
+        with (log_dir / "utilizador_action_flow_debug.log").open("a", encoding="utf-8") as log_file:
+            log_file.write(log_line + "\n")
+
+        print("APPVERBO_UTILIZADOR_ACTION_FLOW_DEBUG " + log_line, flush=True)
+
+        return JSONResponse({"ok": True})
+
+    except Exception as exc:
+        print(
+            "APPVERBO_UTILIZADOR_ACTION_FLOW_DEBUG_ERROR " + repr(exc),
+            flush=True,
+        )
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": repr(exc),
+            },
+            status_code=500,
+        )
+
+
+# APPVERBO_UTILIZADOR_ACTION_FLOW_DEBUG_ENDPOINT_V1_END

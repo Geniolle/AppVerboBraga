@@ -122,13 +122,51 @@
     updateTable(tableRoot);
   }
 
-  function findCreateActionsCard() {
-    const explicitCard = document.querySelector("[data-admin-user-create-card='1']");
+  function buildUserActionUrl(action, userId) {
+    const cleanUserId = String(userId || "").trim();
 
-    if (explicitCard) {
-      return explicitCard;
+    if (!cleanUserId) {
+      return "";
     }
 
+    const userViewValue = action === "view" ? "1" : "0";
+
+    return "/users/new"
+      + "?menu=administrativo"
+      + "&admin_tab=utilizador"
+      + "&user_edit_id=" + encodeURIComponent(cleanUserId)
+      + "&user_view=" + userViewValue
+      + "&target=edit-user-card"
+      + "#edit-user-card";
+  }
+
+  function forceNativeActionNavigation(event) {
+    const actionLink = event.target.closest(
+      "[data-admin-user-shadow-real-link]"
+    );
+
+    if (!actionLink) {
+      return;
+    }
+
+    const action = actionLink.getAttribute("data-admin-user-shadow-real-link");
+    const userId = actionLink.getAttribute("data-admin-user-shadow-user-id");
+    const explicitUrl = buildUserActionUrl(action, userId);
+    const fallbackUrl = actionLink.getAttribute("href") || actionLink.href;
+    const targetUrl = explicitUrl || fallbackUrl;
+
+    if (!targetUrl) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    window.location.href = targetUrl;
+  }
+
+  function findCreateActionsCard() {
     const cards = Array.from(document.querySelectorAll(".card"));
 
     return cards.find(function (card) {
@@ -194,44 +232,19 @@
     }, 120);
   }
 
-  function moveEditCardAboveShadow_v1() {
-    const params = new URLSearchParams(window.location.search);
-
-    if (params.get("menu") !== "administrativo" || params.get("admin_tab") !== "utilizador") {
-      return;
-    }
-
-    if (!params.get("user_edit_id")) {
-      return;
-    }
-
-    const shadowCard = document.getElementById("admin-user-shadow-readonly-card");
-    const editCard = document.getElementById("edit-user-card");
-
-    if (!shadowCard || !editCard || !shadowCard.parentNode) {
-      return;
-    }
-
-    if (editCard.nextElementSibling === shadowCard) {
-      return;
-    }
-
-    shadowCard.parentNode.insertBefore(editCard, shadowCard);
-  }
-
   function initAll() {
     document
       .querySelectorAll("[data-admin-user-shadow-table]")
       .forEach(initTable);
 
     moveCreateActionsCardToTop();
-    moveEditCardAboveShadow_v1();
     focusEditUserCardFromQuery();
 
     window.setTimeout(moveCreateActionsCardToTop, 250);
-    window.setTimeout(moveEditCardAboveShadow_v1, 280);
     window.setTimeout(focusEditUserCardFromQuery, 350);
   }
+
+  document.addEventListener("click", forceNativeActionNavigation, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initAll);

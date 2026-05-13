@@ -132,6 +132,12 @@
   margin-top: 0;
 }
 
+.admin-user-shadow-table-v1 .entity-status.entity-status-pending {
+  color: #8a6a00;
+  background: #fff4cc;
+  border-color: #f0d67a;
+}
+
 @media (max-width: 900px) {
   .admin-user-shadow-toolbar-v1 {
     justify-content: stretch;

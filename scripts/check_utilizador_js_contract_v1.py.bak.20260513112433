@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -14,7 +14,6 @@ MODULO_NAVEGACAO = ROOT / "static" / "js" / "modules" / "admin_user_action_navig
 NOME_MODULO = "APPVERBO_ADMIN_USER_ACTION_NAVIGATION_V1"
 ARQUIVO_MODULO = "admin_user_action_navigation_v1.js"
 ARQUIVO_TABELA = "admin_user_shadow_table_v1.js"
-MARCADOR_BRIDGE_ANTIGO = "APPVERBO_UTILIZADOR_ACTION_CLICK_BRIDGE"
 
 
 def read_text_v4(path: Path) -> str:
@@ -47,15 +46,9 @@ def validar_modulo_navegacao_v4() -> None:
         "window.APPVERBO_ADMIN_USER_ACTION_NAVIGATION_V1" in texto,
         "Modulo de navegacao deve exportar window.APPVERBO_ADMIN_USER_ACTION_NAVIGATION_V1.",
     )
-    possui_listener_click = (
-        'document.addEventListener("click"' in texto
-        or "document.addEventListener('click'" in texto
-        or 'window.addEventListener("click"' in texto
-        or "window.addEventListener('click'" in texto
-    )
     assert_true_v4(
-        possui_listener_click,
-        "Modulo de navegacao deve registar listener de click (document ou window).",
+        "document.addEventListener" in texto and '"click"' in texto,
+        "Modulo de navegacao deve registar listener de click.",
     )
     assert_true_v4(
         "window.location.assign" in texto,
@@ -66,16 +59,8 @@ def validar_modulo_navegacao_v4() -> None:
         "Modulo de navegacao deve impedir handlers concorrentes antes de navegar.",
     )
     assert_true_v4(
-        "stopPropagation" in texto,
-        "Modulo de navegacao deve interromper propagacao de click concorrente.",
-    )
-    assert_true_v4(
         "user_edit_id" in texto and "user_view" in texto,
         "Modulo de navegacao deve validar parametros de acao do Utilizador.",
-    )
-    assert_true_v4(
-        "data-admin-user-action-link='1'" in texto or 'data-admin-user-action-link="1"' in texto,
-        "Modulo de navegacao deve filtrar click por data-admin-user-action-link='1'.",
     )
 
 
@@ -90,14 +75,6 @@ def validar_modulo_tabela_v4() -> None:
         "APPVERBO_ADMIN_USER_ACTION_NAVIGATION_V1" not in texto,
         "Modulo de tabela nao deve conter logica de navegacao das acoes.",
     )
-    assert_true_v4(
-        "window.location.assign" not in texto and "window.location.href" not in texto,
-        "Modulo de tabela nao deve navegar para Exibir/Editar/Fechar.",
-    )
-    assert_true_v4(
-        "data-admin-user-shadow-real-link" not in texto,
-        "Modulo de tabela nao deve interceptar link de acao do subprocesso Utilizador.",
-    )
 
 
 def validar_template_principal_v4() -> None:
@@ -106,10 +83,6 @@ def validar_template_principal_v4() -> None:
     assert_true_v4(
         contar_script_tags_v4(texto, ARQUIVO_MODULO) == 0,
         "Template principal nao deve carregar diretamente o modulo isolado de navegacao do Utilizador.",
-    )
-    assert_true_v4(
-        MARCADOR_BRIDGE_ANTIGO not in texto,
-        "Template principal nao deve conter bridge inline antigo de click do Utilizador.",
     )
 
 
@@ -132,8 +105,8 @@ def validar_partial_utilizador_v4() -> None:
         "Modulo de navegacao deve ser carregado depois do modulo de tabela.",
     )
     assert_true_v4(
-        "view_url" in texto and "edit_url" in texto,
-        "Partial deve expor view_url e edit_url.",
+        "view_url" in texto and "edit_url" in texto and "close_url" in texto,
+        "Partial deve expor view_url, edit_url e close_url.",
     )
     assert_true_v4(
         'href="{{ view_url }}"' in texto,
@@ -142,11 +115,6 @@ def validar_partial_utilizador_v4() -> None:
     assert_true_v4(
         'href="{{ edit_url }}"' in texto,
         "Partial deve usar href direto para Editar.",
-    )
-    assert_true_v4(
-        'data-admin-user-action-link="1"' in texto
-        or "data-admin-user-action-link='1'" in texto,
-        "Partial deve marcar links de Exibir/Editar com data-admin-user-action-link='1'.",
     )
 
 
