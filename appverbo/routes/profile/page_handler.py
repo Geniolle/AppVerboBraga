@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from appverbo.page_state.pagina_default import resolver_pagina_default_v1
 from datetime import datetime, timezone
 from typing import Any
 
@@ -10,6 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from appverbo.admin_subprocesses.menu.service import build_admin_menu_state
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
+from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_from_repository
 
 # APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_START
 from appverbo.admin_subprocesses.v2_service import build_admin_subprocess_state_v2
@@ -464,6 +466,17 @@ def new_user_page(
     if clean_target_from_query:
         initial_menu_target = clean_target_from_query
 
+    # APPVERBO_PAGE_HANDLER_UTILIZADOR_EDIT_TARGET_V2_START
+    if (
+        resolved_menu == "administrativo"
+        and resolved_admin_tab == "utilizador"
+        and parsed_user_edit_id is not None
+    ):
+        initial_menu_target = "#edit-user-card"
+        initial_dynamic_process_section = ""
+    # APPVERBO_PAGE_HANDLER_UTILIZADOR_EDIT_TARGET_V2_END
+
+
     if (
         resolved_menu == MENU_MEU_PERFIL_KEY
         and clean_target_from_query != "#dynamic-process-card"
@@ -494,6 +507,24 @@ def new_user_page(
         clean_dynamic_section_from_query = ""
 
     is_post_save_return = str(appverbo_after_save or "").strip() == "1"
+    # APPVERBO_PAGE_STATE_CONTEXT_V1_START
+    page_state = resolver_pagina_default_v1(
+        resolved_menu=resolved_menu,
+        resolved_admin_tab=resolved_admin_tab,
+        resolved_profile_tab=resolved_profile_tab,
+        parsed_user_edit_id=parsed_user_edit_id,
+        user_view=user_view,
+        parsed_entity_edit_id=parsed_entity_edit_id,
+        entity_view=entity_view,
+        clean_settings_edit_key=clean_settings_edit_key,
+        clean_settings_action=clean_settings_action,
+        clean_target_from_query=clean_target_from_query,
+        clean_profile_section_from_query=clean_profile_section_from_query,
+        clean_dynamic_section_from_query=clean_dynamic_section_from_query,
+        sidebar_section_edit_key=sidebar_section_edit_key,
+        is_post_save_return=is_post_save_return,
+    )
+    # APPVERBO_PAGE_STATE_CONTEXT_V1_END
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
     # ###################################################################################
@@ -623,7 +654,39 @@ def new_user_page(
         )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_UTILIZADOR_SHADOW_V1_START
+    # Estado nativo em paralelo para validar o subprocesso Utilizador sem trocar a tela legada.
+    # O bloco usa sessão própria para ficar isolado da estrutura legada da página.
+    admin_subprocess_shadow_state_v1 = None
+
+    if resolved_admin_tab == "utilizador":
+        utilizador_subprocess_config_v1 = get_admin_subprocess_config("utilizador")
+
+        if utilizador_subprocess_config_v1 is not None:
+            with SessionLocal() as admin_subprocess_shadow_session_v1:
+                admin_subprocess_shadow_state_v1 = build_admin_subprocess_state_from_repository(
+                    config=utilizador_subprocess_config_v1,
+                    session=admin_subprocess_shadow_session_v1,
+                    edit_key=clean_user_edit_id,
+                    success=success or "",
+                    error=error or "",
+                    return_url="/users/new?menu=administrativo&admin_tab=utilizador&target=create-user-card#create-user-card",
+                    context={
+        "page_state": page_state,
+        "page_state_refresh_home_url": page_state.get("refresh_home_url", "/users/new?menu=home"),
+                        "current_user": current_user,
+                        "selected_entity_id": selected_entity_id,
+                        "allowed_entity_ids": entity_permissions["allowed_entity_ids"],
+                        "can_manage_all_entities": entity_permissions["can_manage_all_entities"],
+                    },
+                )
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_UTILIZADOR_SHADOW_V1_END
+
+
+
     context = {
+        "page_state": page_state,
+        "page_state_refresh_home_url": page_state.get("refresh_home_url", "/users/new?menu=home"),
         "request": request,
         "errors": [error] if error else [],
         "success": success or "",
@@ -663,6 +726,7 @@ def new_user_page(
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
+        "admin_subprocess_shadow_state": admin_subprocess_shadow_state_v1,
         "admin_menu_state": admin_menu_state,
         "admin_menu_template_ready_v1": True,
         "admin_menu_template_mode": (str(request.query_params.get("admin_menu_template_mode") or "native").strip().lower() or "native"),

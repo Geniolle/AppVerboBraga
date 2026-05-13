@@ -1,9 +1,10 @@
+
 {% extends "base.html" %}
 
 {% from "macros/admin_menu_subprocess.html" import render_admin_menu_state %}
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
-{% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
+{% from "partials/admin_user_shadow_readonly_v1.html" import render_admin_user_shadow_readonly_v12 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 {# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_START #}
@@ -198,6 +199,10 @@
   window.setTimeout(forceMenuCardsVisibleV1, 250);
 })();
 </script>
+<!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_START -->
+<script defer src="/static/js/modules/appverbo_page_state_refresh_home_v1.js?v=20260513-pagina-default-refresh-home-v1"></script>
+<!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_END -->
+
 {% endblock %}
 
 {% block body %}
@@ -1358,9 +1363,325 @@
           <p>Ligado como <strong>{{ current_user.full_name }}</strong> ({{ current_user.login_email }})</p>
         </section>
 
-        {% if current_user_is_admin %}
+        <!-- APPVERBO_UTILIZADOR_SHADOW_READONLY_V1_START -->
+        {% if current_user_is_admin and admin_tab == "utilizador" and admin_subprocess_shadow_state %}
+          {{ render_admin_user_shadow_readonly_v12(admin_subprocess_shadow_state) }}
+        {% endif %}
+        <!-- APPVERBO_UTILIZADOR_SHADOW_READONLY_V1_END -->
+
+{% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
+        <!-- APPVERBO_UTILIZADOR_ACTION_CLICK_BRIDGE_V17_START -->
+<script>
+(function () {
+  "use strict";
+
+  if (window.__appverboUtilizadorActionClickBridgeV17Loaded) {
+    return;
+  }
+
+  window.__appverboUtilizadorActionClickBridgeV17Loaded = true;
+
+  function parseUrl_v17(value) {
+    try {
+      return new URL(value, window.location.origin);
+    }
+    catch (error) {
+      return null;
+    }
+  }
+
+  function normalizeText_v17(value) {
+    return String(value || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
+  function isCurrentUtilizadorPage_v17() {
+    const currentUrl = parseUrl_v17(window.location.href);
+
+    if (!currentUrl) {
+      return false;
+    }
+
+    return (
+      currentUrl.pathname === "/users/new" &&
+      currentUrl.searchParams.get("menu") === "administrativo" &&
+      currentUrl.searchParams.get("admin_tab") === "utilizador"
+    );
+  }
+
+  function isUserActionUrl_v17(url) {
+    if (!url) {
+      return false;
+    }
+
+    return (
+      url.pathname === "/users/new" &&
+      url.searchParams.get("menu") === "administrativo" &&
+      url.searchParams.get("admin_tab") === "utilizador" &&
+      url.searchParams.has("user_edit_id") &&
+      url.searchParams.has("user_view")
+    );
+  }
+
+  function canonicalizeUserActionUrl_v17(url) {
+    if (!url) {
+      return null;
+    }
+
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "utilizador");
+    url.searchParams.set("target", "edit-user-card");
+    url.hash = "edit-user-card";
+
+    return url;
+  }
+
+  function getUrlFromNode_v17(node) {
+    if (!node) {
+      return null;
+    }
+
+    const directHref = node.getAttribute && node.getAttribute("href");
+
+    if (directHref) {
+      return parseUrl_v17(directHref);
+    }
+
+    const dataHref = node.getAttribute && (
+      node.getAttribute("data-href") ||
+      node.getAttribute("data-url") ||
+      node.getAttribute("data-link")
+    );
+
+    if (dataHref) {
+      return parseUrl_v17(dataHref);
+    }
+
+    return null;
+  }
+
+  function inferActionFromNode_v17(node) {
+    if (!node) {
+      return "";
+    }
+
+    const rawText = [
+      node.getAttribute && node.getAttribute("href"),
+      node.getAttribute && node.getAttribute("data-href"),
+      node.getAttribute && node.getAttribute("data-url"),
+      node.getAttribute && node.getAttribute("data-appverbo-user-action"),
+      node.getAttribute && node.getAttribute("data-appverbo-user-view"),
+      node.getAttribute && node.getAttribute("data-action"),
+      node.getAttribute && node.getAttribute("data-title"),
+      node.getAttribute && node.getAttribute("title"),
+      node.getAttribute && node.getAttribute("aria-label"),
+      node.className,
+      node.textContent
+    ].join(" ");
+
+    const text = normalizeText_v17(rawText);
+
+    if (
+      text.indexOf("user_view=1") >= 0 ||
+      text.indexOf("view") >= 0 ||
+      text.indexOf("exibir") >= 0 ||
+      text.indexOf("visualizar") >= 0 ||
+      text.indexOf("olho") >= 0 ||
+      text.indexOf("eye") >= 0
+    ) {
+      return "1";
+    }
+
+    if (
+      text.indexOf("user_view=0") >= 0 ||
+      text.indexOf("edit") >= 0 ||
+      text.indexOf("editar") >= 0 ||
+      text.indexOf("lapis") >= 0 ||
+      text.indexOf("pencil") >= 0
+    ) {
+      return "0";
+    }
+
+    return "";
+  }
+
+  function findUserIdFromScope_v17(scope) {
+    if (!scope) {
+      return "";
+    }
+
+    const selectors = [
+      "[data-user-edit-id]",
+      "[data-user-id]",
+      "[data-row-id]",
+      "[data-id]",
+      "tr",
+      "[data-appverbo-row]",
+      "[data-admin-row]"
+    ];
+
+    for (const selector of selectors) {
+      const node = scope.closest && scope.closest(selector);
+
+      if (!node) {
+        continue;
+      }
+
+      const directValue =
+        node.getAttribute("data-user-edit-id") ||
+        node.getAttribute("data-user-id") ||
+        node.getAttribute("data-row-id") ||
+        node.getAttribute("data-id");
+
+      if (directValue && /^\d+$/.test(String(directValue))) {
+        return String(directValue);
+      }
+
+      const link = node.querySelector && node.querySelector('a[href*="user_edit_id="]');
+
+      if (link) {
+        const url = parseUrl_v17(link.getAttribute("href"));
+
+        if (url && url.searchParams.get("user_edit_id")) {
+          return url.searchParams.get("user_edit_id");
+        }
+      }
+    }
+
+    return "";
+  }
+
+  function findActionUrlInScope_v17(scope, actionView) {
+    if (!scope || !actionView) {
+      return null;
+    }
+
+    const rowScope = scope.closest && (
+      scope.closest("tr") ||
+      scope.closest("[data-user-id]") ||
+      scope.closest("[data-row-id]") ||
+      scope.closest("[data-id]") ||
+      scope.closest("[data-appverbo-row]") ||
+      scope.closest("[data-admin-row]")
+    );
+
+    const searchScope = rowScope || scope;
+
+    if (!searchScope.querySelector) {
+      return null;
+    }
+
+    const link = searchScope.querySelector(
+      'a[href*="/users/new"][href*="admin_tab=utilizador"][href*="user_edit_id="][href*="user_view=' + actionView + '"]'
+    );
+
+    if (!link) {
+      return null;
+    }
+
+    const url = parseUrl_v17(link.getAttribute("href"));
+
+    if (!isUserActionUrl_v17(url)) {
+      return null;
+    }
+
+    return canonicalizeUserActionUrl_v17(url);
+  }
+
+  function buildActionUrl_v17(userId, actionView) {
+    if (!userId || !actionView) {
+      return null;
+    }
+
+    const url = new URL("/users/new", window.location.origin);
+    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("admin_tab", "utilizador");
+    url.searchParams.set("user_edit_id", userId);
+    url.searchParams.set("user_view", actionView);
+    url.searchParams.set("target", "edit-user-card");
+    url.hash = "edit-user-card";
+
+    return url;
+  }
+
+  function navigate_v17(event, url) {
+    if (!url) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.stopImmediatePropagation) {
+      event.stopImmediatePropagation();
+    }
+
+    window.location.assign(url.toString());
+  }
+
+  function handleUtilizadorActionClick_v17(event) {
+    if (!isCurrentUtilizadorPage_v17()) {
+      return;
+    }
+
+    const target = event.target;
+
+    if (!target || !target.closest) {
+      return;
+    }
+
+    const directAnchor = target.closest("a[href]");
+    const directUrl = getUrlFromNode_v17(directAnchor);
+
+    if (isUserActionUrl_v17(directUrl)) {
+      navigate_v17(event, canonicalizeUserActionUrl_v17(directUrl));
+      return;
+    }
+
+    const control = target.closest(
+      'a,button,[role="button"],[data-href],[data-url],[data-link],[data-action],[data-appverbo-user-action],[data-appverbo-user-view],span,i,svg'
+    );
+
+    if (!control) {
+      return;
+    }
+
+    const controlUrl = getUrlFromNode_v17(control);
+
+    if (isUserActionUrl_v17(controlUrl)) {
+      navigate_v17(event, canonicalizeUserActionUrl_v17(controlUrl));
+      return;
+    }
+
+    const actionView = inferActionFromNode_v17(control);
+
+    if (actionView !== "1" && actionView !== "0") {
+      return;
+    }
+
+    const scopedUrl = findActionUrlInScope_v17(control, actionView);
+
+    if (scopedUrl) {
+      navigate_v17(event, scopedUrl);
+      return;
+    }
+
+    const userId = findUserIdFromScope_v17(control);
+    const builtUrl = buildActionUrl_v17(userId, actionView);
+
+    if (builtUrl) {
+      navigate_v17(event, builtUrl);
+    }
+  }
+
+  document.addEventListener("click", handleUtilizadorActionClick_v17, true);
+})();
+</script>
+<!-- APPVERBO_UTILIZADOR_ACTION_CLICK_BRIDGE_V17_END -->
+<section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
             {% if success %}
               <div class="alert ok">{{ success }}</div>
             {% endif %}
@@ -1533,34 +1854,16 @@
                 {% if not user_readonly_mode %}
                 <button type="submit" class="action-btn">Guardar</button>
                 {% endif %}
-                <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card">{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+                <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=utilizador">{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
               </div>
             </form>
           </div>
         </section>
         {% endif %}
         <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_START -->
-        <section id="admin-users-created-card" class="card" data-menu-scope="administrativo">
-          <h2 class="admin-subprocess-active-title-v1">Utilizadores ativos</h2>
-          {{ render_admin_user_table_v1(
-            active_created_users,
-            "admin-users-table",
-            "Sem utilizadores ativos.",
-            false
-          ) }}
-        </section>
         <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_END -->
 
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_START -->
-        <section id="inactive-users-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores inativos</h2>
-          {{ render_admin_user_table_v1(
-            inactive_users,
-            "inactive-users-table",
-            "Sem Utilizadores inativos.",
-            true
-          ) }}
-        </section>
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_END -->
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}

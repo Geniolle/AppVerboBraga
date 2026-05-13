@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 import ast
 import re
 import sys
@@ -845,14 +845,18 @@ if ADMIN_CSS_CACHE not in template_content:
         fail_v2("não encontrei </head> para incluir CSS admin_subprocesses_v1.css.")
 
 if ADMIN_JS_CACHE not in template_content:
-    if "</body>" in template_content:
+    if "
+</body>" in template_content:
         template_content = template_content.replace(
-            "</body>",
-            f'  <script src="{ADMIN_JS_CACHE}"></script>\n</body>',
+            "
+</body>",
+            f'  <script src="{ADMIN_JS_CACHE}"></script>\n
+</body>',
             1,
         )
     else:
-        fail_v2("não encontrei </body> para incluir JS admin_subprocesses_v1.js.")
+        fail_v2("não encontrei
+</body> para incluir JS admin_subprocesses_v1.js.")
 
 template_content = strip_trailing_whitespace_v2(template_content)
 write_text_v2(TEMPLATE_PATH, template_content)
