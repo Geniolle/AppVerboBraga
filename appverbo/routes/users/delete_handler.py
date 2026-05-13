@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from appverbo.admin_subprocesses.utilizador.delete_service import execute_delete_user_v1
+from appverbo.use_cases.users.delete_user import execute_delete_user_v1
 from appverbo.routes.users.router import router
 
 

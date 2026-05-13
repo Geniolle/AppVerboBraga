@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 TEMPLATE_PRINCIPAL = ROOT / "templates" / "new_user.html"
 PARTIAL_UTILIZADOR = ROOT / "templates" / "partials" / "admin_user_shadow_readonly_v1.html"
+PARTIAL_TABELA_BASE = ROOT / "templates" / "partials" / "admin_user_table_base_v1.html"
 MODULO_TABELA = ROOT / "static" / "js" / "modules" / "admin_user_shadow_table_v1.js"
 MODULO_NAVEGACAO = ROOT / "static" / "js" / "modules" / "admin_user_action_navigation_v1.js"
 
@@ -115,6 +116,7 @@ def validar_template_principal_v4() -> None:
 
 def validar_partial_utilizador_v4() -> None:
     texto = read_text_v4(PARTIAL_UTILIZADOR)
+    texto_tabela_base = read_text_v4(PARTIAL_TABELA_BASE)
 
     qtd_nav = contar_script_tags_v4(texto, ARQUIVO_MODULO)
     qtd_tabela = contar_script_tags_v4(texto, ARQUIVO_TABELA)
@@ -132,21 +134,21 @@ def validar_partial_utilizador_v4() -> None:
         "Modulo de navegacao deve ser carregado depois do modulo de tabela.",
     )
     assert_true_v4(
-        "view_url" in texto and "edit_url" in texto,
-        "Partial deve expor view_url e edit_url.",
+        "view_url" in texto_tabela_base and "edit_url" in texto_tabela_base,
+        "Partial de tabela base deve expor view_url e edit_url.",
     )
     assert_true_v4(
-        'href="{{ view_url }}"' in texto,
-        "Partial deve usar href direto para Exibir.",
+        'href="{{ view_url }}"' in texto_tabela_base,
+        "Partial de tabela base deve usar href direto para Exibir.",
     )
     assert_true_v4(
-        'href="{{ edit_url }}"' in texto,
-        "Partial deve usar href direto para Editar.",
+        'href="{{ edit_url }}"' in texto_tabela_base,
+        "Partial de tabela base deve usar href direto para Editar.",
     )
     assert_true_v4(
-        'data-admin-user-action-link="1"' in texto
-        or "data-admin-user-action-link='1'" in texto,
-        "Partial deve marcar links de Exibir/Editar com data-admin-user-action-link='1'.",
+        'data-admin-user-action-link="1"' in texto_tabela_base
+        or "data-admin-user-action-link='1'" in texto_tabela_base,
+        "Partial de tabela base deve marcar links de Exibir/Editar com data-admin-user-action-link='1'.",
     )
 
 

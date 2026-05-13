@@ -84,18 +84,22 @@ def main() -> None:
     )
 
     partial_path = ROOT / "templates/partials/admin_user_shadow_readonly_v1.html"
+    table_base_path = ROOT / "templates/partials/admin_user_table_base_v1.html"
 
     if partial_path.exists():
         partial = partial_path.read_text(encoding="utf-8")
+        table_base = table_base_path.read_text(encoding="utf-8") if table_base_path.exists() else ""
 
         assert_true(
-            'row.get("view_url")' in partial or "row.get('view_url')" in partial,
-            "partial do Utilizador deve usar view_url vindo do repository",
+            ('row.get("view_url")' in partial or "row.get('view_url')" in partial)
+            or ('row.get("view_url")' in table_base or "row.get('view_url')" in table_base),
+            "partial do Utilizador deve usar view_url vindo do repository (no partial principal ou no table base)",
         )
 
         assert_true(
-            'row.get("edit_url")' in partial or "row.get('edit_url')" in partial,
-            "partial do Utilizador deve usar edit_url vindo do repository",
+            ('row.get("edit_url")' in partial or "row.get('edit_url')" in partial)
+            or ('row.get("edit_url")' in table_base or "row.get('edit_url')" in table_base),
+            "partial do Utilizador deve usar edit_url vindo do repository (no partial principal ou no table base)",
         )
 
         assert_true(

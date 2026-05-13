@@ -6,7 +6,7 @@ import traceback
 from fastapi import Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from appverbo.admin_subprocesses.utilizador.create_service import (
+from appverbo.use_cases.users.create_user import (
     execute_create_user,
     normalize_create_user_input_v1,
 )

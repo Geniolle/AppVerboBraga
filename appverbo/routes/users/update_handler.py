@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from appverbo.admin_subprocesses.utilizador.service import (
+from appverbo.use_cases.users.update_user import (
     execute_update_user_v1,
     normalize_update_user_input_v1,
 )
