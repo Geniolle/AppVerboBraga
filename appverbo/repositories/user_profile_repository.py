@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from appverbo.models import Profile, UserProfile
@@ -14,7 +14,9 @@ def get_active_profile_ids_by_user(session: Session, user_id: int) -> list[int]:
                 UserProfile.user_id == int(user_id),
                 UserProfile.is_active.is_(True),
             )
-        ).scalars().all()
+        )
+        .scalars()
+        .all()
         if raw_id is not None
     ]
 
@@ -29,5 +31,26 @@ def get_active_profile_names_by_user(session: Session, user_id: int) -> list[str
         )
         .order_by(Profile.name.asc())
     ).scalars().all()
+
     return [str(name or "").strip() for name in rows if str(name or "").strip()]
 
+
+def replace_user_profile(
+    session: Session,
+    user_id: int,
+    profile_id: int,
+    *,
+    is_active: bool = True,
+) -> None:
+    session.execute(delete(UserProfile).where(UserProfile.user_id == int(user_id)))
+    session.add(
+        UserProfile(
+            user_id=int(user_id),
+            profile_id=int(profile_id),
+            is_active=bool(is_active),
+        )
+    )
+
+
+def delete_user_profiles(session: Session, user_id: int) -> None:
+    session.execute(delete(UserProfile).where(UserProfile.user_id == int(user_id)))

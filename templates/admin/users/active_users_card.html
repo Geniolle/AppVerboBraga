@@ -1,22 +1,36 @@
 {% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
 
-{% macro render_active_users_card_v1(state) %}
-<section
-  id="admin-user-shadow-readonly-card"
-  class="card admin-user-shadow-readonly-card-v1"
-  data-menu-scope="administrativo"
-  data-admin-subprocess-shadow="utilizador"
->
-  <div class="admin-subsection">
-    <h3>{{ state.config.active_title }}</h3>
-    <p class="muted">Total: {{ state.active_rows|length }}</p>
+{% macro render_active_users_card_v1(state_or_rows=None) %}
+{% set is_state = state_or_rows is not none and state_or_rows.active_rows is defined %}
+{% if is_state %}
+  {% set user_rows = state_or_rows.active_rows %}
+  {% set card_title = state_or_rows.config.active_title if state_or_rows.config is defined else "Utilizadores criados" %}
+  {% set card_id = "admin-user-shadow-readonly-card" %}
+{% elif state_or_rows is not none %}
+  {% set user_rows = state_or_rows %}
+  {% set card_title = "Utilizadores criados" %}
+  {% set card_id = "admin-users-created-card" %}
+{% elif active_created_users is defined %}
+  {% set user_rows = active_created_users %}
+  {% set card_title = "Utilizadores criados" %}
+  {% set card_id = "admin-users-created-card" %}
+{% else %}
+  {% set user_rows = [] %}
+  {% set card_title = "Utilizadores criados" %}
+  {% set card_id = "admin-users-created-card" %}
+{% endif %}
 
-    {% if state.active_rows %}
-      {{ render_admin_user_table_v1("active", state.active_rows, state.config.columns) }}
-    {% else %}
-      <p class="empty">Sem utilizadores ativos no processo nativo.</p>
-    {% endif %}
-  </div>
+<section id="{{ card_id }}" class="card admin-user-shadow-readonly-card-v1" data-menu-scope="administrativo" data-admin-subprocess-shadow="utilizador">
+  <h2>{{ card_title }}</h2>
+  {{ render_admin_user_table_v1(
+    user_rows,
+    "admin-users-table",
+    "Sem utilizadores ativos.",
+    false
+  ) }}
 </section>
 {% endmacro %}
 
+{% if active_created_users is defined %}
+  {{ render_active_users_card_v1(active_created_users) }}
+{% endif %}

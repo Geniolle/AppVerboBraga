@@ -1,5 +1,74 @@
-{% macro render_edit_user_card_v1() %}
-{# Wrapper estrutural para futura migração do card de edição do Utilizador #}
-<section id="edit-user-card"></section>
-{% endmacro %}
+<section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
+          <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
+          {% if success %}
+            <div class="alert ok">{{ success }}</div>
+          {% endif %}
+
+          {% if errors %}
+            <div class="alert error">
+              <ul>
+                {% for error in errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          <div class="admin-subsection">
+            <form method="post" action="/users/update">
+              <input type="hidden" name="user_id" value="{{ user_edit_data.id }}">
+              <div class="grid">
+                <div class="field">
+                  <label for="edit_user_full_name">Nome completo *</label>
+                  <input id="edit_user_full_name" name="full_name" required value="{{ user_edit_data.full_name }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_primary_phone">Telefone principal *</label>
+                  <input id="edit_user_primary_phone" name="primary_phone" required value="{{ user_edit_data.primary_phone }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_email">Email *</label>
+                  <input id="edit_user_email" name="email" type="email" required value="{{ user_edit_data.email }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_account_status">Estado da conta *</label>
+                  <select id="edit_user_account_status" name="account_status" required>
+                    <option value="active" {% if user_edit_data.account_status == "active" %}selected{% endif %}>Ativo</option>
+                    <option value="pending" {% if user_edit_data.account_status == "pending" %}selected{% endif %}>Pendente</option>
+                    <option value="inactive" {% if user_edit_data.account_status == "inactive" %}selected{% endif %}>Inativo</option>
+                    <option value="blocked" {% if user_edit_data.account_status == "blocked" %}selected{% endif %}>Bloqueado</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="edit_user_entity_name">Entidade</label>
+                  <input
+                    id="edit_user_entity_name"
+                    value="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                  <input type="hidden" name="entity_id" value="{{ user_edit_data.entity_id }}">
+                </div>
+                <div class="field full">
+                  <label for="edit_user_profile_id">Perfil global *</label>
+                  <select id="edit_user_profile_id" name="profile_id" required>
+                    <option value="">Selecionar perfil</option>
+                    {% for profile in profiles %}
+                      <option value="{{ profile.id }}" {% if user_edit_data.profile_id == profile.id|string %}selected{% endif %}>
+                        {{ profile.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="form-action-row">
+                {% if not user_readonly_mode %}
+                <button type="submit" class="action-btn">Guardar</button>
+                {% endif %}
+                <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=utilizador">{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+              </div>
+            </form>
+          </div>
+        </section>

@@ -1,19 +1,36 @@
 {% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
 
-{% macro render_inactive_users_card_v1(state) %}
-<section
-  id="admin-user-shadow-inactive-card"
-  class="card admin-user-shadow-readonly-card-v1 admin-user-shadow-inactive-card-v1"
-  data-menu-scope="administrativo"
-  data-admin-subprocess-shadow="utilizador-inactive"
->
-  <h3>{{ state.config.inactive_title }}</h3>
+{% macro render_inactive_users_card_v1(state_or_rows=None) %}
+{% set is_state = state_or_rows is not none and state_or_rows.inactive_rows is defined %}
+{% if is_state %}
+  {% set user_rows = state_or_rows.inactive_rows %}
+  {% set card_title = state_or_rows.config.inactive_title if state_or_rows.config is defined else "Utilizadores inativos" %}
+  {% set card_id = "admin-user-shadow-inactive-card" %}
+{% elif state_or_rows is not none %}
+  {% set user_rows = state_or_rows %}
+  {% set card_title = "Utilizadores inativos" %}
+  {% set card_id = "inactive-users-card" %}
+{% elif inactive_users is defined %}
+  {% set user_rows = inactive_users %}
+  {% set card_title = "Utilizadores inativos" %}
+  {% set card_id = "inactive-users-card" %}
+{% else %}
+  {% set user_rows = [] %}
+  {% set card_title = "Utilizadores inativos" %}
+  {% set card_id = "inactive-users-card" %}
+{% endif %}
 
-  {% if state.inactive_rows %}
-    {{ render_admin_user_table_v1("inactive", state.inactive_rows, state.config.columns) }}
-  {% else %}
-    <p class="empty">Sem utilizadores inativos, pendentes ou bloqueados no processo nativo.</p>
-  {% endif %}
+<section id="{{ card_id }}" class="card admin-user-shadow-readonly-card-v1 admin-user-shadow-inactive-card-v1" data-menu-scope="administrativo" data-admin-subprocess-shadow="utilizador-inactive">
+  <h2>{{ card_title }}</h2>
+  {{ render_admin_user_table_v1(
+    user_rows,
+    "inactive-users-table",
+    "Sem utilizadores inativos.",
+    true
+  ) }}
 </section>
 {% endmacro %}
 
+{% if inactive_users is defined %}
+  {{ render_inactive_users_card_v1(inactive_users) }}
+{% endif %}

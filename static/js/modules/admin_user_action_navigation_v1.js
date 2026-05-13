@@ -61,6 +61,10 @@
     return Boolean(
       target.closest("#admin-user-shadow-readonly-card") ||
       target.closest("#admin-user-shadow-inactive-card") ||
+      target.closest("#admin-users-created-card") ||
+      target.closest("#inactive-users-card") ||
+      target.closest("[data-admin-subprocess-shadow='utilizador']") ||
+      target.closest("[data-admin-subprocess-shadow='utilizador-inactive']") ||
       target.closest("[data-admin-user-actions]")
     );
   }
@@ -99,7 +103,7 @@
         keepalive: true
       }).catch(function () {});
     } catch (error) {
-      // Nao bloquear navegacao por erro de debug.
+      // Nao bloquear navegação por erro de debug.
     }
   }
 
@@ -137,16 +141,38 @@
     }
 
     const userView = url.searchParams.get("user_view");
-    return userView === "1" || userView === "0";
+    return !userView || userView === "1" || userView === "0";
   }
 
-  function normalizarDestinoUtilizador_v1(url) {
+  function resolverUserViewAcaoUtilizador_v1(url, actionElement) {
+    const urlUserView = String(url.searchParams.get("user_view") || "").trim();
+
+    if (urlUserView === "1" || urlUserView === "0") {
+      return urlUserView;
+    }
+
+    const dataUserView = String(
+      actionElement ? actionElement.getAttribute("data-appverbo-user-view") || "" : ""
+    ).trim();
+
+    if (dataUserView === "1" || dataUserView === "0") {
+      return dataUserView;
+    }
+
+    const action = String(
+      actionElement ? actionElement.getAttribute("data-appverbo-user-action") || "" : ""
+    ).trim().toLowerCase();
+
+    return action === "view" ? "1" : "0";
+  }
+
+  function normalizarDestinoUtilizador_v1(url, actionElement) {
     const destino = new URL("/users/new", window.location.origin);
 
     destino.searchParams.set("menu", "administrativo");
     destino.searchParams.set("admin_tab", "utilizador");
     destino.searchParams.set("user_edit_id", url.searchParams.get("user_edit_id"));
-    destino.searchParams.set("user_view", url.searchParams.get("user_view"));
+    destino.searchParams.set("user_view", resolverUserViewAcaoUtilizador_v1(url, actionElement));
     destino.searchParams.set("target", "edit-user-card");
     destino.hash = "edit-user-card";
 
@@ -168,7 +194,17 @@
       return null;
     }
 
-    return node.closest("a[href][data-admin-user-action-link='1']");
+    const explicitLink = node.closest("a[href][data-admin-user-action-link='1']");
+
+    if (explicitLink) {
+      return explicitLink;
+    }
+
+    if (!isCliqueNoEscopoTabelaUtilizador_v1(node)) {
+      return null;
+    }
+
+    return node.closest("a[href*='user_edit_id=']");
   }
 
   function extrairHrefAcaoUtilizador_v1(actionElement) {
@@ -266,7 +302,7 @@
       return;
     }
 
-    const destino = normalizarDestinoUtilizador_v1(url);
+    const destino = normalizarDestinoUtilizador_v1(url, actionElement);
     if (!destino) {
       enviarLogFluxoUtilizador_v1("destino_vazio", {
         href: href
@@ -335,6 +371,7 @@
     moduleName: MODULE_NAME_V1,
     normalizarUrlAcaoUtilizador_v1,
     isUrlAcaoUtilizador_v1,
+    resolverUserViewAcaoUtilizador_v1,
     normalizarDestinoUtilizador_v1,
     localizarLinkAcaoUtilizador_v1,
     extrairHrefAcaoUtilizador_v1,

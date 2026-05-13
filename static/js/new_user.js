@@ -1136,7 +1136,14 @@ if (initialAdminTab === "entidade") {
 if (startupHash === "#home-summary-card") {
   homeSelectedTarget = startupHash;
 }
-if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
+if (
+  startupHash === "#create-user-card" ||
+  startupHash === "#edit-user-card" ||
+  startupHash === "#admin-user-shadow-readonly-card" ||
+  startupHash === "#admin-user-shadow-inactive-card" ||
+  startupHash === "#admin-users-created-card" ||
+  startupHash === "#inactive-users-card"
+) {
   adminSelectedTarget = "#create-user-card";
 } else if (
   startupHash === "#create-entity-card" ||
@@ -2698,6 +2705,8 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
       (
         card.id === "create-user-card" ||
         card.id === "edit-user-card" ||
+        card.id === "admin-user-shadow-readonly-card" ||
+        card.id === "admin-user-shadow-inactive-card" ||
         card.id === "admin-users-created-card" ||
         card.id === "inactive-users-card"
       );
@@ -4404,6 +4413,13 @@ function handleHashNavigation(rawHash) {
   let normalizedHash = cleanHash;
   if (normalizedHash === "#edit-user-card") {
     normalizedHash = "#create-user-card";
+  } else if (
+    normalizedHash === "#admin-user-shadow-readonly-card" ||
+    normalizedHash === "#admin-user-shadow-inactive-card" ||
+    normalizedHash === "#admin-users-created-card" ||
+    normalizedHash === "#inactive-users-card"
+  ) {
+    normalizedHash = "#create-user-card";
   } else if (normalizedHash === "#edit-entity-card") {
     normalizedHash = "#create-entity-card";
   } else if (normalizedHash === "#configuracao-account-status-card") {
@@ -4422,6 +4438,14 @@ function handleHashNavigation(rawHash) {
   const targetMenu = hashTargetMenuMap[normalizedHash];
   if (targetMenu) {
     activateMenuTarget(targetMenu, normalizedHash);
+    if (cleanHash !== normalizedHash) {
+      try {
+        const scrollTarget = document.querySelector(cleanHash);
+        if (scrollTarget) {
+          scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      } catch (error) {}
+    }
   }
 }
 
