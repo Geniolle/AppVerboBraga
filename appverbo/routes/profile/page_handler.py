@@ -18,6 +18,7 @@ from appverbo.admin_subprocesses.v2_service import build_admin_subprocess_state_
 
 # APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_END
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
+from appverbo.admin_subprocesses.utilizador.pagina import montar_estado_pagina_utilizador_v1
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
@@ -175,6 +176,7 @@ def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
     return clean_admin_tab
 
 # APPVERBO_ADMIN_TAB_MENU_CANONICAL_V1_END
+
 
 
 # APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
@@ -670,10 +672,10 @@ def new_user_page(
                     edit_key=clean_user_edit_id,
                     success=success or "",
                     error=error or "",
-                    return_url="/users/new?menu=administrativo&admin_tab=utilizador&target=create-user-card#create-user-card",
+                    return_url="/users/new?menu=administrativo&admin_tab=utilizador",
                     context={
-        "page_state": page_state,
-        "page_state_refresh_home_url": page_state.get("refresh_home_url", "/users/new?menu=home"),
+                        "page_state": page_state,
+                        "page_state_refresh_home_url": page_state.get("refresh_home_url", "/users/new?menu=home"),
                         "current_user": current_user,
                         "selected_entity_id": selected_entity_id,
                         "allowed_entity_ids": entity_permissions["allowed_entity_ids"],
@@ -682,9 +684,28 @@ def new_user_page(
                 )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_UTILIZADOR_SHADOW_V1_END
 
+    # APPVERBO_UTILIZADOR_SUBPROCESS_STATE_ISOLADO_V3_START
+    admin_subprocess_state_utilizador_v1 = None
+
+    if resolved_admin_tab == "utilizador":
+        with SessionLocal() as utilizador_subprocess_session_v1:
+            admin_subprocess_state_utilizador_v1 = montar_estado_pagina_utilizador_v1(
+                session=utilizador_subprocess_session_v1,
+                user_edit_id=clean_user_edit_id,
+                user_view=user_view,
+                selected_entity_id=selected_entity_id,
+                allowed_entity_ids=entity_permissions["allowed_entity_ids"],
+                success=success or "",
+                error=error or "",
+            )
+    # APPVERBO_UTILIZADOR_SUBPROCESS_STATE_ISOLADO_V3_END
+
+
+
 
 
     context = {
+        "admin_subprocess_state_utilizador_v1": admin_subprocess_state_utilizador_v1,
         "page_state": page_state,
         "page_state_refresh_home_url": page_state.get("refresh_home_url", "/users/new?menu=home"),
         "request": request,
@@ -725,7 +746,9 @@ def new_user_page(
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
-        "admin_subprocess_state": admin_subprocess_state_v2,
+        "admin_subprocess_state": admin_subprocess_state_utilizador_v1 if resolved_admin_tab == "utilizador" else admin_subprocess_state_v2,
+        "admin_subprocess_state_utilizador": admin_subprocess_state_utilizador_v1,
+        "admin_subprocess_shadow_state_v1": admin_subprocess_state_utilizador_v1,
         "admin_subprocess_shadow_state": admin_subprocess_shadow_state_v1,
         "admin_menu_state": admin_menu_state,
         "admin_menu_template_ready_v1": True,

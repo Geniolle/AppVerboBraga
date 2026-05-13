@@ -6,6 +6,11 @@ from typing import Any
 from sqlalchemy import select
 
 from appverbo.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
+from appverbo.admin_subprocesses.utilizador.urls import (
+    montar_url_editar_utilizador_v1,
+    montar_url_exibir_utilizador_v1,
+    montar_url_fechar_utilizador_v1,
+)
 from appverbo.models import (
     Entity,
     Member,
@@ -30,11 +35,11 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
     """
     Repository isolada para o subprocesso Utilizador.
 
-    Esta versão mantém a leitura segura para escala:
-    - usa SELECT por colunas;
-    - evita N+1 para Member, Entity e Profile;
-    - respeita escopo de entidades quando recebido no context;
-    - não altera criação, edição, convite ou geração de link.
+    Regras de performance:
+    - SELECT explícito por colunas;
+    - evita N+1 para entidades e perfis;
+    - respeita escopo de entidades recebido no context;
+    - não altera criação, convite, edição ou geração de link legado.
     """
 
     def _resolve_allowed_entity_ids(
@@ -233,6 +238,9 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             "is_active": is_active,
             "created_at": row.created_at,
             "created_at_label": created_at_label,
+            "view_url": montar_url_exibir_utilizador_v1(user_id),
+            "edit_url": montar_url_editar_utilizador_v1(user_id),
+            "close_url": montar_url_fechar_utilizador_v1(),
         }
 
     def list_rows(

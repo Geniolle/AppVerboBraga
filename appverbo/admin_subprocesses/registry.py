@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .utilizador.configuracao import UTILIZADOR_CONFIG
 
 from .models import (
     AdminActionConfig,
@@ -244,33 +245,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 # (6) CONFIGURAÇÃO - UTILIZADOR
 ####################################################################################
 
-UTILIZADOR_CONFIG = AdminSubprocessConfig(
-    key="utilizador",
-    label="Utilizador",
-    singular_label="Utilizador",
-    plural_label="Utilizadores",
-    edit_param="user_edit_id",
-    default_target="create-user-card",
-    edit_target="edit-user-card",
-    create_title="Criar utilizador",
-    edit_title="Editar utilizador",
-    active_title="Utilizadores ativos",
-    inactive_title="Utilizadores inativos",
-    save_endpoint="/users/update",
-    repository_name="user",
-    repository_class="appverbo.admin_subprocesses.repositories.user_repository.UserAdminRepository",
-    status_field="account_status",
-    active_value="active",
-    inactive_value="inactive",
-    identity_field="id",
-    label_field="full_name",
-    enabled=True,
-    migration_status="native_shadow",
-    fields=USER_FIELDS,
-    columns=USER_COLUMNS,
-    actions=DEFAULT_ACTIVE_ACTIONS,
-)
-
+# UTILIZADOR_CONFIG é definido em appverbo/admin_subprocesses/utilizador/configuracao.py
 
 ####################################################################################
 # (7) CONFIGURAÇÃO - MENU

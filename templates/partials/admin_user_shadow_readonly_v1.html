@@ -14,9 +14,9 @@
 
 {% macro render_admin_user_shadow_actions_v15(row) %}
   {% set user_id = row.get('id', '') %}
-{% set view_url = "/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id=" ~ user_id ~ "&user_view=1&target=edit-user-card#edit-user-card" %}
-{% set edit_url = "/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id=" ~ user_id ~ "&user_view=0&target=edit-user-card#edit-user-card" %}
-{% set close_url = "/users/new?menu=administrativo&admin_tab=utilizador" %}
+{% set view_url = row.get("view_url") or "" %}
+{% set edit_url = row.get("edit_url") or "" %}
+{% set close_url = row.get("close_url") or "/users/new?menu=administrativo&admin_tab=utilizador" %}
   <div class="table-actions">
     <a
       class="table-icon-btn"
@@ -147,8 +147,8 @@
   {% else %}
     <p class="empty">Sem utilizadores inativos, pendentes ou bloqueados no processo nativo.</p>
   {% endif %}
-
-  <script src="/static/js/modules/admin_user_shadow_table_v1.js?v=20260513-utilizador-action-click-bridge-v17" defer></script>
+<script src="/static/js/modules/admin_user_shadow_table_v1.js?v=20260513-utilizador-shadow-table-only-v18" defer></script>
+<script src="/static/js/modules/admin_user_action_navigation_v1.js?v=20260513-utilizador-action-navigation-v1" defer></script>
 </section>
 {% endmacro %}
 
