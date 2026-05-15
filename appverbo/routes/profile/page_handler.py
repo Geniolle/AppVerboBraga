@@ -13,21 +13,19 @@ from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
 from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_from_repository
 
-# APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_START
-from appverbo.admin_subprocesses.v2_service import build_admin_subprocess_state_v2
-
-# APPVERBO_ADMIN_SUBPROCESS_V2_PAGE_IMPORTS_END
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.admin_subprocesses.utilizador.pagina import montar_estado_pagina_utilizador_v1
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
-    MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_KEY,
-    normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
 from appverbo.routes.profile.router import router
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.sessoes_admin_context import (
+    build_sessoes_admin_context_v1,
+    build_sessoes_admin_page_payload_v1,
+)
 from appverbo.services.users.context import build_user_admin_edit_context_v1
 
 
@@ -180,102 +178,6 @@ def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
 
 
 
-# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
-
-
-def _normalize_sidebar_section_status_for_page_v22(
-    raw_status: object, raw_is_active: object = None
-) -> str:
-    if raw_is_active is False:
-        return "inativo"
-
-    clean_status = str(raw_status or "").strip().lower()
-
-    if clean_status in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}:
-        return "inativo"
-
-    return "ativo"
-
-
-def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
-    if not isinstance(section, dict):
-        return True
-
-    return (
-        _normalize_sidebar_section_status_for_page_v22(
-            section.get("status"),
-            section.get("is_active"),
-        )
-        == "ativo"
-    )
-
-
-def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> list[dict[str, Any]]:
-    raw_sections = page_data.get("sidebar_section_options")
-
-    if isinstance(raw_sections, list):
-        return normalize_sidebar_sections(raw_sections)
-
-    for menu_row in page_data.get("sidebar_menu_settings", []):
-        if not isinstance(menu_row, dict):
-            continue
-
-        row_key = str(menu_row.get("key") or menu_row.get("menu_key") or "").strip().lower()
-
-        if row_key != "administrativo":
-            continue
-
-        for possible_key in (
-            MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
-            "sidebar_sections",
-            "sections",
-            "admin_sidebar_sections",
-        ):
-            possible_sections = menu_row.get(possible_key)
-
-            if isinstance(possible_sections, list):
-                return normalize_sidebar_sections(possible_sections)
-
-        menu_config = menu_row.get("menu_config")
-
-        if isinstance(menu_config, dict):
-            possible_sections = menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
-
-            if isinstance(possible_sections, list):
-                return normalize_sidebar_sections(possible_sections)
-
-    return []
-
-
-def _split_sidebar_sections_for_page_v22(
-    page_data: dict[str, Any],
-    sidebar_section_edit_key: str,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any] | None]:
-    all_sections = _resolve_sidebar_sections_from_page_data_v22(page_data)
-
-    active_sections = [
-        section for section in all_sections if _sidebar_section_is_active_for_page_v22(section)
-    ]
-
-    inactive_sections = [
-        section for section in all_sections if not _sidebar_section_is_active_for_page_v22(section)
-    ]
-
-    clean_edit_key = str(sidebar_section_edit_key or "").strip().lower()
-    edit_data = None
-
-    if clean_edit_key:
-        for section in all_sections:
-            section_key = str(section.get("key") or "").strip().lower()
-
-            if section_key == clean_edit_key:
-                edit_data = dict(section)
-                break
-
-    return active_sections, inactive_sections, edit_data
-
-
-# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
 
 @router.get("/users/new", response_class=HTMLResponse)
@@ -406,46 +308,27 @@ def new_user_page(
         )
         user_edit_data = user_edit_context.get("user_edit_data", get_user_edit_defaults())
 
-        (
-            active_sidebar_sections_v22,
-            inactive_sidebar_sections_v22,
-            sidebar_section_edit_data_v22,
-        ) = _split_sidebar_sections_for_page_v22(
-            page_data,
-            sidebar_section_edit_key,
+        sessoes_admin_context = build_sessoes_admin_context_v1(
+            session=session,
+            actor_user_id=int(current_user["id"]),
+            actor_login_email=str(current_user["login_email"]),
+            selected_entity_id=selected_entity_id,
+            session_edit_key=sidebar_section_edit_key,
+        )
+        sessoes_admin_page_payload = build_sessoes_admin_page_payload_v1(
+            sessoes_admin_context
         )
 
-        # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START
-        # Recalcula a separação diretamente da configuração normalizada.
-        # Isto evita que o template receba a lista de ativos vazia quando houver fallback antigo.
-        all_sidebar_sections_v26 = _resolve_sidebar_sections_from_page_data_v22(page_data)
-
-        if all_sidebar_sections_v26:
-            active_sidebar_sections_v22 = [
-                section
-                for section in all_sidebar_sections_v26
-                if _sidebar_section_is_active_for_page_v22(section)
-            ]
-            inactive_sidebar_sections_v22 = [
-                section
-                for section in all_sidebar_sections_v26
-                if not _sidebar_section_is_active_for_page_v22(section)
-            ]
-
-            clean_sidebar_section_edit_key_v26 = str(sidebar_section_edit_key or "").strip().lower()
-
-            if clean_sidebar_section_edit_key_v26:
-                sidebar_section_edit_data_v22 = next(
-                    (
-                        dict(section)
-                        for section in all_sidebar_sections_v26
-                        if str(section.get("key") or "").strip().lower()
-                        == clean_sidebar_section_edit_key_v26
-                    ),
-                    sidebar_section_edit_data_v22,
-                )
-            # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
-            settings_edit_data: dict[str, Any] | None = None
+        active_sidebar_sections_v22 = list(
+            sessoes_admin_page_payload.get("active_sidebar_sections", [])
+        )
+        inactive_sidebar_sections_v22 = list(
+            sessoes_admin_page_payload.get("inactive_sidebar_sections", [])
+        )
+        sidebar_section_edit_data_v22 = dict(
+            sessoes_admin_page_payload.get("sidebar_section_edit_data", {})
+        )
+        settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
             row_key = str(row.get("key", "")).strip().lower()
@@ -534,9 +417,9 @@ def new_user_page(
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
     # ###################################################################################
-    # A aba Administrativo -> Menu usa o alvo canónico admin-menu-card.
-    # Sem esta normalização, a URL admin_tab=menu pode ficar sem conteúdo
-    # porque o backend voltava para o target padrão de Entidade.
+    # A aba Administrativo -> Menu usa o alvo canonico admin-menu-card.
+    # Sem esta normalizacao, a URL admin_tab=menu pode ficar sem conteudo
+    # porque o backend voltava para o target padrao de Entidade.
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
         initial_dynamic_process_section = ""
@@ -608,24 +491,14 @@ def new_user_page(
         sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
 
         if sessoes_subprocess_config_v2 is not None:
-            # APPVERBO_SESSOES_HIERARQUIA_RENDER_BD_V1_START
-            # A hierarquia deve refletir a ordem persistida no menu_config do BD.
-            # O page_data pode trazer dados já preparados para outros blocos da página
-            # e, após o redirect do POST das setas, pode reconstruir a lista sem
-            # preservar a alteração visual esperada.
-            try:
-                from appverbo.admin_subprocesses.repositories.sidebar_section_repository import (
-                    SidebarSectionAdminRepository,
-                )
+            all_sidebar_sections_for_subprocess_v3 = list(
+                sessoes_admin_page_payload.get("all_sessions", [])
+            )
 
-                all_sidebar_sections_for_subprocess_v3 = SidebarSectionAdminRepository(
-                    sessoes_subprocess_config_v2
-                ).list_rows(session)
-            except Exception:
+            if not all_sidebar_sections_for_subprocess_v3:
                 all_sidebar_sections_for_subprocess_v3 = list(
                     active_sidebar_sections_v22 or []
                 ) + list(inactive_sidebar_sections_v22 or [])
-            # APPVERBO_SESSOES_HIERARQUIA_RENDER_BD_V1_END
 
             clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip()
 
@@ -662,7 +535,7 @@ def new_user_page(
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_UTILIZADOR_SHADOW_V1_START
     # Estado nativo em paralelo para validar o subprocesso Utilizador sem trocar a tela legada.
-    # O bloco usa sessão própria para ficar isolado da estrutura legada da página.
+    # O bloco usa sessao propria para ficar isolado da estrutura legada da pagina.
     admin_subprocess_shadow_state_v1 = None
 
     if resolved_admin_tab == "utilizador":
@@ -749,6 +622,20 @@ def new_user_page(
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
+        "sessions": list(sessoes_admin_page_payload.get("sessions", [])),
+        "all_sessions": list(sessoes_admin_page_payload.get("all_sessions", [])),
+        "active_sessions": list(sessoes_admin_page_payload.get("active_sessions", [])),
+        "inactive_sessions": list(sessoes_admin_page_payload.get("inactive_sessions", [])),
+        "pending_sessions": list(sessoes_admin_page_payload.get("pending_sessions", [])),
+        "blocked_sessions": list(sessoes_admin_page_payload.get("blocked_sessions", [])),
+        "session_edit_data": dict(sessoes_admin_page_payload.get("session_edit_data", {})),
+        "session_permissions": dict(sessoes_admin_page_payload.get("session_permissions", {})),
+        "session_list_pagination": dict(
+            sessoes_admin_page_payload.get("session_list_pagination", {})
+        ),
+        "sidebar_sections_tab": str(
+            sessoes_admin_page_payload.get("sidebar_sections_tab") or "sessoes"
+        ),
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_utilizador_v1 if resolved_admin_tab == "utilizador" else admin_subprocess_state_v2,
         "admin_subprocess_state_utilizador": admin_subprocess_state_utilizador_v1,
