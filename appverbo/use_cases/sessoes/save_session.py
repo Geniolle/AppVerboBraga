@@ -10,7 +10,6 @@ from appverbo.admin_subprocesses.repositories.sidebar_section_repository import 
     SidebarSectionAdminRepository,
 )
 from appverbo.admin_subprocesses.sessoes.configuracao import SESSOES_CONFIG
-from appverbo.routes.profile.settings.redirects import build_settings_redirect_url_v1
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.sessoes.outcome import SessionActionOutcome
 from appverbo.use_cases.sessoes.policies import (
@@ -30,6 +29,42 @@ SESSION_RETURN_URL_FALLBACK_V1 = (
 # ###################################################################################
 # (1) NORMALIZADORES DE PAYLOAD
 # ###################################################################################
+
+def _build_settings_redirect_url_v1(
+    *,
+    error_message: str = "",
+    success_message: str = "",
+    redirect_menu: str = "administrativo",
+    redirect_target: str = "#admin-account-status-card",
+    settings_edit_key: str = "",
+    settings_action: str = "",
+    settings_tab: str = "",
+) -> str:
+    params: list[tuple[str, str]] = []
+
+    if error_message:
+        params.append(("error", error_message))
+
+    if success_message:
+        params.append(("success", success_message))
+
+    if redirect_menu:
+        params.append(("menu", redirect_menu))
+
+    if redirect_target:
+        params.append(("target", redirect_target.lstrip("#")))
+
+    if settings_edit_key:
+        params.append(("settings_edit_key", settings_edit_key))
+
+    if settings_action:
+        params.append(("settings_action", settings_action))
+
+    if settings_tab:
+        params.append(("settings_tab", settings_tab))
+
+    return f"/users/new?{urlencode(params)}"
+
 
 def normalize_save_session_input_v1(
     *,
@@ -322,7 +357,7 @@ def execute_bulk_save_sessions_v1(
 
     if policy_error:
         return SessionActionOutcome(
-            redirect_url=build_settings_redirect_url_v1(
+            redirect_url=_build_settings_redirect_url_v1(
                 error_message=policy_error,
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,
@@ -344,7 +379,7 @@ def execute_bulk_save_sessions_v1(
 
     if policy_error:
         return SessionActionOutcome(
-            redirect_url=build_settings_redirect_url_v1(
+            redirect_url=_build_settings_redirect_url_v1(
                 error_message=policy_error,
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,
@@ -362,7 +397,7 @@ def execute_bulk_save_sessions_v1(
 
     if not ok:
         return SessionActionOutcome(
-            redirect_url=build_settings_redirect_url_v1(
+            redirect_url=_build_settings_redirect_url_v1(
                 error_message=error_message or "Não foi possível gravar as sessões do sidebar.",
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,
@@ -374,7 +409,7 @@ def execute_bulk_save_sessions_v1(
         )
 
     return SessionActionOutcome(
-        redirect_url=build_settings_redirect_url_v1(
+        redirect_url=_build_settings_redirect_url_v1(
             success_message="Sessões do sidebar e visibilidade dos menus atualizadas com sucesso.",
             redirect_menu=redirect_menu,
             redirect_target=redirect_target,
