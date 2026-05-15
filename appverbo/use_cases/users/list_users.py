@@ -163,30 +163,44 @@ def execute_list_users_v1(
     )
 
     all_users = list(result.get("rows", []))
-    pending_users = [
-        row
+    rows_with_status = [
+        (
+            row,
+            normalize_user_account_status_v1(row.get("account_status")),
+        )
         for row in all_users
-        if normalize_user_account_status_v1(row.get("account_status"))
-        == UserAccountStatus.PENDING.value
     ]
-    created_users = [
+    active_users = [
         row
-        for row in all_users
-        if normalize_user_account_status_v1(row.get("account_status"))
-        != UserAccountStatus.PENDING.value
-    ]
-    active_created_users = [
-        row
-        for row in created_users
-        if normalize_user_account_status_v1(row.get("account_status"))
-        == UserAccountStatus.ACTIVE.value
+        for row, account_status in rows_with_status
+        if account_status == UserAccountStatus.ACTIVE.value
     ]
     inactive_users = [
         row
-        for row in all_users
-        if normalize_user_account_status_v1(row.get("account_status"))
-        != UserAccountStatus.ACTIVE.value
+        for row, account_status in rows_with_status
+        if account_status == UserAccountStatus.INACTIVE.value
     ]
+    pending_users = [
+        row
+        for row, account_status in rows_with_status
+        if account_status == UserAccountStatus.PENDING.value
+    ]
+    blocked_users = [
+        row
+        for row, account_status in rows_with_status
+        if account_status == UserAccountStatus.BLOCKED.value
+    ]
+    non_active_users = [
+        row
+        for row, account_status in rows_with_status
+        if account_status != UserAccountStatus.ACTIVE.value
+    ]
+    created_users = [
+        row
+        for row, account_status in rows_with_status
+        if account_status != UserAccountStatus.PENDING.value
+    ]
+    active_created_users = list(active_users)
     superuser_users = [
         row
         for row in all_users
@@ -199,6 +213,8 @@ def execute_list_users_v1(
         "active_created_users": active_created_users,
         "inactive_users": inactive_users,
         "pending_users": pending_users,
+        "blocked_users": blocked_users,
+        "non_active_users": non_active_users,
         "recent_users": all_users[:10],
         "superuser_users": superuser_users,
         "account_status_summary": _build_account_status_summary_v1(all_users),

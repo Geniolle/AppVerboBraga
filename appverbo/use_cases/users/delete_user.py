@@ -56,7 +56,7 @@ def execute_delete_user(
     clean_user_id = str(user_id or "").strip()
 
     if not clean_user_id.isdigit():
-        return _redirect_v1(error="Utilizador invalido para eliminacao.")
+        return _redirect_v1(error="Utilizador inválido para eliminação.")
 
     parsed_user_id = int(clean_user_id)
     repository = UserAdminRepository(UTILIZADOR_CONFIG)
@@ -96,10 +96,10 @@ def execute_delete_user(
     )
 
     if user is None:
-        return _redirect_v1(error="Utilizador nao encontrado.")
+        return _redirect_v1(error="Utilizador não encontrado.")
 
     if member is None:
-        return _redirect_v1(error="Membro associado ao utilizador nao encontrado.")
+        return _redirect_v1(error="Membro associado ao utilizador não encontrado.")
 
     scope_error = ensure_member_scope_v1(
         repository=repository,
@@ -132,8 +132,8 @@ def execute_delete_user(
         )
         return _redirect_v1(
             error=(
-                "Nao foi possivel eliminar utilizador porque existem registos relacionados. "
-                "Remova ou desative as dependencias associadas primeiro."
+                "Não foi possível eliminar utilizador porque existem registos relacionados. "
+                "Remova ou desative as dependências associadas primeiro."
             )
         )
 

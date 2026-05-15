@@ -71,19 +71,19 @@ def normalize_update_user_input_v1(
     errors: list[str] = []
 
     if not clean_user_id.isdigit():
-        errors.append("Utilizador invalido para edicao.")
+        errors.append("Utilizador inválido para edição.")
 
     if not clean_full_name:
-        errors.append("Nome completo e obrigatorio.")
+        errors.append("Nome completo é obrigatório.")
 
     if not clean_primary_phone:
-        errors.append("Telefone principal e obrigatorio.")
+        errors.append("Telefone principal é obrigatório.")
 
     if not clean_email:
-        errors.append("Email e obrigatorio.")
+        errors.append("Email é obrigatório.")
 
     if clean_account_status not in ALLOWED_ACCOUNT_STATUS:
-        errors.append("Estado de conta invalido.")
+        errors.append("Estado de conta inválido.")
 
     return UpdateUserInput(
         clean_user_id=clean_user_id,
@@ -135,7 +135,7 @@ def _resolve_selected_profile_v1(
         return None
 
     if not clean_profile_id.isdigit():
-        errors.append("Perfil selecionado invalido.")
+        errors.append("Perfil selecionado inválido.")
         return None
 
     profile = repository.get_profile_by_id(
@@ -168,7 +168,7 @@ def _validate_duplicate_fields_v1(
     )
 
     if duplicate_member_id is not None:
-        errors.append("Ja existe um membro com este email.")
+        errors.append("Já existe um membro com este email.")
 
     duplicate_user_id = repository.find_duplicate_user_id_by_email(
         session=session,
@@ -177,7 +177,7 @@ def _validate_duplicate_fields_v1(
     )
 
     if duplicate_user_id is not None:
-        errors.append("Ja existe um utilizador com este email de login.")
+        errors.append("Já existe um utilizador com este email de login.")
 
 
 # ###################################################################################
@@ -235,10 +235,10 @@ def execute_update_user(
     )
 
     if user is None:
-        return _redirect_v1(error="Utilizador nao encontrado.")
+        return _redirect_v1(error="Utilizador não encontrado.")
 
     if member is None:
-        return _redirect_v1(error="Membro associado ao utilizador nao encontrado.")
+        return _redirect_v1(error="Membro associado ao utilizador não encontrado.")
 
     scope_error = ensure_member_scope_v1(
         repository=repository,
@@ -326,7 +326,7 @@ def execute_update_user(
     except IntegrityError:
         session.rollback()
         return _redirect_v1(
-            error="Nao foi possivel atualizar utilizador.",
+            error="Não foi possível atualizar utilizador.",
             user_edit_id=str(parsed_user_id),
             anchor="#edit-user-card",
         )

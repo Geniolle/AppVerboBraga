@@ -801,7 +801,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
 
         if not can_manage_all_entities:
             if not allowed_entity_ids:
-                return None, "Sem entidades disponiveis para este utilizador."
+                return None, "Sem entidades disponíveis para este utilizador."
 
             entities_stmt = entities_stmt.where(Entity.id.in_(sorted(allowed_entity_ids)))
 
@@ -837,7 +837,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
 
         if not can_manage_all_entities:
             if not allowed_entity_ids:
-                return None, "Sem permissao para usar a entidade atual deste utilizador."
+                return None, "Sem permissão para usar a entidade atual deste utilizador."
 
             current_entity_stmt = current_entity_stmt.where(
                 Entity.id.in_(sorted(allowed_entity_ids))
@@ -864,7 +864,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
                 return exact_matches[0], ""
 
             if len(exact_matches) > 1:
-                resolution_error = "Existem multiplas entidades com o mesmo email."
+                resolution_error = "Existem múltiplas entidades com o mesmo email."
 
             _, _, email_domain = clean_email.partition("@")
             clean_email_domain = email_domain.strip().lower()
@@ -880,7 +880,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
                     return domain_matches[0], ""
 
                 if len(domain_matches) > 1 and not resolution_error:
-                    resolution_error = "Existem multiplas entidades com este dominio de email."
+                    resolution_error = "Existem múltiplas entidades com este domínio de email."
 
         # ###################################################################################
         # (5) ULTIMO FALLBACK COMPATIVEL
@@ -891,7 +891,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         if resolution_error:
             return None, resolution_error
 
-        return None, "Nao foi possivel determinar a entidade ativa para este utilizador."
+        return None, "Não foi possível determinar a entidade ativa para este utilizador."
 
     def apply_user_update(
         self,

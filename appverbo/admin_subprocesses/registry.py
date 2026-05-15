@@ -72,59 +72,10 @@ SIDEBAR_SECTION_FIELDS = (
 )
 
 
-USER_FIELDS = (
-    AdminFieldConfig(
-        key="full_name",
-        label="Nome completo",
-        input_name="user_full_name",
-        field_type="text",
-        required=True,
-        max_length=160,
-    ),
-    AdminFieldConfig(
-        key="login_email",
-        label="Email",
-        input_name="user_login_email",
-        field_type="email",
-        required=True,
-        max_length=150,
-    ),
-    AdminFieldConfig(
-        key="account_status",
-        label="Estado",
-        input_name="user_account_status",
-        field_type="select",
-        required=True,
-        options=(
-            ("pending", "Pendente"),
-            ("active", "Ativo"),
-            ("inactive", "Inativo"),
-            ("blocked", "Bloqueado"),
-        ),
-    ),
-)
-
-
-####################################################################################
-# (2) COLUNAS DOS SUBPROCESSOS
-####################################################################################
-
 DEFAULT_COLUMNS = (
     AdminColumnConfig(key="label", label="NOME", source="label"),
     AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
-)
-
-
-USER_COLUMNS = (
-    AdminColumnConfig(key="id", label="ID", source="id"),
-    AdminColumnConfig(key="full_name", label="NOME", source="full_name"),
-    AdminColumnConfig(key="email", label="EMAIL", source="login_email"),
-    AdminColumnConfig(key="phone", label="TELEFONE", source="primary_phone"),
-    AdminColumnConfig(key="entity", label="ENTIDADE", source="entity_name"),
-    AdminColumnConfig(key="profile", label="PERFIL", source="profile_name"),
-    AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
-    AdminColumnConfig(key="created_at", label="CRIADO EM", source="created_at_label"),
 )
 
 ####################################################################################

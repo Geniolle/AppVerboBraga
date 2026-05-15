@@ -27,6 +27,8 @@ def list_admin_users_v1(
         "active_created_users": result.get("active_created_users", []),
         "inactive_users": result.get("inactive_users", []),
         "pending_users": result.get("pending_users", []),
+        "blocked_users": result.get("blocked_users", []),
+        "non_active_users": result.get("non_active_users", []),
         "recent_users": result.get("recent_users", []),
         "superuser_users": result.get("superuser_users", []),
         "account_status_summary": result.get("account_status_summary", []),

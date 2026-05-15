@@ -942,6 +942,8 @@ def get_page_data(
         "active_created_users": user_admin_page_payload["active_created_users"],
         "inactive_users": user_admin_page_payload["inactive_users"],
         "pending_users": user_admin_page_payload["pending_users"],
+        "blocked_users": user_admin_page_payload["blocked_users"],
+        "non_active_users": user_admin_page_payload["non_active_users"],
         "superuser_users": user_admin_page_payload["superuser_users"],
         "user_list_pagination": user_admin_page_payload["user_list_pagination"],
         "entity_permissions": permissions,

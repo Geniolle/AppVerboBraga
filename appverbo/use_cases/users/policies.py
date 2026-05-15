@@ -49,7 +49,7 @@ def ensure_member_scope_v1(
     allowed_entity_ids = allowed_entity_ids_from_permissions_v1(permissions)
 
     if not allowed_entity_ids:
-        return "Sem permissao para gerir utilizadores nesta entidade."
+        return "Sem permissão para gerir utilizadores nesta entidade."
 
     member_is_scoped = repository.member_is_within_allowed_entities(
         session=session,
@@ -60,14 +60,14 @@ def ensure_member_scope_v1(
     if member_is_scoped:
         return ""
 
-    return "Sem permissao para gerir este utilizador."
+    return "Sem permissão para gerir este utilizador."
 
 
 def ensure_not_self_delete_v1(*, actor_user_id: int, target_user_id: int) -> str:
     if int(actor_user_id) != int(target_user_id):
         return ""
 
-    return "Nao e permitido eliminar o proprio utilizador ligado."
+    return "Não é permitido eliminar o próprio utilizador ligado."
 
 
 def ensure_target_user_is_inactive_v1(user: User) -> str:
@@ -77,19 +77,19 @@ def ensure_target_user_is_inactive_v1(user: User) -> str:
     current_status = str(user.account_status or "").strip().lower() or "-"
 
     return (
-        "So e permitido eliminar utilizadores com estado Inativo. "
+        "Só é permitido eliminar utilizadores com estado Inativo. "
         f"Estado atual: {current_status}."
     )
 
 
 def ensure_profile_allowed_v1(profile: Profile | None) -> str:
     if profile is None:
-        return "Perfil selecionado nao existe."
+        return "Perfil selecionado não existe."
 
     if is_allowed_global_profile(profile):
         return ""
 
-    return "Perfil global invalido. Escolha ADMIN, SUPER USER ou USER."
+    return "Perfil global inválido. Escolha ADMIN, SUPER USER ou USER."
 
 
 def is_admin_profile_v1(profile: Profile | None) -> bool:
@@ -169,4 +169,3 @@ def should_validate_last_admin_guard_v1(
     )
 
     return current_is_active_admin and not resulting_is_active_admin
-
