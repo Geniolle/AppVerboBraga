@@ -8,8 +8,13 @@ from appverbo.use_cases.users.create_user import (
     normalize_create_user_input_v1,
 )
 from appverbo.use_cases.users.delete_user import execute_delete_user
+from appverbo.use_cases.users.get_user_edit import (
+    execute_get_user_edit_v1,
+    get_user_edit_defaults_v1,
+)
 from appverbo.use_cases.users.get_user_edit_data import get_user_edit_data_v1
 from appverbo.use_cases.users.list_admin_users import list_admin_users_v1
+from appverbo.use_cases.users.list_users import execute_list_users_v1
 from appverbo.use_cases.users.outcome import UserActionOutcome
 from appverbo.use_cases.users.resolve_user_entity import (
     extract_email_domain_v1,
@@ -35,6 +40,8 @@ from appverbo.use_cases.users.user_permissions import (
 __all__ = [
     "execute_get_user_permissions_v1",
     "execute_resolve_user_entity_v1",
+    "execute_get_user_edit_v1",
+    "execute_list_users_v1",
     "execute_get_user_edit_data_v1",
     "execute_list_admin_users_v1",
     "execute_delete_user_v1",
@@ -48,6 +55,7 @@ __all__ = [
     "execute_update_user",
     "extract_email_domain_v1",
     "get_user_edit_data_v1",
+    "get_user_edit_defaults_v1",
     "list_admin_users_v1",
     "normalize_create_user_input",
     "normalize_create_user_input_v1",

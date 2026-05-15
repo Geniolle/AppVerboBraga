@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from appverbo.models import Entity, MemberEntity, MemberEntityStatus
@@ -46,6 +46,49 @@ def get_member_entity_link(
         .order_by(MemberEntity.id.asc())
         .limit(1)
     ).scalar_one_or_none()
+
+
+def replace_active_member_entity_link(
+    session: Session,
+    member_id: int,
+    entity_id: int,
+) -> MemberEntity:
+    existing_link = session.execute(
+        select(MemberEntity)
+        .where(
+            MemberEntity.member_id == int(member_id),
+            MemberEntity.entity_id == int(entity_id),
+        )
+        .order_by(MemberEntity.id.asc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+    session.execute(
+        update(MemberEntity)
+        .where(
+            MemberEntity.member_id == int(member_id),
+            MemberEntity.entity_id != int(entity_id),
+            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+        )
+        .values(status=MemberEntityStatus.INACTIVE.value)
+    )
+
+    if existing_link is None:
+        link = MemberEntity(
+            member_id=int(member_id),
+            entity_id=int(entity_id),
+            status=MemberEntityStatus.ACTIVE.value,
+            entry_date=date.today(),
+        )
+        session.add(link)
+        return link
+
+    existing_link.status = MemberEntityStatus.ACTIVE.value
+
+    if existing_link.entry_date is None:
+        existing_link.entry_date = date.today()
+
+    return existing_link
 
 
 def upsert_active_member_entity_link(

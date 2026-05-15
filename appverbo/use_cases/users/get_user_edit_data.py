@@ -4,7 +4,11 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from appverbo.services.page import get_page_data, get_user_edit_data, get_user_edit_defaults
+from appverbo.services.permissions import get_user_entity_permissions
+from appverbo.use_cases.users.get_user_edit import (
+    execute_get_user_edit_v1,
+    get_user_edit_defaults_v1,
+)
 
 
 def get_user_edit_data_v1(
@@ -16,16 +20,31 @@ def get_user_edit_data_v1(
     user_edit_id: int | None,
 ) -> dict[str, Any]:
     if user_edit_id is None:
-        return get_user_edit_defaults()
+        return get_user_edit_defaults_v1()
 
-    page_data = get_page_data(
+    permissions = get_user_entity_permissions(
         session,
-        actor_user_id=int(actor_user_id),
-        actor_login_email=str(actor_login_email),
-        selected_entity_id=selected_entity_id,
+        int(actor_user_id),
+        str(actor_login_email or ""),
+        selected_entity_id,
     )
 
-    return page_data.get("user_edit_data") or get_user_edit_defaults()
+    allowed_entity_ids: set[int] | None
+
+    if permissions.get("can_manage_all_entities"):
+        allowed_entity_ids = None
+    else:
+        allowed_entity_ids = {
+            int(raw_id)
+            for raw_id in (permissions.get("allowed_entity_ids") or set())
+            if str(raw_id).strip().isdigit()
+        }
+
+    return execute_get_user_edit_v1(
+        session=session,
+        user_id=user_edit_id,
+        allowed_entity_ids=allowed_entity_ids,
+    )
 
 
 def execute_get_user_edit_data_v1(
@@ -34,7 +53,7 @@ def execute_get_user_edit_data_v1(
     user_id: int | None,
     allowed_entity_ids: set[int] | None = None,
 ) -> dict[str, Any]:
-    return get_user_edit_data(
+    return execute_get_user_edit_v1(
         session=session,
         user_id=user_id,
         allowed_entity_ids=allowed_entity_ids,

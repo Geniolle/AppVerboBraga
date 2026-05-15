@@ -6,20 +6,27 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appverbo.repositories.user_profile_repository import delete_user_profiles
-from appverbo.repositories.user_repository import get_user_by_id, null_created_by_for_deleted_user
-from appverbo.services.auth import is_admin_user
+from appverbo.admin_subprocesses.repositories.user_repository import UserAdminRepository
+from appverbo.admin_subprocesses.utilizador.configuracao import UTILIZADOR_CONFIG
 from appverbo.services.page import build_users_new_url
 from appverbo.services.permissions import get_user_entity_permissions
-from appverbo.services.user_status import is_user_account_status_inactive_v1
 from appverbo.use_cases.users.outcome import UserActionOutcome
-from appverbo.use_cases.users.user_permissions import member_is_within_permissions_v1
+from appverbo.use_cases.users.policies import (
+    ensure_actor_is_admin_v1,
+    ensure_member_scope_v1,
+    ensure_not_self_delete_v1,
+    ensure_target_user_is_inactive_v1,
+)
 
 
 logger = logging.getLogger(__name__)
 
 DELETE_USER_RETURN_TARGET_V1 = "admin-user-shadow-inactive-card"
 
+
+# ###################################################################################
+# (1) REDIRECTS
+# ###################################################################################
 
 def _redirect_v1(success: str = "", error: str = "") -> UserActionOutcome:
     return UserActionOutcome(
@@ -35,35 +42,46 @@ def _redirect_v1(success: str = "", error: str = "") -> UserActionOutcome:
     )
 
 
+# ###################################################################################
+# (2) USE CASE PRINCIPAL
+# ###################################################################################
+
 def execute_delete_user(
     *,
     session: Session,
     actor_user: dict[str, Any],
     selected_entity_id: int | None,
-    user_id: int,
+    user_id: int | str,
 ) -> UserActionOutcome:
-    parsed_user_id = int(user_id)
+    clean_user_id = str(user_id or "").strip()
+
+    if not clean_user_id.isdigit():
+        return _redirect_v1(error="Utilizador invalido para eliminacao.")
+
+    parsed_user_id = int(clean_user_id)
+    repository = UserAdminRepository(UTILIZADOR_CONFIG)
 
     logger.info(
-        "APPVERBO_DELETE_USER_USE_CASE_V1 start actor_id=%s target_user_id=%s",
+        "APPVERBO_DELETE_USER_USE_CASE_V2 start actor_id=%s target_user_id=%s",
         actor_user.get("id"),
         parsed_user_id,
     )
 
-    if not is_admin_user(session, int(actor_user["id"]), str(actor_user["login_email"])):
-        logger.warning(
-            "APPVERBO_DELETE_USER_USE_CASE_V1 denied_not_admin actor_id=%s target_user_id=%s",
-            actor_user.get("id"),
-            parsed_user_id,
-        )
-        return _redirect_v1(error="Apenas administradores podem eliminar utilizadores.")
+    admin_error = ensure_actor_is_admin_v1(
+        session=session,
+        actor_user=actor_user,
+    )
 
-    if parsed_user_id == int(actor_user["id"]):
-        logger.warning(
-            "APPVERBO_DELETE_USER_USE_CASE_V1 denied_self_delete actor_id=%s",
-            actor_user.get("id"),
-        )
-        return _redirect_v1(error="Não é permitido eliminar o próprio utilizador ligado.")
+    if admin_error:
+        return _redirect_v1(error=admin_error)
+
+    self_delete_error = ensure_not_self_delete_v1(
+        actor_user_id=int(actor_user["id"]),
+        target_user_id=parsed_user_id,
+    )
+
+    if self_delete_error:
+        return _redirect_v1(error=self_delete_error)
 
     entity_permissions = get_user_entity_permissions(
         session,
@@ -72,67 +90,52 @@ def execute_delete_user(
         selected_entity_id,
     )
 
-    user = get_user_by_id(session, parsed_user_id)
+    user, member = repository.get_user_and_member(
+        session=session,
+        user_id=parsed_user_id,
+    )
 
     if user is None:
-        logger.warning(
-            "APPVERBO_DELETE_USER_USE_CASE_V1 not_found target_user_id=%s",
-            parsed_user_id,
-        )
-        return _redirect_v1(error="Utilizador não encontrado.")
+        return _redirect_v1(error="Utilizador nao encontrado.")
 
-    if not member_is_within_permissions_v1(
+    if member is None:
+        return _redirect_v1(error="Membro associado ao utilizador nao encontrado.")
+
+    scope_error = ensure_member_scope_v1(
+        repository=repository,
         session=session,
-        member_id=int(user.member_id),
+        member_id=int(member.id),
         permissions=entity_permissions,
-    ):
-        logger.warning(
-            "APPVERBO_DELETE_USER_USE_CASE_V1 denied_scope actor_id=%s target_user_id=%s member_id=%s",
-            actor_user.get("id"),
-            parsed_user_id,
-            user.member_id,
-        )
-        return _redirect_v1(error="Sem permissão para eliminar este utilizador.")
+    )
 
-    clean_status = str(user.account_status or "").strip().lower()
+    if scope_error:
+        return _redirect_v1(error=scope_error)
 
-    if not is_user_account_status_inactive_v1(clean_status):
-        logger.warning(
-            "APPVERBO_DELETE_USER_USE_CASE_V1 denied_status target_user_id=%s status=%s",
-            parsed_user_id,
-            clean_status,
-        )
-        return _redirect_v1(
-            error=(
-                "Só é permitido eliminar utilizadores com estado Inativo. "
-                f"Estado atual: {clean_status or '-'}."
-            )
-        )
+    inactive_error = ensure_target_user_is_inactive_v1(user)
 
-    null_created_by_for_deleted_user(session, parsed_user_id)
-    delete_user_profiles(session, parsed_user_id)
-    session.delete(user)
+    if inactive_error:
+        return _redirect_v1(error=inactive_error)
+
+    repository.delete_inactive_user(
+        session=session,
+        user=user,
+    )
 
     try:
         session.commit()
     except IntegrityError as exc:
         session.rollback()
         logger.error(
-            "APPVERBO_DELETE_USER_USE_CASE_V1 integrity_error target_user_id=%s error=%s",
+            "APPVERBO_DELETE_USER_USE_CASE_V2 integrity_error target_user_id=%s error=%s",
             parsed_user_id,
             exc,
         )
         return _redirect_v1(
             error=(
-                "Não foi possível eliminar utilizador porque existem registos relacionados. "
-                "Remova ou desative as dependências associadas primeiro."
+                "Nao foi possivel eliminar utilizador porque existem registos relacionados. "
+                "Remova ou desative as dependencias associadas primeiro."
             )
         )
-
-    logger.info(
-        "APPVERBO_DELETE_USER_USE_CASE_V1 success target_user_id=%s",
-        parsed_user_id,
-    )
 
     return _redirect_v1(success="Utilizador eliminado com sucesso.")
 

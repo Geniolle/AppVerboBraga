@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,22 +6,25 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from appverbo.admin_subprocesses.repositories.user_repository import UserAdminRepository
+from appverbo.admin_subprocesses.utilizador.configuracao import UTILIZADOR_CONFIG
 from appverbo.models import Profile, UserAccountStatus
-from appverbo.repositories.member_entity_repository import upsert_active_member_entity_link
-from appverbo.repositories.member_repository import get_duplicate_member_id_by_email_ci, get_member_by_id
-from appverbo.repositories.user_profile_repository import replace_user_profile
-from appverbo.repositories.user_repository import get_duplicate_user_id_by_email_ci, get_user_by_id
-from appverbo.services.auth import get_or_create_entity_superuser_profile, is_admin_user, is_allowed_global_profile
+from appverbo.services.auth import get_or_create_entity_superuser_profile
 from appverbo.services.page import build_users_new_url
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.users.outcome import UserActionOutcome
-from appverbo.use_cases.users.resolve_user_entity import resolve_edit_entity_v1
-from appverbo.use_cases.users.user_permissions import (
+from appverbo.use_cases.users.policies import (
+    ensure_actor_is_admin_v1,
     ensure_not_last_active_admin_for_member_v1,
-    is_admin_profile_v1,
-    member_is_within_permissions_v1,
+    ensure_profile_allowed_v1,
+    ensure_member_scope_v1,
+    should_validate_last_admin_guard_v1,
 )
 
+
+# ###################################################################################
+# (1) MODELO DE ENTRADA
+# ###################################################################################
 
 ALLOWED_ACCOUNT_STATUS = {
     UserAccountStatus.ACTIVE.value,
@@ -44,6 +46,10 @@ class UpdateUserInput:
     errors: list[str]
 
 
+# ###################################################################################
+# (2) NORMALIZACAO E REDIRECTS
+# ###################################################################################
+
 def normalize_update_user_input_v1(
     *,
     user_id: str,
@@ -54,30 +60,30 @@ def normalize_update_user_input_v1(
     account_status: str,
     profile_id: str,
 ) -> UpdateUserInput:
-    clean_user_id = user_id.strip()
-    clean_full_name = full_name.strip()
-    clean_primary_phone = primary_phone.strip()
-    clean_email = email.strip().lower()
-    clean_entity_id = entity_id.strip()
-    clean_account_status = account_status.strip().lower()
-    clean_profile_id = profile_id.strip()
+    clean_user_id = str(user_id or "").strip()
+    clean_full_name = str(full_name or "").strip()
+    clean_primary_phone = str(primary_phone or "").strip()
+    clean_email = str(email or "").strip().lower()
+    clean_entity_id = str(entity_id or "").strip()
+    clean_account_status = str(account_status or "").strip().lower()
+    clean_profile_id = str(profile_id or "").strip()
 
     errors: list[str] = []
 
     if not clean_user_id.isdigit():
-        errors.append("Utilizador inválido para edição.")
+        errors.append("Utilizador invalido para edicao.")
 
     if not clean_full_name:
-        errors.append("Nome completo é obrigatório.")
+        errors.append("Nome completo e obrigatorio.")
 
     if not clean_primary_phone:
-        errors.append("Telefone principal é obrigatório.")
+        errors.append("Telefone principal e obrigatorio.")
 
     if not clean_email:
-        errors.append("Email é obrigatório.")
+        errors.append("Email e obrigatorio.")
 
     if clean_account_status not in ALLOWED_ACCOUNT_STATUS:
-        errors.append("Estado de conta inválido.")
+        errors.append("Estado de conta invalido.")
 
     return UpdateUserInput(
         clean_user_id=clean_user_id,
@@ -114,20 +120,107 @@ def _redirect_v1(
     )
 
 
+# ###################################################################################
+# (3) VALIDACOES DE PERFIL E DUPLICIDADE
+# ###################################################################################
+
+def _resolve_selected_profile_v1(
+    *,
+    session: Session,
+    repository: UserAdminRepository,
+    clean_profile_id: str,
+    errors: list[str],
+) -> Profile | None:
+    if not clean_profile_id:
+        return None
+
+    if not clean_profile_id.isdigit():
+        errors.append("Perfil selecionado invalido.")
+        return None
+
+    profile = repository.get_profile_by_id(
+        session=session,
+        profile_id=int(clean_profile_id),
+    )
+
+    profile_error = ensure_profile_allowed_v1(profile)
+
+    if profile_error:
+        errors.append(profile_error)
+        return None
+
+    return profile
+
+
+def _validate_duplicate_fields_v1(
+    *,
+    session: Session,
+    repository: UserAdminRepository,
+    user_id: int,
+    member_id: int,
+    email: str,
+    errors: list[str],
+) -> None:
+    duplicate_member_id = repository.find_duplicate_member_id_by_email(
+        session=session,
+        email=email,
+        excluded_member_id=member_id,
+    )
+
+    if duplicate_member_id is not None:
+        errors.append("Ja existe um membro com este email.")
+
+    duplicate_user_id = repository.find_duplicate_user_id_by_email(
+        session=session,
+        login_email=email,
+        excluded_user_id=user_id,
+    )
+
+    if duplicate_user_id is not None:
+        errors.append("Ja existe um utilizador com este email de login.")
+
+
+# ###################################################################################
+# (4) USE CASE PRINCIPAL
+# ###################################################################################
+
 def execute_update_user(
     *,
     session: Session,
     actor_user: dict[str, Any],
     selected_entity_id: int | None,
-    payload: UpdateUserInput,
+    payload: UpdateUserInput | None = None,
+    user_id: str = "",
+    full_name: str = "",
+    primary_phone: str = "",
+    email: str = "",
+    entity_id: str = "",
+    account_status: str = "",
+    profile_id: str = "",
 ) -> UserActionOutcome:
-    if payload.errors and not payload.clean_user_id.isdigit():
-        return _redirect_v1(error=" ".join(payload.errors))
+    normalized_payload = payload or normalize_update_user_input_v1(
+        user_id=user_id,
+        full_name=full_name,
+        primary_phone=primary_phone,
+        email=email,
+        entity_id=entity_id,
+        account_status=account_status,
+        profile_id=profile_id,
+    )
 
-    parsed_user_id = int(payload.clean_user_id)
+    if normalized_payload.errors and not normalized_payload.clean_user_id.isdigit():
+        return _redirect_v1(error=" ".join(normalized_payload.errors))
 
-    if not is_admin_user(session, int(actor_user["id"]), str(actor_user["login_email"])):
-        return _redirect_v1(error="Apenas administradores podem editar utilizadores.")
+    parsed_user_id = int(normalized_payload.clean_user_id)
+    repository = UserAdminRepository(UTILIZADOR_CONFIG)
+
+    admin_error = ensure_actor_is_admin_v1(
+        session=session,
+        actor_user=actor_user,
+    )
+
+    if admin_error:
+        return _redirect_v1(error=admin_error)
 
     entity_permissions = get_user_entity_permissions(
         session,
@@ -136,66 +229,55 @@ def execute_update_user(
         selected_entity_id,
     )
 
-    user = get_user_by_id(session, parsed_user_id)
+    user, member = repository.get_user_and_member(
+        session=session,
+        user_id=parsed_user_id,
+    )
 
     if user is None:
-        return _redirect_v1(error="Utilizador não encontrado.")
-
-    if not member_is_within_permissions_v1(
-        session=session,
-        member_id=int(user.member_id),
-        permissions=entity_permissions,
-    ):
-        return _redirect_v1(error="Sem permissão para editar este utilizador.")
-
-    member = get_member_by_id(session, int(user.member_id))
+        return _redirect_v1(error="Utilizador nao encontrado.")
 
     if member is None:
-        return _redirect_v1(error="Membro associado ao utilizador não encontrado.")
+        return _redirect_v1(error="Membro associado ao utilizador nao encontrado.")
 
-    errors = list(payload.errors)
-
-    selected_entity, entity_resolution_error = resolve_edit_entity_v1(
+    scope_error = ensure_member_scope_v1(
+        repository=repository,
         session=session,
-        email=payload.clean_email,
-        clean_entity_id=payload.clean_entity_id,
         member_id=int(member.id),
         permissions=entity_permissions,
     )
 
-    if selected_entity is None and entity_resolution_error:
-        errors.append(entity_resolution_error)
+    if scope_error:
+        return _redirect_v1(error=scope_error)
 
-    selected_profile: Profile | None = None
+    errors = list(normalized_payload.errors)
 
-    if payload.clean_profile_id:
-        try:
-            selected_profile = session.get(Profile, int(payload.clean_profile_id))
-        except ValueError:
-            errors.append("Perfil selecionado inválido.")
-
-        if selected_profile is None and not errors:
-            errors.append("Perfil selecionado não existe.")
-        elif selected_profile is not None and not is_allowed_global_profile(selected_profile):
-            errors.append("Perfil global inválido. Escolha ADMIN, SUPER USER ou USER.")
-
-    duplicate_member_id = get_duplicate_member_id_by_email_ci(
+    selected_entity, entity_error = repository.resolve_edit_entity(
         session=session,
-        email=payload.clean_email,
-        excluded_member_id=int(member.id),
+        email=normalized_payload.clean_email,
+        explicit_entity_id=normalized_payload.clean_entity_id,
+        member_id=int(member.id),
+        permissions=entity_permissions,
     )
 
-    if duplicate_member_id is not None:
-        errors.append("Já existe um membro com este email.")
+    if selected_entity is None and entity_error:
+        errors.append(entity_error)
 
-    duplicate_user_id = get_duplicate_user_id_by_email_ci(
+    selected_profile = _resolve_selected_profile_v1(
         session=session,
-        login_email=payload.clean_email,
-        excluded_user_id=int(user.id),
+        repository=repository,
+        clean_profile_id=normalized_payload.clean_profile_id,
+        errors=errors,
     )
 
-    if duplicate_user_id is not None:
-        errors.append("Já existe um utilizador com este email de login.")
+    _validate_duplicate_fields_v1(
+        session=session,
+        repository=repository,
+        user_id=int(user.id),
+        member_id=int(member.id),
+        email=normalized_payload.clean_email,
+        errors=errors,
+    )
 
     if errors:
         return _redirect_v1(
@@ -207,17 +289,14 @@ def execute_update_user(
     if selected_profile is None:
         selected_profile = get_or_create_entity_superuser_profile(session)
 
-    current_is_active_admin = (
-        str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
-        and is_admin_user(session, int(user.id), str(user.login_email or ""))
-    )
-    resulting_is_active_admin = (
-        payload.clean_account_status == UserAccountStatus.ACTIVE.value
-        and is_admin_profile_v1(selected_profile)
-    )
-
-    if current_is_active_admin and not resulting_is_active_admin:
+    if should_validate_last_admin_guard_v1(
+        session=session,
+        user=user,
+        resulting_account_status=normalized_payload.clean_account_status,
+        resulting_profile=selected_profile,
+    ):
         can_change, admin_error = ensure_not_last_active_admin_for_member_v1(
+            repository=repository,
             session=session,
             member_id=int(user.member_id),
             excluded_user_id=int(user.id),
@@ -230,26 +309,16 @@ def execute_update_user(
                 anchor="#edit-user-card",
             )
 
-    member.full_name = payload.clean_full_name
-    member.primary_phone = payload.clean_primary_phone
-    member.email = payload.clean_email
-
-    user.login_email = payload.clean_email
-    user.account_status = payload.clean_account_status
-
-    if selected_entity is not None:
-        upsert_active_member_entity_link(
-            session=session,
-            member_id=int(member.id),
-            entity_id=int(selected_entity.id),
-            replace_primary=True,
-        )
-
-    replace_user_profile(
+    repository.apply_user_update(
         session=session,
-        user_id=int(user.id),
-        profile_id=int(selected_profile.id),
-        is_active=True,
+        user=user,
+        member=member,
+        full_name=normalized_payload.clean_full_name,
+        primary_phone=normalized_payload.clean_primary_phone,
+        login_email=normalized_payload.clean_email,
+        account_status=normalized_payload.clean_account_status,
+        selected_entity=selected_entity,
+        selected_profile=selected_profile,
     )
 
     try:
@@ -257,7 +326,7 @@ def execute_update_user(
     except IntegrityError:
         session.rollback()
         return _redirect_v1(
-            error="Não foi possível atualizar utilizador.",
+            error="Nao foi possivel atualizar utilizador.",
             user_edit_id=str(parsed_user_id),
             anchor="#edit-user-card",
         )

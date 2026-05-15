@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import date
 from typing import Any
@@ -17,10 +17,8 @@ from appverbo.menu_settings import (
     resolve_menu_key_alias,
 )
 from appverbo.services.permissions import get_user_entity_permissions
+from appverbo.services.users.context import build_user_admin_list_context_v1
 from appverbo.services.user_status import (
-    is_user_account_status_active_v1,
-    is_user_account_status_inactive_v1,
-    normalize_user_account_status_v1,
     user_account_status_label_pt_v1,
 )
 from appverbo.services.profile import (
@@ -401,7 +399,6 @@ def get_page_data(
     actor_login_email: str = "",
     selected_entity_id: int | None = None,
 ) -> dict[str, Any]:
-    entity_superuser_profile_name = ENTITY_SUPERUSER_PROFILE_NAME.strip() or "SUPER USER"
     permissions = {
         "is_admin": False,
         "has_owner_membership": False,
@@ -787,7 +784,7 @@ def get_page_data(
                 "nome": "Nome",
                 "telefone": "Telefone",
                 "email": "Email",
-                "pais": "PaÃ­s",
+                "pais": "País",
             }[required_field]
 
         if required_field not in profile_personal_visible_fields:
@@ -889,148 +886,21 @@ def get_page_data(
         entity_rows_stmt.where(Entity.is_active.is_not(True))
     ).all()
 
-    user_rows = session.execute(
-        select(
-            User.id,
-            User.member_id,
-            Member.full_name,
-            Member.primary_phone,
-            User.login_email,
-            User.account_status,
-            User.created_at,
-        )
-       .join(Member, Member.id == User.member_id)
-       .order_by(User.id.desc())
-    ).all()
+    user_admin_context = build_user_admin_list_context_v1(
+        session=session,
+        actor_user_id=actor_user_id,
+        actor_login_email=actor_login_email,
+        selected_entity_id=selected_entity_id,
+    )
 
-    if apply_scope_filter:
-        if scoped_entity_ids:
-            scoped_member_ids = {
-                int(raw_id)
-                for raw_id in session.execute(
-                    select(MemberEntity.member_id)
-                   .where(
-                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                        MemberEntity.entity_id.in_(scoped_entity_ids),
-                    )
-                   .distinct()
-                ).scalars().all()
-            }
-            user_rows = [
-                row for row in user_rows if int(row.member_id) in scoped_member_ids
-            ]
-        else:
-            user_rows = []
-
-    member_ids = [int(row.member_id) for row in user_rows]
-    user_ids = [int(row.id) for row in user_rows]
-
-    entity_name_by_member_id: dict[int, str] = {}
-    entity_id_by_member_id: dict[int, int] = {}
-    if member_ids:
-        entity_name_stmt = (
-            select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name)
-           .join(Entity, Entity.id == MemberEntity.entity_id)
-           .where(
-                MemberEntity.member_id.in_(member_ids),
-                MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-            )
-           .order_by(MemberEntity.member_id.asc(), MemberEntity.id.desc())
-        )
-        if apply_scope_filter and scoped_entity_ids:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
-        elif apply_scope_filter:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id == -1)
-
-        for row in session.execute(entity_name_stmt).all():
-            member_id_value = int(row.member_id)
-            if member_id_value not in entity_name_by_member_id:
-                entity_id_by_member_id[member_id_value] = int(row.entity_id)
-                entity_name_by_member_id[member_id_value] = row.name
-
-    profile_name_by_user_id: dict[int, str] = {}
-    superuser_user_ids: set[int] = set()
-    if user_ids:
-        profile_rows = session.execute(
-            select(UserProfile.user_id, Profile.name)
-           .join(Profile, Profile.id == UserProfile.profile_id)
-           .where(UserProfile.user_id.in_(user_ids), UserProfile.is_active.is_(True))
-           .order_by(UserProfile.user_id.asc(), UserProfile.id.asc())
-        ).all()
-        for row in profile_rows:
-            user_id_value = int(row.user_id)
-            if user_id_value not in profile_name_by_user_id:
-                profile_name_by_user_id[user_id_value] = row.name
-
-        superuser_rows = session.execute(
-            select(UserProfile.user_id)
-           .join(Profile, Profile.id == UserProfile.profile_id)
-           .where(
-                UserProfile.user_id.in_(user_ids),
-                UserProfile.is_active.is_(True),
-                Profile.is_active.is_(True),
-                func.lower(Profile.name) == entity_superuser_profile_name.lower(),
-            )
-        ).all()
-        superuser_user_ids = {int(row.user_id) for row in superuser_rows}
-
-    all_users = [
-        {
-            "id": row.id,
-            "member_id": row.member_id,
-            "full_name": row.full_name,
-            "primary_phone": row.primary_phone or "-",
-            "login_email": row.login_email,
-            "account_status": normalize_user_account_status_v1(row.account_status),
-            "account_status_label": user_account_status_label_pt_v1(row.account_status),
-            "account_status_is_active": is_user_account_status_active_v1(row.account_status),
-            "account_status_is_inactive": is_user_account_status_inactive_v1(row.account_status),
-            "entity_id": entity_id_by_member_id.get(int(row.member_id)),
-            "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
-            "profile_name": profile_name_by_user_id.get(int(row.id), "-"),
-            "is_entity_superuser": int(row.id) in superuser_user_ids,
-            "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
-        }
-        for row in user_rows
-    ]
-    pending_users = [
-        row for row in all_users if row["account_status"] == UserAccountStatus.PENDING.value
-    ]
-    created_users = [
-        row for row in all_users if row["account_status"] != UserAccountStatus.PENDING.value
-    ]
-    active_created_users = [
-        row for row in created_users if is_user_account_status_active_v1(row["account_status"])
-    ]
-    # APPVERBO_NON_ACTIVE_USERS_LIST_V1_START
-    # Mostra no bloco inferior todos os utilizadores cujo estado seja diferente de Ativo.
-    # Assim entram Pendente, Inativo, Bloqueado e outros estados futuros n?o ativos.
-    inactive_users = [
-        row
-        for row in all_users
-        if row["account_status"] != UserAccountStatus.ACTIVE.value
-    ]
-    # APPVERBO_NON_ACTIVE_USERS_LIST_V1_END
-    superuser_users = [row for row in all_users if row["is_entity_superuser"]]
-    recent_users = all_users[:10]
-
-    account_status_map = {
-        UserAccountStatus.ACTIVE.value: 0,
-        UserAccountStatus.PENDING.value: 0,
-        UserAccountStatus.INACTIVE.value: 0,
-        UserAccountStatus.BLOCKED.value: 0,
-    }
-    for row in all_users:
-        normalized_status = str(row.get("account_status") or "").strip().lower()
-        if normalized_status not in account_status_map:
-            account_status_map[normalized_status] = 0
-        account_status_map[normalized_status] += 1
-    account_status_summary = [
-        {"status": UserAccountStatus.ACTIVE.value, "count": account_status_map.get(UserAccountStatus.ACTIVE.value, 0)},
-        {"status": UserAccountStatus.PENDING.value, "count": account_status_map.get(UserAccountStatus.PENDING.value, 0)},
-        {"status": UserAccountStatus.INACTIVE.value, "count": account_status_map.get(UserAccountStatus.INACTIVE.value, 0)},
-        {"status": UserAccountStatus.BLOCKED.value, "count": account_status_map.get(UserAccountStatus.BLOCKED.value, 0)},
-    ]
+    all_users = list(user_admin_context.get("all_users", []))
+    pending_users = list(user_admin_context.get("pending_users", []))
+    created_users = list(user_admin_context.get("created_users", []))
+    active_created_users = list(user_admin_context.get("active_created_users", []))
+    inactive_users = list(user_admin_context.get("inactive_users", []))
+    superuser_users = list(user_admin_context.get("superuser_users", []))
+    recent_users = list(user_admin_context.get("recent_users", []))
+    account_status_summary = list(user_admin_context.get("account_status_summary", []))
 
     def serialize_entity_row(row: Any) -> dict[str, Any]:
         return {
@@ -1091,6 +961,7 @@ def get_page_data(
         "inactive_users": inactive_users,
         "pending_users": pending_users,
         "superuser_users": superuser_users,
+        "user_list_pagination": dict(user_admin_context.get("user_list_pagination", {})),
         "entity_permissions": permissions,
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
         "sidebar_owner_entity": sidebar_owner_entity,
@@ -1300,85 +1171,22 @@ def get_entity_edit_data(
     }
 
 def get_user_edit_defaults() -> dict[str, str]:
-    return {
-        "id": "",
-        "full_name": "",
-        "primary_phone": "",
-        "email": "",
-        "entity_id": "",
-        "entity_name": "",
-        "account_status": UserAccountStatus.ACTIVE.value,
-        "profile_id": "",
-    }
+    from appverbo.use_cases.users.get_user_edit import get_user_edit_defaults_v1
+
+    return get_user_edit_defaults_v1()
 
 def get_user_edit_data(
     session: Session,
     user_id: int | None,
     allowed_entity_ids: set[int] | None = None,
 ) -> dict[str, str]:
-    defaults = get_user_edit_defaults()
-    if user_id is None:
-        return defaults
+    from appverbo.use_cases.users.get_user_edit import execute_get_user_edit_v1
 
-    row = session.execute(
-        select(
-            User.id,
-            User.member_id,
-            Member.full_name,
-            Member.primary_phone,
-            User.login_email,
-            User.account_status,
-        )
-       .join(Member, Member.id == User.member_id)
-       .where(User.id == user_id)
-    ).one_or_none()
-    if row is None:
-        return defaults
-
-    member_entity_stmt = (
-        select(MemberEntity.entity_id)
-       .where(
-            MemberEntity.member_id == row.member_id,
-            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-        )
-       .order_by(MemberEntity.id.desc())
+    return execute_get_user_edit_v1(
+        session=session,
+        user_id=user_id,
+        allowed_entity_ids=allowed_entity_ids,
     )
-    if allowed_entity_ids is not None:
-        if allowed_entity_ids:
-            member_entity_stmt = member_entity_stmt.where(
-                MemberEntity.entity_id.in_(sorted(allowed_entity_ids))
-            )
-        else:
-            return defaults
-
-    member_entity_id = session.scalar(member_entity_stmt.limit(1))
-    if allowed_entity_ids is not None and member_entity_id is None:
-        return defaults
-
-    profile_id = session.scalar(
-        select(UserProfile.profile_id)
-       .where(UserProfile.user_id == row.id, UserProfile.is_active.is_(True))
-       .order_by(UserProfile.id.asc())
-       .limit(1)
-    )
-
-    return {
-        "id": str(row.id),
-        "full_name": row.full_name or "",
-        "primary_phone": row.primary_phone or "",
-        "email": row.login_email or "",
-        "entity_id": str(member_entity_id) if member_entity_id is not None else "",
-        "entity_name": (
-            session.execute(
-                select(Entity.name).where(Entity.id == member_entity_id).limit(1)
-            ).scalar_one_or_none()
-            if member_entity_id is not None
-            else ""
-        )
-        or "",
-        "account_status": row.account_status or UserAccountStatus.ACTIVE.value,
-        "profile_id": str(profile_id) if profile_id is not None else "",
-    }
 
 def get_next_entity_internal_number(session: Session) -> int:
     used_numbers = session.scalars(

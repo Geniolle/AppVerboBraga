@@ -10,7 +10,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from appverbo.models import Entity, Member, MemberStatus, Profile, User, UserAccountStatus
-from appverbo.repositories.member_entity_repository import get_primary_entity_for_member, upsert_active_member_entity_link
+from appverbo.repositories.member_entity_repository import (
+    get_primary_entity_for_member,
+    replace_active_member_entity_link,
+)
 from appverbo.repositories.member_repository import get_member_by_email_ci
 from appverbo.repositories.user_profile_repository import replace_user_profile
 from appverbo.repositories.user_repository import get_user_by_email_ci
@@ -402,11 +405,10 @@ def execute_create_user(
         member.member_status = MemberStatus.ACTIVE.value
         member.is_collaborator = True
 
-    upsert_active_member_entity_link(
+    replace_active_member_entity_link(
         session=session,
         member_id=int(member.id),
         entity_id=int(selected_entity.id),
-        replace_primary=False,
     )
 
     user = User(

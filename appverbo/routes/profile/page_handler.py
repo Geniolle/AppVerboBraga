@@ -28,6 +28,7 @@ from appverbo.menu_settings import (
 )
 from appverbo.routes.profile.router import router
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.users.context import build_user_admin_edit_context_v1
 
 
 def _write_meu_perfil_page_flow_debug_log_v1(
@@ -396,11 +397,14 @@ def new_user_page(
             parsed_entity_edit_id,
             allowed_entity_ids=entity_permissions["allowed_entity_ids"],
         )
-        user_edit_data = get_user_edit_data(
-            session,
-            parsed_user_edit_id,
-            allowed_entity_ids=entity_permissions["allowed_entity_ids"],
+        user_edit_context = build_user_admin_edit_context_v1(
+            session=session,
+            actor_user_id=int(current_user["id"]),
+            actor_login_email=str(current_user["login_email"]),
+            selected_entity_id=selected_entity_id,
+            user_edit_id=parsed_user_edit_id,
         )
+        user_edit_data = user_edit_context.get("user_edit_data", get_user_edit_defaults())
 
         (
             active_sidebar_sections_v22,

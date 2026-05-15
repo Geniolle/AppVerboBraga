@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from appverbo.services.page import get_page_data
+from appverbo.use_cases.users.list_users import execute_list_users_v1
 
 
 def list_admin_users_v1(
@@ -14,18 +14,18 @@ def list_admin_users_v1(
     actor_login_email: str,
     selected_entity_id: int | None,
 ) -> dict[str, Any]:
-    page_data = get_page_data(
-        session,
-        actor_user_id=int(actor_user_id),
-        actor_login_email=str(actor_login_email),
+    result = execute_list_users_v1(
+        session=session,
+        actor_user_id=actor_user_id,
+        actor_login_email=actor_login_email,
         selected_entity_id=selected_entity_id,
     )
 
     return {
-        "created_users": page_data.get("created_users", []),
-        "active_created_users": page_data.get("active_created_users", []),
-        "inactive_users": page_data.get("inactive_users", []),
-        "pending_users": page_data.get("pending_users", []),
+        "created_users": result.get("created_users", []),
+        "active_created_users": result.get("active_created_users", []),
+        "inactive_users": result.get("inactive_users", []),
+        "pending_users": result.get("pending_users", []),
     }
 
 

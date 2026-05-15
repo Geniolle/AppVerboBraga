@@ -62,21 +62,21 @@ USER_COLUMNS = (
 
 
 ####################################################################################
-# (3) AÇÕES DO SUBPROCESSO UTILIZADOR
+# (3) ACOES DO SUBPROCESSO UTILIZADOR
 ####################################################################################
 
 USER_ACTIONS = (
     AdminActionConfig(
         key="view",
         label="Exibir",
-        icon="👁",
+        icon="view",
         action_type="link",
         visible_when=("active", "inactive", "pending", "blocked"),
     ),
     AdminActionConfig(
         key="edit",
         label="Editar",
-        icon="✎",
+        icon="edit",
         action_type="link",
         visible_when=("active", "inactive", "pending", "blocked"),
     ),
@@ -84,7 +84,7 @@ USER_ACTIONS = (
 
 
 ####################################################################################
-# (4) CONFIGURAÇÃO CENTRAL DO SUBPROCESSO UTILIZADOR
+# (4) CONFIGURACAO CENTRAL DO SUBPROCESSO UTILIZADOR
 ####################################################################################
 
 UTILIZADOR_CONFIG = AdminSubprocessConfig(
@@ -108,7 +108,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     identity_field="id",
     label_field="full_name",
     enabled=True,
-    migration_status="native_shadow",
+    migration_status="native",
     fields=USER_FIELDS,
     columns=USER_COLUMNS,
     actions=USER_ACTIONS,

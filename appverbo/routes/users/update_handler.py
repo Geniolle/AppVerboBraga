@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import logging
@@ -12,7 +11,7 @@ from appverbo.models import UserAccountStatus
 from appverbo.routes.users.router import router
 from appverbo.services.page import build_users_new_url
 from appverbo.services.session import get_current_user, get_session_entity_id
-from appverbo.use_cases.users import execute_update_user, normalize_update_user_input_v1
+from appverbo.use_cases.users import execute_update_user
 
 
 logger = logging.getLogger(__name__)
@@ -30,16 +29,6 @@ def update_user_v1(
     profile_id: str = Form(""),
 ) -> RedirectResponse:
     try:
-        payload = normalize_update_user_input_v1(
-            user_id=user_id,
-            full_name=full_name,
-            primary_phone=primary_phone,
-            email=email,
-            entity_id=entity_id,
-            account_status=account_status,
-            profile_id=profile_id,
-        )
-
         with SessionLocal() as session:
             current_user = get_current_user(request, session)
 
@@ -53,7 +42,13 @@ def update_user_v1(
                 session=session,
                 actor_user=current_user,
                 selected_entity_id=get_session_entity_id(request),
-                payload=payload,
+                user_id=user_id,
+                full_name=full_name,
+                primary_phone=primary_phone,
+                email=email,
+                entity_id=entity_id,
+                account_status=account_status,
+                profile_id=profile_id,
             )
 
         return RedirectResponse(

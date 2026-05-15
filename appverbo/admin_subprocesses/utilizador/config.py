@@ -23,7 +23,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     update_endpoint="/users/update",
     save_endpoint="/users/update",
     repository_name="user",
-    repository_class="",
-    enabled=False,
-    migration_status="legacy_pending",
+    repository_class="appverbo.admin_subprocesses.repositories.user_repository.UserAdminRepository",
+    enabled=True,
+    migration_status="native",
 )
