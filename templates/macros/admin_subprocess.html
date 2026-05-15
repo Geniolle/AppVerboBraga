@@ -164,22 +164,29 @@
       href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >&#9998;</a>
 
-    {% if status_value != state.config.active_value and state.config.delete_endpoint and can_delete and not row.get('is_deleted') %}
-      <form
-        method="post"
-        action="{{ state.config.delete_endpoint }}"
-        class="admin-subprocess-inline-form-v1"
-        onsubmit="return confirm('Tem a certeza que pretende eliminar esta sessao?');"
-      >
-        <input type="hidden" name="{{ delete_key_field }}" value="{{ row_key }}">
-        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button
-          type="submit"
-          class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1"
-          title="Eliminar"
-          aria-label="Eliminar"
-        >&#128465;</button>
-      </form>
+    {% if status_value != state.config.active_value and state.config.delete_endpoint and not row.get('is_deleted') %}
+      {% if can_delete %}
+        <form
+          method="post"
+          action="{{ state.config.delete_endpoint }}"
+          class="admin-subprocess-inline-form-v1"
+        >
+          <input type="hidden" name="{{ delete_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button
+            type="submit"
+            class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1"
+            title="Eliminar"
+            aria-label="Eliminar"
+          >&#128465;</button>
+        </form>
+      {% elif state.config.key == "sessoes" %}
+        <span
+          class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1 admin-subprocess-action-btn-disabled-v1"
+          title="Sessão padrão do sistema não pode ser eliminada"
+          aria-label="Sessão padrão do sistema não pode ser eliminada"
+        >&#128465;</span>
+      {% endif %}
     {% endif %}
   </div>
 {% endmacro %}

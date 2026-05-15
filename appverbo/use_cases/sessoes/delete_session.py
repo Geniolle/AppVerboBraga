@@ -29,10 +29,11 @@ from appverbo.use_cases.sessoes.save_session import (
 def normalize_delete_session_input_v1(
     *,
     section_key: str,
+    key: str,
     sidebar_section_return_url: str,
 ) -> dict[str, str]:
     return {
-        "section_key": str(section_key or "").strip(),
+        "section_key": str(section_key or key or "").strip(),
         "sidebar_section_return_url": str(sidebar_section_return_url or "").strip(),
     }
 

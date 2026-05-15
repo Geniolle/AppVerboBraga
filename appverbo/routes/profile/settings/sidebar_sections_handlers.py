@@ -231,10 +231,12 @@ def edit_sidebar_sections_v2(
 def delete_one_sidebar_section_v26(
     request: Request,
     section_key: str = Form(""),
+    key: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_delete_session_input_v1(
         section_key=section_key,
+        key=key,
         sidebar_section_return_url=sidebar_section_return_url,
     )
 

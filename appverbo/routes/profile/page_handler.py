@@ -177,6 +177,44 @@ def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
 # APPVERBO_ADMIN_TAB_MENU_CANONICAL_V1_END
 
 
+# APPVERBO_ADMIN_TAB_SESSOES_FALLBACK_V1_START
+def _resolve_sessions_admin_tab_fallback_v1(
+    *,
+    resolved_menu: str,
+    resolved_admin_tab: str,
+    target: str,
+    sidebar_sections_tab: str,
+    sidebar_section_edit_key: str,
+) -> str:
+    if str(resolved_menu or "").strip().lower() != "administrativo":
+        return resolved_admin_tab
+
+    clean_target = str(target or "").strip().lower()
+    if clean_target.startswith("#"):
+        clean_target = clean_target[1:]
+
+    clean_sidebar_sections_tab = str(sidebar_sections_tab or "").strip().lower()
+    clean_sidebar_section_edit_key = str(sidebar_section_edit_key or "").strip()
+    session_target_keys = {
+        "admin-sidebar-sections-card",
+        "admin-sidebar-sections-form-card",
+        "admin-sidebar-sections-card-create",
+        "admin-sidebar-sections-card-inactive",
+    }
+
+    if (
+        clean_sidebar_sections_tab == "sessoes"
+        or bool(clean_sidebar_section_edit_key)
+        or clean_target in session_target_keys
+    ):
+        return "sessoes"
+
+    return resolved_admin_tab
+
+
+# APPVERBO_ADMIN_TAB_SESSOES_FALLBACK_V1_END
+
+
 
 
 
@@ -217,6 +255,13 @@ def new_user_page(
     if not resolved_menu:
         resolved_menu = "home"
     resolved_admin_tab = _normalize_admin_tab_menu_v1(admin_tab)
+    resolved_admin_tab = _resolve_sessions_admin_tab_fallback_v1(
+        resolved_menu=resolved_menu,
+        resolved_admin_tab=resolved_admin_tab,
+        target=target,
+        sidebar_sections_tab=sidebar_sections_tab,
+        sidebar_section_edit_key=sidebar_section_edit_key,
+    )
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
     if clean_entity_edit_id.isdigit():

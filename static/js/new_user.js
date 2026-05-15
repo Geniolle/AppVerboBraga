@@ -128,6 +128,24 @@ function redirectToStoredPostSaveContextV3(storedContext) {
     return false;
   }
 
+  //###################################################################################
+  // (V3.1) PRESERVAR CONTEXTO EXPLÍCITO DA ABA SESSÕES
+  //###################################################################################
+  // Quando o backend já devolve admin_tab=sessoes (ou sidebar_sections_tab=sessoes),
+  // não devemos reabrir contexto antigo do sessionStorage. Isso evita saltar para outra
+  // tela após criar/editar/mover/eliminar sessão.
+  const currentAdminTab = String(currentUrl.searchParams.get("admin_tab") || "").trim().toLowerCase();
+  const currentSidebarTab = String(currentUrl.searchParams.get("sidebar_sections_tab") || "").trim().toLowerCase();
+  const currentTarget = String(currentUrl.searchParams.get("target") || "").trim().toLowerCase().replace(/^#/, "");
+  const currentHash = String(currentUrl.hash || "").trim().toLowerCase().replace(/^#/, "");
+  const isSessionsTargetContext =
+    currentTarget.startsWith("admin-sidebar-sections-") ||
+    currentHash.startsWith("admin-sidebar-sections-");
+
+  if (currentAdminTab === "sessoes" || currentSidebarTab === "sessoes" || isSessionsTargetContext) {
+    return false;
+  }
+
   let targetUrl = null;
 
   try {
@@ -6690,7 +6708,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       currentUrl.searchParams.delete("dynamic_process_section");
       currentUrl.searchParams.delete("section_key");
       currentUrl.hash = "#create-user-card";
-    } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
+    } else if (
+      actionLookup.includes("/settings/menu/sidebar-section-save") ||
+      actionLookup.includes("/settings/menu/sidebar-section-move-one") ||
+      actionLookup.includes("/settings/menu/sidebar-section-delete-one") ||
+      actionLookup.includes("/settings/menu/sidebar-sections")
+    ) {
       currentUrl.searchParams.set("menu", "administrativo");
       currentUrl.searchParams.set("admin_tab", "sessoes");
       currentUrl.searchParams.set("sidebar_sections_tab", "sessoes");
@@ -7136,7 +7159,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
       url.hash = "#create-user-card";
-    } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
+    } else if (
+      actionLookup.includes("/settings/menu/sidebar-section-save") ||
+      actionLookup.includes("/settings/menu/sidebar-section-move-one") ||
+      actionLookup.includes("/settings/menu/sidebar-section-delete-one") ||
+      actionLookup.includes("/settings/menu/sidebar-sections")
+    ) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "sessoes");
       url.searchParams.set("sidebar_sections_tab", "sessoes");
@@ -7557,7 +7585,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
       url.hash = "#create-user-card";
-    } else if (actionLookup.includes("/settings/menu/sidebar-section-save")) {
+    } else if (
+      actionLookup.includes("/settings/menu/sidebar-section-save") ||
+      actionLookup.includes("/settings/menu/sidebar-section-move-one") ||
+      actionLookup.includes("/settings/menu/sidebar-section-delete-one") ||
+      actionLookup.includes("/settings/menu/sidebar-sections")
+    ) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "sessoes");
       url.searchParams.set("sidebar_sections_tab", "sessoes");
