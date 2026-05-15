@@ -43,10 +43,10 @@ def _build_settings_redirect_url_v1(
     params: list[tuple[str, str]] = []
 
     if error_message:
-        params.append(("error", error_message))
+        params.append(("settings_error", error_message))
 
     if success_message:
-        params.append(("success", success_message))
+        params.append(("settings_success", success_message))
 
     if redirect_menu:
         params.append(("menu", redirect_menu))
