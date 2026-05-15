@@ -16,6 +16,10 @@ from appverbo.menu_settings import (
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
+from appverbo.services.entity_admin_context import (
+    build_entity_admin_context_v1,
+    build_entity_admin_page_payload_v1,
+)
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.users.context import (
     build_user_admin_list_context_v1,
@@ -832,59 +836,14 @@ def get_page_data(
     # APPVERBO_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
 
 
-    scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
-    apply_scope_filter = allowed_entity_ids is not None
-
-    entities_stmt = (
-        select(Entity.id, Entity.name, Entity.internal_number)
-       .where(Entity.is_active.is_(True))
-       .order_by(Entity.name)
+    entity_admin_context = build_entity_admin_context_v1(
+        session=session,
+        actor_user_id=actor_user_id,
+        actor_login_email=actor_login_email,
+        selected_entity_id=selected_entity_id,
     )
-    if apply_scope_filter:
-        if scoped_entity_ids:
-            entities_stmt = entities_stmt.where(Entity.id.in_(scoped_entity_ids))
-        else:
-            entities_stmt = entities_stmt.where(Entity.id == -1)
-    entities = session.execute(entities_stmt).all()
-
+    entity_admin_page_payload = build_entity_admin_page_payload_v1(entity_admin_context)
     profiles_for_form = get_allowed_global_profiles_for_form(session)
-
-    entity_rows_stmt = (
-        select(
-            Entity.id,
-            Entity.internal_number,
-            Entity.name,
-            Entity.acronym,
-            Entity.tax_id,
-            Entity.email,
-            Entity.responsible_name,
-            Entity.door_number,
-            Entity.phone,
-            Entity.address,
-            Entity.city,
-            Entity.freguesia,
-            Entity.postal_code,
-            Entity.country,
-            Entity.description,
-            Entity.profile_scope,
-            Entity.logo_url,
-            Entity.is_active,
-            Entity.created_at,
-        )
-       .order_by(Entity.id.desc())
-    )
-    if apply_scope_filter:
-        if scoped_entity_ids:
-            entity_rows_stmt = entity_rows_stmt.where(Entity.id.in_(scoped_entity_ids))
-        else:
-            entity_rows_stmt = entity_rows_stmt.where(Entity.id == -1)
-
-    recent_entities = session.execute(
-        entity_rows_stmt.where(Entity.is_active.is_(True)).limit(10)
-    ).all()
-    inactive_entities_rows = session.execute(
-        entity_rows_stmt.where(Entity.is_active.is_not(True))
-    ).all()
 
     user_admin_context = build_user_admin_list_context_v1(
         session=session,
@@ -893,49 +852,19 @@ def get_page_data(
         selected_entity_id=selected_entity_id,
     )
     user_admin_page_payload = build_user_admin_page_payload_v1(user_admin_context)
-
-    def serialize_entity_row(row: Any) -> dict[str, Any]:
-        return {
-            "id": row.id,
-            "internal_number": row.internal_number if row.internal_number is not None else "-",
-            "name": row.name,
-            "acronym": row.acronym or "",
-            "tax_id": row.tax_id or "",
-            "email": row.email or "",
-            "responsible_name": row.responsible_name or "",
-            "door_number": row.door_number or "",
-            "phone": row.phone or "",
-            "address": row.address or "",
-            "city": row.city or "",
-            "freguesia": row.freguesia or "",
-            "postal_code": row.postal_code or "",
-            "country": row.country or "",
-            "description": row.description or "",
-            "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
-            "profile_scope_label": (
-                "Owner"
-                if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
-                else "Legado"
-            ),
-            "logo_url": row.logo_url or "",
-            "is_active": bool(row.is_active),
-            "status_label": "Ativo" if row.is_active else "Inativo",
-            "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
-        }
+    entity_permissions_payload = dict(
+        entity_admin_page_payload.get("entity_permissions") or permissions
+    )
 
     return {
-        "entities": [
-            {
-                "id": row.id,
-                "name": row.name,
-                "internal_number": row.internal_number,
-            }
-            for row in entities
-        ],
+        "entities": entity_admin_page_payload["entities"],
         "profiles": profiles_for_form,
         "account_status_summary": user_admin_page_payload["account_status_summary"],
-        "recent_entities": [serialize_entity_row(row) for row in recent_entities],
-        "inactive_entities": [serialize_entity_row(row) for row in inactive_entities_rows],
+        "all_entities": entity_admin_page_payload["all_entities"],
+        "active_entities": entity_admin_page_payload["active_entities"],
+        "recent_entities": entity_admin_page_payload["recent_entities"],
+        "inactive_entities": entity_admin_page_payload["inactive_entities"],
+        "entity_list_pagination": entity_admin_page_payload["entity_list_pagination"],
         "recent_users": user_admin_page_payload["recent_users"],
         "all_users": user_admin_page_payload["all_users"],
         "created_users": user_admin_page_payload["created_users"],
@@ -946,8 +875,11 @@ def get_page_data(
         "non_active_users": user_admin_page_payload["non_active_users"],
         "superuser_users": user_admin_page_payload["superuser_users"],
         "user_list_pagination": user_admin_page_payload["user_list_pagination"],
-        "entity_permissions": permissions,
-        "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
+        "entity_permissions": entity_permissions_payload,
+        "current_user_can_manage_all_entities": bool(
+            entity_admin_page_payload["current_user_can_manage_all_entities"]
+        ),
+        "next_entity_internal_number": entity_admin_page_payload["next_entity_internal_number"],
         "sidebar_owner_entity": sidebar_owner_entity,
         "current_entity_scope": current_entity_scope,
         "sidebar_owner_entity_name": sidebar_owner_entity.get("name", ""),
@@ -1094,65 +1026,22 @@ def get_entity_form_defaults() -> dict[str, str]:
     }
 
 def get_entity_edit_defaults() -> dict[str, str]:
-    return {
-        "id": "",
-        "internal_number": "-",
-        "name": "",
-        "acronym": "",
-        "tax_id": "",
-        "email": "",
-        "responsible_name": "",
-        "door_number": "",
-        "address": "",
-        "city": "",
-        "freguesia": "",
-        "postal_code": "",
-        "country": "",
-        "phone": "",
-        "description": "",
-        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
-        "created_at": "",
-        "logo_url": "",
-        "status": "active",
-    }
+    from appverbo.use_cases.entities.get_entity_edit import get_entity_edit_defaults_v1
+
+    return get_entity_edit_defaults_v1()
 
 def get_entity_edit_data(
     session: Session,
     entity_id: int | None,
     allowed_entity_ids: set[int] | None = None,
 ) -> dict[str, str]:
-    defaults = get_entity_edit_defaults()
-    if entity_id is None:
-        return defaults
+    from appverbo.use_cases.entities.get_entity_edit import execute_get_entity_edit_v1
 
-    if allowed_entity_ids is not None and int(entity_id) not in allowed_entity_ids:
-        return defaults
-
-    entity = session.get(Entity, entity_id)
-    if entity is None:
-        return defaults
-
-    return {
-        "id": str(entity.id),
-        "internal_number": str(entity.internal_number) if entity.internal_number is not None else "-",
-        "name": entity.name or "",
-        "acronym": entity.acronym or "",
-        "tax_id": entity.tax_id or "",
-        "email": entity.email or "",
-        "responsible_name": entity.responsible_name or "",
-        "door_number": entity.door_number or "",
-        "address": entity.address or "",
-        "city": entity.city or "",
-        "freguesia": entity.freguesia or "",
-        "postal_code": entity.postal_code or "",
-        "country": entity.country or "",
-        "phone": entity.phone or "",
-        "description": entity.description or "",
-        "profile_scope": entity.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO,
-        "created_at": entity.created_at.strftime("%d/%m/%Y") if entity.created_at else "",
-        "logo_url": entity.logo_url or "",
-        "status": "active" if entity.is_active else "inactive",
-    }
+    return execute_get_entity_edit_v1(
+        session=session,
+        entity_id=entity_id,
+        allowed_entity_ids=allowed_entity_ids,
+    )
 
 def get_user_edit_defaults() -> dict[str, str]:
     from appverbo.use_cases.users.get_user_edit import get_user_edit_defaults_v1
@@ -1173,20 +1062,11 @@ def get_user_edit_data(
     )
 
 def get_next_entity_internal_number(session: Session) -> int:
-    used_numbers = session.scalars(
-        select(Entity.internal_number)
-       .where(
-            Entity.internal_number.is_not(None),
-            Entity.internal_number >= ENTITY_INTERNAL_NUMBER_MIN,
-            Entity.internal_number <= ENTITY_INTERNAL_NUMBER_MAX,
-        )
-       .order_by(Entity.internal_number.asc())
-    ).all()
-    used_set = {int(number) for number in used_numbers if isinstance(number, int)}
-    for candidate in range(ENTITY_INTERNAL_NUMBER_MIN, ENTITY_INTERNAL_NUMBER_MAX + 1):
-        if candidate not in used_set:
-            return candidate
-    return ENTITY_INTERNAL_NUMBER_MAX
+    from appverbo.admin_subprocesses.entidade.configuracao import ENTIDADE_CONFIG
+    from appverbo.admin_subprocesses.repositories.entity_repository import EntityAdminRepository
+
+    repository = EntityAdminRepository(ENTIDADE_CONFIG)
+    return repository.get_next_internal_number(session=session)
 
 def build_users_new_url(**query_params: str) -> str:
     clean_query_params = {

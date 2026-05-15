@@ -1,158 +1,73 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
+import logging
+import traceback
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import Form, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
-from appverbo.core import *  # noqa: F403,F401
-from appverbo.services import *  # noqa: F403,F401
-from appverbo.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    Profile,
-    User,
-    UserAccountStatus,
-    UserProfile,
-)
-
+from appverbo.core import SessionLocal
 from appverbo.routes.entities.router import router
+from appverbo.services.page import build_users_new_url
+from appverbo.services.session import get_current_user, get_session_entity_id
+from appverbo.use_cases.entities.delete_entity import execute_delete_entity_v1
+
+
+logger = logging.getLogger(__name__)
+
+
+# ###################################################################################
+# (1) ROTA DE ELIMINAÇÃO DE ENTIDADE
+# ###################################################################################
 
 @router.post("/entities/delete", response_class=HTMLResponse)
-def delete_entity(
+def delete_entity_v1(
     request: Request,
     entity_id: str = Form(...),
-) -> HTMLResponse:
-    clean_entity_id = entity_id.strip()
-    if not clean_entity_id.isdigit():
-        return RedirectResponse(
-            url=build_users_new_url(
-                entity_error="Entidade inválida para exclusão.",
-                menu="administrativo",
-                admin_tab="entidade",
+) -> RedirectResponse:
+    clean_entity_id = str(entity_id or "").strip()
+
+    try:
+        with SessionLocal() as session:
+            current_user = get_current_user(request, session)
+
+            if current_user is None:
+                return RedirectResponse(
+                    url="/login?error=Efetue login para continuar.",
+                    status_code=status.HTTP_302_FOUND,
+                )
+
+            outcome = execute_delete_entity_v1(
+                session=session,
+                actor_user=current_user,
+                selected_entity_id=get_session_entity_id(request),
+                entity_id=clean_entity_id,
             )
-            + "#recent-entities-card",
+
+        return RedirectResponse(
+            url=outcome.redirect_url,
+            status_code=outcome.redirect_status_code,
+        )
+
+    except Exception as exc:
+        logger.error(
+            "Erro inesperado ao eliminar entidade: %s\n%s",
+            exc,
+            traceback.format_exc(),
+        )
+        return RedirectResponse(
+            url=(
+                build_users_new_url(
+                    entity_error=(
+                        "Erro ao eliminar entidade. Consulte os logs recentes do serviço web."
+                    ),
+                    menu="administrativo",
+                    admin_tab="entidade",
+                )
+                + "#recent-entities-card"
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    parsed_entity_id = int(clean_entity_id)
-    with SessionLocal() as session:
-        current_user = get_current_user(request, session)
-        if current_user is None:
-            return RedirectResponse(
-                url="/login?error=Efetue login para continuar.",
-                status_code=status.HTTP_302_FOUND,
-            )
-        selected_entity_id = get_session_entity_id(request)
 
-        current_user_is_admin = is_admin_user(
-            session, current_user["id"], current_user["login_email"]
-        )
-        if not current_user_is_admin:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    entity_error="Apenas administradores podem excluir entidades.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-        entity_permissions = get_user_entity_permissions(
-            session,
-            current_user["id"],
-            current_user["login_email"],
-            selected_entity_id,
-        )
-        if not is_entity_within_permissions(parsed_entity_id, entity_permissions):
-            return RedirectResponse(
-                url=build_users_new_url(
-                    entity_error="Sem permissão para eliminar esta entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-        entity = session.get(Entity, parsed_entity_id)
-        if entity is None:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    entity_error="Entidade não encontrada.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-        # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_START
-        if entity.is_active:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    entity_error="Só é permitido eliminar entidades inativas.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                    entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-        # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_END
-
-        linked_users_count = session.scalar(
-            select(func.count(User.id))
-           .join(MemberEntity, MemberEntity.member_id == User.member_id)
-           .where(MemberEntity.entity_id == parsed_entity_id)
-        )
-        if linked_users_count and int(linked_users_count) > 0:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    entity_error="Não pode excluir entidade com utilizadores associados. Inative a entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                    entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-        logo_url_to_remove = entity.logo_url or ""
-        session.execute(
-            delete(MemberEntity).where(MemberEntity.entity_id == parsed_entity_id)
-        )
-        session.delete(entity)
-        try:
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return RedirectResponse(
-                url=build_users_new_url(
-                    entity_error="Não foi possível excluir a entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-    if logo_url_to_remove.startswith("/static/entities/"):
-        (BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
-
-    return RedirectResponse(
-        url=build_users_new_url(
-            entity_success="Entidade excluida com sucesso.",
-            menu="administrativo",
-            admin_tab="entidade",
-        )
-        + "#recent-entities-card",
-        status_code=status.HTTP_303_SEE_OTHER,
-    )
+delete_entity = delete_entity_v1

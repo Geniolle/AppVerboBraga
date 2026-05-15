@@ -1,40 +1,18 @@
 from __future__ import annotations
-from .utilizador.configuracao import UTILIZADOR_CONFIG
 
+from .entidade.configuracao import ENTIDADE_CONFIG
 from .models import (
     AdminActionConfig,
     AdminColumnConfig,
     AdminFieldConfig,
     AdminSubprocessConfig,
 )
+from .utilizador.configuracao import UTILIZADOR_CONFIG
 
 
 ####################################################################################
 # (1) CAMPOS DOS SUBPROCESSOS
 ####################################################################################
-
-ENTITY_FIELDS = (
-    AdminFieldConfig(
-        key="name",
-        label="Nome da entidade",
-        input_name="entity_name",
-        field_type="text",
-        required=True,
-        max_length=160,
-    ),
-    AdminFieldConfig(
-        key="status",
-        label="Estado",
-        input_name="entity_status",
-        field_type="select",
-        required=True,
-        options=(
-            ("active", "Ativa"),
-            ("inactive", "Inativa"),
-        ),
-    ),
-)
-
 
 SIDEBAR_SECTION_FIELDS = (
     AdminFieldConfig(
@@ -78,36 +56,37 @@ DEFAULT_COLUMNS = (
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
 )
 
+
 ####################################################################################
-# (3) AÇÕES PADRÃO
+# (2) AÇÕES PADRÃO
 ####################################################################################
 
 DEFAULT_ACTIVE_ACTIONS = (
     AdminActionConfig(
         key="move_up",
         label="Subir",
-        icon="↑",
+        icon="\u2191",
         action_type="post",
         visible_when=("ativo",),
     ),
     AdminActionConfig(
         key="move_down",
         label="Descer",
-        icon="↓",
+        icon="\u2193",
         action_type="post",
         visible_when=("ativo",),
     ),
     AdminActionConfig(
         key="view",
         label="Visualizar",
-        icon="👁",
+        icon="\U0001f441",
         action_type="button",
         visible_when=("ativo", "inativo", "active", "inactive", "pending", "blocked"),
     ),
     AdminActionConfig(
         key="edit",
         label="Editar",
-        icon="✎",
+        icon="\u270e",
         action_type="link",
         visible_when=("ativo", "inativo", "active", "inactive", "pending", "blocked"),
     ),
@@ -115,45 +94,7 @@ DEFAULT_ACTIVE_ACTIONS = (
 
 
 ####################################################################################
-# (4) CONFIGURAÇÃO - ENTIDADE
-####################################################################################
-
-ENTIDADE_CONFIG = AdminSubprocessConfig(
-    key="entidade",
-    label="Entidade",
-    singular_label="Entidade",
-    plural_label="Entidades",
-    edit_param="entity_edit_id",
-    default_target="create-entity-card",
-    edit_target="edit-entity-card",
-    create_title="Criar entidade",
-    edit_title="Editar entidade",
-    active_title="Entidades ativas",
-    inactive_title="Entidades inativas",
-    create_endpoint="/entities/new",
-    update_endpoint="/entities/update",
-    save_endpoint="/entities/update",
-    delete_endpoint="/entities/delete",
-    repository_name="entity",
-    repository_class="appverbo.admin_subprocesses.repositories.entity_repository.EntityAdminRepository",
-    status_field="entity_status",
-    active_value="active",
-    inactive_value="inactive",
-    identity_field="id",
-    label_field="name",
-    enabled=True,
-    migration_status="reference",
-    fields=ENTITY_FIELDS,
-    columns=(
-        AdminColumnConfig(key="name", label="ENTIDADE", source="name"),
-        AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
-    ),
-    actions=DEFAULT_ACTIVE_ACTIONS,
-)
-
-
-####################################################################################
-# (5) CONFIGURAÇÃO - SESSÕES
+# (3) CONFIGURAÇÃO - SESSÕES
 ####################################################################################
 
 SESSOES_CONFIG = AdminSubprocessConfig(
@@ -193,13 +134,14 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 
 
 ####################################################################################
-# (6) CONFIGURAÇÃO - UTILIZADOR
+# (4) CONFIGURAÇÃO - UTILIZADOR
 ####################################################################################
 
 # UTILIZADOR_CONFIG é definido em appverbo/admin_subprocesses/utilizador/configuracao.py
 
+
 ####################################################################################
-# (7) CONFIGURAÇÃO - MENU
+# (5) CONFIGURAÇÃO - MENU
 ####################################################################################
 
 MENU_CONFIG = AdminSubprocessConfig(
@@ -223,7 +165,7 @@ MENU_CONFIG = AdminSubprocessConfig(
 
 
 ####################################################################################
-# (8) CONFIGURAÇÃO - CONTAS
+# (6) CONFIGURAÇÃO - CONTAS
 ####################################################################################
 
 CONTAS_CONFIG = AdminSubprocessConfig(
@@ -247,7 +189,7 @@ CONTAS_CONFIG = AdminSubprocessConfig(
 
 
 ####################################################################################
-# (9) REGISTRY ÚNICO
+# (7) REGISTRY ÚNICO
 ####################################################################################
 
 ADMIN_SUBPROCESS_REGISTRY = {

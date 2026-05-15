@@ -34,7 +34,7 @@ def save_entity_logo_upload(entity_logo_file: UploadFile | None) -> tuple[str, s
                 if total_size > MAX_ENTITY_LOGO_SIZE_BYTES:
                     file_handle.close()
                     destination.unlink(missing_ok=True)
-                    return "", "Imagem demasiado grande. Limite maximo: 5MB."
+                    return "", "Imagem demasiado grande. Limite máximo: 5MB."
                 file_handle.write(chunk)
     finally:
         entity_logo_file.file.close()
