@@ -11,7 +11,7 @@ from appverbo.services.permissions import is_entity_within_permissions
 
 
 # ###################################################################################
-# (1) POLÍTICAS DE PERMISSÃO E ESCOPO
+# (1) POLITICAS DE PERMISSAO E ESCOPO
 # ###################################################################################
 
 def ensure_actor_can_manage_entities_v1(
@@ -79,7 +79,7 @@ def ensure_can_set_owner_scope_v1(
 
 
 # ###################################################################################
-# (2) POLÍTICAS DE ELIMINAÇÃO
+# (2) POLITICAS DE ELIMINACAO
 # ###################################################################################
 
 def ensure_delete_only_inactive_entity_v1(entity: Entity) -> str:
@@ -103,8 +103,4 @@ def ensure_entity_can_be_deleted_v1(
     if int(linked_users_count) <= 0:
         return ""
 
-    return (
-        "Não pode eliminar entidade com utilizadores associados. "
-        "Inative a entidade primeiro."
-    )
-
+    return "Não pode eliminar entidade com utilizadores ativos associados."

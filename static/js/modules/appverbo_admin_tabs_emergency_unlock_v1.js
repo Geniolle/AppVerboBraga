@@ -224,6 +224,20 @@
         return null;
     }
 
+    function isClickWithinAdminTabUi(event) {
+        var target = event && event.target ? event.target : null;
+
+        if (!target || !target.closest) {
+            return false;
+        }
+
+        return Boolean(
+            target.closest(
+                "#submenu-items, .menu-tabs, .admin-tabs, .admin-subprocess-tabs, [role='tablist']"
+            )
+        );
+    }
+
     function resolveTabName(event) {
         var tabElement = findAdminTabElement(event.target);
 
@@ -280,6 +294,10 @@
 
     function handleAdminTabClick(event) {
         if (!isAdminPage()) {
+            return;
+        }
+
+        if (!isClickWithinAdminTabUi(event)) {
             return;
         }
 

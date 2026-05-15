@@ -14,7 +14,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_START #}
 <link rel="stylesheet" href="/static/css/modules/appverbo_admin_tabs_emergency_unlock_v1.css?v=20260511-admin-tabs-emergency-unlock-v4">
 <link rel="stylesheet" href="/static/css/modules/appverbo_sessoes_entries_per_page_v1.css?v=20260511-sessoes-entries-per-page-v1">
-<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260511-admin-tabs-emergency-unlock-v4"></script>
+<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260515-admin-tabs-emergency-unlock-v6"></script>
 <script src="/static/js/modules/appverbo_sessoes_entries_per_page_v1.js?v=20260511-sessoes-entries-per-page-v1" defer></script>
 <script>
 (function () {
@@ -1721,7 +1721,7 @@
                         {% if current_user_can_manage_all_entities %}
                         {% if not row.is_active %}
 <!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_START -->
-<form method="post" action="/entities/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar esta entidade');">
+<form method="post" action="/entities/delete">
                           <input type="hidden" name="entity_id" value="{{ row.id }}">
                           <button
                             type="submit"
@@ -1828,7 +1828,7 @@
                         {% if current_user_can_manage_all_entities %}
                         {% if not row.is_active %}
 <!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_START -->
-<form method="post" action="/entities/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar esta entidade');">
+<form method="post" action="/entities/delete">
                           <input type="hidden" name="entity_id" value="{{ row.id }}">
                           <button
                             type="submit"

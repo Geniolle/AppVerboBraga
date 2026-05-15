@@ -13,7 +13,7 @@ from appverbo.core import (
     ENTITY_PROFILE_SCOPE_LEGADO,
     ENTITY_PROFILE_SCOPE_OWNER,
 )
-from appverbo.models import Entity, MemberEntity, User
+from appverbo.models import Entity, MemberEntity, MemberEntityStatus, User
 from appverbo.services.entities import apply_entity_form_data_v1, normalize_entity_text_v1
 
 
@@ -491,9 +491,12 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
         entity_id: int,
     ) -> int:
         linked_users = session.scalar(
-            select(func.count(User.id))
+            select(func.count(func.distinct(User.id)))
             .join(MemberEntity, MemberEntity.member_id == User.member_id)
-            .where(MemberEntity.entity_id == int(entity_id))
+            .where(
+                MemberEntity.entity_id == int(entity_id),
+                MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+            )
         )
 
         return int(linked_users or 0)

@@ -67,7 +67,11 @@
                 {% if not user_readonly_mode %}
                 <button type="submit" class="action-btn">Guardar</button>
                 {% endif %}
-                <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=utilizador">{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+                <a
+                  class="action-btn-cancel"
+                  data-admin-user-edit-cancel="1"
+                  href="/users/new?menu=administrativo&admin_tab=utilizador"
+                >{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
               </div>
             </form>
           </div>
