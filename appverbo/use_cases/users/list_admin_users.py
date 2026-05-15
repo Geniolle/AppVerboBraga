@@ -22,10 +22,16 @@ def list_admin_users_v1(
     )
 
     return {
+        "all_users": result.get("all_users", []),
         "created_users": result.get("created_users", []),
         "active_created_users": result.get("active_created_users", []),
         "inactive_users": result.get("inactive_users", []),
         "pending_users": result.get("pending_users", []),
+        "recent_users": result.get("recent_users", []),
+        "superuser_users": result.get("superuser_users", []),
+        "account_status_summary": result.get("account_status_summary", []),
+        "pagination": result.get("pagination", {}),
+        "entity_permissions": result.get("entity_permissions", {}),
     }
 
 

@@ -17,9 +17,9 @@ from appverbo.menu_settings import (
     resolve_menu_key_alias,
 )
 from appverbo.services.permissions import get_user_entity_permissions
-from appverbo.services.users.context import build_user_admin_list_context_v1
-from appverbo.services.user_status import (
-    user_account_status_label_pt_v1,
+from appverbo.services.users.context import (
+    build_user_admin_list_context_v1,
+    build_user_admin_page_payload_v1,
 )
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
@@ -892,15 +892,7 @@ def get_page_data(
         actor_login_email=actor_login_email,
         selected_entity_id=selected_entity_id,
     )
-
-    all_users = list(user_admin_context.get("all_users", []))
-    pending_users = list(user_admin_context.get("pending_users", []))
-    created_users = list(user_admin_context.get("created_users", []))
-    active_created_users = list(user_admin_context.get("active_created_users", []))
-    inactive_users = list(user_admin_context.get("inactive_users", []))
-    superuser_users = list(user_admin_context.get("superuser_users", []))
-    recent_users = list(user_admin_context.get("recent_users", []))
-    account_status_summary = list(user_admin_context.get("account_status_summary", []))
+    user_admin_page_payload = build_user_admin_page_payload_v1(user_admin_context)
 
     def serialize_entity_row(row: Any) -> dict[str, Any]:
         return {
@@ -941,27 +933,17 @@ def get_page_data(
             for row in entities
         ],
         "profiles": profiles_for_form,
-        "account_status_summary": account_status_summary,
+        "account_status_summary": user_admin_page_payload["account_status_summary"],
         "recent_entities": [serialize_entity_row(row) for row in recent_entities],
         "inactive_entities": [serialize_entity_row(row) for row in inactive_entities_rows],
-        "recent_users": [
-            {
-                "id": row["id"],
-                "full_name": row["full_name"],
-                "login_email": row["login_email"],
-                "account_status": row["account_status"],
-                "account_status_label": row.get("account_status_label", user_account_status_label_pt_v1(row["account_status"])),
-                "created_at": row["created_at"],
-            }
-            for row in recent_users
-        ],
-        "all_users": all_users,
-        "created_users": created_users,
-        "active_created_users": active_created_users,
-        "inactive_users": inactive_users,
-        "pending_users": pending_users,
-        "superuser_users": superuser_users,
-        "user_list_pagination": dict(user_admin_context.get("user_list_pagination", {})),
+        "recent_users": user_admin_page_payload["recent_users"],
+        "all_users": user_admin_page_payload["all_users"],
+        "created_users": user_admin_page_payload["created_users"],
+        "active_created_users": user_admin_page_payload["active_created_users"],
+        "inactive_users": user_admin_page_payload["inactive_users"],
+        "pending_users": user_admin_page_payload["pending_users"],
+        "superuser_users": user_admin_page_payload["superuser_users"],
+        "user_list_pagination": user_admin_page_payload["user_list_pagination"],
         "entity_permissions": permissions,
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
         "sidebar_owner_entity": sidebar_owner_entity,

@@ -11,11 +11,45 @@ from appverbo.admin_subprocesses.repositories.user_repository import (
 from appverbo.admin_subprocesses.utilizador.configuracao import UTILIZADOR_CONFIG
 from appverbo.models import UserAccountStatus
 from appverbo.services.permissions import get_user_entity_permissions
+from appverbo.services.user_status import normalize_user_account_status_v1
 
 
 # ###################################################################################
 # (1) CONVERSAO DE FILTROS E RESUMOS
 # ###################################################################################
+
+USER_LIST_ALLOWED_STATUS_VALUES_V1 = frozenset(
+    {
+        UserAccountStatus.ACTIVE.value,
+        UserAccountStatus.PENDING.value,
+        UserAccountStatus.INACTIVE.value,
+        UserAccountStatus.BLOCKED.value,
+    }
+)
+
+
+def _normalize_status_filters_v1(raw_status: str) -> tuple[str, ...]:
+    normalized_values: list[str] = []
+    seen_values: set[str] = set()
+
+    for raw_part in raw_status.split(","):
+        clean_part = str(raw_part or "").strip().lower()
+
+        if not clean_part:
+            continue
+
+        normalized_status = normalize_user_account_status_v1(clean_part)
+
+        if normalized_status not in USER_LIST_ALLOWED_STATUS_VALUES_V1:
+            continue
+
+        if normalized_status in seen_values:
+            continue
+
+        seen_values.add(normalized_status)
+        normalized_values.append(normalized_status)
+
+    return tuple(normalized_values)
 
 def _normalize_filters_v1(filters: dict[str, Any] | None = None) -> UserListFilters:
     raw_filters = filters or {}
@@ -43,14 +77,7 @@ def _normalize_filters_v1(filters: dict[str, Any] | None = None) -> UserListFilt
     entity_id = int(raw_entity_id) if raw_entity_id.isdigit() else None
     profile_id = int(raw_profile_id) if raw_profile_id.isdigit() else None
 
-    status_values = tuple(
-        clean_status
-        for clean_status in (
-            part.strip().lower()
-            for part in raw_status.split(",")
-        )
-        if clean_status
-    )
+    status_values = _normalize_status_filters_v1(raw_status)
 
     return UserListFilters(
         entity_id=entity_id,
@@ -71,7 +98,7 @@ def _build_account_status_summary_v1(rows: list[dict[str, Any]]) -> list[dict[st
     }
 
     for row in rows:
-        normalized_status = str(row.get("account_status") or "").strip().lower()
+        normalized_status = normalize_user_account_status_v1(row.get("account_status"))
 
         if normalized_status not in account_status_map:
             account_status_map[normalized_status] = 0
@@ -139,22 +166,26 @@ def execute_list_users_v1(
     pending_users = [
         row
         for row in all_users
-        if row.get("account_status") == UserAccountStatus.PENDING.value
+        if normalize_user_account_status_v1(row.get("account_status"))
+        == UserAccountStatus.PENDING.value
     ]
     created_users = [
         row
         for row in all_users
-        if row.get("account_status") != UserAccountStatus.PENDING.value
+        if normalize_user_account_status_v1(row.get("account_status"))
+        != UserAccountStatus.PENDING.value
     ]
     active_created_users = [
         row
         for row in created_users
-        if row.get("account_status") == UserAccountStatus.ACTIVE.value
+        if normalize_user_account_status_v1(row.get("account_status"))
+        == UserAccountStatus.ACTIVE.value
     ]
     inactive_users = [
         row
         for row in all_users
-        if row.get("account_status") != UserAccountStatus.ACTIVE.value
+        if normalize_user_account_status_v1(row.get("account_status"))
+        != UserAccountStatus.ACTIVE.value
     ]
     superuser_users = [
         row

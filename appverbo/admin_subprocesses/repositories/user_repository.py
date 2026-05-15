@@ -24,7 +24,7 @@ from appverbo.models import (
 )
 from appverbo.repositories.member_entity_repository import (
     get_active_entity_ids_for_member,
-    upsert_active_member_entity_link,
+    replace_active_member_entity_link,
 )
 from appverbo.repositories.user_profile_repository import (
     delete_user_profiles,
@@ -33,10 +33,26 @@ from appverbo.repositories.user_profile_repository import (
 from appverbo.repositories.user_repository import null_created_by_for_deleted_user
 from appverbo.services.auth import is_admin_user
 from appverbo.services.user_status import (
+    USER_ACCOUNT_STATUS_ACTIVE_V1,
+    USER_ACCOUNT_STATUS_BLOCKED_V1,
+    USER_ACCOUNT_STATUS_INACTIVE_V1,
+    USER_ACCOUNT_STATUS_PENDING_V1,
     is_user_account_status_active_v1,
+    is_user_account_status_blocked_v1,
     is_user_account_status_inactive_v1,
+    is_user_account_status_pending_v1,
     normalize_user_account_status_v1,
     user_account_status_label_pt_v1,
+)
+
+
+USER_LIST_ALLOWED_STATUS_VALUES_V1 = frozenset(
+    {
+        USER_ACCOUNT_STATUS_ACTIVE_V1,
+        USER_ACCOUNT_STATUS_INACTIVE_V1,
+        USER_ACCOUNT_STATUS_PENDING_V1,
+        USER_ACCOUNT_STATUS_BLOCKED_V1,
+    }
 )
 
 
@@ -101,7 +117,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         parsed_profile_id = self._coerce_int(raw_context.get("profile_id"))
 
         raw_status = str(raw_context.get("status") or "").strip().lower()
-        status_values = tuple(
+        raw_status_values = tuple(
             clean_status
             for clean_status in (
                 part.strip().lower()
@@ -109,6 +125,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             )
             if clean_status
         )
+        status_values = self._normalize_status_values_v1(raw_status_values)
 
         clean_search = str(raw_context.get("q") or raw_context.get("search") or "").strip()
 
@@ -132,6 +149,27 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             page=parsed_page,
             page_size=parsed_page_size,
         )
+
+    def _normalize_status_values_v1(
+        self,
+        raw_status_values: tuple[str, ...],
+    ) -> tuple[str, ...]:
+        normalized_values: list[str] = []
+        seen_values: set[str] = set()
+
+        for raw_status in raw_status_values:
+            normalized_status = normalize_user_account_status_v1(raw_status)
+
+            if normalized_status not in USER_LIST_ALLOWED_STATUS_VALUES_V1:
+                continue
+
+            if normalized_status in seen_values:
+                continue
+
+            seen_values.add(normalized_status)
+            normalized_values.append(normalized_status)
+
+        return tuple(normalized_values)
 
     def _resolve_scoped_member_ids(
         self,
@@ -372,7 +410,9 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             "account_status_label": user_account_status_label_pt_v1(clean_status),
             "status_label": user_account_status_label_pt_v1(clean_status),
             "account_status_is_active": is_user_account_status_active_v1(clean_status),
+            "account_status_is_pending": is_user_account_status_pending_v1(clean_status),
             "account_status_is_inactive": is_user_account_status_inactive_v1(clean_status),
+            "account_status_is_blocked": is_user_account_status_blocked_v1(clean_status),
             "is_active": is_user_account_status_active_v1(clean_status),
             "entity_id": entity_id_by_member_id.get(member_id),
             "entity_name": entity_name_by_member_id.get(member_id, "-"),
@@ -393,6 +433,19 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         filters: UserListFilters | None = None,
     ) -> dict[str, Any]:
         resolved_filters = filters or UserListFilters()
+        normalized_status_values = self._normalize_status_values_v1(
+            tuple(resolved_filters.status_values or ())
+        )
+
+        if normalized_status_values != tuple(resolved_filters.status_values or ()):
+            resolved_filters = UserListFilters(
+                entity_id=resolved_filters.entity_id,
+                profile_id=resolved_filters.profile_id,
+                status_values=normalized_status_values,
+                search_text=resolved_filters.search_text,
+                page=resolved_filters.page,
+                page_size=resolved_filters.page_size,
+            )
 
         scoped_member_ids = self._resolve_scoped_member_ids(
             session=session,
@@ -861,11 +914,10 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         user.account_status = str(account_status or "").strip().lower()
 
         if selected_entity is not None:
-            upsert_active_member_entity_link(
+            replace_active_member_entity_link(
                 session=session,
                 member_id=int(member.id),
                 entity_id=int(selected_entity.id),
-                replace_primary=True,
             )
 
         replace_user_profile(
