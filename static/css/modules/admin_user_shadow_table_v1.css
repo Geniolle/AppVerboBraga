@@ -199,6 +199,7 @@
 
 .admin-user-delete-button-v1 {
   color: #c62828 !important;
+  text-decoration: none;
 }
 
 .admin-user-delete-button-v1:hover,

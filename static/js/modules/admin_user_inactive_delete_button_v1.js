@@ -135,14 +135,9 @@
 
     var button = document.createElement("button");
     button.type = "submit";
-    button.className = "admin-user-delete-button-v1";
+    button.className = "table-icon-btn admin-user-delete-button-v1";
     button.title = "Eliminar utilizador";
     button.setAttribute("aria-label", "Eliminar utilizador " + (userEmail || userId));
-    button.style.border = "0";
-    button.style.background = "transparent";
-    button.style.cursor = "pointer";
-    button.style.padding = "4px 6px";
-    button.style.color = "#c62828";
     button.innerHTML = "&#128465;";
 
     form.appendChild(input);

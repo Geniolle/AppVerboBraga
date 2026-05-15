@@ -54,6 +54,12 @@
   color: #b42318;
 }
 
+.entity-status-pending {
+  background: #fff7db;
+  border: 1px solid #f3d98f;
+  color: #8a6a00;
+}
+
 /* APPVERBO_ADMIN_STATUS_TABLES_V1_END */
 
 /* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_START */
