@@ -1,301 +1,700 @@
-# AGENTS.md - Instrucoes do Projeto AppVerboBraga
+# AGENTS.md - Instruções do Projeto AppVerboBraga
 
-Este ficheiro contem as regras locais obrigatorias para qualquer trabalho realizado no repositorio AppVerboBraga.
+Este ficheiro contém as regras locais obrigatórias para qualquer trabalho realizado no repositório AppVerboBraga.
 
-O objetivo deste ficheiro e orientar o Codex e outros agentes de desenvolvimento com instrucoes claras, curtas e prioritarias. Manter este documento objetivo para evitar truncamento pelo limite padrao de leitura de instrucoes do Codex.
+O objetivo deste ficheiro é orientar o Codex e outros agentes de desenvolvimento com instruções claras, curtas e prioritárias. Manter este documento objetivo para evitar truncamento pelo limite padrão de leitura de instruções do Codex.
+
+Este ficheiro representa a versão consolidada das regras do projeto. Regras antigas que tenham sido substituídas não devem coexistir com regras novas concorrentes.
 
 ## 1) Identidade do projeto
 
-O AppVerboBraga e uma aplicacao SaaS modular para igrejas.
+O AppVerboBraga é uma aplicação SaaS modular para igrejas.
 
-A aplicacao deve crescer por modulos ativaveis por entidade: Nucleo/Base, Tesouraria, Eventos, Escalas, Cursos e Relatorios avancados.
+A aplicação deve crescer por módulos ativáveis por entidade, por exemplo:
 
-Novas funcionalidades comerciais devem ser criadas como modulos, nao como paginas soltas.
+- Núcleo/Base;
+- Tesouraria;
+- Eventos;
+- Escalas;
+- Cursos;
+- Relatórios avançados.
 
-## 2) Ordem de prioridade das instrucoes
+Novas funcionalidades comerciais devem ser criadas como módulos, não como páginas soltas.
 
-Ao executar tarefas neste repositorio, seguir esta ordem:
+## 2) Ordem de prioridade das instruções
 
-1. Instrucoes explicitas do utilizador na conversa atual.
-2. Este ficheiro AGENTS.md.
-3. Convencoes ja existentes no codigo.
-4. Boas praticas gerais de desenvolvimento.
+Ao executar tarefas neste repositório, seguir esta ordem:
 
-Se houver conflito entre regras, aplicar a instrucao mais especifica e mais recente.
+1. Instruções explícitas do utilizador na conversa atual.
+2. Este ficheiro `AGENTS.md`.
+3. Convenções já existentes no código.
+4. Boas práticas gerais de desenvolvimento.
 
-Nao criar AGENTS.override.md sem pedido explicito. Usar AGENTS.override.md apenas para overrides temporarios e claramente justificados.
+Se houver conflito entre regras, aplicar a instrução mais específica e mais recente dentro desta ordem.
 
-## 3) Regras operacionais obrigatorias
+Não criar `AGENTS.override.md` sem pedido explícito do utilizador. Usar `AGENTS.override.md` apenas para overrides temporários, documentados e claramente justificados.
+
+## 3) Regras operacionais obrigatórias
 
 Antes de alterar ficheiros:
 
 - entender a funcionalidade existente;
-- evitar alteracoes fora do escopo pedido;
-- criar backup dos ficheiros alterados quando a alteracao for feita por script;
-- preservar nomes, rotas e contratos existentes sempre que possivel;
-- nao remover compatibilidade temporaria sem validacao.
+- evitar alterações fora do escopo pedido;
+- criar backup dos ficheiros alterados quando a alteração for feita por script;
+- preservar nomes, rotas e contratos existentes sempre que possível;
+- não remover compatibilidade temporária sem validação;
+- não mascarar divergências entre código, models, migrations e comportamento real.
 
 Depois de alterar ficheiros:
 
 - validar sintaxe;
-- validar ausencia de mojibake;
-- mostrar git diff;
-- executar git diff --check;
-- mostrar git status;
-- reiniciar Docker quando aplicavel;
-- verificar logs recentes.
+- validar ausência de mojibake;
+- mostrar `git diff`;
+- executar `git diff --check`;
+- mostrar `git status`;
+- reiniciar Docker quando aplicável;
+- verificar logs recentes quando a aplicação for afetada.
+
+Backups criados por script devem ficar em pasta própria com timestamp, preservando o caminho relativo original dos ficheiros alterados.
+
+Exemplo de pasta:
+
+```text
+backups/<nome_da_tarefa>_<YYYYMMDD_HHMMSS>/
+```
 
 ## 4) Docker-first
 
 Este projeto usa Docker.
 
-Sempre que a tarefa envolver banco de dados, Alembic, migrations, models, validacao da aplicacao ou execucao do backend, usar o container web.
+Sempre que a tarefa envolver banco de dados, Alembic, migrations, models, validação da aplicação ou execução do backend, usar o container `web`.
 
 Comandos corretos:
 
+```bash
 docker compose exec web python -m alembic current
 docker compose exec web python -m alembic heads
 docker compose exec web python -m alembic check
 docker compose exec web python -m alembic upgrade head
+```
 
-Evitar executar Alembic no ambiente local .venv quando o banco real usado pela aplicacao estiver no Docker.
+Evitar executar Alembic no ambiente local `.venv` quando o banco real usado pela aplicação estiver no Docker.
 
-## 5) Codificacao de texto
+Reiniciar Docker é obrigatório quando forem alterados:
 
-Todos os ficheiros de codigo, templates, assets e documentacao devem ficar em UTF-8.
+- backend Python;
+- models;
+- migrations;
+- dependências;
+- variáveis de ambiente;
+- configuração da aplicação;
+- templates ou código carregado no arranque da aplicação.
+
+Para alterações apenas em JS/CSS estático, reiniciar Docker só é obrigatório se a aplicação não refletir a alteração, se houver cache/build envolvido ou se o comportamento depender do backend.
+
+Para logs recentes, usar preferencialmente:
+
+```bash
+docker compose logs --tail=100 web
+```
+
+Se outros serviços forem afetados, incluir também esses serviços.
+
+## 5) Codificação de texto
+
+Todos os ficheiros de código, templates, assets e documentação devem ficar em UTF-8.
+
+Extensões principais:
+
+- `.py`;
+- `.html`;
+- `.js`;
+- `.css`;
+- `.md`;
+- `.json`;
+- `.yml`;
+- `.yaml`;
+- `.ini`;
+- `.toml`.
 
 Nunca deixar texto com mojibake no produto final.
 
-Depois de alterar ficheiros .py, .html, .js, .css ou .md, procurar por caracteres suspeitos como texto corrompido, simbolos invalidos e palavras portuguesas quebradas.
+Exemplos de texto corrompido:
 
-A entrega nao deve ser concluida enquanto houver texto corrompido visivel na UI ou nos ficheiros alterados.
+```text
+ConfiguraÃ§Ã£o
+CabeÃ§alho
+InformaÃ§Ãµes
+AÃ§Ãµes
+NÃ£o
+Â
+�
+```
+
+Exemplos corretos:
+
+```text
+Configuração
+Cabeçalho
+Informações
+Ações
+Não
+```
+
+Depois de alterar ficheiros `.py`, `.html`, `.js`, `.css` ou `.md`, procurar por caracteres suspeitos como:
+
+```text
+Ã
+Â
+�
+```
+
+A entrega não deve ser concluída enquanto houver texto corrompido visível na UI ou nos ficheiros alterados.
 
 ## 6) Estrutura por blocos
 
-Sempre dividir codigo e scripts em blocos de processo para melhorar leitura e manutencao.
+Sempre dividir código e scripts em blocos de processo para melhorar leitura e manutenção.
 
-Em PowerShell, usar comentarios com #.
+Em Python e PowerShell, usar comentários com `#`.
 
-Em JavaScript, usar comentarios com //.
+Exemplo:
 
-Nao usar // em comandos PowerShell.
+```python
+# ###################################################################################
+# (1) VALIDAR DADOS
+# ###################################################################################
+```
 
-## 7) PowerShell para alteracoes no projeto
+Em JavaScript, usar comentários com `//`.
+
+Exemplo:
+
+```javascript
+//###################################################################################
+// (1) VALIDAR DADOS
+//###################################################################################
+```
+
+Não usar `//` em comandos PowerShell.
+
+## 7) PowerShell para alterações no projeto
 
 Quando for criado script PowerShell para alterar o projeto, o bloco deve ser completo e pronto para copiar e colar.
 
-O script deve comecar por cd C:\workspace\AppVerboBraga, validar a pasta appverbo e usar ErrorActionPreference como Stop.
+O script deve:
 
-Sempre que alterar ficheiros por script: criar backup antes, validar conteudo depois, executar validacoes aplicaveis, mostrar git diff, executar git diff --check, mostrar git status, reiniciar Docker quando aplicavel, executar teste HTTP e mostrar logs recentes.
+- começar por `cd C:\workspace\AppVerboBraga`;
+- validar a existência da pasta `appverbo`;
+- definir `$ErrorActionPreference = "Stop"`;
+- criar backup antes de alterar ficheiros;
+- validar o conteúdo depois da alteração;
+- executar validações aplicáveis;
+- mostrar `git diff`;
+- executar `git diff --check`;
+- mostrar `git status`;
+- reiniciar Docker quando aplicável;
+- executar teste HTTP quando a aplicação web for afetada;
+- mostrar logs recentes quando a aplicação web for afetada.
 
-## 8) Validacoes obrigatorias por tipo de ficheiro
+Exemplo mínimo de início:
 
-Para Python alterado, executar py_compile.
+```powershell
+cd C:\workspace\AppVerboBraga
+$ErrorActionPreference = "Stop"
 
-Para JavaScript alterado, executar node --check.
+if (-not (Test-Path ".\appverbo")) {
+    throw "Pasta appverbo não encontrada. Confirme que está em C:\workspace\AppVerboBraga."
+}
+```
 
-Para alteracoes estruturais no banco, executar docker compose exec web python -m alembic check.
+Quando a aplicação web for afetada, executar teste HTTP contra uma rota estável do projeto e confirmar que não retorna erro 500.
 
-Para validacao de whitespace e conflitos, executar git diff --check.
+## 8) Validações obrigatórias por tipo de ficheiro
+
+Para Python alterado, executar `py_compile`.
+
+Exemplo:
+
+```bash
+docker compose exec web python -m py_compile appverbo/<ficheiro>.py
+```
+
+Para JavaScript alterado, executar `node --check`.
+
+Exemplo:
+
+```bash
+node --check static/js/<ficheiro>.js
+node --check static/js/modules/<ficheiro>.js
+```
+
+Para alterações estruturais no banco, executar:
+
+```bash
+docker compose exec web python -m alembic current
+docker compose exec web python -m alembic heads
+docker compose exec web python -m alembic check
+```
+
+Para validação de whitespace e conflitos, executar:
+
+```bash
+git diff --check
+```
 
 ## 9) Banco de dados e migrations
 
-Nao criar alteracoes estruturais no banco sem migration Alembic.
+Não criar alterações estruturais no banco sem migration Alembic.
 
-Qualquer nova tabela, coluna, indice ou constraint deve passar por migration.
+Qualquer nova tabela, coluna, índice ou constraint deve passar por migration.
 
-Ao criar ou alterar models: criar ou ajustar migration, validar alembic current, validar alembic heads, validar alembic check e aplicar alembic upgrade head quando necessario.
+Ao criar ou alterar models:
 
-Nao mascarar divergencias entre models e migrations.
+1. criar ou ajustar migration;
+2. validar `alembic current`;
+3. validar `alembic heads`;
+4. validar `alembic check`;
+5. aplicar `alembic upgrade head` quando necessário.
+
+Comandos:
+
+```bash
+docker compose exec web python -m alembic current
+docker compose exec web python -m alembic heads
+docker compose exec web python -m alembic check
+docker compose exec web python -m alembic upgrade head
+```
+
+Não mascarar divergências entre models e migrations.
+
+Resultado esperado para models sincronizados:
+
+```text
+No new upgrade operations detected.
+```
 
 ## 10) Arquitetura modular
 
-As tabelas principais da arquitetura modular sao app_modules, sidebar_menu_items e entity_module_entitlements.
+As tabelas principais da arquitetura modular são:
 
-Modulos core aparecem por padrao.
+- `app_modules`;
+- `sidebar_menu_items`;
+- `entity_module_entitlements`.
 
-Modulos pagos so aparecem se a entidade tiver entity_module_entitlements.status = active.
+Módulos core aparecem por padrão.
 
-Se o modulo estiver inactive, ele nao deve aparecer no menu e nao deve permitir acesso direto por URL.
+Módulos pagos só aparecem se a entidade tiver acesso ativo em `entity_module_entitlements`.
 
-## 11) Seguranca de modulos pagos
+Regra principal:
 
-Nao confiar apenas no frontend para esconder modulos.
+```text
+entity_module_entitlements.status = active
+```
 
-Toda rota de modulo pago deve validar acesso no backend.
+Se o módulo estiver inativo, ele não deve aparecer no menu e não deve permitir acesso direto por URL.
 
-Se a entidade nao tiver acesso ativo, retornar erro 403.
+Antes de implementar lógica core/pago, verificar o model e a tabela existentes. Não criar novo campo para isso sem migration e validação do contrato atual.
+
+## 11) Segurança de módulos pagos
+
+Não confiar apenas no frontend para esconder módulos.
+
+Toda rota de módulo pago deve validar acesso no backend.
+
+Se a entidade não tiver acesso ativo, retornar erro 403.
+
+Exemplo conceitual:
+
+```python
+require_module_access(session, entity_id, "tesouraria")
+```
+
+O frontend pode ocultar opções, mas a autorização real deve estar sempre no backend.
 
 ## 12) Menu lateral
 
 Evitar criar menus fixos diretamente no HTML.
 
-O menu lateral deve evoluir para ser gerado a partir das tabelas app_modules, sidebar_menu_items e entity_module_entitlements.
+O menu lateral deve evoluir para ser gerado a partir das tabelas:
 
-A tabela antiga sidebar_menu_settings e compatibilidade temporaria e nao deve ser removida sem plano de migracao.
+- `app_modules`;
+- `sidebar_menu_items`;
+- `entity_module_entitlements`.
+
+A tabela antiga `sidebar_menu_settings` é compatibilidade temporária e não deve ser removida sem plano de migração.
+
+Não remover compatibilidade legada enquanto o backend ainda depender dela.
 
 ## 13) Regras para datas
 
-Quando houver logica JavaScript ou Google Apps Script relacionada ao projeto AppVerboBraga, formatar datas com Utilities.formatDate(new Date(dataTexto), GMT+1, dd/MM/yyyy).
+Em Google Apps Script relacionado ao projeto AppVerboBraga, formatar datas com:
 
-## 14) Pesquisa dinamica de colunas
+```javascript
+const dataFormatada = Utilities.formatDate(new Date(dataTexto), "GMT+1", "dd/MM/yyyy");
+```
 
-Sempre que uma rotina depender de colunas de tabelas, planilhas, arrays tabulares ou cabecalhos, pesquisar dinamicamente o indice pelo nome da coluna no cabecalho.
+Em JavaScript normal de frontend ou Node.js, não usar `Utilities.formatDate`, porque `Utilities` é específico de Google Apps Script.
 
-Nao usar posicao fixa de coluna como regra principal.
+Para JavaScript normal, usar função própria existente no projeto ou `Intl.DateTimeFormat`, preservando o formato `dd/MM/yyyy` quando aplicável.
 
-O nome da coluna e a referencia absoluta.
+## 14) Pesquisa dinâmica de colunas
 
-## 15) Versionamento de funcoes ajustadas
+Sempre que uma rotina depender de colunas de tabelas, planilhas, arrays tabulares ou cabeçalhos, pesquisar dinamicamente o índice pelo nome da coluna no cabeçalho.
 
-Sempre que for solicitado ajuste em funcao existente, criar uma nova funcao com sufixo sequencial.
+Não usar posição fixa de coluna como regra principal.
 
-Exemplo: se existir euvouaroma, criar euvouaroma_v1. Se ja existir _v1, criar _v2, e assim sucessivamente.
+O nome da coluna é a referência absoluta.
 
-Nao sobrescrever comportamento antigo sem necessidade quando houver risco de regressao.
+Esta regra aplica-se a:
 
-## 16) Listas configuraveis
+- planilhas;
+- tabelas HTML;
+- arrays tabulares;
+- importações CSV/Excel;
+- payloads com cabeçalhos;
+- rotinas JavaScript;
+- rotinas Python.
 
-Sempre que uma funcionalidade permitir criar multiplos itens configuraveis, a interface deve ter bloco superior para criar ou editar apenas um item por vez e tabela ou lista inferior com itens ja criados.
+## 15) Versionamento de funções ajustadas
 
-A tabela ou lista deve ter paginacao obrigatoria e ser a fonte visual principal para o utilizador.
+Quando for solicitado ajuste em função existente, criar nova função com sufixo sequencial apenas quando houver risco real de regressão, dependência externa ou necessidade de compatibilidade temporária.
 
-Containers antigos podem existir apenas como compatibilidade temporaria e devem ficar ocultos.
+Exemplo:
+
+```text
+euvouaroma()
+euvouaroma_v1()
+euvouaroma_v2()
+```
+
+Quando a alteração for interna, segura e sem contrato externo, é permitido ajustar a função existente.
+
+Ao criar versão nova de função:
+
+- documentar porque a versão antiga permanece;
+- indicar onde a versão nova é usada;
+- evitar acumular código morto indefinidamente.
+
+Não sobrescrever comportamento antigo sem necessidade quando houver risco de regressão.
+
+## 16) Listas configuráveis
+
+Sempre que uma funcionalidade permitir criar múltiplos itens configuráveis, a interface deve seguir este padrão:
+
+1. Bloco superior para criar ou editar apenas um item por vez.
+2. Tabela ou lista inferior com itens já criados.
+3. Paginação obrigatória na tabela ou lista.
+4. A tabela ou lista deve ser a fonte visual principal para o utilizador.
+
+Não criar formulários longos com todos os itens abertos simultaneamente.
+
+Containers antigos podem existir apenas como compatibilidade temporária e devem ficar ocultos.
 
 O submit deve reconstruir os inputs no formato esperado pelo backend atual.
 
-Nao criar formularios longos com todos os itens abertos simultaneamente.
+Extrair lógica genérica para manager reutilizável quando houver repetição.
 
-Extrair logica generica para manager reutilizavel quando houver repeticao.
+O ficheiro `new_user.js` deve apenas inicializar managers sempre que possível, evitando concentrar lógica extensa.
 
-O ficheiro new_user.js deve apenas inicializar managers sempre que possivel.
+## 17) Abas configuráveis do processo
 
-## 17) Abas configuraveis do processo
+Toda nova aba configurável dentro do editor de processo deve ter apenas dois blocos visuais principais:
 
-Toda nova aba configuravel dentro do editor de processo deve ter apenas dois blocos visuais principais: bloco superior de criacao/edicao e bloco inferior com tabela ou lista paginada.
+1. Bloco superior de criação/edição.
+2. Bloco inferior com tabela ou lista paginada.
 
-Nao criar terceiro bloco visual externo envolvendo os dois blocos principais.
+Não criar terceiro bloco visual externo envolvendo os dois blocos principais.
 
 O container principal do manager deve ser estrutural, sem borda, fundo ou padding visual.
 
-Acoes da tabela devem usar icones alinhados lado a lado: editar, subir, descer e remover.
+As ações da tabela devem usar ícones alinhados lado a lado:
 
-Toda aba configuravel deve ter manager JavaScript proprio em static/js/modules.
+- editar;
+- subir;
+- descer;
+- remover.
 
-## 18) Validacao de templates e assets
+Toda aba configurável deve ter manager JavaScript próprio em:
 
-Sempre que alterar templates/new_user.html ou assets usados por ele: atualizar cache buster dos ficheiros CSS ou JS alterados, validar JavaScript com node --check, validar ausencia de mojibake, confirmar referencias no template e confirmar que nao existem duplicacoes de scripts ou CSS.
+```text
+static/js/modules
+```
 
-## 19) Campos lado a lado em abas configuraveis
+Regra geral: abas configuráveis podem ter manager JavaScript próprio.
 
-Quando uma aba configuravel precisar apresentar campos lado a lado: HTML define a estrutura, CSS define o grid e JavaScript gere apenas dados e acoes.
+Exceção: quando uma aba já estiver migrada para padrão server-render/AdminSubprocess, o JavaScript não deve reconstruir cards, formulários ou listas. Deve apenas executar ações auxiliares.
+
+## 18) Validação de templates e assets
+
+Sempre que alterar `templates/new_user.html` ou assets usados por ele:
+
+- atualizar cache buster dos ficheiros CSS ou JS alterados;
+- validar JavaScript com `node --check`;
+- validar ausência de mojibake;
+- confirmar referências no template;
+- confirmar que não existem duplicações de scripts ou CSS.
+
+Exemplos:
+
+```bash
+node --check static/js/new_user.js
+node --check static/js/modules/<ficheiro_alterado>.js
+```
+
+## 19) Campos lado a lado em abas configuráveis
+
+Quando uma aba configurável precisar apresentar campos lado a lado:
+
+- HTML define a estrutura;
+- CSS define o grid;
+- JavaScript gere apenas dados, ações, validações, sincronização de payload, renderização de listas e eventos.
 
 Os campos lado a lado devem nascer como filhos diretos do mesmo bloco no template HTML.
 
-O JavaScript nao deve criar wrappers visuais, mover campos existentes para outro container, duplicar selects ja existentes no HTML ou criar segunda coluna por script quando ela pode nascer no template.
+O JavaScript não deve:
 
-## 20) Botoes Guardar e Cancelar
+- criar wrappers visuais para alinhar campos;
+- mover campos existentes para outro container;
+- duplicar selects já existentes no HTML;
+- criar segunda coluna por script quando ela pode nascer no template.
 
-Sempre que existir um par de botoes Guardar e Cancelar, os botoes devem ficar no lado esquerdo, ter o mesmo tamanho, usar a ordem Guardar primeiro e Cancelar depois, e usar os textos Guardar e Cancelar.
+## 20) Botões Guardar e Cancelar
 
-Usar as classes globais action-btn e action-btn-cancel sempre que possivel.
+Sempre que existir um par de botões Guardar e Cancelar:
 
-Nao posicionar Guardar e Cancelar no lado direito, salvo excecao explicita aprovada.
+- os botões devem ficar no lado esquerdo;
+- os dois botões devem ter o mesmo tamanho;
+- a ordem deve ser Guardar primeiro e Cancelar depois;
+- os textos devem ser exatamente Guardar e Cancelar.
 
-## 21) Bloco ou card de criacao
+Usar as classes globais sempre que possível:
 
-Sempre que uma aba, subprocesso ou listagem administrativa tiver acao para criar nova entrada, o botao Criar + nome deve ficar em card ou bloco separado acima da tabela/lista.
+```text
+action-btn
+action-btn-cancel
+```
 
-O card deve seguir o padrao visual da aba Entidade: fundo cinza claro, borda suave, cantos arredondados, altura minima padronizada e botao alinhado a esquerda.
+Não posicionar Guardar e Cancelar no lado direito, salvo exceção explícita aprovada.
+
+## 21) Bloco ou card de criação
+
+Sempre que uma aba, subprocesso ou listagem administrativa tiver ação para criar nova entrada, o botão `Criar + nome` deve ficar em card ou bloco separado acima da tabela/lista.
+
+Exemplos:
+
+- Criar entidade;
+- Criar utilizador;
+- Criar sessão;
+- Criar menu.
+
+O card deve seguir o padrão visual da aba Entidade:
+
+- fundo cinza claro;
+- borda suave;
+- cantos arredondados;
+- altura mínima padronizada;
+- botão alinhado à esquerda.
 
 A tabela/lista inferior deve ficar em outro card separado.
 
-Nao colocar botao de criacao no lado direito do cabecalho da tabela/lista.
+Não colocar botão de criação no lado direito do cabeçalho da tabela/lista.
 
-Quando o formulario abrir, nao deixar faixa vazia acima dos campos, nao manter espaco reservado para botao oculto e nao criar linha separando toolbar vazia dos campos.
+Quando o formulário abrir:
+
+- não deixar faixa vazia acima dos campos;
+- não manter espaço reservado para botão oculto;
+- não criar linha separando toolbar vazia dos campos.
 
 ## 22) Registos ativos e inativos
 
-Sempre que existir listagem administrativa com estado ativo/inativo, o bloco principal deve listar apenas registos ativos ou criados e o bloco de inativos deve ser um card separado abaixo.
+Sempre que existir listagem administrativa com estado ativo/inativo:
 
-Nunca colocar registos inativos dentro do mesmo card/tabela dos registos ativos.
+- o bloco principal deve listar apenas registos ativos ou criados;
+- o bloco de inativos deve ser um card separado abaixo;
+- registos inativos nunca devem ficar dentro do mesmo card/tabela dos registos ativos;
+- o botão de eliminar deve aparecer apenas no bloco de inativos;
+- o backend também deve impedir eliminar registos ativos.
 
-O botao de eliminar deve aparecer apenas no bloco de inativos.
+Esta regra aplica-se, no mínimo, a:
 
-O backend tambem deve impedir eliminar registos ativos.
-
-Esta regra aplica-se, no minimo, a Utilizadores, Entidades, Sessoes e qualquer nova listagem com estados ativo/inativo.
+- Utilizadores;
+- Entidades;
+- Sessões;
+- qualquer nova listagem com estados ativo/inativo.
 
 ## 23) Status e tabelas administrativas de utilizadores
 
-A normalizacao e traducao visual do status devem ficar em appverbo/services/user_status.py.
+A normalização e tradução visual do status devem ficar em:
 
-Nao duplicar logica de status diretamente em page.py, handlers ou templates.
+```text
+appverbo/services/user_status.py
+```
 
-O banco deve guardar valores canonicos em ingles: active, inactive, pending, blocked.
+Não duplicar lógica de status diretamente em `page.py`, handlers ou templates.
 
-O portugues deve ser apenas label visual: Ativo, Inativo, Pendente, Bloqueado.
+O banco deve guardar valores canónicos em inglês:
 
-Tabelas administrativas de utilizadores devem usar partial reutilizavel em templates/partials/admin_user_table_v1.html.
+- `active`;
+- `inactive`;
+- `pending`;
+- `blocked`.
 
-CSS de rodape, paginacao e badges deve ficar em modulo reutilizavel dentro de static/css/modules.
+O português deve ser apenas label visual:
 
-## 24) Sessoes do sidebar
+- Ativo;
+- Inativo;
+- Pendente;
+- Bloqueado.
 
-Na aba Sessoes, o botao Criar sessao pertence apenas a aba Sessoes e deve aparecer acima da listagem quando a aba Sessoes estiver ativa.
+Tabelas administrativas de utilizadores devem usar partial reutilizável em:
 
-O card Criar sessao nao pode aparecer no fim da aba Entidade, Utilizador, Menu ou qualquer outra.
+```text
+templates/partials/admin_user_table_v1.html
+```
 
-Ao sair da aba Sessoes, blocos orfaos de Sessoes devem ser removidos.
+CSS de rodapé, paginação e badges deve ficar em módulo reutilizável dentro de:
 
-Ao voltar para a aba Sessoes, os cards e a listagem devem ser recriados ou reidratados automaticamente.
+```text
+static/css/modules
+```
 
-A listagem inferior deve ser sempre reidratada a partir do BD/configuracao persistida.
+## 24) Sessões do sidebar
 
-Campos visiveis ao criar sessao: Nome da sessao, Sistema e Estado.
+A aba Sessões deve seguir o padrão Entidade/AdminSubprocess.
 
-A chave tecnica da sessao deve continuar a existir para gravacao no BD, ser gerada automaticamente a partir do Nome da sessao, ficar oculta no bloco de criacao e ser preservada durante edicao.
+Regra principal:
 
-O botao de editar deve abrir edicao diretamente na linha, sem usar alert.
+- renderização pelo backend/template;
+- criação e edição processadas pelo fluxo do subprocesso administrativo;
+- listas ativas e inativas separadas pelo backend;
+- JavaScript apenas auxiliar;
+- sem reconstrução completa de cards, formulários ou listas por JavaScript.
 
-Durante a edicao, substituir os icones de acao por Guardar e Cancelar.
+O botão Criar sessão pertence apenas à aba Sessões e deve aparecer acima da listagem quando a aba Sessões estiver ativa.
 
-Se o estado for Ativo, a sessao aparece no bloco principal. Se for diferente de Ativo, aparece no bloco Sessoes inativas.
+O card Criar sessão não pode aparecer no fim da aba Entidade, Utilizador, Menu ou qualquer outra.
 
-A alteracao de estado deve persistir no BD atraves de section_status.
+Ao sair da aba Sessões, blocos órfãos de Sessões não devem permanecer visíveis.
+
+Ao voltar para a aba Sessões, os cards e a listagem devem ser renderizados ou reidratados a partir do backend/configuração persistida.
+
+Campos visíveis ao criar sessão:
+
+- Nome da sessão;
+- Sistema;
+- Estado.
+
+A chave técnica da sessão deve:
+
+- continuar a existir para gravação no BD;
+- ser gerada automaticamente a partir do Nome da sessão;
+- ficar oculta no bloco de criação;
+- ser preservada durante edição.
+
+A ação Editar de Sessões não deve usar `alert`.
+
+A edição deve seguir o fluxo padrão Entidade/AdminSubprocess, com carregamento dos dados pelo backend e renderização do formulário pelo template.
+
+Se a implementação atual usar parâmetro técnico como `sidebar_section_edit_key`, preservar esse contrato até migração validada.
+
+Se o estado for Ativo, a sessão aparece no bloco principal.
+
+Se o estado for diferente de Ativo, aparece no bloco Sessões inativas.
+
+A alteração de estado deve persistir no BD através de:
+
+```text
+section_status
+```
 
 ## 25) Escopo de scripts de subprocessos
 
-Scripts de um subprocesso ou aba nao podem criar, mover ou exibir blocos fora da propria aba ativa.
+Scripts de um subprocesso ou aba não podem criar, mover ou exibir blocos fora da própria aba ativa.
 
-Para a aba Sessoes, os cards Criar sessao e Sessoes inativas so podem aparecer quando Sessoes estiver ativa.
+Para a aba Sessões:
 
-Nao usar apenas URL/hash como criterio, porque a URL pode manter hash de outro card mesmo com a aba correta ativa.
+- o card Criar sessão só pode aparecer quando Sessões estiver ativa;
+- o card Sessões inativas só pode aparecer quando Sessões estiver ativa;
+- nenhum bloco de Sessões pode aparecer no fim da aba Entidade, Utilizador, Menu ou qualquer outra.
+
+Não usar apenas URL/hash como critério, porque a URL pode manter hash de outro card mesmo com a aba correta ativa.
+
+A validação de escopo deve considerar:
+
+- aba ativa;
+- visibilidade real do card;
+- contexto do subprocesso;
+- estado visual dos botões/tabs.
 
 ## 26) Regras de HTML, CSS e JavaScript
 
-HTML deve definir estrutura. CSS deve definir layout visual. JavaScript deve gerir dados, acoes, validacoes, sincronizacao de payload, renderizacao e eventos.
+HTML deve definir estrutura.
 
-JavaScript nao deve resolver problemas estruturais que pertencem ao HTML ou problemas visuais que pertencem ao CSS, exceto em compatibilidade temporaria justificada.
+CSS deve definir layout visual.
 
-Evitar concentrar logica extensa em static/js/new_user.js. Sempre que possivel, criar ou evoluir managers em static/js/modules.
+JavaScript deve gerir:
 
-## 27) Compatibilidade temporaria
+- dados;
+- ações;
+- validações;
+- sincronização de payload;
+- renderização de listas quando aplicável;
+- eventos.
 
-Containers, campos e estruturas legadas podem existir apenas como compatibilidade temporaria.
+JavaScript não deve resolver problemas estruturais que pertencem ao HTML ou problemas visuais que pertencem ao CSS, exceto em compatibilidade temporária justificada.
 
-Quando mantidos, devem ficar ocultos se nao forem a fonte visual principal, ser sincronizados antes do submit, ser documentados no codigo e nao conflitar com a UI nova.
+Evitar concentrar lógica extensa em:
 
-Nao remover legado sem confirmar que o backend ja nao depende dele.
+```text
+static/js/new_user.js
+```
+
+Sempre que possível, criar ou evoluir managers em:
+
+```text
+static/js/modules
+```
+
+## 27) Compatibilidade temporária
+
+Containers, campos e estruturas legadas podem existir apenas como compatibilidade temporária.
+
+Quando mantidos, devem:
+
+- ficar ocultos se não forem a fonte visual principal;
+- ser sincronizados antes do submit;
+- ser documentados no código;
+- não conflitar com a UI nova.
+
+Não remover legado sem confirmar que o backend já não depende dele.
+
+Compatibilidade temporária deve ser tratada como transitória, não como padrão definitivo.
 
 ## 28) Checklist final antes de concluir
 
-Antes de concluir qualquer alteracao, validar: aplicacao sobe no Docker, logs recentes sem traceback, texto sem mojibake, migrations sincronizadas, menu lateral nao quebrou, modulos pagos continuam protegidos no backend, JavaScript alterado passa em node --check, Python alterado passa em py_compile, git diff --check nao mostra erros e git status mostra apenas alteracoes esperadas.
+Antes de concluir qualquer alteração, validar:
 
-## 29) Regra de manutencao deste ficheiro
+- aplicação sobe no Docker;
+- logs recentes sem traceback;
+- texto sem mojibake;
+- migrations sincronizadas;
+- menu lateral não quebrou;
+- módulos pagos continuam protegidos no backend;
+- JavaScript alterado passa em `node --check`;
+- Python alterado passa em `py_compile`;
+- `git diff --check` não mostra erros;
+- `git status` mostra apenas alterações esperadas.
 
-Manter este AGENTS.md curto, consistente e sem Markdown quebrado.
+Quando a aplicação web for afetada, também validar uma rota HTTP estável e confirmar ausência de erro 500.
 
-Evitar acumular regras historicas duplicadas. Quando uma regra nova substituir uma regra antiga, consolidar a versao final em vez de adicionar multiplas versoes concorrentes.
+## 29) Regra de manutenção deste ficheiro
 
-Se o ficheiro crescer demais, mover detalhes extensos para documentacao auxiliar e manter aqui apenas o resumo obrigatorio.
+Manter este `AGENTS.md` curto, consistente e sem Markdown quebrado.
+
+Evitar acumular regras históricas duplicadas.
+
+Quando uma regra nova substituir uma regra antiga, consolidar a versão final em vez de adicionar múltiplas versões concorrentes.
+
+Não inserir notas de conversa, comentários temporários ou blocos incompletos neste ficheiro.
+
+Se o ficheiro crescer demais, mover detalhes extensos para documentação auxiliar e manter aqui apenas o resumo obrigatório.

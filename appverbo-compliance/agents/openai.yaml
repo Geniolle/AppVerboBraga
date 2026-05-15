@@ -1,0 +1,5 @@
+interface:
+  display_name: AppVerbo Compliance
+  short_description: Garante que alterações no AppVerboBraga respeitam o AGENTS.md.
+  icon: check-circle
+  color: blue
