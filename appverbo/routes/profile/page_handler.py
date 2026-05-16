@@ -299,6 +299,13 @@ def new_user_page(
     }:
         clean_settings_tab = ""
 
+    is_admin_menu_tab = (
+        resolved_menu == "administrativo"
+        and resolved_admin_tab == "menu"
+    )
+    menu_settings_edit_key = clean_settings_edit_key if is_admin_menu_tab else ""
+    menu_admin_page_payload = build_menu_admin_page_payload_v1({})
+
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
         if current_user is None:
@@ -377,25 +384,28 @@ def new_user_page(
         sidebar_section_edit_data_v22 = dict(
             sessoes_admin_page_payload.get("sidebar_section_edit_data", {})
         )
-        menu_admin_context = build_menu_admin_context_v1(
-            session=session,
-            actor_user_id=int(current_user["id"]),
-            actor_login_email=str(current_user["login_email"]),
-            selected_entity_id=selected_entity_id,
-            menu_edit_key=clean_settings_edit_key,
-        )
-        menu_admin_page_payload = build_menu_admin_page_payload_v1(menu_admin_context)
+        if is_admin_menu_tab:
+            menu_admin_context = build_menu_admin_context_v1(
+                session=session,
+                actor_user_id=int(current_user["id"]),
+                actor_login_email=str(current_user["login_email"]),
+                selected_entity_id=selected_entity_id,
+                menu_edit_key=menu_settings_edit_key,
+            )
+            menu_admin_page_payload = build_menu_admin_page_payload_v1(
+                menu_admin_context
+            )
 
         settings_edit_data: dict[str, Any] | None = None
-        if clean_settings_edit_key:
+        if menu_settings_edit_key:
             candidate_menu_edit_data = dict(menu_admin_page_payload.get("menu_edit_data", {}))
 
             if str(candidate_menu_edit_data.get("key") or "").strip():
                 settings_edit_data = candidate_menu_edit_data
             else:
-                for row in page_data.get("sidebar_menu_settings", []):
+                for row in menu_admin_page_payload.get("menu_settings", []):
                     row_key = str(row.get("key", "")).strip().lower()
-                    if row_key == clean_settings_edit_key:
+                    if row_key == menu_settings_edit_key:
                         settings_edit_data = dict(row)
                         break
 
@@ -403,11 +413,12 @@ def new_user_page(
         resolved_menu=resolved_menu,
         resolved_profile_tab=resolved_profile_tab,
         resolved_admin_tab=resolved_admin_tab,
-        settings_edit_key=clean_settings_edit_key,
+        settings_edit_key=menu_settings_edit_key,
         can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
         sidebar_menu_settings=list(
-            menu_admin_page_payload.get("menu_settings")
-            or page_data.get("sidebar_menu_settings", [])
+            menu_admin_page_payload.get("menu_settings", [])
+            if is_admin_menu_tab
+            else page_data.get("sidebar_menu_settings", [])
         ),
     )
 
@@ -713,18 +724,26 @@ def new_user_page(
         "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
         **page_data,
     }
-    context["sidebar_menu_settings"] = list(
-        menu_admin_page_payload.get("menu_settings")
-        or page_data.get("sidebar_menu_settings", [])
-    )
-    context["sidebar_section_options"] = list(
-        menu_admin_page_payload.get("sidebar_section_options")
-        or page_data.get("sidebar_section_options", [])
-    )
-    context["menu_section_options"] = list(
-        menu_admin_page_payload.get("menu_section_options")
-        or page_data.get("sidebar_section_options", [])
-    )
+    if is_admin_menu_tab:
+        context["sidebar_menu_settings"] = list(
+            menu_admin_page_payload.get("menu_settings", [])
+        )
+        context["sidebar_section_options"] = list(
+            menu_admin_page_payload.get("sidebar_section_options", [])
+        )
+        context["menu_section_options"] = list(
+            menu_admin_page_payload.get("menu_section_options", [])
+        )
+    else:
+        context["sidebar_menu_settings"] = list(
+            page_data.get("sidebar_menu_settings", [])
+        )
+        context["sidebar_section_options"] = list(
+            page_data.get("sidebar_section_options", [])
+        )
+        context["menu_section_options"] = list(
+            page_data.get("sidebar_section_options", [])
+        )
     context["menu_permissions"] = dict(
         menu_admin_page_payload.get("menu_permissions", {})
     )

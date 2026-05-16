@@ -1171,7 +1171,11 @@ if (
   adminSelectedTarget = "#create-entity-card";
 } else if (startupHash === "#admin-sidebar-sections-card") {
   adminSelectedTarget = "#admin-sidebar-sections-card";
-} else if (startupHash === "#admin-menu-card" || startupHash === "#admin-menu-card-inactive") {
+} else if (
+  startupHash === "#admin-menu-card" ||
+  startupHash === "#admin-menu-card-inactive" ||
+  startupHash === "#admin-menu-card-create"
+) {
   adminSelectedTarget = "#admin-menu-card";
 } else if (startupHash === "#settings-menu-edit-card") {
   adminSelectedTarget = "#settings-menu-edit-card";
@@ -1202,7 +1206,11 @@ if (!startupHash && initialMenuTarget && menuConfig[initialMenu]) {
   const targetExistsInItems = initialMenuItems.some(
     (item) => String(item.target || "") === cleanInitialTarget
   );
-  if (targetExistsInItems || cleanInitialTarget === "#settings-menu-edit-card") {
+  if (
+    targetExistsInItems ||
+    cleanInitialTarget === "#settings-menu-edit-card" ||
+    cleanInitialTarget === "#admin-menu-card-create"
+  ) {
     selectedTargetByMenu[initialMenu] = cleanInitialTarget;
   }
 }
@@ -2745,17 +2753,15 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         (
           (
             resolvedTargetSelector === "#admin-menu-card" ||
-            resolvedTargetSelector === "#admin-menu-card-inactive"
+            resolvedTargetSelector === "#admin-menu-card-inactive" ||
+            resolvedTargetSelector === "#admin-menu-card-create" ||
+            resolvedTargetSelector === "#settings-menu-edit-card"
           ) &&
           (
             card.id === "admin-menu-card-create" ||
             card.id === "admin-menu-card" ||
             card.id === "admin-menu-card-inactive"
           )
-        ) ||
-        (
-          resolvedTargetSelector === "#settings-menu-edit-card" &&
-          card.id === "settings-menu-edit-card"
         )
       );
     card.style.display =
@@ -4460,6 +4466,7 @@ function handleHashNavigation(rawHash) {
     "#create-user-card": "administrativo",
     "#create-entity-card": "administrativo",
     "#admin-subprocess-v2-entidade": "administrativo",
+    "#admin-menu-card-create": "administrativo",
     "#admin-menu-card": "administrativo",
     "#admin-menu-card-inactive": "administrativo",
     "#admin-sidebar-sections-card": "administrativo",
@@ -9024,4 +9031,3 @@ if (document.readyState === "loading") {
 
 window.addEventListener("load", appverboMarkReadyV1, { once: true });
 // APPVERBO_MARK_READY_V1_END
-

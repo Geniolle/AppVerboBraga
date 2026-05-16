@@ -63,9 +63,9 @@
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260515-sessoes-inativas-delete-icon-v3">
   <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
-  <script src="/static/js/modules/menu_context_guard_v1.js?v=20260508-contexto-meu-perfil-v1" defer></script>
+  <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
-  <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260508-admin-menu-scope-v1" defer></script>
+  <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260516-admin-menu-scope-v2" defer></script>
   <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260508-quantity-readonly-renderer-v2" defer></script>
   <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260508-quantity-edit-pairs-v4" defer></script>
 
@@ -191,6 +191,14 @@
       element.style.setProperty("visibility", "visible", "important");
       element.style.setProperty("opacity", "1", "important");
     });
+
+    var createCard = document.getElementById("admin-menu-card-create");
+    var editCard = document.getElementById("settings-menu-edit-card");
+    var activeCard = document.getElementById("admin-menu-card");
+
+    if (createCard && editCard && activeCard && createCard.nextElementSibling !== editCard) {
+      createCard.insertAdjacentElement("afterend", editCard);
+    }
   }
 
   document.addEventListener("DOMContentLoaded", forceMenuCardsVisibleV1, { once: true });
@@ -348,6 +356,10 @@
   border-collapse: collapse;
 }
 
+.appverbo-admin-menu-visible-render-v1 .menu-col-key-hidden-v1 {
+  display: none;
+}
+
 .appverbo-admin-menu-visible-render-v1 .admin-menu-table-v1 th,
 .appverbo-admin-menu-visible-render-v1 .admin-menu-table-v1 td {
   padding: 12px 8px;
@@ -418,63 +430,132 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  color: #5f6877;
+  font-size: 14px;
 }
 
 .appverbo-admin-menu-visible-render-v1 .admin-menu-page-size-v1 {
-  min-width: 76px;
-  height: 38px;
-  border: 1px solid #c7d7f2;
+  min-width: 84px;
+  min-height: 34px;
+  border: 1px solid #c5d2ed;
   border-radius: 8px;
-  padding: 0 10px;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: #253046;
   background: #ffffff;
 }
 
 .appverbo-admin-menu-visible-render-v1 .admin-menu-pagination-v1 {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .appverbo-admin-menu-visible-render-v1 .admin-menu-pagination-button-v1 {
   width: 30px;
   height: 30px;
-  border: 1px solid #d6e2f5;
+  border: 1px solid #d3dced;
   border-radius: 50%;
-  background: #ffffff;
-  color: #1d4f9f;
+  background: transparent;
+  color: #2f6db4;
+  font-size: 14px;
   font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
+.appverbo-admin-menu-visible-render-v1 .admin-menu-pagination-button-v1:hover {
+  background: #eef3ff;
+  color: #1f4eb7;
+  border-color: #becdf0;
+}
+
 .appverbo-admin-menu-visible-render-v1 .admin-menu-pagination-button-v1.is-active {
-  background: #1d5dcc;
-  border-color: #1d5dcc;
+  background: #2f6db4;
+  border-color: #2f6db4;
   color: #ffffff;
 }
 
 .appverbo-admin-menu-visible-render-v1 .admin-menu-pagination-button-v1:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+  background: transparent;
+  color: #7a879d;
+  border-color: #d9dee8;
   cursor: not-allowed;
 }
 </style>
 
 {# APPVERBO_ADMIN_MENU_VISIBLE_RENDER_V1_START #}
-{% if true %}
+{% set admin_menu_section_options_v1 = (menu_section_options if menu_section_options else sidebar_section_options) %}
+{% if current_user_is_admin and admin_tab == "menu" %}
 {% set admin_menu_active_rows = admin_menu_state.active_rows if admin_menu_state else [] %}
 {% set admin_menu_inactive_rows = admin_menu_state.inactive_rows if admin_menu_state else [] %}
 {% set admin_menu_total_rows = (admin_menu_active_rows|length) + (admin_menu_inactive_rows|length) %}
 
 {# APPVERBO_ADMIN_MENU_CREATE_BLOCK_LIKE_SESSOES_V1_START #}
 <section id="admin-menu-card-create"
-         class="card process-window-card appverbo-admin-menu-create-block-v1"
+         class="card entity-panel-card appverbo-admin-menu-create-block-v1"
          data-menu-scope="administrativo">
-  <div class="admin-menu-create-actions-v1">
-    <a class="btn btn-primary admin-menu-create-button-v1"
-       href="/users/new?menu=administrativo&admin_tab=menu&settings_action=create#admin-menu-card-create">
-      Criar menu
-    </a>
-  </div>
+  {% set menu_create_mode_v1 = (settings_action == "create") or (initial_menu_target == "#admin-menu-card-create") %}
+  {% if menu_create_mode_v1 and settings_error %}
+    <div class="alert error">{{ settings_error }}</div>
+  {% endif %}
+  {% if settings_success %}
+    <div class="alert ok">{{ settings_success }}</div>
+  {% endif %}
+
+  <details class="entity-create-collapse admin-menu-create-collapse-v1" {% if menu_create_mode_v1 %}open{% endif %}>
+    <summary class="appverbo-subprocess-create-trigger-v1">
+      <span class="entity-create-toggle-icon" aria-hidden="true"></span>
+      <span>Criar menu</span>
+    </summary>
+    <div class="entity-create-body">
+      <form method="post" action="/settings/menu/save" class="admin-subprocess-form-v1">
+        <input type="hidden" name="menu_mode" value="create">
+        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_target" value="#admin-menu-card">
+        <div class="grid settings-general-grid settings-general-grid-menu-geral">
+          <div class="field">
+            <label for="settings_create_menu_label">Nome do menu *</label>
+            <input
+              id="settings_create_menu_label"
+              name="menu_label"
+              maxlength="100"
+              placeholder="Ex.: Assiduidade"
+              required
+            >
+          </div>
+          <div class="field">
+            <label for="settings_create_menu_visibility_scope">Exibir no sistema</label>
+            <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
+              <option value="all" selected>Owner e Legado</option>
+              <option value="owner">Owner</option>
+              <option value="legado">Legado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="settings_create_menu_section">Sessão</label>
+            <select id="settings_create_menu_section" name="menu_section">
+              {% for section_option in admin_menu_section_options_v1 %}
+              <option value="{{ section_option.key }}">{{ section_option.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-action-row">
+          <button type="submit" class="action-btn">Guardar</button>
+          <button
+            type="button"
+            class="action-btn-cancel"
+            onclick="var d=this.closest('details'); if (d) { d.open = false; }"
+          >Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </details>
 </section>
 {# APPVERBO_ADMIN_MENU_CREATE_BLOCK_LIKE_SESSOES_V1_END #}
 
@@ -508,8 +589,8 @@
         <thead>
           <tr>
             <th>Menu</th>
-            <th>Chave</th>
-            <th>Grupo</th>
+            <th class="menu-col-key-hidden-v1">Chave</th>
+            <th>Sessão</th>
             <th>Estado</th>
             <th>Ordem</th>
             <th class="text-right">Ações</th>
@@ -517,45 +598,54 @@
         </thead>
         <tbody>
           {% for row in admin_menu_active_rows %}
+            {% set row_key = row.key or row.menu_key %}
+            {% set row_key_clean = (row_key|string)|lower %}
+            {% set row_is_protected = row_key_clean in ["home", "administrativo"] %}
             <tr data-admin-menu-row="active"
                 data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
-              <td>{{ row.key or row.menu_key }}</td>
+              <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
               <td>{{ row.group or row.section or "" }}</td>
-              <td>Ativo</td>
-              <td>{{ row.order or row.sort_order or row.position or row.display_order or "" }}</td>
+              <td><span class="entity-status entity-status-active">Ativo</span></td>
+              <td>{{ loop.index }}</td>
               <td class="text-right admin-menu-actions-cell-v1">
-                <div class="admin-actions admin-menu-actions-like-sessoes-v1" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
+                <div class="table-actions" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
                   {# APPVERBO_ADMIN_MENU_ACTIONS_LIKE_SESSOES_V1 #}
                   <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
-                    <input type="hidden" name="menu_key" value="{{ row.key or row.menu_key }}">
+                    <input type="hidden" name="menu_key" value="{{ row_key }}">
                     <input type="hidden" name="direction" value="up">
                     <input type="hidden" name="redirect_menu" value="administrativo">
                     <input type="hidden" name="redirect_target" value="#admin-menu-card">
                     <button type="submit"
-                            class="admin-action-btn admin-action-btn-icon"
+                            class="table-icon-btn"
                             title="Subir"
                             aria-label="Subir {{ row.label or row.name or row.title or row.key }}">&#8593;</button>
                   </form>
 
                   <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
-                    <input type="hidden" name="menu_key" value="{{ row.key or row.menu_key }}">
+                    <input type="hidden" name="menu_key" value="{{ row_key }}">
                     <input type="hidden" name="direction" value="down">
                     <input type="hidden" name="redirect_menu" value="administrativo">
                     <input type="hidden" name="redirect_target" value="#admin-menu-card">
                     <button type="submit"
-                            class="admin-action-btn admin-action-btn-icon"
+                            class="table-icon-btn"
                             title="Descer"
                             aria-label="Descer {{ row.label or row.name or row.title or row.key }}">&#8595;</button>
                   </form>
 
-                  <a class="admin-action-btn admin-action-btn-icon"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row.key or row.menu_key }}&settings_action=toggle#admin-menu-card"
+                  {% if row_is_protected %}
+                  <span class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório">&#128065;</span>
+                  {% else %}
+                  <a class="table-icon-btn"
+                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card"
                      title="Desativar"
-                     aria-label="Desativar {{ row.label or row.name or row.title or row.key }}">&#9679;</a>
+                     aria-label="Desativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
+                  {% endif %}
 
-                  <a class="admin-action-btn admin-action-btn-icon"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row.key or row.menu_key }}&settings_action=edit#settings-menu-edit-card"
+                  <a class="table-icon-btn"
+                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
                 </div>
@@ -614,8 +704,8 @@
         <thead>
           <tr>
             <th>Menu</th>
-            <th>Chave</th>
-            <th>Grupo</th>
+            <th class="menu-col-key-hidden-v1">Chave</th>
+            <th>Sessão</th>
             <th>Estado</th>
             <th>Ordem</th>
             <th class="text-right">Ações</th>
@@ -623,46 +713,43 @@
         </thead>
         <tbody>
           {% for row in admin_menu_inactive_rows %}
+            {% set row_key = row.key or row.menu_key %}
+            {% set row_key_clean = (row_key|string)|lower %}
+            {% set row_is_protected = row_key_clean in ["home", "administrativo"] %}
             <tr data-admin-menu-row="inactive"
                 data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
-              <td>{{ row.key or row.menu_key }}</td>
+              <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
               <td>{{ row.group or row.section or "" }}</td>
-              <td>Inativo</td>
-              <td>{{ row.order or row.sort_order or row.position or row.display_order or "" }}</td>
+              <td><span class="entity-status entity-status-inactive">Inativo</span></td>
+              <td>{{ loop.index }}</td>
               <td class="text-right admin-menu-actions-cell-v1">
-                <div class="admin-actions admin-menu-actions-like-sessoes-v1" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
-                  <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
-                    <input type="hidden" name="menu_key" value="{{ row.key or row.menu_key }}">
-                    <input type="hidden" name="direction" value="up">
-                    <input type="hidden" name="redirect_menu" value="administrativo">
-                    <input type="hidden" name="redirect_target" value="#admin-menu-card-inactive">
-                    <button type="submit"
-                            class="admin-action-btn admin-action-btn-icon"
-                            title="Subir"
-                            aria-label="Subir {{ row.label or row.name or row.title or row.key }}">&#8593;</button>
-                  </form>
-
-                  <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
-                    <input type="hidden" name="menu_key" value="{{ row.key or row.menu_key }}">
-                    <input type="hidden" name="direction" value="down">
-                    <input type="hidden" name="redirect_menu" value="administrativo">
-                    <input type="hidden" name="redirect_target" value="#admin-menu-card-inactive">
-                    <button type="submit"
-                            class="admin-action-btn admin-action-btn-icon"
-                            title="Descer"
-                            aria-label="Descer {{ row.label or row.name or row.title or row.key }}">&#8595;</button>
-                  </form>
-
-                  <a class="admin-action-btn admin-action-btn-icon"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row.key or row.menu_key }}&settings_action=toggle#admin-menu-card-inactive"
+                <div class="table-actions" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
+                  <a class="table-icon-btn"
+                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card-inactive"
                      title="Ativar"
-                     aria-label="Ativar {{ row.label or row.name or row.title or row.key }}">&#9679;</a>
+                     aria-label="Ativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
 
-                  <a class="admin-action-btn admin-action-btn-icon"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row.key or row.menu_key }}&settings_action=edit#settings-menu-edit-card"
+                  <a class="table-icon-btn"
+                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
+
+                  {% if row_is_protected or not row.can_delete %}
+                  <span class="table-icon-btn table-icon-btn-disabled"
+                        title="Menu obrigatório"
+                        aria-label="Menu obrigatório">&#128465;</span>
+                  {% else %}
+                  <form method="post" action="/settings/menu/delete">
+                    <input type="hidden" name="menu_key" value="{{ row_key }}">
+                    <input type="hidden" name="redirect_menu" value="administrativo">
+                    <input type="hidden" name="redirect_target" value="#admin-menu-card-inactive">
+                    <button type="submit"
+                            class="table-icon-btn table-icon-btn-danger"
+                            title="Eliminar menu"
+                            aria-label="Eliminar menu">&#128465;</button>
+                  </form>
+                  {% endif %}
                 </div>
               </td>
             </tr>
@@ -1869,9 +1956,10 @@
         </section>
         {% endif %}
 
-        {% if settings_edit_data %}
+        {% if settings_edit_data and admin_tab == "menu" %}
         {% set settings_edit_origin_menu = "administrativo" %}
         {% set settings_edit_cancel_target = "#admin-menu-card" %}
+        {% set settings_edit_cancel_url = "/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card" %}
         {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
         {% if settings_edit_data.key == "administrativo" and not settings_process_field_options %}
           {% set settings_process_field_options = [
@@ -1943,7 +2031,7 @@
                   <div class="field">
                     <label for="settings_edit_menu_sidebar_section">Sessão</label>
                     <select id="settings_edit_menu_sidebar_section" name="menu_sidebar_section">
-                      {% for section_option in sidebar_section_options %}
+                      {% for section_option in admin_menu_section_options_v1 %}
                       <option value="{{ section_option.key }}" {% if section_option.key == settings_edit_data.sidebar_section_key %}selected{% endif %}>{{ section_option.label }}</option>
                       {% endfor %}
                     </select>
@@ -1953,7 +2041,7 @@
                   <button type="submit" class="action-btn">Guardar</button>
                   <a
                     class="action-btn-cancel"
-                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                    href="{{ settings_edit_cancel_url }}"
                   >Cancelar</a>
                 </div>
               </form>
@@ -2003,7 +2091,7 @@
               <div class="form-action-row">
                 <a
                   class="action-btn-cancel"
-                  href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  href="{{ settings_edit_cancel_url }}"
                 >Cancelar</a>
               </div>
               {% endif %}
@@ -3070,7 +3158,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260516-admin-menu-render-v3" defer></script>
+  <script src="/static/js/new_user.js?v=20260516-admin-menu-render-v4" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
