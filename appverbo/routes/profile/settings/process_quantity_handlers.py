@@ -1,29 +1,20 @@
 from __future__ import annotations
 
-import json
-
 from fastapi import Form, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import text
-from starlette.requests import Request as RequestType
-from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from appverbo.core import SessionLocal
-from appverbo.menu_settings import *  # noqa: F403,F401
 from appverbo.routes.profile.router import router
-from appverbo.routes.profile.settings.permissions import require_menu_settings_owner_v1
-from appverbo.routes.profile.settings.redirects import build_settings_redirect_url_v1
-from appverbo.services.auth import is_admin_user
-from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.session import get_current_user, get_session_entity_id
+from appverbo.use_cases.menu.update_menu_quantity_fields import (
+    execute_update_menu_quantity_fields_v1,
+    normalize_update_menu_quantity_fields_input_v1,
+)
 
 
-####################################################################################
-# (1) ALIASES TEMPORÁRIOS PARA COMPATIBILIDADE COM O CÓDIGO MIGRADO
-####################################################################################
-
-_build_settings_redirect_url = build_settings_redirect_url_v1
-_require_menu_settings_owner_v1 = require_menu_settings_owner_v1
+# ###################################################################################
+# (1) ENDPOINT - CAMPOS DE QUANTIDADE
+# ###################################################################################
 
 
 @router.post("/settings/menu/process-quantity-fields", response_class=HTMLResponse)
@@ -40,76 +31,36 @@ def edit_sidebar_menu_process_quantity_fields_handler(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = resolve_menu_key_alias(menu_key)
+    payload = normalize_update_menu_quantity_fields_input_v1(
+        menu_key=menu_key,
+        quantity_rule_key=list(quantity_rule_key or []),
+        quantity_rule_label=list(quantity_rule_label or []),
+        quantity_field_key=list(quantity_field_key or []),
+        quantity_repeated_field_keys_json=list(quantity_repeated_field_keys_json or []),
+        quantity_header_key=list(quantity_header_key or []),
+        quantity_max_items=list(quantity_max_items or []),
+        quantity_item_label=list(quantity_item_label or []),
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-            settings_edit_key=clean_menu_key,
-            settings_action="edit",
-            settings_tab="campos-quantidade",
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        rows_count = max(
-            len(quantity_rule_key),
-            len(quantity_rule_label),
-            len(quantity_field_key),
-            len(quantity_repeated_field_keys_json),
-            len(quantity_header_key),
-            len(quantity_max_items),
-            len(quantity_item_label),
-        )
-
-        payload_rules: list[dict[str, str]] = []
-        for row_index in range(rows_count):
-            payload_rules.append(
-                {
-                    "key": quantity_rule_key[row_index] if row_index < len(quantity_rule_key) else "",
-                    "label": quantity_rule_label[row_index] if row_index < len(quantity_rule_label) else "",
-                    "quantity_field_key": quantity_field_key[row_index] if row_index < len(quantity_field_key) else "",
-                    "repeated_field_keys": (
-                        quantity_repeated_field_keys_json[row_index]
-                        if row_index < len(quantity_repeated_field_keys_json)
-                        else ""
-                    ),
-                    "header_key": quantity_header_key[row_index] if row_index < len(quantity_header_key) else "",
-                    "max_items": quantity_max_items[row_index] if row_index < len(quantity_max_items) else "",
-                    "item_label": quantity_item_label[row_index] if row_index < len(quantity_item_label) else "",
-                }
-            )
-
-        ok, error_message = update_sidebar_menu_process_quantity_fields_v1(
-            session=session,
-            menu_key=clean_menu_key,
-            raw_fields=payload_rules,
-        )
-
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar os Campos Quantidade.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                    settings_edit_key=clean_menu_key,
-                    settings_action="edit",
-                    settings_tab="campos-quantidade",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        return RedirectResponse(
-            url=_build_settings_redirect_url(
-                success_message="Campos Quantidade atualizados com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="campos-quantidade",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
+        outcome = execute_update_menu_quantity_fields_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )

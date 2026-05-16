@@ -1,80 +1,33 @@
 from __future__ import annotations
 
-import json
-
 from fastapi import Form, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from sqlalchemy import text
-from starlette.requests import Request as RequestType
-from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from appverbo.core import SessionLocal
-from appverbo.menu_settings import *  # noqa: F403,F401
 from appverbo.routes.profile.router import router
-from appverbo.routes.profile.settings.permissions import require_menu_settings_owner_v1
-from appverbo.routes.profile.settings.redirects import build_settings_redirect_url_v1
-from appverbo.services.auth import is_admin_user
-from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.session import get_current_user, get_session_entity_id
-
-
-####################################################################################
-# (1) ALIASES TEMPORÁRIOS PARA COMPATIBILIDADE COM O CÓDIGO MIGRADO
-####################################################################################
-
-_build_settings_redirect_url = build_settings_redirect_url_v1
-
-# APPVERBO_ADMIN_MENU_REDIRECT_KEEP_MENU_TAB_V3
-def _build_admin_menu_redirect_url_v3(
-    success: str = "",
-    error: str = "",
-    redirect_menu: str = "administrativo",
-    redirect_target: str = "#admin-menu-card",
-    *,
-    error_message: str = "",
-    settings_edit_key: str = "",
-    settings_action: str = "",
-) -> str:
-    clean_error = error or error_message
-
-    base_url = _build_settings_redirect_url(
-        success,
-        clean_error,
-        redirect_menu,
-        redirect_target,
-        settings_edit_key=settings_edit_key,
-        settings_action=settings_action,
-    )
-
-    if "admin_tab=" not in base_url:
-        hash_part = ""
-        url_part = base_url
-
-        if "#" in base_url:
-            url_part, hash_value = base_url.split("#", 1)
-            hash_part = "#" + hash_value
-
-        separator = "&" if "?" in url_part else "?"
-        base_url = url_part + separator + "admin_tab=menu" + hash_part
-
-    clean_target = str(redirect_target or "").strip()
-    if clean_target.startswith("#") and "#" not in base_url:
-        base_url = base_url + clean_target
-
-    return base_url
-
-_require_menu_settings_owner_v1 = require_menu_settings_owner_v1
-
-
-# APPVERBO_SESSOES_SERVER_DELETE_ONE_V26_END
-
-
-
+from appverbo.use_cases.menu.create_menu import (
+    execute_create_menu_v1,
+    normalize_create_menu_input_v1,
+)
+from appverbo.use_cases.menu.delete_menu import (
+    execute_delete_menu_v1,
+    normalize_delete_menu_input_v1,
+)
+from appverbo.use_cases.menu.move_menu import (
+    execute_move_menu_v1,
+    normalize_move_menu_input_v1,
+)
+from appverbo.use_cases.menu.update_menu import (
+    execute_update_menu_v1,
+    normalize_update_menu_input_v1,
+)
 
 
 # ###################################################################################
-# (MENU_SETTINGS_CRUD_V1) GRAVAR CONFIGURACOES GERAIS DAS PASTAS
+# (1) ENDPOINT LEGADO - EDITAR MENU
 # ###################################################################################
+
 
 @router.post("/settings/menu/edit", response_class=HTMLResponse)
 def edit_sidebar_menu_setting_handler_v1(
@@ -87,92 +40,41 @@ def edit_sidebar_menu_setting_handler_v1(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
-    clean_menu_key = resolve_menu_key_alias(menu_key)
-    clean_status = str(menu_status or "").strip().lower()
-    make_visible = clean_status not in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}
+    payload = normalize_update_menu_input_v1(
+        menu_key=menu_key,
+        menu_label=menu_label,
+        menu_status=menu_status,
+        menu_visibility_scope=menu_visibility_scope,
+        menu_sidebar_section=menu_sidebar_section,
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-            settings_edit_key=clean_menu_key,
-            settings_action="edit",
-            settings_tab="geral",
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        if not make_visible:
-            ok, error_message = set_sidebar_menu_visibility(
-                session,
-                clean_menu_key,
-                False,
-            )
-            if not ok:
-                return RedirectResponse(
-                    url=_build_settings_redirect_url(
-                        error_message=error_message or "Não foi possível atualizar o estado do menu.",
-                        redirect_menu=redirect_menu,
-                        redirect_target=redirect_target,
-                        settings_edit_key=clean_menu_key,
-                        settings_action="edit",
-                        settings_tab="geral",
-                    ),
-                    status_code=HTTP_303_SEE_OTHER,
-                )
-
-        ok, error_message = update_sidebar_menu_label(
-            session,
-            clean_menu_key,
-            menu_label,
-            menu_visibility_scope,
-            menu_sidebar_section,
-        )
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar o menu.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                    settings_edit_key=clean_menu_key,
-                    settings_action="edit",
-                    settings_tab="geral",
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        if make_visible:
-            ok, error_message = set_sidebar_menu_visibility(
-                session,
-                clean_menu_key,
-                True,
-            )
-            if not ok:
-                return RedirectResponse(
-                    url=_build_settings_redirect_url(
-                        error_message=error_message or "Não foi possível atualizar o estado do menu.",
-                        redirect_menu=redirect_menu,
-                        redirect_target=redirect_target,
-                        settings_edit_key=clean_menu_key,
-                        settings_action="edit",
-                        settings_tab="geral",
-                    ),
-                    status_code=HTTP_303_SEE_OTHER,
-                )
-
-        return RedirectResponse(
-            url=_build_settings_redirect_url(
-                success_message="Menu atualizado com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="geral",
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_update_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
+
+
+# ###################################################################################
+# (2) ENDPOINT LEGADO - CRIAR MENU
+# ###################################################################################
 
 
 @router.post("/settings/menu/create", response_class=HTMLResponse)
@@ -180,58 +82,43 @@ def create_sidebar_menu_setting_handler_v1(
     request: Request,
     menu_label: str = Form(...),
     menu_visibility_scope: str = Form("all"),
+    menu_section: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-menu-card"),
 ) -> RedirectResponse:
-    with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-            settings_action="create",
-        )
-        if blocked_response is not None:
-            return blocked_response
+    payload = normalize_create_menu_input_v1(
+        menu_label=menu_label,
+        menu_visibility_scope=menu_visibility_scope,
+        menu_section=menu_section,
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+    )
 
-        ok, error_message, new_menu_key = create_sidebar_menu_setting(
-            session,
-            menu_label,
-            menu_visibility_scope,
-        )
-        if not ok:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
             return RedirectResponse(
-                url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível criar a pasta.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        return RedirectResponse(
-            url=_build_settings_redirect_url(
-                success_message="Pasta criada com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=(
-                    new_menu_key
-                    if str(redirect_target or "").lstrip("#") == "settings-menu-edit-card"
-                    else ""
-                ),
-                settings_action=(
-                    "edit"
-                    if str(redirect_target or "").lstrip("#") == "settings-menu-edit-card"
-                    else ""
-                ),
-                settings_tab=(
-                    "geral"
-                    if str(redirect_target or "").lstrip("#") == "settings-menu-edit-card"
-                    else ""
-                ),
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_create_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
+
+
+# ###################################################################################
+# (3) ENDPOINT LEGADO - ELIMINAR MENU
+# ###################################################################################
 
 
 @router.post("/settings/menu/delete", response_class=HTMLResponse)
@@ -239,39 +126,39 @@ def delete_sidebar_menu_setting_handler_v1(
     request: Request,
     menu_key: str = Form(...),
     redirect_menu: str = Form("administrativo"),
-    redirect_target: str = Form("#admin-menu-card"),
+    redirect_target: str = Form("#admin-menu-card-inactive"),
 ) -> RedirectResponse:
-    clean_menu_key = resolve_menu_key_alias(menu_key)
+    payload = normalize_delete_menu_input_v1(
+        menu_key=menu_key,
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        ok, error_message = delete_sidebar_menu_setting(session, clean_menu_key)
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível eliminar a pasta.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        return RedirectResponse(
-            url=_build_settings_redirect_url(
-                success_message="Pasta eliminada com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_delete_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
+
+
+# ###################################################################################
+# (4) ENDPOINT LEGADO - MOVER MENU
+# ###################################################################################
 
 
 @router.post("/settings/menu/move", response_class=HTMLResponse)
@@ -282,43 +169,115 @@ def move_sidebar_menu_setting_handler_v1(
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-menu-card"),
 ) -> RedirectResponse:
-    clean_menu_key = resolve_menu_key_alias(menu_key)
+    payload = normalize_move_menu_input_v1(
+        menu_key=menu_key,
+        direction=direction,
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        ok, error_message = move_sidebar_menu_setting(
-            session,
-            clean_menu_key,
-            direction,
-        )
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=_build_admin_menu_redirect_url_v3(
-                    error_message=error_message or "Não foi possível mover a pasta.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        return RedirectResponse(
-            url=_build_admin_menu_redirect_url_v3(
-                success_message="Ordem da pasta atualizada com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_move_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
 
-# APPVERBO_REMAINING_ROUTES_MENU_CRUD_ADMIN_V1_START
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
+
+
+# ###################################################################################
+# (5) ENDPOINT NOVO - SAVE ÚNICO DE MENU
+# ###################################################################################
+
+
+@router.post("/settings/menu/save", response_class=HTMLResponse)
+def save_sidebar_menu_setting_handler_v1(
+    request: Request,
+    menu_mode: str = Form(""),
+    subprocess_mode: str = Form(""),
+    menu_key: str = Form(""),
+    menu_label: str = Form(""),
+    menu_status: str = Form("ativo"),
+    menu_visibility_scope: str = Form("all"),
+    menu_sidebar_section: str = Form(""),
+    menu_section: str = Form(""),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#admin-menu-card"),
+    subprocess_return_url: str = Form(""),
+) -> RedirectResponse:
+    clean_mode = str(menu_mode or subprocess_mode or "").strip().lower()
+
+    if clean_mode not in {"create", "edit"}:
+        clean_mode = "edit" if str(menu_key or "").strip() else "create"
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if clean_mode == "edit":
+            payload = normalize_update_menu_input_v1(
+                menu_key=menu_key,
+                menu_label=menu_label,
+                menu_status=menu_status,
+                menu_visibility_scope=menu_visibility_scope,
+                menu_sidebar_section=menu_sidebar_section or menu_section,
+                redirect_menu=redirect_menu,
+                redirect_target=(
+                    redirect_target
+                    if str(redirect_target or "").strip() and str(redirect_target or "").strip() != "#admin-menu-card"
+                    else "#settings-menu-edit-card"
+                ),
+            )
+            outcome = execute_update_menu_v1(
+                session=session,
+                actor_user=current_user,
+                selected_entity_id=get_session_entity_id(request),
+                payload=payload,
+            )
+        else:
+            payload = normalize_create_menu_input_v1(
+                menu_label=menu_label,
+                menu_visibility_scope=menu_visibility_scope,
+                menu_section=menu_sidebar_section or menu_section,
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target or "#admin-menu-card",
+                subprocess_return_url=subprocess_return_url,
+            )
+            outcome = execute_create_menu_v1(
+                session=session,
+                actor_user=current_user,
+                selected_entity_id=get_session_entity_id(request),
+                payload=payload,
+            )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
+
+
+# ###################################################################################
+# (6) ENDPOINTS DE COMPATIBILIDADE ADMIN-SUBPROCESS
+# ###################################################################################
+
 
 @router.post("/settings/menu/admin-create", response_class=HTMLResponse)
 def create_sidebar_menu_setting_admin_subprocess_handler(
@@ -328,61 +287,35 @@ def create_sidebar_menu_setting_admin_subprocess_handler(
     menu_section: str = Form(""),
     subprocess_return_url: str = Form(""),
 ) -> RedirectResponse:
-    redirect_menu = "administrativo"
-    redirect_target = "#admin-menu-card"
+    payload = normalize_create_menu_input_v1(
+        menu_label=menu_label,
+        menu_visibility_scope=menu_visibility_scope,
+        menu_section=menu_section,
+        redirect_menu="administrativo",
+        redirect_target="#admin-menu-card",
+        subprocess_return_url=subprocess_return_url,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-            settings_action="create",
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        ok, error_message, new_menu_key = create_sidebar_menu_setting(
-            session,
-            menu_label,
-            menu_visibility_scope,
-        )
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível criar o menu.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        if str(menu_section or "").strip():
-            ok, error_message = update_sidebar_menu_label(
-                session,
-                new_menu_key,
-                menu_label,
-                menu_visibility_scope,
-                menu_section,
-            )
-            if not ok:
-                return RedirectResponse(
-                    url=_build_settings_redirect_url(
-                        error_message=error_message or "Não foi possível configurar a sessão do menu.",
-                        redirect_menu=redirect_menu,
-                        redirect_target=redirect_target,
-                    ),
-                    status_code=HTTP_303_SEE_OTHER,
-                )
-
-        return RedirectResponse(
-            url=_build_settings_redirect_url(
-                success_message="Menu criado com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_create_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
 
 
 @router.post("/settings/menu/admin-move", response_class=HTMLResponse)
@@ -392,43 +325,34 @@ def move_sidebar_menu_setting_admin_subprocess_handler(
     direction: str = Form(...),
     subprocess_return_url: str = Form(""),
 ) -> RedirectResponse:
-    redirect_menu = "administrativo"
-    redirect_target = "#admin-menu-card"
-    clean_menu_key = resolve_menu_key_alias(menu_key)
+    payload = normalize_move_menu_input_v1(
+        menu_key=menu_key,
+        direction=direction,
+        redirect_menu="administrativo",
+        redirect_target="#admin-menu-card",
+        subprocess_return_url=subprocess_return_url,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        ok, error_message = move_sidebar_menu_setting(
-            session,
-            clean_menu_key,
-            direction,
-        )
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=_build_admin_menu_redirect_url_v3(
-                    error_message=error_message or "Não foi possível mover o menu.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        return RedirectResponse(
-            url=_build_admin_menu_redirect_url_v3(
-                success_message="Ordem do menu atualizada com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_move_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
 
 
 @router.post("/settings/menu/admin-delete", response_class=HTMLResponse)
@@ -437,38 +361,30 @@ def delete_sidebar_menu_setting_admin_subprocess_handler(
     menu_key: str = Form(...),
     subprocess_return_url: str = Form(""),
 ) -> RedirectResponse:
-    redirect_menu = "administrativo"
-    redirect_target = "#admin-menu-card"
-    clean_menu_key = resolve_menu_key_alias(menu_key)
+    payload = normalize_delete_menu_input_v1(
+        menu_key=menu_key,
+        redirect_menu="administrativo",
+        redirect_target="#admin-menu-card-inactive",
+        subprocess_return_url=subprocess_return_url,
+    )
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
-            session,
-            request,
-            redirect_menu,
-            redirect_target,
-        )
-        if blocked_response is not None:
-            return blocked_response
+        current_user = get_current_user(request, session)
 
-        ok, error_message = delete_sidebar_menu_setting(session, clean_menu_key)
-        if not ok:
+        if current_user is None:
             return RedirectResponse(
-                url=subprocess_return_url or _build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível eliminar o menu.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                ),
-                status_code=HTTP_303_SEE_OTHER,
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
             )
 
-        return RedirectResponse(
-            url=subprocess_return_url or _build_settings_redirect_url(
-                success_message="Menu eliminado com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-            ),
-            status_code=HTTP_303_SEE_OTHER,
+        outcome = execute_delete_menu_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
         )
 
-# APPVERBO_REMAINING_ROUTES_MENU_CRUD_ADMIN_V1_END
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )

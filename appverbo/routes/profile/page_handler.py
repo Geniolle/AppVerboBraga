@@ -22,6 +22,10 @@ from appverbo.menu_settings import (
 )
 from appverbo.routes.profile.router import router
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.menu_admin_context import (
+    build_menu_admin_context_v1,
+    build_menu_admin_page_payload_v1,
+)
 from appverbo.services.sessoes_admin_context import (
     build_sessoes_admin_context_v1,
     build_sessoes_admin_page_payload_v1,
@@ -373,13 +377,27 @@ def new_user_page(
         sidebar_section_edit_data_v22 = dict(
             sessoes_admin_page_payload.get("sidebar_section_edit_data", {})
         )
+        menu_admin_context = build_menu_admin_context_v1(
+            session=session,
+            actor_user_id=int(current_user["id"]),
+            actor_login_email=str(current_user["login_email"]),
+            selected_entity_id=selected_entity_id,
+            menu_edit_key=clean_settings_edit_key,
+        )
+        menu_admin_page_payload = build_menu_admin_page_payload_v1(menu_admin_context)
+
         settings_edit_data: dict[str, Any] | None = None
-    if clean_settings_edit_key:
-        for row in page_data.get("sidebar_menu_settings", []):
-            row_key = str(row.get("key", "")).strip().lower()
-            if row_key == clean_settings_edit_key:
-                settings_edit_data = dict(row)
-                break
+        if clean_settings_edit_key:
+            candidate_menu_edit_data = dict(menu_admin_page_payload.get("menu_edit_data", {}))
+
+            if str(candidate_menu_edit_data.get("key") or "").strip():
+                settings_edit_data = candidate_menu_edit_data
+            else:
+                for row in page_data.get("sidebar_menu_settings", []):
+                    row_key = str(row.get("key", "")).strip().lower()
+                    if row_key == clean_settings_edit_key:
+                        settings_edit_data = dict(row)
+                        break
 
     initial_menu_target, initial_dynamic_process_section = _resolve_initial_menu_target(
         resolved_menu=resolved_menu,
@@ -387,7 +405,10 @@ def new_user_page(
         resolved_admin_tab=resolved_admin_tab,
         settings_edit_key=clean_settings_edit_key,
         can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
-        sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
+        sidebar_menu_settings=list(
+            menu_admin_page_payload.get("menu_settings")
+            or page_data.get("sidebar_menu_settings", [])
+        ),
     )
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
@@ -559,7 +580,7 @@ def new_user_page(
         admin_menu_state = build_admin_menu_state(
             rows=[
                 row
-                for row in page_data.get("sidebar_menu_settings", [])
+                for row in menu_admin_page_payload.get("menu_settings", [])
                 if not bool(row.get("is_deleted"))
             ],
             section_options=tuple(
@@ -567,7 +588,7 @@ def new_user_page(
                     str(option.get("key") or "").strip().lower(),
                     str(option.get("label") or "").strip(),
                 )
-                for option in page_data.get("sidebar_section_options", [])
+                for option in menu_admin_page_payload.get("sidebar_section_options", [])
                 if str(option.get("key") or "").strip()
                 and str(option.get("label") or "").strip()
             ),
@@ -692,6 +713,27 @@ def new_user_page(
         "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
         **page_data,
     }
+    context["sidebar_menu_settings"] = list(
+        menu_admin_page_payload.get("menu_settings")
+        or page_data.get("sidebar_menu_settings", [])
+    )
+    context["sidebar_section_options"] = list(
+        menu_admin_page_payload.get("sidebar_section_options")
+        or page_data.get("sidebar_section_options", [])
+    )
+    context["menu_section_options"] = list(
+        menu_admin_page_payload.get("menu_section_options")
+        or page_data.get("sidebar_section_options", [])
+    )
+    context["menu_permissions"] = dict(
+        menu_admin_page_payload.get("menu_permissions", {})
+    )
+    context["menu_list_pagination"] = dict(
+        menu_admin_page_payload.get("menu_list_pagination", {})
+    )
+    context["menu_edit_data"] = dict(
+        menu_admin_page_payload.get("menu_edit_data", {})
+    )
     _write_meu_perfil_page_flow_debug_log_v1(
         request,
         "04_users_new_render_context",

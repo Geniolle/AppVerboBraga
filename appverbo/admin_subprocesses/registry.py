@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .entidade.configuracao import ENTIDADE_CONFIG
+from .menu.configuracao import MENU_CONFIG
 from .models import AdminSubprocessConfig
 from .sessoes.configuracao import SESSOES_CONFIG
 from .utilizador.configuracao import UTILIZADOR_CONFIG
@@ -17,24 +18,7 @@ from .utilizador.configuracao import UTILIZADOR_CONFIG
 # (2) CONFIGURACAO - MENU
 ####################################################################################
 
-MENU_CONFIG = AdminSubprocessConfig(
-    key="menu",
-    label="Menu",
-    singular_label="Menu",
-    plural_label="Menus",
-    edit_param="settings_edit_key",
-    default_target="admin-menu-card",
-    edit_target="admin-menu-card",
-    create_title="Criar menu",
-    edit_title="Editar menu",
-    active_title="Menus ativos",
-    inactive_title="Menus inativos",
-    save_endpoint="/settings/menu/save",
-    repository_name="menu",
-    repository_class="",
-    enabled=False,
-    migration_status="legacy_pending",
-)
+# MENU_CONFIG e definido em appverbo/admin_subprocesses/menu/configuracao.py
 
 
 ####################################################################################
