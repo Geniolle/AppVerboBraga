@@ -7,7 +7,7 @@
   //###################################################################################
 
   const DEFAULT_CONFIG = {
-    pageSizes: ["5", "10", "20"],
+    pageSizes: ["5", "10", "20", "25", "50"],
     defaultPageSize: "5",
     footerSelector: [
       ".admin-table-footer-standard-v1",
@@ -98,13 +98,17 @@
         return;
       }
 
-      const preferido = rodapes.find(function (footer) {
-        return footer.classList.contains("admin-table-footer-standard-v1");
-      }) || rodapes.find(function (footer) {
-        return footer.classList.contains("admin-subprocess-table-footer-v1");
-      }) || rodapes.find(function (footer) {
-        return footer.classList.contains("table-limiter");
-      }) || rodapes[0];
+      const preferido =
+        rodapes.find(function (footer) {
+          return footer.classList.contains("admin-table-footer-standard-v1");
+        }) ||
+        rodapes.find(function (footer) {
+          return footer.classList.contains("admin-subprocess-table-footer-v1");
+        }) ||
+        rodapes.find(function (footer) {
+          return footer.classList.contains("table-limiter");
+        }) ||
+        rodapes[0];
 
       rodapes.forEach(function (footer) {
         if (footer !== preferido) {
@@ -122,8 +126,12 @@
     const select = footer.querySelector("select");
     const botoes = Array.from(footer.querySelectorAll("button"));
 
-    let botaoAnterior = footer.querySelector(".admin-table-footer-standard-nav-btn-v1:first-of-type");
-    let botaoSeguinte = footer.querySelector(".admin-table-footer-standard-nav-btn-v1:last-of-type");
+    let botaoAnterior = footer.querySelector(
+      ".admin-table-footer-standard-nav-btn-v1:first-of-type"
+    );
+    let botaoSeguinte = footer.querySelector(
+      ".admin-table-footer-standard-nav-btn-v1:last-of-type"
+    );
 
     if (!botaoAnterior) {
       botaoAnterior = footer.querySelector(".table-limiter-nav-btn:first-of-type");
@@ -168,8 +176,8 @@
       return;
     }
 
-    const valoresPadrao = CONFIG.pageSizes || ["5", "10", "20"];
-    const valorAtual = select.value || CONFIG.defaultPageSize || "5";
+    const valoresPadrao = CONFIG.pageSizes || ["5", "10", "20", "25", "50"];
+    const valorAtual = select.value || CONFIG.defaultPageSize || valoresPadrao[0];
     const existentes = new Set();
 
     Array.from(select.options).forEach(function (option) {
@@ -189,7 +197,7 @@
       }
     });
 
-    select.value = valoresPadrao.includes(valorAtual) ? valorAtual : valoresPadrao[0];
+    select.value = existentes.has(valorAtual) ? valorAtual : valoresPadrao[0];
   }
 
   function normalizarTextoAdminTableFooterStandard_v3(footer) {
@@ -210,7 +218,8 @@
     const linhas = Array.from(tabela.querySelectorAll("tbody tr"));
     const controles = obterControlesRodapeAdminTableFooterStandard_v3(footer);
 
-    estado.pageSize = Number.parseInt(controles.select ? controles.select.value : CONFIG.defaultPageSize, 10) || 5;
+    estado.pageSize =
+      Number.parseInt(controles.select ? controles.select.value : CONFIG.defaultPageSize, 10) || 5;
 
     const totalPaginas = Math.max(1, Math.ceil(linhas.length / estado.pageSize));
 
@@ -308,8 +317,7 @@
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", instalarRodapesAdminTableFooterStandard_v3);
-  }
-  else {
+  } else {
     instalarRodapesAdminTableFooterStandard_v3();
   }
 

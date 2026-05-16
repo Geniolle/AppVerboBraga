@@ -5,6 +5,8 @@
   <title>{{ state.config.label if state else "Subprocesso" }} - Admin V2</title>
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_config_v1.css?v=20260516-admin-footer-config-v1">
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260516-admin-footer-standard-v3">
 </head>
 <body>
   {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
@@ -25,5 +27,6 @@
   </main>
 
   <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1"></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v1.js?v=20260516-admin-footer-standard-v3" defer></script>
 </body>
 </html>
