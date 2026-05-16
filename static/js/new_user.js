@@ -2698,6 +2698,17 @@ function applyContentForMenu(menuKey) {
 }
 
 function applyContentForMenuTarget(menuKey, targetSelector) {
+  let resolvedTargetSelector = String(targetSelector || "");
+
+  if (menuKey === "administrativo") {
+    if (
+      resolvedTargetSelector === "#admin-menu-form" ||
+      resolvedTargetSelector === "#admin-menu-create-card"
+    ) {
+      resolvedTargetSelector = "#admin-menu-card";
+    }
+  }
+
   scopedCards.forEach((card) => {
     const rawScope = card.getAttribute("data-menu-scope") || "";
     const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
@@ -2733,21 +2744,22 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
       (
         (
           (
-            targetSelector === "#admin-menu-card" ||
-            targetSelector === "#admin-menu-card-inactive"
+            resolvedTargetSelector === "#admin-menu-card" ||
+            resolvedTargetSelector === "#admin-menu-card-inactive"
           ) &&
           (
+            card.id === "admin-menu-card-create" ||
             card.id === "admin-menu-card" ||
             card.id === "admin-menu-card-inactive"
           )
         ) ||
         (
-          targetSelector === "#settings-menu-edit-card" &&
+          resolvedTargetSelector === "#settings-menu-edit-card" &&
           card.id === "settings-menu-edit-card"
         )
       );
     card.style.display =
-      targetSelector === ("#" + card.id) ||
+      resolvedTargetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
       isMenuGroupedBlock
@@ -2755,7 +2767,7 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         : "none";
   });
   if (dynamicProcessCardEl) {
-    dynamicProcessCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
+    dynamicProcessCardEl.style.display = resolvedTargetSelector === "#dynamic-process-card" ? "" : "none";
   }
 }
 

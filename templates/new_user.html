@@ -460,18 +460,18 @@
 </style>
 
 {# APPVERBO_ADMIN_MENU_VISIBLE_RENDER_V1_START #}
-{% if admin_tab == "menu" %}
+{% if true %}
 {% set admin_menu_active_rows = admin_menu_state.active_rows if admin_menu_state else [] %}
 {% set admin_menu_inactive_rows = admin_menu_state.inactive_rows if admin_menu_state else [] %}
 {% set admin_menu_total_rows = (admin_menu_active_rows|length) + (admin_menu_inactive_rows|length) %}
 
 {# APPVERBO_ADMIN_MENU_CREATE_BLOCK_LIKE_SESSOES_V1_START #}
-<section id="admin-menu-create-card"
+<section id="admin-menu-card-create"
          class="card process-window-card appverbo-admin-menu-create-block-v1"
          data-menu-scope="administrativo">
   <div class="admin-menu-create-actions-v1">
     <a class="btn btn-primary admin-menu-create-button-v1"
-       href="/users/new?menu=administrativo&admin_tab=menu&settings_action=create#admin-menu-form">
+       href="/users/new?menu=administrativo&admin_tab=menu&settings_action=create#admin-menu-card-create">
       Criar menu
     </a>
   </div>
@@ -3070,7 +3070,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260515-sessoes-delete-stay-v2" defer></script>
+  <script src="/static/js/new_user.js?v=20260516-admin-menu-render-v3" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
