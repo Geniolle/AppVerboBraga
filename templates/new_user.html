@@ -13,9 +13,7 @@
 {% block head_extra %}
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_START #}
 <link rel="stylesheet" href="/static/css/modules/appverbo_admin_tabs_emergency_unlock_v1.css?v=20260511-admin-tabs-emergency-unlock-v4">
-<link rel="stylesheet" href="/static/css/modules/appverbo_sessoes_entries_per_page_v1.css?v=20260511-sessoes-entries-per-page-v1">
 <script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260515-admin-tabs-emergency-unlock-v6"></script>
-<script src="/static/js/modules/appverbo_sessoes_entries_per_page_v1.js?v=20260511-sessoes-entries-per-page-v1" defer></script>
 <script>
 (function () {
   function liberarTelaAppVerboV2() {
@@ -62,8 +60,8 @@
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260515-sessoes-inativas-delete-icon-v3">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
-  <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
+<script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
+<script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
   <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260516-admin-menu-scope-v2" defer></script>
   <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260508-quantity-readonly-renderer-v2" defer></script>
@@ -220,9 +218,6 @@
 
     <main class="content">
 
-
-
-
       <div class="container">
         <section id="menu-tabs-card" class="card menu-tabs-card">
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
@@ -233,13 +228,11 @@
         {% endif %}
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
 
-
 <style>
 /* APPVERBO_ADMIN_MENU_ACTIONS_LIKE_SESSOES_STYLE_V1 */
 .appverbo-admin-menu-visible-render-v1 .admin-menu-actions-cell-v1 {
   white-space: nowrap;
 }
-
 
 /* APPVERBO_ADMIN_MENU_MOVE_BUTTONS_POST_STYLE_V1 */
 .appverbo-admin-menu-visible-render-v1 .admin-menu-action-form-v1 {
@@ -287,7 +280,6 @@
   outline-offset: 2px;
 }
 </style>
-
 
 <style>
 /* APPVERBO_ADMIN_MENU_FULL_LAYOUT_LIKE_SESSOES_STYLE_V1 */
@@ -3173,3 +3165,5 @@
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
 {% endblock %}
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260516-admin-table-footer-standard-v2b">
+  <script src="/static/js/modules/admin_table_footer_standard_v1.js?v=20260516-admin-table-footer-standard-v2b" defer></script>
