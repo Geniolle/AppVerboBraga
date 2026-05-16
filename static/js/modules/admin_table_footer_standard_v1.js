@@ -3,32 +3,43 @@
   "use strict";
 
   //###################################################################################
-  // (1) CONFIGURACAO
+  // (1) CONFIGURACAO REUTILIZAVEL
   //###################################################################################
 
-  const FOOTER_SELECTOR = [
-    ".table-limiter",
-    ".admin-status-table-footer-v1",
-    ".admin-subprocess-table-footer-v1"
-  ].join(",");
+  const DEFAULT_CONFIG = {
+    pageSizes: ["5", "10", "20"],
+    defaultPageSize: "5",
+    footerSelector: [
+      ".admin-table-footer-standard-v1",
+      ".table-limiter",
+      ".admin-status-table-footer-v1",
+      ".admin-subprocess-table-footer-v1"
+    ].join(","),
+    legacySessoesSelector: [
+      ".appverbo-sessoes-entries-per-page-v1",
+      ".appverbo_sessoes_entries_per_page_v1",
+      ".appverbo-sessoes-entries-per-page-footer-v1",
+      ".appverbo_sessoes_entries_per_page_footer_v1",
+      ".sessoes-entries-per-page-footer-v1",
+      ".sessoes_entries_per_page_footer_v1",
+      "[data-appverbo-sessoes-entries-per-page-v1]",
+      "[data-sessoes-entries-per-page]",
+      "[data-sessoes-entries-per-page-v1]"
+    ].join(",")
+  };
 
-  const LEGACY_SESSOES_SELECTOR = [
-    ".appverbo-sessoes-entries-per-page-v1",
-    ".appverbo_sessoes_entries_per_page_v1",
-    ".appverbo-sessoes-entries-per-page-footer-v1",
-    ".appverbo_sessoes_entries_per_page_footer_v1",
-    ".sessoes-entries-per-page-footer-v1",
-    ".sessoes_entries_per_page_footer_v1",
-    "[data-appverbo-sessoes-entries-per-page-v1]",
-    "[data-sessoes-entries-per-page]",
-    "[data-sessoes-entries-per-page-v1]"
-  ].join(",");
+  window.APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_CONFIG_V1 =
+    window.APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_CONFIG_V1 || DEFAULT_CONFIG;
+
+  const CONFIG = window.APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_CONFIG_V1;
+  const FOOTER_SELECTOR = CONFIG.footerSelector;
+  const LEGACY_SESSOES_SELECTOR = CONFIG.legacySessoesSelector;
 
   //###################################################################################
-  // (2) LIMPAR DUPLICADOS
+  // (2) REMOVER LEGADOS E DUPLICADOS
   //###################################################################################
 
-  function removerRodapesLegadosSessoesAdminTableFooterStandard_v2b() {
+  function removerRodapesLegadosSessoesAdminTableFooterStandard_v3() {
     document.querySelectorAll(LEGACY_SESSOES_SELECTOR).forEach(function (elemento) {
       if (elemento.closest(".admin-subprocess-table-footer-v1")) {
         return;
@@ -38,7 +49,7 @@
     });
   }
 
-  function obterTabelaDoRodapeAdminTableFooterStandard_v2b(footer) {
+  function obterTabelaDoRodapeAdminTableFooterStandard_v3(footer) {
     let cursor = footer.previousElementSibling;
 
     while (cursor) {
@@ -65,11 +76,11 @@
     return null;
   }
 
-  function removerRodapesDuplicadosAdminTableFooterStandard_v2b() {
+  function removerRodapesDuplicadosAdminTableFooterStandard_v3() {
     const mapa = new Map();
 
     document.querySelectorAll(FOOTER_SELECTOR).forEach(function (footer) {
-      const tabela = obterTabelaDoRodapeAdminTableFooterStandard_v2b(footer);
+      const tabela = obterTabelaDoRodapeAdminTableFooterStandard_v3(footer);
 
       if (!tabela) {
         return;
@@ -88,6 +99,8 @@
       }
 
       const preferido = rodapes.find(function (footer) {
+        return footer.classList.contains("admin-table-footer-standard-v1");
+      }) || rodapes.find(function (footer) {
         return footer.classList.contains("admin-subprocess-table-footer-v1");
       }) || rodapes.find(function (footer) {
         return footer.classList.contains("table-limiter");
@@ -102,15 +115,23 @@
   }
 
   //###################################################################################
-  // (3) CONTROLOS DO RODAPE
+  // (3) CONTROLOS
   //###################################################################################
 
-  function obterControlesRodapeAdminTableFooterStandard_v2b(footer) {
+  function obterControlesRodapeAdminTableFooterStandard_v3(footer) {
     const select = footer.querySelector("select");
     const botoes = Array.from(footer.querySelectorAll("button"));
 
-    let botaoAnterior = footer.querySelector(".table-limiter-nav-btn:first-of-type");
-    let botaoSeguinte = footer.querySelector(".table-limiter-nav-btn:last-of-type");
+    let botaoAnterior = footer.querySelector(".admin-table-footer-standard-nav-btn-v1:first-of-type");
+    let botaoSeguinte = footer.querySelector(".admin-table-footer-standard-nav-btn-v1:last-of-type");
+
+    if (!botaoAnterior) {
+      botaoAnterior = footer.querySelector(".table-limiter-nav-btn:first-of-type");
+    }
+
+    if (!botaoSeguinte) {
+      botaoSeguinte = footer.querySelector(".table-limiter-nav-btn:last-of-type");
+    }
 
     if (!botaoAnterior && botoes.length > 0) {
       botaoAnterior = botoes[0];
@@ -120,7 +141,11 @@
       botaoSeguinte = botoes[botoes.length - 1];
     }
 
-    let paginaAtual = footer.querySelector(".table-limiter-page");
+    let paginaAtual = footer.querySelector(".admin-table-footer-standard-page-v1");
+
+    if (!paginaAtual) {
+      paginaAtual = footer.querySelector(".table-limiter-page");
+    }
 
     if (!paginaAtual) {
       paginaAtual = footer.querySelector(".pagination .active");
@@ -135,16 +160,16 @@
   }
 
   //###################################################################################
-  // (4) NORMALIZAR SELECT E TEXTO
+  // (4) NORMALIZACAO
   //###################################################################################
 
-  function normalizarOpcoesSelectAdminTableFooterStandard_v2b(select) {
+  function normalizarOpcoesSelectAdminTableFooterStandard_v3(select) {
     if (!select) {
       return;
     }
 
-    const valoresPadrao = ["5", "10", "20"];
-    const valorAtual = select.value || "5";
+    const valoresPadrao = CONFIG.pageSizes || ["5", "10", "20"];
+    const valorAtual = select.value || CONFIG.defaultPageSize || "5";
     const existentes = new Set();
 
     Array.from(select.options).forEach(function (option) {
@@ -164,10 +189,10 @@
       }
     });
 
-    select.value = valoresPadrao.includes(valorAtual) ? valorAtual : "5";
+    select.value = valoresPadrao.includes(valorAtual) ? valorAtual : valoresPadrao[0];
   }
 
-  function normalizarTextoAdminTableFooterStandard_v2b(footer) {
+  function normalizarTextoAdminTableFooterStandard_v3(footer) {
     footer.querySelectorAll("span").forEach(function (span) {
       const texto = (span.textContent || "").replace(/\s+/g, " ").trim();
 
@@ -181,11 +206,11 @@
   // (5) PAGINACAO
   //###################################################################################
 
-  function aplicarPaginaAdminTableFooterStandard_v2b(tabela, footer, estado) {
+  function aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado) {
     const linhas = Array.from(tabela.querySelectorAll("tbody tr"));
-    const controles = obterControlesRodapeAdminTableFooterStandard_v2b(footer);
+    const controles = obterControlesRodapeAdminTableFooterStandard_v3(footer);
 
-    estado.pageSize = Number.parseInt(controles.select ? controles.select.value : "5", 10) || 5;
+    estado.pageSize = Number.parseInt(controles.select ? controles.select.value : CONFIG.defaultPageSize, 10) || 5;
 
     const totalPaginas = Math.max(1, Math.ceil(linhas.length / estado.pageSize));
 
@@ -217,43 +242,43 @@
     }
   }
 
-  function iniciarRodapeAdminTableFooterStandard_v2b(footer) {
-    if (footer.dataset.appverboAdminTableFooterStandardReadyV2b === "1") {
+  function iniciarRodapeAdminTableFooterStandard_v3(footer) {
+    if (footer.dataset.appverboAdminTableFooterStandardReadyV3 === "1") {
       return;
     }
 
-    const tabela = obterTabelaDoRodapeAdminTableFooterStandard_v2b(footer);
+    const tabela = obterTabelaDoRodapeAdminTableFooterStandard_v3(footer);
 
     if (!tabela) {
       return;
     }
 
-    const controles = obterControlesRodapeAdminTableFooterStandard_v2b(footer);
+    const controles = obterControlesRodapeAdminTableFooterStandard_v3(footer);
 
     if (!controles.select) {
       return;
     }
 
-    normalizarTextoAdminTableFooterStandard_v2b(footer);
-    normalizarOpcoesSelectAdminTableFooterStandard_v2b(controles.select);
+    normalizarTextoAdminTableFooterStandard_v3(footer);
+    normalizarOpcoesSelectAdminTableFooterStandard_v3(controles.select);
 
     const estado = {
       page: 1,
-      pageSize: Number.parseInt(controles.select.value || "5", 10) || 5
+      pageSize: Number.parseInt(controles.select.value || CONFIG.defaultPageSize, 10) || 5
     };
 
-    footer.dataset.appverboAdminTableFooterStandardReadyV2b = "1";
+    footer.dataset.appverboAdminTableFooterStandardReadyV3 = "1";
 
     controles.select.addEventListener("change", function () {
       estado.page = 1;
-      aplicarPaginaAdminTableFooterStandard_v2b(tabela, footer, estado);
+      aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
     });
 
     if (controles.botaoAnterior) {
       controles.botaoAnterior.addEventListener("click", function (event) {
         event.preventDefault();
         estado.page -= 1;
-        aplicarPaginaAdminTableFooterStandard_v2b(tabela, footer, estado);
+        aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
       });
     }
 
@@ -261,33 +286,33 @@
       controles.botaoSeguinte.addEventListener("click", function (event) {
         event.preventDefault();
         estado.page += 1;
-        aplicarPaginaAdminTableFooterStandard_v2b(tabela, footer, estado);
+        aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
       });
     }
 
-    aplicarPaginaAdminTableFooterStandard_v2b(tabela, footer, estado);
+    aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
   }
 
   //###################################################################################
   // (6) INSTALAR
   //###################################################################################
 
-  function instalarRodapesAdminTableFooterStandard_v2b() {
-    removerRodapesLegadosSessoesAdminTableFooterStandard_v2b();
-    removerRodapesDuplicadosAdminTableFooterStandard_v2b();
+  function instalarRodapesAdminTableFooterStandard_v3() {
+    removerRodapesLegadosSessoesAdminTableFooterStandard_v3();
+    removerRodapesDuplicadosAdminTableFooterStandard_v3();
 
     document.querySelectorAll(FOOTER_SELECTOR).forEach(function (footer) {
-      iniciarRodapeAdminTableFooterStandard_v2b(footer);
+      iniciarRodapeAdminTableFooterStandard_v3(footer);
     });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", instalarRodapesAdminTableFooterStandard_v2b);
+    document.addEventListener("DOMContentLoaded", instalarRodapesAdminTableFooterStandard_v3);
   }
   else {
-    instalarRodapesAdminTableFooterStandard_v2b();
+    instalarRodapesAdminTableFooterStandard_v3();
   }
 
-  window.addEventListener("load", instalarRodapesAdminTableFooterStandard_v2b);
+  window.addEventListener("load", instalarRodapesAdminTableFooterStandard_v3);
 })();
 // APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_V1_END

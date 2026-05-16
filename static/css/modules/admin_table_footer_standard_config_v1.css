@@ -1,0 +1,54 @@
+/* APPVERBO_ADMIN_TABLE_FOOTER_CONFIG_V1_START */
+
+/*
+  Configuracao visual reutilizavel do rodape de tabelas administrativas.
+
+  Qualquer processo ou subprocesso novo deve reutilizar estes tokens.
+  Nao definir tamanhos locais para select, texto, fonte ou paginacao do rodape.
+*/
+
+:root {
+  --appverbo-admin-table-footer-font-family: inherit;
+  --appverbo-admin-table-footer-font-size: 14px;
+  --appverbo-admin-table-footer-line-height: 1.2;
+  --appverbo-admin-table-footer-text-color: #5f6877;
+  --appverbo-admin-table-footer-text-white-space: nowrap;
+
+  --appverbo-admin-table-footer-margin-top: 10px;
+  --appverbo-admin-table-footer-gap: 12px;
+  --appverbo-admin-table-footer-left-gap: 8px;
+  --appverbo-admin-table-footer-left-min-width: 230px;
+
+  --appverbo-admin-table-footer-select-min-width: 84px;
+  --appverbo-admin-table-footer-select-height: 34px;
+  --appverbo-admin-table-footer-select-padding-x: 10px;
+  --appverbo-admin-table-footer-select-radius: 8px;
+  --appverbo-admin-table-footer-select-border: #cfd5df;
+  --appverbo-admin-table-footer-select-background: #ffffff;
+  --appverbo-admin-table-footer-select-color: #253046;
+
+  --appverbo-admin-table-footer-pagination-size: 30px;
+  --appverbo-admin-table-footer-pagination-gap: 10px;
+  --appverbo-admin-table-footer-pagination-border: #d3dced;
+  --appverbo-admin-table-footer-pagination-color: #2f6db4;
+  --appverbo-admin-table-footer-pagination-active-bg: #2f6db4;
+  --appverbo-admin-table-footer-pagination-active-color: #ffffff;
+  --appverbo-admin-table-footer-pagination-disabled-color: #7a879d;
+  --appverbo-admin-table-footer-pagination-disabled-border: #d9dee8;
+}
+
+/*
+  Classe base recomendada para novos processos:
+
+  <div class="admin-table-footer-standard-v1">
+    <div class="admin-table-footer-standard-left-v1">
+      <select class="admin-table-footer-standard-select-v1"></select>
+      <span>entradas por página</span>
+    </div>
+    <div class="admin-table-footer-standard-right-v1">
+      ...
+    </div>
+  </div>
+*/
+
+/* APPVERBO_ADMIN_TABLE_FOOTER_CONFIG_V1_END */

@@ -1,13 +1,14 @@
 /* APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_V1_START */
 
 /*
-  Padrao global v2b do rodape de tabelas administrativas.
-  Corrige:
-  - Sessoes duplicado.
-  - Menu com "entradas por pagina" quebrando linha.
-  - Diferencas de largura e fonte entre Entidade, Utilizador, Sessoes e Menu.
+  Rodape padrao reutilizavel para tabelas administrativas.
+
+  Este ficheiro aplica o layout.
+  Os tamanhos, fonte e cores ficam centralizados em:
+  static/css/modules/admin_table_footer_standard_config_v1.css
 */
 
+/* Oculta rodapes legados especificos de Sessoes para evitar duplicacao. */
 .appverbo-sessoes-entries-per-page-v1,
 .appverbo_sessoes_entries_per_page_v1,
 .appverbo-sessoes-entries-per-page-footer-v1,
@@ -20,56 +21,66 @@
   display: none !important;
 }
 
+/* Container principal. */
+.card .admin-table-footer-standard-v1,
 .card .table-limiter,
 .card .admin-status-table-footer-v1,
 .card .admin-subprocess-table-footer-v1,
+.admin-table-footer-standard-v1,
 .table-limiter,
 .admin-status-table-footer-v1,
 .admin-subprocess-table-footer-v1 {
   width: 100% !important;
   min-width: 100% !important;
-  margin: 10px 0 0 0 !important;
+  margin: var(--appverbo-admin-table-footer-margin-top, 10px) 0 0 0 !important;
   padding: 0 !important;
   border-top: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 12px !important;
+  gap: var(--appverbo-admin-table-footer-gap, 12px) !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
-  color: #5f6877 !important;
-  line-height: 1.2 !important;
+  font-family: var(--appverbo-admin-table-footer-font-family, inherit) !important;
+  font-size: var(--appverbo-admin-table-footer-font-size, 14px) !important;
+  color: var(--appverbo-admin-table-footer-text-color, #5f6877) !important;
+  line-height: var(--appverbo-admin-table-footer-line-height, 1.2) !important;
   box-sizing: border-box !important;
 }
 
+/* Lado esquerdo. */
+.card .admin-table-footer-standard-left-v1,
 .card .table-limiter-left,
 .card .admin-subprocess-table-footer-left-v1,
+.admin-table-footer-standard-left-v1,
 .table-limiter-left,
 .admin-subprocess-table-footer-left-v1 {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
-  gap: 8px !important;
+  gap: var(--appverbo-admin-table-footer-left-gap, 8px) !important;
   flex: 0 0 auto !important;
   width: auto !important;
-  min-width: 230px !important;
-  color: #5f6877 !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
-  line-height: 1.2 !important;
-  white-space: nowrap !important;
+  min-width: var(--appverbo-admin-table-footer-left-min-width, 230px) !important;
+  color: var(--appverbo-admin-table-footer-text-color, #5f6877) !important;
+  font-family: var(--appverbo-admin-table-footer-font-family, inherit) !important;
+  font-size: var(--appverbo-admin-table-footer-font-size, 14px) !important;
+  line-height: var(--appverbo-admin-table-footer-line-height, 1.2) !important;
+  white-space: var(--appverbo-admin-table-footer-text-white-space, nowrap) !important;
   box-sizing: border-box !important;
 }
 
+/* Utilizador usa select e span diretamente no footer. */
 .admin-status-table-footer-v1 > select {
   flex: 0 0 auto !important;
 }
 
+/* Texto do rodape. */
 .admin-status-table-footer-v1 > span,
+.admin-table-footer-standard-left-v1 span,
 .table-limiter-left span,
 .admin-subprocess-table-footer-left-v1 span,
+.admin-table-footer-standard-v1 > span,
 .table-limiter > span,
 .admin-subprocess-table-footer-v1 > span {
   display: inline-block !important;
@@ -77,49 +88,55 @@
   width: auto !important;
   min-width: max-content !important;
   max-width: none !important;
-  white-space: nowrap !important;
+  white-space: var(--appverbo-admin-table-footer-text-white-space, nowrap) !important;
   overflow: visible !important;
   text-overflow: clip !important;
-  color: #5f6877 !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
-  line-height: 1.2 !important;
+  color: var(--appverbo-admin-table-footer-text-color, #5f6877) !important;
+  font-family: var(--appverbo-admin-table-footer-font-family, inherit) !important;
+  font-size: var(--appverbo-admin-table-footer-font-size, 14px) !important;
+  line-height: var(--appverbo-admin-table-footer-line-height, 1.2) !important;
 }
 
+/* Select padrao. */
+.admin-table-footer-standard-select-v1,
 .table-limiter-select,
+.admin-table-footer-standard-v1 select,
 .table-limiter select,
 .admin-status-table-footer-v1 select,
 .admin-subprocess-table-footer-v1 select {
   flex: 0 0 auto !important;
   width: auto !important;
-  min-width: 84px !important;
+  min-width: var(--appverbo-admin-table-footer-select-min-width, 84px) !important;
   max-width: none !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  max-height: 34px !important;
+  height: var(--appverbo-admin-table-footer-select-height, 34px) !important;
+  min-height: var(--appverbo-admin-table-footer-select-height, 34px) !important;
+  max-height: var(--appverbo-admin-table-footer-select-height, 34px) !important;
   margin: 0 !important;
-  padding: 0 10px !important;
-  border: 1px solid #cfd5df !important;
-  border-radius: 8px !important;
-  background: #ffffff !important;
-  color: #253046 !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
+  padding: 0 var(--appverbo-admin-table-footer-select-padding-x, 10px) !important;
+  border: 1px solid var(--appverbo-admin-table-footer-select-border, #cfd5df) !important;
+  border-radius: var(--appverbo-admin-table-footer-select-radius, 8px) !important;
+  background: var(--appverbo-admin-table-footer-select-background, #ffffff) !important;
+  color: var(--appverbo-admin-table-footer-select-color, #253046) !important;
+  font-family: var(--appverbo-admin-table-footer-font-family, inherit) !important;
+  font-size: var(--appverbo-admin-table-footer-font-size, 14px) !important;
   font-weight: 400 !important;
-  line-height: 1.2 !important;
+  line-height: var(--appverbo-admin-table-footer-line-height, 1.2) !important;
   box-sizing: border-box !important;
 }
 
+/* Lado direito. */
+.card .admin-table-footer-standard-right-v1,
 .card .table-limiter-right,
 .card .admin-subprocess-table-footer-right-v1,
 .card .admin-status-table-footer-v1 .pagination,
+.admin-table-footer-standard-right-v1,
 .table-limiter-right,
 .admin-subprocess-table-footer-right-v1,
 .admin-status-table-footer-v1 .pagination {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  gap: 10px !important;
+  gap: var(--appverbo-admin-table-footer-pagination-gap, 10px) !important;
   flex: 0 0 auto !important;
   width: auto !important;
   min-width: 0 !important;
@@ -128,22 +145,24 @@
   box-sizing: border-box !important;
 }
 
+/* Botoes de navegacao. */
+.admin-table-footer-standard-nav-btn-v1,
 .table-limiter-nav-btn,
 .admin-status-table-footer-v1 .pagination button,
 .admin-subprocess-table-footer-v1 .pagination button {
-  width: 30px !important;
-  min-width: 30px !important;
-  max-width: 30px !important;
-  height: 30px !important;
-  min-height: 30px !important;
-  max-height: 30px !important;
+  width: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  min-width: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  max-width: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  height: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  min-height: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  max-height: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
   margin: 0 !important;
   padding: 0 !important;
-  border: 1px solid #d3dced !important;
+  border: 1px solid var(--appverbo-admin-table-footer-pagination-border, #d3dced) !important;
   border-radius: 999px !important;
   background: transparent !important;
-  color: #2f6db4 !important;
-  font-family: inherit !important;
+  color: var(--appverbo-admin-table-footer-pagination-color, #2f6db4) !important;
+  font-family: var(--appverbo-admin-table-footer-font-family, inherit) !important;
   font-size: 18px !important;
   font-weight: 700 !important;
   line-height: 1 !important;
@@ -154,32 +173,35 @@
   cursor: pointer !important;
 }
 
+.admin-table-footer-standard-nav-btn-v1:disabled,
 .table-limiter-nav-btn:disabled,
 .admin-status-table-footer-v1 .pagination button:disabled,
 .admin-subprocess-table-footer-v1 .pagination button:disabled {
   opacity: 0.4 !important;
   cursor: not-allowed !important;
   background: transparent !important;
-  color: #7a879d !important;
-  border-color: #d9dee8 !important;
+  color: var(--appverbo-admin-table-footer-pagination-disabled-color, #7a879d) !important;
+  border-color: var(--appverbo-admin-table-footer-pagination-disabled-border, #d9dee8) !important;
 }
 
+/* Pagina atual. */
+.admin-table-footer-standard-page-v1,
 .table-limiter-page,
 .admin-status-table-footer-v1 .pagination button.active,
 .admin-subprocess-table-footer-v1 .pagination button.active {
-  min-width: 30px !important;
-  width: 30px !important;
-  max-width: 30px !important;
-  height: 30px !important;
-  min-height: 30px !important;
-  max-height: 30px !important;
+  min-width: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  width: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  max-width: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  height: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  min-height: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
+  max-height: var(--appverbo-admin-table-footer-pagination-size, 30px) !important;
   padding: 0 !important;
   border-radius: 999px !important;
-  background: #2f6db4 !important;
-  color: #ffffff !important;
-  border: 1px solid #2f6db4 !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
+  background: var(--appverbo-admin-table-footer-pagination-active-bg, #2f6db4) !important;
+  color: var(--appverbo-admin-table-footer-pagination-active-color, #ffffff) !important;
+  border: 1px solid var(--appverbo-admin-table-footer-pagination-active-bg, #2f6db4) !important;
+  font-family: var(--appverbo-admin-table-footer-font-family, inherit) !important;
+  font-size: var(--appverbo-admin-table-footer-font-size, 14px) !important;
   font-weight: 700 !important;
   line-height: 1 !important;
   display: inline-flex !important;
