@@ -3244,6 +3244,22 @@ html body #admin-users-created-card > h2 {
 
 /* APPVERBO_ADMIN_ACTIVE_CARD_TITLE_PARITY_V1_END */
 
+/* APPVERBO_SESSOES_MENU_TITLE_PARITY_V1_START */
+/* Mantem os titulos de Sessoes com a mesma fonte/escala dos titulos de Menu. */
+html body #admin-menu-card .admin-menu-table-header-v1 h2,
+html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2,
+html body #admin-sidebar-sections-card > h2,
+html body #admin-sidebar-sections-card-inactive > h2 {
+  color: #2f3a4a !important;
+  font-family: inherit !important;
+  font-size: 1.5em !important;
+  font-weight: 700 !important;
+  letter-spacing: normal !important;
+  line-height: normal !important;
+  margin: 0 0 12px !important;
+}
+/* APPVERBO_SESSOES_MENU_TITLE_PARITY_V1_END */
+
 /* APPVERBO_ADMIN_CARD_TYPOGRAPHY_REUSABLE_V1_START */
 /* Tokens reutilizaveis para cabecalho e itens dos cards administrativos.
    Para alterar todos os cards, mudar apenas as variaveis abaixo. */
@@ -3278,6 +3294,8 @@ html body :is(
   #admin-users-created-card,
   #recent-users-card,
   #inactive-users-card,
+  #admin-user-shadow-readonly-card,
+  #admin-user-shadow-inactive-card,
   #admin-sidebar-sections-card,
   #admin-sidebar-sections-form-card,
   #admin-account-status-card,
@@ -3317,8 +3335,9 @@ html body :is(
   #inactive-entities-table,
   #admin-users-created-table,
   #admin-users-inactive-table,
-  #recent-users-table,
-  #inactive-users-table
+  #admin-users-table,
+  #inactive-users-table,
+  #recent-users-table
 ) thead th {
   color: var(--appverbo-admin-card-table-head-color-v1) !important;
   font-family: var(--appverbo-admin-card-table-head-font-family-v1) !important;
@@ -3338,6 +3357,8 @@ html body :is(
   #admin-users-created-card,
   #recent-users-card,
   #inactive-users-card,
+  #admin-user-shadow-readonly-card,
+  #admin-user-shadow-inactive-card,
   #admin-sidebar-sections-card,
   #admin-sidebar-sections-form-card,
   #admin-account-status-card,

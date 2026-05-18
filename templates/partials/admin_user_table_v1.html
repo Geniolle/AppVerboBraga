@@ -1,3 +1,4 @@
+{% from "partials/admin_table_footer_standard_v1.html" import render_admin_table_footer_standard_v1 %}
 {% macro render_admin_user_table_v1(arg1, arg2=None, arg3=None, allow_delete=False) %}
 {% if arg1 is string %}
   {% set table_mode = arg1 %}
@@ -106,18 +107,7 @@
     {% endfor %}
   </tbody>
 </table>
-
-<div class="table-footer admin-status-table-footer-v1 admin-users-table-footer">
-  <select aria-label="Entradas por página">
-    <option selected>5</option>
-  </select>
-  <span>entradas por página</span>
-  <div class="pagination">
-    <button type="button" disabled>&lsaquo;</button>
-    <button type="button" class="active">1</button>
-    <button type="button" disabled>&rsaquo;</button>
-  </div>
-</div>
+{{ render_admin_table_footer_standard_v1(table_id=table_id, page_size=5, aria_label="Entradas por página") }}
 {% else %}
 <p class="empty">{{ empty_message }}</p>
 {% endif %}

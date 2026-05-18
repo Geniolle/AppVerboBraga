@@ -4,6 +4,7 @@
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
 {% from "partials/admin_user_shadow_readonly_v1.html" import render_admin_user_shadow_readonly_v12 %}
+{% from "partials/admin_table_footer_standard_v1.html" import render_admin_table_footer_standard_v1 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 {# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_START #}
@@ -49,7 +50,7 @@
 </noscript>
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260515-admin-status-pending-v6">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260517-admin-status-pending-v8-sessoes-menu-title-parity">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260512-sidebar-owner-footer-logo-v7">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
@@ -209,8 +210,7 @@
 <!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_END -->
 
   <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_config_v1.css?v=20260516-admin-footer-config-v1">
-  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260516-admin-footer-standard-v3">
-
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260517-admin-footer-standard-v8-subprocess-font-parity">
 {% endblock %}
 
 {% block body %}
@@ -317,8 +317,26 @@
   margin-bottom: 14px;
 }
 
-.appverbo-admin-menu-visible-render-v1 .admin-menu-table-header-v1 h2 {
-  margin-bottom: 10px;
+html body #admin-menu-card .admin-menu-table-header-v1 h2,
+html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
+  color: var(--appverbo-admin-card-header-color-v1) !important;
+  font-family: var(--appverbo-admin-card-header-font-family-v1) !important;
+  font-size: var(--appverbo-admin-card-header-font-size-v1) !important;
+  font-weight: var(--appverbo-admin-card-header-font-weight-v1) !important;
+  letter-spacing: 0 !important;
+  line-height: var(--appverbo-admin-card-header-line-height-v1) !important;
+  margin: 0 0 12px !important;
+}
+
+#admin-sidebar-sections-card > h2,
+#admin-sidebar-sections-card-inactive > h2 {
+  color: #0f2647 !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2 !important;
+  margin: 0 0 12px !important;
 }
 
 .appverbo-admin-menu-visible-render-v1 .admin-menu-total-v1 {
@@ -580,7 +598,7 @@
 
   {% if admin_menu_active_rows|length > 0 %}
     <div class="admin-menu-table-wrap-v1">
-      <table class="admin-menu-table-v1" data-admin-menu-table="active">
+      <table id="admin-menu-active-table" class="admin-menu-table-v1" data-admin-menu-table="active">
         <thead>
           <tr>
             <th>Menu</th>
@@ -651,21 +669,7 @@
       </table>
     </div>
 
-    <div class="admin-menu-table-footer-v1" data-admin-menu-footer="active">
-      <div class="admin-menu-page-size-wrap-v1">
-        <select class="admin-menu-page-size-v1"
-                data-admin-menu-page-size="active"
-                aria-label="Entradas por página dos menus ativos">
-          <option value="5" selected>5</option>
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-        </select>
-        <span>entradas por página</span>
-      </div>
-
-      <div class="admin-menu-pagination-v1" data-admin-menu-pagination="active" aria-label="Paginação dos menus ativos"></div>
-    </div>
+    {{ render_admin_table_footer_standard_v1(table_id="admin-menu-active-table", page_size=5, aria_label="Entradas por página dos menus ativos") }}
   {% else %}
     <p class="muted">Sem registros.</p>
   {% endif %}
@@ -695,7 +699,7 @@
 
   {% if admin_menu_inactive_rows|length > 0 %}
     <div class="admin-menu-table-wrap-v1">
-      <table class="admin-menu-table-v1" data-admin-menu-table="inactive">
+      <table id="admin-menu-inactive-table" class="admin-menu-table-v1" data-admin-menu-table="inactive">
         <thead>
           <tr>
             <th>Menu</th>
@@ -753,29 +757,21 @@
       </table>
     </div>
 
-    <div class="admin-menu-table-footer-v1" data-admin-menu-footer="inactive">
-      <div class="admin-menu-page-size-wrap-v1">
-        <select class="admin-menu-page-size-v1"
-                data-admin-menu-page-size="inactive"
-                aria-label="Entradas por página dos menus inativos">
-          <option value="5" selected>5</option>
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-        </select>
-        <span>entradas por página</span>
-      </div>
-
-      <div class="admin-menu-pagination-v1" data-admin-menu-pagination="inactive" aria-label="Paginação dos menus inativos"></div>
-    </div>
+    {{ render_admin_table_footer_standard_v1(table_id="admin-menu-inactive-table", page_size=5, aria_label="Entradas por página dos menus inativos") }}
   {% else %}
     <p class="muted">Sem registros.</p>
   {% endif %}
 </section>
 
 <script>
-/* APPVERBO_ADMIN_MENU_SEARCH_PAGINATION_LIKE_SESSOES_V1 */
+/* APPVERBO_ADMIN_MENU_SEARCH_SYNC_STANDARD_FOOTER_V1 */
 (function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) NORMALIZAR TEXTO
+  //###################################################################################
+
   function normalizeText(value) {
     return String(value || "")
       .toLowerCase()
@@ -783,123 +779,65 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  function buildButton(label, page, isActive, isDisabled, onClick) {
-    var button = document.createElement("button");
-    button.type = "button";
-    button.className = "admin-menu-pagination-button-v1" + (isActive ? " is-active" : "");
-    button.textContent = label;
-    button.disabled = Boolean(isDisabled);
-    button.setAttribute("aria-label", label);
-    button.addEventListener("click", function () {
-      if (!button.disabled) {
-        onClick(page);
-      }
-    });
-    return button;
-  }
+  //###################################################################################
+  // (2) FILTRO + DISPARO DE EVENTO PARA O FOOTER PADRAO
+  //###################################################################################
 
-  function setupMenuTable(scope) {
+  function applyMenuFilter(scope) {
     var rows = Array.prototype.slice.call(document.querySelectorAll('[data-admin-menu-row="' + scope + '"]'));
     var searchInput = document.querySelector('[data-admin-menu-search="' + scope + '"]');
-    var pageSizeInput = document.querySelector('[data-admin-menu-page-size="' + scope + '"]');
-    var pagination = document.querySelector('[data-admin-menu-pagination="' + scope + '"]');
     var totalEl = document.querySelector('[data-admin-menu-total="' + scope + '"]');
 
     if (!rows.length) {
-      if (pagination) {
-        pagination.innerHTML = "";
-      }
       return;
     }
 
-    var currentPage = 1;
+    var term = normalizeText(searchInput ? searchInput.value : "");
+    var filteredCount = 0;
 
-    function getFilteredRows() {
-      var term = normalizeText(searchInput ? searchInput.value : "");
-      if (!term) {
-        return rows;
-      }
+    rows.forEach(function (row) {
+      var text = normalizeText(row.getAttribute("data-admin-menu-filter-text") || row.textContent);
+      var isMatch = !term || text.indexOf(term) >= 0;
+      row.dataset.adminSearchMatchV1 = isMatch ? "1" : "0";
 
-      return rows.filter(function (row) {
-        return normalizeText(row.getAttribute("data-admin-menu-filter-text") || row.textContent).indexOf(term) >= 0;
-      });
-    }
-
-    function render() {
-      var pageSize = parseInt(pageSizeInput ? pageSizeInput.value : "5", 10);
-      if (!pageSize || pageSize < 1) {
-        pageSize = 5;
-      }
-
-      var filteredRows = getFilteredRows();
-      var totalRows = filteredRows.length;
-      var totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
-
-      if (currentPage > totalPages) {
-        currentPage = totalPages;
-      }
-
-      var start = (currentPage - 1) * pageSize;
-      var end = start + pageSize;
-
-      rows.forEach(function (row) {
+      if (!isMatch) {
         row.style.display = "none";
-      });
-
-      filteredRows.slice(start, end).forEach(function (row) {
-        row.style.display = "";
-      });
-
-      if (totalEl) {
-        totalEl.textContent = String(totalRows);
       }
 
-      if (!pagination) {
-        return;
+      if (isMatch) {
+        filteredCount += 1;
       }
+    });
 
-      pagination.innerHTML = "";
-
-      pagination.appendChild(buildButton("‹", Math.max(1, currentPage - 1), false, currentPage <= 1, function (page) {
-        currentPage = page;
-        render();
-      }));
-
-      for (var page = 1; page <= totalPages; page += 1) {
-        if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) {
-          pagination.appendChild(buildButton(String(page), page, page === currentPage, false, function (nextPage) {
-            currentPage = nextPage;
-            render();
-          }));
-        }
-      }
-
-      pagination.appendChild(buildButton("›", Math.min(totalPages, currentPage + 1), false, currentPage >= totalPages, function (page) {
-        currentPage = page;
-        render();
-      }));
+    if (totalEl) {
+      totalEl.textContent = String(filteredCount);
     }
+
+    var tableEl = rows[0].closest("table");
+    if (tableEl) {
+      tableEl.dispatchEvent(new CustomEvent("admin-table-filter-changed"));
+    }
+  }
+
+  //###################################################################################
+  // (3) INICIALIZAR EVENTOS DE PESQUISA
+  //###################################################################################
+
+  function setupMenuFilter(scope) {
+    var searchInput = document.querySelector('[data-admin-menu-search="' + scope + '"]');
 
     if (searchInput) {
       searchInput.addEventListener("input", function () {
-        currentPage = 1;
-        render();
+        applyMenuFilter(scope);
       });
     }
 
-    if (pageSizeInput) {
-      pageSizeInput.addEventListener("change", function () {
-        currentPage = 1;
-        render();
-      });
-    }
-
-    render();
+    applyMenuFilter(scope);
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    setupMenuTable("active");
-    setupMenuTable("inactive");
+    setupMenuFilter("active");
+    setupMenuFilter("inactive");
   });
 })();
 </script>
@@ -3167,5 +3105,5 @@
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
-  <script src="/static/js/modules/admin_table_footer_standard_v1.js?v=20260516-admin-footer-standard-v3" defer></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v1.js?v=20260516-admin-footer-standard-v7-force-menu-dedupe" defer></script>
 {% endblock %}

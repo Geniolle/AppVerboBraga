@@ -1,0 +1,8 @@
+/* APPVERBO_ADMIN_MENU_FOOTER_DEDUPE_V1_START */
+
+.admin-menu-footer-duplicate-hidden-v1,
+[data-admin-menu-footer-duplicate-hidden-v1="1"] {
+  display: none !important;
+}
+
+/* APPVERBO_ADMIN_MENU_FOOTER_DEDUPE_V1_END */

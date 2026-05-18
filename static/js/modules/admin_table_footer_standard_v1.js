@@ -1,326 +1,1019 @@
-// APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_V1_START
+//###################################################################################
+// APPVERBOBRAGA - ADMIN TABLE FOOTER STANDARD V2
+//###################################################################################
+
 (function () {
   "use strict";
 
   //###################################################################################
-  // (1) CONFIGURACAO REUTILIZAVEL
+  // (1) SELETORES E CONFIGURACOES
   //###################################################################################
 
-  const DEFAULT_CONFIG = {
-    pageSizes: ["5", "10", "20", "25", "50"],
-    defaultPageSize: "5",
-    footerSelector: [
+  const LEGACY_FOOTER_SELECTOR_V2 = [
+    ".appverbo-sessoes-entries-per-page-v1",
+    ".appverbo_sessoes_entries_per_page_v1",
+    ".appverbo-sessoes-entries-per-page-footer-v1",
+    ".appverbo_sessoes_entries_per_page_footer_v1",
+    ".sessoes-entries-per-page-footer-v1",
+    ".sessoes_entries_per_page_footer_v1",
+    "[data-appverbo-sessoes-entries-per-page-v1]",
+    "[data-sessoes-entries-per-page]",
+    "[data-sessoes-entries-per-page-v1]",
+    ".table-limiter",
+    "[id$='-limiter']"
+  ].join(",");
+
+  const ADMIN_LIST_CARD_SELECTOR_V2 = [
+    ".admin-subprocess-table-card-v1",
+    "#admin-users-created-card",
+    "#recent-users-card",
+    "#inactive-users-card",
+    "#active-users-card",
+    "#admin-entities-created-card",
+    "#recent-entities-card",
+    "#inactive-entities-card",
+    "#active-entities-card",
+    "#admin-menu-card",
+    "[data-admin-menu-card]",
+    "[data-admin-subprocess]",
+    ".admin-menu-card-v1"
+  ].join(",");
+
+  //###################################################################################
+  // (2) FUNCOES BASE
+  //###################################################################################
+
+  function toSafeString_v2(value) {
+    return String(value === null || value === undefined ? "" : value);
+  }
+
+  function toInteger_v2(value, fallback) {
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }
+
+  function clamp_v2(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function escapeAttribute_v2(value) {
+    return toSafeString_v2(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function normalizeText_v2(value) {
+    return toSafeString_v2(value)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function ensureElementId_v2(element, prefix) {
+    if (!element) {
+      return "";
+    }
+
+    if (element.id) {
+      return element.id;
+    }
+
+    const randomPart = Math.random().toString(36).slice(2, 10);
+    element.id = prefix + "-" + randomPart;
+
+    return element.id;
+  }
+
+  //###################################################################################
+  // (3) HTML REUTILIZAVEL
+  //###################################################################################
+
+  function buildFooterHtml_v2(config) {
+    const safeConfig = config || {};
+    const tableId = toSafeString_v2(safeConfig.tableId).trim();
+    const pageSize = toInteger_v2(safeConfig.pageSize, 5);
+    const ariaLabel = toSafeString_v2(safeConfig.ariaLabel || "Entradas por página");
+
+    return [
+      '<div class="admin-table-footer-standard-v1 table-footer admin-status-table-footer-v1" data-admin-table-footer-standard-v1="1"' + (tableId ? ' data-admin-table-id="' + escapeAttribute_v2(tableId) + '"' : "") + '>',
+      '  <div class="admin-table-footer-page-size-v1">',
+      '    <select class="admin-table-footer-page-size-select-v1" aria-label="' + escapeAttribute_v2(ariaLabel) + '" data-admin-table-footer-page-size-v1="1">',
+      '      <option value="5"' + (pageSize === 5 ? " selected" : "") + '>5</option>',
+      '      <option value="10"' + (pageSize === 10 ? " selected" : "") + '>10</option>',
+      '      <option value="20"' + (pageSize === 20 ? " selected" : "") + '>20</option>',
+      '    </select>',
+      '    <span class="admin-table-footer-label-v1"><span>entradas</span><span>por página</span></span>',
+      '  </div>',
+      '  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">',
+      '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Página anterior" data-admin-table-footer-prev-v1="1" disabled>&#8249;</button>',
+      '    <span class="admin-table-footer-page-v1 active" aria-current="page" data-admin-table-footer-page-v1="1">1</span>',
+      '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Próxima página" data-admin-table-footer-next-v1="1" disabled>&#8250;</button>',
+      '  </div>',
+      '</div>'
+    ].join("");
+  }
+
+  //###################################################################################
+  // (4) IDENTIFICAR CARDS E TABELAS ELEGIVEIS
+  //###################################################################################
+
+  function getCardForElement_v2(element) {
+    if (!element) {
+      return null;
+    }
+
+    return element.closest(".card, .admin-subprocess-table-card-v1, section");
+  }
+
+  function cardLooksLikeAdminList_v2(cardEl) {
+    if (!cardEl) {
+      return false;
+    }
+
+    if (cardEl.matches(ADMIN_LIST_CARD_SELECTOR_V2)) {
+      return true;
+    }
+
+    const titleEl = cardEl.querySelector("h2, h3");
+    const titleText = normalizeText_v2(titleEl ? titleEl.textContent : "");
+
+    if (!titleText) {
+      return false;
+    }
+
+    return [
+      "menus ativos",
+      "menus inativos",
+      "sessoes ativas",
+      "sessoes inativas",
+      "utilizadores criados",
+      "utilizadores inativos",
+      "entidades criadas",
+      "entidades inativas",
+      "entidades ativas"
+    ].some(function (expectedTitle) {
+      return titleText.indexOf(expectedTitle) >= 0;
+    });
+  }
+
+  function tableHasRows_v2(tableEl) {
+    const tbodyEl = tableEl ? tableEl.querySelector("tbody") : null;
+
+    if (!tbodyEl) {
+      return false;
+    }
+
+    return tbodyEl.querySelectorAll("tr").length > 0;
+  }
+
+  function isEligibleTable_v2(tableEl) {
+    if (!tableEl || !tableHasRows_v2(tableEl)) {
+      return false;
+    }
+
+    const cardEl = getCardForElement_v2(tableEl);
+
+    if (!cardLooksLikeAdminList_v2(cardEl)) {
+      return false;
+    }
+
+    if (tableEl.closest("form")) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function getTableInsertionAnchor_v2(tableEl) {
+    if (!tableEl) {
+      return null;
+    }
+
+    const wrapEl = tableEl.closest(".admin-subprocess-table-wrap-v1, .table-responsive, .admin-table-wrap-v1");
+
+    if (wrapEl && getCardForElement_v2(wrapEl) === getCardForElement_v2(tableEl)) {
+      return wrapEl;
+    }
+
+    return tableEl;
+  }
+
+  function findTableForFooter_v2(footerEl) {
+    const tableId = toSafeString_v2(footerEl.dataset.adminTableId).trim();
+
+    if (tableId) {
+      const tableById = document.getElementById(tableId);
+
+      if (tableById) {
+        return tableById;
+      }
+    }
+
+    const previousEl = footerEl.previousElementSibling;
+
+    if (previousEl) {
+      if (previousEl.matches && previousEl.matches("table")) {
+        return previousEl;
+      }
+
+      const tableInsidePrevious = previousEl.querySelector ? previousEl.querySelector("table") : null;
+
+      if (tableInsidePrevious) {
+        return tableInsidePrevious;
+      }
+    }
+
+    const cardEl = getCardForElement_v2(footerEl);
+
+    if (!cardEl) {
+      return null;
+    }
+
+    const tables = Array.from(cardEl.querySelectorAll("table"));
+
+    for (let index = tables.length - 1; index >= 0; index -= 1) {
+      const tableEl = tables[index];
+
+      if (tableEl.compareDocumentPosition(footerEl) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return tableEl;
+      }
+    }
+
+    return tables.length ? tables[0] : null;
+  }
+
+  function getTableRows_v2(tableEl) {
+    if (!tableEl) {
+      return [];
+    }
+
+    const tbodyEl = tableEl.querySelector("tbody");
+
+    if (!tbodyEl) {
+      return [];
+    }
+
+    return Array.from(tbodyEl.querySelectorAll("tr"));
+  }
+
+  //###################################################################################
+  // (5) REMOVER OU OCULTAR RODAPES DUPLICADOS
+  //###################################################################################
+
+  function hideElement_v2(element) {
+    if (!element) {
+      return;
+    }
+
+    element.setAttribute("data-admin-table-footer-hidden-duplicate-v2", "1");
+    element.style.display = "none";
+  }
+
+  function hideLegacyFootersWhenStandardExists_v2(rootEl) {
+    const scopeEl = rootEl || document;
+    const cards = Array.from(scopeEl.querySelectorAll(".card, .admin-subprocess-table-card-v1, section"));
+
+    cards.forEach(function (cardEl) {
+      const standardFooters = Array.from(cardEl.querySelectorAll("[data-admin-table-footer-standard-v1='1']"));
+
+      if (!standardFooters.length) {
+        return;
+      }
+
+      const legacyFooters = Array.from(cardEl.querySelectorAll(LEGACY_FOOTER_SELECTOR_V2));
+
+      legacyFooters.forEach(function (legacyEl) {
+        if (legacyEl.closest("[data-admin-table-footer-standard-v1='1']")) {
+          return;
+        }
+
+        hideElement_v2(legacyEl);
+      });
+    });
+  }
+
+  function hideDuplicateStandardFooters_v2(rootEl) {
+    const scopeEl = rootEl || document;
+    const cards = Array.from(scopeEl.querySelectorAll(".card, .admin-subprocess-table-card-v1, section"));
+
+    cards.forEach(function (cardEl) {
+      const footers = Array.from(cardEl.querySelectorAll("[data-admin-table-footer-standard-v1='1']"));
+      const seenByTableId = new Set();
+
+      footers.forEach(function (footerEl) {
+        const tableId = toSafeString_v2(footerEl.dataset.adminTableId).trim();
+        const key = tableId || "card-footer";
+
+        if (seenByTableId.has(key)) {
+          hideElement_v2(footerEl);
+          return;
+        }
+
+        seenByTableId.add(key);
+      });
+    });
+  }
+
+  //###################################################################################
+  // (6) INJETAR RODAPE PADRAO ONDE AINDA NAO EXISTE
+  //###################################################################################
+
+  function cardHasStandardFooterForTable_v2(cardEl, tableId) {
+    if (!cardEl || !tableId) {
+      return false;
+    }
+
+    const selector = "[data-admin-table-footer-standard-v1='1'][data-admin-table-id='" + CSS.escape(tableId) + "']";
+
+    return Boolean(cardEl.querySelector(selector));
+  }
+
+
+  //###################################################################################
+  // (6.1) PROTECAO DO SUBPROCESSO MENU CONTRA RODAPE DUPLICADO V6
+  //###################################################################################
+
+  function isMenuCardFooterStandard_v6(cardEl) {
+    if (!cardEl) {
+      return false;
+    }
+
+    const titleEl = cardEl.querySelector("h2, h3");
+    const titleText = normalizeText_v2(titleEl ? titleEl.textContent : "");
+
+    return titleText.indexOf("menus ativos") >= 0 || titleText.indexOf("menus inativos") >= 0;
+  }
+
+  function getFooterRootsFooterStandard_v6(cardEl) {
+    if (!cardEl) {
+      return [];
+    }
+
+    const selector = [
+      "[data-admin-table-footer-standard-v1='1']",
       ".admin-table-footer-standard-v1",
-      ".table-limiter",
       ".admin-status-table-footer-v1",
-      ".admin-subprocess-table-footer-v1"
-    ].join(","),
-    legacySessoesSelector: [
-      ".appverbo-sessoes-entries-per-page-v1",
-      ".appverbo_sessoes_entries_per_page_v1",
-      ".appverbo-sessoes-entries-per-page-footer-v1",
-      ".appverbo_sessoes_entries_per_page_footer_v1",
-      ".sessoes-entries-per-page-footer-v1",
-      ".sessoes_entries_per_page_footer_v1",
-      "[data-appverbo-sessoes-entries-per-page-v1]",
-      "[data-sessoes-entries-per-page]",
-      "[data-sessoes-entries-per-page-v1]"
-    ].join(",")
+      ".table-limiter",
+      "[id$='-limiter']"
+    ].join(",");
+
+    const rawFooters = Array.from(cardEl.querySelectorAll(selector));
+    const uniqueFooters = [];
+
+    rawFooters.forEach(function (footerEl) {
+      const rootFooter = footerEl.closest(selector);
+
+      if (!rootFooter || rootFooter !== footerEl) {
+        return;
+      }
+
+      if (uniqueFooters.indexOf(rootFooter) < 0) {
+        uniqueFooters.push(rootFooter);
+      }
+    });
+
+    uniqueFooters.sort(function (leftEl, rightEl) {
+      if (leftEl === rightEl) {
+        return 0;
+      }
+
+      if (leftEl.compareDocumentPosition(rightEl) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return -1;
+      }
+
+      return 1;
+    });
+
+    return uniqueFooters;
+  }
+
+  function cardAlreadyHasMenuFooterFooterStandard_v6(cardEl) {
+    return getFooterRootsFooterStandard_v6(cardEl).length > 0;
+  }
+
+  function showMenuFooterFooterStandard_v6(footerEl) {
+    if (!footerEl) {
+      return;
+    }
+
+    footerEl.removeAttribute("data-admin-menu-footer-hidden-source-v6");
+    footerEl.classList.remove("admin-menu-footer-hidden-source-v6");
+
+    if (footerEl.style && footerEl.style.display === "none") {
+      footerEl.style.display = "";
+    }
+  }
+
+  function hideMenuFooterFooterStandard_v6(footerEl) {
+    if (!footerEl) {
+      return;
+    }
+
+    footerEl.setAttribute("data-admin-menu-footer-hidden-source-v6", "1");
+    footerEl.classList.add("admin-menu-footer-hidden-source-v6");
+    footerEl.style.display = "none";
+  }
+
+  function hideExtraMenuFootersFooterStandard_v6(rootEl) {
+    const scopeEl = rootEl || document;
+    const cards = Array.from(scopeEl.querySelectorAll(".card, section, .admin-subprocess-table-card-v1"));
+
+    cards.forEach(function (cardEl) {
+      if (!isMenuCardFooterStandard_v6(cardEl)) {
+        return;
+      }
+
+      const footers = getFooterRootsFooterStandard_v6(cardEl);
+
+      footers.forEach(function (footerEl, index) {
+        if (index === 0) {
+          showMenuFooterFooterStandard_v6(footerEl);
+          return;
+        }
+
+        hideMenuFooterFooterStandard_v6(footerEl);
+      });
+    });
+  }
+
+  function insertFooterAfterTable_v2(tableEl) {
+    const cardEl = getCardForElement_v2(tableEl);
+
+    if (!cardEl || !isEligibleTable_v2(tableEl)) {
+      return;
+    }
+
+    const tableId = ensureElementId_v2(tableEl, "admin-table-standard-v2");
+
+    if (cardHasStandardFooterForTable_v2(cardEl, tableId)) {
+      return;
+    }
+
+    const insertionAnchor = getTableInsertionAnchor_v2(tableEl);
+
+    if (!insertionAnchor) {
+      return;
+    }
+
+    const tempEl = document.createElement("div");
+    tempEl.innerHTML = buildFooterHtml_v2({
+      tableId: tableId,
+      pageSize: 5,
+      ariaLabel: "Entradas por página"
+    });
+
+    const footerEl = tempEl.firstElementChild;
+
+    if (!footerEl) {
+      return;
+    }
+
+    insertionAnchor.insertAdjacentElement("afterend", footerEl);
+  }
+
+  function ensureStandardFootersForTables_v2(rootEl) {
+    const scopeEl = rootEl || document;
+    const tables = Array.from(scopeEl.querySelectorAll("table"));
+
+    tables.forEach(insertFooterAfterTable_v2);
+  }
+
+  //###################################################################################
+  // (7) RENDERIZAR PAGINACAO
+  //###################################################################################
+
+  function getFilteredRowsForFooter_v2(rows) {
+    return rows.filter(function (rowEl) {
+      return rowEl.dataset.adminSearchMatchV1 !== "0";
+    });
+  }
+
+  function renderFooterState_v2(state) {
+    const rows = getTableRows_v2(state.tableEl);
+    const filteredRows = getFilteredRowsForFooter_v2(rows);
+    const totalRows = filteredRows.length;
+    const totalPages = Math.max(1, Math.ceil(totalRows / state.pageSize));
+
+    state.currentPage = clamp_v2(state.currentPage, 1, totalPages);
+
+    const startIndex = (state.currentPage - 1) * state.pageSize;
+    const endIndex = startIndex + state.pageSize;
+
+    rows.forEach(function (rowEl) {
+      rowEl.style.display = "none";
+    });
+
+    filteredRows.forEach(function (rowEl, index) {
+      rowEl.style.display = index >= startIndex && index < endIndex ? "" : "none";
+    });
+
+    state.pageEl.textContent = String(state.currentPage);
+    state.prevEl.disabled = state.currentPage <= 1;
+    state.nextEl.disabled = state.currentPage >= totalPages;
+  }
+
+  function initializeFooter_v2(footerEl) {
+    if (!footerEl || footerEl.dataset.adminTableFooterInitializedV2 === "1") {
+      return;
+    }
+
+    if (footerEl.getAttribute("data-admin-table-footer-hidden-duplicate-v2") === "1") {
+      return;
+    }
+
+    const tableEl = findTableForFooter_v2(footerEl);
+    const pageSizeEl = footerEl.querySelector("[data-admin-table-footer-page-size-v1='1']");
+    const prevEl = footerEl.querySelector("[data-admin-table-footer-prev-v1='1']");
+    const nextEl = footerEl.querySelector("[data-admin-table-footer-next-v1='1']");
+    const pageEl = footerEl.querySelector("[data-admin-table-footer-page-v1='1']");
+
+    if (!tableEl || !pageSizeEl || !prevEl || !nextEl || !pageEl) {
+      return;
+    }
+
+    const state = {
+      tableEl: tableEl,
+      pageSizeEl: pageSizeEl,
+      prevEl: prevEl,
+      nextEl: nextEl,
+      pageEl: pageEl,
+      currentPage: 1,
+      pageSize: toInteger_v2(pageSizeEl.value, 5)
+    };
+
+    pageSizeEl.addEventListener("change", function () {
+      state.pageSize = toInteger_v2(pageSizeEl.value, 5);
+      state.currentPage = 1;
+      renderFooterState_v2(state);
+    });
+
+    prevEl.addEventListener("click", function () {
+      if (state.currentPage > 1) {
+        state.currentPage -= 1;
+        renderFooterState_v2(state);
+      }
+    });
+
+    nextEl.addEventListener("click", function () {
+      state.currentPage += 1;
+      renderFooterState_v2(state);
+    });
+
+    tableEl.addEventListener("admin-table-filter-changed", function () {
+      state.currentPage = 1;
+      renderFooterState_v2(state);
+    });
+
+    footerEl.dataset.adminTableFooterInitializedV2 = "1";
+    renderFooterState_v2(state);
+  }
+
+  function initializeFooters_v2(rootEl) {
+    const scopeEl = rootEl || document;
+
+    ensureStandardFootersForTables_v2(scopeEl);
+    hideLegacyFootersWhenStandardExists_v2(scopeEl);
+    hideDuplicateStandardFooters_v2(scopeEl);
+    if (typeof hideDuplicateMenuFooters_v3 === "function") {
+      try {
+        hideDuplicateMenuFooters_v3(scopeEl);
+      } catch (error) {
+        // Mantem o fluxo de paginacao ativo mesmo que o dedupe legado falhe.
+      }
+    }
+    hideExtraMenuFootersFooterStandard_v6(scopeEl);
+
+    const footers = Array.from(scopeEl.querySelectorAll("[data-admin-table-footer-standard-v1='1']"));
+
+    footers.forEach(initializeFooter_v2);
+  }
+
+  //###################################################################################
+  // (8) OBSERVAR RENDERIZACOES DINAMICAS
+  //###################################################################################
+
+  let observerTimer_v2 = null;
+
+  function scheduleInitializeFooters_v2() {
+    if (observerTimer_v2) {
+      window.clearTimeout(observerTimer_v2);
+    }
+
+    observerTimer_v2 = window.setTimeout(function () {
+      observerTimer_v2 = null;
+      initializeFooters_v2(document);
+    }, 80);
+  }
+
+  function startMutationObserver_v2() {
+    if (!document.body || window.AppVerboAdminTableFooterStandardObserverStarted_v2) {
+      return;
+    }
+
+    const observer = new MutationObserver(function () {
+      scheduleInitializeFooters_v2();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    window.AppVerboAdminTableFooterStandardObserverStarted_v2 = true;
+  }
+
+  //###################################################################################
+  // (9) EXPOR API E INICIALIZAR
+  //###################################################################################
+
+  window.AppVerboAdminTableFooterStandard_v2 = {
+    buildFooterHtml_v2: buildFooterHtml_v2,
+    initializeFooters_v2: initializeFooters_v2,
+    hideDuplicateMenuFooters_v3: hideDuplicateMenuFooters_v3
   };
 
-  window.APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_CONFIG_V1 =
-    window.APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_CONFIG_V1 || DEFAULT_CONFIG;
-
-  const CONFIG = window.APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_CONFIG_V1;
-  const FOOTER_SELECTOR = CONFIG.footerSelector;
-  const LEGACY_SESSOES_SELECTOR = CONFIG.legacySessoesSelector;
-
-  //###################################################################################
-  // (2) REMOVER LEGADOS E DUPLICADOS
-  //###################################################################################
-
-  function removerRodapesLegadosSessoesAdminTableFooterStandard_v3() {
-    document.querySelectorAll(LEGACY_SESSOES_SELECTOR).forEach(function (elemento) {
-      if (elemento.closest(".admin-subprocess-table-footer-v1")) {
-        return;
-      }
-
-      elemento.remove();
-    });
-  }
-
-  function obterTabelaDoRodapeAdminTableFooterStandard_v3(footer) {
-    let cursor = footer.previousElementSibling;
-
-    while (cursor) {
-      if (cursor.matches && cursor.matches(FOOTER_SELECTOR)) {
-        cursor = cursor.previousElementSibling;
-        continue;
-      }
-
-      if (cursor.matches && cursor.matches("table")) {
-        return cursor;
-      }
-
-      if (cursor.querySelector) {
-        const tabelaInterna = cursor.querySelector("table");
-
-        if (tabelaInterna) {
-          return tabelaInterna;
-        }
-      }
-
-      cursor = cursor.previousElementSibling;
-    }
-
-    return null;
-  }
-
-  function removerRodapesDuplicadosAdminTableFooterStandard_v3() {
-    const mapa = new Map();
-
-    document.querySelectorAll(FOOTER_SELECTOR).forEach(function (footer) {
-      const tabela = obterTabelaDoRodapeAdminTableFooterStandard_v3(footer);
-
-      if (!tabela) {
-        return;
-      }
-
-      if (!mapa.has(tabela)) {
-        mapa.set(tabela, []);
-      }
-
-      mapa.get(tabela).push(footer);
-    });
-
-    mapa.forEach(function (rodapes) {
-      if (rodapes.length <= 1) {
-        return;
-      }
-
-      const preferido =
-        rodapes.find(function (footer) {
-          return footer.classList.contains("admin-table-footer-standard-v1");
-        }) ||
-        rodapes.find(function (footer) {
-          return footer.classList.contains("admin-subprocess-table-footer-v1");
-        }) ||
-        rodapes.find(function (footer) {
-          return footer.classList.contains("table-limiter");
-        }) ||
-        rodapes[0];
-
-      rodapes.forEach(function (footer) {
-        if (footer !== preferido) {
-          footer.remove();
-        }
-      });
-    });
-  }
-
-  //###################################################################################
-  // (3) CONTROLOS
-  //###################################################################################
-
-  function obterControlesRodapeAdminTableFooterStandard_v3(footer) {
-    const select = footer.querySelector("select");
-    const botoes = Array.from(footer.querySelectorAll("button"));
-
-    let botaoAnterior = footer.querySelector(
-      ".admin-table-footer-standard-nav-btn-v1:first-of-type"
-    );
-    let botaoSeguinte = footer.querySelector(
-      ".admin-table-footer-standard-nav-btn-v1:last-of-type"
-    );
-
-    if (!botaoAnterior) {
-      botaoAnterior = footer.querySelector(".table-limiter-nav-btn:first-of-type");
-    }
-
-    if (!botaoSeguinte) {
-      botaoSeguinte = footer.querySelector(".table-limiter-nav-btn:last-of-type");
-    }
-
-    if (!botaoAnterior && botoes.length > 0) {
-      botaoAnterior = botoes[0];
-    }
-
-    if (!botaoSeguinte && botoes.length > 1) {
-      botaoSeguinte = botoes[botoes.length - 1];
-    }
-
-    let paginaAtual = footer.querySelector(".admin-table-footer-standard-page-v1");
-
-    if (!paginaAtual) {
-      paginaAtual = footer.querySelector(".table-limiter-page");
-    }
-
-    if (!paginaAtual) {
-      paginaAtual = footer.querySelector(".pagination .active");
-    }
-
-    return {
-      select,
-      botaoAnterior,
-      botaoSeguinte,
-      paginaAtual
-    };
-  }
-
-  //###################################################################################
-  // (4) NORMALIZACAO
-  //###################################################################################
-
-  function normalizarOpcoesSelectAdminTableFooterStandard_v3(select) {
-    if (!select) {
-      return;
-    }
-
-    const valoresPadrao = CONFIG.pageSizes || ["5", "10", "20", "25", "50"];
-    const valorAtual = select.value || CONFIG.defaultPageSize || valoresPadrao[0];
-    const existentes = new Set();
-
-    Array.from(select.options).forEach(function (option) {
-      if (!option.value) {
-        option.value = option.textContent.trim();
-      }
-
-      existentes.add(option.value);
-    });
-
-    valoresPadrao.forEach(function (valor) {
-      if (!existentes.has(valor)) {
-        const option = document.createElement("option");
-        option.value = valor;
-        option.textContent = valor;
-        select.appendChild(option);
-      }
-    });
-
-    select.value = existentes.has(valorAtual) ? valorAtual : valoresPadrao[0];
-  }
-
-  function normalizarTextoAdminTableFooterStandard_v3(footer) {
-    footer.querySelectorAll("span").forEach(function (span) {
-      const texto = (span.textContent || "").replace(/\s+/g, " ").trim();
-
-      if (texto.toLowerCase() === "entradas por página") {
-        span.textContent = "entradas por página";
-      }
-    });
-  }
-
-  //###################################################################################
-  // (5) PAGINACAO
-  //###################################################################################
-
-  function aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado) {
-    const linhas = Array.from(tabela.querySelectorAll("tbody tr"));
-    const controles = obterControlesRodapeAdminTableFooterStandard_v3(footer);
-
-    estado.pageSize =
-      Number.parseInt(controles.select ? controles.select.value : CONFIG.defaultPageSize, 10) || 5;
-
-    const totalPaginas = Math.max(1, Math.ceil(linhas.length / estado.pageSize));
-
-    if (estado.page > totalPaginas) {
-      estado.page = totalPaginas;
-    }
-
-    if (estado.page < 1) {
-      estado.page = 1;
-    }
-
-    const inicio = (estado.page - 1) * estado.pageSize;
-    const fim = inicio + estado.pageSize;
-
-    linhas.forEach(function (linha, index) {
-      linha.style.display = index >= inicio && index < fim ? "" : "none";
-    });
-
-    if (controles.paginaAtual) {
-      controles.paginaAtual.textContent = String(estado.page);
-    }
-
-    if (controles.botaoAnterior) {
-      controles.botaoAnterior.disabled = estado.page <= 1;
-    }
-
-    if (controles.botaoSeguinte) {
-      controles.botaoSeguinte.disabled = estado.page >= totalPaginas;
-    }
-  }
-
-  function iniciarRodapeAdminTableFooterStandard_v3(footer) {
-    if (footer.dataset.appverboAdminTableFooterStandardReadyV3 === "1") {
-      return;
-    }
-
-    const tabela = obterTabelaDoRodapeAdminTableFooterStandard_v3(footer);
-
-    if (!tabela) {
-      return;
-    }
-
-    const controles = obterControlesRodapeAdminTableFooterStandard_v3(footer);
-
-    if (!controles.select) {
-      return;
-    }
-
-    normalizarTextoAdminTableFooterStandard_v3(footer);
-    normalizarOpcoesSelectAdminTableFooterStandard_v3(controles.select);
-
-    const estado = {
-      page: 1,
-      pageSize: Number.parseInt(controles.select.value || CONFIG.defaultPageSize, 10) || 5
-    };
-
-    footer.dataset.appverboAdminTableFooterStandardReadyV3 = "1";
-
-    controles.select.addEventListener("change", function () {
-      estado.page = 1;
-      aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
-    });
-
-    if (controles.botaoAnterior) {
-      controles.botaoAnterior.addEventListener("click", function (event) {
-        event.preventDefault();
-        estado.page -= 1;
-        aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
-      });
-    }
-
-    if (controles.botaoSeguinte) {
-      controles.botaoSeguinte.addEventListener("click", function (event) {
-        event.preventDefault();
-        estado.page += 1;
-        aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
-      });
-    }
-
-    aplicarPaginaAdminTableFooterStandard_v3(tabela, footer, estado);
-  }
-
-  //###################################################################################
-  // (6) INSTALAR
-  //###################################################################################
-
-  function instalarRodapesAdminTableFooterStandard_v3() {
-    removerRodapesLegadosSessoesAdminTableFooterStandard_v3();
-    removerRodapesDuplicadosAdminTableFooterStandard_v3();
-
-    document.querySelectorAll(FOOTER_SELECTOR).forEach(function (footer) {
-      iniciarRodapeAdminTableFooterStandard_v3(footer);
-    });
-  }
+  window.AppVerboAdminTableFooterStandard_v1 = {
+    buildFooterHtml_v1: buildFooterHtml_v2,
+    initializeFooters_v1: initializeFooters_v2
+  };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", instalarRodapesAdminTableFooterStandard_v3);
+    document.addEventListener("DOMContentLoaded", function () {
+      initializeFooters_v2(document);
+      startMutationObserver_v2();
+    });
   } else {
-    instalarRodapesAdminTableFooterStandard_v3();
+    initializeFooters_v2(document);
+    startMutationObserver_v2();
+  }
+})();
+
+//###################################################################################
+  // (8.1) DEDUPE ESPECIFICO DO RODAPE DO SUBPROCESSO MENU
+  //###################################################################################
+
+  function isMenuFooterCard_v3(cardEl) {
+    if (!cardEl) {
+      return false;
+    }
+
+    if (cardEl.getAttribute("data-admin-subprocess") === "menu") {
+      return true;
+    }
+
+    if (cardEl.id && cardEl.id.toLowerCase().indexOf("menu") >= 0) {
+      return true;
+    }
+
+    const titleEl = cardEl.querySelector("h2, h3");
+    const titleText = normalizeText_v2(titleEl ? titleEl.textContent : "");
+
+    return titleText.indexOf("menus ativos") >= 0 || titleText.indexOf("menus inativos") >= 0;
   }
 
-  window.addEventListener("load", instalarRodapesAdminTableFooterStandard_v3);
+  function getMenuFooterCandidates_v3(cardEl) {
+    if (!cardEl) {
+      return [];
+    }
+
+    const selector = [
+      "[data-admin-table-footer-standard-v1='1']",
+      ".admin-table-footer-standard-v1",
+      ".table-limiter",
+      "[id$='-limiter']"
+    ].join(",");
+
+    const candidates = Array.from(cardEl.querySelectorAll(selector));
+    const unique = [];
+
+    candidates.forEach(function (element) {
+      const ownFooter = element.closest(selector);
+
+      if (ownFooter !== element) {
+        return;
+      }
+
+      if (unique.indexOf(element) < 0) {
+        unique.push(element);
+      }
+    });
+
+    unique.sort(function (leftEl, rightEl) {
+      if (leftEl === rightEl) {
+        return 0;
+      }
+
+      return leftEl.compareDocumentPosition(rightEl) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+
+    return unique;
+  }
+
+  function showMenuFooter_v3(footerEl) {
+    if (!footerEl) {
+      return;
+    }
+
+    footerEl.removeAttribute("data-admin-table-footer-hidden-menu-duplicate-v3");
+
+    if (footerEl.getAttribute("data-admin-table-footer-hidden-duplicate-v2") === "1") {
+      footerEl.removeAttribute("data-admin-table-footer-hidden-duplicate-v2");
+    }
+
+    if (footerEl.style && footerEl.style.display === "none") {
+      footerEl.style.display = "";
+    }
+  }
+
+  function hideMenuFooterDuplicate_v3(footerEl) {
+    if (!footerEl) {
+      return;
+    }
+
+    footerEl.setAttribute("data-admin-table-footer-hidden-menu-duplicate-v3", "1");
+    footerEl.style.display = "none";
+  }
+
+  function hideDuplicateMenuFooters_v3(rootEl) {
+    const scopeEl = rootEl || document;
+    const cards = Array.from(scopeEl.querySelectorAll(".card, .admin-subprocess-table-card-v1, section"));
+
+    cards.forEach(function (cardEl) {
+      if (!isMenuFooterCard_v3(cardEl)) {
+        return;
+      }
+
+      const footers = getMenuFooterCandidates_v3(cardEl);
+
+      if (footers.length <= 1) {
+        if (footers.length === 1) {
+          showMenuFooter_v3(footers[0]);
+        }
+
+        return;
+      }
+
+      footers.forEach(function (footerEl, index) {
+        if (index === 0) {
+          showMenuFooter_v3(footerEl);
+          return;
+        }
+
+        hideMenuFooterDuplicate_v3(footerEl);
+      });
+    });
+  }
+
+  //###################################################################################
+  // (8.1) DEDUPE ESPECIFICO DO RODAPE DO SUBPROCESSO MENU_END
+
+// APPVERBO_ADMIN_MENU_FOOTER_FORCE_DEDUPE_V7_START
+
+//###################################################################################
+// APPVERBOBRAGA - CORRECAO DEFINITIVA DO RODAPE DUPLICADO DO MENU V7
+//###################################################################################
+
+(function () {
+  "use strict";
+
+  //###################################################################################
+  // (1) FUNCOES BASE
+  //###################################################################################
+
+  function normalizarTextoMenuFooterForceDedupe_v7(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function isMenuCardMenuFooterForceDedupe_v7(cardEl) {
+    if (!cardEl) {
+      return false;
+    }
+
+    const titleEl = cardEl.querySelector("h2, h3");
+    const titleText = normalizarTextoMenuFooterForceDedupe_v7(titleEl ? titleEl.textContent : "");
+
+    return titleText.indexOf("menus ativos") >= 0 || titleText.indexOf("menus inativos") >= 0;
+  }
+
+  function isAfterTableMenuFooterForceDedupe_v7(element, tableEl) {
+    if (!element || !tableEl) {
+      return false;
+    }
+
+    return Boolean(tableEl.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }
+
+  function isFooterLikeMenuFooterForceDedupe_v7(element, tableEl) {
+    if (!element || !tableEl) {
+      return false;
+    }
+
+    if (!isAfterTableMenuFooterForceDedupe_v7(element, tableEl)) {
+      return false;
+    }
+
+    if (!element.querySelector("select")) {
+      return false;
+    }
+
+    const text = normalizarTextoMenuFooterForceDedupe_v7(element.textContent);
+
+    return text.indexOf("entradas") >= 0 && text.indexOf("pagina") >= 0;
+  }
+
+  function getTopFooterRootMenuFooterForceDedupe_v7(element, cardEl, tableEl) {
+    let currentEl = element;
+    let parentEl = currentEl.parentElement;
+
+    while (
+      parentEl &&
+      parentEl !== cardEl &&
+      isFooterLikeMenuFooterForceDedupe_v7(parentEl, tableEl)
+    ) {
+      currentEl = parentEl;
+      parentEl = currentEl.parentElement;
+    }
+
+    return currentEl;
+  }
+
+  function getFooterRootsMenuFooterForceDedupe_v7(cardEl) {
+    if (!cardEl) {
+      return [];
+    }
+
+    const tableEl = cardEl.querySelector("table");
+
+    if (!tableEl) {
+      return [];
+    }
+
+    const allElements = Array.from(cardEl.querySelectorAll("div, nav, footer"));
+    const roots = [];
+
+    allElements.forEach(function (element) {
+      if (!isFooterLikeMenuFooterForceDedupe_v7(element, tableEl)) {
+        return;
+      }
+
+      const rootEl = getTopFooterRootMenuFooterForceDedupe_v7(element, cardEl, tableEl);
+
+      if (!rootEl) {
+        return;
+      }
+
+      const alreadyInsideExistingRoot = roots.some(function (existingRoot) {
+        return existingRoot === rootEl || existingRoot.contains(rootEl);
+      });
+
+      if (alreadyInsideExistingRoot) {
+        return;
+      }
+
+      for (let index = roots.length - 1; index >= 0; index -= 1) {
+        if (rootEl.contains(roots[index])) {
+          roots.splice(index, 1);
+        }
+      }
+
+      roots.push(rootEl);
+    });
+
+    roots.sort(function (leftEl, rightEl) {
+      if (leftEl === rightEl) {
+        return 0;
+      }
+
+      if (leftEl.compareDocumentPosition(rightEl) & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return -1;
+      }
+
+      return 1;
+    });
+
+    return roots;
+  }
+
+  function showFooterMenuFooterForceDedupe_v7(footerEl) {
+    if (!footerEl) {
+      return;
+    }
+
+    footerEl.removeAttribute("data-admin-menu-footer-force-hidden-v7");
+    footerEl.classList.remove("admin-menu-footer-force-hidden-v7");
+
+    if (footerEl.style) {
+      footerEl.style.removeProperty("display");
+      footerEl.style.removeProperty("height");
+      footerEl.style.removeProperty("min-height");
+      footerEl.style.removeProperty("margin");
+      footerEl.style.removeProperty("padding");
+      footerEl.style.removeProperty("border");
+      footerEl.style.removeProperty("overflow");
+    }
+  }
+
+  function hideFooterMenuFooterForceDedupe_v7(footerEl) {
+    if (!footerEl) {
+      return;
+    }
+
+    footerEl.setAttribute("data-admin-menu-footer-force-hidden-v7", "1");
+    footerEl.setAttribute("aria-hidden", "true");
+    footerEl.classList.add("admin-menu-footer-force-hidden-v7");
+
+    if (footerEl.style) {
+      footerEl.style.setProperty("display", "none", "important");
+      footerEl.style.setProperty("height", "0", "important");
+      footerEl.style.setProperty("min-height", "0", "important");
+      footerEl.style.setProperty("margin", "0", "important");
+      footerEl.style.setProperty("padding", "0", "important");
+      footerEl.style.setProperty("border", "0", "important");
+      footerEl.style.setProperty("overflow", "hidden", "important");
+    }
+  }
+
+  //###################################################################################
+  // (2) APLICAR DEDUPE SOMENTE NOS CARDS MENUS ATIVOS / MENUS INATIVOS
+  //###################################################################################
+
+  function aplicarMenuFooterForceDedupe_v7(rootEl) {
+    const scopeEl = rootEl || document;
+    const cards = Array.from(scopeEl.querySelectorAll(".card, section, .admin-subprocess-table-card-v1"));
+
+    cards.forEach(function (cardEl) {
+      if (!isMenuCardMenuFooterForceDedupe_v7(cardEl)) {
+        return;
+      }
+
+      const footers = getFooterRootsMenuFooterForceDedupe_v7(cardEl);
+
+      footers.forEach(function (footerEl, index) {
+        if (index === 0) {
+          showFooterMenuFooterForceDedupe_v7(footerEl);
+          return;
+        }
+
+        hideFooterMenuFooterForceDedupe_v7(footerEl);
+      });
+    });
+  }
+
+  //###################################################################################
+  // (3) REAPLICAR APOS TODOS OS SCRIPTS QUE POSSAM INJETAR RODAPE
+  //###################################################################################
+
+  function scheduleMenuFooterForceDedupe_v7() {
+    [0, 50, 150, 300, 700, 1200, 2500, 5000].forEach(function (delayMs) {
+      window.setTimeout(function () {
+        aplicarMenuFooterForceDedupe_v7(document);
+      }, delayMs);
+    });
+  }
+
+  function startObserverMenuFooterForceDedupe_v7() {
+    if (!document.body || window.AppVerboAdminMenuFooterForceDedupeObserverStarted_v7) {
+      return;
+    }
+
+    const observer = new MutationObserver(function () {
+      window.clearTimeout(window.AppVerboAdminMenuFooterForceDedupeTimer_v7);
+
+      window.AppVerboAdminMenuFooterForceDedupeTimer_v7 = window.setTimeout(function () {
+        aplicarMenuFooterForceDedupe_v7(document);
+      }, 80);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    window.AppVerboAdminMenuFooterForceDedupeObserverStarted_v7 = true;
+  }
+
+  window.AppVerboAdminMenuFooterForceDedupe_v7 = {
+    aplicarMenuFooterForceDedupe_v7: aplicarMenuFooterForceDedupe_v7
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      scheduleMenuFooterForceDedupe_v7();
+      startObserverMenuFooterForceDedupe_v7();
+    });
+  } else {
+    scheduleMenuFooterForceDedupe_v7();
+    startObserverMenuFooterForceDedupe_v7();
+  }
+
+  window.addEventListener("load", scheduleMenuFooterForceDedupe_v7);
 })();
-// APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_V1_END
+
+// APPVERBO_ADMIN_MENU_FOOTER_FORCE_DEDUPE_V7_END
