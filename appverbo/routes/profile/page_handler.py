@@ -3,12 +3,16 @@ from __future__ import annotations
 from appverbo.page_state.pagina_default import resolver_pagina_default_v1
 from datetime import datetime, timezone
 from typing import Any
+import unicodedata
 
 from fastapi import Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import select
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
+from appverbo.admin_subprocesses.menu.configuracao import MENU_CONFIG
 from appverbo.admin_subprocesses.menu.service import build_admin_menu_state
+from appverbo.admin_subprocesses.repositories.menu_repository import MenuAdminRepository
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
 from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_from_repository
@@ -16,6 +20,7 @@ from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_fro
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.admin_subprocesses.utilizador.pagina import montar_estado_pagina_utilizador_v1
 from appverbo.core import *  # noqa: F403,F401
+from appverbo.models import AdminDefinition
 from appverbo.menu_settings import (
     MENU_MEU_PERFIL_KEY,
     resolve_menu_key_alias,
@@ -113,11 +118,184 @@ def _resolve_admin_menu_target_v1(settings_edit_key: str) -> str:
     return "#admin-menu-card"
 
 
+def _resolve_admin_definicoes_target_v1(definition_edit_id: str) -> str:
+    if str(definition_edit_id or "").strip():
+        return "#admin-definicoes-card-edit"
+
+    return "#admin-definicoes-card"
+
+
+def _build_definicoes_options_from_rows_v1(
+    rows: list[dict[str, Any]],
+    *,
+    empty_message: str,
+    value_candidates: tuple[str, ...],
+    label_candidates: tuple[str, ...],
+    fixed_options: tuple[tuple[str, str], ...] = (),
+    current_value: object = "",
+) -> tuple[tuple[str, str], ...]:
+    normalized_options: list[tuple[str, str]] = []
+    seen_values: set[str] = set()
+
+    def _push_option(option_key: object, option_label: object) -> None:
+        clean_key = str(option_key or "").strip().lower()
+        clean_label = str(option_label or "").strip()
+        option_value = clean_label or clean_key
+        normalized_option_value = option_value.strip().lower()
+
+        if not normalized_option_value or normalized_option_value in seen_values:
+            return
+
+        seen_values.add(normalized_option_value)
+        normalized_options.append((option_value, clean_label or clean_key))
+
+    for fixed_option in fixed_options:
+        if not isinstance(fixed_option, tuple) or len(fixed_option) != 2:
+            continue
+
+        _push_option(fixed_option[0], fixed_option[1])
+
+    for raw_row in rows:
+        if not isinstance(raw_row, dict):
+            continue
+
+        if bool(raw_row.get("is_deleted")):
+            continue
+
+        raw_status = str(raw_row.get("status") or "").strip().lower()
+        raw_is_active = raw_row.get("is_active")
+        is_active = bool(raw_is_active) or raw_status in {"active", "ativo", "1", "true", "on"}
+
+        if not is_active:
+            continue
+
+        option_value = ""
+        option_label = ""
+
+        for candidate_key in value_candidates:
+            candidate_value = str(raw_row.get(candidate_key) or "").strip()
+            if candidate_value:
+                option_value = candidate_value
+                break
+
+        for candidate_key in label_candidates:
+            candidate_label = str(raw_row.get(candidate_key) or "").strip()
+            if candidate_label:
+                option_label = candidate_label
+                break
+
+        _push_option(option_value, option_label)
+
+    clean_current_value = str(current_value or "").strip()
+    normalized_current_value = clean_current_value.lower()
+    if normalized_current_value and normalized_current_value not in seen_values:
+        normalized_options.append((clean_current_value, clean_current_value))
+
+    if not normalized_options:
+        return (("", empty_message),)
+
+    return (("", "Selecione"), *tuple(normalized_options))
+
+
+def _build_definicoes_process_options_v1(
+    session_rows: list[dict[str, Any]],
+    current_value: object = "",
+) -> tuple[tuple[str, str], ...]:
+    return _build_definicoes_options_from_rows_v1(
+        session_rows,
+        empty_message="Sem sessões ativas",
+        value_candidates=("label", "name", "key", "id"),
+        label_candidates=("label", "name", "key", "id"),
+        fixed_options=(("Geral", "Geral"),),
+        current_value=current_value,
+    )
+
+
+def _build_definicoes_subprocess_options_v1(
+    menu_rows: list[dict[str, Any]],
+    current_value: object = "",
+) -> tuple[tuple[str, str], ...]:
+    return _build_definicoes_options_from_rows_v1(
+        menu_rows,
+        empty_message="Sem subprocessos ativos no Menu",
+        value_candidates=("label", "name", "key", "menu_key"),
+        label_candidates=("label", "name", "key", "menu_key"),
+        fixed_options=(("Geral", "Geral"),),
+        current_value=current_value,
+    )
+
+
+# ###################################################################################
+# (X) DEFINICOES GERAIS - TAMANHO DAS ABAS ADMINISTRATIVAS
+# ###################################################################################
+
+def _normalize_definition_lookup_text_v1(value: object) -> str:
+    clean_value = " ".join(str(value or "").strip().split()).lower()
+    normalized = unicodedata.normalize("NFD", clean_value)
+    return "".join(
+        character
+        for character in normalized
+        if unicodedata.category(character) != "Mn"
+    )
+
+
+def _parse_tabs_width_ch_v1(value: object) -> int | None:
+    raw_value = str(value or "").strip().replace(",", ".")
+
+    if not raw_value:
+        return None
+
+    try:
+        parsed_value = int(float(raw_value))
+    except (TypeError, ValueError):
+        return None
+
+    if parsed_value <= 0:
+        return None
+
+    # Limites defensivos para evitar layout quebrado por valores extremos.
+    return max(8, min(60, parsed_value))
+
+
+def _resolve_admin_tabs_width_ch_from_definitions_v1(
+    *,
+    session: Any,
+    default_width_ch: int = 24,
+) -> int:
+    rows = session.execute(
+        select(AdminDefinition).order_by(AdminDefinition.id.desc())
+    ).scalars().all()
+
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != "tamanho":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_name) != "aba geral":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.process_name) != "geral":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.subprocess_name) != "geral":
+            continue
+
+        parsed_width_ch = _parse_tabs_width_ch_v1(row.initial_value)
+
+        if parsed_width_ch is not None:
+            return parsed_width_ch
+
+    return int(default_width_ch)
+
+
 def _resolve_initial_menu_target(
     resolved_menu: str,
     resolved_profile_tab: str,
     resolved_admin_tab: str,
     settings_edit_key: str,
+    definition_edit_id: str,
     can_manage_all_entities: bool,
     sidebar_menu_settings: list[dict[str, Any]],
 ) -> tuple[str, str]:
@@ -139,11 +317,13 @@ def _resolve_initial_menu_target(
     if clean_menu_key == "administrativo":
         if resolved_admin_tab == "menu":
             return _resolve_admin_menu_target_v1(settings_edit_key), ""
+        if resolved_admin_tab == "definicoes":
+            return _resolve_admin_definicoes_target_v1(definition_edit_id), ""
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "sessoes":
             return "#admin-sidebar-sections-card", ""
-        if resolved_admin_tab in {"menu", "contas", "definicoes"}:
+        if resolved_admin_tab in {"menu", "contas"}:
             return "#admin-account-status-card", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
@@ -168,12 +348,11 @@ def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
 
     legacy_aliases = {
         "contas": "menu",
-        "definicoes": "menu",
     }
 
     clean_admin_tab = legacy_aliases.get(clean_admin_tab, clean_admin_tab)
 
-    if clean_admin_tab not in {"utilizador", "entidade", "menu", "sessoes"}:
+    if clean_admin_tab not in {"utilizador", "entidade", "menu", "sessoes", "definicoes"}:
         return "entidade"
 
     return clean_admin_tab
@@ -239,6 +418,7 @@ def new_user_page(
     admin_tab: str = "entidade",
     entity_edit_id: str = "",
     user_edit_id: str = "",
+    definition_edit_id: str = "",
     entity_view: str = "",
     user_view: str = "",
     settings_edit_key: str = "",
@@ -274,6 +454,7 @@ def new_user_page(
     clean_user_edit_id = user_edit_id.strip()
     if clean_user_edit_id.isdigit():
         parsed_user_edit_id = int(clean_user_edit_id)
+    clean_definition_edit_id = str(definition_edit_id or "").strip()
     readonly_truthy_values = {"1", "true", "sim", "yes", "on"}
     entity_readonly_mode = (
         entity_view.strip().lower() in readonly_truthy_values and parsed_entity_edit_id is not None
@@ -303,10 +484,15 @@ def new_user_page(
         resolved_menu == "administrativo"
         and resolved_admin_tab == "menu"
     )
+    admin_tabs_width_ch_v1 = 24
     menu_settings_edit_key = clean_settings_edit_key if is_admin_menu_tab else ""
     menu_admin_page_payload = build_menu_admin_page_payload_v1({})
 
     with SessionLocal() as session:
+        admin_tabs_width_ch_v1 = _resolve_admin_tabs_width_ch_from_definitions_v1(
+            session=session,
+            default_width_ch=24,
+        )
         current_user = get_current_user(request, session)
         if current_user is None:
             return RedirectResponse(
@@ -384,7 +570,9 @@ def new_user_page(
         sidebar_section_edit_data_v22 = dict(
             sessoes_admin_page_payload.get("sidebar_section_edit_data", {})
         )
-        if is_admin_menu_tab:
+        if is_admin_menu_tab or (
+            resolved_menu == "administrativo" and resolved_admin_tab == "definicoes"
+        ):
             menu_admin_context = build_menu_admin_context_v1(
                 session=session,
                 actor_user_id=int(current_user["id"]),
@@ -414,6 +602,7 @@ def new_user_page(
         resolved_profile_tab=resolved_profile_tab,
         resolved_admin_tab=resolved_admin_tab,
         settings_edit_key=menu_settings_edit_key,
+        definition_edit_id=clean_definition_edit_id,
         can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
         sidebar_menu_settings=list(
             menu_admin_page_payload.get("menu_settings", [])
@@ -469,6 +658,10 @@ def new_user_page(
         clean_dynamic_section_from_query = ""
     elif resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+        initial_dynamic_process_section = ""
+        clean_dynamic_section_from_query = ""
+    elif resolved_menu == "administrativo" and resolved_admin_tab == "definicoes":
+        initial_menu_target = _resolve_admin_definicoes_target_v1(clean_definition_edit_id)
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
@@ -555,6 +748,7 @@ def new_user_page(
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
     admin_menu_state = None
+    admin_subprocess_state_definicoes_v1 = None
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
     # Entidade permanece no fluxo legado em /users/new.
@@ -608,6 +802,72 @@ def new_user_page(
             error=settings_error if resolved_admin_tab == "menu" else "",
             return_url="/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card",
         )
+    elif resolved_menu == "administrativo" and resolved_admin_tab == "definicoes":
+        definicoes_subprocess_config_v1 = get_admin_subprocess_config("definicoes")
+
+        if definicoes_subprocess_config_v1 is not None:
+            menu_rows_for_definicoes_subprocess_options_v1: list[dict[str, Any]] = list(
+                menu_admin_page_payload.get("menu_settings", [])
+            )
+            session_rows_for_definicoes_process_options_v1: list[dict[str, Any]] = list(
+                sessoes_admin_page_payload.get("active_sidebar_sections", [])
+            )
+
+            if not session_rows_for_definicoes_process_options_v1:
+                session_rows_for_definicoes_process_options_v1 = list(
+                    sessoes_admin_page_payload.get("active_sessions", [])
+                    or sessoes_admin_page_payload.get("sessions", [])
+                    or sessoes_admin_page_payload.get("all_sessions", [])
+                )
+
+            with SessionLocal() as definicoes_subprocess_session_v1:
+                admin_subprocess_state_definicoes_v1 = build_admin_subprocess_state_from_repository(
+                    config=definicoes_subprocess_config_v1,
+                    session=definicoes_subprocess_session_v1,
+                    edit_key=clean_definition_edit_id,
+                    success=success or "",
+                    error=error or "",
+                    return_url="/users/new?menu=administrativo&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card",
+                    context={
+                        "page_state": page_state,
+                        "current_user": current_user,
+                        "selected_entity_id": selected_entity_id,
+                        "allowed_entity_ids": entity_permissions["allowed_entity_ids"],
+                        "can_manage_all_entities": entity_permissions["can_manage_all_entities"],
+                    },
+                )
+
+                if not menu_rows_for_definicoes_subprocess_options_v1:
+                    menu_repository_v1 = MenuAdminRepository(MENU_CONFIG)
+                    menu_rows_for_definicoes_subprocess_options_v1 = list(
+                        menu_repository_v1.list_active(
+                            session=definicoes_subprocess_session_v1
+                        )
+                    )
+
+            if admin_subprocess_state_definicoes_v1 is not None:
+                edit_process_value_v1 = ""
+                edit_subprocess_value_v1 = ""
+                if isinstance(admin_subprocess_state_definicoes_v1.edit_data, dict):
+                    edit_process_value_v1 = str(
+                        admin_subprocess_state_definicoes_v1.edit_data.get("process_name") or ""
+                    ).strip()
+                    edit_subprocess_value_v1 = str(
+                        admin_subprocess_state_definicoes_v1.edit_data.get("subprocess_name") or ""
+                    ).strip()
+
+                admin_subprocess_state_definicoes_v1.field_options["process_name"] = (
+                    _build_definicoes_process_options_v1(
+                        session_rows_for_definicoes_process_options_v1,
+                        edit_process_value_v1,
+                    )
+                )
+                admin_subprocess_state_definicoes_v1.field_options["subprocess_name"] = (
+                    _build_definicoes_subprocess_options_v1(
+                        menu_rows_for_definicoes_subprocess_options_v1,
+                        edit_subprocess_value_v1,
+                    )
+                )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_UTILIZADOR_SHADOW_V1_START
@@ -714,8 +974,19 @@ def new_user_page(
             sessoes_admin_page_payload.get("sidebar_sections_tab") or "sessoes"
         ),
         "admin_tab": resolved_admin_tab,
-        "admin_subprocess_state": admin_subprocess_state_utilizador_v1 if resolved_admin_tab == "utilizador" else admin_subprocess_state_v2,
+        "admin_tabs_width_ch": int(admin_tabs_width_ch_v1),
+        "admin_subprocess_state": (
+            admin_subprocess_state_utilizador_v1
+            if resolved_admin_tab == "utilizador"
+            else (
+                admin_subprocess_state_definicoes_v1
+                if resolved_admin_tab == "definicoes"
+                else admin_subprocess_state_v2
+            )
+        ),
         "admin_subprocess_state_utilizador": admin_subprocess_state_utilizador_v1,
+        "admin_subprocess_state_definicoes_v1": admin_subprocess_state_definicoes_v1,
+        "admin_subprocess_state_definicoes": admin_subprocess_state_definicoes_v1,
         "admin_subprocess_shadow_state_v1": admin_subprocess_state_utilizador_v1,
         "admin_subprocess_shadow_state": admin_subprocess_shadow_state_v1,
         "admin_menu_state": admin_menu_state,
@@ -724,7 +995,11 @@ def new_user_page(
         "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),
         **page_data,
     }
-    if is_admin_menu_tab:
+    is_admin_menu_or_definicoes_tab_v1 = (
+        is_admin_menu_tab
+        or (resolved_menu == "administrativo" and resolved_admin_tab == "definicoes")
+    )
+    if is_admin_menu_or_definicoes_tab_v1:
         context["sidebar_menu_settings"] = list(
             menu_admin_page_payload.get("menu_settings", [])
         )

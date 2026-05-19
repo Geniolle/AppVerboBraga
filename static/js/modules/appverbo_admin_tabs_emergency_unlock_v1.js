@@ -91,6 +91,10 @@
             return "menu";
         }
 
+        if (text === "definicoes" || text === "definições") {
+            return "definicoes";
+        }
+
         return "";
     }
 
@@ -171,20 +175,21 @@
                 containerText.indexOf("entidade") !== -1 &&
                 containerText.indexOf("utilizador") !== -1 &&
                 containerText.indexOf("sessoes") !== -1 &&
-                containerText.indexOf("menu") !== -1
+                containerText.indexOf("menu") !== -1 &&
+                (containerText.indexOf("definicoes") !== -1 || containerText.indexOf("definições") !== -1)
             ) {
                 var rect = container.getBoundingClientRect();
                 var relativeX = event.clientX - rect.left;
                 var ratio = relativeX / Math.max(rect.width, 1);
-                var index = Math.floor(ratio * 4);
-                var orderedTabs = ["entidade", "utilizador", "sessoes", "menu"];
+                var orderedTabs = ["entidade", "utilizador", "sessoes", "menu", "definicoes"];
+                var index = Math.floor(ratio * orderedTabs.length);
 
                 if (index < 0) {
                     index = 0;
                 }
 
-                if (index > 3) {
-                    index = 3;
+                if (index > orderedTabs.length - 1) {
+                    index = orderedTabs.length - 1;
                 }
 
                 return orderedTabs[index];
@@ -261,7 +266,8 @@
             entidade: true,
             utilizador: true,
             sessoes: true,
-            menu: true
+            menu: true,
+            definicoes: true
         };
 
         if (!allowedTabs[tabName]) {
@@ -284,6 +290,10 @@
             url.searchParams.set("target", "admin-sidebar-sections-card");
             url.hash = "admin-sidebar-sections-card";
         }
+        else if (tabName === "definicoes") {
+            url.searchParams.set("target", "admin-definicoes-card");
+            url.hash = "admin-definicoes-card";
+        }
         else {
             url.hash = "";
         }
@@ -298,6 +308,22 @@
         }
 
         if (!isClickWithinAdminTabUi(event)) {
+            return;
+        }
+
+        var submenuAnchor =
+            event &&
+            event.target &&
+            event.target.closest
+                ? event.target.closest("#submenu-items .submenu-item")
+                : null;
+
+        // Deixa o gestor principal (new_user.js) tratar cliques reais do submenu.
+        // Aqui apenas cobrimos fallback quando o clique nao acerta no link/tab esperado.
+        if (
+            submenuAnchor &&
+            String(submenuAnchor.getAttribute("href") || "").trim().indexOf("#") === 0
+        ) {
             return;
         }
 

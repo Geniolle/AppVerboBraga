@@ -1039,14 +1039,18 @@ function mergeDynamicProcessMenus() {
           { label: "Entidade", target: "#create-entity-card" },
           { label: "Utilizador", target: "#create-user-card" },
           { label: "Sessões", target: "#admin-sidebar-sections-card" },
-          { label: "Menu", target: "#admin-menu-card" }
+          { label: "Menu", target: "#admin-menu-card" },
+          { label: "Definições", target: "#admin-definicoes-card" }
         ];
         const mergedItems = dynamicItems.filter((item) => {
           const sectionKey = String(item.dynamicProcessSectionKey || "").trim().toLowerCase();
           if (!sectionKey) {
             return false;
           }
-          return sectionKey !== "__geral__" && !sectionKey.startsWith("field:");
+          if (sectionKey === "__geral__" || sectionKey.startsWith("field:")) {
+            return false;
+          }
+          return !["entidade", "utilizador", "sessoes", "menu", "definicoes"].includes(sectionKey);
         });
         const seenTargets = new Set(baseItems.map((item) => buildMenuItemUniqueKey_v1(item)));
         const dynamicExtraItems = mergedItems.filter((item) => {
@@ -1148,6 +1152,8 @@ if (initialAdminTab === "entidade") {
   adminSelectedTarget = "#admin-sidebar-sections-card";
 } else if (initialAdminTab === "menu") {
   adminSelectedTarget = "#admin-menu-card";
+} else if (initialAdminTab === "definicoes") {
+  adminSelectedTarget = "#admin-definicoes-card";
 } else if (initialAdminTab === "contas") {
   adminSelectedTarget = "#admin-account-status-card";
 }
@@ -1177,6 +1183,13 @@ if (
   startupHash === "#admin-menu-card-create"
 ) {
   adminSelectedTarget = "#admin-menu-card";
+} else if (
+  startupHash === "#admin-definicoes-card" ||
+  startupHash === "#admin-definicoes-card-create" ||
+  startupHash === "#admin-definicoes-card-inactive" ||
+  startupHash === "#admin-definicoes-card-edit"
+) {
+  adminSelectedTarget = "#admin-definicoes-card";
 } else if (startupHash === "#settings-menu-edit-card") {
   adminSelectedTarget = "#settings-menu-edit-card";
 }
@@ -1209,7 +1222,10 @@ if (!startupHash && initialMenuTarget && menuConfig[initialMenu]) {
   if (
     targetExistsInItems ||
     cleanInitialTarget === "#settings-menu-edit-card" ||
-    cleanInitialTarget === "#admin-menu-card-create"
+    cleanInitialTarget === "#admin-menu-card-create" ||
+    cleanInitialTarget === "#admin-definicoes-card-create" ||
+    cleanInitialTarget === "#admin-definicoes-card-inactive" ||
+    cleanInitialTarget === "#admin-definicoes-card-edit"
   ) {
     selectedTargetByMenu[initialMenu] = cleanInitialTarget;
   }
@@ -2695,10 +2711,32 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
 }
 
 function applyContentForMenu(menuKey) {
+  function showScopedCard(card) {
+    if (!card || !card.style) {
+      return;
+    }
+
+    card.style.removeProperty("display");
+  }
+
+  function hideScopedCard(card) {
+    if (!card || !card.style) {
+      return;
+    }
+
+    card.style.setProperty("display", "none", "important");
+  }
+
   scopedCards.forEach((card) => {
     const rawScope = card.getAttribute("data-menu-scope") || "";
     const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
-    card.style.display = scopes.includes(menuKey) ? "" : "none";
+
+    if (scopes.includes(menuKey)) {
+      showScopedCard(card);
+      return;
+    }
+
+    hideScopedCard(card);
   });
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = "none";
@@ -2706,6 +2744,22 @@ function applyContentForMenu(menuKey) {
 }
 
 function applyContentForMenuTarget(menuKey, targetSelector) {
+  function showScopedCard(cardElement) {
+    if (!cardElement || !cardElement.style) {
+      return;
+    }
+
+    cardElement.style.removeProperty("display");
+  }
+
+  function hideScopedCard(cardElement) {
+    if (!cardElement || !cardElement.style) {
+      return;
+    }
+
+    cardElement.style.setProperty("display", "none", "important");
+  }
+
   let resolvedTargetSelector = String(targetSelector || "");
 
   if (menuKey === "administrativo") {
@@ -2721,7 +2775,7 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
     const rawScope = card.getAttribute("data-menu-scope") || "";
     const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
     if (!scopes.includes(menuKey)) {
-      card.style.display = "none";
+      hideScopedCard(card);
       return;
     }
     const isEntityGroupedBlock =
@@ -2734,7 +2788,8 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "create-entity-card" ||
         card.id === "edit-entity-card" ||
         card.id === "recent-entities-card" ||
-        card.id === "inactive-entities-card"
+        card.id === "inactive-entities-card" ||
+        card.id === "admin-entidade-v2-integrated-root"
       );
     const isUserGroupedBlock =
       menuKey === "administrativo" &&
@@ -2764,13 +2819,32 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
           )
         )
       );
-    card.style.display =
+    const isDefinicoesGroupedBlock =
+      menuKey === "administrativo" &&
+      (
+        resolvedTargetSelector === "#admin-definicoes-card" ||
+        resolvedTargetSelector === "#admin-definicoes-card-create" ||
+        resolvedTargetSelector === "#admin-definicoes-card-inactive" ||
+        resolvedTargetSelector === "#admin-definicoes-card-edit"
+      ) &&
+      (
+        card.id === "admin-definicoes-card" ||
+        card.id === "admin-definicoes-card-create" ||
+        card.id === "admin-definicoes-card-inactive" ||
+        card.id === "admin-definicoes-card-edit"
+      );
+    if (
       resolvedTargetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isMenuGroupedBlock
-        ? ""
-        : "none";
+      isMenuGroupedBlock ||
+      isDefinicoesGroupedBlock
+    ) {
+      showScopedCard(card);
+      return;
+    }
+
+    hideScopedCard(card);
   });
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = resolvedTargetSelector === "#dynamic-process-card" ? "" : "none";
@@ -4266,13 +4340,21 @@ function renderSubmenu(menuKey) {
       event.preventDefault();
 
       if (menuKey === "administrativo" && item.target === "#admin-sidebar-sections-card") {
-        const nextUrl = new URL(window.location.href);
-        nextUrl.pathname = "/users/new";
+        const nextUrl = new URL("/users/new", window.location.origin);
         nextUrl.searchParams.set("menu", "administrativo");
         nextUrl.searchParams.set("admin_tab", "sessoes");
         nextUrl.searchParams.set("sidebar_sections_tab", "sessoes");
         nextUrl.searchParams.set("target", "admin-sidebar-sections-card");
         nextUrl.hash = "#admin-sidebar-sections-card";
+        window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
+        return;
+      }
+      if (menuKey === "administrativo" && item.target === "#admin-definicoes-card") {
+        const nextUrl = new URL("/users/new", window.location.origin);
+        nextUrl.searchParams.set("menu", "administrativo");
+        nextUrl.searchParams.set("admin_tab", "definicoes");
+        nextUrl.searchParams.set("target", "admin-definicoes-card");
+        nextUrl.hash = "#admin-definicoes-card";
         window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
         return;
       }
@@ -4297,6 +4379,13 @@ function renderSubmenu(menuKey) {
     });
     itemsEl.appendChild(link);
   });
+
+  if (typeof window.setTimeout === "function") {
+    window.setTimeout(() => {
+      const event = new CustomEvent("appverbo:normalize-tabs-width-v1");
+      window.dispatchEvent(event);
+    }, 0);
+  }
 
 }
 
@@ -4460,6 +4549,12 @@ function handleHashNavigation(rawHash) {
     normalizedHash = "#create-entity-card";
   } else if (normalizedHash === "#configuracao-account-status-card") {
     normalizedHash = "#admin-menu-card";
+  } else if (
+    normalizedHash === "#admin-definicoes-card-create" ||
+    normalizedHash === "#admin-definicoes-card-inactive" ||
+    normalizedHash === "#admin-definicoes-card-edit"
+  ) {
+    normalizedHash = "#admin-definicoes-card";
   }
 
   const hashTargetMenuMap = {
@@ -4469,6 +4564,10 @@ function handleHashNavigation(rawHash) {
     "#admin-menu-card-create": "administrativo",
     "#admin-menu-card": "administrativo",
     "#admin-menu-card-inactive": "administrativo",
+    "#admin-definicoes-card": "administrativo",
+    "#admin-definicoes-card-create": "administrativo",
+    "#admin-definicoes-card-inactive": "administrativo",
+    "#admin-definicoes-card-edit": "administrativo",
     "#admin-sidebar-sections-card": "administrativo",
     "#settings-menu-edit-card": "administrativo"
   };
@@ -6629,6 +6728,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       "sidebar_sections_tab",
       "entity_edit_id",
       "user_edit_id",
+      "definition_edit_id",
       "settings_edit_key",
       "settings_action",
       "sidebar_section_edit_key",
@@ -6747,6 +6847,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       currentUrl.searchParams.delete("dynamic_process_section");
       currentUrl.searchParams.delete("section_key");
       currentUrl.hash = "#admin-menu-card";
+    } else if (
+      actionLookup.includes("/settings/definicoes/save") ||
+      actionLookup.includes("/settings/definicoes/delete")
+    ) {
+      currentUrl.searchParams.set("menu", "administrativo");
+      currentUrl.searchParams.set("admin_tab", "definicoes");
+      currentUrl.searchParams.set("target", "#admin-definicoes-card");
+      currentUrl.searchParams.delete("dynamic_process_section");
+      currentUrl.searchParams.delete("section_key");
+      currentUrl.hash = "#admin-definicoes-card";
     }
 
     currentUrl.searchParams.set("appverbo_after_save", "1");
@@ -7114,6 +7224,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       "sidebar_sections_tab",
       "entity_edit_id",
       "user_edit_id",
+      "definition_edit_id",
       "settings_edit_key",
       "settings_action",
       "sidebar_section_edit_key",
@@ -7198,6 +7309,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
       url.hash = "#admin-menu-card";
+    } else if (
+      actionLookup.includes("/settings/definicoes/save") ||
+      actionLookup.includes("/settings/definicoes/delete")
+    ) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "definicoes");
+      url.searchParams.set("target", "#admin-definicoes-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#admin-definicoes-card";
     }
 
     url.searchParams.set("appverbo_after_save", "1");
@@ -7520,6 +7641,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     [
       "entity_edit_id",
       "user_edit_id",
+      "definition_edit_id",
       "settings_edit_key",
       "settings_action",
       "sidebar_section_edit_key",
@@ -7624,6 +7746,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
       url.hash = "#admin-menu-card";
+    } else if (
+      actionLookup.includes("/settings/definicoes/save") ||
+      actionLookup.includes("/settings/definicoes/delete")
+    ) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "definicoes");
+      url.searchParams.set("target", "#admin-definicoes-card");
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+      url.hash = "#admin-definicoes-card";
     }
 
     return url.pathname + url.search + url.hash;

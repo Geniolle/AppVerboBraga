@@ -50,6 +50,26 @@
     );
   }
 
+  function deveFixarAbaMenuPorContextoEdicao_v4() {
+    const parametros = obterParametrosUrl_v4();
+    const adminTab = String(parametros.get("admin_tab") || "").trim().toLowerCase();
+
+    if (!temContextoDeEdicaoMenu_v4()) {
+      return false;
+    }
+
+    if (
+      adminTab === "entidade" ||
+      adminTab === "utilizador" ||
+      adminTab === "sessoes" ||
+      adminTab === "definicoes"
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
   function normalizarPathQueryHash_v4(urlString) {
     const link = document.createElement("a");
     link.href = urlString;
@@ -121,6 +141,7 @@
       utilizador: "/users/new?menu=administrativo&admin_tab=utilizador",
       entidade: "/users/new?menu=administrativo&admin_tab=entidade",
       menu: "/users/new?menu=administrativo&admin_tab=menu",
+      definicoes: "/users/new?menu=administrativo&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card",
       sessoes: "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     };
 
@@ -132,7 +153,7 @@
     const adminTab = String(parametros.get("admin_tab") || "").trim().toLowerCase();
     const hash = String(window.location.hash || "").trim().toLowerCase();
 
-    if (temContextoDeEdicaoMenu_v4()) {
+    if (deveFixarAbaMenuPorContextoEdicao_v4()) {
       return "menu";
     }
 
@@ -154,7 +175,17 @@
       return "sessoes";
     }
 
-    if (adminTab === "menu" || adminTab === "contas" || adminTab === "definicoes") {
+    if (
+      adminTab === "definicoes" ||
+      hash === "#admin-definicoes-card" ||
+      hash === "#admin-definicoes-card-create" ||
+      hash === "#admin-definicoes-card-inactive" ||
+      hash === "#admin-definicoes-card-edit"
+    ) {
+      return "definicoes";
+    }
+
+    if (adminTab === "menu" || adminTab === "contas") {
       return "menu";
     }
 
@@ -178,7 +209,7 @@
 
     const destino = normalizarPathQueryHash_v4(urlLimpa);
 
-    if (temContextoDeEdicaoMenu_v4()) {
+    if (deveFixarAbaMenuPorContextoEdicao_v4()) {
       return atual !== destino;
     }
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import case, select
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.models import Entity
@@ -55,7 +55,12 @@ def format_entity_created_at_v2(value: object) -> str:
 class EntityAdminSubprocessRepositoryV2(BaseAdminSubprocessRepositoryV2):
     def list_rows(self) -> list[dict[str, Any]]:
         entities = self.session.scalars(
-            select(Entity).order_by(Entity.is_active.desc(), Entity.name.asc())
+            select(Entity).order_by(
+                Entity.is_active.desc(),
+                case((Entity.internal_number.is_(None), 1), else_=0),
+                Entity.internal_number.asc(),
+                Entity.id.asc(),
+            )
         ).all()
 
         rows: list[dict[str, Any]] = []
@@ -182,8 +187,27 @@ class EntityAdminSubprocessRepositoryV2(BaseAdminSubprocessRepositoryV2):
         return self.validate_entity_v2(data, ignore_entity_id=entity.id)
 
     def get_next_internal_number_v2(self) -> int:
-        current_max = self.session.scalar(select(func.max(Entity.internal_number))) or 0
-        return int(current_max) + 1
+        used_numbers = self.session.scalars(
+            select(Entity.internal_number)
+            .where(
+                Entity.internal_number.is_not(None),
+                Entity.internal_number >= ENTITY_INTERNAL_NUMBER_MIN,
+                Entity.internal_number <= ENTITY_INTERNAL_NUMBER_MAX,
+            )
+            .order_by(Entity.internal_number.asc())
+        ).all()
+
+        used_set = {
+            int(number)
+            for number in used_numbers
+            if isinstance(number, int)
+        }
+
+        for candidate in range(ENTITY_INTERNAL_NUMBER_MIN, ENTITY_INTERNAL_NUMBER_MAX + 1):
+            if candidate not in used_set:
+                return candidate
+
+        return ENTITY_INTERNAL_NUMBER_MAX
 
     def create(self, data: dict[str, Any]) -> dict[str, Any]:
         stored_logo_url = ""

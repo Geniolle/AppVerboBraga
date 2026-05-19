@@ -105,6 +105,14 @@
     }
 
     if (
+      adminTab === "definicoes" ||
+      target.includes("admin-definicoes-card") ||
+      hash.includes("admin-definicoes-card")
+    ) {
+      return "definicoes";
+    }
+
+    if (
       adminTab === "contas" ||
       target.includes("admin-account-status") ||
       target.includes("account-status") ||
@@ -146,6 +154,10 @@
       return "menu";
     }
 
+    if (rawAdminTab === "definicoes") {
+      return "definicoes";
+    }
+
     if (rawAdminTab === "contas") {
       return "contas";
     }
@@ -171,6 +183,10 @@
 
     if (rawTarget.includes("admin-menu-card") || rawTarget.includes("settings-menu-edit-card")) {
       return "menu";
+    }
+
+    if (rawTarget.includes("admin-definicoes-card")) {
+      return "definicoes";
     }
 
     if (rawTarget.includes("account")) {
@@ -202,6 +218,13 @@
           targetFromHref.includes("settings-menu-edit-card")
         ) {
           return "menu";
+        }
+
+        if (
+          adminTabFromHref === "definicoes" ||
+          targetFromHref.includes("admin-definicoes-card")
+        ) {
+          return "definicoes";
         }
 
         if (adminTabFromHref === "contas" || targetFromHref.includes("account")) {
@@ -241,6 +264,10 @@
       return "menu";
     }
 
+    if (lookup.includes("definicoes") || lookup.includes("definições")) {
+      return "definicoes";
+    }
+
     if (lookup.includes("conta") || lookup.includes("configuracao")) {
       return "contas";
     }
@@ -262,6 +289,7 @@
       "appverbo-admin-tab-utilizador",
       "appverbo-admin-tab-sessoes",
       "appverbo-admin-tab-menu",
+      "appverbo-admin-tab-definicoes",
       "appverbo-admin-tab-contas"
     ].forEach(function (className) {
       document.body.classList.remove(className);
@@ -287,6 +315,12 @@
 
     if (activeTab === "menu") {
       document.body.classList.add("appverbo-admin-tab-menu");
+      document.body.classList.remove("appverbo-admin-sessoes");
+      return;
+    }
+
+    if (activeTab === "definicoes") {
+      document.body.classList.add("appverbo-admin-tab-definicoes");
       document.body.classList.remove("appverbo-admin-sessoes");
       return;
     }

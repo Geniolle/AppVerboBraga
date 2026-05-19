@@ -114,14 +114,22 @@
     "#inactive-entities-card",
     "#admin-users-created-card",
     "#inactive-users-card",
+    "#admin-user-shadow-readonly-card",
+    "#admin-user-shadow-inactive-card",
+    "[data-admin-subprocess-shadow='utilizador']",
+    "[data-admin-subprocess-shadow='utilizador-inactive']",
+    ".admin-user-shadow-readonly-card-v1",
     ".admin-subprocess-table-card-v1",
   ];
 
-  const cards = selectors
-    .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
-    .filter((cardEl, index, allCards) => allCards.indexOf(cardEl) === index);
+  function resolveTargetCardsV1(rootEl) {
+    const scopeEl = rootEl || document;
+    return selectors
+      .flatMap((selector) => Array.from(scopeEl.querySelectorAll(selector)))
+      .filter((cardEl, index, allCards) => allCards.indexOf(cardEl) === index);
+  }
 
-  cards.forEach((cardEl) => {
+  function mountSearchForCardV1(cardEl) {
     if (!cardEl || cardEl.dataset.adminListSearchMountedV1 === "1") {
       return;
     }
@@ -149,5 +157,42 @@
     });
 
     cardEl.dataset.adminListSearchMountedV1 = "1";
-  });
+  }
+
+  function mountSearchToolbarsV1(rootEl) {
+    resolveTargetCardsV1(rootEl).forEach(mountSearchForCardV1);
+  }
+
+  let observerTimerV1 = null;
+
+  function scheduleMountV1() {
+    if (observerTimerV1) {
+      window.clearTimeout(observerTimerV1);
+    }
+
+    observerTimerV1 = window.setTimeout(() => {
+      observerTimerV1 = null;
+      mountSearchToolbarsV1(document);
+    }, 80);
+  }
+
+  function startMutationObserverV1() {
+    if (!document.body || window.AppVerboAdminTableSearchObserverStartedV1) {
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      scheduleMountV1();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    window.AppVerboAdminTableSearchObserverStartedV1 = true;
+  }
+
+  mountSearchToolbarsV1(document);
+  startMutationObserverV1();
 })();

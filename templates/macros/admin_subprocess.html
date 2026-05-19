@@ -1,4 +1,3 @@
-{% from "partials/admin_table_footer_standard_v1.html" import render_admin_table_footer_standard_v1 %}
 {% macro admin_subprocess_get_value(row, key, default="") %}
   {{ row.get(key, default) if row else default }}
 {% endmacro %}
@@ -35,13 +34,14 @@
 
 {% macro render_admin_subprocess_form(state) %}
   {% set create_form_card_id = state.config.default_target %}
-  {% if state.config.key in ("menu", "sessoes") %}
+  {% if state.config.key in ("menu", "sessoes", "definicoes") %}
     {% set create_form_card_id = state.config.default_target ~ "-create" %}
   {% endif %}
   <section
     id="{{ state.config.edit_target if state.is_editing else create_form_card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
+    data-menu-scope="administrativo"
   >
     {% if state.success %}
       <div class="alert ok">{{ state.success }}</div>
@@ -193,11 +193,12 @@
 
 
 {% macro render_admin_subprocess_table(state, rows, title, status_value) %}
-  <section
+<section
     id="{{ state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-status="{{ status_value }}"
+    data-menu-scope="administrativo"
   >
     <h2>{{ title }}</h2>
 
@@ -235,7 +236,6 @@
           </tbody>
         </table>
       </div>
-      {{ render_admin_table_footer_standard_v1(table_id="admin-subprocess-" ~ state.config.key ~ "-" ~ status_value ~ "-table", page_size=5, aria_label="Entradas por página (" ~ title ~ ")") }}
 {% else %}
       <p class="empty">Sem registos.</p>
     {% endif %}

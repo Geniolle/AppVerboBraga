@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import case, delete, func, or_, select
 
 from appverbo.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
 from appverbo.core import (
@@ -268,7 +268,11 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
 
         row_stmt = (
             filtered_stmt
-            .order_by(Entity.id.desc())
+            .order_by(
+                case((Entity.internal_number.is_(None), 1), else_=0),
+                Entity.internal_number.asc(),
+                Entity.id.asc(),
+            )
             .offset((resolved_filters.page - 1) * resolved_filters.page_size)
             .limit(resolved_filters.page_size)
         )

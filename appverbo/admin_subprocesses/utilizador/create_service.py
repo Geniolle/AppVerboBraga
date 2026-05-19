@@ -294,6 +294,34 @@ def normalize_create_user_input_v1(
 
 normalize_create_user_input = normalize_create_user_input_v1
 
+
+# ###################################################################################
+# (3) NUMERACAO DE UTILIZADOR - PREENCHER LACUNAS DE ID
+# ###################################################################################
+
+def get_next_available_user_id_v1(session: Session) -> int:
+    used_user_ids = session.scalars(
+        select(User.id).order_by(User.id.asc())
+    ).all()
+
+    next_candidate = 1
+
+    for raw_user_id in used_user_ids:
+        if not isinstance(raw_user_id, int):
+            continue
+
+        if raw_user_id < next_candidate:
+            continue
+
+        if raw_user_id == next_candidate:
+            next_candidate += 1
+            continue
+
+        if raw_user_id > next_candidate:
+            break
+
+    return next_candidate
+
 def _build_error_context(
     *,
     request: Request,
@@ -586,6 +614,7 @@ def execute_create_user(
             existing_member_link.entry_date = date.today()
 
     user = User(
+        id=get_next_available_user_id_v1(session),
         member_id=member.id,
         login_email=payload.clean_email,
         password_hash=hash_password(secrets.token_urlsafe(24)),

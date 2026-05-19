@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .definicoes.configuracao import DEFINICOES_CONFIG
 from .entidade.configuracao import ENTIDADE_CONFIG
 from .menu.configuracao import MENU_CONFIG
 from .models import AdminSubprocessConfig
@@ -54,6 +55,7 @@ ADMIN_SUBPROCESS_REGISTRY = {
     SESSOES_CONFIG.key: SESSOES_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
+    DEFINICOES_CONFIG.key: DEFINICOES_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,
 }
 

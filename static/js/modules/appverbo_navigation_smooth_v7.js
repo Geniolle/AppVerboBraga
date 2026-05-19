@@ -14,6 +14,7 @@
     "appverbo-admin-tab-utilizador",
     "appverbo-admin-tab-sessoes",
     "appverbo-admin-tab-menu",
+    "appverbo-admin-tab-definicoes",
     "appverbo-admin-tab-contas"
   ];
 
@@ -131,6 +132,14 @@
     }
 
     if (
+      adminTab === "definicoes" ||
+      target.includes("admin-definicoes-card") ||
+      hash.includes("admin-definicoes-card")
+    ) {
+      return "definicoes";
+    }
+
+    if (
       adminTab === "contas" ||
       target.includes("admin-account-status") ||
       hash.includes("admin-account-status")
@@ -221,6 +230,10 @@
       return "menu";
     }
 
+    if (rawAdminTab === "definicoes") {
+      return "definicoes";
+    }
+
     if (rawAdminTab === "contas") {
       return "contas";
     }
@@ -246,6 +259,10 @@
 
     if (rawTarget.includes("admin-menu-card") || rawTarget.includes("settings-menu-edit-card")) {
       return "menu";
+    }
+
+    if (rawTarget.includes("admin-definicoes-card")) {
+      return "definicoes";
     }
 
     if (rawTarget.includes("account")) {
@@ -279,6 +296,10 @@
       lookup.includes(" menus ")
     ) {
       return "menu";
+    }
+
+    if (lookup.includes("definicoes") || lookup.includes("definições")) {
+      return "definicoes";
     }
 
     if (lookup.includes("conta") || lookup.includes("configuracao")) {
@@ -398,6 +419,13 @@
       return url.pathname + url.search + url.hash;
     }
 
+    if (tab === "definicoes") {
+      url.searchParams.set("admin_tab", "definicoes");
+      url.searchParams.set("target", "admin-definicoes-card");
+      url.hash = "admin-definicoes-card";
+      return url.pathname + url.search + url.hash;
+    }
+
     if (tab === "contas") {
       url.searchParams.set("admin_tab", "contas");
       url.searchParams.set("target", "admin-account-status-card");
@@ -486,6 +514,22 @@
         text.includes("menus ativos") ||
         text.includes("menus inativos") ||
         text.includes("editar menu")
+      );
+    }
+
+    if (tab === "definicoes") {
+      return (
+        subprocess === "definicoes" ||
+        id === "admin-definicoes-card-create" ||
+        id === "admin-definicoes-card" ||
+        id === "admin-definicoes-card-edit" ||
+        id === "admin-definicoes-card-inactive" ||
+        text.includes("criar definicao") ||
+        text.includes("criar definição") ||
+        text.includes("definicoes ativas") ||
+        text.includes("definições ativas") ||
+        text.includes("definicoes inativas") ||
+        text.includes("definições inativas")
       );
     }
 
@@ -662,6 +706,21 @@
     );
 
     if (clickedTopSubprocess) {
+      const submenuAnchor =
+        clickedTopSubprocess.matches &&
+        clickedTopSubprocess.matches("#submenu-items .submenu-item, #submenu-items a")
+          ? clickedTopSubprocess
+          : null;
+
+      // O menu principal (new_user.js) deve conduzir a navegacao real das abas.
+      // Aqui mantemos apenas o fallback quando nao for um link real do submenu.
+      if (
+        submenuAnchor &&
+        String(submenuAnchor.getAttribute("href") || "").trim().indexOf("#") === 0
+      ) {
+        return;
+      }
+
       const tab = getTabFromElementV7(clickedTopSubprocess);
 
       if (tab) {

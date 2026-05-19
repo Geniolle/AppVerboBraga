@@ -3,6 +3,9 @@ from __future__ import annotations
 from appverbo.routes.profile.settings import (
     additional_fields_handlers as additional_fields_handlers_v1,
 )
+from appverbo.routes.profile.settings import (
+    definicoes_handlers as definicoes_handlers_v1,
+)
 from appverbo.routes.profile.settings import menu_crud_handlers as menu_crud_handlers_v1
 from appverbo.routes.profile.settings import (
     process_fields_handlers as process_fields_handlers_v1,
@@ -45,6 +48,7 @@ from appverbo.routes.profile.settings.redirects import (
 
 __all__ = [
     "additional_fields_handlers_v1",
+    "definicoes_handlers_v1",
     "menu_crud_handlers_v1",
     "process_fields_handlers_v1",
     "process_lists_handlers_v1",

@@ -6,6 +6,7 @@ from appverbo.models.department import (
     DepartmentMembershipRole,
     Role,
 )
+from appverbo.models.admin_definition import AdminDefinition
 from appverbo.models.entity import Entity
 from appverbo.models.enums import (
     DepartmentMembershipStatus,
@@ -31,6 +32,7 @@ __all__ = [
     "DepartmentMembershipOperation",
     "DepartmentMembershipRole",
     "Role",
+    "AdminDefinition",
     "Entity",
     "DepartmentMembershipStatus",
     "MemberEntityStatus",

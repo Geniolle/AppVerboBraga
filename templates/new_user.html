@@ -4,7 +4,6 @@
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
 {% from "partials/admin_user_shadow_readonly_v1.html" import render_admin_user_shadow_readonly_v12 %}
-{% from "partials/admin_table_footer_standard_v1.html" import render_admin_table_footer_standard_v1 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 {# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_START #}
@@ -14,7 +13,7 @@
 {% block head_extra %}
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_START #}
 <link rel="stylesheet" href="/static/css/modules/appverbo_admin_tabs_emergency_unlock_v1.css?v=20260511-admin-tabs-emergency-unlock-v4">
-<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260515-admin-tabs-emergency-unlock-v6"></script>
+<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260518-admin-tabs-emergency-unlock-v7-definicoes-click-fix"></script>
 <script>
 (function () {
   function liberarTelaAppVerboV2() {
@@ -56,11 +55,11 @@
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260518-admin-tabs-width-from-definicoes-v4"></script>
 
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260515-sessoes-inativas-delete-icon-v3">
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260518-admin-subprocess-definicoes-one-row-v2">
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
@@ -142,7 +141,7 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260511-entidade-cards-v2" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260518-admin-subprocess-nav-v3-definicoes-click-fix" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
@@ -228,6 +227,9 @@
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_START -->
         {% if admin_tab == "sessoes" and admin_subprocess_state %}
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
+        {% endif %}
+        {% if admin_tab == "definicoes" and admin_subprocess_state_definicoes_v1 %}
+          {{ render_admin_subprocess_state(admin_subprocess_state_definicoes_v1) }}
         {% endif %}
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
 
@@ -669,7 +671,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       </table>
     </div>
 
-    {{ render_admin_table_footer_standard_v1(table_id="admin-menu-active-table", page_size=5, aria_label="Entradas por página dos menus ativos") }}
   {% else %}
     <p class="muted">Sem registros.</p>
   {% endif %}
@@ -757,7 +758,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       </table>
     </div>
 
-    {{ render_admin_table_footer_standard_v1(table_id="admin-menu-inactive-table", page_size=5, aria_label="Entradas por página dos menus inativos") }}
   {% else %}
     <p class="muted">Sem registros.</p>
   {% endif %}
@@ -849,7 +849,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 
         <!-- APPVERBO_ADMIN_ENTIDADE_V2_USERS_NEW_START -->
         {% if admin_tab == "entidade" and admin_subprocess_state and admin_subprocess_state.config.key == "entidade" %}
-          <div id="admin-entidade-v2-integrated-root" data-admin-entidade-v2-integrated="1">
+          <div id="admin-entidade-v2-integrated-root" data-admin-entidade-v2-integrated="1" data-menu-scope="administrativo">
             {{ render_admin_subprocess_v2_state(admin_subprocess_state) }}
           </div>
         {% endif %}
@@ -1762,21 +1762,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               </tbody>
             </table>
             {% if current_user_can_manage_all_entities %}
-            <div id="recent-entities-limiter" class="table-limiter">
-              <div class="table-limiter-left">
-                <select id="recent-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades ativas)">
-                  <option value="5" selected>5</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-                <span>entradas por página</span>
-              </div>
-              <div class="table-limiter-right">
-                <button id="recent-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
-                <span id="recent-entities-page" class="table-limiter-page">1</span>
-                <button id="recent-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
-              </div>
-            </div>
             {% endif %}
           {% else %}
             <p class="empty">Sem entidades ativas criadas ainda.</p>
@@ -1868,21 +1853,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 {% endfor %}
               </tbody>
             </table>
-            <div id="inactive-entities-limiter" class="table-limiter">
-              <div class="table-limiter-left">
-                <select id="inactive-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades inativas)">
-                  <option value="5" selected>5</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-                <span>entradas por página</span>
-              </div>
-              <div class="table-limiter-right">
-                <button id="inactive-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
-                <span id="inactive-entities-page" class="table-limiter-page">1</span>
-                <button id="inactive-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
-              </div>
-            </div>
           {% else %}
             <p class="empty">Sem entidades inativas.</p>
           {% endif %}
@@ -3043,8 +3013,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       </div>
     </main>
   </div>
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
 {% endblock %}
 
 {% block scripts %}
@@ -3074,6 +3042,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       initialMenuTarget: {{ initial_menu_target|tojson }},
       initialDynamicProcessSection: {{ initial_dynamic_process_section|tojson }},
       initialAdminTab: {{ admin_tab|tojson }},
+      adminTabsWidthCh: {{ admin_tabs_width_ch|tojson }},
       currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
       settingsAction: {{ settings_action|tojson }},
       settingsTab: {{ settings_tab|tojson }},
@@ -3090,9 +3059,10 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260506-admin-table-search-v2"></script>
-  <script src="/static/js/new_user.js?v=20260516-admin-menu-render-v4" defer></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39"></script>
+  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260518-admin-table-search-v3-utilizador-shadow"></script>
+  <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260518-admin-definicoes-process-options-v4"></script>
+  <script src="/static/js/new_user.js?v=20260518-process-tabs-equal-width-v8-definicoes-active-fix" defer></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260518-top-menu-active-v40-definicoes-context-fix"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>
@@ -3100,10 +3070,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
-<script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
-  <script src="/static/js/modules/admin_table_footer_standard_v1.js?v=20260516-admin-footer-standard-v7-force-menu-dedupe" defer></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260518-admin-footer-standard-v2-root-fix" defer></script>
 {% endblock %}

@@ -462,7 +462,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         count_stmt = select(func.count()).select_from(filtered_stmt.subquery())
         total_rows = int(session.scalar(count_stmt) or 0)
 
-        row_stmt = filtered_stmt.order_by(User.id.desc()).offset(
+        row_stmt = filtered_stmt.order_by(User.id.asc()).offset(
             (resolved_filters.page - 1) * resolved_filters.page_size
         ).limit(resolved_filters.page_size)
 
