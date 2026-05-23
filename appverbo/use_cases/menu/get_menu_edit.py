@@ -36,6 +36,7 @@ def get_menu_edit_defaults_v1() -> dict[str, Any]:
         "additional_field_type_options": [],
         "process_lists": [],
         "process_list_options": [],
+        "process_list_source_options": [],
         "process_quantity_fields": [],
         "process_subsequent_fields": [],
         "is_active": True,

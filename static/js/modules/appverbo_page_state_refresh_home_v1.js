@@ -41,6 +41,41 @@
     return url.searchParams.has(key) && String(url.searchParams.get(key) || "").trim() !== "";
   }
 
+  function hasStableContextParams_v1(url) {
+    if (!url) {
+      return false;
+    }
+
+    const menuValue = String(url.searchParams.get("menu") || "").trim().toLowerCase();
+    if (menuValue && menuValue !== "home") {
+      return true;
+    }
+
+    const targetValue = String(url.searchParams.get("target") || "").trim();
+    if (targetValue) {
+      return true;
+    }
+
+    const contextParams = [
+      "admin_tab",
+      "sidebar_sections_tab",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "dynamic_process_section",
+      "section_key",
+      "profile_tab",
+      "profile_section",
+      "entity_edit_id",
+      "user_edit_id",
+      "definition_edit_id",
+      "entity_view",
+      "user_view"
+    ];
+
+    return contextParams.some((key) => hasValue_v1(url, key));
+  }
+
   function shouldPreserveCurrentUrl_v1(url) {
     const preserveParams = [
       "appverbo_after_save",
@@ -59,6 +94,10 @@
       if (hasValue_v1(url, key)) {
         return true;
       }
+    }
+
+    if (hasStableContextParams_v1(url)) {
+      return true;
     }
 
     return false;

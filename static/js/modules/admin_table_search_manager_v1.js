@@ -122,11 +122,29 @@
     ".admin-subprocess-table-card-v1",
   ];
 
+  const mountedCardStatesV1 = new WeakMap();
+
   function resolveTargetCardsV1(rootEl) {
     const scopeEl = rootEl || document;
     return selectors
       .flatMap((selector) => Array.from(scopeEl.querySelectorAll(selector)))
       .filter((cardEl, index, allCards) => allCards.indexOf(cardEl) === index);
+  }
+
+  function scheduleRefreshForCardV1(cardEl) {
+    const state = mountedCardStatesV1.get(cardEl);
+    if (!state) {
+      return;
+    }
+
+    if (state.refreshTimer) {
+      window.clearTimeout(state.refreshTimer);
+    }
+
+    state.refreshTimer = window.setTimeout(() => {
+      state.refreshTimer = null;
+      state.refresh();
+    }, 60);
   }
 
   function mountSearchForCardV1(cardEl) {
@@ -147,14 +165,46 @@
     const { toolbarEl, totalEl, inputEl } = buildToolbarV1();
     titleEl.insertAdjacentElement("afterend", toolbarEl);
 
-    const nameColumnIndex = resolveNameColumnIndexV1(tableEl);
-    const initialStats = applyFilterV1(tableEl, nameColumnIndex, "");
-    updateToolbarTotalV1(totalEl, initialStats.matchedCount, initialStats.totalCount);
+    //###################################################################################
+    // (4.1) ESTADO DO CARD E RECALCULO DE TOTAL
+    //###################################################################################
+
+    const state = {
+      tableEl,
+      totalEl,
+      inputEl,
+      getNameColumnIndex: () => resolveNameColumnIndexV1(tableEl),
+      refreshTimer: null,
+      refresh: () => {
+        const stats = applyFilterV1(tableEl, state.getNameColumnIndex(), inputEl.value || "");
+        updateToolbarTotalV1(totalEl, stats.matchedCount, stats.totalCount);
+      },
+    };
+
+    mountedCardStatesV1.set(cardEl, state);
+    state.refresh();
 
     inputEl.addEventListener("input", () => {
-      const stats = applyFilterV1(tableEl, nameColumnIndex, inputEl.value || "");
-      updateToolbarTotalV1(totalEl, stats.matchedCount, stats.totalCount);
+      state.refresh();
     });
+
+    tableEl.addEventListener("admin-table-data-changed", () => {
+      scheduleRefreshForCardV1(cardEl);
+    });
+
+    const tbodyEl = tableEl.querySelector("tbody");
+    if (tbodyEl) {
+      const bodyObserver = new MutationObserver(() => {
+        scheduleRefreshForCardV1(cardEl);
+      });
+
+      bodyObserver.observe(tbodyEl, {
+        childList: true,
+        subtree: true,
+      });
+
+      state.bodyObserver = bodyObserver;
+    }
 
     cardEl.dataset.adminListSearchMountedV1 = "1";
   }

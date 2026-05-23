@@ -943,6 +943,56 @@ body {
   margin: 0;
 }
 
+   .appverbo-dynamic-process-create-block-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 64px;
+}
+
+   .appverbo-dynamic-process-card-v1 .profile-card-header {
+  margin-bottom: 14px;
+}
+
+   .appverbo-dynamic-process-form-v1 {
+  margin-bottom: 0;
+}
+
+   .appverbo-dynamic-process-grid-v1 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+   .appverbo-dynamic-process-grid-v1 .field {
+  min-width: 0;
+}
+
+   .appverbo-dynamic-process-table-wrap-v1 {
+  width: 100%;
+}
+
+   .appverbo-dynamic-process-history-card-v1 h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+   .appverbo-dynamic-process-history-card-v1 + .appverbo-dynamic-process-history-card-v1 {
+  margin-top: 12px;
+}
+
+body.appverbo-hide-submenu-tabs-v1 #menu-tabs-card {
+  display: none !important;
+}
+
+   .appverbo-dynamic-process-create-block-v1 .appverbo-subprocess-create-trigger-v1 {
+  margin: 0;
+}
+
+   .appverbo-dynamic-process-create-block-v1.is-editing {
+  display: none !important;
+}
+
    .profile-edit-toggle {
   margin: 0;
   padding: 8px 12px;
@@ -975,6 +1025,18 @@ body {
 
    #dynamic-process-card.dynamic-process-open .profile-edit-toggle {
   display: none;
+}
+
+   #dynamic-process-card.dynamic-process-history-mode .profile-readonly {
+  display: none;
+}
+
+   #dynamic-process-card.dynamic-process-history-mode:not(.editing):not(.dynamic-process-history-show-readonly) {
+  display: none !important;
+}
+
+   #dynamic-process-card.dynamic-process-history-mode.dynamic-process-history-show-readonly .profile-readonly {
+  display: block;
 }
 
    .profile-edit-actions {
@@ -6268,3 +6330,55 @@ body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"]
   text-overflow: ellipsis;
 }
 /* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_END */
+
+/* APPVERBO_FIXED_SIDEBAR_SCROLL_RIGHT_V1_START */
+@media (min-width: 641px) {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    overflow-y: hidden;
+  }
+
+  .layout {
+    height: calc(100vh - 62px);
+    min-height: calc(100vh - 62px);
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    height: calc(100vh - 62px);
+    max-height: calc(100vh - 62px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .content {
+    height: 100%;
+    max-height: calc(100vh - 62px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    overflow-y: auto;
+  }
+
+  .layout {
+    height: auto;
+    min-height: calc(100vh - 62px);
+    overflow: visible;
+  }
+
+  .content {
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+/* APPVERBO_FIXED_SIDEBAR_SCROLL_RIGHT_V1_END */

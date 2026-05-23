@@ -39,6 +39,45 @@ function isAppVerboPostSaveFeedbackUrlV3(url) {
   return false;
 }
 
+function hasStableUsersNewContextV3(url) {
+  if (!url || url.pathname !== "/users/new") {
+    return false;
+  }
+
+  const menuValue = String(url.searchParams.get("menu") || "").trim().toLowerCase();
+  const targetValue = String(url.searchParams.get("target") || "").trim();
+
+  if (menuValue && menuValue !== "home") {
+    return true;
+  }
+
+  if (targetValue) {
+    return true;
+  }
+
+  const contextParams = [
+    "admin_tab",
+    "sidebar_sections_tab",
+    "settings_edit_key",
+    "settings_action",
+    "settings_tab",
+    "dynamic_process_section",
+    "section_key",
+    "profile_tab",
+    "profile_section",
+    "entity_edit_id",
+    "user_edit_id",
+    "definition_edit_id",
+    "entity_view",
+    "user_view"
+  ];
+
+  return contextParams.some((paramName) => {
+    const value = String(url.searchParams.get(paramName) || "").trim();
+    return Boolean(value);
+  });
+}
+
 function readAndClearAppVerboPostSaveContextV3() {
   try {
     const rawValue = window.sessionStorage.getItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3) || "";
@@ -125,6 +164,15 @@ function redirectToStoredPostSaveContextV3(storedContext) {
   // contrario, o utilizador ve a mensagem de erro por um instante e ela
   // desaparece quando o JS reabre o contexto guardado.
   if (!isAppVerboPostSaveFeedbackUrlV3(currentUrl)) {
+    return false;
+  }
+
+  //###################################################################################
+  // (V3.0) PRESERVAR CONTEXTO EXPLICITO DA URL ATUAL
+  //###################################################################################
+  // Quando o backend devolve uma URL com contexto estavel (menu/aba/target), ela
+  // deve prevalecer sobre qualquer contexto antigo guardado no sessionStorage.
+  if (hasStableUsersNewContextV3(currentUrl)) {
     return false;
   }
 
@@ -222,6 +270,10 @@ if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
 
 const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
 const MEU_PERFIL_MENU_KEY = "meu_perfil";
+const EMPRESA_MENU_KEY = "empresa";
+const EMPRESA_INTERNAL_NUMBER_FIELD_KEY = "entity_internal_number";
+const EMPRESA_LOGO_UPLOAD_FIELD_KEY = "entity_logo_file";
+const EMPRESA_LOGO_CURRENT_FIELD_KEY = "entity_logo_current";
 const LEGACY_DOCUMENTOS_MENU_KEY = "documentos";
 const currentUserName = bootstrap.currentUserName || "";
 const currentUserEmail = bootstrap.currentUserEmail || "";
@@ -287,6 +339,7 @@ const selectedDynamicSectionByMenu = {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
 const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
+const readOnlyDynamicProcessMenuKeys = new Set();
 
 
 function normalizeSettingsTabKey(value) {
@@ -332,6 +385,34 @@ function normalizeMenuKey(value) {
     return "administrativo";
   }
   return cleanKey;
+}
+
+function isEmpresaProcessField(menuKey, fieldKey) {
+  return (
+    normalizeMenuKey(menuKey) === EMPRESA_MENU_KEY &&
+    normalizeMenuKey(fieldKey) !== ""
+  );
+}
+
+function isEmpresaReadOnlyField(menuKey, fieldKey) {
+  return (
+    isEmpresaProcessField(menuKey, fieldKey) &&
+    normalizeMenuKey(fieldKey) === EMPRESA_INTERNAL_NUMBER_FIELD_KEY
+  );
+}
+
+function isEmpresaLogoUploadField(menuKey, fieldKey) {
+  return (
+    isEmpresaProcessField(menuKey, fieldKey) &&
+    normalizeMenuKey(fieldKey) === EMPRESA_LOGO_UPLOAD_FIELD_KEY
+  );
+}
+
+function isEmpresaLogoCurrentField(menuKey, fieldKey) {
+  return (
+    isEmpresaProcessField(menuKey, fieldKey) &&
+    normalizeMenuKey(fieldKey) === EMPRESA_LOGO_CURRENT_FIELD_KEY
+  );
 }
 
 sidebarMenuSettings.forEach((setting) => {
@@ -1091,6 +1172,7 @@ function mergeDynamicProcessMenus() {
 mergeDynamicProcessMenus();
 
 const itemsEl = document.getElementById("submenu-items");
+const menuTabsCardEl = document.getElementById("menu-tabs-card");
 const menuButtons = document.querySelectorAll(".menu-item");
 const scopedCards = document.querySelectorAll("[data-menu-scope]");
 const userMenuEl = document.getElementById("user-menu");
@@ -1104,10 +1186,12 @@ const profileEditCancelButtons = document.querySelectorAll("[data-edit-cancel]")
 const trainingOutrosEnabledEl = document.getElementById("edit_training_outros_enabled");
 const trainingOutrosInputEl = document.getElementById("edit_training_outros");
 const processFieldsBuilderEl = document.getElementById("process-fields-builder");
+const dynamicProcessCreateCardEl = document.getElementById("dynamic-process-create-card");
 const dynamicProcessCardEl = document.getElementById("dynamic-process-card");
 const dynamicProcessTitleEl = document.getElementById("dynamic-process-title");
 const dynamicProcessDescriptionEl = document.getElementById("dynamic-process-description");
 const dynamicProcessSectionLabelEl = document.getElementById("dynamic-process-section-label");
+const dynamicProcessReadOnlyEl = document.getElementById("dynamic-process-readonly");
 const dynamicProcessReadOnlyGridEl = document.getElementById("dynamic-process-readonly-grid");
 const dynamicProcessEditGridEl = document.getElementById("dynamic-process-edit-grid");
 const dynamicProcessEditFormEl = document.getElementById("dynamic-process-edit-form");
@@ -1124,6 +1208,18 @@ const dynamicProcessHistoryTableEl = document.getElementById("dynamic-process-hi
 const dynamicProcessHistoryHeadEl = document.getElementById("dynamic-process-history-head");
 const dynamicProcessHistoryBodyEl = document.getElementById("dynamic-process-history-body");
 const dynamicProcessHistoryEmptyEl = document.getElementById("dynamic-process-history-empty");
+const dynamicProcessHistoryActiveCardEl = document.getElementById("dynamic-process-history-active-card");
+const dynamicProcessHistoryActiveTitleEl = document.getElementById("dynamic-process-history-active-title");
+const dynamicProcessHistoryActiveTableEl = document.getElementById("dynamic-process-history-active-table");
+const dynamicProcessHistoryActiveHeadEl = document.getElementById("dynamic-process-history-active-head");
+const dynamicProcessHistoryActiveBodyEl = document.getElementById("dynamic-process-history-active-body");
+const dynamicProcessHistoryActiveEmptyEl = document.getElementById("dynamic-process-history-active-empty");
+const dynamicProcessHistoryInactiveCardEl = document.getElementById("dynamic-process-history-inactive-card");
+const dynamicProcessHistoryInactiveTitleEl = document.getElementById("dynamic-process-history-inactive-title");
+const dynamicProcessHistoryInactiveTableEl = document.getElementById("dynamic-process-history-inactive-table");
+const dynamicProcessHistoryInactiveHeadEl = document.getElementById("dynamic-process-history-inactive-head");
+const dynamicProcessHistoryInactiveBodyEl = document.getElementById("dynamic-process-history-inactive-body");
+const dynamicProcessHistoryInactiveEmptyEl = document.getElementById("dynamic-process-history-inactive-empty");
 let homeSelectedTarget = "#home-summary-card";
 let profileSelectedTarget = "#perfil-pessoal-card";
 if (initialProfileTab === "morada") {
@@ -1464,189 +1560,474 @@ function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionF
   }
 
   const cleanMenuKey = normalizeMenuKey(menuKey);
-  const cleanSectionKey = String(sectionKey || "").trim();
+  const cleanSectionKey = String(sectionKey || "").trim().toLowerCase();
   const historyRowsRaw = Array.isArray(menuProcessHistoryMap[cleanMenuKey])
     ? menuProcessHistoryMap[cleanMenuKey]
     : [];
   const historyRows = historyRowsRaw.filter((item) => item && typeof item === "object");
+
+  dynamicProcessHistoryHeadEl.innerHTML = "";
+  dynamicProcessHistoryBodyEl.innerHTML = "";
+  if (dynamicProcessHistoryActiveHeadEl) {
+    dynamicProcessHistoryActiveHeadEl.innerHTML = "";
+  }
+  if (dynamicProcessHistoryActiveBodyEl) {
+    dynamicProcessHistoryActiveBodyEl.innerHTML = "";
+  }
+  if (dynamicProcessHistoryInactiveHeadEl) {
+    dynamicProcessHistoryInactiveHeadEl.innerHTML = "";
+  }
+  if (dynamicProcessHistoryInactiveBodyEl) {
+    dynamicProcessHistoryInactiveBodyEl.innerHTML = "";
+  }
+
+  const normalizedFields = Array.isArray(sectionFields)
+    ? sectionFields.filter((field) => field && typeof field === "object")
+    : [];
+  const tableFields = normalizedFields.filter((field) => String(field.key || "").trim());
+  const sectionFieldKeys = new Set(
+    tableFields
+      .map((field) => normalizeMenuKey(field && field.key))
+      .filter(Boolean)
+  );
   const visibleRows = historyRows.filter((item) => {
-    const rowSectionKey = String(item.section_key || "").trim();
+    const rowSectionKey = String(item.section_key || "").trim().toLowerCase();
     if (!cleanSectionKey) {
       return true;
     }
     if (!rowSectionKey) {
       return true;
     }
-    return rowSectionKey === cleanSectionKey;
+    if (rowSectionKey === cleanSectionKey) {
+      return true;
+    }
+
+    // Compatibilidade: registros legados foram gravados por campo (field:<key>)
+    // e precisam continuar visíveis quando a seção atual passou a ser por header.
+    if (rowSectionKey.startsWith("field:")) {
+      const legacyFieldKey = normalizeMenuKey(rowSectionKey.slice("field:".length));
+      if (legacyFieldKey && sectionFieldKeys.has(legacyFieldKey)) {
+        return true;
+      }
+    }
+
+    if (cleanSectionKey.startsWith("field:")) {
+      const currentFieldKey = normalizeMenuKey(cleanSectionKey.slice("field:".length));
+      if (currentFieldKey && rowSectionKey === currentFieldKey) {
+        return true;
+      }
+    }
+
+    if (sectionFieldKeys.size && sectionFieldKeys.has(normalizeMenuKey(rowSectionKey))) {
+      return true;
+    }
+
+    return false;
   });
-
-  dynamicProcessHistoryHeadEl.innerHTML = "";
-  dynamicProcessHistoryBodyEl.innerHTML = "";
-
-  const normalizedFields = Array.isArray(sectionFields)
-    ? sectionFields.filter((field) => field && typeof field === "object")
-    : [];
-  const tableFields = normalizedFields.filter((field) => String(field.key || "").trim());
   const showStateColumn = String(recordLabels.singular || "") === "departamento";
+  const singularLabel = toSentenceCaseText(recordLabels.singular || "registo").toLowerCase();
+  const pluralLabel = toSentenceCaseText(recordLabels.plural || "registos").toLowerCase();
+
+  const setLegacyHistoryState = (showTable, showEmpty = false) => {
+    if (dynamicProcessHistoryTableEl) {
+      dynamicProcessHistoryTableEl.style.display = showTable ? "" : "none";
+    }
+    if (dynamicProcessHistoryEmptyEl) {
+      dynamicProcessHistoryEmptyEl.style.display = showEmpty ? "" : "none";
+      dynamicProcessHistoryEmptyEl.textContent = `Sem ${pluralLabel} criados.`;
+    }
+  };
+
+  const hideSeparatedHistoryCards = () => {
+    if (dynamicProcessHistoryActiveCardEl) {
+      dynamicProcessHistoryActiveCardEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryInactiveCardEl) {
+      dynamicProcessHistoryInactiveCardEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryActiveTableEl) {
+      dynamicProcessHistoryActiveTableEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryInactiveTableEl) {
+      dynamicProcessHistoryInactiveTableEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryActiveEmptyEl) {
+      dynamicProcessHistoryActiveEmptyEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryInactiveEmptyEl) {
+      dynamicProcessHistoryInactiveEmptyEl.style.display = "none";
+    }
+  };
+
+  const getRowValues = (row) => (
+    row && row.values && typeof row.values === "object"
+      ? row.values
+      : {}
+  );
+
+  const resolveRowState = (values) => {
+    const rawStateValue = normalizeLookupText(values.__estado || "");
+    return rawStateValue === "inativo" ? "inativo" : "ativo";
+  };
+
+  const createHeadRow = (headElement, includeStateColumn, includeCreatedColumn = true) => {
+    if (!headElement) {
+      return;
+    }
+    headElement.innerHTML = "";
+    const headRowEl = document.createElement("tr");
+    if (includeCreatedColumn) {
+      const createdHeadEl = document.createElement("th");
+      createdHeadEl.textContent = "Criado em";
+      headRowEl.appendChild(createdHeadEl);
+    }
+    tableFields.forEach((field) => {
+      const thEl = document.createElement("th");
+      thEl.textContent = toSentenceCaseText(field.label || field.key);
+      headRowEl.appendChild(thEl);
+    });
+    if (includeStateColumn) {
+      const stateHeadEl = document.createElement("th");
+      stateHeadEl.textContent = "Estado";
+      headRowEl.appendChild(stateHeadEl);
+    }
+    const actionsHeadEl = document.createElement("th");
+    actionsHeadEl.textContent = "Ações";
+    headRowEl.appendChild(actionsHeadEl);
+    headElement.appendChild(headRowEl);
+  };
+
+  const populateReadOnlyFromRow = (values) => {
+    if (!dynamicProcessReadOnlyGridEl) {
+      return;
+    }
+    dynamicProcessReadOnlyGridEl.innerHTML = "";
+    tableFields.forEach((field) => {
+      const fieldKey = normalizeMenuKey(field.key);
+      const fieldType = normalizeProcessFieldType(field.fieldType);
+      const itemEl = document.createElement("div");
+      itemEl.className = "personal-item";
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "personal-label";
+      labelEl.textContent = toSentenceCaseText(field.label || field.key);
+
+      const valueEl = document.createElement("strong");
+      valueEl.className = "personal-value";
+      const rawValue = String(values[fieldKey] || "").trim();
+      if (fieldType === "flag") {
+        valueEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
+      } else {
+        valueEl.textContent = rawValue || "-";
+      }
+
+      itemEl.appendChild(labelEl);
+      itemEl.appendChild(valueEl);
+      dynamicProcessReadOnlyGridEl.appendChild(itemEl);
+    });
+
+    if (showStateColumn) {
+      const stateItemEl = document.createElement("div");
+      stateItemEl.className = "personal-item";
+
+      const stateLabelEl = document.createElement("span");
+      stateLabelEl.className = "personal-label";
+      stateLabelEl.textContent = "Estado";
+
+      const stateValueEl = document.createElement("strong");
+      stateValueEl.className = "personal-value";
+      stateValueEl.textContent = resolveRowState(values) === "inativo" ? "Inativo" : "Ativo";
+
+      stateItemEl.appendChild(stateLabelEl);
+      stateItemEl.appendChild(stateValueEl);
+      dynamicProcessReadOnlyGridEl.appendChild(stateItemEl);
+    }
+  };
+
+  const openRecordForEdit = (rowRecordId, values) => {
+    if (!rowRecordId || !dynamicProcessEditFormEl) {
+      return;
+    }
+    if (dynamicProcessHistoryActionInputEl) {
+      dynamicProcessHistoryActionInputEl.value = "update";
+    }
+    if (dynamicProcessHistoryRecordIdInputEl) {
+      dynamicProcessHistoryRecordIdInputEl.value = rowRecordId;
+    }
+    if (dynamicProcessSubmitBtnEl) {
+      dynamicProcessSubmitBtnEl.textContent = "Guardar";
+    }
+    if (dynamicProcessCardEl) {
+      dynamicProcessCardEl.classList.add("editing");
+      dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
+    }
+    if (dynamicProcessReadOnlyEl) {
+      dynamicProcessReadOnlyEl.style.display = "none";
+    }
+    if (dynamicProcessCreateCardEl) {
+      dynamicProcessCreateCardEl.classList.add("is-editing");
+    }
+
+    tableFields.forEach((field) => {
+      const fieldKey = normalizeMenuKey(field.key);
+      if (!fieldKey) {
+        return;
+      }
+      const inputName = `process_field__${fieldKey}`;
+      const inputEl = dynamicProcessEditFormEl.querySelector(`[name="${inputName}"]`);
+      if (!inputEl) {
+        return;
+      }
+      const rawValue = String(values[fieldKey] || "").trim();
+      if (inputEl.type === "checkbox") {
+        inputEl.checked = isTruthyFlagValue(rawValue);
+        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+      if (inputEl.type === "file") {
+        return;
+      }
+      let normalizedValue = rawValue;
+      if (normalizeProcessFieldType(field.fieldType) === "date") {
+        normalizedValue = normalizeDateInputValue(rawValue);
+      }
+      inputEl.value = normalizedValue;
+      inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    if (showStateColumn) {
+      const stateSelectEl = dynamicProcessEditFormEl.querySelector("[name='process_state']");
+      if (stateSelectEl) {
+        stateSelectEl.value = resolveRowState(values);
+      }
+    }
+
+    dynamicProcessEditFormEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const openRecordForView = (values) => {
+    populateReadOnlyFromRow(values);
+    if (dynamicProcessHistoryActionInputEl) {
+      dynamicProcessHistoryActionInputEl.value = "create";
+    }
+    if (dynamicProcessHistoryRecordIdInputEl) {
+      dynamicProcessHistoryRecordIdInputEl.value = "";
+    }
+    if (dynamicProcessSubmitBtnEl) {
+      dynamicProcessSubmitBtnEl.textContent = "Guardar";
+    }
+    if (dynamicProcessCardEl) {
+      dynamicProcessCardEl.classList.remove("editing");
+      dynamicProcessCardEl.classList.add("dynamic-process-history-show-readonly");
+      dynamicProcessCardEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    if (dynamicProcessReadOnlyEl) {
+      dynamicProcessReadOnlyEl.style.display = "";
+    }
+    if (dynamicProcessCreateCardEl) {
+      dynamicProcessCreateCardEl.classList.remove("is-editing");
+    }
+  };
+
+  const renderRows = (
+    rows,
+    bodyElement,
+    includeStateColumn,
+    allowDeleteForInactive,
+    includeCreatedColumn = true
+  ) => {
+    if (!bodyElement) {
+      return;
+    }
+    bodyElement.innerHTML = "";
+    rows.forEach((row) => {
+      const rowRecordId = String(row.record_id || "").trim();
+      const values = getRowValues(row);
+      const rowState = resolveRowState(values);
+
+      const trEl = document.createElement("tr");
+      if (includeCreatedColumn) {
+        const createdCellEl = document.createElement("td");
+        createdCellEl.textContent = String(row.created_at || "-").trim() || "-";
+        trEl.appendChild(createdCellEl);
+      }
+
+      tableFields.forEach((field) => {
+        const fieldKey = normalizeMenuKey(field.key);
+        const fieldType = normalizeProcessFieldType(field.fieldType);
+        const tdEl = document.createElement("td");
+        const rawValue = String(values[fieldKey] || "").trim();
+        if (fieldType === "flag") {
+          tdEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
+        } else {
+          tdEl.textContent = rawValue || "-";
+        }
+        trEl.appendChild(tdEl);
+      });
+
+      if (includeStateColumn) {
+        const stateCellEl = document.createElement("td");
+        const stateBadgeEl = document.createElement("span");
+        const isInactiveState = rowState === "inativo";
+        stateBadgeEl.className = `entity-status ${isInactiveState ? "entity-status-inactive" : "entity-status-active"}`;
+        stateBadgeEl.textContent = isInactiveState ? "Inativo" : "Ativo";
+        stateCellEl.appendChild(stateBadgeEl);
+        trEl.appendChild(stateCellEl);
+      }
+
+      const actionsCellEl = document.createElement("td");
+      const actionsWrapEl = document.createElement("div");
+      actionsWrapEl.className = "table-actions";
+
+      const viewBtnEl = document.createElement("button");
+      viewBtnEl.type = "button";
+      viewBtnEl.className = "table-icon-btn";
+      viewBtnEl.title = `Exibir ${singularLabel}`;
+      viewBtnEl.setAttribute("aria-label", `Exibir ${singularLabel}`);
+      viewBtnEl.innerHTML = "&#128065;";
+      viewBtnEl.disabled = !rowRecordId;
+      viewBtnEl.addEventListener("click", () => {
+        if (!rowRecordId) {
+          return;
+        }
+        openRecordForView(values);
+      });
+      actionsWrapEl.appendChild(viewBtnEl);
+
+      const editBtnEl = document.createElement("button");
+      editBtnEl.type = "button";
+      editBtnEl.className = "table-icon-btn";
+      editBtnEl.title = `Editar ${singularLabel}`;
+      editBtnEl.setAttribute("aria-label", `Editar ${singularLabel}`);
+      editBtnEl.innerHTML = "&#9998;";
+      editBtnEl.disabled = !rowRecordId;
+      editBtnEl.addEventListener("click", () => {
+        openRecordForEdit(rowRecordId, values);
+      });
+      actionsWrapEl.appendChild(editBtnEl);
+
+      if (allowDeleteForInactive && (!includeStateColumn || rowState === "inativo")) {
+        const deleteBtnEl = document.createElement("button");
+        deleteBtnEl.type = "button";
+        deleteBtnEl.className = "table-icon-btn table-icon-btn-danger";
+        deleteBtnEl.title = `Eliminar ${singularLabel}`;
+        deleteBtnEl.setAttribute("aria-label", `Eliminar ${singularLabel}`);
+        deleteBtnEl.innerHTML = "&#128465;";
+        deleteBtnEl.disabled = !rowRecordId;
+        deleteBtnEl.addEventListener("click", () => {
+          if (!rowRecordId || !dynamicProcessEditFormEl) {
+            return;
+          }
+          if (dynamicProcessHistoryActionInputEl) {
+            dynamicProcessHistoryActionInputEl.value = "delete";
+          }
+          if (dynamicProcessHistoryRecordIdInputEl) {
+            dynamicProcessHistoryRecordIdInputEl.value = rowRecordId;
+          }
+          dynamicProcessEditFormEl.submit();
+        });
+        actionsWrapEl.appendChild(deleteBtnEl);
+      }
+
+      actionsCellEl.appendChild(actionsWrapEl);
+      trEl.appendChild(actionsCellEl);
+      bodyElement.appendChild(trEl);
+    });
+  };
 
   if (!tableFields.length || !visibleRows.length) {
-    dynamicProcessHistoryTableEl.style.display = "none";
-    dynamicProcessHistoryEmptyEl.style.display = "";
-    dynamicProcessHistoryEmptyEl.textContent = `Sem ${recordLabels.plural} criados.`;
-    dynamicProcessHistoryBlockEl.style.display = "";
-    if (dynamicProcessHistoryTitleEl) {
-      dynamicProcessHistoryTitleEl.textContent = `Lista de ${recordLabels.plural} criados`;
+    if (showStateColumn) {
+      setLegacyHistoryState(false, false);
+      if (dynamicProcessHistoryActiveCardEl) {
+        dynamicProcessHistoryActiveCardEl.style.display = "";
+      }
+      if (dynamicProcessHistoryInactiveCardEl) {
+        dynamicProcessHistoryInactiveCardEl.style.display = "";
+      }
+      if (dynamicProcessHistoryTitleEl) {
+        dynamicProcessHistoryTitleEl.textContent = `Lista de ${pluralLabel} criados`;
+      }
+      if (dynamicProcessHistoryActiveTitleEl) {
+        dynamicProcessHistoryActiveTitleEl.textContent = `${toSentenceCaseText(pluralLabel)} ativos`;
+      }
+      if (dynamicProcessHistoryInactiveTitleEl) {
+        dynamicProcessHistoryInactiveTitleEl.textContent = `${toSentenceCaseText(pluralLabel)} inativos`;
+      }
+      if (dynamicProcessHistoryActiveTableEl) {
+        dynamicProcessHistoryActiveTableEl.style.display = "none";
+      }
+      if (dynamicProcessHistoryInactiveTableEl) {
+        dynamicProcessHistoryInactiveTableEl.style.display = "none";
+      }
+      if (dynamicProcessHistoryActiveEmptyEl) {
+        dynamicProcessHistoryActiveEmptyEl.style.display = "";
+        dynamicProcessHistoryActiveEmptyEl.textContent = `Sem ${pluralLabel} ativos.`;
+      }
+      if (dynamicProcessHistoryInactiveEmptyEl) {
+        dynamicProcessHistoryInactiveEmptyEl.style.display = "";
+        dynamicProcessHistoryInactiveEmptyEl.textContent = `Sem ${pluralLabel} inativos.`;
+      }
+    } else {
+      hideSeparatedHistoryCards();
+      setLegacyHistoryState(false, true);
+      if (dynamicProcessHistoryTitleEl) {
+        dynamicProcessHistoryTitleEl.textContent = `Lista de ${pluralLabel} criados`;
+      }
     }
+    dynamicProcessHistoryBlockEl.style.display = showStateColumn ? "none" : "";
     return;
   }
 
-  const headRowEl = document.createElement("tr");
-  const createdHeadEl = document.createElement("th");
-  createdHeadEl.textContent = "Criado em";
-  headRowEl.appendChild(createdHeadEl);
-  tableFields.forEach((field) => {
-    const thEl = document.createElement("th");
-    thEl.textContent = toSentenceCaseText(field.label || field.key);
-    headRowEl.appendChild(thEl);
-  });
   if (showStateColumn) {
-    const stateHeadEl = document.createElement("th");
-    stateHeadEl.textContent = "Estado";
-    headRowEl.appendChild(stateHeadEl);
-  }
-  const actionsHeadEl = document.createElement("th");
-  actionsHeadEl.textContent = "Ações";
-  headRowEl.appendChild(actionsHeadEl);
-  dynamicProcessHistoryHeadEl.appendChild(headRowEl);
+    setLegacyHistoryState(false, false);
+    if (dynamicProcessHistoryActiveCardEl) {
+      dynamicProcessHistoryActiveCardEl.style.display = "";
+    }
+    if (dynamicProcessHistoryInactiveCardEl) {
+      dynamicProcessHistoryInactiveCardEl.style.display = "";
+    }
+    if (dynamicProcessHistoryTitleEl) {
+      dynamicProcessHistoryTitleEl.textContent = `Lista de ${pluralLabel} criados`;
+    }
+    const activeRows = visibleRows.filter((row) => resolveRowState(getRowValues(row)) !== "inativo");
+    const inactiveRows = visibleRows.filter((row) => resolveRowState(getRowValues(row)) === "inativo");
 
-  visibleRows.forEach((row) => {
-    const trEl = document.createElement("tr");
-    const rowRecordId = String(row.record_id || "").trim();
-
-    const createdCellEl = document.createElement("td");
-    createdCellEl.textContent = String(row.created_at || "-").trim() || "-";
-    trEl.appendChild(createdCellEl);
-
-    const values = row.values && typeof row.values === "object" ? row.values : {};
-    tableFields.forEach((field) => {
-      const fieldKey = normalizeMenuKey(field.key);
-      const tdEl = document.createElement("td");
-      const rawValue = String(values[fieldKey] || "").trim();
-      if (normalizeProcessFieldType(field.fieldType) === "flag") {
-        tdEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
-      } else {
-        tdEl.textContent = rawValue || "-";
-      }
-      trEl.appendChild(tdEl);
-    });
-    if (showStateColumn) {
-      const stateCellEl = document.createElement("td");
-      const rawStateValue = normalizeLookupText(values.__estado || "");
-      stateCellEl.textContent = rawStateValue === "inativo" ? "Inativo" : "Ativo";
-      trEl.appendChild(stateCellEl);
+    if (dynamicProcessHistoryActiveTitleEl) {
+      dynamicProcessHistoryActiveTitleEl.textContent = `${toSentenceCaseText(pluralLabel)} ativos`;
+    }
+    if (dynamicProcessHistoryInactiveTitleEl) {
+      dynamicProcessHistoryInactiveTitleEl.textContent = `${toSentenceCaseText(pluralLabel)} inativos`;
     }
 
-    const actionsCellEl = document.createElement("td");
-    const actionsWrapEl = document.createElement("div");
-    actionsWrapEl.className = "table-actions";
+    createHeadRow(dynamicProcessHistoryActiveHeadEl, true, false);
+    createHeadRow(dynamicProcessHistoryInactiveHeadEl, true, false);
+    renderRows(activeRows, dynamicProcessHistoryActiveBodyEl, true, false, false);
+    renderRows(inactiveRows, dynamicProcessHistoryInactiveBodyEl, true, true, false);
 
-    const editBtnEl = document.createElement("button");
-    editBtnEl.type = "button";
-    editBtnEl.className = "table-icon-btn";
-    editBtnEl.title = `Editar ${recordLabels.singular}`;
-    editBtnEl.setAttribute("aria-label", `Editar ${recordLabels.singular}`);
-    editBtnEl.innerHTML = "&#9998;";
-    editBtnEl.disabled = !rowRecordId;
-    editBtnEl.addEventListener("click", () => {
-      if (!rowRecordId || !dynamicProcessEditFormEl) {
-        return;
-      }
-      if (dynamicProcessHistoryActionInputEl) {
-        dynamicProcessHistoryActionInputEl.value = "update";
-      }
-      if (dynamicProcessHistoryRecordIdInputEl) {
-        dynamicProcessHistoryRecordIdInputEl.value = rowRecordId;
-      }
-      if (dynamicProcessSubmitBtnEl) {
-        dynamicProcessSubmitBtnEl.textContent = "Guardar";
-      }
-      if (dynamicProcessCardEl) {
-        dynamicProcessCardEl.classList.add("editing");
-      }
-
-      const values = row.values && typeof row.values === "object" ? row.values : {};
-      tableFields.forEach((field) => {
-        const fieldKey = normalizeMenuKey(field.key);
-        if (!fieldKey) {
-          return;
-        }
-        const inputName = `process_field__${fieldKey}`;
-        const inputEl = dynamicProcessEditFormEl.querySelector(`[name="${inputName}"]`);
-        if (!inputEl) {
-          return;
-        }
-        const rawValue = String(values[fieldKey] || "").trim();
-        if (inputEl.type === "checkbox") {
-          const normalizedFlag = isTruthyFlagValue(rawValue);
-          inputEl.checked = normalizedFlag;
-          inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-          return;
-        }
-        let normalizedValue = rawValue;
-        if (normalizeProcessFieldType(field.fieldType) === "date") {
-          normalizedValue = normalizeDateInputValue(rawValue);
-        }
-        inputEl.value = normalizedValue;
-        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-      });
-      if (showStateColumn) {
-        const stateSelectEl = dynamicProcessEditFormEl.querySelector("[name='process_state']");
-        if (stateSelectEl) {
-          const rawStateValue = normalizeLookupText(values.__estado || "");
-          stateSelectEl.value = rawStateValue === "inativo" ? "inativo" : "ativo";
-        }
-      }
-
-      dynamicProcessEditFormEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-    actionsWrapEl.appendChild(editBtnEl);
-
-    const deleteBtnEl = document.createElement("button");
-    deleteBtnEl.type = "button";
-    deleteBtnEl.className = "table-icon-btn table-icon-btn-danger";
-    deleteBtnEl.title = `Eliminar ${recordLabels.singular}`;
-    deleteBtnEl.setAttribute("aria-label", `Eliminar ${recordLabels.singular}`);
-    deleteBtnEl.innerHTML = "&#128465;";
-    deleteBtnEl.disabled = !rowRecordId;
-    deleteBtnEl.addEventListener("click", () => {
-      if (!rowRecordId || !dynamicProcessEditFormEl) {
-        return;
-      }
-      if (!window.confirm(`Deseja eliminar este ${recordLabels.singular}?`)) {
-        return;
-      }
-      if (dynamicProcessHistoryActionInputEl) {
-        dynamicProcessHistoryActionInputEl.value = "delete";
-      }
-      if (dynamicProcessHistoryRecordIdInputEl) {
-        dynamicProcessHistoryRecordIdInputEl.value = rowRecordId;
-      }
-      dynamicProcessEditFormEl.submit();
-    });
-    actionsWrapEl.appendChild(deleteBtnEl);
-
-    actionsCellEl.appendChild(actionsWrapEl);
-    trEl.appendChild(actionsCellEl);
-
-    dynamicProcessHistoryBodyEl.appendChild(trEl);
-  });
-
-  dynamicProcessHistoryTableEl.style.display = "";
-  dynamicProcessHistoryEmptyEl.style.display = "none";
-  dynamicProcessHistoryBlockEl.style.display = "";
-  if (dynamicProcessHistoryTitleEl) {
-    dynamicProcessHistoryTitleEl.textContent = `Lista de ${recordLabels.plural} criados`;
+    if (dynamicProcessHistoryActiveTableEl) {
+      dynamicProcessHistoryActiveTableEl.style.display = activeRows.length ? "" : "none";
+    }
+    if (dynamicProcessHistoryInactiveTableEl) {
+      dynamicProcessHistoryInactiveTableEl.style.display = inactiveRows.length ? "" : "none";
+    }
+    if (dynamicProcessHistoryActiveEmptyEl) {
+      dynamicProcessHistoryActiveEmptyEl.style.display = activeRows.length ? "none" : "";
+      dynamicProcessHistoryActiveEmptyEl.textContent = `Sem ${pluralLabel} ativos.`;
+    }
+    if (dynamicProcessHistoryInactiveEmptyEl) {
+      dynamicProcessHistoryInactiveEmptyEl.style.display = inactiveRows.length ? "none" : "";
+      dynamicProcessHistoryInactiveEmptyEl.textContent = `Sem ${pluralLabel} inativos.`;
+    }
+  } else {
+    hideSeparatedHistoryCards();
+    setLegacyHistoryState(true, false);
+    createHeadRow(dynamicProcessHistoryHeadEl, false, true);
+    renderRows(visibleRows, dynamicProcessHistoryBodyEl, false, true, true);
+    if (dynamicProcessHistoryTitleEl) {
+      dynamicProcessHistoryTitleEl.textContent = `Lista de ${pluralLabel} criados`;
+    }
   }
+
+  dynamicProcessHistoryBlockEl.style.display = showStateColumn ? "none" : "";
 }
 
 function buildProcessOptionMetaMap(setting) {
@@ -2355,17 +2736,39 @@ function collectCurrentDynamicProcessValues(menuKey) {
   return baseValues;
 }
 
-function renderDynamicProcessCard(menuKey, sectionKey) {
+function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
   if (!dynamicProcessCardEl) {
     return;
   }
+  const preserveInteractionState = Boolean(options && options.preserveInteractionState);
+  const wasEditing = dynamicProcessCardEl.classList.contains("editing");
+  const wasCreateCardEditing = dynamicProcessCreateCardEl
+    ? dynamicProcessCreateCardEl.classList.contains("is-editing")
+    : false;
+  const previousHistoryAction = dynamicProcessHistoryActionInputEl
+    ? String(dynamicProcessHistoryActionInputEl.value || "").trim()
+    : "";
+  const previousHistoryRecordId = dynamicProcessHistoryRecordIdInputEl
+    ? String(dynamicProcessHistoryRecordIdInputEl.value || "").trim()
+    : "";
+  const previousSubmitLabel = dynamicProcessSubmitBtnEl
+    ? String(dynamicProcessSubmitBtnEl.textContent || "").trim()
+    : "";
   const cleanMenuKey = normalizeMenuKey(menuKey);
+  const dynamicProcessReadOnlyMode = readOnlyDynamicProcessMenuKeys.has(cleanMenuKey);
   const menuData = dynamicProcessDataByMenu[cleanMenuKey];
   const processSetting = getSidebarMenuSetting(cleanMenuKey);
   const currentProcessValuesByField = collectCurrentDynamicProcessValues(cleanMenuKey);
   const currentProcessQuantityValuesByRule = collectCurrentDynamicProcessQuantityValues(cleanMenuKey);
-  dynamicProcessCardEl.classList.remove("editing");
+  if (!preserveInteractionState) {
+    dynamicProcessCardEl.classList.remove("editing");
+    dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
+  }
   dynamicProcessCardEl.classList.remove("dynamic-process-open");
+  dynamicProcessCardEl.classList.remove("dynamic-process-history-mode");
+  if (dynamicProcessCreateCardEl && !preserveInteractionState) {
+    dynamicProcessCreateCardEl.classList.remove("is-editing");
+  }
 
   if (dynamicProcessReadOnlyGridEl) {
     dynamicProcessReadOnlyGridEl.innerHTML = "";
@@ -2375,6 +2778,12 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   }
   if (dynamicProcessHistoryBlockEl) {
     dynamicProcessHistoryBlockEl.style.display = "none";
+  }
+  if (dynamicProcessHistoryActiveCardEl) {
+    dynamicProcessHistoryActiveCardEl.style.display = "none";
+  }
+  if (dynamicProcessHistoryInactiveCardEl) {
+    dynamicProcessHistoryInactiveCardEl.style.display = "none";
   }
 
   if (!menuData) {
@@ -2398,14 +2807,25 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     if (dynamicProcessEditToggleEl) {
       dynamicProcessEditToggleEl.style.display = "none";
     }
+    if (dynamicProcessCreateCardEl) {
+      dynamicProcessCreateCardEl.style.display = "none";
+    }
     if (dynamicProcessHistoryActionInputEl) {
-      dynamicProcessHistoryActionInputEl.value = "create";
+      dynamicProcessHistoryActionInputEl.value = (
+        preserveInteractionState && previousHistoryAction
+          ? previousHistoryAction
+          : "create"
+      );
     }
     if (dynamicProcessHistoryRecordIdInputEl) {
-      dynamicProcessHistoryRecordIdInputEl.value = "";
+      dynamicProcessHistoryRecordIdInputEl.value = preserveInteractionState ? previousHistoryRecordId : "";
     }
     if (dynamicProcessSubmitBtnEl) {
-      dynamicProcessSubmitBtnEl.textContent = "Guardar";
+      dynamicProcessSubmitBtnEl.textContent = (
+        preserveInteractionState && previousSubmitLabel
+          ? previousSubmitLabel
+          : "Guardar"
+      );
     }
     if (dynamicProcessEmptyEl) {
       dynamicProcessEmptyEl.style.display = "";
@@ -2455,8 +2875,25 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   const absenceProcessMode = isAbsenceProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   const historyProcessMode = isHistoryProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   const historyRecordLabels = getHistoryRecordLabels(cleanMenuKey, menuLabel, sectionLabel);
-  const showStateField = historyProcessMode && !absenceProcessMode && historyRecordLabels.singular === "departamento";
+  const departmentHistoryMode = (
+    historyProcessMode &&
+    !absenceProcessMode &&
+    historyRecordLabels.singular === "departamento"
+  );
+  const showStateField = departmentHistoryMode;
   dynamicProcessCardEl.classList.toggle("dynamic-process-open", absenceProcessMode);
+  dynamicProcessCardEl.classList.toggle("dynamic-process-history-mode", departmentHistoryMode);
+  if (!departmentHistoryMode) {
+    dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
+  }
+  if (dynamicProcessReadOnlyEl) {
+    if (departmentHistoryMode) {
+      const showReadOnlyPreview = dynamicProcessCardEl.classList.contains("dynamic-process-history-show-readonly");
+      dynamicProcessReadOnlyEl.style.display = showReadOnlyPreview ? "" : "none";
+    } else {
+      dynamicProcessReadOnlyEl.style.display = "";
+    }
+  }
 
   if (dynamicProcessTitleEl) {
     dynamicProcessTitleEl.textContent = sectionLabel || menuLabel;
@@ -2477,13 +2914,21 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     dynamicProcessSectionKeyInputEl.defaultValue = resolvedSectionKey;
   }
   if (dynamicProcessHistoryActionInputEl) {
-    dynamicProcessHistoryActionInputEl.value = "create";
+    dynamicProcessHistoryActionInputEl.value = (
+      preserveInteractionState && previousHistoryAction
+        ? previousHistoryAction
+        : "create"
+    );
   }
   if (dynamicProcessHistoryRecordIdInputEl) {
-    dynamicProcessHistoryRecordIdInputEl.value = "";
+    dynamicProcessHistoryRecordIdInputEl.value = preserveInteractionState ? previousHistoryRecordId : "";
   }
   if (dynamicProcessSubmitBtnEl) {
-    dynamicProcessSubmitBtnEl.textContent = "Guardar";
+    dynamicProcessSubmitBtnEl.textContent = (
+      preserveInteractionState && previousSubmitLabel
+        ? previousSubmitLabel
+        : "Guardar"
+    );
   }
 
   const selectedSectionKey = normalizeMenuKey(selectedSection ? selectedSection.key : "");
@@ -2505,6 +2950,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     if (dynamicProcessEditToggleEl) {
       dynamicProcessEditToggleEl.style.display = "none";
     }
+    if (dynamicProcessCreateCardEl) {
+      dynamicProcessCreateCardEl.style.display = "none";
+    }
     if (dynamicProcessEmptyEl) {
       dynamicProcessEmptyEl.style.display = "";
       dynamicProcessEmptyEl.textContent = "Sem campos configurados para esta aba.";
@@ -2512,15 +2960,46 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     if (dynamicProcessHistoryBlockEl) {
       dynamicProcessHistoryBlockEl.style.display = "none";
     }
+    if (dynamicProcessHistoryActiveCardEl) {
+      dynamicProcessHistoryActiveCardEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryInactiveCardEl) {
+      dynamicProcessHistoryInactiveCardEl.style.display = "none";
+    }
     syncDynamicProcessQuantityHiddenInputs(cleanMenuKey, currentProcessQuantityValuesByRule);
     return;
   }
 
   if (dynamicProcessEditToggleEl) {
     dynamicProcessEditToggleEl.style.display = "none";
-    if (!absenceProcessMode && (sectionFields.length || hasQuantityRulesForSection)) {
+    if (
+      !dynamicProcessReadOnlyMode &&
+      !absenceProcessMode &&
+      (sectionFields.length || hasQuantityRulesForSection)
+    ) {
       dynamicProcessEditToggleEl.style.display = "";
-      dynamicProcessEditToggleEl.textContent = historyProcessMode ? "Criar" : "Editar";
+      if (historyProcessMode) {
+        const createActionLabel = toSentenceCaseText(
+          (selectedSection && selectedSection.label)
+            ? selectedSection.label
+            : (historyRecordLabels.singular || "registo")
+        );
+        dynamicProcessEditToggleEl.textContent = `Criar ${createActionLabel}`;
+      } else {
+        dynamicProcessEditToggleEl.textContent = "Editar";
+      }
+    }
+  }
+  if (dynamicProcessCreateCardEl) {
+    const showCreateCard = (
+      dynamicProcessEditToggleEl &&
+      dynamicProcessEditToggleEl.style.display !== "none"
+    );
+    dynamicProcessCreateCardEl.style.display = showCreateCard ? "" : "none";
+    if (!showCreateCard) {
+      dynamicProcessCreateCardEl.classList.remove("is-editing");
+    } else if (preserveInteractionState && wasCreateCardEditing) {
+      dynamicProcessCreateCardEl.classList.add("is-editing");
     }
   }
   if (dynamicProcessEmptyEl) {
@@ -2537,9 +3016,20 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     const fieldType = normalizeProcessFieldType(field.fieldType);
     const fieldSize = normalizeProcessFieldSize(field.size, fieldType);
     const fieldRequired = Boolean(field.isRequired) && fieldType !== "flag";
-    const readOnlyValue = String(field.value || "").trim();
+    const isEmpresaInternalNumber = isEmpresaReadOnlyField(cleanMenuKey, fieldKey);
+    const isEmpresaLogoUpload = isEmpresaLogoUploadField(cleanMenuKey, fieldKey);
+    const isEmpresaLogoCurrent = isEmpresaLogoCurrentField(cleanMenuKey, fieldKey);
+    const hasLiveFieldValue = Object.prototype.hasOwnProperty.call(currentProcessValuesByField, fieldKey);
+    const liveFieldValue = hasLiveFieldValue ? String(currentProcessValuesByField[fieldKey] || "").trim() : "";
+    const readOnlyValue = (
+      preserveInteractionState && hasLiveFieldValue
+        ? liveFieldValue
+        : String(field.value || "").trim()
+    );
     const fieldValue = absenceProcessMode ? "" : readOnlyValue;
-    const editDefaultValue = historyProcessMode ? "" : fieldValue;
+    const editDefaultValue = historyProcessMode
+      ? (preserveInteractionState && hasLiveFieldValue ? liveFieldValue : "")
+      : (preserveInteractionState && hasLiveFieldValue ? liveFieldValue : fieldValue);
 
     if (dynamicProcessReadOnlyGridEl) {
       const readOnlyItemEl = document.createElement("div");
@@ -2552,14 +3042,36 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
 
       const valueEl = document.createElement("strong");
       valueEl.className = "personal-value";
-      if (fieldType === "flag") {
+      let handledReadOnlyValue = false;
+      if (isEmpresaLogoUpload) {
+        valueEl.textContent = "Selecione um ficheiro no modo de edição.";
+      } else if (isEmpresaLogoCurrent) {
+        if (fieldValue) {
+          const logoWrapperEl = document.createElement("div");
+          logoWrapperEl.className = "entity-edit-current-logo-preview";
+
+          const logoImageEl = document.createElement("img");
+          logoImageEl.className = "entity-edit-current-logo-image";
+          logoImageEl.src = fieldValue;
+          logoImageEl.alt = "Logo atual da entidade";
+
+          logoWrapperEl.appendChild(logoImageEl);
+          readOnlyItemEl.appendChild(labelEl);
+          readOnlyItemEl.appendChild(logoWrapperEl);
+          handledReadOnlyValue = true;
+        } else {
+          valueEl.textContent = "-";
+        }
+      } else if (fieldType === "flag") {
         valueEl.textContent = isTruthyFlagValue(fieldValue) ? "Sim" : "Não";
       } else {
         valueEl.textContent = fieldValue || "-";
       }
 
-      readOnlyItemEl.appendChild(labelEl);
-      readOnlyItemEl.appendChild(valueEl);
+      if (!handledReadOnlyValue) {
+        readOnlyItemEl.appendChild(labelEl);
+        readOnlyItemEl.appendChild(valueEl);
+      }
       dynamicProcessReadOnlyGridEl.appendChild(readOnlyItemEl);
     }
 
@@ -2576,7 +3088,67 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       labelEl.setAttribute("for", inputId);
       labelEl.textContent = fieldRequired ? `${fieldLabel} *` : fieldLabel;
 
-      if (fieldType === "flag") {
+      if (isEmpresaLogoCurrent) {
+        const hiddenInputEl = document.createElement("input");
+        hiddenInputEl.type = "hidden";
+        hiddenInputEl.name = inputName;
+        hiddenInputEl.value = editDefaultValue;
+        hiddenInputEl.defaultValue = editDefaultValue;
+
+        const previewEl = document.createElement("div");
+        previewEl.className = "entity-edit-current-logo-preview";
+
+        if (editDefaultValue) {
+          const removeInputId = `${inputId}_remove`;
+
+          const removeInputEl = document.createElement("input");
+          removeInputEl.id = removeInputId;
+          removeInputEl.className = "entity-edit-remove-logo-input";
+          removeInputEl.type = "checkbox";
+          removeInputEl.name = "process_field__entity_logo_remove";
+          removeInputEl.value = "1";
+
+          const removeLabelEl = document.createElement("label");
+          removeLabelEl.setAttribute("for", removeInputId);
+          removeLabelEl.className = "entity-edit-remove-logo-btn";
+          removeLabelEl.title = "Remover logo atual";
+          removeLabelEl.setAttribute("aria-label", "Remover logo atual");
+          removeLabelEl.innerHTML = "&#10005;";
+
+          const imageEl = document.createElement("img");
+          imageEl.className = "entity-edit-current-logo-image";
+          imageEl.src = editDefaultValue;
+          imageEl.alt = "Logo atual da entidade";
+
+          const removePlaceholderEl = document.createElement("div");
+          removePlaceholderEl.className = "entity-edit-remove-logo-placeholder";
+          removePlaceholderEl.textContent = "Logo marcado para remoção. Clique em Guardar para confirmar.";
+
+          previewEl.appendChild(removeInputEl);
+          previewEl.appendChild(removeLabelEl);
+          previewEl.appendChild(imageEl);
+          previewEl.appendChild(removePlaceholderEl);
+        } else {
+          const emptyEl = document.createElement("strong");
+          emptyEl.className = "personal-value";
+          emptyEl.textContent = "-";
+          previewEl.appendChild(emptyEl);
+        }
+
+        fieldContainerEl.appendChild(labelEl);
+        fieldContainerEl.appendChild(previewEl);
+        fieldContainerEl.appendChild(hiddenInputEl);
+      } else if (isEmpresaLogoUpload) {
+        const inputEl = document.createElement("input");
+        inputEl.id = inputId;
+        inputEl.name = inputName;
+        inputEl.type = "file";
+        inputEl.accept = "image/png,image/jpeg,image/webp,image/gif,image/svg+xml";
+        renderedInputsByFieldKey.set(fieldKey, inputEl);
+
+        fieldContainerEl.appendChild(labelEl);
+        fieldContainerEl.appendChild(inputEl);
+      } else if (fieldType === "flag") {
         const wrapperEl = document.createElement("label");
         wrapperEl.className = "profile-custom-flag-control";
 
@@ -2650,6 +3222,12 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
         if (typeof fieldSize === "number" && fieldSize > 0 && processTextualTypes.has(fieldType)) {
           inputEl.maxLength = fieldSize;
         }
+        if (isEmpresaInternalNumber) {
+          inputEl.readOnly = true;
+          inputEl.disabled = true;
+          inputEl.classList.add("readonly-field");
+          inputEl.required = false;
+        }
         renderedInputsByFieldKey.set(fieldKey, inputEl);
 
         fieldContainerEl.appendChild(labelEl);
@@ -2705,8 +3283,23 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       sectionFields,
       historyRecordLabels
     );
-  } else if (dynamicProcessHistoryBlockEl) {
-    dynamicProcessHistoryBlockEl.style.display = "none";
+  } else {
+    if (dynamicProcessHistoryBlockEl) {
+      dynamicProcessHistoryBlockEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryActiveCardEl) {
+      dynamicProcessHistoryActiveCardEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryInactiveCardEl) {
+      dynamicProcessHistoryInactiveCardEl.style.display = "none";
+    }
+  }
+
+  if (preserveInteractionState && wasEditing) {
+    dynamicProcessCardEl.classList.add("editing");
+    if (dynamicProcessCreateCardEl && wasCreateCardEditing) {
+      dynamicProcessCreateCardEl.classList.add("is-editing");
+    }
   }
 }
 
@@ -2740,6 +3333,16 @@ function applyContentForMenu(menuKey) {
   });
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = "none";
+  }
+  if (dynamicProcessCreateCardEl) {
+    dynamicProcessCreateCardEl.style.display = "none";
+    dynamicProcessCreateCardEl.classList.remove("is-editing");
+  }
+  if (dynamicProcessHistoryActiveCardEl) {
+    dynamicProcessHistoryActiveCardEl.style.display = "none";
+  }
+  if (dynamicProcessHistoryInactiveCardEl) {
+    dynamicProcessHistoryInactiveCardEl.style.display = "none";
   }
 }
 
@@ -2849,6 +3452,20 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = resolvedTargetSelector === "#dynamic-process-card" ? "" : "none";
   }
+  if (dynamicProcessCreateCardEl) {
+    dynamicProcessCreateCardEl.style.display = resolvedTargetSelector === "#dynamic-process-card" ? "" : "none";
+    if (resolvedTargetSelector !== "#dynamic-process-card") {
+      dynamicProcessCreateCardEl.classList.remove("is-editing");
+    }
+  }
+  if (resolvedTargetSelector !== "#dynamic-process-card") {
+    if (dynamicProcessHistoryActiveCardEl) {
+      dynamicProcessHistoryActiveCardEl.style.display = "none";
+    }
+    if (dynamicProcessHistoryInactiveCardEl) {
+      dynamicProcessHistoryInactiveCardEl.style.display = "none";
+    }
+  }
 }
 
 function clearSubmenuActiveLinks(links) {
@@ -2884,6 +3501,12 @@ function closeAllProfileEdits() {
       form.reset();
     }
   });
+  if (dynamicProcessCreateCardEl) {
+    dynamicProcessCreateCardEl.classList.remove("is-editing");
+  }
+  if (dynamicProcessCardEl) {
+    dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
+  }
   syncTrainingOutrosState();
 }
 
@@ -3211,6 +3834,68 @@ function setupMeuPerfilQuantityRules() {
 }
 
 function setupConditionalProcessVisibility() {
+  let dynamicProcessConditionalRenderTimerId = 0;
+
+  function getDynamicProcessFieldKeyFromControl(controlEl) {
+    if (!controlEl || typeof controlEl.getAttribute !== "function") {
+      return "";
+    }
+
+    const rawName = String(controlEl.getAttribute("name") || "").trim();
+
+    if (!rawName.startsWith("process_field__")) {
+      return "";
+    }
+
+    return normalizeMenuKey(rawName.replace(/^process_field__/, ""));
+  }
+
+  function isDynamicProcessFieldDrivingRerender(menuKey, fieldKey) {
+    const cleanMenuKey = normalizeMenuKey(menuKey);
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+
+    if (!cleanMenuKey || !cleanFieldKey) {
+      return false;
+    }
+
+    const setting = getSidebarMenuSetting(cleanMenuKey);
+
+    if (!setting) {
+      return false;
+    }
+
+    const drivesSubsequentRules = normalizeProcessSubsequentRules(
+      setting.process_subsequent_fields
+    ).some((rule) => normalizeMenuKey(rule.triggerField) === cleanFieldKey);
+
+    if (drivesSubsequentRules) {
+      return true;
+    }
+
+    return normalizeProcessQuantityRules(setting.process_quantity_fields)
+      .some((rule) => normalizeMenuKey(rule.quantityFieldKey) === cleanFieldKey);
+  }
+
+  function scheduleDynamicProcessConditionalRender(cleanMenuKey) {
+    if (!cleanMenuKey) {
+      return;
+    }
+
+    if (dynamicProcessConditionalRenderTimerId) {
+      window.clearTimeout(dynamicProcessConditionalRenderTimerId);
+      dynamicProcessConditionalRenderTimerId = 0;
+    }
+
+    dynamicProcessConditionalRenderTimerId = window.setTimeout(() => {
+      dynamicProcessConditionalRenderTimerId = 0;
+      renderDynamicProcessCard(
+        cleanMenuKey,
+        selectedDynamicSectionByMenu[cleanMenuKey] || (dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : ""),
+        { preserveInteractionState: true }
+      );
+    }, 0);
+  }
+
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   const personalFormEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   if (personalFormEl && personalFormEl.dataset.boundSubsequentVisibility !== "1") {
@@ -3225,15 +3910,17 @@ function setupConditionalProcessVisibility() {
   if (dynamicProcessEditFormEl && dynamicProcessEditFormEl.dataset.boundSubsequentVisibility !== "1") {
     dynamicProcessEditFormEl.dataset.boundSubsequentVisibility = "1";
     ["input", "change"].forEach((eventName) => {
-      dynamicProcessEditFormEl.addEventListener(eventName, () => {
+      dynamicProcessEditFormEl.addEventListener(eventName, (event) => {
         const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
         if (!cleanMenuKey) {
           return;
         }
-        renderDynamicProcessCard(
-          cleanMenuKey,
-          selectedDynamicSectionByMenu[cleanMenuKey] || (dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
-        );
+        const targetEl = event && event.target ? event.target : null;
+        const changedFieldKey = getDynamicProcessFieldKeyFromControl(targetEl);
+        if (!isDynamicProcessFieldDrivingRerender(cleanMenuKey, changedFieldKey)) {
+          return;
+        }
+        scheduleDynamicProcessConditionalRender(cleanMenuKey);
       });
     });
   }
@@ -4287,13 +4974,32 @@ function setupProcessEditTabs() {
     const resolvedTabKey = hasTargetTab ? tabKey : "geral";
     tabLinks.forEach((tabLink) => {
       const isActive = tabLink.getAttribute("data-process-edit-tab") === resolvedTabKey;
+      tabLink.style.removeProperty("background");
+      tabLink.style.removeProperty("background-color");
+      tabLink.style.removeProperty("border-color");
+      tabLink.style.removeProperty("color");
       tabLink.classList.toggle("active", isActive);
+      tabLink.classList.toggle("is-active", isActive);
       tabLink.setAttribute("aria-selected", isActive ? "true" : "false");
+      if (isActive) {
+        tabLink.setAttribute("data-active", "true");
+        tabLink.setAttribute("data-selected", "true");
+        tabLink.removeAttribute("data-appverbo-force-active");
+        tabLink.removeAttribute("data-appverbo-force-inactive");
+        tabLink.removeAttribute("data-appverbo-menu-active");
+      } else {
+        tabLink.removeAttribute("data-active");
+        tabLink.removeAttribute("data-selected");
+        tabLink.removeAttribute("data-appverbo-force-active");
+        tabLink.removeAttribute("data-appverbo-force-inactive");
+        tabLink.removeAttribute("data-appverbo-menu-active");
+      }
     });
     panes.forEach((pane) => {
       const isActive = pane.getAttribute("data-process-edit-pane") === resolvedTabKey;
       pane.classList.toggle("active", isActive);
     });
+    window.dispatchEvent(new CustomEvent("appverbo:normalize-tabs-width-v1"));
   }
 
   tabLinks.forEach((tabLink) => {
@@ -4322,10 +5028,24 @@ function renderSubmenu(menuKey) {
     return;
   }
 
-  itemsEl.innerHTML = "";
-  itemsEl.style.display = "flex";
+  const menuItems = Array.isArray(config.items) ? config.items : [];
+  const shouldHideSingleDynamicSubmenu = (
+    menuItems.length === 1 &&
+    String(menuItems[0] && menuItems[0].target || "") === "#dynamic-process-card" &&
+    Boolean(menuItems[0] && menuItems[0].dynamicProcessSectionKey)
+  );
 
-  config.items.forEach((item) => {
+  if (typeof document !== "undefined" && document.body) {
+    document.body.classList.toggle("appverbo-hide-submenu-tabs-v1", shouldHideSingleDynamicSubmenu);
+  }
+  if (menuTabsCardEl) {
+    menuTabsCardEl.style.display = shouldHideSingleDynamicSubmenu ? "none" : "";
+  }
+
+  itemsEl.innerHTML = "";
+  itemsEl.style.display = shouldHideSingleDynamicSubmenu ? "none" : "flex";
+
+  menuItems.forEach((item) => {
     const link = document.createElement("a");
     link.className = "submenu-item";
     link.href = item.target;
@@ -4355,6 +5075,15 @@ function renderSubmenu(menuKey) {
         nextUrl.searchParams.set("admin_tab", "definicoes");
         nextUrl.searchParams.set("target", "admin-definicoes-card");
         nextUrl.hash = "#admin-definicoes-card";
+        window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
+        return;
+      }
+      if (menuKey === "administrativo" && item.target === "#admin-menu-card") {
+        const nextUrl = new URL("/users/new", window.location.origin);
+        nextUrl.searchParams.set("menu", "administrativo");
+        nextUrl.searchParams.set("admin_tab", "menu");
+        nextUrl.searchParams.set("target", "admin-menu-card");
+        nextUrl.hash = "#admin-menu-card";
         window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
         return;
       }
@@ -4611,6 +5340,9 @@ profileEditButtons.forEach((button) => {
       return;
     }
     card.classList.add("editing");
+    if (cardId === "dynamic-process-card" && dynamicProcessCreateCardEl) {
+      dynamicProcessCreateCardEl.classList.add("is-editing");
+    }
   });
 });
 
@@ -4628,6 +5360,9 @@ if (dynamicProcessEditToggleEl) {
     if (dynamicProcessEditFormEl) {
       dynamicProcessEditFormEl.reset();
     }
+    if (dynamicProcessCardEl) {
+      dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
+    }
   });
 }
 
@@ -4642,6 +5377,12 @@ profileEditCancelButtons.forEach((button) => {
       return;
     }
     card.classList.remove("editing");
+    if (cardId === "dynamic-process-card") {
+      card.classList.remove("dynamic-process-history-show-readonly");
+    }
+    if (cardId === "dynamic-process-card" && dynamicProcessCreateCardEl) {
+      dynamicProcessCreateCardEl.classList.remove("is-editing");
+    }
     const form = card.querySelector(".profile-edit-form");
     if (form) {
       form.reset();
@@ -5611,7 +6352,29 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       .forEach(applyCurrentProfileSectionToQuantityReadonlyV1);
   }
 
-  document.addEventListener("click", function () {
+  function shouldRunMeuPerfilQuantityReadonlyV1(event) {
+    const currentMenuKey = typeof normalizeMenuKey === "function"
+      ? normalizeMenuKey(activeMenuKey)
+      : "";
+
+    if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
+      return true;
+    }
+
+    const targetEl = event && event.target ? event.target : null;
+
+    return Boolean(
+      targetEl &&
+      typeof targetEl.closest === "function" &&
+      targetEl.closest("#perfil-pessoal-card")
+    );
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!shouldRunMeuPerfilQuantityReadonlyV1(event)) {
+      return;
+    }
+
     window.setTimeout(refreshMeuPerfilQuantityReadonlyVisibilityV1, 0);
     window.setTimeout(refreshMeuPerfilQuantityReadonlyVisibilityV1, 80);
   });
@@ -5857,9 +6620,42 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 250);
   }
 
-  document.addEventListener("click", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("input", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("change", scheduleDedupMeuPerfilQuantityOriginsV1, true);
+  function shouldRunMeuPerfilQuantityOriginDedupV1(event) {
+    const currentMenuKey = typeof normalizeMenuKey === "function"
+      ? normalizeMenuKey(activeMenuKey)
+      : "";
+
+    if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
+      return true;
+    }
+
+    const targetEl = event && event.target ? event.target : null;
+
+    return Boolean(
+      targetEl &&
+      typeof targetEl.closest === "function" &&
+      targetEl.closest("#perfil-pessoal-card")
+    );
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!shouldRunMeuPerfilQuantityOriginDedupV1(event)) {
+      return;
+    }
+    scheduleDedupMeuPerfilQuantityOriginsV1();
+  }, true);
+  document.addEventListener("input", function (event) {
+    if (!shouldRunMeuPerfilQuantityOriginDedupV1(event)) {
+      return;
+    }
+    scheduleDedupMeuPerfilQuantityOriginsV1();
+  }, true);
+  document.addEventListener("change", function (event) {
+    if (!shouldRunMeuPerfilQuantityOriginDedupV1(event)) {
+      return;
+    }
+    scheduleDedupMeuPerfilQuantityOriginsV1();
+  }, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", scheduleDedupMeuPerfilQuantityOriginsV1);
@@ -6173,9 +6969,42 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   // (3) EVENTOS
   //###################################################################################
 
-  document.addEventListener("click", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("input", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("change", scheduleMeuPerfilEditSectionFilterV1, true);
+  function shouldRunMeuPerfilEditSectionFilterV1(event) {
+    const currentMenuKey = typeof normalizeMenuKey === "function"
+      ? normalizeMenuKey(activeMenuKey)
+      : "";
+
+    if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
+      return true;
+    }
+
+    const targetEl = event && event.target ? event.target : null;
+
+    return Boolean(
+      targetEl &&
+      typeof targetEl.closest === "function" &&
+      targetEl.closest("#perfil-pessoal-card")
+    );
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!shouldRunMeuPerfilEditSectionFilterV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilEditSectionFilterV1();
+  }, true);
+  document.addEventListener("input", function (event) {
+    if (!shouldRunMeuPerfilEditSectionFilterV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilEditSectionFilterV1();
+  }, true);
+  document.addEventListener("change", function (event) {
+    if (!shouldRunMeuPerfilEditSectionFilterV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilEditSectionFilterV1();
+  }, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", scheduleMeuPerfilEditSectionFilterV1);
@@ -8492,10 +9321,48 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   // (7) EVENTOS
   //###################################################################################
 
-  document.addEventListener("input", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("change", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("click", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("appverbo:profile-section-restored", scheduleMeuPerfilSubsequentVisibilityV1, true);
+  function shouldRunMeuPerfilSubsequentVisibilityV1(event) {
+    const currentMenuKey = typeof normalizeMenuKey === "function"
+      ? normalizeMenuKey(activeMenuKey)
+      : "";
+
+    if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
+      return true;
+    }
+
+    const targetEl = event && event.target ? event.target : null;
+
+    return Boolean(
+      targetEl &&
+      typeof targetEl.closest === "function" &&
+      targetEl.closest("#perfil-pessoal-card")
+    );
+  }
+
+  document.addEventListener("input", function (event) {
+    if (!shouldRunMeuPerfilSubsequentVisibilityV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilSubsequentVisibilityV1();
+  }, true);
+  document.addEventListener("change", function (event) {
+    if (!shouldRunMeuPerfilSubsequentVisibilityV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilSubsequentVisibilityV1();
+  }, true);
+  document.addEventListener("click", function (event) {
+    if (!shouldRunMeuPerfilSubsequentVisibilityV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilSubsequentVisibilityV1();
+  }, true);
+  document.addEventListener("appverbo:profile-section-restored", function (event) {
+    if (!shouldRunMeuPerfilSubsequentVisibilityV1(event)) {
+      return;
+    }
+    scheduleMeuPerfilSubsequentVisibilityV1();
+  }, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", scheduleMeuPerfilSubsequentVisibilityV1);

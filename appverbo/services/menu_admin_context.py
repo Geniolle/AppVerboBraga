@@ -116,6 +116,9 @@ def build_menu_admin_edit_context_v1(
             edit_data.get("process_visible_field_rows") or []
         ),
         "process_lists": list(edit_data.get("process_lists") or []),
+        "process_list_source_options": list(
+            edit_data.get("process_list_source_options") or []
+        ),
     }
 
 
@@ -182,6 +185,9 @@ def build_menu_admin_page_payload_v1(
             context.get("process_visible_field_rows", [])
         ),
         "process_lists": list(context.get("process_lists", [])),
+        "process_list_source_options": list(
+            context.get("process_list_source_options", [])
+        ),
         "current_user_can_manage_all_entities": bool(
             context.get("current_user_can_manage_all_entities")
         ),

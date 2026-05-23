@@ -163,6 +163,12 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         visibility_scope_mode = self._normalize_text(
             row.get("visibility_scope_mode") or "all"
         ).lower()
+        section_key = self._normalize_text(
+            row.get("sidebar_section_key") or row.get("menu_section")
+        ).lower()
+        section_label = self._normalize_text(
+            row.get("sidebar_section_label") or row.get("menu_section_label")
+        )
 
         return {
             **row,
@@ -180,10 +186,10 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             ),
             "display_order": row.get("display_order", row.get("order_index", 0)),
             "order": row.get("display_order", row.get("order_index", 0)),
-            "menu_section": self._normalize_text(row.get("menu_section")).lower(),
-            "menu_section_label": self._normalize_text(row.get("menu_section_label")),
-            "group": self._normalize_text(row.get("menu_section_label")),
-            "section": self._normalize_text(row.get("menu_section_label")),
+            "menu_section": section_key,
+            "menu_section_label": section_label,
+            "group": section_label,
+            "section": section_label,
             "can_delete": bool(row.get("can_delete")),
             "can_move_up": bool(row.get("can_move_up", True)),
             "can_move_down": bool(row.get("can_move_down", True)),

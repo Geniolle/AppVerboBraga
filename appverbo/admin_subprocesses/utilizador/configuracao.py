@@ -16,15 +16,23 @@ USER_FIELDS = (
     AdminFieldConfig(
         key="full_name",
         label="Nome completo",
-        input_name="user_full_name",
+        input_name="full_name",
         field_type="text",
         required=True,
         max_length=160,
     ),
     AdminFieldConfig(
-        key="login_email",
+        key="primary_phone",
+        label="Telefone principal",
+        input_name="primary_phone",
+        field_type="text",
+        required=True,
+        max_length=30,
+    ),
+    AdminFieldConfig(
+        key="email",
         label="Email",
-        input_name="user_login_email",
+        input_name="email",
         field_type="email",
         required=True,
         max_length=150,
@@ -32,7 +40,7 @@ USER_FIELDS = (
     AdminFieldConfig(
         key="account_status",
         label="Estado",
-        input_name="user_account_status",
+        input_name="account_status",
         field_type="select",
         required=True,
         options=(
@@ -41,6 +49,20 @@ USER_FIELDS = (
             ("inactive", "Inativo"),
             ("blocked", "Bloqueado"),
         ),
+    ),
+    AdminFieldConfig(
+        key="entity_id",
+        label="Entidade",
+        input_name="entity_id",
+        field_type="select",
+        required=True,
+    ),
+    AdminFieldConfig(
+        key="profile_id",
+        label="Perfil global",
+        input_name="profile_id",
+        field_type="select",
+        required=True,
     ),
 )
 
@@ -100,6 +122,8 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     active_title="Utilizadores ativos",
     inactive_title="Utilizadores inativos",
     save_endpoint="/users/update",
+    create_endpoint="/users/new",
+    delete_endpoint="/users/delete",
     repository_name="user",
     repository_class="appverbo.admin_subprocesses.repositories.user_repository.UserAdminRepository",
     status_field="account_status",
@@ -107,6 +131,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     inactive_value="inactive",
     identity_field="id",
     label_field="full_name",
+    edit_key_field="user_id",
     enabled=True,
     migration_status="native",
     fields=USER_FIELDS,

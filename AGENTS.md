@@ -698,3 +698,27 @@ Quando uma regra nova substituir uma regra antiga, consolidar a versão final em
 Não inserir notas de conversa, comentários temporários ou blocos incompletos neste ficheiro.
 
 Se o ficheiro crescer demais, mover detalhes extensos para documentação auxiliar e manter aqui apenas o resumo obrigatório.
+
+## 30) Padrão de subprocesso administrativo (referência obrigatória)
+
+Sempre que criar ou ajustar um novo subprocesso administrativo, seguir o mesmo padrão consolidado de Entidade/Departamentos:
+
+- manter renderização principal no backend/template e usar JavaScript apenas para ações auxiliares;
+- usar card separado para ação de criação (`Criar + nome`) acima da listagem;
+- o botão de criação deve refletir o subprocesso/aba ativa em tempo real (ex.: `Criar Liderança`, `Criar sessão`, `Criar entidade`);
+- usar card separado para formulário de criação/edição;
+- os campos do formulário de criação/edição devem ser exatamente os campos configurados em `Menu > Editar processo` para o processo e subprocesso (aba/header) ativo;
+- não deixar faixa vazia no topo quando formulário estiver oculto;
+- usar pares `Guardar` e `Cancelar` no lado esquerdo e com tamanho consistente;
+- quando houver estado, separar em dois cards: bloco de ativos e bloco de inativos;
+- não misturar ativos e inativos na mesma tabela;
+- mostrar eliminar apenas no bloco inativo;
+- listar ações com ícones alinhados lado a lado na ordem: exibir, editar e eliminar (quando aplicável);
+- em listagens administrativas deste padrão, o eliminar deve executar direto, sem popup nativo `window.confirm`;
+- manter toolbar `Total` e `Procurar` dentro de cada card de tabela, nunca em card acima das tabelas;
+- garantir que o total atualiza após renderização dinâmica, filtro e mudança de linhas;
+- manter paginação padrão em cada tabela de ativos/inativos;
+- para Departamentos, não exibir coluna `Criado em` na tabela padrão;
+- manter badges de estado com labels visuais em PT (`Ativo`/`Inativo`);
+- preservar compatibilidade de dados legados de `section_key` (ex.: `field:<campo>`) para não ocultar registos antigos quando a configuração muda de campo para header;
+- em qualquer alteração de JS/CSS/template deste fluxo, atualizar cache buster no template e validar carregamento.

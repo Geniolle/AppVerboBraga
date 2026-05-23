@@ -32,6 +32,94 @@
       .replace(/"/g, "&quot;");
   }
 
+  const PROCESS_LIST_SOURCE_MANUAL_V1 = "manual";
+  const PROCESS_LIST_SOURCE_USERS_V1 = "users";
+  const PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 = "table:";
+  const PROCESS_LIST_SOURCE_OPTIONS_V1 = Object.freeze(
+    {
+      [PROCESS_LIST_SOURCE_MANUAL_V1]: "Manual",
+      [PROCESS_LIST_SOURCE_USERS_V1]: "Utilizador (automático)"
+    }
+  );
+
+  function normalizeTableKeyFromSource_v1(value) {
+    const rawValue = toSafeString_v1(value).trim().toLowerCase();
+
+    if (!rawValue) {
+      return "";
+    }
+
+    if (rawValue.indexOf(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1) === 0) {
+      return normalizeKey_v1(rawValue.slice(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1.length));
+    }
+
+    if (rawValue.indexOf("table_") === 0) {
+      return normalizeKey_v1(rawValue.slice(6));
+    }
+
+    return "";
+  }
+
+  function buildTableSourceKey_v1(tableKey) {
+    const cleanTableKey = normalizeKey_v1(tableKey);
+    if (!cleanTableKey) {
+      return "";
+    }
+    return PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 + cleanTableKey;
+  }
+
+  function normalizeSourceKey_v1(value) {
+    const rawValue = toSafeString_v1(value).trim().toLowerCase();
+    const normalizedValue = normalizeKey_v1(rawValue);
+
+    if (
+      normalizedValue === "users" ||
+      normalizedValue === "user" ||
+      normalizedValue === "utilizador" ||
+      normalizedValue === "utilizadores"
+    ) {
+      return PROCESS_LIST_SOURCE_USERS_V1;
+    }
+
+    const tableKey = normalizeTableKeyFromSource_v1(rawValue);
+    if (tableKey) {
+      return buildTableSourceKey_v1(tableKey);
+    }
+
+    return PROCESS_LIST_SOURCE_MANUAL_V1;
+  }
+
+  function formatTableLabel_v1(tableKey) {
+    return normalizeKey_v1(tableKey)
+      .split("_")
+      .filter(Boolean)
+      .map(function (part) {
+        return part.charAt(0).toUpperCase() + part.slice(1);
+      })
+      .join(" ");
+  }
+
+  function resolveSourceLabel_v1(sourceKey) {
+    const cleanSourceKey = normalizeSourceKey_v1(sourceKey);
+    const tableKey = normalizeTableKeyFromSource_v1(cleanSourceKey);
+    if (tableKey) {
+      return "Tabela: " + (formatTableLabel_v1(tableKey) || tableKey) + " (automático)";
+    }
+    return PROCESS_LIST_SOURCE_OPTIONS_V1[cleanSourceKey] || PROCESS_LIST_SOURCE_OPTIONS_V1[PROCESS_LIST_SOURCE_MANUAL_V1];
+  }
+
+  function isUsersSource_v1(sourceKey) {
+    return normalizeSourceKey_v1(sourceKey) === PROCESS_LIST_SOURCE_USERS_V1;
+  }
+
+  function isTableSource_v1(sourceKey) {
+    return Boolean(normalizeTableKeyFromSource_v1(normalizeSourceKey_v1(sourceKey)));
+  }
+
+  function isAutomaticSource_v1(sourceKey) {
+    return isUsersSource_v1(sourceKey) || isTableSource_v1(sourceKey);
+  }
+
   function createButton_v1(action, label, itemId, disabled) {
     const button = document.createElement("button");
     const icons = {
@@ -67,6 +155,7 @@
       editorKey: form.querySelector("[data-process-list-editor-key]"),
       editorLabel: form.querySelector("[data-process-list-editor-label]"),
       editorItems: form.querySelector("[data-process-list-editor-items]"),
+      editorSource: form.querySelector("[data-process-list-editor-source]"),
       submitButton: form.querySelector("[data-process-list-editor-submit]"),
       cancelButton: form.querySelector("[data-process-list-editor-cancel]"),
       table: form.querySelector("[data-process-lists-table]"),
@@ -91,12 +180,14 @@
         const label = readInput_v1(row, "process_list_label");
         const key = readInput_v1(row, "process_list_key") || normalizeKey_v1(label) || "lista_" + (index + 1);
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
+        const sourceKey = normalizeSourceKey_v1(readInput_v1(row, "process_list_source"));
 
         return {
           managerId: "list_" + index + "_" + key,
           key: key,
           label: label,
-          itemsCsv: itemsCsv
+          itemsCsv: itemsCsv,
+          sourceKey: sourceKey
         };
       })
       .filter(function (item) {
@@ -115,7 +206,8 @@
       const fields = [
         ["process_list_key", item.key],
         ["process_list_label", item.label],
-        ["process_list_items_csv", item.itemsCsv]
+        ["process_list_items_csv", item.itemsCsv],
+        ["process_list_source", normalizeSourceKey_v1(item.sourceKey)]
       ];
 
       fields.forEach(function (field) {
@@ -132,11 +224,57 @@
   // (4) EDITOR SUPERIOR
   //###################################################################################
 
+  function syncEditorSourceMode_v1(elements) {
+    if (!elements || !elements.editorItems) {
+      return;
+    }
+
+    const currentSourceKey = normalizeSourceKey_v1(elements.editorSource ? elements.editorSource.value : "");
+    const automaticSource = isAutomaticSource_v1(currentSourceKey);
+
+    elements.editorItems.disabled = automaticSource;
+    elements.editorItems.placeholder = automaticSource
+      ? "Preenchimento automático com a fonte selecionada."
+      : "Ex.: Ativo, Inativo, Pendente";
+
+    if (automaticSource) {
+      elements.editorItems.value = "";
+    }
+  }
+
   function clearEditor_v1(state, elements) {
     state.editingId = "";
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorItems.value = "";
+    if (elements.editorSource) {
+      elements.editorSource.value = PROCESS_LIST_SOURCE_MANUAL_V1;
+    }
+    syncEditorSourceMode_v1(elements);
+  }
+
+  function ensureEditorSourceOption_v1(elements, sourceKey) {
+    if (!elements || !elements.editorSource) {
+      return;
+    }
+
+    const cleanSourceKey = normalizeSourceKey_v1(sourceKey);
+    if (!cleanSourceKey) {
+      return;
+    }
+
+    const hasOption = Array.from(elements.editorSource.options || []).some(function (optionEl) {
+      return normalizeSourceKey_v1(optionEl.value) === cleanSourceKey;
+    });
+
+    if (hasOption) {
+      return;
+    }
+
+    const optionEl = document.createElement("option");
+    optionEl.value = cleanSourceKey;
+    optionEl.textContent = resolveSourceLabel_v1(cleanSourceKey);
+    elements.editorSource.appendChild(optionEl);
   }
 
   function loadEditor_v1(item, state, elements) {
@@ -144,12 +282,21 @@
     elements.editorKey.value = item.key || "";
     elements.editorLabel.value = item.label || "";
     elements.editorItems.value = item.itemsCsv || "";
+    if (elements.editorSource) {
+      const sourceKey = normalizeSourceKey_v1(item.sourceKey);
+      ensureEditorSourceOption_v1(elements, sourceKey);
+      elements.editorSource.value = sourceKey;
+    }
+    syncEditorSourceMode_v1(elements);
     elements.editorLabel.focus();
   }
 
   function readEditorItem_v1(state, elements) {
     const label = toSafeString_v1(elements.editorLabel.value).trim();
-    const itemsCsv = toSafeString_v1(elements.editorItems.value).trim();
+    const sourceKey = normalizeSourceKey_v1(elements.editorSource ? elements.editorSource.value : "");
+    const itemsCsv = isAutomaticSource_v1(sourceKey)
+      ? ""
+      : toSafeString_v1(elements.editorItems.value).trim();
     const currentKey = toSafeString_v1(elements.editorKey.value).trim();
     const key = currentKey || normalizeKey_v1(label);
 
@@ -157,7 +304,8 @@
       managerId: state.editingId || "tmp_" + Date.now(),
       key: key,
       label: label,
-      itemsCsv: itemsCsv
+      itemsCsv: itemsCsv,
+      sourceKey: sourceKey
     };
   }
 
@@ -231,11 +379,17 @@
     visibleItems.forEach(function (item, visibleIndex) {
       const absoluteIndex = start + visibleIndex;
       const row = document.createElement("tr");
+      const sourceLabel = resolveSourceLabel_v1(item.sourceKey);
+      const automaticSource = isAutomaticSource_v1(item.sourceKey);
+      const contentLabel = automaticSource
+        ? "Automático (fonte configurada)"
+        : (item.itemsCsv || "-");
 
       row.dataset.processListItemId = item.managerId;
       row.innerHTML = [
         "<td>" + escapeHtml_v1(item.label) + "</td>",
-        "<td>" + escapeHtml_v1(item.itemsCsv || "-") + "</td>"
+        "<td>" + escapeHtml_v1(sourceLabel) + "</td>",
+        "<td>" + escapeHtml_v1(contentLabel) + "</td>"
       ].join("");
 
       const actionsTd = document.createElement("td");
@@ -343,6 +497,12 @@
       clearEditor_v1(state, elements);
     });
 
+    if (elements.editorSource) {
+      elements.editorSource.addEventListener("change", function () {
+        syncEditorSourceMode_v1(elements);
+      });
+    }
+
     elements.pageSize.addEventListener("change", function () {
       state.pageSize = Number.parseInt(elements.pageSize.value, 10) || 5;
       state.page = 1;
@@ -426,9 +586,14 @@
       editingId: ""
     };
 
+    if (elements.editorSource && !elements.editorSource.value) {
+      elements.editorSource.value = PROCESS_LIST_SOURCE_MANUAL_V1;
+    }
+
     form.dataset.processListsManagerBoundV1 = "1";
 
     bindEvents_v1(form, state, elements);
+    syncEditorSourceMode_v1(elements);
     syncHiddenInputs_v1(state, elements);
     renderTable_v1(state, elements);
   }

@@ -321,18 +321,19 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
 
         return entity_id_by_member_id, entity_name_by_member_id
 
-    def _build_profile_name_map_by_user_id(
+    def _build_profile_maps_by_user_id(
         self,
         *,
         session: Any,
         user_ids: set[int],
-    ) -> dict[int, str]:
+    ) -> tuple[dict[int, str], dict[int, str]]:
         if not user_ids:
-            return {}
+            return {}, {}
 
         stmt = (
             select(
                 UserProfile.user_id.label("user_id"),
+                UserProfile.profile_id.label("profile_id"),
                 Profile.name.label("profile_name"),
             )
             .join(Profile, Profile.id == UserProfile.profile_id)
@@ -344,6 +345,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         )
 
         names_by_user_id: dict[int, str] = {}
+        ids_by_user_id: dict[int, str] = {}
 
         for row in session.execute(stmt).all():
             user_id = int(row.user_id)
@@ -352,8 +354,9 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
                 continue
 
             names_by_user_id[user_id] = str(row.profile_name or "-")
+            ids_by_user_id[user_id] = str(row.profile_id or "").strip()
 
-        return names_by_user_id
+        return names_by_user_id, ids_by_user_id
 
     def _build_superuser_user_ids(
         self,
@@ -388,6 +391,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         entity_id_by_member_id: dict[int, int],
         entity_name_by_member_id: dict[int, str],
         profile_name_by_user_id: dict[int, str],
+        profile_id_by_user_id: dict[int, str],
         superuser_user_ids: set[int],
     ) -> dict[str, Any]:
         user_id = int(row.id)
@@ -414,8 +418,9 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             "account_status_is_inactive": is_user_account_status_inactive_v1(clean_status),
             "account_status_is_blocked": is_user_account_status_blocked_v1(clean_status),
             "is_active": is_user_account_status_active_v1(clean_status),
-            "entity_id": entity_id_by_member_id.get(member_id),
+            "entity_id": str(entity_id_by_member_id.get(member_id) or "").strip(),
             "entity_name": entity_name_by_member_id.get(member_id, "-"),
+            "profile_id": str(profile_id_by_user_id.get(user_id) or "").strip(),
             "profile_name": profile_name_by_user_id.get(user_id, "-"),
             "is_entity_superuser": user_id in superuser_user_ids,
             "created_at": self._format_datetime_label(row.created_at),
@@ -485,7 +490,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             allowed_entity_ids=allowed_entity_ids,
             selected_entity_id=resolved_filters.entity_id,
         )
-        profile_name_by_user_id = self._build_profile_name_map_by_user_id(
+        profile_name_by_user_id, profile_id_by_user_id = self._build_profile_maps_by_user_id(
             session=session,
             user_ids=user_ids,
         )
@@ -500,6 +505,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
                 entity_id_by_member_id=entity_id_by_member_id,
                 entity_name_by_member_id=entity_name_by_member_id,
                 profile_name_by_user_id=profile_name_by_user_id,
+                profile_id_by_user_id=profile_id_by_user_id,
                 superuser_user_ids=superuser_user_ids,
             )
             for row in raw_rows

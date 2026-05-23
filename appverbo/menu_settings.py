@@ -58,6 +58,18 @@ MENU_SECTION_BY_SYSTEM_MENU_KEY = {
 MENU_CONFIG_SIDEBAR_SECTION_KEY = "sidebar_section"
 MENU_CONFIG_SIDEBAR_SECTIONS_KEY = "sidebar_sections"
 MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY = "sidebar_global_refresh_version"
+MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY = "meu_perfil_headers_auto_repaired_v1"
+MENU_CONFIG_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_AUTO_SEEDED_V1_KEY = (
+    "meu_perfil_department_membership_fields_auto_seeded_v1"
+)
+MENU_CONFIG_MEU_PERFIL_DEPARTMENT_ROLES_OPERATIONS_MOVED_V1_KEY = (
+    "meu_perfil_department_roles_operations_moved_v1"
+)
+MENU_CONFIG_DEPARTAMENTOS_ROLES_OPERATIONS_FIELDS_AUTO_SEEDED_V1_KEY = (
+    "departamentos_roles_operations_fields_auto_seeded_v1"
+)
+MENU_CONFIG_PROCESS_FIELDS_SEEDED_ALL_V1_KEY = "process_fields_seeded_all_v1"
+MENU_DEPARTAMENTOS_KEY = "departamentos"
 MENU_LEGACY_KEY_ALIAS = {
     "configuracao": "administrativo",
     MENU_MEU_PERFIL_LEGACY_KEY: MENU_MEU_PERFIL_KEY,
@@ -165,6 +177,223 @@ MENU_MEU_PERFIL_FIELD_LABELS = {
     item["key"]: item["label"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS
 }
 MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "email", "telefone", "pais"]
+MENU_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_V1: tuple[dict[str, Any], ...] = (
+    {
+        "key": "custom_dados_de_departamento",
+        "label": "Dados de departamento",
+        "field_type": "header",
+        "is_required": False,
+    },
+    {
+        "key": "custom_departamento_nome",
+        "label": "Departamento",
+        "field_type": "text",
+        "is_required": True,
+        "size": 120,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_departamento_estado",
+        "label": "Estado no departamento",
+        "field_type": "text",
+        "is_required": True,
+        "size": 30,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_departamento_data_entrada",
+        "label": "Data de entrada",
+        "field_type": "date",
+        "is_required": True,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_departamento_data_saida",
+        "label": "Data de saida",
+        "field_type": "date",
+        "is_required": False,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_departamento_motivo_saida",
+        "label": "Motivo de saida",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_departamento_supervisor_direto",
+        "label": "Supervisor direto",
+        "field_type": "text",
+        "is_required": False,
+        "size": 150,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_departamento_observacoes",
+        "label": "Observacoes",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255,
+        "header_key": "custom_dados_de_departamento",
+    },
+    {
+        "key": "custom_funcoes_no_departamento",
+        "label": "Funcoes no departamento",
+        "field_type": "header",
+        "is_required": False,
+    },
+    {
+        "key": "custom_funcao_no_departamento",
+        "label": "Funcao no departamento",
+        "field_type": "text",
+        "is_required": False,
+        "size": 120,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_funcao_principal_departamento",
+        "label": "Funcao principal",
+        "field_type": "flag",
+        "is_required": False,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_funcao_ativa_departamento",
+        "label": "Funcao ativa",
+        "field_type": "flag",
+        "is_required": False,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_incluir_funcao_na_escala",
+        "label": "Incluir funcao na escala",
+        "field_type": "flag",
+        "is_required": False,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_limite_mensal_funcao",
+        "label": "Limite mensal da funcao",
+        "field_type": "number",
+        "is_required": False,
+        "size": 10,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_data_inicio_funcao",
+        "label": "Data inicio da funcao",
+        "field_type": "date",
+        "is_required": False,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_data_fim_funcao",
+        "label": "Data fim da funcao",
+        "field_type": "date",
+        "is_required": False,
+        "header_key": "custom_funcoes_no_departamento",
+    },
+    {
+        "key": "custom_operacao_de_escala",
+        "label": "Operacao de escala",
+        "field_type": "header",
+        "is_required": False,
+    },
+    {
+        "key": "custom_escala_prioridade_interna",
+        "label": "Prioridade interna",
+        "field_type": "number",
+        "is_required": False,
+        "size": 10,
+        "header_key": "custom_operacao_de_escala",
+    },
+    {
+        "key": "custom_escala_elegivel_automatica",
+        "label": "Elegivel para escala automatica",
+        "field_type": "flag",
+        "is_required": False,
+        "header_key": "custom_operacao_de_escala",
+    },
+    {
+        "key": "custom_escala_ultima_data",
+        "label": "Ultima escala",
+        "field_type": "date",
+        "is_required": False,
+        "header_key": "custom_operacao_de_escala",
+    },
+    {
+        "key": "custom_escala_limite_mensal",
+        "label": "Limite mensal de escalas",
+        "field_type": "number",
+        "is_required": False,
+        "size": 10,
+        "header_key": "custom_operacao_de_escala",
+    },
+    {
+        "key": "custom_escala_permitir_mesmo_dia",
+        "label": "Permitir escala no mesmo dia",
+        "field_type": "flag",
+        "is_required": False,
+        "header_key": "custom_operacao_de_escala",
+    },
+    {
+        "key": "custom_escala_bloqueio_temporario",
+        "label": "Bloqueado temporariamente para escala",
+        "field_type": "flag",
+        "is_required": False,
+        "header_key": "custom_operacao_de_escala",
+    },
+    {
+        "key": "custom_escala_motivo_bloqueio",
+        "label": "Motivo do bloqueio",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255,
+        "header_key": "custom_operacao_de_escala",
+    },
+)
+MENU_DEPARTMENT_ROLES_OPERATIONS_MOVE_KEYS_V1: set[str] = {
+    "custom_funcoes_no_departamento",
+    "custom_funcao_no_departamento",
+    "custom_funcao_principal_departamento",
+    "custom_funcao_ativa_departamento",
+    "custom_incluir_funcao_na_escala",
+    "custom_limite_mensal_funcao",
+    "custom_data_inicio_funcao",
+    "custom_data_fim_funcao",
+    "custom_operacao_de_escala",
+    "custom_escala_prioridade_interna",
+    "custom_escala_elegivel_automatica",
+    "custom_escala_ultima_data",
+    "custom_escala_limite_mensal",
+    "custom_escala_permitir_mesmo_dia",
+    "custom_escala_bloqueio_temporario",
+    "custom_escala_motivo_bloqueio",
+}
+MENU_DEPARTMENT_ROLES_OPERATIONS_MOVE_HEADERS_V1: set[str] = {
+    "custom_funcoes_no_departamento",
+    "custom_operacao_de_escala",
+}
+MENU_DEPARTAMENTOS_MEMBERSHIP_HEADERS_V1: set[str] = {
+    "custom_dados_de_departamento",
+    *MENU_DEPARTMENT_ROLES_OPERATIONS_MOVE_HEADERS_V1,
+}
+MENU_DEPARTMENT_MEMBERSHIP_DATA_KEYS_V1: set[str] = {
+    "custom_dados_de_departamento",
+    "custom_departamento_nome",
+    "custom_departamento_estado",
+    "custom_departamento_data_entrada",
+    "custom_departamento_data_saida",
+    "custom_departamento_motivo_saida",
+    "custom_departamento_supervisor_direto",
+    "custom_departamento_observacoes",
+}
+MENU_DEPARTAMENTOS_FIELDS_SEED_KEYS_V1: set[str] = (
+    set(MENU_DEPARTMENT_MEMBERSHIP_DATA_KEYS_V1)
+    | set(MENU_DEPARTMENT_ROLES_OPERATIONS_MOVE_KEYS_V1)
+)
 
 
 def _sidebar_menu_defaults_by_key() -> dict[str, dict[str, Any]]:
@@ -1042,6 +1271,726 @@ def _parse_menu_config(raw_menu_config: Any) -> dict[str, Any]:
     return {}
 
 
+# ###################################################################################
+# (MEU_PERFIL) REPARO AUTOMATICO DE HEADERS VISIVEIS
+# ###################################################################################
+
+def _build_legacy_visible_fields_from_rows_v1(
+    rows: list[dict[str, str]],
+) -> list[str]:
+    legacy_visible_fields: list[str] = []
+    emitted_legacy_keys: set[str] = set()
+    active_header_key = ""
+
+    for row in rows:
+        field_key = str(row.get("field_key") or "").strip().lower()
+        header_key = str(row.get("header_key") or "").strip().lower()
+
+        if not field_key:
+            continue
+
+        if header_key and header_key != active_header_key:
+            if header_key not in emitted_legacy_keys:
+                legacy_visible_fields.append(header_key)
+                emitted_legacy_keys.add(header_key)
+
+            active_header_key = header_key
+
+        if not header_key:
+            active_header_key = ""
+
+        if field_key in emitted_legacy_keys:
+            continue
+
+        legacy_visible_fields.append(field_key)
+        emitted_legacy_keys.add(field_key)
+
+    return legacy_visible_fields
+
+
+# ###################################################################################
+# (MEU_PERFIL) AUTO-SEED DE CAMPOS DEPARTMENT_MEMBERSHIP_*
+# ###################################################################################
+
+def _normalize_seed_required_flag_v1(raw_value: Any) -> bool:
+    if isinstance(raw_value, bool):
+        return raw_value
+    return str(raw_value or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
+
+
+def _ensure_meu_perfil_department_membership_fields_v1(
+    menu_config: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool]:
+    if not isinstance(menu_config, dict):
+        return {}, False
+
+    updated_menu_config = dict(menu_config)
+
+    additional_fields = normalize_menu_process_additional_fields(
+        updated_menu_config.get("additional_fields")
+    )
+
+    additional_fields_by_key: dict[str, dict[str, Any]] = {}
+    for field in additional_fields:
+        clean_key = str(field.get("key") or "").strip().lower()
+        if clean_key and clean_key not in additional_fields_by_key:
+            additional_fields_by_key[clean_key] = field
+
+    changed = False
+
+    for raw_seed_field in MENU_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_V1:
+        seed_key = _normalize_custom_field_key(raw_seed_field.get("key"))
+        seed_label = _normalize_additional_field_label(raw_seed_field.get("label"))
+        seed_type = _normalize_additional_field_type(raw_seed_field.get("field_type"))
+        seed_size = _normalize_additional_field_size(raw_seed_field.get("size"), seed_type)
+        seed_required = _normalize_seed_required_flag_v1(raw_seed_field.get("is_required"))
+
+        if not seed_key or not seed_label:
+            continue
+
+        if seed_key in additional_fields_by_key:
+            continue
+
+        seed_field_payload: dict[str, Any] = {
+            "key": seed_key,
+            "label": seed_label,
+            "field_type": seed_type,
+            "is_required": bool(seed_required and seed_type != "header"),
+        }
+
+        if seed_size is not None:
+            seed_field_payload["size"] = seed_size
+
+        additional_fields.append(seed_field_payload)
+        additional_fields_by_key[seed_key] = seed_field_payload
+        changed = True
+
+    updated_menu_config["additional_fields"] = additional_fields
+
+    header_keys = {
+        str(field.get("key") or "").strip().lower()
+        for field in additional_fields
+        if str(field.get("field_type") or "").strip().lower() == "header"
+        and str(field.get("key") or "").strip()
+    }
+
+    existing_visible_fields: list[str] = []
+    seen_visible_fields: set[str] = set()
+    for raw_key in (updated_menu_config.get("process_visible_fields") or []):
+        field_key = str(raw_key or "").strip().lower()
+        if not field_key or field_key in seen_visible_fields:
+            continue
+        seen_visible_fields.add(field_key)
+        existing_visible_fields.append(field_key)
+
+    if not existing_visible_fields:
+        for raw_row in (updated_menu_config.get("process_visible_field_rows") or []):
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            if not field_key or field_key in seen_visible_fields:
+                continue
+            seen_visible_fields.add(field_key)
+            existing_visible_fields.append(field_key)
+
+    header_map: dict[str, str] = {}
+    for raw_source_map in (
+        updated_menu_config.get("process_visible_field_header_map"),
+        updated_menu_config.get("visible_field_headers"),
+    ):
+        if not isinstance(raw_source_map, dict):
+            continue
+        for raw_field_key, raw_header_key in raw_source_map.items():
+            field_key = str(raw_field_key or "").strip().lower()
+            header_key = str(raw_header_key or "").strip().lower()
+            if not field_key or not header_key:
+                continue
+            if header_key not in header_keys:
+                continue
+            header_map[field_key] = header_key
+
+    for raw_row in (updated_menu_config.get("process_visible_field_rows") or []):
+        if not isinstance(raw_row, dict):
+            continue
+        field_key = str(raw_row.get("field_key") or "").strip().lower()
+        header_key = str(raw_row.get("header_key") or "").strip().lower()
+        if not field_key or not header_key:
+            continue
+        if header_key not in header_keys:
+            continue
+        header_map[field_key] = header_key
+
+    seeded_rows: list[dict[str, str]] = []
+    for raw_seed_field in MENU_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_V1:
+        seed_type = _normalize_additional_field_type(raw_seed_field.get("field_type"))
+        if seed_type == "header":
+            continue
+        field_key = _normalize_custom_field_key(raw_seed_field.get("key"))
+        header_key = _normalize_custom_field_key(raw_seed_field.get("header_key"))
+        if not field_key:
+            continue
+        if header_key not in header_keys:
+            header_key = ""
+        seeded_rows.append({"field_key": field_key, "header_key": header_key})
+
+    for seeded_row in seeded_rows:
+        field_key = seeded_row["field_key"]
+        header_key = seeded_row["header_key"]
+        if field_key not in seen_visible_fields:
+            existing_visible_fields.append(field_key)
+            seen_visible_fields.add(field_key)
+            changed = True
+        if header_key and field_key not in header_map:
+            header_map[field_key] = header_key
+            changed = True
+
+    if not changed:
+        return dict(menu_config), False
+
+    normalized_rows: list[dict[str, str]] = []
+    for field_key in existing_visible_fields:
+        normalized_rows.append(
+            {
+                "field_key": field_key,
+                "header_key": str(header_map.get(field_key) or "").strip().lower(),
+            }
+        )
+
+    process_visible_field_header_map = {
+        row["field_key"]: row["header_key"]
+        for row in normalized_rows
+        if row.get("header_key")
+    }
+
+    process_visible_headers: list[str] = []
+    seen_headers: set[str] = set()
+    for row in normalized_rows:
+        header_key = str(row.get("header_key") or "").strip().lower()
+        if not header_key or header_key in seen_headers:
+            continue
+        seen_headers.add(header_key)
+        process_visible_headers.append(header_key)
+
+    refresh_token = str(uuid4())
+    updated_menu_config["process_visible_fields"] = [
+        str(row.get("field_key") or "").strip().lower()
+        for row in normalized_rows
+        if str(row.get("field_key") or "").strip()
+    ]
+    updated_menu_config["process_visible_field_header_map"] = process_visible_field_header_map
+    updated_menu_config["process_visible_field_rows"] = normalized_rows
+    updated_menu_config["process_visible_headers"] = process_visible_headers
+    updated_menu_config["process_visible_fields_configured"] = True
+    updated_menu_config["process_visible_fields_refresh_version"] = refresh_token
+    updated_menu_config["visible_fields"] = _build_legacy_visible_fields_from_rows_v1(
+        normalized_rows
+    )
+    updated_menu_config["visible_field_headers"] = process_visible_field_header_map
+    updated_menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+    updated_menu_config[
+        MENU_CONFIG_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_AUTO_SEEDED_V1_KEY
+    ] = True
+
+    return updated_menu_config, True
+
+
+# ###################################################################################
+# (MEU_PERFIL) COMPAT - MANTER CAMPOS NO PROPRIO PROCESSO
+# ###################################################################################
+
+def _migrate_meu_perfil_department_roles_operations_out_v1(
+    menu_config: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool]:
+    if not isinstance(menu_config, dict):
+        return {}, False
+    return dict(menu_config), False
+
+
+# ###################################################################################
+# (DEPARTAMENTOS) LIMPEZA DE CAMPOS DEPARTMENT_MEMBERSHIP_*
+# ###################################################################################
+
+def _ensure_departamentos_roles_operations_fields_v1(
+    menu_config: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool]:
+    if not isinstance(menu_config, dict):
+        return {}, False
+
+    updated_menu_config = dict(menu_config)
+
+    changed = False
+
+    additional_fields = normalize_menu_process_additional_fields(
+        updated_menu_config.get("additional_fields")
+    )
+    filtered_additional_fields: list[dict[str, Any]] = []
+    for raw_field in additional_fields:
+        field_key = str(raw_field.get("key") or "").strip().lower()
+        if field_key in MENU_DEPARTAMENTOS_FIELDS_SEED_KEYS_V1:
+            changed = True
+            continue
+        filtered_additional_fields.append(raw_field)
+    updated_menu_config["additional_fields"] = filtered_additional_fields
+
+    visible_fields: list[str] = []
+    seen_visible_fields: set[str] = set()
+    for raw_key in (updated_menu_config.get("process_visible_fields") or []):
+        field_key = str(raw_key or "").strip().lower()
+        if not field_key or field_key in seen_visible_fields:
+            continue
+        seen_visible_fields.add(field_key)
+        if field_key in MENU_DEPARTAMENTOS_FIELDS_SEED_KEYS_V1:
+            changed = True
+            continue
+        visible_fields.append(field_key)
+
+    visible_field_header_map: dict[str, str] = {}
+    for raw_map in (
+        updated_menu_config.get("process_visible_field_header_map"),
+        updated_menu_config.get("visible_field_headers"),
+    ):
+        if not isinstance(raw_map, dict):
+            continue
+        for raw_field_key, raw_header_key in raw_map.items():
+            field_key = str(raw_field_key or "").strip().lower()
+            header_key = str(raw_header_key or "").strip().lower()
+            if not field_key:
+                continue
+            if (
+                field_key in MENU_DEPARTAMENTOS_FIELDS_SEED_KEYS_V1
+                or header_key in MENU_DEPARTAMENTOS_MEMBERSHIP_HEADERS_V1
+            ):
+                changed = True
+                continue
+            visible_field_header_map[field_key] = header_key
+
+    normalized_rows: list[dict[str, str]] = []
+    raw_rows = updated_menu_config.get("process_visible_field_rows")
+    if isinstance(raw_rows, list):
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            header_key = str(raw_row.get("header_key") or "").strip().lower()
+            if not field_key:
+                continue
+            if (
+                field_key in MENU_DEPARTAMENTOS_FIELDS_SEED_KEYS_V1
+                or header_key in MENU_DEPARTAMENTOS_MEMBERSHIP_HEADERS_V1
+            ):
+                changed = True
+                continue
+            normalized_rows.append({"field_key": field_key, "header_key": header_key})
+            visible_field_header_map[field_key] = header_key
+
+    if not normalized_rows:
+        for field_key in visible_fields:
+            normalized_rows.append(
+                {
+                    "field_key": field_key,
+                    "header_key": str(visible_field_header_map.get(field_key) or "").strip().lower(),
+                }
+            )
+
+    process_visible_field_header_map = {
+        row["field_key"]: row["header_key"]
+        for row in normalized_rows
+        if row.get("header_key")
+    }
+    process_visible_fields = [
+        str(row.get("field_key") or "").strip().lower()
+        for row in normalized_rows
+        if str(row.get("field_key") or "").strip()
+    ]
+    process_visible_headers: list[str] = []
+    seen_headers: set[str] = set()
+    for row in normalized_rows:
+        header_key = str(row.get("header_key") or "").strip().lower()
+        if (
+            not header_key
+            or header_key in seen_headers
+            or header_key in MENU_DEPARTAMENTOS_MEMBERSHIP_HEADERS_V1
+        ):
+            continue
+        seen_headers.add(header_key)
+        process_visible_headers.append(header_key)
+
+    legacy_visible_fields: list[str] = []
+    seen_legacy_visible_fields: set[str] = set()
+    for raw_key in (updated_menu_config.get("visible_fields") or []):
+        field_key = str(raw_key or "").strip().lower()
+        if not field_key or field_key in seen_legacy_visible_fields:
+            continue
+        if (
+            field_key in MENU_DEPARTAMENTOS_FIELDS_SEED_KEYS_V1
+            or field_key in MENU_DEPARTAMENTOS_MEMBERSHIP_HEADERS_V1
+        ):
+            changed = True
+            continue
+        seen_legacy_visible_fields.add(field_key)
+        legacy_visible_fields.append(field_key)
+
+    if not changed:
+        return dict(menu_config), False
+
+    refresh_token = str(uuid4())
+    updated_menu_config["process_visible_fields"] = process_visible_fields
+    updated_menu_config["process_visible_field_rows"] = normalized_rows
+    updated_menu_config["process_visible_field_header_map"] = process_visible_field_header_map
+    updated_menu_config["process_visible_headers"] = process_visible_headers
+    updated_menu_config["visible_field_headers"] = process_visible_field_header_map
+    updated_menu_config["visible_fields"] = legacy_visible_fields
+    updated_menu_config["process_visible_fields_configured"] = True
+    updated_menu_config["process_visible_fields_refresh_version"] = refresh_token
+    updated_menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+    updated_menu_config[
+        MENU_CONFIG_DEPARTAMENTOS_ROLES_OPERATIONS_FIELDS_AUTO_SEEDED_V1_KEY
+    ] = True
+
+    return updated_menu_config, True
+
+
+def _repair_meu_perfil_process_headers_v1(
+    menu_config: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool]:
+    if not isinstance(menu_config, dict):
+        return {}, False
+
+    if bool(menu_config.get(MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY)):
+        return dict(menu_config), False
+
+    normalized_fields = normalize_menu_process_additional_fields_v1(
+        menu_config.get("additional_fields")
+    )
+
+    header_order: list[str] = []
+    header_label_map: dict[str, str] = {}
+    for item in normalized_fields:
+        field_type = str(item.get("field_type") or "").strip().lower()
+        field_key = str(item.get("key") or "").strip().lower()
+        if field_type != "header" or not field_key:
+            continue
+        header_order.append(field_key)
+        header_label_map[field_key] = str(item.get("label") or "").strip()
+
+    if not header_order:
+        updated_menu_config = dict(menu_config)
+        updated_menu_config[MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY] = True
+        return updated_menu_config, True
+
+    selectable_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in get_menu_process_selectable_field_options(
+            MENU_MEU_PERFIL_KEY,
+            menu_config,
+        )
+        if str(item.get("key") or "").strip()
+    }
+    if not selectable_keys:
+        updated_menu_config = dict(menu_config)
+        updated_menu_config[MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY] = True
+        return updated_menu_config, True
+
+    visible_fields_raw = normalize_menu_process_visible_fields(
+        MENU_MEU_PERFIL_KEY,
+        menu_config.get("visible_fields"),
+        menu_config,
+    )
+    visible_fields: list[str] = []
+    seen_visible_fields: set[str] = set()
+    for raw_field_key in visible_fields_raw:
+        field_key = str(raw_field_key or "").strip().lower()
+        if not field_key or field_key in seen_visible_fields:
+            continue
+        if field_key not in selectable_keys:
+            continue
+        seen_visible_fields.add(field_key)
+        visible_fields.append(field_key)
+
+    if not visible_fields:
+        return dict(menu_config), False
+
+    current_header_map = get_menu_process_visible_field_header_map(
+        MENU_MEU_PERFIL_KEY,
+        menu_config,
+    )
+    visible_field_headers: dict[str, str] = {}
+    for field_key, header_key in current_header_map.items():
+        clean_field_key = str(field_key or "").strip().lower()
+        clean_header_key = str(header_key or "").strip().lower()
+        if not clean_field_key or not clean_header_key:
+            continue
+        if clean_field_key not in selectable_keys:
+            continue
+        if clean_header_key not in header_order:
+            continue
+        visible_field_headers[clean_field_key] = clean_header_key
+
+    used_headers = {
+        str(visible_field_headers.get(field_key) or "").strip().lower()
+        for field_key in visible_fields
+        if str(visible_field_headers.get(field_key) or "").strip()
+    }
+    missing_headers = [header_key for header_key in header_order if header_key not in used_headers]
+
+    if not missing_headers:
+        updated_menu_config = dict(menu_config)
+        updated_menu_config[MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY] = True
+        return updated_menu_config, True
+
+    changed = False
+    default_candidate_order = ["nome", "telefone", "email", "pais"]
+    morada_candidate_order = ["pais", "telefone", "email", "nome"]
+    already_mapped_fields = set(visible_field_headers.keys())
+
+    def resolve_insert_index_v1(target_header_key: str) -> int:
+        first_field_index_by_header: dict[str, int] = {}
+        for field_index, field_key in enumerate(visible_fields):
+            header_key = str(visible_field_headers.get(field_key) or "").strip().lower()
+            if not header_key:
+                continue
+            if header_key not in first_field_index_by_header:
+                first_field_index_by_header[header_key] = field_index
+
+        if target_header_key not in header_order:
+            return len(visible_fields)
+
+        target_index = header_order.index(target_header_key)
+        for next_header_key in header_order[target_index + 1:]:
+            if next_header_key in first_field_index_by_header:
+                return first_field_index_by_header[next_header_key]
+
+        return len(visible_fields)
+
+    for missing_header_key in missing_headers:
+        label_text = str(header_label_map.get(missing_header_key) or "").strip().lower()
+        if "morada" in label_text:
+            candidate_order = morada_candidate_order
+        else:
+            candidate_order = default_candidate_order
+
+        target_field_key = ""
+        for candidate_key in candidate_order:
+            clean_candidate_key = str(candidate_key or "").strip().lower()
+            if clean_candidate_key not in selectable_keys:
+                continue
+            if clean_candidate_key in already_mapped_fields:
+                continue
+            target_field_key = clean_candidate_key
+            break
+
+        if not target_field_key:
+            continue
+
+        visible_field_headers[target_field_key] = missing_header_key
+        already_mapped_fields.add(target_field_key)
+        changed = True
+
+        if target_field_key not in visible_fields:
+            insert_index = resolve_insert_index_v1(missing_header_key)
+            visible_fields.insert(max(0, min(insert_index, len(visible_fields))), target_field_key)
+
+    if not changed:
+        updated_menu_config = dict(menu_config)
+        updated_menu_config[MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY] = True
+        return updated_menu_config, True
+
+    normalized_rows = [
+        {
+            "field_key": field_key,
+            "header_key": str(visible_field_headers.get(field_key) or "").strip().lower(),
+        }
+        for field_key in visible_fields
+    ]
+
+    repaired_header_map = {
+        row["field_key"]: row["header_key"]
+        for row in normalized_rows
+        if row.get("header_key")
+    }
+
+    process_visible_headers: list[str] = []
+    seen_headers: set[str] = set()
+    for row in normalized_rows:
+        header_key = str(row.get("header_key") or "").strip().lower()
+        if not header_key or header_key in seen_headers:
+            continue
+        seen_headers.add(header_key)
+        process_visible_headers.append(header_key)
+
+    refresh_token = str(uuid4())
+    updated_menu_config = dict(menu_config)
+    updated_menu_config["process_visible_fields"] = list(visible_fields)
+    updated_menu_config["process_visible_field_header_map"] = repaired_header_map
+    updated_menu_config["process_visible_field_rows"] = normalized_rows
+    updated_menu_config["process_visible_headers"] = process_visible_headers
+    updated_menu_config["process_visible_fields_configured"] = True
+    updated_menu_config["process_visible_fields_refresh_version"] = refresh_token
+    updated_menu_config["visible_fields"] = _build_legacy_visible_fields_from_rows_v1(normalized_rows)
+    updated_menu_config["visible_field_headers"] = repaired_header_map
+    updated_menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+    updated_menu_config[MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY] = True
+
+    return updated_menu_config, True
+
+
+def _seed_process_fields_all_visible_once_v1(
+    menu_key: Any,
+    menu_config: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool]:
+    if not isinstance(menu_config, dict):
+        return {}, False
+
+    if bool(menu_config.get(MENU_CONFIG_PROCESS_FIELDS_SEEDED_ALL_V1_KEY)):
+        return dict(menu_config), False
+
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    selectable_options = get_menu_process_selectable_field_options(
+        clean_menu_key,
+        menu_config,
+    )
+    selectable_keys_order: list[str] = []
+    seen_selectable_keys: set[str] = set()
+    for option in selectable_options:
+        field_key = str(option.get("key") or "").strip().lower()
+        if not field_key or field_key in seen_selectable_keys:
+            continue
+        seen_selectable_keys.add(field_key)
+        selectable_keys_order.append(field_key)
+
+    updated_menu_config = dict(menu_config)
+
+    if not selectable_keys_order:
+        updated_menu_config[MENU_CONFIG_PROCESS_FIELDS_SEEDED_ALL_V1_KEY] = True
+        return updated_menu_config, True
+
+    header_options = get_menu_process_header_options(clean_menu_key, menu_config)
+    header_order: list[str] = []
+    header_keys: set[str] = set()
+    for option in header_options:
+        header_key = str(option.get("key") or "").strip().lower()
+        if not header_key or header_key in header_keys:
+            continue
+        header_keys.add(header_key)
+        header_order.append(header_key)
+
+    existing_header_map: dict[str, str] = {}
+    for raw_map in (
+        menu_config.get("process_visible_field_header_map"),
+        menu_config.get("visible_field_headers"),
+    ):
+        if not isinstance(raw_map, dict):
+            continue
+        for raw_field_key, raw_header_key in raw_map.items():
+            field_key = str(raw_field_key or "").strip().lower()
+            header_key = str(raw_header_key or "").strip().lower()
+            if field_key in seen_selectable_keys and header_key in header_keys:
+                existing_header_map[field_key] = header_key
+
+    process_visible_rows = menu_config.get("process_visible_field_rows")
+    if isinstance(process_visible_rows, list):
+        for raw_row in process_visible_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            header_key = str(raw_row.get("header_key") or "").strip().lower()
+            if field_key in seen_selectable_keys and header_key in header_keys:
+                existing_header_map[field_key] = header_key
+
+    inferred_header_map: dict[str, str] = {}
+    additional_fields = normalize_menu_process_additional_fields_v1(
+        menu_config.get("additional_fields")
+    )
+    active_header_key = ""
+    for raw_item in additional_fields:
+        if not isinstance(raw_item, dict):
+            continue
+        item_key = str(raw_item.get("key") or "").strip().lower()
+        item_type = str(raw_item.get("field_type") or "").strip().lower()
+        if item_type == "header":
+            active_header_key = item_key if item_key in header_keys else ""
+            continue
+        if item_key in seen_selectable_keys and active_header_key and item_key not in inferred_header_map:
+            inferred_header_map[item_key] = active_header_key
+
+    rows: list[dict[str, str]] = []
+    for field_key in selectable_keys_order:
+        header_key = str(existing_header_map.get(field_key) or inferred_header_map.get(field_key) or "").strip().lower()
+        if header_key not in header_keys:
+            header_key = ""
+        rows.append({"field_key": field_key, "header_key": header_key})
+
+    if clean_menu_key == MENU_MEU_PERFIL_KEY:
+        for row in rows:
+            field_key = row["field_key"]
+            if row.get("header_key"):
+                continue
+            if field_key in {"nome", "telefone", "email"} and "custom_dados_pessoais" in header_keys:
+                row["header_key"] = "custom_dados_pessoais"
+            if field_key == "pais" and "custom_dados_de_morada" in header_keys:
+                row["header_key"] = "custom_dados_de_morada"
+
+    used_headers = {
+        str(row.get("header_key") or "").strip().lower()
+        for row in rows
+        if str(row.get("header_key") or "").strip()
+    }
+    missing_headers = [header_key for header_key in header_order if header_key not in used_headers]
+    if missing_headers:
+        empty_indexes = [
+            index
+            for index, row in enumerate(rows)
+            if not str(row.get("header_key") or "").strip()
+        ]
+        for missing_header_key in missing_headers:
+            if not empty_indexes:
+                break
+            chosen_index: int | None = None
+            if clean_menu_key == MENU_MEU_PERFIL_KEY and "morada" in missing_header_key:
+                for index, row in enumerate(rows):
+                    if row["field_key"] == "pais":
+                        chosen_index = index
+                        break
+            if chosen_index is None:
+                chosen_index = empty_indexes[0]
+            rows[chosen_index]["header_key"] = missing_header_key
+            empty_indexes = [
+                index
+                for index, row in enumerate(rows)
+                if not str(row.get("header_key") or "").strip()
+            ]
+
+    process_visible_field_header_map = {
+        str(row["field_key"]): str(row["header_key"])
+        for row in rows
+        if str(row.get("header_key") or "").strip()
+    }
+
+    process_visible_headers: list[str] = []
+    seen_headers: set[str] = set()
+    for row in rows:
+        header_key = str(row.get("header_key") or "").strip().lower()
+        if not header_key or header_key in seen_headers:
+            continue
+        seen_headers.add(header_key)
+        process_visible_headers.append(header_key)
+
+    refresh_token = str(uuid4())
+    updated_menu_config["process_visible_fields"] = [str(row["field_key"]) for row in rows]
+    updated_menu_config["process_visible_field_rows"] = rows
+    updated_menu_config["process_visible_field_header_map"] = process_visible_field_header_map
+    updated_menu_config["process_visible_headers"] = process_visible_headers
+    updated_menu_config["process_visible_fields_configured"] = True
+    updated_menu_config["process_visible_fields_refresh_version"] = refresh_token
+    updated_menu_config["visible_fields"] = _build_legacy_visible_fields_from_rows_v1(rows)
+    updated_menu_config["visible_field_headers"] = process_visible_field_header_map
+    updated_menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+    updated_menu_config[MENU_CONFIG_PROCESS_FIELDS_SEEDED_ALL_V1_KEY] = True
+
+    return updated_menu_config, True
+
+
 def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
     existing_rows = session.execute(text("SELECT menu_key FROM sidebar_menu_settings")).all()
     existing_keys = {_normalize_menu_key(row.menu_key) for row in existing_rows}
@@ -1146,6 +2095,119 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
                 """
             ),
             {"menu_key": MENU_MEU_PERFIL_KEY, "menu_label": "Meu perfil"},
+        )
+        changed = True
+
+    meu_perfil_config_raw = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE menu_key = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": MENU_MEU_PERFIL_KEY},
+    ).scalar_one_or_none()
+    meu_perfil_config = _parse_menu_config(meu_perfil_config_raw)
+    working_meu_perfil_config, meu_perfil_headers_repaired = _repair_meu_perfil_process_headers_v1(
+        meu_perfil_config
+    )
+    working_meu_perfil_config, meu_perfil_department_fields_seeded = (
+        _ensure_meu_perfil_department_membership_fields_v1(
+            working_meu_perfil_config
+        )
+    )
+    working_meu_perfil_config, meu_perfil_roles_operations_moved = (
+        _migrate_meu_perfil_department_roles_operations_out_v1(
+            working_meu_perfil_config
+        )
+    )
+    if (
+        meu_perfil_headers_repaired
+        or meu_perfil_department_fields_seeded
+        or meu_perfil_roles_operations_moved
+    ):
+        session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE menu_key = :menu_key
+                """
+            ),
+            {
+                "menu_key": MENU_MEU_PERFIL_KEY,
+                "menu_config": json.dumps(working_meu_perfil_config, ensure_ascii=False),
+            },
+        )
+        changed = True
+
+    departamentos_row = session.execute(
+        text(
+            """
+            SELECT id, menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": MENU_DEPARTAMENTOS_KEY},
+    ).mappings().first()
+    if departamentos_row is not None:
+        departamentos_config = _parse_menu_config(departamentos_row.get("menu_config"))
+        updated_departamentos_config, departamentos_fields_seeded = (
+            _ensure_departamentos_roles_operations_fields_v1(
+                departamentos_config
+            )
+        )
+        if departamentos_fields_seeded:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "menu_key": MENU_DEPARTAMENTOS_KEY,
+                    "menu_config": json.dumps(updated_departamentos_config, ensure_ascii=False),
+                },
+            )
+            changed = True
+
+    process_config_rows = session.execute(
+        text(
+            """
+            SELECT menu_key, menu_config
+            FROM sidebar_menu_settings
+            """
+        )
+    ).all()
+    for process_config_row in process_config_rows:
+        clean_menu_key = _resolve_legacy_menu_alias(process_config_row.menu_key)
+        if not clean_menu_key:
+            continue
+        current_menu_config = _parse_menu_config(process_config_row.menu_config)
+        seeded_menu_config, seeded_changed = _seed_process_fields_all_visible_once_v1(
+            clean_menu_key,
+            current_menu_config,
+        )
+        if not seeded_changed:
+            continue
+        session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": clean_menu_key,
+                "menu_config": json.dumps(seeded_menu_config, ensure_ascii=False),
+            },
         )
         changed = True
 
@@ -1388,6 +2450,20 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         clean_setting_key = _normalize_menu_key(setting.get("key"))
         setting_row = db_by_key.get(clean_setting_key)
         section_config = _parse_menu_config(None if setting_row is None else setting_row.menu_config)
+
+        # Prioriza o mapeamento atual por secao do sidebar para manter coerencia
+        # entre o formulario de edicao e a listagem de menus.
+        sidebar_section_key = _normalize_sidebar_section_key(setting.get("sidebar_section_key"))
+        sidebar_section_label = str(setting.get("sidebar_section_label") or "").strip()
+
+        if sidebar_section_key:
+            setting["menu_section"] = sidebar_section_key
+            setting["menu_section_label"] = sidebar_section_label or get_menu_section_label(
+                sidebar_section_key
+            )
+            continue
+
+        # Fallback legado: usa o menu_section historico quando nao existir secao.
         section_key = normalize_menu_section_key(
             section_config.get("menu_section"),
             clean_setting_key,
@@ -2775,6 +3851,127 @@ def _normalize_process_list_key_v3(raw_key: Any) -> str:
     return clean_key
 
 
+PROCESS_LIST_SOURCE_MANUAL_V1 = "manual"
+PROCESS_LIST_SOURCE_USERS_V1 = "users"
+PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 = "table:"
+PROCESS_LIST_SOURCE_TABLE_EXCLUDED_KEYS_V1 = frozenset({"alembic_version", "sqlite_sequence"})
+PROCESS_LIST_SOURCE_LABELS_V1 = {
+    PROCESS_LIST_SOURCE_MANUAL_V1: "Manual",
+    PROCESS_LIST_SOURCE_USERS_V1: "Utilizador (automático)",
+}
+PROCESS_LIST_SOURCE_TABLE_DISPLAY_COLUMN_PRIORITY_V1 = (
+    "label",
+    "nome",
+    "name",
+    "title",
+    "titulo",
+    "descricao",
+    "description",
+    "full_name",
+    "display_name",
+    "login_email",
+    "email",
+    "code",
+    "codigo",
+    "key",
+    "id",
+)
+PROCESS_LIST_SOURCE_TABLE_STATUS_COLUMN_PRIORITY_V1 = (
+    "account_status",
+    "status",
+    "section_status",
+    "record_status",
+    "is_active",
+)
+PROCESS_LIST_SOURCE_TABLE_TEXT_TYPES_V1 = frozenset(
+    {
+        "character varying",
+        "character",
+        "text",
+        "citext",
+        "varchar",
+        "bpchar",
+    }
+)
+
+
+def _is_process_list_users_source_alias_v1(raw_value: Any) -> bool:
+    clean_value = str(raw_value or "").strip().lower()
+    clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
+    clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
+    clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+
+    return clean_value in {"users", "user", "utilizador", "utilizadores", "tabela_utilizador", "users_table"}
+
+
+def _normalize_process_list_table_key_v1(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
+    clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
+    clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+    return clean_value
+
+
+def _build_process_list_table_source_key_v1(table_key: str) -> str:
+    clean_table_key = _normalize_process_list_table_key_v1(table_key)
+    if not clean_table_key:
+        return ""
+    return f"{PROCESS_LIST_SOURCE_TABLE_PREFIX_V1}{clean_table_key}"
+
+
+def _extract_process_list_table_key_from_source_v1(raw_source: Any) -> str:
+    clean_source = str(raw_source or "").strip().lower()
+
+    if not clean_source:
+        return ""
+
+    if clean_source.startswith(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):
+        return _normalize_process_list_table_key_v1(
+            clean_source[len(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):]
+        )
+
+    if clean_source.startswith("table_"):
+        return _normalize_process_list_table_key_v1(clean_source[6:])
+
+    return ""
+
+
+def _format_process_list_table_label_v1(table_key: str) -> str:
+    clean_table_key = _normalize_process_list_table_key_v1(table_key)
+    if not clean_table_key:
+        return "Tabela"
+    return clean_table_key.replace("_", " ").title()
+
+
+def _is_process_list_source_automatic_v1(source_key: str) -> bool:
+    clean_source_key = _normalize_process_list_source_key_v1(source_key)
+    return clean_source_key == PROCESS_LIST_SOURCE_USERS_V1 or bool(
+        _extract_process_list_table_key_from_source_v1(clean_source_key)
+    )
+
+
+def _normalize_process_list_source_key_v1(raw_source: Any) -> str:
+    if _is_process_list_users_source_alias_v1(raw_source):
+        return PROCESS_LIST_SOURCE_USERS_V1
+
+    table_key = _extract_process_list_table_key_from_source_v1(raw_source)
+    if table_key:
+        return _build_process_list_table_source_key_v1(table_key)
+
+    return PROCESS_LIST_SOURCE_MANUAL_V1
+
+
+def _resolve_process_list_source_label_v1(source_key: str) -> str:
+    clean_source_key = _normalize_process_list_source_key_v1(source_key)
+    source_table_key = _extract_process_list_table_key_from_source_v1(clean_source_key)
+    if source_table_key:
+        return f"Tabela: {_format_process_list_table_label_v1(source_table_key)} (automático)"
+    return PROCESS_LIST_SOURCE_LABELS_V1.get(
+        clean_source_key,
+        PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_MANUAL_V1],
+    )
+
+
 def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_lists, (list, tuple, set)):
         return []
@@ -2808,13 +4005,24 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
 
         seen_keys.add(list_key)
 
+        raw_source_key = (
+            raw_item.get("source_key")
+            or raw_item.get("source")
+            or raw_item.get("process_list_source")
+            or raw_item.get("data_source")
+        )
+        source_key = _normalize_process_list_source_key_v1(raw_source_key)
+
         raw_items = raw_item.get("items_csv", raw_item.get("items"))
-        if isinstance(raw_items, str):
-            raw_values = raw_items.split(",")
-        elif isinstance(raw_items, (list, tuple, set)):
-            raw_values = raw_items
-        else:
+        if _is_process_list_source_automatic_v1(source_key):
             raw_values = []
+        else:
+            if isinstance(raw_items, str):
+                raw_values = raw_items.split(",")
+            elif isinstance(raw_items, (list, tuple, set)):
+                raw_values = raw_items
+            else:
+                raw_values = []
 
         items: list[str] = []
         seen_items: set[str] = set()
@@ -2833,16 +4041,304 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
             seen_items.add(lookup)
             items.append(clean_value)
 
+        has_explicit_source = bool(str(raw_source_key or "").strip())
+        if (
+            source_key == PROCESS_LIST_SOURCE_MANUAL_V1
+            and not has_explicit_source
+            and len(items) == 1
+            and _is_process_list_users_source_alias_v1(items[0])
+        ):
+            source_key = PROCESS_LIST_SOURCE_USERS_V1
+            items = []
+
         normalized.append(
             {
                 "key": list_key,
                 "label": label,
                 "items": items,
                 "items_csv": ", ".join(items),
+                "source_key": source_key,
+                "source_label": _resolve_process_list_source_label_v1(source_key),
             }
         )
 
     return normalized
+
+
+def _load_process_list_users_source_items_v1(session: Session) -> list[str]:
+    rows = session.execute(
+        text(
+            """
+            SELECT DISTINCT
+                trim(coalesce(nullif(m.full_name, ''), nullif(u.login_email, ''))) AS option_label
+            FROM users AS u
+            JOIN members AS m ON m.id = u.member_id
+            WHERE lower(trim(coalesce(u.account_status, ''))) = 'active'
+            ORDER BY option_label
+            """
+        )
+    ).mappings().all()
+
+    labels: list[str] = []
+    seen_labels: set[str] = set()
+
+    for row in rows:
+        option_label = " ".join(str((row or {}).get("option_label") or "").strip().split())
+
+        if not option_label:
+            continue
+
+        lookup_label = option_label.lower()
+        if lookup_label in seen_labels:
+            continue
+
+        seen_labels.add(lookup_label)
+        labels.append(option_label)
+
+    return labels
+
+
+def _list_process_source_tables_v1(session: Session) -> list[str]:
+    rows = session.execute(
+        text(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_type = 'BASE TABLE'
+            ORDER BY table_name
+            """
+        )
+    ).mappings().all()
+
+    table_keys: list[str] = []
+    seen_table_keys: set[str] = set()
+
+    for row in rows:
+        table_key = _normalize_process_list_table_key_v1((row or {}).get("table_name"))
+
+        if (
+            not table_key
+            or table_key in seen_table_keys
+            or table_key in PROCESS_LIST_SOURCE_TABLE_EXCLUDED_KEYS_V1
+        ):
+            continue
+
+        seen_table_keys.add(table_key)
+        table_keys.append(table_key)
+
+    return table_keys
+
+
+def get_process_list_source_options_v1(session: Session) -> list[dict[str, str]]:
+    options: list[dict[str, str]] = [
+        {"key": PROCESS_LIST_SOURCE_MANUAL_V1, "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_MANUAL_V1]},
+        {"key": PROCESS_LIST_SOURCE_USERS_V1, "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_USERS_V1]},
+    ]
+
+    for table_key in _list_process_source_tables_v1(session):
+        if table_key == "users":
+            continue
+        options.append(
+            {
+                "key": _build_process_list_table_source_key_v1(table_key),
+                "label": _resolve_process_list_source_label_v1(
+                    _build_process_list_table_source_key_v1(table_key)
+                ),
+            }
+        )
+
+    return options
+
+
+def _quote_sql_identifier_v1(raw_identifier: Any) -> str:
+    return '"' + str(raw_identifier or "").replace('"', '""') + '"'
+
+
+def _load_process_source_table_columns_v1(
+    session: Session,
+    table_key: str,
+) -> list[dict[str, str]]:
+    clean_table_key = _normalize_process_list_table_key_v1(table_key)
+    if not clean_table_key:
+        return []
+
+    rows = session.execute(
+        text(
+            """
+            SELECT
+                column_name,
+                data_type,
+                udt_name,
+                ordinal_position
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = :table_name
+            ORDER BY ordinal_position
+            """
+        ),
+        {"table_name": clean_table_key},
+    ).mappings().all()
+
+    normalized_columns: list[dict[str, str]] = []
+    for row in rows:
+        column_name = _normalize_process_list_table_key_v1((row or {}).get("column_name"))
+        if not column_name:
+            continue
+        normalized_columns.append(
+            {
+                "column_name": column_name,
+                "data_type": str((row or {}).get("data_type") or "").strip().lower(),
+                "udt_name": str((row or {}).get("udt_name") or "").strip().lower(),
+            }
+        )
+
+    return normalized_columns
+
+
+def _is_process_source_table_text_column_v1(column_meta: dict[str, str]) -> bool:
+    return (
+        str(column_meta.get("data_type") or "").strip().lower() in PROCESS_LIST_SOURCE_TABLE_TEXT_TYPES_V1
+        or str(column_meta.get("udt_name") or "").strip().lower() in PROCESS_LIST_SOURCE_TABLE_TEXT_TYPES_V1
+    )
+
+
+def _resolve_process_source_table_display_column_v1(columns: list[dict[str, str]]) -> str:
+    if not columns:
+        return ""
+
+    columns_by_name = {
+        str(column.get("column_name") or "").strip().lower(): column
+        for column in columns
+        if str(column.get("column_name") or "").strip()
+    }
+
+    for preferred_name in PROCESS_LIST_SOURCE_TABLE_DISPLAY_COLUMN_PRIORITY_V1:
+        if preferred_name in columns_by_name:
+            return preferred_name
+
+    for column in columns:
+        if _is_process_source_table_text_column_v1(column):
+            return str(column.get("column_name") or "").strip().lower()
+
+    return str(columns[0].get("column_name") or "").strip().lower()
+
+
+def _resolve_process_source_table_status_column_v1(columns: list[dict[str, str]]) -> dict[str, str] | None:
+    columns_by_name = {
+        str(column.get("column_name") or "").strip().lower(): column
+        for column in columns
+        if str(column.get("column_name") or "").strip()
+    }
+
+    for preferred_name in PROCESS_LIST_SOURCE_TABLE_STATUS_COLUMN_PRIORITY_V1:
+        if preferred_name in columns_by_name:
+            return columns_by_name[preferred_name]
+
+    return None
+
+
+def _load_process_list_table_source_items_v1(
+    session: Session,
+    table_key: str,
+) -> list[str]:
+    clean_table_key = _normalize_process_list_table_key_v1(table_key)
+    if not clean_table_key:
+        return []
+
+    table_columns = _load_process_source_table_columns_v1(session, clean_table_key)
+    display_column = _resolve_process_source_table_display_column_v1(table_columns)
+    if not display_column:
+        return []
+
+    status_column_meta = _resolve_process_source_table_status_column_v1(table_columns)
+
+    quoted_schema = _quote_sql_identifier_v1("public")
+    quoted_table = _quote_sql_identifier_v1(clean_table_key)
+    quoted_display_column = _quote_sql_identifier_v1(display_column)
+    display_expr = f"trim(coalesce({quoted_display_column}::text, ''))"
+
+    where_parts = [f"{display_expr} <> ''"]
+
+    if status_column_meta:
+        quoted_status_column = _quote_sql_identifier_v1(status_column_meta.get("column_name"))
+        status_data_type = str(status_column_meta.get("data_type") or "").strip().lower()
+        status_udt_name = str(status_column_meta.get("udt_name") or "").strip().lower()
+
+        if status_data_type == "boolean" or status_udt_name == "bool":
+            where_parts.append(f"{quoted_status_column} IS TRUE")
+        else:
+            where_parts.append(
+                f"lower(trim(coalesce({quoted_status_column}::text, ''))) = 'active'"
+            )
+
+    where_sql = " AND ".join(where_parts)
+
+    rows = session.execute(
+        text(
+            f"""
+            SELECT DISTINCT {display_expr} AS option_label
+            FROM {quoted_schema}.{quoted_table}
+            WHERE {where_sql}
+            ORDER BY option_label
+            LIMIT 500
+            """
+        )
+    ).mappings().all()
+
+    items: list[str] = []
+    seen_items: set[str] = set()
+
+    for row in rows:
+        option_label = " ".join(str((row or {}).get("option_label") or "").strip().split())
+        if not option_label:
+            continue
+        lookup_label = option_label.lower()
+        if lookup_label in seen_items:
+            continue
+        seen_items.add(lookup_label)
+        items.append(option_label)
+
+    return items
+
+
+def _resolve_process_lists_dynamic_sources_v1(
+    session: Session,
+    process_lists: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not process_lists:
+        return []
+
+    resolved_lists: list[dict[str, Any]] = []
+    users_source_items_cache: list[str] | None = None
+    table_source_items_cache: dict[str, list[str]] = {}
+
+    for raw_process_list in process_lists:
+        process_list = dict(raw_process_list or {})
+        source_key = _normalize_process_list_source_key_v1(process_list.get("source_key"))
+        source_table_key = _extract_process_list_table_key_from_source_v1(source_key)
+
+        process_list["source_key"] = source_key
+        process_list["source_label"] = _resolve_process_list_source_label_v1(source_key)
+
+        if source_key == PROCESS_LIST_SOURCE_USERS_V1:
+            if users_source_items_cache is None:
+                users_source_items_cache = _load_process_list_users_source_items_v1(session)
+            process_list["items"] = list(users_source_items_cache)
+            process_list["items_csv"] = ", ".join(users_source_items_cache)
+        elif source_table_key:
+            if source_table_key not in table_source_items_cache:
+                table_source_items_cache[source_table_key] = _load_process_list_table_source_items_v1(
+                    session,
+                    source_table_key,
+                )
+            source_items = table_source_items_cache.get(source_table_key, [])
+            process_list["items"] = list(source_items)
+            process_list["items_csv"] = ", ".join(source_items)
+
+        resolved_lists.append(process_list)
+
+    return resolved_lists
 
 
 if "_original_normalize_menu_process_additional_fields_for_list_v3" not in globals():
@@ -2883,6 +4379,7 @@ if "_original_get_sidebar_menu_settings_for_lists_v3" not in globals():
 
 def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
     settings = _original_get_sidebar_menu_settings_for_lists_v3(session)
+    process_list_source_options = get_process_list_source_options_v1(session)
 
     rows = session.execute(
         text(
@@ -2902,7 +4399,10 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
     for item in settings:
         clean_key = _normalize_menu_key(item.get("key"))
         menu_config = config_by_key.get(clean_key, {})
-        process_lists = normalize_menu_process_lists_v3(menu_config.get("process_lists"))
+        process_lists = _resolve_process_lists_dynamic_sources_v1(
+            session,
+            normalize_menu_process_lists_v3(menu_config.get("process_lists")),
+        )
         process_subsequent_fields = normalize_menu_process_subsequent_fields(menu_config.get("subsequent_fields"))
         process_quantity_fields = normalize_menu_process_quantity_fields(
             menu_config.get("process_quantity_fields")
@@ -2910,6 +4410,7 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
         item["process_lists"] = process_lists
         item["process_subsequent_fields"] = process_subsequent_fields
         item["process_quantity_fields"] = process_quantity_fields
+        item["process_list_source_options"] = list(process_list_source_options)
         item["process_list_options"] = [
             {"key": process_list["key"], "label": process_list["label"]}
             for process_list in process_lists

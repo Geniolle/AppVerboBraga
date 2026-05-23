@@ -40,6 +40,7 @@ def normalize_update_menu_process_lists_input_v1(
     process_list_key: list[str],
     process_list_label: list[str],
     process_list_items_csv: list[str],
+    process_list_source: list[str],
     redirect_menu: str = "administrativo",
     redirect_target: str = "#settings-menu-edit-card",
 ) -> UpdateMenuProcessListsInput:
@@ -47,12 +48,14 @@ def normalize_update_menu_process_lists_input_v1(
         len(process_list_key or []),
         len(process_list_label or []),
         len(process_list_items_csv or []),
+        len(process_list_source or []),
     )
 
     payload_lists: list[dict[str, str]] = []
     for row_index in range(rows_count):
         label = process_list_label[row_index] if row_index < len(process_list_label or []) else ""
         items_csv = process_list_items_csv[row_index] if row_index < len(process_list_items_csv or []) else ""
+        source_key = process_list_source[row_index] if row_index < len(process_list_source or []) else ""
 
         if not str(label or "").strip() and not str(items_csv or "").strip():
             continue
@@ -62,6 +65,7 @@ def normalize_update_menu_process_lists_input_v1(
                 "key": process_list_key[row_index] if row_index < len(process_list_key or []) else "",
                 "label": label,
                 "items_csv": items_csv,
+                "source_key": source_key,
             }
         )
 

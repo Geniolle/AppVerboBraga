@@ -34,14 +34,20 @@
 
 .admin-subprocess-form-v1 {
   width: 100%;
+  min-width: 0;
 }
 
 .admin-subprocess-create-collapse-v1 > summary {
   min-width: 0;
+  list-style: none;
 }
 
 .admin-subprocess-create-collapse-v1 > summary::-webkit-details-marker {
   display: none;
+}
+
+.admin-subprocess-create-collapse-v1 > summary::marker {
+  content: none;
 }
 
 .admin-subprocess-create-collapse-v1[open] > summary {
@@ -54,6 +60,7 @@
   gap: 12px;
   align-items: end;
   width: 100%;
+  min-width: 0;
 }
 
 .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
@@ -72,6 +79,7 @@
 .admin-subprocess-field-v1 input,
 .admin-subprocess-field-v1 select {
   width: 100%;
+  min-width: 0;
   min-height: 38px;
   border: 1px solid #c6d0e2;
   border-radius: 7px;
@@ -108,7 +116,13 @@
   width: 100%;
 }
 
+.admin-subprocess-table-wrap-v1 {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .admin-subprocess-table-v1 {
+  min-width: 700px;
   border-collapse: collapse;
 }
 
@@ -130,6 +144,95 @@
 .admin-subprocess-table-v1 th:last-child,
 .admin-subprocess-table-v1 td:last-child {
   text-align: center;
+}
+
+.admin-subprocess-card-v1[data-admin-subprocess="utilizador"] .admin-subprocess-table-wrap-v1 {
+  overflow-x: visible;
+}
+
+.admin-subprocess-card-v1[data-admin-subprocess="utilizador"] .admin-subprocess-table-v1 {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.admin-subprocess-card-v1[data-admin-subprocess="utilizador"] .admin-subprocess-table-v1 th,
+.admin-subprocess-card-v1[data-admin-subprocess="utilizador"] .admin-subprocess-table-v1 td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.admin-subprocess-card-v1[data-admin-subprocess="utilizador"] .admin-subprocess-table-v1 th:last-child,
+.admin-subprocess-card-v1[data-admin-subprocess="utilizador"] .admin-subprocess-table-v1 td:last-child {
+  white-space: nowrap;
+}
+
+/* ###################################################################################
+   (2) UTILIZADOR - RESPONSIVO NO SPLIT SCREEN
+   ################################################################################### */
+
+body.appverbo-admin-tab-utilizador :is(
+  #create-user-card,
+  #admin-users-created-card,
+  #inactive-users-card,
+  #admin-user-shadow-readonly-card,
+  #admin-user-shadow-inactive-card,
+  .admin-subprocess-card-v1[data-admin-subprocess="utilizador"]
+) {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+body.appverbo-admin-tab-utilizador :is(
+  #admin-users-created-card,
+  #inactive-users-card,
+  #admin-user-shadow-readonly-card,
+  #admin-user-shadow-inactive-card,
+  .admin-subprocess-card-v1[data-admin-subprocess="utilizador"].admin-subprocess-table-card-v1
+) :is(
+  table,
+  .admin-subprocess-table-v1,
+  #admin-users-table,
+  #inactive-users-table
+) {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed !important;
+}
+
+body.appverbo-admin-tab-utilizador :is(
+  #admin-users-created-card,
+  #inactive-users-card,
+  #admin-user-shadow-readonly-card,
+  #admin-user-shadow-inactive-card,
+  .admin-subprocess-card-v1[data-admin-subprocess="utilizador"].admin-subprocess-table-card-v1
+) :is(th, td) {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+body.appverbo-admin-tab-utilizador :is(
+  #admin-users-created-card,
+  #inactive-users-card,
+  #admin-user-shadow-readonly-card,
+  #admin-user-shadow-inactive-card,
+  .admin-subprocess-card-v1[data-admin-subprocess="utilizador"].admin-subprocess-table-card-v1
+) :is(th:last-child, td:last-child) {
+  min-width: 104px !important;
+  width: auto !important;
+  white-space: nowrap !important;
+}
+
+body.appverbo-admin-tab-utilizador
+.admin-subprocess-create-collapse-v1 > summary::marker {
+  content: none !important;
+}
+
+body.appverbo-admin-tab-utilizador
+.admin-subprocess-create-collapse-v1 > summary::-webkit-details-marker {
+  display: none !important;
 }
 
 .admin-subprocess-row-actions-v1 {
@@ -211,15 +314,33 @@
   color: #b91c1c;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1500px) {
+  .admin-subprocess-grid-v1 {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 1250px) {
   .admin-subprocess-grid-v1 {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1900px) {
+  .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1600px) {
   .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1500px) {
+  .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -252,6 +373,35 @@
   font-family: var(--appverbo-admin-subprocess-item-font-family-v1) !important;
   font-size: var(--appverbo-admin-subprocess-item-font-size-v1) !important;
   line-height: var(--appverbo-admin-subprocess-item-line-height-v1) !important;
+}
+
+@media (max-width: 1500px) {
+  #menu-tabs-card #submenu-items.menu-tabs,
+  #submenu-items.menu-tabs,
+  #submenu-items {
+    --appverbo-admin-tab-width-v1: 120px !important;
+  }
+}
+
+@media (max-width: 1250px) {
+  #menu-tabs-card #submenu-items.menu-tabs,
+  #submenu-items.menu-tabs,
+  #submenu-items {
+    --appverbo-admin-tab-width-v1: 98px !important;
+    flex-wrap: wrap !important;
+    row-gap: 8px !important;
+    overflow-x: visible !important;
+  }
+}
+
+@media (max-width: 760px) {
+  #menu-tabs-card #submenu-items.menu-tabs,
+  #submenu-items.menu-tabs,
+  #submenu-items {
+    --appverbo-admin-tab-width-v1: 92px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+  }
 }
 
 /* APPVERBO_ADMIN_SUBPROCESSES_V1_END */

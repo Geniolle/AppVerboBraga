@@ -39,6 +39,269 @@ from appverbo.services.profile import (
     parse_member_profile_fields,
 )
 
+# ###################################################################################
+# (1) PROCESSO EMPRESA - CAMPOS FIXOS DA ENTIDADE LOGADA
+# ###################################################################################
+MENU_EMPRESA_KEY = "empresa"
+MENU_EMPRESA_SECTION_KEY = "entity_dados_entidade"
+
+MENU_EMPRESA_PROCESS_FIELD_OPTIONS_V1: tuple[dict[str, Any], ...] = (
+    {
+        "key": MENU_EMPRESA_SECTION_KEY,
+        "label": "Dados da entidade",
+        "field_type": "header",
+        "is_required": False,
+    },
+    {
+        "key": "entity_internal_number",
+        "label": "Nº Cliente",
+        "field_type": "text",
+        "is_required": False,
+        "size": 30,
+    },
+    {
+        "key": "entity_name",
+        "label": "Nome da entidade",
+        "field_type": "text",
+        "is_required": True,
+        "size": 150,
+    },
+    {
+        "key": "entity_acronym",
+        "label": "Acrónimo (opcional)",
+        "field_type": "text",
+        "is_required": False,
+        "size": 30,
+    },
+    {
+        "key": "entity_tax_id",
+        "label": "Nº Identificação Fiscal",
+        "field_type": "text",
+        "is_required": True,
+        "size": 40,
+    },
+    {
+        "key": "entity_profile_scope",
+        "label": "Perfil da entidade",
+        "field_type": "text",
+        "is_required": True,
+        "size": 20,
+    },
+    {
+        "key": "entity_email",
+        "label": "Email",
+        "field_type": "email",
+        "is_required": True,
+        "size": 150,
+    },
+    {
+        "key": "entity_address",
+        "label": "Morada",
+        "field_type": "text",
+        "is_required": True,
+        "size": 255,
+    },
+    {
+        "key": "entity_door_number",
+        "label": "Nº da porta",
+        "field_type": "text",
+        "is_required": True,
+        "size": 30,
+    },
+    {
+        "key": "entity_freguesia",
+        "label": "Freguesia",
+        "field_type": "text",
+        "is_required": True,
+        "size": 120,
+    },
+    {
+        "key": "entity_postal_code",
+        "label": "Código postal",
+        "field_type": "text",
+        "is_required": True,
+        "size": 30,
+    },
+    {
+        "key": "entity_city",
+        "label": "Cidade",
+        "field_type": "text",
+        "is_required": True,
+        "size": 120,
+    },
+    {
+        "key": "entity_country",
+        "label": "País",
+        "field_type": "text",
+        "is_required": True,
+        "size": 120,
+    },
+    {
+        "key": "entity_phone",
+        "label": "Telefone",
+        "field_type": "phone",
+        "is_required": True,
+        "size": 30,
+    },
+    {
+        "key": "entity_responsible_name",
+        "label": "Nome do responsável",
+        "field_type": "text",
+        "is_required": True,
+        "size": 200,
+    },
+    {
+        "key": "entity_logo_file",
+        "label": "Imagem/ícone da entidade (ficheiro opcional)",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255,
+    },
+    {
+        "key": "entity_logo_current",
+        "label": "Logo atual",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255,
+    },
+)
+
+MENU_EMPRESA_VISIBLE_FIELD_KEYS_V1: tuple[str, ...] = (
+    "entity_internal_number",
+    "entity_name",
+    "entity_acronym",
+    "entity_tax_id",
+    "entity_profile_scope",
+    "entity_email",
+    "entity_address",
+    "entity_door_number",
+    "entity_freguesia",
+    "entity_postal_code",
+    "entity_city",
+    "entity_country",
+    "entity_phone",
+    "entity_responsible_name",
+    "entity_logo_file",
+    "entity_logo_current",
+)
+
+
+def _normalize_empresa_sidebar_setting_v1(sidebar_item: dict[str, Any]) -> dict[str, Any]:
+    normalized_item = dict(sidebar_item or {})
+    process_field_options = [dict(option) for option in MENU_EMPRESA_PROCESS_FIELD_OPTIONS_V1]
+    process_selectable_field_options = [
+        dict(option)
+        for option in process_field_options
+        if str(option.get("field_type") or "").strip().lower() != "header"
+    ]
+    process_visible_fields = list(MENU_EMPRESA_VISIBLE_FIELD_KEYS_V1)
+    process_visible_field_rows = [
+        {"field_key": field_key, "header_key": MENU_EMPRESA_SECTION_KEY}
+        for field_key in process_visible_fields
+    ]
+    process_visible_field_header_map = {
+        field_key: MENU_EMPRESA_SECTION_KEY
+        for field_key in process_visible_fields
+    }
+
+    normalized_item["process_field_options"] = process_field_options
+    normalized_item["process_additional_fields"] = [dict(option) for option in process_field_options]
+    normalized_item["process_selectable_field_options"] = process_selectable_field_options
+    normalized_item["process_visible_fields"] = process_visible_fields
+    normalized_item["process_visible_field_rows"] = process_visible_field_rows
+    normalized_item["process_visible_field_header_map"] = process_visible_field_header_map
+    normalized_item["process_visible_headers"] = [MENU_EMPRESA_SECTION_KEY]
+    normalized_item["visible_field_headers"] = dict(process_visible_field_header_map)
+
+    return normalized_item
+
+
+def _resolve_empresa_entity_values_v1(
+    session: Session,
+    selected_entity_id: int | None,
+    allowed_entity_ids: set[int] | None,
+) -> dict[str, str]:
+    def _map_profile_scope_label_v1(raw_scope: Any) -> str:
+        clean_scope = str(raw_scope or "").strip().lower()
+        if clean_scope == "owner":
+            return "Owner"
+        if clean_scope == "legado":
+            return "Legado"
+        return ""
+
+    candidate_entity_ids: list[int] = []
+    allowed_ids = set(allowed_entity_ids or set())
+
+    if selected_entity_id is not None and (not allowed_ids or selected_entity_id in allowed_ids):
+        candidate_entity_ids.append(int(selected_entity_id))
+
+    if allowed_ids:
+        for entity_id in sorted(allowed_ids):
+            if entity_id not in candidate_entity_ids:
+                candidate_entity_ids.append(entity_id)
+
+    for entity_id in candidate_entity_ids:
+        entity_row = session.execute(
+            select(
+                Entity.internal_number,
+                Entity.name,
+                Entity.acronym,
+                Entity.tax_id,
+                Entity.profile_scope,
+                Entity.email,
+                Entity.address,
+                Entity.door_number,
+                Entity.freguesia,
+                Entity.postal_code,
+                Entity.city,
+                Entity.country,
+                Entity.phone,
+                Entity.logo_url,
+                Entity.responsible_name,
+            )
+            .where(Entity.id == entity_id)
+            .limit(1)
+        ).one_or_none()
+        if entity_row is None:
+            continue
+        return {
+            "entity_internal_number": str(entity_row.internal_number or "").strip(),
+            "entity_name": str(entity_row.name or "").strip(),
+            "entity_acronym": str(entity_row.acronym or "").strip(),
+            "entity_tax_id": str(entity_row.tax_id or "").strip(),
+            "entity_profile_scope": _map_profile_scope_label_v1(entity_row.profile_scope),
+            "entity_email": str(entity_row.email or "").strip(),
+            "entity_address": str(entity_row.address or "").strip(),
+            "entity_door_number": str(entity_row.door_number or "").strip(),
+            "entity_freguesia": str(entity_row.freguesia or "").strip(),
+            "entity_postal_code": str(entity_row.postal_code or "").strip(),
+            "entity_city": str(entity_row.city or "").strip(),
+            "entity_country": str(entity_row.country or "").strip(),
+            "entity_phone": str(entity_row.phone or "").strip(),
+            "entity_logo_file": "",
+            "entity_logo_current": str(entity_row.logo_url or "").strip(),
+            "entity_responsible_name": str(entity_row.responsible_name or "").strip(),
+        }
+
+    return {
+        "entity_internal_number": "",
+        "entity_name": "",
+        "entity_acronym": "",
+        "entity_tax_id": "",
+        "entity_profile_scope": "",
+        "entity_email": "",
+        "entity_address": "",
+        "entity_door_number": "",
+        "entity_freguesia": "",
+        "entity_postal_code": "",
+        "entity_city": "",
+        "entity_country": "",
+        "entity_phone": "",
+        "entity_logo_file": "",
+        "entity_logo_current": "",
+        "entity_responsible_name": "",
+    }
+
 
 # APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_START
 def _format_profile_visibility_date_v1(raw_value: Any) -> str:
@@ -458,6 +721,20 @@ def get_page_data(
         current_entity_scope = str(raw_entity_scope or "").strip().lower()
 
     sidebar_menu_settings = get_sidebar_menu_settings(session)
+    normalized_sidebar_menu_settings: list[dict[str, Any]] = []
+    for raw_sidebar_item in sidebar_menu_settings:
+        sidebar_item = dict(raw_sidebar_item or {})
+        if resolve_menu_key_alias(sidebar_item.get("key")) == MENU_EMPRESA_KEY:
+            sidebar_item = _normalize_empresa_sidebar_setting_v1(sidebar_item)
+        normalized_sidebar_menu_settings.append(sidebar_item)
+    sidebar_menu_settings = normalized_sidebar_menu_settings
+
+    empresa_values_by_field = _resolve_empresa_entity_values_v1(
+        session,
+        selected_entity_id=selected_entity_id,
+        allowed_entity_ids=allowed_entity_ids,
+    )
+
     visible_sidebar_menu_keys = get_visible_sidebar_menu_keys(
         sidebar_menu_settings,
         current_user_is_admin=current_user_is_admin,
@@ -489,6 +766,9 @@ def get_page_data(
     for sidebar_item in sidebar_menu_settings:
         menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
         if not menu_key or menu_key in {"home", "perfil", "administrativo"}:
+            continue
+        if menu_key == MENU_EMPRESA_KEY:
+            menu_process_values_map[menu_key] = dict(empresa_values_by_field)
             continue
         visible_rows = (
             sidebar_item.get("process_visible_field_rows")

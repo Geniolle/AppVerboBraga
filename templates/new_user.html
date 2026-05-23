@@ -3,7 +3,6 @@
 {% from "macros/admin_menu_subprocess.html" import render_admin_menu_state %}
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
-{% from "partials/admin_user_shadow_readonly_v1.html" import render_admin_user_shadow_readonly_v12 %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 {# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_START #}
@@ -48,18 +47,18 @@
   </style>
 </noscript>
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
-<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260507-create-button-style-v1">
+<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260517-admin-status-pending-v8-sessoes-menu-title-parity">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260512-sidebar-owner-footer-logo-v7">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260523-departamentos-cards-separated-v6">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260523-fields-config-v9-list-source-tables">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260518-admin-tabs-width-from-definicoes-v4"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260522-admin-tabs-process-edit-active-v10"></script>
 
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260518-admin-subprocess-definicoes-one-row-v2">
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260521-admin-subprocess-responsive-split-v3">
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
@@ -141,7 +140,7 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260518-admin-subprocess-nav-v3-definicoes-click-fix" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260519-admin-subprocess-nav-v6-process-only-server-tabs-fix" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
@@ -205,7 +204,7 @@
 })();
 </script>
 <!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_START -->
-<script defer src="/static/js/modules/appverbo_page_state_refresh_home_v1.js?v=20260513-pagina-default-refresh-home-v1"></script>
+<script defer src="/static/js/modules/appverbo_page_state_refresh_home_v1.js?v=20260523-pagina-default-refresh-home-v2"></script>
 <!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_END -->
 
   <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_config_v1.css?v=20260516-admin-footer-config-v1">
@@ -225,6 +224,9 @@
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
         </section>
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_START -->
+        {% if current_user_is_admin and admin_tab == "utilizador" and admin_subprocess_state_utilizador_v1 %}
+          {{ render_admin_subprocess_state(admin_subprocess_state_utilizador_v1) }}
+        {% endif %}
         {% if admin_tab == "sessoes" and admin_subprocess_state %}
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
         {% endif %}
@@ -855,17 +857,20 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         {% endif %}
         <!-- APPVERBO_ADMIN_ENTIDADE_V2_USERS_NEW_END -->
 
-<section id="dynamic-process-card" class="card" style="display: none;">
+<section id="dynamic-process-create-card" class="card entity-panel-card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appverbo-dynamic-process-create-block-v1" style="display: none;">
+          <button
+            id="dynamic-process-edit-toggle"
+            type="button"
+            class="appverbo-subprocess-create-trigger-v1"
+            data-edit-target="dynamic-process-card"
+          >
+            Criar
+          </button>
+        </section>
+
+<section id="dynamic-process-card" class="card admin-subprocess-card-v1 appverbo-dynamic-process-card-v1" style="display: none;">
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
-            <button
-              id="dynamic-process-edit-toggle"
-              type="button"
-              class="profile-edit-toggle"
-              data-edit-target="dynamic-process-card"
-            >
-              Editar
-            </button>
           </div>
           {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert ok">{{ profile_success }}</div>
@@ -876,27 +881,51 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           <div id="dynamic-process-readonly" class="profile-readonly">
             <div id="dynamic-process-readonly-grid" class="personal-grid"></div>
           </div>
-          <form id="dynamic-process-edit-form" class="profile-edit-form" method="post" action="/users/profile/process-data">
+          <form id="dynamic-process-edit-form" class="profile-edit-form admin-subprocess-form-v1 appverbo-dynamic-process-form-v1" method="post" action="/users/profile/process-data" enctype="multipart/form-data">
             <input id="dynamic-process-menu-key" type="hidden" name="menu_key" value="">
             <input id="dynamic-process-section-key" type="hidden" name="section_key" value="">
             <input type="hidden" name="target" value="#dynamic-process-card">
             <input id="dynamic-process-history-action" type="hidden" name="history_action" value="create">
             <input id="dynamic-process-history-record-id" type="hidden" name="history_record_id" value="">
-            <div id="dynamic-process-edit-grid" class="personal-grid"></div>
-            <div class="profile-edit-actions">
+            <div id="dynamic-process-edit-grid" class="personal-grid admin-subprocess-grid-v1 appverbo-dynamic-process-grid-v1"></div>
+            <div class="profile-edit-actions form-action-row admin-subprocess-actions-v1">
               <button id="dynamic-process-submit-btn" type="submit">Guardar</button>
               <button type="button" class="profile-cancel-btn" data-edit-cancel="dynamic-process-card">Cancelar</button>
             </div>
           </form>
-          <div id="dynamic-process-history-block" class="admin-subsection" style="display: none;">
+          <div id="dynamic-process-history-block" class="admin-subsection appverbo-dynamic-process-history-block-v1" style="display: none;">
             <h3 id="dynamic-process-history-title">Lista de registos criados</h3>
-            <table id="dynamic-process-history-table" style="display: none;">
-              <thead id="dynamic-process-history-head"></thead>
-              <tbody id="dynamic-process-history-body"></tbody>
-            </table>
+            <div class="admin-subprocess-table-wrap-v1 appverbo-dynamic-process-table-wrap-v1">
+              <table id="dynamic-process-history-table" class="admin-subprocess-table-v1 dynamic-process-table" style="display: none;">
+                <thead id="dynamic-process-history-head"></thead>
+                <tbody id="dynamic-process-history-body"></tbody>
+              </table>
+            </div>
             <p id="dynamic-process-history-empty" class="empty" style="display: none;">Sem ausências criadas.</p>
           </div>
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
+        </section>
+
+        <section id="dynamic-process-history-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1 appverbo-dynamic-process-history-card-v1" style="display: none;">
+          <h2 id="dynamic-process-history-active-title">Registos ativos</h2>
+          <div class="admin-subprocess-table-wrap-v1 appverbo-dynamic-process-table-wrap-v1">
+            <table id="dynamic-process-history-active-table" class="admin-subprocess-table-v1 dynamic-process-table" style="display: none;">
+              <thead id="dynamic-process-history-active-head"></thead>
+              <tbody id="dynamic-process-history-active-body"></tbody>
+            </table>
+          </div>
+          <p id="dynamic-process-history-active-empty" class="empty" style="display: none;">Sem registos ativos.</p>
+        </section>
+
+        <section id="dynamic-process-history-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1 appverbo-dynamic-process-history-card-v1" style="display: none;">
+          <h2 id="dynamic-process-history-inactive-title">Registos inativos</h2>
+          <div class="admin-subprocess-table-wrap-v1 appverbo-dynamic-process-table-wrap-v1">
+            <table id="dynamic-process-history-inactive-table" class="admin-subprocess-table-v1 dynamic-process-table" style="display: none;">
+              <thead id="dynamic-process-history-inactive-head"></thead>
+              <tbody id="dynamic-process-history-inactive-body"></tbody>
+            </table>
+          </div>
+          <p id="dynamic-process-history-inactive-empty" class="empty" style="display: none;">Sem registos inativos.</p>
         </section>
 
         <section id="home-summary-card" class="card" data-menu-scope="home">
@@ -1383,17 +1412,17 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         </section>
 
         <!-- APPVERBO_UTILIZADOR_SHADOW_READONLY_V1_START -->
-        {% if current_user_is_admin and admin_tab == "utilizador" and admin_subprocess_shadow_state %}
-          {{ render_admin_user_shadow_readonly_v12(admin_subprocess_shadow_state) }}
+        {% if current_user_is_admin and admin_tab == "utilizador" and (not admin_subprocess_state_utilizador_v1) and admin_subprocess_shadow_state %}
+          {{ render_admin_subprocess_state(admin_subprocess_shadow_state) }}
         {% endif %}
         <!-- APPVERBO_UTILIZADOR_SHADOW_READONLY_V1_END -->
 
 {% if current_user_is_admin %}
-        {% if not (user_edit_data is defined and user_edit_data.id) %}
+        {% if admin_tab != "utilizador" and not (user_edit_data is defined and user_edit_data.id) %}
 {% include "admin/users/create_user_card.html" %}
         {% endif %}
 
-        {% if user_edit_data is defined and user_edit_data.id %}
+        {% if admin_tab != "utilizador" and user_edit_data is defined and user_edit_data.id %}
         {% include "admin/users/edit_user_card.html" %}
         {% endif %}
         <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_START -->
@@ -2316,7 +2345,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                     <div class="process-list-row-v8" data-process-list-row>
                       <input type="hidden" name="process_list_key" value="{{ process_list.key }}" disabled>
                       <input type="hidden" name="process_list_label" value="{{ process_list.label }}" disabled>
-                      <input type="hidden" name="process_list_items_csv" value="{{ process_list.items_csv }}" disabled>
+                      <input type="hidden" name="process_list_items_csv" value="{{ '' if (process_list.source_key == 'users' or (process_list.source_key|string).startswith('table:')) else process_list.items_csv }}" disabled>
+                      <input type="hidden" name="process_list_source" value="{{ process_list.source_key|default('manual') }}" disabled>
                     </div>
                     {% endfor %}
                   </div>
@@ -2342,8 +2372,27 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                         <input
                           id="process-list-editor-items"
                           type="text"
+                          placeholder="Ex.: Ativo, Inativo, Pendente"
                           data-process-list-editor-items
                         >
+                      </div>
+
+                      <div class="field">
+                        <label for="process-list-editor-source">Fonte de dados</label>
+                        {% set process_list_source_options = settings_edit_data.process_list_source_options|default([]) %}
+                        <select
+                          id="process-list-editor-source"
+                          data-process-list-editor-source
+                        >
+                          {% if process_list_source_options %}
+                            {% for source_option in process_list_source_options %}
+                              <option value="{{ source_option.key }}" {% if source_option.key == 'manual' %}selected{% endif %}>{{ source_option.label }}</option>
+                            {% endfor %}
+                          {% else %}
+                            <option value="manual" selected>Manual</option>
+                            <option value="users">Utilizador (automático)</option>
+                          {% endif %}
+                        </select>
                       </div>
 
                       <div class="field full">
@@ -2374,6 +2423,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                         <thead>
                           <tr>
                             <th>Nome da lista</th>
+                            <th>Fonte de dados</th>
                             <th>Conteúdo da lista</th>
                             <th class="configurable-items-actions-col-v1">Ações</th>
                           </tr>
@@ -3043,6 +3093,10 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       initialDynamicProcessSection: {{ initial_dynamic_process_section|tojson }},
       initialAdminTab: {{ admin_tab|tojson }},
       adminTabsWidthCh: {{ admin_tabs_width_ch|tojson }},
+      adminTabsTextSizePx: {{ admin_tabs_text_size_px|tojson }},
+      adminTabsFontFamily: {{ admin_tabs_font_family|tojson }},
+      adminTabsColorHex: {{ admin_tabs_color_hex|tojson }},
+      adminTabsTextColorHex: {{ admin_tabs_text_color_hex|tojson }},
       currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
       settingsAction: {{ settings_action|tojson }},
       settingsTab: {{ settings_tab|tojson }},
@@ -3056,18 +3110,18 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260430-final-buttons-v1"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-source-v3-table-auto"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260518-admin-table-search-v3-utilizador-shadow"></script>
-  <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260518-admin-definicoes-process-options-v4"></script>
-  <script src="/static/js/new_user.js?v=20260518-process-tabs-equal-width-v8-definicoes-active-fix" defer></script>
+  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260523-admin-table-search-v4-dynamic-total"></script>
+  <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260519-admin-definicoes-color-inline-v7"></script>
+<script src="/static/js/new_user.js?v=20260523-departamentos-cards-separated-v10" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260518-top-menu-active-v40-definicoes-context-fix"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
-  <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>
+  <script src="/static/js/modules/settings_process_tabs.js?v=20260522-settings-process-tabs-click-trace-v4"></script>
   <script src="/static/js/modules/menu_section_form.js?v=20260427c"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>

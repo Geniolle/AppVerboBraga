@@ -32,6 +32,7 @@ from appverbo.services.profile import (
     serialize_menu_process_quantity_values,
 )
 from appverbo.models import (
+    Department,
     Entity,
     Member,
     MemberEntity,
@@ -54,6 +55,16 @@ MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
 }
 
 
+
+
+def _remove_local_entity_logo_if_exists_v1(logo_url: str) -> None:
+    clean_logo_url = str(logo_url or "").strip()
+
+    if not clean_logo_url.startswith("/static/entities/"):
+        return
+
+    local_logo_path = BASE_DIR / clean_logo_url.lstrip("/")
+    local_logo_path.unlink(missing_ok=True)
 
 
 def _safe_process_flow_debug_value_v1(raw_value: Any, max_size: int = 2000) -> str:
@@ -445,6 +456,185 @@ def _normalize_process_state(raw_value: Any) -> str:
     if clean_value in {"inativo", "inactive", "0", "false", "off"}:
         return "inativo"
     return "ativo"
+
+
+def _resolve_department_name_field_key_v1(
+    field_keys: list[str],
+    field_meta_by_key: dict[str, dict[str, Any]],
+) -> str:
+    for raw_field_key in field_keys:
+        field_key = str(raw_field_key or "").strip().lower()
+        if not field_key:
+            continue
+        field_meta = field_meta_by_key.get(field_key) or {}
+        if _normalize_process_field_type(field_meta.get("field_type")) == "header":
+            continue
+        joined_lookup = " ".join(
+            part
+            for part in (
+                _normalize_lookup_text(field_key),
+                _normalize_lookup_text(field_meta.get("label")),
+            )
+            if part
+        )
+        if "departamento" not in joined_lookup:
+            continue
+        if "nome" not in joined_lookup:
+            continue
+        return field_key
+    return ""
+
+
+def _extract_department_name_value_v1(
+    values_by_field: dict[str, Any],
+    field_keys: list[str],
+    field_meta_by_key: dict[str, dict[str, Any]],
+) -> str:
+    if not isinstance(values_by_field, dict):
+        return ""
+    department_name_field_key = _resolve_department_name_field_key_v1(
+        field_keys,
+        field_meta_by_key,
+    )
+    if not department_name_field_key:
+        return ""
+    clean_name = " ".join(
+        str(values_by_field.get(department_name_field_key) or "").strip().split()
+    )
+    if not clean_name:
+        return ""
+    return clean_name[:150]
+
+
+def _parse_department_id_value_v1(raw_value: Any) -> int | None:
+    try:
+        parsed_id = int(str(raw_value or "").strip())
+    except (TypeError, ValueError):
+        return None
+    if parsed_id <= 0:
+        return None
+    return parsed_id
+
+
+def _resolve_selected_entity_id_for_process_v1(
+    request: Request,
+    session: Session,
+    current_user: dict[str, Any],
+) -> tuple[int | None, str]:
+    selected_entity_id = get_session_entity_id(request)
+    entity_permissions = get_user_entity_permissions(
+        session,
+        int(current_user["id"]),
+        str(current_user.get("login_email") or ""),
+        selected_entity_id,
+    )
+    resolved_entity_id = entity_permissions.get("selected_entity_id")
+
+    if resolved_entity_id is None:
+        return None, "Nenhuma entidade ativa foi encontrada para atualizar."
+
+    if not is_entity_within_permissions(int(resolved_entity_id), entity_permissions):
+        return None, "Sem permissao para atualizar esta entidade."
+
+    return int(resolved_entity_id), ""
+
+
+def _find_department_by_entity_and_name_v1(
+    session: Session,
+    entity_id: int,
+    department_name: str,
+) -> Department | None:
+    clean_department_name = " ".join(str(department_name or "").strip().split())
+    if not clean_department_name:
+        return None
+
+    return session.execute(
+        select(Department).where(
+            Department.entity_id == int(entity_id),
+            func.lower(func.trim(Department.name)) == clean_department_name.lower(),
+        )
+    ).scalar_one_or_none()
+
+
+def _upsert_department_for_process_v1(
+    session: Session,
+    *,
+    entity_id: int,
+    department_name: str,
+    is_active: bool,
+    preferred_department_id: int | None = None,
+) -> Department | None:
+    clean_department_name = " ".join(str(department_name or "").strip().split())[:150]
+    if not clean_department_name:
+        return None
+
+    department_by_id: Department | None = None
+    if preferred_department_id is not None:
+        possible_department = session.get(Department, int(preferred_department_id))
+        if (
+            possible_department is not None
+            and int(possible_department.entity_id) == int(entity_id)
+        ):
+            department_by_id = possible_department
+
+    department_by_name = _find_department_by_entity_and_name_v1(
+        session,
+        int(entity_id),
+        clean_department_name,
+    )
+    if department_by_name is not None:
+        department_by_name.name = clean_department_name
+        department_by_name.is_active = bool(is_active)
+        if (
+            department_by_id is not None
+            and int(department_by_id.id) != int(department_by_name.id)
+        ):
+            department_by_id.is_active = False
+        return department_by_name
+
+    if department_by_id is not None:
+        department_by_id.name = clean_department_name
+        department_by_id.is_active = bool(is_active)
+        return department_by_id
+
+    created_department = Department(
+        entity_id=int(entity_id),
+        name=clean_department_name,
+        is_active=bool(is_active),
+    )
+    session.add(created_department)
+    session.flush()
+    return created_department
+
+
+def _deactivate_department_for_process_v1(
+    session: Session,
+    *,
+    entity_id: int,
+    department_id: int | None,
+    department_name: str,
+) -> Department | None:
+    target_department: Department | None = None
+
+    if department_id is not None:
+        possible_department = session.get(Department, int(department_id))
+        if (
+            possible_department is not None
+            and int(possible_department.entity_id) == int(entity_id)
+        ):
+            target_department = possible_department
+
+    if target_department is None and department_name:
+        target_department = _find_department_by_entity_and_name_v1(
+            session,
+            int(entity_id),
+            department_name,
+        )
+
+    if target_department is not None:
+        target_department.is_active = False
+
+    return target_department
 
 def _build_process_sections(process_visible_field_rows: Any) -> list[dict[str, Any]]:
     if not isinstance(process_visible_field_rows, list):
@@ -1428,6 +1618,197 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+        if clean_menu_key == "empresa":
+            # ###################################################################################
+            # (1) RESOLVER ENTIDADE ATIVA E PERMISSOES
+            # ###################################################################################
+            selected_entity_id = get_session_entity_id(request)
+            entity_permissions = get_user_entity_permissions(
+                session,
+                int(current_user["id"]),
+                str(current_user.get("login_email") or ""),
+                selected_entity_id,
+            )
+            resolved_entity_id = entity_permissions.get("selected_entity_id")
+
+            if resolved_entity_id is None:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error="Nenhuma entidade ativa foi encontrada para atualizar.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            if not is_entity_within_permissions(int(resolved_entity_id), entity_permissions):
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error="Sem permissao para atualizar esta entidade.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            entity = session.get(Entity, int(resolved_entity_id))
+            if entity is None:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error="Entidade selecionada nao encontrada.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            # ###################################################################################
+            # (2) LER E NORMALIZAR CAMPOS EDITAVEIS DA ABA EMPRESA
+            # ###################################################################################
+            def _read_empresa_process_field_v1(field_key: str, max_size: int) -> str:
+                input_name = f"process_field__{field_key}"
+                clean_value = str(submitted_form.get(input_name) or "").strip()
+                if max_size > 0:
+                    clean_value = clean_value[:max_size]
+                return clean_value
+
+            def _optional_or_none_v1(clean_value: str) -> str | None:
+                return clean_value or None
+
+            clean_name = _read_empresa_process_field_v1("entity_name", 150)
+            clean_acronym = _read_empresa_process_field_v1("entity_acronym", 30)
+            clean_tax_id = _read_empresa_process_field_v1("entity_tax_id", 40)
+            clean_email = _read_empresa_process_field_v1("entity_email", 150)
+            clean_address = _read_empresa_process_field_v1("entity_address", 255)
+            clean_door_number = _read_empresa_process_field_v1("entity_door_number", 30)
+            clean_freguesia = _read_empresa_process_field_v1("entity_freguesia", 120)
+            clean_postal_code = _read_empresa_process_field_v1("entity_postal_code", 30)
+            clean_city = _read_empresa_process_field_v1("entity_city", 120)
+            clean_country = _read_empresa_process_field_v1("entity_country", 120)
+            clean_phone = _read_empresa_process_field_v1("entity_phone", 30)
+            clean_responsible_name = _read_empresa_process_field_v1("entity_responsible_name", 200)
+            clean_profile_scope_raw = _read_empresa_process_field_v1("entity_profile_scope", 20).lower()
+            raw_logo_file = submitted_form.get("process_field__entity_logo_file")
+            clean_remove_logo_raw = str(submitted_form.get("process_field__entity_logo_remove") or "").strip().lower()
+            remove_logo_requested = clean_remove_logo_raw in {"1", "true", "sim", "yes", "on"}
+
+            clean_profile_scope = ""
+            if clean_profile_scope_raw in {"owner", "legado"}:
+                clean_profile_scope = clean_profile_scope_raw
+
+            required_empresa_fields_v1: tuple[tuple[str, str], ...] = (
+                ("Nome da entidade", clean_name),
+                ("Nº Identificação Fiscal", clean_tax_id),
+                ("Perfil da entidade", clean_profile_scope),
+                ("Email", clean_email),
+                ("Telefone", clean_phone),
+                ("Nome do responsável", clean_responsible_name),
+                ("Morada", clean_address),
+                ("Nº da porta", clean_door_number),
+                ("Freguesia", clean_freguesia),
+                ("Código postal", clean_postal_code),
+                ("Cidade", clean_city),
+                ("País", clean_country),
+            )
+            missing_required_labels = [
+                label
+                for label, clean_value in required_empresa_fields_v1
+                if not str(clean_value or "").strip()
+            ]
+            if missing_required_labels:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_labels) + ".",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            stored_logo_url = ""
+            logo_upload_error = ""
+            if raw_logo_file is not None and str(getattr(raw_logo_file, "filename", "") or "").strip():
+                stored_logo_url, logo_upload_error = save_entity_logo_upload(raw_logo_file)
+
+            if logo_upload_error:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error=logo_upload_error,
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            current_logo_url = str(entity.logo_url or "").strip()
+            delete_old_logo_after_commit = ""
+
+            # ###################################################################################
+            # (3) PERSISTIR EM ENTITIES E REDIRECIONAR
+            # ###################################################################################
+            entity.name = clean_name
+            entity.acronym = _optional_or_none_v1(clean_acronym)
+            entity.tax_id = _optional_or_none_v1(clean_tax_id)
+            entity.email = _optional_or_none_v1(clean_email)
+            entity.address = _optional_or_none_v1(clean_address)
+            entity.door_number = _optional_or_none_v1(clean_door_number)
+            entity.freguesia = _optional_or_none_v1(clean_freguesia)
+            entity.postal_code = _optional_or_none_v1(clean_postal_code)
+            entity.city = _optional_or_none_v1(clean_city)
+            entity.country = _optional_or_none_v1(clean_country)
+            entity.phone = _optional_or_none_v1(clean_phone)
+            entity.responsible_name = _optional_or_none_v1(clean_responsible_name)
+            if stored_logo_url:
+                entity.logo_url = stored_logo_url
+                if (
+                    current_logo_url.startswith("/static/entities/")
+                    and current_logo_url != stored_logo_url
+                ):
+                    delete_old_logo_after_commit = current_logo_url
+            elif remove_logo_requested:
+                entity.logo_url = None
+                if current_logo_url.startswith("/static/entities/"):
+                    delete_old_logo_after_commit = current_logo_url
+
+            if bool(entity_permissions.get("can_manage_all_entities")) and clean_profile_scope:
+                entity.profile_scope = clean_profile_scope
+
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                if stored_logo_url:
+                    _remove_local_entity_logo_if_exists_v1(stored_logo_url)
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error="Falha ao atualizar os dados da Empresa.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            if delete_old_logo_after_commit:
+                _remove_local_entity_logo_if_exists_v1(delete_old_logo_after_commit)
+
+            raw_session_entity_id = request.session.get("entity_id")
+            parsed_session_entity_id = None
+            try:
+                parsed_session_entity_id = int(raw_session_entity_id)
+            except (TypeError, ValueError):
+                parsed_session_entity_id = None
+            if parsed_session_entity_id == int(entity.id):
+                request.session["entity_logo_url"] = str(entity.logo_url or "")
+
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_success="Dados da Empresa atualizados com sucesso.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         quantity_rules = _normalize_process_quantity_rules(
             process_setting.get("process_quantity_fields")
         )
@@ -1437,7 +1818,24 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             process_setting,
             requested_section_key,
         )
-        record_label_singular = "ausência" if absence_process_mode else "registo"
+        department_history_mode = (
+            history_process_mode
+            and not absence_process_mode
+            and "departamento" in _normalize_lookup_text(
+                " ".join(
+                    [
+                        clean_menu_key,
+                        str(process_setting.get("label") or ""),
+                        requested_section_key,
+                    ]
+                )
+            )
+        )
+        record_label_singular = (
+            "departamento"
+            if department_history_mode
+            else ("ausência" if absence_process_mode else "registo")
+        )
         if requested_history_action not in {"", "create", "update", "delete"}:
             requested_history_action = "create"
         if not history_process_mode:
@@ -1593,18 +1991,75 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
 
-            filtered_records = [
-                row
-                for row in existing_records
-                if str(row.get("record_id") or "").strip() != requested_history_record_id
-            ]
-            if len(filtered_records) == len(existing_records):
+            target_record = next(
+                (
+                    row
+                    for row in existing_records
+                    if str(row.get("record_id") or "").strip() == requested_history_record_id
+                ),
+                None,
+            )
+            if target_record is None:
                 return RedirectResponse(
                     url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
                         profile_error=f"{record_label_singular.capitalize()} não encontrado para eliminar.",
                     ),
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
+
+            if department_history_mode:
+                target_values = (
+                    target_record.get("values")
+                    if isinstance(target_record.get("values"), dict)
+                    else {}
+                )
+                target_state = _normalize_process_state(target_values.get("__estado"))
+                if target_state != "inativo":
+                    return RedirectResponse(
+                        url=_build_post_save_redirect_url_v6(
+                            submitted_form,
+                            menu=clean_menu_key,
+                            profile_error="Somente departamentos inativos podem ser eliminados.",
+                        ),
+                        status_code=status.HTTP_303_SEE_OTHER,
+                    )
+                target_department_id = _parse_department_id_value_v1(
+                    target_values.get("__department_id")
+                )
+                target_department_name = _extract_department_name_value_v1(
+                    target_values,
+                    list(target_values.keys()),
+                    field_meta_by_key,
+                )
+                if target_department_id is not None or target_department_name:
+                    resolved_entity_id, resolve_entity_error = (
+                        _resolve_selected_entity_id_for_process_v1(
+                            request,
+                            session,
+                            current_user,
+                        )
+                    )
+                    if resolve_entity_error:
+                        return RedirectResponse(
+                            url=_build_post_save_redirect_url_v6(
+                                submitted_form,
+                                menu=clean_menu_key,
+                                profile_error=resolve_entity_error,
+                            ),
+                            status_code=status.HTTP_303_SEE_OTHER,
+                        )
+                    _deactivate_department_for_process_v1(
+                        session,
+                        entity_id=int(resolved_entity_id),
+                        department_id=target_department_id,
+                        department_name=target_department_name,
+                    )
+
+            filtered_records = [
+                row
+                for row in existing_records
+                if str(row.get("record_id") or "").strip() != requested_history_record_id
+            ]
 
             if records_storage_key:
                 serialized_records = serialize_menu_process_records(filtered_records)
@@ -1695,7 +2150,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         if missing_required_quantity_labels:
             return RedirectResponse(
                 url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
-                    profile_error="Preencha os campos obrigatÃ³rios: " + ", ".join(missing_required_quantity_labels) + ".",
+                    profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_quantity_labels) + ".",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -1763,6 +2218,74 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             submitted_section_values["__estado"] = _normalize_process_state(
                 submitted_form.get("process_state")
             )
+        record_for_update = None
+        if (
+            history_process_mode
+            and requested_history_action == "update"
+            and requested_history_record_id
+        ):
+            record_for_update = next(
+                (
+                    row
+                    for row in existing_records
+                    if str(row.get("record_id") or "").strip() == requested_history_record_id
+                ),
+                None,
+            )
+        if (
+            history_process_mode
+            and department_history_mode
+            and requested_history_action in {"create", "update"}
+        ):
+            department_name = _extract_department_name_value_v1(
+                submitted_section_values,
+                active_section_field_keys,
+                field_meta_by_key,
+            )
+            if department_name:
+                if requested_history_action == "update" and requested_history_record_id and record_for_update is None:
+                    return RedirectResponse(
+                        url=_build_post_save_redirect_url_v6(
+                            submitted_form,
+                            menu=clean_menu_key,
+                            profile_error=f"{record_label_singular.capitalize()} nao encontrado para editar.",
+                        ),
+                        status_code=status.HTTP_303_SEE_OTHER,
+                    )
+                previous_values = (
+                    record_for_update.get("values")
+                    if isinstance(record_for_update, dict)
+                    and isinstance(record_for_update.get("values"), dict)
+                    else {}
+                )
+                previous_department_id = _parse_department_id_value_v1(
+                    previous_values.get("__department_id")
+                )
+                resolved_entity_id, resolve_entity_error = (
+                    _resolve_selected_entity_id_for_process_v1(
+                        request,
+                        session,
+                        current_user,
+                    )
+                )
+                if resolve_entity_error:
+                    return RedirectResponse(
+                        url=_build_post_save_redirect_url_v6(
+                            submitted_form,
+                            menu=clean_menu_key,
+                            profile_error=resolve_entity_error,
+                        ),
+                        status_code=status.HTTP_303_SEE_OTHER,
+                    )
+                synced_department = _upsert_department_for_process_v1(
+                    session,
+                    entity_id=int(resolved_entity_id),
+                    department_name=department_name,
+                    is_active=submitted_section_values.get("__estado") == "ativo",
+                    preferred_department_id=previous_department_id,
+                )
+                if synced_department is not None:
+                    submitted_section_values["__department_id"] = str(synced_department.id)
 
         if absence_process_mode:
             start_date_value: date | None = None

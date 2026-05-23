@@ -141,6 +141,14 @@
 
 .admin-user-shadow-table-shell-v1 {
   width: 100%;
+  min-width: 0;
+}
+
+.admin-user-shadow-table-shell-v1 .admin-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-user-shadow-toolbar-v1 {
@@ -171,9 +179,22 @@
   color: #6f7c91;
 }
 
+#admin-users-table,
+#inactive-users-table,
 .admin-user-shadow-table-v1 {
   width: 100%;
+  min-width: 760px;
   table-layout: auto;
+}
+
+.admin-user-shadow-table-v1 th,
+.admin-user-shadow-table-v1 td,
+#admin-users-table th,
+#admin-users-table td,
+#inactive-users-table th,
+#inactive-users-table td {
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .admin-user-shadow-table-v1 th,
@@ -191,6 +212,12 @@
 
 .admin-user-shadow-table-v1 .table-actions {
   justify-content: flex-end;
+}
+
+#admin-users-table .table-actions,
+#inactive-users-table .table-actions {
+  justify-content: flex-end;
+  white-space: nowrap;
 }
 
 .admin-user-shadow-table-v1 .table-icon-btn {
@@ -269,7 +296,14 @@
   border-color: #f0d67a;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
+  #create-user-card .grid,
+  #edit-user-card .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
   .admin-user-shadow-toolbar-v1 {
     justify-content: stretch;
   }
@@ -284,6 +318,13 @@
 
   .admin-user-shadow-footer-v1 .pagination {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 980px) {
+  #create-user-card .grid,
+  #edit-user-card .grid {
+    grid-template-columns: 1fr;
   }
 }
 .admin-user-actions-top-card-v1 {

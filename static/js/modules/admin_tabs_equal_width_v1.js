@@ -16,18 +16,32 @@
       itemSelector: ".submenu-item",
       fixedWidthCh: 24,
       bootstrapWidthKey: "adminTabsWidthCh",
+      bootstrapTextSizeKey: "adminTabsTextSizePx",
+      bootstrapFontFamilyKey: "adminTabsFontFamily",
+      bootstrapColorKey: "adminTabsColorHex",
+      bootstrapTextColorKey: "adminTabsTextColorHex",
       cssVariableName: "--appverbo-admin-tab-width-v1"
     },
     {
       containerSelector: ".profile-process-tabs",
       itemSelector: ".profile-process-tab-btn",
       fixedWidthCh: 24,
+      bootstrapWidthKey: "adminTabsWidthCh",
+      bootstrapTextSizeKey: "adminTabsTextSizePx",
+      bootstrapFontFamilyKey: "adminTabsFontFamily",
+      bootstrapColorKey: "adminTabsColorHex",
+      bootstrapTextColorKey: "adminTabsTextColorHex",
       cssVariableName: "--appverbo-process-tab-equal-width"
     },
     {
       containerSelector: ".process-edit-tabs",
       itemSelector: ".process-edit-tab-link",
       fixedWidthCh: 24,
+      bootstrapWidthKey: "adminTabsWidthCh",
+      bootstrapTextSizeKey: "adminTabsTextSizePx",
+      bootstrapFontFamilyKey: "adminTabsFontFamily",
+      bootstrapColorKey: "adminTabsColorHex",
+      bootstrapTextColorKey: "adminTabsTextColorHex",
       useInlineWidth: true
     }
   ];
@@ -114,6 +128,63 @@
     });
   }
 
+  function applyInlineFontFamilyToTabs_v1(tabs, fontFamilyValue) {
+    tabs.forEach(function (tab) {
+      if (fontFamilyValue) {
+        tab.style.setProperty("font-family", fontFamilyValue, "important");
+      } else {
+        tab.style.removeProperty("font-family");
+      }
+    });
+  }
+
+  function applyInlineTextSizeToTabsV1(tabs, textSizePx) {
+    const hasValidSize = Number.isFinite(textSizePx) && textSizePx > 0;
+    const normalizedSize = hasValidSize ? `${Math.ceil(textSizePx)}px` : "";
+
+    tabs.forEach(function (tab) {
+      if (normalizedSize) {
+        tab.style.setProperty("font-size", normalizedSize, "important");
+      } else {
+        tab.style.removeProperty("font-size");
+      }
+
+      Array.from(tab.querySelectorAll("*")).forEach(function (childElement) {
+        if (normalizedSize) {
+          childElement.style.setProperty("font-size", normalizedSize, "important");
+        } else {
+          childElement.style.removeProperty("font-size");
+        }
+      });
+    });
+  }
+
+  function normalizeHexColorV1(value) {
+    const rawValue = String(value || "").trim().replace(/\s+/g, "");
+
+    if (!rawValue) {
+      return "";
+    }
+
+    const cleanValue = rawValue.charAt(0) === "#" ? rawValue.slice(1) : rawValue;
+
+    if (/^[0-9a-fA-F]{3}$/.test(cleanValue)) {
+      const expandedValue = cleanValue
+        .split("")
+        .map(function (character) {
+          return character + character;
+        })
+        .join("");
+      return `#${expandedValue.toUpperCase()}`;
+    }
+
+    if (/^[0-9a-fA-F]{6}$/.test(cleanValue)) {
+      return `#${cleanValue.toUpperCase()}`;
+    }
+
+    return "";
+  }
+
   function resolveBootstrapFixedWidthCh_v1(group) {
     const bootstrapWidthKey = String(group.bootstrapWidthKey || "").trim();
 
@@ -137,6 +208,190 @@
     return Math.max(8, Math.min(60, parsedWidthValue));
   }
 
+  function resolveBootstrapColorHex_v1(group) {
+    const bootstrapColorKey = String(group.bootstrapColorKey || "").trim();
+
+    if (!bootstrapColorKey) {
+      return "";
+    }
+
+    const bootstrap = window.__APPVERBO_BOOTSTRAP__;
+
+    if (!bootstrap || typeof bootstrap !== "object") {
+      return "";
+    }
+
+    return normalizeHexColorV1(bootstrap[bootstrapColorKey]);
+  }
+
+  function resolveBootstrapTextSizePxV1(group) {
+    const bootstrapTextSizeKey = String(group.bootstrapTextSizeKey || "").trim();
+
+    if (!bootstrapTextSizeKey) {
+      return null;
+    }
+
+    const bootstrap = window.__APPVERBO_BOOTSTRAP__;
+
+    if (!bootstrap || typeof bootstrap !== "object") {
+      return null;
+    }
+
+    const rawTextSizeValue = bootstrap[bootstrapTextSizeKey];
+    const parsedTextSizeValue = Number.parseInt(String(rawTextSizeValue || "").trim(), 10);
+
+    if (!Number.isFinite(parsedTextSizeValue) || parsedTextSizeValue <= 0) {
+      return null;
+    }
+
+    return Math.max(10, Math.min(40, parsedTextSizeValue));
+  }
+
+  function resolveBootstrapTextColorHex_v1(group) {
+    const bootstrapTextColorKey = String(group.bootstrapTextColorKey || "").trim();
+
+    if (!bootstrapTextColorKey) {
+      return "";
+    }
+
+    const bootstrap = window.__APPVERBO_BOOTSTRAP__;
+
+    if (!bootstrap || typeof bootstrap !== "object") {
+      return "";
+    }
+
+    return normalizeHexColorV1(bootstrap[bootstrapTextColorKey]);
+  }
+
+  function resolveBootstrapFontFamily_v1(group) {
+    const bootstrapFontFamilyKey = String(group.bootstrapFontFamilyKey || "").trim();
+
+    if (!bootstrapFontFamilyKey) {
+      return "";
+    }
+
+    const bootstrap = window.__APPVERBO_BOOTSTRAP__;
+
+    if (!bootstrap || typeof bootstrap !== "object") {
+      return "";
+    }
+
+    const rawFontFamilyValue = String(bootstrap[bootstrapFontFamilyKey] || "").trim();
+
+    if (!rawFontFamilyValue) {
+      return "";
+    }
+
+    if (rawFontFamilyValue.length > 120) {
+      return "";
+    }
+
+    if (/[\r\n;{}]/.test(rawFontFamilyValue)) {
+      return "";
+    }
+
+    return rawFontFamilyValue;
+  }
+
+  function isActiveTabStateV1(tab) {
+    if (!tab) {
+      return false;
+    }
+
+    const isProcessEditTab = Boolean(tab.closest(".process-edit-tabs"));
+
+    if (tab.classList && tab.classList.contains("active")) {
+      return true;
+    }
+
+    const ariaSelected = String(tab.getAttribute("aria-selected") || "").trim().toLowerCase();
+    if (ariaSelected === "true") {
+      return true;
+    }
+
+    const dataActive = String(tab.getAttribute("data-active") || "").trim().toLowerCase();
+    if (dataActive === "true") {
+      return true;
+    }
+
+    if (isProcessEditTab) {
+      return false;
+    }
+
+    const dataSelected = String(tab.getAttribute("data-selected") || "").trim().toLowerCase();
+    if (dataSelected === "true") {
+      return true;
+    }
+
+    const forcedActive = String(tab.getAttribute("data-appverbo-force-active") || "").trim().toLowerCase();
+    if (forcedActive === "true") {
+      return true;
+    }
+
+    const menuActive = String(tab.getAttribute("data-appverbo-menu-active") || "").trim().toLowerCase();
+    if (menuActive === "true") {
+      return true;
+    }
+
+    return false;
+  }
+
+  function resolveTabTextColorFromBackgroundV1(hexColor) {
+    const normalizedHexColor = normalizeHexColorV1(hexColor);
+
+    if (!normalizedHexColor) {
+      return "#FFFFFF";
+    }
+
+    const red = Number.parseInt(normalizedHexColor.slice(1, 3), 16);
+    const green = Number.parseInt(normalizedHexColor.slice(3, 5), 16);
+    const blue = Number.parseInt(normalizedHexColor.slice(5, 7), 16);
+    const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+    return luminance >= 0.62 ? "#1F2F4A" : "#FFFFFF";
+  }
+
+  function clearInlineColorStylesV1(tab) {
+    tab.style.removeProperty("background");
+    tab.style.removeProperty("background-color");
+    tab.style.removeProperty("border-color");
+    tab.style.removeProperty("color");
+
+    Array.from(tab.querySelectorAll("*")).forEach(function (childElement) {
+      childElement.style.removeProperty("color");
+    });
+  }
+
+  function applyInlineColorToTabsV1(tabs, activeColorHex, activeTextColorHex) {
+    tabs.forEach(function (tab) {
+      clearInlineColorStylesV1(tab);
+    });
+
+    const normalizedColorHex = normalizeHexColorV1(activeColorHex);
+
+    if (!normalizedColorHex) {
+      return;
+    }
+
+    const normalizedTextColorHex = normalizeHexColorV1(activeTextColorHex);
+    const textColor = normalizedTextColorHex || resolveTabTextColorFromBackgroundV1(normalizedColorHex);
+
+    tabs.forEach(function (tab) {
+      if (!isActiveTabStateV1(tab)) {
+        return;
+      }
+
+      tab.style.setProperty("background", normalizedColorHex, "important");
+      tab.style.setProperty("background-color", normalizedColorHex, "important");
+      tab.style.setProperty("border-color", normalizedColorHex, "important");
+      tab.style.setProperty("color", textColor, "important");
+
+      Array.from(tab.querySelectorAll("*")).forEach(function (childElement) {
+        childElement.style.setProperty("color", textColor, "important");
+      });
+    });
+  }
+
   function equalizeTabGroup_v1(group) {
     const containerSelector = group.containerSelector;
     const itemSelector = group.itemSelector;
@@ -147,6 +402,10 @@
     const fixedWidthCh = Number.isFinite(bootstrapFixedWidthCh)
       ? bootstrapFixedWidthCh
       : defaultFixedWidthCh;
+    const bootstrapTextSizePx = resolveBootstrapTextSizePxV1(group);
+    const bootstrapFontFamily = resolveBootstrapFontFamily_v1(group);
+    const bootstrapColorHex = resolveBootstrapColorHex_v1(group);
+    const bootstrapTextColorHex = resolveBootstrapTextColorHex_v1(group);
     const cssVariableName = String(group.cssVariableName || "").trim();
     const useInlineWidth = group.useInlineWidth === true;
     const containers = Array.from(document.querySelectorAll(containerSelector));
@@ -161,6 +420,10 @@
       if (!tabs.length) {
         return;
       }
+
+      applyInlineFontFamilyToTabs_v1(tabs, bootstrapFontFamily);
+      applyInlineTextSizeToTabsV1(tabs, bootstrapTextSizePx);
+      applyInlineColorToTabsV1(tabs, bootstrapColorHex, bootstrapTextColorHex);
 
       if (tabs.length === 1) {
         clearTabWidth_v1(container, tabs, cssVariableName, useInlineWidth);
@@ -241,7 +504,16 @@
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      characterData: true
+      characterData: true,
+      attributes: true,
+      attributeFilter: [
+        "class",
+        "aria-selected",
+        "data-active",
+        "data-selected",
+        "data-appverbo-force-active",
+        "data-appverbo-menu-active"
+      ]
     });
   }
 

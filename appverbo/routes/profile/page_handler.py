@@ -226,7 +226,7 @@ def _build_definicoes_subprocess_options_v1(
 
 
 # ###################################################################################
-# (X) DEFINICOES GERAIS - TAMANHO DAS ABAS ADMINISTRATIVAS
+# (X) DEFINICOES GERAIS - TAMANHO, FONTE E COR DAS ABAS ADMINISTRATIVAS
 # ###################################################################################
 
 def _normalize_definition_lookup_text_v1(value: object) -> str:
@@ -255,6 +255,60 @@ def _parse_tabs_width_ch_v1(value: object) -> int | None:
 
     # Limites defensivos para evitar layout quebrado por valores extremos.
     return max(8, min(60, parsed_value))
+
+
+def _parse_tabs_text_size_px_v1(value: object) -> int | None:
+    raw_value = str(value or "").strip().replace(",", ".")
+
+    if not raw_value:
+        return None
+
+    try:
+        parsed_value = int(float(raw_value))
+    except (TypeError, ValueError):
+        return None
+
+    if parsed_value <= 0:
+        return None
+
+    # Limites defensivos para evitar texto ilegivel ou exagerado na aba.
+    return max(10, min(40, parsed_value))
+
+
+def _parse_tabs_font_family_v1(value: object) -> str | None:
+    raw_value = " ".join(str(value or "").strip().split())
+
+    if not raw_value:
+        return None
+
+    if len(raw_value) > 120:
+        return None
+
+    if any(token in raw_value for token in ("\n", "\r", ";", "{", "}")):
+        return None
+
+    return raw_value
+
+
+def _parse_tabs_color_hex_v1(value: object) -> str | None:
+    raw_value = "".join(str(value or "").strip().split())
+
+    if not raw_value:
+        return None
+
+    if raw_value.startswith("#"):
+        raw_value = raw_value[1:]
+
+    if len(raw_value) == 3 and all(character in "0123456789abcdefABCDEF" for character in raw_value):
+        raw_value = "".join(character * 2 for character in raw_value)
+    elif len(raw_value) == 6 and all(
+        character in "0123456789abcdefABCDEF" for character in raw_value
+    ):
+        raw_value = raw_value
+    else:
+        return None
+
+    return "#" + raw_value.upper()
 
 
 def _resolve_admin_tabs_width_ch_from_definitions_v1(
@@ -288,6 +342,150 @@ def _resolve_admin_tabs_width_ch_from_definitions_v1(
             return parsed_width_ch
 
     return int(default_width_ch)
+
+
+def _resolve_admin_tabs_font_family_from_definitions_v1(
+    *,
+    session: Any,
+    default_font_family: str = '"Segoe UI", Tahoma, Arial, sans-serif',
+) -> str:
+    rows = session.execute(
+        select(AdminDefinition).order_by(AdminDefinition.id.desc())
+    ).scalars().all()
+
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != "fonte":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_name) != "aba fonte":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.process_name) != "geral":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.subprocess_name) != "geral":
+            continue
+
+        parsed_font_family = _parse_tabs_font_family_v1(row.initial_value)
+
+        if parsed_font_family is not None:
+            return parsed_font_family
+
+    fallback_font_family = _parse_tabs_font_family_v1(default_font_family)
+    if fallback_font_family is not None:
+        return fallback_font_family
+    return '"Segoe UI", Tahoma, Arial, sans-serif'
+
+
+def _resolve_admin_tabs_text_size_px_from_definitions_v1(
+    *,
+    session: Any,
+    default_text_size_px: int = 13,
+) -> int:
+    rows = session.execute(
+        select(AdminDefinition).order_by(AdminDefinition.id.desc())
+    ).scalars().all()
+
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != "tamanho":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_name) != "aba texto tamanho":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.process_name) != "geral":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.subprocess_name) != "geral":
+            continue
+
+        parsed_text_size_px = _parse_tabs_text_size_px_v1(row.initial_value)
+
+        if parsed_text_size_px is not None:
+            return parsed_text_size_px
+
+    fallback_text_size_px = _parse_tabs_text_size_px_v1(default_text_size_px)
+    if fallback_text_size_px is not None:
+        return fallback_text_size_px
+    return 13
+
+
+def _resolve_admin_tabs_color_hex_from_definitions_v1(
+    *,
+    session: Any,
+    default_color_hex: str = "#1F4FA3",
+) -> str:
+    rows = session.execute(
+        select(AdminDefinition).order_by(AdminDefinition.id.desc())
+    ).scalars().all()
+
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != "cor":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_name) != "aba cor":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.process_name) != "geral":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.subprocess_name) != "geral":
+            continue
+
+        parsed_color_hex = _parse_tabs_color_hex_v1(row.initial_value)
+
+        if parsed_color_hex is not None:
+            return parsed_color_hex
+
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#1F4FA3"
+
+
+def _resolve_admin_tabs_text_color_hex_from_definitions_v1(
+    *,
+    session: Any,
+    default_text_color_hex: str = "",
+) -> str:
+    rows = session.execute(
+        select(AdminDefinition).order_by(AdminDefinition.id.desc())
+    ).scalars().all()
+
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != "cor":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.parameter_name) != "aba texto":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.process_name) != "geral":
+            continue
+
+        if _normalize_definition_lookup_text_v1(row.subprocess_name) != "geral":
+            continue
+
+        parsed_text_color_hex = _parse_tabs_color_hex_v1(row.initial_value)
+
+        if parsed_text_color_hex is not None:
+            return parsed_text_color_hex
+
+    fallback_text_color_hex = _parse_tabs_color_hex_v1(default_text_color_hex)
+    if fallback_text_color_hex is not None:
+        return fallback_text_color_hex
+    return ""
 
 
 def _resolve_initial_menu_target(
@@ -485,6 +683,10 @@ def new_user_page(
         and resolved_admin_tab == "menu"
     )
     admin_tabs_width_ch_v1 = 24
+    admin_tabs_text_size_px_v1 = 13
+    admin_tabs_font_family_v1 = '"Segoe UI", Tahoma, Arial, sans-serif'
+    admin_tabs_color_hex_v1 = "#1F4FA3"
+    admin_tabs_text_color_hex_v1 = ""
     menu_settings_edit_key = clean_settings_edit_key if is_admin_menu_tab else ""
     menu_admin_page_payload = build_menu_admin_page_payload_v1({})
 
@@ -492,6 +694,22 @@ def new_user_page(
         admin_tabs_width_ch_v1 = _resolve_admin_tabs_width_ch_from_definitions_v1(
             session=session,
             default_width_ch=24,
+        )
+        admin_tabs_text_size_px_v1 = _resolve_admin_tabs_text_size_px_from_definitions_v1(
+            session=session,
+            default_text_size_px=13,
+        )
+        admin_tabs_font_family_v1 = _resolve_admin_tabs_font_family_from_definitions_v1(
+            session=session,
+            default_font_family='"Segoe UI", Tahoma, Arial, sans-serif',
+        )
+        admin_tabs_color_hex_v1 = _resolve_admin_tabs_color_hex_from_definitions_v1(
+            session=session,
+            default_color_hex="#1F4FA3",
+        )
+        admin_tabs_text_color_hex_v1 = _resolve_admin_tabs_text_color_hex_from_definitions_v1(
+            session=session,
+            default_text_color_hex="",
         )
         current_user = get_current_user(request, session)
         if current_user is None:
@@ -909,6 +1127,8 @@ def new_user_page(
                 user_view=user_view,
                 selected_entity_id=selected_entity_id,
                 allowed_entity_ids=entity_permissions["allowed_entity_ids"],
+                entity_rows=page_data.get("entities", []),
+                profile_rows=page_data.get("profiles", []),
                 success=success or "",
                 error=error or "",
             )
@@ -975,6 +1195,10 @@ def new_user_page(
         ),
         "admin_tab": resolved_admin_tab,
         "admin_tabs_width_ch": int(admin_tabs_width_ch_v1),
+        "admin_tabs_text_size_px": int(admin_tabs_text_size_px_v1),
+        "admin_tabs_font_family": str(admin_tabs_font_family_v1),
+        "admin_tabs_color_hex": str(admin_tabs_color_hex_v1),
+        "admin_tabs_text_color_hex": str(admin_tabs_text_color_hex_v1),
         "admin_subprocess_state": (
             admin_subprocess_state_utilizador_v1
             if resolved_admin_tab == "utilizador"

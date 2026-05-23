@@ -193,8 +193,13 @@
 
 
 {% macro render_admin_subprocess_table(state, rows, title, status_value) %}
+  {% if state.config.key == "utilizador" %}
+    {% set card_id = "admin-users-created-card" if status_value == state.config.active_value else "inactive-users-card" %}
+  {% else %}
+    {% set card_id = state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' %}
+  {% endif %}
 <section
-    id="{{ state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
+    id="{{ card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-status="{{ status_value }}"

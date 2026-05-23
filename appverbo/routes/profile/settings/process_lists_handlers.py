@@ -24,6 +24,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_key: list[str] = Form(default=[]),
     process_list_label: list[str] = Form(default=[]),
     process_list_items_csv: list[str] = Form(default=[]),
+    process_list_source: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
@@ -32,6 +33,7 @@ def edit_sidebar_menu_process_lists_handler(
         process_list_key=list(process_list_key or []),
         process_list_label=list(process_list_label or []),
         process_list_items_csv=list(process_list_items_csv or []),
+        process_list_source=list(process_list_source or []),
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
     )

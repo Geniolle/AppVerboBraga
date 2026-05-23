@@ -557,6 +557,36 @@
     return Array.from(container.querySelectorAll(".card, .admin-subprocess-card-v1"));
   }
 
+  function shouldForceServerRenderForTabV7(tab) {
+    const cleanTab = cleanValueV7(tab);
+
+    if (!cleanTab) {
+      return false;
+    }
+
+    // O subprocesso Utilizador possui blocos server-render (shadow tables).
+    // Quando a pagina inicia noutra aba, esses blocos podem nao existir no DOM.
+    // Neste caso, o clique deve recarregar em admin_tab=utilizador.
+    if (cleanTab === "utilizador") {
+      const hasUserShadowBlocks = Boolean(
+        document.querySelector(
+          "#admin-user-shadow-readonly-card, " +
+          "#admin-users-created-card, " +
+          "[data-admin-subprocess-shadow='utilizador']"
+        )
+      );
+
+      return !hasUserShadowBlocks;
+    }
+
+    return false;
+  }
+
+  function shouldAlwaysNavigateForHashSubmenuTabV7(tab) {
+    const cleanTab = cleanValueV7(tab);
+    return cleanTab === "sessoes" || cleanTab === "menu" || cleanTab === "definicoes";
+  }
+
   //###################################################################################
   // (7) RENDER DO SUBPROCESSO
   //###################################################################################
@@ -711,17 +741,42 @@
         clickedTopSubprocess.matches("#submenu-items .submenu-item, #submenu-items a")
           ? clickedTopSubprocess
           : null;
+      const submenuHref = String(submenuAnchor ? submenuAnchor.getAttribute("href") || "" : "").trim();
+      const isHashOnlySubmenuLink = submenuHref.indexOf("#") === 0;
+      const isAdminProcessOnlyMode =
+        Boolean(document.body) &&
+        document.body.classList.contains("appverbo-admin-process-only");
 
       // O menu principal (new_user.js) deve conduzir a navegacao real das abas.
       // Aqui mantemos apenas o fallback quando nao for um link real do submenu.
-      if (
-        submenuAnchor &&
-        String(submenuAnchor.getAttribute("href") || "").trim().indexOf("#") === 0
-      ) {
+      // Excecao: em modo "process-only" o clique no submenu precisa sair desse modo.
+      if (submenuAnchor && isHashOnlySubmenuLink && !isAdminProcessOnlyMode) {
         return;
       }
 
       const tab = getTabFromElementV7(clickedTopSubprocess);
+
+      if (tab && submenuAnchor && isHashOnlySubmenuLink) {
+        // No estado inicial (admin process-only), algumas abas dependem de server-render.
+        // Para esses casos, navegamos para URL canônica imediatamente.
+        if (
+          isAdminProcessOnlyMode &&
+          (shouldAlwaysNavigateForHashSubmenuTabV7(tab) || shouldForceServerRenderForTabV7(tab))
+        ) {
+          const destination = buildAdminSubprocessUrlV7(tab);
+          const currentPath = window.location.pathname + window.location.search + window.location.hash;
+
+          if (destination && currentPath !== destination) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (typeof event.stopImmediatePropagation === "function") {
+              event.stopImmediatePropagation();
+            }
+            window.location.assign(destination);
+            return;
+          }
+        }
+      }
 
       if (tab) {
         event.preventDefault();
@@ -729,6 +784,16 @@
 
         if (typeof event.stopImmediatePropagation === "function") {
           event.stopImmediatePropagation();
+        }
+
+        if (shouldForceServerRenderForTabV7(tab)) {
+          const destination = buildAdminSubprocessUrlV7(tab);
+          const currentPath = window.location.pathname + window.location.search + window.location.hash;
+
+          if (destination && currentPath !== destination) {
+            window.location.assign(destination);
+            return;
+          }
         }
 
         renderAdminSubprocessV7(tab, { updateUrl: true });
