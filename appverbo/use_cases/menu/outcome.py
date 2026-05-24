@@ -84,10 +84,13 @@ def sanitize_menu_return_url_v1(
         "appverbo_after_save",
     }
 
+    clean_default_target = str(default_target or "#admin-menu-card").strip() or "#admin-menu-card"
+    clean_default_target = clean_default_target.lstrip("#")
     clean_params: list[tuple[str, str]] = []
     found_menu = False
     found_admin_tab = False
     found_target = False
+    target_value = clean_default_target
 
     for key, value in parse_qsl(parts.query, keep_blank_values=True):
         if key in blocked_params:
@@ -105,7 +108,10 @@ def sanitize_menu_return_url_v1(
 
         if key == "target":
             found_target = True
-            clean_params.append(("target", str(default_target or "#admin-menu-card").lstrip("#")))
+            clean_target_value = str(value or "").strip().lstrip("#")
+            if clean_target_value:
+                target_value = clean_target_value
+            clean_params.append(("target", target_value))
             continue
 
         clean_params.append((key, value))
@@ -117,9 +123,9 @@ def sanitize_menu_return_url_v1(
         clean_params.append(("admin_tab", "menu"))
 
     if not found_target:
-        clean_params.append(("target", str(default_target or "#admin-menu-card").lstrip("#")))
+        clean_params.append(("target", target_value))
 
-    clean_fragment = str(default_target or "#admin-menu-card").lstrip("#")
+    clean_fragment = str(parts.fragment or "").strip().lstrip("#") or target_value
 
     return urlunsplit(
         (

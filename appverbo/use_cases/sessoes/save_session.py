@@ -153,6 +153,13 @@ def sanitize_sidebar_section_return_url_v1(return_url: object) -> str:
     found_admin_tab = False
     found_sidebar_tab = False
     found_target = False
+    session_target_keys = {
+        "admin-sidebar-sections-card",
+        "admin-sidebar-sections-form-card",
+        "admin-sidebar-sections-card-create",
+        "admin-sidebar-sections-card-inactive",
+    }
+    target_value = "admin-sidebar-sections-card"
 
     for key, value in parse_qsl(parts.query, keep_blank_values=True):
         if key in blocked_params:
@@ -175,7 +182,10 @@ def sanitize_sidebar_section_return_url_v1(return_url: object) -> str:
 
         if key == "target":
             found_target = True
-            clean_params.append(("target", "admin-sidebar-sections-card"))
+            clean_target_value = str(value or "").strip().lstrip("#")
+            if clean_target_value in session_target_keys:
+                target_value = clean_target_value
+            clean_params.append(("target", target_value))
             continue
 
         clean_params.append((key, value))
@@ -190,7 +200,11 @@ def sanitize_sidebar_section_return_url_v1(return_url: object) -> str:
         clean_params.append(("sidebar_sections_tab", "sessoes"))
 
     if not found_target:
-        clean_params.append(("target", "admin-sidebar-sections-card"))
+        clean_params.append(("target", target_value))
+
+    clean_fragment = str(parts.fragment or "").strip().lstrip("#")
+    if clean_fragment not in session_target_keys:
+        clean_fragment = target_value
 
     return urlunsplit(
         (
@@ -198,7 +212,7 @@ def sanitize_sidebar_section_return_url_v1(return_url: object) -> str:
             "",
             "/users/new",
             urlencode(clean_params),
-            "admin-sidebar-sections-card",
+            clean_fragment,
         )
     )
 

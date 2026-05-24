@@ -2,6 +2,10 @@
 (function () {
   "use strict";
 
+  if (typeof window !== "undefined") {
+    window.__APPVERBO_QUANTITY_READONLY_RENDERER_V2_ACTIVE = true;
+  }
+
   //###################################################################################
   // (1) BOOTSTRAP E CONSTANTES
   //###################################################################################
@@ -27,7 +31,14 @@
   //###################################################################################
 
   function normalizeKeyQuantityReadonly_v2(value) {
-    const cleanValue = String(value || "").trim().toLowerCase();
+    const cleanValue = String(value || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9_]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_|_$/g, "");
 
     if (cleanValue === LEGACY_DOCUMENTOS_KEY_V2) {
       return MEU_PERFIL_KEY_V2;
@@ -219,22 +230,47 @@
       return inputValue;
     }
 
-    const activeTab = Array.from(document.querySelectorAll(".menu-tabs button, .menu-tabs [role='tab'], .menu-tabs .active"))
-      .find(function (element) {
-        const classes = normalizeTextQuantityReadonly_v2(element.className || "");
-        const ariaSelected = String(element.getAttribute("aria-selected") || "").toLowerCase();
+    const activeTabSelectors = [
+      "#submenu-items .submenu-item.active[data-profile-section]",
+      "#submenu-items .submenu-item[data-profile-section][aria-selected='true']",
+      "#submenu-items .submenu-item[data-profile-section][data-active='true']",
+      ".submenu-item.active[data-profile-section]",
+      ".submenu-item[data-profile-section][aria-selected='true']",
+      "[data-profile-section-tab].active[data-profile-section]",
+      "[data-profile-section-button].active[data-profile-section]",
+      ".profile-section-tab.active[data-profile-section]"
+    ];
 
-        return classes.includes("active") || ariaSelected === "true";
-      });
+    for (const selector of activeTabSelectors) {
+      const activeElement = document.querySelector(selector);
 
-    const activeText = normalizeTextQuantityReadonly_v2(activeTab ? activeTab.textContent : "");
+      if (!activeElement) {
+        continue;
+      }
 
-    if (activeText.includes("agregado")) {
-      return "dados_de_agregados";
+      const sectionFromDataset = normalizeKeyQuantityReadonly_v2(
+        activeElement.dataset.profileSection ||
+        activeElement.dataset.profileSectionKey ||
+        activeElement.dataset.profileSectionTab ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      if (sectionFromDataset) {
+        return sectionFromDataset;
+      }
     }
 
-    if (activeText.includes("pessoal")) {
-      return "dados_pessoais";
+    try {
+      const currentUrl = new URL(window.location.href);
+      const sectionFromQuery = normalizeKeyQuantityReadonly_v2(currentUrl.searchParams.get("profile_section") || "");
+
+      if (sectionFromQuery) {
+        return sectionFromQuery;
+      }
+    }
+    catch (error) {
+      // Ignora erro de parse da URL.
     }
 
     return "";
@@ -486,9 +522,47 @@
     window.setTimeout(renderQuantityReadonly_v2, 1600);
   }
 
-  document.addEventListener("click", function () {
+  function shouldReactToSectionChangeQuantityReadonly_v2(event) {
+    const target = event && event.target ? event.target : null;
+
+    if (!target || typeof target.closest !== "function") {
+      return false;
+    }
+
+    if (
+      target.closest("#submenu-items .submenu-item[data-profile-section]") ||
+      target.closest(".submenu-item[data-profile-section]") ||
+      target.closest("[data-profile-section-tab]") ||
+      target.closest("[data-profile-section-button]") ||
+      target.closest(".profile-section-tab")
+    ) {
+      return true;
+    }
+
+    if (target.matches("input[name='profile_section'], [data-meu-perfil-section-input], [data-profile-section-input]")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!shouldReactToSectionChangeQuantityReadonly_v2(event)) {
+      return;
+    }
+
     window.setTimeout(applySectionVisibilityQuantityReadonly_v2, 0);
-    window.setTimeout(renderQuantityReadonly_v2, 120);
+    window.setTimeout(renderQuantityReadonly_v2, 80);
+    window.setTimeout(renderQuantityReadonly_v2, 220);
+  }, true);
+
+  document.addEventListener("change", function (event) {
+    if (!shouldReactToSectionChangeQuantityReadonly_v2(event)) {
+      return;
+    }
+
+    window.setTimeout(applySectionVisibilityQuantityReadonly_v2, 0);
+    window.setTimeout(renderQuantityReadonly_v2, 0);
   }, true);
 
   if (document.readyState === "loading") {

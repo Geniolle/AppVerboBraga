@@ -27,6 +27,8 @@ def move_sidebar_menu_additional_field_handler(
     direction: str = Form(...),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_move_menu_additional_field_input_v1(
         menu_key=menu_key,
@@ -34,6 +36,7 @@ def move_sidebar_menu_additional_field_handler(
         direction=direction,
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -75,6 +78,8 @@ def edit_sidebar_menu_process_additional_fields_v1(
     additional_field_list_key: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_update_menu_additional_fields_input_v1(
         menu_key=menu_key,
@@ -86,6 +91,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
         additional_field_list_key=list(additional_field_list_key or []),
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:

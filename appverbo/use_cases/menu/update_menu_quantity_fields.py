@@ -12,6 +12,7 @@ from appverbo.use_cases.menu.outcome import (
     MenuActionOutcome,
     build_menu_return_url_with_message_v1,
     build_menu_settings_redirect_url_v1,
+    sanitize_menu_return_url_v1,
 )
 from appverbo.use_cases.menu.policies import (
     ensure_actor_can_manage_menu_v1,
@@ -32,6 +33,7 @@ class UpdateMenuQuantityFieldsInput:
     quantity_rules: list[dict[str, str]]
     redirect_menu: str
     redirect_target: str
+    subprocess_return_url: str
 
 
 def normalize_update_menu_quantity_fields_input_v1(
@@ -46,6 +48,7 @@ def normalize_update_menu_quantity_fields_input_v1(
     quantity_item_label: list[str],
     redirect_menu: str = "administrativo",
     redirect_target: str = "#settings-menu-edit-card",
+    subprocess_return_url: str = "",
 ) -> UpdateMenuQuantityFieldsInput:
     rows_count = max(
         len(quantity_rule_key or []),
@@ -76,6 +79,7 @@ def normalize_update_menu_quantity_fields_input_v1(
         quantity_rules=payload_rules,
         redirect_menu=str(redirect_menu or "administrativo").strip() or "administrativo",
         redirect_target=str(redirect_target or "#settings-menu-edit-card").strip() or "#settings-menu-edit-card",
+        subprocess_return_url=str(subprocess_return_url or "").strip(),
     )
 
 
@@ -92,13 +96,19 @@ def execute_update_menu_quantity_fields_v1(
     payload: UpdateMenuQuantityFieldsInput,
 ) -> MenuActionOutcome:
     repository = MenuAdminRepository(MENU_CONFIG)
-    return_url = build_menu_settings_redirect_url_v1(
-        redirect_menu=payload.redirect_menu,
-        redirect_target=payload.redirect_target,
-        settings_edit_key=payload.menu_key,
-        settings_action="edit",
-        settings_tab="campos-quantidade",
-    )
+    if payload.subprocess_return_url:
+        return_url = sanitize_menu_return_url_v1(
+            payload.subprocess_return_url,
+            default_target=payload.redirect_target or "#settings-menu-edit-card",
+        )
+    else:
+        return_url = build_menu_settings_redirect_url_v1(
+            redirect_menu=payload.redirect_menu,
+            redirect_target=payload.redirect_target,
+            settings_edit_key=payload.menu_key,
+            settings_action="edit",
+            settings_tab="campos-quantidade",
+        )
 
     policy_error = ensure_actor_can_manage_menu_v1(session=session, actor_user=actor_user)
     if policy_error:

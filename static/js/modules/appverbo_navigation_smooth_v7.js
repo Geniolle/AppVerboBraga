@@ -557,6 +557,44 @@
     return Array.from(container.querySelectorAll(".card, .admin-subprocess-card-v1"));
   }
 
+  function hasCustomSubprocessLinksV7() {
+    const submenu = document.getElementById("submenu-items");
+
+    if (!submenu) {
+      return false;
+    }
+
+    const submenuItems = Array.from(
+      submenu.querySelectorAll(".submenu-item, button, a, [data-admin-tab]")
+    );
+
+    return submenuItems.some(function (item) {
+      if (!item) {
+        return false;
+      }
+
+      const profileSection = cleanValueV7(item.getAttribute("data-profile-section"));
+      if (profileSection) {
+        return true;
+      }
+
+      const dynamicSection = cleanValueV7(
+        item.getAttribute("data-dynamic-process-section") ||
+        item.getAttribute("data-dynamic-process-section-key")
+      );
+      if (dynamicSection) {
+        return true;
+      }
+
+      const href = String(item.getAttribute("href") || "").trim();
+      if (href.indexOf("#") === 0 && !getTabFromElementV7(item)) {
+        return true;
+      }
+
+      return false;
+    });
+  }
+
   function shouldForceServerRenderForTabV7(tab) {
     const cleanTab = cleanValueV7(tab);
 
@@ -622,6 +660,18 @@
 
     manterMenuSubprocessosVisivelV7();
     limparAbaAtivaComRepeticaoV7();
+  }
+
+  function exitAdminProcessOnlyModeV7() {
+    if (!document.body) {
+      return;
+    }
+
+    document.body.classList.remove("appverbo-admin-process-only");
+    document.body.classList.add("appverbo-admin-subprocess-context");
+    document.body.classList.add("appverbo-admin-submenu-stable");
+    limparClassesTabBodyV7();
+    manterMenuSubprocessosVisivelV7();
   }
 
   function renderAdminSubprocessV7(tab, options) {
@@ -695,6 +745,12 @@
     if (tab) {
       renderAdminSubprocessV7(tab, { updateUrl: false });
     } else {
+      if (hasCustomSubprocessLinksV7()) {
+        exitAdminProcessOnlyModeV7();
+        markReadyV7();
+        return;
+      }
+
       renderAdminProcessOnlyV7();
 
       if (window.history && typeof window.history.replaceState === "function") {
@@ -805,6 +861,12 @@
 
     if (menuButton && cleanValueV7(menuButton.getAttribute("data-menu")) === "administrativo") {
       window.setTimeout(function () {
+        if (hasCustomSubprocessLinksV7()) {
+          exitAdminProcessOnlyModeV7();
+          markReadyV7();
+          return;
+        }
+
         if (window.history && typeof window.history.replaceState === "function") {
           window.history.replaceState(window.history.state, document.title, "/users/new?menu=administrativo");
         }
@@ -813,7 +875,13 @@
         markReadyV7();
       }, 0);
 
-      window.setTimeout(renderAdminProcessOnlyV7, 80);
+      window.setTimeout(function () {
+        if (hasCustomSubprocessLinksV7()) {
+          exitAdminProcessOnlyModeV7();
+          return;
+        }
+        renderAdminProcessOnlyV7();
+      }, 80);
       return;
     }
 

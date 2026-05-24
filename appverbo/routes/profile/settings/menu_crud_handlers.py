@@ -39,6 +39,8 @@ def edit_sidebar_menu_setting_handler_v1(
     menu_sidebar_section: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_update_menu_input_v1(
         menu_key=menu_key,
@@ -48,6 +50,7 @@ def edit_sidebar_menu_setting_handler_v1(
         menu_sidebar_section=menu_sidebar_section,
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -85,6 +88,8 @@ def create_sidebar_menu_setting_handler_v1(
     menu_section: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-menu-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_create_menu_input_v1(
         menu_label=menu_label,
@@ -92,6 +97,7 @@ def create_sidebar_menu_setting_handler_v1(
         menu_section=menu_section,
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -127,11 +133,14 @@ def delete_sidebar_menu_setting_handler_v1(
     menu_key: str = Form(...),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-menu-card-inactive"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_delete_menu_input_v1(
         menu_key=menu_key,
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -168,12 +177,15 @@ def move_sidebar_menu_setting_handler_v1(
     direction: str = Form(...),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-menu-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_move_menu_input_v1(
         menu_key=menu_key,
         direction=direction,
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -245,6 +257,7 @@ def save_sidebar_menu_setting_handler_v1(
                     if str(redirect_target or "").strip() and str(redirect_target or "").strip() != "#admin-menu-card"
                     else "#settings-menu-edit-card"
                 ),
+                subprocess_return_url=subprocess_return_url,
             )
             outcome = execute_update_menu_v1(
                 session=session,
@@ -286,6 +299,7 @@ def create_sidebar_menu_setting_admin_subprocess_handler(
     menu_visibility_scope: str = Form("all"),
     menu_section: str = Form(""),
     subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_create_menu_input_v1(
         menu_label=menu_label,
@@ -293,7 +307,7 @@ def create_sidebar_menu_setting_admin_subprocess_handler(
         menu_section=menu_section,
         redirect_menu="administrativo",
         redirect_target="#admin-menu-card",
-        subprocess_return_url=subprocess_return_url,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -324,13 +338,14 @@ def move_sidebar_menu_setting_admin_subprocess_handler(
     menu_key: str = Form(...),
     direction: str = Form(...),
     subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_move_menu_input_v1(
         menu_key=menu_key,
         direction=direction,
         redirect_menu="administrativo",
         redirect_target="#admin-menu-card",
-        subprocess_return_url=subprocess_return_url,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:
@@ -360,12 +375,13 @@ def delete_sidebar_menu_setting_admin_subprocess_handler(
     request: Request,
     menu_key: str = Form(...),
     subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_delete_menu_input_v1(
         menu_key=menu_key,
         redirect_menu="administrativo",
         redirect_target="#admin-menu-card-inactive",
-        subprocess_return_url=subprocess_return_url,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:

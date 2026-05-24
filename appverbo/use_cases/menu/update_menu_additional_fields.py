@@ -12,6 +12,7 @@ from appverbo.use_cases.menu.outcome import (
     MenuActionOutcome,
     build_menu_return_url_with_message_v1,
     build_menu_settings_redirect_url_v1,
+    sanitize_menu_return_url_v1,
 )
 from appverbo.use_cases.menu.policies import (
     ensure_actor_can_manage_menu_v1,
@@ -34,6 +35,7 @@ class MoveMenuAdditionalFieldInput:
     direction: str
     redirect_menu: str
     redirect_target: str
+    subprocess_return_url: str
 
 
 @dataclass(frozen=True)
@@ -42,6 +44,7 @@ class UpdateMenuAdditionalFieldsInput:
     fields: list[dict[str, str]]
     redirect_menu: str
     redirect_target: str
+    subprocess_return_url: str
 
 
 def normalize_move_menu_additional_field_input_v1(
@@ -51,6 +54,7 @@ def normalize_move_menu_additional_field_input_v1(
     direction: str,
     redirect_menu: str = "administrativo",
     redirect_target: str = "#settings-menu-edit-card",
+    subprocess_return_url: str = "",
 ) -> MoveMenuAdditionalFieldInput:
     return MoveMenuAdditionalFieldInput(
         menu_key=str(menu_key or "").strip().lower(),
@@ -58,6 +62,7 @@ def normalize_move_menu_additional_field_input_v1(
         direction=str(direction or "").strip().lower(),
         redirect_menu=str(redirect_menu or "administrativo").strip() or "administrativo",
         redirect_target=str(redirect_target or "#settings-menu-edit-card").strip() or "#settings-menu-edit-card",
+        subprocess_return_url=str(subprocess_return_url or "").strip(),
     )
 
 
@@ -72,6 +77,7 @@ def normalize_update_menu_additional_fields_input_v1(
     additional_field_list_key: list[str],
     redirect_menu: str = "administrativo",
     redirect_target: str = "#settings-menu-edit-card",
+    subprocess_return_url: str = "",
 ) -> UpdateMenuAdditionalFieldsInput:
     rows_count = max(
         len(additional_field_key or []),
@@ -100,6 +106,7 @@ def normalize_update_menu_additional_fields_input_v1(
         fields=fields,
         redirect_menu=str(redirect_menu or "administrativo").strip() or "administrativo",
         redirect_target=str(redirect_target or "#settings-menu-edit-card").strip() or "#settings-menu-edit-card",
+        subprocess_return_url=str(subprocess_return_url or "").strip(),
     )
 
 
@@ -109,6 +116,11 @@ def normalize_update_menu_additional_fields_input_v1(
 
 
 def _build_additional_fields_return_url_v1(payload: Any) -> str:
+    if str(payload.subprocess_return_url or "").strip():
+        return sanitize_menu_return_url_v1(
+            payload.subprocess_return_url,
+            default_target=payload.redirect_target or "#settings-menu-edit-card",
+        )
     return build_menu_settings_redirect_url_v1(
         redirect_menu=payload.redirect_menu,
         redirect_target=payload.redirect_target,

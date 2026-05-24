@@ -33,6 +33,12 @@
     return normalizarTexto_v7(value);
   }
 
+  function construirStorageKeyV7(form) {
+    const menuKeyInput = form ? form.querySelector("input[name='menu_key']") : null;
+    const menuKey = normalizarChave_v7(menuKeyInput ? menuKeyInput.value : "");
+    return "appverbo:process-editor:campos-config:" + (menuKey || "default");
+  }
+
   function limparLabelCabecalho_v7(value) {
     return textoSeguro_v7(value)
       .replace(/\s*-\s*Cabeçalho\s*$/i, "")
@@ -522,6 +528,51 @@
     HTMLFormElement.prototype.submit.call(form);
   }
 
+  //###################################################################################
+  // (8B) ELIMINAR COM PERSISTENCIA DIRETA
+  //###################################################################################
+
+  function vincularEliminarDireto_v7(form, elements, manager) {
+    if (!elements || !elements.tableBody) {
+      return;
+    }
+
+    if (elements.tableBody.dataset.processFieldsConfigDirectDeleteBoundV7 === "1") {
+      return;
+    }
+
+    elements.tableBody.dataset.processFieldsConfigDirectDeleteBoundV7 = "1";
+
+    elements.tableBody.addEventListener("click", function (event) {
+      const target = event && event.target instanceof Element
+        ? event.target
+        : (event && event.target && event.target.parentElement instanceof Element
+          ? event.target.parentElement
+          : null);
+      const actionButton = target ? target.closest("[data-configurable-action]") : null;
+
+      if (!actionButton) {
+        return;
+      }
+
+      const action = textoSeguro_v7(actionButton.dataset.configurableAction).trim().toLowerCase();
+
+      if (action !== "remove") {
+        return;
+      }
+
+      if (actionButton.disabled) {
+        return;
+      }
+
+      window.setTimeout(function () {
+        manager.syncHiddenInputs();
+        desativarInputsLegadosV8(form, elements);
+        submitNativo_v7(form);
+      }, 0);
+    });
+  }
+
   function vincularBotoesFormulario_v7(form, elements, manager) {
     if (form.dataset.processFieldsConfigSubmitBoundV7 === "1") {
       return;
@@ -577,6 +628,8 @@
         desativarInputsLegadosV8(form, elements);
       });
     }
+
+    vincularEliminarDireto_v7(form, elements, manager);
   }
 
   //###################################################################################
@@ -623,6 +676,7 @@
       root: form,
       itemName: "campo",
       itemNamePlural: "campos",
+      stateStorageKey: construirStorageKeyV7(form),
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
       pageSizeOptions: [5, 10, 25],
       initialItems,

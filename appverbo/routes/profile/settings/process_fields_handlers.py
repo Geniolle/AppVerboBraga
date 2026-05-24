@@ -26,6 +26,8 @@ def edit_sidebar_menu_process_fields_handler(
     visible_rows_json: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_update_menu_process_fields_input_v1(
         menu_key=menu_key,
@@ -34,6 +36,7 @@ def edit_sidebar_menu_process_fields_handler(
         visible_rows_json=visible_rows_json,
         redirect_menu=redirect_menu,
         redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
     )
 
     with SessionLocal() as session:

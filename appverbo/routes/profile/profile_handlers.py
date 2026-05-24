@@ -1031,8 +1031,20 @@ def _build_post_save_redirect_url_v6(
     if hasattr(submitted_form, "get"):
         raw_return_url = str(submitted_form.get("return_url") or "").strip()
 
-    safe_return_url = _sanitize_users_new_return_url_post_save_v6(
+    return _build_post_save_redirect_url_from_raw_return_url_v6(
         raw_return_url,
+        **params,
+    )
+
+
+def _build_post_save_redirect_url_from_raw_return_url_v6(
+    raw_return_url: Any,
+    **params: Any,
+) -> str:
+    clean_raw_return_url = str(raw_return_url or "").strip()
+
+    safe_return_url = _sanitize_users_new_return_url_post_save_v6(
+        clean_raw_return_url,
         params,
     )
 
@@ -1083,55 +1095,40 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
     redirect_target = str(submitted_form.get("target") or "#perfil-pessoal-card").strip() or "#perfil-pessoal-card"
     redirect_profile_section = str(submitted_form.get("profile_section") or "").strip().lower()
     # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
-    clean_full_name = str(submitted_form.get("full_name") or "").strip()
-    clean_primary_phone = str(submitted_form.get("primary_phone") or "").strip()
-    clean_login_email = str(submitted_form.get("login_email") or submitted_form.get("email") or "").strip().lower()
-    clean_country = str(submitted_form.get("country") or "").strip()
-    clean_birth_date = str(submitted_form.get("birth_date") or "").strip()
-    whatsapp_notice_opt_in = str(submitted_form.get("whatsapp_notice_opt_in") or "").strip()
+    def _form_has_field_v1(field_name: str) -> bool:
+        try:
+            return field_name in submitted_form
+        except Exception:
+            return False
 
-    try:
-        parsed_birth_date = parse_optional_date_pt(clean_birth_date)
-    except ValueError:
-        return RedirectResponse(
-            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Data de nascimento inválida. Use o formato dd/mm/aaaa.",
-                profile_tab="pessoal",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+    def _date_to_pt_text_v1(raw_date: date | None) -> str:
+        if raw_date is None:
+            return ""
+        return raw_date.strftime("%d/%m/%Y")
 
-    parsed_whatsapp_notice_opt_in = whatsapp_notice_opt_in == "1"
+    has_full_name = _form_has_field_v1("full_name")
+    has_primary_phone = _form_has_field_v1("primary_phone")
+    has_login_email = _form_has_field_v1("login_email") or _form_has_field_v1("email")
+    has_country = _form_has_field_v1("country")
+    has_birth_date = _form_has_field_v1("birth_date")
+    has_whatsapp_notice_opt_in = _form_has_field_v1("whatsapp_notice_opt_in")
 
-    if not clean_full_name:
-        return RedirectResponse(
-            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Nome completo é obrigatório.",
-                profile_tab="pessoal",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-    if not clean_primary_phone:
-        return RedirectResponse(
-            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Telefone principal é obrigatório.",
-                profile_tab="pessoal",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+    submitted_full_name = str(submitted_form.get("full_name") or "").strip()
+    submitted_primary_phone = str(submitted_form.get("primary_phone") or "").strip()
+    submitted_login_email = str(
+        submitted_form.get("login_email") or submitted_form.get("email") or ""
+    ).strip().lower()
+    submitted_country = str(submitted_form.get("country") or "").strip()
+    submitted_birth_date = str(submitted_form.get("birth_date") or "").strip()
+    submitted_whatsapp_notice_opt_in = str(submitted_form.get("whatsapp_notice_opt_in") or "").strip()
 
-    if not clean_login_email:
-        return RedirectResponse(
-            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Email é obrigatório.",
-                profile_tab="pessoal",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    if "@" not in clean_login_email:
-        return RedirectResponse(
-            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Email inválido.",
-                profile_tab="pessoal",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+    clean_full_name = ""
+    clean_primary_phone = ""
+    clean_login_email = ""
+    clean_country = ""
+    clean_birth_date = ""
+    parsed_birth_date: date | None = None
+    parsed_whatsapp_notice_opt_in = False
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -1156,6 +1153,99 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         if user_account is None:
             return RedirectResponse(
                 url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Conta de utilizador não encontrada.",
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        # ###################################################################################
+        # (MEU_PERFIL) PERMITIR GRAVACAO POR ABA
+        # ###################################################################################
+        clean_full_name = (
+            submitted_full_name
+            if has_full_name
+            else str(member.full_name or "").strip()
+        )
+        clean_primary_phone = (
+            submitted_primary_phone
+            if has_primary_phone
+            else str(member.primary_phone or "").strip()
+        )
+        clean_login_email = (
+            submitted_login_email
+            if has_login_email
+            else str(user_account.login_email or member.email or "").strip().lower()
+        )
+        clean_country = (
+            submitted_country
+            if has_country
+            else str(member.country or "").strip()
+        )
+
+        if has_birth_date:
+            clean_birth_date = submitted_birth_date
+            try:
+                parsed_birth_date = parse_optional_date_pt(clean_birth_date)
+            except ValueError:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        profile_error="Data de nascimento inválida. Use o formato dd/mm/aaaa.",
+                        profile_tab="pessoal",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+        else:
+            parsed_birth_date = member.birth_date
+            clean_birth_date = _date_to_pt_text_v1(parsed_birth_date)
+
+        parsed_whatsapp_notice_opt_in = bool(member.whatsapp_notice_opt_in)
+        if has_whatsapp_notice_opt_in:
+            parsed_whatsapp_notice_opt_in = submitted_whatsapp_notice_opt_in == "1"
+        elif (
+            has_full_name
+            or has_primary_phone
+            or has_login_email
+            or has_country
+            or has_birth_date
+        ):
+            parsed_whatsapp_notice_opt_in = False
+
+        if not clean_full_name:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    profile_error="Nome completo é obrigatório.",
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if not clean_primary_phone:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    profile_error="Telefone principal é obrigatório.",
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if not clean_login_email:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    profile_error="Email é obrigatório.",
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if "@" not in clean_login_email:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    profile_error="Email inválido.",
                     profile_tab="pessoal",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
@@ -1262,14 +1352,46 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 "is_required": is_required,
             }
         visible_field_section_map: dict[str, str] = {}
+        profile_section_order: list[str] = []
+        seen_profile_sections: set[str] = set()
         for raw_row in (meu_perfil_setting or {}).get("process_visible_field_rows", []):
             if not isinstance(raw_row, dict):
                 continue
             field_key = str(raw_row.get("field_key") or "").strip().lower()
             if not field_key:
                 continue
-            visible_field_section_map[field_key] = str(raw_row.get("header_key") or "").strip().lower()
-        visible_custom_keys = [
+            header_key = str(raw_row.get("header_key") or "").strip().lower()
+            visible_field_section_map[field_key] = header_key
+            if header_key and header_key not in seen_profile_sections:
+                seen_profile_sections.add(header_key)
+                profile_section_order.append(header_key)
+
+        default_profile_section_key = profile_section_order[0] if profile_section_order else ""
+        active_profile_section_key = str(redirect_profile_section or "").strip().lower()
+        if (
+            active_profile_section_key
+            and profile_section_order
+            and active_profile_section_key not in seen_profile_sections
+        ):
+            active_profile_section_key = default_profile_section_key
+        if not active_profile_section_key:
+            active_profile_section_key = default_profile_section_key
+
+        # ###################################################################################
+        # (MEU_PERFIL) ALINHAR MAPA DE ABA COM A UI (FALLBACK PARA A PRIMEIRA ABA)
+        # ###################################################################################
+        if default_profile_section_key:
+            for option_key in option_keys:
+                clean_option_key = str(option_key or "").strip().lower()
+                if not clean_option_key:
+                    continue
+                current_section_key = str(
+                    visible_field_section_map.get(clean_option_key) or ""
+                ).strip().lower()
+                if not current_section_key:
+                    visible_field_section_map[clean_option_key] = default_profile_section_key
+
+        all_visible_custom_keys = [
             clean_key
             for clean_key in (
                 str(raw_key or "").strip().lower()
@@ -1281,6 +1403,14 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             and clean_key not in quantity_repeated_field_keys
             and str((custom_field_meta.get(clean_key) or {}).get("field_type") or "") != "header"
         ]
+        visible_custom_keys = list(all_visible_custom_keys)
+        if active_profile_section_key:
+            visible_custom_keys = [
+                clean_key
+                for clean_key in visible_custom_keys
+                if str(visible_field_section_map.get(clean_key) or "").strip().lower()
+                == active_profile_section_key
+            ]
         current_meu_perfil_values: dict[str, str] = {
             "nome": clean_full_name,
             "telefone": clean_primary_phone,
@@ -1289,7 +1419,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             "data_nascimento": clean_birth_date,
             "autorizacao_whatsapp": "1" if parsed_whatsapp_notice_opt_in else "0",
         }
-        for custom_key in visible_custom_keys:
+        for custom_key in all_visible_custom_keys:
             field_name = f"custom_field__{custom_key}"
             field_meta = custom_field_meta.get(custom_key) or {}
             field_type = str(field_meta.get("field_type") or "text").strip().lower()
@@ -1387,8 +1517,26 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         active_quantity_rule_keys: set[str] = set()
         for quantity_rule in quantity_rules:
             rule_key = str(quantity_rule.get("key") or "").strip().lower()
+            rule_header_key = str(quantity_rule.get("header_key") or "").strip().lower()
             quantity_field_key = str(quantity_rule.get("quantity_field_key") or "").strip().lower()
             if not rule_key or not quantity_field_key:
+                continue
+
+            applies_to_current_section = True
+            if active_profile_section_key:
+                quantity_field_section_key = str(
+                    visible_field_section_map.get(quantity_field_key) or ""
+                ).strip().lower()
+                if rule_header_key:
+                    applies_to_current_section = (
+                        rule_header_key == active_profile_section_key
+                    )
+                elif quantity_field_section_key:
+                    applies_to_current_section = (
+                        quantity_field_section_key == active_profile_section_key
+                    )
+
+            if not applies_to_current_section:
                 continue
 
             if (
@@ -1442,6 +1590,8 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         for quantity_rule in quantity_rules:
             rule_key = str(quantity_rule.get("key") or "").strip().lower()
             if not rule_key:
+                continue
+            if rule_key not in active_quantity_rule_keys:
                 continue
 
             storage_key = build_menu_process_quantity_storage_key(
@@ -2416,6 +2566,7 @@ def update_address_profile(
     city: str = Form(""),
     freguesia: str = Form(""),
     postal_code: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_address = address.strip()
     clean_city = city.strip()
@@ -2435,9 +2586,11 @@ def update_address_profile(
         ).scalar_one_or_none()
         if member is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error="Membro associado ao utilizador não encontrado.",
                     profile_tab="morada",
+                    target="#perfil-morada-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2452,17 +2605,21 @@ def update_address_profile(
         except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error="Falha ao gravar dados de morada.",
                     profile_tab="morada",
+                    target="#perfil-morada-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
     return RedirectResponse(
-        url=build_users_new_url(
+        url=_build_post_save_redirect_url_from_raw_return_url_v6(
+            return_url,
             profile_success="Dados de morada atualizados com sucesso.",
             profile_tab="morada",
+            target="#perfil-morada-card",
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
@@ -2477,15 +2634,18 @@ def update_training_profile(
     training_escola_missoes: str | None = Form(default=None),
     training_outros_enabled: str | None = Form(default=None),
     training_outros: str = Form(""),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_training_outros = training_outros.strip()
     is_outros_enabled = training_outros_enabled == "1"
 
     if is_outros_enabled and not clean_training_outros:
         return RedirectResponse(
-            url=build_users_new_url(
+            url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                return_url,
                 profile_error="Preencha o campo Outros para gravar o treinamento.",
                 profile_tab="treinamento",
+                target="#dados-treinamento-card",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
@@ -2503,9 +2663,11 @@ def update_training_profile(
         ).scalar_one_or_none()
         if member is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error="Membro associado ao utilizador não encontrado.",
                     profile_tab="treinamento",
+                    target="#dados-treinamento-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2522,23 +2684,31 @@ def update_training_profile(
         except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error="Falha ao gravar dados de treinamento.",
                     profile_tab="treinamento",
+                    target="#dados-treinamento-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
     return RedirectResponse(
-        url=build_users_new_url(
+        url=_build_post_save_redirect_url_from_raw_return_url_v6(
+            return_url,
             profile_success="Dados de treinamento atualizados com sucesso.",
             profile_tab="treinamento",
+            target="#dados-treinamento-card",
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
 @router.post("/users/profile/whatsapp/verify")
-def verify_whatsapp_profile(request: Request) -> RedirectResponse:
+def verify_whatsapp_profile(
+    request: Request,
+    return_url: str = Form(""),
+    profile_section: str = Form(""),
+) -> RedirectResponse:
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
         if current_user is None:
@@ -2552,9 +2722,12 @@ def verify_whatsapp_profile(request: Request) -> RedirectResponse:
         ).scalar_one_or_none()
         if member is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error="Membro associado ao utilizador não encontrado.",
                     profile_tab="pessoal",
+                    profile_section=profile_section,
+                    target="#perfil-pessoal-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2562,12 +2735,15 @@ def verify_whatsapp_profile(request: Request) -> RedirectResponse:
         normalized_phone = normalize_whatsapp_recipient(member.primary_phone or "")
         if not normalized_phone:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error=(
                         "Telefone inválido para WhatsApp. Use formato internacional "
                         "(ex.: +351912345678)."
                     ),
                     profile_tab="pessoal",
+                    profile_section=profile_section,
+                    target="#perfil-pessoal-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2581,21 +2757,27 @@ def verify_whatsapp_profile(request: Request) -> RedirectResponse:
         if not is_sent:
             session.commit()
             return RedirectResponse(
-                url=build_users_new_url(
+                url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                    return_url,
                     profile_error=f"Não foi possível iniciar verificação WhatsApp: {error_message}",
                     profile_tab="pessoal",
+                    profile_section=profile_section,
+                    target="#perfil-pessoal-card",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         session.commit()
         return RedirectResponse(
-            url=build_users_new_url(
+            url=_build_post_save_redirect_url_from_raw_return_url_v6(
+                return_url,
                 profile_success=(
                     "Verificação WhatsApp iniciada. O estado será atualizado automaticamente "
                     "quando o webhook receber a confirmação."
                 ),
                 profile_tab="pessoal",
+                profile_section=profile_section,
+                target="#perfil-pessoal-card",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )

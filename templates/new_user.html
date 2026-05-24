@@ -63,8 +63,8 @@
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
   <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260516-admin-menu-scope-v2" defer></script>
-  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260508-quantity-readonly-renderer-v2" defer></script>
-  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260508-quantity-edit-pairs-v4" defer></script>
+  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260524-quantity-readonly-renderer-v2-section-scope-fix-v3" defer></script>
+  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260524-quantity-edit-pairs-v4-section-scope-fix-v2" defer></script>
 
 <script>
 (function () {
@@ -140,7 +140,7 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260519-admin-subprocess-nav-v6-process-only-server-tabs-fix" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260524-admin-subprocess-nav-v7-process-only-dynamic-tabs-fix" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
@@ -1179,6 +1179,90 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 value="{{ '' if user_personal_data.login_email == '-' else user_personal_data.login_email }}"
               >
               {% endif %}
+              {% if "whatsapp" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
+                <label for="edit_whatsapp_status">WhatsApp</label>
+                <input
+                  id="edit_whatsapp_status"
+                  type="text"
+                  value="{{ user_personal_data.whatsapp_verification_status }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
+              {% if "conta" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', '') }}">
+                <label for="edit_account_status">Conta</label>
+                <input
+                  id="edit_account_status"
+                  type="text"
+                  value="{{ user_personal_data.account_status }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
+              {% if "estado_membro" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', '') }}">
+                <label for="edit_member_status">Estado de membro</label>
+                <input
+                  id="edit_member_status"
+                  type="text"
+                  value="{{ user_personal_data.member_status }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
+              {% if "colaborador" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', '') }}">
+                <label for="edit_is_collaborator">Colaborador</label>
+                <input
+                  id="edit_is_collaborator"
+                  type="text"
+                  value="{{ user_personal_data.is_collaborator }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
+              {% if "entidades" in profile_personal_visible_fields %}
+              <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', '') }}">
+                <label for="edit_entities_readonly">Entidades</label>
+                <input
+                  id="edit_entities_readonly"
+                  type="text"
+                  value="{{ user_personal_data.entities }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
+              {% if "ultima_verificacao_whatsapp" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', '') }}">
+                <label for="edit_whatsapp_last_check">Última verificação WhatsApp</label>
+                <input
+                  id="edit_whatsapp_last_check"
+                  type="text"
+                  value="{{ user_personal_data.whatsapp_last_check_at }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
+              {% if "detalhe_verificacao" in profile_personal_visible_fields %}
+              <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', '') }}">
+                <label for="edit_whatsapp_last_error">Detalhe da verificação</label>
+                <input
+                  id="edit_whatsapp_last_error"
+                  type="text"
+                  value="{{ user_personal_data.whatsapp_last_error }}"
+                  readonly
+                  class="readonly-field"
+                >
+              </div>
+              {% endif %}
               {% for field_key in profile_personal_visible_fields %}
               {% if field_key.startswith("custom_") %}
               {% set custom_meta = profile_personal_custom_field_meta.get(field_key, {}) %}
@@ -1268,6 +1352,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             </div>
           </div>
           <form class="profile-edit-form" method="post" action="/users/profile/address">
+            <input type="hidden" name="menu" value="meu_perfil">
+            <input type="hidden" name="target" value="#perfil-morada-card">
+            <input type="hidden" name="profile_tab" value="morada">
             <div class="personal-grid">
               <div class="field full">
                 <label for="edit_address">Morada</label>
@@ -1334,6 +1421,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             </div>
           </div>
           <form class="profile-edit-form" method="post" action="/users/profile/training">
+            <input type="hidden" name="menu" value="meu_perfil">
+            <input type="hidden" name="target" value="#dados-treinamento-card">
+            <input type="hidden" name="profile_tab" value="treinamento">
             <div class="training-options-grid">
               <label class="training-option-row">
                 <input
@@ -2079,6 +2169,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="settings_edit_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="settings_action" value="edit">
+                <input type="hidden" name="settings_tab" value="campos-config">
 
                 <div class="configurable-items-manager-v1 process-fields-config-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-fields-config-legacy-container>
@@ -2205,6 +2298,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="settings_edit_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="settings_action" value="edit">
+                <input type="hidden" name="settings_tab" value="campos-quantidade">
 
                 <div class="configurable-items-manager-v1 process-quantity-fields-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-quantity-fields-legacy-container>
@@ -2337,6 +2433,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="settings_edit_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="settings_action" value="edit">
+                <input type="hidden" name="settings_tab" value="lista">
 
                 <div class="configurable-items-manager-v1 process-lists-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-lists-legacy-container>
@@ -2464,6 +2563,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="settings_edit_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="settings_action" value="edit">
+                <input type="hidden" name="settings_tab" value="campos-subsequentes">
 
                 <div class="configurable-items-manager-v1 process-subsequent-fields-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-subsequent-fields-legacy-container>
@@ -2586,6 +2688,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="settings_edit_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="settings_action" value="edit">
+                <input type="hidden" name="settings_tab" value="campos-adicionais">
 
                 <div
                   id="process-additional-fields-builder-v3"
@@ -3108,14 +3213,14 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
     };
   </script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260430-final-buttons-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260430-final-buttons-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-source-v3-table-auto"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
-  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260524-core-click-target-guard-v1"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260523-additional-pagination-state-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-pagination-state-v1"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
+  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260523-admin-table-search-v4-dynamic-total"></script>
   <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260519-admin-definicoes-color-inline-v7"></script>
-<script src="/static/js/new_user.js?v=20260523-departamentos-cards-separated-v10" defer></script>
+<script src="/static/js/new_user.js?v=20260524-meu-perfil-refactor-v14" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260518-top-menu-active-v40-definicoes-context-fix"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
@@ -3126,6 +3231,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260524-fields-remove-direct-save-v1"></script>
   <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260518-admin-footer-standard-v2-root-fix" defer></script>
 {% endblock %}

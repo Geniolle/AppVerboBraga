@@ -1317,6 +1317,11 @@ def _normalize_seed_required_flag_v1(raw_value: Any) -> bool:
         return raw_value
     return str(raw_value or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
 
+def _normalize_seed_toggle_flag_v1(raw_value: Any) -> bool:
+    if isinstance(raw_value, bool):
+        return raw_value
+    return str(raw_value or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
+
 
 def _ensure_meu_perfil_department_membership_fields_v1(
     menu_config: dict[str, Any] | None,
@@ -1337,6 +1342,17 @@ def _ensure_meu_perfil_department_membership_fields_v1(
             additional_fields_by_key[clean_key] = field
 
     changed = False
+    auto_seed_already_applied = _normalize_seed_toggle_flag_v1(
+        updated_menu_config.get(
+            MENU_CONFIG_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_AUTO_SEEDED_V1_KEY
+        )
+    )
+    process_fields_already_configured = bool(
+        updated_menu_config.get("process_visible_fields_configured")
+    )
+    should_auto_seed_visibility = (
+        not auto_seed_already_applied and not process_fields_already_configured
+    )
 
     for raw_seed_field in MENU_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_V1:
         seed_key = _normalize_custom_field_key(raw_seed_field.get("key"))
@@ -1420,29 +1436,36 @@ def _ensure_meu_perfil_department_membership_fields_v1(
             continue
         header_map[field_key] = header_key
 
-    seeded_rows: list[dict[str, str]] = []
-    for raw_seed_field in MENU_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_V1:
-        seed_type = _normalize_additional_field_type(raw_seed_field.get("field_type"))
-        if seed_type == "header":
-            continue
-        field_key = _normalize_custom_field_key(raw_seed_field.get("key"))
-        header_key = _normalize_custom_field_key(raw_seed_field.get("header_key"))
-        if not field_key:
-            continue
-        if header_key not in header_keys:
-            header_key = ""
-        seeded_rows.append({"field_key": field_key, "header_key": header_key})
+    if should_auto_seed_visibility:
+        seeded_rows: list[dict[str, str]] = []
+        for raw_seed_field in MENU_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_V1:
+            seed_type = _normalize_additional_field_type(raw_seed_field.get("field_type"))
+            if seed_type == "header":
+                continue
+            field_key = _normalize_custom_field_key(raw_seed_field.get("key"))
+            header_key = _normalize_custom_field_key(raw_seed_field.get("header_key"))
+            if not field_key:
+                continue
+            if header_key not in header_keys:
+                header_key = ""
+            seeded_rows.append({"field_key": field_key, "header_key": header_key})
 
-    for seeded_row in seeded_rows:
-        field_key = seeded_row["field_key"]
-        header_key = seeded_row["header_key"]
-        if field_key not in seen_visible_fields:
-            existing_visible_fields.append(field_key)
-            seen_visible_fields.add(field_key)
-            changed = True
-        if header_key and field_key not in header_map:
-            header_map[field_key] = header_key
-            changed = True
+        for seeded_row in seeded_rows:
+            field_key = seeded_row["field_key"]
+            header_key = seeded_row["header_key"]
+            if field_key not in seen_visible_fields:
+                existing_visible_fields.append(field_key)
+                seen_visible_fields.add(field_key)
+                changed = True
+            if header_key and field_key not in header_map:
+                header_map[field_key] = header_key
+                changed = True
+
+    if not auto_seed_already_applied:
+        updated_menu_config[
+            MENU_CONFIG_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_AUTO_SEEDED_V1_KEY
+        ] = True
+        changed = True
 
     if not changed:
         return dict(menu_config), False

@@ -230,34 +230,35 @@
   //###################################################################################
 
   function getCurrentProfileSectionFromActiveTabQuantityEditPairs_v4() {
-    const candidates = Array.from(
-      document.querySelectorAll("button, a, [role='tab'], .menu-tab, .tab-button, .active")
-    );
+    const explicitSelectors = [
+      "#submenu-items .submenu-item.active[data-profile-section]",
+      "#submenu-items .submenu-item[data-profile-section][aria-selected='true']",
+      "#submenu-items .submenu-item[data-profile-section][data-active='true']",
+      ".submenu-item.active[data-profile-section]",
+      ".submenu-item[data-profile-section][aria-selected='true']",
+      "[data-profile-section-tab].active[data-profile-section]",
+      "[data-profile-section-button].active[data-profile-section]",
+      ".profile-section-tab.active[data-profile-section]"
+    ];
 
-    const activeCandidate = candidates.find(function (element) {
-      const text = normalizeTextQuantityEditPairs_v4(element.textContent || "");
-      const className = normalizeTextQuantityEditPairs_v4(element.className || "");
-      const ariaSelected = String(element.getAttribute("aria-selected") || "").trim().toLowerCase();
+    for (const selector of explicitSelectors) {
+      const activeElement = document.querySelector(selector);
 
-      if (!text) {
-        return false;
+      if (!activeElement) {
+        continue;
       }
 
-      if (!(className.includes("active") || className.includes("primary") || ariaSelected === "true")) {
-        return false;
+      const sectionKey = normalizeKeyQuantityEditPairs_v4(
+        activeElement.dataset.profileSection ||
+        activeElement.dataset.profileSectionKey ||
+        activeElement.dataset.profileSectionTab ||
+        activeElement.dataset.sectionKey ||
+        ""
+      );
+
+      if (sectionKey) {
+        return sectionKey;
       }
-
-      return text.includes("dados pessoais") || text.includes("dados de agregados");
-    });
-
-    const activeText = normalizeTextQuantityEditPairs_v4(activeCandidate ? activeCandidate.textContent : "");
-
-    if (activeText.includes("agregados")) {
-      return "custom_dados_de_agregados";
-    }
-
-    if (activeText.includes("pessoais")) {
-      return "custom_dados_pessoais";
     }
 
     return "";
@@ -291,12 +292,17 @@
 
   function shouldRenderRuleInCurrentSectionQuantityEditPairs_v4(rule) {
     const ruleSection = normalizeKeyQuantityEditPairs_v4(rule && rule.headerKey);
+    const currentSection = getCurrentProfileSectionQuantityEditPairs_v4();
 
     if (!ruleSection) {
       return true;
     }
 
-    return getCurrentProfileSectionQuantityEditPairs_v4() === ruleSection;
+    if (!currentSection) {
+      return false;
+    }
+
+    return currentSection === ruleSection;
   }
 
   //###################################################################################
@@ -586,6 +592,7 @@
     group.setAttribute("data-appverbo-quantity-edit-generated-v4", "1");
     group.setAttribute("data-appverbo-quantity-rule-key-v4", rule.key);
     group.setAttribute("data-appverbo-quantity-index-v4", String(index));
+    group.setAttribute("data-profile-section-pane", rule.headerKey || "");
     group.style.gridColumn = "1 / -1";
     group.style.order = String(5000 + index);
 
@@ -880,21 +887,36 @@
     renderAllPairsQuantityEditPairs_v4(Boolean(forceRender));
   }
 
-  document.addEventListener("click", function (event) {
-    const clickedElement = event.target && event.target.closest
-      ? event.target.closest("button, a, [role='tab'], [data-edit-target='perfil-pessoal-card'], .profile-edit-toggle")
-      : null;
+  function shouldReactToSectionChangeQuantityEditPairs_v4(event) {
+    const target = event && event.target ? event.target : null;
 
-    if (!clickedElement) {
-      return;
+    if (!target || typeof target.closest !== "function") {
+      return false;
     }
 
-    const text = normalizeTextQuantityEditPairs_v4(clickedElement.textContent || "");
-    const isRelevantClick = text.includes("dados pessoais") ||
-      text.includes("dados de agregados") ||
-      clickedElement.matches("[data-edit-target='perfil-pessoal-card'], .profile-edit-toggle");
+    if (target.closest("[data-appverbo-quantity-edit-generated-v4='1']")) {
+      return false;
+    }
 
-    if (!isRelevantClick) {
+    if (
+      target.closest("#submenu-items .submenu-item[data-profile-section]") ||
+      target.closest(".submenu-item[data-profile-section]") ||
+      target.closest("[data-profile-section-tab]") ||
+      target.closest("[data-profile-section-button]") ||
+      target.closest(".profile-section-tab")
+    ) {
+      return true;
+    }
+
+    if (target.matches("input[name='profile_section'], [data-meu-perfil-section-input], [data-profile-section-input]")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  document.addEventListener("click", function (event) {
+    if (!shouldReactToSectionChangeQuantityEditPairs_v4(event)) {
       return;
     }
 
@@ -907,6 +929,18 @@
     window.setTimeout(function () {
       startQuantityEditPairs_v4(true);
     }, 250);
+  }, true);
+
+  document.addEventListener("change", function (event) {
+    if (!shouldReactToSectionChangeQuantityEditPairs_v4(event)) {
+      return;
+    }
+
+    renderStateByRuleKey.clear();
+
+    window.setTimeout(function () {
+      startQuantityEditPairs_v4(true);
+    }, 0);
   }, true);
 
   if (document.readyState === "loading") {

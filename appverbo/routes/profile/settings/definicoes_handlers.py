@@ -37,21 +37,43 @@ def _sanitize_definicoes_return_url_v1(raw_return_url: object) -> str:
     if parts.path != "/users/new":
         parts = urlsplit(DEFINICOES_DEFAULT_RETURN_URL_V1)
 
+    allowed_targets = {
+        "admin-definicoes-card",
+        "admin-definicoes-card-create",
+        "admin-definicoes-card-inactive",
+        "admin-definicoes-card-edit",
+    }
+    target_value = "admin-definicoes-card"
+
     preserved_params = [
         (key, value)
         for key, value in parse_qsl(parts.query, keep_blank_values=True)
         if key not in {"menu", "admin_tab", "target", "success", "error", "settings_success", "settings_error"}
     ]
+
+    for key, value in parse_qsl(parts.query, keep_blank_values=True):
+        if key != "target":
+            continue
+
+        clean_target = str(value or "").strip().lstrip("#")
+        if clean_target in allowed_targets:
+            target_value = clean_target
+        break
+
     preserved_params.append(("menu", "administrativo"))
     preserved_params.append(("admin_tab", "definicoes"))
-    preserved_params.append(("target", "admin-definicoes-card"))
+    preserved_params.append(("target", target_value))
+
+    clean_fragment = str(parts.fragment or "").strip().lstrip("#")
+    if clean_fragment not in allowed_targets:
+        clean_fragment = target_value
 
     return urlunsplit((
         "",
         "",
         "/users/new",
         urlencode(preserved_params),
-        "admin-definicoes-card",
+        clean_fragment,
     ))
 
 

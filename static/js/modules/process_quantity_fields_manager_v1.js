@@ -28,6 +28,62 @@
       .replace(/"/g, "&quot;");
   }
 
+  function canUseSessionStorage_v1() {
+    try {
+      return Boolean(window && window.sessionStorage);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function readStoredPaginationState_v1(storageKey, fallbackPageSize) {
+    if (!storageKey || !canUseSessionStorage_v1()) {
+      return null;
+    }
+
+    try {
+      const rawValue = window.sessionStorage.getItem(storageKey);
+      if (!rawValue) {
+        return null;
+      }
+
+      const parsed = JSON.parse(rawValue);
+      const page = Number.parseInt(parsed && parsed.page, 10);
+      const pageSize = Number.parseInt(parsed && parsed.pageSize, 10);
+
+      return {
+        page: Number.isFinite(page) && page > 0 ? page : 1,
+        pageSize: Number.isFinite(pageSize) && pageSize > 0 ? pageSize : fallbackPageSize
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function saveStoredPaginationState_v1(storageKey, state) {
+    if (!storageKey || !state || !canUseSessionStorage_v1()) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          page: Number.isFinite(state.page) && state.page > 0 ? state.page : 1,
+          pageSize: Number.isFinite(state.pageSize) && state.pageSize > 0 ? state.pageSize : 5
+        })
+      );
+    } catch (error) {
+      // Ignore storage quota/private mode failures.
+    }
+  }
+
+  function buildPaginationStorageKey_v1(form) {
+    const menuKeyInput = form ? form.querySelector("input[name='menu_key']") : null;
+    const menuKey = normalizeKey_v1(menuKeyInput ? menuKeyInput.value : "");
+    return "appverbo:process-editor:campos-quantidade:" + (menuKey || "default");
+  }
+
   function createButton_v1(action, label, itemId, disabled) {
     const button = document.createElement("button");
     const icons = {
@@ -344,6 +400,7 @@
     elements.totalLabel.textContent = totalItems + " " + (totalItems === 1 ? "regra" : "regras");
 
     renderPagination_v1(state, elements, totalPages);
+    saveStoredPaginationState_v1(state.storageKey, state);
   }
 
   function renderPagination_v1(state, elements, totalPages) {
@@ -494,8 +551,24 @@
       items: readInitialItems_v1(elements),
       page: 1,
       pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
+      storageKey: buildPaginationStorageKey_v1(form),
       editingId: ""
     };
+
+    const storedState = readStoredPaginationState_v1(state.storageKey, state.pageSize);
+    if (storedState) {
+      state.page = storedState.page;
+      state.pageSize = storedState.pageSize;
+    }
+
+    if (elements.pageSize) {
+      const hasOption = Array.from(elements.pageSize.options || []).some(function (optionEl) {
+        return Number.parseInt(optionEl.value, 10) === state.pageSize;
+      });
+      if (hasOption) {
+        elements.pageSize.value = String(state.pageSize);
+      }
+    }
 
     form.dataset.processQuantityFieldsManagerBoundV1 = "1";
 

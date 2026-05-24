@@ -12,6 +12,7 @@ from appverbo.use_cases.menu.outcome import (
     MenuActionOutcome,
     build_menu_return_url_with_message_v1,
     build_menu_settings_redirect_url_v1,
+    sanitize_menu_return_url_v1,
 )
 from appverbo.use_cases.menu.policies import (
     ensure_actor_can_manage_menu_v1,
@@ -32,6 +33,7 @@ class UpdateMenuSubsequentFieldsInput:
     subsequent_fields: list[dict[str, str]]
     redirect_menu: str
     redirect_target: str
+    subprocess_return_url: str
 
 
 def normalize_update_menu_subsequent_fields_input_v1(
@@ -44,6 +46,7 @@ def normalize_update_menu_subsequent_fields_input_v1(
     subsequent_trigger_value: list[str],
     redirect_menu: str = "administrativo",
     redirect_target: str = "#settings-menu-edit-card",
+    subprocess_return_url: str = "",
 ) -> UpdateMenuSubsequentFieldsInput:
     rows_count = max(
         len(subsequent_field_key or []),
@@ -73,6 +76,7 @@ def normalize_update_menu_subsequent_fields_input_v1(
         subsequent_fields=payload_fields,
         redirect_menu=str(redirect_menu or "administrativo").strip() or "administrativo",
         redirect_target=str(redirect_target or "#settings-menu-edit-card").strip() or "#settings-menu-edit-card",
+        subprocess_return_url=str(subprocess_return_url or "").strip(),
     )
 
 
@@ -89,13 +93,19 @@ def execute_update_menu_subsequent_fields_v1(
     payload: UpdateMenuSubsequentFieldsInput,
 ) -> MenuActionOutcome:
     repository = MenuAdminRepository(MENU_CONFIG)
-    return_url = build_menu_settings_redirect_url_v1(
-        redirect_menu=payload.redirect_menu,
-        redirect_target=payload.redirect_target,
-        settings_edit_key=payload.menu_key,
-        settings_action="edit",
-        settings_tab="campos-subsequentes",
-    )
+    if payload.subprocess_return_url:
+        return_url = sanitize_menu_return_url_v1(
+            payload.subprocess_return_url,
+            default_target=payload.redirect_target or "#settings-menu-edit-card",
+        )
+    else:
+        return_url = build_menu_settings_redirect_url_v1(
+            redirect_menu=payload.redirect_menu,
+            redirect_target=payload.redirect_target,
+            settings_edit_key=payload.menu_key,
+            settings_action="edit",
+            settings_tab="campos-subsequentes",
+        )
 
     policy_error = ensure_actor_can_manage_menu_v1(session=session, actor_user=actor_user)
     if policy_error:

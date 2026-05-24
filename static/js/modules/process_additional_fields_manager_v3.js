@@ -46,6 +46,13 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
+  function buildStorageKey_v3(root) {
+    const parentForm = root ? root.closest("form") : null;
+    const menuKeyInput = parentForm ? parentForm.querySelector("input[name='menu_key']") : null;
+    const menuKey = normalizeLookup_v3(menuKeyInput ? menuKeyInput.value : "");
+    return "appverbo:process-editor:campos-adicionais:" + (menuKey || "default");
+  }
+
   function normalizeFieldType_v3(value) {
     const cleanType = normalizeLookup_v3(value).replace(/_/g, "-");
 
@@ -630,6 +637,7 @@
       root,
       itemName: "campo",
       itemNamePlural: "campos",
+      stateStorageKey: buildStorageKey_v3(root),
       pageSizeDefault: 5,
       pageSizeOptions: [5, 10, 25],
       initialItems,

@@ -2229,6 +2229,13 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 }
 
 function renderMeuPerfilQuantityGroups() {
+  if (
+    window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE &&
+    window.__APPVERBO_QUANTITY_READONLY_RENDERER_V2_ACTIVE
+  ) {
+    return;
+  }
+
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   const readonlyGridEl = personalCardEl ? personalCardEl.querySelector(".profile-readonly .personal-grid") : null;
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
@@ -3492,6 +3499,23 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
   }
 }
 
+function isMeuPerfilQuantityV4GeneratedTarget(targetEl) {
+  if (!targetEl || typeof targetEl.closest !== "function") {
+    return false;
+  }
+
+  if (targetEl.dataset && (
+    targetEl.dataset.appverboQuantityFieldKeyV4 ||
+    targetEl.dataset.appverboQuantityRuleKeyV4
+  )) {
+    return true;
+  }
+
+  return Boolean(
+    targetEl.closest("[data-appverbo-quantity-edit-generated-v4='1']")
+  );
+}
+
 function closeAllProfileEdits() {
   const editingCards = document.querySelectorAll(".card.editing");
   editingCards.forEach((card) => {
@@ -3735,6 +3759,33 @@ function collectCurrentMeuPerfilProcessValues() {
   return valuesByField;
 }
 
+function getMeuPerfilProcessFieldKeyFromControl(controlEl) {
+  if (!controlEl || typeof controlEl.getAttribute !== "function") {
+    return "";
+  }
+
+  const rawName = String(controlEl.getAttribute("name") || "").trim();
+
+  if (!rawName) {
+    return "";
+  }
+
+  if (rawName.startsWith("custom_field__")) {
+    return normalizeMenuKey(rawName.replace(/^custom_field__/, ""));
+  }
+
+  const fixedFieldMap = {
+    full_name: "nome",
+    primary_phone: "telefone",
+    login_email: "email",
+    country: "pais",
+    birth_date: "data_nascimento",
+    whatsapp_notice_opt_in: "autorizacao_whatsapp"
+  };
+
+  return normalizeMenuKey(fixedFieldMap[rawName] || "");
+}
+
 function applyMeuPerfilProcessSubsequentVisibility() {
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   const personalCardEl = document.getElementById("perfil-pessoal-card");
@@ -3774,10 +3825,16 @@ function applyMeuPerfilProcessSubsequentVisibility() {
       setActiveSubmenu("#perfil-pessoal-card", firstVisibleLinkEl);
     }
   }
-  renderMeuPerfilQuantityGroups();
+  if (!window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE) {
+    renderMeuPerfilQuantityGroups();
+  }
 }
 
 function setupMeuPerfilQuantityRules() {
+  if (window.__APPVERBO_QUANTITY_EDIT_PAIRS_V4_ACTIVE) {
+    return;
+  }
+
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
@@ -3876,6 +3933,25 @@ function setupConditionalProcessVisibility() {
       .some((rule) => normalizeMenuKey(rule.quantityFieldKey) === cleanFieldKey);
   }
 
+  function isMeuPerfilFieldDrivingRerender(fieldKey, setting) {
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+
+    if (!cleanFieldKey || !setting) {
+      return false;
+    }
+
+    const drivesSubsequentRules = normalizeProcessSubsequentRules(
+      setting.process_subsequent_fields
+    ).some((rule) => normalizeMenuKey(rule.triggerField) === cleanFieldKey);
+
+    if (drivesSubsequentRules) {
+      return true;
+    }
+
+    return normalizeProcessQuantityRules(setting.process_quantity_fields)
+      .some((rule) => normalizeMenuKey(rule.quantityFieldKey) === cleanFieldKey);
+  }
+
   function scheduleDynamicProcessConditionalRender(cleanMenuKey) {
     if (!cleanMenuKey) {
       return;
@@ -3901,7 +3977,20 @@ function setupConditionalProcessVisibility() {
   if (personalFormEl && personalFormEl.dataset.boundSubsequentVisibility !== "1") {
     personalFormEl.dataset.boundSubsequentVisibility = "1";
     ["input", "change"].forEach((eventName) => {
-      personalFormEl.addEventListener(eventName, () => {
+      personalFormEl.addEventListener(eventName, (event) => {
+        const targetEl = event && event.target ? event.target : null;
+
+        if (isMeuPerfilQuantityV4GeneratedTarget(targetEl)) {
+          return;
+        }
+
+        const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
+        const changedFieldKey = getMeuPerfilProcessFieldKeyFromControl(targetEl);
+
+        if (!isMeuPerfilFieldDrivingRerender(changedFieldKey, setting)) {
+          return;
+        }
+
         applyMeuPerfilProcessSubsequentVisibility();
       });
     });
@@ -6124,6 +6213,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 (function setupMeuPerfilQuantityReadonlyRendererV1() {
   "use strict";
 
+  if (window.__APPVERBO_QUANTITY_READONLY_RENDERER_V2_ACTIVE) {
+    return;
+  }
+
   //###################################################################################
   // (1) HELPERS
   //###################################################################################
@@ -6621,6 +6714,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function shouldRunMeuPerfilQuantityOriginDedupV1(event) {
+    const targetEl = event && event.target ? event.target : null;
+
+    if (isMeuPerfilQuantityV4GeneratedTarget(targetEl)) {
+      return false;
+    }
+
     const currentMenuKey = typeof normalizeMenuKey === "function"
       ? normalizeMenuKey(activeMenuKey)
       : "";
@@ -6628,8 +6727,6 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
       return true;
     }
-
-    const targetEl = event && event.target ? event.target : null;
 
     return Boolean(
       targetEl &&
@@ -6850,6 +6947,31 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     return wrapper.dataset.profileQuantityOriginDuplicateV1 === "1";
   }
 
+  function syncWrapperRequiredStateV1(wrapper, shouldEnableRequired) {
+    if (!wrapper) {
+      return;
+    }
+
+    wrapper.querySelectorAll("input, select, textarea").forEach((control) => {
+      if (!control || String(control.type || "").toLowerCase() === "hidden") {
+        return;
+      }
+
+      if (shouldEnableRequired) {
+        if (control.dataset.profileSectionRequiredTemporarilyRemovedV1 === "1") {
+          control.required = true;
+          delete control.dataset.profileSectionRequiredTemporarilyRemovedV1;
+        }
+        return;
+      }
+
+      if (control.required) {
+        control.required = false;
+        control.dataset.profileSectionRequiredTemporarilyRemovedV1 = "1";
+      }
+    });
+  }
+
   function setWrapperVisibleBySectionV1(wrapper, currentSection, expectedSection) {
     if (!wrapper || !currentSection || !expectedSection) {
       return;
@@ -6858,17 +6980,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (isDuplicateOriginWrapperV1(wrapper)) {
       wrapper.hidden = true;
       wrapper.style.display = "none";
+      syncWrapperRequiredStateV1(wrapper, false);
       return;
     }
 
     if (currentSection === expectedSection) {
       wrapper.hidden = false;
       wrapper.style.display = "";
+      syncWrapperRequiredStateV1(wrapper, true);
       return;
     }
 
     wrapper.hidden = true;
     wrapper.style.display = "none";
+    syncWrapperRequiredStateV1(wrapper, false);
   }
 
   function applyQuantityHostsSectionV1(form) {
@@ -6970,6 +7095,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   //###################################################################################
 
   function shouldRunMeuPerfilEditSectionFilterV1(event) {
+    const targetEl = event && event.target ? event.target : null;
+
+    if (isMeuPerfilQuantityV4GeneratedTarget(targetEl)) {
+      return false;
+    }
+
     const currentMenuKey = typeof normalizeMenuKey === "function"
       ? normalizeMenuKey(activeMenuKey)
       : "";
@@ -6977,8 +7108,6 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
       return true;
     }
-
-    const targetEl = event && event.target ? event.target : null;
 
     return Boolean(
       targetEl &&
@@ -8463,6 +8592,92 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     return "";
   }
 
+  function getCurrentSettingsTabReturnUrlV6(form) {
+    const formTab = normalizeReturnUrlKeyV6(
+      getFormValueReturnUrlV6(form, ["settings_tab"])
+    );
+
+    if (formTab) {
+      return formTab;
+    }
+
+    const currentUrl = getCurrentUrlReturnUrlV6();
+    const urlTab = normalizeReturnUrlKeyV6(currentUrl.searchParams.get("settings_tab"));
+
+    if (urlTab) {
+      return urlTab;
+    }
+
+    const activeTab = document.querySelector(
+      "[data-process-edit-tab].active, " +
+      "[data-process-edit-tab][aria-selected='true'], " +
+      "[data-process-edit-tab][data-active='true'], " +
+      ".process-edit-tab-link.active"
+    );
+
+    if (!activeTab) {
+      return "";
+    }
+
+    return normalizeReturnUrlKeyV6(
+      activeTab.dataset.processEditTab ||
+      activeTab.getAttribute("data-process-edit-tab") ||
+      ""
+    );
+  }
+
+  function getSettingsEditContextReturnUrlV6(form, menuKey) {
+    const currentUrl = getCurrentUrlReturnUrlV6();
+    const settingsEditKey = normalizeReturnUrlKeyV6(
+      getFormValueReturnUrlV6(form, ["settings_edit_key"]) ||
+      currentUrl.searchParams.get("settings_edit_key") ||
+      ""
+    );
+    const settingsAction = normalizeReturnUrlKeyV6(
+      getFormValueReturnUrlV6(form, ["settings_action"]) ||
+      currentUrl.searchParams.get("settings_action") ||
+      ""
+    );
+    const settingsTab = getCurrentSettingsTabReturnUrlV6(form);
+
+    const shouldKeepContext = (
+      menuKey === "administrativo" &&
+      (
+        settingsEditKey ||
+        settingsTab ||
+        normalizeReturnUrlLookupV6(currentUrl.searchParams.get("target")).includes("settings-menu-edit-card")
+      )
+    );
+
+    if (!shouldKeepContext) {
+      return {
+        settingsEditKey: "",
+        settingsAction: "",
+        settingsTab: ""
+      };
+    }
+
+    return {
+      settingsEditKey,
+      settingsAction: settingsAction || (settingsEditKey ? "edit" : ""),
+      settingsTab
+    };
+  }
+
+  function isProcessSettingsActionReturnUrlV6(actionLookup) {
+    const processSettingsActions = [
+      "/settings/menu/process-fields",
+      "/settings/menu/process-additional-fields",
+      "/settings/menu/process-quantity-fields",
+      "/settings/menu/process-lists",
+      "/settings/menu/process-subsequent-fields"
+    ];
+
+    return processSettingsActions.some(function (actionPath) {
+      return actionLookup.includes(actionPath);
+    });
+  }
+
   function buildReturnUrlPostSaveV6(form) {
     const url = getCurrentUrlReturnUrlV6();
     const actionLookup = normalizeReturnUrlLookupV6(getFormActionReturnUrlV6(form));
@@ -8502,6 +8717,43 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return url.pathname + url.search + url.hash;
     }
 
+    if (actionLookup.includes("/users/profile/address")) {
+      url.searchParams.set("menu", "meu_perfil");
+      url.searchParams.set("target", "#perfil-morada-card");
+      url.searchParams.set("profile_tab", "morada");
+      url.searchParams.delete("admin_tab");
+      url.searchParams.delete("sidebar_sections_tab");
+      url.hash = "#perfil-morada-card";
+      return url.pathname + url.search + url.hash;
+    }
+
+    if (actionLookup.includes("/users/profile/training")) {
+      url.searchParams.set("menu", "meu_perfil");
+      url.searchParams.set("target", "#dados-treinamento-card");
+      url.searchParams.set("profile_tab", "treinamento");
+      url.searchParams.delete("admin_tab");
+      url.searchParams.delete("sidebar_sections_tab");
+      url.hash = "#dados-treinamento-card";
+      return url.pathname + url.search + url.hash;
+    }
+
+    if (actionLookup.includes("/users/profile/whatsapp/verify")) {
+      const profileSection = getCurrentProfileSectionReturnUrlV6();
+
+      url.searchParams.set("menu", "meu_perfil");
+      url.searchParams.set("target", "#perfil-pessoal-card");
+      url.searchParams.set("profile_tab", "pessoal");
+      url.searchParams.delete("admin_tab");
+      url.searchParams.delete("sidebar_sections_tab");
+      url.hash = "#perfil-pessoal-card";
+
+      if (profileSection) {
+        url.searchParams.set("profile_section", profileSection);
+      }
+
+      return url.pathname + url.search + url.hash;
+    }
+
     if (actionLookup.includes("/users/profile/process-data")) {
       url.searchParams.set("target", "#dynamic-process-card");
       url.hash = "#dynamic-process-card";
@@ -8512,6 +8764,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (menuKey) {
       url.searchParams.set("menu", menuKey);
     }
+
+    const settingsContext = getSettingsEditContextReturnUrlV6(form, menuKey);
 
     const target = getFormValueReturnUrlV6(form, ["target", "return_target"]);
 
@@ -8532,6 +8786,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (sectionKey) {
       url.searchParams.set("dynamic_process_section", sectionKey);
       url.searchParams.set("section_key", sectionKey);
+    }
+
+    if (settingsContext.settingsEditKey) {
+      url.searchParams.set("settings_edit_key", settingsContext.settingsEditKey);
+    }
+    if (settingsContext.settingsAction) {
+      url.searchParams.set("settings_action", settingsContext.settingsAction);
+    }
+    if (settingsContext.settingsTab) {
+      url.searchParams.set("settings_tab", settingsContext.settingsTab);
     }
 
     if (actionLookup.includes("/entities/update")) {
@@ -8568,6 +8832,27 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       url.searchParams.delete("dynamic_process_section");
       url.searchParams.delete("section_key");
       url.hash = "#admin-sidebar-sections-card";
+    } else if (isProcessSettingsActionReturnUrlV6(actionLookup)) {
+      url.searchParams.set("menu", "administrativo");
+      url.searchParams.set("admin_tab", "menu");
+      url.searchParams.set("target", "#settings-menu-edit-card");
+      url.hash = "#settings-menu-edit-card";
+
+      if (settingsContext.settingsEditKey) {
+        url.searchParams.set("settings_edit_key", settingsContext.settingsEditKey);
+      } else {
+        const formMenuKey = normalizeReturnUrlKeyV6(
+          getFormValueReturnUrlV6(form, ["menu_key"])
+        );
+        if (formMenuKey) {
+          url.searchParams.set("settings_edit_key", formMenuKey);
+          url.searchParams.set("settings_action", "edit");
+        }
+      }
+
+      if (settingsContext.settingsTab) {
+        url.searchParams.set("settings_tab", settingsContext.settingsTab);
+      }
     } else if (actionLookup.includes("/settings/menu/save")) {
       url.searchParams.set("menu", "administrativo");
       url.searchParams.set("admin_tab", "menu");
@@ -9322,6 +9607,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   //###################################################################################
 
   function shouldRunMeuPerfilSubsequentVisibilityV1(event) {
+    const targetEl = event && event.target ? event.target : null;
+
+    if (isMeuPerfilQuantityV4GeneratedTarget(targetEl)) {
+      return false;
+    }
+
     const currentMenuKey = typeof normalizeMenuKey === "function"
       ? normalizeMenuKey(activeMenuKey)
       : "";
@@ -9329,8 +9620,6 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
       return true;
     }
-
-    const targetEl = event && event.target ? event.target : null;
 
     return Boolean(
       targetEl &&

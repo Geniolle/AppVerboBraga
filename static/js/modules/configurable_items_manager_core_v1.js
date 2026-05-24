@@ -75,6 +75,57 @@
     return Math.min(maxValue, Math.max(minValue, parsedValue));
   }
 
+  function canUseSessionStorage_v1() {
+    try {
+      return Boolean(window && window.sessionStorage);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function readStoredState_v1(storageKey, fallbackPageSize) {
+    if (!storageKey || !canUseSessionStorage_v1()) {
+      return null;
+    }
+
+    try {
+      const rawValue = window.sessionStorage.getItem(storageKey);
+      if (!rawValue) {
+        return null;
+      }
+
+      const parsed = JSON.parse(rawValue);
+      if (!parsed || typeof parsed !== "object") {
+        return null;
+      }
+
+      return {
+        page: clampNumber_v1(parsed.page, 1, 100000, 1),
+        pageSize: clampNumber_v1(parsed.pageSize, 1, 100, fallbackPageSize)
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeStoredState_v1(storageKey, state) {
+    if (!storageKey || !state || !canUseSessionStorage_v1()) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          page: clampNumber_v1(state.page, 1, 100000, 1),
+          pageSize: clampNumber_v1(state.pageSize, 1, 100, 5)
+        })
+      );
+    } catch (error) {
+      // Ignore blocked quota or private-mode storage errors.
+    }
+  }
+
   function defaultGetItemId_v1(item, index) {
     if (item && item.id !== undefined && item.id !== null && String(item.id).trim()) {
       return String(item.id).trim();
@@ -146,6 +197,7 @@
       onChange: typeof config.onChange === "function" ? config.onChange : null,
       onRender: typeof config.onRender === "function" ? config.onRender : null,
       initialItems: toArray_v1(config.initialItems),
+      stateStorageKey: String(config.stateStorageKey || "").trim(),
       preventEditorSubmit: config.preventEditorSubmit !== false,
       actions: {
         edit: config.actions && config.actions.edit === false ? false : true,
@@ -173,13 +225,23 @@
   }
 
   function createInitialState_v1(config) {
+    const storedState = readStoredState_v1(config.stateStorageKey, config.pageSizeDefault);
+
     return {
       items: normalizeItems_v1(config.initialItems, config),
-      page: 1,
-      pageSize: config.pageSizeDefault,
+      page: storedState ? storedState.page : 1,
+      pageSize: storedState ? storedState.pageSize : config.pageSizeDefault,
       editingId: "",
       initialized: false
     };
+  }
+
+  function persistManagerState_v1(manager) {
+    if (!manager || !manager.config) {
+      return;
+    }
+
+    writeStoredState_v1(manager.config.stateStorageKey, manager.state);
   }
 
   //###################################################################################
@@ -616,7 +678,11 @@
     manager.elements.tableBody.dataset.boundActionsV1 = "1";
 
     manager.elements.tableBody.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-configurable-action]");
+      const rawTarget = event && event.target ? event.target : null;
+      const originElement = rawTarget instanceof Element
+        ? rawTarget
+        : (rawTarget && rawTarget.parentElement instanceof Element ? rawTarget.parentElement : null);
+      const button = originElement ? originElement.closest("[data-configurable-action]") : null;
 
       if (!button) {
         return;
@@ -653,7 +719,11 @@
     manager.elements.pagination.dataset.boundPaginationV1 = "1";
 
     manager.elements.pagination.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-configurable-page]");
+      const rawTarget = event && event.target ? event.target : null;
+      const originElement = rawTarget instanceof Element
+        ? rawTarget
+        : (rawTarget && rawTarget.parentElement instanceof Element ? rawTarget.parentElement : null);
+      const button = originElement ? originElement.closest("[data-configurable-page]") : null;
 
       if (!button || button.disabled) {
         return;
@@ -739,6 +809,7 @@
     renderPageSize_v1(manager);
     renderTableBody_v1(manager);
     renderPagination_v1(manager);
+    persistManagerState_v1(manager);
 
     if (typeof manager.config.onRender === "function") {
       manager.config.onRender({
