@@ -707,6 +707,7 @@ Sempre que criar ou ajustar um novo subprocesso administrativo, seguir o mesmo p
 - usar card separado para ação de criação (`Criar + nome`) acima da listagem;
 - o botão de criação deve refletir o subprocesso/aba ativa em tempo real (ex.: `Criar Liderança`, `Criar sessão`, `Criar entidade`);
 - usar card separado para formulário de criação/edição;
+- quando a ação `Editar` abrir card/formulário de subprocesso, o card de edição deve usar fundo cinzento claro padrão (igual Entidade), nunca fundo branco;
 - os campos do formulário de criação/edição devem ser exatamente os campos configurados em `Menu > Editar processo` para o processo e subprocesso (aba/header) ativo;
 - não deixar faixa vazia no topo quando formulário estiver oculto;
 - usar pares `Guardar` e `Cancelar` no lado esquerdo e com tamanho consistente;

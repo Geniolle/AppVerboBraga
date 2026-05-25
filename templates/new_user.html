@@ -49,7 +49,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260517-admin-status-pending-v8-sessoes-menu-title-parity">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260523-departamentos-cards-separated-v6">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260525-subprocess-edit-card-gray-v7">
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260523-fields-config-v9-list-source-tables">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
@@ -3220,7 +3220,60 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260523-admin-table-search-v4-dynamic-total"></script>
   <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260519-admin-definicoes-color-inline-v7"></script>
-<script src="/static/js/new_user.js?v=20260524-meu-perfil-refactor-v14" defer></script>
+<script src="/static/js/modules/post_save_context_navigation_guard_v3.js?v=20260525-post-save-guard-module-v1" defer></script>
+<script src="/static/js/modules/post_save_context_capture_v3.js?v=20260525-post-save-capture-module-v1" defer></script>
+<script src="/static/js/modules/return_url_post_save_capture_v4.js?v=20260525-return-url-capture-v4-module-v1" defer></script>
+<script src="/static/js/modules/frontend_return_url_post_save_v6.js?v=20260525-return-url-post-save-v6-module-v1" defer></script>
+<script src="/static/js/modules/initial_profile_section_from_url_v1.js?v=20260525-initial-profile-section-module-v1" defer></script>
+<script src="/static/js/modules/meu_perfil_subsequent_visibility_v1.js?v=20260525-meu-perfil-subsequent-module-v1" defer></script>
+<script src="/static/js/modules/auto_dismiss_flash_messages_v1.js?v=20260525-auto-dismiss-flash-module-v1" defer></script>
+<script src="/static/js/modules/meu_perfil_quantity_submit_sync_v1.js?v=20260525-quantity-submit-sync-module-v1" defer></script>
+<script src="/static/js/modules/message_dismiss_safe_v5.js?v=20260525-message-dismiss-safe-v5-module-v1" defer></script>
+<script src="/static/js/modules/mark_ready_v1.js?v=20260525-mark-ready-module-v1" defer></script>
+<script src="/static/js/modules/meu_perfil_quantity_renderer_v1.js?v=20260525-quantity-renderer-module-v1" defer></script>
+<script src="/static/js/modules/meu_perfil_quantity_readonly_renderer_v1.js?v=20260525-quantity-readonly-renderer-module-v1" defer></script>
+<script src="/static/js/modules/meu_perfil_quantity_origin_dedup_v1.js?v=20260525-quantity-origin-dedup-module-v1" defer></script>
+<script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
+<script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
+<script src="/static/js/modules/process_sections_builder_v1.js?v=20260525-process-sections-builder-module-v1" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260525-dynamic-runtime-core-module-v1" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260525-dynamic-process-history-renderer-module-v1" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260525-menu-dynamic-navigation-core-module-v1" defer></script>
+<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260525-menu-navigation-controller-module-v1" defer></script>
+<script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260525-menu-navigation-facade-module-v1" defer></script>
+<script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
+<script src="/static/js/modules/process_field_utils_v1.js?v=20260525-process-field-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260525-process-subsequent-rules-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260525-process-history-labels-utils-module-v1" defer></script>
+<script src="/static/js/modules/avatar_utils_v1.js?v=20260525-avatar-utils-module-v1" defer></script>
+<script src="/static/js/modules/user_dropdown_ui_v1.js?v=20260525-user-dropdown-ui-module-v1" defer></script>
+<script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260525-process-field-runtime-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_absence_date_validation_v1.js?v=20260525-process-absence-date-validation-module-v1" defer></script>
+<script src="/static/js/modules/profile_edit_ui_utils_v1.js?v=20260525-profile-edit-ui-utils-module-v1" defer></script>
+<script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
+<script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260525-menu-navigation-bridge-module-v1" defer></script>
+<script src="/static/js/modules/profile_allocation_multivalue_v1.js?v=20260525-profile-allocation-multivalue-module-v1" defer></script>
+<script src="/static/js/modules/profile_process_runtime_core_v1.js?v=20260525-profile-process-runtime-core-module-v1" defer></script>
+<script src="/static/js/modules/process_fields_builder_v1.js?v=20260525-process-fields-builder-module-v1" defer></script>
+<script src="/static/js/modules/process_additional_fields_builder_v1.js?v=20260525-process-additional-fields-builder-module-v1" defer></script>
+<script src="/static/js/modules/sidebar_sections_editor_v1.js?v=20260525-sidebar-sections-editor-module-v1" defer></script>
+<script src="/static/js/modules/create_user_invite_link_v1.js?v=20260525-create-user-invite-link-module-v1" defer></script>
+<script src="/static/js/modules/process_additional_fields_manager_v2.js?v=20260525-process-additional-fields-manager-v2-module-v1" defer></script>
+<script src="/static/js/modules/process_additional_fields_manager_v2_guard_v1.js?v=20260525-process-additional-fields-manager-v2-guard-module-v1" defer></script>
+<script src="/static/js/modules/read_only_cards_v1.js?v=20260525-read-only-cards-module-v1" defer></script>
+<script src="/static/js/modules/admin_table_limiter_v1.js?v=20260525-admin-table-limiter-module-v1" defer></script>
+<script src="/static/js/modules/process_edit_tabs_v1.js?v=20260525-process-edit-tabs-module-v1" defer></script>
+<script src="/static/js/modules/training_outros_state_v1.js?v=20260525-training-outros-state-module-v1" defer></script>
+<script src="/static/js/modules/setup_bridges_v1.js?v=20260525-setup-bridges-module-v1" defer></script>
+<script src="/static/js/modules/menu_item_unique_key_v1.js?v=20260525-menu-item-unique-key-module-v1" defer></script>
+<script src="/static/js/modules/page_support_integrations_v1.js?v=20260525-page-support-integrations-module-v1" defer></script>
+<script src="/static/js/modules/module_bootstrap_registry_v1.js?v=20260525-module-bootstrap-registry-v1" defer></script>
+<script src="/static/js/modules/module_bootstrap_runner_bridge_v1.js?v=20260525-module-bootstrap-runner-bridge-module-v1" defer></script>
+<script src="/static/js/modules/page_dom_registry_v1.js?v=20260525-page-dom-registry-module-v1" defer></script>
+<script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
+<script src="/static/js/modules/page_bootstrap_v1.js?v=20260525-page-bootstrap-module-v1" defer></script>
+<script src="/static/js/new_user.js?v=20260525-new-user-refactor-v53" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260518-top-menu-active-v40-definicoes-context-fix"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

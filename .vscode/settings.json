@@ -9,9 +9,6 @@
 
   "ruff.enable": true,
   "ruff.nativeServer": "on",
-  "ruff.lint.run": "onSave",
-  "ruff.format.args": [],
-  "ruff.lint.args": [],
 
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
