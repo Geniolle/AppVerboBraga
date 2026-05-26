@@ -69,6 +69,258 @@ const menuNavigationBridgeApiV1 =
   typeof window.APPVERBO_CREATE_MENU_NAVIGATION_BRIDGE_API_V1 === "function"
     ? window.APPVERBO_CREATE_MENU_NAVIGATION_BRIDGE_API_V1()
     : null;
+const processSubprocessStandardsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_SUBPROCESS_STANDARDS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_SUBPROCESS_STANDARDS_API_V1()
+    : null;
+
+//###################################################################################
+// (0) TEMA PADRAO DAS ABAS DE SUBPROCESSO
+//###################################################################################
+const SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1 = Object.freeze({
+  sizeBootstrapKeys: Object.freeze([
+    "subprocessTitleFontSizePx",
+    "adminSubprocessTitleFontSizePx",
+    "adminProcessTitleFontSizePx",
+  ]),
+  colorBootstrapKeys: Object.freeze([
+    "subprocessTitleColorHex",
+    "adminSubprocessTitleColorHex",
+    "adminProcessTitleColorHex",
+  ]),
+  fontFamilyBootstrapKeys: Object.freeze([
+    "subprocessTitleFontFamily",
+    "adminSubprocessTitleFontFamily",
+    "adminProcessTitleFontFamily",
+  ]),
+  defaultSizePx: 20,
+  defaultColorHex: "#0F172A",
+  defaultFontFamily: '"Segoe UI", Tahoma, Arial, sans-serif',
+  minSizePx: 16,
+  maxSizePx: 28,
+});
+
+const SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1 = Object.freeze({
+  sizeBootstrapKeys: Object.freeze([
+    "subprocessCardItemFontSizePx",
+    "adminSubprocessCardItemFontSizePx",
+    "adminCardItemFontSizePx",
+  ]),
+  colorBootstrapKeys: Object.freeze([
+    "subprocessCardItemColorHex",
+    "adminSubprocessCardItemColorHex",
+    "adminCardItemColorHex",
+  ]),
+  fontFamilyBootstrapKeys: Object.freeze([
+    "subprocessCardItemFontFamily",
+    "adminSubprocessCardItemFontFamily",
+    "adminCardItemFontFamily",
+  ]),
+  fontWeightBootstrapKeys: Object.freeze([
+    "subprocessCardItemFontWeight",
+    "adminSubprocessCardItemFontWeight",
+    "adminCardItemFontWeight",
+  ]),
+  defaultSizePx: 12,
+  defaultColorHex: "#0F1F3A",
+  defaultFontFamily: 'Inter, "Segoe UI", sans-serif',
+  defaultFontWeight: 500,
+  minSizePx: 10,
+  maxSizePx: 24,
+  minWeight: 300,
+  maxWeight: 900,
+});
+
+const SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1 = Object.freeze({
+  colorBootstrapKeys: Object.freeze([
+    "subprocessCardTableHeadColorHex",
+    "adminSubprocessCardTableHeadColorHex",
+    "adminCardTableHeadColorHex",
+  ]),
+  defaultColorHex: "#000000",
+  defaultFontWeight: 700,
+});
+
+function setupSubprocessTabsThemeV1() {
+  if (!processSubprocessStandardsApiV1) {
+    return;
+  }
+  if (typeof processSubprocessStandardsApiV1.ensureDefaultSubprocessTabThemeV1 === "function") {
+    processSubprocessStandardsApiV1.ensureDefaultSubprocessTabThemeV1();
+  }
+
+  if (typeof processSubprocessStandardsApiV1.applySubprocessTabThemeV1 !== "function") {
+    return;
+  }
+
+  const activeColor = String(
+    bootstrap.subprocessTabsActiveColorHex ||
+    bootstrap.adminTabsColorHex ||
+    ""
+  ).trim();
+  const inactiveColor = String(
+    bootstrap.subprocessTabsInactiveColorHex ||
+    ""
+  ).trim();
+  const indicatorColor = String(
+    bootstrap.subprocessTabsIndicatorColorHex ||
+    activeColor
+  ).trim();
+  const borderColor = String(
+    bootstrap.subprocessTabsBorderColorHex ||
+    ""
+  ).trim();
+
+  const parsePositiveIntegerV1 = (value) => {
+    const parsedValue = Number.parseInt(String(value || "").trim(), 10);
+    if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+      return null;
+    }
+    return parsedValue;
+  };
+  const clampValueV1 = (value, min, max) => {
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+    return Math.min(max, Math.max(min, value));
+  };
+  const resolveFirstBootstrapValueV1 = (keys = []) => {
+    for (let index = 0; index < keys.length; index += 1) {
+      const key = String(keys[index] || "").trim();
+      if (!key) {
+        continue;
+      }
+      const value = bootstrap[key];
+      if (typeof value === "undefined" || value === null) {
+        continue;
+      }
+      const cleanValue = String(value).trim();
+      if (!cleanValue) {
+        continue;
+      }
+      return cleanValue;
+    }
+    return "";
+  };
+  const normalizeFontFamilyTokenV1 = (value) => {
+    const cleanValue = String(value || "").trim();
+    if (!cleanValue) {
+      return "";
+    }
+    if (cleanValue.length > 120) {
+      return "";
+    }
+    if (/[\r\n;{}]/.test(cleanValue)) {
+      return "";
+    }
+    return cleanValue;
+  };
+
+  const rootEl = (
+    typeof document !== "undefined" &&
+    document.documentElement
+  )
+    ? document.documentElement
+    : null;
+  if (rootEl) {
+    const bootstrapTabTextSizePx = parsePositiveIntegerV1(
+      bootstrap.subprocessTabsTextSizePx ||
+      bootstrap.adminTabsTextSizePx
+    );
+    const resolvedTabTextSizePx = clampValueV1(
+      bootstrapTabTextSizePx || 14,
+      12,
+      20
+    );
+    const bootstrapTitleSizePx = parsePositiveIntegerV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.sizeBootstrapKeys)
+    );
+    const resolvedTitleSizePx = clampValueV1(
+      bootstrapTitleSizePx || SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.defaultSizePx,
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.minSizePx,
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.maxSizePx
+    );
+    const bootstrapTabsGapPx = parsePositiveIntegerV1(bootstrap.subprocessTabsGapPx);
+    const resolvedTabsGapPx = clampValueV1(bootstrapTabsGapPx || 16, 8, 36);
+    const bootstrapTitleColor = resolveFirstBootstrapValueV1(
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.colorBootstrapKeys
+    );
+    const resolvedTitleColor = (
+      bootstrapTitleColor ||
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.defaultColorHex
+    );
+    const bootstrapTitleFontFamily = normalizeFontFamilyTokenV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.fontFamilyBootstrapKeys)
+    );
+    const resolvedTitleFontFamily = (
+      bootstrapTitleFontFamily ||
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.defaultFontFamily
+    );
+    const bootstrapCardItemSizePx = parsePositiveIntegerV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.sizeBootstrapKeys)
+    );
+    const resolvedCardItemSizePx = clampValueV1(
+      bootstrapCardItemSizePx || SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultSizePx,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.minSizePx,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.maxSizePx
+    );
+    const bootstrapCardItemColor = resolveFirstBootstrapValueV1(
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.colorBootstrapKeys
+    );
+    const resolvedCardItemColor = (
+      bootstrapCardItemColor ||
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultColorHex
+    );
+    const bootstrapCardItemFontFamily = normalizeFontFamilyTokenV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.fontFamilyBootstrapKeys)
+    );
+    const resolvedCardItemFontFamily = (
+      bootstrapCardItemFontFamily ||
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultFontFamily
+    );
+    const bootstrapCardItemFontWeight = parsePositiveIntegerV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.fontWeightBootstrapKeys)
+    );
+    const resolvedCardItemFontWeight = clampValueV1(
+      bootstrapCardItemFontWeight || SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultFontWeight,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.minWeight,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.maxWeight
+    );
+    const bootstrapCardTableHeadColor = resolveFirstBootstrapValueV1(
+      SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1.colorBootstrapKeys
+    );
+    const resolvedCardTableHeadColor = (
+      bootstrapCardTableHeadColor ||
+      SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1.defaultColorHex
+    );
+
+    rootEl.style.setProperty("--appverbo-subprocess-title-font-size", `${resolvedTitleSizePx}px`);
+    rootEl.style.setProperty("--appverbo-subprocess-tab-font-size", `${resolvedTabTextSizePx}px`);
+    rootEl.style.setProperty("--appverbo-subprocess-tabs-gap", `${resolvedTabsGapPx}px`);
+    rootEl.style.setProperty("--appverbo-subprocess-title-color", resolvedTitleColor);
+    rootEl.style.setProperty("--appverbo-subprocess-title-font-family", resolvedTitleFontFamily);
+    rootEl.style.setProperty("--appverbo-admin-card-item-font-size-v1", `${resolvedCardItemSizePx}px`);
+    rootEl.style.setProperty("--appverbo-admin-card-item-color-v1", resolvedCardItemColor);
+    rootEl.style.setProperty("--appverbo-admin-card-item-font-family-v1", resolvedCardItemFontFamily);
+    rootEl.style.setProperty("--appverbo-admin-card-item-font-weight-v1", String(resolvedCardItemFontWeight));
+    rootEl.style.setProperty("--appverbo-admin-card-table-head-color-v1", resolvedCardTableHeadColor);
+    rootEl.style.setProperty(
+      "--appverbo-admin-card-table-head-font-weight-v1",
+      String(SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1.defaultFontWeight)
+    );
+  }
+
+  if (activeColor || inactiveColor || indicatorColor || borderColor) {
+    processSubprocessStandardsApiV1.applySubprocessTabThemeV1({
+      activeColor: activeColor || undefined,
+      inactiveColor: inactiveColor || undefined,
+      indicatorColor: indicatorColor || undefined,
+      borderColor: borderColor || undefined
+    });
+  }
+}
+
+setupSubprocessTabsThemeV1();
 const currentUserName = bootstrap.currentUserName || "";
 const currentUserEmail = bootstrap.currentUserEmail || "";
 const currentUserIsAdmin = Boolean(bootstrap.currentUserIsAdmin);
@@ -681,7 +933,21 @@ function runModuleBootstrapStepV1(step, context = {}) {
 }
 
 // APPVERBO_MENU_DYNAMIC_MERGE_V1_START
-runModuleBootstrapStepV1("menuDynamicMergeV1");
+runModuleBootstrapStepV1("menuDynamicMergeV1", {
+  sidebarMenuSettings,
+  visibleSidebarMenuKeys,
+  menuConfig,
+  menuProcessValuesMap,
+  dynamicProcessDataByMenu,
+  selectedDynamicSectionByMenu,
+  MEU_PERFIL_MENU_KEY,
+  initialMenu,
+  initialDynamicProcessSection,
+  normalizeMenuKey,
+  toSentenceCaseText,
+  buildProcessSections,
+  forceMerge: true
+});
 // APPVERBO_MENU_DYNAMIC_MERGE_V1_END
 
 const pageDomRegistryV1 = (
@@ -691,6 +957,7 @@ const pageDomRegistryV1 = (
   : {
       itemsEl: document.getElementById("submenu-items"),
       menuTabsCardEl: document.getElementById("menu-tabs-card"),
+      submenuProcessTitleEl: document.getElementById("submenu-process-title"),
       menuButtons: document.querySelectorAll(".menu-item"),
       scopedCards: document.querySelectorAll("[data-menu-scope]"),
       userMenuEl: document.getElementById("user-menu"),
@@ -742,6 +1009,7 @@ const pageDomRegistryV1 = (
 const {
   itemsEl,
   menuTabsCardEl,
+  submenuProcessTitleEl,
   menuButtons,
   scopedCards,
   userMenuEl,
@@ -1276,6 +1544,59 @@ function setupAllocationSectionMultiValue(personalCardEl, sectionKey) {
   profileAllocationMultiValueApiV1.setupAllocationSectionMultiValue(personalCardEl, sectionKey);
 }
 
+//###################################################################################
+// (DYNAMIC PROCESS) INITIALIZAR RUNTIME CORE V1
+//###################################################################################
+function setupDynamicProcessRuntimeCoreV1() {
+  if (typeof window.APPVERBO_SETUP_DYNAMIC_PROCESS_RUNTIME_CORE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_SETUP_DYNAMIC_PROCESS_RUNTIME_CORE_V1({
+    MEU_PERFIL_MENU_KEY,
+    menuProcessValuesMap,
+    menuProcessHistoryMap,
+    menuProcessQuantityValuesMap,
+    sidebarMenuSettings,
+    dynamicProcessDataByMenu,
+    selectedDynamicSectionByMenu,
+    itemsEl,
+    dynamicProcessCardEl,
+    dynamicProcessCreateCardEl,
+    dynamicProcessReadOnlyEl,
+    dynamicProcessReadOnlyGridEl,
+    dynamicProcessEditGridEl,
+    dynamicProcessEditFormEl,
+    dynamicProcessTitleEl,
+    dynamicProcessDescriptionEl,
+    dynamicProcessSectionLabelEl,
+    dynamicProcessMenuKeyInputEl,
+    dynamicProcessSectionKeyInputEl,
+    dynamicProcessHistoryActionInputEl,
+    dynamicProcessHistoryRecordIdInputEl,
+    dynamicProcessSubmitBtnEl,
+    dynamicProcessEditToggleEl,
+    dynamicProcessEmptyEl,
+    dynamicProcessHistoryBlockEl,
+    dynamicProcessHistoryActiveCardEl,
+    dynamicProcessHistoryInactiveCardEl,
+    dynamicProcessHistoryTableEl,
+    dynamicProcessHistoryHeadEl,
+    dynamicProcessHistoryBodyEl,
+    dynamicProcessHistoryEmptyEl,
+    dynamicProcessHistoryActiveTableEl,
+    dynamicProcessHistoryActiveHeadEl,
+    dynamicProcessHistoryActiveBodyEl,
+    dynamicProcessHistoryActiveEmptyEl,
+    dynamicProcessHistoryInactiveTableEl,
+    dynamicProcessHistoryInactiveHeadEl,
+    dynamicProcessHistoryInactiveBodyEl,
+    dynamicProcessHistoryInactiveEmptyEl
+  });
+}
+
+setupDynamicProcessRuntimeCoreV1();
+
 // APPVERBO_PROFILE_PROCESS_RUNTIME_CORE_V1_START
 runModuleBootstrapStepV1("profileProcessRuntimeCoreV1");
 // APPVERBO_PROFILE_PROCESS_RUNTIME_CORE_V1_END
@@ -1386,7 +1707,112 @@ function setupProcessEditTabs() {
   });
 }
 
+//###################################################################################
+// (DYNAMIC PROCESS) WRAPPERS DE ACESSO V1
+//###################################################################################
+function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
+  if (typeof window.renderDynamicProcessCard !== "function") {
+    return;
+  }
+  window.renderDynamicProcessCard(menuKey, sectionKey, options);
+}
+
+function collectCurrentMeuPerfilQuantityValues() {
+  if (typeof window.collectCurrentMeuPerfilQuantityValues !== "function") {
+    return {};
+  }
+  return window.collectCurrentMeuPerfilQuantityValues();
+}
+
+function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
+  if (typeof window.syncMeuPerfilQuantityHiddenInputs !== "function") {
+    return;
+  }
+  window.syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule);
+}
+
 let appverboMenuNavigationFacadeV1 = null;
+
+function sanitizeMenuProcessTitleLabelV1(value) {
+  let cleanLabel = String(value || "").trim().replace(/\s+/g, " ");
+  if (!cleanLabel) {
+    return "";
+  }
+
+  // Remove prefixos de icone textual no formato "[*]" / "[H]" etc.
+  cleanLabel = cleanLabel.replace(/^\[[^\]]+\]\s*/g, "").trim();
+  return cleanLabel;
+}
+
+function resolveMenuButtonLabelV1(menuKey) {
+  const menuButton = Array.from(menuButtons || []).find(
+    (button) => normalizeMenuKey(button && button.dataset ? button.dataset.menu : "") === menuKey
+  );
+  if (!menuButton) {
+    return "";
+  }
+
+  const dataLabel = sanitizeMenuProcessTitleLabelV1(
+    menuButton.getAttribute("data-menu-label")
+  );
+  if (dataLabel) {
+    return dataLabel;
+  }
+
+  const labelEl = menuButton.querySelector(".menu-item-label");
+  const labelText = sanitizeMenuProcessTitleLabelV1(
+    labelEl ? labelEl.textContent : ""
+  );
+  if (labelText) {
+    return labelText;
+  }
+
+  const fallbackText = sanitizeMenuProcessTitleLabelV1(menuButton.textContent || "");
+  return fallbackText;
+}
+
+function resolveMenuProcessTitleLabelV1(menuKey, explicitTitle = "") {
+  const cleanExplicitTitle = String(explicitTitle || "").trim();
+  if (cleanExplicitTitle) {
+    return toSentenceCaseText(cleanExplicitTitle);
+  }
+
+  const buttonLabel = resolveMenuButtonLabelV1(menuKey);
+  if (buttonLabel) {
+    return buttonLabel;
+  }
+
+  const config = menuConfig && menuConfig[menuKey];
+  const configTitle = String((config && config.title) || "").trim();
+  if (configTitle) {
+    return toSentenceCaseText(configTitle);
+  }
+
+  return toSentenceCaseText(String(menuKey || ""));
+}
+
+function updateSubmenuProcessTitleV1(menuKey, explicitTitle = "") {
+  if (!submenuProcessTitleEl) {
+    return;
+  }
+
+  const resolvedMenuKey = normalizeMenuKey(menuKey || activeMenuKey || initialMenu || "");
+  let title = resolveMenuProcessTitleLabelV1(resolvedMenuKey, explicitTitle);
+  if (!title) {
+    title = String(submenuProcessTitleEl.textContent || "").trim();
+  }
+  if (!title && resolvedMenuKey) {
+    title = toSentenceCaseText(String(resolvedMenuKey || "").replace(/_/g, " "));
+  }
+  submenuProcessTitleEl.textContent = title;
+  submenuProcessTitleEl.style.display = title ? "block" : "";
+  submenuProcessTitleEl.setAttribute("data-menu-key", String(resolvedMenuKey || ""));
+}
+
+const initialProcessTitleMenuKeyV1 = normalizeMenuKey(activeMenuKey || initialMenu || "");
+if (initialProcessTitleMenuKeyV1) {
+  updateSubmenuProcessTitleV1(initialProcessTitleMenuKeyV1);
+}
 
 function buildMenuNavigationBridgeContextV1() {
   return {
@@ -1402,6 +1828,8 @@ function buildMenuNavigationBridgeContextV1() {
     applyContentForMenuTarget,
     applyContentForMenu,
     renderDynamicProcessCard,
+    updateSubmenuProcessTitle: updateSubmenuProcessTitleV1,
+    resolveMenuProcessTitleLabel: resolveMenuProcessTitleLabelV1,
     applyMeuPerfilProcessSubsequentVisibility,
     selectedTargetByMenu,
     selectedDynamicSectionByMenu,
@@ -1441,6 +1869,7 @@ function getMenuNavigationFacadeV1() {
     applyContentForMenuTarget,
     applyContentForMenu,
     renderDynamicProcessCard,
+    updateSubmenuProcessTitle: updateSubmenuProcessTitleV1,
     applyMeuPerfilProcessSubsequentVisibility,
     selectedTargetByMenu,
     selectedDynamicSectionByMenu,

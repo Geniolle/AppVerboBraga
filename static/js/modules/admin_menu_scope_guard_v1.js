@@ -26,6 +26,12 @@
     );
   }
 
+  function shouldBypassScopeGuardV2() {
+    return Boolean(
+      document.querySelector("script[src*='appverbo_navigation_smooth_v7.js']")
+    );
+  }
+
   //###################################################################################
   // (2) APLICAR VISIBILIDADE APENAS NOS CARDS DO SUBPROCESSO MENU
   //###################################################################################
@@ -40,6 +46,10 @@
   }
 
   function aplicarEscopoMenuAdministrativoV2() {
+    if (shouldBypassScopeGuardV2()) {
+      return;
+    }
+
     const menuAtivo = contextoMenuAdministrativoAtivoV2();
     const cards = obterCardsMenuAdministrativoV2();
 

@@ -14,12 +14,10 @@
     {
       containerSelector: "#menu-tabs-card #submenu-items.menu-tabs",
       itemSelector: ".submenu-item",
-      fixedWidthCh: 24,
-      bootstrapWidthKey: "adminTabsWidthCh",
-      bootstrapTextSizeKey: "adminTabsTextSizePx",
-      bootstrapFontFamilyKey: "adminTabsFontFamily",
-      bootstrapColorKey: "adminTabsColorHex",
-      bootstrapTextColorKey: "adminTabsTextColorHex",
+      fixedWidthCh: 0,
+      disableEqualWidth: true,
+      disableInlineTypography: true,
+      disableInlineColor: true,
       cssVariableName: "--appverbo-admin-tab-width-v1"
     },
     {
@@ -362,6 +360,15 @@
     });
   }
 
+  function clearInlineTypographyStylesV1(tab) {
+    tab.style.removeProperty("font-family");
+    tab.style.removeProperty("font-size");
+
+    Array.from(tab.querySelectorAll("*")).forEach(function (childElement) {
+      childElement.style.removeProperty("font-size");
+    });
+  }
+
   function applyInlineColorToTabsV1(tabs, activeColorHex, activeTextColorHex) {
     tabs.forEach(function (tab) {
       clearInlineColorStylesV1(tab);
@@ -408,6 +415,9 @@
     const bootstrapTextColorHex = resolveBootstrapTextColorHex_v1(group);
     const cssVariableName = String(group.cssVariableName || "").trim();
     const useInlineWidth = group.useInlineWidth === true;
+    const disableEqualWidth = group.disableEqualWidth === true;
+    const disableInlineTypography = group.disableInlineTypography === true;
+    const disableInlineColor = group.disableInlineColor === true;
     const containers = Array.from(document.querySelectorAll(containerSelector));
 
     containers.forEach(function (container) {
@@ -421,9 +431,27 @@
         return;
       }
 
-      applyInlineFontFamilyToTabs_v1(tabs, bootstrapFontFamily);
-      applyInlineTextSizeToTabsV1(tabs, bootstrapTextSizePx);
-      applyInlineColorToTabsV1(tabs, bootstrapColorHex, bootstrapTextColorHex);
+      if (!disableInlineTypography) {
+        applyInlineFontFamilyToTabs_v1(tabs, bootstrapFontFamily);
+        applyInlineTextSizeToTabsV1(tabs, bootstrapTextSizePx);
+      } else {
+        tabs.forEach(function (tab) {
+          clearInlineTypographyStylesV1(tab);
+        });
+      }
+
+      if (!disableInlineColor) {
+        applyInlineColorToTabsV1(tabs, bootstrapColorHex, bootstrapTextColorHex);
+      } else {
+        tabs.forEach(function (tab) {
+          clearInlineColorStylesV1(tab);
+        });
+      }
+
+      if (disableEqualWidth) {
+        clearTabWidth_v1(container, tabs, cssVariableName, useInlineWidth);
+        return;
+      }
 
       if (tabs.length === 1) {
         clearTabWidth_v1(container, tabs, cssVariableName, useInlineWidth);

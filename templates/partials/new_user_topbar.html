@@ -1,5 +1,19 @@
   <header class="topbar">
     <div class="topbar-left">
+      <button
+        id="appverbo-sidebar-toggle"
+        class="topbar-sidebar-toggle"
+        type="button"
+        aria-label="Fechar menu lateral"
+        aria-controls="appverbo-sidebar"
+        aria-expanded="true"
+      >
+        <span class="topbar-sidebar-toggle-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
       <div class="brand">
         <span class="brand-mark">
           {% if user_personal_data.primary_entity_logo_url %}
@@ -12,7 +26,6 @@
           {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else (user_personal_data.entities if user_personal_data.entities != '-' else 'SOMA') }}
         </span>
       </div>
-      <button class="topbar-action" type="button" title="Voltar">&larr;</button>
     </div>
     <div class="topbar-right">
       <div id="user-menu" class="user-menu">

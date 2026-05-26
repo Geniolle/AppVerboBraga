@@ -12,7 +12,7 @@
 {% block head_extra %}
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_START #}
 <link rel="stylesheet" href="/static/css/modules/appverbo_admin_tabs_emergency_unlock_v1.css?v=20260511-admin-tabs-emergency-unlock-v4">
-<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260518-admin-tabs-emergency-unlock-v7-definicoes-click-fix"></script>
+<script src="/static/js/modules/appverbo_admin_tabs_emergency_unlock_v1.js?v=20260526-admin-tabs-emergency-unlock-v8-bypass-v7-nav"></script>
 <script>
 (function () {
   function liberarTelaAppVerboV2() {
@@ -48,13 +48,26 @@
 </noscript>
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260517-admin-status-pending-v8-sessoes-menu-title-parity">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260525-subprocess-edit-card-gray-v7">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260526-admin-status-footer-single-line-v10-last-row-no-border">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260526-sidebar-style-settings-v2-hide-empty-departamento-card">
+  <style>
+    :root {
+      --topbar: {{ admin_topbar_color_hex|default('#334A62', true) }};
+      --sidebar-bg: {{ admin_sidebar_bg_color_hex|default('#F3F3F4', true) }};
+      --sidebar-active: {{ admin_sidebar_active_bg_color_hex|default('#E4E6EA', true) }};
+      --sidebar-text-color: {{ admin_sidebar_text_color_hex|default('#5C6572', true) }};
+      --sidebar-text-size-px: {{ admin_sidebar_text_size_px|default(14, true) }};
+      --sidebar-font-family: {{ admin_sidebar_font_family|default('"Segoe UI", Tahoma, Arial, sans-serif', true) }};
+      --sidebar-font-weight: {{ admin_sidebar_font_weight|default(500, true) }};
+      --sidebar-icon-color: {{ admin_sidebar_icon_color_hex|default('#5F6B7D', true) }};
+      --sidebar-section-text-color: {{ admin_sidebar_section_text_color_hex|default('#808792', true) }};
+    }
+  </style>
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260523-fields-config-v9-list-source-tables">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
-<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260522-admin-tabs-process-edit-active-v10"></script>
+<script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260526-admin-tabs-top-subprocess-line-v11"></script>
 
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
@@ -62,7 +75,7 @@
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
-  <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260516-admin-menu-scope-v2" defer></script>
+  <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260526-admin-menu-scope-v3-bypass-v7-nav" defer></script>
   <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260524-quantity-readonly-renderer-v2-section-scope-fix-v3" defer></script>
   <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260524-quantity-edit-pairs-v4-section-scope-fix-v2" defer></script>
 
@@ -140,8 +153,8 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260524-admin-subprocess-nav-v7-process-only-dynamic-tabs-fix" defer></script>
-  <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260509-aba-ativa-subprocessos-v1" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260526-admin-subprocess-nav-v12-menu-canonical-render-fix" defer></script>
+  <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260525-aba-ativa-subprocessos-v2-bypass-v7" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
 // ###################################################################################
@@ -208,7 +221,7 @@
 <!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_END -->
 
   <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_config_v1.css?v=20260516-admin-footer-config-v1">
-  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260517-admin-footer-standard-v8-subprocess-font-parity">
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260526-admin-footer-standard-v9-last-visible-row">
 {% endblock %}
 
 {% block body %}
@@ -220,7 +233,9 @@
     <main class="content">
 
       <div class="container">
+        {% set initial_menu_label_v1 = (initial_menu or "")|replace("_", " ")|trim %}
         <section id="menu-tabs-card" class="card menu-tabs-card">
+          <div id="submenu-process-title" class="submenu-process-title" aria-live="polite">{{ initial_menu_label_v1|title }}</div>
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
         </section>
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_START -->
@@ -2273,6 +2288,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
+                          <option value="30">30</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
                         </select>
                       </label>
 
@@ -2414,6 +2432,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
+                          <option value="30">30</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
                         </select>
                       </label>
 
@@ -2544,6 +2565,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
+                          <option value="30">30</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
                         </select>
                       </label>
 
@@ -2666,6 +2690,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
+                          <option value="30">30</option>
+                          <option value="50">50</option>
+                          <option value="100">100</option>
                         </select>
                       </label>
 
@@ -3171,7 +3198,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/modules/admin_user_inactive_delete_button_v1.js?v=20260515-user-actions-guard-v10"></script>
+<script src="/static/js/modules/admin_user_inactive_delete_button_v1.js?v=20260526-user-actions-guard-v11-dedupe-delete"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
   <script>
@@ -3202,6 +3229,15 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       adminTabsFontFamily: {{ admin_tabs_font_family|tojson }},
       adminTabsColorHex: {{ admin_tabs_color_hex|tojson }},
       adminTabsTextColorHex: {{ admin_tabs_text_color_hex|tojson }},
+      adminProcessTitleFontSizePx: {{ admin_process_title_font_size_px|tojson }},
+      adminProcessTitleFontFamily: {{ admin_process_title_font_family|tojson }},
+      adminProcessTitleColorHex: {{ admin_process_title_color_hex|tojson }},
+      adminCardItemFontSizePx: {{ admin_card_item_font_size_px|tojson }},
+      adminCardItemFontFamily: {{ admin_card_item_font_family|tojson }},
+      adminCardItemColorHex: {{ admin_card_item_color_hex|tojson }},
+      adminCardItemFontWeight: {{ admin_card_item_font_weight|tojson }},
+      adminCardTableHeadColorHex: {{ admin_card_table_head_color_hex|tojson }},
+      adminTopbarColorHex: {{ admin_topbar_color_hex|default('#334A62', true)|tojson }},
       currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
       settingsAction: {{ settings_action|tojson }},
       settingsTab: {{ settings_tab|tojson }},
@@ -3213,8 +3249,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
     };
   </script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260524-core-click-target-guard-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260523-additional-pagination-state-v1"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260526-core-page-size-options-v2"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260526-additional-page-size-options-v2"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-pagination-state-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
@@ -3238,9 +3274,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260525-process-sections-builder-module-v1" defer></script>
 <script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260525-dynamic-runtime-core-module-v1" defer></script>
 <script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260525-dynamic-process-history-renderer-module-v1" defer></script>
-<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260525-menu-dynamic-navigation-core-module-v1" defer></script>
-<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260525-menu-navigation-controller-module-v1" defer></script>
-<script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260525-menu-navigation-facade-module-v1" defer></script>
+<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260526-menu-dynamic-navigation-core-v5-hide-departamento-card" defer></script>
+<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260526-menu-navigation-controller-standards-v8-title-context-refactor" defer></script>
+<script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
+<script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
 <script src="/static/js/modules/process_field_utils_v1.js?v=20260525-process-field-utils-module-v1" defer></script>
 <script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260525-process-subsequent-rules-utils-module-v1" defer></script>
@@ -3252,7 +3290,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/process_absence_date_validation_v1.js?v=20260525-process-absence-date-validation-module-v1" defer></script>
 <script src="/static/js/modules/profile_edit_ui_utils_v1.js?v=20260525-profile-edit-ui-utils-module-v1" defer></script>
 <script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
-<script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260525-menu-navigation-bridge-module-v1" defer></script>
+<script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260526-menu-navigation-bridge-process-title-v2" defer></script>
 <script src="/static/js/modules/profile_allocation_multivalue_v1.js?v=20260525-profile-allocation-multivalue-module-v1" defer></script>
 <script src="/static/js/modules/profile_process_runtime_core_v1.js?v=20260525-profile-process-runtime-core-module-v1" defer></script>
 <script src="/static/js/modules/process_fields_builder_v1.js?v=20260525-process-fields-builder-module-v1" defer></script>
@@ -3268,13 +3306,14 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/setup_bridges_v1.js?v=20260525-setup-bridges-module-v1" defer></script>
 <script src="/static/js/modules/menu_item_unique_key_v1.js?v=20260525-menu-item-unique-key-module-v1" defer></script>
 <script src="/static/js/modules/page_support_integrations_v1.js?v=20260525-page-support-integrations-module-v1" defer></script>
-<script src="/static/js/modules/module_bootstrap_registry_v1.js?v=20260525-module-bootstrap-registry-v1" defer></script>
+<script src="/static/js/modules/module_bootstrap_registry_v1.js?v=20260525-module-bootstrap-registry-v2" defer></script>
 <script src="/static/js/modules/module_bootstrap_runner_bridge_v1.js?v=20260525-module-bootstrap-runner-bridge-module-v1" defer></script>
-<script src="/static/js/modules/page_dom_registry_v1.js?v=20260525-page-dom-registry-module-v1" defer></script>
+<script src="/static/js/modules/page_dom_registry_v1.js?v=20260526-page-dom-registry-process-title-v2" defer></script>
 <script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
 <script src="/static/js/modules/page_bootstrap_v1.js?v=20260525-page-bootstrap-module-v1" defer></script>
-<script src="/static/js/new_user.js?v=20260525-new-user-refactor-v53" defer></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260518-top-menu-active-v40-definicoes-context-fix"></script>
+<script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
+<script src="/static/js/new_user.js?v=20260526-new-user-refactor-v63-global-table-head-color" defer></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>
@@ -3284,6 +3323,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260524-fields-remove-direct-save-v1"></script>
-  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260518-admin-footer-standard-v2-root-fix" defer></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260526-fields-page-size-options-v2"></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260526-admin-footer-standard-v4-page-size-options" defer></script>
 {% endblock %}

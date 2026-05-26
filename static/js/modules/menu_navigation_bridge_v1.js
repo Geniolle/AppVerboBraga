@@ -28,6 +28,7 @@
         applyContentForMenuTarget: context.applyContentForMenuTarget,
         applyContentForMenu: context.applyContentForMenu,
         renderDynamicProcessCard: context.renderDynamicProcessCard,
+        updateSubmenuProcessTitle: context.updateSubmenuProcessTitle,
         applyMeuPerfilProcessSubsequentVisibility: context.applyMeuPerfilProcessSubsequentVisibility,
         selectedTargetByMenu: context.selectedTargetByMenu,
         selectedDynamicSectionByMenu: context.selectedDynamicSectionByMenu,

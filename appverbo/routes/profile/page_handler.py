@@ -20,6 +20,7 @@ from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_fro
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.admin_subprocesses.utilizador.pagina import montar_estado_pagina_utilizador_v1
 from appverbo.core import *  # noqa: F403,F401
+from appverbo.db.bootstrap import ensure_admin_process_title_default_definitions_v1
 from appverbo.models import AdminDefinition
 from appverbo.menu_settings import (
     MENU_MEU_PERFIL_KEY,
@@ -290,6 +291,23 @@ def _parse_tabs_font_family_v1(value: object) -> str | None:
     return raw_value
 
 
+def _parse_font_weight_value_v1(value: object) -> int | None:
+    raw_value = str(value or "").strip().replace(",", ".")
+
+    if not raw_value:
+        return None
+
+    try:
+        parsed_value = int(float(raw_value))
+    except (TypeError, ValueError):
+        return None
+
+    if parsed_value <= 0:
+        return None
+
+    return max(300, min(900, parsed_value))
+
+
 def _parse_tabs_color_hex_v1(value: object) -> str | None:
     raw_value = "".join(str(value or "").strip().split())
 
@@ -311,16 +329,261 @@ def _parse_tabs_color_hex_v1(value: object) -> str | None:
     return "#" + raw_value.upper()
 
 
-def _resolve_admin_tabs_width_ch_from_definitions_v1(
+# ###################################################################################
+# (X.1) CONSTANTES DE ESTILO - PROCESSO/SUBPROCESSO (DEFINICOES)
+# ###################################################################################
+
+ADMIN_PROCESS_TITLE_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str]] = {
+    "font_size": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "titulo processo tamanho",
+            "titulo do processo tamanho",
+            "titulo tamanho",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "font_family": {
+        "parameter_type": "fonte",
+        "parameter_names": (
+            "titulo processo fonte",
+            "titulo do processo fonte",
+            "titulo fonte",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "titulo processo cor",
+            "titulo do processo cor",
+            "titulo cor",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+}
+
+# ###################################################################################
+# (X.2) CONSTANTES DE ESTILO - TEXTO DOS ITENS DOS CARDS (DEFINICOES)
+# ###################################################################################
+
+ADMIN_SUBPROCESS_CARD_ITEM_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str]] = {
+    "font_size": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "card item texto tamanho",
+            "item card texto tamanho",
+            "item texto tamanho",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "font_family": {
+        "parameter_type": "fonte",
+        "parameter_names": (
+            "card item texto fonte",
+            "item card texto fonte",
+            "item texto fonte",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "card item texto cor",
+            "item card texto cor",
+            "item texto cor",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "font_weight": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "card item texto peso",
+            "item card texto peso",
+            "item texto peso",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+}
+
+# ###################################################################################
+# (X.3) CONSTANTES DE ESTILO - CABECALHO DE TABELAS/COLUNAS (DEFINICOES)
+# ###################################################################################
+
+ADMIN_SUBPROCESS_CARD_TABLE_HEAD_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str]] = {
+    "color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "card cabecalho texto cor",
+            "cabecalho texto cor",
+            "header texto cor",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+}
+
+# ###################################################################################
+# (X.4) CONSTANTES DE ESTILO - BARRA DO CABECALHO (DEFINICOES)
+# ###################################################################################
+
+ADMIN_TOPBAR_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str]] = {
+    "color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "barra cabecalho cor",
+            "barra do cabecalho cor",
+            "topbar cor",
+            "header bar color",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+}
+
+# ###################################################################################
+# (X.5) CONSTANTES DE ESTILO - BARRA LATERAL (DEFINICOES)
+# ###################################################################################
+
+ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str]] = {
+    "background_color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "barra lateral fundo cor",
+            "sidebar fundo cor",
+            "sidebar background color",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "active_background_color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "barra lateral item ativo fundo cor",
+            "sidebar item ativo fundo cor",
+            "sidebar active background color",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "text_color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "barra lateral texto cor",
+            "sidebar texto cor",
+            "sidebar text color",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "text_size": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "barra lateral texto tamanho",
+            "sidebar texto tamanho",
+            "sidebar text size",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "font_family": {
+        "parameter_type": "fonte",
+        "parameter_names": (
+            "barra lateral texto fonte",
+            "barra lateral tipo de letra",
+            "sidebar texto fonte",
+            "sidebar font family",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "font_weight": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "barra lateral texto peso",
+            "sidebar texto peso",
+            "sidebar font weight",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "icon_color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "barra lateral icone cor",
+            "sidebar icone cor",
+            "sidebar icon color",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+    "section_text_color": {
+        "parameter_type": "cor",
+        "parameter_names": (
+            "barra lateral secao texto cor",
+            "sidebar secao texto cor",
+            "sidebar section text color",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "geral",
+    },
+}
+
+def _resolve_definition_initial_value_by_alias_v1(
     *,
-    session: Any,
-    default_width_ch: int = 24,
-) -> int:
-    rows = session.execute(
-        select(AdminDefinition).order_by(AdminDefinition.id.desc())
-    ).scalars().all()
+    rows: list[AdminDefinition],
+    parameter_type: str,
+    parameter_names: tuple[str, ...],
+    process_name: str,
+    subprocess_name: str,
+) -> str | None:
+    normalized_parameter_type = _normalize_definition_lookup_text_v1(parameter_type)
+    normalized_parameter_names = {
+        _normalize_definition_lookup_text_v1(parameter_name)
+        for parameter_name in parameter_names
+        if str(parameter_name or "").strip()
+    }
+    normalized_process_name = _normalize_definition_lookup_text_v1(process_name)
+    normalized_subprocess_name = _normalize_definition_lookup_text_v1(subprocess_name)
 
     for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != normalized_parameter_type:
+            continue
+        if _normalize_definition_lookup_text_v1(row.parameter_name) not in normalized_parameter_names:
+            continue
+        if _normalize_definition_lookup_text_v1(row.process_name) != normalized_process_name:
+            continue
+        if _normalize_definition_lookup_text_v1(row.subprocess_name) != normalized_subprocess_name:
+            continue
+        return str(row.initial_value or "")
+
+    return None
+
+
+def _resolve_admin_tabs_width_ch_from_definitions_v1(
+    *,
+    session: Any | None = None,
+    rows: list[AdminDefinition] | None = None,
+    default_width_ch: int = 24,
+) -> int:
+    definition_rows = rows
+    if definition_rows is None:
+        if session is None:
+            return int(default_width_ch)
+        definition_rows = session.execute(
+            select(AdminDefinition).order_by(AdminDefinition.id.desc())
+        ).scalars().all()
+
+    for row in definition_rows:
         if _normalize_definition_lookup_text_v1(row.status) != "active":
             continue
 
@@ -346,14 +609,22 @@ def _resolve_admin_tabs_width_ch_from_definitions_v1(
 
 def _resolve_admin_tabs_font_family_from_definitions_v1(
     *,
-    session: Any,
+    session: Any | None = None,
+    rows: list[AdminDefinition] | None = None,
     default_font_family: str = '"Segoe UI", Tahoma, Arial, sans-serif',
 ) -> str:
-    rows = session.execute(
-        select(AdminDefinition).order_by(AdminDefinition.id.desc())
-    ).scalars().all()
+    definition_rows = rows
+    if definition_rows is None:
+        if session is None:
+            fallback_font_family = _parse_tabs_font_family_v1(default_font_family)
+            if fallback_font_family is not None:
+                return fallback_font_family
+            return '"Segoe UI", Tahoma, Arial, sans-serif'
+        definition_rows = session.execute(
+            select(AdminDefinition).order_by(AdminDefinition.id.desc())
+        ).scalars().all()
 
-    for row in rows:
+    for row in definition_rows:
         if _normalize_definition_lookup_text_v1(row.status) != "active":
             continue
 
@@ -382,14 +653,22 @@ def _resolve_admin_tabs_font_family_from_definitions_v1(
 
 def _resolve_admin_tabs_text_size_px_from_definitions_v1(
     *,
-    session: Any,
+    session: Any | None = None,
+    rows: list[AdminDefinition] | None = None,
     default_text_size_px: int = 13,
 ) -> int:
-    rows = session.execute(
-        select(AdminDefinition).order_by(AdminDefinition.id.desc())
-    ).scalars().all()
+    definition_rows = rows
+    if definition_rows is None:
+        if session is None:
+            fallback_text_size_px = _parse_tabs_text_size_px_v1(default_text_size_px)
+            if fallback_text_size_px is not None:
+                return fallback_text_size_px
+            return 13
+        definition_rows = session.execute(
+            select(AdminDefinition).order_by(AdminDefinition.id.desc())
+        ).scalars().all()
 
-    for row in rows:
+    for row in definition_rows:
         if _normalize_definition_lookup_text_v1(row.status) != "active":
             continue
 
@@ -418,14 +697,22 @@ def _resolve_admin_tabs_text_size_px_from_definitions_v1(
 
 def _resolve_admin_tabs_color_hex_from_definitions_v1(
     *,
-    session: Any,
+    session: Any | None = None,
+    rows: list[AdminDefinition] | None = None,
     default_color_hex: str = "#1F4FA3",
 ) -> str:
-    rows = session.execute(
-        select(AdminDefinition).order_by(AdminDefinition.id.desc())
-    ).scalars().all()
+    definition_rows = rows
+    if definition_rows is None:
+        if session is None:
+            fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+            if fallback_color_hex is not None:
+                return fallback_color_hex
+            return "#1F4FA3"
+        definition_rows = session.execute(
+            select(AdminDefinition).order_by(AdminDefinition.id.desc())
+        ).scalars().all()
 
-    for row in rows:
+    for row in definition_rows:
         if _normalize_definition_lookup_text_v1(row.status) != "active":
             continue
 
@@ -454,14 +741,22 @@ def _resolve_admin_tabs_color_hex_from_definitions_v1(
 
 def _resolve_admin_tabs_text_color_hex_from_definitions_v1(
     *,
-    session: Any,
+    session: Any | None = None,
+    rows: list[AdminDefinition] | None = None,
     default_text_color_hex: str = "",
 ) -> str:
-    rows = session.execute(
-        select(AdminDefinition).order_by(AdminDefinition.id.desc())
-    ).scalars().all()
+    definition_rows = rows
+    if definition_rows is None:
+        if session is None:
+            fallback_text_color_hex = _parse_tabs_color_hex_v1(default_text_color_hex)
+            if fallback_text_color_hex is not None:
+                return fallback_text_color_hex
+            return ""
+        definition_rows = session.execute(
+            select(AdminDefinition).order_by(AdminDefinition.id.desc())
+        ).scalars().all()
 
-    for row in rows:
+    for row in definition_rows:
         if _normalize_definition_lookup_text_v1(row.status) != "active":
             continue
 
@@ -486,6 +781,465 @@ def _resolve_admin_tabs_text_color_hex_from_definitions_v1(
     if fallback_text_color_hex is not None:
         return fallback_text_color_hex
     return ""
+
+
+def _resolve_admin_process_title_font_size_px_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_text_size_px: int = 20,
+) -> int:
+    config = ADMIN_PROCESS_TITLE_STYLE_DEFINITION_KEYS_V1["font_size"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_text_size_px = _parse_tabs_text_size_px_v1(raw_value)
+    if parsed_text_size_px is not None:
+        return parsed_text_size_px
+    fallback_text_size_px = _parse_tabs_text_size_px_v1(default_text_size_px)
+    if fallback_text_size_px is not None:
+        return fallback_text_size_px
+    return 20
+
+
+def _resolve_admin_process_title_font_family_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_font_family: str = '"Segoe UI", Tahoma, Arial, sans-serif',
+) -> str:
+    config = ADMIN_PROCESS_TITLE_STYLE_DEFINITION_KEYS_V1["font_family"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_font_family = _parse_tabs_font_family_v1(raw_value)
+    if parsed_font_family is not None:
+        return parsed_font_family
+    fallback_font_family = _parse_tabs_font_family_v1(default_font_family)
+    if fallback_font_family is not None:
+        return fallback_font_family
+    return '"Segoe UI", Tahoma, Arial, sans-serif'
+
+
+def _resolve_admin_process_title_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#0F172A",
+) -> str:
+    config = ADMIN_PROCESS_TITLE_STYLE_DEFINITION_KEYS_V1["color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#0F172A"
+
+
+def _resolve_admin_card_item_font_size_px_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_text_size_px: int = 12,
+) -> int:
+    config = ADMIN_SUBPROCESS_CARD_ITEM_STYLE_DEFINITION_KEYS_V1["font_size"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_text_size_px = _parse_tabs_text_size_px_v1(raw_value)
+    if parsed_text_size_px is not None:
+        return parsed_text_size_px
+    fallback_text_size_px = _parse_tabs_text_size_px_v1(default_text_size_px)
+    if fallback_text_size_px is not None:
+        return fallback_text_size_px
+    return 12
+
+
+def _resolve_admin_card_item_font_family_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_font_family: str = 'Inter, "Segoe UI", sans-serif',
+) -> str:
+    config = ADMIN_SUBPROCESS_CARD_ITEM_STYLE_DEFINITION_KEYS_V1["font_family"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_font_family = _parse_tabs_font_family_v1(raw_value)
+    if parsed_font_family is not None:
+        return parsed_font_family
+    fallback_font_family = _parse_tabs_font_family_v1(default_font_family)
+    if fallback_font_family is not None:
+        return fallback_font_family
+    return 'Inter, "Segoe UI", sans-serif'
+
+
+def _resolve_admin_card_item_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#0F1F3A",
+) -> str:
+    config = ADMIN_SUBPROCESS_CARD_ITEM_STYLE_DEFINITION_KEYS_V1["color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#0F1F3A"
+
+
+def _resolve_admin_card_item_font_weight_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_font_weight: int = 500,
+) -> int:
+    config = ADMIN_SUBPROCESS_CARD_ITEM_STYLE_DEFINITION_KEYS_V1["font_weight"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_font_weight = _parse_font_weight_value_v1(raw_value)
+    if parsed_font_weight is not None:
+        return parsed_font_weight
+    fallback_font_weight = _parse_font_weight_value_v1(default_font_weight)
+    if fallback_font_weight is not None:
+        return fallback_font_weight
+    return 500
+
+
+def _resolve_admin_card_table_head_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#000000",
+) -> str:
+    config = ADMIN_SUBPROCESS_CARD_TABLE_HEAD_STYLE_DEFINITION_KEYS_V1["color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#000000"
+
+
+def _resolve_admin_topbar_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#334A62",
+) -> str:
+    config = ADMIN_TOPBAR_STYLE_DEFINITION_KEYS_V1["color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#334A62"
+
+
+def _resolve_admin_sidebar_background_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#F3F3F4",
+) -> str:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["background_color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#F3F3F4"
+
+
+def _resolve_admin_sidebar_active_background_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#E4E6EA",
+) -> str:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["active_background_color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#E4E6EA"
+
+
+def _resolve_admin_sidebar_text_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#5C6572",
+) -> str:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["text_color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#5C6572"
+
+
+def _resolve_admin_sidebar_text_size_px_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_text_size_px: int = 14,
+) -> int:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["text_size"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_text_size_px = _parse_tabs_text_size_px_v1(raw_value)
+    if parsed_text_size_px is not None:
+        return parsed_text_size_px
+    fallback_text_size_px = _parse_tabs_text_size_px_v1(default_text_size_px)
+    if fallback_text_size_px is not None:
+        return fallback_text_size_px
+    return 14
+
+
+def _resolve_admin_sidebar_font_family_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_font_family: str = '"Segoe UI", Tahoma, Arial, sans-serif',
+) -> str:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["font_family"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_font_family = _parse_tabs_font_family_v1(raw_value)
+    if parsed_font_family is not None:
+        return parsed_font_family
+    fallback_font_family = _parse_tabs_font_family_v1(default_font_family)
+    if fallback_font_family is not None:
+        return fallback_font_family
+    return '"Segoe UI", Tahoma, Arial, sans-serif'
+
+
+def _resolve_admin_sidebar_font_weight_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_font_weight: int = 500,
+) -> int:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["font_weight"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_font_weight = _parse_font_weight_value_v1(raw_value)
+    if parsed_font_weight is not None:
+        return parsed_font_weight
+    fallback_font_weight = _parse_font_weight_value_v1(default_font_weight)
+    if fallback_font_weight is not None:
+        return fallback_font_weight
+    return 500
+
+
+def _resolve_admin_sidebar_icon_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#5F6B7D",
+) -> str:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["icon_color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#5F6B7D"
+
+
+def _resolve_admin_sidebar_section_text_color_hex_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_color_hex: str = "#808792",
+) -> str:
+    config = ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1["section_text_color"]
+    parameter_names = tuple(
+        str(name)
+        for name in config.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(config["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(config["process_name"]),
+        subprocess_name=str(config["subprocess_name"]),
+    )
+    parsed_color_hex = _parse_tabs_color_hex_v1(raw_value)
+    if parsed_color_hex is not None:
+        return parsed_color_hex
+    fallback_color_hex = _parse_tabs_color_hex_v1(default_color_hex)
+    if fallback_color_hex is not None:
+        return fallback_color_hex
+    return "#808792"
 
 
 def _resolve_initial_menu_target(
@@ -687,29 +1441,119 @@ def new_user_page(
     admin_tabs_font_family_v1 = '"Segoe UI", Tahoma, Arial, sans-serif'
     admin_tabs_color_hex_v1 = "#1F4FA3"
     admin_tabs_text_color_hex_v1 = ""
+    admin_process_title_font_size_px_v1 = 20
+    admin_process_title_font_family_v1 = '"Segoe UI", Tahoma, Arial, sans-serif'
+    admin_process_title_color_hex_v1 = "#0F172A"
+    admin_card_item_font_size_px_v1 = 12
+    admin_card_item_font_family_v1 = 'Inter, "Segoe UI", sans-serif'
+    admin_card_item_color_hex_v1 = "#0F1F3A"
+    admin_card_item_font_weight_v1 = 500
+    admin_card_table_head_color_hex_v1 = "#000000"
+    admin_topbar_color_hex_v1 = "#334A62"
+    admin_sidebar_bg_color_hex_v1 = "#F3F3F4"
+    admin_sidebar_active_bg_color_hex_v1 = "#E4E6EA"
+    admin_sidebar_text_color_hex_v1 = "#5C6572"
+    admin_sidebar_text_size_px_v1 = 14
+    admin_sidebar_font_family_v1 = '"Segoe UI", Tahoma, Arial, sans-serif'
+    admin_sidebar_font_weight_v1 = 500
+    admin_sidebar_icon_color_hex_v1 = "#5F6B7D"
+    admin_sidebar_section_text_color_hex_v1 = "#808792"
     menu_settings_edit_key = clean_settings_edit_key if is_admin_menu_tab else ""
     menu_admin_page_payload = build_menu_admin_page_payload_v1({})
 
+    ensure_admin_process_title_default_definitions_v1()
+
     with SessionLocal() as session:
+        admin_definition_rows_v1 = session.execute(
+            select(AdminDefinition).order_by(AdminDefinition.id.desc())
+        ).scalars().all()
         admin_tabs_width_ch_v1 = _resolve_admin_tabs_width_ch_from_definitions_v1(
-            session=session,
+            rows=admin_definition_rows_v1,
             default_width_ch=24,
         )
         admin_tabs_text_size_px_v1 = _resolve_admin_tabs_text_size_px_from_definitions_v1(
-            session=session,
+            rows=admin_definition_rows_v1,
             default_text_size_px=13,
         )
         admin_tabs_font_family_v1 = _resolve_admin_tabs_font_family_from_definitions_v1(
-            session=session,
+            rows=admin_definition_rows_v1,
             default_font_family='"Segoe UI", Tahoma, Arial, sans-serif',
         )
         admin_tabs_color_hex_v1 = _resolve_admin_tabs_color_hex_from_definitions_v1(
-            session=session,
+            rows=admin_definition_rows_v1,
             default_color_hex="#1F4FA3",
         )
         admin_tabs_text_color_hex_v1 = _resolve_admin_tabs_text_color_hex_from_definitions_v1(
-            session=session,
+            rows=admin_definition_rows_v1,
             default_text_color_hex="",
+        )
+        admin_process_title_font_size_px_v1 = _resolve_admin_process_title_font_size_px_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_text_size_px=20,
+        )
+        admin_process_title_font_family_v1 = _resolve_admin_process_title_font_family_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_font_family='"Segoe UI", Tahoma, Arial, sans-serif',
+        )
+        admin_process_title_color_hex_v1 = _resolve_admin_process_title_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#0F172A",
+        )
+        admin_card_item_font_size_px_v1 = _resolve_admin_card_item_font_size_px_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_text_size_px=12,
+        )
+        admin_card_item_font_family_v1 = _resolve_admin_card_item_font_family_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_font_family='Inter, "Segoe UI", sans-serif',
+        )
+        admin_card_item_color_hex_v1 = _resolve_admin_card_item_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#0F1F3A",
+        )
+        admin_card_item_font_weight_v1 = _resolve_admin_card_item_font_weight_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_font_weight=500,
+        )
+        admin_card_table_head_color_hex_v1 = _resolve_admin_card_table_head_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#000000",
+        )
+        admin_topbar_color_hex_v1 = _resolve_admin_topbar_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#334A62",
+        )
+        admin_sidebar_bg_color_hex_v1 = _resolve_admin_sidebar_background_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#F3F3F4",
+        )
+        admin_sidebar_active_bg_color_hex_v1 = _resolve_admin_sidebar_active_background_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#E4E6EA",
+        )
+        admin_sidebar_text_color_hex_v1 = _resolve_admin_sidebar_text_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#5C6572",
+        )
+        admin_sidebar_text_size_px_v1 = _resolve_admin_sidebar_text_size_px_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_text_size_px=14,
+        )
+        admin_sidebar_font_family_v1 = _resolve_admin_sidebar_font_family_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_font_family='"Segoe UI", Tahoma, Arial, sans-serif',
+        )
+        admin_sidebar_font_weight_v1 = _resolve_admin_sidebar_font_weight_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_font_weight=500,
+        )
+        admin_sidebar_icon_color_hex_v1 = _resolve_admin_sidebar_icon_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#5F6B7D",
+        )
+        admin_sidebar_section_text_color_hex_v1 = _resolve_admin_sidebar_section_text_color_hex_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_color_hex="#808792",
         )
         current_user = get_current_user(request, session)
         if current_user is None:
@@ -753,31 +1597,59 @@ def new_user_page(
             resolved_menu = "home"
         # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
-        next_entity_internal_number = get_next_entity_internal_number(session)
-        entity_edit_data = get_entity_edit_data(
-            session,
-            parsed_entity_edit_id,
-            allowed_entity_ids=entity_permissions["allowed_entity_ids"],
-        )
-        user_edit_context = build_user_admin_edit_context_v1(
-            session=session,
-            actor_user_id=int(current_user["id"]),
-            actor_login_email=str(current_user["login_email"]),
-            selected_entity_id=selected_entity_id,
-            user_edit_id=parsed_user_edit_id,
-        )
-        user_edit_data = user_edit_context.get("user_edit_data", get_user_edit_defaults())
 
-        sessoes_admin_context = build_sessoes_admin_context_v1(
-            session=session,
-            actor_user_id=int(current_user["id"]),
-            actor_login_email=str(current_user["login_email"]),
-            selected_entity_id=selected_entity_id,
-            session_edit_key=sidebar_section_edit_key,
+        is_admin_menu_scope_v1 = resolved_menu == "administrativo"
+        is_entidade_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "entidade"
+        is_utilizador_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "utilizador"
+        is_sessoes_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "sessoes"
+        is_definicoes_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "definicoes"
+
+        should_load_entity_context_v1 = bool(
+            parsed_entity_edit_id is not None or is_entidade_tab_v1
         )
-        sessoes_admin_page_payload = build_sessoes_admin_page_payload_v1(
-            sessoes_admin_context
+        should_load_user_context_v1 = bool(
+            parsed_user_edit_id is not None or is_utilizador_tab_v1
         )
+        should_load_sessoes_context_v1 = bool(
+            is_sessoes_tab_v1
+            or is_definicoes_tab_v1
+            or str(sidebar_section_edit_key or "").strip()
+            or str(sidebar_sections_tab or "").strip().lower() == "sessoes"
+        )
+
+        next_entity_internal_number = ""
+        entity_edit_data = get_entity_edit_defaults()
+        if should_load_entity_context_v1:
+            next_entity_internal_number = get_next_entity_internal_number(session)
+            entity_edit_data = get_entity_edit_data(
+                session,
+                parsed_entity_edit_id,
+                allowed_entity_ids=entity_permissions["allowed_entity_ids"],
+            )
+
+        user_edit_data = get_user_edit_defaults()
+        if should_load_user_context_v1:
+            user_edit_context = build_user_admin_edit_context_v1(
+                session=session,
+                actor_user_id=int(current_user["id"]),
+                actor_login_email=str(current_user["login_email"]),
+                selected_entity_id=selected_entity_id,
+                user_edit_id=parsed_user_edit_id,
+            )
+            user_edit_data = user_edit_context.get("user_edit_data", get_user_edit_defaults())
+
+        sessoes_admin_page_payload = build_sessoes_admin_page_payload_v1({})
+        if should_load_sessoes_context_v1:
+            sessoes_admin_context = build_sessoes_admin_context_v1(
+                session=session,
+                actor_user_id=int(current_user["id"]),
+                actor_login_email=str(current_user["login_email"]),
+                selected_entity_id=selected_entity_id,
+                session_edit_key=sidebar_section_edit_key,
+            )
+            sessoes_admin_page_payload = build_sessoes_admin_page_payload_v1(
+                sessoes_admin_context
+            )
 
         active_sidebar_sections_v22 = list(
             sessoes_admin_page_payload.get("active_sidebar_sections", [])
@@ -1199,6 +2071,23 @@ def new_user_page(
         "admin_tabs_font_family": str(admin_tabs_font_family_v1),
         "admin_tabs_color_hex": str(admin_tabs_color_hex_v1),
         "admin_tabs_text_color_hex": str(admin_tabs_text_color_hex_v1),
+        "admin_process_title_font_size_px": int(admin_process_title_font_size_px_v1),
+        "admin_process_title_font_family": str(admin_process_title_font_family_v1),
+        "admin_process_title_color_hex": str(admin_process_title_color_hex_v1),
+        "admin_card_item_font_size_px": int(admin_card_item_font_size_px_v1),
+        "admin_card_item_font_family": str(admin_card_item_font_family_v1),
+        "admin_card_item_color_hex": str(admin_card_item_color_hex_v1),
+        "admin_card_item_font_weight": int(admin_card_item_font_weight_v1),
+        "admin_card_table_head_color_hex": str(admin_card_table_head_color_hex_v1),
+        "admin_topbar_color_hex": str(admin_topbar_color_hex_v1),
+        "admin_sidebar_bg_color_hex": str(admin_sidebar_bg_color_hex_v1),
+        "admin_sidebar_active_bg_color_hex": str(admin_sidebar_active_bg_color_hex_v1),
+        "admin_sidebar_text_color_hex": str(admin_sidebar_text_color_hex_v1),
+        "admin_sidebar_text_size_px": int(admin_sidebar_text_size_px_v1),
+        "admin_sidebar_font_family": str(admin_sidebar_font_family_v1),
+        "admin_sidebar_font_weight": int(admin_sidebar_font_weight_v1),
+        "admin_sidebar_icon_color_hex": str(admin_sidebar_icon_color_hex_v1),
+        "admin_sidebar_section_text_color_hex": str(admin_sidebar_section_text_color_hex_v1),
         "admin_subprocess_state": (
             admin_subprocess_state_utilizador_v1
             if resolved_admin_tab == "utilizador"

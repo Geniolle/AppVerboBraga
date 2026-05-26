@@ -6,6 +6,7 @@
     return {
       itemsEl: document.getElementById("submenu-items"),
       menuTabsCardEl: document.getElementById("menu-tabs-card"),
+      submenuProcessTitleEl: document.getElementById("submenu-process-title"),
       menuButtons: document.querySelectorAll(".menu-item"),
       scopedCards: document.querySelectorAll("[data-menu-scope]"),
       userMenuEl: document.getElementById("user-menu"),

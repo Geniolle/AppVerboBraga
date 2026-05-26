@@ -39,6 +39,12 @@
     );
   }
 
+  function shouldBypassGuardV1() {
+    return Boolean(
+      document.querySelector("script[src*='appverbo_navigation_smooth_v7.js']")
+    );
+  }
+
   //###################################################################################
   // (2) DESCOBRIR QUAL SUBPROCESSO DEVE ESTAR ATIVO
   //###################################################################################
@@ -478,6 +484,10 @@
   //###################################################################################
 
   function initV1() {
+    if (shouldBypassGuardV1()) {
+      return;
+    }
+
     startObserverV1();
     applyActiveTabRepeatedV1();
   }
@@ -492,12 +502,20 @@
   window.addEventListener("pageshow", initV1);
 
   window.addEventListener("popstate", function () {
+    if (shouldBypassGuardV1()) {
+      return;
+    }
+
     window.requestAnimationFrame(function () {
       applyActiveTabRepeatedV1();
     });
   });
 
   document.addEventListener("click", function (event) {
+    if (shouldBypassGuardV1()) {
+      return;
+    }
+
     const target = event.target instanceof Element ? event.target : null;
 
     if (!target) {

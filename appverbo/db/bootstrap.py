@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 from sqlalchemy import func, inspect, select, text
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from appverbo.config.settings import settings
 from appverbo.db.session import SessionLocal, engine
-from appverbo.models import Profile
+from appverbo.models import AdminDefinition, Profile
 
 
 def ensure_entities_optional_columns() -> None:
@@ -175,6 +176,302 @@ def ensure_required_global_profiles() -> None:
             if not (profile.description or "").strip():
                 profile.description = choice["description"]
                 changed = True
+
+        if changed:
+            session.commit()
+
+
+# ###################################################################################
+# (B1) DEFINICOES DEFAULT - TITULO DO PROCESSO ADMINISTRATIVO
+# ###################################################################################
+
+ADMIN_PROCESS_TITLE_DEFINITION_DEFAULTS_V1: tuple[dict[str, str | tuple[str, ...]], ...] = (
+    {
+        "parameter_name": "TITULO PROCESSO TAMANHO",
+        "parameter_type": "tamanho",
+        "initial_value": "20",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "titulo processo tamanho",
+            "titulo do processo tamanho",
+            "titulo tamanho",
+        ),
+    },
+    {
+        "parameter_name": "TITULO PROCESSO FONTE",
+        "parameter_type": "fonte",
+        "initial_value": "Segoe UI",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "titulo processo fonte",
+            "titulo do processo fonte",
+            "titulo fonte",
+        ),
+    },
+    {
+        "parameter_name": "TITULO PROCESSO COR",
+        "parameter_type": "cor",
+        "initial_value": "#0F172A",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "titulo processo cor",
+            "titulo do processo cor",
+            "titulo cor",
+        ),
+    },
+    {
+        "parameter_name": "CARD ITEM TEXTO TAMANHO",
+        "parameter_type": "tamanho",
+        "initial_value": "12",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "card item texto tamanho",
+            "item card texto tamanho",
+            "item texto tamanho",
+        ),
+    },
+    {
+        "parameter_name": "CARD ITEM TEXTO FONTE",
+        "parameter_type": "fonte",
+        "initial_value": "Inter, \"Segoe UI\", sans-serif",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "card item texto fonte",
+            "item card texto fonte",
+            "item texto fonte",
+        ),
+    },
+    {
+        "parameter_name": "CARD ITEM TEXTO COR",
+        "parameter_type": "cor",
+        "initial_value": "#0F1F3A",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "card item texto cor",
+            "item card texto cor",
+            "item texto cor",
+        ),
+    },
+    {
+        "parameter_name": "CARD ITEM TEXTO PESO",
+        "parameter_type": "tamanho",
+        "initial_value": "500",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "card item texto peso",
+            "item card texto peso",
+            "item texto peso",
+        ),
+    },
+    {
+        "parameter_name": "CARD CABECALHO TEXTO COR",
+        "parameter_type": "cor",
+        "initial_value": "#000000",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "card cabecalho texto cor",
+            "cabecalho texto cor",
+            "header texto cor",
+        ),
+    },
+    {
+        "parameter_name": "BARRA CABECALHO COR",
+        "parameter_type": "cor",
+        "initial_value": "#334A62",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra cabecalho cor",
+            "barra do cabecalho cor",
+            "topbar cor",
+            "header bar color",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL FUNDO COR",
+        "parameter_type": "cor",
+        "initial_value": "#F3F3F4",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral fundo cor",
+            "sidebar fundo cor",
+            "sidebar background color",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL ITEM ATIVO FUNDO COR",
+        "parameter_type": "cor",
+        "initial_value": "#E4E6EA",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral item ativo fundo cor",
+            "sidebar item ativo fundo cor",
+            "sidebar active background color",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL TEXTO COR",
+        "parameter_type": "cor",
+        "initial_value": "#5C6572",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral texto cor",
+            "sidebar texto cor",
+            "sidebar text color",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL TEXTO TAMANHO",
+        "parameter_type": "tamanho",
+        "initial_value": "14",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral texto tamanho",
+            "sidebar texto tamanho",
+            "sidebar text size",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL TEXTO FONTE",
+        "parameter_type": "fonte",
+        "initial_value": "\"Segoe UI\", Tahoma, Arial, sans-serif",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral texto fonte",
+            "barra lateral tipo de letra",
+            "sidebar texto fonte",
+            "sidebar font family",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL TEXTO PESO",
+        "parameter_type": "tamanho",
+        "initial_value": "500",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral texto peso",
+            "sidebar texto peso",
+            "sidebar font weight",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL ICONE COR",
+        "parameter_type": "cor",
+        "initial_value": "#5F6B7D",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral icone cor",
+            "sidebar icone cor",
+            "sidebar icon color",
+        ),
+    },
+    {
+        "parameter_name": "BARRA LATERAL SECAO TEXTO COR",
+        "parameter_type": "cor",
+        "initial_value": "#808792",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "barra lateral secao texto cor",
+            "sidebar secao texto cor",
+            "sidebar section text color",
+        ),
+    },
+)
+
+
+def _normalize_definition_lookup_text_v1(value: object) -> str:
+    clean_value = " ".join(str(value or "").strip().split()).lower()
+    normalized = unicodedata.normalize("NFD", clean_value)
+    return "".join(
+        character
+        for character in normalized
+        if unicodedata.category(character) != "Mn"
+    )
+
+
+def ensure_admin_process_title_default_definitions_v1() -> None:
+    inspector = inspect(engine)
+    try:
+        table_names = set(inspector.get_table_names())
+    except NoSuchTableError:
+        return
+    if "admin_definitions" not in table_names:
+        return
+
+    with SessionLocal() as session:
+        rows = session.execute(select(AdminDefinition)).scalars().all()
+        changed = False
+
+        for default_row in ADMIN_PROCESS_TITLE_DEFINITION_DEFAULTS_V1:
+            parameter_type = _normalize_definition_lookup_text_v1(default_row.get("parameter_type"))
+            process_name = _normalize_definition_lookup_text_v1(default_row.get("process_name"))
+            subprocess_name = _normalize_definition_lookup_text_v1(default_row.get("subprocess_name"))
+            aliases = tuple(
+                str(alias)
+                for alias in default_row.get("aliases", ())
+                if str(alias or "").strip()
+            )
+            normalized_aliases = {
+                _normalize_definition_lookup_text_v1(alias)
+                for alias in aliases
+            }
+            normalized_aliases.add(
+                _normalize_definition_lookup_text_v1(default_row.get("parameter_name"))
+            )
+
+            has_match = any(
+                _normalize_definition_lookup_text_v1(row.parameter_type) == parameter_type
+                and _normalize_definition_lookup_text_v1(row.process_name) == process_name
+                and _normalize_definition_lookup_text_v1(row.subprocess_name) == subprocess_name
+                and _normalize_definition_lookup_text_v1(row.parameter_name) in normalized_aliases
+                for row in rows
+            )
+            if has_match:
+                continue
+
+            record = AdminDefinition(
+                parameter_name=str(default_row.get("parameter_name") or "").strip(),
+                parameter_type=str(default_row.get("parameter_type") or "").strip(),
+                initial_value=str(default_row.get("initial_value") or "").strip(),
+                process_name=str(default_row.get("process_name") or "").strip(),
+                subprocess_name=str(default_row.get("subprocess_name") or "").strip(),
+                status=str(default_row.get("status") or "active").strip() or "active",
+            )
+            session.add(record)
+            changed = True
 
         if changed:
             session.commit()

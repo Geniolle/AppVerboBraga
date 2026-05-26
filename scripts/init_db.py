@@ -7,6 +7,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy.engine import make_url
 from dotenv import load_dotenv
+from appverbo.db.bootstrap import ensure_admin_process_title_default_definitions_v1
 
 
 def get_database_url() -> str:
@@ -20,6 +21,7 @@ def main() -> None:
     alembic_cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
     alembic_cfg.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
     command.upgrade(alembic_cfg, "head")
+    ensure_admin_process_title_default_definitions_v1()
     safe_url = make_url(database_url).render_as_string(hide_password=True)
     print(f"Database migrated to head: {safe_url}")
 

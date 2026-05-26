@@ -79,10 +79,12 @@ def create_entity_v1(
             )
 
         if outcome.kind == "template":
+            template_context = dict(outcome.template_context or {})
+            template_context.setdefault("admin_topbar_color_hex", "#334A62")
             return templates.TemplateResponse(
                 request,
                 "new_user.html",
-                outcome.template_context or {},
+                template_context,
                 status_code=outcome.template_status_code,
             )
 

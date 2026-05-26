@@ -38,6 +38,16 @@
     return obterMenuAtual_v4() === "administrativo";
   }
 
+  function deveIgnorarTopMenuActiveV4() {
+    if (!estaNoAdministrativo_v4()) {
+      return false;
+    }
+
+    return Boolean(
+      document.querySelector("script[src*='appverbo_navigation_smooth_v7.js']")
+    );
+  }
+
   function temContextoDeEdicaoMenu_v4() {
     const parametros = obterParametrosUrl_v4();
 
@@ -448,6 +458,10 @@
   //###################################################################################
 
   function inicializar_v4() {
+    if (deveIgnorarTopMenuActiveV4()) {
+      return;
+    }
+
     limparEstadoVisualAdministrativo_v4();
     ligarCliqueAbas_v4();
     observarAbasDinamicas_v4();
@@ -467,6 +481,10 @@
   }
 
   window.addEventListener("popstate", function () {
+    if (deveIgnorarTopMenuActiveV4()) {
+      return;
+    }
+
     activeTabLabelV4 = "";
     aplicarActiveInicial_v4();
   });

@@ -61,6 +61,7 @@
       return;
     }
 
+    element.removeAttribute("hidden");
     element.style.setProperty("display", "block", "important");
     element.style.setProperty("visibility", "visible", "important");
     element.style.setProperty("opacity", "1", "important");
@@ -211,6 +212,7 @@
       element.getAttribute("data-admin-tab") ||
       element.getAttribute("data-tab") ||
       element.getAttribute("data-admin-target") ||
+      element.getAttribute("data-appverbo-subprocess-tab") ||
       ""
     );
 
@@ -269,6 +271,77 @@
       return "contas";
     }
 
+    const rawHref = String(element.getAttribute("href") || "").trim();
+    if (rawHref) {
+      try {
+        const hrefUrl = new URL(rawHref, window.location.origin);
+        const hrefAdminTab = cleanValueV7(hrefUrl.searchParams.get("admin_tab"));
+        const hrefTarget = cleanValueV7(hrefUrl.searchParams.get("target") || "").replace(/^#/, "");
+        const hrefHash = cleanValueV7((hrefUrl.hash || "").replace(/^#/, ""));
+        const hrefLookup = (hrefTarget + " " + hrefHash).trim();
+
+        if (hrefAdminTab === "entidade" || hrefLookup.includes("entity") || hrefLookup.includes("entidade")) {
+          return "entidade";
+        }
+
+        if (hrefAdminTab === "utilizador" || hrefLookup.includes("user") || hrefLookup.includes("utilizador")) {
+          return "utilizador";
+        }
+
+        if (
+          hrefAdminTab === "sessoes" ||
+          hrefLookup.includes("admin-sidebar-sections") ||
+          hrefLookup.includes("sidebar-sections")
+        ) {
+          return "sessoes";
+        }
+
+        if (
+          hrefAdminTab === "menu" ||
+          hrefLookup.includes("admin-menu-card") ||
+          hrefLookup.includes("settings-menu-edit-card")
+        ) {
+          return "menu";
+        }
+
+        if (hrefAdminTab === "definicoes" || hrefLookup.includes("admin-definicoes-card")) {
+          return "definicoes";
+        }
+
+        if (hrefAdminTab === "contas" || hrefLookup.includes("admin-account-status")) {
+          return "contas";
+        }
+      } catch (error) {
+        if (rawHref.indexOf("#") === 0) {
+          const hrefHashOnly = cleanValueV7(rawHref.replace(/^#/, ""));
+
+          if (hrefHashOnly.includes("entity") || hrefHashOnly.includes("entidade")) {
+            return "entidade";
+          }
+
+          if (hrefHashOnly.includes("user") || hrefHashOnly.includes("utilizador")) {
+            return "utilizador";
+          }
+
+          if (hrefHashOnly.includes("admin-sidebar-sections") || hrefHashOnly.includes("sidebar-sections")) {
+            return "sessoes";
+          }
+
+          if (hrefHashOnly.includes("admin-menu-card") || hrefHashOnly.includes("settings-menu-edit-card")) {
+            return "menu";
+          }
+
+          if (hrefHashOnly.includes("admin-definicoes-card")) {
+            return "definicoes";
+          }
+
+          if (hrefHashOnly.includes("admin-account-status")) {
+            return "contas";
+          }
+        }
+      }
+    }
+
     const lookup = normalizeLookupTextV7([
       element.textContent || "",
       element.id || "",
@@ -316,16 +389,18 @@
       return;
     }
 
-    submenu
-      .querySelectorAll(".active, [aria-selected='true'], [data-active='true'], [data-selected='true']")
-      .forEach(function (element) {
-        element.classList.remove("active");
-        element.classList.remove("selected");
-        element.classList.remove("is-active");
-        element.setAttribute("aria-selected", "false");
-        element.removeAttribute("data-active");
-        element.removeAttribute("data-selected");
-      });
+    Array.from(submenu.querySelectorAll(".submenu-item, button, a, [data-admin-tab]")).forEach(function (element) {
+      element.classList.remove("active");
+      element.classList.remove("selected");
+      element.classList.remove("is-active");
+      element.setAttribute("aria-selected", "false");
+      element.removeAttribute("data-active");
+      element.removeAttribute("data-selected");
+      element.removeAttribute("data-appverbo-force-active");
+      element.removeAttribute("data-appverbo-menu-active");
+      element.removeAttribute("data-appverbo-menu-inactive");
+      element.setAttribute("data-appverbo-force-inactive", "true");
+    });
   }
 
   function marcarAbaAtivaV7(tab) {
@@ -346,6 +421,9 @@
 
       element.classList.add("active");
       element.setAttribute("aria-selected", "true");
+      element.setAttribute("data-appverbo-force-active", "true");
+      element.removeAttribute("data-appverbo-force-inactive");
+      element.removeAttribute("data-appverbo-menu-inactive");
       return true;
     });
   }
@@ -386,9 +464,27 @@
   //###################################################################################
 
   function buildAdminSubprocessUrlV7(tab) {
-    const url = new URL("/users/new", window.location.origin);
+    const currentUrl = getCurrentUrlV7();
+    const url = currentUrl
+      ? new URL(currentUrl.toString())
+      : new URL("/users/new", window.location.origin);
 
+    url.pathname = "/users/new";
     url.searchParams.set("menu", "administrativo");
+    url.searchParams.delete("admin_tab");
+    url.searchParams.delete("target");
+    url.searchParams.delete("sidebar_sections_tab");
+    url.searchParams.delete("sidebar_section_edit_key");
+    url.searchParams.delete("entity_edit_id");
+    url.searchParams.delete("entity_view");
+    url.searchParams.delete("user_edit_id");
+    url.searchParams.delete("user_view");
+    url.searchParams.delete("definition_edit_id");
+    url.searchParams.delete("settings_edit_key");
+    url.searchParams.delete("settings_action");
+    url.searchParams.delete("settings_tab");
+    url.searchParams.delete("settings_success");
+    url.searchParams.delete("settings_error");
 
     if (tab === "entidade") {
       url.searchParams.set("admin_tab", "entidade");
@@ -440,10 +536,6 @@
   // (6) MATCH DE CARDS POR SUBPROCESSO
   //###################################################################################
 
-  function getCardTextV7(card) {
-    return normalizeLookupTextV7(card ? card.textContent || "" : "");
-  }
-
   function isMenuTabsCardV7(card) {
     return Boolean(card && card.id === "menu-tabs-card");
   }
@@ -452,100 +544,155 @@
     return Boolean(card && card.id === "home-summary-card");
   }
 
-  function isCardForTabV7(card, tab) {
+  function buildAdminCardIdSetV7(values) {
+    return new Set(
+      (Array.isArray(values) ? values : [])
+        .map((value) => cleanValueV7(value))
+        .filter(Boolean)
+    );
+  }
+
+  const ADMIN_TAB_CARD_ID_SETS_V7 = Object.freeze({
+    entidade: buildAdminCardIdSetV7([
+      "create-entity-card",
+      "edit-entity-card",
+      "recent-entities-card",
+      "inactive-entities-card",
+      "admin-subprocess-v2-entidade",
+      "admin-subprocess-v2-entidade-edit",
+      "admin-entidade-v2-integrated-root"
+    ]),
+    utilizador: buildAdminCardIdSetV7([
+      "create-user-card",
+      "edit-user-card",
+      "admin-user-shadow-readonly-card",
+      "admin-user-shadow-inactive-card",
+      "admin-users-created-card",
+      "inactive-users-card"
+    ]),
+    sessoes: buildAdminCardIdSetV7([
+      "admin-sidebar-sections-card",
+      "admin-sidebar-sections-form-card",
+      "admin-sidebar-sections-card-create",
+      "admin-sidebar-sections-card-inactive"
+    ]),
+    menu: buildAdminCardIdSetV7([
+      "admin-menu-card-create",
+      "admin-menu-card",
+      "admin-menu-card-inactive",
+      "settings-menu-edit-card"
+    ]),
+    definicoes: buildAdminCardIdSetV7([
+      "admin-definicoes-card-create",
+      "admin-definicoes-card",
+      "admin-definicoes-card-edit",
+      "admin-definicoes-card-inactive"
+    ]),
+    contas: buildAdminCardIdSetV7([
+      "admin-account-create-card",
+      "admin-account-status-card"
+    ])
+  });
+
+  function resolveCardTabByIdV7(cleanId) {
+    if (!cleanId) {
+      return "";
+    }
+
+    if (ADMIN_TAB_CARD_ID_SETS_V7.entidade.has(cleanId)) {
+      return "entidade";
+    }
+    if (ADMIN_TAB_CARD_ID_SETS_V7.utilizador.has(cleanId)) {
+      return "utilizador";
+    }
+    if (ADMIN_TAB_CARD_ID_SETS_V7.sessoes.has(cleanId)) {
+      return "sessoes";
+    }
+    if (ADMIN_TAB_CARD_ID_SETS_V7.menu.has(cleanId)) {
+      return "menu";
+    }
+    if (ADMIN_TAB_CARD_ID_SETS_V7.definicoes.has(cleanId)) {
+      return "definicoes";
+    }
+    if (ADMIN_TAB_CARD_ID_SETS_V7.contas.has(cleanId)) {
+      return "contas";
+    }
+
+    if (cleanId.startsWith("admin-sidebar-sections")) {
+      return "sessoes";
+    }
+    if (cleanId.startsWith("admin-definicoes-card")) {
+      return "definicoes";
+    }
+    if (cleanId.startsWith("admin-menu-card")) {
+      return "menu";
+    }
+    if (cleanId.includes("admin-account") || cleanId.includes("account-status")) {
+      return "contas";
+    }
+
+    if (
+      cleanId.includes("user") ||
+      cleanId.includes("utilizador")
+    ) {
+      return "utilizador";
+    }
+
+    if (
+      cleanId.includes("entity") ||
+      cleanId.includes("entities") ||
+      cleanId.includes("entidade")
+    ) {
+      return "entidade";
+    }
+
+    return "";
+  }
+
+  function resolveCardTabV7(card) {
     if (!card || isMenuTabsCardV7(card) || isHomeCardV7(card)) {
+      return "";
+    }
+
+    const cachedTab = cleanValueV7(card.getAttribute("data-appverbo-admin-tab"));
+    if (cachedTab) {
+      return cachedTab;
+    }
+
+    const subprocess = cleanValueV7(card.getAttribute("data-admin-subprocess"));
+    if (
+      subprocess === "entidade" ||
+      subprocess === "utilizador" ||
+      subprocess === "sessoes" ||
+      subprocess === "menu" ||
+      subprocess === "definicoes" ||
+      subprocess === "contas"
+    ) {
+      card.setAttribute("data-appverbo-admin-tab", subprocess);
+      return subprocess;
+    }
+
+    const resolvedById = resolveCardTabByIdV7(cleanValueV7(card.id));
+    if (resolvedById) {
+      card.setAttribute("data-appverbo-admin-tab", resolvedById);
+      return resolvedById;
+    }
+
+    const menuScope = cleanValueV7(card.getAttribute("data-menu-scope"));
+    if (menuScope.includes("configuracao")) {
+      card.setAttribute("data-appverbo-admin-tab", "contas");
+      return "contas";
+    }
+
+    return "";
+  }
+
+  function isCardForTabV7(card, tab) {
+    const cleanTab = cleanValueV7(tab);
+    if (!cleanTab) {
       return false;
     }
-
-    const id = cleanValueV7(card.id);
-    const subprocess = cleanValueV7(card.getAttribute("data-admin-subprocess"));
-    const text = getCardTextV7(card);
-
-    if (tab === "entidade") {
-      return (
-        id === "create-entity-card" ||
-        id === "edit-entity-card" ||
-        id === "recent-entities-card" ||
-        id === "inactive-entities-card" ||
-        id.includes("entity") ||
-        id.includes("entities") ||
-        id.includes("entidade") ||
-        text.includes("criar entidade") ||
-        text.includes("entidades ativas") ||
-        text.includes("entidades criadas") ||
-        text.includes("entidades inativas") ||
-        text.includes("dados gerais")
-      );
-    }
-
-    if (tab === "utilizador") {
-      return (
-        id.includes("user") ||
-        id.includes("utilizador") ||
-        text.includes("criar utilizador") ||
-        text.includes("utilizadores criados") ||
-        text.includes("utilizadores ativos") ||
-        text.includes("utilizadores inativos")
-      );
-    }
-
-    if (tab === "sessoes") {
-      return (
-        subprocess === "sessoes" ||
-        id.includes("admin-sidebar-sections") ||
-        id.includes("sidebar-sections") ||
-        text.includes("criar sessao") ||
-        text.includes("sessoes ativas") ||
-        text.includes("sessoes inativas") ||
-        text.includes("criar sessão") ||
-        text.includes("sessões ativas") ||
-        text.includes("sessões inativas")
-      );
-    }
-
-    if (tab === "menu") {
-      return (
-        subprocess === "menu" ||
-        id === "admin-menu-card-create" ||
-        id === "admin-menu-card" ||
-        id === "admin-menu-card-inactive" ||
-        id === "settings-menu-edit-card" ||
-        text.includes("criar menu") ||
-        text.includes("menus ativos") ||
-        text.includes("menus inativos") ||
-        text.includes("editar menu")
-      );
-    }
-
-    if (tab === "definicoes") {
-      return (
-        subprocess === "definicoes" ||
-        id === "admin-definicoes-card-create" ||
-        id === "admin-definicoes-card" ||
-        id === "admin-definicoes-card-edit" ||
-        id === "admin-definicoes-card-inactive" ||
-        text.includes("criar definicao") ||
-        text.includes("criar definição") ||
-        text.includes("definicoes ativas") ||
-        text.includes("definições ativas") ||
-        text.includes("definicoes inativas") ||
-        text.includes("definições inativas")
-      );
-    }
-
-    if (tab === "contas") {
-      return (
-        id.includes("admin-account-status") ||
-        id.includes("account-status") ||
-        text.includes("conta") ||
-        text.includes("permissao") ||
-        text.includes("permissão") ||
-        text.includes("configuracao") ||
-        text.includes("configuração")
-      );
-    }
-
-    return false;
+    return resolveCardTabV7(card) === cleanTab;
   }
 
   function getAdminCardsV7() {
@@ -600,6 +747,25 @@
 
     if (!cleanTab) {
       return false;
+    }
+
+    if (cleanTab === "menu") {
+      const hasCanonicalMenuCards = Boolean(
+        document.getElementById("admin-menu-card") ||
+        document.getElementById("admin-menu-card-create") ||
+        document.getElementById("admin-menu-card-inactive") ||
+        document.getElementById("settings-menu-edit-card")
+      );
+
+      return !hasCanonicalMenuCards;
+    }
+
+    if (cleanTab === "sessoes" || cleanTab === "definicoes") {
+      const hasSubprocessBlocks = getAdminCardsV7().some(function (card) {
+        return isCardForTabV7(card, cleanTab);
+      });
+
+      return !hasSubprocessBlocks;
     }
 
     // O subprocesso Utilizador possui blocos server-render (shadow tables).
@@ -792,6 +958,13 @@
     );
 
     if (clickedTopSubprocess) {
+      const currentUrl = getCurrentUrlV7();
+      const isAdminRoute = urlIndicaAdminV7(currentUrl);
+
+      if (!isAdminRoute) {
+        return;
+      }
+
       const submenuAnchor =
         clickedTopSubprocess.matches &&
         clickedTopSubprocess.matches("#submenu-items .submenu-item, #submenu-items a")
@@ -802,13 +975,6 @@
       const isAdminProcessOnlyMode =
         Boolean(document.body) &&
         document.body.classList.contains("appverbo-admin-process-only");
-
-      // O menu principal (new_user.js) deve conduzir a navegacao real das abas.
-      // Aqui mantemos apenas o fallback quando nao for um link real do submenu.
-      // Excecao: em modo "process-only" o clique no submenu precisa sair desse modo.
-      if (submenuAnchor && isHashOnlySubmenuLink && !isAdminProcessOnlyMode) {
-        return;
-      }
 
       const tab = getTabFromElementV7(clickedTopSubprocess);
 
@@ -842,17 +1008,26 @@
           event.stopImmediatePropagation();
         }
 
-        if (shouldForceServerRenderForTabV7(tab)) {
-          const destination = buildAdminSubprocessUrlV7(tab);
-          const currentPath = window.location.pathname + window.location.search + window.location.hash;
+        const destination = buildAdminSubprocessUrlV7(tab);
+        const currentPath = window.location.pathname + window.location.search + window.location.hash;
 
+        if (shouldForceServerRenderForTabV7(tab)) {
           if (destination && currentPath !== destination) {
             window.location.assign(destination);
             return;
           }
         }
 
-        renderAdminSubprocessV7(tab, { updateUrl: true });
+        const rendered = renderAdminSubprocessV7(tab, { updateUrl: true });
+
+        if (!rendered && destination) {
+          if (currentPath !== destination) {
+            window.location.assign(destination);
+          } else {
+            window.location.reload();
+          }
+          return;
+        }
         return;
       }
     }

@@ -94,6 +94,9 @@
       '      <option value="5"' + (pageSize === 5 ? " selected" : "") + ">5</option>",
       '      <option value="10"' + (pageSize === 10 ? " selected" : "") + ">10</option>",
       '      <option value="20"' + (pageSize === 20 ? " selected" : "") + ">20</option>",
+      '      <option value="30"' + (pageSize === 30 ? " selected" : "") + ">30</option>",
+      '      <option value="50"' + (pageSize === 50 ? " selected" : "") + ">50</option>",
+      '      <option value="100"' + (pageSize === 100 ? " selected" : "") + ">100</option>",
       "    </select>",
       '    <span class="admin-table-footer-label-v1"><span>entradas</span><span>por página</span></span>',
       "  </div>",
@@ -317,12 +320,23 @@
     const endIndex = startIndex + state.pageSize;
 
     rows.forEach((rowEl) => {
+      rowEl.classList.remove("admin-table-last-visible-row-v1");
       rowEl.style.display = "none";
     });
 
+    const visibleRows = [];
+
     filteredRows.forEach((rowEl, index) => {
-      rowEl.style.display = index >= startIndex && index < endIndex ? "" : "none";
+      const isVisible = index >= startIndex && index < endIndex;
+      rowEl.style.display = isVisible ? "" : "none";
+      if (isVisible) {
+        visibleRows.push(rowEl);
+      }
     });
+
+    if (visibleRows.length) {
+      visibleRows[visibleRows.length - 1].classList.add("admin-table-last-visible-row-v1");
+    }
 
     state.pageEl.textContent = String(state.currentPage);
     state.prevEl.disabled = state.currentPage <= 1;

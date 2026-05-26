@@ -32,6 +32,12 @@
         return pathname === "/users/new" && search.indexOf("menu=administrativo") !== -1;
     }
 
+    function shouldBypassEmergencyUnlock() {
+        return Boolean(
+            document.querySelector("script[src*='appverbo_navigation_smooth_v7.js']")
+        );
+    }
+
     function getDirectTabName(element) {
         if (!element || !element.getAttribute) {
             return "";
@@ -303,6 +309,10 @@
     }
 
     function handleAdminTabClick(event) {
+        if (shouldBypassEmergencyUnlock()) {
+            return;
+        }
+
         if (!isAdminPage()) {
             return;
         }

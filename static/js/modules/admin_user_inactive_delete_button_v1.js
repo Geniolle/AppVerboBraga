@@ -155,7 +155,19 @@
       return false;
     }
 
-    if (row.querySelector(".admin-user-delete-form-v1, .admin-user-delete-button-v1")) {
+    // Evita duplicacao quando o backend ja renderizou um botao de eliminar
+    // com classes/atributos diferentes entre layouts legados e novos.
+    if (
+      row.querySelector(
+        ".admin-user-delete-form-v1, " +
+        ".admin-user-delete-button-v1, " +
+        ".table-icon-btn-danger, " +
+        ".admin-subprocess-action-btn-danger-v1, " +
+        "[data-appverbo-user-action='delete'], " +
+        "[title*='Eliminar'], " +
+        "[aria-label*='Eliminar']"
+      )
+    ) {
       return false;
     }
 
@@ -184,6 +196,38 @@
     return true;
   }
 
+  function cleanupInjectedDeleteDuplicatesV1(row) {
+    if (!row || !row.querySelectorAll) {
+      return 0;
+    }
+
+    var hasNativeDelete = Boolean(
+      row.querySelector(
+        ".table-icon-btn-danger, " +
+        ".admin-subprocess-action-btn-danger-v1, " +
+        "[data-appverbo-user-action='delete']"
+      )
+    );
+
+    if (!hasNativeDelete) {
+      return 0;
+    }
+
+    var injectedForms = row.querySelectorAll("form[data-appverbo-delete-injected='1']");
+    var removedCount = 0;
+    var index;
+
+    for (index = 0; index < injectedForms.length; index += 1) {
+      var form = injectedForms[index];
+      if (form && form.parentNode) {
+        form.parentNode.removeChild(form);
+        removedCount += 1;
+      }
+    }
+
+    return removedCount;
+  }
+
   function scanInactiveTables() {
     var containers = document.querySelectorAll(
       "#admin-user-shadow-inactive-card, #inactive-users-card, [data-admin-subprocess-shadow='utilizador-inactive']"
@@ -196,6 +240,7 @@
       var rowIndex;
 
       for (rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        cleanupInjectedDeleteDuplicatesV1(rows[rowIndex]);
         if (ensureDeleteButtonForRow(rows[rowIndex])) {
           totalAdded += 1;
         }
@@ -209,6 +254,7 @@
       var tableRowIndex;
 
       for (tableRowIndex = 0; tableRowIndex < tableRows.length; tableRowIndex += 1) {
+        cleanupInjectedDeleteDuplicatesV1(tableRows[tableRowIndex]);
         if (ensureDeleteButtonForRow(tableRows[tableRowIndex])) {
           totalAdded += 1;
         }

@@ -168,7 +168,7 @@
     const selectors = config.selectors && typeof config.selectors === "object" ? config.selectors : {};
     const pageSizeOptions = toArray_v1(config.pageSizeOptions).length
       ? toArray_v1(config.pageSizeOptions)
-      : [5, 10, 25];
+      : [5, 10, 20, 30, 50, 100];
 
     return {
       root: config.root || null,

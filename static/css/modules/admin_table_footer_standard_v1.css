@@ -13,6 +13,13 @@
   width: 100%;
 }
 
+/* APPVERBO_ADMIN_TABLE_LAST_VISIBLE_ROW_V1_START */
+/* Evita linha dupla antes do rodapé quando a paginação oculta linhas no tbody. */
+table tbody tr.admin-table-last-visible-row-v1 > td {
+  border-bottom: 0 !important;
+}
+/* APPVERBO_ADMIN_TABLE_LAST_VISIBLE_ROW_V1_END */
+
 .admin-table-footer-page-size-v1 {
   align-items: center;
   display: inline-flex;

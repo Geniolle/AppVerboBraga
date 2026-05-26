@@ -11,7 +11,10 @@
       if (typeof window.APPVERBO_SETUP_MENU_DYNAMIC_NAVIGATION_CORE_V1 !== "function") {
         return;
       }
-      window.APPVERBO_SETUP_MENU_DYNAMIC_NAVIGATION_CORE_V1({ source: "merge-stub" });
+      window.APPVERBO_SETUP_MENU_DYNAMIC_NAVIGATION_CORE_V1({
+        ...context,
+        source: "merge-stub"
+      });
       return;
     }
 

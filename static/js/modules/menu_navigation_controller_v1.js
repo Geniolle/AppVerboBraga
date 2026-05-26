@@ -5,8 +5,100 @@
   "use strict";
 
   function createMenuNavigationControllerV1(context = {}) {
+    const processSubprocessStandardsApiV1 = (
+      typeof window !== "undefined" &&
+      typeof window.APPVERBO_CREATE_PROCESS_SUBPROCESS_STANDARDS_API_V1 === "function"
+    )
+      ? window.APPVERBO_CREATE_PROCESS_SUBPROCESS_STANDARDS_API_V1()
+      : null;
+    const standardSubprocessTargetMapCacheV1 = new Map();
+
+    function getStandardSubprocessTargetMap(menuKey) {
+      const cleanMenuKey = context.normalizeMenuKey(menuKey);
+      if (!cleanMenuKey) {
+        return new Map();
+      }
+      if (standardSubprocessTargetMapCacheV1.has(cleanMenuKey)) {
+        return standardSubprocessTargetMapCacheV1.get(cleanMenuKey);
+      }
+      const map = (
+        processSubprocessStandardsApiV1 &&
+        typeof processSubprocessStandardsApiV1.getStandardSubprocessTargetMapV1 === "function"
+      )
+        ? processSubprocessStandardsApiV1.getStandardSubprocessTargetMapV1(cleanMenuKey, {
+            normalizeMenuKey: context.normalizeMenuKey
+          })
+        : new Map();
+      standardSubprocessTargetMapCacheV1.set(cleanMenuKey, map);
+      return map;
+    }
+
+    function resolveStandardSubprocessItem(menuKey, item) {
+      if (item && item.route) {
+        return item;
+      }
+      const cleanTarget = String(item && item.target || "").trim();
+      if (!cleanTarget) {
+        return null;
+      }
+      const map = getStandardSubprocessTargetMap(menuKey);
+      return map.get(cleanTarget) || null;
+    }
+
+    function navigateToStandardSubprocessRoute(menuKey, item) {
+      if (
+        !processSubprocessStandardsApiV1 ||
+        typeof processSubprocessStandardsApiV1.resolveSubprocessNavigationUrlV1 !== "function"
+      ) {
+        return false;
+      }
+      const standardItem = resolveStandardSubprocessItem(menuKey, item);
+      if (!standardItem || !standardItem.route) {
+        return false;
+      }
+
+      const nextUrl = processSubprocessStandardsApiV1.resolveSubprocessNavigationUrlV1(menuKey, standardItem, {
+        baseHref: window.location.href,
+        pathname: "/users/new",
+        normalizeMenuKey: context.normalizeMenuKey
+      });
+      if (!nextUrl) {
+        return false;
+      }
+
+      window.location.assign(nextUrl);
+      return true;
+    }
+
+    function resolveProcessTitle(menuKey, config) {
+      if (typeof context.resolveMenuProcessTitleLabel === "function") {
+        const resolvedLabel = context.resolveMenuProcessTitleLabel(
+          menuKey,
+          String((config && config.title) || "")
+        );
+        if (String(resolvedLabel || "").trim()) {
+          return String(resolvedLabel).trim();
+        }
+      }
+
+      const configTitle = String((config && config.title) || "").trim();
+      if (configTitle) {
+        return context.toSentenceCaseText(configTitle);
+      }
+
+      return context.toSentenceCaseText(String(menuKey || ""));
+    }
+
+    function updateSubmenuProcessTitle(menuKey, config) {
+      if (typeof context.updateSubmenuProcessTitle !== "function") {
+        return;
+      }
+      context.updateSubmenuProcessTitle(menuKey, resolveProcessTitle(menuKey, config));
+    }
+
     function renderSubmenu(menuKey) {
       const config = context.menuConfig[menuKey];
+      updateSubmenuProcessTitle(menuKey, config);
       if (!config || !context.itemsEl) {
         return;
       }
@@ -30,9 +122,25 @@
 
       menuItems.forEach((item) => {
         const link = document.createElement("a");
+        const standardItem = resolveStandardSubprocessItem(menuKey, item);
+        const routeConfig = (
+          standardItem &&
+          standardItem.route &&
+          typeof standardItem.route === "object"
+        )
+          ? standardItem.route
+          : null;
         link.className = "submenu-item";
         link.href = item.target;
         link.textContent = context.toSentenceCaseText(item.label);
+        if (standardItem && standardItem.key) {
+          link.dataset.tab = String(standardItem.key);
+          link.dataset.adminTab = String(standardItem.key);
+          link.dataset.appverboSubprocessTab = String(standardItem.key);
+        }
+        if (routeConfig && routeConfig.adminTab) {
+          link.dataset.adminTab = String(routeConfig.adminTab);
+        }
         if (item.profileSection) {
           link.dataset.profileSection = String(item.profileSection);
         }
@@ -42,32 +150,7 @@
         link.addEventListener("click", (event) => {
           event.preventDefault();
 
-          if (menuKey === "administrativo" && item.target === "#admin-sidebar-sections-card") {
-            const nextUrl = new URL("/users/new", window.location.origin);
-            nextUrl.searchParams.set("menu", "administrativo");
-            nextUrl.searchParams.set("admin_tab", "sessoes");
-            nextUrl.searchParams.set("sidebar_sections_tab", "sessoes");
-            nextUrl.searchParams.set("target", "admin-sidebar-sections-card");
-            nextUrl.hash = "#admin-sidebar-sections-card";
-            window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
-            return;
-          }
-          if (menuKey === "administrativo" && item.target === "#admin-definicoes-card") {
-            const nextUrl = new URL("/users/new", window.location.origin);
-            nextUrl.searchParams.set("menu", "administrativo");
-            nextUrl.searchParams.set("admin_tab", "definicoes");
-            nextUrl.searchParams.set("target", "admin-definicoes-card");
-            nextUrl.hash = "#admin-definicoes-card";
-            window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
-            return;
-          }
-          if (menuKey === "administrativo" && item.target === "#admin-menu-card") {
-            const nextUrl = new URL("/users/new", window.location.origin);
-            nextUrl.searchParams.set("menu", "administrativo");
-            nextUrl.searchParams.set("admin_tab", "menu");
-            nextUrl.searchParams.set("target", "admin-menu-card");
-            nextUrl.hash = "#admin-menu-card";
-            window.location.assign(nextUrl.pathname + nextUrl.search + nextUrl.hash);
+          if (navigateToStandardSubprocessRoute(menuKey, item)) {
             return;
           }
 
@@ -246,43 +329,20 @@
       if (!cleanHash) {
         return;
       }
-      let normalizedHash = cleanHash;
-      if (normalizedHash === "#edit-user-card") {
-        normalizedHash = "#create-user-card";
-      } else if (
-        normalizedHash === "#admin-user-shadow-readonly-card" ||
-        normalizedHash === "#admin-user-shadow-inactive-card" ||
-        normalizedHash === "#admin-users-created-card" ||
-        normalizedHash === "#inactive-users-card"
+      if (
+        !processSubprocessStandardsApiV1 ||
+        typeof processSubprocessStandardsApiV1.resolveStandardMenuByHashTargetV1 !== "function"
       ) {
-        normalizedHash = "#create-user-card";
-      } else if (normalizedHash === "#edit-entity-card") {
-        normalizedHash = "#create-entity-card";
-      } else if (normalizedHash === "#configuracao-account-status-card") {
-        normalizedHash = "#admin-menu-card";
-      } else if (
-        normalizedHash === "#admin-definicoes-card-create" ||
-        normalizedHash === "#admin-definicoes-card-inactive" ||
-        normalizedHash === "#admin-definicoes-card-edit"
-      ) {
-        normalizedHash = "#admin-definicoes-card";
+        return;
       }
 
-      const hashTargetMenuMap = {
-        "#create-user-card": "administrativo",
-        "#create-entity-card": "administrativo",
-        "#admin-subprocess-v2-entidade": "administrativo",
-        "#admin-menu-card-create": "administrativo",
-        "#admin-menu-card": "administrativo",
-        "#admin-menu-card-inactive": "administrativo",
-        "#admin-definicoes-card": "administrativo",
-        "#admin-definicoes-card-create": "administrativo",
-        "#admin-definicoes-card-inactive": "administrativo",
-        "#admin-definicoes-card-edit": "administrativo",
-        "#admin-sidebar-sections-card": "administrativo",
-        "#settings-menu-edit-card": "administrativo"
-      };
-      const targetMenu = hashTargetMenuMap[normalizedHash];
+      let normalizedHash = cleanHash;
+      const resolvedHashTarget = processSubprocessStandardsApiV1.resolveStandardMenuByHashTargetV1(cleanHash, {
+        normalizeMenuKey: context.normalizeMenuKey
+      });
+      normalizedHash = String(resolvedHashTarget && resolvedHashTarget.targetSelector || "").trim() || cleanHash;
+      const targetMenu = String(resolvedHashTarget && resolvedHashTarget.menuKey || "").trim();
+
       if (targetMenu) {
         activateMenuTarget(targetMenu, normalizedHash);
         if (cleanHash !== normalizedHash) {

@@ -639,7 +639,7 @@
       itemNamePlural: "campos",
       stateStorageKey: buildStorageKey_v3(root),
       pageSizeDefault: 5,
-      pageSizeOptions: [5, 10, 25],
+      pageSizeOptions: [5, 10, 20, 30, 50, 100],
       initialItems,
       selectors: {
         editorForm: "[data-additional-field-editor-block]",

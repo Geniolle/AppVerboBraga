@@ -2,11 +2,11 @@
 
 .admin-status-table-footer-v1 {
   align-items: center;
-  border-top: 1px solid #d8e0ec;
+  border-top: 0;
   display: flex;
   gap: 8px;
   justify-content: flex-start;
-  margin-top: 10px;
+  margin-top: 0;
   padding-top: 10px;
 }
 
@@ -30,6 +30,27 @@
   min-width: 26px;
   padding: 0 8px;
 }
+
+/* APPVERBO_ADMIN_TABLE_SINGLE_DIVIDER_V1_START */
+/* Remove a borda extra imediatamente acima do footer de paginação.
+   Mantém divisórias entre linhas e remove apenas a última. */
+html body :is(
+  #admin-entities-created-table,
+  #admin-entities-inactive-table,
+  #active-entities-table,
+  #inactive-entities-table,
+  #admin-users-created-table,
+  #admin-users-inactive-table,
+  #recent-users-table,
+  #inactive-users-table,
+  #admin-sidebar-sections-table,
+  #admin-sidebar-sections-inactive-table,
+  #settings-menu-table,
+  #admin-account-status-table
+) tbody tr:last-child > td {
+  border-bottom: 0 !important;
+}
+/* APPVERBO_ADMIN_TABLE_SINGLE_DIVIDER_V1_END */
 
 .entity-status {
   align-items: center;

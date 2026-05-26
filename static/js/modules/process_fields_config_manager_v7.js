@@ -678,7 +678,7 @@
       itemNamePlural: "campos",
       stateStorageKey: construirStorageKeyV7(form),
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 25],
+      pageSizeOptions: [5, 10, 20, 30, 50, 100],
       initialItems,
       selectors: {
         editorForm: "[data-process-fields-config-editor-block]",
