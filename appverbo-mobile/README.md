@@ -43,8 +43,21 @@ Comandos uteis:
 npm run android
 npm run ios
 npm run web
+npm run start:lan
+npm run start:tunnel
 npm run typecheck
 ```
+
+## Simular no telemovel
+
+1. Instalar a app Expo Go no Android/iOS.
+2. No projeto `appverbo-mobile`, arrancar:
+
+```bash
+npm run start:tunnel
+```
+
+3. Abrir Expo Go e ler o QR code mostrado no terminal.
 
 ## Estrutura inicial
 
@@ -56,12 +69,14 @@ appverbo-mobile/
     services/api.ts
     services/auth.ts
     services/home.ts
+    services/modules.ts
 ```
 
 `src/config/api.ts` resolve a base da API compartilhada.
 `src/services/api.ts` contem um ping simples de conectividade.
 `src/services/auth.ts` contem login/me/logout para sessao no backend partilhado.
 `src/services/home.ts` carrega o resumo de home (dashboard, menus e perfil) para o app.
+`src/services/modules.ts` carrega dados por modulo (`/api/mobile/modules` e `/api/mobile/modules/{module_key}`).
 
 ## Navegacao atual
 
@@ -78,3 +93,5 @@ appverbo-mobile/
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 - `GET /api/mobile/home`
+- `GET /api/mobile/modules`
+- `GET /api/mobile/modules/{module_key}`

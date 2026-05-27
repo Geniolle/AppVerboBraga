@@ -16,6 +16,11 @@ import { apiBaseUrl } from './src/config/api';
 import { pingBackend } from './src/services/api';
 import { AuthSessionPayload, loginWithBackend, logoutFromBackend } from './src/services/auth';
 import { MobileHomePayload, MobileMenuItem, getMobileHomeData } from './src/services/home';
+import {
+  MobileModulePayload,
+  getAllMobileModulesData,
+  getMobileModuleData,
+} from './src/services/modules';
 
 type ScreenMode = 'checking' | 'guest' | 'authenticated';
 type LoginMode = 'login' | 'admin';
@@ -103,6 +108,16 @@ export default function App() {
   const [isBusy, setIsBusy] = useState(false);
   const [message, setMessage] = useState('A validar sessao no backend...');
   const [pingMessage, setPingMessage] = useState('Sem teste de API executado.');
+  const [modulePayloadByKey, setModulePayloadByKey] = useState<Record<string, MobileModulePayload>>({});
+  const [moduleLoadState, setModuleLoadState] = useState<{
+    moduleKey: string;
+    isLoading: boolean;
+    errorMessage: string;
+  }>({
+    moduleKey: '',
+    isLoading: false,
+    errorMessage: '',
+  });
 
   const currentRoute = routeStack[routeStack.length - 1] ?? INITIAL_APP_ROUTE;
   const menuItems = homeData?.home.menu_items ?? [];
@@ -114,10 +129,28 @@ export default function App() {
     () => findMenuByKey(menuItems, currentRoute.menu_key),
     [menuItems, currentRoute.menu_key]
   );
+  const selectedMenuLookupKey = selectedMenu ? normalizeLookupToken(selectedMenu.key) : '';
+  const selectedModulePayload = selectedMenuLookupKey ? modulePayloadByKey[selectedMenuLookupKey] ?? null : null;
+  const selectedModuleLoading = moduleLoadState.isLoading && moduleLoadState.moduleKey === selectedMenuLookupKey;
+  const selectedModuleErrorMessage =
+    moduleLoadState.moduleKey === selectedMenuLookupKey ? moduleLoadState.errorMessage : '';
 
   useEffect(() => {
     void refreshSession();
   }, []);
+
+  useEffect(() => {
+    if (screenMode !== 'authenticated' || currentRoute.name !== 'native_module' || !selectedMenu) {
+      return;
+    }
+
+    const cleanMenuKey = normalizeLookupToken(selectedMenu.key);
+    if (!cleanMenuKey || modulePayloadByKey[cleanMenuKey]) {
+      return;
+    }
+
+    void loadNativeModulePayload(selectedMenu);
+  }, [screenMode, currentRoute.name, selectedMenu, modulePayloadByKey]);
 
   //###################################################################################
   // (2) HELPERS DE ROTEAMENTO INTERNO
@@ -168,12 +201,17 @@ export default function App() {
     try {
       const payload = await getMobileHomeData();
       applyHomePayload(payload);
+      setModulePayloadByKey({});
+      setModuleLoadState({ moduleKey: '', isLoading: false, errorMessage: '' });
+      void prefetchVisibleNativeModules();
       setScreenMode('authenticated');
       setMessage('Sessao ativa.');
       resetRouteStack();
     } catch {
       setSessionData(null);
       setHomeData(null);
+      setModulePayloadByKey({});
+      setModuleLoadState({ moduleKey: '', isLoading: false, errorMessage: '' });
       setScreenMode('guest');
       setMessage('Faca login para continuar.');
       resetRouteStack();
@@ -211,6 +249,9 @@ export default function App() {
       });
       const payload = await getMobileHomeData();
       applyHomePayload(payload);
+      setModulePayloadByKey({});
+      setModuleLoadState({ moduleKey: '', isLoading: false, errorMessage: '' });
+      void prefetchVisibleNativeModules();
       setScreenMode('authenticated');
       setMessage('Login concluido.');
       setPassword('');
@@ -238,6 +279,8 @@ export default function App() {
       await logoutFromBackend();
       setSessionData(null);
       setHomeData(null);
+      setModulePayloadByKey({});
+      setModuleLoadState({ moduleKey: '', isLoading: false, errorMessage: '' });
       setScreenMode('guest');
       setPassword('');
       setMessage('Sessao terminada.');
@@ -264,12 +307,18 @@ export default function App() {
     try {
       const payload = await getMobileHomeData();
       applyHomePayload(payload);
+      void prefetchVisibleNativeModules();
       setMessage('Home atualizada.');
       if (
         (currentRoute.name === 'menu_detail' || currentRoute.name === 'native_module') &&
         !findMenuByKey(payload.home.menu_items, currentRoute.menu_key)
       ) {
         goToRootRoute('menus');
+      } else if (currentRoute.name === 'native_module') {
+        const refreshedMenu = findMenuByKey(payload.home.menu_items, currentRoute.menu_key);
+        if (refreshedMenu) {
+          void loadNativeModulePayload(refreshedMenu, true);
+        }
       }
     } catch (error) {
       const details = error instanceof Error ? error.message : 'Falha ao atualizar home.';
@@ -332,7 +381,113 @@ export default function App() {
   }
 
   //###################################################################################
-  // (10) RENDER DE CARREGAMENTO INICIAL
+  // (10) HELPERS DE CACHE DE MODULO MOBILE
+  //###################################################################################
+  function collectModulePayloadCacheKeys(
+    payload: MobileModulePayload,
+    additionalKeys: string[] = []
+  ): string[] {
+    const normalizedKeys = new Set<string>();
+    const keysToNormalize = [payload.summary.key, payload.module.key, ...additionalKeys];
+    keysToNormalize.forEach((rawKey) => {
+      const normalizedKey = normalizeLookupToken(rawKey);
+      if (normalizedKey) {
+        normalizedKeys.add(normalizedKey);
+      }
+    });
+
+    const mappedNativeModule = resolveNativeModuleDefinition(payload.module);
+    if (mappedNativeModule) {
+      normalizedKeys.add(mappedNativeModule.key);
+    }
+
+    return Array.from(normalizedKeys);
+  }
+
+  function cacheModulePayload(payload: MobileModulePayload, additionalKeys: string[] = []): void {
+    const cacheKeys = collectModulePayloadCacheKeys(payload, additionalKeys);
+    if (cacheKeys.length === 0) {
+      return;
+    }
+
+    setModulePayloadByKey((previousMap) => {
+      const nextMap: Record<string, MobileModulePayload> = { ...previousMap };
+      cacheKeys.forEach((cacheKey) => {
+        nextMap[cacheKey] = payload;
+      });
+      return nextMap;
+    });
+  }
+
+  async function prefetchVisibleNativeModules(): Promise<void> {
+    try {
+      const payload = await getAllMobileModulesData();
+      const preloadedEntries: Record<string, MobileModulePayload> = {};
+
+      payload.modules.forEach((moduleRow) => {
+        const modulePayload: MobileModulePayload = {
+          ok: true,
+          session: payload.session,
+          permissions: payload.permissions,
+          module: moduleRow.module,
+          summary: moduleRow.summary,
+        };
+        collectModulePayloadCacheKeys(modulePayload).forEach((cacheKey) => {
+          preloadedEntries[cacheKey] = modulePayload;
+        });
+      });
+
+      if (Object.keys(preloadedEntries).length > 0) {
+        setModulePayloadByKey((previousMap) => ({
+          ...previousMap,
+          ...preloadedEntries,
+        }));
+      }
+    } catch {
+      // Ignorar falhas silenciosas de preload para nao interromper o fluxo principal.
+    }
+  }
+
+  //###################################################################################
+  // (11) CARREGAR PAYLOAD DE MODULO MOBILE
+  //###################################################################################
+  async function loadNativeModulePayload(menuItem: MobileMenuItem, forceRefresh = false): Promise<void> {
+    const cleanMenuKey = normalizeLookupToken(menuItem.key);
+    if (!cleanMenuKey) {
+      return;
+    }
+
+    if (!forceRefresh && modulePayloadByKey[cleanMenuKey]) {
+      return;
+    }
+
+    setModuleLoadState({
+      moduleKey: cleanMenuKey,
+      isLoading: true,
+      errorMessage: '',
+    });
+
+    try {
+      const payload = await getMobileModuleData(menuItem.key);
+      cacheModulePayload(payload, [cleanMenuKey]);
+      setModuleLoadState({
+        moduleKey: cleanMenuKey,
+        isLoading: false,
+        errorMessage: '',
+      });
+    } catch (error) {
+      const details = error instanceof Error ? error.message : 'Falha ao carregar modulo.';
+      setModuleLoadState({
+        moduleKey: cleanMenuKey,
+        isLoading: false,
+        errorMessage: details,
+      });
+      setMessage(`Falha ao carregar modulo ${menuItem.label}: ${details}`);
+    }
+  }
+
+  //###################################################################################
+  // (12) RENDER DE CARREGAMENTO INICIAL
   //###################################################################################
   if (screenMode === 'checking') {
     return (
@@ -467,8 +622,16 @@ export default function App() {
             <NativeModuleRoute
               menuItem={selectedMenu}
               homeData={homeData}
+              modulePayload={selectedModulePayload}
+              isModuleLoading={selectedModuleLoading}
+              moduleErrorMessage={selectedModuleErrorMessage}
               onOpenMenuInWeb={handleOpenMenuInWeb}
               onOpenSummaryRoute={() => goToRootRoute('summary')}
+              onReloadModule={() => {
+                if (selectedMenu) {
+                  void loadNativeModulePayload(selectedMenu, true);
+                }
+              }}
             />
           ) : null}
 
@@ -683,8 +846,12 @@ function MenuDetailRoute(props: MenuDetailRouteProps) {
 type NativeModuleRouteProps = {
   menuItem: MobileMenuItem | null;
   homeData: MobileHomePayload | null;
+  modulePayload: MobileModulePayload | null;
+  isModuleLoading: boolean;
+  moduleErrorMessage: string;
   onOpenMenuInWeb: (menuItem: MobileMenuItem) => Promise<void>;
   onOpenSummaryRoute: () => void;
+  onReloadModule: () => void;
 };
 
 function NativeModuleRoute(props: NativeModuleRouteProps) {
@@ -699,11 +866,15 @@ function NativeModuleRoute(props: NativeModuleRouteProps) {
 
   const currentMenuItem = props.menuItem;
   const moduleDefinition = resolveNativeModuleDefinition(currentMenuItem);
-  if (!moduleDefinition) {
+  const moduleSummary = props.modulePayload?.summary ?? null;
+  if (!moduleDefinition && !moduleSummary) {
     return (
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Modulo</Text>
         <Text style={styles.cardText}>Modulo nativo nao mapeado no APP.</Text>
+        <Pressable style={styles.buttonSecondary} onPress={props.onReloadModule}>
+          <Text style={styles.buttonSecondaryLabel}>Atualizar modulo</Text>
+        </Pressable>
         <Pressable style={styles.buttonPrimary} onPress={() => void props.onOpenMenuInWeb(currentMenuItem)}>
           <Text style={styles.buttonPrimaryLabel}>Abrir no WEB</Text>
         </Pressable>
@@ -711,24 +882,34 @@ function NativeModuleRoute(props: NativeModuleRouteProps) {
     );
   }
 
-  const moduleMetrics = buildModuleMetrics(moduleDefinition.key, props.homeData);
+  const fallbackMetrics = moduleDefinition ? buildModuleMetrics(moduleDefinition.key, props.homeData) : [];
+  const moduleMetrics = moduleSummary?.metrics ?? fallbackMetrics;
+  const moduleTitle = moduleSummary?.title || moduleDefinition?.title || currentMenuItem.label;
+  const moduleScope = moduleSummary?.mobile_scope || moduleDefinition?.mobileScope || 'Fluxo dedicado no APP.';
+  const moduleDescription = moduleSummary?.description || moduleDefinition?.description || '';
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>{moduleDefinition.title}</Text>
+      <Text style={styles.cardTitle}>{moduleTitle}</Text>
       <Text style={styles.cardText}>Key: {currentMenuItem.key}</Text>
-      <Text style={styles.cardText}>Escopo APP: {moduleDefinition.mobileScope}</Text>
-      <Text style={styles.cardText}>{moduleDefinition.description}</Text>
+      <Text style={styles.cardText}>Escopo APP: {moduleScope}</Text>
+      <Text style={styles.cardText}>{moduleDescription}</Text>
       <View style={styles.moduleTagBox}>
         <Text style={styles.moduleTagLabel}>Modulo Nativo APP</Text>
       </View>
 
+      {props.isModuleLoading ? <Text style={styles.cardText}>A carregar dados do modulo...</Text> : null}
+      {props.moduleErrorMessage ? <Text style={styles.moduleErrorText}>{props.moduleErrorMessage}</Text> : null}
+
       {moduleMetrics.map((metric) => (
-        <Text key={`${moduleDefinition.key}-${metric.label}`} style={styles.cardText}>
+        <Text key={`${currentMenuItem.key}-${metric.label}`} style={styles.cardText}>
           {metric.label}: {metric.value}
         </Text>
       ))}
 
+      <Pressable style={styles.buttonSecondary} onPress={props.onReloadModule}>
+        <Text style={styles.buttonSecondaryLabel}>Atualizar modulo</Text>
+      </Pressable>
       <Pressable style={styles.buttonSecondary} onPress={props.onOpenSummaryRoute}>
         <Text style={styles.buttonSecondaryLabel}>Ir para Resumo</Text>
       </Pressable>
@@ -1155,6 +1336,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#0b5fff',
+  },
+  moduleErrorText: {
+    fontSize: 12,
+    color: '#b91c1c',
+    lineHeight: 18,
   },
   infoText: {
     fontSize: 12,
