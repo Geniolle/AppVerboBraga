@@ -37,8 +37,12 @@
       });
     });
 
-    if (context.dynamicProcessEditToggleEl) {
-      context.dynamicProcessEditToggleEl.addEventListener("click", () => {
+    function bindDynamicProcessEditToggleV1(toggleEl) {
+      if (!toggleEl || toggleEl.dataset.appverboDynamicEditBoundV1 === "1") {
+        return;
+      }
+      toggleEl.dataset.appverboDynamicEditBoundV1 = "1";
+      toggleEl.addEventListener("click", () => {
         if (context.dynamicProcessHistoryActionInputEl) {
           context.dynamicProcessHistoryActionInputEl.value = "create";
         }
@@ -56,6 +60,9 @@
         }
       });
     }
+
+    bindDynamicProcessEditToggleV1(context.dynamicProcessEditToggleEl);
+    bindDynamicProcessEditToggleV1(document.getElementById("dynamic-process-header-edit-toggle"));
 
     context.profileEditCancelButtons.forEach((button) => {
       button.addEventListener("click", () => {
@@ -97,7 +104,23 @@
     context.userDropdownLinks.forEach((link) => {
       link.addEventListener("click", (event) => {
         event.preventDefault();
-        const menuKey = context.normalizeMenuKey(link.getAttribute("data-dropdown-menu") || "perfil");
+        const primaryMenuKey = context.normalizeMenuKey(
+          link.getAttribute("data-dropdown-menu") || "perfil"
+        );
+        const fallbackMenuKey = context.normalizeMenuKey(
+          link.getAttribute("data-dropdown-menu-fallback") || ""
+        );
+        const forceFirstSubprocess = ["1", "true", "on", "yes"].includes(
+          String(link.getAttribute("data-dropdown-force-first") || "")
+            .trim()
+            .toLowerCase()
+        );
+
+        let menuKey = primaryMenuKey;
+        if (!context.menuConfig[menuKey] && fallbackMenuKey && context.menuConfig[fallbackMenuKey]) {
+          menuKey = fallbackMenuKey;
+        }
+
         const targetSelector = link.getAttribute("data-dropdown-target") || "";
         if (!context.menuConfig[menuKey]) {
           context.closeUserDropdown();
@@ -106,7 +129,18 @@
         if (targetSelector) {
           context.selectedTargetByMenu[menuKey] = targetSelector;
         }
-        context.activateMenuTarget(menuKey, targetSelector);
+        if (forceFirstSubprocess && typeof context.activateMenu === "function") {
+          context.activateMenu(menuKey, { resetDynamicToFirst: true });
+
+          if (targetSelector) {
+            const targetCard = document.querySelector(targetSelector);
+            if (targetCard) {
+              targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
+        } else {
+          context.activateMenuTarget(menuKey, targetSelector);
+        }
         context.closeUserDropdown();
       });
     });

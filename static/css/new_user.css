@@ -1065,6 +1065,29 @@ body.appverbo-sidebar-collapsed .appverbo-sidebar-owner-text {
   align-items: end;
 }
 
+/* ###################################################################################
+   EMPRESA - DADOS DA ENTIDADE EM 4 COLUNAS (DESKTOP)
+   ################################################################################### */
+
+#dynamic-process-card.appverbo-empresa-layout-4cols-v1 .profile-readonly .personal-grid,
+#dynamic-process-card.appverbo-empresa-layout-4cols-v1 .appverbo-dynamic-process-grid-v1 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1400px) {
+  #dynamic-process-card.appverbo-empresa-layout-4cols-v1 .profile-readonly .personal-grid,
+  #dynamic-process-card.appverbo-empresa-layout-4cols-v1 .appverbo-dynamic-process-grid-v1 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  #dynamic-process-card.appverbo-empresa-layout-4cols-v1 .profile-readonly .personal-grid,
+  #dynamic-process-card.appverbo-empresa-layout-4cols-v1 .appverbo-dynamic-process-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
    .appverbo-dynamic-process-grid-v1 .field {
   min-width: 0;
 }
@@ -2102,8 +2125,9 @@ th {
    (PERFIL) Dados pessoais: Nome, Telefone e Email na primeira linha
 ################################################################################### */
 
+#perfil-pessoal-card .profile-readonly .personal-grid,
 #perfil-pessoal-card .profile-edit-form .personal-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 #perfil-pessoal-card .profile-edit-form .field.full {
@@ -2114,13 +2138,22 @@ th {
   background: #ffffff;
 }
 
+@media (max-width: 1400px) {
+  #perfil-pessoal-card .profile-readonly .personal-grid,
+  #perfil-pessoal-card .profile-edit-form .personal-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1100px) {
+  #perfil-pessoal-card .profile-readonly .personal-grid,
   #perfil-pessoal-card .profile-edit-form .personal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 720px) {
+  #perfil-pessoal-card .profile-readonly .personal-grid,
   #perfil-pessoal-card .profile-edit-form .personal-grid {
     grid-template-columns: 1fr;
   }
@@ -2131,7 +2164,7 @@ th {
 ################################################################################### */
 
 #perfil-pessoal-card .profile-edit-form .personal-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 #perfil-pessoal-card .profile-edit-form .profile-field-name {
@@ -2168,6 +2201,12 @@ th {
 
 #perfil-pessoal-card .profile-edit-form .field.full:has(#edit_login_email) {
   grid-column: auto;
+}
+
+@media (max-width: 1400px) {
+  #perfil-pessoal-card .profile-edit-form .personal-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 1100px) {

@@ -1411,6 +1411,13 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 if str(visible_field_section_map.get(clean_key) or "").strip().lower()
                 == active_profile_section_key
             ]
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_custom_fields = {
+            key: value
+            for key, value in existing_profile_fields.items()
+            if key.startswith("custom_")
+        }
+
         current_meu_perfil_values: dict[str, str] = {
             "nome": clean_full_name,
             "telefone": clean_primary_phone,
@@ -1424,9 +1431,14 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             field_meta = custom_field_meta.get(custom_key) or {}
             field_type = str(field_meta.get("field_type") or "text").strip().lower()
             if field_type == "flag":
-                current_meu_perfil_values[custom_key] = (
-                    "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
-                )
+                if field_name in submitted_form:
+                    current_meu_perfil_values[custom_key] = (
+                        "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
+                    )
+                else:
+                    current_meu_perfil_values[custom_key] = str(
+                        existing_custom_fields.get(custom_key) or "0"
+                    ).strip() or "0"
                 continue
             if hasattr(submitted_form, "getlist"):
                 raw_submitted_values = submitted_form.getlist(field_name)
@@ -1437,7 +1449,13 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 for raw_value in raw_submitted_values
             ]
             clean_values = [value for value in submitted_values if value]
-            current_meu_perfil_values[custom_key] = ", ".join(clean_values)
+            clean_custom_value = ", ".join(clean_values)
+            if clean_custom_value:
+                current_meu_perfil_values[custom_key] = clean_custom_value
+            else:
+                current_meu_perfil_values[custom_key] = str(
+                    existing_custom_fields.get(custom_key) or ""
+                ).strip()
         meu_perfil_subsequent_rules = _resolve_process_subsequent_rules_from_setting_v1(
             meu_perfil_setting
         )
@@ -1452,13 +1470,46 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             visible_field_section_map,
         )
         active_custom_keys_set = set(active_custom_keys)
+        submitted_custom_values_by_key: dict[str, str] = {}
+        submitted_custom_presence: set[str] = set()
+        for custom_key in all_visible_custom_keys:
+            field_name = f"custom_field__{custom_key}"
+            field_meta = custom_field_meta.get(custom_key) or {}
+            field_type = str(field_meta.get("field_type") or "text").strip().lower()
+            field_size = field_meta.get("size")
 
-        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
-        existing_custom_fields = {
-            key: value
-            for key, value in existing_profile_fields.items()
-            if key.startswith("custom_")
-        }
+            if field_type == "flag":
+                if field_name in submitted_form:
+                    submitted_custom_presence.add(custom_key)
+                    submitted_custom_values_by_key[custom_key] = (
+                        "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
+                    )
+                continue
+
+            if hasattr(submitted_form, "getlist"):
+                raw_submitted_values = submitted_form.getlist(field_name)
+            else:
+                raw_submitted_values = [submitted_form.get(field_name)]
+
+            has_submitted_value = (
+                field_name in submitted_form
+                or any(raw_value is not None for raw_value in raw_submitted_values)
+            )
+            if has_submitted_value:
+                submitted_custom_presence.add(custom_key)
+
+            submitted_values = [
+                str(raw_value or "").strip()
+                for raw_value in raw_submitted_values
+            ]
+            clean_values = [value for value in submitted_values if value]
+            if isinstance(field_size, int) and field_size > 0:
+                clean_values = [value[:field_size] for value in clean_values]
+            clean_custom_value = ", ".join(clean_values)
+
+            if clean_custom_value:
+                submitted_custom_values_by_key[custom_key] = clean_custom_value
+
         updated_custom_fields = {
             key: value
             for key, value in existing_custom_fields.items()
@@ -1475,27 +1526,19 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         }
         missing_required_custom_labels: list[str] = []
         for custom_key in active_custom_keys:
-            field_name = f"custom_field__{custom_key}"
             field_meta = custom_field_meta.get(custom_key) or {}
             field_type = str(field_meta.get("field_type") or "text").strip().lower()
-            field_size = field_meta.get("size")
             field_required = bool(field_meta.get("is_required"))
             if field_type == "flag":
-                updated_custom_fields[custom_key] = "1" if str(submitted_form.get(field_name) or "").strip() == "1" else "0"
+                if custom_key in submitted_custom_presence:
+                    updated_custom_fields[custom_key] = submitted_custom_values_by_key.get(custom_key, "0")
+                else:
+                    updated_custom_fields[custom_key] = str(
+                        existing_custom_fields.get(custom_key) or "0"
+                    ).strip() or "0"
                 continue
 
-            if hasattr(submitted_form, "getlist"):
-                raw_submitted_values = submitted_form.getlist(field_name)
-            else:
-                raw_submitted_values = [submitted_form.get(field_name)]
-            submitted_values = [
-                str(raw_value or "").strip()
-                for raw_value in raw_submitted_values
-            ]
-            clean_values = [value for value in submitted_values if value]
-            if isinstance(field_size, int) and field_size > 0:
-                clean_values = [value[:field_size] for value in clean_values]
-            clean_custom_value = ", ".join(clean_values)
+            clean_custom_value = submitted_custom_values_by_key.get(custom_key, "")
             if field_required and not clean_custom_value:
                 field_label = option_labels_by_key.get(custom_key) or custom_key
                 if field_label not in missing_required_custom_labels:
@@ -1513,6 +1556,19 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
 
             updated_custom_fields.pop(hidden_custom_key, None)
         # APPVERBO_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_END
+
+        # APPVERBO_MEU_PERFIL_PERSIST_SUBMITTED_FIELDS_V1_START
+        # Preserva campos efetivamente submetidos mesmo quando profile_section chega desalinhado.
+        # Mantem a prioridade da regra de campos subsequentes ocultos.
+        for submitted_custom_key, submitted_custom_value in submitted_custom_values_by_key.items():
+            if submitted_custom_key not in visible_custom_keys_set:
+                continue
+            if submitted_custom_key in hidden_meu_perfil_targets:
+                continue
+            if not submitted_custom_value:
+                continue
+            updated_custom_fields[submitted_custom_key] = submitted_custom_value
+        # APPVERBO_MEU_PERFIL_PERSIST_SUBMITTED_FIELDS_V1_END
 
         active_quantity_rule_keys: set[str] = set()
         for quantity_rule in quantity_rules:

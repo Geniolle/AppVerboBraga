@@ -117,6 +117,7 @@
       ? deps.menuProcessValuesMap
       : {};
     const isDepartamentosMenuKeyV1 = (menuKey) => normalizeMenuKey(menuKey) === "departamentos";
+    const isEmpresaMenuKeyV1 = (menuKey) => normalizeMenuKey(menuKey) === "empresa";
     const dynamicProcessDataByMenu = (
       deps.dynamicProcessDataByMenu &&
       typeof deps.dynamicProcessDataByMenu === "object" &&
@@ -355,11 +356,15 @@
       const historyInactiveCardEl = resolveElementByIdV1(deps, "dynamic-process-history-inactive-card");
       const shouldShowDynamicCardTarget = resolvedTargetSelector === "#dynamic-process-card";
       const shouldHideDynamicCardForDepartamentos = isDepartamentosMenuKeyV1(menuKey);
+      const shouldHideCreateCardForEmpresa = isEmpresaMenuKeyV1(menuKey);
       const shouldShowDynamicCard = (
         shouldShowDynamicCardTarget &&
         !shouldHideDynamicCardForDepartamentos
       );
-      const shouldShowCreateCard = shouldShowDynamicCardTarget;
+      const shouldShowCreateCard = (
+        shouldShowDynamicCardTarget &&
+        !shouldHideCreateCardForEmpresa
+      );
 
       if (dynamicCardEl && dynamicCardEl.style) {
         dynamicCardEl.style.display = shouldShowDynamicCard ? "" : "none";

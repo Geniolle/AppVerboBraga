@@ -191,7 +191,43 @@ def get_hidden_process_targets_from_rules(
 
     hidden_targets: set[str] = set()
     for target_field, target_rules in grouped_rules.items():
-        if not all(is_process_subsequent_rule_met(rule, values_by_field) for rule in target_rules):
+        # ###################################################################################
+        # (SUBSEQUENT_RULES) AGRUPAR POR CAMPO+OPERADOR
+        # ###################################################################################
+        # Regras do mesmo target com o mesmo trigger_field+operator representam alternativas
+        # (OR), por exemplo:
+        # - estado_civil == "Casado"
+        # - estado_civil == "União de Facto"
+        # Já grupos diferentes continuam com semântica AND.
+        grouped_by_condition: dict[tuple[str, str], list[dict[str, str]]] = {}
+        for rule in target_rules:
+            condition_key = (
+                str(rule.get("trigger_field") or "").strip().lower(),
+                normalize_process_subsequent_operator(rule.get("operator")),
+            )
+            grouped_by_condition.setdefault(condition_key, []).append(rule)
+
+        is_target_visible = True
+        for (trigger_field, operator), condition_rules in grouped_by_condition.items():
+            if not trigger_field:
+                continue
+
+            if operator in {"equals", "not_equals"} and len(condition_rules) > 1:
+                condition_met = any(
+                    is_process_subsequent_rule_met(rule, values_by_field)
+                    for rule in condition_rules
+                )
+            else:
+                condition_met = all(
+                    is_process_subsequent_rule_met(rule, values_by_field)
+                    for rule in condition_rules
+                )
+
+            if not condition_met:
+                is_target_visible = False
+                break
+
+        if not is_target_visible:
             hidden_targets.add(target_field)
     return hidden_targets
 

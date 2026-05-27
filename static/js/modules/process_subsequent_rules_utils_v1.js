@@ -88,7 +88,39 @@
         });
         const hiddenTargets = new Set();
         groupedRules.forEach((targetRules, targetField) => {
-          if (!targetRules.every((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField))) {
+          //###################################################################################
+          //(SUBSEQUENT_RULES) OR POR MESMO triggerField+operator, AND ENTRE GRUPOS
+          //###################################################################################
+          const groupedByCondition = new Map();
+          targetRules.forEach((rule) => {
+            const conditionKey = `${normalizeMenuKey(rule.triggerField)}::${normalizeProcessSubsequentOperator(rule.operator)}`;
+            if (!groupedByCondition.has(conditionKey)) {
+              groupedByCondition.set(conditionKey, []);
+            }
+            groupedByCondition.get(conditionKey).push(rule);
+          });
+
+          let isTargetVisible = true;
+          groupedByCondition.forEach((conditionRules) => {
+            if (!isTargetVisible) {
+              return;
+            }
+
+            const operator = normalizeProcessSubsequentOperator(
+              conditionRules[0] && conditionRules[0].operator
+            );
+
+            const conditionMet =
+              (operator === "equals" || operator === "not_equals") && conditionRules.length > 1
+                ? conditionRules.some((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField))
+                : conditionRules.every((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField));
+
+            if (!conditionMet) {
+              isTargetVisible = false;
+            }
+          });
+
+          if (!isTargetVisible) {
             hiddenTargets.add(targetField);
           }
         });

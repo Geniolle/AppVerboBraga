@@ -2086,29 +2086,15 @@ runModuleBootstrapStepV1("meuPerfilEditSectionFilterV1");
 // APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
 
 // APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
-runModuleBootstrapStepV1("keepCurrentProcessAfterProfileSaveV1");
+// Fluxo legado desativado para evitar listeners duplicados no submit do Meu perfil.
 // APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
 
 // APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_START
-runModuleBootstrapStepV1("postSaveContextCaptureV3", {
-  APPVERBO_POST_SAVE_CONTEXT_KEY_V3,
-  MEU_PERFIL_MENU_KEY,
-  initialMenu,
-  profilePersonalSections,
-  selectedDynamicSectionByMenu,
-  normalizeMenuKey,
-  normalizeLookupText
-});
+// Fluxo legado desativado para evitar sobreposição com FRONTEND_RETURN_URL_POST_SAVE_V6.
 // APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_END
 
 // APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_START
-runModuleBootstrapStepV1("returnUrlPostSaveCaptureV4", {
-  initialMenu,
-  profilePersonalSections,
-  selectedDynamicSectionByMenu,
-  normalizeMenuKey,
-  normalizeLookupText
-});
+// Fluxo legado desativado para evitar sobreposição com FRONTEND_RETURN_URL_POST_SAVE_V6.
 // APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_END
 
 // APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_START

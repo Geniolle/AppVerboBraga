@@ -49,7 +49,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260526-admin-status-footer-single-line-v10-last-row-no-border">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260526-sidebar-style-settings-v2-hide-empty-departamento-card">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260527-sidebar-style-settings-v4-meu-perfil-4cols">
   <style>
     :root {
       --topbar: {{ admin_topbar_color_hex|default('#334A62', true) }};
@@ -64,7 +64,7 @@
     }
   </style>
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260523-fields-config-v9-list-source-tables">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260527-fields-config-v10-process-tabs-vertical-center">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260526-admin-tabs-top-subprocess-line-v11"></script>
@@ -74,10 +74,10 @@
   <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260521-admin-subprocess-responsive-split-v3">
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
-  <script src="/static/js/modules/profile_field_order.js?v=20260508-profile-field-order-v4" defer></script>
+  <script src="/static/js/modules/profile_field_order.js?v=20260527-profile-field-order-v5-menu-order-priority" defer></script>
   <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260526-admin-menu-scope-v3-bypass-v7-nav" defer></script>
-  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260524-quantity-readonly-renderer-v2-section-scope-fix-v3" defer></script>
-  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260524-quantity-edit-pairs-v4-section-scope-fix-v2" defer></script>
+  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260527-quantity-readonly-order-anchor-fix-v4" defer></script>
+  <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260527-quantity-edit-pairs-v8-bind-edit-entrypoints" defer></script>
 
 <script>
 (function () {
@@ -153,7 +153,7 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260526-admin-subprocess-nav-v12-menu-canonical-render-fix" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260527-admin-subprocess-nav-v13-respect-active-sidebar-menu" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260525-aba-ativa-subprocessos-v2-bypass-v7" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
@@ -886,6 +886,13 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <section id="dynamic-process-card" class="card admin-subprocess-card-v1 appverbo-dynamic-process-card-v1" style="display: none;">
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
+            <button
+              id="dynamic-process-header-edit-toggle"
+              type="button"
+              class="profile-edit-toggle"
+              data-edit-target="dynamic-process-card"
+              style="display: none;"
+            >Editar</button>
           </div>
           {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert ok">{{ profile_success }}</div>
@@ -3272,16 +3279,16 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260525-process-sections-builder-module-v1" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260525-dynamic-runtime-core-module-v1" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260527-dynamic-runtime-core-v3-empresa-4cols" defer></script>
 <script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260525-dynamic-process-history-renderer-module-v1" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
-<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260526-menu-dynamic-navigation-core-v5-hide-departamento-card" defer></script>
-<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260526-menu-navigation-controller-standards-v8-title-context-refactor" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260527-menu-dynamic-navigation-core-v6-hide-empresa-create-card" defer></script>
+<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260526-menu-navigation-controller-standards-v9-force-first-subprocess" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
 <script src="/static/js/modules/process_field_utils_v1.js?v=20260525-process-field-utils-module-v1" defer></script>
-<script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260525-process-subsequent-rules-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260527-process-subsequent-rules-utils-or-groups-v2" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
 <script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260525-process-history-labels-utils-module-v1" defer></script>
 <script src="/static/js/modules/avatar_utils_v1.js?v=20260525-avatar-utils-module-v1" defer></script>
@@ -3310,12 +3317,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/module_bootstrap_runner_bridge_v1.js?v=20260525-module-bootstrap-runner-bridge-module-v1" defer></script>
 <script src="/static/js/modules/page_dom_registry_v1.js?v=20260526-page-dom-registry-process-title-v2" defer></script>
 <script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
-<script src="/static/js/modules/page_bootstrap_v1.js?v=20260525-page-bootstrap-module-v1" defer></script>
+<script src="/static/js/modules/page_bootstrap_v1.js?v=20260527-page-bootstrap-v3-dropdown-minha-conta-sync" defer></script>
 <script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
-<script src="/static/js/new_user.js?v=20260526-new-user-refactor-v63-global-table-head-color" defer></script>
+<script src="/static/js/new_user.js?v=20260527-new-user-refactor-v64-single-post-save-flow" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
-<script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_process_tabs.js?v=20260522-settings-process-tabs-click-trace-v4"></script>
@@ -3323,6 +3329,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260526-fields-page-size-options-v2"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260527-fields-layout-order-v7-autosave-hierarchy"></script>
   <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260526-admin-footer-standard-v4-page-size-options" defer></script>
 {% endblock %}

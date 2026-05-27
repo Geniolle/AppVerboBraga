@@ -737,6 +737,14 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     : "";
   const cleanMenuKey = normalizeMenuKey(menuKey);
   const dynamicProcessReadOnlyMode = readOnlyDynamicProcessMenuKeys.has(cleanMenuKey);
+  const useEmpresaFourColumnsLayoutV1 = cleanMenuKey === "empresa";
+  dynamicProcessCardEl.classList.toggle("appverbo-empresa-layout-4cols-v1", useEmpresaFourColumnsLayoutV1);
+  const dynamicProcessHeaderEditToggleEl = (
+    typeof document !== "undefined"
+      ? document.getElementById("dynamic-process-header-edit-toggle")
+      : null
+  );
+  const useInlineHeaderEditToggle = cleanMenuKey === "empresa";
   const menuData = dynamicProcessDataByMenu[cleanMenuKey];
   const processSetting = getSidebarMenuSetting(cleanMenuKey);
   const currentProcessValuesByField = collectCurrentDynamicProcessValues(cleanMenuKey);
@@ -787,6 +795,9 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     }
     if (dynamicProcessEditToggleEl) {
       dynamicProcessEditToggleEl.style.display = "none";
+    }
+    if (dynamicProcessHeaderEditToggleEl) {
+      dynamicProcessHeaderEditToggleEl.style.display = "none";
     }
     if (dynamicProcessCreateCardEl) {
       dynamicProcessCreateCardEl.style.display = "none";
@@ -931,6 +942,9 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     if (dynamicProcessEditToggleEl) {
       dynamicProcessEditToggleEl.style.display = "none";
     }
+    if (dynamicProcessHeaderEditToggleEl) {
+      dynamicProcessHeaderEditToggleEl.style.display = "none";
+    }
     if (dynamicProcessCreateCardEl) {
       dynamicProcessCreateCardEl.style.display = "none";
     }
@@ -951,30 +965,39 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     return;
   }
 
-  if (dynamicProcessEditToggleEl) {
-    dynamicProcessEditToggleEl.style.display = "none";
-    if (
-      !dynamicProcessReadOnlyMode &&
-      !absenceProcessMode &&
-      (sectionFields.length || hasQuantityRulesForSection)
-    ) {
-      dynamicProcessEditToggleEl.style.display = "";
-      if (historyProcessMode) {
-        const createActionLabel = toSentenceCaseText(
-          (selectedSection && selectedSection.label)
-            ? selectedSection.label
-            : (historyRecordLabels.singular || "registo")
-        );
-        dynamicProcessEditToggleEl.textContent = `Criar ${createActionLabel}`;
-      } else {
-        dynamicProcessEditToggleEl.textContent = "Editar";
-      }
-    }
+  const shouldShowEditToggle = (
+    !dynamicProcessReadOnlyMode &&
+    !absenceProcessMode &&
+    (sectionFields.length || hasQuantityRulesForSection)
+  );
+  let editToggleLabel = "Editar";
+  if (historyProcessMode) {
+    const createActionLabel = toSentenceCaseText(
+      (selectedSection && selectedSection.label)
+        ? selectedSection.label
+        : (historyRecordLabels.singular || "registo")
+    );
+    editToggleLabel = `Criar ${createActionLabel}`;
   }
+
+  if (dynamicProcessEditToggleEl) {
+    dynamicProcessEditToggleEl.style.display = shouldShowEditToggle ? "" : "none";
+    dynamicProcessEditToggleEl.textContent = editToggleLabel;
+  }
+
+  if (dynamicProcessHeaderEditToggleEl) {
+    dynamicProcessHeaderEditToggleEl.style.display = (
+      useInlineHeaderEditToggle && shouldShowEditToggle
+        ? ""
+        : "none"
+    );
+    dynamicProcessHeaderEditToggleEl.textContent = editToggleLabel;
+  }
+
   if (dynamicProcessCreateCardEl) {
     const showCreateCard = (
-      dynamicProcessEditToggleEl &&
-      dynamicProcessEditToggleEl.style.display !== "none"
+      shouldShowEditToggle &&
+      !useInlineHeaderEditToggle
     );
     dynamicProcessCreateCardEl.style.display = showCreateCard ? "" : "none";
     if (!showCreateCard) {

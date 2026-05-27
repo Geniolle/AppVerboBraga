@@ -27,6 +27,10 @@
     : {};
 
   const renderStateByRuleKey = new Map();
+  let startRenderTimerA_v4 = 0;
+  let startRenderTimerB_v4 = 0;
+  let startRenderTimerC_v4 = 0;
+  let editObserverBound_v4 = false;
 
   //###################################################################################
   // (2) NORMALIZAR
@@ -511,15 +515,39 @@
     const name = "process_quantity_field__" + rule.key + "__" + String(index) + "__" + fieldKey;
     let input = null;
 
-    if (fieldType === "list" && Array.isArray(fieldMeta.listOptions) && fieldMeta.listOptions.length) {
+    if (fieldType === "list") {
       input = document.createElement("select");
+      const currentValue = String(value || "").trim();
+      let hasCurrentValueOption = false;
 
-      fieldMeta.listOptions.forEach(function (optionValue) {
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "Selecione";
+      input.appendChild(emptyOption);
+
+      (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : []).forEach(function (optionValue) {
+        const cleanOptionValue = String(optionValue || "").trim();
+
+        if (!cleanOptionValue) {
+          return;
+        }
+
         const option = document.createElement("option");
-        option.value = String(optionValue || "").trim();
-        option.textContent = String(optionValue || "").trim();
+        option.value = cleanOptionValue;
+        option.textContent = cleanOptionValue;
+        if (currentValue && cleanOptionValue === currentValue) {
+          hasCurrentValueOption = true;
+        }
         input.appendChild(option);
       });
+
+      // Preserva valor legado/salvo mesmo se a lista configurada mudou ou ficou vazia.
+      if (currentValue && !hasCurrentValueOption) {
+        const legacyOption = document.createElement("option");
+        legacyOption.value = currentValue;
+        legacyOption.textContent = currentValue;
+        input.appendChild(legacyOption);
+      }
     }
     else if (fieldType === "flag") {
       input = document.createElement("select");
@@ -737,6 +765,7 @@
 
   function renderRulePairsQuantityEditPairs_v4(form, grid, rule, fieldMetaMap, forceRender) {
     const currentValues = collectExistingQuantityValuesQuantityEditPairs_v4(form, rule);
+    const savedValues = getQuantityValuesQuantityEditPairs_v4(rule.key);
 
     if (!shouldRenderRuleInCurrentSectionQuantityEditPairs_v4(rule)) {
       renderStateByRuleKey.delete(rule.key);
@@ -751,12 +780,39 @@
       return;
     }
 
-    const quantityCount = getQuantityCountQuantityEditPairs_v4(quantityInput, rule);
-    const savedValues = getQuantityValuesQuantityEditPairs_v4(rule.key);
+    const quantityRawValue = String(quantityInput.value || "").trim();
+    let quantityCount = getQuantityCountQuantityEditPairs_v4(quantityInput, rule);
+    const fallbackCount = Math.min(
+      Math.max(currentValues.length, savedValues.length),
+      rule.maxItems || 50
+    );
+
+    if (!quantityCount && !quantityRawValue && fallbackCount > 0) {
+      quantityCount = fallbackCount;
+      quantityInput.value = String(fallbackCount);
+    }
+
     const mergedValues = [];
 
     for (let index = 0; index < quantityCount; index += 1) {
-      mergedValues[index] = currentValues[index] || savedValues[index] || {};
+      const savedItem = savedValues[index] && typeof savedValues[index] === "object"
+        ? savedValues[index]
+        : {};
+      const currentItem = currentValues[index] && typeof currentValues[index] === "object"
+        ? currentValues[index]
+        : {};
+      const mergedItem = { ...savedItem };
+
+      rule.repeatedFieldKeys.forEach(function (fieldKey) {
+        const currentValue = String(currentItem[fieldKey] || "").trim();
+
+        // So sobrescreve o valor salvo quando o valor atual do campo nao esta vazio.
+        if (currentValue) {
+          mergedItem[fieldKey] = currentValue;
+        }
+      });
+
+      mergedValues[index] = mergedItem;
     }
 
     const signature = JSON.stringify({
@@ -887,6 +943,87 @@
     renderAllPairsQuantityEditPairs_v4(Boolean(forceRender));
   }
 
+  function scheduleStartQuantityEditPairs_v4(forceRender) {
+    if (startRenderTimerA_v4) {
+      window.clearTimeout(startRenderTimerA_v4);
+      startRenderTimerA_v4 = 0;
+    }
+    if (startRenderTimerB_v4) {
+      window.clearTimeout(startRenderTimerB_v4);
+      startRenderTimerB_v4 = 0;
+    }
+    if (startRenderTimerC_v4) {
+      window.clearTimeout(startRenderTimerC_v4);
+      startRenderTimerC_v4 = 0;
+    }
+
+    startRenderTimerA_v4 = window.setTimeout(function () {
+      startQuantityEditPairs_v4(Boolean(forceRender));
+    }, 0);
+
+    startRenderTimerB_v4 = window.setTimeout(function () {
+      startQuantityEditPairs_v4(Boolean(forceRender));
+    }, 120);
+
+    startRenderTimerC_v4 = window.setTimeout(function () {
+      startQuantityEditPairs_v4(Boolean(forceRender));
+    }, 320);
+  }
+
+  function bindEditEntryPointsQuantityEditPairs_v4() {
+    if (editObserverBound_v4) {
+      return;
+    }
+    editObserverBound_v4 = true;
+
+    document.addEventListener("click", function (event) {
+      const target = event && event.target ? event.target : null;
+      if (!target || typeof target.closest !== "function") {
+        return;
+      }
+
+      const editToggle = target.closest(
+        "[data-edit-target='perfil-pessoal-card'], " +
+        "#perfil-pessoal-card .profile-edit-toggle, " +
+        "#perfil-pessoal-card [data-profile-edit-toggle]"
+      );
+
+      if (!editToggle) {
+        return;
+      }
+
+      renderStateByRuleKey.clear();
+      scheduleStartQuantityEditPairs_v4(true);
+    }, true);
+
+    const profileCard = document.getElementById("perfil-pessoal-card");
+    if (!profileCard || typeof MutationObserver !== "function") {
+      return;
+    }
+
+    const observer = new MutationObserver(function (mutations) {
+      const classChanged = mutations.some(function (mutation) {
+        return mutation.type === "attributes" && mutation.attributeName === "class";
+      });
+
+      if (!classChanged) {
+        return;
+      }
+
+      if (!profileCard.classList.contains("editing")) {
+        return;
+      }
+
+      renderStateByRuleKey.clear();
+      scheduleStartQuantityEditPairs_v4(true);
+    });
+
+    observer.observe(profileCard, {
+      attributes: true,
+      attributeFilter: ["class"]
+    });
+  }
+
   function shouldReactToSectionChangeQuantityEditPairs_v4(event) {
     const target = event && event.target ? event.target : null;
 
@@ -922,13 +1059,7 @@
 
     renderStateByRuleKey.clear();
 
-    window.setTimeout(function () {
-      startQuantityEditPairs_v4(true);
-    }, 80);
-
-    window.setTimeout(function () {
-      startQuantityEditPairs_v4(true);
-    }, 250);
+    scheduleStartQuantityEditPairs_v4(true);
   }, true);
 
   document.addEventListener("change", function (event) {
@@ -938,21 +1069,22 @@
 
     renderStateByRuleKey.clear();
 
-    window.setTimeout(function () {
-      startQuantityEditPairs_v4(true);
-    }, 0);
+    scheduleStartQuantityEditPairs_v4(true);
   }, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
+      bindEditEntryPointsQuantityEditPairs_v4();
       startQuantityEditPairs_v4(false);
     });
   }
   else {
+    bindEditEntryPointsQuantityEditPairs_v4();
     startQuantityEditPairs_v4(false);
   }
 
   window.addEventListener("pageshow", function () {
+    bindEditEntryPointsQuantityEditPairs_v4();
     startQuantityEditPairs_v4(false);
   });
 })();

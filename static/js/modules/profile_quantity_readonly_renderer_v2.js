@@ -368,29 +368,107 @@
     });
   }
 
+  function restoreHiddenSourceFieldsQuantityReadonly_v2(grid) {
+    if (!grid) {
+      return;
+    }
+
+    Array.from(grid.querySelectorAll("[data-appverbo-quantity-source-hidden-v2='1']")).forEach(function (item) {
+      item.style.display = "";
+      item.removeAttribute("data-appverbo-quantity-source-hidden-v2");
+    });
+  }
+
+  function hideSourceRepeatedFieldsQuantityReadonly_v2(grid, rule) {
+    if (!grid || !rule || !Array.isArray(rule.repeatedFieldKeys) || !rule.repeatedFieldKeys.length) {
+      return;
+    }
+
+    const ruleSectionKey = normalizeKeyQuantityReadonly_v2(rule.headerKey || "");
+    const repeatedFieldKeySet = new Set(
+      rule.repeatedFieldKeys
+        .map(function (fieldKey) {
+          return normalizeKeyQuantityReadonly_v2(fieldKey);
+        })
+        .filter(Boolean)
+    );
+
+    Array.from(grid.querySelectorAll(".personal-item")).forEach(function (item) {
+      if (item.getAttribute("data-appverbo-quantity-readonly-v2") === "1") {
+        return;
+      }
+
+      const fieldKey = normalizeKeyQuantityReadonly_v2(
+        item.getAttribute("data-profile-field-key") || item.dataset.profileFieldKey || ""
+      );
+
+      if (!fieldKey || !repeatedFieldKeySet.has(fieldKey)) {
+        return;
+      }
+
+      if (ruleSectionKey) {
+        const itemSectionKey = normalizeKeyQuantityReadonly_v2(
+          item.getAttribute("data-profile-section-pane") || item.dataset.profileSectionPane || ""
+        );
+
+        if (itemSectionKey && itemSectionKey !== ruleSectionKey) {
+          return;
+        }
+      }
+
+      item.style.display = "none";
+      item.setAttribute("data-appverbo-quantity-source-hidden-v2", "1");
+    });
+  }
+
+  function resolveItemOrderQuantityReadonly_v2(item) {
+    if (!item) {
+      return 0;
+    }
+
+    const styleOrder = Number.parseInt(String(item.style.order || "").trim(), 10);
+
+    if (Number.isFinite(styleOrder)) {
+      return styleOrder;
+    }
+
+    const dataOrder = Number.parseInt(
+      String(item.getAttribute("data-appverbo-profile-order-v4") || "").trim(),
+      10
+    );
+
+    if (Number.isFinite(dataOrder)) {
+      return dataOrder;
+    }
+
+    return 0;
+  }
+
   //###################################################################################
   // (7) CRIAR ELEMENTOS NO PADRAO CAMPO A CAMPO
   //###################################################################################
 
-  function createHeaderQuantityReadonly_v2(rule, itemIndex) {
+  function createHeaderQuantityReadonly_v2(rule, itemIndex, orderValue) {
     const header = document.createElement("div");
 
     header.className = "appverbo-quantity-readonly-header-v2";
     header.setAttribute("data-appverbo-quantity-readonly-v2", "1");
     header.setAttribute("data-profile-section-pane", rule.headerKey || "");
     header.style.gridColumn = "1 / -1";
+    header.style.order = String(orderValue);
     header.textContent = rule.itemLabel + " " + String(itemIndex + 1);
 
     return header;
   }
 
-  function createFieldQuantityReadonly_v2(rule, fieldKey, value, fieldMeta) {
+  function createFieldQuantityReadonly_v2(rule, fieldKey, value, fieldMeta, orderValue) {
     const item = document.createElement("div");
 
     item.className = "personal-item appverbo-quantity-readonly-field-v2";
     item.setAttribute("data-appverbo-quantity-readonly-v2", "1");
     item.setAttribute("data-profile-section-pane", rule.headerKey || "");
     item.setAttribute("data-profile-field-key", fieldKey);
+    item.style.order = String(orderValue);
 
     const label = document.createElement("span");
     label.className = "personal-label";
@@ -449,6 +527,7 @@
 
     cleanupLegacyQuantityReadonly_v2(grid);
     cleanupCurrentQuantityReadonly_v2(grid);
+    restoreHiddenSourceFieldsQuantityReadonly_v2(grid);
 
     const rules = normalizeQuantityRulesQuantityReadonly_v2(setting.process_quantity_fields);
     const fieldMetaMap = getFieldMetaMapQuantityReadonly_v2(setting);
@@ -461,10 +540,13 @@
       }
 
       let insertionPoint = findQuantityFieldElementQuantityReadonly_v2(grid, rule, fieldMetaMap);
+      const insertionBaseOrder = resolveItemOrderQuantityReadonly_v2(insertionPoint);
+      let nextOrder = insertionBaseOrder + 1;
 
       values.forEach(function (itemValues, itemIndex) {
-        const header = createHeaderQuantityReadonly_v2(rule, itemIndex);
+        const header = createHeaderQuantityReadonly_v2(rule, itemIndex, nextOrder);
         insertionPoint = insertAfterQuantityReadonly_v2(insertionPoint, header, grid);
+        nextOrder += 1;
 
         rule.repeatedFieldKeys.forEach(function (fieldKey) {
           const fieldMeta = fieldMetaMap.get(fieldKey) || {
@@ -477,12 +559,16 @@
             rule,
             fieldKey,
             itemValues ? itemValues[fieldKey] : "",
-            fieldMeta
+            fieldMeta,
+            nextOrder
           );
 
           insertionPoint = insertAfterQuantityReadonly_v2(insertionPoint, fieldElement, grid);
+          nextOrder += 1;
         });
       });
+
+      hideSourceRepeatedFieldsQuantityReadonly_v2(grid, rule);
     });
 
     applySectionVisibilityQuantityReadonly_v2();

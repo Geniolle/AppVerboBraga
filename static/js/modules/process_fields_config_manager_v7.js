@@ -529,19 +529,25 @@
   }
 
   //###################################################################################
-  // (8B) ELIMINAR COM PERSISTENCIA DIRETA
+  // (8B) ACOES DIRETAS COM PERSISTENCIA
   //###################################################################################
 
-  function vincularEliminarDireto_v7(form, elements, manager) {
+  function persistirAlteracoesDiretas_v7(form, elements, manager) {
+    manager.syncHiddenInputs();
+    desativarInputsLegadosV8(form, elements);
+    submitNativo_v7(form);
+  }
+
+  function vincularAcoesDiretas_v7(form, elements, manager) {
     if (!elements || !elements.tableBody) {
       return;
     }
 
-    if (elements.tableBody.dataset.processFieldsConfigDirectDeleteBoundV7 === "1") {
+    if (elements.tableBody.dataset.processFieldsConfigDirectActionsBoundV7 === "1") {
       return;
     }
 
-    elements.tableBody.dataset.processFieldsConfigDirectDeleteBoundV7 = "1";
+    elements.tableBody.dataset.processFieldsConfigDirectActionsBoundV7 = "1";
 
     elements.tableBody.addEventListener("click", function (event) {
       const target = event && event.target instanceof Element
@@ -557,7 +563,7 @@
 
       const action = textoSeguro_v7(actionButton.dataset.configurableAction).trim().toLowerCase();
 
-      if (action !== "remove") {
+      if (action !== "remove" && action !== "up" && action !== "down") {
         return;
       }
 
@@ -566,9 +572,7 @@
       }
 
       window.setTimeout(function () {
-        manager.syncHiddenInputs();
-        desativarInputsLegadosV8(form, elements);
-        submitNativo_v7(form);
+        persistirAlteracoesDiretas_v7(form, elements, manager);
       }, 0);
     });
   }
@@ -629,7 +633,7 @@
       });
     }
 
-    vincularEliminarDireto_v7(form, elements, manager);
+    vincularAcoesDiretas_v7(form, elements, manager);
   }
 
   //###################################################################################

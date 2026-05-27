@@ -202,11 +202,11 @@
   function getEffectiveOrder_v4() {
     const readonlyOrder = getReadonlyOrder_v4();
 
-    if (readonlyOrder.length) {
-      return mergeOrder_v4(readonlyOrder, fallbackVisibleFields);
+    if (fallbackVisibleFields.length) {
+      return mergeOrder_v4(fallbackVisibleFields, readonlyOrder);
     }
 
-    return fallbackVisibleFields.slice();
+    return readonlyOrder.slice();
   }
 
   //###################################################################################
@@ -333,10 +333,67 @@
   }
 
   //###################################################################################
+  // (8.1) APLICAR ORDEM AO MODO LEITURA
+  //###################################################################################
+
+  function applyOrderToReadonlyGrid_v4() {
+    const readonlyGrid = getReadonlyGrid_v4();
+    const effectiveOrder = getEffectiveOrder_v4();
+
+    if (!readonlyGrid || !effectiveOrder.length) {
+      return;
+    }
+
+    const readonlyItems = Array.from(readonlyGrid.querySelectorAll(".personal-item"));
+    const orderedKeys = new Set();
+
+    readonlyItems.forEach(function (item) {
+      item.style.order = "";
+    });
+
+    effectiveOrder.forEach(function (fieldKey, index) {
+      const cleanFieldKey = normalizeKey_v4(fieldKey);
+
+      if (!cleanFieldKey) {
+        return;
+      }
+
+      const targetItem = readonlyItems.find(function (item) {
+        return resolveReadonlyItemKey_v4(item) === cleanFieldKey;
+      });
+
+      if (!targetItem) {
+        return;
+      }
+
+      targetItem.style.order = String((index + 1) * 10);
+      targetItem.setAttribute("data-appverbo-profile-order-v4", String(index + 1));
+      orderedKeys.add(cleanFieldKey);
+    });
+
+    let nextOrder = (effectiveOrder.length + 1) * 10;
+
+    readonlyItems.forEach(function (item) {
+      const fieldKey = resolveReadonlyItemKey_v4(item);
+
+      if (fieldKey && orderedKeys.has(fieldKey)) {
+        return;
+      }
+
+      item.style.order = String(nextOrder);
+      item.setAttribute("data-appverbo-profile-order-v4", String(nextOrder));
+      nextOrder += 10;
+    });
+  }
+
+  //###################################################################################
   // (9) EXECUTAR APENAS EM EVENTOS CONTROLADOS
   //###################################################################################
 
   function scheduleApplyOrder_v4() {
+    window.setTimeout(applyOrderToReadonlyGrid_v4, 0);
+    window.setTimeout(applyOrderToReadonlyGrid_v4, 120);
+    window.setTimeout(applyOrderToReadonlyGrid_v4, 400);
     window.setTimeout(applyOrderToEditForm_v4, 0);
     window.setTimeout(applyOrderToEditForm_v4, 120);
     window.setTimeout(applyOrderToEditForm_v4, 400);

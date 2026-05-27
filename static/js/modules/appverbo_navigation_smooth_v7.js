@@ -87,6 +87,17 @@
     );
   }
 
+  function getActiveSidebarMenuKeyV7() {
+    if (typeof document === "undefined") {
+      return "";
+    }
+    const activeMenuButton = document.querySelector("button.menu-item.active[data-menu], .menu-item.active[data-menu]");
+    if (!activeMenuButton) {
+      return "";
+    }
+    return cleanValueV7(activeMenuButton.getAttribute("data-menu"));
+  }
+
   function getAdminTabFromUrlV7(url) {
     if (!urlIndicaAdminV7(url)) {
       return "";
@@ -960,8 +971,9 @@
     if (clickedTopSubprocess) {
       const currentUrl = getCurrentUrlV7();
       const isAdminRoute = urlIndicaAdminV7(currentUrl);
+      const isAdminSidebarMenuActive = getActiveSidebarMenuKeyV7() === "administrativo";
 
-      if (!isAdminRoute) {
+      if (!isAdminRoute || !isAdminSidebarMenuActive) {
         return;
       }
 

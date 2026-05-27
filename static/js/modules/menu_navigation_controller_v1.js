@@ -219,6 +219,7 @@
         return;
       }
       const { resetDynamicToFirst = false } = options;
+      const forceFirstItem = Boolean(resetDynamicToFirst);
       const targetButton = Array.from(context.menuButtons).find((btn) => context.normalizeMenuKey(btn.dataset.menu) === menuKey);
       const menuItems = Array.isArray(config.items) ? config.items : [];
       if (resetDynamicToFirst) {
@@ -241,7 +242,7 @@
       const defaultTarget = getDefaultTargetForMenu(
         menuKey,
         config,
-        { forceFirstItem: resetDynamicToFirst }
+        { forceFirstItem }
       );
       if (defaultTarget) {
         const savedDynamicSectionKey = String(context.selectedDynamicSectionByMenu[menuKey] || "");
@@ -276,9 +277,16 @@
           menuKey === context.MEU_PERFIL_MENU_KEY &&
           typeof window.activateProfilePersonalSection === "function"
         ) {
-          let selectedSectionItem = menuItems.find(
-            (item) => String(item.profileSection || "") === context.getMeuPerfilSelectedProfileSection()
-          );
+          let selectedSectionItem = null;
+          if (forceFirstItem) {
+            selectedSectionItem = menuItems.find(
+              (item) => String(item.target || "") === String(defaultTarget || "")
+            ) || menuItems[0];
+          } else {
+            selectedSectionItem = menuItems.find(
+              (item) => String(item.profileSection || "") === context.getMeuPerfilSelectedProfileSection()
+            );
+          }
           if (!selectedSectionItem) {
             selectedSectionItem = menuItems.find((item) => item.target === defaultTarget) || menuItems[0];
           }
