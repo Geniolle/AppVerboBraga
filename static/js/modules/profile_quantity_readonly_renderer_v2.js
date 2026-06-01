@@ -1,4 +1,4 @@
-﻿// APPVERBO_PROFILE_QUANTITY_READONLY_RENDERER_V2_START
+// APPVERBO_PROFILE_QUANTITY_READONLY_RENDERER_V2_START
 (function () {
   "use strict";
 
@@ -626,6 +626,14 @@
     }
 
     if (target.matches("input[name='profile_section'], [data-meu-perfil-section-input], [data-profile-section-input]")) {
+      return true;
+    }
+
+    if (
+      target.closest("[data-edit-cancel]") ||
+      target.closest(".profile-cancel-btn") ||
+      target.closest(".action-btn-cancel")
+    ) {
       return true;
     }
 

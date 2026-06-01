@@ -1,4 +1,4 @@
-﻿// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3
+// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3
 // O fluxo de navegacao pos-save foi extraido para:
 // static/js/modules/post_save_context_navigation_guard_v3.js
 const APPVERBO_POST_SAVE_CONTEXT_KEY_V3 = "appverbo:post-save-context-v3";
@@ -352,6 +352,7 @@ const settingsAction = bootstrap.settingsAction || "";
 const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
 const settingsEditKey = normalizeMenuKey(bootstrap.settingsEditKey || "");
 const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
+window.sidebarMenuSettings = sidebarMenuSettings;
 const sidebarMenuSettingsByKey = new Map();
 const visibleSidebarMenuKeys = new Set(
   (Array.isArray(bootstrap.visibleSidebarMenuKeys) ? bootstrap.visibleSidebarMenuKeys : [])
@@ -2126,7 +2127,8 @@ runModuleBootstrapStepV1("meuPerfilSubsequentVisibilityV1", {
   normalizeProcessFieldType,
   normalizeProcessSubsequentRules,
   getHiddenProcessTargets,
-  isMeuPerfilQuantityV4GeneratedTarget
+  isMeuPerfilQuantityV4GeneratedTarget,
+  menuButtons
 });
 // APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
 /* APPVERBO_AUTO_DISMISS_FLASH_MESSAGES_V1_START */

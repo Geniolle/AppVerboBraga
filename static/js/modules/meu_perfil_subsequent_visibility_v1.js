@@ -58,6 +58,26 @@
   // (1) HELPERS BASE
   //###################################################################################
 
+  function getActiveMenuKeyDynamic() {
+    const menuButtons = deps.menuButtons || document.querySelectorAll(".menu-item");
+    if (menuButtons) {
+      const activeBtn = Array.from(menuButtons).find((btn) => btn.classList.contains("active"));
+      if (activeBtn) {
+        return normalizeSubsequentKeyV1(activeBtn.dataset.menu);
+      }
+    }
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const menuQuery = urlParams.get("menu");
+      if (menuQuery) {
+        return normalizeSubsequentKeyV1(menuQuery);
+      }
+    } catch (e) {}
+
+    return normalizeSubsequentKeyV1(activeMenuKey);
+  }
+
   function safeSubsequentTextV1(value) {
     return String(value === null || value === undefined ? "" : value);
   }
@@ -285,7 +305,10 @@
     ).forEach((control) => controls.push(control));
 
     for (const control of controls) {
-      if (!control || control.disabled) {
+      if (!control) {
+        continue;
+      }
+      if (control.disabled) {
         continue;
       }
 
@@ -546,9 +569,7 @@
       return false;
     }
 
-    const currentMenuKey = typeof normalizeMenuKey === "function"
-      ? normalizeMenuKey(activeMenuKey)
-      : "";
+    const currentMenuKey = getActiveMenuKeyDynamic();
 
     if (currentMenuKey === MEU_PERFIL_MENU_KEY) {
       return true;

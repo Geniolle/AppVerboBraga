@@ -124,6 +124,42 @@
             hiddenTargets.add(targetField);
           }
         });
+
+        //###################################################################################
+        //(SUBSEQUENT_RULES) SECAO/CABECALHO SO OCULTA SE TODOS OS SEUS FILHOS FOREM OCULTOS
+        //###################################################################################
+        const fieldToHeaderMap = new Map();
+        const settingsList = Array.isArray(window.sidebarMenuSettings)
+          ? window.sidebarMenuSettings
+          : (window.__APPVERBO_BOOTSTRAP__ && Array.isArray(window.__APPVERBO_BOOTSTRAP__.sidebarMenuSettings)
+            ? window.__APPVERBO_BOOTSTRAP__.sidebarMenuSettings
+            : (typeof sidebarMenuSettings !== "undefined" && Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []));
+
+        settingsList.forEach((menuSetting) => {
+          if (menuSetting && Array.isArray(menuSetting.process_visible_field_rows)) {
+            menuSetting.process_visible_field_rows.forEach((row) => {
+              const fKey = String(row.field_key || "").trim().toLowerCase();
+              const hKey = String(row.header_key || "").trim().toLowerCase();
+              if (fKey && hKey) {
+                fieldToHeaderMap.set(fKey, hKey);
+              }
+            });
+          }
+        });
+
+        const visibleFieldsHeaders = new Set();
+        fieldToHeaderMap.forEach((headerKey, fieldKey) => {
+          if (!hiddenTargets.has(fieldKey)) {
+            visibleFieldsHeaders.add(headerKey);
+          }
+        });
+
+        visibleFieldsHeaders.forEach((headerKey) => {
+          if (hiddenTargets.has(headerKey)) {
+            hiddenTargets.delete(headerKey);
+          }
+        });
+
         return hiddenTargets;
       }
 

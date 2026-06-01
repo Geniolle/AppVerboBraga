@@ -49,7 +49,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260526-admin-status-footer-single-line-v10-last-row-no-border">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260527-sidebar-style-settings-v4-meu-perfil-4cols">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260529-tabs-alignment-fix-v1">
   <style>
     :root {
       --topbar: {{ admin_topbar_color_hex|default('#334A62', true) }};
@@ -76,7 +76,7 @@
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260527-profile-field-order-v5-menu-order-priority" defer></script>
   <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260526-admin-menu-scope-v3-bypass-v7-nav" defer></script>
-  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260527-quantity-readonly-order-anchor-fix-v4" defer></script>
+  <script src="/static/js/modules/profile_quantity_readonly_renderer_v2.js?v=20260529-quantity-readonly-cancel-fix-v1" defer></script>
   <script src="/static/js/modules/profile_quantity_edit_pairs_v1.js?v=20260527-quantity-edit-pairs-v8-bind-edit-entrypoints" defer></script>
 
 <script>
@@ -2292,11 +2292,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       <label class="configurable-items-page-size-v1">
                         Entradas por página
                         <select data-process-fields-config-page-size>
-                          <option value="5" selected>5</option>
+                          <option value="5">5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
                           <option value="30">30</option>
-                          <option value="50">50</option>
+                          <option value="50" selected>50</option>
                           <option value="100">100</option>
                         </select>
                       </label>
@@ -3288,7 +3288,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
 <script src="/static/js/modules/process_field_utils_v1.js?v=20260525-process-field-utils-module-v1" defer></script>
-<script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260527-process-subsequent-rules-utils-or-groups-v2" defer></script>
+<script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260529-process-subsequent-rules-utils-bootstrap-fix-v1" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
 <script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260525-process-history-labels-utils-module-v1" defer></script>
 <script src="/static/js/modules/avatar_utils_v1.js?v=20260525-avatar-utils-module-v1" defer></script>
@@ -3319,7 +3319,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
 <script src="/static/js/modules/page_bootstrap_v1.js?v=20260527-page-bootstrap-v3-dropdown-minha-conta-sync" defer></script>
 <script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
-<script src="/static/js/new_user.js?v=20260527-new-user-refactor-v64-single-post-save-flow" defer></script>
+<script src="/static/js/new_user.js?v=20260529-new-user-global-settings-fix-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>
@@ -3329,6 +3329,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260527-fields-layout-order-v7-autosave-hierarchy"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260529-fields-layout-order-v7-autosave-hierarchy-v2"></script>
   <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260526-admin-footer-standard-v4-page-size-options" defer></script>
 {% endblock %}

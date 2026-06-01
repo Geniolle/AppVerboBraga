@@ -6921,3 +6921,15 @@ body .content .container > #settings-menu-edit-card {
   }
 }
 /* APPVERBO_ADMIN_SUBPROCESS_TABS_OVERFLOW_MORE_V1_END */
+
+/* ###################################################################################
+   ALINHAR TEXTOS AO MEIO NAS ABAS (REGRA GERAL)
+   ################################################################################### */
+.process-edit-tab-link,
+.profile-process-tab-btn,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
