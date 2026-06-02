@@ -2755,7 +2755,7 @@ html body :is(
   font-weight: 800 !important;
   letter-spacing: -0.015em !important;
   line-height: 1.22 !important;
-  margin-bottom: 18px !important;
+  margin-bottom: var(--appverbo-admin-card-heading-margin-bottom-v1, 18px) !important;
 }
 
 html body :is(
@@ -3260,7 +3260,7 @@ html body #admin-users-created-card > h2 {
   font-weight: 800 !important;
   letter-spacing: -0.015em !important;
   line-height: 1.22 !important;
-  margin-bottom: 18px !important;
+  margin-bottom: var(--appverbo-admin-card-heading-margin-bottom-v1, 18px) !important;
 }
 
 /* APPVERBO_ADMIN_ACTIVE_CARD_TITLE_PARITY_V1_END */

@@ -867,19 +867,15 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
   const absenceProcessMode = isAbsenceProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   const historyProcessMode = isHistoryProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   const historyRecordLabels = getHistoryRecordLabels(cleanMenuKey, menuLabel, sectionLabel);
-  const departmentHistoryMode = (
-    historyProcessMode &&
-    !absenceProcessMode &&
-    historyRecordLabels.singular === "departamento"
-  );
-  const showStateField = departmentHistoryMode;
+  const stateHistoryMode = historyProcessMode && !absenceProcessMode;
+  const showStateField = stateHistoryMode;
   dynamicProcessCardEl.classList.toggle("dynamic-process-open", absenceProcessMode);
-  dynamicProcessCardEl.classList.toggle("dynamic-process-history-mode", departmentHistoryMode);
-  if (!departmentHistoryMode) {
+  dynamicProcessCardEl.classList.toggle("dynamic-process-history-mode", stateHistoryMode);
+  if (!stateHistoryMode) {
     dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
   }
   if (dynamicProcessReadOnlyEl) {
-    if (departmentHistoryMode) {
+    if (stateHistoryMode) {
       const showReadOnlyPreview = dynamicProcessCardEl.classList.contains("dynamic-process-history-show-readonly");
       dynamicProcessReadOnlyEl.style.display = showReadOnlyPreview ? "" : "none";
     } else {

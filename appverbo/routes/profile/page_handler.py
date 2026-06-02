@@ -24,6 +24,8 @@ from appverbo.db.bootstrap import ensure_admin_process_title_default_definitions
 from appverbo.models import AdminDefinition
 from appverbo.menu_settings import (
     MENU_MEU_PERFIL_KEY,
+    infer_sidebar_icon_key,
+    normalize_sidebar_icon_key,
     resolve_menu_key_alias,
 )
 from appverbo.routes.profile.router import router
@@ -535,6 +537,16 @@ ADMIN_SIDEBAR_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | st
         "subprocess_name": "geral",
     },
 }
+ADMIN_SIDEBAR_MENU_ICON_DEFINITION_KEYS_V1: dict[str, tuple[str, ...] | str] = {
+    "parameter_type": "icone",
+    "parameter_names": (
+        "icone menu lateral",
+        "icone do menu lateral",
+        "icone processo",
+        "icone do processo",
+        "sidebar icon",
+    ),
+}
 
 def _resolve_definition_initial_value_by_alias_v1(
     *,
@@ -567,6 +579,66 @@ def _resolve_definition_initial_value_by_alias_v1(
         return str(row.initial_value or "")
 
     return None
+
+
+def _resolve_sidebar_menu_icon_key_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    menu_key: object,
+    menu_label: object,
+    menu_section_label: object,
+) -> str:
+    default_icon_key = infer_sidebar_icon_key(
+        menu_key,
+        menu_label,
+        menu_section_label,
+    )
+    parameter_names = tuple(
+        str(name)
+        for name in ADMIN_SIDEBAR_MENU_ICON_DEFINITION_KEYS_V1.get("parameter_names", ())
+        if str(name or "").strip()
+    )
+    raw_value = _resolve_definition_initial_value_by_alias_v1(
+        rows=rows,
+        parameter_type=str(ADMIN_SIDEBAR_MENU_ICON_DEFINITION_KEYS_V1["parameter_type"]),
+        parameter_names=parameter_names,
+        process_name=str(menu_section_label or ""),
+        subprocess_name=str(menu_label or ""),
+    )
+
+    if not str(raw_value or "").strip():
+        return default_icon_key
+
+    normalized_icon_key = normalize_sidebar_icon_key(raw_value)
+    if normalized_icon_key == "circle" and default_icon_key != "circle":
+        return default_icon_key
+
+    return normalized_icon_key
+
+
+def _apply_sidebar_icon_keys_to_menu_settings_v1(
+    *,
+    rows: list[AdminDefinition],
+    sidebar_menu_settings: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    normalized_settings: list[dict[str, Any]] = []
+
+    for raw_setting in sidebar_menu_settings:
+        setting = dict(raw_setting or {})
+        setting["sidebar_icon_key"] = _resolve_sidebar_menu_icon_key_from_definitions_v1(
+            rows=rows,
+            menu_key=setting.get("key"),
+            menu_label=setting.get("label"),
+            menu_section_label=(
+                setting.get("menu_section_label")
+                or setting.get("sidebar_section_label")
+                or setting.get("section")
+                or ""
+            ),
+        )
+        normalized_settings.append(setting)
+
+    return normalized_settings
 
 
 def _resolve_admin_tabs_width_ch_from_definitions_v1(
@@ -1829,7 +1901,7 @@ def new_user_page(
 
 
     # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_START
-    if resolved_admin_tab == "menu":
+    if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
         initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
@@ -2132,6 +2204,10 @@ def new_user_page(
         context["menu_section_options"] = list(
             page_data.get("sidebar_section_options", [])
         )
+    context["sidebar_menu_settings"] = _apply_sidebar_icon_keys_to_menu_settings_v1(
+        rows=admin_definition_rows_v1,
+        sidebar_menu_settings=list(context.get("sidebar_menu_settings", [])),
+    )
     context["menu_permissions"] = dict(
         menu_admin_page_payload.get("menu_permissions", {})
     )

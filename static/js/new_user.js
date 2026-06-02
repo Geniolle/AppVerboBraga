@@ -383,8 +383,8 @@ const menuProcessQuantityValuesMap = (
 const startupHash = window.location.hash || "";
 const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
-const processTextualTypes = new Set(["text", "number", "email", "phone"]);
-const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
+const processTextualTypes = new Set(["text", "number", "email", "phone", "link"]);
+const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list", "link"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 const readOnlyDynamicProcessMenuKeys = new Set();
 
@@ -811,7 +811,11 @@ function isHistoryProcessMenu(menuKey, menuLabel, sectionLabel) {
   if (!joined) {
     return false;
   }
-  return isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) || joined.includes("departamento");
+  return (
+    isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) ||
+    joined.includes("departamento") ||
+    joined.includes("musica")
+  );
 }
 
 function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
@@ -833,6 +837,9 @@ function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
   }
   if (joined.includes("departamento")) {
     return { singular: "departamento", plural: "departamentos" };
+  }
+  if (joined.includes("musica")) {
+    return { singular: "musica", plural: "musicas" };
   }
   return { singular: "registo", plural: "registos" };
 }
@@ -1231,6 +1238,9 @@ function getDynamicProcessInputType(fieldType) {
   }
   if (fieldType === "phone") {
     return "tel";
+  }
+  if (fieldType === "link") {
+    return "url";
   }
   if (fieldType === "date") {
     return "date";

@@ -30,6 +30,7 @@ DEFINICOES_FIELDS = (
             ("tamanho", "Tamanho"),
             ("fonte", "Fonte"),
             ("cor", "Cor"),
+            ("icone", "Ícone"),
         ),
     ),
     AdminFieldConfig(
@@ -39,6 +40,7 @@ DEFINICOES_FIELDS = (
         field_type="text",
         required=True,
         max_length=255,
+        placeholder="Ex.: music, home, building, users, wallet",
     ),
     AdminFieldConfig(
         key="process_name",

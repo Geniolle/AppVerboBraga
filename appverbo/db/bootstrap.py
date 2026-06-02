@@ -410,6 +410,14 @@ ADMIN_PROCESS_TITLE_DEFINITION_DEFAULTS_V1: tuple[dict[str, str | tuple[str, ...
         ),
     },
 )
+ADMIN_SIDEBAR_ICON_PARAMETER_NAME_V1 = "ICONE MENU LATERAL"
+ADMIN_SIDEBAR_ICON_PARAMETER_ALIASES_V1: tuple[str, ...] = (
+    "icone menu lateral",
+    "icone do menu lateral",
+    "icone processo",
+    "icone do processo",
+    "sidebar icon",
+)
 
 
 def _normalize_definition_lookup_text_v1(value: object) -> str:
@@ -420,6 +428,71 @@ def _normalize_definition_lookup_text_v1(value: object) -> str:
         for character in normalized
         if unicodedata.category(character) != "Mn"
     )
+
+
+def _seed_sidebar_icon_definitions_v1(
+    *,
+    session,
+    rows: list[AdminDefinition],
+) -> bool:
+    from appverbo.menu_settings import get_sidebar_menu_settings, infer_sidebar_icon_key
+
+    sidebar_rows = get_sidebar_menu_settings(session)
+    normalized_parameter_names = {
+        _normalize_definition_lookup_text_v1(parameter_name)
+        for parameter_name in (
+            ADMIN_SIDEBAR_ICON_PARAMETER_NAME_V1,
+            *ADMIN_SIDEBAR_ICON_PARAMETER_ALIASES_V1,
+        )
+        if str(parameter_name or "").strip()
+    }
+    changed = False
+
+    for sidebar_row in sidebar_rows:
+        menu_label = str(
+            sidebar_row.get("label")
+            or sidebar_row.get("menu_label")
+            or sidebar_row.get("key")
+            or ""
+        ).strip()
+        process_name = str(
+            sidebar_row.get("menu_section_label")
+            or sidebar_row.get("sidebar_section_label")
+            or ""
+        ).strip()
+        subprocess_name = menu_label
+
+        if not process_name or not subprocess_name:
+            continue
+
+        has_match = any(
+            _normalize_definition_lookup_text_v1(row.parameter_type) == "icone"
+            and _normalize_definition_lookup_text_v1(row.process_name) == _normalize_definition_lookup_text_v1(process_name)
+            and _normalize_definition_lookup_text_v1(row.subprocess_name) == _normalize_definition_lookup_text_v1(subprocess_name)
+            and _normalize_definition_lookup_text_v1(row.parameter_name) in normalized_parameter_names
+            for row in rows
+        )
+        if has_match:
+            continue
+
+        icon_key = infer_sidebar_icon_key(
+            sidebar_row.get("key"),
+            menu_label,
+            process_name,
+        )
+        record = AdminDefinition(
+            parameter_name=ADMIN_SIDEBAR_ICON_PARAMETER_NAME_V1,
+            parameter_type="icone",
+            initial_value=icon_key,
+            process_name=process_name,
+            subprocess_name=subprocess_name,
+            status="active",
+        )
+        session.add(record)
+        rows.append(record)
+        changed = True
+
+    return changed
 
 
 def ensure_admin_process_title_default_definitions_v1() -> None:
@@ -471,6 +544,9 @@ def ensure_admin_process_title_default_definitions_v1() -> None:
                 status=str(default_row.get("status") or "active").strip() or "active",
             )
             session.add(record)
+            changed = True
+
+        if _seed_sidebar_icon_definitions_v1(session=session, rows=rows):
             changed = True
 
         if changed:

@@ -34,6 +34,9 @@
         if (fieldType === "phone") {
           return "tel";
         }
+        if (fieldType === "link") {
+          return "url";
+        }
         if (fieldType === "date") {
           return "date";
         }

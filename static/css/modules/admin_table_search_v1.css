@@ -44,6 +44,32 @@
   box-shadow: 0 0 0 2px rgba(43, 111, 216, 0.12);
 }
 
+/* APPVERBO_ADMIN_SUBPROCESS_TOOLBAR_PARITY_V1_START */
+/* Padrao reutilizavel para qualquer subprocesso que recebe toolbar de pesquisa/total. */
+.admin-list-toolbar-card-v1 {
+  --appverbo-admin-card-heading-margin-bottom-v1: 12px;
+}
+
+.admin-list-toolbar-card-v1 .admin-list-toolbar-title-v1 {
+  margin: 0 0 var(--appverbo-admin-card-heading-margin-bottom-v1, 12px) !important;
+}
+
+.admin-list-toolbar-card-v1 .admin-list-toolbar-v1 {
+  margin: 0 0 12px !important;
+  min-height: 36px;
+}
+
+.admin-list-toolbar-card-v1 .admin-list-search-wrap-v1 {
+  width: 260px !important;
+  min-width: 260px !important;
+  max-width: 260px !important;
+}
+
+.admin-list-toolbar-title-v1 {
+  margin-bottom: var(--appverbo-admin-card-heading-margin-bottom-v1, 12px) !important;
+}
+/* APPVERBO_ADMIN_SUBPROCESS_TOOLBAR_PARITY_V1_END */
+
 @media (max-width: 700px) {
   .admin-list-toolbar-v1 {
     flex-direction: column;
@@ -53,6 +79,7 @@
   .admin-list-search-wrap-v1 {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
   }
 }
 

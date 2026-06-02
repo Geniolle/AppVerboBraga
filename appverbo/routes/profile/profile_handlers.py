@@ -46,8 +46,8 @@ from appverbo.models import (
 
 from appverbo.routes.profile.router import router
 
-PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list"}
-PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone"}
+PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list", "link"}
+PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone", "link"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
 MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
     **dict(MENU_MEU_PERFIL_FIELD_LABELS),
@@ -426,7 +426,7 @@ def _is_history_process(
         return False
     if _is_absence_process(menu_key, process_setting):
         return True
-    return "departamento" in joined
+    return ("departamento" in joined) or ("musica" in joined)
 
 def _is_start_date_field(field_key: str, field_label: str) -> bool:
     joined = f"{_normalize_lookup_text(field_key)} {_normalize_lookup_text(field_label)}".strip()

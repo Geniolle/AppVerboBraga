@@ -55,9 +55,64 @@ MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "tutorial": "igreja",
     "tesouraria": "tesouraria",
 }
+SIDEBAR_ICON_DEFAULT_KEY = "circle"
+SIDEBAR_ICON_ALIAS_MAP: dict[str, str] = {
+    "settings": "settings",
+    "setting": "settings",
+    "gear": "settings",
+    "admin": "settings",
+    "home": "home",
+    "house": "home",
+    "empresa": "building",
+    "building": "building",
+    "office": "building",
+    "departamentos": "departments",
+    "departamento": "departments",
+    "department": "departments",
+    "departments": "departments",
+    "music": "music",
+    "musica": "music",
+    "musicas": "music",
+    "nota": "music",
+    "user": "user",
+    "perfil": "user",
+    "profile": "user",
+    "users": "users",
+    "usuarios": "users",
+    "utilizador": "users",
+    "utilizadores": "users",
+    "funcionario": "users",
+    "funcionarios": "users",
+    "team": "users",
+    "wallet": "wallet",
+    "finance": "wallet",
+    "financeiro": "wallet",
+    "tesouraria": "wallet",
+    "money": "wallet",
+    "chart": "chart",
+    "report": "chart",
+    "reports": "chart",
+    "relatorio": "chart",
+    "relatorios": "chart",
+    "graph": "chart",
+    "link": "link",
+    "links": "link",
+    "mail": "mail",
+    "email": "mail",
+    "contact": "mail",
+    "contacto": "mail",
+    "contato": "mail",
+    "book": "book",
+    "tutorial": "book",
+    "help": "book",
+    "manual": "book",
+    "circle": "circle",
+    "default": "circle",
+}
 MENU_CONFIG_SIDEBAR_SECTION_KEY = "sidebar_section"
 MENU_CONFIG_SIDEBAR_SECTIONS_KEY = "sidebar_sections"
 MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY = "sidebar_global_refresh_version"
+MENU_CONFIG_SIDEBAR_ICON_KEY = "sidebar_icon"
 MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY = "meu_perfil_headers_auto_repaired_v1"
 MENU_CONFIG_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_AUTO_SEEDED_V1_KEY = (
     "meu_perfil_department_membership_fields_auto_seeded_v1"
@@ -85,12 +140,13 @@ SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
     str(item["key"]).strip().lower(): str(item["label"])
     for item in SIDEBAR_SECTION_DEFAULTS
 }
-ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "email", "phone", "number"}
+ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "email", "phone", "number", "link"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "text", "label": "Texto"},
     {"key": "number", "label": "Número"},
     {"key": "email", "label": "Email"},
     {"key": "phone", "label": "Telefone"},
+    {"key": "link", "label": "Link"},
     {"key": "date", "label": "Data"},
     {"key": "flag", "label": "Flag"},
     {"key": "header", "label": "Cabeçalho (aba)"},
@@ -519,6 +575,69 @@ def normalize_menu_section_key(raw_section: Any, menu_key: Any = "") -> str:
 def get_menu_section_label(section_key: Any) -> str:
     clean_section = normalize_menu_section_key(section_key)
     return MENU_SECTION_LABELS.get(clean_section, MENU_SECTION_LABELS[MENU_SECTION_DEFAULT_KEY])
+
+
+def normalize_sidebar_icon_key(raw_icon_key: Any) -> str:
+    clean_value = str(raw_icon_key or "").strip().lower()
+    clean_value = clean_value.replace("-", "_").replace(" ", "_")
+    clean_value = re.sub(r"[^a-z0-9_]+", "", clean_value)
+    clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+
+    if not clean_value:
+        return SIDEBAR_ICON_DEFAULT_KEY
+
+    alias_key = clean_value.replace("_", "")
+    if clean_value in SIDEBAR_ICON_ALIAS_MAP:
+        return SIDEBAR_ICON_ALIAS_MAP[clean_value]
+    if alias_key in SIDEBAR_ICON_ALIAS_MAP:
+        return SIDEBAR_ICON_ALIAS_MAP[alias_key]
+
+    return SIDEBAR_ICON_DEFAULT_KEY
+
+
+def infer_sidebar_icon_key(
+    menu_key: Any = "",
+    menu_label: Any = "",
+    menu_section: Any = "",
+) -> str:
+    candidate_values = (
+        str(menu_key or "").strip().lower(),
+        str(menu_label or "").strip().lower(),
+        str(menu_section or "").strip().lower(),
+    )
+    joined = " ".join(value for value in candidate_values if value)
+
+    if "music" in joined or "musica" in joined:
+        return "music"
+    if "depart" in joined:
+        return "departments"
+    if "admin" in joined or "defin" in joined or "config" in joined:
+        return "settings"
+    if "home" in joined or "inicio" in joined:
+        return "home"
+    if "empresa" in joined or "entidade" in joined or "building" in joined:
+        return "building"
+    if "perfil" in joined or "profile" in joined:
+        return "user"
+    if (
+        "funcion" in joined
+        or "utilizador" in joined
+        or "usuario" in joined
+        or "users" in joined
+    ):
+        return "users"
+    if "tesour" in joined or "finance" in joined or "money" in joined:
+        return "wallet"
+    if "relat" in joined or "report" in joined or "graf" in joined:
+        return "chart"
+    if "link" in joined:
+        return "link"
+    if "contat" in joined or "contact" in joined or "mail" in joined:
+        return "mail"
+    if "tutorial" in joined or "ajuda" in joined or "manual" in joined:
+        return "book"
+
+    return SIDEBAR_ICON_DEFAULT_KEY
 
 
 def _menu_exists(session: Session, menu_key: str) -> bool:
@@ -4682,7 +4801,6 @@ def normalize_menu_process_additional_fields_v1(raw_fields: Any) -> list[dict[st
 
     normalized: list[dict[str, Any]] = []
     seen_keys: set[str] = set()
-    seen_labels: set[str] = set()
 
     for row_index, raw_item in enumerate(raw_fields):
         item_label = ""
@@ -4719,12 +4837,6 @@ def normalize_menu_process_additional_fields_v1(raw_fields: Any) -> list[dict[st
 
         if not item_label:
             continue
-
-        normalized_label_key = item_label.lower()
-        if normalized_label_key in seen_labels:
-            continue
-
-        seen_labels.add(normalized_label_key)
 
         candidate_key = item_key or _build_custom_field_key_from_label(item_label)
         unique_key = candidate_key
@@ -5668,7 +5780,6 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         return []
 
     normalized: list[dict[str, Any]] = []
-    seen_labels: set[str] = set()
     seen_keys: set[str] = set()
 
     for raw_item in raw_fields:
@@ -5678,6 +5789,7 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         item_size: int | None = None
         item_is_required = False
         item_list_key = ""
+        item_shared_value_key = ""
 
         if isinstance(raw_item, dict):
             item_label = _normalize_additional_field_label(raw_item.get("label"))
@@ -5698,6 +5810,12 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
                 or raw_item.get("process_list_key")
                 or raw_item.get("processListKey")
             )
+            item_shared_value_key = _normalize_menu_key(
+                raw_item.get("shared_value_key")
+                or raw_item.get("sharedValueKey")
+                or raw_item.get("value_group_key")
+                or raw_item.get("valueGroupKey")
+            )
         else:
             item_label = _normalize_additional_field_label(raw_item)
             item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
@@ -5709,13 +5827,6 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         if not item_label:
             continue
-
-        normalized_label_key = item_label.lower()
-
-        if normalized_label_key in seen_labels:
-            continue
-
-        seen_labels.add(normalized_label_key)
 
         candidate_key = item_key or _build_custom_field_key_from_label(item_label)
         unique_key = candidate_key
@@ -5729,6 +5840,8 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         if item_type == "list" and not item_list_key:
             item_list_key = _normalize_process_list_key_v8(item_label)
+        if item_type == "list" and not item_shared_value_key:
+            item_shared_value_key = item_list_key
 
         normalized_item: dict[str, Any] = {
             "key": unique_key,
@@ -5742,6 +5855,8 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         if item_type == "list":
             normalized_item["list_key"] = item_list_key
+        if item_shared_value_key:
+            normalized_item["shared_value_key"] = item_shared_value_key
 
         normalized.append(normalized_item)
 

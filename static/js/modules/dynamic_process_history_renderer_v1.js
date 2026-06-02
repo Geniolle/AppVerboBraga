@@ -130,7 +130,9 @@
 
       return false;
     });
-    const showStateColumn = String(recordLabels.singular || "") === "departamento";
+    const normalizedSingularLabel = normalizeLookupText(recordLabels.singular || "");
+    const departmentHistoryMode = normalizedSingularLabel === "departamento";
+    const showStateColumn = normalizedSingularLabel !== "ausencia";
     const singularLabel = toSentenceCaseText(recordLabels.singular || "registo").toLowerCase();
     const pluralLabel = toSentenceCaseText(recordLabels.plural || "registos").toLowerCase();
 
@@ -176,7 +178,18 @@
       return rawStateValue === "inativo" ? "inativo" : "ativo";
     };
 
-    const createHeadRow = (headElement, includeStateColumn, includeCreatedColumn = true) => {
+    const resolveLinkHref = (rawValue) => {
+      const cleanValue = String(rawValue || "").trim();
+      if (!cleanValue) {
+        return "";
+      }
+      if (/^https?:\/\//i.test(cleanValue)) {
+        return cleanValue;
+      }
+      return `https://${cleanValue}`;
+    };
+
+    const createHeadRow = (headElement, includeStateColumn, includeCreatedColumn = false) => {
       if (!headElement) {
         return;
       }
@@ -223,6 +236,15 @@
         const rawValue = String(values[fieldKey] || "").trim();
         if (fieldType === "flag") {
           valueEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
+        } else if (fieldType === "link" && rawValue) {
+          const linkEl = document.createElement("a");
+          linkEl.href = resolveLinkHref(rawValue);
+          linkEl.target = "_blank";
+          linkEl.rel = "noopener noreferrer";
+          linkEl.textContent = rawValue;
+          linkEl.style.textDecoration = "underline";
+          valueEl.textContent = "";
+          valueEl.appendChild(linkEl);
         } else {
           valueEl.textContent = rawValue || "-";
         }
@@ -339,7 +361,7 @@
       bodyElement,
       includeStateColumn,
       allowDeleteForInactive,
-      includeCreatedColumn = true
+      includeCreatedColumn = false
     ) => {
       if (!bodyElement) {
         return;
@@ -364,6 +386,14 @@
           const rawValue = String(values[fieldKey] || "").trim();
           if (fieldType === "flag") {
             tdEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
+          } else if (fieldType === "link" && rawValue) {
+            const linkEl = document.createElement("a");
+            linkEl.href = resolveLinkHref(rawValue);
+            linkEl.target = "_blank";
+            linkEl.rel = "noopener noreferrer";
+            linkEl.textContent = rawValue;
+            linkEl.style.textDecoration = "underline";
+            tdEl.appendChild(linkEl);
           } else {
             tdEl.textContent = rawValue || "-";
           }
@@ -526,8 +556,8 @@
     } else {
       hideSeparatedHistoryCards();
       setLegacyHistoryState(true, false);
-      createHeadRow(dynamicProcessHistoryHeadEl, false, true);
-      renderRows(visibleRows, dynamicProcessHistoryBodyEl, false, true, true);
+      createHeadRow(dynamicProcessHistoryHeadEl, false, false);
+      renderRows(visibleRows, dynamicProcessHistoryBodyEl, false, true, false);
       if (dynamicProcessHistoryTitleEl) {
         dynamicProcessHistoryTitleEl.textContent = `Lista de ${pluralLabel} criados`;
       }

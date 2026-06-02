@@ -57,6 +57,16 @@
     return { toolbarEl, totalEl, inputEl };
   }
 
+  function applyReusableToolbarLayoutV1(cardEl, titleEl) {
+    if (!cardEl || !titleEl) {
+      return;
+    }
+
+    cardEl.classList.add("admin-list-toolbar-card-v1");
+    titleEl.classList.add("admin-list-toolbar-title-v1");
+    cardEl.dataset.adminListToolbarLayoutV1 = "1";
+  }
+
   function updateToolbarTotalV1(totalEl, matchedCount, totalCount) {
     if (matchedCount === totalCount) {
       totalEl.textContent = `Total: ${totalCount}`;
@@ -157,12 +167,13 @@
       return;
     }
 
-    const titleEl = cardEl.querySelector("h2");
+    const titleEl = cardEl.querySelector("h2, h3");
     if (!titleEl) {
       return;
     }
 
     const { toolbarEl, totalEl, inputEl } = buildToolbarV1();
+    applyReusableToolbarLayoutV1(cardEl, titleEl);
     titleEl.insertAdjacentElement("afterend", toolbarEl);
 
     //###################################################################################

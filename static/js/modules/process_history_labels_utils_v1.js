@@ -42,7 +42,11 @@
         if (!joined) {
           return false;
         }
-        return isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) || joined.includes("departamento");
+        return (
+          isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) ||
+          joined.includes("departamento") ||
+          joined.includes("musica")
+        );
       }
 
       function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
@@ -52,6 +56,9 @@
         }
         if (joined.includes("departamento")) {
           return { singular: "departamento", plural: "departamentos" };
+        }
+        if (joined.includes("musica")) {
+          return { singular: "musica", plural: "musicas" };
         }
         return { singular: "registo", plural: "registos" };
       }

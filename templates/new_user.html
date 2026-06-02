@@ -48,7 +48,7 @@
 </noscript>
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260526-admin-status-footer-single-line-v10-last-row-no-border">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260529-tabs-alignment-fix-v1">
   <style>
     :root {
@@ -63,7 +63,7 @@
       --sidebar-section-text-color: {{ admin_sidebar_section_text_color_hex|default('#808792', true) }};
     }
   </style>
-  <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260506-admin-table-search-v2">
+  <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260601-admin-table-search-v6-toolbar-absolute-parity">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260527-fields-config-v10-process-tabs-vertical-center">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
@@ -3257,11 +3257,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
     };
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260526-core-page-size-options-v2"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260526-additional-page-size-options-v2"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260601-additional-link-type-v4"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-pagination-state-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
-  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260523-admin-table-search-v4-dynamic-total"></script>
+  <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260601-admin-table-search-v5-reusable-subprocess-toolbar"></script>
   <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260519-admin-definicoes-color-inline-v7"></script>
 <script src="/static/js/modules/post_save_context_navigation_guard_v3.js?v=20260525-post-save-guard-module-v1" defer></script>
 <script src="/static/js/modules/post_save_context_capture_v3.js?v=20260525-post-save-capture-module-v1" defer></script>
@@ -3278,22 +3278,22 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_quantity_origin_dedup_v1.js?v=20260525-quantity-origin-dedup-module-v1" defer></script>
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
-<script src="/static/js/modules/process_sections_builder_v1.js?v=20260525-process-sections-builder-module-v1" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260527-dynamic-runtime-core-v3-empresa-4cols" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260525-dynamic-process-history-renderer-module-v1" defer></script>
+<script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260601-dynamic-runtime-core-v4-state-history-layout" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260601-dynamic-process-history-renderer-v4-link-clickable" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
-<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260527-menu-dynamic-navigation-core-v6-hide-empresa-create-card" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260601-menu-dynamic-navigation-core-v7-departamentos-dynamic-card" defer></script>
 <script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260526-menu-navigation-controller-standards-v9-force-first-subprocess" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
-<script src="/static/js/modules/process_field_utils_v1.js?v=20260525-process-field-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_field_utils_v1.js?v=20260601-process-field-utils-link-type-v2" defer></script>
 <script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260529-process-subsequent-rules-utils-bootstrap-fix-v1" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
-<script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260525-process-history-labels-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260601-process-history-labels-utils-module-v2-musicas-history-mode" defer></script>
 <script src="/static/js/modules/avatar_utils_v1.js?v=20260525-avatar-utils-module-v1" defer></script>
 <script src="/static/js/modules/user_dropdown_ui_v1.js?v=20260525-user-dropdown-ui-module-v1" defer></script>
-<script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260525-process-field-runtime-utils-module-v1" defer></script>
+<script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260601-process-field-runtime-utils-link-type-v2" defer></script>
 <script src="/static/js/modules/process_absence_date_validation_v1.js?v=20260525-process-absence-date-validation-module-v1" defer></script>
 <script src="/static/js/modules/profile_edit_ui_utils_v1.js?v=20260525-profile-edit-ui-utils-module-v1" defer></script>
 <script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
@@ -3319,7 +3319,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
 <script src="/static/js/modules/page_bootstrap_v1.js?v=20260527-page-bootstrap-v3-dropdown-minha-conta-sync" defer></script>
 <script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
-<script src="/static/js/new_user.js?v=20260529-new-user-global-settings-fix-v1" defer></script>
+<script src="/static/js/new_user.js?v=20260601-new-user-link-type-v3" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>

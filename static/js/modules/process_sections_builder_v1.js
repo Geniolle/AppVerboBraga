@@ -55,29 +55,90 @@
       const optionRequiredRaw = Object.prototype.hasOwnProperty.call(option, "is_required")
         ? option.is_required
         : option.required;
+      const optionListKey = normalizeMenuKey(option.list_key || option.listKey);
+      const optionSharedValueKey = normalizeMenuKey(
+        option.shared_value_key || option.sharedValueKey || option.value_group_key || option.valueGroupKey || optionListKey
+      );
       optionMetaByKey.set(optionKey, {
         label: optionLabel,
         fieldType: optionType,
         size: optionSize,
-        listKey: normalizeMenuKey(option.list_key || option.listKey),
-        listOptions: processListsByKey.get(normalizeMenuKey(option.list_key || option.listKey)) || [],
+        listKey: optionListKey,
+        sharedValueKey: optionSharedValueKey,
+        listOptions: processListsByKey.get(optionListKey) || [],
         isRequired: normalizeProcessFieldRequired(optionRequiredRaw)
       });
+    });
+
+    const sharedValuesByKey = new Map();
+    const listValuesByKey = new Map();
+    const sourceFieldOrder = [];
+    const seenSourceFields = new Set();
+
+    const appendSourceField = (rawFieldKey) => {
+      const fieldKey = normalizeMenuKey(rawFieldKey);
+      if (!fieldKey || seenSourceFields.has(fieldKey)) {
+        return;
+      }
+      seenSourceFields.add(fieldKey);
+      sourceFieldOrder.push(fieldKey);
+    };
+
+    visibleFieldOrder.forEach((rawFieldKey) => {
+      appendSourceField(rawFieldKey);
+    });
+    processRows.forEach((row) => {
+      appendSourceField(row && row.field_key);
+    });
+    Object.keys(processValuesByField || {}).forEach((rawFieldKey) => {
+      appendSourceField(rawFieldKey);
+    });
+
+    sourceFieldOrder.forEach((fieldKey) => {
+      const fieldMeta = optionMetaByKey.get(fieldKey) || {};
+      const fieldValueRaw = processValuesByField[fieldKey];
+      const fieldValue = typeof fieldValueRaw === "string"
+        ? fieldValueRaw.trim()
+        : String(fieldValueRaw || "").trim();
+      if (!fieldValue) {
+        return;
+      }
+      const sharedValueKey = normalizeMenuKey(fieldMeta.sharedValueKey);
+      const listKey = normalizeMenuKey(fieldMeta.listKey);
+      if (sharedValueKey && !sharedValuesByKey.has(sharedValueKey)) {
+        sharedValuesByKey.set(sharedValueKey, fieldValue);
+      }
+      if (listKey && !listValuesByKey.has(listKey)) {
+        listValuesByKey.set(listKey, fieldValue);
+      }
     });
 
     function buildFieldEntry(fieldKey, fieldMeta = {}) {
       const normalizedFieldType = normalizeProcessFieldType(fieldMeta.fieldType);
       const storageKey = getProcessStorageKey(setting.key, fieldKey);
-      const fieldValue = processValuesByField[fieldKey];
+      const sharedValueKey = normalizeMenuKey(fieldMeta.sharedValueKey);
+      const listKey = normalizeMenuKey(fieldMeta.listKey);
+      const ownFieldValue = processValuesByField[fieldKey];
+      let resolvedFieldValue = typeof ownFieldValue === "string"
+        ? ownFieldValue
+        : String(ownFieldValue || "");
+      if (!String(resolvedFieldValue || "").trim()) {
+        if (sharedValueKey && sharedValuesByKey.has(sharedValueKey)) {
+          resolvedFieldValue = String(sharedValuesByKey.get(sharedValueKey) || "");
+        } else if (listKey && listValuesByKey.has(listKey)) {
+          resolvedFieldValue = String(listValuesByKey.get(listKey) || "");
+        }
+      }
       return {
         key: fieldKey,
         label: toSentenceCaseText(fieldMeta.label || fieldKey),
         fieldType: normalizedFieldType === "header" ? "text" : normalizedFieldType,
         size: normalizeProcessFieldSize(fieldMeta.size, normalizedFieldType),
         isRequired: Boolean(fieldMeta.isRequired),
-        listKey: normalizeMenuKey(fieldMeta.listKey),
+        listKey,
+        sharedValueKey,
         listOptions: Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions.slice() : [],
-        value: typeof fieldValue === "string" ? fieldValue : "",
+        value: String(resolvedFieldValue || "").trim(),
         storageKey
       };
     }

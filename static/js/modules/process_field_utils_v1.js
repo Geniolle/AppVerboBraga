@@ -6,8 +6,8 @@
     const deps = options && typeof options === "object" ? options : {};
     const legacyDocumentosMenuKey = String(deps.legacyDocumentosMenuKey || "documentos").trim().toLowerCase();
     const meuPerfilMenuKey = String(deps.meuPerfilMenuKey || "meu_perfil").trim().toLowerCase();
-    const processTextualTypes = new Set(["text", "number", "email", "phone"]);
-    const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
+    const processTextualTypes = new Set(["text", "number", "email", "phone", "link"]);
+    const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list", "link"]);
 
     //###################################################################################
     // (1) NORMALIZACAO BASE

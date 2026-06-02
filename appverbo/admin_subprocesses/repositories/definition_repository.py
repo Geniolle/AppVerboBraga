@@ -14,6 +14,7 @@ DEFINITION_TYPE_VALUES_V1 = {
     "tamanho",
     "fonte",
     "cor",
+    "icone",
 }
 
 DEFINITION_STATUS_ACTIVE_V1 = "active"
@@ -49,6 +50,8 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
             "font": "fonte",
             "cor": "cor",
             "color": "cor",
+            "icone": "icone",
+            "icon": "icone",
         }
 
         mapped_value = aliases.get(clean_value, clean_value)
@@ -75,6 +78,7 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
             "tamanho": "Tamanho",
             "fonte": "Fonte",
             "cor": "Cor",
+            "icone": "Ícone",
         }.get(clean_type, "Tamanho")
 
     def _coerce_int(self, value: object) -> int | None:
@@ -134,14 +138,21 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
     ) -> list[dict[str, Any]]:
         rows = session.execute(
             select(AdminDefinition).order_by(
-                AdminDefinition.process_name.asc(),
-                AdminDefinition.subprocess_name.asc(),
-                AdminDefinition.parameter_name.asc(),
                 AdminDefinition.id.asc(),
             )
         ).scalars().all()
 
-        return [self._to_row(row) for row in rows]
+        normalized_rows = [self._to_row(row) for row in rows]
+        normalized_rows.sort(
+            key=lambda row: (
+                self._normalize_ascii(row.get("parameter_name")),
+                self._normalize_ascii(row.get("process_name")),
+                self._normalize_ascii(row.get("subprocess_name")),
+                self._coerce_int(row.get("id")) or 0,
+            )
+        )
+
+        return normalized_rows
 
     def get_for_edit(
         self,
