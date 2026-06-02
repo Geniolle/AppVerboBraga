@@ -38,6 +38,11 @@ from appverbo.services.profile import (
     parse_menu_process_quantity_values,
     parse_member_profile_fields,
 )
+from appverbo.services.songs import (
+    is_song_process_menu_v1,
+    list_entity_songs_v1,
+    serialize_songs_to_history_rows_v1,
+)
 
 # ###################################################################################
 # (1) PROCESSO EMPRESA - CAMPOS FIXOS DA ENTIDADE LOGADA
@@ -769,6 +774,15 @@ def get_page_data(
             continue
         if menu_key == MENU_EMPRESA_KEY:
             menu_process_values_map[menu_key] = dict(empresa_values_by_field)
+            continue
+        if is_song_process_menu_v1(menu_key, sidebar_item.get("label")):
+            if selected_entity_id is not None:
+                song_rows = serialize_songs_to_history_rows_v1(
+                    list_entity_songs_v1(session, int(selected_entity_id)),
+                    sidebar_item,
+                )
+                if song_rows:
+                    menu_process_history_map[menu_key] = song_rows
             continue
         visible_rows = (
             sidebar_item.get("process_visible_field_rows")

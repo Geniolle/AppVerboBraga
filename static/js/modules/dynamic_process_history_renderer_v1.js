@@ -54,6 +54,7 @@
       dynamicProcessCardEl,
       dynamicProcessCreateCardEl
     } = elements;
+    const dynamicProcessSongAiFlagInputEl = document.getElementById("dynamic-process-song-ai-flag");
 
     if (
       !dynamicProcessHistoryBlockEl ||
@@ -276,6 +277,9 @@
       if (!rowRecordId || !dynamicProcessEditFormEl) {
         return;
       }
+      if (dynamicProcessSongAiFlagInputEl) {
+        dynamicProcessSongAiFlagInputEl.value = "0";
+      }
       if (dynamicProcessHistoryActionInputEl) {
         dynamicProcessHistoryActionInputEl.value = "update";
       }
@@ -333,6 +337,9 @@
     };
 
     const openRecordForView = (values) => {
+      if (dynamicProcessSongAiFlagInputEl) {
+        dynamicProcessSongAiFlagInputEl.value = "0";
+      }
       populateReadOnlyFromRow(values);
       if (dynamicProcessHistoryActionInputEl) {
         dynamicProcessHistoryActionInputEl.value = "create";

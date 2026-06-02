@@ -49,7 +49,8 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260529-tabs-alignment-fix-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260602-song-process-ui-v1">
+  <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v4-six-inline-fields">
   <style>
     :root {
       --topbar: {{ admin_topbar_color_hex|default('#334A62', true) }};
@@ -909,7 +910,12 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             <input type="hidden" name="target" value="#dynamic-process-card">
             <input id="dynamic-process-history-action" type="hidden" name="history_action" value="create">
             <input id="dynamic-process-history-record-id" type="hidden" name="history_record_id" value="">
+            <input id="dynamic-process-song-ai-flag" type="hidden" name="song_ai_lyrics_generated" value="0">
             <div id="dynamic-process-edit-grid" class="personal-grid admin-subprocess-grid-v1 appverbo-dynamic-process-grid-v1"></div>
+            <div id="dynamic-process-song-tools" class="appverbo-song-tools-v1" style="display: none;">
+              <button id="dynamic-process-song-ai-btn" type="button" class="action-btn-secondary">Gerar letra por IA</button>
+              <p id="dynamic-process-song-feedback" class="appverbo-song-feedback-v1" aria-live="polite"></p>
+            </div>
             <div class="profile-edit-actions form-action-row admin-subprocess-actions-v1">
               <button id="dynamic-process-submit-btn" type="submit">Guardar</button>
               <button type="button" class="profile-cancel-btn" data-edit-cancel="dynamic-process-card">Cancelar</button>
@@ -930,6 +936,24 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 
         <section id="dynamic-process-history-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1 appverbo-dynamic-process-history-card-v1" style="display: none;">
           <h2 id="dynamic-process-history-active-title">Registos ativos</h2>
+          <div id="dynamic-process-song-filters" class="appverbo-song-filters-v1" style="display: none;">
+            <div class="field">
+              <label for="dynamic-process-song-filter-name">Pesquisar por nome</label>
+              <input id="dynamic-process-song-filter-name" type="text" placeholder="Nome da música">
+            </div>
+            <div class="field">
+              <label for="dynamic-process-song-filter-source">Fonte da letra</label>
+              <select id="dynamic-process-song-filter-source">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="dynamic-process-song-filter-status">Estado da letra</label>
+              <select id="dynamic-process-song-filter-status">
+                <option value="">Todos</option>
+              </select>
+            </div>
+          </div>
           <div class="admin-subprocess-table-wrap-v1 appverbo-dynamic-process-table-wrap-v1">
             <table id="dynamic-process-history-active-table" class="admin-subprocess-table-v1 dynamic-process-table" style="display: none;">
               <thead id="dynamic-process-history-active-head"></thead>
@@ -3257,7 +3281,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
     };
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260526-core-page-size-options-v2"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260601-additional-link-type-v4"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260602-additional-textarea-type-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-pagination-state-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
@@ -3279,15 +3303,16 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260601-dynamic-runtime-core-v4-state-history-layout" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260601-dynamic-process-history-renderer-v4-link-clickable" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260602-dynamic-runtime-core-v5-song-ui" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260602-dynamic-process-history-renderer-v5-song-ai-reset" defer></script>
+<script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
 <script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260601-menu-dynamic-navigation-core-v7-departamentos-dynamic-card" defer></script>
 <script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260526-menu-navigation-controller-standards-v9-force-first-subprocess" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
-<script src="/static/js/modules/process_field_utils_v1.js?v=20260601-process-field-utils-link-type-v2" defer></script>
+<script src="/static/js/modules/process_field_utils_v1.js?v=20260602-process-field-utils-textarea-v1" defer></script>
 <script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260529-process-subsequent-rules-utils-bootstrap-fix-v1" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
 <script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260601-process-history-labels-utils-module-v2-musicas-history-mode" defer></script>
@@ -3319,7 +3344,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
 <script src="/static/js/modules/page_bootstrap_v1.js?v=20260527-page-bootstrap-v3-dropdown-minha-conta-sync" defer></script>
 <script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
-<script src="/static/js/new_user.js?v=20260601-new-user-link-type-v3" defer></script>
+<script src="/static/js/new_user.js?v=20260602-new-user-textarea-song-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>

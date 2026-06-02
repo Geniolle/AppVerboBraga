@@ -64,6 +64,13 @@ class Settings:
     SMTP_FROM_EMAIL: str
     SMTP_FROM_NAME: str
     SMTP_USE_TLS: bool
+    OPENAI_API_KEY: str
+    SONGS_TRANSCRIPTION_ENABLED: bool
+    SONGS_TRANSCRIPTION_MODEL: str
+    SONGS_LYRICS_FORMATTING_MODEL: str
+    SONGS_TRANSCRIPTION_LANGUAGE: str
+    SONGS_TRANSCRIPTION_REQUEST_TIMEOUT_SECONDS: int
+    SONGS_TRANSCRIPTION_DOWNLOAD_TIMEOUT_SECONDS: int
 
     ALLOWED_ACCOUNT_STATUS: set[str]
     ENTITY_PROFILE_SCOPE_OWNER: str
@@ -134,6 +141,28 @@ def _build_settings() -> Settings:
         SMTP_FROM_EMAIL=(os.getenv("SMTP_FROM_EMAIL", "") or "").strip(),
         SMTP_FROM_NAME=(os.getenv("SMTP_FROM_NAME", "AppVerboBraga") or "AppVerboBraga").strip(),
         SMTP_USE_TLS=_env_bool("SMTP_USE_TLS", True),
+        OPENAI_API_KEY=(os.getenv("OPENAI_API_KEY", "") or "").strip(),
+        SONGS_TRANSCRIPTION_ENABLED=_env_bool("SONGS_TRANSCRIPTION_ENABLED", True),
+        SONGS_TRANSCRIPTION_MODEL=(
+            os.getenv("SONGS_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe")
+            or "gpt-4o-mini-transcribe"
+        ).strip(),
+        SONGS_LYRICS_FORMATTING_MODEL=(
+            os.getenv("SONGS_LYRICS_FORMATTING_MODEL", "gpt-4.1-mini")
+            or "gpt-4.1-mini"
+        ).strip(),
+        SONGS_TRANSCRIPTION_LANGUAGE=(
+            os.getenv("SONGS_TRANSCRIPTION_LANGUAGE", "pt")
+            or "pt"
+        ).strip(),
+        SONGS_TRANSCRIPTION_REQUEST_TIMEOUT_SECONDS=_env_int(
+            "SONGS_TRANSCRIPTION_REQUEST_TIMEOUT_SECONDS",
+            180,
+        ),
+        SONGS_TRANSCRIPTION_DOWNLOAD_TIMEOUT_SECONDS=_env_int(
+            "SONGS_TRANSCRIPTION_DOWNLOAD_TIMEOUT_SECONDS",
+            180,
+        ),
         ALLOWED_ACCOUNT_STATUS={"active", "pending", "inactive", "blocked"},
         ENTITY_PROFILE_SCOPE_OWNER="owner",
         ENTITY_PROFILE_SCOPE_LEGADO="legado",

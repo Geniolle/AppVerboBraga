@@ -22,6 +22,7 @@ from appverbo.models.modules import (
 )
 from appverbo.models.profile import Profile, UserProfile
 from appverbo.models.sidebar_menu_setting import SidebarMenuSetting
+from appverbo.models.song import Song
 from appverbo.models.user import User
 
 __all__ = [
@@ -46,6 +47,7 @@ __all__ = [
     "Profile",
     "UserProfile",
     "SidebarMenuSetting",
+    "Song",
     "User",
 ]
 

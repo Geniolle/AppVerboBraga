@@ -12,3 +12,4 @@ httpx>=0.27,<1.0
 phonenumbers>=8.13,<9.0
 pycountry>=23.12,<25.0
 Babel>=2.14,<3.0
+yt-dlp>=2025.1,<2027.0

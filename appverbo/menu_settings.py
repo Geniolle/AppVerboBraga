@@ -140,9 +140,10 @@ SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
     str(item["key"]).strip().lower(): str(item["label"])
     for item in SIDEBAR_SECTION_DEFAULTS
 }
-ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "email", "phone", "number", "link"}
+ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "textarea", "email", "phone", "number", "link"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "text", "label": "Texto"},
+    {"key": "textarea", "label": "Texto longo"},
     {"key": "number", "label": "Número"},
     {"key": "email", "label": "Email"},
     {"key": "phone", "label": "Telefone"},
@@ -682,6 +683,257 @@ def _normalize_sentence_case_text(raw_text: Any) -> str:
     return f"{lowered_text[0].upper()}{lowered_text[1:]}"
 
 
+# ###################################################################################
+# (MUSICAS) NORMALIZACAO DE CONFIGURACAO DO PROCESSO
+# ###################################################################################
+
+def _normalize_music_lookup_text_v1(raw_value: Any) -> str:
+    normalized = (
+        unicodedata.normalize("NFKD", str(raw_value or ""))
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .strip()
+        .lower()
+    )
+    return " ".join(normalized.split())
+
+
+def _is_music_menu_v1(menu_key: Any, menu_label: Any = "") -> bool:
+    joined = " ".join(
+        part
+        for part in (
+            _normalize_music_lookup_text_v1(menu_key),
+            _normalize_music_lookup_text_v1(menu_label),
+        )
+        if part
+    )
+    return "musica" in joined
+
+
+def _resolve_music_field_role_v1(field_key: Any, field_label: Any, field_type: Any) -> str:
+    clean_field_type = str(field_type or "").strip().lower()
+    lookup = " ".join(
+        part
+        for part in (
+            _normalize_music_lookup_text_v1(field_key),
+            _normalize_music_lookup_text_v1(field_label),
+        )
+        if part
+    )
+    if not lookup:
+        return ""
+    if clean_field_type == "header":
+        return "header"
+    if "nome" in lookup and "musica" in lookup:
+        return "name"
+    if "versao" in lookup:
+        return "version"
+    if ("youtube" in lookup) or ("url" in lookup) or ("link" in lookup):
+        return "youtube_url"
+    if "fonte" in lookup and "letra" in lookup:
+        return "lyrics_source"
+    if "estado" in lookup and "letra" in lookup:
+        return "lyrics_status"
+    if "letra" in lookup:
+        return "lyrics"
+    return ""
+
+
+def _normalize_music_process_lists_v1(raw_lists: Any) -> list[dict[str, Any]]:
+    normalized_lists: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+
+    for list_key, list_label, list_items in (
+        (
+            "list_fonte_da_letra",
+            "Fonte da letra",
+            ["manual", "youtube_transcript", "audio_transcription", "imported"],
+        ),
+        (
+            "list_estado_da_letra",
+            "Estado da letra",
+            ["rascunho", "revista", "aprovada"],
+        ),
+    ):
+        normalized_lists.append(
+            {
+                "key": list_key,
+                "label": list_label,
+                "items": list(list_items),
+                "items_csv": ", ".join(list_items),
+                "source_key": "manual",
+                "source_label": "Manual",
+            }
+        )
+        seen_keys.add(list_key)
+
+    if isinstance(raw_lists, list):
+        for raw_item in raw_lists:
+            if not isinstance(raw_item, dict):
+                continue
+            clean_key = str(raw_item.get("key") or "").strip().lower()
+            if not clean_key or clean_key in seen_keys:
+                continue
+            normalized_lists.append(dict(raw_item))
+            seen_keys.add(clean_key)
+
+    return normalized_lists
+
+
+def _normalize_music_menu_config_v1(
+    menu_key: Any,
+    menu_label: Any,
+    raw_menu_config: dict[str, Any] | None,
+) -> dict[str, Any]:
+    menu_config = dict(raw_menu_config or {})
+    if not _is_music_menu_v1(menu_key, menu_label):
+        return menu_config
+
+    additional_fields = normalize_menu_process_additional_fields(
+        menu_config.get("additional_fields")
+    )
+    preferred_fields_by_role: dict[str, dict[str, Any]] = {}
+    used_field_keys: set[str] = set()
+
+    for field in additional_fields:
+        clean_field_key = str(field.get("key") or "").strip().lower()
+        clean_field_type = str(field.get("field_type") or "text").strip().lower()
+        field_role = _resolve_music_field_role_v1(
+            clean_field_key,
+            field.get("label"),
+            clean_field_type,
+        )
+        if not field_role:
+            continue
+        current_field = preferred_fields_by_role.get(field_role)
+        if current_field is None:
+            preferred_fields_by_role[field_role] = dict(field)
+            continue
+        current_type = str(current_field.get("field_type") or "").strip().lower()
+        if field_role in {"lyrics_source", "lyrics_status"} and current_type != "list" and clean_field_type == "list":
+            preferred_fields_by_role[field_role] = dict(field)
+
+    default_field_specs = (
+        {
+            "role": "header",
+            "default_key": "custom_adicionar_musica",
+            "label": "Adicionar música",
+            "field_type": "header",
+            "is_required": False,
+        },
+        {
+            "role": "name",
+            "default_key": "custom_nome_da_musica",
+            "label": "Nome da música",
+            "field_type": "text",
+            "is_required": True,
+            "size": 255,
+        },
+        {
+            "role": "version",
+            "default_key": "custom_versao",
+            "label": "Versão",
+            "field_type": "text",
+            "is_required": True,
+            "size": 255,
+        },
+        {
+            "role": "youtube_url",
+            "default_key": "custom_url",
+            "label": "URL do YouTube",
+            "field_type": "link",
+            "is_required": True,
+            "size": 255,
+        },
+        {
+            "role": "lyrics",
+            "default_key": "custom_letra",
+            "label": "Letra",
+            "field_type": "textarea",
+            "is_required": True,
+            "size": 4000,
+        },
+        {
+            "role": "lyrics_source",
+            "default_key": "custom_fonte_da_letra",
+            "label": "Fonte da letra",
+            "field_type": "list",
+            "is_required": True,
+            "list_key": "list_fonte_da_letra",
+            "shared_value_key": "list_fonte_da_letra",
+        },
+        {
+            "role": "lyrics_status",
+            "default_key": "custom_estado_da_letra",
+            "label": "Estado da letra",
+            "field_type": "list",
+            "is_required": True,
+            "list_key": "list_estado_da_letra",
+            "shared_value_key": "list_estado_da_letra",
+        },
+    )
+
+    normalized_music_fields: list[dict[str, Any]] = []
+    for field_spec in default_field_specs:
+        existing_field = preferred_fields_by_role.get(field_spec["role"])
+        field_data = dict(existing_field or {})
+        clean_field_key = str(field_data.get("key") or "").strip().lower()
+        if not clean_field_key:
+            clean_field_key = str(field_spec["default_key"])
+        clean_field_key = _normalize_custom_field_key(clean_field_key)
+        field_data["key"] = clean_field_key
+        field_data["label"] = str(field_spec["label"])
+        field_data["field_type"] = str(field_spec["field_type"])
+        field_data["is_required"] = bool(field_spec.get("is_required", False))
+        if "size" in field_spec:
+            field_data["size"] = int(field_spec["size"])
+        else:
+            field_data.pop("size", None)
+        if "list_key" in field_spec:
+            field_data["list_key"] = str(field_spec["list_key"])
+            field_data["shared_value_key"] = str(field_spec["shared_value_key"])
+        else:
+            field_data.pop("list_key", None)
+            field_data.pop("shared_value_key", None)
+        normalized_music_fields.append(field_data)
+        used_field_keys.add(clean_field_key)
+
+    extra_fields: list[dict[str, Any]] = []
+    for field in additional_fields:
+        clean_field_key = str(field.get("key") or "").strip().lower()
+        if not clean_field_key or clean_field_key in used_field_keys:
+            continue
+        extra_fields.append(dict(field))
+
+    header_key = str(normalized_music_fields[0].get("key") or "").strip().lower()
+    visible_field_keys = [
+        str(field.get("key") or "").strip().lower()
+        for field in normalized_music_fields
+        if str(field.get("field_type") or "").strip().lower() != "header"
+    ]
+    header_map = {
+        field_key: header_key
+        for field_key in visible_field_keys
+    }
+    menu_config["additional_fields"] = normalized_music_fields + extra_fields
+    menu_config["process_lists"] = _normalize_music_process_lists_v1(
+        menu_config.get("process_lists")
+    )
+    menu_config["visible_fields"] = [header_key] + visible_field_keys
+    menu_config["process_visible_fields"] = [header_key] + visible_field_keys
+    menu_config["visible_field_headers"] = dict(header_map)
+    menu_config["process_visible_field_header_map"] = dict(header_map)
+    menu_config["process_visible_field_rows"] = [
+        {
+            "field_key": field_key,
+            "header_key": header_key,
+        }
+        for field_key in visible_field_keys
+    ]
+    menu_config["process_visible_fields_configured"] = True
+    return menu_config
+
+
 def _build_custom_field_key_from_label(label: str) -> str:
     normalized = (
         unicodedata.normalize("NFKD", label or "")
@@ -965,11 +1217,13 @@ def _normalize_additional_field_type(raw_type: Any) -> str:
 def _normalize_additional_field_size(raw_size: Any, field_type: str) -> int | None:
     if field_type not in ADDITIONAL_FIELD_TEXTUAL_TYPES:
         return None
+    max_size = 4000 if field_type == "textarea" else ADDITIONAL_FIELD_MAX_SIZE
+    default_size = 4000 if field_type == "textarea" else ADDITIONAL_FIELD_DEFAULT_SIZE
     try:
         parsed_size = int(str(raw_size or "").strip())
     except (TypeError, ValueError):
-        parsed_size = ADDITIONAL_FIELD_DEFAULT_SIZE
-    parsed_size = max(1, min(parsed_size, ADDITIONAL_FIELD_MAX_SIZE))
+        parsed_size = default_size
+    parsed_size = max(1, min(parsed_size, max_size))
     return parsed_size
 
 def _normalize_additional_field_required(raw_required: Any) -> bool:
@@ -2418,7 +2672,11 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             is_active = bool(row.is_active)
             is_deleted = bool(row.is_deleted)
 
-        menu_config = _parse_menu_config(None if row is None else row.menu_config)
+        menu_config = _normalize_music_menu_config_v1(
+            menu_key,
+            menu_label,
+            _parse_menu_config(None if row is None else row.menu_config),
+        )
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         process_subsequent_fields = menu_config.get("subsequent_fields", [])
         explicit_display_order = _normalize_menu_display_order(
@@ -2482,7 +2740,11 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         menu_label = _normalize_system_menu_label(menu_key, row.menu_label or menu_key) or menu_key
         is_active = bool(row.is_active)
         is_deleted = bool(row.is_deleted)
-        menu_config = _parse_menu_config(row.menu_config)
+        menu_config = _normalize_music_menu_config_v1(
+            menu_key,
+            menu_label,
+            _parse_menu_config(row.menu_config),
+        )
         requires_admin = bool(menu_config.get("requires_admin", True))
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         fallback_order = len(SIDEBAR_MENU_DEFAULTS) + extra_index

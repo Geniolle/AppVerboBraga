@@ -10,11 +10,12 @@
   //###################################################################################
 
   const ROOT_SELECTOR = "[data-process-additional-fields-manager-v3]";
-  const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "flag", "header", "list", "link"]);
-  const TEXTUAL_TYPES = new Set(["text", "number", "email", "phone", "link"]);
+  const SUPPORTED_TYPES = new Set(["text", "textarea", "number", "email", "phone", "date", "flag", "header", "list", "link"]);
+  const TEXTUAL_TYPES = new Set(["text", "textarea", "number", "email", "phone", "link"]);
 
   const TYPE_LABELS = {
     text: "Texto",
+    textarea: "Texto longo",
     number: "Numero",
     email: "Email",
     phone: "Telefone",

@@ -1,0 +1,133 @@
+.appverbo-song-tools-v1 {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  justify-items: start;
+}
+
+.appverbo-song-feedback-v1 {
+  margin: 0;
+  color: #36506b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.appverbo-song-feedback-v1.is-error {
+  color: #a33f2f;
+}
+
+.appverbo-song-feedback-v1.is-success {
+  color: #1f7a49;
+}
+
+.appverbo-song-filters-v1 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 14px;
+}
+
+.appverbo-song-filters-v1 .field {
+  min-width: 0;
+}
+
+.appverbo-song-filters-v1 label {
+  display: block;
+  margin-bottom: 6px;
+  color: #24374d;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.appverbo-song-filters-v1 input,
+.appverbo-song-filters-v1 select,
+.appverbo-dynamic-process-textarea-v1 {
+  width: 100%;
+  border: 1px solid #c8d4e5;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #10233c;
+}
+
+#dynamic-process-edit-grid.appverbo-song-grid-v1 {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 10px;
+  align-items: start;
+}
+
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-inline-field-v1,
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-lyrics-field-v1 {
+  min-width: 0;
+}
+
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-lyrics-field-v1 {
+  grid-column: 1 / -1;
+}
+
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-inline-field-v1 label,
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-inline-field-v1 input,
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-inline-field-v1 select {
+  min-width: 0;
+}
+
+#dynamic-process-edit-grid.appverbo-song-grid-v1 .appverbo-song-lyrics-field-v1 textarea {
+  min-height: 280px;
+}
+
+.appverbo-dynamic-process-textarea-v1 {
+  min-height: 220px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.appverbo-song-status-badge-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.appverbo-song-status-badge-v1.is-rascunho {
+  background: #fff4d8;
+  color: #8a5b00;
+}
+
+.appverbo-song-status-badge-v1.is-revista {
+  background: #e0eefc;
+  color: #1f4fa3;
+}
+
+.appverbo-song-status-badge-v1.is-aprovada {
+  background: #ddf5e6;
+  color: #1f7a49;
+}
+
+@media (max-width: 1480px) {
+  #dynamic-process-edit-grid.appverbo-song-grid-v1 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  #dynamic-process-edit-grid.appverbo-song-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .appverbo-song-filters-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  #dynamic-process-edit-grid.appverbo-song-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}

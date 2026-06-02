@@ -6,8 +6,8 @@
     const deps = options && typeof options === "object" ? options : {};
     const legacyDocumentosMenuKey = String(deps.legacyDocumentosMenuKey || "documentos").trim().toLowerCase();
     const meuPerfilMenuKey = String(deps.meuPerfilMenuKey || "meu_perfil").trim().toLowerCase();
-    const processTextualTypes = new Set(["text", "number", "email", "phone", "link"]);
-    const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list", "link"]);
+    const processTextualTypes = new Set(["text", "textarea", "number", "email", "phone", "link"]);
+    const processSupportedTypes = new Set(["text", "textarea", "number", "email", "phone", "date", "flag", "list", "link"]);
 
     //###################################################################################
     // (1) NORMALIZACAO BASE
@@ -93,10 +93,12 @@
         return null;
       }
       const parsedSize = Number.parseInt(String(rawSize || "").trim(), 10);
+      const maxSize = fieldType === "textarea" ? 4000 : 255;
+      const defaultSize = fieldType === "textarea" ? 4000 : 255;
       if (!Number.isFinite(parsedSize)) {
-        return 255;
+        return defaultSize;
       }
-      return Math.min(255, Math.max(1, parsedSize));
+      return Math.min(maxSize, Math.max(1, parsedSize));
     }
 
     function normalizeProcessFieldRequired(rawRequired) {

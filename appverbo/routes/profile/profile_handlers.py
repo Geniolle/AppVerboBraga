@@ -39,15 +39,24 @@ from appverbo.models import (
     MemberEntityStatus,
     MemberStatus,
     Profile,
+    Song,
     User,
     UserAccountStatus,
     UserProfile,
 )
+from appverbo.services.songs import (
+    build_song_field_mapping_v1,
+    get_song_by_id_v1,
+    is_song_process_menu_v1,
+    normalize_song_lyrics_source_v1,
+    normalize_song_lyrics_status_v1,
+    transcribe_song_from_youtube_v1,
+)
 
 from appverbo.routes.profile.router import router
 
-PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list", "link"}
-PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone", "link"}
+PROCESS_FIELD_TYPES = {"text", "textarea", "number", "email", "phone", "date", "flag", "list", "link"}
+PROCESS_TEXTUAL_FIELD_TYPES = {"text", "textarea", "number", "email", "phone", "link"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
 MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
     **dict(MENU_MEU_PERFIL_FIELD_LABELS),
@@ -384,8 +393,9 @@ def _normalize_process_field_size(raw_size: Any, field_type: str) -> int | None:
     try:
         parsed_size = int(str(raw_size or "").strip())
     except (TypeError, ValueError):
-        return 255
-    return max(1, min(parsed_size, 255))
+        return 4000 if field_type == "textarea" else 255
+    max_size = 4000 if field_type == "textarea" else 255
+    return max(1, min(parsed_size, max_size))
 
 def _normalize_process_field_required(raw_required: Any) -> bool:
     if isinstance(raw_required, bool):
@@ -1072,6 +1082,246 @@ def _build_post_save_redirect_url_from_raw_return_url_v6(
         build_users_new_url(**normalized_params)
     )
 # APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_END
+
+
+# ###################################################################################
+# (MUSICAS) PERSISTENCIA DEDICADA POR ENTIDADE
+# ###################################################################################
+
+def _handle_song_process_submission_v1(
+    *,
+    request: Request,
+    session: Session,
+    current_user: dict[str, Any],
+    submitted_form: Any,
+    clean_menu_key: str,
+    process_setting: dict[str, Any],
+    requested_history_action: str,
+    requested_history_record_id: str,
+    active_section_field_keys: list[str],
+    field_meta_by_key: dict[str, dict[str, Any]],
+) -> RedirectResponse:
+    resolved_entity_id, resolve_entity_error = _resolve_selected_entity_id_for_process_v1(
+        request,
+        session,
+        current_user,
+    )
+    if resolve_entity_error:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error=resolve_entity_error,
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    song_field_mapping = build_song_field_mapping_v1(process_setting)
+    required_roles = {
+        "name": "Nome da música",
+        "version": "Versão",
+        "youtube_url": "URL do YouTube",
+        "lyrics": "Letra",
+        "lyrics_source": "Fonte da letra",
+        "lyrics_status": "Estado da letra",
+    }
+
+    if requested_history_action == "delete":
+        try:
+            parsed_song_id = int(str(requested_history_record_id or "").strip())
+        except (TypeError, ValueError):
+            parsed_song_id = 0
+        if parsed_song_id <= 0:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Música inválida para eliminar.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        target_song = get_song_by_id_v1(session, int(resolved_entity_id), parsed_song_id)
+        if target_song is None:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Música não encontrada para eliminar.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        if bool(target_song.is_active):
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Somente músicas inativas podem ser eliminadas.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        session.delete(target_song)
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Falha ao eliminar a música.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_success="Música eliminada com sucesso.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    missing_roles = [
+        role_label
+        for role_key, role_label in required_roles.items()
+        if not str(song_field_mapping.get(role_key) or "").strip()
+    ]
+    if missing_roles:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Configuração incompleta do processo Músicas: " + ", ".join(missing_roles) + ".",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    submitted_values_by_field: dict[str, str] = {}
+    for field_key in active_section_field_keys:
+        field_meta = field_meta_by_key.get(field_key) or {}
+        field_type = _normalize_process_field_type(field_meta.get("field_type"))
+        field_size = _normalize_process_field_size(field_meta.get("size"), field_type)
+        input_name = f"process_field__{field_key}"
+        if field_type == "flag":
+            submitted_values_by_field[field_key] = (
+                "1" if str(submitted_form.get(input_name) or "").strip() == "1" else "0"
+            )
+            continue
+        clean_value = str(submitted_form.get(input_name) or "").strip()
+        if isinstance(field_size, int) and field_size > 0:
+            clean_value = clean_value[:field_size]
+        submitted_values_by_field[field_key] = clean_value
+
+    clean_name = str(submitted_values_by_field.get(song_field_mapping["name"]) or "").strip()
+    clean_version = str(submitted_values_by_field.get(song_field_mapping["version"]) or "").strip()
+    clean_youtube_url = str(submitted_values_by_field.get(song_field_mapping["youtube_url"]) or "").strip()
+    clean_lyrics = str(submitted_values_by_field.get(song_field_mapping["lyrics"]) or "").strip()
+    clean_source = normalize_song_lyrics_source_v1(
+        submitted_values_by_field.get(song_field_mapping["lyrics_source"])
+    )
+    clean_status = normalize_song_lyrics_status_v1(
+        submitted_values_by_field.get(song_field_mapping["lyrics_status"])
+    )
+    song_ai_lyrics_generated = str(submitted_form.get("song_ai_lyrics_generated") or "").strip().lower() in {
+        "1",
+        "true",
+        "sim",
+        "yes",
+        "on",
+    }
+
+    missing_labels: list[str] = []
+    if not clean_name:
+        missing_labels.append("Nome da música")
+    if not clean_version:
+        missing_labels.append("Versão")
+    if not clean_youtube_url:
+        missing_labels.append("URL do YouTube")
+    if not clean_lyrics:
+        missing_labels.append("Letra")
+    if missing_labels:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_labels) + ".",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    if song_ai_lyrics_generated:
+        clean_source = "audio_transcription"
+        clean_status = "rascunho"
+    elif not clean_source:
+        clean_source = "manual"
+    elif clean_source == "audio_transcription" and requested_history_action == "create":
+        clean_status = "rascunho"
+
+    song_is_active = _normalize_process_state(submitted_form.get("process_state")) == "ativo"
+
+    song_for_save: Song | None = None
+    if requested_history_action == "update":
+        try:
+            parsed_song_id = int(str(requested_history_record_id or "").strip())
+        except (TypeError, ValueError):
+            parsed_song_id = 0
+        if parsed_song_id <= 0:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Música inválida para editar.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        song_for_save = get_song_by_id_v1(session, int(resolved_entity_id), parsed_song_id)
+        if song_for_save is None:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Música não encontrada para editar.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+    else:
+        song_for_save = Song(entity_id=int(resolved_entity_id))
+        session.add(song_for_save)
+
+    song_for_save.name = clean_name
+    song_for_save.version = clean_version
+    song_for_save.youtube_url = clean_youtube_url
+    song_for_save.lyrics = clean_lyrics
+    song_for_save.lyrics_source = clean_source
+    song_for_save.lyrics_status = clean_status
+    song_for_save.is_active = bool(song_is_active)
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Falha ao gravar os dados da música.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    success_message = (
+        "Música atualizada com sucesso."
+        if requested_history_action == "update"
+        else "Música criada com sucesso."
+    )
+    return RedirectResponse(
+        url=_build_post_save_redirect_url_v6(
+            submitted_form,
+            menu=clean_menu_key,
+            profile_success=success_message,
+        ),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
 
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
@@ -2188,6 +2438,24 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             field_section_map,
         )
 
+        if is_song_process_menu_v1(
+            clean_menu_key,
+            process_setting.get("label"),
+            requested_section_key,
+        ):
+            return _handle_song_process_submission_v1(
+                request=request,
+                session=session,
+                current_user=current_user,
+                submitted_form=submitted_form,
+                clean_menu_key=clean_menu_key,
+                process_setting=process_setting,
+                requested_history_action=requested_history_action,
+                requested_history_record_id=requested_history_record_id,
+                active_section_field_keys=active_section_field_keys,
+                field_meta_by_key=field_meta_by_key,
+            )
+
         if history_process_mode and requested_history_action == "delete":
             if not requested_history_record_id:
                 return RedirectResponse(
@@ -2613,6 +2881,35 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     return RedirectResponse(
         url=redirect_url,
         status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/api/songs/transcribe-audio")
+async def transcribe_song_audio_v1(request: Request) -> JSONResponse:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "message": "Efetue login para continuar.",
+                },
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            payload = await request.json()
+        except Exception:
+            payload = {}
+
+    transcribed_ok, response_payload = transcribe_song_from_youtube_v1(
+        youtube_url=(payload or {}).get("youtubeUrl"),
+        song_name=(payload or {}).get("songName"),
+        version=(payload or {}).get("version"),
+    )
+    return JSONResponse(
+        response_payload,
+        status_code=status.HTTP_200_OK if transcribed_ok else status.HTTP_400_BAD_REQUEST,
     )
 
 @router.post("/users/profile/address")

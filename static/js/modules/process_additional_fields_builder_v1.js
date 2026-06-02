@@ -20,6 +20,7 @@
     if (!Array.isArray(fieldTypes) || !fieldTypes.length) {
       fieldTypes = [
         { key: "text", label: "Texto" },
+        { key: "textarea", label: "Texto longo" },
         { key: "number", label: "Número" },
         { key: "email", label: "Email" },
         { key: "phone", label: "Telefone" },
@@ -41,7 +42,7 @@
       return;
     }
 
-    const sizedTypes = new Set(["text", "number", "email", "phone"]);
+    const sizedTypes = new Set(["text", "textarea", "number", "email", "phone"]);
     let additionalFieldsPageSize = Number.parseInt(pageSizeEl ? pageSizeEl.value : "5", 10) || 5;
     let additionalFieldsCurrentPage = 1;
 
@@ -213,7 +214,7 @@
           name="additional_field_size"
           class="process-additional-field-size-input"
           min="1"
-          max="255"
+          max="4000"
           placeholder=""
           value="${String(initialSize || "")}"
         >

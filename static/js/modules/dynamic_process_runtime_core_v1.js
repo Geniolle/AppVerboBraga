@@ -1195,43 +1195,52 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
         fieldContainerEl.appendChild(labelEl);
         fieldContainerEl.appendChild(selectEl);
       } else {
-        const inputEl = document.createElement("input");
         const inputValue = fieldType === "date"
           ? normalizeDateInputValue(editDefaultValue)
           : editDefaultValue;
-        inputEl.id = inputId;
-        inputEl.name = inputName;
-        inputEl.type = getDynamicProcessInputType(fieldType);
-        inputEl.value = inputValue;
-        inputEl.defaultValue = inputValue;
-        inputEl.required = fieldRequired;
-        if (fieldType === "date" && typeof inputEl.showPicker === "function") {
-          const openDatePicker = () => {
-            try {
-              inputEl.showPicker();
-            } catch (error) {
-              // Some browsers block showPicker outside trusted user events.
-            }
-          };
-          inputEl.addEventListener("click", openDatePicker);
-          inputEl.addEventListener("focus", openDatePicker);
-        }
-        if (fieldType === "number") {
-          inputEl.inputMode = "numeric";
+        const controlEl = fieldType === "textarea"
+          ? document.createElement("textarea")
+          : document.createElement("input");
+        controlEl.id = inputId;
+        controlEl.name = inputName;
+        controlEl.required = fieldRequired;
+        if (fieldType === "textarea") {
+          controlEl.value = inputValue;
+          controlEl.defaultValue = inputValue;
+          controlEl.rows = 10;
+          controlEl.classList.add("appverbo-dynamic-process-textarea-v1");
+        } else {
+          controlEl.type = getDynamicProcessInputType(fieldType);
+          controlEl.value = inputValue;
+          controlEl.defaultValue = inputValue;
+          if (fieldType === "date" && typeof controlEl.showPicker === "function") {
+            const openDatePicker = () => {
+              try {
+                controlEl.showPicker();
+              } catch (error) {
+                // Some browsers block showPicker outside trusted user events.
+              }
+            };
+            controlEl.addEventListener("click", openDatePicker);
+            controlEl.addEventListener("focus", openDatePicker);
+          }
+          if (fieldType === "number") {
+            controlEl.inputMode = "numeric";
+          }
         }
         if (typeof fieldSize === "number" && fieldSize > 0 && processTextualTypes.has(fieldType)) {
-          inputEl.maxLength = fieldSize;
+          controlEl.maxLength = fieldSize;
         }
         if (isEmpresaInternalNumber) {
-          inputEl.readOnly = true;
-          inputEl.disabled = true;
-          inputEl.classList.add("readonly-field");
-          inputEl.required = false;
+          controlEl.readOnly = true;
+          controlEl.disabled = true;
+          controlEl.classList.add("readonly-field");
+          controlEl.required = false;
         }
-        renderedInputsByFieldKey.set(fieldKey, inputEl);
+        renderedInputsByFieldKey.set(fieldKey, controlEl);
 
         fieldContainerEl.appendChild(labelEl);
-        fieldContainerEl.appendChild(inputEl);
+        fieldContainerEl.appendChild(controlEl);
       }
 
       dynamicProcessEditGridEl.appendChild(fieldContainerEl);
@@ -1293,6 +1302,23 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     if (dynamicProcessHistoryInactiveCardEl) {
       dynamicProcessHistoryInactiveCardEl.style.display = "none";
     }
+  }
+
+  if (typeof window.APPVERBO_APPLY_SONG_PROCESS_UI_V1 === "function") {
+    window.APPVERBO_APPLY_SONG_PROCESS_UI_V1({
+      menuKey: cleanMenuKey,
+      menuLabel,
+      sectionLabel,
+      sectionFields,
+      processSetting,
+      historyProcessMode,
+      dynamicProcessEditFormEl,
+      dynamicProcessEditGridEl,
+      dynamicProcessHistoryActiveCardEl,
+      dynamicProcessHistoryInactiveCardEl,
+      dynamicProcessHistoryActiveTableEl,
+      dynamicProcessHistoryInactiveTableEl
+    });
   }
 
   if (preserveInteractionState && wasEditing) {

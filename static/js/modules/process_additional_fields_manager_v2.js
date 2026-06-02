@@ -65,7 +65,7 @@
     let tempIndex = 1;
     let currentPage = 1;
     let pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-    const sizedTypes = new Set(["text", "number", "email", "phone"]);
+    const sizedTypes = new Set(["text", "textarea", "number", "email", "phone"]);
 
     try {
       fieldTypes = JSON.parse(fieldTypesRaw);
