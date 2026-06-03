@@ -96,6 +96,27 @@
       context.updateSubmenuProcessTitle(menuKey, resolveProcessTitle(menuKey, config));
     }
 
+    function escapeSelectorValueV1(value) {
+      const cleanValue = String(value || "");
+      if (typeof window !== "undefined" && window.CSS && typeof window.CSS.escape === "function") {
+        return window.CSS.escape(cleanValue);
+      }
+      return cleanValue.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    }
+
+    function resolveDynamicSectionLinkElementV1(sectionKey) {
+      if (!context.itemsEl) {
+        return null;
+      }
+      const cleanSectionKey = String(sectionKey || "").trim();
+      if (!cleanSectionKey) {
+        return null;
+      }
+      return context.itemsEl.querySelector(
+        `.submenu-item[data-dynamic-process-section="${escapeSelectorValueV1(cleanSectionKey)}"]`
+      );
+    }
+
     function renderSubmenu(menuKey) {
       const config = context.menuConfig[menuKey];
       updateSubmenuProcessTitle(menuKey, config);
@@ -259,9 +280,7 @@
         context.selectedTargetByMenu[menuKey] = defaultTarget;
         if (selectedDynamicItem && context.itemsEl) {
           const selectedSectionKey = String(selectedDynamicItem.dynamicProcessSectionKey || "");
-          const selectedLinkEl = context.itemsEl.querySelector(
-            `.submenu-item[data-dynamic-process-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
-          );
+          const selectedLinkEl = resolveDynamicSectionLinkElementV1(selectedSectionKey);
           if (selectedLinkEl) {
             context.setActiveSubmenu(defaultTarget, selectedLinkEl);
           } else {
@@ -321,7 +340,18 @@
         return;
       }
       context.selectedTargetByMenu[menuKey] = targetSelector;
-      context.setActiveSubmenu(targetSelector);
+      if (targetSelector === "#dynamic-process-card") {
+        const selectedLinkEl = resolveDynamicSectionLinkElementV1(
+          context.selectedDynamicSectionByMenu[menuKey] || ""
+        );
+        if (selectedLinkEl) {
+          context.setActiveSubmenu(targetSelector, selectedLinkEl);
+        } else {
+          context.setActiveSubmenu(targetSelector);
+        }
+      } else {
+        context.setActiveSubmenu(targetSelector);
+      }
       context.applyContentForMenuTarget(menuKey, targetSelector);
       if (targetSelector === "#dynamic-process-card") {
         context.renderDynamicProcessCard(menuKey, context.selectedDynamicSectionByMenu[menuKey] || "");

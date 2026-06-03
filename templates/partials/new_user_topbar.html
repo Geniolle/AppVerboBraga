@@ -1,3 +1,5 @@
+{% set topbar_feedback_state_v1 = "success" if topbar_feedback_message_v1 else "idle" %}
+
   <header class="topbar">
     <div class="topbar-left">
       <button
@@ -53,9 +55,9 @@
               data-dropdown-target="#perfil-pessoal-card"
               href="#perfil-pessoal-card"
             >Minha conta</a>
-            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-morada-card" href="#perfil-morada-card">Minhas configurações</a>
-            <a class="dropdown-link" data-dropdown-menu="links" data-dropdown-target="#sessao-card" href="#sessao-card">Minhas informações sobre a entidade</a>
-            <a class="dropdown-link" data-dropdown-menu="home" data-dropdown-target="#home-summary-card" href="#home-summary-card">Quais são as novidades?</a>
+            <a class="dropdown-link" data-dropdown-menu="perfil" data-dropdown-target="#perfil-morada-card" href="#perfil-morada-card">Minhas configura&ccedil;&otilde;es</a>
+            <a class="dropdown-link" data-dropdown-menu="links" data-dropdown-target="#sessao-card" href="#sessao-card">Minhas informa&ccedil;&otilde;es sobre a entidade</a>
+            <a class="dropdown-link" data-dropdown-menu="home" data-dropdown-target="#home-summary-card" href="#home-summary-card">Quais s&atilde;o as novidades?</a>
           </div>
           <form class="dropdown-logout-form" method="post" action="/logout">
             <button class="dropdown-logout-btn" type="submit">Efetuar logoff</button>
@@ -64,3 +66,28 @@
       </div>
     </div>
   </header>
+  <div
+    id="appverbo-topbar-feedback"
+    class="topbar-feedback topbar-feedback-toast"
+    data-appverbo-topbar-feedback="1"
+    data-feedback-state="{{ topbar_feedback_state_v1 }}"
+    data-feedback-message="{{ topbar_feedback_message_v1 }}"
+    data-feedback-idle-label="Sem atualiza&ccedil;&otilde;es recentes"
+    data-feedback-saving-label="A atualizar..."
+    data-feedback-success-label="Atualizado com sucesso."
+    data-feedback-visible="{% if topbar_feedback_message_v1 %}true{% else %}false{% endif %}"
+    role="status"
+    aria-live="polite"
+    title="{% if topbar_feedback_message_v1 %}{{ topbar_feedback_message_v1 }}{% else %}Sem atualiza&ccedil;&otilde;es recentes{% endif %}"
+  >
+    <span class="topbar-feedback-button" aria-hidden="true">
+      <span class="topbar-feedback-icon" data-appverbo-topbar-feedback-icon>&#10003;</span>
+    </span>
+    <span class="topbar-feedback-label" data-appverbo-topbar-feedback-text>
+      {% if topbar_feedback_message_v1 %}
+        {{ topbar_feedback_message_v1 }}
+      {% else %}
+        Sem atualiza&ccedil;&otilde;es recentes
+      {% endif %}
+    </span>
+  </div>

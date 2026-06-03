@@ -1,12 +1,29 @@
 {% extends "base.html" %}
 
-{% from "macros/admin_menu_subprocess.html" import render_admin_menu_state %}
+{% from "macros/admin_menu_subprocess.html" import render_admin_menu_state, render_admin_menu_legacy_actions_v1 %}
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
 {% from "macros/admin_subprocess_v2.html" import render_admin_subprocess_v2_state %}
 
+{% set topbar_feedback_message_v1 = "" %}
+{% if settings_success %}
+  {% set topbar_feedback_message_v1 = settings_success %}
+{% elif entity_success %}
+  {% set topbar_feedback_message_v1 = entity_success %}
+{% elif profile_success %}
+  {% set topbar_feedback_message_v1 = profile_success %}
+{% elif success %}
+  {% set topbar_feedback_message_v1 = success %}
+{% elif admin_subprocess_state and admin_subprocess_state.flash_message and (admin_subprocess_state.flash_category|default("success")) != "error" %}
+  {% set topbar_feedback_message_v1 = admin_subprocess_state.flash_message %}
+{% elif admin_subprocess_state and admin_subprocess_state.success %}
+  {% set topbar_feedback_message_v1 = admin_subprocess_state.success %}
+{% elif admin_menu_state and admin_menu_state.success %}
+  {% set topbar_feedback_message_v1 = admin_menu_state.success %}
+{% endif %}
+
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 {# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_START #}
-{% block body_class %}appverbo-booting{% if admin_process_only %} appverbo-admin-process-only{% endif %}{% if admin_tab %} appverbo-admin-tab-{{ admin_tab }}{% endif %}{% endblock %}
+{% block body_class %}appverbo-booting{% if admin_process_only %} appverbo-admin-process-only{% endif %}{% if admin_tab %} appverbo-admin-tab-{{ admin_tab }}{% endif %}{% if topbar_feedback_message_v1 %} appverbo-has-topbar-feedback-v1{% endif %}{% endblock %}
 {# APPVERBO_ANTI_FLICKER_BODY_CLASS_V2_END #}
 
 {% block head_extra %}
@@ -49,8 +66,8 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260602-song-process-ui-v1">
-  <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v4-six-inline-fields">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260603-topbar-feedback-toast-v4-zindex">
+  <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v5-lyrics-preview">
   <style>
     :root {
       --topbar: {{ admin_topbar_color_hex|default('#334A62', true) }};
@@ -154,7 +171,7 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260527-admin-subprocess-nav-v13-respect-active-sidebar-menu" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260603-admin-subprocess-nav-v16-clean-admin-context" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260525-aba-ativa-subprocessos-v2-bypass-v7" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
@@ -642,6 +659,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               <td><span class="entity-status entity-status-active">Ativo</span></td>
               <td>{{ loop.index }}</td>
               <td class="text-right admin-menu-actions-cell-v1">
+                {{ render_admin_menu_legacy_actions_v1(row, row_key, row_is_protected, "active", "#admin-menu-card") }}
+                {% if false %}
                 <div class="table-actions" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
                   {# APPVERBO_ADMIN_MENU_ACTIONS_LIKE_SESSOES_V1 #}
                   <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
@@ -666,6 +685,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                             aria-label="Descer {{ row.label or row.name or row.title or row.key }}">&#8595;</button>
                   </form>
 
+                  <a class="table-icon-btn"
+                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+                     title="Editar"
+                     aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
+
                   {% if row_is_protected %}
                   <span class="table-icon-btn table-icon-btn-disabled"
                         title="Menu obrigatório"
@@ -677,11 +701,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                      aria-label="Desativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
                   {% endif %}
 
-                  <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
-                     title="Editar"
-                     aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
                 </div>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}
@@ -742,16 +763,18 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               <td><span class="entity-status entity-status-inactive">Inativo</span></td>
               <td>{{ loop.index }}</td>
               <td class="text-right admin-menu-actions-cell-v1">
+                {{ render_admin_menu_legacy_actions_v1(row, row_key, row_is_protected, "inactive", "#admin-menu-card-inactive") }}
+                {% if false %}
                 <div class="table-actions" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
-                  <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card-inactive"
-                     title="Ativar"
-                     aria-label="Ativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
-
                   <a class="table-icon-btn"
                      href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
+
+                  <a class="table-icon-btn"
+                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card-inactive"
+                     title="Ativar"
+                     aria-label="Ativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
 
                   {% if row_is_protected or not row.can_delete %}
                   <span class="table-icon-btn table-icon-btn-disabled"
@@ -769,6 +792,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   </form>
                   {% endif %}
                 </div>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}
@@ -1889,19 +1913,19 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       <div class="table-actions">
                         <a
                           class="table-icon-btn"
-                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
-                          title="Exibir entidade"
-                          aria-label="Exibir entidade"
-                        >
-                          &#128065;
-                        </a>
-                        <a
-                          class="table-icon-btn"
                           href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card"
                           title="Modificar entidade"
                           aria-label="Modificar entidade"
                         >
                           &#9998;
+                        </a>
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
+                          title="Exibir entidade"
+                          aria-label="Exibir entidade"
+                        >
+                          &#128065;
                         </a>
                         {% if current_user_can_manage_all_entities %}
                         {% if not row.is_active %}
@@ -1981,19 +2005,19 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       <div class="table-actions">
                         <a
                           class="table-icon-btn"
-                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
-                          title="Exibir entidade"
-                          aria-label="Exibir entidade"
-                        >
-                          &#128065;
-                        </a>
-                        <a
-                          class="table-icon-btn"
                           href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card"
                           title="Modificar entidade"
                           aria-label="Modificar entidade"
                         >
                           &#9998;
+                        </a>
+                        <a
+                          class="table-icon-btn"
+                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
+                          title="Exibir entidade"
+                          aria-label="Exibir entidade"
+                        >
+                          &#128065;
                         </a>
                         {% if current_user_can_manage_all_entities %}
                         {% if not row.is_active %}
@@ -3281,8 +3305,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
     };
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260526-core-page-size-options-v2"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260602-additional-textarea-type-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260523-lists-pagination-state-v1"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260602-additional-time-type-v2"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260603-lists-sessions-and-menu-by-session-v3"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260601-admin-table-search-v5-reusable-subprocess-toolbar"></script>
@@ -3293,6 +3317,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/frontend_return_url_post_save_v6.js?v=20260525-return-url-post-save-v6-module-v1" defer></script>
 <script src="/static/js/modules/initial_profile_section_from_url_v1.js?v=20260525-initial-profile-section-module-v1" defer></script>
 <script src="/static/js/modules/meu_perfil_subsequent_visibility_v1.js?v=20260525-meu-perfil-subsequent-module-v1" defer></script>
+<script src="/static/js/modules/topbar_save_feedback_v1.js?v=20260603-topbar-save-feedback-toast-v4-promote-body" defer></script>
 <script src="/static/js/modules/auto_dismiss_flash_messages_v1.js?v=20260525-auto-dismiss-flash-module-v1" defer></script>
 <script src="/static/js/modules/meu_perfil_quantity_submit_sync_v1.js?v=20260525-quantity-submit-sync-module-v1" defer></script>
 <script src="/static/js/modules/message_dismiss_safe_v5.js?v=20260525-message-dismiss-safe-v5-module-v1" defer></script>
@@ -3303,28 +3328,28 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260602-dynamic-runtime-core-v5-song-ui" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260602-dynamic-process-history-renderer-v5-song-ai-reset" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260603-dynamic-runtime-core-v8-all-options-in-automatic-lists" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260603-dynamic-process-history-renderer-v7-actions-order" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
-<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260601-menu-dynamic-navigation-core-v7-departamentos-dynamic-card" defer></script>
-<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260526-menu-navigation-controller-standards-v9-force-first-subprocess" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260603-menu-dynamic-navigation-core-v8-submenu-state-unified" defer></script>
+<script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260603-menu-navigation-controller-v10-dynamic-link-active" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
-<script src="/static/js/modules/process_field_utils_v1.js?v=20260602-process-field-utils-textarea-v1" defer></script>
+<script src="/static/js/modules/process_field_utils_v1.js?v=20260602-process-field-utils-time-v2" defer></script>
 <script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260529-process-subsequent-rules-utils-bootstrap-fix-v1" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
-<script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260601-process-history-labels-utils-module-v2-musicas-history-mode" defer></script>
+<script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260602-process-history-labels-utils-module-v3-generic-history-layout" defer></script>
 <script src="/static/js/modules/avatar_utils_v1.js?v=20260525-avatar-utils-module-v1" defer></script>
 <script src="/static/js/modules/user_dropdown_ui_v1.js?v=20260525-user-dropdown-ui-module-v1" defer></script>
-<script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260601-process-field-runtime-utils-link-type-v2" defer></script>
+<script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260602-process-field-runtime-utils-time-v3" defer></script>
 <script src="/static/js/modules/process_absence_date_validation_v1.js?v=20260525-process-absence-date-validation-module-v1" defer></script>
 <script src="/static/js/modules/profile_edit_ui_utils_v1.js?v=20260525-profile-edit-ui-utils-module-v1" defer></script>
 <script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
 <script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260526-menu-navigation-bridge-process-title-v2" defer></script>
 <script src="/static/js/modules/profile_allocation_multivalue_v1.js?v=20260525-profile-allocation-multivalue-module-v1" defer></script>
-<script src="/static/js/modules/profile_process_runtime_core_v1.js?v=20260525-profile-process-runtime-core-module-v1" defer></script>
+<script src="/static/js/modules/profile_process_runtime_core_v1.js?v=20260603-profile-process-runtime-core-v2-session-list-rerender" defer></script>
 <script src="/static/js/modules/process_fields_builder_v1.js?v=20260525-process-fields-builder-module-v1" defer></script>
 <script src="/static/js/modules/process_additional_fields_builder_v1.js?v=20260525-process-additional-fields-builder-module-v1" defer></script>
 <script src="/static/js/modules/sidebar_sections_editor_v1.js?v=20260525-sidebar-sections-editor-module-v1" defer></script>
@@ -3345,6 +3370,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/page_bootstrap_v1.js?v=20260527-page-bootstrap-v3-dropdown-minha-conta-sync" defer></script>
 <script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
 <script src="/static/js/new_user.js?v=20260602-new-user-textarea-song-v1" defer></script>
+<script src="/static/js/modules/dynamic_process_silent_refresh_v1.js?v=20260603-dynamic-process-silent-refresh-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260506-fechar-edicao-apos-guardar-v1"></script>

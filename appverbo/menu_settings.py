@@ -28,7 +28,7 @@ SIDEBAR_MENU_KEYS = {item["key"] for item in SIDEBAR_MENU_DEFAULTS}
 SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
-MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", MENU_MEU_PERFIL_KEY}
+MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", "administrativo", MENU_MEU_PERFIL_KEY}
 MENU_VISIBILITY_SCOPES = ("owner", "legado")
 MENU_VISIBILITY_SCOPE_ALL = "all"
 MENU_CONFIG_DISPLAY_ORDER_KEY = "display_order"
@@ -149,6 +149,7 @@ ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "phone", "label": "Telefone"},
     {"key": "link", "label": "Link"},
     {"key": "date", "label": "Data"},
+    {"key": "time", "label": "Horário"},
     {"key": "flag", "label": "Flag"},
     {"key": "header", "label": "Cabeçalho (aba)"},
     {"key": "list", "label": "Lista"},
@@ -1507,7 +1508,7 @@ def normalize_menu_process_visible_fields_v4(
     if normalized_fields:
         return normalized_fields
 
-    if has_explicit_config:
+    if has_explicit_config and clean_menu_key != "administrativo":
         return []
 
     return get_menu_process_default_visible_fields(
@@ -4257,11 +4258,21 @@ def _normalize_process_list_key_v3(raw_key: Any) -> str:
 
 PROCESS_LIST_SOURCE_MANUAL_V1 = "manual"
 PROCESS_LIST_SOURCE_USERS_V1 = "users"
+PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 = "sidebar_sections"
+PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 = "sidebar_menus_by_section"
 PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 = "table:"
 PROCESS_LIST_SOURCE_TABLE_EXCLUDED_KEYS_V1 = frozenset({"alembic_version", "sqlite_sequence"})
+PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1 = {
+    "user_profiles": "profiles",
+}
 PROCESS_LIST_SOURCE_LABELS_V1 = {
     PROCESS_LIST_SOURCE_MANUAL_V1: "Manual",
     PROCESS_LIST_SOURCE_USERS_V1: "Utilizador (automático)",
+    PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1: "Sessoes (automatico)",
+    PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1: "Subprocesso/Menu por sessao (automatico)",
+}
+PROCESS_LIST_SOURCE_TABLE_LABEL_OVERRIDES_V1 = {
+    "profiles": "Perfil",
 }
 PROCESS_LIST_SOURCE_TABLE_DISPLAY_COLUMN_PRIORITY_V1 = (
     "label",
@@ -4308,11 +4319,44 @@ def _is_process_list_users_source_alias_v1(raw_value: Any) -> bool:
     return clean_value in {"users", "user", "utilizador", "utilizadores", "tabela_utilizador", "users_table"}
 
 
+def _is_process_list_sidebar_sections_source_alias_v1(raw_value: Any) -> bool:
+    clean_value = str(raw_value or "").strip().lower()
+    clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
+    clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
+    clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+
+    return clean_value in {
+        PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1,
+        "sessions",
+        "session",
+        "sessoes",
+        "sidebar_sections",
+    }
+
+
+def _is_process_list_sidebar_menus_by_section_source_alias_v1(raw_value: Any) -> bool:
+    clean_value = str(raw_value or "").strip().lower()
+    clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
+    clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
+    clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+
+    return clean_value in {
+        PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1,
+        "menus_by_section",
+        "menu_by_section",
+        "menus_por_sessao",
+        "menu_por_sessao",
+        "subprocessos_por_sessao",
+        "submenu_por_sessao",
+    }
+
+
 def _normalize_process_list_table_key_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
     clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
     clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
     clean_value = re.sub(r"_+", "_", clean_value).strip("_")
+    clean_value = PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1.get(clean_value, clean_value)
     return clean_value
 
 
@@ -4344,12 +4388,18 @@ def _format_process_list_table_label_v1(table_key: str) -> str:
     clean_table_key = _normalize_process_list_table_key_v1(table_key)
     if not clean_table_key:
         return "Tabela"
+    if clean_table_key in PROCESS_LIST_SOURCE_TABLE_LABEL_OVERRIDES_V1:
+        return PROCESS_LIST_SOURCE_TABLE_LABEL_OVERRIDES_V1[clean_table_key]
     return clean_table_key.replace("_", " ").title()
 
 
 def _is_process_list_source_automatic_v1(source_key: str) -> bool:
     clean_source_key = _normalize_process_list_source_key_v1(source_key)
-    return clean_source_key == PROCESS_LIST_SOURCE_USERS_V1 or bool(
+    return clean_source_key in {
+        PROCESS_LIST_SOURCE_USERS_V1,
+        PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1,
+        PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1,
+    } or bool(
         _extract_process_list_table_key_from_source_v1(clean_source_key)
     )
 
@@ -4357,6 +4407,10 @@ def _is_process_list_source_automatic_v1(source_key: str) -> bool:
 def _normalize_process_list_source_key_v1(raw_source: Any) -> str:
     if _is_process_list_users_source_alias_v1(raw_source):
         return PROCESS_LIST_SOURCE_USERS_V1
+    if _is_process_list_sidebar_sections_source_alias_v1(raw_source):
+        return PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1
+    if _is_process_list_sidebar_menus_by_section_source_alias_v1(raw_source):
+        return PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1
 
     table_key = _extract_process_list_table_key_from_source_v1(raw_source)
     if table_key:
@@ -4502,6 +4556,118 @@ def _load_process_list_users_source_items_v1(session: Session) -> list[str]:
     return labels
 
 
+def _normalize_process_list_option_label_v1(raw_value: Any) -> str:
+    return " ".join(str(raw_value or "").strip().split())
+
+
+def _extract_process_list_option_labels_v1(option_rows: list[dict[str, Any]]) -> list[str]:
+    labels: list[str] = []
+    seen_labels: set[str] = set()
+
+    for row in option_rows:
+        option_label = _normalize_process_list_option_label_v1(
+            row.get("label") or row.get("value")
+        )
+        if not option_label:
+            continue
+        lookup_label = option_label.lower()
+        if lookup_label in seen_labels:
+            continue
+        seen_labels.add(lookup_label)
+        labels.append(option_label)
+
+    return labels
+
+
+def _build_process_list_option_rows_from_labels_v1(labels: list[str]) -> list[dict[str, str]]:
+    return [
+        {
+            "value": option_label,
+            "label": option_label,
+        }
+        for option_label in labels
+        if str(option_label or "").strip()
+    ]
+
+
+def _load_process_list_sidebar_sections_source_rows_v1(
+    session: Session,
+) -> list[dict[str, str]]:
+    administrativo_config = _load_menu_config(session, "administrativo")
+    section_rows = normalize_sidebar_sections(
+        administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+
+    option_rows: list[dict[str, str]] = []
+    seen_section_keys: set[str] = set()
+
+    for section_row in section_rows:
+        section_key = _normalize_sidebar_section_key(section_row.get("key"))
+        section_label = _normalize_process_list_option_label_v1(section_row.get("label"))
+        section_status = _normalize_sidebar_section_status_v5(
+            section_row.get("status")
+            if section_row.get("status") is not None
+            else section_row.get("section_status", section_row.get("is_active"))
+        )
+
+        if not section_key or not section_label or section_status != "ativo":
+            continue
+        if section_key in seen_section_keys:
+            continue
+
+        seen_section_keys.add(section_key)
+        option_rows.append(
+            {
+                "value": section_label,
+                "label": section_label,
+                "section_key": section_key,
+                "section_label": section_label,
+            }
+        )
+
+    return option_rows
+
+
+def _load_process_list_sidebar_menus_by_section_source_rows_v1(
+    session: Session,
+) -> list[dict[str, str]]:
+    base_get_sidebar_menu_settings = globals().get("_original_get_sidebar_menu_settings_for_lists_v3")
+    if callable(base_get_sidebar_menu_settings):
+        menu_rows = base_get_sidebar_menu_settings(session)
+    else:
+        menu_rows = get_sidebar_menu_settings(session)
+
+    option_rows: list[dict[str, str]] = []
+
+    for menu_row in menu_rows:
+        if not bool(menu_row.get("is_active")) or bool(menu_row.get("is_deleted")):
+            continue
+
+        menu_label = _normalize_process_list_option_label_v1(menu_row.get("label"))
+        menu_key = _normalize_menu_key(menu_row.get("key"))
+        section_key = _normalize_sidebar_section_key(
+            menu_row.get("sidebar_section_key") or menu_row.get("menu_section")
+        )
+        section_label = _normalize_process_list_option_label_v1(
+            menu_row.get("sidebar_section_label") or menu_row.get("menu_section_label")
+        )
+
+        if not menu_label or not section_key or not section_label:
+            continue
+
+        option_rows.append(
+            {
+                "value": menu_label,
+                "label": menu_label,
+                "menu_key": menu_key,
+                "section_key": section_key,
+                "section_label": section_label,
+            }
+        )
+
+    return option_rows
+
+
 def _list_process_source_tables_v1(session: Session) -> list[str]:
     rows = session.execute(
         text(
@@ -4538,6 +4704,14 @@ def get_process_list_source_options_v1(session: Session) -> list[dict[str, str]]
     options: list[dict[str, str]] = [
         {"key": PROCESS_LIST_SOURCE_MANUAL_V1, "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_MANUAL_V1]},
         {"key": PROCESS_LIST_SOURCE_USERS_V1, "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_USERS_V1]},
+        {
+            "key": PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1,
+            "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1],
+        },
+        {
+            "key": PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1,
+            "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1],
+        },
     ]
 
     for table_key in _list_process_source_tables_v1(session):
@@ -4716,6 +4890,8 @@ def _resolve_process_lists_dynamic_sources_v1(
     resolved_lists: list[dict[str, Any]] = []
     users_source_items_cache: list[str] | None = None
     table_source_items_cache: dict[str, list[str]] = {}
+    sidebar_sections_source_rows_cache: list[dict[str, str]] | None = None
+    sidebar_menus_by_section_source_rows_cache: list[dict[str, str]] | None = None
 
     for raw_process_list in process_lists:
         process_list = dict(raw_process_list or {})
@@ -4730,6 +4906,29 @@ def _resolve_process_lists_dynamic_sources_v1(
                 users_source_items_cache = _load_process_list_users_source_items_v1(session)
             process_list["items"] = list(users_source_items_cache)
             process_list["items_csv"] = ", ".join(users_source_items_cache)
+            process_list["option_rows"] = _build_process_list_option_rows_from_labels_v1(
+                users_source_items_cache
+            )
+        elif source_key == PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1:
+            if sidebar_sections_source_rows_cache is None:
+                sidebar_sections_source_rows_cache = _load_process_list_sidebar_sections_source_rows_v1(
+                    session
+                )
+            process_list["option_rows"] = list(sidebar_sections_source_rows_cache)
+            process_list["items"] = _extract_process_list_option_labels_v1(
+                sidebar_sections_source_rows_cache
+            )
+            process_list["items_csv"] = ", ".join(process_list["items"])
+        elif source_key == PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1:
+            if sidebar_menus_by_section_source_rows_cache is None:
+                sidebar_menus_by_section_source_rows_cache = (
+                    _load_process_list_sidebar_menus_by_section_source_rows_v1(session)
+                )
+            process_list["option_rows"] = list(sidebar_menus_by_section_source_rows_cache)
+            process_list["items"] = _extract_process_list_option_labels_v1(
+                sidebar_menus_by_section_source_rows_cache
+            )
+            process_list["items_csv"] = ", ".join(process_list["items"])
         elif source_table_key:
             if source_table_key not in table_source_items_cache:
                 table_source_items_cache[source_table_key] = _load_process_list_table_source_items_v1(
@@ -4739,6 +4938,13 @@ def _resolve_process_lists_dynamic_sources_v1(
             source_items = table_source_items_cache.get(source_table_key, [])
             process_list["items"] = list(source_items)
             process_list["items_csv"] = ", ".join(source_items)
+            process_list["option_rows"] = _build_process_list_option_rows_from_labels_v1(
+                source_items
+            )
+        else:
+            process_list["option_rows"] = _build_process_list_option_rows_from_labels_v1(
+                list(process_list.get("items") or [])
+            )
 
         resolved_lists.append(process_list)
 
@@ -4802,7 +5008,12 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
 
     for item in settings:
         clean_key = _normalize_menu_key(item.get("key"))
-        menu_config = config_by_key.get(clean_key, {})
+        raw_menu_config = config_by_key.get(clean_key, {})
+        menu_config = _normalize_music_menu_config_v1(
+            clean_key,
+            item.get("label"),
+            item.get("menu_config") if isinstance(item.get("menu_config"), dict) else raw_menu_config,
+        )
         process_lists = _resolve_process_lists_dynamic_sources_v1(
             session,
             normalize_menu_process_lists_v3(menu_config.get("process_lists")),
@@ -5341,6 +5552,20 @@ def update_sidebar_menu_additional_fields_v4(
 
         seen_fields.add(field_key)
         clean_visible_fields.append(field_key)
+
+    if clean_menu_key == "administrativo" and not clean_visible_fields:
+        default_visible_fields = get_menu_process_default_visible_fields(
+            clean_menu_key,
+            menu_config,
+        )
+        for field_key in default_visible_fields:
+            clean_field_key = str(field_key or "").strip().lower()
+            if not clean_field_key or clean_field_key in seen_fields:
+                continue
+            if clean_field_key not in selectable_keys:
+                continue
+            seen_fields.add(clean_field_key)
+            clean_visible_fields.append(clean_field_key)
 
     process_visible_field_rows: list[dict[str, str]] = []
     process_visible_field_header_map: dict[str, str] = {}

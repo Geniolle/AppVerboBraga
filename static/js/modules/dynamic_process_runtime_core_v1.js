@@ -6,20 +6,7 @@
     const deps = options && typeof options === "object" ? options : {};
 function buildProcessOptionMetaMap(setting) {
   const metaByKey = new Map();
-  const processListsByKey = new Map();
-  const processLists = Array.isArray(setting && setting.process_lists) ? setting.process_lists : [];
-  processLists.forEach((processList) => {
-    const listKey = normalizeMenuKey(processList && processList.key);
-    if (!listKey) {
-      return;
-    }
-    processListsByKey.set(
-      listKey,
-      Array.isArray(processList.items)
-        ? processList.items.map((item) => String(item || "").trim()).filter(Boolean)
-        : []
-    );
-  });
+  const processListsByKey = buildProcessListMetaMap(setting);
 
   const processOptions = Array.isArray(setting && setting.process_field_options)
     ? setting.process_field_options
@@ -40,12 +27,399 @@ function buildProcessOptionMetaMap(setting) {
       fieldType,
       size: normalizeProcessFieldSize(option.size, fieldType),
       listKey,
-      listOptions: processListsByKey.get(listKey) || [],
+      listSourceKey: (processListsByKey.get(listKey) || {}).sourceKey || "",
+      listOptions: Array.isArray((processListsByKey.get(listKey) || {}).items)
+        ? (processListsByKey.get(listKey) || {}).items.slice()
+        : [],
+      listOptionRows: Array.isArray((processListsByKey.get(listKey) || {}).optionRows)
+        ? (processListsByKey.get(listKey) || {}).optionRows.slice()
+        : [],
       isRequired: normalizeProcessFieldRequired(optionRequiredRaw)
     });
   });
 
   return metaByKey;
+}
+
+function normalizeProcessListOptionRowsV1(optionRows) {
+  if (!Array.isArray(optionRows)) {
+    return [];
+  }
+
+  return optionRows
+    .map((row) => {
+      const rawRow = row && typeof row === "object" ? row : {};
+      const value = String(rawRow.value || rawRow.label || "").trim();
+      const label = String(rawRow.label || rawRow.value || "").trim();
+      if (!value && !label) {
+        return null;
+      }
+      return {
+        value,
+        label,
+        menuKey: normalizeMenuKey(rawRow.menu_key || rawRow.menuKey),
+        sectionKey: normalizeMenuKey(rawRow.section_key || rawRow.sectionKey || rawRow.session_key || rawRow.sessionKey),
+        sectionLabel: String(rawRow.section_label || rawRow.sectionLabel || rawRow.session_label || rawRow.sessionLabel || "").trim()
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildProcessListMetaMap(setting) {
+  const processListsByKey = new Map();
+  const processLists = Array.isArray(setting && setting.process_lists) ? setting.process_lists : [];
+
+  processLists.forEach((processList) => {
+    const listKey = normalizeMenuKey(processList && processList.key);
+    if (!listKey) {
+      return;
+    }
+
+    processListsByKey.set(listKey, {
+      key: listKey,
+      sourceKey: normalizeMenuKey(processList && (processList.source_key || processList.sourceKey)),
+      items: Array.isArray(processList && processList.items)
+        ? processList.items.map((item) => String(item || "").trim()).filter(Boolean)
+        : [],
+      optionRows: normalizeProcessListOptionRowsV1(
+        processList && (processList.option_rows || processList.optionRows)
+      )
+    });
+  });
+
+  return processListsByKey;
+}
+
+function resolveDynamicProcessListControlValueV1(renderedInputsByFieldKey, processValuesByField, fieldKey) {
+  const cleanFieldKey = normalizeMenuKey(fieldKey);
+  if (!cleanFieldKey) {
+    return "";
+  }
+
+  const renderedControl = renderedInputsByFieldKey instanceof Map
+    ? renderedInputsByFieldKey.get(cleanFieldKey)
+    : null;
+
+  if (renderedControl) {
+    if (renderedControl.tagName && String(renderedControl.tagName).toLowerCase() === "select") {
+      return String(renderedControl.value || "").trim();
+    }
+    if (renderedControl.type === "checkbox") {
+      return renderedControl.checked ? "1" : "0";
+    }
+    return String(renderedControl.value || "").trim();
+  }
+
+  return String((processValuesByField && processValuesByField[cleanFieldKey]) || "").trim();
+}
+
+function resolveDynamicProcessSessionControllerFieldKeyV1(sectionFields, processSetting, processListMetaByKey, targetFieldKey) {
+  const candidates = [];
+  const seenFieldKeys = new Set();
+  const sources = [];
+
+  if (Array.isArray(sectionFields)) {
+    sources.push(sectionFields);
+  }
+  if (Array.isArray(processSetting && processSetting.process_field_options)) {
+    sources.push(processSetting.process_field_options);
+  }
+
+  sources.forEach((fields) => {
+    fields.forEach((field) => {
+      const fieldKey = normalizeMenuKey(field && field.key);
+      const listKey = normalizeMenuKey(field && (field.listKey || field.list_key));
+      if (!fieldKey || fieldKey === normalizeMenuKey(targetFieldKey) || seenFieldKeys.has(fieldKey)) {
+        return;
+      }
+      const listMeta = processListMetaByKey instanceof Map ? processListMetaByKey.get(listKey) : null;
+      if (!listMeta || listMeta.sourceKey !== "sidebar_sections") {
+        return;
+      }
+      seenFieldKeys.add(fieldKey);
+      candidates.push({
+        key: fieldKey,
+        label: String(field && field.label || fieldKey).trim()
+      });
+    });
+  });
+
+  if (!candidates.length) {
+    return "";
+  }
+
+  const explicitSessionCandidate = candidates.find((candidate) => {
+    const lookupValue = normalizeLookupText(`${candidate.key} ${candidate.label}`);
+    return lookupValue.includes("sessao");
+  });
+
+  return explicitSessionCandidate || candidates[0];
+}
+
+function normalizeDynamicProcessSelectOptionRowsV1(rawOptions) {
+  if (!Array.isArray(rawOptions)) {
+    return [];
+  }
+
+  return rawOptions
+    .map((rawOption) => {
+      if (rawOption && typeof rawOption === "object" && !Array.isArray(rawOption)) {
+        const value = String(rawOption.value || rawOption.label || "").trim();
+        const label = String(rawOption.label || rawOption.value || "").trim();
+        if (!value && !label) {
+          return null;
+        }
+        return {
+          value,
+          label,
+          menuKey: normalizeMenuKey(rawOption.menuKey || rawOption.menu_key),
+          sectionKey: normalizeMenuKey(rawOption.sectionKey || rawOption.section_key),
+          sectionLabel: String(rawOption.sectionLabel || rawOption.section_label || "").trim(),
+          isAllOption: Boolean(rawOption.isAllOption)
+        };
+      }
+
+      const optionValue = String(rawOption || "").trim();
+      if (!optionValue) {
+        return null;
+      }
+      return {
+        value: optionValue,
+        label: optionValue,
+        menuKey: "",
+        sectionKey: "",
+        sectionLabel: "",
+        isAllOption: false
+      };
+    })
+    .filter(Boolean);
+}
+
+function isDynamicProcessAutomaticListSourceV1(listSourceKey) {
+  const cleanSourceKey = normalizeMenuKey(listSourceKey);
+  return (
+    cleanSourceKey === "users" ||
+    cleanSourceKey === "sidebar_sections" ||
+    cleanSourceKey === "sidebar_menus_by_section" ||
+    cleanSourceKey.indexOf("table_") === 0
+  );
+}
+
+function buildDynamicProcessAllOptionLabelV1(field) {
+  const rawLabel = String(field && (field.label || field.key) || "").trim();
+  const labelLookup = normalizeLookupText(rawLabel);
+  const sourceKey = normalizeMenuKey(field && field.listSourceKey);
+
+  if (labelLookup.includes("subprocess")) {
+    return "Todos os subprocessos";
+  }
+  if (labelLookup.includes("processo")) {
+    return "Todos os processos";
+  }
+  if (labelLookup.includes("sessao")) {
+    return "Todas as sessões";
+  }
+  if (labelLookup.includes("perfil")) {
+    return "Todos os perfis";
+  }
+  if (labelLookup.includes("utilizador") || labelLookup.includes("usuario") || labelLookup.includes("user")) {
+    return "Todos os utilizadores";
+  }
+  if (labelLookup.includes("entidade")) {
+    return "Todas as entidades";
+  }
+  if (labelLookup.includes("empresa")) {
+    return "Todas as empresas";
+  }
+  if (labelLookup.includes("departamento")) {
+    return "Todos os departamentos";
+  }
+  if (labelLookup.includes("menu")) {
+    return "Todos os menus";
+  }
+  if (labelLookup.includes("musica")) {
+    return "Todas as músicas";
+  }
+
+  if (sourceKey === "sidebar_sections") {
+    return "Todas as sessões";
+  }
+  if (sourceKey === "sidebar_menus_by_section") {
+    return "Todos os subprocessos";
+  }
+  if (sourceKey === "users" || sourceKey === "table_users") {
+    return "Todos os utilizadores";
+  }
+  if (sourceKey === "table_profiles" || sourceKey === "table_user_profiles") {
+    return "Todos os perfis";
+  }
+  if (sourceKey === "table_entities") {
+    return "Todas as entidades";
+  }
+  if (sourceKey === "table_departments") {
+    return "Todos os departamentos";
+  }
+  if (sourceKey === "table_members") {
+    return "Todos os membros";
+  }
+  if (sourceKey === "table_roles") {
+    return "Todos os perfis";
+  }
+  if (sourceKey === "table_songs") {
+    return "Todas as músicas";
+  }
+
+  if (rawLabel) {
+    return `Todos os valores de ${rawLabel.toLowerCase()}`;
+  }
+
+  return "Todos";
+}
+
+function buildDynamicProcessAllOptionRowV1(field) {
+  if (!isDynamicProcessAutomaticListSourceV1(field && field.listSourceKey)) {
+    return null;
+  }
+
+  const allOptionLabel = buildDynamicProcessAllOptionLabelV1(field);
+  if (!allOptionLabel) {
+    return null;
+  }
+
+  return {
+    value: allOptionLabel,
+    label: allOptionLabel,
+    menuKey: "",
+    sectionKey: "",
+    sectionLabel: "",
+    isAllOption: true
+  };
+}
+
+function prependDynamicProcessAllOptionRowV1(field, optionRows) {
+  const normalizedRows = normalizeDynamicProcessSelectOptionRowsV1(optionRows);
+  const allOptionRow = buildDynamicProcessAllOptionRowV1(field);
+
+  if (!allOptionRow) {
+    return normalizedRows;
+  }
+
+  const allOptionLookup = normalizeLookupText(allOptionRow.value);
+  const filteredRows = normalizedRows.filter((row) => {
+    const rowLookup = normalizeLookupText(row && (row.value || row.label) || "");
+    return rowLookup !== allOptionLookup;
+  });
+
+  return [allOptionRow].concat(filteredRows);
+}
+
+function isDynamicProcessAllOptionValueV1(rawValue, field) {
+  const allOptionRow = buildDynamicProcessAllOptionRowV1(field);
+  if (!allOptionRow) {
+    return false;
+  }
+
+  const cleanValue = normalizeLookupText(rawValue);
+  const allOptionLookup = normalizeLookupText(allOptionRow.value);
+  return Boolean(cleanValue) && cleanValue === allOptionLookup;
+}
+
+function resolveDynamicProcessListOptionsForFieldV1(options) {
+  const field = options && options.field ? options.field : {};
+  const processSetting = options && options.processSetting ? options.processSetting : {};
+  const processValuesByField = options && options.processValuesByField ? options.processValuesByField : {};
+  const renderedInputsByFieldKey = options && options.renderedInputsByFieldKey ? options.renderedInputsByFieldKey : null;
+  const sectionFields = Array.isArray(options && options.sectionFields) ? options.sectionFields : [];
+  const processListMetaByKey = options && options.processListMetaByKey instanceof Map
+    ? options.processListMetaByKey
+    : buildProcessListMetaMap(processSetting);
+
+  const listKey = normalizeMenuKey(field && field.listKey);
+  const listMeta = processListMetaByKey.get(listKey);
+  const baseOptionRows = normalizeDynamicProcessSelectOptionRowsV1(
+    Array.isArray(field && field.listOptionRows) && field.listOptionRows.length
+      ? field.listOptionRows
+      : (Array.isArray(field && field.listOptions) ? field.listOptions : [])
+  );
+
+  if (!listMeta) {
+    return prependDynamicProcessAllOptionRowV1(field, baseOptionRows);
+  }
+
+  const sourceOptionRows = normalizeDynamicProcessSelectOptionRowsV1(
+    Array.isArray(listMeta.optionRows) && listMeta.optionRows.length
+      ? listMeta.optionRows
+      : (Array.isArray(listMeta.items) ? listMeta.items : baseOptionRows)
+  );
+
+  if (listMeta.sourceKey !== "sidebar_menus_by_section") {
+    return prependDynamicProcessAllOptionRowV1(
+      field,
+      sourceOptionRows.length ? sourceOptionRows : baseOptionRows
+    );
+  }
+
+  const sessionControllerField = resolveDynamicProcessSessionControllerFieldKeyV1(
+    sectionFields,
+    processSetting,
+    processListMetaByKey,
+    field && field.key
+  );
+
+  if (!sessionControllerField || !sessionControllerField.key) {
+    return prependDynamicProcessAllOptionRowV1(
+      field,
+      sourceOptionRows.length ? sourceOptionRows : baseOptionRows
+    );
+  }
+
+  const sessionValue = resolveDynamicProcessListControlValueV1(
+    renderedInputsByFieldKey,
+    processValuesByField,
+    sessionControllerField.key
+  );
+
+  if (!sessionValue) {
+    return [];
+  }
+
+  if (isDynamicProcessAllOptionValueV1(sessionValue, sessionControllerField)) {
+    return prependDynamicProcessAllOptionRowV1(field, sourceOptionRows);
+  }
+
+  const sessionLookup = normalizeLookupText(sessionValue);
+  const filteredOptions = [];
+  const seenOptions = new Set();
+
+  sourceOptionRows.forEach((row) => {
+    const optionLabel = String(row && (row.label || row.value) || "").trim();
+    const sectionKeyLookup = normalizeLookupText(row && row.sectionKey || "");
+    const sectionLabelLookup = normalizeLookupText(row && row.sectionLabel || "");
+
+    if (!optionLabel) {
+      return;
+    }
+    if (sessionLookup !== sectionKeyLookup && sessionLookup !== sectionLabelLookup) {
+      return;
+    }
+
+    const optionLookup = normalizeLookupText(optionLabel);
+    if (seenOptions.has(optionLookup)) {
+      return;
+    }
+
+    seenOptions.add(optionLookup);
+    filteredOptions.push({
+      value: String(row && (row.value || row.label) || "").trim(),
+      label: optionLabel,
+      menuKey: normalizeMenuKey(row && row.menuKey || ""),
+      sectionKey: normalizeMenuKey(row && row.sectionKey || ""),
+      sectionLabel: String(row && row.sectionLabel || "").trim(),
+      isAllOption: Boolean(row && row.isAllOption)
+    });
+  });
+
+  return prependDynamicProcessAllOptionRowV1(field, filteredOptions);
 }
 
 function collectCurrentDynamicProcessQuantityValues(menuKey) {
@@ -382,10 +756,15 @@ function renderMeuPerfilQuantityGroups() {
             placeholderEl.value = "";
             placeholderEl.textContent = "Selecione";
             controlEl.appendChild(placeholderEl);
-            (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : []).forEach((optionValue) => {
+            prependDynamicProcessAllOptionRowV1(
+              fieldMeta,
+              Array.isArray(fieldMeta.listOptionRows) && fieldMeta.listOptionRows.length
+                ? fieldMeta.listOptionRows
+                : (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : [])
+            ).forEach((optionRow) => {
               const optionEl = document.createElement("option");
-              optionEl.value = String(optionValue || "").trim();
-              optionEl.textContent = String(optionValue || "").trim();
+              optionEl.value = String(optionRow && (optionRow.value || optionRow.label) || "").trim();
+              optionEl.textContent = String(optionRow && (optionRow.label || optionRow.value) || "").trim();
               optionEl.selected = optionEl.value === currentValue;
               controlEl.appendChild(optionEl);
             });
@@ -636,11 +1015,16 @@ function renderDynamicProcessQuantityGroups(
               defaultOptionEl.textContent = "Selecione";
               selectEl.appendChild(defaultOptionEl);
 
-              (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : []).forEach((optionValue) => {
+              prependDynamicProcessAllOptionRowV1(
+                fieldMeta,
+                Array.isArray(fieldMeta.listOptionRows) && fieldMeta.listOptionRows.length
+                  ? fieldMeta.listOptionRows
+                  : (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : [])
+              ).forEach((optionRow) => {
                 const optionEl = document.createElement("option");
-                optionEl.value = String(optionValue || "");
-                optionEl.textContent = String(optionValue || "");
-                if (String(optionValue || "") === currentValue) {
+                optionEl.value = String(optionRow && (optionRow.value || optionRow.label) || "");
+                optionEl.textContent = String(optionRow && (optionRow.label || optionRow.value) || "");
+                if (optionEl.value === currentValue) {
                   optionEl.selected = true;
                 }
                 selectEl.appendChild(optionEl);
@@ -747,6 +1131,7 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
   const useInlineHeaderEditToggle = cleanMenuKey === "empresa";
   const menuData = dynamicProcessDataByMenu[cleanMenuKey];
   const processSetting = getSidebarMenuSetting(cleanMenuKey);
+  const processListMetaByKey = buildProcessListMetaMap(processSetting);
   const currentProcessValuesByField = collectCurrentDynamicProcessValues(cleanMenuKey);
   const currentProcessQuantityValuesByRule = collectCurrentDynamicProcessQuantityValues(cleanMenuKey);
   if (!preserveInteractionState) {
@@ -1019,6 +1404,11 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     const isEmpresaInternalNumber = isEmpresaReadOnlyField(cleanMenuKey, fieldKey);
     const isEmpresaLogoUpload = isEmpresaLogoUploadField(cleanMenuKey, fieldKey);
     const isEmpresaLogoCurrent = isEmpresaLogoCurrentField(cleanMenuKey, fieldKey);
+    const isContactMembershipImportFileField = (
+      cleanMenuKey === "contacto_geral" &&
+      normalizeMenuKey(selectedSection ? (selectedSection.key || "") : "") === "custom_input_ficheiro_header" &&
+      normalizeLookupText(field.label || fieldKey).includes("ficheiro")
+    );
     const hasLiveFieldValue = Object.prototype.hasOwnProperty.call(currentProcessValuesByField, fieldKey);
     const liveFieldValue = hasLiveFieldValue ? String(currentProcessValuesByField[fieldKey] || "").trim() : "";
     const readOnlyValue = (
@@ -1180,12 +1570,19 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
         defaultOptionEl.textContent = "Selecione";
         selectEl.appendChild(defaultOptionEl);
 
-        const listOptions = Array.isArray(field.listOptions) ? field.listOptions : [];
-        listOptions.forEach((optionValue) => {
+        const listOptions = resolveDynamicProcessListOptionsForFieldV1({
+          field,
+          sectionFields,
+          processSetting,
+          processValuesByField: currentProcessValuesByField,
+          renderedInputsByFieldKey,
+          processListMetaByKey
+        });
+        listOptions.forEach((optionRow) => {
           const optionEl = document.createElement("option");
-          optionEl.value = String(optionValue || "");
-          optionEl.textContent = String(optionValue || "");
-          if (String(optionValue || "") === editDefaultValue) {
+          optionEl.value = String(optionRow && (optionRow.value || optionRow.label) || "");
+          optionEl.textContent = String(optionRow && (optionRow.label || optionRow.value) || "");
+          if (optionEl.value === editDefaultValue) {
             optionEl.selected = true;
           }
           selectEl.appendChild(optionEl);
@@ -1210,9 +1607,14 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
           controlEl.rows = 10;
           controlEl.classList.add("appverbo-dynamic-process-textarea-v1");
         } else {
-          controlEl.type = getDynamicProcessInputType(fieldType);
-          controlEl.value = inputValue;
-          controlEl.defaultValue = inputValue;
+          if (isContactMembershipImportFileField) {
+            controlEl.type = "file";
+            controlEl.accept = ".csv,.xlsx";
+          } else {
+            controlEl.type = getDynamicProcessInputType(fieldType);
+            controlEl.value = inputValue;
+            controlEl.defaultValue = inputValue;
+          }
           if (fieldType === "date" && typeof controlEl.showPicker === "function") {
             const openDatePicker = () => {
               try {

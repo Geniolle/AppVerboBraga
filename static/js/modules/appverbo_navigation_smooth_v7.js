@@ -30,6 +30,22 @@
     return String(value || "").trim().toLowerCase();
   }
 
+  function normalizeTargetSelectorV7(value) {
+    const cleanValue = String(value || "").trim();
+    if (!cleanValue) {
+      return "";
+    }
+    return cleanValue.startsWith("#") ? cleanValue : `#${cleanValue}`;
+  }
+
+  function escapeSelectorValueV7(value) {
+    const cleanValue = String(value || "");
+    if (typeof window !== "undefined" && window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(cleanValue);
+    }
+    return cleanValue.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  }
+
   function normalizeLookupTextV7(value) {
     return String(value || "")
       .trim()
@@ -103,6 +119,17 @@
       return "";
     }
 
+    const dynamicProcessContext = resolveAdminDynamicProcessContextFromUrlV7(url);
+    if (
+      dynamicProcessContext.hasDynamicProcessContext &&
+      (
+        !dynamicProcessContext.targetSelector ||
+        dynamicProcessContext.targetSelector === "#dynamic-process-card"
+      )
+    ) {
+      return "definicoes";
+    }
+
     const adminTab = cleanValueV7(url.searchParams.get("admin_tab"));
     const target = cleanValueV7(url.searchParams.get("target"));
     const hash = cleanValueV7((url.hash || "").replace(/^#/, ""));
@@ -168,6 +195,79 @@
     }
 
     return getAdminTabFromUrlV7(url) === "";
+  }
+
+  function resolveAdminDynamicProcessContextFromUrlV7(url) {
+    if (!urlIndicaAdminV7(url)) {
+      return {
+        targetSelector: "",
+        dynamicSectionKey: "",
+        hasDynamicProcessContext: false
+      };
+    }
+
+    const targetSelector = normalizeTargetSelectorV7(url.searchParams.get("target"));
+    const dynamicSectionKey = cleanValueV7(
+      url.searchParams.get("dynamic_process_section") ||
+      url.searchParams.get("section_key")
+    );
+    const hasExplicitNonDynamicTarget = Boolean(
+      targetSelector && targetSelector !== "#dynamic-process-card"
+    );
+    const hasDynamicProcessContext = Boolean(
+      dynamicSectionKey &&
+      (
+        targetSelector === "#dynamic-process-card" ||
+        !hasExplicitNonDynamicTarget
+      )
+    );
+
+    return {
+      targetSelector,
+      dynamicSectionKey: hasDynamicProcessContext ? dynamicSectionKey : "",
+      hasDynamicProcessContext
+    };
+  }
+
+  function getDynamicProcessSectionFromUrlV7(url) {
+    return resolveAdminDynamicProcessContextFromUrlV7(url).dynamicSectionKey;
+  }
+
+  function clearAdminNavigationParamsV7(url, options = {}) {
+    if (!url || !url.searchParams) {
+      return;
+    }
+
+    const { includeDynamicProcess = false } = options;
+
+    [
+      "admin_tab",
+      "target",
+      "sidebar_sections_tab",
+      "sidebar_section_edit_key",
+      "entity_edit_id",
+      "entity_view",
+      "user_edit_id",
+      "user_view",
+      "definition_edit_id",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "settings_success",
+      "settings_error",
+      "profile_success",
+      "profile_error",
+      "success",
+      "error",
+      "appverbo_after_save"
+    ].forEach(function (paramName) {
+      url.searchParams.delete(paramName);
+    });
+
+    if (includeDynamicProcess) {
+      url.searchParams.delete("dynamic_process_section");
+      url.searchParams.delete("section_key");
+    }
   }
 
   //###################################################################################
@@ -414,6 +514,19 @@
     });
   }
 
+  function marcarElementoAbaAtivaV7(element) {
+    if (!element) {
+      return false;
+    }
+
+    element.classList.add("active");
+    element.setAttribute("aria-selected", "true");
+    element.setAttribute("data-appverbo-force-active", "true");
+    element.removeAttribute("data-appverbo-force-inactive");
+    element.removeAttribute("data-appverbo-menu-inactive");
+    return true;
+  }
+
   function marcarAbaAtivaV7(tab) {
     const submenu = document.getElementById("submenu-items");
 
@@ -430,13 +543,38 @@
         return false;
       }
 
-      element.classList.add("active");
-      element.setAttribute("aria-selected", "true");
-      element.setAttribute("data-appverbo-force-active", "true");
-      element.removeAttribute("data-appverbo-force-inactive");
-      element.removeAttribute("data-appverbo-menu-inactive");
-      return true;
+      return marcarElementoAbaAtivaV7(element);
     });
+  }
+
+  function marcarAbaDinamicaAtivaV7(sectionKey) {
+    const submenu = document.getElementById("submenu-items");
+    const cleanSectionKey = cleanValueV7(sectionKey);
+
+    if (!submenu || !cleanSectionKey) {
+      return false;
+    }
+
+    limparAbaAtivaSubprocessoV7();
+
+    const dynamicLink = submenu.querySelector(
+      `.submenu-item[data-dynamic-process-section="${escapeSelectorValueV7(cleanSectionKey)}"], ` +
+      `.submenu-item[data-dynamic-process-section-key="${escapeSelectorValueV7(cleanSectionKey)}"]`
+    );
+
+    if (!dynamicLink) {
+      return false;
+    }
+
+    return marcarElementoAbaAtivaV7(dynamicLink);
+  }
+
+  function marcarAbaAtivaPorContextoV7(tab, dynamicSectionKey) {
+    if (marcarAbaDinamicaAtivaV7(dynamicSectionKey)) {
+      return;
+    }
+
+    marcarAbaAtivaV7(tab);
   }
 
   function limparAbaAtivaComRepeticaoV7() {
@@ -482,20 +620,7 @@
 
     url.pathname = "/users/new";
     url.searchParams.set("menu", "administrativo");
-    url.searchParams.delete("admin_tab");
-    url.searchParams.delete("target");
-    url.searchParams.delete("sidebar_sections_tab");
-    url.searchParams.delete("sidebar_section_edit_key");
-    url.searchParams.delete("entity_edit_id");
-    url.searchParams.delete("entity_view");
-    url.searchParams.delete("user_edit_id");
-    url.searchParams.delete("user_view");
-    url.searchParams.delete("definition_edit_id");
-    url.searchParams.delete("settings_edit_key");
-    url.searchParams.delete("settings_action");
-    url.searchParams.delete("settings_tab");
-    url.searchParams.delete("settings_success");
-    url.searchParams.delete("settings_error");
+    clearAdminNavigationParamsV7(url, { includeDynamicProcess: true });
 
     if (tab === "entidade") {
       url.searchParams.set("admin_tab", "entidade");
@@ -854,6 +979,7 @@
   function renderAdminSubprocessV7(tab, options) {
     const config = options || {};
     const normalizedTab = tab;
+    const dynamicSectionKey = cleanValueV7(config.dynamicSectionKey);
 
     if (!normalizedTab) {
       renderAdminProcessOnlyV7();
@@ -889,7 +1015,7 @@
       }
     });
 
-    marcarAbaAtivaV7(normalizedTab);
+    marcarAbaAtivaPorContextoV7(normalizedTab, dynamicSectionKey);
     manterMenuSubprocessosVisivelV7();
     marcarMenuEstavelV7();
 
@@ -918,9 +1044,13 @@
     }
 
     const tab = getAdminTabFromUrlV7(url);
+    const dynamicSectionKey = getDynamicProcessSectionFromUrlV7(url);
 
     if (tab) {
-      renderAdminSubprocessV7(tab, { updateUrl: false });
+      renderAdminSubprocessV7(tab, {
+        updateUrl: false,
+        dynamicSectionKey
+      });
     } else {
       if (hasCustomSubprocessLinksV7()) {
         exitAdminProcessOnlyModeV7();

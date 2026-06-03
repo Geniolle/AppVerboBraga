@@ -40,6 +40,9 @@
         if (fieldType === "date") {
           return "date";
         }
+        if (fieldType === "time") {
+          return "time";
+        }
         return "text";
       }
 

@@ -255,8 +255,44 @@ function setupConditionalProcessVisibility() {
       return true;
     }
 
-    return normalizeProcessQuantityRules(setting.process_quantity_fields)
+    const drivesQuantityRules = normalizeProcessQuantityRules(setting.process_quantity_fields)
       .some((rule) => normalizeMenuKey(rule.quantityFieldKey) === cleanFieldKey);
+
+    if (drivesQuantityRules) {
+      return true;
+    }
+
+    const processListSourcesByKey = new Map();
+    (Array.isArray(setting.process_lists) ? setting.process_lists : []).forEach((processList) => {
+      const listKey = normalizeMenuKey(processList && processList.key);
+      if (!listKey) {
+        return;
+      }
+      processListSourcesByKey.set(
+        listKey,
+        normalizeMenuKey(processList && (processList.source_key || processList.sourceKey))
+      );
+    });
+
+    const hasMenusBySessionList = (Array.isArray(setting.process_field_options) ? setting.process_field_options : [])
+      .some((option) => {
+        const listKey = normalizeMenuKey(option && (option.list_key || option.listKey));
+        return processListSourcesByKey.get(listKey) === "sidebar_menus_by_section";
+      });
+
+    if (!hasMenusBySessionList) {
+      return false;
+    }
+
+    return (Array.isArray(setting.process_field_options) ? setting.process_field_options : [])
+      .some((option) => {
+        const optionKey = normalizeMenuKey(option && option.key);
+        const listKey = normalizeMenuKey(option && (option.list_key || option.listKey));
+        return (
+          optionKey === cleanFieldKey &&
+          processListSourcesByKey.get(listKey) === "sidebar_sections"
+        );
+      });
   }
 
   function isMeuPerfilFieldDrivingRerender(fieldKey, setting) {

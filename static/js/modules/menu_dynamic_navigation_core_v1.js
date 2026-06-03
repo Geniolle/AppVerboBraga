@@ -381,9 +381,42 @@
     //###################################################################################
     // (5) SUBMENU
     //###################################################################################
+    function clearSubmenuLinkStateV1(link) {
+      if (!link) {
+        return;
+      }
+
+      link.classList.remove("active");
+      link.classList.remove("selected");
+      link.classList.remove("is-active");
+      link.setAttribute("aria-selected", "false");
+      link.removeAttribute("data-active");
+      link.removeAttribute("data-selected");
+      link.removeAttribute("data-appverbo-force-active");
+      link.removeAttribute("data-appverbo-menu-active");
+      link.removeAttribute("data-appverbo-menu-inactive");
+      link.setAttribute("data-appverbo-force-inactive", "true");
+    }
+
+    function markSubmenuLinkActiveStateV1(link) {
+      if (!link) {
+        return;
+      }
+
+      link.classList.add("active");
+      link.classList.add("selected");
+      link.classList.add("is-active");
+      link.setAttribute("aria-selected", "true");
+      link.setAttribute("data-active", "true");
+      link.setAttribute("data-selected", "true");
+      link.setAttribute("data-appverbo-force-active", "true");
+      link.removeAttribute("data-appverbo-force-inactive");
+      link.removeAttribute("data-appverbo-menu-inactive");
+    }
+
     function clearSubmenuActiveLinks(links) {
       Array.from(links || []).forEach((link) => {
-        link.classList.remove("active");
+        clearSubmenuLinkStateV1(link);
       });
     }
 
@@ -395,14 +428,14 @@
       const links = itemsEl.querySelectorAll(".submenu-item");
       clearSubmenuActiveLinks(links);
       if (selectedLinkEl) {
-        selectedLinkEl.classList.add("active");
+        markSubmenuLinkActiveStateV1(selectedLinkEl);
         return;
       }
       const firstMatch = Array.from(links).find(
         (link) => link.getAttribute("href") === targetSelector
       );
       if (firstMatch) {
-        firstMatch.classList.add("active");
+        markSubmenuLinkActiveStateV1(firstMatch);
       }
     }
 

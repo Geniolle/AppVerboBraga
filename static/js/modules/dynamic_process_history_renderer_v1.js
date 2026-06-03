@@ -68,6 +68,7 @@
 
     const cleanMenuKey = normalizeMenuKey(menuKey);
     const cleanSectionKey = String(sectionKey || "").trim().toLowerCase();
+    const songHistoryMode = normalizeLookupText(cleanMenuKey).includes("musica");
     const historyRowsRaw = Array.isArray(menuProcessHistoryMap[cleanMenuKey])
       ? menuProcessHistoryMap[cleanMenuKey]
       : [];
@@ -188,6 +189,19 @@
         return cleanValue;
       }
       return `https://${cleanValue}`;
+    };
+
+    const summarizeTableCellText = (rawValue, maxLength = 140) => {
+      const normalizedText = String(rawValue || "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!normalizedText) {
+        return "-";
+      }
+      if (normalizedText.length <= maxLength) {
+        return normalizedText;
+      }
+      return `${normalizedText.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
     };
 
     const createHeadRow = (headElement, includeStateColumn, includeCreatedColumn = false) => {
@@ -391,6 +405,11 @@
           const fieldType = normalizeProcessFieldType(field.fieldType);
           const tdEl = document.createElement("td");
           const rawValue = String(values[fieldKey] || "").trim();
+          const normalizedFieldLabel = normalizeLookupText(field.label || field.key);
+          const isSongLyricsField = songHistoryMode
+            && normalizedFieldLabel.includes("letra")
+            && !normalizedFieldLabel.includes("fonte")
+            && !normalizedFieldLabel.includes("estado");
           if (fieldType === "flag") {
             tdEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
           } else if (fieldType === "link" && rawValue) {
@@ -401,6 +420,10 @@
             linkEl.textContent = rawValue;
             linkEl.style.textDecoration = "underline";
             tdEl.appendChild(linkEl);
+          } else if (isSongLyricsField && rawValue) {
+            tdEl.textContent = summarizeTableCellText(rawValue, 120);
+            tdEl.title = rawValue;
+            tdEl.classList.add("appverbo-song-lyrics-preview-cell-v1");
           } else {
             tdEl.textContent = rawValue || "-";
           }
@@ -421,6 +444,18 @@
         const actionsWrapEl = document.createElement("div");
         actionsWrapEl.className = "table-actions";
 
+        const editBtnEl = document.createElement("button");
+        editBtnEl.type = "button";
+        editBtnEl.className = "table-icon-btn";
+        editBtnEl.title = `Editar ${singularLabel}`;
+        editBtnEl.setAttribute("aria-label", `Editar ${singularLabel}`);
+        editBtnEl.innerHTML = "&#9998;";
+        editBtnEl.disabled = !rowRecordId;
+        editBtnEl.addEventListener("click", () => {
+          openRecordForEdit(rowRecordId, values);
+        });
+        actionsWrapEl.appendChild(editBtnEl);
+
         const viewBtnEl = document.createElement("button");
         viewBtnEl.type = "button";
         viewBtnEl.className = "table-icon-btn";
@@ -435,18 +470,6 @@
           openRecordForView(values);
         });
         actionsWrapEl.appendChild(viewBtnEl);
-
-        const editBtnEl = document.createElement("button");
-        editBtnEl.type = "button";
-        editBtnEl.className = "table-icon-btn";
-        editBtnEl.title = `Editar ${singularLabel}`;
-        editBtnEl.setAttribute("aria-label", `Editar ${singularLabel}`);
-        editBtnEl.innerHTML = "&#9998;";
-        editBtnEl.disabled = !rowRecordId;
-        editBtnEl.addEventListener("click", () => {
-          openRecordForEdit(rowRecordId, values);
-        });
-        actionsWrapEl.appendChild(editBtnEl);
 
         if (allowDeleteForInactive && (!includeStateColumn || rowState === "inativo")) {
           const deleteBtnEl = document.createElement("button");

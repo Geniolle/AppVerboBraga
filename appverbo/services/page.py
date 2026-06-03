@@ -1,8 +1,9 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import date
 from typing import Any
 from urllib.parse import urlencode
+import unicodedata
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
@@ -37,12 +38,105 @@ from appverbo.services.profile import (
     parse_menu_process_records,
     parse_menu_process_quantity_values,
     parse_member_profile_fields,
+    serialize_menu_process_quantity_values,
 )
 from appverbo.services.songs import (
     is_song_process_menu_v1,
     list_entity_songs_v1,
     serialize_songs_to_history_rows_v1,
 )
+
+
+def _normalize_process_lookup_text_v1(raw_value: Any) -> str:
+    normalized = (
+        unicodedata.normalize("NFKD", str(raw_value or ""))
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .strip()
+        .lower()
+    )
+    return " ".join(normalized.split())
+
+
+def _is_single_record_process_menu_v1(menu_key: Any, menu_label: Any) -> bool:
+    normalized_menu_key = _normalize_process_lookup_text_v1(menu_key).replace(" ", "_")
+    joined = " ".join(
+        part
+        for part in (
+            _normalize_process_lookup_text_v1(menu_key),
+            _normalize_process_lookup_text_v1(menu_label),
+        )
+        if part
+    )
+    if not normalized_menu_key and not joined:
+        return False
+    return (
+        normalized_menu_key in {"empresa", "meu_perfil", "perfil"}
+        or "meu perfil" in joined
+        or "perfil pessoal" in joined
+    )
+
+
+def _is_history_process_menu_v1(menu_key: Any, menu_label: Any) -> bool:
+    joined = " ".join(
+        part
+        for part in (
+            _normalize_process_lookup_text_v1(menu_key),
+            _normalize_process_lookup_text_v1(menu_label),
+        )
+        if part
+    )
+    if not joined:
+        return False
+    if "assiduidade" in joined or "ausencia" in joined:
+        return True
+    if _is_single_record_process_menu_v1(menu_key, menu_label):
+        return False
+    return True
+
+
+def _build_legacy_history_row_v1(
+    *,
+    visible_rows: list[dict[str, Any]],
+    menu_values: dict[str, str],
+    quantity_values_by_rule: dict[str, list[dict[str, str]]],
+) -> list[dict[str, Any]]:
+    if not menu_values and not quantity_values_by_rule:
+        return []
+
+    section_keys = {
+        str((raw_row or {}).get("header_key") or "").strip()
+        for raw_row in (visible_rows or [])
+        if isinstance(raw_row, dict)
+    }
+    section_keys.discard("")
+    if len(section_keys) == 1:
+        section_key = next(iter(section_keys))
+    else:
+        section_key = ""
+
+    row_values = dict(menu_values)
+    for rule_key, items in (quantity_values_by_rule or {}).items():
+        if not rule_key:
+            continue
+        serialized_items = serialize_menu_process_quantity_values(items)
+        if serialized_items:
+            row_values[f"quantity__{str(rule_key).strip().lower()}"] = serialized_items
+
+    if not row_values:
+        return []
+
+    if "__estado" not in row_values:
+        row_values["__estado"] = "ativo"
+
+    return [
+        {
+            "record_id": "legacy_current",
+            "created_at": "",
+            "section_key": section_key,
+            "values": row_values,
+        }
+    ]
 
 # ###################################################################################
 # (1) PROCESSO EMPRESA - CAMPOS FIXOS DA ENTIDADE LOGADA
@@ -770,7 +864,13 @@ def get_page_data(
     menu_process_quantity_values_map: dict[str, dict[str, list[dict[str, str]]]] = {}
     for sidebar_item in sidebar_menu_settings:
         menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
-        if not menu_key or menu_key in {"home", "perfil", "administrativo"}:
+        # ###################################################################################
+        # (MENU PROCESS MAPS) INCLUIR DADOS DINAMICOS DO ADMINISTRATIVO
+        # ###################################################################################
+        # O menu "administrativo" tambem pode expor subprocessos dinamicos gravados em
+        # profile_custom_fields. Sem carregar estes mapas, o reload/F5 volta sem a tabela
+        # atualizada e transmite a ideia de que o registo nao foi guardado.
+        if not menu_key or menu_key in {"home", "perfil"}:
             continue
         if menu_key == MENU_EMPRESA_KEY:
             menu_process_values_map[menu_key] = dict(empresa_values_by_field)
@@ -827,6 +927,14 @@ def get_page_data(
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
                 menu_process_history_map[menu_key] = menu_history_rows
+            elif _is_history_process_menu_v1(menu_key, sidebar_item.get("label")):
+                legacy_history_rows = _build_legacy_history_row_v1(
+                    visible_rows=visible_rows,
+                    menu_values=menu_values,
+                    quantity_values_by_rule=quantity_values_by_rule,
+                )
+                if legacy_history_rows:
+                    menu_process_history_map[menu_key] = legacy_history_rows
     profile_personal_visible_fields = list(MENU_MEU_PERFIL_FIELDS_DEFAULT)
     profile_personal_field_labels = dict(MENU_MEU_PERFIL_FIELD_LABELS)
     profile_personal_field_types: dict[str, str] = {}
@@ -928,7 +1036,7 @@ def get_page_data(
                 profile_personal_duplicate_custom_keys.add(clean_key)
                 continue
             field_type = str(custom_field.get("field_type") or "text").strip().lower()
-            if field_type not in {"text", "number", "email", "phone", "date", "flag", "header", "list"}:
+            if field_type not in {"text", "number", "email", "phone", "date", "time", "flag", "header", "list"}:
                 field_type = "text"
             try:
                 parsed_size = int(str(custom_field.get("size") or "").strip())

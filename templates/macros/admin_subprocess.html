@@ -147,6 +147,13 @@
       {% endif %}
     {% endif %}
 
+    <a
+      class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+      title="Editar"
+      aria-label="Editar"
+      href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
+    >&#9998;</a>
+
     <button
       type="button"
       class="admin-subprocess-action-btn-v1"
@@ -156,13 +163,6 @@
       data-view-title="{{ state.config.singular_label }}"
       data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
     >&#128065;</button>
-
-    <a
-      class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
-      title="Editar"
-      aria-label="Editar"
-      href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
-    >&#9998;</a>
 
     {% if status_value != state.config.active_value and state.config.delete_endpoint and not row.get('is_deleted') %}
       {% if can_delete %}

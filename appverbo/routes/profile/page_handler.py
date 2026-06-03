@@ -128,6 +128,57 @@ def _resolve_admin_definicoes_target_v1(definition_edit_id: str) -> str:
     return "#admin-definicoes-card"
 
 
+def _normalize_target_selector_v1(value: object) -> str:
+    clean_value = str(value or "").strip()
+    if not clean_value:
+        return ""
+    return clean_value if clean_value.startswith("#") else f"#{clean_value}"
+
+
+def _resolve_requested_dynamic_context_v1(
+    request: Request,
+    *,
+    fallback_target: object = "",
+    fallback_profile_section: object = "",
+    fallback_dynamic_process_section: object = "",
+    fallback_section_key: object = "",
+) -> tuple[str, str, str, bool]:
+    clean_target_from_query = _normalize_target_selector_v1(
+        request.query_params.get("target", fallback_target)
+    )
+    clean_profile_section_from_query = str(
+        request.query_params.get("profile_section", fallback_profile_section) or ""
+    ).strip().lower()
+    clean_dynamic_section_from_query = str(
+        request.query_params.get("dynamic_process_section", "")
+        or request.query_params.get("section_key", "")
+        or fallback_dynamic_process_section
+        or fallback_section_key
+        or ""
+    ).strip()
+
+    has_explicit_non_dynamic_target = bool(
+        clean_target_from_query and clean_target_from_query != "#dynamic-process-card"
+    )
+    has_admin_dynamic_process_context = bool(
+        clean_dynamic_section_from_query
+        and (
+            clean_target_from_query == "#dynamic-process-card"
+            or not has_explicit_non_dynamic_target
+        )
+    )
+
+    if not has_admin_dynamic_process_context:
+        clean_dynamic_section_from_query = ""
+
+    return (
+        clean_target_from_query,
+        clean_profile_section_from_query,
+        clean_dynamic_section_from_query,
+        has_admin_dynamic_process_context,
+    )
+
+
 def _build_definicoes_options_from_rows_v1(
     rows: list[dict[str, Any]],
     *,
@@ -1470,6 +1521,24 @@ def new_user_page(
         sidebar_sections_tab=sidebar_sections_tab,
         sidebar_section_edit_key=sidebar_section_edit_key,
     )
+    (
+        clean_target_from_query,
+        clean_profile_section_from_query,
+        clean_dynamic_section_from_query,
+        has_admin_dynamic_process_context,
+    ) = _resolve_requested_dynamic_context_v1(
+        request,
+        fallback_target=target,
+        fallback_profile_section=profile_section,
+        fallback_dynamic_process_section=dynamic_process_section,
+        fallback_section_key=section_key,
+    )
+    if (
+        resolved_menu == "administrativo"
+        and has_admin_dynamic_process_context
+        and clean_target_from_query == "#dynamic-process-card"
+    ):
+        resolved_admin_tab = "definicoes"
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
     if clean_entity_edit_id.isdigit():
@@ -1774,12 +1843,6 @@ def new_user_page(
     )
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
-    clean_target_from_query = str(target or "").strip()
-    if clean_target_from_query and not clean_target_from_query.startswith("#"):
-        clean_target_from_query = f"#{clean_target_from_query}"
-    clean_profile_section_from_query = str(profile_section or "").strip().lower()
-    clean_dynamic_section_from_query = str(dynamic_process_section or section_key or "").strip()
-
     if clean_target_from_query:
         initial_menu_target = clean_target_from_query
 
@@ -1819,13 +1882,21 @@ def new_user_page(
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     elif resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
+        if has_admin_dynamic_process_context:
+            initial_menu_target = "#dynamic-process-card"
+            initial_dynamic_process_section = clean_dynamic_section_from_query
+        else:
+            initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+            initial_dynamic_process_section = ""
+            clean_dynamic_section_from_query = ""
     elif resolved_menu == "administrativo" and resolved_admin_tab == "definicoes":
-        initial_menu_target = _resolve_admin_definicoes_target_v1(clean_definition_edit_id)
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
+        if has_admin_dynamic_process_context:
+            initial_menu_target = "#dynamic-process-card"
+            initial_dynamic_process_section = clean_dynamic_section_from_query
+        else:
+            initial_menu_target = _resolve_admin_definicoes_target_v1(clean_definition_edit_id)
+            initial_dynamic_process_section = ""
+            clean_dynamic_section_from_query = ""
 
     is_post_save_return = str(appverbo_after_save or "").strip() == "1"
     # APPVERBO_PAGE_STATE_CONTEXT_V1_START
@@ -1849,13 +1920,16 @@ def new_user_page(
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
     # ###################################################################################
-    # A aba Administrativo -> Menu usa o alvo canonico admin-menu-card.
-    # Sem esta normalizacao, a URL admin_tab=menu pode ficar sem conteudo
-    # porque o backend voltava para o target padrao de Entidade.
+    # A aba Administrativo -> Menu usa o alvo canonico admin-menu-card
+    # apenas quando nao estamos a reentrar num subprocesso dinamico.
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
+        if has_admin_dynamic_process_context:
+            initial_menu_target = "#dynamic-process-card"
+            initial_dynamic_process_section = clean_dynamic_section_from_query
+        else:
+            initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+            initial_dynamic_process_section = ""
+            clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_END
 
     # APPVERBO_ADMIN_PROCESS_ONLY_V1_START
@@ -1902,9 +1976,13 @@ def new_user_page(
 
     # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_START
     if resolved_menu == "administrativo" and resolved_admin_tab == "menu":
-        initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
-        initial_dynamic_process_section = ""
-        clean_dynamic_section_from_query = ""
+        if has_admin_dynamic_process_context:
+            initial_menu_target = "#dynamic-process-card"
+            initial_dynamic_process_section = clean_dynamic_section_from_query
+        else:
+            initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+            initial_dynamic_process_section = ""
+            clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_END
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START

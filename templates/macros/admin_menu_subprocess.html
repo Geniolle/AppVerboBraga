@@ -105,6 +105,15 @@
       {% endif %}
     {% endif %}
 
+    {% if state.can_manage_all_entities %}
+      <a
+        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+        title="Editar"
+        aria-label="Editar"
+        href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;target={{ state.edit_target }}&amp;settings_edit_key={{ row_key }}&amp;settings_action=edit#{{ state.edit_target }}"
+      >&#9998;</a>
+    {% endif %}
+
     <button
       type="button"
       class="admin-subprocess-action-btn-v1"
@@ -114,15 +123,6 @@
       data-menu-view-scope="{{ row_system_label }}"
       data-menu-view-status="{{ row_status_label }}"
     >&#128065;</button>
-
-    {% if state.can_manage_all_entities %}
-      <a
-        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
-        title="Editar"
-        aria-label="Editar"
-        href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;target={{ state.edit_target }}&amp;settings_edit_key={{ row_key }}&amp;settings_action=edit#{{ state.edit_target }}"
-      >&#9998;</a>
-    {% endif %}
 
     {% if state.can_manage_all_entities and status_value != "ativo" and can_delete and not row.get("is_deleted") %}
       <form
@@ -140,6 +140,70 @@
           aria-label="Eliminar"
         >&#128465;</button>
       </form>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_menu_legacy_actions_v1(row, row_key, row_is_protected, table_status, redirect_target) %}
+  {% set row_label = row.label or row.name or row.title or row.key %}
+  {% set is_active_table = table_status == "active" %}
+  {% set can_delete = row.get("can_delete", true) %}
+  <div class="table-actions" aria-label="Ações do menu {{ row_label }}">
+    {% if is_active_table %}
+      <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
+        <input type="hidden" name="menu_key" value="{{ row_key }}">
+        <input type="hidden" name="direction" value="up">
+        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_target" value="{{ redirect_target }}">
+        <button type="submit" class="table-icon-btn" title="Subir" aria-label="Subir {{ row_label }}">&#8593;</button>
+      </form>
+
+      <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
+        <input type="hidden" name="menu_key" value="{{ row_key }}">
+        <input type="hidden" name="direction" value="down">
+        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_target" value="{{ redirect_target }}">
+        <button type="submit" class="table-icon-btn" title="Descer" aria-label="Descer {{ row_label }}">&#8595;</button>
+      </form>
+    {% endif %}
+
+    <a
+      class="table-icon-btn"
+      href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+      title="Editar"
+      aria-label="Editar {{ row_label }}"
+    >&#9998;</a>
+
+    {% if is_active_table %}
+      {% if row_is_protected %}
+      <span class="table-icon-btn table-icon-btn-disabled" title="Menu obrigatório" aria-label="Menu obrigatório">&#128065;</span>
+      {% else %}
+      <a
+        class="table-icon-btn"
+        href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle{{ redirect_target }}"
+        title="Desativar"
+        aria-label="Desativar {{ row_label }}"
+      >&#128065;</a>
+      {% endif %}
+    {% else %}
+      <a
+        class="table-icon-btn"
+        href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle{{ redirect_target }}"
+        title="Ativar"
+        aria-label="Ativar {{ row_label }}"
+      >&#128065;</a>
+
+      {% if row_is_protected or not can_delete %}
+      <span class="table-icon-btn table-icon-btn-disabled" title="Menu obrigatório" aria-label="Menu obrigatório">&#128465;</span>
+      {% else %}
+      <form method="post" action="/settings/menu/delete">
+        <input type="hidden" name="menu_key" value="{{ row_key }}">
+        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_target" value="{{ redirect_target }}">
+        <button type="submit" class="table-icon-btn table-icon-btn-danger" title="Eliminar menu" aria-label="Eliminar menu">&#128465;</button>
+      </form>
+      {% endif %}
     {% endif %}
   </div>
 {% endmacro %}

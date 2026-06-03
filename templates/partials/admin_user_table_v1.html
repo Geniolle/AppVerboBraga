@@ -62,17 +62,6 @@
         <div class="table-actions" data-admin-user-actions="1">
           <a
             class="table-icon-btn"
-            href="{{ view_href }}"
-            data-admin-user-action-link="1"
-            data-appverbo-user-action="view"
-            data-appverbo-user-view="1"
-            data-user-id="{{ row.id }}"
-            title="Exibir utilizador"
-            aria-label="Exibir utilizador {{ row.login_email }}"
-          >&#128065;</a>
-
-          <a
-            class="table-icon-btn"
             href="{{ edit_href }}"
             data-admin-user-action-link="1"
             data-appverbo-user-action="edit"
@@ -81,6 +70,17 @@
             title="Modificar utilizador"
             aria-label="Modificar utilizador {{ row.login_email }}"
           >&#9998;</a>
+
+          <a
+            class="table-icon-btn"
+            href="{{ view_href }}"
+            data-admin-user-action-link="1"
+            data-appverbo-user-action="view"
+            data-appverbo-user-view="1"
+            data-user-id="{{ row.id }}"
+            title="Exibir utilizador"
+            aria-label="Exibir utilizador {{ row.login_email }}"
+          >&#128065;</a>
 
           {% if delete_enabled %}
           <form

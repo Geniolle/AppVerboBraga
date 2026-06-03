@@ -384,7 +384,7 @@ const startupHash = window.location.hash || "";
 const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
 const processTextualTypes = new Set(["text", "textarea", "number", "email", "phone", "link"]);
-const processSupportedTypes = new Set(["text", "textarea", "number", "email", "phone", "date", "flag", "list", "link"]);
+const processSupportedTypes = new Set(["text", "textarea", "number", "email", "phone", "date", "time", "flag", "list", "link"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 const readOnlyDynamicProcessMenuKeys = new Set();
 

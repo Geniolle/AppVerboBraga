@@ -90,30 +90,42 @@
 
   const PROCESS_LIST_SOURCE_MANUAL_V1 = "manual";
   const PROCESS_LIST_SOURCE_USERS_V1 = "users";
+  const PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 = "sidebar_sections";
+  const PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 = "sidebar_menus_by_section";
   const PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 = "table:";
+  const PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1 = Object.freeze(
+    {
+      user_profiles: "profiles"
+    }
+  );
   const PROCESS_LIST_SOURCE_OPTIONS_V1 = Object.freeze(
     {
       [PROCESS_LIST_SOURCE_MANUAL_V1]: "Manual",
-      [PROCESS_LIST_SOURCE_USERS_V1]: "Utilizador (automático)"
+      [PROCESS_LIST_SOURCE_USERS_V1]: "Utilizador (automatico)",
+      [PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1]: "Sessoes (automatico)",
+      [PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1]: "Subprocesso/Menu por sessao (automatico)"
     }
   );
 
   function normalizeTableKeyFromSource_v1(value) {
     const rawValue = toSafeString_v1(value).trim().toLowerCase();
+    let cleanTableKey = "";
 
     if (!rawValue) {
       return "";
     }
 
     if (rawValue.indexOf(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1) === 0) {
-      return normalizeKey_v1(rawValue.slice(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1.length));
+      cleanTableKey = normalizeKey_v1(rawValue.slice(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1.length));
+    } else if (rawValue.indexOf("table_") === 0) {
+      cleanTableKey = normalizeKey_v1(rawValue.slice(6));
     }
 
-    if (rawValue.indexOf("table_") === 0) {
-      return normalizeKey_v1(rawValue.slice(6));
+    if (!cleanTableKey) {
+      return "";
     }
 
-    return "";
+    return PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1[cleanTableKey] || cleanTableKey;
   }
 
   function buildTableSourceKey_v1(tableKey) {
@@ -137,6 +149,28 @@
       return PROCESS_LIST_SOURCE_USERS_V1;
     }
 
+    if (
+      normalizedValue === PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 ||
+      normalizedValue === "sessions" ||
+      normalizedValue === "session" ||
+      normalizedValue === "sessoes" ||
+      normalizedValue === "sidebar_sections"
+    ) {
+      return PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1;
+    }
+
+    if (
+      normalizedValue === PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 ||
+      normalizedValue === "menus_by_section" ||
+      normalizedValue === "menu_by_section" ||
+      normalizedValue === "menus_por_sessao" ||
+      normalizedValue === "menu_por_sessao" ||
+      normalizedValue === "subprocessos_por_sessao" ||
+      normalizedValue === "submenu_por_sessao"
+    ) {
+      return PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1;
+    }
+
     const tableKey = normalizeTableKeyFromSource_v1(rawValue);
     if (tableKey) {
       return buildTableSourceKey_v1(tableKey);
@@ -146,7 +180,13 @@
   }
 
   function formatTableLabel_v1(tableKey) {
-    return normalizeKey_v1(tableKey)
+    const cleanTableKey = normalizeTableKeyFromSource_v1(buildTableSourceKey_v1(tableKey)) || normalizeKey_v1(tableKey);
+
+    if (cleanTableKey === "profiles") {
+      return "Perfil";
+    }
+
+    return cleanTableKey
       .split("_")
       .filter(Boolean)
       .map(function (part) {
@@ -173,7 +213,13 @@
   }
 
   function isAutomaticSource_v1(sourceKey) {
-    return isUsersSource_v1(sourceKey) || isTableSource_v1(sourceKey);
+    const cleanSourceKey = normalizeSourceKey_v1(sourceKey);
+    return (
+      cleanSourceKey === PROCESS_LIST_SOURCE_USERS_V1 ||
+      cleanSourceKey === PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 ||
+      cleanSourceKey === PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 ||
+      isTableSource_v1(cleanSourceKey)
+    );
   }
 
   function createButton_v1(action, label, itemId, disabled) {

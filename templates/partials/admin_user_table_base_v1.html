@@ -23,19 +23,6 @@
   <div class="table-actions">
     <a
       class="table-icon-btn"
-      href="{{ view_url }}"
-      data-admin-user-action-link="1"
-      data-appverbo-user-action="view"
-      data-appverbo-user-view="1"
-      title="Exibir utilizador"
-      aria-label="Exibir utilizador"
-      data-admin-user-shadow-real-link="view"
-      data-admin-user-shadow-user-id="{{ user_id }}"
-    >
-      &#128065;
-    </a>
-    <a
-      class="table-icon-btn"
       href="{{ edit_url }}"
       data-admin-user-action-link="1"
       data-appverbo-user-action="edit"
@@ -46,6 +33,19 @@
       data-admin-user-shadow-user-id="{{ user_id }}"
     >
       &#9998;
+    </a>
+    <a
+      class="table-icon-btn"
+      href="{{ view_url }}"
+      data-admin-user-action-link="1"
+      data-appverbo-user-action="view"
+      data-appverbo-user-view="1"
+      title="Exibir utilizador"
+      aria-label="Exibir utilizador"
+      data-admin-user-shadow-real-link="view"
+      data-admin-user-shadow-user-id="{{ user_id }}"
+    >
+      &#128065;
     </a>
     {% if show_delete %}
     <form method="post" action="/users/delete" style="display:inline;">

@@ -52,10 +52,13 @@ from appverbo.services.songs import (
     normalize_song_lyrics_status_v1,
     transcribe_song_from_youtube_v1,
 )
+from appverbo.services.contact_membership_import import (
+    parse_contact_membership_import_file_v1,
+)
 
 from appverbo.routes.profile.router import router
 
-PROCESS_FIELD_TYPES = {"text", "textarea", "number", "email", "phone", "date", "flag", "list", "link"}
+PROCESS_FIELD_TYPES = {"text", "textarea", "number", "email", "phone", "date", "time", "flag", "list", "link"}
 PROCESS_TEXTUAL_FIELD_TYPES = {"text", "textarea", "number", "email", "phone", "link"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
 MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
@@ -422,6 +425,24 @@ def _is_absence_process(menu_key: str, process_setting: dict[str, Any] | None = 
         return False
     return ("assiduidade" in joined) or ("ausencia" in joined)
 
+def _is_single_record_process(
+    menu_key: str,
+    process_setting: dict[str, Any] | None = None,
+    section_key: str = "",
+) -> bool:
+    normalized_menu_key = _normalize_lookup_text(menu_key).replace(" ", "_")
+    parts = [_normalize_lookup_text(menu_key), _normalize_lookup_text(section_key)]
+    if isinstance(process_setting, dict):
+        parts.append(_normalize_lookup_text(process_setting.get("label")))
+    joined = " ".join(part for part in parts if part)
+    if not normalized_menu_key and not joined:
+        return False
+    return (
+        normalized_menu_key in {"empresa", "meu_perfil", "perfil"}
+        or "meu perfil" in joined
+        or "perfil pessoal" in joined
+    )
+
 def _is_history_process(
     menu_key: str,
     process_setting: dict[str, Any] | None = None,
@@ -436,7 +457,9 @@ def _is_history_process(
         return False
     if _is_absence_process(menu_key, process_setting):
         return True
-    return ("departamento" in joined) or ("musica" in joined)
+    if _is_single_record_process(menu_key, process_setting, section_key):
+        return False
+    return True
 
 def _is_start_date_field(field_key: str, field_label: str) -> bool:
     joined = f"{_normalize_lookup_text(field_key)} {_normalize_lookup_text(field_label)}".strip()
@@ -1081,6 +1104,175 @@ def _build_post_save_redirect_url_from_raw_return_url_v6(
     return _append_after_save_marker_to_users_new_url_v6(
         build_users_new_url(**normalized_params)
     )
+
+
+def _build_post_save_stable_url_from_raw_return_url_v1(
+    raw_return_url: Any,
+    **params: Any,
+) -> str:
+    clean_raw_return_url = str(raw_return_url or "").strip()
+
+    if clean_raw_return_url:
+        try:
+            parsed_url = urlsplit(clean_raw_return_url)
+        except Exception:
+            parsed_url = None
+
+        if (
+            parsed_url is not None
+            and not parsed_url.scheme
+            and not parsed_url.netloc
+            and (parsed_url.path or "/users/new") == "/users/new"
+        ):
+            query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
+            query_params.pop("appverbo_after_save", None)
+            query_params.pop("profile_success", None)
+            query_params.pop("profile_error", None)
+
+            for raw_key, raw_value in params.items():
+                clean_key = str(raw_key or "").strip()
+                clean_value = str(raw_value or "").strip()
+                if not clean_key:
+                    continue
+                if clean_value:
+                    query_params[clean_key] = clean_value
+                else:
+                    query_params.pop(clean_key, None)
+
+            clean_target = str(query_params.get("target") or "").strip()
+            query_string = urlencode(query_params)
+            fragment = clean_target if clean_target.startswith("#") else (
+                f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+            )
+
+            return (
+                f"/users/new?{query_string}{fragment}"
+                if query_string
+                else f"/users/new{fragment}"
+            )
+
+    return build_users_new_url(**params)
+
+
+def _build_post_save_stable_url_v1(
+    submitted_form: Any,
+    **params: Any,
+) -> str:
+    raw_return_url = ""
+
+    if hasattr(submitted_form, "get"):
+        raw_return_url = str(submitted_form.get("return_url") or "").strip()
+
+    return _build_post_save_stable_url_from_raw_return_url_v1(
+        raw_return_url,
+        **params,
+    )
+
+
+def _is_dynamic_process_silent_refresh_request_v1(request: Request) -> bool:
+    clean_header = str(request.headers.get("x-appverbo-silent-refresh") or "").strip()
+    if clean_header == "1":
+        return True
+
+    requested_with = str(request.headers.get("x-requested-with") or "").strip().lower()
+    return requested_with == "xmlhttprequest"
+
+
+def _build_dynamic_process_runtime_snapshot_v1(
+    *,
+    clean_menu_key: str,
+    process_setting: dict[str, Any],
+    existing_profile_fields: dict[str, str],
+) -> dict[str, Any]:
+    visible_rows = (
+        process_setting.get("process_visible_field_rows")
+        if isinstance(process_setting.get("process_visible_field_rows"), list)
+        else []
+    )
+    values_by_field: dict[str, str] = {}
+    for raw_row in visible_rows:
+        if not isinstance(raw_row, dict):
+            continue
+        field_key = str(raw_row.get("field_key") or "").strip().lower()
+        if not field_key:
+            continue
+        storage_key = build_menu_process_field_storage_key(clean_menu_key, field_key)
+        if not storage_key:
+            continue
+        storage_value = existing_profile_fields.get(storage_key)
+        if storage_value is None:
+            continue
+        values_by_field[field_key] = str(storage_value)
+
+    quantity_values_by_rule: dict[str, list[dict[str, str]]] = {}
+    for quantity_rule in process_setting.get("process_quantity_fields") or []:
+        if not isinstance(quantity_rule, dict):
+            continue
+        rule_key = str(quantity_rule.get("key") or "").strip().lower()
+        if not rule_key:
+            continue
+        quantity_storage_key = build_menu_process_quantity_storage_key(clean_menu_key, rule_key)
+        if not quantity_storage_key:
+            continue
+        quantity_values = parse_menu_process_quantity_values(
+            existing_profile_fields.get(quantity_storage_key)
+        )
+        if quantity_values:
+            quantity_values_by_rule[rule_key] = quantity_values
+
+    history_rows: list[dict[str, Any]] = []
+    history_storage_key = build_menu_process_records_storage_key(clean_menu_key)
+    if history_storage_key:
+        history_rows = parse_menu_process_records(
+            existing_profile_fields.get(history_storage_key)
+        )
+
+    return {
+        "values_by_field": values_by_field,
+        "quantity_values_by_rule": quantity_values_by_rule,
+        "history_rows": history_rows,
+    }
+
+
+def _build_dynamic_process_silent_refresh_payload_v1(
+    *,
+    submitted_form: Any,
+    clean_menu_key: str,
+    requested_section_key: str,
+    process_setting: dict[str, Any],
+    existing_profile_fields: dict[str, str],
+    success_message: str,
+) -> dict[str, Any]:
+    runtime_snapshot = _build_dynamic_process_runtime_snapshot_v1(
+        clean_menu_key=clean_menu_key,
+        process_setting=process_setting,
+        existing_profile_fields=existing_profile_fields,
+    )
+    clean_section_key = str(requested_section_key or "").strip()
+    redirect_url = _build_post_save_redirect_url_v6(
+        submitted_form,
+        menu=clean_menu_key,
+        profile_success=success_message,
+    )
+    stable_url = _build_post_save_stable_url_v1(
+        submitted_form,
+        menu=clean_menu_key,
+        target="#dynamic-process-card",
+        dynamic_process_section=clean_section_key,
+        section_key=clean_section_key,
+    )
+
+    return {
+        "success": True,
+        "message": success_message,
+        "menuKey": clean_menu_key,
+        "sectionKey": clean_section_key,
+        "redirectUrl": redirect_url,
+        "stableUrl": stable_url,
+        "valuesByField": runtime_snapshot["values_by_field"],
+        "quantityValuesByRule": runtime_snapshot["quantity_values_by_rule"],
+        "historyRows": runtime_snapshot["history_rows"],
+    }
 # APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_END
 
 
@@ -1320,6 +1512,226 @@ def _handle_song_process_submission_v1(
             menu=clean_menu_key,
             profile_success=success_message,
         ),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+# ###################################################################################
+# (CONTACTO GERAL) IMPORTACAO MASSIVA DE DADOS DE MEMBRESIA
+# ###################################################################################
+
+def _resolve_contact_membership_import_config_v1(
+    menu_key: str,
+    process_setting: dict[str, Any],
+    requested_section_key: str,
+    field_meta_by_key: dict[str, dict[str, Any]],
+    field_section_map: dict[str, str],
+) -> dict[str, str]:
+    if _normalize_lookup_text(menu_key) != "contacto_geral":
+        return {}
+
+    options_by_key = {
+        str((raw_option or {}).get("key") or "").strip().lower(): (raw_option or {})
+        for raw_option in (process_setting.get("process_field_options") or [])
+        if str((raw_option or {}).get("key") or "").strip()
+    }
+    header_labels_by_key = {
+        option_key: str((raw_option or {}).get("label") or "").strip()
+        for option_key, raw_option in options_by_key.items()
+        if str((raw_option or {}).get("field_type") or "").strip().lower() == "header"
+    }
+
+    input_section_key = ""
+    target_section_key = ""
+    upload_field_key = ""
+    name_field_key = ""
+    phone_field_key = ""
+    email_field_key = ""
+
+    for header_key, header_label in header_labels_by_key.items():
+        joined_lookup = " ".join(
+            part
+            for part in (
+                _normalize_lookup_text(header_key),
+                _normalize_lookup_text(header_label),
+            )
+            if part
+        )
+        if not input_section_key and "input ficheiro" in joined_lookup:
+            input_section_key = header_key
+        if not target_section_key and "dados membresia" in joined_lookup:
+            target_section_key = header_key
+
+    if not input_section_key or not target_section_key:
+        return {}
+    if str(requested_section_key or "").strip().lower() != input_section_key:
+        return {}
+
+    for field_key, field_meta in (field_meta_by_key or {}).items():
+        section_key = str(field_section_map.get(field_key) or "").strip().lower()
+        label_lookup = " ".join(
+            part
+            for part in (
+                _normalize_lookup_text(field_key),
+                _normalize_lookup_text(field_meta.get("label")),
+            )
+            if part
+        )
+        if section_key == input_section_key and not upload_field_key and "ficheiro" in label_lookup:
+            upload_field_key = field_key
+            continue
+        if section_key != target_section_key:
+            continue
+        if not name_field_key and "nome" in label_lookup:
+            name_field_key = field_key
+            continue
+        if not phone_field_key and ("telefone" in label_lookup or "telemovel" in label_lookup or "celular" in label_lookup):
+            phone_field_key = field_key
+            continue
+        if not email_field_key and "email" in label_lookup:
+            email_field_key = field_key
+
+    if not upload_field_key or not name_field_key or not phone_field_key or not email_field_key:
+        return {}
+
+    return {
+        "input_section_key": input_section_key,
+        "target_section_key": target_section_key,
+        "upload_field_key": upload_field_key,
+        "name_field_key": name_field_key,
+        "phone_field_key": phone_field_key,
+        "email_field_key": email_field_key,
+    }
+
+
+async def _handle_contact_membership_import_v1(
+    *,
+    session: Session,
+    submitted_form: Any,
+    member: Member,
+    clean_menu_key: str,
+    import_config: dict[str, str],
+    existing_profile_fields: dict[str, str],
+    existing_records: list[dict[str, Any]],
+    records_storage_key: str,
+) -> RedirectResponse:
+    upload_field_key = str(import_config.get("upload_field_key") or "").strip().lower()
+    target_section_key = str(import_config.get("target_section_key") or "").strip()
+    input_section_key = str(import_config.get("input_section_key") or "").strip()
+    if not upload_field_key or not target_section_key or not records_storage_key:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Configuração incompleta para importação de contactos.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    raw_upload_file = submitted_form.get(f"process_field__{upload_field_key}")
+    upload_filename = str(getattr(raw_upload_file, "filename", "") or "").strip()
+    if not upload_filename:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Selecione um ficheiro CSV ou XLSX para importar.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    try:
+        import_result = await parse_contact_membership_import_file_v1(raw_upload_file)
+    except ValueError as exc:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error=str(exc),
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    imported_rows = list(import_result.get("rows") or [])
+    skipped_rows = int(import_result.get("skipped_rows") or 0)
+    if not imported_rows:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Nenhuma linha válida foi encontrada no ficheiro enviado.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    timestamp_label = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    name_field_key = str(import_config.get("name_field_key") or "").strip().lower()
+    phone_field_key = str(import_config.get("phone_field_key") or "").strip().lower()
+    email_field_key = str(import_config.get("email_field_key") or "").strip().lower()
+
+    for imported_row in imported_rows:
+        existing_records.append(
+            {
+                "record_id": uuid4().hex,
+                "created_at": timestamp_label,
+                "section_key": target_section_key,
+                "values": {
+                    name_field_key: str(imported_row.get("name") or "").strip(),
+                    phone_field_key: str(imported_row.get("phone") or "").strip(),
+                    email_field_key: str(imported_row.get("email") or "").strip(),
+                    "__estado": "ativo",
+                },
+            }
+        )
+
+    existing_records.append(
+        {
+            "record_id": uuid4().hex,
+            "created_at": timestamp_label,
+            "section_key": input_section_key,
+            "values": {
+                upload_field_key: f"{upload_filename} ({len(imported_rows)} importados)",
+                "__estado": "ativo",
+            },
+        }
+    )
+
+    serialized_records = serialize_menu_process_records(existing_records)
+    if serialized_records:
+        existing_profile_fields[records_storage_key] = serialized_records
+    else:
+        existing_profile_fields.pop(records_storage_key, None)
+
+    member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_error="Falha ao importar os dados do ficheiro.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    success_message = f"{len(imported_rows)} dados de membresia importados com sucesso."
+    if skipped_rows > 0:
+        success_message += f" {skipped_rows} linhas foram ignoradas."
+
+    redirect_url = _append_after_save_marker_to_users_new_url_v6(
+        build_users_new_url(
+            menu=clean_menu_key,
+            target="#dynamic-process-card",
+            dynamic_process_section=target_section_key,
+            section_key=target_section_key,
+            profile_success=success_message,
+        )
+    )
+    return RedirectResponse(
+        url=redirect_url,
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
@@ -2011,12 +2423,13 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
     )
 
 @router.post("/users/profile/process-data")
-async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
+async def update_dynamic_process_profile(request: Request):
     submitted_form = await request.form()
     clean_menu_key = resolve_menu_key_alias(submitted_form.get("menu_key"))
     requested_section_key = str(submitted_form.get("section_key") or "").strip()
     requested_history_action = str(submitted_form.get("history_action") or "").strip().lower()
     requested_history_record_id = str(submitted_form.get("history_record_id") or "").strip()
+    silent_refresh_requested = _is_dynamic_process_silent_refresh_request_v1(request)
     _write_meu_perfil_process_flow_debug_log_v1(
         request,
         "01_process_form_received",
@@ -2352,6 +2765,24 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             if records_storage_key
             else []
         )
+        contact_membership_import_config = _resolve_contact_membership_import_config_v1(
+            clean_menu_key,
+            process_setting,
+            requested_section_key,
+            field_meta_by_key,
+            field_section_map,
+        )
+        if contact_membership_import_config:
+            return await _handle_contact_membership_import_v1(
+                session=session,
+                submitted_form=submitted_form,
+                member=member,
+                clean_menu_key=clean_menu_key,
+                import_config=contact_membership_import_config,
+                existing_profile_fields=existing_profile_fields,
+                existing_records=existing_records,
+                records_storage_key=records_storage_key,
+            )
         current_process_values_by_field: dict[str, str] = {}
         for option_key in field_meta_by_key.keys():
             storage_key = build_menu_process_field_storage_key(clean_menu_key, option_key)
@@ -2565,9 +2996,25 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
 
+            success_message = f"{record_label_singular.capitalize()} eliminado com sucesso."
+            if silent_refresh_requested:
+                return JSONResponse(
+                    _build_dynamic_process_silent_refresh_payload_v1(
+                        submitted_form=submitted_form,
+                        clean_menu_key=clean_menu_key,
+                        requested_section_key=requested_section_key,
+                        process_setting=process_setting,
+                        existing_profile_fields=existing_profile_fields,
+                        success_message=success_message,
+                    ),
+                    status_code=status.HTTP_200_OK,
+                )
+
             return RedirectResponse(
-                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
-                    profile_success=f"{record_label_singular.capitalize()} eliminado com sucesso.",
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_success=success_message,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2878,6 +3325,19 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             "success_message": success_message,
         },
     )
+    if silent_refresh_requested:
+        return JSONResponse(
+            _build_dynamic_process_silent_refresh_payload_v1(
+                submitted_form=submitted_form,
+                clean_menu_key=clean_menu_key,
+                requested_section_key=requested_section_key,
+                process_setting=process_setting,
+                existing_profile_fields=existing_profile_fields,
+                success_message=success_message,
+            ),
+            status_code=status.HTTP_200_OK,
+        )
+
     return RedirectResponse(
         url=redirect_url,
         status_code=status.HTTP_303_SEE_OTHER,

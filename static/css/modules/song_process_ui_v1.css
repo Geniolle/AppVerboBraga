@@ -110,6 +110,13 @@
   color: #1f7a49;
 }
 
+.appverbo-song-lyrics-preview-cell-v1 {
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media (max-width: 1480px) {
   #dynamic-process-edit-grid.appverbo-song-grid-v1 {
     grid-template-columns: repeat(3, minmax(0, 1fr));

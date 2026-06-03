@@ -37,19 +37,64 @@
         return joined.includes("assiduidade") || joined.includes("ausencia");
       }
 
+      function isSingleRecordProcessMenu(menuKey, menuLabel, sectionLabel) {
+        const normalizedMenuKey = normalizeLookupText(menuKey).replace(/\s+/g, "_");
+        const joined = buildNormalizedJoinedText(menuKey, menuLabel, sectionLabel);
+        if (!normalizedMenuKey && !joined) {
+          return false;
+        }
+        return (
+          normalizedMenuKey === "empresa" ||
+          normalizedMenuKey === "meu_perfil" ||
+          normalizedMenuKey === "perfil" ||
+          joined.includes("meu perfil") ||
+          joined.includes("perfil pessoal")
+        );
+      }
+
+      function pluralizeHistoryLabel(label) {
+        const normalizedLabel = normalizeLookupText(label);
+        if (!normalizedLabel) {
+          return "registos";
+        }
+        if (normalizedLabel.endsWith("s")) {
+          return normalizedLabel;
+        }
+        if (normalizedLabel.endsWith("ao")) {
+          return `${normalizedLabel.slice(0, -2)}oes`;
+        }
+        if (normalizedLabel.endsWith("al")) {
+          return `${normalizedLabel.slice(0, -2)}ais`;
+        }
+        if (normalizedLabel.endsWith("el")) {
+          return `${normalizedLabel.slice(0, -2)}eis`;
+        }
+        if (normalizedLabel.endsWith("il")) {
+          return `${normalizedLabel.slice(0, -2)}is`;
+        }
+        if (normalizedLabel.endsWith("ol")) {
+          return `${normalizedLabel.slice(0, -2)}ois`;
+        }
+        if (normalizedLabel.endsWith("ul")) {
+          return `${normalizedLabel.slice(0, -2)}uis`;
+        }
+        return `${normalizedLabel}s`;
+      }
+
       function isHistoryProcessMenu(menuKey, menuLabel, sectionLabel) {
         const joined = buildNormalizedJoinedText(menuKey, menuLabel, sectionLabel);
         if (!joined) {
           return false;
         }
-        return (
-          isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) ||
-          joined.includes("departamento") ||
-          joined.includes("musica")
-        );
+        if (isSingleRecordProcessMenu(menuKey, menuLabel, sectionLabel)) {
+          return false;
+        }
+        return true;
       }
 
       function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
+        const normalizedMenuLabel = normalizeLookupText(menuLabel);
+        const normalizedSectionLabel = normalizeLookupText(sectionLabel);
         const joined = buildNormalizedJoinedText(menuKey, menuLabel, sectionLabel);
         if (isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel)) {
           return { singular: "ausencia", plural: "ausencias" };
@@ -60,7 +105,11 @@
         if (joined.includes("musica")) {
           return { singular: "musica", plural: "musicas" };
         }
-        return { singular: "registo", plural: "registos" };
+        const genericSingularLabel = normalizedMenuLabel || normalizedSectionLabel || "registo";
+        return {
+          singular: genericSingularLabel,
+          plural: pluralizeHistoryLabel(genericSingularLabel)
+        };
       }
 
       return {
