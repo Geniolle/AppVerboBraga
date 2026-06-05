@@ -98,6 +98,13 @@ class AdminSubprocessState:
     error: str = ""
     return_url: str = ""
     field_options: dict[str, tuple[tuple[str, str], ...]] = field(default_factory=dict)
+    active_columns: tuple[AdminColumnConfig, ...] | None = None
+
+    @property
+    def effective_columns(self) -> tuple[AdminColumnConfig, ...]:
+        if self.active_columns is not None:
+            return self.active_columns
+        return self.config.columns
 
     @property
     def is_editing(self) -> bool:

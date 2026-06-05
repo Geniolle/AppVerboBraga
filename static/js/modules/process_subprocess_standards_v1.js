@@ -31,7 +31,10 @@
         target: "create-user-card",
         hash: "create-user-card"
       }
-    },
+    }
+  ]);
+
+  const SESSOES_SUBPROCESS_TABS_V1 = Object.freeze([
     {
       key: "sessoes",
       label: "Sessões",
@@ -67,40 +70,35 @@
     }
   ]);
 
+
   const SUBPROCESS_TAB_LIBRARY_V1 = Object.freeze({
-    administrativo: ADMINISTRATIVO_SUBPROCESS_TABS_V1
+    administrativo: ADMINISTRATIVO_SUBPROCESS_TABS_V1,
+    sessoes: SESSOES_SUBPROCESS_TABS_V1
   });
 
   const MENU_TARGET_ALIAS_LIBRARY_V1 = Object.freeze({
-    administrativo: Object.freeze({
+    administrativo: Object.freeze({}),
+    sessoes: Object.freeze({
       "#admin-menu-form": "#admin-menu-card",
       "#admin-menu-create-card": "#admin-menu-card"
     })
   });
 
   const MENU_SCOPED_CARD_GROUP_LIBRARY_V1 = Object.freeze({
-    administrativo: Object.freeze([
+    sessoes: Object.freeze([
       Object.freeze({
-        key: "entidade",
-        targets: Object.freeze(["#create-entity-card", "#admin-subprocess-v2-entidade"]),
+        key: "sessoes",
+        targets: Object.freeze([
+          "#admin-sidebar-sections-card",
+          "#admin-sidebar-sections-card-create",
+          "#admin-sidebar-sections-card-inactive",
+          "#admin-sidebar-sections-card-edit"
+        ]),
         cardIds: Object.freeze([
-          "create-entity-card",
-          "edit-entity-card",
-          "recent-entities-card",
-          "inactive-entities-card",
-          "admin-entidade-v2-integrated-root"
-        ])
-      }),
-      Object.freeze({
-        key: "utilizador",
-        targets: Object.freeze(["#create-user-card"]),
-        cardIds: Object.freeze([
-          "create-user-card",
-          "edit-user-card",
-          "admin-user-shadow-readonly-card",
-          "admin-user-shadow-inactive-card",
-          "admin-users-created-card",
-          "inactive-users-card"
+          "admin-sidebar-sections-card-create",
+          "admin-sidebar-sections-card",
+          "admin-sidebar-sections-card-inactive",
+          "admin-sidebar-sections-card-edit"
         ])
       }),
       Object.freeze({
@@ -133,6 +131,31 @@
           "admin-definicoes-card-edit"
         ])
       })
+    ]),
+    administrativo: Object.freeze([
+      Object.freeze({
+        key: "entidade",
+        targets: Object.freeze(["#create-entity-card", "#admin-subprocess-v2-entidade"]),
+        cardIds: Object.freeze([
+          "create-entity-card",
+          "edit-entity-card",
+          "recent-entities-card",
+          "inactive-entities-card",
+          "admin-entidade-v2-integrated-root"
+        ])
+      }),
+      Object.freeze({
+        key: "utilizador",
+        targets: Object.freeze(["#create-user-card"]),
+        cardIds: Object.freeze([
+          "create-user-card",
+          "edit-user-card",
+          "admin-user-shadow-readonly-card",
+          "admin-user-shadow-inactive-card",
+          "admin-users-created-card",
+          "inactive-users-card"
+        ])
+      })
     ])
   });
 
@@ -153,15 +176,15 @@
     "#create-user-card": "administrativo",
     "#create-entity-card": "administrativo",
     "#admin-subprocess-v2-entidade": "administrativo",
-    "#admin-menu-card-create": "administrativo",
-    "#admin-menu-card": "administrativo",
-    "#admin-menu-card-inactive": "administrativo",
-    "#admin-definicoes-card": "administrativo",
-    "#admin-definicoes-card-create": "administrativo",
-    "#admin-definicoes-card-inactive": "administrativo",
-    "#admin-definicoes-card-edit": "administrativo",
-    "#admin-sidebar-sections-card": "administrativo",
-    "#settings-menu-edit-card": "administrativo"
+    "#admin-menu-card-create": "sessoes",
+    "#admin-menu-card": "sessoes",
+    "#admin-menu-card-inactive": "sessoes",
+    "#admin-definicoes-card": "sessoes",
+    "#admin-definicoes-card-create": "sessoes",
+    "#admin-definicoes-card-inactive": "sessoes",
+    "#admin-definicoes-card-edit": "sessoes",
+    "#admin-sidebar-sections-card": "sessoes",
+    "#settings-menu-edit-card": "sessoes"
   });
 
   //###################################################################################

@@ -98,7 +98,7 @@ def sanitize_menu_return_url_v1(
 
         if key == "menu":
             found_menu = True
-            clean_params.append(("menu", "administrativo"))
+            clean_params.append(("menu", str(value or "administrativo").strip() or "administrativo"))
             continue
 
         if key == "admin_tab":

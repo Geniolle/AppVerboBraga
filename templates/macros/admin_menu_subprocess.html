@@ -4,7 +4,7 @@
     id="{{ state.create_target }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
     data-admin-subprocess="menu"
-    data-menu-scope="administrativo"
+    data-menu-scope="{{ initial_menu }}"
   >
     {% if state.success %}
       <div class="alert ok">{{ state.success }}</div>
@@ -110,7 +110,7 @@
         class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
         title="Editar"
         aria-label="Editar"
-        href="/users/new?menu=administrativo&amp;admin_tab=menu&amp;target={{ state.edit_target }}&amp;settings_edit_key={{ row_key }}&amp;settings_action=edit#{{ state.edit_target }}"
+      href="/users/new?menu={{ initial_menu }}&amp;admin_tab=menu&amp;target={{ state.edit_target }}&amp;settings_edit_key={{ row_key }}&amp;settings_action=edit#{{ state.edit_target }}"
       >&#9998;</a>
     {% endif %}
 
@@ -154,7 +154,7 @@
       <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
         <input type="hidden" name="menu_key" value="{{ row_key }}">
         <input type="hidden" name="direction" value="up">
-        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
         <input type="hidden" name="redirect_target" value="#admin-menu-card-create">
         <button type="submit" class="table-icon-btn" title="Subir" aria-label="Subir {{ row_label }}">&#8593;</button>
       </form>
@@ -162,7 +162,7 @@
       <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
         <input type="hidden" name="menu_key" value="{{ row_key }}">
         <input type="hidden" name="direction" value="down">
-        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
         <input type="hidden" name="redirect_target" value="#admin-menu-card-create">
         <button type="submit" class="table-icon-btn" title="Descer" aria-label="Descer {{ row_label }}">&#8595;</button>
       </form>
@@ -170,7 +170,7 @@
 
     <a
       class="table-icon-btn"
-      href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+      href="/users/new?menu={{ initial_menu }}&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
       title="Editar"
       aria-label="Editar {{ row_label }}"
     >&#9998;</a>
@@ -181,7 +181,7 @@
       {% else %}
       <a
         class="table-icon-btn"
-        href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle{{ redirect_target }}"
+        href="/users/new?menu={{ initial_menu }}&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle{{ redirect_target }}"
         title="Desativar"
         aria-label="Desativar {{ row_label }}"
       >&#128065;</a>
@@ -189,7 +189,7 @@
     {% else %}
       <a
         class="table-icon-btn"
-        href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle{{ redirect_target }}"
+        href="/users/new?menu={{ initial_menu }}&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle{{ redirect_target }}"
         title="Ativar"
         aria-label="Ativar {{ row_label }}"
       >&#128065;</a>
@@ -199,7 +199,7 @@
       {% else %}
       <form method="post" action="/settings/menu/delete">
         <input type="hidden" name="menu_key" value="{{ row_key }}">
-        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
         <input type="hidden" name="redirect_target" value="{{ redirect_target }}">
         <button type="submit" class="table-icon-btn table-icon-btn-danger" title="Eliminar menu" aria-label="Eliminar menu">&#128465;</button>
       </form>
@@ -215,7 +215,7 @@
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="menu"
     data-admin-subprocess-status="{{ status_value }}"
-    data-menu-scope="administrativo"
+    data-menu-scope="{{ initial_menu }}"
   >
     <h2>{{ title }}</h2>
 

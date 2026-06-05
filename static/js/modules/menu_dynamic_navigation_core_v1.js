@@ -199,7 +199,9 @@
           : {};
         const sections = buildProcessSections(setting, menuValuesByField);
 
-        if (!sections.length) {
+        const isStandardProcess = menuKey === "administrativo" || menuKey === "sessoes";
+
+        if (!sections.length && !isStandardProcess) {
           delete dynamicProcessDataByMenu[menuKey];
           delete selectedDynamicSectionByMenu[menuKey];
           if (existingConfig) {
@@ -243,85 +245,83 @@
           dynamicProcessSectionKey: String(section && section.key || "__empty__")
         }));
 
-        if (existingConfig) {
-          if (menuKey === "administrativo") {
-            const baseItems = (
-              processSubprocessStandardsApiV1 &&
-              typeof processSubprocessStandardsApiV1.getStandardSubprocessTabsV1 === "function"
-            )
-              ? processSubprocessStandardsApiV1.getStandardSubprocessTabsV1(menuKey, { normalizeMenuKey })
-              : [
-                  { key: "entidade", label: "Entidade", target: "#create-entity-card" },
-                  { key: "utilizador", label: "Utilizador", target: "#create-user-card" },
-                  { label: "Sessões", target: "#admin-sidebar-sections-card" },
-                  { key: "menu", label: "Menu", target: "#admin-menu-card" },
-                  { label: "Definições", target: "#admin-definicoes-card" }
-                ];
-            const baseSectionKeys = (
-              processSubprocessStandardsApiV1 &&
-              typeof processSubprocessStandardsApiV1.getStandardSubprocessKeysV1 === "function"
-            )
-              ? new Set(processSubprocessStandardsApiV1.getStandardSubprocessKeysV1(menuKey, { normalizeMenuKey }))
-              : new Set(["entidade", "utilizador", "sessoes", "menu", "definicoes"]);
-            const normalizedBaseItems = baseItems.map((item) => {
-              const cleanTarget = String(item && item.target || "").trim();
-              let fallbackKey = "";
+        let finalItems = dynamicItems;
+        if (menuKey === "administrativo" || menuKey === "sessoes") {
+          const baseItems = (
+            processSubprocessStandardsApiV1 &&
+            typeof processSubprocessStandardsApiV1.getStandardSubprocessTabsV1 === "function"
+          )
+            ? processSubprocessStandardsApiV1.getStandardSubprocessTabsV1(menuKey, { normalizeMenuKey })
+            : [
+                { key: "entidade", label: "Entidade", target: "#create-entity-card" },
+                { key: "utilizador", label: "Utilizador", target: "#create-user-card" },
+                { label: "Sessões", target: "#admin-sidebar-sections-card" },
+                { key: "menu", label: "Menu", target: "#admin-menu-card" },
+                { label: "Definições", target: "#admin-definicoes-card" }
+              ];
+          const baseSectionKeys = (
+            processSubprocessStandardsApiV1 &&
+            typeof processSubprocessStandardsApiV1.getStandardSubprocessKeysV1 === "function"
+          )
+            ? new Set(processSubprocessStandardsApiV1.getStandardSubprocessKeysV1(menuKey, { normalizeMenuKey }))
+            : new Set(["entidade", "utilizador", "sessoes", "menu", "definicoes"]);
+          const normalizedBaseItems = baseItems.map((item) => {
+            const cleanTarget = String(item && item.target || "").trim();
+            let fallbackKey = "";
 
-              if (cleanTarget === "#create-entity-card") {
-                fallbackKey = "entidade";
-              } else if (cleanTarget === "#create-user-card") {
-                fallbackKey = "utilizador";
-              } else if (cleanTarget === "#admin-sidebar-sections-card") {
-                fallbackKey = "sessoes";
-              } else if (cleanTarget === "#admin-menu-card") {
-                fallbackKey = "menu";
-              } else if (cleanTarget === "#admin-definicoes-card") {
-                fallbackKey = "definicoes";
-              }
+            if (cleanTarget === "#create-entity-card") {
+              fallbackKey = "entidade";
+            } else if (cleanTarget === "#create-user-card") {
+              fallbackKey = "utilizador";
+            } else if (cleanTarget === "#admin-sidebar-sections-card") {
+              fallbackKey = "sessoes";
+            } else if (cleanTarget === "#admin-menu-card") {
+              fallbackKey = "menu";
+            } else if (cleanTarget === "#admin-definicoes-card") {
+              fallbackKey = "definicoes";
+            }
 
-              return {
-                ...item,
-                key: normalizeMenuKey(item && item.key || fallbackKey)
-              };
-            });
-            const mergedItems = dynamicItems.filter((item) => {
-              const sectionKey = String(item && item.dynamicProcessSectionKey || "").trim().toLowerCase();
-              if (!sectionKey) {
-                return false;
-              }
-              if (sectionKey === "__geral__" || sectionKey.startsWith("field:")) {
-                return false;
-              }
-              return !baseSectionKeys.has(sectionKey);
-            });
-            const seenTargets = new Set(normalizedBaseItems.map((item) => buildMenuItemUniqueKeyV1(item)));
-            const dynamicExtraItems = mergedItems.filter((item) => {
-              const targetKey = buildMenuItemUniqueKeyV1(item);
-              if (!targetKey || seenTargets.has(targetKey)) {
-                return false;
-              }
-              seenTargets.add(targetKey);
-              return true;
-            });
-            const trailingStandardKeysV1 = new Set(ADMINISTRATIVO_TRAILING_STANDARD_KEYS_V1);
-            const leadingBaseItems = normalizedBaseItems.filter((item) => {
-              const itemKey = normalizeMenuKey(item && item.key);
-              return !trailingStandardKeysV1.has(itemKey);
-            });
-            const trailingBaseItems = normalizedBaseItems.filter((item) => {
-              const itemKey = normalizeMenuKey(item && item.key);
-              return trailingStandardKeysV1.has(itemKey);
-            });
-            menuConfig[menuKey] = {
-              ...existingConfig,
-              items: [...leadingBaseItems, ...dynamicExtraItems, ...trailingBaseItems]
+            return {
+              ...item,
+              key: normalizeMenuKey(item && item.key || fallbackKey)
             };
-            return;
-          }
+          });
+          const mergedItems = dynamicItems.filter((item) => {
+            const sectionKey = String(item && item.dynamicProcessSectionKey || "").trim().toLowerCase();
+            if (!sectionKey) {
+              return false;
+            }
+            if (sectionKey === "__geral__" || sectionKey.startsWith("field:")) {
+              return false;
+            }
+            return !baseSectionKeys.has(sectionKey);
+          });
+          const seenTargets = new Set(normalizedBaseItems.map((item) => buildMenuItemUniqueKeyV1(item)));
+          const dynamicExtraItems = mergedItems.filter((item) => {
+            const targetKey = buildMenuItemUniqueKeyV1(item);
+            if (!targetKey || seenTargets.has(targetKey)) {
+              return false;
+            }
+            seenTargets.add(targetKey);
+            return true;
+          });
+          const trailingStandardKeysV1 = new Set(ADMINISTRATIVO_TRAILING_STANDARD_KEYS_V1);
+          const leadingBaseItems = normalizedBaseItems.filter((item) => {
+            const itemKey = normalizeMenuKey(item && item.key);
+            return !trailingStandardKeysV1.has(itemKey);
+          });
+          const trailingBaseItems = normalizedBaseItems.filter((item) => {
+            const itemKey = normalizeMenuKey(item && item.key);
+            return trailingStandardKeysV1.has(itemKey);
+          });
+          
+          finalItems = [...leadingBaseItems, ...dynamicExtraItems, ...trailingBaseItems];
+        }
 
+        if (existingConfig) {
           menuConfig[menuKey] = {
             ...existingConfig,
-            items: dynamicItems
+            items: finalItems
           };
           return;
         }
@@ -331,7 +331,7 @@
           description: "Campos configurados para este processo.",
           singleView: true,
           toggleOnMenuClick: true,
-          items: dynamicItems,
+          items: finalItems,
           details: [
             { label: "Modulo", value: cleanMenuLabel },
             { label: "Status", value: "Ativo" }

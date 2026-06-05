@@ -549,7 +549,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 {# APPVERBO_ADMIN_MENU_CREATE_BLOCK_LIKE_SESSOES_V1_START #}
 <section id="admin-menu-card-create"
          class="card entity-panel-card appverbo-admin-menu-create-block-v1"
-         data-menu-scope="administrativo">
+         data-menu-scope="administrativo,sessoes">
   {% set menu_create_mode_v1 = (settings_action == "create") or (initial_menu_target == "#admin-menu-card-create") %}
   {% if menu_create_mode_v1 and settings_error %}
     <div class="alert error">{{ settings_error }}</div>
@@ -566,7 +566,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
     <div class="entity-create-body">
       <form method="post" action="/settings/menu/save" class="admin-subprocess-form-v1">
         <input type="hidden" name="menu_mode" value="create">
-        <input type="hidden" name="redirect_menu" value="administrativo">
+        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
         <input type="hidden" name="redirect_target" value="#admin-menu-card">
         <div class="grid settings-general-grid settings-general-grid-menu-geral">
           <div class="field">
@@ -612,7 +612,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 
 <section id="admin-menu-card"
          class="card process-window-card appverbo-admin-menu-visible-render-v1"
-         data-menu-scope="administrativo"
+         data-menu-scope="administrativo,sessoes"
          data-admin-menu-visible-render="true"
          data-admin-menu-table-card="active"
          style="display:block !important; visibility:visible !important; opacity:1 !important;">
@@ -667,7 +667,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
                     <input type="hidden" name="menu_key" value="{{ row_key }}">
                     <input type="hidden" name="direction" value="up">
-                    <input type="hidden" name="redirect_menu" value="administrativo">
+                    <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                     <input type="hidden" name="redirect_target" value="#admin-menu-card">
                     <button type="submit"
                             class="table-icon-btn"
@@ -678,7 +678,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   <form method="post" action="/settings/menu/move" class="admin-menu-action-form-v1">
                     <input type="hidden" name="menu_key" value="{{ row_key }}">
                     <input type="hidden" name="direction" value="down">
-                    <input type="hidden" name="redirect_menu" value="administrativo">
+                    <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                     <input type="hidden" name="redirect_target" value="#admin-menu-card">
                     <button type="submit"
                             class="table-icon-btn"
@@ -687,7 +687,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   </form>
 
                   <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+                     href="/users/new?menu={{ initial_menu }}&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
 
@@ -697,7 +697,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                         aria-label="Menu obrigatório">&#128065;</span>
                   {% else %}
                   <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card"
+                     href="/users/new?menu={{ initial_menu }}&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card"
                      title="Desativar"
                      aria-label="Desativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
                   {% endif %}
@@ -718,7 +718,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 
 <section id="admin-menu-card-inactive"
          class="card process-window-card appverbo-admin-menu-visible-render-v1"
-         data-menu-scope="administrativo"
+         data-menu-scope="administrativo,sessoes"
          data-admin-menu-table-card="inactive">
 
   <div class="admin-menu-table-header-v1">
@@ -768,12 +768,12 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 {% if false %}
                 <div class="table-actions" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
                   <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+                     href="/users/new?menu={{ initial_menu }}&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
 
                   <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card-inactive"
+                     href="/users/new?menu={{ initial_menu }}&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=toggle#admin-menu-card-inactive"
                      title="Ativar"
                      aria-label="Ativar {{ row.label or row.name or row.title or row.key }}">&#128065;</a>
 
@@ -784,7 +784,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   {% else %}
                   <form method="post" action="/settings/menu/delete">
                     <input type="hidden" name="menu_key" value="{{ row_key }}">
-                    <input type="hidden" name="redirect_menu" value="administrativo">
+                    <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                     <input type="hidden" name="redirect_target" value="#admin-menu-card-inactive">
                     <button type="submit"
                             class="table-icon-btn table-icon-btn-danger"
@@ -2054,9 +2054,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         {% endif %}
 
         {% if settings_edit_data and admin_tab == "menu" %}
-        {% set settings_edit_origin_menu = "administrativo" %}
+        {% set settings_edit_origin_menu = initial_menu %}
         {% set settings_edit_cancel_target = "#admin-menu-card" %}
-        {% set settings_edit_cancel_url = "/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card" %}
+        {% set settings_edit_cancel_url = "/users/new?menu=" + initial_menu + "&admin_tab=menu&target=admin-menu-card#admin-menu-card" %}
         {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
         {% if settings_edit_data.key == "administrativo" and not settings_process_field_options %}
           {% set settings_process_field_options = [
@@ -2070,7 +2070,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
         {% set settings_has_process_fields = true %}
         {% set settings_owner_fields_enabled = current_user_can_manage_all_entities %}
-        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo">
+        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes">
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
           {% if settings_has_process_fields %}
@@ -2963,7 +2963,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 
                 {% if false and admin_tab == "menu" %}
         {% if current_user_can_manage_all_entities %}
-        <section id="admin-account-create-card" class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1" data-menu-scope="administrativo">
+        <section id="admin-account-create-card" class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1" data-menu-scope="sessoes">
           <div id="btn-create-menu-container">
             <button type="button" class="appverbo-subprocess-create-trigger-v1" id="btn-create-menu" onclick="document.getElementById('btn-create-menu-container').style.display='none'; document.getElementById('admin-menu-form-container').style.display='block'; document.getElementById('admin-menu-form').reset();">
               Criar menu
@@ -2971,7 +2971,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           </div>
           <div id="admin-menu-form-container" style="display: none;">
             <form id="admin-menu-form" method="post" action="/settings/menu/create" class="admin-subprocess-form-v1">
-                <input type="hidden" name="redirect_menu" value="administrativo">
+                <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                 <input type="hidden" name="redirect_target" value="#admin-account-create-card">
                 <div class="admin-subprocess-grid-v1">
                   <div class="field admin-subprocess-field-v1">
@@ -3007,7 +3007,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         {% endif %}
 
         {% if false %}
-        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,configuracao">
+        <section id="admin-account-status-card" class="card" data-menu-scope="sessoes,configuracao">
           <div class="profile-card-header">
             <h2>Menus do sistema</h2>
           </div>
@@ -3047,7 +3047,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       <form method="post" action="/settings/menu/move">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="direction" value="up">
-                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                         <input type="hidden" name="redirect_target" value="#admin-account-status-card">
                         <button
                           type="submit"
@@ -3071,7 +3071,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       <form method="post" action="/settings/menu/move">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="direction" value="down">
-                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                         <input type="hidden" name="redirect_target" value="#admin-account-status-card">
                         <button
                           type="submit"
@@ -3112,7 +3112,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       {% endif %}
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu={{ initial_menu }}&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar menu"
                         aria-label="Editar menu"
                       >
@@ -3127,7 +3127,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           </table>
         </section>
 
-        <section id="admin-menu-inactive-card" class="card" data-menu-scope="administrativo,configuracao">
+        <section id="admin-menu-inactive-card" class="card" data-menu-scope="sessoes,configuracao">
           <div class="profile-card-header">
             <h2>Menus inativos</h2>
           </div>
@@ -3165,7 +3165,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       </a>
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu={{ initial_menu }}&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar menu"
                         aria-label="Editar menu"
                       >
@@ -3174,7 +3174,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       {% if current_user_can_manage_all_entities and row.can_delete %}
                       <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
-                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_menu" value="{{ initial_menu }}">
                         <input type="hidden" name="redirect_target" value="#admin-menu-inactive-card">
                         <button type="submit" class="table-icon-btn table-icon-btn-danger" title="Excluir menu" aria-label="Excluir menu">&#128465;</button>
                       </form>
@@ -3238,7 +3238,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       </a>
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu={{ initial_menu }}&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar pasta"
                         aria-label="Editar pasta"
                       >
@@ -3312,7 +3312,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
     };
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260526-core-page-size-options-v2"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260602-additional-time-type-v2"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260605-additional-actions-auto-save"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260603-lists-sessions-and-menu-by-session-v3"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
@@ -3336,10 +3336,10 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
 <script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260603-dynamic-runtime-core-v12-table-source-normalization" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260603-dynamic-process-history-renderer-v7-actions-order" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260606-dynamic-process-history-renderer-v8-actions-order" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
-<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
-<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260605-menu-dynamic-navigation-core-v9-admin-order" defer></script>
+<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260606-process-subprocess-standards-v8-definicoes-groups" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260606-menu-dynamic-navigation-core-v13-sessoes" defer></script>
 <script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260603-menu-navigation-controller-v10-dynamic-link-active" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
@@ -3362,7 +3362,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/process_additional_fields_builder_v1.js?v=20260525-process-additional-fields-builder-module-v1" defer></script>
 <script src="/static/js/modules/sidebar_sections_editor_v1.js?v=20260525-sidebar-sections-editor-module-v1" defer></script>
 <script src="/static/js/modules/create_user_invite_link_v1.js?v=20260525-create-user-invite-link-module-v1" defer></script>
-<script src="/static/js/modules/process_additional_fields_manager_v2.js?v=20260525-process-additional-fields-manager-v2-module-v1" defer></script>
+<script src="/static/js/modules/process_additional_fields_manager_v2.js?v=20260605-process-additional-fields-manager-v2-module-v2-auto-submit" defer></script>
 <script src="/static/js/modules/process_additional_fields_manager_v2_guard_v1.js?v=20260525-process-additional-fields-manager-v2-guard-module-v1" defer></script>
 <script src="/static/js/modules/read_only_cards_v1.js?v=20260525-read-only-cards-module-v1" defer></script>
 <script src="/static/js/modules/admin_table_limiter_v1.js?v=20260525-admin-table-limiter-module-v1" defer></script>

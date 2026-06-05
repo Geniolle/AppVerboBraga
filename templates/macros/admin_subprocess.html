@@ -64,7 +64,7 @@
     id="{{ state.config.edit_target if state.is_editing else create_form_card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
-    data-menu-scope="administrativo"
+    data-menu-scope="administrativo,sessoes"
   >
     {% if state.success %}
       <div class="alert ok">{{ state.success }}</div>
@@ -226,7 +226,7 @@
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-status="{{ status_value }}"
-    data-menu-scope="administrativo"
+    data-menu-scope="administrativo,sessoes"
   >
     <h2>{{ title }}</h2>
 
@@ -235,7 +235,7 @@
         <table id="admin-subprocess-{{ state.config.key }}-{{ status_value }}-table" class="admin-subprocess-table-v1" data-admin-table-standard-v1="1">
           <thead>
             <tr>
-              {% for column in state.config.columns %}
+              {% for column in state.effective_columns %}
                 <th class="{{ column.css_class }}">{{ column.label }}</th>
               {% endfor %}
               <th>A&Ccedil;&Otilde;ES</th>
@@ -244,7 +244,7 @@
           <tbody>
             {% for row in rows %}
               <tr>
-                {% for column in state.config.columns %}
+                {% for column in state.effective_columns %}
                   {% set cell_value = row.get(column.source, "") %}
                   <td class="{{ column.css_class }}">
                     {% if column.key == "status" %}

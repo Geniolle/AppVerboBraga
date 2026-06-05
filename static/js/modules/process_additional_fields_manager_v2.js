@@ -419,11 +419,21 @@
           clearEditor();
         }
         renderTable();
+        if (typeof formEl.requestSubmit === "function") {
+          formEl.requestSubmit();
+        } else {
+          formEl.submit();
+        }
         return;
       }
       if (action === "up" || action === "down") {
         moveStoreRow(fieldKey, action);
         renderTable();
+        if (typeof formEl.requestSubmit === "function") {
+          formEl.requestSubmit();
+        } else {
+          formEl.submit();
+        }
       }
     });
 

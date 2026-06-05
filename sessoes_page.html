@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acesso</title>
+  <link rel="stylesheet" href="/static/css/ui-standards.css?v=20260506-subprocess-create-trigger-v1">
+  
+  <link rel="stylesheet" href="/static/css/login.css?v=20260425a">
+
+</head>
+<body class="">
+  
+  <main class="card ">
+    
+      <h1>Entrar na sua conta</h1>
+
+      
+      
+        <div class="alert error">Efetue login para continuar.</div>
+      
+
+      <form method="post" action="/login">
+        <input type="hidden" name="login_mode" value="login">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required value="" placeholder="exemplo: joao@dominio.com">
+        </div>
+
+        
+
+        <div class="field-row">
+          <label for="password">Palavra-passe</label>
+          <a class="inline-link" href="/password/forgot">Esqueceu a palavra-passe</a>
+        </div>
+        <div class="field">
+          <input id="password" name="password" type="password" required placeholder="Digite sua palavra-passe">
+        </div>
+
+        <button class="primary-btn" type="submit">Continuar</button>
+      </form>
+
+      <div class="providers">
+        
+          
+          <a class="provider-btn " href="/oauth/login/google">
+            <span class="provider-icon">G</span>
+            Entrar com Google
+          </a>
+        
+          
+          <a class="provider-btn " href="/oauth/login/microsoft">
+            <span class="provider-icon">M</span>
+            Entrar com Microsoft
+          </a>
+        
+      </div>
+
+      <p class="switch-mode">
+        Não tem conta
+        <a href="/login?mode=signup">Criar conta</a>
+      </p>
+      <p class="hint">
+        Se os botoes de provedor estiverem desativados, configure `GOOGLE_CLIENT_ID/SECRET`,
+        `MICROSOFT_CLIENT_ID/SECRET`.
+      </p>
+    
+  </main>
+
+  
+  <script src="/static/js/login.js"></script>
+
+</body>
+</html>

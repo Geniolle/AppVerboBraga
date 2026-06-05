@@ -628,6 +628,41 @@
     return true;
   }
 
+  function bindDirectActions_v4(root, manager) {
+    if (!manager || !manager.elements || !manager.elements.tableBody) {
+      return;
+    }
+
+    if (manager.elements.tableBody.dataset.additionalFieldsDirectActionsBoundV4 === "1") {
+      return;
+    }
+
+    manager.elements.tableBody.dataset.additionalFieldsDirectActionsBoundV4 = "1";
+
+    manager.elements.tableBody.addEventListener("click", (event) => {
+      const target = event && event.target instanceof Element
+        ? event.target
+        : (event && event.target && event.target.parentElement instanceof Element
+          ? event.target.parentElement
+          : null);
+      const actionButton = target ? target.closest("[data-configurable-action]") : null;
+
+      if (!actionButton || actionButton.disabled) {
+        return;
+      }
+
+      const action = toSafeString_v3(actionButton.dataset.configurableAction).trim().toLowerCase();
+
+      if (action !== "remove" && action !== "up" && action !== "down") {
+        return;
+      }
+
+      window.setTimeout(() => {
+        submitAdditionalFieldsForm_v4(root, manager);
+      }, 0);
+    });
+  }
+
   function bindEditorExtras_v4(root, manager) {
     if (root.dataset.additionalFieldsExtrasBoundV4 === "1") {
       return;
@@ -685,6 +720,7 @@
     }
 
     updateEditorVisibility_v3(root);
+    bindDirectActions_v4(root, manager);
   }
 
 // APPVERBO_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_END

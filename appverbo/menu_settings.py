@@ -52,6 +52,7 @@ MENU_SECTION_LABELS = {
 }
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
+    "sessoes": "sistema",
     "home": "geral",
     MENU_MEU_PERFIL_KEY: "igreja",
     "funcionarios": "igreja",
@@ -175,6 +176,11 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
     "administrativo": (
         {"key": "entidade", "label": "Entidade"},
         {"key": "utilizador", "label": "Utilizador"},
+    ),
+    "sessoes": (
+        {"key": "perfil_de_autorizacao", "label": "Perfil de autorização"},
+        {"key": "sessoes", "label": "Sessões"},
+        {"key": "menu", "label": "Menu"},
         {"key": "definicoes", "label": "Definições"},
     ),
     MENU_MEU_PERFIL_KEY: (
@@ -224,7 +230,8 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
 
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "home": ["resumo_geral", "indicadores", "graficos"],
-    "administrativo": ["entidade", "utilizador", "definicoes"],
+    "administrativo": ["entidade", "utilizador"],
+    "sessoes": ["perfil_de_autorizacao", "sessoes", "menu", "definicoes"],
     MENU_MEU_PERFIL_KEY: ["nome", "email", "telefone", "pais"],
     "funcionarios": ["nome", "telefone", "email"],
     "financeiro": ["nome", "estado", "criado_em"],
@@ -1623,6 +1630,13 @@ def get_menu_process_visible_field_rows(
 
     if rows:
         return rows
+
+    has_explicit_config = False
+    if isinstance(menu_config, dict):
+        has_explicit_config = bool(menu_config.get("process_visible_fields_configured"))
+
+    if has_explicit_config and clean_menu_key != "administrativo":
+        return []
 
     defaults = get_menu_process_default_visible_fields(clean_menu_key, menu_config)
     default_rows = [
