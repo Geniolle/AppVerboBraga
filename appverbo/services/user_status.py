@@ -66,3 +66,13 @@ def is_user_account_status_inactive_v1(raw_status: Any) -> bool:
 
 def is_user_account_status_blocked_v1(raw_status: Any) -> bool:
     return normalize_user_account_status_v1(raw_status) == USER_ACCOUNT_STATUS_BLOCKED_V1
+
+
+def is_user_account_status_non_active_v1(raw_status: Any) -> bool:
+    normalized_status = normalize_user_account_status_v1(raw_status)
+
+    return normalized_status in {
+        USER_ACCOUNT_STATUS_INACTIVE_V1,
+        USER_ACCOUNT_STATUS_PENDING_V1,
+        USER_ACCOUNT_STATUS_BLOCKED_V1,
+    }

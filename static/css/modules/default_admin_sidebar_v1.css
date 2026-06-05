@@ -1,0 +1,12 @@
+/* ###################################################################################
+   (1) DEFAULT ADMIN SIDEBAR STYLES
+   ################################################################################### */
+
+.sidebar .menu-section {
+  color: #000000;
+  font-weight: 700;
+}
+
+.sidebar .menu-item[data-menu="sessoes"] .menu-item-label {
+  font-weight: 700;
+}

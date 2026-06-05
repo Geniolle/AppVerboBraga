@@ -12,8 +12,6 @@ from appverbo.menu_settings import (
     MENU_MEU_PERFIL_FIELD_OPTIONS,
     MENU_MEU_PERFIL_FIELDS_DEFAULT,
     MENU_MEU_PERFIL_KEY,
-    get_sidebar_menu_settings,
-    get_visible_sidebar_menu_keys,
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
@@ -21,7 +19,12 @@ from appverbo.services.entity_admin_context import (
     build_entity_admin_context_v1,
     build_entity_admin_page_payload_v1,
 )
-from appverbo.services.permissions import get_user_entity_permissions
+from appverbo.services.process_view_authorization import (
+    PROCESS_VIEW_AUTHORIZATION_MENU_KEY,
+    PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
+    build_effective_sidebar_visibility_v1,
+    build_process_view_authorization_history_rows_v1,
+)
 from appverbo.services.users.context import (
     build_user_admin_list_context_v1,
     build_user_admin_page_payload_v1,
@@ -765,25 +768,22 @@ def get_page_data(
     actor_login_email: str = "",
     selected_entity_id: int | None = None,
 ) -> dict[str, Any]:
-    permissions = {
-        "is_admin": False,
-        "has_owner_membership": False,
-        "can_manage_all_entities": False,
-        "selected_entity_id": selected_entity_id,
-        "allowed_entity_ids": set(),
-    }
+    visibility_context = build_effective_sidebar_visibility_v1(
+        session,
+        actor_user_id=actor_user_id,
+        actor_login_email=actor_login_email,
+        selected_entity_id=selected_entity_id,
+    )
+    permissions = dict(visibility_context.get("permissions") or {})
+    selected_entity_id = visibility_context.get("selected_entity_id")
+    current_user_is_admin = bool(visibility_context.get("current_user_is_admin"))
+    current_entity_scope = str(visibility_context.get("current_entity_scope") or "").strip().lower()
     allowed_entity_ids: set[int] | None = None
     if actor_user_id is not None:
-        permissions = get_user_entity_permissions(
-            session,
-            actor_user_id,
-            actor_login_email,
-            selected_entity_id,
-        )
-        allowed_entity_ids = set(permissions["allowed_entity_ids"])
-        selected_entity_id = permissions["selected_entity_id"]
-    current_user_is_admin = bool(permissions["is_admin"])
-    current_entity_scope = ""
+        allowed_entity_ids = {
+            int(raw_id)
+            for raw_id in (permissions.get("allowed_entity_ids") or set())
+        }
 
     # APPVERBO_SIDEBAR_OWNER_ENTITY_CONTEXT_V3_START
     sidebar_owner_entity = {"name": "", "logo_url": ""}
@@ -811,15 +811,10 @@ def get_page_data(
     except Exception:
         sidebar_owner_entity = {"name": "", "logo_url": ""}
     # APPVERBO_SIDEBAR_OWNER_ENTITY_CONTEXT_V3_END
-    if selected_entity_id is not None:
-        raw_entity_scope = session.execute(
-            select(Entity.profile_scope)
-           .where(Entity.id == selected_entity_id)
-           .limit(1)
-        ).scalar_one_or_none()
-        current_entity_scope = str(raw_entity_scope or "").strip().lower()
-
-    sidebar_menu_settings = get_sidebar_menu_settings(session)
+    sidebar_menu_settings = [
+        dict(raw_row or {})
+        for raw_row in (visibility_context.get("sidebar_menu_settings") or [])
+    ]
     normalized_sidebar_menu_settings: list[dict[str, Any]] = []
     for raw_sidebar_item in sidebar_menu_settings:
         sidebar_item = dict(raw_sidebar_item or {})
@@ -834,11 +829,11 @@ def get_page_data(
         allowed_entity_ids=allowed_entity_ids,
     )
 
-    visible_sidebar_menu_keys = get_visible_sidebar_menu_keys(
-        sidebar_menu_settings,
-        current_user_is_admin=current_user_is_admin,
-        current_entity_scope=current_entity_scope,
-    )
+    visible_sidebar_menu_keys = {
+        str(raw_key or "").strip().lower()
+        for raw_key in (visibility_context.get("visible_sidebar_menu_keys") or [])
+        if str(raw_key or "").strip()
+    }
     administrativo_menu = next(
         (
             row
@@ -923,6 +918,34 @@ def get_page_data(
         if quantity_values_by_rule:
             menu_process_quantity_values_map[menu_key] = quantity_values_by_rule
         history_storage_key = build_menu_process_records_storage_key(menu_key)
+        if menu_key == PROCESS_VIEW_AUTHORIZATION_MENU_KEY:
+            legacy_menu_history_rows = (
+                parse_menu_process_records(actor_profile_fields.get(history_storage_key))
+                if history_storage_key
+                else []
+            )
+            legacy_menu_history_rows = [
+                row
+                for row in legacy_menu_history_rows
+                if str(row.get("section_key") or "").strip().lower()
+                != PROCESS_VIEW_AUTHORIZATION_SECTION_KEY
+            ]
+            authorization_history_rows = build_process_view_authorization_history_rows_v1(
+                session,
+                selected_entity_id=selected_entity_id,
+            )
+            combined_history_rows = authorization_history_rows + legacy_menu_history_rows
+            if combined_history_rows:
+                menu_process_history_map[menu_key] = combined_history_rows
+            elif _is_history_process_menu_v1(menu_key, sidebar_item.get("label")):
+                legacy_history_rows = _build_legacy_history_row_v1(
+                    visible_rows=visible_rows,
+                    menu_values=menu_values,
+                    quantity_values_by_rule=quantity_values_by_rule,
+                )
+                if legacy_history_rows:
+                    menu_process_history_map[menu_key] = legacy_history_rows
+            continue
         if history_storage_key:
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
@@ -1470,6 +1493,179 @@ def get_next_entity_internal_number(session: Session) -> int:
     repository = EntityAdminRepository(ENTIDADE_CONFIG)
     return repository.get_next_internal_number(session=session)
 
+
+# ###################################################################################
+# (16) DEFAULTS DE CONTEXTO PARA new_user.html
+# ###################################################################################
+
+def ensure_new_user_template_context_defaults_v1(
+    context: dict[str, Any] | None,
+) -> dict[str, Any]:
+    clean_context = dict(context or {})
+
+    current_user = dict(clean_context.get("current_user") or {})
+    current_user.setdefault("full_name", "")
+    current_user.setdefault("login_email", "")
+    clean_context["current_user"] = current_user
+
+    entity_permissions = dict(clean_context.get("entity_permissions") or {})
+    entity_permissions.setdefault("selected_entity_id", None)
+    entity_permissions.setdefault("allowed_entity_ids", [])
+    entity_permissions.setdefault("can_manage_all_entities", False)
+    clean_context["entity_permissions"] = entity_permissions
+
+    user_personal_data = dict(clean_context.get("user_personal_data") or {})
+    user_personal_data.setdefault("primary_phone", "")
+    user_personal_data.setdefault("account_status", "")
+    user_personal_data.setdefault("member_status", "")
+    user_personal_data.setdefault("entities", [])
+    user_personal_data.setdefault("address", "")
+    user_personal_data.setdefault("city", "")
+    user_personal_data.setdefault("freguesia", "")
+    user_personal_data.setdefault("postal_code", "")
+    clean_context["user_personal_data"] = user_personal_data
+
+    dashboard_data = dict(clean_context.get("dashboard_data") or {})
+    dashboard_data.setdefault("entity_status", {"labels": [], "values": []})
+    dashboard_data.setdefault("users_by_profile", {"labels": [], "values": []})
+    dashboard_data.setdefault(
+        "totals",
+        {
+            "entities": 0,
+            "users": 0,
+            "active_entities": 0,
+            "inactive_entities": 0,
+        },
+    )
+    clean_context["dashboard_data"] = dashboard_data
+
+    page_state = dict(clean_context.get("page_state") or {})
+    page_state.setdefault("refresh_home_url", "/users/new?menu=home")
+    clean_context["page_state"] = page_state
+    clean_context.setdefault(
+        "page_state_refresh_home_url",
+        str(page_state.get("refresh_home_url") or "/users/new?menu=home"),
+    )
+
+    clean_context.setdefault("errors", [])
+    clean_context.setdefault("success", "")
+    clean_context.setdefault("generated_invite_link", "")
+    clean_context.setdefault("form_data", get_form_defaults())
+    clean_context.setdefault("entity_form_data", get_entity_form_defaults())
+    clean_context.setdefault("entity_edit_data", get_entity_edit_defaults())
+    clean_context.setdefault("user_edit_data", get_user_edit_defaults())
+    clean_context.setdefault("entity_readonly_mode", False)
+    clean_context.setdefault("user_readonly_mode", False)
+    clean_context.setdefault("current_user_is_admin", False)
+    clean_context.setdefault(
+        "current_user_can_manage_all_entities",
+        bool(entity_permissions.get("can_manage_all_entities")),
+    )
+    clean_context.setdefault("entity_success", "")
+    clean_context.setdefault("entity_error", "")
+    clean_context.setdefault("next_entity_internal_number", "")
+    clean_context.setdefault("profile_success", "")
+    clean_context.setdefault("profile_error", "")
+    clean_context.setdefault("settings_success", "")
+    clean_context.setdefault("settings_error", "")
+    clean_context.setdefault("settings_edit_data", None)
+    clean_context.setdefault("settings_edit_key", "")
+    clean_context.setdefault("settings_action", "edit")
+    clean_context.setdefault("settings_tab", "")
+    clean_context.setdefault("profile_tab", "pessoal")
+    clean_context.setdefault("initial_menu", "home")
+    clean_context.setdefault("initial_menu_target", "")
+    clean_context.setdefault("initial_dynamic_process_section", "")
+    clean_context.setdefault("initial_profile_section", "")
+    clean_context.setdefault("requested_profile_section", "")
+    clean_context.setdefault("requested_dynamic_process_section", "")
+    clean_context.setdefault("appverbo_after_save", False)
+    clean_context.setdefault("admin_process_only", False)
+    clean_context.setdefault("sidebar_section_edit_key", "")
+    clean_context.setdefault("sidebar_section_edit_data", None)
+    clean_context.setdefault("active_sidebar_sections", [])
+    clean_context.setdefault("inactive_sidebar_sections", [])
+    clean_context.setdefault("sessions", [])
+    clean_context.setdefault("all_sessions", [])
+    clean_context.setdefault("active_sessions", [])
+    clean_context.setdefault("inactive_sessions", [])
+    clean_context.setdefault("pending_sessions", [])
+    clean_context.setdefault("blocked_sessions", [])
+    clean_context.setdefault("session_edit_data", {})
+    clean_context.setdefault("session_permissions", {})
+    clean_context.setdefault("session_list_pagination", {})
+    clean_context.setdefault("sidebar_sections_tab", "sessoes")
+    clean_context.setdefault("admin_tab", "")
+    clean_context.setdefault("admin_tabs_width_ch", 24)
+    clean_context.setdefault("admin_tabs_text_size_px", 13)
+    clean_context.setdefault("admin_tabs_font_family", '"Segoe UI", Tahoma, Arial, sans-serif')
+    clean_context.setdefault("admin_tabs_color_hex", "#1F4FA3")
+    clean_context.setdefault("admin_tabs_text_color_hex", "")
+    clean_context.setdefault("admin_process_title_font_size_px", 20)
+    clean_context.setdefault("admin_process_title_font_family", '"Segoe UI", Tahoma, Arial, sans-serif')
+    clean_context.setdefault("admin_process_title_color_hex", "#0F172A")
+    clean_context.setdefault("admin_card_item_font_size_px", 12)
+    clean_context.setdefault("admin_card_item_font_family", 'Inter, "Segoe UI", sans-serif')
+    clean_context.setdefault("admin_card_item_color_hex", "#0F1F3A")
+    clean_context.setdefault("admin_card_item_font_weight", 500)
+    clean_context.setdefault("admin_card_table_head_color_hex", "#000000")
+    clean_context.setdefault("admin_topbar_color_hex", "#334A62")
+    clean_context.setdefault("admin_sidebar_bg_color_hex", "#F3F3F4")
+    clean_context.setdefault("admin_sidebar_active_bg_color_hex", "#E4E6EA")
+    clean_context.setdefault("admin_sidebar_text_color_hex", "#5C6572")
+    clean_context.setdefault("admin_sidebar_text_size_px", 14)
+    clean_context.setdefault("admin_sidebar_font_family", '"Segoe UI", Tahoma, Arial, sans-serif')
+    clean_context.setdefault("admin_sidebar_font_weight", 500)
+    clean_context.setdefault("admin_sidebar_icon_color_hex", "#5F6B7D")
+    clean_context.setdefault("admin_sidebar_section_text_color_hex", "#808792")
+    clean_context.setdefault("admin_subprocess_state", None)
+    clean_context.setdefault("admin_subprocess_state_utilizador_v1", None)
+    clean_context.setdefault("admin_subprocess_state_utilizador", None)
+    clean_context.setdefault("admin_subprocess_state_definicoes_v1", None)
+    clean_context.setdefault("admin_subprocess_state_definicoes", None)
+    clean_context.setdefault("admin_subprocess_shadow_state_v1", None)
+    clean_context.setdefault("admin_subprocess_shadow_state", None)
+    clean_context.setdefault("admin_menu_state", {"success": "", "error": ""})
+    clean_context.setdefault("admin_menu_template_ready_v1", False)
+    clean_context.setdefault("admin_menu_template_mode", "native")
+    clean_context.setdefault("account_status_summary", [])
+    clean_context.setdefault("entities", [])
+    clean_context.setdefault("profiles", [])
+    clean_context.setdefault("all_entities", [])
+    clean_context.setdefault("active_entities", [])
+    clean_context.setdefault("recent_entities", [])
+    clean_context.setdefault("inactive_entities", [])
+    clean_context.setdefault("entity_list_pagination", {})
+    clean_context.setdefault("recent_users", [])
+    clean_context.setdefault("all_users", [])
+    clean_context.setdefault("created_users", [])
+    clean_context.setdefault("active_created_users", [])
+    clean_context.setdefault("inactive_users", [])
+    clean_context.setdefault("pending_users", [])
+    clean_context.setdefault("blocked_users", [])
+    clean_context.setdefault("non_active_users", [])
+    clean_context.setdefault("superuser_users", [])
+    clean_context.setdefault("user_list_pagination", {})
+    clean_context.setdefault("sidebar_owner_entity", {})
+    clean_context.setdefault("current_entity_scope", "")
+    clean_context.setdefault("sidebar_owner_entity_name", "")
+    clean_context.setdefault("sidebar_owner_entity_logo_url", "")
+    clean_context.setdefault("sidebar_menu_settings", [])
+    clean_context.setdefault("sidebar_section_options", [])
+    clean_context.setdefault("visible_sidebar_menu_keys", [])
+    clean_context.setdefault("menu_process_values_map", {})
+    clean_context.setdefault("menu_process_history_map", {})
+    clean_context.setdefault("menu_process_quantity_values_map", {})
+    clean_context.setdefault("profile_personal_visible_fields", [])
+    clean_context.setdefault("profile_personal_field_labels", {})
+    clean_context.setdefault("profile_personal_field_section_map", {})
+    clean_context.setdefault("profile_personal_sections", [])
+    clean_context.setdefault("profile_personal_custom_field_meta", {})
+    clean_context.setdefault("menu_meu_perfil_field_options", [])
+    clean_context.setdefault("menu_meu_perfil_field_labels", {})
+
+    return clean_context
+
 def build_users_new_url(**query_params: str) -> str:
     clean_query_params = {
         key: value
@@ -1490,5 +1686,6 @@ __all__ = [
     "get_user_edit_defaults",
     "get_user_edit_data",
     "get_next_entity_internal_number",
+    "ensure_new_user_template_context_defaults_v1",
     "build_users_new_url",
 ]

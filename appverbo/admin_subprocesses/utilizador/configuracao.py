@@ -131,6 +131,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     inactive_value="inactive",
     identity_field="id",
     label_field="full_name",
+    delete_key_field="user_id",
     edit_key_field="user_id",
     enabled=True,
     migration_status="native",

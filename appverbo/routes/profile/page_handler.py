@@ -30,6 +30,8 @@ from appverbo.menu_settings import (
 )
 from appverbo.routes.profile.router import router
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.admin_definition_scope import list_admin_definitions_in_scope_v1
+from appverbo.services.entity_scope import build_entity_scope_label_v1
 from appverbo.services.menu_admin_context import (
     build_menu_admin_context_v1,
     build_menu_admin_page_payload_v1,
@@ -121,11 +123,51 @@ def _resolve_admin_menu_target_v1(settings_edit_key: str) -> str:
     return "#admin-menu-card"
 
 
+def _is_targeted_edit_request_v1(
+    edit_identifier: object,
+    target_selector: object,
+    expected_target_selector: str,
+) -> bool:
+    clean_edit_identifier = str(edit_identifier or "").strip()
+    clean_target_selector = _normalize_target_selector_v1(target_selector)
+    clean_expected_target_selector = _normalize_target_selector_v1(
+        expected_target_selector
+    )
+
+    return bool(
+        clean_edit_identifier
+        and clean_target_selector
+        and clean_target_selector == clean_expected_target_selector
+    )
+
+
+def _is_admin_menu_edit_request_v1(
+    settings_edit_key: str,
+    target_selector: str,
+) -> bool:
+    return _is_targeted_edit_request_v1(
+        settings_edit_key,
+        target_selector,
+        "#settings-menu-edit-card",
+    )
+
+
 def _resolve_admin_definicoes_target_v1(definition_edit_id: str) -> str:
     if str(definition_edit_id or "").strip():
         return "#admin-definicoes-card-edit"
 
     return "#admin-definicoes-card"
+
+
+def _is_admin_definicoes_edit_request_v1(
+    definition_edit_id: str,
+    target_selector: str,
+) -> bool:
+    return _is_targeted_edit_request_v1(
+        definition_edit_id,
+        target_selector,
+        "#admin-definicoes-card-edit",
+    )
 
 
 def _normalize_target_selector_v1(value: object) -> str:
@@ -1577,6 +1619,39 @@ def new_user_page(
         resolved_menu == "administrativo"
         and resolved_admin_tab == "menu"
     )
+    is_admin_definicoes_tab = (
+        resolved_menu == "administrativo"
+        and resolved_admin_tab == "definicoes"
+    )
+    is_admin_menu_edit_request_v1 = (
+        is_admin_menu_tab
+        and _is_admin_menu_edit_request_v1(
+            clean_settings_edit_key,
+            clean_target_from_query,
+        )
+    )
+    is_admin_definicoes_edit_request_v1 = (
+        is_admin_definicoes_tab
+        and _is_admin_definicoes_edit_request_v1(
+            clean_definition_edit_id,
+            clean_target_from_query,
+        )
+    )
+    effective_settings_edit_key = clean_settings_edit_key
+    effective_settings_action = clean_settings_action
+    effective_settings_tab = clean_settings_tab
+    effective_definition_edit_id = clean_definition_edit_id
+
+    if is_admin_menu_tab and not is_admin_menu_edit_request_v1:
+        effective_settings_edit_key = ""
+        effective_settings_tab = ""
+
+        if clean_settings_action != "create":
+            effective_settings_action = ""
+
+    if is_admin_definicoes_tab and not is_admin_definicoes_edit_request_v1:
+        effective_definition_edit_id = ""
+
     admin_tabs_width_ch_v1 = 24
     admin_tabs_text_size_px_v1 = 13
     admin_tabs_font_family_v1 = '"Segoe UI", Tahoma, Arial, sans-serif'
@@ -1599,15 +1674,28 @@ def new_user_page(
     admin_sidebar_font_weight_v1 = 500
     admin_sidebar_icon_color_hex_v1 = "#5F6B7D"
     admin_sidebar_section_text_color_hex_v1 = "#808792"
-    menu_settings_edit_key = clean_settings_edit_key if is_admin_menu_tab else ""
+    menu_settings_edit_key = (
+        effective_settings_edit_key
+        if is_admin_menu_tab
+        else ""
+    )
     menu_admin_page_payload = build_menu_admin_page_payload_v1({})
 
     ensure_admin_process_title_default_definitions_v1()
 
     with SessionLocal() as session:
-        admin_definition_rows_v1 = session.execute(
-            select(AdminDefinition).order_by(AdminDefinition.id.desc())
-        ).scalars().all()
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+        selected_entity_id = get_session_entity_id(request)
+
+        admin_definition_rows_v1 = list_admin_definitions_in_scope_v1(
+            session,
+            selected_entity_id=selected_entity_id,
+        )
         admin_tabs_width_ch_v1 = _resolve_admin_tabs_width_ch_from_definitions_v1(
             rows=admin_definition_rows_v1,
             default_width_ch=24,
@@ -1696,13 +1784,6 @@ def new_user_page(
             rows=admin_definition_rows_v1,
             default_color_hex="#808792",
         )
-        current_user = get_current_user(request, session)
-        if current_user is None:
-            return RedirectResponse(
-                url="/login?error=Efetue login para continuar.",
-                status_code=status.HTTP_302_FOUND,
-            )
-        selected_entity_id = get_session_entity_id(request)
         current_user_is_admin = is_admin_user(
             session, current_user["id"], current_user["login_email"]
         )
@@ -1833,7 +1914,7 @@ def new_user_page(
         resolved_profile_tab=resolved_profile_tab,
         resolved_admin_tab=resolved_admin_tab,
         settings_edit_key=menu_settings_edit_key,
-        definition_edit_id=clean_definition_edit_id,
+        definition_edit_id=effective_definition_edit_id,
         can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
         sidebar_menu_settings=list(
             menu_admin_page_payload.get("menu_settings", [])
@@ -1886,7 +1967,7 @@ def new_user_page(
             initial_menu_target = "#dynamic-process-card"
             initial_dynamic_process_section = clean_dynamic_section_from_query
         else:
-            initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+            initial_menu_target = _resolve_admin_menu_target_v1(menu_settings_edit_key)
             initial_dynamic_process_section = ""
             clean_dynamic_section_from_query = ""
     elif resolved_menu == "administrativo" and resolved_admin_tab == "definicoes":
@@ -1894,7 +1975,9 @@ def new_user_page(
             initial_menu_target = "#dynamic-process-card"
             initial_dynamic_process_section = clean_dynamic_section_from_query
         else:
-            initial_menu_target = _resolve_admin_definicoes_target_v1(clean_definition_edit_id)
+            initial_menu_target = _resolve_admin_definicoes_target_v1(
+                effective_definition_edit_id
+            )
             initial_dynamic_process_section = ""
             clean_dynamic_section_from_query = ""
 
@@ -1908,8 +1991,8 @@ def new_user_page(
         user_view=user_view,
         parsed_entity_edit_id=parsed_entity_edit_id,
         entity_view=entity_view,
-        clean_settings_edit_key=clean_settings_edit_key,
-        clean_settings_action=clean_settings_action,
+        clean_settings_edit_key=effective_settings_edit_key,
+        clean_settings_action=effective_settings_action,
         clean_target_from_query=clean_target_from_query,
         clean_profile_section_from_query=clean_profile_section_from_query,
         clean_dynamic_section_from_query=clean_dynamic_section_from_query,
@@ -1927,7 +2010,7 @@ def new_user_page(
             initial_menu_target = "#dynamic-process-card"
             initial_dynamic_process_section = clean_dynamic_section_from_query
         else:
-            initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+            initial_menu_target = _resolve_admin_menu_target_v1(menu_settings_edit_key)
             initial_dynamic_process_section = ""
             clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_BACKEND_RENDER_V4_END
@@ -1980,7 +2063,7 @@ def new_user_page(
             initial_menu_target = "#dynamic-process-card"
             initial_dynamic_process_section = clean_dynamic_section_from_query
         else:
-            initial_menu_target = _resolve_admin_menu_target_v1(clean_settings_edit_key)
+            initial_menu_target = _resolve_admin_menu_target_v1(menu_settings_edit_key)
             initial_dynamic_process_section = ""
             clean_dynamic_section_from_query = ""
     # APPVERBO_ADMIN_MENU_NATIVE_POST_CONTEXT_V4_END
@@ -2064,7 +2147,7 @@ def new_user_page(
                 admin_subprocess_state_definicoes_v1 = build_admin_subprocess_state_from_repository(
                     config=definicoes_subprocess_config_v1,
                     session=definicoes_subprocess_session_v1,
-                    edit_key=clean_definition_edit_id,
+                    edit_key=effective_definition_edit_id,
                     success=success or "",
                     error=error or "",
                     return_url="/users/new?menu=administrativo&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card",
@@ -2085,7 +2168,16 @@ def new_user_page(
                         )
                     )
 
+                current_definition_scope_label_v1 = build_entity_scope_label_v1(
+                    definicoes_subprocess_session_v1,
+                    selected_entity_id,
+                )
+
             if admin_subprocess_state_definicoes_v1 is not None:
+                create_data_v1 = dict(admin_subprocess_state_definicoes_v1.create_data or {})
+                create_data_v1["entity_scope_label"] = current_definition_scope_label_v1
+                admin_subprocess_state_definicoes_v1.create_data = create_data_v1
+
                 edit_process_value_v1 = ""
                 edit_subprocess_value_v1 = ""
                 if isinstance(admin_subprocess_state_definicoes_v1.edit_data, dict):
@@ -2185,9 +2277,9 @@ def new_user_page(
         "settings_success": settings_success or "",
         "settings_error": settings_error or "",
         "settings_edit_data": settings_edit_data,
-        "settings_edit_key": clean_settings_edit_key,
-        "settings_action": clean_settings_action,
-        "settings_tab": clean_settings_tab,
+        "settings_edit_key": effective_settings_edit_key,
+        "settings_action": effective_settings_action,
+        "settings_tab": effective_settings_tab,
         "profile_tab": resolved_profile_tab,
         "initial_menu": resolved_menu,
         "initial_menu_target": initial_menu_target,

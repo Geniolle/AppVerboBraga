@@ -41,14 +41,14 @@ def normalize_move_menu_input_v1(
     menu_key: str,
     direction: str,
     redirect_menu: str = "administrativo",
-    redirect_target: str = "#admin-menu-card",
+    redirect_target: str = "#admin-menu-card-create",
     subprocess_return_url: str = "",
 ) -> MoveMenuInput:
     return MoveMenuInput(
         menu_key=str(menu_key or "").strip().lower(),
         direction=str(direction or "").strip().lower(),
         redirect_menu=str(redirect_menu or "administrativo").strip() or "administrativo",
-        redirect_target=str(redirect_target or "#admin-menu-card").strip() or "#admin-menu-card",
+        redirect_target=str(redirect_target or "#admin-menu-card-create").strip() or "#admin-menu-card-create",
         subprocess_return_url=str(subprocess_return_url or "").strip(),
     )
 
@@ -70,7 +70,7 @@ def execute_move_menu_v1(
     if payload.subprocess_return_url:
         return_url = sanitize_menu_return_url_v1(
             payload.subprocess_return_url,
-            default_target=payload.redirect_target or "#admin-menu-card",
+            default_target=payload.redirect_target or "#admin-menu-card-create",
         )
     else:
         return_url = build_menu_settings_redirect_url_v1(

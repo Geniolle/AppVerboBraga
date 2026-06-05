@@ -55,6 +55,7 @@ def execute_get_menu_edit_v1(
     *,
     session: Session,
     menu_key: str,
+    selected_entity_id: object = None,
 ) -> dict[str, Any]:
     clean_menu_key = str(menu_key or "").strip().lower()
 
@@ -62,7 +63,11 @@ def execute_get_menu_edit_v1(
         return get_menu_edit_defaults_v1()
 
     repository = MenuAdminRepository(MENU_CONFIG)
-    row = repository.get_for_edit(session=session, edit_key=clean_menu_key)
+    row = repository.get_for_edit(
+        session=session,
+        edit_key=clean_menu_key,
+        context={"selected_entity_id": selected_entity_id},
+    )
 
     if row is None:
         return get_menu_edit_defaults_v1()

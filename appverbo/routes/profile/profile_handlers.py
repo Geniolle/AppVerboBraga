@@ -55,6 +55,13 @@ from appverbo.services.songs import (
 from appverbo.services.contact_membership_import import (
     parse_contact_membership_import_file_v1,
 )
+from appverbo.services.process_view_authorization import (
+    build_effective_sidebar_visibility_v1,
+    build_process_view_authorization_history_rows_v1,
+    delete_process_view_authorization_rule_v1,
+    is_process_view_authorization_section_v1,
+    save_process_view_authorization_rule_v1,
+)
 
 from appverbo.routes.profile.router import router
 
@@ -1183,6 +1190,7 @@ def _build_dynamic_process_runtime_snapshot_v1(
     clean_menu_key: str,
     process_setting: dict[str, Any],
     existing_profile_fields: dict[str, str],
+    history_rows_override: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     visible_rows = (
         process_setting.get("process_visible_field_rows")
@@ -1221,11 +1229,18 @@ def _build_dynamic_process_runtime_snapshot_v1(
             quantity_values_by_rule[rule_key] = quantity_values
 
     history_rows: list[dict[str, Any]] = []
-    history_storage_key = build_menu_process_records_storage_key(clean_menu_key)
-    if history_storage_key:
-        history_rows = parse_menu_process_records(
-            existing_profile_fields.get(history_storage_key)
-        )
+    if isinstance(history_rows_override, list):
+        history_rows = [
+            dict(raw_row)
+            for raw_row in history_rows_override
+            if isinstance(raw_row, dict)
+        ]
+    else:
+        history_storage_key = build_menu_process_records_storage_key(clean_menu_key)
+        if history_storage_key:
+            history_rows = parse_menu_process_records(
+                existing_profile_fields.get(history_storage_key)
+            )
 
     return {
         "values_by_field": values_by_field,
@@ -1242,11 +1257,13 @@ def _build_dynamic_process_silent_refresh_payload_v1(
     process_setting: dict[str, Any],
     existing_profile_fields: dict[str, str],
     success_message: str,
+    history_rows_override: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     runtime_snapshot = _build_dynamic_process_runtime_snapshot_v1(
         clean_menu_key=clean_menu_key,
         process_setting=process_setting,
         existing_profile_fields=existing_profile_fields,
+        history_rows_override=history_rows_override,
     )
     clean_section_key = str(requested_section_key or "").strip()
     redirect_url = _build_post_save_redirect_url_v6(
@@ -1940,7 +1957,10 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        sidebar_menu_settings = get_sidebar_menu_settings(session)
+        sidebar_menu_settings = get_sidebar_menu_settings(
+            session,
+            selected_entity_id=get_session_entity_id(request),
+        )
         meu_perfil_setting = next(
             (
                 row
@@ -2471,7 +2491,10 @@ async def update_dynamic_process_profile(request: Request):
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        sidebar_menu_settings = get_sidebar_menu_settings(session)
+        sidebar_menu_settings = get_sidebar_menu_settings(
+            session,
+            selected_entity_id=get_session_entity_id(request),
+        )
         process_setting = next(
             (
                 row
@@ -2484,6 +2507,27 @@ async def update_dynamic_process_profile(request: Request):
             return RedirectResponse(
                 url=_build_post_save_redirect_url_v6(submitted_form, menu="home",
                     profile_error="Processo não encontrado.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+        visibility_context = build_effective_sidebar_visibility_v1(
+            session,
+            actor_user_id=int(current_user["id"]),
+            actor_login_email=str(current_user.get("login_email") or ""),
+            selected_entity_id=get_session_entity_id(request),
+            sidebar_menu_settings=sidebar_menu_settings,
+        )
+        effective_visible_menu_keys = {
+            str(raw_key or "").strip().lower()
+            for raw_key in (visibility_context.get("visible_sidebar_menu_keys") or [])
+            if str(raw_key or "").strip()
+        }
+        if clean_menu_key not in effective_visible_menu_keys:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu="home",
+                    profile_error="Sem permissão para aceder a este processo.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2705,10 +2749,27 @@ async def update_dynamic_process_profile(request: Request):
             if department_history_mode
             else ("ausência" if absence_process_mode else "registo")
         )
+        process_view_authorization_mode = (
+            history_process_mode
+            and is_process_view_authorization_section_v1(
+                clean_menu_key,
+                requested_section_key,
+            )
+        )
         if requested_history_action not in {"", "create", "update", "delete"}:
             requested_history_action = "create"
         if not history_process_mode:
             requested_history_action = "create"
+        process_view_authorization_scope_entity_id = (
+            visibility_context.get("selected_entity_id")
+            if process_view_authorization_mode
+            else None
+        )
+        if process_view_authorization_mode:
+            existing_records = build_process_view_authorization_history_rows_v1(
+                session,
+                selected_entity_id=process_view_authorization_scope_entity_id,
+            )
 
         section_field_keys = _resolve_process_section_fields(
             process_setting.get("process_visible_field_rows"),
@@ -2888,6 +2949,57 @@ async def update_dynamic_process_profile(request: Request):
             )
 
         if history_process_mode and requested_history_action == "delete":
+            if process_view_authorization_mode:
+                if not requested_history_record_id:
+                    return RedirectResponse(
+                        url=_build_post_save_redirect_url_v6(
+                            submitted_form,
+                            menu=clean_menu_key,
+                            profile_error="Registo inválido para eliminar.",
+                        ),
+                        status_code=status.HTTP_303_SEE_OTHER,
+                    )
+
+                success_message, refreshed_authorization_rows, authorization_error = (
+                    delete_process_view_authorization_rule_v1(
+                        session,
+                        selected_entity_id=process_view_authorization_scope_entity_id,
+                        requested_history_record_id=requested_history_record_id,
+                    )
+                )
+                if authorization_error:
+                    return RedirectResponse(
+                        url=_build_post_save_redirect_url_v6(
+                            submitted_form,
+                            menu=clean_menu_key,
+                            profile_error=authorization_error,
+                        ),
+                        status_code=status.HTTP_303_SEE_OTHER,
+                    )
+
+                if silent_refresh_requested:
+                    return JSONResponse(
+                        _build_dynamic_process_silent_refresh_payload_v1(
+                            submitted_form=submitted_form,
+                            clean_menu_key=clean_menu_key,
+                            requested_section_key=requested_section_key,
+                            process_setting=process_setting,
+                            existing_profile_fields=existing_profile_fields,
+                            success_message=success_message,
+                            history_rows_override=refreshed_authorization_rows,
+                        ),
+                        status_code=status.HTTP_200_OK,
+                    )
+
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_success=success_message,
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
             if not requested_history_record_id:
                 return RedirectResponse(
                     url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
@@ -3153,6 +3265,65 @@ async def update_dynamic_process_profile(request: Request):
                 ),
                 None,
             )
+        if process_view_authorization_mode and requested_history_action in {"create", "update"}:
+            success_message, refreshed_authorization_rows, authorization_error = (
+                save_process_view_authorization_rule_v1(
+                    session,
+                    sidebar_menu_settings=sidebar_menu_settings,
+                    selected_entity_id=process_view_authorization_scope_entity_id,
+                    current_user_id=int(current_user["id"]),
+                    requested_history_action=requested_history_action,
+                    requested_history_record_id=requested_history_record_id,
+                    submitted_section_values=submitted_section_values,
+                )
+            )
+            if authorization_error:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error=authorization_error,
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            redirect_url = _build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_success=success_message,
+            )
+            _write_meu_perfil_process_flow_debug_log_v1(
+                request,
+                "03_process_authorization_redirect_success",
+                submitted_form=submitted_form,
+                data={
+                    "clean_menu_key": clean_menu_key,
+                    "requested_section_key": requested_section_key,
+                    "requested_history_action": requested_history_action,
+                    "requested_history_record_id": requested_history_record_id,
+                    "redirect_url": redirect_url,
+                    "success_message": success_message,
+                },
+            )
+            if silent_refresh_requested:
+                return JSONResponse(
+                    _build_dynamic_process_silent_refresh_payload_v1(
+                        submitted_form=submitted_form,
+                        clean_menu_key=clean_menu_key,
+                        requested_section_key=requested_section_key,
+                        process_setting=process_setting,
+                        existing_profile_fields=existing_profile_fields,
+                        success_message=success_message,
+                        history_rows_override=refreshed_authorization_rows,
+                    ),
+                    status_code=status.HTTP_200_OK,
+                )
+
+            return RedirectResponse(
+                url=redirect_url,
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         if (
             history_process_mode
             and department_history_mode

@@ -261,6 +261,12 @@
         enviarLogFluxoUtilizador_v1("cancel_navegacao_disparada", {
           href: cancelHref
         });
+        if (typeof window.APPVERBO_HANDLE_CARD_CANCEL_CLOSE_V1 === "function") {
+          const handled = window.APPVERBO_HANDLE_CARD_CANCEL_CLOSE_V1(cancelLink);
+          if (handled) {
+            return;
+          }
+        }
         window.location.assign(cancelHref);
       }
       return;

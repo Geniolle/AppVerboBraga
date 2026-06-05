@@ -5,7 +5,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 MENU_RETURN_URL_FALLBACK_V1 = (
-    "/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card"
+    "/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card-create#admin-menu-card-create"
 )
 
 
@@ -25,7 +25,7 @@ def build_menu_settings_redirect_url_v1(
     error_message: str = "",
     success_message: str = "",
     redirect_menu: str = "administrativo",
-    redirect_target: str = "#admin-menu-card",
+    redirect_target: str = "#admin-menu-card-create",
     settings_edit_key: str = "",
     settings_action: str = "",
     settings_tab: str = "",
@@ -65,7 +65,7 @@ def build_menu_settings_redirect_url_v1(
 def sanitize_menu_return_url_v1(
     return_url: object,
     *,
-    default_target: str = "#admin-menu-card",
+    default_target: str = "#admin-menu-card-create",
 ) -> str:
     raw_url = str(return_url or "").strip() or MENU_RETURN_URL_FALLBACK_V1
 
@@ -84,7 +84,7 @@ def sanitize_menu_return_url_v1(
         "appverbo_after_save",
     }
 
-    clean_default_target = str(default_target or "#admin-menu-card").strip() or "#admin-menu-card"
+    clean_default_target = str(default_target or "#admin-menu-card-create").strip() or "#admin-menu-card-create"
     clean_default_target = clean_default_target.lstrip("#")
     clean_params: list[tuple[str, str]] = []
     found_menu = False

@@ -33,9 +33,18 @@ def _build_delete_user_redirect_url_v1(error: str) -> str:
 @router.post("/users/delete", response_class=HTMLResponse)
 def delete_user_v1(
     request: Request,
-    user_id: str = Form(...),
+    user_id: str | None = Form(None),
+    legacy_user_id: str | None = Form(None, alias="id"),
 ) -> RedirectResponse:
-    clean_user_id = str(user_id or "").strip()
+    clean_user_id = str(user_id or legacy_user_id or "").strip()
+
+    if not clean_user_id:
+        return RedirectResponse(
+            url=_build_delete_user_redirect_url_v1(
+                "Utilizador inválido para eliminação."
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
     try:
         with SessionLocal() as session:

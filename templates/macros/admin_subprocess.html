@@ -3,11 +3,13 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_field(field, value="", field_options=()) %}
+{% macro render_admin_subprocess_field(field, value="", field_options=(), mode="create") %}
+  {% set is_readonly = field.field_type == "readonly" or (mode == "edit" and field.readonly_on_edit) or (mode != "edit" and field.readonly_on_create) %}
+  {% set input_type = "text" if field.field_type in ("readonly", "select") and is_readonly else field.field_type %}
   <div class="field admin-subprocess-field-v1 {{ field.css_class }}">
     <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
-    {% if field.field_type == "select" %}
+    {% if field.field_type == "select" and not is_readonly %}
       <select
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
@@ -21,14 +23,35 @@
       <input
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
-        type="{{ field.field_type }}"
+        type="{{ input_type }}"
         value="{{ value }}"
         {% if field.required %}required{% endif %}
         {% if field.max_length %}maxlength="{{ field.max_length }}"{% endif %}
         {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+        {% if is_readonly %}readonly aria-readonly="true"{% endif %}
       >
     {% endif %}
   </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_fields_in_display_order(state, edit_data=None) %}
+  {% set status_field_key = state.config.status_field|string %}
+  {% set field_values = edit_data if edit_data else (state.create_data if state.create_data else {}) %}
+
+  {% for field in state.config.fields %}
+    {% if field.key != status_field_key %}
+      {% set field_value = field_values.get(field.key, "") if field_values else "" %}
+      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create") }}
+    {% endif %}
+  {% endfor %}
+
+  {% for field in state.config.fields %}
+    {% if field.key == status_field_key %}
+      {% set field_value = field_values.get(field.key, "") if field_values else "" %}
+      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create") }}
+    {% endif %}
+  {% endfor %}
 {% endmacro %}
 
 
@@ -60,19 +83,21 @@
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
         <div class="admin-subprocess-grid-v1">
-          {% for field in state.config.fields %}
-            {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else "" %}
-            {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ())) }}
-          {% endfor %}
+          {{ render_admin_subprocess_fields_in_display_order(state, state.edit_data) }}
         </div>
 
         <div class="form-action-row admin-subprocess-actions-v1">
           <button type="submit" class="action-btn">Guardar</button>
-          <a class="action-btn-cancel" href="{{ state.return_url }}">Cancelar</a>
+          <a
+            class="action-btn-cancel"
+            data-card-cancel-close="1"
+            data-card-cancel-return-url="{{ state.return_url }}"
+            href="{{ state.return_url }}"
+          >Cancelar</a>
         </div>
       </form>
     {% else %}
-      <details class="entity-create-collapse admin-subprocess-create-collapse-v1">
+      <details class="entity-create-collapse admin-subprocess-create-collapse-v1" {% if state.should_open_create_form %}open{% endif %}>
         <summary class="appverbo-subprocess-create-trigger-v1">
           <span>{{ state.config.create_title }}</span>
         </summary>
@@ -84,9 +109,7 @@
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
             <div class="admin-subprocess-grid-v1">
-              {% for field in state.config.fields %}
-                {{ render_admin_subprocess_field(field, "", state.field_options.get(field.key, ())) }}
-              {% endfor %}
+              {{ render_admin_subprocess_fields_in_display_order(state) }}
             </div>
 
             <div class="form-action-row admin-subprocess-actions-v1">
@@ -94,7 +117,7 @@
               <button
                 type="button"
                 class="action-btn-cancel"
-                onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                data-card-cancel-close="1"
               >Cancelar</button>
             </div>
           </form>

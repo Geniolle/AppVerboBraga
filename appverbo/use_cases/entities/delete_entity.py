@@ -12,6 +12,7 @@ from appverbo.services.page import build_users_new_url
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.entities.outcome import EntityActionOutcome
 from appverbo.use_cases.entities.policies import (
+    build_entity_delete_dependency_error_v1,
     ensure_actor_can_manage_entities_v1,
     ensure_delete_only_inactive_entity_v1,
     ensure_entity_can_be_deleted_v1,
@@ -23,12 +24,16 @@ from appverbo.use_cases.entities.policies import (
 # (1) HELPERS DE REDIRECT E FICHEIROS
 # ###################################################################################
 
+EDIT_ENTITY_CARD_ANCHOR_V1 = "#edit-entity-card"
+RECENT_ENTITIES_CARD_ANCHOR_V1 = "#recent-entities-card"
+
+
 def _build_entity_delete_redirect_v1(
     *,
     entity_success: str = "",
     entity_error: str = "",
     entity_edit_id: int | None = None,
-    anchor: str = "#recent-entities-card",
+    anchor: str = RECENT_ENTITIES_CARD_ANCHOR_V1,
 ) -> str:
     query_kwargs: dict[str, str] = {
         "entity_success": entity_success,
@@ -43,6 +48,26 @@ def _build_entity_delete_redirect_v1(
     return build_users_new_url(**query_kwargs) + anchor
 
 
+def build_entity_delete_unexpected_error_redirect_v1(
+    *,
+    entity_error: str,
+    clean_entity_id: str | int = "",
+) -> str:
+    normalized_entity_id = str(clean_entity_id or "").strip()
+
+    if normalized_entity_id.isdigit():
+        return _build_entity_delete_redirect_v1(
+            entity_error=entity_error,
+            entity_edit_id=int(normalized_entity_id),
+            anchor=EDIT_ENTITY_CARD_ANCHOR_V1,
+        )
+
+    return _build_entity_delete_redirect_v1(
+        entity_error=entity_error,
+        anchor=RECENT_ENTITIES_CARD_ANCHOR_V1,
+    )
+
+
 def _remove_local_logo_if_exists_v1(logo_url: str) -> None:
     clean_logo_url = str(logo_url or "").strip()
 
@@ -51,6 +76,39 @@ def _remove_local_logo_if_exists_v1(logo_url: str) -> None:
 
     local_logo_path = BASE_DIR / clean_logo_url.lstrip("/")
     local_logo_path.unlink(missing_ok=True)
+
+
+def _build_entity_delete_integrity_error_v1(
+    *,
+    repository: EntityAdminRepository,
+    session: Session,
+    entity_id: int,
+) -> str:
+    dependency_summary = repository.get_entity_delete_dependency_summary_v1(
+        session=session,
+        entity_id=entity_id,
+    )
+    dependency_error = build_entity_delete_dependency_error_v1(dependency_summary)
+
+    if dependency_error:
+        return dependency_error
+
+    return "Não foi possível eliminar a entidade porque ainda existem registos dependentes."
+
+
+def _build_entity_delete_edit_redirect_outcome_v1(
+    *,
+    entity_error: str,
+    entity_edit_id: int,
+) -> EntityActionOutcome:
+    return EntityActionOutcome(
+        kind="redirect",
+        redirect_url=_build_entity_delete_redirect_v1(
+            entity_error=entity_error,
+            entity_edit_id=entity_edit_id,
+            anchor=EDIT_ENTITY_CARD_ANCHOR_V1,
+        ),
+    )
 
 
 # ###################################################################################
@@ -127,13 +185,9 @@ def execute_delete_entity_v1(
     inactive_error = ensure_delete_only_inactive_entity_v1(entity)
 
     if inactive_error:
-        return EntityActionOutcome(
-            kind="redirect",
-            redirect_url=_build_entity_delete_redirect_v1(
-                entity_error=inactive_error,
-                entity_edit_id=parsed_entity_id,
-                anchor="#edit-entity-card",
-            ),
+        return _build_entity_delete_edit_redirect_outcome_v1(
+            entity_error=inactive_error,
+            entity_edit_id=parsed_entity_id,
         )
 
     delete_policy_error = ensure_entity_can_be_deleted_v1(
@@ -143,35 +197,32 @@ def execute_delete_entity_v1(
     )
 
     if delete_policy_error:
-        return EntityActionOutcome(
-            kind="redirect",
-            redirect_url=_build_entity_delete_redirect_v1(
-                entity_error=delete_policy_error,
-                entity_edit_id=parsed_entity_id,
-                anchor="#edit-entity-card",
-            ),
+        return _build_entity_delete_edit_redirect_outcome_v1(
+            entity_error=delete_policy_error,
+            entity_edit_id=parsed_entity_id,
         )
 
     logo_url_to_remove = str(entity.logo_url or "").strip()
 
-    repository.delete_member_entity_links(
-        session=session,
-        entity_id=parsed_entity_id,
-    )
-    repository.delete_inactive_entity(
-        session=session,
-        entity=entity,
-    )
-
     try:
+        repository.delete_entity_dependencies_v1(
+            session=session,
+            entity_id=parsed_entity_id,
+        )
+        repository.delete_inactive_entity(
+            session=session,
+            entity=entity,
+        )
         session.commit()
     except IntegrityError:
         session.rollback()
-        return EntityActionOutcome(
-            kind="redirect",
-            redirect_url=_build_entity_delete_redirect_v1(
-                entity_error="Não foi possível eliminar a entidade.",
+        return _build_entity_delete_edit_redirect_outcome_v1(
+            entity_error=_build_entity_delete_integrity_error_v1(
+                repository=repository,
+                session=session,
+                entity_id=parsed_entity_id,
             ),
+            entity_edit_id=parsed_entity_id,
         )
 
     _remove_local_logo_if_exists_v1(logo_url_to_remove)
@@ -182,4 +233,3 @@ def execute_delete_entity_v1(
             entity_success="Entidade eliminada com sucesso.",
         ),
     )
-

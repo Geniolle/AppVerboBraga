@@ -145,6 +145,7 @@ def execute_update_menu_v1(
         menu_label=payload.menu_label,
         visibility_scope_mode=payload.menu_visibility_scope,
         menu_sidebar_section=payload.menu_sidebar_section,
+        selected_entity_id=selected_entity_id,
     )
 
     if not ok:

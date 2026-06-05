@@ -154,6 +154,7 @@ def execute_update_menu_process_lists_v1(
         session=session,
         menu_key=payload.menu_key,
         raw_lists=payload.process_lists,
+        selected_entity_id=selected_entity_id,
     )
     if not ok:
         return build_menu_return_url_with_message_v1(

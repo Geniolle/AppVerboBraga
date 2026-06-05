@@ -7,11 +7,14 @@ from sqlalchemy.orm import Session
 from appverbo.core import ADMIN_PROFILE_NAMES
 from appverbo.models import Profile, User, UserAccountStatus
 from appverbo.services.auth import is_admin_user, is_allowed_global_profile
-from appverbo.services.user_status import is_user_account_status_inactive_v1
+from appverbo.services.user_status import (
+    is_user_account_status_non_active_v1,
+    user_account_status_label_pt_v1,
+)
 
 
 # ###################################################################################
-# (1) NORMALIZADORES E VALIDACOES BASE
+# (1) NORMALIZADORES E VALIDAÇÕES BASE
 # ###################################################################################
 
 def allowed_entity_ids_from_permissions_v1(permissions: dict[str, Any]) -> set[int]:
@@ -70,16 +73,20 @@ def ensure_not_self_delete_v1(*, actor_user_id: int, target_user_id: int) -> str
     return "Não é permitido eliminar o próprio utilizador ligado."
 
 
-def ensure_target_user_is_inactive_v1(user: User) -> str:
-    if is_user_account_status_inactive_v1(user.account_status):
+def ensure_target_user_is_non_active_v1(user: User) -> str:
+    if is_user_account_status_non_active_v1(user.account_status):
         return ""
 
-    current_status = str(user.account_status or "").strip().lower() or "-"
+    current_status = user_account_status_label_pt_v1(user.account_status)
 
     return (
-        "Só é permitido eliminar utilizadores com estado Inativo. "
+        "Só é permitido eliminar utilizadores não ativos. "
         f"Estado atual: {current_status}."
     )
+
+
+def ensure_target_user_is_inactive_v1(user: User) -> str:
+    return ensure_target_user_is_non_active_v1(user)
 
 
 def ensure_profile_allowed_v1(profile: Profile | None) -> str:
@@ -105,7 +112,7 @@ def is_admin_profile_v1(profile: Profile | None) -> bool:
 
 
 # ###################################################################################
-# (2) PROTECOES DO ULTIMO ADMIN ATIVO
+# (2) PROTEÇÕES DO ÚLTIMO ADMIN ATIVO
 # ###################################################################################
 
 def ensure_not_last_active_admin_for_member_v1(

@@ -103,4 +103,107 @@ def ensure_entity_can_be_deleted_v1(
     if int(linked_users_count) <= 0:
         return ""
 
-    return "Não pode eliminar entidade com utilizadores ativos associados."
+    dependency_summary = repository.get_entity_delete_dependency_summary_v1(
+        session=session,
+        entity_id=int(entity_id),
+    )
+
+    return build_entity_delete_dependency_error_v1(dependency_summary)
+
+
+# ###################################################################################
+# (3) MENSAGENS DE DEPENDENCIAS DE ELIMINACAO
+# ###################################################################################
+
+def build_entity_delete_dependency_error_v1(
+    dependency_summary: dict[str, Any] | None,
+) -> str:
+    clean_summary = dependency_summary or {}
+
+    linked_users_count = int(clean_summary.get("linked_users_count") or 0)
+    department_membership_count = int(clean_summary.get("department_membership_count") or 0)
+    department_count = int(clean_summary.get("department_count") or 0)
+    role_count = int(clean_summary.get("role_count") or 0)
+    song_count = int(clean_summary.get("song_count") or 0)
+    entity_module_entitlement_count = int(
+        clean_summary.get("entity_module_entitlement_count") or 0
+    )
+    process_view_authorization_rule_count = int(
+        clean_summary.get("process_view_authorization_rule_count") or 0
+    )
+    department_names = [
+        str(raw_name or "").strip()
+        for raw_name in (clean_summary.get("department_membership_department_names") or [])
+        if str(raw_name or "").strip()
+    ]
+    process_view_authorization_rule_labels = [
+        str(raw_label or "").strip()
+        for raw_label in (clean_summary.get("process_view_authorization_rule_labels") or [])
+        if str(raw_label or "").strip()
+    ]
+
+    dependency_parts: list[str] = []
+
+    if linked_users_count > 0:
+        dependency_parts.append(
+            f"{linked_users_count} utilizador{'es' if linked_users_count != 1 else ''} ativo{'s' if linked_users_count != 1 else ''} associado{'s' if linked_users_count != 1 else ''}"
+        )
+
+    if department_membership_count > 0:
+        membership_label = (
+            "vínculo de departamento"
+            if department_membership_count == 1
+            else "vínculos de departamento"
+        )
+        detail_suffix = ""
+
+        if department_names:
+            detail_suffix = f" ({', '.join(department_names)})"
+
+        dependency_parts.append(
+            f"{department_membership_count} {membership_label}{detail_suffix}"
+        )
+
+    if department_count > 0:
+        dependency_parts.append(
+            f"{department_count} departamento{'s' if department_count != 1 else ''} configurado{'s' if department_count != 1 else ''}"
+        )
+
+    if role_count > 0:
+        dependency_parts.append(
+            f"{role_count} função{'ões' if role_count != 1 else ''} configurada{'s' if role_count != 1 else ''}"
+        )
+
+    if song_count > 0:
+        dependency_parts.append(
+            f"{song_count} música{'s' if song_count != 1 else ''} associada{'s' if song_count != 1 else ''}"
+        )
+
+    if process_view_authorization_rule_count > 0:
+        rule_label = (
+            "regra de autorização de visualização"
+            if process_view_authorization_rule_count == 1
+            else "regras de autorização de visualização"
+        )
+        detail_suffix = ""
+
+        if process_view_authorization_rule_labels:
+            detail_suffix = f" ({'; '.join(process_view_authorization_rule_labels)})"
+
+        dependency_parts.append(
+            f"{process_view_authorization_rule_count} {rule_label}{detail_suffix}"
+        )
+
+    if entity_module_entitlement_count > 0:
+        dependency_parts.append(
+            f"{entity_module_entitlement_count} permiss{'ão' if entity_module_entitlement_count == 1 else 'ões'} de módulo configurada{'s' if entity_module_entitlement_count != 1 else ''}"
+        )
+
+    if not dependency_parts:
+        return ""
+
+    return (
+        "Não pode eliminar a entidade porque ainda existem dependências: "
+        + "; ".join(dependency_parts)
+        + "."
+    )

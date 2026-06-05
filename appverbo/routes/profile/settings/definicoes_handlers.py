@@ -190,12 +190,15 @@ def save_admin_definicoes_v1(
         if denied_response is not None:
             return denied_response
 
+        selected_entity_id = get_session_entity_id(request)
+
         try:
             if clean_mode == "edit":
                 ok, error_message = repository.update_definition(
                     session=session,
                     definition_id=clean_edit_key,
                     payload=payload,
+                    selected_entity_id=selected_entity_id,
                 )
                 if not ok:
                     session.rollback()
@@ -214,6 +217,7 @@ def save_admin_definicoes_v1(
             ok, error_message, _ = repository.create_definition(
                 session=session,
                 payload=payload,
+                selected_entity_id=selected_entity_id,
             )
 
             if not ok:
@@ -264,10 +268,13 @@ def delete_admin_definicoes_v1(
         if denied_response is not None:
             return denied_response
 
+        selected_entity_id = get_session_entity_id(request)
+
         try:
             ok, error_message = repository.delete_definition(
                 session=session,
                 definition_id=clean_edit_key,
+                selected_entity_id=selected_entity_id,
             )
 
             if not ok:

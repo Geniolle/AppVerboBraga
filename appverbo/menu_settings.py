@@ -9,6 +9,13 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from appverbo.menu_config_scope import (
+    MENU_CONFIG_SCOPE_MENU_LABEL_KEY_V1,
+    apply_entity_scoped_menu_config_updates_v1,
+    build_effective_menu_config_v1,
+    build_effective_menu_label_v1,
+)
+
 MENU_MEU_PERFIL_KEY = "meu_perfil"
 MENU_MEU_PERFIL_LEGACY_KEY = "documentos"
 
@@ -2640,7 +2647,10 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
         session.commit()
 
 
-def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
+def get_sidebar_menu_settings(
+    session: Session,
+    selected_entity_id: object = None,
+) -> list[dict[str, Any]]:
     ensure_sidebar_menu_settings_defaults(session)
     defaults_by_key = _sidebar_menu_defaults_by_key()
     rows = session.execute(
@@ -2673,10 +2683,23 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             is_active = bool(row.is_active)
             is_deleted = bool(row.is_deleted)
 
-        menu_config = _normalize_music_menu_config_v1(
+        raw_menu_config = _normalize_music_menu_config_v1(
             menu_key,
             menu_label,
             _parse_menu_config(None if row is None else row.menu_config),
+        )
+        effective_menu_label = build_effective_menu_label_v1(
+            menu_label,
+            raw_menu_config,
+            selected_entity_id=selected_entity_id,
+        ) or menu_label
+        menu_config = _normalize_music_menu_config_v1(
+            menu_key,
+            effective_menu_label,
+            build_effective_menu_config_v1(
+                raw_menu_config,
+                selected_entity_id=selected_entity_id,
+            ),
         )
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         process_subsequent_fields = menu_config.get("subsequent_fields", [])
@@ -2700,7 +2723,7 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         settings.append(
             {
                 "key": menu_key,
-                "label": menu_label,
+                "label": effective_menu_label,
                 "default_label": _normalize_system_menu_label(
                     menu_key,
                     defaults_by_key[menu_key]["label"],
@@ -2708,7 +2731,7 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
                 "requires_admin": bool(item["requires_admin"]),
                 "is_active": bool(is_active),
                 "is_deleted": bool(is_deleted),
-                "can_delete": not _is_menu_delete_protected(menu_key, menu_label),
+                "can_delete": not _is_menu_delete_protected(menu_key, effective_menu_label),
                 "menu_config": menu_config,
                 "visibility_scopes": get_menu_visibility_scopes(menu_config),
                 "visibility_scope_mode": get_menu_visibility_scope_mode(menu_config),
@@ -2741,10 +2764,23 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         menu_label = _normalize_system_menu_label(menu_key, row.menu_label or menu_key) or menu_key
         is_active = bool(row.is_active)
         is_deleted = bool(row.is_deleted)
-        menu_config = _normalize_music_menu_config_v1(
+        raw_menu_config = _normalize_music_menu_config_v1(
             menu_key,
             menu_label,
             _parse_menu_config(row.menu_config),
+        )
+        effective_menu_label = build_effective_menu_label_v1(
+            menu_label,
+            raw_menu_config,
+            selected_entity_id=selected_entity_id,
+        ) or menu_label
+        menu_config = _normalize_music_menu_config_v1(
+            menu_key,
+            effective_menu_label,
+            build_effective_menu_config_v1(
+                raw_menu_config,
+                selected_entity_id=selected_entity_id,
+            ),
         )
         requires_admin = bool(menu_config.get("requires_admin", True))
         process_additional_fields = get_menu_process_additional_fields(menu_config)
@@ -2769,12 +2805,12 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         settings.append(
             {
                 "key": menu_key,
-                "label": menu_label,
+                "label": effective_menu_label,
                 "default_label": menu_label,
                 "requires_admin": requires_admin,
                 "is_active": is_active,
                 "is_deleted": is_deleted,
-                "can_delete": not _is_menu_delete_protected(menu_key, menu_label),
+                "can_delete": not _is_menu_delete_protected(menu_key, effective_menu_label),
                 "menu_config": menu_config,
                 "visibility_scopes": get_menu_visibility_scopes(menu_config),
                 "visibility_scope_mode": get_menu_visibility_scope_mode(menu_config),
@@ -2985,6 +3021,22 @@ def _load_menu_config(session: Session, menu_key: str) -> dict[str, Any]:
     return _parse_menu_config(raw_menu_config)
 
 
+def _persist_menu_config(session: Session, menu_key: str, menu_config: dict[str, Any]) -> None:
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+
+
 def set_sidebar_menu_visibility(session: Session, menu_key: str, make_visible: bool) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
@@ -3018,6 +3070,7 @@ def update_sidebar_menu_label(
     menu_label: str,
     visibility_scope_mode: str | None = None,
     sidebar_section_key: str | None = None,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     clean_menu_label = _normalize_sentence_case_text(menu_label)
@@ -3028,6 +3081,10 @@ def update_sidebar_menu_label(
         return False, "Nome do menu é obrigatório."
 
     menu_config = _load_menu_config(session, clean_menu_key)
+    effective_menu_config = build_effective_menu_config_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+    )
     clean_scope_mode = str(visibility_scope_mode or "").strip().lower()
     if clean_scope_mode:
         if clean_scope_mode == MENU_VISIBILITY_SCOPE_ALL:
@@ -3054,35 +3111,54 @@ def update_sidebar_menu_label(
     if requested_section_key:
         if requested_section_key not in section_keys_set:
             return False, "Sessão inválida."
-        menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = requested_section_key
+        resolved_section_key = requested_section_key
     elif section_keys:
         current_section_key = _normalize_sidebar_section_key(
-            menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
+            effective_menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
         )
         if current_section_key not in section_keys_set:
-            menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = _resolve_default_sidebar_section_key(
+            resolved_section_key = _resolve_default_sidebar_section_key(
                 clean_menu_key,
                 section_keys_set,
                 section_keys,
             )
         else:
-            menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = current_section_key
+            resolved_section_key = current_section_key
 
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_label = :menu_label,
-                menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_label": clean_menu_label,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
-    )
+    if not section_keys:
+        resolved_section_key = ""
+
+    if selected_entity_id is None:
+        if resolved_section_key:
+            menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = resolved_section_key
+        _persist_menu_config(session, clean_menu_key, menu_config)
+        session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_label = :menu_label
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": clean_menu_key,
+                "menu_label": clean_menu_label,
+            },
+        )
+    else:
+        scoped_updates: dict[str, Any] = {
+            MENU_CONFIG_SCOPE_MENU_LABEL_KEY_V1: clean_menu_label,
+        }
+        if resolved_section_key:
+            scoped_updates[MENU_CONFIG_SIDEBAR_SECTION_KEY] = resolved_section_key
+
+        menu_config = apply_entity_scoped_menu_config_updates_v1(
+            menu_config,
+            selected_entity_id=selected_entity_id,
+            updates=scoped_updates,
+        )
+        _persist_menu_config(session, clean_menu_key, menu_config)
+
     session.commit()
     return True, ""
 
@@ -3186,6 +3262,7 @@ def update_sidebar_menu_process_fields_v4(
     menu_key: str,
     visible_fields: list[str] | tuple[str, ...] | set[str],
     visible_headers: list[str] | tuple[str, ...] | set[str] | None = None,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
@@ -3200,14 +3277,18 @@ def update_sidebar_menu_process_fields_v4(
         return False, "Menu não encontrado."
 
     menu_config = _load_menu_config(session, clean_menu_key)
+    effective_menu_config = build_effective_menu_config_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+    )
 
     selectable_options = get_menu_process_selectable_field_options(
         clean_menu_key,
-        menu_config,
+        effective_menu_config,
     )
     header_options = get_menu_process_header_options(
         clean_menu_key,
-        menu_config,
+        effective_menu_config,
     )
 
     selectable_keys = {
@@ -3238,7 +3319,7 @@ def update_sidebar_menu_process_fields_v4(
     # APPVERBO_PROCESS_FIELDS_PRESERVE_HEADERS_V13_START
     existing_header_map: dict[str, str] = {}
 
-    existing_rows = menu_config.get("process_visible_field_rows")
+    existing_rows = effective_menu_config.get("process_visible_field_rows")
     if isinstance(existing_rows, list):
         for existing_row in existing_rows:
             if not isinstance(existing_row, dict):
@@ -3250,7 +3331,7 @@ def update_sidebar_menu_process_fields_v4(
             if existing_field_key and existing_header_key:
                 existing_header_map[existing_field_key] = existing_header_key
 
-    existing_process_header_map = menu_config.get("process_visible_field_header_map")
+    existing_process_header_map = effective_menu_config.get("process_visible_field_header_map")
     if isinstance(existing_process_header_map, dict):
         for raw_field_key, raw_header_key in existing_process_header_map.items():
             existing_field_key = str(raw_field_key or "").strip().lower()
@@ -3259,7 +3340,7 @@ def update_sidebar_menu_process_fields_v4(
             if existing_field_key and existing_header_key:
                 existing_header_map[existing_field_key] = existing_header_key
 
-    existing_legacy_header_map = menu_config.get("visible_field_headers")
+    existing_legacy_header_map = effective_menu_config.get("visible_field_headers")
     if isinstance(existing_legacy_header_map, dict):
         for raw_field_key, raw_header_key in existing_legacy_header_map.items():
             existing_field_key = str(raw_field_key or "").strip().lower()
@@ -3356,30 +3437,25 @@ def update_sidebar_menu_process_fields_v4(
 
     refresh_token = str(uuid4())
 
-    menu_config["process_visible_fields"] = process_visible_fields
-    menu_config["process_visible_field_header_map"] = process_visible_field_header_map
-    menu_config["process_visible_field_rows"] = normalized_rows
-    menu_config["process_visible_fields_configured"] = True
-    menu_config["process_visible_fields_refresh_version"] = refresh_token
-
-    menu_config["visible_fields"] = legacy_visible_fields
-    menu_config["visible_field_headers"] = process_visible_field_header_map
-
-    menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
-
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+    menu_config = apply_entity_scoped_menu_config_updates_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+        updates={
+            "process_visible_fields": process_visible_fields,
+            "process_visible_field_header_map": process_visible_field_header_map,
+            "process_visible_field_rows": normalized_rows,
+            "process_visible_fields_configured": True,
+            "process_visible_fields_refresh_version": refresh_token,
+            "visible_fields": legacy_visible_fields,
+            "visible_field_headers": process_visible_field_header_map,
+            MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY: refresh_token,
         },
     )
+
+    if selected_entity_id is not None:
+        menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+
+    _persist_menu_config(session, clean_menu_key, menu_config)
     session.commit()
 
     return True, ""
@@ -3391,18 +3467,21 @@ def update_sidebar_menu_process_fields(
     menu_key: str,
     visible_fields: list[str] | tuple[str, ...] | set[str],
     visible_headers: list[str] | tuple[str, ...] | set[str] | None = None,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     return update_sidebar_menu_process_fields_v4(
         session,
         menu_key,
         visible_fields,
         visible_headers,
+        selected_entity_id,
     )
 
 def update_sidebar_menu_process_lists(
     session: Session,
     menu_key: str,
     raw_lists: Any,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
@@ -3414,21 +3493,12 @@ def update_sidebar_menu_process_lists(
 
     menu_config = _load_menu_config(session, clean_menu_key)
     normalized_lists = normalize_menu_process_lists_v3(raw_lists)
-    menu_config["process_lists"] = normalized_lists
-
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
+    menu_config = apply_entity_scoped_menu_config_updates_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+        updates={"process_lists": normalized_lists},
     )
+    _persist_menu_config(session, clean_menu_key, menu_config)
     session.commit()
     return True, ""
 
@@ -3992,8 +4062,14 @@ if "_original_get_sidebar_menu_settings_for_lists_v1" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v1 = get_sidebar_menu_settings
 
 
-def get_sidebar_menu_settings_v2(session: Session) -> list[dict[str, Any]]:
-    settings = _original_get_sidebar_menu_settings_for_lists_v1(session)
+def get_sidebar_menu_settings_v2(
+    session: Session,
+    selected_entity_id: object = None,
+) -> list[dict[str, Any]]:
+    settings = _original_get_sidebar_menu_settings_for_lists_v1(
+        session,
+        selected_entity_id=selected_entity_id,
+    )
 
     rows = session.execute(
         text(
@@ -4205,8 +4281,14 @@ if "_original_get_sidebar_menu_settings_for_lists_v2" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v2 = get_sidebar_menu_settings
 
 
-def get_sidebar_menu_settings_v3(session: Session) -> list[dict[str, Any]]:
-    settings = _original_get_sidebar_menu_settings_for_lists_v2(session)
+def get_sidebar_menu_settings_v3(
+    session: Session,
+    selected_entity_id: object = None,
+) -> list[dict[str, Any]]:
+    settings = _original_get_sidebar_menu_settings_for_lists_v2(
+        session,
+        selected_entity_id=selected_entity_id,
+    )
 
     rows = session.execute(
         text(
@@ -4592,8 +4674,12 @@ def _build_process_list_option_rows_from_labels_v1(labels: list[str]) -> list[di
 
 def _load_process_list_sidebar_sections_source_rows_v1(
     session: Session,
+    selected_entity_id: object = None,
 ) -> list[dict[str, str]]:
-    administrativo_config = _load_menu_config(session, "administrativo")
+    administrativo_config = build_effective_menu_config_v1(
+        _load_menu_config(session, "administrativo"),
+        selected_entity_id=selected_entity_id,
+    )
     section_rows = normalize_sidebar_sections(
         administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
     )
@@ -4630,12 +4716,19 @@ def _load_process_list_sidebar_sections_source_rows_v1(
 
 def _load_process_list_sidebar_menus_by_section_source_rows_v1(
     session: Session,
+    selected_entity_id: object = None,
 ) -> list[dict[str, str]]:
     base_get_sidebar_menu_settings = globals().get("_original_get_sidebar_menu_settings_for_lists_v3")
     if callable(base_get_sidebar_menu_settings):
-        menu_rows = base_get_sidebar_menu_settings(session)
+        menu_rows = base_get_sidebar_menu_settings(
+            session,
+            selected_entity_id=selected_entity_id,
+        )
     else:
-        menu_rows = get_sidebar_menu_settings(session)
+        menu_rows = get_sidebar_menu_settings(
+            session,
+            selected_entity_id=selected_entity_id,
+        )
 
     option_rows: list[dict[str, str]] = []
 
@@ -4883,6 +4976,7 @@ def _load_process_list_table_source_items_v1(
 def _resolve_process_lists_dynamic_sources_v1(
     session: Session,
     process_lists: list[dict[str, Any]],
+    selected_entity_id: object = None,
 ) -> list[dict[str, Any]]:
     if not process_lists:
         return []
@@ -4912,7 +5006,8 @@ def _resolve_process_lists_dynamic_sources_v1(
         elif source_key == PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1:
             if sidebar_sections_source_rows_cache is None:
                 sidebar_sections_source_rows_cache = _load_process_list_sidebar_sections_source_rows_v1(
-                    session
+                    session,
+                    selected_entity_id=selected_entity_id,
                 )
             process_list["option_rows"] = list(sidebar_sections_source_rows_cache)
             process_list["items"] = _extract_process_list_option_labels_v1(
@@ -4922,7 +5017,10 @@ def _resolve_process_lists_dynamic_sources_v1(
         elif source_key == PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1:
             if sidebar_menus_by_section_source_rows_cache is None:
                 sidebar_menus_by_section_source_rows_cache = (
-                    _load_process_list_sidebar_menus_by_section_source_rows_v1(session)
+                    _load_process_list_sidebar_menus_by_section_source_rows_v1(
+                        session,
+                        selected_entity_id=selected_entity_id,
+                    )
                 )
             process_list["option_rows"] = list(sidebar_menus_by_section_source_rows_cache)
             process_list["items"] = _extract_process_list_option_labels_v1(
@@ -4987,8 +5085,14 @@ if "_original_get_sidebar_menu_settings_for_lists_v3" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v3 = get_sidebar_menu_settings
 
 
-def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
-    settings = _original_get_sidebar_menu_settings_for_lists_v3(session)
+def get_sidebar_menu_settings_v4(
+    session: Session,
+    selected_entity_id: object = None,
+) -> list[dict[str, Any]]:
+    settings = _original_get_sidebar_menu_settings_for_lists_v3(
+        session,
+        selected_entity_id=selected_entity_id,
+    )
     process_list_source_options = get_process_list_source_options_v1(session)
 
     rows = session.execute(
@@ -5017,6 +5121,7 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
         process_lists = _resolve_process_lists_dynamic_sources_v1(
             session,
             normalize_menu_process_lists_v3(menu_config.get("process_lists")),
+            selected_entity_id=selected_entity_id,
         )
         process_subsequent_fields = normalize_menu_process_subsequent_fields(menu_config.get("subsequent_fields"))
         process_quantity_fields = normalize_menu_process_quantity_fields(
@@ -5151,6 +5256,7 @@ def update_sidebar_menu_process_quantity_fields_v1(
     session: Session,
     menu_key: str,
     raw_fields: Any,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
@@ -5166,7 +5272,13 @@ def update_sidebar_menu_process_quantity_fields_v1(
         return False, "Menu não encontrado."
 
     menu_config = _load_menu_config(session, clean_menu_key)
-    additional_fields = normalize_menu_process_additional_fields(menu_config.get("additional_fields"))
+    effective_menu_config = build_effective_menu_config_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+    )
+    additional_fields = normalize_menu_process_additional_fields(
+        effective_menu_config.get("additional_fields")
+    )
     additional_fields_by_key = {
         str(field.get("key") or "").strip().lower(): field
         for field in additional_fields
@@ -5245,21 +5357,12 @@ def update_sidebar_menu_process_quantity_fields_v1(
             }
         )
 
-    menu_config["process_quantity_fields"] = validated_fields
-
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
+    menu_config = apply_entity_scoped_menu_config_updates_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+        updates={"process_quantity_fields": validated_fields},
     )
+    _persist_menu_config(session, clean_menu_key, menu_config)
     session.commit()
 
     return True, ""
@@ -5450,6 +5553,7 @@ def update_sidebar_menu_additional_fields_v4(
     session: Session,
     menu_key: str,
     fields: list[dict[str, Any]],
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
@@ -5467,10 +5571,14 @@ def update_sidebar_menu_additional_fields_v4(
         return False, "Menu não encontrado."
 
     menu_config = _load_menu_config(session, clean_menu_key)
+    effective_menu_config = build_effective_menu_config_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+    )
 
     old_header_map: dict[str, str] = {}
 
-    old_rows = menu_config.get("process_visible_field_rows")
+    old_rows = effective_menu_config.get("process_visible_field_rows")
     if isinstance(old_rows, list):
         for old_row in old_rows:
             if not isinstance(old_row, dict):
@@ -5482,7 +5590,7 @@ def update_sidebar_menu_additional_fields_v4(
             if field_key and header_key:
                 old_header_map[field_key] = header_key
 
-    legacy_header_map = menu_config.get("visible_field_headers")
+    legacy_header_map = effective_menu_config.get("visible_field_headers")
     if isinstance(legacy_header_map, dict):
         for raw_field_key, raw_header_key in legacy_header_map.items():
             field_key = str(raw_field_key or "").strip().lower()
@@ -5492,15 +5600,15 @@ def update_sidebar_menu_additional_fields_v4(
                 old_header_map[field_key] = header_key
 
     normalized_fields = normalize_menu_process_additional_fields(fields)
-    menu_config["additional_fields"] = normalized_fields
+    effective_menu_config["additional_fields"] = normalized_fields
 
     selectable_options = get_menu_process_selectable_field_options(
         clean_menu_key,
-        menu_config,
+        effective_menu_config,
     )
     header_options = get_menu_process_header_options(
         clean_menu_key,
-        menu_config,
+        effective_menu_config,
     )
 
     selectable_keys = {
@@ -5514,10 +5622,10 @@ def update_sidebar_menu_additional_fields_v4(
         if str(item.get("key") or "").strip()
     }
 
-    raw_configured_fields = menu_config.get("process_visible_fields")
+    raw_configured_fields = effective_menu_config.get("process_visible_fields")
     configured_flag = (
-        "process_visible_fields" in menu_config
-        or bool(menu_config.get("process_visible_fields_configured"))
+        "process_visible_fields" in effective_menu_config
+        or bool(effective_menu_config.get("process_visible_fields_configured"))
     )
 
     if isinstance(raw_configured_fields, (list, tuple, set)):
@@ -5526,7 +5634,7 @@ def update_sidebar_menu_additional_fields_v4(
         raw_visible_fields = []
 
     if not raw_visible_fields:
-        raw_rows = menu_config.get("process_visible_field_rows")
+        raw_rows = effective_menu_config.get("process_visible_field_rows")
 
         if isinstance(raw_rows, list):
             for raw_row in raw_rows:
@@ -5556,7 +5664,7 @@ def update_sidebar_menu_additional_fields_v4(
     if clean_menu_key == "administrativo" and not clean_visible_fields:
         default_visible_fields = get_menu_process_default_visible_fields(
             clean_menu_key,
-            menu_config,
+            effective_menu_config,
         )
         for field_key in default_visible_fields:
             clean_field_key = str(field_key or "").strip().lower()
@@ -5610,31 +5718,35 @@ def update_sidebar_menu_additional_fields_v4(
         legacy_visible_fields.append(field_key)
         emitted_legacy_keys.add(field_key)
 
-    if configured_flag:
-        menu_config["process_visible_fields"] = clean_visible_fields
-        menu_config["process_visible_field_header_map"] = process_visible_field_header_map
-        menu_config["process_visible_field_rows"] = process_visible_field_rows
-        menu_config["process_visible_fields_configured"] = True
-        menu_config["visible_fields"] = legacy_visible_fields
-        menu_config["visible_field_headers"] = process_visible_field_header_map
-
     refresh_token = str(uuid4())
-    menu_config["process_additional_fields_refresh_version"] = refresh_token
-    menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+    scoped_updates: dict[str, Any] = {
+        "additional_fields": normalized_fields,
+        "process_additional_fields_refresh_version": refresh_token,
+        MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY: refresh_token,
+    }
 
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
+    if configured_flag:
+        scoped_updates.update(
+            {
+                "process_visible_fields": clean_visible_fields,
+                "process_visible_field_header_map": process_visible_field_header_map,
+                "process_visible_field_rows": process_visible_field_rows,
+                "process_visible_fields_configured": True,
+                "visible_fields": legacy_visible_fields,
+                "visible_field_headers": process_visible_field_header_map,
+            }
+        )
+
+    menu_config = apply_entity_scoped_menu_config_updates_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+        updates=scoped_updates,
     )
+
+    if selected_entity_id is not None:
+        menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = refresh_token
+
+    _persist_menu_config(session, clean_menu_key, menu_config)
     session.commit()
 
     return True, ""
@@ -5645,22 +5757,26 @@ def update_sidebar_menu_additional_fields_v1(
     session: Session,
     menu_key: str,
     fields: list[dict[str, Any]],
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     return update_sidebar_menu_additional_fields_v4(
         session,
         menu_key,
         fields,
+        selected_entity_id,
     )
 
 def update_sidebar_menu_additional_fields(
     session: Session,
     menu_key: str,
     raw_fields: Any,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     return update_sidebar_menu_additional_fields_v1(
         session=session,
         menu_key=menu_key,
-        raw_fields=raw_fields,
+        fields=list(raw_fields or []) if isinstance(raw_fields, (list, tuple, set)) else [],
+        selected_entity_id=selected_entity_id,
     )
 
 
@@ -5720,6 +5836,7 @@ def update_sidebar_menu_subsequent_fields(
     session: Session,
     menu_key: str,
     raw_fields: Any,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     """Atualiza os campos subsequentes de um menu."""
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
@@ -5733,44 +5850,14 @@ def update_sidebar_menu_subsequent_fields(
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu não encontrado."
 
-    raw_config = session.execute(
-        text(
-            """
-            SELECT menu_config
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = :menu_key
-            LIMIT 1
-            """
-        ),
-        {"menu_key": clean_menu_key},
-    ).scalar_one_or_none()
-
-    menu_config: dict[str, Any] = {}
-
-    if isinstance(raw_config, str) and raw_config.strip():
-        try:
-            parsed_config = json.loads(raw_config)
-            if isinstance(parsed_config, dict):
-                menu_config = parsed_config
-        except json.JSONDecodeError:
-            menu_config = {}
-
+    menu_config = _load_menu_config(session, clean_menu_key)
     normalized_fields = normalize_menu_process_subsequent_fields(raw_fields)
-    menu_config["subsequent_fields"] = normalized_fields
-
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
+    menu_config = apply_entity_scoped_menu_config_updates_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+        updates={"subsequent_fields": normalized_fields},
     )
+    _persist_menu_config(session, clean_menu_key, menu_config)
     session.commit()
 
     return True, ""
@@ -5785,6 +5872,7 @@ def move_sidebar_menu_additional_field(
     menu_key: str,
     field_key: str,
     direction: str,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     """
     Move um campo adicional para cima ou para baixo no formulário.
@@ -5805,30 +5893,14 @@ def move_sidebar_menu_additional_field(
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu não encontrado."
 
-    raw_config = session.execute(
-        text(
-            """
-            SELECT menu_config
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = :menu_key
-            LIMIT 1
-            """
-        ),
-        {"menu_key": clean_menu_key},
-    ).scalar_one_or_none()
-
-    menu_config: dict[str, Any] = {}
-
-    if isinstance(raw_config, str) and raw_config.strip():
-        try:
-            parsed_config = json.loads(raw_config)
-            if isinstance(parsed_config, dict):
-                menu_config = parsed_config
-        except json.JSONDecodeError:
-            menu_config = {}
+    menu_config = _load_menu_config(session, clean_menu_key)
+    effective_menu_config = build_effective_menu_config_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+    )
 
     normalized_fields = normalize_menu_process_additional_fields_v1(
-        menu_config.get("additional_fields")
+        effective_menu_config.get("additional_fields")
     )
 
     if not normalized_fields:
@@ -5911,24 +5983,22 @@ def move_sidebar_menu_additional_field(
         )
 
     # Reconstruir a hierarquia e salvar
-    menu_config = _rebuild_menu_process_hierarchy_from_additional_fields_v1(
-        menu_config,
+    rebuilt_menu_config = _rebuild_menu_process_hierarchy_from_additional_fields_v1(
+        dict(effective_menu_config),
         normalized_fields,
     )
-
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+    menu_config = apply_entity_scoped_menu_config_updates_v1(
+        menu_config,
+        selected_entity_id=selected_entity_id,
+        updates={
+            "additional_fields": rebuilt_menu_config.get("additional_fields"),
+            "process_visible_fields": rebuilt_menu_config.get("process_visible_fields"),
+            "process_visible_headers": rebuilt_menu_config.get("process_visible_headers"),
+            "process_visible_field_rows": rebuilt_menu_config.get("process_visible_field_rows"),
+            "process_visible_field_header_map": rebuilt_menu_config.get("process_visible_field_header_map"),
         },
     )
+    _persist_menu_config(session, clean_menu_key, menu_config)
     session.commit()
 
     return True, ""

@@ -16,7 +16,7 @@ from appverbo.models import User, UserAccountStatus, UserProfile
 from appverbo.services.auth import is_admin_user
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.session import get_current_user, get_session_entity_id
-from appverbo.services.user_status import is_user_account_status_inactive_v1
+from appverbo.services.user_status import is_user_account_status_non_active_v1
 
 
 # ###################################################################################
@@ -78,9 +78,9 @@ def execute_delete_user_v1(
                 error="Sem permiss\u00e3o para eliminar este utilizador."
             )
 
-        if not is_user_account_status_inactive_v1(user.account_status):
+        if not is_user_account_status_non_active_v1(user.account_status):
             return redirect_admin_users_v1(
-                error="S\u00f3 \u00e9 permitido eliminar utilizadores inativos."
+                error="S\u00f3 \u00e9 permitido eliminar utilizadores n\u00e3o ativos."
             )
 
         target_is_active_admin = (

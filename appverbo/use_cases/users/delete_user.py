@@ -15,7 +15,7 @@ from appverbo.use_cases.users.policies import (
     ensure_actor_is_admin_v1,
     ensure_member_scope_v1,
     ensure_not_self_delete_v1,
-    ensure_target_user_is_inactive_v1,
+    ensure_target_user_is_non_active_v1,
 )
 
 
@@ -111,7 +111,7 @@ def execute_delete_user(
     if scope_error:
         return _redirect_v1(error=scope_error)
 
-    inactive_error = ensure_target_user_is_inactive_v1(user)
+    inactive_error = ensure_target_user_is_non_active_v1(user)
 
     if inactive_error:
         return _redirect_v1(error=inactive_error)

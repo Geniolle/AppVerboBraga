@@ -466,7 +466,8 @@ def _seed_sidebar_icon_definitions_v1(
             continue
 
         has_match = any(
-            _normalize_definition_lookup_text_v1(row.parameter_type) == "icone"
+            getattr(row, "entity_id", None) is None
+            and _normalize_definition_lookup_text_v1(row.parameter_type) == "icone"
             and _normalize_definition_lookup_text_v1(row.process_name) == _normalize_definition_lookup_text_v1(process_name)
             and _normalize_definition_lookup_text_v1(row.subprocess_name) == _normalize_definition_lookup_text_v1(subprocess_name)
             and _normalize_definition_lookup_text_v1(row.parameter_name) in normalized_parameter_names
@@ -526,7 +527,8 @@ def ensure_admin_process_title_default_definitions_v1() -> None:
             )
 
             has_match = any(
-                _normalize_definition_lookup_text_v1(row.parameter_type) == parameter_type
+                getattr(row, "entity_id", None) is None
+                and _normalize_definition_lookup_text_v1(row.parameter_type) == parameter_type
                 and _normalize_definition_lookup_text_v1(row.process_name) == process_name
                 and _normalize_definition_lookup_text_v1(row.subprocess_name) == subprocess_name
                 and _normalize_definition_lookup_text_v1(row.parameter_name) in normalized_aliases

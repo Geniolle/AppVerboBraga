@@ -25,6 +25,7 @@
     "[data-admin-subprocess-shadow='utilizador']",
     "[data-admin-subprocess-shadow='utilizador-inactive']",
   ].join(",");
+  const TEMP_PAGE_SIZE_QUERY_PREFIX_V2 = "appverbo_table_page_size_";
 
   //###################################################################################
   // (2) FUNCOES BASE
@@ -71,6 +72,85 @@
     const randomPart = Math.random().toString(36).slice(2, 10);
     element.id = prefix + "-" + randomPart;
     return element.id;
+  }
+
+  function buildTempPageSizeQueryParamNameV2(tableEl) {
+    const tableId = ensureElementIdV2(tableEl, "admin-table-standard-v2");
+
+    if (!tableId) {
+      return "";
+    }
+
+    return TEMP_PAGE_SIZE_QUERY_PREFIX_V2 + tableId;
+  }
+
+  function getUrlObjectV2(rawUrl) {
+    try {
+      return new URL(toSafeStringV2(rawUrl || window.location.href), window.location.origin);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function toRelativeUrlV2(urlObject) {
+    if (!urlObject) {
+      return "/users/new";
+    }
+
+    return (
+      toSafeStringV2(urlObject.pathname || "/users/new") +
+      toSafeStringV2(urlObject.search || "") +
+      toSafeStringV2(urlObject.hash || "")
+    );
+  }
+
+  function readTempPageSizeFromUrlV2(tableEl, fallback) {
+    const paramName = buildTempPageSizeQueryParamNameV2(tableEl);
+    const urlObject = getUrlObjectV2(window.location.href);
+
+    if (!paramName || !urlObject) {
+      return fallback;
+    }
+
+    return toIntegerV2(urlObject.searchParams.get(paramName), fallback);
+  }
+
+  function syncPageSizeSelectValueV2(pageSizeEl, pageSize) {
+    if (!pageSizeEl) {
+      return;
+    }
+
+    const hasOption = Array.from(pageSizeEl.options || []).some(function (optionEl) {
+      return toIntegerV2(optionEl.value, 0) === pageSize;
+    });
+
+    if (hasOption) {
+      pageSizeEl.value = String(pageSize);
+    }
+  }
+
+  function clearTemporaryPageSizeParamsFromUrlV2() {
+    const urlObject = getUrlObjectV2(window.location.href);
+    let hasChanges = false;
+
+    if (!urlObject) {
+      return;
+    }
+
+    Array.from(urlObject.searchParams.keys()).forEach(function (paramName) {
+      if (paramName.indexOf(TEMP_PAGE_SIZE_QUERY_PREFIX_V2) !== 0) {
+        return;
+      }
+
+      urlObject.searchParams.delete(paramName);
+      hasChanges = true;
+    });
+
+    if (!hasChanges) {
+      return;
+    }
+
+    window.history.replaceState({}, "", toRelativeUrlV2(urlObject));
   }
 
   //###################################################################################
@@ -343,6 +423,104 @@
     state.nextEl.disabled = state.currentPage >= totalPages;
   }
 
+  function getFooterForTableV2(tableEl) {
+    const tableId = ensureElementIdV2(tableEl, "admin-table-standard-v2");
+
+    if (!tableId) {
+      return null;
+    }
+
+    return document.querySelector(
+      '[data-admin-table-footer-standard-v1="1"][data-admin-table-id="' +
+        escapeAttributeV2(tableId) +
+        '"]'
+    );
+  }
+
+  function collectCurrentMenuTablePageSizesV2() {
+    return [
+      document.getElementById("admin-menu-active-table"),
+      document.getElementById("admin-menu-inactive-table"),
+    ].reduce(function (accumulator, tableEl) {
+      const footerEl = tableEl ? getFooterForTableV2(tableEl) : null;
+      const pageSizeEl = footerEl
+        ? footerEl.querySelector("[data-admin-table-footer-page-size-v1='1']")
+        : null;
+      const paramName = tableEl ? buildTempPageSizeQueryParamNameV2(tableEl) : "";
+      const pageSize = toIntegerV2(pageSizeEl ? pageSizeEl.value : "", 5);
+
+      if (paramName) {
+        accumulator.push([paramName, String(pageSize)]);
+      }
+
+      return accumulator;
+    }, []);
+  }
+
+  function isMenuHierarchyActionFormV2(formEl) {
+    const actionUrl = getUrlObjectV2(formEl ? formEl.getAttribute("action") : "");
+    const actionPath = normalizeTextV2(actionUrl ? actionUrl.pathname : "");
+
+    return actionPath === "/settings/menu/move" || actionPath === "/settings/menu/admin-move";
+  }
+
+  function upsertHiddenInputValueV2(formEl, inputName, inputValue) {
+    let inputEl = formEl.querySelector('input[name="' + inputName + '"]');
+
+    if (!inputEl) {
+      inputEl = document.createElement("input");
+      inputEl.type = "hidden";
+      inputEl.name = inputName;
+      formEl.appendChild(inputEl);
+    }
+
+    inputEl.value = inputValue;
+  }
+
+  function buildMenuActionReturnUrlWithPageSizesV2(baseUrl) {
+    const urlObject = getUrlObjectV2(baseUrl || window.location.href);
+
+    if (!urlObject) {
+      return "/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card";
+    }
+
+    collectCurrentMenuTablePageSizesV2().forEach(function (entry) {
+      urlObject.searchParams.set(entry[0], entry[1]);
+    });
+
+    return toRelativeUrlV2(urlObject);
+  }
+
+  function bindMenuHierarchyActionReturnUrlV2() {
+    if (window.AppVerboAdminTableFooterMenuMoveBindingV2 === true) {
+      return;
+    }
+
+    document.addEventListener(
+      "submit",
+      function (event) {
+        const formEl = event.target;
+        const existingReturnUrlEl = formEl
+          ? formEl.querySelector('input[name="subprocess_return_url"], input[name="return_url"]')
+          : null;
+        const existingReturnUrl = existingReturnUrlEl ? existingReturnUrlEl.value : "";
+
+        if (!formEl || !isMenuHierarchyActionFormV2(formEl)) {
+          return;
+        }
+
+        upsertHiddenInputValueV2(
+          formEl,
+          "subprocess_return_url",
+          buildMenuActionReturnUrlWithPageSizesV2(existingReturnUrl)
+        );
+      },
+      true
+    );
+
+    window.AppVerboAdminTableFooterMenuMoveBindingV2 = true;
+  }
+
   function initializeFooterV2(footerEl) {
     if (!footerEl || footerEl.dataset.adminTableFooterInitializedV2 === "1") {
       return;
@@ -365,8 +543,13 @@
       nextEl: nextEl,
       pageEl: pageEl,
       currentPage: 1,
-      pageSize: toIntegerV2(pageSizeEl.value, 5),
+      pageSize: readTempPageSizeFromUrlV2(
+        tableEl,
+        toIntegerV2(pageSizeEl.value, 5)
+      ),
     };
+
+    syncPageSizeSelectValueV2(pageSizeEl, state.pageSize);
 
     pageSizeEl.addEventListener("change", function () {
       state.pageSize = toIntegerV2(pageSizeEl.value, 5);
@@ -404,6 +587,7 @@
       scopeEl.querySelectorAll('[data-admin-table-footer-standard-v1="1"]')
     );
     footers.forEach(initializeFooterV2);
+    clearTemporaryPageSizeParamsFromUrlV2();
   }
 
   //###################################################################################
@@ -457,10 +641,12 @@
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
       initializeFootersV2(document);
+      bindMenuHierarchyActionReturnUrlV2();
       startMutationObserverV2();
     });
   } else {
     initializeFootersV2(document);
+    bindMenuHierarchyActionReturnUrlV2();
     startMutationObserverV2();
   }
 })();

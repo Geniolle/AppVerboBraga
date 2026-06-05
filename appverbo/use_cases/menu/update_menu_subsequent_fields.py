@@ -153,6 +153,7 @@ def execute_update_menu_subsequent_fields_v1(
         session=session,
         menu_key=payload.menu_key,
         raw_fields=payload.subsequent_fields,
+        selected_entity_id=selected_entity_id,
     )
     if not ok:
         return build_menu_return_url_with_message_v1(

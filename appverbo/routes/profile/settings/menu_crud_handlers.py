@@ -87,7 +87,7 @@ def create_sidebar_menu_setting_handler_v1(
     menu_visibility_scope: str = Form("all"),
     menu_section: str = Form(""),
     redirect_menu: str = Form("administrativo"),
-    redirect_target: str = Form("#admin-menu-card"),
+    redirect_target: str = Form("#admin-menu-card-create"),
     subprocess_return_url: str = Form(""),
     return_url: str = Form(""),
 ) -> RedirectResponse:
@@ -176,7 +176,7 @@ def move_sidebar_menu_setting_handler_v1(
     menu_key: str = Form(...),
     direction: str = Form(...),
     redirect_menu: str = Form("administrativo"),
-    redirect_target: str = Form("#admin-menu-card"),
+    redirect_target: str = Form("#admin-menu-card-create"),
     subprocess_return_url: str = Form(""),
     return_url: str = Form(""),
 ) -> RedirectResponse:
@@ -306,7 +306,7 @@ def create_sidebar_menu_setting_admin_subprocess_handler(
         menu_visibility_scope=menu_visibility_scope,
         menu_section=menu_section,
         redirect_menu="administrativo",
-        redirect_target="#admin-menu-card",
+        redirect_target="#admin-menu-card-create",
         subprocess_return_url=subprocess_return_url or return_url,
     )
 
@@ -344,7 +344,7 @@ def move_sidebar_menu_setting_admin_subprocess_handler(
         menu_key=menu_key,
         direction=direction,
         redirect_menu="administrativo",
-        redirect_target="#admin-menu-card",
+        redirect_target="#admin-menu-card-create",
         subprocess_return_url=subprocess_return_url or return_url,
     )
 

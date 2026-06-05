@@ -1225,6 +1225,29 @@ body.appverbo-sidebar-collapsed .appverbo-sidebar-owner-text {
   }
 }
 
+/* ###################################################################################
+   PERFIL DE AUTORIZACAO - 4 CAMPOS NA PRIMEIRA LINHA
+   ################################################################################### */
+
+#dynamic-process-card.appverbo-admin-authorization-layout-4cols-v1 .profile-readonly .personal-grid,
+#dynamic-process-card.appverbo-admin-authorization-layout-4cols-v1 .appverbo-dynamic-process-grid-v1 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1200px) {
+  #dynamic-process-card.appverbo-admin-authorization-layout-4cols-v1 .profile-readonly .personal-grid,
+  #dynamic-process-card.appverbo-admin-authorization-layout-4cols-v1 .appverbo-dynamic-process-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  #dynamic-process-card.appverbo-admin-authorization-layout-4cols-v1 .profile-readonly .personal-grid,
+  #dynamic-process-card.appverbo-admin-authorization-layout-4cols-v1 .appverbo-dynamic-process-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
    .appverbo-dynamic-process-grid-v1 .field {
   min-width: 0;
 }

@@ -67,6 +67,7 @@
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260603-topbar-feedback-toast-v4-zindex">
+  <link rel="stylesheet" href="/static/css/modules/default_admin_sidebar_v1.css?v=20260604-default-admin-sidebar-v1">
   <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v5-lyrics-preview">
   <style>
     :root {
@@ -89,7 +90,7 @@
 
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260521-admin-subprocess-responsive-split-v3">
+<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260605-admin-subprocess-scope-readonly-v4">
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260527-profile-field-order-v5-menu-order-priority" defer></script>
@@ -600,7 +601,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           <button
             type="button"
             class="action-btn-cancel"
-            onclick="var d=this.closest('details'); if (d) { d.open = false; }"
+            data-card-cancel-close="1"
           >Cancelar</button>
         </div>
       </form>
@@ -686,7 +687,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   </form>
 
                   <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+                     href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
 
@@ -767,7 +768,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 {% if false %}
                 <div class="table-actions" aria-label="Ações do menu {{ row.label or row.name or row.title or row.key }}">
                   <a class="table-icon-btn"
-                     href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+                     href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
                      title="Editar"
                      aria-label="Editar {{ row.label or row.name or row.title or row.key }}">&#9998;</a>
 
@@ -1696,7 +1697,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   <button
                     type="button"
                     class="action-btn-cancel"
-                    onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                    data-card-cancel-close="1"
                   >Cancelar</button>
                 </div>
               </form>
@@ -1857,7 +1858,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               {% if not entity_readonly_mode %}
               <button type="submit" class="action-btn">Guardar</button>
               {% endif %}
-              <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=entidade#create-entity-card">{% if entity_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+              <a
+                class="action-btn-cancel"
+                data-card-cancel-close="1"
+                href="/users/new?menu=administrativo&admin_tab=entidade#create-entity-card"
+              >{% if entity_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
             </div>
           </form>
         </section>
@@ -2133,6 +2138,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   <button type="submit" class="action-btn">Guardar</button>
                   <a
                     class="action-btn-cancel"
+                    data-card-cancel-close="1"
                     href="{{ settings_edit_cancel_url }}"
                   >Cancelar</a>
                 </div>
@@ -2183,6 +2189,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               <div class="form-action-row">
                 <a
                   class="action-btn-cancel"
+                  data-card-cancel-close="1"
                   href="{{ settings_edit_cancel_url }}"
                 >Cancelar</a>
               </div>
@@ -3105,7 +3112,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       {% endif %}
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar menu"
                         aria-label="Editar menu"
                       >
@@ -3158,7 +3165,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       </a>
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar menu"
                         aria-label="Editar menu"
                       >
@@ -3231,7 +3238,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                       </a>
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar pasta"
                         aria-label="Editar pasta"
                       >
@@ -3320,7 +3327,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/topbar_save_feedback_v1.js?v=20260603-topbar-save-feedback-toast-v4-promote-body" defer></script>
 <script src="/static/js/modules/auto_dismiss_flash_messages_v1.js?v=20260525-auto-dismiss-flash-module-v1" defer></script>
 <script src="/static/js/modules/meu_perfil_quantity_submit_sync_v1.js?v=20260525-quantity-submit-sync-module-v1" defer></script>
-<script src="/static/js/modules/message_dismiss_safe_v5.js?v=20260525-message-dismiss-safe-v5-module-v1" defer></script>
+<script src="/static/js/modules/message_dismiss_safe_v5.js?v=20260604-message-dismiss-safe-v5-module-v2" defer></script>
 <script src="/static/js/modules/mark_ready_v1.js?v=20260525-mark-ready-module-v1" defer></script>
 <script src="/static/js/modules/meu_perfil_quantity_renderer_v1.js?v=20260525-quantity-renderer-module-v1" defer></script>
 <script src="/static/js/modules/meu_perfil_quantity_readonly_renderer_v1.js?v=20260525-quantity-readonly-renderer-module-v1" defer></script>
@@ -3328,11 +3335,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260603-dynamic-runtime-core-v8-all-options-in-automatic-lists" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260603-dynamic-runtime-core-v12-table-source-normalization" defer></script>
 <script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260603-dynamic-process-history-renderer-v7-actions-order" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260526-process-subprocess-standards-v3-hash-map" defer></script>
-<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260603-menu-dynamic-navigation-core-v8-submenu-state-unified" defer></script>
+<script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260605-menu-dynamic-navigation-core-v9-admin-order" defer></script>
 <script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260603-menu-navigation-controller-v10-dynamic-link-active" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
@@ -3345,6 +3352,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/user_dropdown_ui_v1.js?v=20260525-user-dropdown-ui-module-v1" defer></script>
 <script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260602-process-field-runtime-utils-time-v3" defer></script>
 <script src="/static/js/modules/process_absence_date_validation_v1.js?v=20260525-process-absence-date-validation-module-v1" defer></script>
+<script src="/static/js/modules/card_cancel_close_v1.js?v=20260605-card-cancel-close-v1" defer></script>
 <script src="/static/js/modules/profile_edit_ui_utils_v1.js?v=20260525-profile-edit-ui-utils-module-v1" defer></script>
 <script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
 <script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260526-menu-navigation-bridge-process-title-v2" defer></script>
@@ -3381,5 +3389,5 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260529-fields-layout-order-v7-autosave-hierarchy-v2"></script>
-  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260526-admin-footer-standard-v4-page-size-options" defer></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260605-admin-footer-standard-v5-menu-move-page-size-return" defer></script>
 {% endblock %}

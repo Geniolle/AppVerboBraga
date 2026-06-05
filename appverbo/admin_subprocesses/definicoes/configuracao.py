@@ -61,6 +61,15 @@ DEFINICOES_FIELDS = (
         options_source="menu_subprocesses",
     ),
     AdminFieldConfig(
+        key="entity_scope_label",
+        label="ENTIDADE",
+        input_name="definition_entity_scope_label",
+        field_type="readonly",
+        readonly_on_create=True,
+        readonly_on_edit=True,
+        css_class="admin-subprocess-scope-field-v1",
+    ),
+    AdminFieldConfig(
         key="status",
         label="ESTADO",
         input_name="definition_status",
@@ -84,6 +93,7 @@ DEFINICOES_COLUMNS = (
     AdminColumnConfig(key="initial_value", label="VALOR INICIAL", source="initial_value"),
     AdminColumnConfig(key="process_name", label="PROCESSO", source="process_name"),
     AdminColumnConfig(key="subprocess_name", label="SUBPROCESSO", source="subprocess_name"),
+    AdminColumnConfig(key="entity_scope_label", label="ENTIDADE", source="entity_scope_label"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
 )
 

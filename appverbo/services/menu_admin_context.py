@@ -91,6 +91,7 @@ def build_menu_admin_edit_context_v1(
     *,
     session: Session,
     menu_edit_key: str,
+    selected_entity_id: int | None,
 ) -> dict[str, Any]:
     clean_menu_edit_key = str(menu_edit_key or "").strip().lower()
 
@@ -100,6 +101,7 @@ def build_menu_admin_edit_context_v1(
         edit_data = execute_get_menu_edit_v1(
             session=session,
             menu_key=clean_menu_edit_key,
+            selected_entity_id=selected_entity_id,
         )
 
     return {
@@ -147,6 +149,7 @@ def build_menu_admin_context_v1(
     edit_context = build_menu_admin_edit_context_v1(
         session=session,
         menu_edit_key=menu_edit_key,
+        selected_entity_id=selected_entity_id,
     )
 
     return {

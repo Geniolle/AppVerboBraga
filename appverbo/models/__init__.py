@@ -21,6 +21,7 @@ from appverbo.models.modules import (
     SidebarMenuItem,
 )
 from appverbo.models.profile import Profile, UserProfile
+from appverbo.models.process_view_authorization_rule import ProcessViewAuthorizationRule
 from appverbo.models.sidebar_menu_setting import SidebarMenuSetting
 from appverbo.models.song import Song
 from appverbo.models.user import User
@@ -46,6 +47,7 @@ __all__ = [
     "SidebarMenuItem",
     "Profile",
     "UserProfile",
+    "ProcessViewAuthorizationRule",
     "SidebarMenuSetting",
     "Song",
     "User",

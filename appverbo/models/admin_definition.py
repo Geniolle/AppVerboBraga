@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import Index, String, Text, text
+from typing import Optional
+
+from sqlalchemy import ForeignKey, Index, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from appverbo.models.base import Base, TimestampMixin
@@ -10,10 +12,18 @@ class AdminDefinition(Base, TimestampMixin):
     __tablename__ = "admin_definitions"
     __table_args__ = (
         Index("ix_admin_definitions_status", "status"),
+        Index("ix_admin_definitions_entity_id", "entity_id"),
         Index("ix_admin_definitions_process_subprocess", "process_name", "subprocess_name"),
+        Index(
+            "ix_admin_definitions_entity_process_subprocess",
+            "entity_id",
+            "process_name",
+            "subprocess_name",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    entity_id: Mapped[Optional[int]] = mapped_column(ForeignKey("entities.id"), nullable=True)
     parameter_name: Mapped[str] = mapped_column(String(160), nullable=False)
     parameter_type: Mapped[str] = mapped_column(String(30), nullable=False)
     initial_value: Mapped[str] = mapped_column(

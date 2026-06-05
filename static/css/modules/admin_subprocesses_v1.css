@@ -90,6 +90,16 @@
   font-size: 13px;
 }
 
+.admin-subprocess-field-v1 input[readonly] {
+  background: #edf2f8;
+  color: #415066;
+  cursor: default;
+}
+
+.admin-subprocess-scope-field-v1 {
+  min-width: 180px;
+}
+
 .admin-subprocess-actions-v1 {
   display: flex;
   align-items: center;

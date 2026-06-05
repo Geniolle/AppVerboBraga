@@ -219,6 +219,7 @@ def execute_move_menu_additional_field_v1(
         menu_key=payload.menu_key,
         field_key=payload.field_key,
         direction=payload.direction,
+        selected_entity_id=selected_entity_id,
     )
     if not ok:
         return build_menu_return_url_with_message_v1(
@@ -259,6 +260,7 @@ def execute_update_menu_additional_fields_v1(
         session=session,
         menu_key=payload.menu_key,
         fields=payload.fields,
+        selected_entity_id=selected_entity_id,
     )
     if not ok:
         return build_menu_return_url_with_message_v1(

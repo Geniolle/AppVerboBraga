@@ -29,6 +29,26 @@
     "settings_error",
     "invite_link"
   ];
+  const PROTECTED_STRUCTURAL_TAGS = new Set([
+    "section",
+    "article",
+    "main",
+    "aside",
+    "nav",
+    "form",
+    "details",
+    "fieldset",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr",
+    "td",
+    "th",
+    "ul",
+    "ol",
+    "li"
+  ]);
 
   function normalizeText(value) {
     return String(value || "")
@@ -227,13 +247,51 @@
     );
   }
 
+  function hasExplicitDismissibleMessageClass(element) {
+    if (!element) {
+      return false;
+    }
+
+    const classText = String(element.className || "").toLowerCase();
+
+    return (
+      classText.includes("alert") ||
+      classText.includes("toast") ||
+      classText.includes("message") ||
+      classText.includes("notification") ||
+      classText.includes("flash")
+    );
+  }
+
+  function isDismissibleMessageContainer(element) {
+    if (!element || !hasMessageStyleSignal(element)) {
+      return false;
+    }
+
+    const role = String(element.getAttribute("role") || "").toLowerCase();
+    const tagName = String(element.tagName || "").toLowerCase();
+
+    if (role === "alert") {
+      return true;
+    }
+
+    if (!hasExplicitDismissibleMessageClass(element)) {
+      return false;
+    }
+
+    if (PROTECTED_STRUCTURAL_TAGS.has(tagName)) {
+      return false;
+    }
+
+    return true;
+  }
+
   function findBestMessageContainer(element, normalizedMessageText) {
     if (!element) {
       return null;
     }
 
     let current = element;
-    let best = element;
     let depth = 0;
 
     while (current && current !== document.body && depth < 6) {
@@ -243,19 +301,15 @@
         break;
       }
 
-      if (hasMessageStyleSignal(current)) {
+      if (isDismissibleMessageContainer(current)) {
         return current;
-      }
-
-      if (text.length <= 260) {
-        best = current;
       }
 
       current = current.parentElement;
       depth += 1;
     }
 
-    return best;
+    return null;
   }
 
   function collectMessageElements(reason) {

@@ -8,16 +8,18 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from appverbo.core import SessionLocal
 from appverbo.routes.entities.router import router
-from appverbo.services.page import build_users_new_url
 from appverbo.services.session import get_current_user, get_session_entity_id
-from appverbo.use_cases.entities.delete_entity import execute_delete_entity_v1
+from appverbo.use_cases.entities.delete_entity import (
+    build_entity_delete_unexpected_error_redirect_v1,
+    execute_delete_entity_v1,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 # ###################################################################################
-# (1) ROTA DE ELIMINAÇÃO DE ENTIDADE
+# (1) ROTA DE ELIMINACAO DE ENTIDADE
 # ###################################################################################
 
 @router.post("/entities/delete", response_class=HTMLResponse)
@@ -51,20 +53,17 @@ def delete_entity_v1(
 
     except Exception as exc:
         logger.error(
-            "Erro inesperado ao eliminar entidade: %s\n%s",
+            "APPVERBO_DELETE_ENTITY_ROUTE_V2 unexpected_error entity_id=%s error=%s\n%s",
+            clean_entity_id,
             exc,
             traceback.format_exc(),
         )
         return RedirectResponse(
-            url=(
-                build_users_new_url(
-                    entity_error=(
-                        "Erro ao eliminar entidade. Consulte os logs recentes do serviço web."
-                    ),
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card"
+            url=build_entity_delete_unexpected_error_redirect_v1(
+                entity_error=(
+                    "Erro ao eliminar entidade. Consulte os logs recentes do serviço web."
+                ),
+                clean_entity_id=clean_entity_id,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )

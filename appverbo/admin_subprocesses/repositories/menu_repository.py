@@ -24,6 +24,11 @@ from appverbo.menu_settings import (
     update_sidebar_menu_process_quantity_fields_v1,
     update_sidebar_menu_subsequent_fields,
 )
+from appverbo.menu_config_scope import (
+    apply_entity_scoped_menu_config_updates_v1,
+    build_effective_menu_config_v1,
+)
+from appverbo.services.entity_scope import resolve_selected_entity_scope_id_v1
 
 
 MENU_STATUS_ACTIVE_V1 = "active"
@@ -236,7 +241,13 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         filters: MenuListFilters | None = None,
     ) -> dict[str, Any]:
         resolved_filters = filters or MenuListFilters()
-        rows = [self._to_row_v1(raw_row) for raw_row in get_sidebar_menu_settings(session)]
+        rows = [
+            self._to_row_v1(raw_row)
+            for raw_row in get_sidebar_menu_settings(
+                session,
+                selected_entity_id=resolved_filters.entity_id,
+            )
+        ]
         rows = self._apply_filters_v1(rows=rows, filters=resolved_filters)
 
         total_rows = len(rows)
@@ -303,13 +314,17 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         menu_key: str,
+        selected_entity_id: object = None,
     ) -> dict[str, Any] | None:
         clean_menu_key = self.normalize_menu_key(menu_key)
 
         if not clean_menu_key:
             return None
 
-        for row in get_sidebar_menu_settings(session):
+        for row in get_sidebar_menu_settings(
+            session,
+            selected_entity_id=selected_entity_id,
+        ):
             current_key = self.normalize_menu_key(row.get("key"))
 
             if current_key == clean_menu_key:
@@ -326,6 +341,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         return self.get_by_key(
             session=session,
             menu_key=edit_key,
+            selected_entity_id=resolve_selected_entity_scope_id_v1(context),
         )
 
     def get_next_display_order(self, *, session: Any) -> int:
@@ -371,6 +387,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         menu_label: str,
         visibility_scope_mode: str,
         menu_sidebar_section: str = "",
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         return update_sidebar_menu_label(
             session,
@@ -378,6 +395,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             menu_label,
             visibility_scope_mode,
             menu_sidebar_section,
+            selected_entity_id,
         )
 
     def update_menu_visibility(
@@ -413,12 +431,14 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         menu_key: str,
         visible_fields: list[str],
         visible_headers: list[str],
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         return update_sidebar_menu_process_fields(
             session=session,
             menu_key=menu_key,
             visible_fields=visible_fields,
             visible_headers=visible_headers,
+            selected_entity_id=selected_entity_id,
         )
 
     def _read_sidebar_menu_config_v1(
@@ -456,6 +476,21 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             return parsed_config
 
         return {}
+
+    def _read_effective_sidebar_menu_config_v1(
+        self,
+        *,
+        session: Any,
+        menu_key: str,
+        selected_entity_id: object = None,
+    ) -> dict[str, Any]:
+        return build_effective_menu_config_v1(
+            self._read_sidebar_menu_config_v1(
+                session=session,
+                menu_key=menu_key,
+            ),
+            selected_entity_id=selected_entity_id,
+        )
 
     def _write_sidebar_menu_config_v1(
         self,
@@ -568,15 +603,17 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         menu_key: str,
         old_menu_config: dict[str, Any],
+        selected_entity_id: object = None,
     ) -> None:
         old_assignments = self._get_header_assignments_from_config_v1(old_menu_config)
 
         if not old_assignments:
             return
 
-        current_config = self._read_sidebar_menu_config_v1(
+        current_config = self._read_effective_sidebar_menu_config_v1(
             session=session,
             menu_key=menu_key,
+            selected_entity_id=selected_entity_id,
         )
         if not current_config:
             return
@@ -608,13 +645,24 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
                 }
             )
 
-        current_config["process_visible_field_header_map"] = restored_header_map
-        current_config["process_visible_field_rows"] = restored_rows
+        raw_config = self._read_sidebar_menu_config_v1(
+            session=session,
+            menu_key=menu_key,
+        )
+        raw_config = apply_entity_scoped_menu_config_updates_v1(
+            raw_config,
+            selected_entity_id=selected_entity_id,
+            updates={
+                "process_visible_field_header_map": restored_header_map,
+                "process_visible_field_rows": restored_rows,
+                "visible_field_headers": restored_header_map,
+            },
+        )
 
         self._write_sidebar_menu_config_v1(
             session=session,
             menu_key=menu_key,
-            menu_config=current_config,
+            menu_config=raw_config,
         )
         session.commit()
 
@@ -624,16 +672,19 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         menu_key: str,
         fields: list[dict[str, Any]],
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
-        old_menu_config = self._read_sidebar_menu_config_v1(
+        old_menu_config = self._read_effective_sidebar_menu_config_v1(
             session=session,
             menu_key=menu_key,
+            selected_entity_id=selected_entity_id,
         )
 
         ok, error_message = update_sidebar_menu_additional_fields_v1(
             session=session,
             menu_key=menu_key,
             fields=fields,
+            selected_entity_id=selected_entity_id,
         )
         if not ok:
             return False, error_message
@@ -642,6 +693,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             session=session,
             menu_key=menu_key,
             old_menu_config=old_menu_config,
+            selected_entity_id=selected_entity_id,
         )
 
         return True, ""
@@ -652,11 +704,13 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         menu_key: str,
         raw_lists: list[dict[str, str]],
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         return update_sidebar_menu_process_lists(
             session=session,
             menu_key=menu_key,
             raw_lists=raw_lists,
+            selected_entity_id=selected_entity_id,
         )
 
     def update_quantity_fields(
@@ -665,11 +719,13 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         menu_key: str,
         raw_fields: list[dict[str, str]],
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         return update_sidebar_menu_process_quantity_fields_v1(
             session=session,
             menu_key=menu_key,
             raw_fields=raw_fields,
+            selected_entity_id=selected_entity_id,
         )
 
     def update_subsequent_fields(
@@ -678,11 +734,13 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         menu_key: str,
         raw_fields: list[dict[str, str]],
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         return update_sidebar_menu_subsequent_fields(
             session=session,
             menu_key=menu_key,
             raw_fields=raw_fields,
+            selected_entity_id=selected_entity_id,
         )
 
     def move_additional_field(
@@ -692,12 +750,14 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         menu_key: str,
         field_key: str,
         direction: str,
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         return move_sidebar_menu_additional_field(
             session=session,
             menu_key=menu_key,
             field_key=field_key,
             direction=direction,
+            selected_entity_id=selected_entity_id,
         )
 
     def load_menu_config(
@@ -705,10 +765,12 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         menu_key: str,
+        selected_entity_id: object = None,
     ) -> dict[str, Any]:
-        return self._read_sidebar_menu_config_v1(
+        return self._read_effective_sidebar_menu_config_v1(
             session=session,
             menu_key=menu_key,
+            selected_entity_id=selected_entity_id,
         )
 
     def persist_menu_config(
@@ -806,6 +868,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             menu_sidebar_section=self._normalize_text(
                 payload.get("menu_sidebar_section") or payload.get("menu_section") or ""
             ),
+            selected_entity_id=resolve_selected_entity_scope_id_v1(context),
         )
         return ok
 

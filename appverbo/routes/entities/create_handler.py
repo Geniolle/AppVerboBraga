@@ -8,7 +8,10 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from appverbo.core import SessionLocal, templates
 from appverbo.routes.entities.router import router
-from appverbo.services.page import build_users_new_url
+from appverbo.services.page import (
+    build_users_new_url,
+    ensure_new_user_template_context_defaults_v1,
+)
 from appverbo.services.session import get_current_user, get_session_entity_id
 from appverbo.use_cases.entities.create_entity import (
     execute_create_entity_v1,
@@ -79,8 +82,9 @@ def create_entity_v1(
             )
 
         if outcome.kind == "template":
-            template_context = dict(outcome.template_context or {})
-            template_context.setdefault("admin_topbar_color_hex", "#334A62")
+            template_context = ensure_new_user_template_context_defaults_v1(
+                outcome.template_context
+            )
             return templates.TemplateResponse(
                 request,
                 "new_user.html",

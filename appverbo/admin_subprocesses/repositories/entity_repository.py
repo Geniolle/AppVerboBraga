@@ -13,7 +13,20 @@ from appverbo.core import (
     ENTITY_PROFILE_SCOPE_LEGADO,
     ENTITY_PROFILE_SCOPE_OWNER,
 )
-from appverbo.models import Entity, MemberEntity, MemberEntityStatus, User
+from appverbo.models import (
+    Department,
+    DepartmentMembership,
+    DepartmentMembershipOperation,
+    DepartmentMembershipRole,
+    Entity,
+    EntityModuleEntitlement,
+    MemberEntity,
+    MemberEntityStatus,
+    ProcessViewAuthorizationRule,
+    Role,
+    Song,
+    User,
+)
 from appverbo.services.entities import apply_entity_form_data_v1, normalize_entity_text_v1
 
 
@@ -505,6 +518,348 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
 
         return int(linked_users or 0)
 
+    # ###################################################################################
+    # (3) INSPECAO DE DEPENDENCIAS PARA ELIMINACAO
+    # ###################################################################################
+
+    def count_departments(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> int:
+        total_departments = session.scalar(
+            select(func.count(Department.id)).where(Department.entity_id == int(entity_id))
+        )
+
+        return int(total_departments or 0)
+
+    def count_roles(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> int:
+        total_roles = session.scalar(
+            select(func.count(Role.id)).where(Role.entity_id == int(entity_id))
+        )
+
+        return int(total_roles or 0)
+
+    def count_songs(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> int:
+        total_songs = session.scalar(
+            select(func.count(Song.id)).where(Song.entity_id == int(entity_id))
+        )
+
+        return int(total_songs or 0)
+
+    def count_entity_module_entitlements(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> int:
+        total_entitlements = session.scalar(
+            select(func.count(EntityModuleEntitlement.id)).where(
+                EntityModuleEntitlement.entity_id == int(entity_id)
+            )
+        )
+
+        return int(total_entitlements or 0)
+
+    def get_department_membership_dependency_snapshot_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+        preview_limit: int = 3,
+    ) -> dict[str, Any]:
+        membership_count = session.scalar(
+            select(func.count(DepartmentMembership.id))
+            .join(MemberEntity, MemberEntity.id == DepartmentMembership.member_entity_id)
+            .where(MemberEntity.entity_id == int(entity_id))
+        )
+
+        preview_stmt = (
+            select(
+                Department.name.label("department_name"),
+                func.count(DepartmentMembership.id).label("membership_count"),
+            )
+            .join(DepartmentMembership, DepartmentMembership.department_id == Department.id)
+            .join(MemberEntity, MemberEntity.id == DepartmentMembership.member_entity_id)
+            .where(MemberEntity.entity_id == int(entity_id))
+            .group_by(Department.id, Department.name)
+            .order_by(func.count(DepartmentMembership.id).desc(), Department.name.asc())
+            .limit(max(1, int(preview_limit or 3)))
+        )
+
+        preview_rows = session.execute(preview_stmt).all()
+
+        return {
+            "membership_count": int(membership_count or 0),
+            "department_names": [
+                str(row.department_name or "").strip()
+                for row in preview_rows
+                if str(row.department_name or "").strip()
+            ],
+        }
+
+    def get_process_view_authorization_rule_snapshot_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+        preview_limit: int = 3,
+    ) -> dict[str, Any]:
+        rule_count = session.scalar(
+            select(func.count(ProcessViewAuthorizationRule.id)).where(
+                ProcessViewAuthorizationRule.entity_id == int(entity_id)
+            )
+        )
+
+        preview_stmt = (
+            select(
+                ProcessViewAuthorizationRule.profile_name.label("profile_name"),
+                ProcessViewAuthorizationRule.process_label.label("process_label"),
+                ProcessViewAuthorizationRule.subprocess_label.label("subprocess_label"),
+                ProcessViewAuthorizationRule.department_name.label("department_name"),
+            )
+            .where(ProcessViewAuthorizationRule.entity_id == int(entity_id))
+            .order_by(
+                ProcessViewAuthorizationRule.profile_name.asc(),
+                ProcessViewAuthorizationRule.process_label.asc(),
+                ProcessViewAuthorizationRule.subprocess_label.asc(),
+                ProcessViewAuthorizationRule.department_name.asc(),
+            )
+            .limit(max(1, int(preview_limit or 3)))
+        )
+
+        preview_rows = session.execute(preview_stmt).all()
+        preview_labels: list[str] = []
+
+        for row in preview_rows:
+            clean_profile_name = str(row.profile_name or "").strip() or "-"
+            clean_process_label = str(row.process_label or "").strip() or "-"
+            clean_subprocess_label = str(row.subprocess_label or "").strip() or "-"
+            clean_department_name = str(row.department_name or "").strip()
+
+            label_parts = [
+                clean_profile_name,
+                clean_process_label,
+                clean_subprocess_label,
+            ]
+
+            if clean_department_name:
+                label_parts.append(clean_department_name)
+
+            preview_labels.append(" / ".join(label_parts))
+
+        return {
+            "rule_count": int(rule_count or 0),
+            "rule_labels": preview_labels,
+        }
+
+    def get_entity_delete_dependency_summary_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> dict[str, Any]:
+        department_membership_snapshot = self.get_department_membership_dependency_snapshot_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        process_view_authorization_rule_snapshot = (
+            self.get_process_view_authorization_rule_snapshot_v1(
+                session=session,
+                entity_id=entity_id,
+            )
+        )
+
+        return {
+            "linked_users_count": self.count_linked_users(
+                session=session,
+                entity_id=entity_id,
+            ),
+            "department_count": self.count_departments(
+                session=session,
+                entity_id=entity_id,
+            ),
+            "role_count": self.count_roles(
+                session=session,
+                entity_id=entity_id,
+            ),
+            "song_count": self.count_songs(
+                session=session,
+                entity_id=entity_id,
+            ),
+            "entity_module_entitlement_count": self.count_entity_module_entitlements(
+                session=session,
+                entity_id=entity_id,
+            ),
+            "department_membership_count": int(
+                department_membership_snapshot.get("membership_count") or 0
+            ),
+            "department_membership_department_names": list(
+                department_membership_snapshot.get("department_names") or []
+            ),
+            "process_view_authorization_rule_count": int(
+                process_view_authorization_rule_snapshot.get("rule_count") or 0
+            ),
+            "process_view_authorization_rule_labels": list(
+                process_view_authorization_rule_snapshot.get("rule_labels") or []
+            ),
+        }
+
+    def delete_department_membership_operations_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(DepartmentMembershipOperation).where(
+                DepartmentMembershipOperation.department_membership_id.in_(
+                    select(DepartmentMembership.id)
+                    .join(MemberEntity, MemberEntity.id == DepartmentMembership.member_entity_id)
+                    .where(MemberEntity.entity_id == int(entity_id))
+                )
+            )
+        )
+
+    def delete_department_membership_roles_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(DepartmentMembershipRole).where(
+                DepartmentMembershipRole.department_membership_id.in_(
+                    select(DepartmentMembership.id)
+                    .join(MemberEntity, MemberEntity.id == DepartmentMembership.member_entity_id)
+                    .where(MemberEntity.entity_id == int(entity_id))
+                )
+            )
+        )
+
+    def delete_department_memberships_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(DepartmentMembership).where(
+                DepartmentMembership.member_entity_id.in_(
+                    select(MemberEntity.id).where(MemberEntity.entity_id == int(entity_id))
+                )
+            )
+        )
+
+    def delete_process_view_authorization_rules_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(ProcessViewAuthorizationRule).where(
+                ProcessViewAuthorizationRule.entity_id == int(entity_id)
+            )
+        )
+
+    def delete_entity_module_entitlements_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(EntityModuleEntitlement).where(
+                EntityModuleEntitlement.entity_id == int(entity_id)
+            )
+        )
+
+    def delete_roles_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(Role).where(Role.entity_id == int(entity_id))
+        )
+
+    def delete_departments_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(Department).where(Department.entity_id == int(entity_id))
+        )
+
+    def delete_songs_for_entity_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        session.execute(
+            delete(Song).where(Song.entity_id == int(entity_id))
+        )
+
+    def delete_entity_dependencies_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: int,
+    ) -> None:
+        # Remove dependências profundas antes dos registos raiz da entidade.
+        self.delete_department_membership_operations_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_department_membership_roles_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_department_memberships_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_process_view_authorization_rules_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_entity_module_entitlements_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_roles_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_departments_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_songs_for_entity_v1(
+            session=session,
+            entity_id=entity_id,
+        )
+        self.delete_member_entity_links(
+            session=session,
+            entity_id=entity_id,
+        )
+
     def create_entity(
         self,
         *,
@@ -626,6 +981,6 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
         if self.count_linked_users(session=session, entity_id=parsed_entity_id) > 0:
             return False
 
-        self.delete_member_entity_links(session=session, entity_id=parsed_entity_id)
+        self.delete_entity_dependencies_v1(session=session, entity_id=parsed_entity_id)
         self.delete_inactive_entity(session=session, entity=entity)
         return True

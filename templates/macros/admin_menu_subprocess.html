@@ -60,7 +60,7 @@
             <button
               type="button"
               class="action-btn-cancel"
-              onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+              data-card-cancel-close="1"
             >Cancelar</button>
           </div>
         </form>
@@ -155,7 +155,7 @@
         <input type="hidden" name="menu_key" value="{{ row_key }}">
         <input type="hidden" name="direction" value="up">
         <input type="hidden" name="redirect_menu" value="administrativo">
-        <input type="hidden" name="redirect_target" value="{{ redirect_target }}">
+        <input type="hidden" name="redirect_target" value="#admin-menu-card-create">
         <button type="submit" class="table-icon-btn" title="Subir" aria-label="Subir {{ row_label }}">&#8593;</button>
       </form>
 
@@ -163,14 +163,14 @@
         <input type="hidden" name="menu_key" value="{{ row_key }}">
         <input type="hidden" name="direction" value="down">
         <input type="hidden" name="redirect_menu" value="administrativo">
-        <input type="hidden" name="redirect_target" value="{{ redirect_target }}">
+        <input type="hidden" name="redirect_target" value="#admin-menu-card-create">
         <button type="submit" class="table-icon-btn" title="Descer" aria-label="Descer {{ row_label }}">&#8595;</button>
       </form>
     {% endif %}
 
     <a
       class="table-icon-btn"
-      href="/users/new?menu=administrativo&admin_tab=menu&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
+      href="/users/new?menu=administrativo&admin_tab=menu&target=settings-menu-edit-card&settings_edit_key={{ row_key }}&settings_action=edit#settings-menu-edit-card"
       title="Editar"
       aria-label="Editar {{ row_label }}"
     >&#9998;</a>

@@ -91,6 +91,7 @@ class AdminSubprocessState:
     mode: AdminSubprocessMode = "create"
     edit_key: str = ""
     edit_data: dict[str, Any] | None = None
+    create_data: dict[str, Any] | None = None
     active_rows: list[dict[str, Any]] = field(default_factory=list)
     inactive_rows: list[dict[str, Any]] = field(default_factory=list)
     success: str = ""
@@ -101,6 +102,27 @@ class AdminSubprocessState:
     @property
     def is_editing(self) -> bool:
         return self.mode == "edit" and bool(self.edit_data)
+
+    @property
+    def should_open_create_form(self) -> bool:
+        if self.is_editing:
+            return False
+
+        if bool(str(self.error or "").strip()):
+            return True
+
+        if not isinstance(self.create_data, dict) or not self.create_data:
+            return False
+
+        for field in self.config.fields:
+            if field.field_type == "readonly" or field.readonly_on_create:
+                continue
+
+            raw_value = self.create_data.get(field.key, "")
+            if str(raw_value or "").strip():
+                return True
+
+        return False
 
     @property
     def target_card_id(self) -> str:
