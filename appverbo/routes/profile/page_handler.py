@@ -2115,6 +2115,15 @@ def new_user_page(
             or str(sidebar_sections_tab or "").strip().lower() == "sessoes"
         )
 
+        current_entity_internal_number = ""
+        if selected_entity_id is not None:
+            from appverbo.models.entity import Entity as _Entity
+            db_entity_internal_number = session.scalar(
+                select(_Entity.internal_number).where(_Entity.id == selected_entity_id)
+            )
+            if db_entity_internal_number is not None:
+                current_entity_internal_number = str(db_entity_internal_number)
+
         next_entity_internal_number = ""
         entity_edit_data = get_entity_edit_defaults()
         if should_load_entity_context_v1:
@@ -2604,6 +2613,7 @@ def new_user_page(
         "entity_success": entity_success or "",
         "entity_error": entity_error or "",
         "next_entity_internal_number": str(next_entity_internal_number),
+        "current_entity_internal_number": current_entity_internal_number,
         "profile_success": profile_success or "",
         "profile_error": profile_error or "",
         "settings_success": settings_success or "",

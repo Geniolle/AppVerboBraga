@@ -1536,7 +1536,10 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     const fieldType = normalizeProcessFieldType(field.fieldType);
     const fieldSize = normalizeProcessFieldSize(field.size, fieldType);
     const fieldRequired = Boolean(field.isRequired) && fieldType !== "flag";
-    const isEmpresaInternalNumber = isEmpresaReadOnlyField(cleanMenuKey, fieldKey);
+    const isEmpresaInternalNumber = (
+      isEmpresaReadOnlyField(cleanMenuKey, fieldKey) ||
+      (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_cliente")
+    );
     const isEmpresaLogoUpload = isEmpresaLogoUploadField(cleanMenuKey, fieldKey);
     const isEmpresaLogoCurrent = isEmpresaLogoCurrentField(cleanMenuKey, fieldKey);
     const isContactMembershipImportFileField = (
@@ -1546,15 +1549,21 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     );
     const hasLiveFieldValue = Object.prototype.hasOwnProperty.call(currentProcessValuesByField, fieldKey);
     const liveFieldValue = hasLiveFieldValue ? String(currentProcessValuesByField[fieldKey] || "").trim() : "";
-    const readOnlyValue = (
+    let readOnlyValue = (
       preserveInteractionState && hasLiveFieldValue
         ? liveFieldValue
         : String(field.value || "").trim()
     );
+    if (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_cliente" && !readOnlyValue) {
+      readOnlyValue = String(window.__APPVERBO_BOOTSTRAP__.currentEntityInternalNumber || "").trim();
+    }
     const fieldValue = absenceProcessMode ? "" : readOnlyValue;
-    const editDefaultValue = historyProcessMode
+    let editDefaultValue = historyProcessMode
       ? (preserveInteractionState && hasLiveFieldValue ? liveFieldValue : "")
       : (preserveInteractionState && hasLiveFieldValue ? liveFieldValue : fieldValue);
+    if (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_cliente" && !editDefaultValue) {
+      editDefaultValue = String(window.__APPVERBO_BOOTSTRAP__.currentEntityInternalNumber || "").trim();
+    }
 
     if (dynamicProcessReadOnlyGridEl) {
       const readOnlyItemEl = document.createElement("div");

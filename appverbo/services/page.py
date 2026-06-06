@@ -955,7 +955,22 @@ def get_page_data(
         if history_storage_key:
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
-                menu_process_history_map[menu_key] = menu_history_rows
+                # ###################################################################################
+                # FILTRAR POR Nº CLIENTE (ENTIDADE) PARA CONTACTO GERAL
+                # ###################################################################################
+                if menu_key == "contacto_geral" and selected_entity_id is not None:
+                    from appverbo.models.entity import Entity as _Entity
+                    active_entity_internal_number = session.scalar(
+                        select(_Entity.internal_number).where(_Entity.id == selected_entity_id)
+                    )
+                    if active_entity_internal_number is not None:
+                        target_str = str(active_entity_internal_number).strip()
+                        menu_history_rows = [
+                            row for row in menu_history_rows
+                            if str(row.get("values", {}).get("custom_n_cliente") or "").strip() == target_str
+                        ]
+                if menu_history_rows:
+                    menu_process_history_map[menu_key] = menu_history_rows
             elif _is_history_process_menu_v1(menu_key, sidebar_item.get("label")):
                 legacy_history_rows = _build_legacy_history_row_v1(
                     visible_rows=visible_rows,

@@ -1631,6 +1631,7 @@ async def _handle_contact_membership_import_v1(
     existing_profile_fields: dict[str, str],
     existing_records: list[dict[str, Any]],
     records_storage_key: str,
+    active_entity_internal_number: str | None = None,
 ) -> RedirectResponse:
     upload_field_key = str(import_config.get("upload_field_key") or "").strip().lower()
     target_section_key = str(import_config.get("target_section_key") or "").strip()
@@ -1687,29 +1688,37 @@ async def _handle_contact_membership_import_v1(
     email_field_key = str(import_config.get("email_field_key") or "").strip().lower()
 
     for imported_row in imported_rows:
+        row_values = {
+            name_field_key: str(imported_row.get("name") or "").strip(),
+            phone_field_key: str(imported_row.get("phone") or "").strip(),
+            email_field_key: str(imported_row.get("email") or "").strip(),
+            "__estado": "ativo",
+        }
+        if active_entity_internal_number is not None:
+            row_values["custom_n_cliente"] = active_entity_internal_number
+
         existing_records.append(
             {
                 "record_id": uuid4().hex,
                 "created_at": timestamp_label,
                 "section_key": target_section_key,
-                "values": {
-                    name_field_key: str(imported_row.get("name") or "").strip(),
-                    phone_field_key: str(imported_row.get("phone") or "").strip(),
-                    email_field_key: str(imported_row.get("email") or "").strip(),
-                    "__estado": "ativo",
-                },
+                "values": row_values,
             }
         )
+
+    input_values = {
+        upload_field_key: f"{upload_filename} ({len(imported_rows)} importados)",
+        "__estado": "ativo",
+    }
+    if active_entity_internal_number is not None:
+        input_values["custom_n_cliente"] = active_entity_internal_number
 
     existing_records.append(
         {
             "record_id": uuid4().hex,
             "created_at": timestamp_label,
             "section_key": input_section_key,
-            "values": {
-                upload_field_key: f"{upload_filename} ({len(imported_rows)} importados)",
-                "__estado": "ativo",
-            },
+            "values": input_values,
         }
     )
 
@@ -2495,6 +2504,14 @@ async def update_dynamic_process_profile(request: Request):
             session,
             selected_entity_id=get_session_entity_id(request),
         )
+        active_entity_id = get_session_entity_id(request)
+        active_entity_internal_number = None
+        if active_entity_id is not None:
+            active_entity_internal_number = session.scalar(
+                select(Entity.internal_number).where(Entity.id == active_entity_id)
+            )
+        if active_entity_internal_number is not None:
+            active_entity_internal_number = str(active_entity_internal_number)
         process_setting = next(
             (
                 row
@@ -2844,6 +2861,7 @@ async def update_dynamic_process_profile(request: Request):
                 existing_profile_fields=existing_profile_fields,
                 existing_records=existing_records,
                 records_storage_key=records_storage_key,
+                active_entity_internal_number=active_entity_internal_number,
             )
         current_process_values_by_field: dict[str, str] = {}
         for option_key in field_meta_by_key.keys():
@@ -3253,6 +3271,8 @@ async def update_dynamic_process_profile(request: Request):
             submitted_section_values["__estado"] = _normalize_process_state(
                 submitted_form.get("process_state")
             )
+            if clean_menu_key == "contacto_geral" and active_entity_internal_number is not None:
+                submitted_section_values["custom_n_cliente"] = active_entity_internal_number
         record_for_update = None
         if (
             history_process_mode

@@ -2396,6 +2396,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       adminCardTableHeadColorHex: {{ admin_card_table_head_color_hex|tojson }},
       adminTopbarColorHex: {{ admin_topbar_color_hex|default('#334A62', true)|tojson }},
       currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
+      currentEntityInternalNumber: {{ current_entity_internal_number|tojson }},
       settingsAction: {{ settings_action|tojson }},
       settingsTab: {{ settings_tab|tojson }},
       settingsEditKey: {{ settings_edit_key|tojson }},
@@ -2430,7 +2431,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260603-dynamic-runtime-core-v12-table-source-normalization" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260606-dynamic-runtime-core-v13-n-cliente" defer></script>
 <script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260606-dynamic-process-history-renderer-v8-actions-order" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260606-process-subprocess-standards-v9-cancel-edit-close" defer></script>

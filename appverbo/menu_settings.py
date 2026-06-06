@@ -2915,11 +2915,116 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
         session.commit()
 
 
+# ###################################################################################
+# (1.5) INJEÇÃO DINÂMICA DO CAMPO Nº CLIENTE PARA CONTACTO GERAL
+# ###################################################################################
+
+def _inject_contacto_geral_n_cliente_config_v1(
+    menu_key: str,
+    menu_config: dict[str, Any],
+    entity_internal_number: object = None,
+) -> dict[str, Any]:
+    if menu_key != "contacto_geral" or not isinstance(menu_config, dict):
+        return menu_config
+
+    updated = dict(menu_config)
+
+    # 1. Inject custom_n_cliente into additional_fields
+    add_fields = [dict(f) for f in (updated.get("additional_fields") or [])]
+    found_n = False
+    for f in add_fields:
+        if str(f.get("key") or "").strip().lower() == "custom_n_cliente":
+            if entity_internal_number is not None:
+                f["value"] = str(entity_internal_number)
+            found_n = True
+            break
+
+    if not found_n:
+        h_idx = -1
+        for idx, f in enumerate(add_fields):
+            if str(f.get("key") or "").strip().lower() == "custom_dados_membresia":
+                h_idx = idx
+                break
+        n_field = {
+            "key": "custom_n_cliente",
+            "label": "Nº cliente",
+            "field_type": "text",
+            "is_required": False,
+            "size": 255
+        }
+        if entity_internal_number is not None:
+            n_field["value"] = str(entity_internal_number)
+        if h_idx != -1:
+            add_fields.insert(h_idx + 1, n_field)
+        else:
+            add_fields.append(n_field)
+    updated["additional_fields"] = add_fields
+
+    # 2. Inject custom_n_cliente into visible_fields
+    vis_fields = list(updated.get("visible_fields") or [])
+    if "custom_n_cliente" not in vis_fields:
+        if "custom_dados_membresia" in vis_fields:
+            vis_fields.insert(vis_fields.index("custom_dados_membresia") + 1, "custom_n_cliente")
+        else:
+            vis_fields.append("custom_n_cliente")
+        updated["visible_fields"] = vis_fields
+
+    # 3. Inject into visible_field_headers
+    vfh = dict(updated.get("visible_field_headers") or {})
+    if "custom_n_cliente" not in vfh:
+        vfh["custom_n_cliente"] = "custom_dados_membresia"
+        updated["visible_field_headers"] = vfh
+
+    # 4. Inject into process_visible_fields
+    pvf = list(updated.get("process_visible_fields") or [])
+    if "custom_n_cliente" not in pvf:
+        if "custom_dados_membresia" in pvf:
+            pvf.insert(pvf.index("custom_dados_membresia") + 1, "custom_n_cliente")
+        else:
+            pvf.append("custom_n_cliente")
+        updated["process_visible_fields"] = pvf
+
+    # 5. Inject into process_visible_field_header_map
+    pvfhm = dict(updated.get("process_visible_field_header_map") or {})
+    if "custom_n_cliente" not in pvfhm:
+        pvfhm["custom_n_cliente"] = "custom_dados_membresia"
+        updated["process_visible_field_header_map"] = pvfhm
+
+    # 6. Inject into process_visible_field_rows
+    pvfr = list(updated.get("process_visible_field_rows") or [])
+    if not any(str(r.get("field_key") or "").strip().lower() == "custom_n_cliente" for r in pvfr):
+        target_idx = -1
+        for idx, r in enumerate(pvfr):
+            if str(r.get("field_key") or "").strip().lower() == "custom_dados_membresia":
+                target_idx = idx
+                break
+        n_row = {
+            "field_key": "custom_n_cliente",
+            "header_key": "custom_dados_membresia"
+        }
+        if target_idx != -1:
+            pvfr.insert(target_idx + 1, n_row)
+        else:
+            pvfr.append(n_row)
+        updated["process_visible_field_rows"] = pvfr
+
+    return updated
+
+
 def get_sidebar_menu_settings(
     session: Session,
     selected_entity_id: object = None,
 ) -> list[dict[str, Any]]:
     ensure_sidebar_menu_settings_defaults(session)
+    active_entity_internal_number = None
+    if selected_entity_id is not None:
+        from appverbo.models.entity import Entity as _Entity
+        from sqlalchemy import select
+        active_entity_internal_number = session.scalar(
+            select(_Entity.internal_number).where(_Entity.id == selected_entity_id)
+        )
+        if active_entity_internal_number is not None:
+            active_entity_internal_number = str(active_entity_internal_number).strip()
     owner_entity_id = get_owner_entity_scope_id_v1(session)
     defaults_by_key = _sidebar_menu_defaults_by_key()
     rows = session.execute(
@@ -2988,6 +3093,7 @@ def get_sidebar_menu_settings(
                 ),
             ),
         )
+        menu_config = _inject_contacto_geral_n_cliente_config_v1(menu_key, menu_config, active_entity_internal_number)
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         process_subsequent_fields = menu_config.get("subsequent_fields", [])
         explicit_display_order = _normalize_menu_display_order(
@@ -3088,6 +3194,7 @@ def get_sidebar_menu_settings(
                 ),
             ),
         )
+        menu_config = _inject_contacto_geral_n_cliente_config_v1(menu_key, menu_config, active_entity_internal_number)
         requires_admin = bool(menu_config.get("requires_admin", True))
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         fallback_order = len(SIDEBAR_MENU_DEFAULTS) + extra_index
