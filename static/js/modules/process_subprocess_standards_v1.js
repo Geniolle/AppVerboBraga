@@ -372,6 +372,18 @@
       return true;
     }
 
+    // If the card is an edit card, only match it if the target itself is an edit card
+    if (typeof document !== "undefined") {
+      const cardEl = document.getElementById(normalizedCardId);
+      if (cardEl && cardEl.getAttribute("data-admin-card-role") === "edit") {
+        const targetEl = document.querySelector(resolvedTargetSelector);
+        const targetRole = targetEl ? targetEl.getAttribute("data-admin-card-role") : null;
+        if (targetRole !== "edit") {
+          return false;
+        }
+      }
+    }
+
     // Dynamic matching by data-admin-card-group attribute
     if (typeof document !== "undefined") {
       const cardEl = document.getElementById(normalizedCardId);
