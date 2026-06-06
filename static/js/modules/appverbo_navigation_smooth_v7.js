@@ -96,11 +96,11 @@
   //###################################################################################
 
   function urlIndicaAdminV7(url) {
-    return Boolean(
-      url &&
-      url.pathname === "/users/new" &&
-      cleanValueV7(url.searchParams.get("menu")) === "administrativo"
-    );
+    if (!url || url.pathname !== "/users/new") {
+      return false;
+    }
+    const menu = cleanValueV7(url.searchParams.get("menu"));
+    return menu === "administrativo" || menu === "sessoes";
   }
 
   function getActiveSidebarMenuKeyV7() {
@@ -612,6 +612,17 @@
   // (5) URL CANONICA
   //###################################################################################
 
+  function resolveMenuKeyForTabV7(tab) {
+    const cleanTab = cleanValueV7(tab);
+    if (cleanTab === "entidade" || cleanTab === "utilizador") {
+      return "administrativo";
+    }
+    if (cleanTab === "sessoes" || cleanTab === "menu" || cleanTab === "definicoes") {
+      return "sessoes";
+    }
+    return "administrativo";
+  }
+
   function buildAdminSubprocessUrlV7(tab) {
     const currentUrl = getCurrentUrlV7();
     const url = currentUrl
@@ -619,7 +630,8 @@
       : new URL("/users/new", window.location.origin);
 
     url.pathname = "/users/new";
-    url.searchParams.set("menu", "administrativo");
+    const menuKey = resolveMenuKeyForTabV7(tab);
+    url.searchParams.set("menu", menuKey);
     clearAdminNavigationParamsV7(url, { includeDynamicProcess: true });
 
     if (tab === "entidade") {
@@ -665,7 +677,7 @@
       return url.pathname + url.search + url.hash;
     }
 
-    return "/users/new?menu=administrativo";
+    return "/users/new?menu=" + resolveMenuKeyForTabV7(tab);
   }
 
   //###################################################################################
@@ -1060,8 +1072,9 @@
 
       renderAdminProcessOnlyV7();
 
+      const activeMenu = getActiveSidebarMenuKeyV7() || "administrativo";
       if (window.history && typeof window.history.replaceState === "function") {
-        window.history.replaceState(window.history.state, document.title, "/users/new?menu=administrativo");
+        window.history.replaceState(window.history.state, document.title, "/users/new?menu=" + activeMenu);
       }
     }
 
@@ -1101,7 +1114,8 @@
     if (clickedTopSubprocess) {
       const currentUrl = getCurrentUrlV7();
       const isAdminRoute = urlIndicaAdminV7(currentUrl);
-      const isAdminSidebarMenuActive = getActiveSidebarMenuKeyV7() === "administrativo";
+      const activeMenuKey = getActiveSidebarMenuKeyV7();
+      const isAdminSidebarMenuActive = activeMenuKey === "administrativo" || activeMenuKey === "sessoes";
 
       if (!isAdminRoute || !isAdminSidebarMenuActive) {
         return;
@@ -1176,7 +1190,8 @@
 
     const menuButton = target.closest("button[data-menu]");
 
-    if (menuButton && cleanValueV7(menuButton.getAttribute("data-menu")) === "administrativo") {
+    const activeMenuKeyClick = menuButton ? cleanValueV7(menuButton.getAttribute("data-menu")) : "";
+    if (menuButton && (activeMenuKeyClick === "administrativo" || activeMenuKeyClick === "sessoes")) {
       window.setTimeout(function () {
         if (hasCustomSubprocessLinksV7()) {
           exitAdminProcessOnlyModeV7();
@@ -1185,7 +1200,7 @@
         }
 
         if (window.history && typeof window.history.replaceState === "function") {
-          window.history.replaceState(window.history.state, document.title, "/users/new?menu=administrativo");
+          window.history.replaceState(window.history.state, document.title, "/users/new?menu=" + activeMenuKeyClick);
         }
 
         renderAdminProcessOnlyV7();

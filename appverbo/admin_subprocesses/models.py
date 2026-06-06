@@ -98,7 +98,14 @@ class AdminSubprocessState:
     error: str = ""
     return_url: str = ""
     field_options: dict[str, tuple[tuple[str, str], ...]] = field(default_factory=dict)
+    active_fields: tuple[AdminFieldConfig, ...] | None = None
     active_columns: tuple[AdminColumnConfig, ...] | None = None
+
+    @property
+    def effective_fields(self) -> tuple[AdminFieldConfig, ...]:
+        if self.active_fields is not None:
+            return self.active_fields
+        return self.config.fields
 
     @property
     def effective_columns(self) -> tuple[AdminColumnConfig, ...]:
@@ -121,8 +128,8 @@ class AdminSubprocessState:
         if not isinstance(self.create_data, dict) or not self.create_data:
             return False
 
-        for field in self.config.fields:
-            if field.field_type == "readonly" or field.readonly_on_create:
+        for field in self.effective_fields:
+            if field.field_type in {"readonly", "hidden"} or field.readonly_on_create:
                 continue
 
             raw_value = self.create_data.get(field.key, "")

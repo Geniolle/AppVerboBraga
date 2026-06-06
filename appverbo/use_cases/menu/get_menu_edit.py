@@ -22,7 +22,7 @@ def get_menu_edit_defaults_v1() -> dict[str, Any]:
         "status": "active",
         "status_label": "Ativo",
         "visibility_scope_mode": "all",
-        "visibility_scope_label": "Owner e Legado",
+        "visibility_scope_label": "Default",
         "menu_section": "",
         "menu_section_label": "",
         "menu_config": {},

@@ -12,7 +12,7 @@ from appverbo.admin_subprocesses.service import build_admin_subprocess_state
 
 
 ####################################################################################
-# (1) CARREGAMENTO ISOLADO DO REPOSITÓRIO DO SUBPROCESSO
+# (1) CARREGAMENTO ISOLADO DO REPOSITORIO DO SUBPROCESSO
 ####################################################################################
 
 def load_admin_subprocess_repository(
@@ -27,7 +27,7 @@ def load_admin_subprocess_repository(
 
     if not separator or not module_name or not class_name:
         raise RuntimeError(
-            f"repository_class inválido para subprocesso {config.key}: "
+            f"repository_class invalido para subprocesso {config.key}: "
             f"{repository_class_path}"
         )
 
@@ -36,7 +36,7 @@ def load_admin_subprocess_repository(
 
     if repository_class is None:
         raise RuntimeError(
-            f"Classe de repository não encontrada para subprocesso {config.key}: "
+            f"Classe de repository nao encontrada para subprocesso {config.key}: "
             f"{repository_class_path}"
         )
 
@@ -47,7 +47,7 @@ def load_admin_subprocess_repository(
 
     if not isinstance(repository, BaseAdminSubprocessRepository):
         raise RuntimeError(
-            f"Repository do subprocesso {config.key} não herda "
+            f"Repository do subprocesso {config.key} nao herda "
             "BaseAdminSubprocessRepository."
         )
 
@@ -55,7 +55,7 @@ def load_admin_subprocess_repository(
 
 
 ####################################################################################
-# (2) CONSTRUÇÃO ÚNICA DO STATE DO SUBPROCESSO
+# (2) CONSTRUCAO UNICA DO STATE DO SUBPROCESSO
 ####################################################################################
 
 def build_admin_subprocess_state_from_repository(
@@ -78,11 +78,20 @@ def build_admin_subprocess_state_from_repository(
         return None
 
     rows = repository.list_rows(session, context or {})
+    edit_data = None
+
+    if str(edit_key or "").strip():
+        edit_data = repository.get_for_edit(
+            session,
+            edit_key,
+            context or {},
+        )
 
     return build_admin_subprocess_state(
         config=config,
         rows=rows,
         edit_key=edit_key,
+        edit_data=edit_data,
         create_data=create_data,
         success=success,
         error=error,

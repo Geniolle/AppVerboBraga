@@ -61,6 +61,13 @@
     return "";
   }
 
+  function shouldForceNavigationV1(triggerEl) {
+    return Boolean(
+      triggerEl &&
+      normalizeTextV1(triggerEl.getAttribute("data-card-cancel-force-navigation")) === "1"
+    );
+  }
+
   function resetClosestFormV1(triggerEl) {
     if (!triggerEl || triggerEl.getAttribute("data-card-cancel-reset-form") === "0") {
       return;
@@ -150,6 +157,11 @@
     const returnUrl = resolveReturnUrlV1(triggerEl);
     if (!returnUrl) {
       return false;
+    }
+
+    if (shouldForceNavigationV1(triggerEl)) {
+      window.location.assign(returnUrl);
+      return true;
     }
 
     if (activateUsersNewTargetV1(returnUrl)) {

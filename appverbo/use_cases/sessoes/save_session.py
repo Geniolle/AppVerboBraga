@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from appverbo.admin_subprocesses.repositories.sidebar_section_repository import (
     SidebarSectionAdminRepository,
 )
+from appverbo.admin_subprocesses.sessoes.common import build_sessoes_admin_return_url_v2
 from appverbo.admin_subprocesses.sessoes.configuracao import SESSOES_CONFIG
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.sessoes.outcome import SessionActionOutcome
@@ -20,9 +21,10 @@ from appverbo.use_cases.sessoes.policies import (
 
 
 SESSION_RETURN_URL_FALLBACK_V1 = (
-    "/users/new?menu=administrativo&admin_tab=sessoes"
-    "&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card"
-    "#admin-sidebar-sections-card"
+    build_sessoes_admin_return_url_v2(
+        admin_tab="sessoes",
+        target="admin-sidebar-sections-card",
+    )
 )
 
 
@@ -167,7 +169,7 @@ def sanitize_sidebar_section_return_url_v1(return_url: object) -> str:
 
         if key == "menu":
             found_menu = True
-            clean_params.append(("menu", "administrativo"))
+            clean_params.append(("menu", "sessoes"))
             continue
 
         if key == "admin_tab":
@@ -191,7 +193,7 @@ def sanitize_sidebar_section_return_url_v1(return_url: object) -> str:
         clean_params.append((key, value))
 
     if not found_menu:
-        clean_params.append(("menu", "administrativo"))
+        clean_params.append(("menu", "sessoes"))
 
     if not found_admin_tab:
         clean_params.append(("admin_tab", "sessoes"))

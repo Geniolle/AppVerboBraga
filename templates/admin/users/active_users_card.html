@@ -20,7 +20,7 @@
   {% set card_id = "admin-users-created-card" %}
 {% endif %}
 
-<section id="{{ card_id }}" class="card admin-user-shadow-readonly-card-v1" data-menu-scope="administrativo" data-admin-subprocess-shadow="utilizador">
+<section id="{{ card_id }}" class="card admin-user-shadow-readonly-card-v1" data-menu-scope="administrativo" data-admin-subprocess-shadow="utilizador" data-admin-card-group="utilizador" data-admin-card-role="active">
   <h2>{{ card_title }}</h2>
   {{ render_admin_user_table_v1(
     user_rows,

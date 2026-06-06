@@ -918,7 +918,12 @@ def get_page_data(
         if quantity_values_by_rule:
             menu_process_quantity_values_map[menu_key] = quantity_values_by_rule
         history_storage_key = build_menu_process_records_storage_key(menu_key)
-        if menu_key == PROCESS_VIEW_AUTHORIZATION_MENU_KEY:
+        if menu_key in (PROCESS_VIEW_AUTHORIZATION_MENU_KEY, "perfil_de_autorizacao"):
+            resolved_section_key = (
+                "custom_objeto_de_autorizacao"
+                if menu_key == "perfil_de_autorizacao"
+                else PROCESS_VIEW_AUTHORIZATION_SECTION_KEY
+            )
             legacy_menu_history_rows = (
                 parse_menu_process_records(actor_profile_fields.get(history_storage_key))
                 if history_storage_key
@@ -928,11 +933,12 @@ def get_page_data(
                 row
                 for row in legacy_menu_history_rows
                 if str(row.get("section_key") or "").strip().lower()
-                != PROCESS_VIEW_AUTHORIZATION_SECTION_KEY
+                != resolved_section_key
             ]
             authorization_history_rows = build_process_view_authorization_history_rows_v1(
                 session,
                 selected_entity_id=selected_entity_id,
+                section_key=resolved_section_key,
             )
             combined_history_rows = authorization_history_rows + legacy_menu_history_rows
             if combined_history_rows:

@@ -2769,6 +2769,7 @@ async def update_dynamic_process_profile(request: Request):
             existing_records = build_process_view_authorization_history_rows_v1(
                 session,
                 selected_entity_id=process_view_authorization_scope_entity_id,
+                section_key=requested_section_key,
             )
 
         section_field_keys = _resolve_process_section_fields(
@@ -2965,6 +2966,7 @@ async def update_dynamic_process_profile(request: Request):
                         session,
                         selected_entity_id=process_view_authorization_scope_entity_id,
                         requested_history_record_id=requested_history_record_id,
+                        section_key=requested_section_key,
                     )
                 )
                 if authorization_error:
@@ -3275,6 +3277,7 @@ async def update_dynamic_process_profile(request: Request):
                     requested_history_action=requested_history_action,
                     requested_history_record_id=requested_history_record_id,
                     submitted_section_values=submitted_section_values,
+                    section_key=requested_section_key,
                 )
             )
             if authorization_error:

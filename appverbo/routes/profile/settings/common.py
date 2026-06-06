@@ -76,4 +76,4 @@ def settings_visibility_scope_label_v1(value: object) -> str:
     if clean_value == "legado":
         return "Legado"
 
-    return "Owner e Legado"
+    return "Default"

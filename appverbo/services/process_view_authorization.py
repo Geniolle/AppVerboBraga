@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 from appverbo.menu_settings import (
     get_sidebar_menu_settings,
     get_visible_sidebar_menu_keys,
+    is_sidebar_menu_entity_scope_visible_v1,
+    is_sidebar_menu_section_visible_v1,
     normalize_menu_visibility_scopes,
     resolve_menu_key_alias,
 )
@@ -87,8 +89,10 @@ def is_process_view_authorization_section_v1(menu_key: Any, section_key: Any) ->
     clean_menu_key = resolve_menu_key_alias(menu_key)
     clean_section_key = str(section_key or "").strip().lower()
     return (
-        clean_menu_key == PROCESS_VIEW_AUTHORIZATION_MENU_KEY
-        and clean_section_key == PROCESS_VIEW_AUTHORIZATION_SECTION_KEY
+        (clean_menu_key == PROCESS_VIEW_AUTHORIZATION_MENU_KEY
+         and clean_section_key == PROCESS_VIEW_AUTHORIZATION_SECTION_KEY)
+        or (clean_menu_key == "perfil_de_autorizacao"
+            and clean_section_key == "custom_objeto_de_autorizacao")
     )
 
 
@@ -399,6 +403,7 @@ def build_process_view_authorization_history_rows_v1(
     session: Session,
     *,
     selected_entity_id: int | None,
+    section_key: str = PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for rule in list_process_view_authorization_rules_v1(
@@ -411,7 +416,7 @@ def build_process_view_authorization_history_rows_v1(
                 "created_at": _format_process_view_authorization_created_at_v1(
                     rule.created_at
                 ),
-                "section_key": PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
+                "section_key": section_key,
                 "values": {
                     "custom_perfil": str(rule.profile_name or "").strip(),
                     "custom_processo": str(rule.process_label or "").strip(),
@@ -469,6 +474,7 @@ def save_process_view_authorization_rule_v1(
     requested_history_action: str,
     requested_history_record_id: str,
     submitted_section_values: dict[str, str],
+    section_key: str = PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
 ) -> tuple[str, list[dict[str, Any]], str]:
     clean_profile_name = str(submitted_section_values.get("custom_perfil") or "").strip()
     clean_process_label = str(submitted_section_values.get("custom_processo") or "").strip()
@@ -556,6 +562,7 @@ def save_process_view_authorization_rule_v1(
     refreshed_rows = build_process_view_authorization_history_rows_v1(
         session,
         selected_entity_id=selected_entity_id,
+        section_key=section_key,
     )
     return success_message, refreshed_rows, ""
 
@@ -565,6 +572,7 @@ def delete_process_view_authorization_rule_v1(
     *,
     selected_entity_id: int | None,
     requested_history_record_id: str,
+    section_key: str = PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
 ) -> tuple[str, list[dict[str, Any]], str]:
     target_rule = _get_process_view_authorization_rule_for_scope_v1(
         session,
@@ -584,6 +592,7 @@ def delete_process_view_authorization_rule_v1(
     refreshed_rows = build_process_view_authorization_history_rows_v1(
         session,
         selected_entity_id=selected_entity_id,
+        section_key=section_key,
     )
     return "Regra de autorização eliminada com sucesso.", refreshed_rows, ""
 
@@ -666,6 +675,16 @@ def build_process_view_authorized_sidebar_menu_keys_v1(
             raw_row.get("visibility_scopes")
         )
         if clean_entity_scope and clean_entity_scope not in visibility_scopes:
+            continue
+        if not is_sidebar_menu_section_visible_v1(
+            raw_row,
+            current_entity_scope=clean_entity_scope,
+        ):
+            continue
+        if not is_sidebar_menu_entity_scope_visible_v1(
+            record_entity_id=raw_row.get("entity_scope_entity_id"),
+            selected_entity_id=selected_entity_id,
+        ):
             continue
 
         visible_candidate_rows_by_key[menu_key] = raw_row
@@ -791,6 +810,7 @@ def build_effective_sidebar_visibility_v1(
         settings,
         current_user_is_admin=current_user_is_admin,
         current_entity_scope=current_entity_scope,
+        selected_entity_id=resolved_selected_entity_id,
     )
     granted_sidebar_menu_keys = build_process_view_authorized_sidebar_menu_keys_v1(
         session,

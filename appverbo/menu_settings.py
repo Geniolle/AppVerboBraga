@@ -14,14 +14,17 @@ from appverbo.menu_config_scope import (
     apply_entity_scoped_menu_config_updates_v1,
     build_effective_menu_config_v1,
     build_effective_menu_label_v1,
+    get_menu_entity_scope_overrides_v1,
 )
 
 MENU_MEU_PERFIL_KEY = "meu_perfil"
 MENU_MEU_PERFIL_LEGACY_KEY = "documentos"
+MENU_SESSOES_KEY = "sessoes"
 
 SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "home", "label": "Home", "requires_admin": False},
     {"key": "administrativo", "label": "Administrativo", "requires_admin": True},
+    {"key": MENU_SESSOES_KEY, "label": "Estruturas", "requires_admin": True},
     {"key": MENU_MEU_PERFIL_KEY, "label": "Meu perfil", "requires_admin": True},
     {"key": "funcionarios", "label": "Funcionarios", "requires_admin": True},
     {"key": "financeiro", "label": "Financeiro", "requires_admin": True},
@@ -32,9 +35,28 @@ SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
 )
 
 SIDEBAR_MENU_KEYS = {item["key"] for item in SIDEBAR_MENU_DEFAULTS}
-SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo"}
-SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo"}
+SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo", MENU_SESSOES_KEY}
+SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo", MENU_SESSOES_KEY}
 SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
+SIDEBAR_MENU_GLOBAL_SCOPE_KEYS = frozenset({MENU_SESSOES_KEY})
+SIDEBAR_MENU_ENTITY_LABEL_DEFAULT_KEYS = frozenset(
+    {
+        "home",
+        "administrativo",
+        MENU_SESSOES_KEY,
+        "empresa",
+        "contacto_geral",
+    }
+)
+SIDEBAR_MENU_ENTITY_LABEL_OWNER_KEYS = frozenset(
+    {
+        MENU_MEU_PERFIL_KEY,
+        "departamentos",
+        "adicionar_musica",
+        "ensaio",
+        "contactos",
+    }
+)
 MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", "administrativo", MENU_MEU_PERFIL_KEY}
 MENU_VISIBILITY_SCOPES = ("owner", "legado")
 MENU_VISIBILITY_SCOPE_ALL = "all"
@@ -485,6 +507,133 @@ def resolve_menu_key_alias(menu_key: Any) -> str:
     return _resolve_legacy_menu_alias(menu_key)
 
 
+# ###################################################################################
+# (0A) ESCOPO GLOBAL DE MENUS CORE
+# ###################################################################################
+
+
+def is_global_scope_menu_v1(menu_key: Any) -> bool:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    return clean_menu_key in SIDEBAR_MENU_GLOBAL_SCOPE_KEYS
+
+
+def resolve_menu_selected_entity_scope_id_v1(
+    menu_key: Any,
+    selected_entity_id: object = None,
+) -> object:
+    if is_global_scope_menu_v1(menu_key):
+        return None
+    return selected_entity_id
+
+
+def _coerce_menu_entity_scope_id_v1(value: object) -> int | None:
+    clean_value = str(value or "").strip()
+
+    if not clean_value.isdigit():
+        return None
+
+    parsed_value = int(clean_value)
+    if parsed_value <= 0:
+        return None
+
+    return parsed_value
+
+
+def is_sidebar_menu_entity_scope_visible_v1(
+    *,
+    record_entity_id: object,
+    selected_entity_id: object,
+) -> bool:
+    parsed_record_entity_id = _coerce_menu_entity_scope_id_v1(record_entity_id)
+    parsed_selected_entity_id = _coerce_menu_entity_scope_id_v1(selected_entity_id)
+
+    if parsed_record_entity_id is None:
+        return True
+
+    if parsed_selected_entity_id is None:
+        return False
+
+    return parsed_record_entity_id == parsed_selected_entity_id
+
+
+def resolve_menu_entity_label_scope_id_v1(
+    menu_key: Any,
+    selected_entity_id: object = None,
+    *,
+    owner_entity_id: object = None,
+    has_entity_scope_overrides: bool = False,
+) -> object:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if clean_menu_key in SIDEBAR_MENU_ENTITY_LABEL_DEFAULT_KEYS:
+        return None
+
+    if clean_menu_key in SIDEBAR_MENU_ENTITY_LABEL_OWNER_KEYS:
+        return owner_entity_id
+
+    if has_entity_scope_overrides:
+        return selected_entity_id
+
+    return None
+
+
+def get_owner_entity_scope_id_v1(session: Session) -> int | None:
+    from appverbo.services.entities import get_existing_owner_entity_id_v1
+
+    return get_existing_owner_entity_id_v1(session=session)
+
+
+def resolve_menu_entity_scope_id_v1(
+    menu_key: Any,
+    *,
+    selected_entity_id: object = None,
+    owner_entity_id: object = None,
+    menu_config: dict[str, Any] | None = None,
+) -> object:
+    effective_selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        menu_key,
+        selected_entity_id,
+    )
+    entity_scope_overrides = get_menu_entity_scope_overrides_v1(
+        menu_config,
+        selected_entity_id=effective_selected_entity_id,
+    )
+
+    return resolve_menu_entity_label_scope_id_v1(
+        menu_key,
+        effective_selected_entity_id,
+        owner_entity_id=owner_entity_id,
+        has_entity_scope_overrides=bool(entity_scope_overrides),
+    )
+
+
+def resolve_menu_effective_config_scope_id_v1(
+    menu_key: Any,
+    *,
+    selected_entity_id: object = None,
+    owner_entity_id: object = None,
+    menu_config: dict[str, Any] | None = None,
+) -> object:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if clean_menu_key in SIDEBAR_MENU_GLOBAL_SCOPE_KEYS:
+        return None
+
+    if clean_menu_key in SIDEBAR_MENU_ENTITY_LABEL_DEFAULT_KEYS:
+        owner_scope_overrides = get_menu_entity_scope_overrides_v1(
+            menu_config,
+            selected_entity_id=owner_entity_id,
+        )
+        if owner_scope_overrides:
+            return owner_entity_id
+        return None
+
+    return resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
+
+
 def _is_menu_delete_protected(menu_key: Any, menu_label: Any = "") -> bool:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     if clean_menu_key in SIDEBAR_MENU_DELETE_PROTECTED_KEYS:
@@ -538,7 +687,7 @@ def _resolve_visibility_scope_label_from_mode(scope_mode: Any) -> str:
         return "Owner"
     if clean_mode == "legado":
         return "Legado"
-    return "Owner e Legado"
+    return "Default"
 
 def normalize_menu_visibility_scopes(raw_scopes: Any) -> list[str]:
     if isinstance(raw_scopes, str):
@@ -949,6 +1098,28 @@ def _normalize_music_menu_config_v1(
     return menu_config
 
 
+def _normalize_core_sidebar_menu_config_v1(
+    menu_key: Any,
+    raw_menu_config: dict[str, Any] | None,
+) -> dict[str, Any]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    menu_config = dict(raw_menu_config or {})
+
+    if clean_menu_key not in SIDEBAR_MENU_GLOBAL_SCOPE_KEYS:
+        return menu_config
+
+    menu_config["requires_admin"] = True
+    menu_config["visibility_scopes"] = list(MENU_VISIBILITY_SCOPES)
+
+    if not str(menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY) or "").strip():
+        menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = MENU_SECTION_BY_SYSTEM_MENU_KEY.get(
+            clean_menu_key,
+            MENU_SECTION_DEFAULT_KEY,
+        )
+
+    return menu_config
+
+
 def _build_custom_field_key_from_label(label: str) -> str:
     normalized = (
         unicodedata.normalize("NFKD", label or "")
@@ -1060,6 +1231,38 @@ def _normalize_sidebar_section_status_v5(raw_status: Any) -> str:
 
 def _sidebar_section_status_label_v5(raw_status: Any) -> str:
     return "Inativo" if _normalize_sidebar_section_status_v5(raw_status) == "inativo" else "Ativo"
+
+
+def is_sidebar_menu_section_visible_v1(
+    menu_row: dict[str, Any] | None,
+    current_entity_scope: str | None = None,
+) -> bool:
+    if not isinstance(menu_row, dict):
+        return True
+
+    clean_section_key = _normalize_sidebar_section_key(menu_row.get("sidebar_section_key"))
+    if not clean_section_key:
+        return True
+
+    raw_section_status = menu_row.get("sidebar_section_status")
+    if raw_section_status is None:
+        raw_section_status = menu_row.get("sidebar_section_is_active")
+    if _normalize_sidebar_section_status_v5(raw_section_status) != "ativo":
+        return False
+
+    clean_entity_scope = _normalize_menu_visibility_scope_value(current_entity_scope)
+    sidebar_section_visibility_scopes = (
+        menu_row.get("sidebar_section_visibility_scopes")
+        if menu_row.get("sidebar_section_visibility_scopes") is not None
+        else menu_row.get("sidebar_section_visibility_scope_mode")
+    )
+    visibility_scopes = _normalize_sidebar_section_visibility_scopes(
+        sidebar_section_visibility_scopes
+    )
+    if clean_entity_scope and clean_entity_scope not in visibility_scopes:
+        return False
+
+    return True
 
 
 def _build_sidebar_section_payload(
@@ -2492,6 +2695,57 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
         )
         changed = True
 
+    sessoes_menu_label = _normalize_system_menu_label(MENU_SESSOES_KEY, "Estruturas")
+    sessoes_row = session.execute(
+        text(
+            """
+            SELECT menu_label, is_active, is_deleted, menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": MENU_SESSOES_KEY},
+    ).mappings().first()
+
+    if sessoes_row is not None:
+        current_sessoes_config = _parse_menu_config(sessoes_row.get("menu_config"))
+        normalized_sessoes_config = _normalize_core_sidebar_menu_config_v1(
+            MENU_SESSOES_KEY,
+            current_sessoes_config,
+        )
+        current_sessoes_label = _normalize_system_menu_label(
+            MENU_SESSOES_KEY,
+            sessoes_row.get("menu_label") or "",
+        )
+        needs_sessoes_update = (
+            not bool(sessoes_row.get("is_active"))
+            or bool(sessoes_row.get("is_deleted"))
+            or current_sessoes_label in {"", "Sessões", "Sessoes"}
+            or json.dumps(current_sessoes_config, ensure_ascii=False, sort_keys=True)
+            != json.dumps(normalized_sessoes_config, ensure_ascii=False, sort_keys=True)
+        )
+
+        if needs_sessoes_update:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_label = :menu_label,
+                        is_active = TRUE,
+                        is_deleted = FALSE,
+                        menu_config = :menu_config
+                    WHERE lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "menu_key": MENU_SESSOES_KEY,
+                    "menu_label": sessoes_menu_label,
+                    "menu_config": json.dumps(normalized_sessoes_config, ensure_ascii=False),
+                },
+            )
+            changed = True
+
     meu_perfil_label = session.execute(
         text(
             """
@@ -2666,6 +2920,7 @@ def get_sidebar_menu_settings(
     selected_entity_id: object = None,
 ) -> list[dict[str, Any]]:
     ensure_sidebar_menu_settings_defaults(session)
+    owner_entity_id = get_owner_entity_scope_id_v1(session)
     defaults_by_key = _sidebar_menu_defaults_by_key()
     rows = session.execute(
         text(
@@ -2697,22 +2952,40 @@ def get_sidebar_menu_settings(
             is_active = bool(row.is_active)
             is_deleted = bool(row.is_deleted)
 
-        raw_menu_config = _normalize_music_menu_config_v1(
+        raw_menu_config = _normalize_core_sidebar_menu_config_v1(
             menu_key,
-            menu_label,
-            _parse_menu_config(None if row is None else row.menu_config),
+            _normalize_music_menu_config_v1(
+                menu_key,
+                menu_label,
+                _parse_menu_config(None if row is None else row.menu_config),
+            ),
+        )
+        effective_menu_config_scope_id = resolve_menu_effective_config_scope_id_v1(
+            menu_key,
+            selected_entity_id=selected_entity_id,
+            owner_entity_id=owner_entity_id,
+            menu_config=raw_menu_config,
         )
         effective_menu_label = build_effective_menu_label_v1(
             menu_label,
             raw_menu_config,
-            selected_entity_id=selected_entity_id,
+            selected_entity_id=effective_menu_config_scope_id,
         ) or menu_label
-        menu_config = _normalize_music_menu_config_v1(
+        entity_scope_entity_id = resolve_menu_entity_scope_id_v1(
             menu_key,
-            effective_menu_label,
-            build_effective_menu_config_v1(
-                raw_menu_config,
-                selected_entity_id=selected_entity_id,
+            selected_entity_id=selected_entity_id,
+            owner_entity_id=owner_entity_id,
+            menu_config=raw_menu_config,
+        )
+        menu_config = _normalize_core_sidebar_menu_config_v1(
+            menu_key,
+            _normalize_music_menu_config_v1(
+                menu_key,
+                effective_menu_label,
+                build_effective_menu_config_v1(
+                    raw_menu_config,
+                    selected_entity_id=effective_menu_config_scope_id,
+                ),
             ),
         )
         process_additional_fields = get_menu_process_additional_fields(menu_config)
@@ -2750,6 +3023,7 @@ def get_sidebar_menu_settings(
                 "visibility_scopes": get_menu_visibility_scopes(menu_config),
                 "visibility_scope_mode": get_menu_visibility_scope_mode(menu_config),
                 "visibility_scope_label": get_menu_visibility_scope_label(menu_config),
+                "entity_scope_entity_id": entity_scope_entity_id,
                 "process_additional_fields": process_additional_fields,
                 "process_subsequent_fields": process_subsequent_fields,
                 "process_visible_fields": process_visible_fields,
@@ -2778,22 +3052,40 @@ def get_sidebar_menu_settings(
         menu_label = _normalize_system_menu_label(menu_key, row.menu_label or menu_key) or menu_key
         is_active = bool(row.is_active)
         is_deleted = bool(row.is_deleted)
-        raw_menu_config = _normalize_music_menu_config_v1(
+        raw_menu_config = _normalize_core_sidebar_menu_config_v1(
             menu_key,
-            menu_label,
-            _parse_menu_config(row.menu_config),
+            _normalize_music_menu_config_v1(
+                menu_key,
+                menu_label,
+                _parse_menu_config(row.menu_config),
+            ),
+        )
+        effective_menu_config_scope_id = resolve_menu_effective_config_scope_id_v1(
+            menu_key,
+            selected_entity_id=selected_entity_id,
+            owner_entity_id=owner_entity_id,
+            menu_config=raw_menu_config,
         )
         effective_menu_label = build_effective_menu_label_v1(
             menu_label,
             raw_menu_config,
-            selected_entity_id=selected_entity_id,
+            selected_entity_id=effective_menu_config_scope_id,
         ) or menu_label
-        menu_config = _normalize_music_menu_config_v1(
+        entity_scope_entity_id = resolve_menu_entity_scope_id_v1(
             menu_key,
-            effective_menu_label,
-            build_effective_menu_config_v1(
-                raw_menu_config,
-                selected_entity_id=selected_entity_id,
+            selected_entity_id=selected_entity_id,
+            owner_entity_id=owner_entity_id,
+            menu_config=raw_menu_config,
+        )
+        menu_config = _normalize_core_sidebar_menu_config_v1(
+            menu_key,
+            _normalize_music_menu_config_v1(
+                menu_key,
+                effective_menu_label,
+                build_effective_menu_config_v1(
+                    raw_menu_config,
+                    selected_entity_id=effective_menu_config_scope_id,
+                ),
             ),
         )
         requires_admin = bool(menu_config.get("requires_admin", True))
@@ -2829,6 +3121,7 @@ def get_sidebar_menu_settings(
                 "visibility_scopes": get_menu_visibility_scopes(menu_config),
                 "visibility_scope_mode": get_menu_visibility_scope_mode(menu_config),
                 "visibility_scope_label": get_menu_visibility_scope_label(menu_config),
+                "entity_scope_entity_id": entity_scope_entity_id,
                 "process_additional_fields": process_additional_fields,
                 "process_visible_fields": process_visible_fields,
                 "process_visible_field_header_map": process_visible_field_header_map,
@@ -2879,6 +3172,34 @@ def get_sidebar_menu_settings(
         for item in sidebar_section_options
         if str(item.get("key") or "").strip()
     }
+    sidebar_section_visibility_scopes_by_key = {
+        str(item.get("key") or "").strip().lower(): normalize_menu_visibility_scopes(
+            item.get("visibility_scopes")
+        )
+        for item in sidebar_section_options
+        if str(item.get("key") or "").strip()
+    }
+    sidebar_section_visibility_scope_mode_by_key = {
+        str(item.get("key") or "").strip().lower(): get_sidebar_section_visibility_scope_mode(
+            item
+        )
+        for item in sidebar_section_options
+        if str(item.get("key") or "").strip()
+    }
+    sidebar_section_visibility_scope_label_by_key = {
+        str(item.get("key") or "").strip().lower(): get_sidebar_section_visibility_scope_label(
+            item
+        )
+        for item in sidebar_section_options
+        if str(item.get("key") or "").strip()
+    }
+    sidebar_section_status_by_key = {
+        str(item.get("key") or "").strip().lower(): _normalize_sidebar_section_status_v5(
+            item.get("status") if item.get("status") is not None else item.get("is_active")
+        )
+        for item in sidebar_section_options
+        if str(item.get("key") or "").strip()
+    }
     for setting_row in settings:
         clean_menu_key = str(setting_row.get("key") or "").strip().lower()
         menu_config = setting_row.get("menu_config")
@@ -2895,11 +3216,28 @@ def get_sidebar_menu_settings(
                 sidebar_section_keys,
             )
         setting_row["sidebar_section_key"] = configured_section_key
+        sidebar_section_status = sidebar_section_status_by_key.get(configured_section_key, "ativo")
         setting_row["sidebar_section_label"] = (
             sidebar_section_labels_by_key.get(configured_section_key)
             or SIDEBAR_SECTION_DEFAULTS_BY_KEY.get(configured_section_key)
             or configured_section_key
         )
+        setting_row["sidebar_section_visibility_scopes"] = list(
+            sidebar_section_visibility_scopes_by_key.get(
+                configured_section_key,
+                list(MENU_VISIBILITY_SCOPES),
+            )
+        )
+        setting_row["sidebar_section_visibility_scope_mode"] = (
+            sidebar_section_visibility_scope_mode_by_key.get(configured_section_key)
+            or MENU_VISIBILITY_SCOPE_ALL
+        )
+        setting_row["sidebar_section_visibility_scope_label"] = (
+            sidebar_section_visibility_scope_label_by_key.get(configured_section_key)
+            or _resolve_visibility_scope_label_from_mode(MENU_VISIBILITY_SCOPE_ALL)
+        )
+        setting_row["sidebar_section_status"] = sidebar_section_status
+        setting_row["sidebar_section_is_active"] = sidebar_section_status == "ativo"
 
     for setting in settings:
         clean_setting_key = _normalize_menu_key(setting.get("key"))
@@ -3002,6 +3340,7 @@ def get_visible_sidebar_menu_keys(
     settings: list[dict[str, Any]],
     current_user_is_admin: bool,
     current_entity_scope: str | None = None,
+    selected_entity_id: object = None,
 ) -> set[str]:
     clean_entity_scope = _normalize_menu_visibility_scope_value(current_entity_scope)
     visible_keys: set[str] = set()
@@ -3012,6 +3351,16 @@ def get_visible_sidebar_menu_keys(
             continue
         visibility_scopes = normalize_menu_visibility_scopes(item.get("visibility_scopes"))
         if clean_entity_scope and clean_entity_scope not in visibility_scopes:
+            continue
+        if not is_sidebar_menu_section_visible_v1(
+            item,
+            current_entity_scope=clean_entity_scope,
+        ):
+            continue
+        if not is_sidebar_menu_entity_scope_visible_v1(
+            record_entity_id=item.get("entity_scope_entity_id"),
+            selected_entity_id=selected_entity_id,
+        ):
             continue
         visible_keys.add(str(item["key"]))
     if "home" not in visible_keys:
@@ -3032,7 +3381,10 @@ def _load_menu_config(session: Session, menu_key: str) -> dict[str, Any]:
         ),
         {"menu_key": clean_menu_key},
     ).scalar_one_or_none()
-    return _parse_menu_config(raw_menu_config)
+    return _normalize_core_sidebar_menu_config_v1(
+        clean_menu_key,
+        _parse_menu_config(raw_menu_config),
+    )
 
 
 def _persist_menu_config(session: Session, menu_key: str, menu_config: dict[str, Any]) -> None:
@@ -3095,6 +3447,12 @@ def update_sidebar_menu_label(
         return False, "Nome do menu é obrigatório."
 
     menu_config = _load_menu_config(session, clean_menu_key)
+    selected_entity_id = resolve_menu_effective_config_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id=selected_entity_id,
+        owner_entity_id=get_owner_entity_scope_id_v1(session),
+        menu_config=menu_config,
+    )
     effective_menu_config = build_effective_menu_config_v1(
         menu_config,
         selected_entity_id=selected_entity_id,
@@ -3280,6 +3638,10 @@ def update_sidebar_menu_process_fields_v4(
 ) -> tuple[bool, str]:
     # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -3498,6 +3860,10 @@ def update_sidebar_menu_process_lists(
     selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -5273,6 +5639,10 @@ def update_sidebar_menu_process_quantity_fields_v1(
     selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -5571,6 +5941,10 @@ def update_sidebar_menu_additional_fields_v4(
 ) -> tuple[bool, str]:
     # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -5854,6 +6228,10 @@ def update_sidebar_menu_subsequent_fields(
 ) -> tuple[bool, str]:
     """Atualiza os campos subsequentes de um menu."""
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -5893,6 +6271,10 @@ def move_sidebar_menu_additional_field(
     Se o campo for do tipo 'header' (Cabeçalho), move o bloco inteiro junto com os campos abaixo.
     """
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    selected_entity_id = resolve_menu_selected_entity_scope_id_v1(
+        clean_menu_key,
+        selected_entity_id,
+    )
 
     if not clean_menu_key:
         return False, "Menu inválido."

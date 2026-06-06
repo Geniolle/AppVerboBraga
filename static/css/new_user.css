@@ -6021,7 +6021,7 @@ input.action-btn-cancel,
 
 .appverbo-standard-create-card-v4,
 .appverbo-sessoes-create-card-v3,
-#admin-sidebar-sections-create-card {
+#admin-sidebar-sections-card-create {
   width: 100% !important;
   min-height: var(--appverbo-create-card-min-height-v4) !important;
   padding: var(--appverbo-create-card-padding-v4) !important;
@@ -6037,18 +6037,18 @@ input.action-btn-cancel,
 
 .appverbo-standard-create-card-v4 > *,
 .appverbo-sessoes-create-card-v3 > *,
-#admin-sidebar-sections-create-card > * {
+#admin-sidebar-sections-card-create > * {
   flex: 0 0 auto;
 }
 
 .appverbo-standard-create-card-v4 .action-btn,
 .appverbo-sessoes-create-card-v3 .action-btn,
-#admin-sidebar-sections-create-card .action-btn {
+#admin-sidebar-sections-card-create .action-btn {
   align-self: center !important;
 }
 
 .appverbo-sessoes-create-card-v3 .appverbo-create-entry-block-v1,
-#admin-sidebar-sections-create-card .appverbo-create-entry-block-v1 {
+#admin-sidebar-sections-card-create .appverbo-create-entry-block-v1 {
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -6059,7 +6059,7 @@ input.action-btn-cancel,
 }
 
 .appverbo-sessoes-create-card-v3 .appverbo-create-entry-toolbar-v1,
-#admin-sidebar-sections-create-card .appverbo-create-entry-toolbar-v1 {
+#admin-sidebar-sections-card-create .appverbo-create-entry-toolbar-v1 {
   min-height: 32px !important;
   display: flex !important;
   align-items: center !important;
@@ -6068,7 +6068,7 @@ input.action-btn-cancel,
 }
 
 .appverbo-sessoes-create-card-v3 .appverbo-create-entry-panel-v1,
-#admin-sidebar-sections-create-card .appverbo-create-entry-panel-v1 {
+#admin-sidebar-sections-card-create .appverbo-create-entry-panel-v1 {
   width: 100% !important;
   margin-top: 14px !important;
   padding-top: 14px !important;

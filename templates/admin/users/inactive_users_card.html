@@ -20,7 +20,7 @@
   {% set card_id = "inactive-users-card" %}
 {% endif %}
 
-<section id="{{ card_id }}" class="card admin-user-shadow-readonly-card-v1 admin-user-shadow-inactive-card-v1" data-menu-scope="administrativo" data-admin-subprocess-shadow="utilizador-inactive">
+<section id="{{ card_id }}" class="card admin-user-shadow-readonly-card-v1 admin-user-shadow-inactive-card-v1" data-menu-scope="administrativo" data-admin-subprocess-shadow="utilizador-inactive" data-admin-card-group="utilizador" data-admin-card-role="inactive">
   <h2>{{ card_title }}</h2>
   {{ render_admin_user_table_v1(
     user_rows,

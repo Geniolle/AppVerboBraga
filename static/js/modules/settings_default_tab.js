@@ -44,6 +44,14 @@
     return settingsAction === "edit";
   }
 
+  function isUrlEdicaoMenuAdministrativo(url) {
+    if (!isUrlEdicaoProcesso(url)) {
+      return false;
+    }
+
+    return normalizarTexto(url.searchParams.get("admin_tab")) === "menu";
+  }
+
   function aplicarAbaGeralNaUrl(url) {
     if (!isUrlEdicaoProcesso(url)) {
       return url;
@@ -55,6 +63,50 @@
 
   function montarHref(url) {
     return `${url.pathname}${url.search}${url.hash}`;
+  }
+
+  function isModifiedClick(event) {
+    if (!event) {
+      return false;
+    }
+
+    return Boolean(
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    );
+  }
+
+  function obterMenuAtualSeguranca() {
+    try {
+      const urlAtual = new URL(window.location.href);
+      return normalizarTexto(urlAtual.searchParams.get("menu"));
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function normalizarContextoMenuNaUrl(url) {
+    if (!isUrlEdicaoMenuAdministrativo(url)) {
+      return url;
+    }
+
+    const menuDaUrl = normalizarTexto(url.searchParams.get("menu"));
+    if (menuDaUrl) {
+      return url;
+    }
+
+    const menuAtual = obterMenuAtualSeguranca();
+    if (menuAtual === "administrativo" || menuAtual === "sessoes") {
+      url.searchParams.set("menu", menuAtual);
+      return url;
+    }
+
+    url.searchParams.set("menu", "sessoes");
+    return url;
   }
 
   //###################################################################################
@@ -71,7 +123,7 @@
         return;
       }
 
-      const novaUrl = aplicarAbaGeralNaUrl(url);
+      const novaUrl = normalizarContextoMenuNaUrl(aplicarAbaGeralNaUrl(url));
       link.setAttribute("href", montarHref(novaUrl));
     });
   }
@@ -95,8 +147,29 @@
         return;
       }
 
-      const novaUrl = aplicarAbaGeralNaUrl(url);
+      const novaUrl = normalizarContextoMenuNaUrl(aplicarAbaGeralNaUrl(url));
       link.setAttribute("href", montarHref(novaUrl));
+
+      if (!isUrlEdicaoMenuAdministrativo(novaUrl) || isModifiedClick(event)) {
+        return;
+      }
+
+      const destino = montarHref(novaUrl);
+      const atual = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (typeof event.stopImmediatePropagation === "function") {
+        event.stopImmediatePropagation();
+      }
+
+      if (destino === atual) {
+        window.location.reload();
+        return;
+      }
+
+      window.location.assign(destino);
     },
     true
   );

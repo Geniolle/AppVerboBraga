@@ -1,4 +1,4 @@
-<section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
+<section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" data-admin-card-group="utilizador" data-admin-card-role="edit">
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           {% if success %}

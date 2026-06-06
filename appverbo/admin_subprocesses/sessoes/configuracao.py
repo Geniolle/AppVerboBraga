@@ -29,7 +29,7 @@ SIDEBAR_SECTION_FIELDS = (
         field_type="select",
         required=True,
         options=(
-            ("all", "Owner e Legado"),
+            ("all", "Default"),
             ("owner", "Owner"),
             ("legado", "Legado"),
         ),
@@ -53,9 +53,9 @@ SIDEBAR_SECTION_FIELDS = (
 # ###################################################################################
 
 SIDEBAR_SECTION_COLUMNS = (
-    AdminColumnConfig(key="entity", label="ENTIDADE", source="entity_name"),
     AdminColumnConfig(key="label", label="NOME", source="label"),
     AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
+    AdminColumnConfig(key="entity", label="ENTIDADE", source="entity_name"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
 )
 

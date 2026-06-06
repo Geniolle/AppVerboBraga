@@ -4,6 +4,8 @@
     id="{{ state.create_target }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
     data-admin-subprocess="menu"
+    data-admin-card-group="menu"
+    data-admin-card-role="create"
     data-menu-scope="{{ initial_menu }}"
   >
     {% if state.success %}
@@ -38,7 +40,7 @@
             <div class="field admin-subprocess-field-v1">
               <label for="admin_menu_create_visibility_scope">Sistema</label>
               <select id="admin_menu_create_visibility_scope" name="menu_visibility_scope">
-                <option value="all" selected>Owner e Legado</option>
+                <option value="all" selected>Default</option>
                 <option value="owner">Owner</option>
                 <option value="legado">Legado</option>
               </select>
@@ -215,6 +217,8 @@
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="menu"
     data-admin-subprocess-status="{{ status_value }}"
+    data-admin-card-group="menu"
+    data-admin-card-role="{{ 'active' if status_value == 'ativo' else 'inactive' }}"
     data-menu-scope="{{ initial_menu }}"
   >
     <h2>{{ title }}</h2>
@@ -226,6 +230,7 @@
             <tr>
               <th>Menu lateral</th>
               <th>Sistema</th>
+              <th>Entidade</th>
               <th>Estado</th>
               <th>Ações</th>
             </tr>
@@ -235,6 +240,7 @@
               <tr>
                 <td>{{ row.get("label", "") }}</td>
                 <td>{{ row.get("visibility_scope_label", "-") }}</td>
+                <td>{{ row.get("entity_name", "Default") }}</td>
                 <td>
                   <span class="admin-subprocess-badge-v1 {% if status_value == 'ativo' %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
                     {{ row.get("status_label", "Ativo" if status_value == "ativo" else "Inativo") }}

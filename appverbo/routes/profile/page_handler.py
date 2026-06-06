@@ -8,13 +8,18 @@ import unicodedata
 from fastapi import Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appverbo.admin_subprocesses.menu.configuracao import MENU_CONFIG
 from appverbo.admin_subprocesses.menu.service import build_admin_menu_state
 from appverbo.admin_subprocesses.repositories.menu_repository import MenuAdminRepository
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
-from appverbo.admin_subprocesses.service import build_admin_subprocess_state
+from appverbo.admin_subprocesses.sessoes.common import (
+    build_sessoes_admin_return_url_v2,
+    get_sessoes_visible_fields_v2,
+    get_sessoes_visible_columns_v2,
+)
 from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_from_repository
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
@@ -170,11 +175,155 @@ def _is_admin_definicoes_edit_request_v1(
     )
 
 
+def _resolve_targeted_edit_key_v1(
+    edit_identifier: object,
+    target_selector: object,
+    expected_target_selector: str,
+) -> str:
+    clean_edit_identifier = str(edit_identifier or "").strip()
+
+    if not _is_targeted_edit_request_v1(
+        clean_edit_identifier,
+        target_selector,
+        expected_target_selector,
+    ):
+        return ""
+
+    return clean_edit_identifier
+
+
+def _resolve_admin_sessoes_target_v1(sidebar_section_edit_key: str) -> str:
+    if str(sidebar_section_edit_key or "").strip():
+        return "#admin-sidebar-sections-form-card"
+
+    return "#admin-sidebar-sections-card"
+
+
+def _is_admin_sessoes_edit_request_v1(
+    sidebar_section_edit_key: str,
+    target_selector: str,
+) -> bool:
+    return _is_targeted_edit_request_v1(
+        sidebar_section_edit_key,
+        target_selector,
+        "#admin-sidebar-sections-form-card",
+    )
+
+
 def _normalize_target_selector_v1(value: object) -> str:
     clean_value = str(value or "").strip()
     if not clean_value:
         return ""
     return clean_value if clean_value.startswith("#") else f"#{clean_value}"
+
+
+def _filter_sessoes_rows_for_scope_v1(
+    rows: list[dict[str, Any]] | tuple[dict[str, Any], ...],
+    current_entity_scope: object,
+) -> list[dict[str, Any]]:
+    clean_entity_scope = str(current_entity_scope or "").strip().lower()
+    filtered_rows: list[dict[str, Any]] = []
+
+    for raw_row in rows or []:
+        row = dict(raw_row or {})
+        row_scope_mode = str(row.get("visibility_scope_mode") or "").strip().lower()
+
+        if row_scope_mode == "owner" and clean_entity_scope != "owner":
+            continue
+
+        filtered_rows.append(row)
+
+    return filtered_rows
+
+
+def _load_selected_entity_name_for_admin_subprocess_v1(
+    session: Session,
+    selected_entity_id: object,
+) -> str:
+    clean_selected_entity_id = str(selected_entity_id or "").strip()
+
+    if not clean_selected_entity_id.isdigit():
+        return ""
+
+    try:
+        from appverbo.models.entity import Entity as _EntityModel
+
+        entity_name = session.execute(
+            select(_EntityModel.name)
+            .where(_EntityModel.id == int(clean_selected_entity_id))
+            .limit(1)
+        ).scalar_one_or_none()
+    except Exception:
+        return ""
+
+    return str(entity_name or "").strip()
+
+
+def _decorate_admin_subprocess_state_with_entity_name_v1(
+    state: Any,
+    entity_name: object,
+) -> Any:
+    if state is None:
+        return None
+
+    clean_entity_name = str(entity_name or "").strip()
+
+    if isinstance(getattr(state, "active_rows", None), list):
+        state.active_rows = [
+            {**dict(row or {}), "entity_name": clean_entity_name}
+            for row in state.active_rows
+        ]
+
+    if isinstance(getattr(state, "inactive_rows", None), list):
+        state.inactive_rows = [
+            {**dict(row or {}), "entity_name": clean_entity_name}
+            for row in state.inactive_rows
+        ]
+
+    if isinstance(getattr(state, "edit_data", None), dict):
+        state.edit_data = {
+            **dict(state.edit_data),
+            "entity_name": clean_entity_name,
+        }
+
+    if isinstance(getattr(state, "create_data", None), dict):
+        state.create_data = {
+            **dict(state.create_data),
+            "entity_name": clean_entity_name,
+        }
+
+    return state
+
+
+def _filter_sessoes_admin_subprocess_state_for_scope_v1(
+    state: Any,
+    current_entity_scope: object,
+) -> Any:
+    if state is None:
+        return None
+
+    state.active_rows = _filter_sessoes_rows_for_scope_v1(
+        list(getattr(state, "active_rows", []) or []),
+        current_entity_scope,
+    )
+    state.inactive_rows = _filter_sessoes_rows_for_scope_v1(
+        list(getattr(state, "inactive_rows", []) or []),
+        current_entity_scope,
+    )
+
+    if isinstance(getattr(state, "edit_data", None), dict):
+        filtered_edit_rows = _filter_sessoes_rows_for_scope_v1(
+            [dict(state.edit_data)],
+            current_entity_scope,
+        )
+        if filtered_edit_rows:
+            state.edit_data = filtered_edit_rows[0]
+        else:
+            state.edit_data = None
+            state.edit_key = ""
+            state.mode = "create"
+
+    return state
 
 
 def _resolve_requested_dynamic_context_v1(
@@ -1477,6 +1626,64 @@ def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
 # APPVERBO_ADMIN_TAB_MENU_CANONICAL_V1_END
 
 
+# APPVERBO_ADMIN_PROCESS_MENU_FALLBACK_V1_START
+def _resolve_blank_admin_process_menu_v1(
+    *,
+    raw_menu: object,
+    raw_admin_tab: object,
+    raw_target: object,
+    raw_settings_edit_key: object,
+    raw_definition_edit_id: object,
+    raw_sidebar_section_edit_key: object,
+    raw_sidebar_sections_tab: object,
+) -> str:
+    clean_menu = resolve_menu_key_alias(raw_menu)
+    if clean_menu:
+        return clean_menu
+
+    clean_admin_tab = _normalize_admin_tab_menu_v1(raw_admin_tab)
+    clean_target = _normalize_target_selector_v1(raw_target)
+    clean_settings_edit_key = str(raw_settings_edit_key or "").strip()
+    clean_definition_edit_id = str(raw_definition_edit_id or "").strip()
+    clean_sidebar_section_edit_key = str(raw_sidebar_section_edit_key or "").strip()
+    clean_sidebar_sections_tab = str(raw_sidebar_sections_tab or "").strip().lower()
+
+    if clean_admin_tab in {"menu", "sessoes", "definicoes"}:
+        return "sessoes"
+
+    if clean_admin_tab in {"entidade", "utilizador"}:
+        return "administrativo"
+
+    if clean_target in {
+        "#settings-menu-edit-card",
+        "#admin-menu-card",
+        "#admin-menu-card-create",
+        "#admin-menu-card-inactive",
+        "#admin-definicoes-card",
+        "#admin-definicoes-card-edit",
+        "#admin-definicoes-card-create",
+        "#admin-definicoes-card-inactive",
+        "#admin-sidebar-sections-card",
+        "#admin-sidebar-sections-form-card",
+        "#admin-sidebar-sections-card-create",
+        "#admin-sidebar-sections-card-inactive",
+    }:
+        return "sessoes"
+
+    if (
+        clean_settings_edit_key
+        or clean_definition_edit_id
+        or clean_sidebar_section_edit_key
+        or clean_sidebar_sections_tab == "sessoes"
+    ):
+        return "sessoes"
+
+    return "home"
+
+
+# APPVERBO_ADMIN_PROCESS_MENU_FALLBACK_V1_END
+
+
 # APPVERBO_ADMIN_TAB_SESSOES_FALLBACK_V1_START
 def _resolve_sessions_admin_tab_fallback_v1(
     *,
@@ -1552,9 +1759,15 @@ def new_user_page(
     resolved_profile_tab = profile_tab.strip().lower()
     if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
         resolved_profile_tab = "pessoal"
-    resolved_menu = resolve_menu_key_alias(menu)
-    if not resolved_menu:
-        resolved_menu = "home"
+    resolved_menu = _resolve_blank_admin_process_menu_v1(
+        raw_menu=menu,
+        raw_admin_tab=admin_tab,
+        raw_target=target,
+        raw_settings_edit_key=settings_edit_key,
+        raw_definition_edit_id=definition_edit_id,
+        raw_sidebar_section_edit_key=sidebar_section_edit_key,
+        raw_sidebar_sections_tab=sidebar_sections_tab,
+    )
     resolved_admin_tab = _normalize_admin_tab_menu_v1(admin_tab)
     resolved_admin_tab = _resolve_sessions_admin_tab_fallback_v1(
         resolved_menu=resolved_menu,
@@ -1623,6 +1836,10 @@ def new_user_page(
         resolved_menu in {"administrativo", "sessoes"}
         and resolved_admin_tab == "definicoes"
     )
+    is_admin_sessoes_tab_request_v1 = (
+        resolved_menu in {"administrativo", "sessoes"}
+        and resolved_admin_tab == "sessoes"
+    )
     is_admin_menu_edit_request_v1 = (
         is_admin_menu_tab
         and _is_admin_menu_edit_request_v1(
@@ -1637,10 +1854,22 @@ def new_user_page(
             clean_target_from_query,
         )
     )
+    is_admin_sessoes_edit_request_v1 = (
+        is_admin_sessoes_tab_request_v1
+        and _is_admin_sessoes_edit_request_v1(
+            sidebar_section_edit_key,
+            clean_target_from_query,
+        )
+    )
     effective_settings_edit_key = clean_settings_edit_key
     effective_settings_action = clean_settings_action
     effective_settings_tab = clean_settings_tab
     effective_definition_edit_id = clean_definition_edit_id
+    effective_sidebar_section_edit_key = _resolve_targeted_edit_key_v1(
+        sidebar_section_edit_key,
+        clean_target_from_query,
+        "#admin-sidebar-sections-form-card",
+    )
 
     if is_admin_menu_tab and not is_admin_menu_edit_request_v1:
         effective_settings_edit_key = ""
@@ -1651,6 +1880,9 @@ def new_user_page(
 
     if is_admin_definicoes_tab and not is_admin_definicoes_edit_request_v1:
         effective_definition_edit_id = ""
+
+    if is_admin_sessoes_tab_request_v1 and not is_admin_sessoes_edit_request_v1:
+        effective_sidebar_section_edit_key = ""
 
     admin_tabs_width_ch_v1 = 24
     admin_tabs_text_size_px_v1 = 13
@@ -1676,7 +1908,7 @@ def new_user_page(
     admin_sidebar_section_text_color_hex_v1 = "#808792"
     menu_settings_edit_key = (
         effective_settings_edit_key
-        if is_admin_menu_tab
+        if (is_admin_menu_tab or is_admin_sessoes_tab_request_v1)
         else ""
     )
     menu_admin_page_payload = build_menu_admin_page_payload_v1({})
@@ -1835,7 +2067,7 @@ def new_user_page(
         should_load_sessoes_context_v1 = bool(
             is_sessoes_tab_v1
             or is_definicoes_tab_v1
-            or str(sidebar_section_edit_key or "").strip()
+            or effective_sidebar_section_edit_key
             or str(sidebar_sections_tab or "").strip().lower() == "sessoes"
         )
 
@@ -1867,7 +2099,7 @@ def new_user_page(
                 actor_user_id=int(current_user["id"]),
                 actor_login_email=str(current_user["login_email"]),
                 selected_entity_id=selected_entity_id,
-                session_edit_key=sidebar_section_edit_key,
+                session_edit_key=effective_sidebar_section_edit_key,
             )
             sessoes_admin_page_payload = build_sessoes_admin_page_payload_v1(
                 sessoes_admin_context
@@ -1956,10 +2188,9 @@ def new_user_page(
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
     if resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "sessoes":
-        if str(sidebar_section_edit_key or "").strip():
-            initial_menu_target = "#admin-sidebar-sections-form-card"
-        else:
-            initial_menu_target = "#admin-sidebar-sections-card"
+        initial_menu_target = _resolve_admin_sessoes_target_v1(
+            effective_sidebar_section_edit_key
+        )
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
     elif resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "menu":
@@ -1996,7 +2227,7 @@ def new_user_page(
         clean_target_from_query=clean_target_from_query,
         clean_profile_section_from_query=clean_profile_section_from_query,
         clean_dynamic_section_from_query=clean_dynamic_section_from_query,
-        sidebar_section_edit_key=sidebar_section_edit_key,
+        sidebar_section_edit_key=effective_sidebar_section_edit_key,
         is_post_save_return=is_post_save_return,
     )
     # APPVERBO_PAGE_STATE_CONTEXT_V1_END
@@ -2085,59 +2316,43 @@ def new_user_page(
         sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
 
         if sessoes_subprocess_config_v2 is not None:
-            all_sidebar_sections_for_subprocess_v3 = list(
-                sessoes_admin_page_payload.get("all_sessions", [])
+            current_entity_scope_for_sessoes = str(
+                page_data.get("current_entity_scope") or ""
+            ).strip().lower()
+            sessoes_entity_name_v1 = _load_selected_entity_name_for_admin_subprocess_v1(
+                session,
+                selected_entity_id,
             )
 
-            if not all_sidebar_sections_for_subprocess_v3:
-                all_sidebar_sections_for_subprocess_v3 = list(
-                    active_sidebar_sections_v22 or []
-                ) + list(inactive_sidebar_sections_v22 or [])
-
-            current_entity_scope_for_sessoes = str(page_data.get("current_entity_scope") or "").strip().lower()
-            filtered_sidebar_sections = []
-            for row in all_sidebar_sections_for_subprocess_v3:
-                row_scope_mode = str(row.get("visibility_scope_mode") or "").strip().lower()
-                if row_scope_mode == "owner" and current_entity_scope_for_sessoes != "owner":
-                    continue
-                filtered_sidebar_sections.append(row)
-            all_sidebar_sections_for_subprocess_v3 = filtered_sidebar_sections
-
-            # #######################################################################
-            # INJETAR NOME DA ENTIDADE EM CADA ROW
-            # #######################################################################
-            sessoes_entity_name_v1 = ""
-            if selected_entity_id is not None:
-                try:
-                    from sqlalchemy import select as _sa_select
-                    from appverbo.models.entity import Entity as _EntityModel
-                    _entity_row = session.execute(
-                        _sa_select(_EntityModel.name)
-                        .where(_EntityModel.id == int(selected_entity_id))
-                        .limit(1)
-                    ).scalar_one_or_none()
-                    sessoes_entity_name_v1 = str(_entity_row or "").strip()
-                except Exception:
-                    sessoes_entity_name_v1 = ""
-
-            all_sidebar_sections_for_subprocess_v3 = [
-                {**row, "entity_name": sessoes_entity_name_v1}
-                for row in all_sidebar_sections_for_subprocess_v3
-            ]
-
-            clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip()
-
-            admin_subprocess_state_v2 = build_admin_subprocess_state(
+            admin_subprocess_state_v2 = build_admin_subprocess_state_from_repository(
                 config=sessoes_subprocess_config_v2,
-                rows=all_sidebar_sections_for_subprocess_v3,
-                edit_key=clean_sidebar_section_edit_key_v2,
+                session=session,
+                edit_key=effective_sidebar_section_edit_key,
                 success=settings_success if resolved_admin_tab == "sessoes" else "",
                 error=settings_error if resolved_admin_tab == "sessoes" else "",
-                return_url="/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
+                return_url=build_sessoes_admin_return_url_v2(
+                    admin_tab="sessoes",
+                    target="admin-sidebar-sections-card",
+                ),
+                context={
+                    "page_state": page_state,
+                    "current_user": current_user,
+                    "selected_entity_id": selected_entity_id,
+                    "allowed_entity_ids": entity_permissions["allowed_entity_ids"],
+                    "can_manage_all_entities": entity_permissions["can_manage_all_entities"],
+                },
             )
 
-            current_entity_scope_for_sessoes = str(page_data.get("current_entity_scope") or "").strip().lower()
             if admin_subprocess_state_v2 is not None:
+                admin_subprocess_state_v2 = _filter_sessoes_admin_subprocess_state_for_scope_v1(
+                    admin_subprocess_state_v2,
+                    current_entity_scope_for_sessoes,
+                )
+                admin_subprocess_state_v2 = _decorate_admin_subprocess_state_with_entity_name_v1(
+                    admin_subprocess_state_v2,
+                    sessoes_entity_name_v1,
+                )
+
                 original_options = []
                 for field in sessoes_subprocess_config_v2.fields:
                     if field.key == "visibility_scope_mode":
@@ -2151,14 +2366,27 @@ def new_user_page(
                     filtered_options.append((val, label))
 
                 admin_subprocess_state_v2.field_options["visibility_scope_mode"] = tuple(filtered_options)
+                admin_subprocess_state_v2.active_fields = tuple(
+                    get_sessoes_visible_fields_v2(current_entity_scope_for_sessoes)
+                )
 
-                # Filtrar coluna SISTEMA para entidades que nao sejam Owner
                 if current_entity_scope_for_sessoes != "owner":
-                    admin_subprocess_state_v2.active_columns = tuple(
-                        col
-                        for col in sessoes_subprocess_config_v2.columns
-                        if col.key != "system"
-                    )
+                    create_data_v1 = dict(admin_subprocess_state_v2.create_data or {})
+                    create_data_v1["visibility_scope_mode"] = str(
+                        create_data_v1.get("visibility_scope_mode") or "legado"
+                    ).strip() or "legado"
+                    admin_subprocess_state_v2.create_data = create_data_v1
+
+                    if isinstance(admin_subprocess_state_v2.edit_data, dict):
+                        edit_data_v1 = dict(admin_subprocess_state_v2.edit_data or {})
+                        edit_data_v1["visibility_scope_mode"] = str(
+                            edit_data_v1.get("visibility_scope_mode") or "legado"
+                        ).strip() or "legado"
+                        admin_subprocess_state_v2.edit_data = edit_data_v1
+
+                admin_subprocess_state_v2.active_columns = tuple(
+                    get_sessoes_visible_columns_v2(current_entity_scope_for_sessoes)
+                )
     elif resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "menu":
         admin_menu_state = build_admin_menu_state(
             rows=[
@@ -2205,7 +2433,10 @@ def new_user_page(
                     edit_key=effective_definition_edit_id,
                     success=success or "",
                     error=error or "",
-                    return_url=f"/users/new?menu={resolved_menu}&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card",
+                    return_url=build_sessoes_admin_return_url_v2(
+                        admin_tab="definicoes",
+                        target="admin-definicoes-card",
+                    ),
                     context={
                         "page_state": page_state,
                         "current_user": current_user,
@@ -2344,7 +2575,7 @@ def new_user_page(
         "requested_dynamic_process_section": clean_dynamic_section_from_query,
         "appverbo_after_save": is_post_save_return,
         "admin_process_only": bool(admin_process_only),
-        "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
+        "sidebar_section_edit_key": str(effective_sidebar_section_edit_key or "").strip().lower(),
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,

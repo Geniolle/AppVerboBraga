@@ -86,6 +86,7 @@ def build_admin_subprocess_state(
     config: AdminSubprocessConfig,
     rows: Iterable[dict[str, Any]],
     edit_key: str = "",
+    edit_data: dict[str, Any] | None = None,
     create_data: dict[str, Any] | None = None,
     success: str = "",
     error: str = "",
@@ -94,13 +95,18 @@ def build_admin_subprocess_state(
 ) -> AdminSubprocessState:
     row_list = [dict(row) for row in rows]
     active_rows, inactive_rows = split_admin_subprocess_rows(row_list, config)
-    edit_data = find_admin_subprocess_row(row_list, config, edit_key)
+    resolved_edit_data = None
+
+    if isinstance(edit_data, dict) and edit_data:
+        resolved_edit_data = dict(edit_data)
+    else:
+        resolved_edit_data = find_admin_subprocess_row(row_list, config, edit_key)
 
     return AdminSubprocessState(
         config=config,
-        mode="edit" if edit_data else "create",
+        mode="edit" if resolved_edit_data else "create",
         edit_key=edit_key,
-        edit_data=edit_data,
+        edit_data=resolved_edit_data,
         create_data=dict(create_data or {}),
         active_rows=active_rows,
         inactive_rows=inactive_rows,

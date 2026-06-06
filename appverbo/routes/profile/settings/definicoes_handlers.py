@@ -5,6 +5,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from fastapi import Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from appverbo.admin_subprocesses.sessoes.common import build_sessoes_admin_return_url_v2
 from appverbo.admin_subprocesses.repositories.definition_repository import (
     DefinitionAdminRepository,
 )
@@ -18,7 +19,10 @@ from appverbo.services.session import get_current_user, get_session_entity_id
 
 
 DEFINICOES_DEFAULT_RETURN_URL_V1 = (
-    "/users/new?menu=administrativo&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card"
+    build_sessoes_admin_return_url_v2(
+        admin_tab="definicoes",
+        target="admin-definicoes-card",
+    )
 )
 
 
@@ -60,7 +64,7 @@ def _sanitize_definicoes_return_url_v1(raw_return_url: object) -> str:
             target_value = clean_target
         break
 
-    preserved_params.append(("menu", "administrativo"))
+    preserved_params.append(("menu", "sessoes"))
     preserved_params.append(("admin_tab", "definicoes"))
     preserved_params.append(("target", target_value))
 

@@ -150,9 +150,9 @@
     const mapa = {
       utilizador: "/users/new?menu=administrativo&admin_tab=utilizador",
       entidade: "/users/new?menu=administrativo&admin_tab=entidade",
-      menu: "/users/new?menu=administrativo&admin_tab=menu",
-      definicoes: "/users/new?menu=administrativo&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card",
-      sessoes: "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
+      menu: "/users/new?menu=sessoes&admin_tab=menu&target=admin-menu-card#admin-menu-card",
+      definicoes: "/users/new?menu=sessoes&admin_tab=definicoes&target=admin-definicoes-card#admin-definicoes-card",
+      sessoes: "/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     };
 
     return mapa[texto] || "";

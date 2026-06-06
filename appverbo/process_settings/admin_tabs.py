@@ -14,6 +14,7 @@ ADMIN_PROCESS_SETTINGS_TABS: tuple[dict[str, str], ...] = (
     {"key": "campos_quantidade", "label": "Campos Quantidade"},
     {"key": "lista", "label": "Listas"},
     {"key": "campos_subsequentes", "label": "Campos Subsequentes"},
+    {"key": "subprocessos", "label": "Subprocessos"},
 )
 
 

@@ -138,7 +138,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         if scope_mode == "legado":
             return "Legado"
 
-        return "Owner e Legado"
+        return "Default"
 
     def make_unique_session_key(self, base_key: str, used_keys: set[str]) -> str:
         clean_base_key = self._slugify_session_key(base_key) or "nova_sessao"
