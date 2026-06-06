@@ -16,6 +16,7 @@ from appverbo.admin_subprocesses.repositories.sidebar_section_repository import 
 from appverbo.admin_subprocesses.sessoes.configuracao import SESSOES_CONFIG
 from appverbo.menu_settings import get_sidebar_global_refresh_version_v1
 from appverbo.services.permissions import get_user_entity_permissions
+from appverbo.services.entity_scope import load_entity_profile_scope_v1
 
 
 # ###################################################################################
@@ -96,9 +97,28 @@ def execute_list_sessions_v1(
         selected_entity_id,
     )
 
+    resolved_selected_entity_id = permissions.get("selected_entity_id")
+    if normalized_filters.entity_id is None and resolved_selected_entity_id is not None:
+        normalized_filters = SidebarSectionListFilters(
+            entity_id=resolved_selected_entity_id,
+            allowed_entity_ids=normalized_filters.allowed_entity_ids,
+            status_values=normalized_filters.status_values,
+            search_text=normalized_filters.search_text,
+            page=normalized_filters.page,
+            page_size=normalized_filters.page_size,
+        )
+
+    current_entity_scope = load_entity_profile_scope_v1(
+        session,
+        resolved_selected_entity_id,
+    )
+    if not current_entity_scope and permissions.get("can_manage_all_entities"):
+        current_entity_scope = "owner"
+
     result = repository.list_sessions(
         session=session,
         filters=normalized_filters,
+        current_entity_scope=current_entity_scope,
     )
 
     all_sessions = list(result.get("rows", []))

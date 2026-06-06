@@ -74,12 +74,12 @@
       facade.activateMenu(menuKey, options);
     }
 
-    function activateMenuTarget(menuKey, targetSelector, context = {}) {
+    function activateMenuTarget(menuKey, targetSelector, options = {}, context = {}) {
       const facade = getMenuNavigationFacade(context);
       if (!facade || typeof facade.activateMenuTarget !== "function") {
         return;
       }
-      facade.activateMenuTarget(menuKey, targetSelector);
+      facade.activateMenuTarget(menuKey, targetSelector, options);
     }
 
     function handleHashNavigation(rawHash, context = {}) {

@@ -55,7 +55,7 @@ SIDEBAR_SECTION_FIELDS = (
 SIDEBAR_SECTION_COLUMNS = (
     AdminColumnConfig(key="label", label="NOME", source="label"),
     AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
-    AdminColumnConfig(key="entity", label="ENTIDADE", source="entity_name"),
+    AdminColumnConfig(key="entity_internal_number", label="Nº CLIENTE", source="entity_internal_number"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
 )
 

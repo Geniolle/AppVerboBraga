@@ -8,12 +8,13 @@ from appverbo.admin_subprocesses.repositories.sidebar_section_repository import 
     SidebarSectionAdminRepository,
 )
 from appverbo.admin_subprocesses.sessoes.configuracao import SESSOES_CONFIG
+from appverbo.services.entity_scope import load_entity_profile_scope_v1
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.sessoes.outcome import SessionActionOutcome
 from appverbo.use_cases.sessoes.policies import (
     ensure_actor_can_manage_sessions_v1,
-    ensure_actor_is_owner_for_sessions_v1,
     ensure_session_can_be_moved_v1,
+    ensure_session_row_action_allowed_v1,
 )
 from appverbo.use_cases.sessoes.save_session import (
     build_sidebar_section_redirect_v1,
@@ -73,8 +74,23 @@ def execute_move_session_v1(
         str(actor_user["login_email"] or ""),
         selected_entity_id,
     )
+    resolved_selected_entity_id = permissions.get("selected_entity_id")
+    current_entity_scope = load_entity_profile_scope_v1(
+        session,
+        resolved_selected_entity_id,
+    )
 
-    policy_error = ensure_actor_is_owner_for_sessions_v1(permissions=permissions)
+    if not current_entity_scope and permissions.get("can_manage_all_entities"):
+        current_entity_scope = "owner"
+
+    policy_error = ensure_session_row_action_allowed_v1(
+        repository=repository,
+        session=session,
+        section_key=payload.get("section_key", ""),
+        action="move",
+        selected_entity_id=resolved_selected_entity_id,
+        current_entity_scope=current_entity_scope,
+    )
 
     if policy_error:
         return build_sidebar_section_redirect_v1(
@@ -88,6 +104,7 @@ def execute_move_session_v1(
         session=session,
         section_key=payload.get("section_key", ""),
         direction=payload.get("direction", ""),
+        selected_entity_id=resolved_selected_entity_id,
     )
 
     if policy_error:
@@ -101,6 +118,8 @@ def execute_move_session_v1(
         session=session,
         section_key=payload.get("section_key", ""),
         direction=payload.get("direction", ""),
+        selected_entity_id=resolved_selected_entity_id,
+        current_entity_scope=current_entity_scope,
     )
 
     if not ok:

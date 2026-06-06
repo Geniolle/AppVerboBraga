@@ -279,15 +279,16 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         member_ids: set[int],
         allowed_entity_ids: set[int] | None,
         selected_entity_id: int | None,
-    ) -> tuple[dict[int, int], dict[int, str]]:
+    ) -> tuple[dict[int, int], dict[int, str], dict[int, str]]:
         if not member_ids:
-            return {}, {}
+            return {}, {}, {}
 
         stmt = (
             select(
                 MemberEntity.member_id.label("member_id"),
                 MemberEntity.entity_id.label("entity_id"),
                 Entity.name.label("entity_name"),
+                Entity.internal_number.label("entity_internal_number"),
                 MemberEntity.id.label("member_entity_id"),
             )
             .join(Entity, Entity.id == MemberEntity.entity_id)
@@ -309,6 +310,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
 
         entity_id_by_member_id: dict[int, int] = {}
         entity_name_by_member_id: dict[int, str] = {}
+        entity_internal_number_by_member_id: dict[int, str] = {}
 
         for row in session.execute(stmt).all():
             member_id = int(row.member_id)
@@ -318,8 +320,9 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
 
             entity_id_by_member_id[member_id] = int(row.entity_id)
             entity_name_by_member_id[member_id] = str(row.entity_name or "-")
+            entity_internal_number_by_member_id[member_id] = str(row.entity_internal_number or "-")
 
-        return entity_id_by_member_id, entity_name_by_member_id
+        return entity_id_by_member_id, entity_name_by_member_id, entity_internal_number_by_member_id
 
     def _build_profile_maps_by_user_id(
         self,
@@ -390,6 +393,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         row: Any,
         entity_id_by_member_id: dict[int, int],
         entity_name_by_member_id: dict[int, str],
+        entity_internal_number_by_member_id: dict[int, str],
         profile_name_by_user_id: dict[int, str],
         profile_id_by_user_id: dict[int, str],
         superuser_user_ids: set[int],
@@ -420,6 +424,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             "is_active": is_user_account_status_active_v1(clean_status),
             "entity_id": str(entity_id_by_member_id.get(member_id) or "").strip(),
             "entity_name": entity_name_by_member_id.get(member_id, "-"),
+            "entity_internal_number": entity_internal_number_by_member_id.get(member_id, "-"),
             "profile_id": str(profile_id_by_user_id.get(user_id) or "").strip(),
             "profile_name": profile_name_by_user_id.get(user_id, "-"),
             "is_entity_superuser": user_id in superuser_user_ids,
@@ -484,7 +489,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             if row.id is not None
         }
 
-        entity_id_by_member_id, entity_name_by_member_id = self._build_entity_map_by_member_id(
+        entity_id_by_member_id, entity_name_by_member_id, entity_internal_number_by_member_id = self._build_entity_map_by_member_id(
             session=session,
             member_ids=member_ids,
             allowed_entity_ids=allowed_entity_ids,
@@ -504,6 +509,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
                 row=row,
                 entity_id_by_member_id=entity_id_by_member_id,
                 entity_name_by_member_id=entity_name_by_member_id,
+                entity_internal_number_by_member_id=entity_internal_number_by_member_id,
                 profile_name_by_user_id=profile_name_by_user_id,
                 profile_id_by_user_id=profile_id_by_user_id,
                 superuser_user_ids=superuser_user_ids,

@@ -6,6 +6,7 @@ from typing import Any
 
 MENU_CONFIG_ENTITY_SCOPES_KEY_V1 = "entity_scoped_overrides_v1"
 MENU_CONFIG_SCOPE_MENU_LABEL_KEY_V1 = "menu_label"
+MENU_CONFIG_SCOPE_SIDEBAR_SECTIONS_KEY_V1 = "sidebar_sections"
 MENU_CONFIG_SCOPE_KEYS_V1 = frozenset(
     {
         "additional_fields",
@@ -22,6 +23,7 @@ MENU_CONFIG_SCOPE_KEYS_V1 = frozenset(
         "process_quantity_fields",
         "subsequent_fields",
         "sidebar_section",
+        MENU_CONFIG_SCOPE_SIDEBAR_SECTIONS_KEY_V1,
         "sidebar_global_refresh_version",
         MENU_CONFIG_SCOPE_MENU_LABEL_KEY_V1,
     }
@@ -48,6 +50,63 @@ def coerce_entity_scope_id_v1(value: object) -> int | None:
 
 def _clone_menu_scope_value_v1(value: Any) -> Any:
     return copy.deepcopy(value)
+
+
+def _normalize_keyed_menu_scope_row_v1(value: Any) -> tuple[str, Any]:
+    if not isinstance(value, dict):
+        return "", None
+
+    clean_key = str(value.get("key") or "").strip().lower()
+
+    if not clean_key:
+        return "", None
+
+    return clean_key, _clone_menu_scope_value_v1(value)
+
+
+def _merge_scoped_sidebar_sections_v1(
+    base_value: Any,
+    scoped_value: Any,
+) -> list[Any]:
+    base_items = list(base_value) if isinstance(base_value, list) else []
+    scoped_items = list(scoped_value) if isinstance(scoped_value, list) else []
+    merged_items: list[Any] = []
+    merged_index_by_key: dict[str, int] = {}
+
+    for raw_item in base_items:
+        clean_key, cloned_item = _normalize_keyed_menu_scope_row_v1(raw_item)
+
+        if not clean_key or cloned_item is None:
+            continue
+
+        merged_index_by_key[clean_key] = len(merged_items)
+        merged_items.append(cloned_item)
+
+    for raw_item in scoped_items:
+        clean_key, cloned_item = _normalize_keyed_menu_scope_row_v1(raw_item)
+
+        if not clean_key or cloned_item is None:
+            continue
+
+        if clean_key in merged_index_by_key:
+            merged_items[merged_index_by_key[clean_key]] = cloned_item
+            continue
+
+        merged_index_by_key[clean_key] = len(merged_items)
+        merged_items.append(cloned_item)
+
+    return merged_items
+
+
+def _build_effective_menu_scope_value_v1(
+    scope_key: str,
+    base_value: Any,
+    scoped_value: Any,
+) -> Any:
+    if scope_key == MENU_CONFIG_SCOPE_SIDEBAR_SECTIONS_KEY_V1:
+        return _merge_scoped_sidebar_sections_v1(base_value, scoped_value)
+
+    return _clone_menu_scope_value_v1(scoped_value)
 
 
 def normalize_menu_entity_scopes_v1(
@@ -119,8 +178,10 @@ def build_effective_menu_config_v1(
         if scope_key not in scoped_overrides:
             continue
 
-        effective_menu_config[scope_key] = _clone_menu_scope_value_v1(
-            scoped_overrides[scope_key]
+        effective_menu_config[scope_key] = _build_effective_menu_scope_value_v1(
+            scope_key,
+            effective_menu_config.get(scope_key),
+            scoped_overrides[scope_key],
         )
 
     return effective_menu_config

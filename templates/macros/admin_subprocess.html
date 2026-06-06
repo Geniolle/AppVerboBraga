@@ -167,13 +167,18 @@
   {% set row_menu_key = "sessoes" if state.config.key in ("sessoes", "definicoes") else "administrativo" %}
   {% set move_key_field = state.config.move_key_field or state.config.identity_field %}
   {% set delete_key_field = state.config.delete_key_field or state.config.identity_field %}
+  {% set can_move = row.get("can_move", true) %}
+  {% set move_disabled_reason = row.get("move_disabled_reason", "Movimento indisponível neste registo.") %}
+  {% set delete_disabled_reason = row.get("delete_disabled_reason", "Eliminação indisponível neste registo.") %}
   {% set can_move_up = row.get("can_move_up", true) %}
   {% set can_move_down = row.get("can_move_down", true) %}
   {% set can_delete = row.get("can_delete", true) %}
+  {% set can_edit = row.get("can_edit", true) %}
+  {% set edit_disabled_reason = row.get("edit_disabled_reason", "Edição indisponível neste registo.") %}
 
   <div class="admin-subprocess-row-actions-v1">
     {% if status_value == state.config.active_value and state.config.move_endpoint %}
-      {% if can_move_up %}
+      {% if can_move and can_move_up %}
         <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
           <input type="hidden" name="{{ move_key_field }}" value="{{ row_key }}">
           {% if move_key_field != "key" %}
@@ -184,10 +189,10 @@
           <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">&#8593;</button>
         </form>
       {% else %}
-        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no topo" aria-label="Já está no topo">&#8593;</span>
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="{{ move_disabled_reason if not can_move else 'Já está no topo' }}" aria-label="{{ move_disabled_reason if not can_move else 'Já está no topo' }}">&#8593;</span>
       {% endif %}
 
-      {% if can_move_down %}
+      {% if can_move and can_move_down %}
         <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
           <input type="hidden" name="{{ move_key_field }}" value="{{ row_key }}">
           {% if move_key_field != "key" %}
@@ -198,16 +203,24 @@
           <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">&#8595;</button>
         </form>
       {% else %}
-        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no fim" aria-label="Já está no fim">&#8595;</span>
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="{{ move_disabled_reason if not can_move else 'Já está no fim' }}" aria-label="{{ move_disabled_reason if not can_move else 'Já está no fim' }}">&#8595;</span>
       {% endif %}
     {% endif %}
 
+    {% if can_edit %}
     <a
       class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
       title="Editar"
       aria-label="Editar"
       href="/users/new?menu={{ row_menu_key }}&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >&#9998;</a>
+    {% else %}
+    <span
+      class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1"
+      title="{{ edit_disabled_reason }}"
+      aria-label="{{ edit_disabled_reason }}"
+    >&#9998;</span>
+    {% endif %}
 
     <button
       type="button"
@@ -238,8 +251,8 @@
       {% elif state.config.key == "sessoes" %}
         <span
           class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1 admin-subprocess-action-btn-disabled-v1"
-          title="Sessão padrão do sistema não pode ser eliminada"
-          aria-label="Sessão padrão do sistema não pode ser eliminada"
+          title="{{ delete_disabled_reason or 'Sessão padrão do sistema não pode ser eliminada' }}"
+          aria-label="{{ delete_disabled_reason or 'Sessão padrão do sistema não pode ser eliminada' }}"
         >&#128465;</span>
       {% endif %}
     {% endif %}

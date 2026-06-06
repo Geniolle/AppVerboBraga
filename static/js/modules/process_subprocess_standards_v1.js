@@ -80,7 +80,9 @@
     administrativo: Object.freeze({}),
     sessoes: Object.freeze({
       "#admin-menu-form": "#admin-menu-card",
-      "#admin-menu-create-card": "#admin-menu-card"
+      "#admin-menu-create-card": "#admin-menu-card",
+      "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card",
+      "#admin-definicoes-card-edit": "#admin-definicoes-card"
     })
   });
 
@@ -92,13 +94,13 @@
           "#admin-sidebar-sections-card",
           "#admin-sidebar-sections-card-create",
           "#admin-sidebar-sections-card-inactive",
-          "#admin-sidebar-sections-card-edit"
+          "#admin-sidebar-sections-form-card"
         ]),
         cardIds: Object.freeze([
           "admin-sidebar-sections-card-create",
           "admin-sidebar-sections-card",
           "admin-sidebar-sections-card-inactive",
-          "admin-sidebar-sections-card-edit"
+          "admin-sidebar-sections-form-card"
         ])
       }),
       Object.freeze({
@@ -168,8 +170,7 @@
     "#edit-entity-card": "#create-entity-card",
     "#configuracao-account-status-card": "#admin-menu-card",
     "#admin-definicoes-card-create": "#admin-definicoes-card",
-    "#admin-definicoes-card-inactive": "#admin-definicoes-card",
-    "#admin-definicoes-card-edit": "#admin-definicoes-card"
+    "#admin-definicoes-card-inactive": "#admin-definicoes-card"
   });
 
   const HASH_TARGET_MENU_LIBRARY_V1 = Object.freeze({
@@ -184,6 +185,7 @@
     "#admin-definicoes-card-inactive": "sessoes",
     "#admin-definicoes-card-edit": "sessoes",
     "#admin-sidebar-sections-card": "sessoes",
+    "#admin-sidebar-sections-form-card": "sessoes",
     "#settings-menu-edit-card": "sessoes"
   });
 
@@ -370,6 +372,23 @@
       return true;
     }
 
+    // Dynamic matching by data-admin-card-group attribute
+    if (typeof document !== "undefined") {
+      const cardEl = document.getElementById(normalizedCardId);
+      if (cardEl) {
+        const cardGroup = cardEl.getAttribute("data-admin-card-group");
+        if (cardGroup) {
+          const targetEl = document.querySelector(resolvedTargetSelector);
+          if (targetEl) {
+            const targetGroup = targetEl.getAttribute("data-admin-card-group");
+            if (targetGroup && cardGroup === targetGroup) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
     const groups = getStandardScopedCardGroupsV1(menuKey, options);
     return groups.some((group) => (
       group.targets.includes(resolvedTargetSelector) &&
@@ -385,6 +404,24 @@
     if (!normalizedHash) {
       return "";
     }
+
+    // Try dynamic DOM-based resolution first
+    if (typeof document !== "undefined") {
+      const element = document.getElementById(normalizedHash.replace("#", ""));
+      if (element) {
+        const tabKey = element.getAttribute("data-admin-subprocess");
+        if (tabKey) {
+          for (const menuKey in SUBPROCESS_TAB_LIBRARY_V1) {
+            const tabs = SUBPROCESS_TAB_LIBRARY_V1[menuKey];
+            const tabDef = tabs.find((t) => t.key === tabKey);
+            if (tabDef && tabDef.target) {
+              return normalizeTargetSelectorV1(tabDef.target);
+            }
+          }
+        }
+      }
+    }
+
     const aliasedHash = HASH_TARGET_ALIAS_LIBRARY_V1[normalizedHash];
     return normalizeTargetSelectorV1(aliasedHash || normalizedHash);
   }
@@ -401,6 +438,26 @@
         menuKey: "",
         targetSelector: ""
       };
+    }
+
+    // Try dynamic DOM-based menuKey resolution first
+    if (typeof document !== "undefined") {
+      const originalHash = normalizeTargetSelectorV1(rawHash);
+      const element = document.getElementById(originalHash.replace("#", ""));
+      if (element) {
+        const tabKey = element.getAttribute("data-admin-subprocess");
+        if (tabKey) {
+          for (const menuKey in SUBPROCESS_TAB_LIBRARY_V1) {
+            const tabs = SUBPROCESS_TAB_LIBRARY_V1[menuKey];
+            if (tabs.some((t) => t.key === tabKey)) {
+              return {
+                menuKey: normalizeMenuKey(menuKey),
+                targetSelector: normalizedTarget
+              };
+            }
+          }
+        }
+      }
     }
 
     const menuKey = normalizeMenuKey(HASH_TARGET_MENU_LIBRARY_V1[normalizedTarget] || "");

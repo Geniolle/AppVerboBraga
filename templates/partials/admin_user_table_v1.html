@@ -20,7 +20,7 @@
       <th>Nome</th>
       <th>Email</th>
       <th>Telefone</th>
-      <th>Entidade</th>
+      <th>Nº Cliente</th>
       <th>Perfil</th>
       <th>Estado</th>
       <th>Criado em</th>
@@ -34,7 +34,7 @@
       <td>{{ row.full_name }}</td>
       <td>{{ row.login_email }}</td>
       <td>{{ row.primary_phone }}</td>
-      <td>{{ row.entity_name }}</td>
+      <td>{{ row.entity_internal_number }}</td>
       <td>{{ row.profile_name }}</td>
       <td>
         {% if row.account_status_is_active or row.account_status == "active" %}

@@ -112,3 +112,13 @@ def ensure_menu_can_edit_additional_fields_v1(
         return "Este menu não permite campos adicionais."
 
     return ""
+
+
+def ensure_menu_additional_fields_owner_scope_v1(
+    *,
+    can_edit: bool,
+) -> str:
+    if can_edit:
+        return ""
+
+    return "Campos adicionais deste processo só podem ser editados na entidade Owner."

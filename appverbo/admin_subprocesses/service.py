@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from typing import Any, Iterable
@@ -87,6 +86,7 @@ def build_admin_subprocess_state(
     rows: Iterable[dict[str, Any]],
     edit_key: str = "",
     edit_data: dict[str, Any] | None = None,
+    allow_edit_row_fallback: bool = True,
     create_data: dict[str, Any] | None = None,
     success: str = "",
     error: str = "",
@@ -99,7 +99,7 @@ def build_admin_subprocess_state(
 
     if isinstance(edit_data, dict) and edit_data:
         resolved_edit_data = dict(edit_data)
-    else:
+    elif allow_edit_row_fallback:
         resolved_edit_data = find_admin_subprocess_row(row_list, config, edit_key)
 
     return AdminSubprocessState(

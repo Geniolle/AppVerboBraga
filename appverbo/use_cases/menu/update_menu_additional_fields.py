@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 
 from appverbo.admin_subprocesses.menu.configuracao import MENU_CONFIG
 from appverbo.admin_subprocesses.repositories.menu_repository import MenuAdminRepository
+from appverbo.services.menu_additional_fields_access import (
+    build_menu_additional_fields_access_v1,
+)
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.menu.outcome import (
     MenuActionOutcome,
@@ -15,6 +18,7 @@ from appverbo.use_cases.menu.outcome import (
     sanitize_menu_return_url_v1,
 )
 from appverbo.use_cases.menu.policies import (
+    ensure_menu_additional_fields_owner_scope_v1,
     ensure_actor_can_manage_menu_v1,
     ensure_actor_is_owner_for_menu_v1,
     ensure_menu_can_edit_additional_fields_v1,
@@ -138,14 +142,14 @@ def _validate_common_additional_field_permissions_v1(
     payload: Any,
     repository: MenuAdminRepository,
     return_url: str,
-) -> MenuActionOutcome | None:
+) -> tuple[MenuActionOutcome | None, dict[str, Any]]:
     policy_error = ensure_actor_can_manage_menu_v1(session=session, actor_user=actor_user)
     if policy_error:
         return build_menu_return_url_with_message_v1(
             return_url=return_url,
             message_key="error",
             message=policy_error,
-        )
+        ), {}
 
     permissions = get_user_entity_permissions(
         session,
@@ -160,7 +164,7 @@ def _validate_common_additional_field_permissions_v1(
             return_url=return_url,
             message_key="error",
             message=policy_error,
-        )
+        ), {}
 
     policy_error = ensure_menu_in_scope_v1(permissions=permissions)
     if policy_error:
@@ -168,7 +172,7 @@ def _validate_common_additional_field_permissions_v1(
             return_url=return_url,
             message_key="error",
             message=policy_error,
-        )
+        ), {}
 
     policy_error = ensure_menu_exists_v1(
         repository=repository,
@@ -180,7 +184,7 @@ def _validate_common_additional_field_permissions_v1(
             return_url=return_url,
             message_key="error",
             message=policy_error,
-        )
+        ), {}
 
     policy_error = ensure_menu_can_edit_additional_fields_v1(menu_key=payload.menu_key)
     if policy_error:
@@ -188,9 +192,24 @@ def _validate_common_additional_field_permissions_v1(
             return_url=return_url,
             message_key="error",
             message=policy_error,
-        )
+        ), {}
 
-    return None
+    access = build_menu_additional_fields_access_v1(
+        session=session,
+        selected_entity_id=selected_entity_id,
+        can_manage_all_entities=bool(permissions.get("can_manage_all_entities")),
+    )
+    policy_error = ensure_menu_additional_fields_owner_scope_v1(
+        can_edit=bool(access.get("can_edit"))
+    )
+    if policy_error:
+        return build_menu_return_url_with_message_v1(
+            return_url=return_url,
+            message_key="error",
+            message=policy_error,
+        ), access
+
+    return None, access
 
 
 def execute_move_menu_additional_field_v1(
@@ -203,7 +222,7 @@ def execute_move_menu_additional_field_v1(
     repository = MenuAdminRepository(MENU_CONFIG)
     return_url = _build_additional_fields_return_url_v1(payload)
 
-    blocked = _validate_common_additional_field_permissions_v1(
+    blocked, access = _validate_common_additional_field_permissions_v1(
         session=session,
         actor_user=actor_user,
         selected_entity_id=selected_entity_id,
@@ -219,7 +238,7 @@ def execute_move_menu_additional_field_v1(
         menu_key=payload.menu_key,
         field_key=payload.field_key,
         direction=payload.direction,
-        selected_entity_id=selected_entity_id,
+        selected_entity_id=access.get("edit_entity_id"),
     )
     if not ok:
         return build_menu_return_url_with_message_v1(
@@ -245,7 +264,7 @@ def execute_update_menu_additional_fields_v1(
     repository = MenuAdminRepository(MENU_CONFIG)
     return_url = _build_additional_fields_return_url_v1(payload)
 
-    blocked = _validate_common_additional_field_permissions_v1(
+    blocked, access = _validate_common_additional_field_permissions_v1(
         session=session,
         actor_user=actor_user,
         selected_entity_id=selected_entity_id,
@@ -260,7 +279,7 @@ def execute_update_menu_additional_fields_v1(
         session=session,
         menu_key=payload.menu_key,
         fields=payload.fields,
-        selected_entity_id=selected_entity_id,
+        selected_entity_id=access.get("edit_entity_id"),
     )
     if not ok:
         return build_menu_return_url_with_message_v1(

@@ -148,6 +148,18 @@
     return toSafeString_v1(item[key]);
   }
 
+  function hasEnabledActions_v1(config) {
+    if (!config || !config.actions) {
+      return false;
+    }
+
+    return Boolean(
+      config.actions.edit ||
+      config.actions.move ||
+      config.actions.remove
+    );
+  }
+
   function normalizeColumn_v1(rawColumn) {
     const column = rawColumn && typeof rawColumn === "object" ? rawColumn : {};
 
@@ -346,8 +358,10 @@
       row.appendChild(th);
     });
 
-    const actionsTh = createElement_v1("th", "configurable-items-actions-col-v1", "Ações");
-    row.appendChild(actionsTh);
+    if (hasEnabledActions_v1(manager.config)) {
+      const actionsTh = createElement_v1("th", "configurable-items-actions-col-v1", "Ações");
+      row.appendChild(actionsTh);
+    }
 
     thead.innerHTML = "";
     thead.appendChild(row);
@@ -423,27 +437,29 @@
         row.appendChild(td);
       });
 
-      const actionsTd = document.createElement("td");
-      const actionsWrap = document.createElement("div");
+      if (hasEnabledActions_v1(manager.config)) {
+        const actionsTd = document.createElement("td");
+        const actionsWrap = document.createElement("div");
 
-      actionsTd.className = "configurable-items-actions-cell-v1";
-      actionsWrap.className = "configurable-items-actions-v1";
+        actionsTd.className = "configurable-items-actions-cell-v1";
+        actionsWrap.className = "configurable-items-actions-v1";
 
-      if (manager.config.actions.edit) {
-        actionsWrap.appendChild(createActionButton_v1("edit", "Editar", itemId, false));
+        if (manager.config.actions.edit) {
+          actionsWrap.appendChild(createActionButton_v1("edit", "Editar", itemId, false));
+        }
+
+        if (manager.config.actions.move) {
+          actionsWrap.appendChild(createActionButton_v1("up", "Subir", itemId, absoluteIndex === 0));
+          actionsWrap.appendChild(createActionButton_v1("down", "Descer", itemId, absoluteIndex === totalItems - 1));
+        }
+
+        if (manager.config.actions.remove) {
+          actionsWrap.appendChild(createActionButton_v1("remove", "Remover", itemId, false));
+        }
+
+        actionsTd.appendChild(actionsWrap);
+        row.appendChild(actionsTd);
       }
-
-      if (manager.config.actions.move) {
-        actionsWrap.appendChild(createActionButton_v1("up", "Subir", itemId, absoluteIndex === 0));
-        actionsWrap.appendChild(createActionButton_v1("down", "Descer", itemId, absoluteIndex === totalItems - 1));
-      }
-
-      if (manager.config.actions.remove) {
-        actionsWrap.appendChild(createActionButton_v1("remove", "Remover", itemId, false));
-      }
-
-      actionsTd.appendChild(actionsWrap);
-      row.appendChild(actionsTd);
       tableBody.appendChild(row);
     });
 

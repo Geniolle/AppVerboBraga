@@ -204,8 +204,13 @@
       context.startupHash === "#admin-subprocess-v2-entidade"
     ) {
       adminSelectedTarget = "#create-entity-card";
-    } else if (context.startupHash === "#admin-sidebar-sections-card") {
-      adminSelectedTarget = "#admin-sidebar-sections-card";
+    } else if (
+      context.startupHash === "#admin-sidebar-sections-card" ||
+      context.startupHash === "#admin-sidebar-sections-card-create" ||
+      context.startupHash === "#admin-sidebar-sections-card-inactive" ||
+      context.startupHash === "#admin-sidebar-sections-form-card"
+    ) {
+      adminSelectedTarget = context.startupHash;
     } else if (
       context.startupHash === "#admin-menu-card" ||
       context.startupHash === "#admin-menu-card-inactive" ||
@@ -258,7 +263,10 @@
         cleanInitialTarget === "#admin-menu-card-create" ||
         cleanInitialTarget === "#admin-definicoes-card-create" ||
         cleanInitialTarget === "#admin-definicoes-card-inactive" ||
-        cleanInitialTarget === "#admin-definicoes-card-edit"
+        cleanInitialTarget === "#admin-definicoes-card-edit" ||
+        cleanInitialTarget === "#admin-sidebar-sections-form-card" ||
+        cleanInitialTarget === "#admin-sidebar-sections-card-create" ||
+        cleanInitialTarget === "#admin-sidebar-sections-card-inactive"
       ) {
         selectedTargetByMenu[context.initialMenu] = cleanInitialTarget;
       }

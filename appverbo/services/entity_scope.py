@@ -98,3 +98,85 @@ def build_entity_scope_label_v1(
 
     entity_name_by_id = build_entity_scope_name_map_v1(session, [parsed_entity_id])
     return entity_name_by_id.get(parsed_entity_id, f"Entidade {parsed_entity_id}")
+
+
+def build_entity_scope_internal_number_map_v1(
+    session: Session,
+    entity_ids: set[int] | list[int] | tuple[int, ...],
+) -> dict[int, str]:
+    normalized_entity_ids = sorted(
+        {
+            parsed_entity_id
+            for parsed_entity_id in (
+                coerce_entity_scope_id_v1(raw_entity_id)
+                for raw_entity_id in entity_ids
+            )
+            if parsed_entity_id is not None
+        }
+    )
+
+    if not normalized_entity_ids:
+        return {}
+
+    rows = session.execute(
+        select(Entity.id, Entity.internal_number).where(Entity.id.in_(normalized_entity_ids))
+    ).all()
+
+    internal_number_by_id: dict[int, str] = {}
+
+    for row in rows:
+        if row.id is None:
+            continue
+
+        parsed_entity_id = int(row.id)
+        clean_internal_number = str(row.internal_number or "").strip()
+        internal_number_by_id[parsed_entity_id] = clean_internal_number or str(parsed_entity_id)
+
+    return internal_number_by_id
+
+
+def build_entity_scope_display_v1(
+    session: Session,
+    entity_id: object,
+) -> dict[str, str]:
+    parsed_entity_id = coerce_entity_scope_id_v1(entity_id)
+
+    if parsed_entity_id is None:
+        return {
+            "entity_name": "",
+            "entity_internal_number": "",
+        }
+
+    entity_name = build_entity_scope_label_v1(session, parsed_entity_id)
+    entity_internal_number = build_entity_scope_internal_number_map_v1(
+        session,
+        [parsed_entity_id],
+    ).get(parsed_entity_id, str(parsed_entity_id))
+
+    return {
+        "entity_name": entity_name,
+        "entity_internal_number": entity_internal_number,
+    }
+
+
+def load_entity_profile_scope_v1(
+    session: Session,
+    entity_id: object,
+) -> str:
+    parsed_entity_id = coerce_entity_scope_id_v1(entity_id)
+
+    if parsed_entity_id is None:
+        return ""
+
+    raw_scope = session.execute(
+        select(Entity.profile_scope)
+        .where(Entity.id == parsed_entity_id)
+        .limit(1)
+    ).scalar_one_or_none()
+
+    clean_scope = str(raw_scope or "").strip().lower()
+
+    if clean_scope in {"owner", "legado"}:
+        return clean_scope
+
+    return ""

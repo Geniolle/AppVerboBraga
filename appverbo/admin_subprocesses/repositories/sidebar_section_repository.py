@@ -8,7 +8,17 @@ from typing import Any
 
 from sqlalchemy import text
 
+from appverbo.admin_subprocesses.common.row_action_access import (
+    build_admin_subprocess_row_action_access_v1,
+    decorate_admin_subprocess_row_action_access_v1,
+)
 from appverbo.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
+from appverbo.menu_config_scope import (
+    MENU_CONFIG_SCOPE_SIDEBAR_SECTIONS_KEY_V1,
+    apply_entity_scoped_menu_config_updates_v1,
+    coerce_entity_scope_id_v1,
+    get_menu_entity_scope_overrides_v1,
+)
 from appverbo.menu_settings import (
     MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY,
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
@@ -19,6 +29,7 @@ from appverbo.menu_settings import (
     normalize_menu_visibility_scopes,
     update_sidebar_sections_v2,
 )
+from appverbo.services.entity_scope import build_entity_scope_display_v1
 
 
 SESSION_STATUS_ACTIVE_V1 = "ativo"
@@ -50,6 +61,10 @@ class SidebarSectionListFilters:
     page_size: int = 5000
 
 
+SESSION_SCOPE_ORIGIN_DEFAULT_V1 = "default"
+SESSION_SCOPE_ORIGIN_ENTITY_V1 = "entity"
+
+
 # ###################################################################################
 # (2) REPOSITORY NATIVO DE SESSOES
 # ###################################################################################
@@ -62,6 +77,22 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
 
     def _normalize_key(self, value: object) -> str:
         return self._normalize_text(value).lower()
+
+    def _resolve_current_entity_scope_from_context(
+        self,
+        context: dict[str, Any] | None,
+    ) -> str:
+        return self._normalize_key((context or {}).get("current_entity_scope"))
+
+    def _resolve_selected_entity_id_from_context(
+        self,
+        context: dict[str, Any] | None,
+    ) -> int | None:
+        clean_context = context or {}
+
+        return coerce_entity_scope_id_v1(
+            clean_context.get("selected_entity_id") or clean_context.get("entity_id")
+        )
 
     def _slugify_session_key(self, value: object) -> str:
         raw_value = self._normalize_text(value).lower()
@@ -179,7 +210,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
     ) -> SidebarSectionListFilters:
         raw_context = context or {}
 
-        raw_entity_id = self._normalize_text(raw_context.get("entity_id"))
+        raw_entity_id = self._normalize_text(raw_context.get("entity_id") or raw_context.get("selected_entity_id"))
         parsed_entity_id = int(raw_entity_id) if raw_entity_id.isdigit() else None
 
         raw_page = self._normalize_text(raw_context.get("page"))
@@ -288,6 +319,140 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         session.commit()
         return True, ""
 
+    def _build_entity_scope_display_v1(
+        self,
+        *,
+        session: Any,
+        entity_id: object,
+    ) -> dict[str, str]:
+        return build_entity_scope_display_v1(session, entity_id)
+
+    def _decorate_session_scope_metadata_v1(
+        self,
+        *,
+        session: Any,
+        row: dict[str, Any],
+        scope_origin: str,
+        entity_scope_entity_id: object = None,
+    ) -> dict[str, Any]:
+        clean_row = dict(row or {})
+        clean_scope_origin = str(scope_origin or "").strip().lower()
+
+        if clean_scope_origin == SESSION_SCOPE_ORIGIN_ENTITY_V1:
+            scope_display = self._build_entity_scope_display_v1(
+                session=session,
+                entity_id=entity_scope_entity_id,
+            )
+            clean_row["entity_scope_origin"] = SESSION_SCOPE_ORIGIN_ENTITY_V1
+            clean_row["entity_scope_entity_id"] = coerce_entity_scope_id_v1(
+                entity_scope_entity_id
+            )
+            clean_row["entity_name"] = str(scope_display.get("entity_name") or "").strip()
+            clean_row["entity_internal_number"] = str(
+                scope_display.get("entity_internal_number") or ""
+            ).strip()
+            return clean_row
+
+        clean_row["entity_scope_origin"] = SESSION_SCOPE_ORIGIN_DEFAULT_V1
+        clean_row["entity_scope_entity_id"] = None
+        clean_row["entity_name"] = "Default"
+        clean_row["entity_internal_number"] = "Default"
+        return clean_row
+
+    def _normalize_scope_rows_v1(
+        self,
+        *,
+        session: Any,
+        raw_sections: object,
+        scope_origin: str,
+        entity_scope_entity_id: object = None,
+        append_defaults: bool,
+    ) -> list[dict[str, Any]]:
+        raw_items = raw_sections if isinstance(raw_sections, list) else []
+        normalized_rows: list[dict[str, Any]] = []
+        seen_keys: set[str] = set()
+
+        for raw_section in raw_items:
+            normalized_row = self.normalize_session_row(raw_section)
+
+            if not normalized_row:
+                continue
+
+            clean_key = self._normalize_key(normalized_row.get("key"))
+
+            if not clean_key or clean_key in seen_keys:
+                continue
+
+            seen_keys.add(clean_key)
+            normalized_rows.append(
+                self._decorate_session_scope_metadata_v1(
+                    session=session,
+                    row=normalized_row,
+                    scope_origin=scope_origin,
+                    entity_scope_entity_id=entity_scope_entity_id,
+                )
+            )
+
+        if append_defaults:
+            normalized_rows = self._append_missing_defaults(normalized_rows)
+
+        return normalized_rows
+
+    def _load_sidebar_sections_scope_rows_v1(
+        self,
+        *,
+        session: Any,
+        selected_entity_id: object = None,
+    ) -> dict[str, Any]:
+        menu_config, found_row = self._load_administrativo_menu_config(session=session)
+        parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
+        global_rows = self._normalize_scope_rows_v1(
+            session=session,
+            raw_sections=menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY),
+            scope_origin=SESSION_SCOPE_ORIGIN_DEFAULT_V1,
+            append_defaults=True,
+        )
+
+        entity_override_rows: list[dict[str, Any]] = []
+
+        if parsed_selected_entity_id is not None:
+            entity_scope_overrides = get_menu_entity_scope_overrides_v1(
+                menu_config,
+                selected_entity_id=parsed_selected_entity_id,
+            )
+            entity_override_rows = self._normalize_scope_rows_v1(
+                session=session,
+                raw_sections=entity_scope_overrides.get(
+                    MENU_CONFIG_SCOPE_SIDEBAR_SECTIONS_KEY_V1
+                ),
+                scope_origin=SESSION_SCOPE_ORIGIN_ENTITY_V1,
+                entity_scope_entity_id=parsed_selected_entity_id,
+                append_defaults=False,
+            )
+
+        return {
+            "menu_config": menu_config,
+            "found_row": found_row,
+            "selected_entity_id": parsed_selected_entity_id,
+            "global_rows": global_rows,
+            "entity_rows": entity_override_rows,
+        }
+
+    def _serialize_session_rows_for_persistence_v1(
+        self,
+        rows: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        return [
+            {
+                "key": self._normalize_key(row.get("key")),
+                "label": row.get("label"),
+                "visibility_scope_mode": row.get("visibility_scope_mode"),
+                "status": row.get("status"),
+            }
+            for row in rows
+            if self._normalize_key(row.get("key"))
+        ]
+
     def normalize_session_row(
         self,
         row: dict[str, Any] | str,
@@ -341,6 +506,8 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             "id": clean_key,
             "label": clean_label,
             "name": clean_label,
+            "entity_name": "Default",
+            "entity_internal_number": "Default",
             "visibility_scopes": visibility_scopes,
             "visibility_scope_mode": clean_scope_mode,
             "visibility_scope_label": self._scope_label(clean_scope_mode),
@@ -383,31 +550,38 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
 
         return normalized_rows
 
-    def read_sidebar_sections(self, *, session: Any) -> list[dict[str, Any]]:
-        menu_config, _ = self._load_administrativo_menu_config(session=session)
-        raw_sections = menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    def read_sidebar_sections(
+        self,
+        *,
+        session: Any,
+        selected_entity_id: object = None,
+    ) -> list[dict[str, Any]]:
+        scope_rows = self._load_sidebar_sections_scope_rows_v1(
+            session=session,
+            selected_entity_id=selected_entity_id,
+        )
+        merged_rows = [dict(row) for row in scope_rows.get("global_rows", [])]
+        merged_index_by_key = {
+            self._normalize_key(row.get("key")): index
+            for index, row in enumerate(merged_rows)
+            if self._normalize_key(row.get("key"))
+        }
 
-        if not isinstance(raw_sections, list):
-            raw_sections = []
+        for row in scope_rows.get("entity_rows", []):
+            clean_row = dict(row)
+            clean_key = self._normalize_key(clean_row.get("key"))
 
-        normalized_rows: list[dict[str, Any]] = []
-        seen_keys: set[str] = set()
-
-        for raw_section in raw_sections:
-            normalized_row = self.normalize_session_row(raw_section)
-
-            if not normalized_row:
+            if not clean_key:
                 continue
 
-            clean_key = self._normalize_key(normalized_row.get("key"))
-
-            if not clean_key or clean_key in seen_keys:
+            if clean_key in merged_index_by_key:
+                merged_rows[merged_index_by_key[clean_key]] = clean_row
                 continue
 
-            seen_keys.add(clean_key)
-            normalized_rows.append(normalized_row)
+            merged_index_by_key[clean_key] = len(merged_rows)
+            merged_rows.append(clean_row)
 
-        return self._append_missing_defaults(normalized_rows)
+        return merged_rows
 
     def update_global_refresh_version(self, *, session: Any) -> tuple[bool, str]:
         menu_config, found_row = self._load_administrativo_menu_config(session=session)
@@ -527,6 +701,58 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
 
         return True, "", patched_rows
 
+    def persist_entity_sidebar_sections_v1(
+        self,
+        *,
+        session: Any,
+        selected_entity_id: object,
+        sections: list[dict[str, Any]],
+    ) -> tuple[bool, str, list[dict[str, Any]]]:
+        parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
+
+        if parsed_selected_entity_id is None:
+            return False, "Selecione uma entidade válida para gravar as sessões.", []
+
+        normalized_rows = self._normalize_scope_rows_v1(
+            session=session,
+            raw_sections=sections,
+            scope_origin=SESSION_SCOPE_ORIGIN_ENTITY_V1,
+            entity_scope_entity_id=parsed_selected_entity_id,
+            append_defaults=False,
+        )
+
+        menu_config, found_row = self._load_administrativo_menu_config(session=session)
+
+        if not found_row:
+            return False, "Configuração do menu Administrativo não encontrada.", []
+
+        updated_menu_config = apply_entity_scoped_menu_config_updates_v1(
+            menu_config,
+            selected_entity_id=parsed_selected_entity_id,
+            updates={
+                MENU_CONFIG_SCOPE_SIDEBAR_SECTIONS_KEY_V1: (
+                    self._serialize_session_rows_for_persistence_v1(normalized_rows)
+                ),
+            },
+        )
+        updated_menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+            build_sidebar_global_refresh_version_v1()
+        )
+
+        persisted, persist_error = self._persist_administrativo_menu_config(
+            session=session,
+            menu_config=updated_menu_config,
+        )
+
+        if not persisted:
+            return (
+                False,
+                persist_error or "Não foi possível gravar as sessões personalizadas.",
+                [],
+            )
+
+        return True, "", normalized_rows
+
     def _apply_filters(
         self,
         *,
@@ -565,7 +791,12 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
 
         return filtered_rows
 
-    def _apply_row_actions_metadata(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _apply_row_actions_metadata(
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        current_entity_scope: object = "",
+    ) -> list[dict[str, Any]]:
         result_rows = [dict(row) for row in rows]
 
         status_groups: dict[str, list[int]] = {}
@@ -576,14 +807,20 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
 
         for status, indexes in status_groups.items():
             for group_index, row_index in enumerate(indexes):
-                row = result_rows[row_index]
-                can_move = status == SESSION_STATUS_ACTIVE_V1
+                row = decorate_admin_subprocess_row_action_access_v1(
+                    subprocess_key=self.config.key,
+                    row=result_rows[row_index],
+                    current_entity_scope=current_entity_scope,
+                )
+                can_move = status == SESSION_STATUS_ACTIVE_V1 and bool(row.get("can_move", True))
                 row["can_move_up"] = can_move and group_index > 0
                 row["can_move_down"] = can_move and group_index < (len(indexes) - 1)
                 row["can_delete"] = (
-                    self._normalize_key(row.get("key")) not in SIDEBAR_SECTION_DEFAULTS_BY_KEY
+                    bool(row.get("can_delete", True))
+                    and self._normalize_key(row.get("key")) not in SIDEBAR_SECTION_DEFAULTS_BY_KEY
                     and status != SESSION_STATUS_ACTIVE_V1
                 )
+                result_rows[row_index] = row
 
         return result_rows
 
@@ -592,12 +829,19 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         filters: SidebarSectionListFilters | None = None,
+        current_entity_scope: object = "",
     ) -> dict[str, Any]:
         resolved_filters = filters or SidebarSectionListFilters()
 
-        rows = self.read_sidebar_sections(session=session)
+        rows = self.read_sidebar_sections(
+            session=session,
+            selected_entity_id=resolved_filters.entity_id,
+        )
         rows = self._apply_filters(rows=rows, filters=resolved_filters)
-        rows = self._apply_row_actions_metadata(rows)
+        rows = self._apply_row_actions_metadata(
+            rows,
+            current_entity_scope=current_entity_scope,
+        )
 
         total_rows = len(rows)
         start_index = (resolved_filters.page - 1) * resolved_filters.page_size
@@ -617,6 +861,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         filters: SidebarSectionListFilters | None = None,
+        current_entity_scope: object = "",
     ) -> list[dict[str, Any]]:
         resolved_filters = filters or SidebarSectionListFilters()
         active_filters = SidebarSectionListFilters(
@@ -632,6 +877,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             self.list_sessions(
                 session=session,
                 filters=active_filters,
+                current_entity_scope=current_entity_scope,
             ).get("rows", [])
         )
 
@@ -640,6 +886,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         filters: SidebarSectionListFilters | None = None,
+        current_entity_scope: object = "",
     ) -> list[dict[str, Any]]:
         resolved_filters = filters or SidebarSectionListFilters()
         inactive_filters = SidebarSectionListFilters(
@@ -655,17 +902,41 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             self.list_sessions(
                 session=session,
                 filters=inactive_filters,
+                current_entity_scope=current_entity_scope,
             ).get("rows", [])
         )
 
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         filters = self._normalize_filters_from_context(context)
+        current_entity_scope = self._resolve_current_entity_scope_from_context(context)
         result = self.list_sessions(
             session=session,
             filters=filters,
+            current_entity_scope=current_entity_scope,
         )
 
         return list(result.get("rows", []))
+
+    def get_session_row_by_key_v1(
+        self,
+        *,
+        session: Any,
+        section_key: str,
+        selected_entity_id: object = None,
+    ) -> dict[str, Any] | None:
+        clean_section_key = self._slugify_session_key(section_key)
+
+        if not clean_section_key:
+            return None
+
+        for row in self.read_sidebar_sections(
+            session=session,
+            selected_entity_id=selected_entity_id,
+        ):
+            if self._normalize_key(row.get("key")) == clean_section_key:
+                return dict(row)
+
+        return None
 
     def get_for_edit(
         self,
@@ -678,11 +949,29 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         if not clean_edit_key:
             return None
 
-        for row in self.read_sidebar_sections(session=session):
+        current_entity_scope = self._resolve_current_entity_scope_from_context(context)
+        selected_entity_id = self._resolve_selected_entity_id_from_context(context)
+
+        for row in self.read_sidebar_sections(
+            session=session,
+            selected_entity_id=selected_entity_id,
+        ):
             current_key = self._normalize_key(row.get("key"))
 
             if current_key == clean_edit_key:
-                return dict(row)
+                resolved_row = dict(row)
+
+                if current_entity_scope:
+                    action_access = build_admin_subprocess_row_action_access_v1(
+                        subprocess_key=self.config.key,
+                        row=resolved_row,
+                        current_entity_scope=current_entity_scope,
+                    )
+                    if not bool(action_access.get("can_edit", True)):
+                        return None
+                    resolved_row.update(action_access)
+
+                return resolved_row
 
         return None
 
@@ -695,17 +984,47 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         section_label: str,
         section_visibility_scope_mode: str,
         section_status: str,
+        selected_entity_id: object = None,
+        current_entity_scope: object = "",
     ) -> tuple[bool, str, str]:
         clean_mode = self._normalize_key(mode)
         clean_original_key = self._slugify_session_key(original_section_key)
         clean_label = self._normalize_text(section_label)
         clean_scope_mode = self.normalize_session_scope(section_visibility_scope_mode)
         clean_status = self.normalize_session_status(section_status)
+        clean_current_entity_scope = self._normalize_key(current_entity_scope)
+        parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
 
         if not clean_label:
             return False, "Informe o nome da sessão.", ""
 
-        current_rows = self.read_sidebar_sections(session=session)
+        scope_origin = (
+            SESSION_SCOPE_ORIGIN_DEFAULT_V1
+            if clean_current_entity_scope == "owner"
+            else SESSION_SCOPE_ORIGIN_ENTITY_V1
+        )
+
+        if scope_origin == SESSION_SCOPE_ORIGIN_ENTITY_V1:
+            if parsed_selected_entity_id is None:
+                return False, "Selecione uma entidade válida para gravar a sessão.", ""
+            clean_scope_mode = "legado"
+
+        scope_rows = self._load_sidebar_sections_scope_rows_v1(
+            session=session,
+            selected_entity_id=parsed_selected_entity_id,
+        )
+        current_rows = [
+            dict(row)
+            for row in (
+                scope_rows.get("global_rows", [])
+                if scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1
+                else scope_rows.get("entity_rows", [])
+            )
+        ]
+        effective_rows = self.read_sidebar_sections(
+            session=session,
+            selected_entity_id=parsed_selected_entity_id,
+        )
         payload_rows: list[dict[str, Any]] = []
         target_key = ""
 
@@ -741,7 +1060,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         else:
             used_keys = {
                 self._normalize_key(row.get("key"))
-                for row in current_rows
+                for row in effective_rows
                 if self._normalize_key(row.get("key"))
             }
             target_key = self.make_unique_session_key(clean_label, used_keys)
@@ -765,10 +1084,17 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                 }
             )
 
-        ok, error_message, _ = self.persist_sidebar_sections(
-            session=session,
-            sections=payload_rows,
-        )
+        if scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1:
+            ok, error_message, _ = self.persist_sidebar_sections(
+                session=session,
+                sections=payload_rows,
+            )
+        else:
+            ok, error_message, _ = self.persist_entity_sidebar_sections_v1(
+                session=session,
+                selected_entity_id=parsed_selected_entity_id,
+                sections=payload_rows,
+            )
 
         if not ok:
             return False, error_message or "Não foi possível gravar a sessão.", ""
@@ -781,14 +1107,38 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         section_key: str,
         direction: str,
+        selected_entity_id: object = None,
+        current_entity_scope: object = "",
     ) -> tuple[bool, str, bool]:
         clean_section_key = self._slugify_session_key(section_key)
         clean_direction = self._normalize_key(direction)
+        parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
 
         if clean_direction not in {"up", "down"}:
             return False, "Direção inválida para mover a sessão.", False
 
-        current_rows = self.read_sidebar_sections(session=session)
+        target_row = self.get_session_row_by_key_v1(
+            session=session,
+            section_key=clean_section_key,
+            selected_entity_id=parsed_selected_entity_id,
+        )
+
+        if target_row is None:
+            return False, "Sessão não encontrada para mover.", False
+
+        scope_origin = str(target_row.get("entity_scope_origin") or "").strip().lower()
+        scope_rows = self._load_sidebar_sections_scope_rows_v1(
+            session=session,
+            selected_entity_id=parsed_selected_entity_id,
+        )
+        current_rows = [
+            dict(row)
+            for row in (
+                scope_rows.get("global_rows", [])
+                if scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1
+                else scope_rows.get("entity_rows", [])
+            )
+        ]
         payload_rows = [
             {
                 "key": self._normalize_key(row.get("key")),
@@ -842,10 +1192,17 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             payload_rows[current_index],
         )
 
-        ok, error_message, _ = self.persist_sidebar_sections(
-            session=session,
-            sections=payload_rows,
-        )
+        if scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1:
+            ok, error_message, _ = self.persist_sidebar_sections(
+                session=session,
+                sections=payload_rows,
+            )
+        else:
+            ok, error_message, _ = self.persist_entity_sidebar_sections_v1(
+                session=session,
+                selected_entity_id=parsed_selected_entity_id,
+                sections=payload_rows,
+            )
 
         if not ok:
             return False, error_message or "Não foi possível mover a sessão.", False
@@ -857,13 +1214,36 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         section_key: str,
+        selected_entity_id: object = None,
     ) -> tuple[bool, str]:
         clean_section_key = self._slugify_session_key(section_key)
+        parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
 
         if not clean_section_key:
             return False, "Sessão inválida para eliminar."
 
-        current_rows = self.read_sidebar_sections(session=session)
+        target_row = self.get_session_row_by_key_v1(
+            session=session,
+            section_key=clean_section_key,
+            selected_entity_id=parsed_selected_entity_id,
+        )
+
+        if target_row is None:
+            return False, "Sessão não encontrada para eliminar."
+
+        scope_origin = str(target_row.get("entity_scope_origin") or "").strip().lower()
+        scope_rows = self._load_sidebar_sections_scope_rows_v1(
+            session=session,
+            selected_entity_id=parsed_selected_entity_id,
+        )
+        current_rows = [
+            dict(row)
+            for row in (
+                scope_rows.get("global_rows", [])
+                if scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1
+                else scope_rows.get("entity_rows", [])
+            )
+        ]
         payload_rows: list[dict[str, Any]] = []
         found_row: dict[str, Any] | None = None
 
@@ -892,10 +1272,17 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         if self.normalize_session_status(found_row.get("status")) == SESSION_STATUS_ACTIVE_V1:
             return False, "Só é permitido eliminar sessões inativas."
 
-        ok, error_message, _ = self.persist_sidebar_sections(
-            session=session,
-            sections=payload_rows,
-        )
+        if scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1:
+            ok, error_message, _ = self.persist_sidebar_sections(
+                session=session,
+                sections=payload_rows,
+            )
+        else:
+            ok, error_message, _ = self.persist_entity_sidebar_sections_v1(
+                session=session,
+                selected_entity_id=parsed_selected_entity_id,
+                sections=payload_rows,
+            )
 
         if not ok:
             return False, error_message or "Não foi possível eliminar a sessão."
@@ -908,6 +1295,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         payload: dict[str, Any],
         context: dict[str, Any] | None = None,
     ) -> bool:
+        clean_context = context or {}
         ok, _, _ = self.save_session(
             session=session,
             mode="create",
@@ -915,6 +1303,8 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             section_label=self._normalize_text(payload.get("label")),
             section_visibility_scope_mode=self._normalize_text(payload.get("visibility_scope_mode")),
             section_status=self._normalize_text(payload.get("status")),
+            selected_entity_id=self._resolve_selected_entity_id_from_context(clean_context),
+            current_entity_scope=self._resolve_current_entity_scope_from_context(clean_context),
         )
 
         return ok
@@ -926,6 +1316,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         payload: dict[str, Any],
         context: dict[str, Any] | None = None,
     ) -> bool:
+        clean_context = context or {}
         ok, _, _ = self.save_session(
             session=session,
             mode="edit",
@@ -933,6 +1324,8 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             section_label=self._normalize_text(payload.get("label")),
             section_visibility_scope_mode=self._normalize_text(payload.get("visibility_scope_mode")),
             section_status=self._normalize_text(payload.get("status")),
+            selected_entity_id=self._resolve_selected_entity_id_from_context(clean_context),
+            current_entity_scope=self._resolve_current_entity_scope_from_context(clean_context),
         )
 
         return ok
@@ -944,10 +1337,13 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         direction: str,
         context: dict[str, Any] | None = None,
     ) -> bool:
+        clean_context = context or {}
         ok, _, _ = self.move_session(
             session=session,
             section_key=edit_key,
             direction=direction,
+            selected_entity_id=self._resolve_selected_entity_id_from_context(clean_context),
+            current_entity_scope=self._resolve_current_entity_scope_from_context(clean_context),
         )
 
         return ok
@@ -958,9 +1354,11 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         edit_key: str,
         context: dict[str, Any] | None = None,
     ) -> bool:
+        clean_context = context or {}
         ok, _ = self.delete_session(
             session=session,
             section_key=edit_key,
+            selected_entity_id=self._resolve_selected_entity_id_from_context(clean_context),
         )
 
         return ok

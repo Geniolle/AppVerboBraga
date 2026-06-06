@@ -64,6 +64,7 @@ class Settings:
     SMTP_FROM_EMAIL: str
     SMTP_FROM_NAME: str
     SMTP_USE_TLS: bool
+    LEGACY_CAN_VIEW_OWNER_PROCESS_ADDITIONAL_FIELDS: bool
     OPENAI_API_KEY: str
     SONGS_TRANSCRIPTION_ENABLED: bool
     SONGS_TRANSCRIPTION_MODEL: str
@@ -141,6 +142,10 @@ def _build_settings() -> Settings:
         SMTP_FROM_EMAIL=(os.getenv("SMTP_FROM_EMAIL", "") or "").strip(),
         SMTP_FROM_NAME=(os.getenv("SMTP_FROM_NAME", "AppVerboBraga") or "AppVerboBraga").strip(),
         SMTP_USE_TLS=_env_bool("SMTP_USE_TLS", True),
+        LEGACY_CAN_VIEW_OWNER_PROCESS_ADDITIONAL_FIELDS=_env_bool(
+            "LEGACY_CAN_VIEW_OWNER_PROCESS_ADDITIONAL_FIELDS",
+            False,
+        ),
         OPENAI_API_KEY=(os.getenv("OPENAI_API_KEY", "") or "").strip(),
         SONGS_TRANSCRIPTION_ENABLED=_env_bool("SONGS_TRANSCRIPTION_ENABLED", True),
         SONGS_TRANSCRIPTION_MODEL=(

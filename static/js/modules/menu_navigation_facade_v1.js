@@ -62,12 +62,12 @@
       resolvedController.activateMenu(menuKey, options);
     }
 
-    function activateMenuTarget(menuKey, targetSelector) {
+    function activateMenuTarget(menuKey, targetSelector, options = {}) {
       const resolvedController = getController();
       if (!resolvedController) {
         return;
       }
-      resolvedController.activateMenuTarget(menuKey, targetSelector);
+      resolvedController.activateMenuTarget(menuKey, targetSelector, options);
     }
 
     function handleHashNavigation(rawHash) {

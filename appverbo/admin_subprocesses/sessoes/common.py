@@ -16,7 +16,7 @@ SESSOES_DEFAULT_ADMIN_TAB_V2 = "sessoes"
 SESSOES_DEFAULT_TARGET_V2 = "admin-sidebar-sections-card"
 SESSOES_SYSTEM_COLUMN_KEY_V2 = "system"
 SESSOES_SYSTEM_FIELD_KEY_V2 = "visibility_scope_mode"
-SESSOES_ENTITY_FIELD_KEY_V2 = "entity_name"
+SESSOES_ENTITY_FIELD_KEY_V2 = "entity_internal_number"
 
 
 ####################################################################################
@@ -149,8 +149,8 @@ def get_sessoes_visible_columns_v2(current_entity_scope: object = "") -> list[An
 def build_sessoes_entity_readonly_field_v2() -> AdminFieldConfig:
     return AdminFieldConfig(
         key=SESSOES_ENTITY_FIELD_KEY_V2,
-        label="Entidade",
-        input_name="section_entity_name_display",
+        label="Nº Cliente",
+        input_name="section_entity_internal_number_display",
         field_type="readonly",
         readonly_on_create=True,
         readonly_on_edit=True,

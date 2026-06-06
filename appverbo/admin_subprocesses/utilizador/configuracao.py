@@ -76,7 +76,7 @@ USER_COLUMNS = (
     AdminColumnConfig(key="full_name", label="NOME", source="full_name"),
     AdminColumnConfig(key="email", label="EMAIL", source="login_email"),
     AdminColumnConfig(key="phone", label="TELEFONE", source="primary_phone"),
-    AdminColumnConfig(key="entity", label="ENTIDADE", source="entity_name"),
+    AdminColumnConfig(key="entity_internal_number", label="Nº CLIENTE", source="entity_internal_number"),
     AdminColumnConfig(key="profile", label="PERFIL", source="profile_name"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
     AdminColumnConfig(key="created_at", label="CRIADO EM", source="created_at_label"),

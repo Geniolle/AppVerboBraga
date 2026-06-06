@@ -11,12 +11,14 @@ from appverbo.admin_subprocesses.repositories.sidebar_section_repository import 
 )
 from appverbo.admin_subprocesses.sessoes.common import build_sessoes_admin_return_url_v2
 from appverbo.admin_subprocesses.sessoes.configuracao import SESSOES_CONFIG
+from appverbo.services.entity_scope import load_entity_profile_scope_v1
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.use_cases.sessoes.outcome import SessionActionOutcome
 from appverbo.use_cases.sessoes.policies import (
     ensure_actor_can_manage_sessions_v1,
     ensure_actor_is_owner_for_sessions_v1,
     ensure_session_in_scope_v1,
+    ensure_session_row_action_allowed_v1,
 )
 
 
@@ -303,8 +305,20 @@ def execute_save_session_v1(
         str(actor_user["login_email"] or ""),
         selected_entity_id,
     )
+    resolved_selected_entity_id = permissions.get("selected_entity_id")
+    current_entity_scope = load_entity_profile_scope_v1(
+        session,
+        resolved_selected_entity_id,
+    )
 
-    policy_error = ensure_actor_is_owner_for_sessions_v1(permissions=permissions)
+    if not current_entity_scope and permissions.get("can_manage_all_entities"):
+        current_entity_scope = "owner"
+
+    policy_error = ensure_session_in_scope_v1(
+        permissions=permissions,
+        selected_entity_id=resolved_selected_entity_id,
+        current_entity_scope=current_entity_scope,
+    )
 
     if policy_error:
         return build_sidebar_section_redirect_v1(
@@ -313,14 +327,22 @@ def execute_save_session_v1(
             message=policy_error,
         )
 
-    policy_error = ensure_session_in_scope_v1(permissions=permissions)
-
-    if policy_error:
-        return build_sidebar_section_redirect_v1(
-            return_url=safe_return_url,
-            message_key="error",
-            message=policy_error,
+    if payload.get("section_mode", "create") == "edit":
+        policy_error = ensure_session_row_action_allowed_v1(
+            repository=repository,
+            session=session,
+            section_key=payload.get("original_section_key", ""),
+            action="edit",
+            selected_entity_id=resolved_selected_entity_id,
+            current_entity_scope=current_entity_scope,
         )
+
+        if policy_error:
+            return build_sidebar_section_redirect_v1(
+                return_url=safe_return_url,
+                message_key="error",
+                message=policy_error,
+            )
 
     ok, error_message, _ = repository.save_session(
         session=session,
@@ -329,6 +351,8 @@ def execute_save_session_v1(
         section_label=payload.get("section_label", ""),
         section_visibility_scope_mode=payload.get("section_visibility_scope_mode", "all"),
         section_status=payload.get("section_status", "ativo"),
+        selected_entity_id=resolved_selected_entity_id,
+        current_entity_scope=current_entity_scope,
     )
 
     if not ok:

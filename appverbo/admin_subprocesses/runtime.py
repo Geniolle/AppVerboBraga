@@ -92,6 +92,7 @@ def build_admin_subprocess_state_from_repository(
         rows=rows,
         edit_key=edit_key,
         edit_data=edit_data,
+        allow_edit_row_fallback=False,
         create_data=create_data,
         success=success,
         error=error,

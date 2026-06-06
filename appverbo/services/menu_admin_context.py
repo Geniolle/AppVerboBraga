@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 
 from appverbo.admin_subprocesses.menu.configuracao import MENU_CONFIG
 from appverbo.admin_subprocesses.repositories.menu_repository import MenuAdminRepository
+from appverbo.services.menu_additional_fields_access import (
+    build_menu_additional_fields_access_v1,
+)
 from appverbo.use_cases.menu.get_menu_edit import (
     execute_get_menu_edit_v1,
     get_menu_edit_defaults_v1,
@@ -87,11 +90,99 @@ def build_menu_admin_list_context_v1(
 # ###################################################################################
 
 
+def _copy_process_additional_fields_source_v1(
+    *,
+    target_data: dict[str, Any],
+    source_data: dict[str, Any],
+) -> dict[str, Any]:
+    clean_target_data = dict(target_data or {})
+    clean_source_data = dict(source_data or {})
+
+    for source_key in (
+        "process_additional_fields",
+        "process_lists",
+        "process_list_options",
+        "process_list_source_options",
+    ):
+        clean_target_data[source_key] = list(clean_source_data.get(source_key) or [])
+
+    return clean_target_data
+
+
+def _apply_menu_additional_fields_access_v1(
+    *,
+    session: Session,
+    edit_data: dict[str, Any],
+    menu_edit_key: str,
+    selected_entity_id: int | None,
+    can_manage_all_entities: bool,
+) -> dict[str, Any]:
+    enriched_edit_data = dict(edit_data or get_menu_edit_defaults_v1())
+    access = build_menu_additional_fields_access_v1(
+        session=session,
+        selected_entity_id=selected_entity_id,
+        can_manage_all_entities=can_manage_all_entities,
+    )
+
+    enriched_edit_data["process_owner_fields_enabled"] = bool(
+        access.get("process_owner_fields_enabled")
+    )
+    enriched_edit_data["process_additional_fields_can_view"] = bool(
+        access.get("can_view")
+    )
+    enriched_edit_data["process_additional_fields_can_edit"] = bool(
+        access.get("can_edit")
+    )
+    enriched_edit_data["process_additional_fields_readonly"] = bool(
+        access.get("is_readonly")
+    )
+    enriched_edit_data["process_additional_fields_source_entity_id"] = access.get(
+        "source_entity_id"
+    )
+    enriched_edit_data["process_additional_fields_source_entity_label"] = str(
+        access.get("source_entity_label") or ""
+    ).strip()
+    enriched_edit_data["process_additional_fields_selected_entity_id"] = access.get(
+        "selected_entity_id"
+    )
+    enriched_edit_data["process_additional_fields_selected_entity_label"] = str(
+        access.get("selected_entity_label") or ""
+    ).strip()
+
+    if not bool(access.get("can_view")):
+        enriched_edit_data["process_additional_fields"] = []
+        enriched_edit_data["process_lists"] = []
+        enriched_edit_data["process_list_options"] = []
+        enriched_edit_data["process_list_source_options"] = []
+        return enriched_edit_data
+
+    source_entity_id = access.get("source_entity_id")
+    selected_scope_entity_id = access.get("selected_entity_id")
+
+    if (
+        str(menu_edit_key or "").strip()
+        and source_entity_id is not None
+        and source_entity_id != selected_scope_entity_id
+    ):
+        source_edit_data = execute_get_menu_edit_v1(
+            session=session,
+            menu_key=str(menu_edit_key or "").strip().lower(),
+            selected_entity_id=source_entity_id,
+        )
+        enriched_edit_data = _copy_process_additional_fields_source_v1(
+            target_data=enriched_edit_data,
+            source_data=source_edit_data,
+        )
+
+    return enriched_edit_data
+
+
 def build_menu_admin_edit_context_v1(
     *,
     session: Session,
     menu_edit_key: str,
     selected_entity_id: int | None,
+    can_manage_all_entities: bool,
 ) -> dict[str, Any]:
     clean_menu_edit_key = str(menu_edit_key or "").strip().lower()
 
@@ -103,6 +194,14 @@ def build_menu_admin_edit_context_v1(
             menu_key=clean_menu_edit_key,
             selected_entity_id=selected_entity_id,
         )
+
+    edit_data = _apply_menu_additional_fields_access_v1(
+        session=session,
+        edit_data=dict(edit_data or {}),
+        menu_edit_key=clean_menu_edit_key,
+        selected_entity_id=selected_entity_id,
+        can_manage_all_entities=can_manage_all_entities,
+    )
 
     return {
         "menu_edit_data": dict(edit_data),
@@ -150,6 +249,9 @@ def build_menu_admin_context_v1(
         session=session,
         menu_edit_key=menu_edit_key,
         selected_entity_id=selected_entity_id,
+        can_manage_all_entities=bool(
+            list_context.get("current_user_can_manage_all_entities")
+        ),
     )
 
     return {

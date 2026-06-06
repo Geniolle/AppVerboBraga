@@ -236,61 +236,104 @@ def _filter_sessoes_rows_for_scope_v1(
     return filtered_rows
 
 
-def _load_selected_entity_name_for_admin_subprocess_v1(
+def _load_selected_entity_scope_display_for_admin_subprocess_v1(
     session: Session,
     selected_entity_id: object,
-) -> str:
+) -> dict[str, str]:
     clean_selected_entity_id = str(selected_entity_id or "").strip()
 
     if not clean_selected_entity_id.isdigit():
-        return ""
+        return {
+            "entity_name": "",
+            "entity_internal_number": "",
+        }
 
     try:
         from appverbo.models.entity import Entity as _EntityModel
 
-        entity_name = session.execute(
-            select(_EntityModel.name)
+        entity_row = session.execute(
+            select(
+                _EntityModel.name,
+                _EntityModel.internal_number,
+            )
             .where(_EntityModel.id == int(clean_selected_entity_id))
             .limit(1)
-        ).scalar_one_or_none()
+        ).first()
     except Exception:
-        return ""
+        return {
+            "entity_name": "",
+            "entity_internal_number": "",
+        }
 
-    return str(entity_name or "").strip()
+    if entity_row is None:
+        return {
+            "entity_name": "",
+            "entity_internal_number": "",
+        }
+
+    return {
+        "entity_name": str(entity_row.name or "").strip(),
+        "entity_internal_number": str(entity_row.internal_number or "").strip(),
+    }
 
 
-def _decorate_admin_subprocess_state_with_entity_name_v1(
+def _decorate_admin_subprocess_state_with_selected_entity_scope_v1(
     state: Any,
-    entity_name: object,
+    entity_scope_display: dict[str, object] | None,
 ) -> Any:
     if state is None:
         return None
 
-    clean_entity_name = str(entity_name or "").strip()
+    scope_display = dict(entity_scope_display or {})
+    clean_entity_name = str(scope_display.get("entity_name") or "").strip()
+    clean_entity_internal_number = str(
+        scope_display.get("entity_internal_number") or ""
+    ).strip()
+
+    def _merge_scope_values_v1(row: dict[str, Any] | None, *, is_create_data: bool) -> dict[str, Any]:
+        merged_row = dict(row or {})
+
+        current_entity_name = str(merged_row.get("entity_name") or "").strip()
+        current_entity_internal_number = str(
+            merged_row.get("entity_internal_number") or ""
+        ).strip()
+
+        if is_create_data:
+            merged_row["entity_name"] = current_entity_name or clean_entity_name
+            merged_row["entity_internal_number"] = (
+                current_entity_internal_number or clean_entity_internal_number
+            )
+            return merged_row
+
+        merged_row["entity_name"] = current_entity_name or clean_entity_name
+        merged_row["entity_internal_number"] = (
+            current_entity_internal_number or clean_entity_internal_number
+        )
+        return merged_row
 
     if isinstance(getattr(state, "active_rows", None), list):
         state.active_rows = [
-            {**dict(row or {}), "entity_name": clean_entity_name}
+            _merge_scope_values_v1(dict(row or {}), is_create_data=False)
             for row in state.active_rows
         ]
 
     if isinstance(getattr(state, "inactive_rows", None), list):
         state.inactive_rows = [
-            {**dict(row or {}), "entity_name": clean_entity_name}
+            _merge_scope_values_v1(dict(row or {}), is_create_data=False)
             for row in state.inactive_rows
         ]
 
     if isinstance(getattr(state, "edit_data", None), dict):
-        state.edit_data = {
-            **dict(state.edit_data),
-            "entity_name": clean_entity_name,
-        }
+        state.edit_data = _merge_scope_values_v1(
+            dict(state.edit_data),
+            is_create_data=False,
+        )
 
     if isinstance(getattr(state, "create_data", None), dict):
-        state.create_data = {
-            **dict(state.create_data),
-            "entity_name": clean_entity_name,
-        }
+        state.create_data = _merge_scope_values_v1(
+            dict(state.create_data),
+            is_create_data=True,
+        )
 
     return state
 
@@ -1564,6 +1607,7 @@ def _resolve_initial_menu_target(
     definition_edit_id: str,
     can_manage_all_entities: bool,
     sidebar_menu_settings: list[dict[str, Any]],
+    sidebar_section_edit_key: str = "",
 ) -> tuple[str, str]:
     clean_menu_key = resolve_menu_key_alias(resolved_menu)
     settings_by_key = {
@@ -1588,7 +1632,7 @@ def _resolve_initial_menu_target(
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "sessoes":
-            return "#admin-sidebar-sections-card", ""
+            return _resolve_admin_sessoes_target_v1(sidebar_section_edit_key), ""
         if resolved_admin_tab in {"menu", "contas"}:
             return "#admin-account-status-card", ""
         if resolved_admin_tab == "utilizador":
@@ -2153,6 +2197,7 @@ def new_user_page(
             if is_admin_menu_tab
             else page_data.get("sidebar_menu_settings", [])
         ),
+        sidebar_section_edit_key=effective_sidebar_section_edit_key,
     )
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
@@ -2319,7 +2364,7 @@ def new_user_page(
             current_entity_scope_for_sessoes = str(
                 page_data.get("current_entity_scope") or ""
             ).strip().lower()
-            sessoes_entity_name_v1 = _load_selected_entity_name_for_admin_subprocess_v1(
+            sessoes_entity_scope_display_v1 = _load_selected_entity_scope_display_for_admin_subprocess_v1(
                 session,
                 selected_entity_id,
             )
@@ -2340,6 +2385,7 @@ def new_user_page(
                     "selected_entity_id": selected_entity_id,
                     "allowed_entity_ids": entity_permissions["allowed_entity_ids"],
                     "can_manage_all_entities": entity_permissions["can_manage_all_entities"],
+                    "current_entity_scope": current_entity_scope_for_sessoes,
                 },
             )
 
@@ -2348,9 +2394,9 @@ def new_user_page(
                     admin_subprocess_state_v2,
                     current_entity_scope_for_sessoes,
                 )
-                admin_subprocess_state_v2 = _decorate_admin_subprocess_state_with_entity_name_v1(
+                admin_subprocess_state_v2 = _decorate_admin_subprocess_state_with_selected_entity_scope_v1(
                     admin_subprocess_state_v2,
-                    sessoes_entity_name_v1,
+                    sessoes_entity_scope_display_v1,
                 )
 
                 original_options = []

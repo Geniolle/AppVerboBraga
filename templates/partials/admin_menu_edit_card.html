@@ -14,7 +14,11 @@
         {% set settings_process_header_options = settings_edit_data.process_header_options or [] %}
         {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
         {% set settings_has_process_fields = true %}
-        {% set settings_owner_fields_enabled = current_user_can_manage_all_entities %}
+        {% set settings_owner_fields_enabled = settings_edit_data.process_owner_fields_enabled|default(false) %}
+        {% set settings_additional_fields_can_view = settings_edit_data.process_additional_fields_can_view|default(false) %}
+        {% set settings_additional_fields_can_edit = settings_edit_data.process_additional_fields_can_edit|default(false) %}
+        {% set settings_additional_fields_readonly = settings_edit_data.process_additional_fields_readonly|default(false) %}
+        {% set settings_additional_fields_client_number = settings_edit_data.process_additional_fields_source_entity_label or settings_edit_data.process_additional_fields_selected_entity_label or "-" %}
         <section id="settings-menu-edit-card" class="card process-window-card" data-admin-card-group="menu" data-admin-card-role="edit" data-menu-scope="administrativo,sessoes">
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
@@ -22,8 +26,10 @@
           <div class="process-edit-tabs" id="process-edit-tabs" role="tablist" aria-label="Abas de edição do processo">
             <a href="#settings-tab-geral" role="tab" aria-selected="true" class="process-edit-tab-link active" data-process-edit-tab="geral">Geral</a>
             <a href="#settings-tab-campos-config" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-config">Configuração dos campos</a>
-            {% if settings_owner_fields_enabled %}
+            {% if settings_additional_fields_can_view %}
             <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
+            {% endif %}
+            {% if settings_owner_fields_enabled %}
               <a href="#settings-tab-campos-quantidade" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-quantidade">Campos Quantidade</a>
               <a href="#settings-tab-lista" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="lista">Listas</a>
               <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
@@ -710,10 +716,15 @@
               </form>
             </div>
           </div>
+          {% if settings_additional_fields_can_view %}
 <div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
             <div class="admin-subsection">
 <h3>Campos Adicionais</h3>
+              {% if settings_additional_fields_readonly %}
+                                          <p class="muted process-tab-description-v1">Visualização apenas para validação no sistema legado. Estes campos adicionais são geridos pelo Nº Cliente {{ settings_edit_data.process_additional_fields_source_entity_label or "-" }}.</p>
+              {% else %}
                                           <p class="muted process-tab-description-v1">Crie, edite, ordene e remova campos adicionais exibidos neste processo.</p>
+              {% endif %}
 <form
                 method="post"
                 action="/settings/menu/process-additional-fields"
@@ -731,6 +742,7 @@
                   class="process-fields-builder configurable-items-manager-v1"
                   data-field-types='{{ settings_edit_data.additional_field_type_options|tojson }}'
                   data-process-lists='{{ settings_edit_data.process_lists|default([])|tojson }}'
+                  data-additional-fields-readonly="{% if settings_additional_fields_readonly %}1{% else %}0{% endif %}"
                 >
                   <div
                     id="process-additional-fields-container"
@@ -758,6 +770,7 @@
 
                   <div class="configurable-items-editor-v1">
 <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                      {% if settings_additional_fields_can_edit %}
                       <div class="field">
                         <label for="process-additional-field-editor-label">Nome do campo adicional</label>
                         <input
@@ -829,7 +842,20 @@
                           <span>Campo obrigatório</span>
                         </label>
                       </div>
+                      {% endif %}
 
+                      <div class="field">
+                        <label for="process-additional-field-editor-client-number">Nº Cliente</label>
+                        <input
+                          id="process-additional-field-editor-client-number"
+                          type="text"
+                          value="{{ settings_additional_fields_client_number }}"
+                          readonly
+                          {% if settings_additional_fields_readonly %}disabled class="readonly-field"{% endif %}
+                        >
+                      </div>
+
+                      {% if settings_additional_fields_can_edit %}
                       <div class="field full">
                         <div class="form-action-row">
                           <button
@@ -844,6 +870,7 @@
                           >Cancelar</button>
                         </div>
                       </div>
+                      {% endif %}
                     </div>
                   </div>
 
@@ -887,6 +914,7 @@
                   </div>
                 </div>
               </form>
+              {% if settings_additional_fields_can_edit %}
               <form
                 id="process-additional-field-move-form"
                 method="post"
@@ -899,8 +927,10 @@
                 <input type="hidden" name="redirect_menu" value="">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
               </form>
+              {% endif %}
             </div>
           </div>
+          {% endif %}
           {% endif %}
           {% endif %}
         </section>

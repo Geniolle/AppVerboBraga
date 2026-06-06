@@ -1960,7 +1960,7 @@ function activateMenu(menuKey, options = {}) {
   facade.activateMenu(menuKey, options);
 }
 
-function activateMenuTarget(menuKey, targetSelector) {
+function activateMenuTarget(menuKey, targetSelector, options = {}) {
   if (
     menuNavigationBridgeApiV1 &&
     typeof menuNavigationBridgeApiV1.activateMenuTarget === "function"
@@ -1968,6 +1968,7 @@ function activateMenuTarget(menuKey, targetSelector) {
     menuNavigationBridgeApiV1.activateMenuTarget(
       menuKey,
       targetSelector,
+      options,
       buildMenuNavigationBridgeContextV1()
     );
     return;
@@ -1976,7 +1977,7 @@ function activateMenuTarget(menuKey, targetSelector) {
   if (!facade || typeof facade.activateMenuTarget !== "function") {
     return;
   }
-  facade.activateMenuTarget(menuKey, targetSelector);
+  facade.activateMenuTarget(menuKey, targetSelector, options);
 }
 
 function handleHashNavigation(rawHash) {

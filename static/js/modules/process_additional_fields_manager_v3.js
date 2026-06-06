@@ -165,6 +165,14 @@
     return root.querySelector("[data-additional-fields-hidden-container]");
   }
 
+  function isReadOnlyMode_v3(root) {
+    if (!root) {
+      return false;
+    }
+
+    return toSafeString_v3(root.getAttribute("data-additional-fields-readonly")).trim() === "1";
+  }
+
   function getLegacyContainer_v3(root) {
     return (
       root.querySelector("[data-additional-fields-legacy-container]") ||
@@ -741,6 +749,7 @@
     }
 
     const initialItems = readLegacyAdditionalFields_v3(root);
+    const readOnlyMode = isReadOnlyMode_v3(root);
 
     const manager = core.createConfigurableItemsManager_v1({
       root,
@@ -801,7 +810,14 @@
       loadEditorItem: loadEditorItem_v4,
       clearEditor: clearEditor_v4,
       validateItem: validateEditorItem_v3,
-      syncHiddenInputs: syncHiddenInputs_v3
+      syncHiddenInputs: syncHiddenInputs_v3,
+      actions: readOnlyMode
+        ? {
+            edit: false,
+            remove: false,
+            move: false
+          }
+        : undefined
     });
 
     if (!manager) {

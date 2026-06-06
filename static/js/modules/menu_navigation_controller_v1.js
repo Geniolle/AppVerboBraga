@@ -330,7 +330,7 @@
       context.setActiveSubmenu("");
     }
 
-    function activateMenuTarget(menuKey, targetSelector) {
+    function activateMenuTarget(menuKey, targetSelector, options = {}) {
       const config = context.menuConfig[menuKey];
       if (!config) {
         return;
@@ -345,20 +345,22 @@
           context.selectedDynamicSectionByMenu[menuKey] || ""
         );
         if (selectedLinkEl) {
-          context.setActiveSubmenu(targetSelector, selectedLinkEl);
+          context.setActiveSubmenu(targetSelector, selectedLinkEl, menuKey);
         } else {
-          context.setActiveSubmenu(targetSelector);
+          context.setActiveSubmenu(targetSelector, null, menuKey);
         }
       } else {
-        context.setActiveSubmenu(targetSelector);
+        context.setActiveSubmenu(targetSelector, null, menuKey);
       }
       context.applyContentForMenuTarget(menuKey, targetSelector);
       if (targetSelector === "#dynamic-process-card") {
         context.renderDynamicProcessCard(menuKey, context.selectedDynamicSectionByMenu[menuKey] || "");
       }
-      const targetCard = document.querySelector(targetSelector);
-      if (targetCard) {
-        targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!options.preventScroll) {
+        const targetCard = document.querySelector(targetSelector);
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       }
     }
 
@@ -382,8 +384,9 @@
       const targetMenu = String(resolvedHashTarget && resolvedHashTarget.menuKey || "").trim();
 
       if (targetMenu) {
-        activateMenuTarget(targetMenu, normalizedHash);
-        if (cleanHash !== normalizedHash) {
+        const hasDifferentScrollTarget = (cleanHash !== normalizedHash);
+        activateMenuTarget(targetMenu, normalizedHash, { preventScroll: hasDifferentScrollTarget });
+        if (hasDifferentScrollTarget) {
           try {
             const scrollTarget = document.querySelector(cleanHash);
             if (scrollTarget) {
