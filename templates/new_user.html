@@ -66,7 +66,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260603-topbar-feedback-toast-v4-zindex">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260607-menu-n-entidade-grid">
   <link rel="stylesheet" href="/static/css/modules/default_admin_sidebar_v1.css?v=20260604-default-admin-sidebar-v1">
   <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v5-lyrics-preview">
   <style>
@@ -596,6 +596,17 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               {% endfor %}
             </select>
           </div>
+          <div class="field">
+            <label for="settings_create_menu_entity_internal_number">Nº Entidade</label>
+            <input
+              id="settings_create_menu_entity_internal_number"
+              type="text"
+              value="{{ current_entity_internal_number or 'Default' }}"
+              readonly
+              disabled
+              class="readonly-field"
+            >
+          </div>
         </div>
         <div class="form-action-row">
           <button type="submit" class="action-btn">Guardar</button>
@@ -644,6 +655,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             <th>Menu</th>
             <th class="menu-col-key-hidden-v1">Chave</th>
             <th>Sessão</th>
+            <th>Nº Entidade</th>
             <th>Estado</th>
             <th>Ordem</th>
             <th class="text-right">Ações</th>
@@ -655,10 +667,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             {% set row_key_clean = (row_key|string)|lower %}
             {% set row_is_protected = row_key_clean in ["home", "administrativo"] %}
             <tr data-admin-menu-row="active"
-                data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') }}">
+                data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') ~ ' ' ~ (row.entity_internal_number or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
               <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
               <td>{{ row.group or row.section or "" }}</td>
+              <td>{{ row.entity_internal_number or "Default" }}</td>
               <td><span class="entity-status entity-status-active">Ativo</span></td>
               <td>{{ loop.index }}</td>
               <td class="text-right admin-menu-actions-cell-v1">
@@ -748,6 +761,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             <th>Menu</th>
             <th class="menu-col-key-hidden-v1">Chave</th>
             <th>Sessão</th>
+            <th>Nº Entidade</th>
             <th>Estado</th>
             <th>Ordem</th>
             <th class="text-right">Ações</th>
@@ -759,10 +773,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             {% set row_key_clean = (row_key|string)|lower %}
             {% set row_is_protected = row_key_clean in ["home", "administrativo"] %}
             <tr data-admin-menu-row="inactive"
-                data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') }}">
+                data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') ~ ' ' ~ (row.entity_internal_number or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
               <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
               <td>{{ row.group or row.section or "" }}</td>
+              <td>{{ row.entity_internal_number or "Default" }}</td>
               <td><span class="entity-status entity-status-inactive">Inativo</span></td>
               <td>{{ loop.index }}</td>
               <td class="text-right admin-menu-actions-cell-v1">
@@ -2431,8 +2446,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260606-dynamic-runtime-core-v13-n-cliente" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260606-dynamic-process-history-renderer-v8-actions-order" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260607-dynamic-runtime-core-v14-n-user" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260607-dynamic-process-history-renderer-v11-cols-order" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260606-process-subprocess-standards-v9-cancel-edit-close" defer></script>
 <script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260606-menu-dynamic-navigation-core-v13-sessoes" defer></script>

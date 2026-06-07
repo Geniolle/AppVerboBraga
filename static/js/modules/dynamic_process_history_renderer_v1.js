@@ -93,6 +93,23 @@
       ? sectionFields.filter((field) => field && typeof field === "object")
       : [];
     const tableFields = normalizedFields.filter((field) => String(field.key || "").trim());
+    let listFields = tableFields;
+    if (cleanMenuKey === "contacto_geral" && cleanSectionKey === "custom_dados_membresia") {
+      const fieldUser = tableFields.find(f => String(f.key || "").trim().toLowerCase() === "custom_n_user");
+      const fieldCliente = tableFields.find(f => String(f.key || "").trim().toLowerCase() === "custom_n_cliente");
+      const otherFields = tableFields.filter(f => {
+        const k = String(f.key || "").trim().toLowerCase();
+        return k !== "custom_n_user" && k !== "custom_n_cliente";
+      });
+      listFields = [];
+      if (fieldUser) {
+        listFields.push(fieldUser);
+      }
+      listFields.push(...otherFields.slice(0, 3));
+      if (fieldCliente) {
+        listFields.push(fieldCliente);
+      }
+    }
     const sectionFieldKeys = new Set(
       tableFields
         .map((field) => normalizeMenuKey(field && field.key))
@@ -215,7 +232,7 @@
         createdHeadEl.textContent = "Criado em";
         headRowEl.appendChild(createdHeadEl);
       }
-      tableFields.forEach((field) => {
+      listFields.forEach((field) => {
         const thEl = document.createElement("th");
         thEl.textContent = toSentenceCaseText(field.label || field.key);
         headRowEl.appendChild(thEl);
@@ -400,7 +417,7 @@
           trEl.appendChild(createdCellEl);
         }
 
-        tableFields.forEach((field) => {
+        listFields.forEach((field) => {
           const fieldKey = normalizeMenuKey(field.key);
           const fieldType = normalizeProcessFieldType(field.fieldType);
           const tdEl = document.createElement("td");

@@ -156,7 +156,7 @@ MENU_EMPRESA_PROCESS_FIELD_OPTIONS_V1: tuple[dict[str, Any], ...] = (
     },
     {
         "key": "entity_internal_number",
-        "label": "Nº Cliente",
+        "label": "Nº Entidade",
         "field_type": "text",
         "is_required": False,
         "size": 30,
@@ -956,7 +956,7 @@ def get_page_data(
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
                 # ###################################################################################
-                # FILTRAR POR Nº CLIENTE (ENTIDADE) PARA CONTACTO GERAL
+                # FILTRAR POR Nº ENTIDADE (ENTIDADE) PARA CONTACTO GERAL
                 # ###################################################################################
                 if menu_key == "contacto_geral" and selected_entity_id is not None:
                     from appverbo.models.entity import Entity as _Entity

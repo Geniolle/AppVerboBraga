@@ -149,7 +149,7 @@ def get_sessoes_visible_columns_v2(current_entity_scope: object = "") -> list[An
 def build_sessoes_entity_readonly_field_v2() -> AdminFieldConfig:
     return AdminFieldConfig(
         key=SESSOES_ENTITY_FIELD_KEY_V2,
-        label="Nº Cliente",
+        label="Nº Entidade",
         input_name="section_entity_internal_number_display",
         field_type="readonly",
         readonly_on_create=True,

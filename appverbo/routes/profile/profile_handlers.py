@@ -3273,6 +3273,47 @@ async def update_dynamic_process_profile(request: Request):
             )
             if clean_menu_key == "contacto_geral" and active_entity_internal_number is not None:
                 submitted_section_values["custom_n_cliente"] = active_entity_internal_number
+
+            if clean_menu_key == "contacto_geral" and requested_section_key == "custom_dados_membresia":
+                if requested_history_action == "update" and requested_history_record_id:
+                    # Resolve record_for_update early to preserve its custom_n_user
+                    ref_record = next(
+                        (
+                            row
+                            for row in existing_records
+                            if str(row.get("record_id") or "").strip() == requested_history_record_id
+                        ),
+                        None,
+                    )
+                    existing_n_user = ""
+                    if ref_record and isinstance(ref_record, dict):
+                        existing_n_user = str(ref_record.get("values", {}).get("custom_n_user") or "").strip()
+                    submitted_section_values["custom_n_user"] = existing_n_user
+                else:
+                    # Create mode - generate sequence number unique per entity
+                    max_seq = 0
+                    if active_entity_id is not None and active_entity_internal_number is not None:
+                        records_storage_key = build_menu_process_records_storage_key("contacto_geral")
+                        members_of_entity = session.scalars(
+                            select(Member).join(MemberEntity, MemberEntity.member_id == Member.id)
+                            .where(MemberEntity.entity_id == active_entity_id)
+                            .where(Member.profile_custom_fields.like(f'%"{records_storage_key}"%'))
+                        ).all()
+
+                        target_str = str(active_entity_internal_number).strip()
+                        for m in members_of_entity:
+                            m_fields = parse_member_profile_fields(m.profile_custom_fields)
+                            m_records = parse_menu_process_records(m_fields.get(records_storage_key))
+                            for r in m_records:
+                                r_section = str(r.get("section_key") or "").strip()
+                                if r_section == "custom_dados_membresia":
+                                    r_values = r.get("values") or {}
+                                    if str(r_values.get("custom_n_cliente") or "").strip() == target_str:
+                                        val_str = str(r_values.get("custom_n_user") or "").strip()
+                                        if val_str.isdigit():
+                                            max_seq = max(max_seq, int(val_str))
+                    next_seq = max_seq + 1
+                    submitted_section_values["custom_n_user"] = f"{next_seq:05d}"
         record_for_update = None
         if (
             history_process_mode

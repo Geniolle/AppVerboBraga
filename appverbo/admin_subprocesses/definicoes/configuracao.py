@@ -61,8 +61,8 @@ DEFINICOES_FIELDS = (
         options_source="menu_subprocesses",
     ),
     AdminFieldConfig(
-        key="entity_scope_label",
-        label="ENTIDADE",
+        key="entity_internal_number",
+        label="Nº ENTIDADE",
         input_name="definition_entity_scope_label",
         field_type="readonly",
         readonly_on_create=True,
@@ -93,7 +93,7 @@ DEFINICOES_COLUMNS = (
     AdminColumnConfig(key="initial_value", label="VALOR INICIAL", source="initial_value"),
     AdminColumnConfig(key="process_name", label="PROCESSO", source="process_name"),
     AdminColumnConfig(key="subprocess_name", label="SUBPROCESSO", source="subprocess_name"),
-    AdminColumnConfig(key="entity_scope_label", label="ENTIDADE", source="entity_scope_label"),
+    AdminColumnConfig(key="entity_internal_number", label="Nº ENTIDADE", source="entity_internal_number"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
 )
 

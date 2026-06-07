@@ -9,7 +9,9 @@ from appverbo.models import AdminDefinition
 from appverbo.services.admin_definition_scope import list_admin_definitions_in_scope_v1
 from appverbo.services.entity_scope import (
     ENTITY_SCOPE_DEFAULT_LABEL_V1,
+    build_entity_scope_display_v1,
     build_entity_scope_name_map_v1,
+    build_entity_scope_internal_number_map_v1,
     coerce_entity_scope_id_v1,
     is_record_visible_for_selected_entity_v1,
     resolve_selected_entity_scope_id_v1,
@@ -123,10 +125,15 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
         model: AdminDefinition,
         *,
         entity_name_by_id: dict[int, str],
+        entity_internal_number_by_id: dict[int, str],
     ) -> dict[str, Any]:
         clean_status = self._normalize_status(model.status)
         clean_type = self._normalize_definition_type(model.parameter_type)
         parsed_entity_id = coerce_entity_scope_id_v1(model.entity_id)
+        if parsed_entity_id is None:
+            entity_internal_number = "Default"
+        else:
+            entity_internal_number = entity_internal_number_by_id.get(parsed_entity_id, str(parsed_entity_id))
 
         return {
             "id": int(model.id),
@@ -136,6 +143,7 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
                 entity_id=parsed_entity_id,
                 entity_name_by_id=entity_name_by_id,
             ),
+            "entity_internal_number": entity_internal_number,
             "is_global_scope": parsed_entity_id is None,
             "parameter_name": self._normalize_text(model.parameter_name),
             "parameter_type": clean_type,
@@ -201,17 +209,16 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
             session,
             selected_entity_id=selected_entity_id,
         )
-        entity_name_by_id = build_entity_scope_name_map_v1(
-            session,
-            {
-                int(row.entity_id)
-                for row in rows
-                if coerce_entity_scope_id_v1(row.entity_id) is not None
-            },
-        )
+        entity_ids = {
+            int(row.entity_id)
+            for row in rows
+            if coerce_entity_scope_id_v1(row.entity_id) is not None
+        }
+        entity_name_by_id = build_entity_scope_name_map_v1(session, entity_ids)
+        entity_internal_number_by_id = build_entity_scope_internal_number_map_v1(session, entity_ids)
 
         normalized_rows = [
-            self._to_row(row, entity_name_by_id=entity_name_by_id)
+            self._to_row(row, entity_name_by_id=entity_name_by_id, entity_internal_number_by_id=entity_internal_number_by_id)
             for row in rows
         ]
         normalized_rows.sort(
@@ -241,11 +248,10 @@ class DefinitionAdminRepository(BaseAdminSubprocessRepository):
         if record is None:
             return None
 
-        entity_name_by_id = build_entity_scope_name_map_v1(
-            session,
-            [record.entity_id] if coerce_entity_scope_id_v1(record.entity_id) is not None else [],
-        )
-        return self._to_row(record, entity_name_by_id=entity_name_by_id)
+        entity_ids = [record.entity_id] if coerce_entity_scope_id_v1(record.entity_id) is not None else []
+        entity_name_by_id = build_entity_scope_name_map_v1(session, entity_ids)
+        entity_internal_number_by_id = build_entity_scope_internal_number_map_v1(session, entity_ids)
+        return self._to_row(record, entity_name_by_id=entity_name_by_id, entity_internal_number_by_id=entity_internal_number_by_id)
 
     def create_definition(
         self,

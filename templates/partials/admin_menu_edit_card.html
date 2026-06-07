@@ -84,6 +84,16 @@
                       {% endfor %}
                     </select>
                   </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_entity_internal_number">Nº Entidade</label>
+                    <input
+                      id="settings_edit_menu_entity_internal_number"
+                      value="{{ settings_edit_data.entity_internal_number or 'Default' }}"
+                      readonly
+                      disabled
+                      class="readonly-field"
+                    >
+                  </div>
                 </div>
                 <div class="form-action-row">
                   <button type="submit" class="action-btn">Guardar</button>
@@ -131,6 +141,16 @@
                   <input
                     id="settings_edit_menu_sidebar_section_readonly"
                     value="{{ settings_edit_data.sidebar_section_label if settings_edit_data.sidebar_section_label else '-' }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_entity_internal_number_readonly">Nº Entidade</label>
+                  <input
+                    id="settings_edit_menu_entity_internal_number_readonly"
+                    value="{{ settings_edit_data.entity_internal_number or 'Default' }}"
                     readonly
                     disabled
                     class="readonly-field"
@@ -721,7 +741,7 @@
             <div class="admin-subsection">
 <h3>Campos Adicionais</h3>
               {% if settings_additional_fields_readonly %}
-                                          <p class="muted process-tab-description-v1">Visualização apenas para validação no sistema legado. Estes campos adicionais são geridos pelo Nº Cliente {{ settings_edit_data.process_additional_fields_source_entity_label or "-" }}.</p>
+                                          <p class="muted process-tab-description-v1">Visualização apenas para validação no sistema legado. Estes campos adicionais são geridos pelo Nº Entidade {{ settings_edit_data.process_additional_fields_source_entity_label or "-" }}.</p>
               {% else %}
                                           <p class="muted process-tab-description-v1">Crie, edite, ordene e remova campos adicionais exibidos neste processo.</p>
               {% endif %}
@@ -845,7 +865,7 @@
                       {% endif %}
 
                       <div class="field">
-                        <label for="process-additional-field-editor-client-number">Nº Cliente</label>
+                        <label for="process-additional-field-editor-client-number">Nº Entidade</label>
                         <input
                           id="process-additional-field-editor-client-number"
                           type="text"

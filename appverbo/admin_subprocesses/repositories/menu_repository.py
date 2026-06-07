@@ -33,6 +33,7 @@ from appverbo.menu_config_scope import (
     build_effective_menu_config_v1,
 )
 from appverbo.services.entity_scope import (
+    build_entity_scope_display_v1,
     build_entity_scope_label_v1,
     is_record_visible_for_selected_entity_v1,
     resolve_selected_entity_scope_id_v1,
@@ -203,6 +204,14 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             session,
             entity_scope_label_entity_id,
         )
+        if entity_scope_label_entity_id is None:
+            entity_internal_number = "Default"
+        else:
+            scope_display = build_entity_scope_display_v1(
+                session,
+                entity_scope_label_entity_id,
+            )
+            entity_internal_number = str(scope_display.get("entity_internal_number") or "").strip() or "Default"
 
         return {
             **row,
@@ -227,6 +236,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             "entity_name": entity_scope_label,
             "entity_scope_label": entity_scope_label,
             "entity_scope_entity_id": entity_scope_label_entity_id,
+            "entity_internal_number": entity_internal_number,
             "can_delete": bool(row.get("can_delete")),
             "can_move_up": bool(row.get("can_move_up", True)),
             "can_move_down": bool(row.get("can_move_down", True)),

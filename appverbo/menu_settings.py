@@ -39,24 +39,25 @@ SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo", MENU_SESSOES_KEY}
 SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo", MENU_SESSOES_KEY}
 SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
 SIDEBAR_MENU_GLOBAL_SCOPE_KEYS = frozenset({MENU_SESSOES_KEY})
-SIDEBAR_MENU_ENTITY_LABEL_DEFAULT_KEYS = frozenset(
+SIDEBAR_MENU_ENTITY_LABEL_1001_KEYS = frozenset(
     {
-        "home",
-        "administrativo",
-        MENU_SESSOES_KEY,
         "empresa",
         "contacto_geral",
-    }
-)
-SIDEBAR_MENU_ENTITY_LABEL_OWNER_KEYS = frozenset(
-    {
-        MENU_MEU_PERFIL_KEY,
         "departamentos",
+        MENU_MEU_PERFIL_KEY,
         "adicionar_musica",
         "ensaio",
         "contactos",
     }
 )
+SIDEBAR_MENU_ENTITY_LABEL_DEFAULT_KEYS = frozenset(
+    {
+        "home",
+        "administrativo",
+        MENU_SESSOES_KEY,
+    }
+)
+SIDEBAR_MENU_ENTITY_LABEL_OWNER_KEYS: frozenset[str] = frozenset()
 MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", "administrativo", MENU_MEU_PERFIL_KEY}
 MENU_VISIBILITY_SCOPES = ("owner", "legado")
 MENU_VISIBILITY_SCOPE_ALL = "all"
@@ -162,8 +163,6 @@ MENU_LEGACY_KEY_ALIAS = {
 SIDEBAR_SECTION_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "sistema", "label": "Sistema", "visibility_scopes": ["owner", "legado"]},
     {"key": "geral", "label": "Geral", "visibility_scopes": ["owner", "legado"]},
-    {"key": "dados_gerais", "label": "Dados gerais", "visibility_scopes": ["owner", "legado"]},
-    {"key": "igreja", "label": "Igreja", "visibility_scopes": ["owner", "legado"]},
     {"key": "tesouraria", "label": "Tesouraria", "visibility_scopes": ["owner", "legado"]},
 )
 SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
@@ -564,6 +563,9 @@ def resolve_menu_entity_label_scope_id_v1(
     has_entity_scope_overrides: bool = False,
 ) -> object:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+
+    if clean_menu_key in SIDEBAR_MENU_ENTITY_LABEL_1001_KEYS:
+        return 19
 
     if clean_menu_key in SIDEBAR_MENU_ENTITY_LABEL_DEFAULT_KEYS:
         return None
@@ -2916,7 +2918,7 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
 
 
 # ###################################################################################
-# (1.5) INJEÇÃO DINÂMICA DO CAMPO Nº CLIENTE PARA CONTACTO GERAL
+# (1.5) INJEÇÃO DINÂMICA DO CAMPO Nº ENTIDADE PARA CONTACTO GERAL
 # ###################################################################################
 
 def _inject_contacto_geral_n_cliente_config_v1(
@@ -2929,84 +2931,137 @@ def _inject_contacto_geral_n_cliente_config_v1(
 
     updated = dict(menu_config)
 
-    # 1. Inject custom_n_cliente into additional_fields
+    # 1. Setup our injected fields
+    user_field = {
+        "key": "custom_n_user",
+        "label": "Nº USER",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255
+    }
+    client_field = {
+        "key": "custom_n_cliente",
+        "label": "Nº Entidade",
+        "field_type": "text",
+        "is_required": False,
+        "size": 255
+    }
+    if entity_internal_number is not None:
+        client_field["value"] = str(entity_internal_number)
+
+    # 2. Inject into additional_fields
     add_fields = [dict(f) for f in (updated.get("additional_fields") or [])]
-    found_n = False
-    for f in add_fields:
-        if str(f.get("key") or "").strip().lower() == "custom_n_cliente":
-            if entity_internal_number is not None:
-                f["value"] = str(entity_internal_number)
-            found_n = True
+    add_fields = [f for f in add_fields if f.get("key") not in ("custom_n_user", "custom_n_cliente")]
+
+    h_idx = -1
+    for idx, f in enumerate(add_fields):
+        if str(f.get("key") or "").strip().lower() == "custom_dados_membresia":
+            h_idx = idx
             break
 
-    if not found_n:
-        h_idx = -1
-        for idx, f in enumerate(add_fields):
-            if str(f.get("key") or "").strip().lower() == "custom_dados_membresia":
-                h_idx = idx
+    if h_idx != -1:
+        add_fields.insert(h_idx + 1, user_field)
+        next_h_idx = len(add_fields)
+        for idx in range(h_idx + 2, len(add_fields)):
+            if add_fields[idx].get("field_type") == "header":
+                next_h_idx = idx
                 break
-        n_field = {
-            "key": "custom_n_cliente",
-            "label": "Nº cliente",
-            "field_type": "text",
-            "is_required": False,
-            "size": 255
-        }
-        if entity_internal_number is not None:
-            n_field["value"] = str(entity_internal_number)
-        if h_idx != -1:
-            add_fields.insert(h_idx + 1, n_field)
-        else:
-            add_fields.append(n_field)
+        add_fields.insert(next_h_idx, client_field)
+    else:
+        add_fields.append(user_field)
+        add_fields.append(client_field)
+
     updated["additional_fields"] = add_fields
 
-    # 2. Inject custom_n_cliente into visible_fields
+    # 3. Inject into visible_fields
     vis_fields = list(updated.get("visible_fields") or [])
-    if "custom_n_cliente" not in vis_fields:
-        if "custom_dados_membresia" in vis_fields:
-            vis_fields.insert(vis_fields.index("custom_dados_membresia") + 1, "custom_n_cliente")
-        else:
-            vis_fields.append("custom_n_cliente")
-        updated["visible_fields"] = vis_fields
+    vis_fields = [f for f in vis_fields if f not in ("custom_n_user", "custom_n_cliente")]
+    h_idx = -1
+    try:
+        h_idx = vis_fields.index("custom_dados_membresia")
+    except ValueError:
+        h_idx = -1
 
-    # 3. Inject into visible_field_headers
-    vfh = dict(updated.get("visible_field_headers") or {})
-    if "custom_n_cliente" not in vfh:
-        vfh["custom_n_cliente"] = "custom_dados_membresia"
-        updated["visible_field_headers"] = vfh
-
-    # 4. Inject into process_visible_fields
-    pvf = list(updated.get("process_visible_fields") or [])
-    if "custom_n_cliente" not in pvf:
-        if "custom_dados_membresia" in pvf:
-            pvf.insert(pvf.index("custom_dados_membresia") + 1, "custom_n_cliente")
-        else:
-            pvf.append("custom_n_cliente")
-        updated["process_visible_fields"] = pvf
-
-    # 5. Inject into process_visible_field_header_map
-    pvfhm = dict(updated.get("process_visible_field_header_map") or {})
-    if "custom_n_cliente" not in pvfhm:
-        pvfhm["custom_n_cliente"] = "custom_dados_membresia"
-        updated["process_visible_field_header_map"] = pvfhm
-
-    # 6. Inject into process_visible_field_rows
-    pvfr = list(updated.get("process_visible_field_rows") or [])
-    if not any(str(r.get("field_key") or "").strip().lower() == "custom_n_cliente" for r in pvfr):
-        target_idx = -1
-        for idx, r in enumerate(pvfr):
-            if str(r.get("field_key") or "").strip().lower() == "custom_dados_membresia":
-                target_idx = idx
+    if h_idx != -1:
+        vis_fields.insert(h_idx + 1, "custom_n_user")
+        header_keys = {f["key"] for f in add_fields if f.get("field_type") == "header"}
+        next_h_idx = len(vis_fields)
+        for idx in range(h_idx + 2, len(vis_fields)):
+            if vis_fields[idx] in header_keys:
+                next_h_idx = idx
                 break
-        n_row = {
-            "field_key": "custom_n_cliente",
-            "header_key": "custom_dados_membresia"
-        }
-        if target_idx != -1:
-            pvfr.insert(target_idx + 1, n_row)
-        else:
-            pvfr.append(n_row)
-        updated["process_visible_field_rows"] = pvfr
+        vis_fields.insert(next_h_idx, "custom_n_cliente")
+    else:
+        vis_fields.append("custom_n_user")
+        vis_fields.append("custom_n_cliente")
+
+    updated["visible_fields"] = vis_fields
+
+    # 4. Inject into visible_field_headers
+    vfh = dict(updated.get("visible_field_headers") or {})
+    vfh["custom_n_user"] = "custom_dados_membresia"
+    vfh["custom_n_cliente"] = "custom_dados_membresia"
+    updated["visible_field_headers"] = vfh
+
+    # 5. Inject into process_visible_fields
+    pvf = list(updated.get("process_visible_fields") or [])
+    pvf = [f for f in pvf if f not in ("custom_n_user", "custom_n_cliente")]
+    pvfhm_temp = dict(updated.get("process_visible_field_header_map") or {})
+    pvfhm_temp["custom_n_user"] = "custom_dados_membresia"
+    pvfhm_temp["custom_n_cliente"] = "custom_dados_membresia"
+
+    from collections import defaultdict
+    by_header = defaultdict(list)
+    header_order = ["custom_dados_membresia"]
+    seen_headers = {"custom_dados_membresia"}
+
+    for f in pvf:
+        h = pvfhm_temp.get(f) or "custom_dados_membresia"
+        by_header[h].append(f)
+        if h not in seen_headers:
+            seen_headers.add(h)
+            header_order.append(h)
+
+    membresia_fields = by_header["custom_dados_membresia"]
+    membresia_fields = ["custom_n_user"] + membresia_fields + ["custom_n_cliente"]
+    by_header["custom_dados_membresia"] = membresia_fields
+
+    new_pvf = []
+    for h in header_order:
+        new_pvf.extend(by_header[h])
+    updated["process_visible_fields"] = new_pvf
+
+    # 6. Inject into process_visible_field_header_map
+    pvfhm = dict(updated.get("process_visible_field_header_map") or {})
+    pvfhm["custom_n_user"] = "custom_dados_membresia"
+    pvfhm["custom_n_cliente"] = "custom_dados_membresia"
+    updated["process_visible_field_header_map"] = pvfhm
+
+    # 7. Inject into process_visible_field_rows
+    pvfr = list(updated.get("process_visible_field_rows") or [])
+    pvfr = [r for r in pvfr if r.get("field_key") not in ("custom_n_user", "custom_n_cliente")]
+
+    by_header_row = defaultdict(list)
+    row_header_order = ["custom_dados_membresia"]
+    seen_row_headers = {"custom_dados_membresia"}
+
+    for r in pvfr:
+        h = r.get("header_key") or "custom_dados_membresia"
+        by_header_row[h].append(r)
+        if h not in seen_row_headers:
+            seen_row_headers.add(h)
+            row_header_order.append(h)
+
+    membresia_rows = by_header_row["custom_dados_membresia"]
+    user_row = {"field_key": "custom_n_user", "header_key": "custom_dados_membresia"}
+    client_row = {"field_key": "custom_n_cliente", "header_key": "custom_dados_membresia"}
+    membresia_rows = [user_row] + membresia_rows + [client_row]
+    by_header_row["custom_dados_membresia"] = membresia_rows
+
+    new_pvfr = []
+    for h in row_header_order:
+        new_pvfr.extend(by_header_row[h])
+    updated["process_visible_field_rows"] = new_pvfr
 
     return updated
 

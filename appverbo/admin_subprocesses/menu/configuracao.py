@@ -51,7 +51,7 @@ MENU_COLUMNS = (
     AdminColumnConfig(key="label", label="MENU", source="label"),
     AdminColumnConfig(key="menu_key", label="CHAVE", source="key"),
     AdminColumnConfig(key="menu_section_label", label="GRUPO", source="menu_section_label"),
-    AdminColumnConfig(key="entity_name", label="ENTIDADE", source="entity_name"),
+    AdminColumnConfig(key="entity_internal_number", label="Nº ENTIDADE", source="entity_internal_number"),
     AdminColumnConfig(key="status_label", label="ESTADO", source="status_label"),
 )
 

@@ -233,7 +233,7 @@ class EntityAdminSubprocessRepositoryV2(BaseAdminSubprocessRepositoryV2):
 
         return {
             "ok": True,
-            "message": f"Entidade criada com sucesso. Nº Cliente: {entity.internal_number}.",
+            "message": f"Entidade criada com sucesso. Nº Entidade: {entity.internal_number}.",
             "row": self.entity_to_row_v2(entity),
         }
 

@@ -36,7 +36,10 @@ from appverbo.menu_settings import (
 from appverbo.routes.profile.router import router
 from appverbo.services import *  # noqa: F403,F401
 from appverbo.services.admin_definition_scope import list_admin_definitions_in_scope_v1
-from appverbo.services.entity_scope import build_entity_scope_label_v1
+from appverbo.services.entity_scope import (
+    build_entity_scope_label_v1,
+    build_entity_scope_display_v1,
+)
 from appverbo.services.menu_admin_context import (
     build_menu_admin_context_v1,
     build_menu_admin_page_payload_v1,
@@ -2513,10 +2516,16 @@ def new_user_page(
                     definicoes_subprocess_session_v1,
                     selected_entity_id,
                 )
+                current_definition_display_v1 = build_entity_scope_display_v1(
+                    definicoes_subprocess_session_v1,
+                    selected_entity_id,
+                )
+                current_definition_internal_number_v1 = current_definition_display_v1.get("entity_internal_number") or "Default"
 
             if admin_subprocess_state_definicoes_v1 is not None:
                 create_data_v1 = dict(admin_subprocess_state_definicoes_v1.create_data or {})
                 create_data_v1["entity_scope_label"] = current_definition_scope_label_v1
+                create_data_v1["entity_internal_number"] = current_definition_internal_number_v1
                 admin_subprocess_state_definicoes_v1.create_data = create_data_v1
 
                 edit_process_value_v1 = ""

@@ -1538,7 +1538,7 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     const fieldRequired = Boolean(field.isRequired) && fieldType !== "flag";
     const isEmpresaInternalNumber = (
       isEmpresaReadOnlyField(cleanMenuKey, fieldKey) ||
-      (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_cliente")
+      (cleanMenuKey === "contacto_geral" && (fieldKey === "custom_n_cliente" || fieldKey === "custom_n_user"))
     );
     const isEmpresaLogoUpload = isEmpresaLogoUploadField(cleanMenuKey, fieldKey);
     const isEmpresaLogoCurrent = isEmpresaLogoCurrentField(cleanMenuKey, fieldKey);
@@ -1557,12 +1557,18 @@ function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
     if (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_cliente" && !readOnlyValue) {
       readOnlyValue = String(window.__APPVERBO_BOOTSTRAP__.currentEntityInternalNumber || "").trim();
     }
+    if (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_user" && !readOnlyValue) {
+      readOnlyValue = "Automático";
+    }
     const fieldValue = absenceProcessMode ? "" : readOnlyValue;
     let editDefaultValue = historyProcessMode
       ? (preserveInteractionState && hasLiveFieldValue ? liveFieldValue : "")
       : (preserveInteractionState && hasLiveFieldValue ? liveFieldValue : fieldValue);
     if (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_cliente" && !editDefaultValue) {
       editDefaultValue = String(window.__APPVERBO_BOOTSTRAP__.currentEntityInternalNumber || "").trim();
+    }
+    if (cleanMenuKey === "contacto_geral" && fieldKey === "custom_n_user" && !editDefaultValue) {
+      editDefaultValue = "Automático";
     }
 
     if (dynamicProcessReadOnlyGridEl) {

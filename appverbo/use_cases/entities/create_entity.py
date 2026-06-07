@@ -326,6 +326,6 @@ def execute_create_entity_v1(
     return EntityActionOutcome(
         kind="redirect",
         redirect_url=_build_entity_create_redirect_v1(
-            entity_success=f"Entidade criada com sucesso. Nº Cliente: {created_internal_number}.",
+            entity_success=f"Entidade criada com sucesso. Nº Entidade: {created_internal_number}.",
         ),
     )

@@ -34,7 +34,7 @@ ENTIDADE_CONFIG_V2 = AdminSubprocessConfigV2(
     fields=(
         AdminFieldConfigV2(
             key="internal_number",
-            label="Nº cliente",
+            label="Nº Entidade",
             field_type="readonly",
             visible_on_create=False,
             readonly_on_edit=True,
@@ -153,7 +153,7 @@ ENTIDADE_CONFIG_V2 = AdminSubprocessConfigV2(
         ),
     ),
     columns=(
-        AdminColumnConfigV2("internal_number", "Nº cliente"),
+        AdminColumnConfigV2("internal_number", "Nº Entidade"),
         AdminColumnConfigV2("name", "Nome"),
         AdminColumnConfigV2("profile_scope_label", "Perfil"),
         AdminColumnConfigV2("city", "Cidade"),
