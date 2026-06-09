@@ -10,19 +10,21 @@
   //###################################################################################
 
   const ROOT_SELECTOR = "[data-process-additional-fields-manager-v3]";
-  const SUPPORTED_TYPES = new Set(["text", "textarea", "number", "email", "phone", "date", "time", "flag", "header", "list", "link"]);
-  const TEXTUAL_TYPES = new Set(["text", "textarea", "number", "email", "phone", "link"]);
+  const SUPPORTED_TYPES = new Set(["text", "textarea", "number", "currency", "email", "phone", "date", "time", "flag", "file", "header", "list", "link"]);
+  const TEXTUAL_TYPES = new Set(["text", "textarea", "number", "currency", "email", "phone", "link"]);
 
   const TYPE_LABELS = {
     text: "Texto",
     textarea: "Texto longo",
     number: "Numero",
+    currency: "Valor monetário (0,00)",
     email: "Email",
     phone: "Telefone",
     link: "Link",
     date: "Data",
     time: "Horário",
     flag: "Sim/Nao",
+    file: "Ficheiro (upload)",
     header: "Cabecalho",
     list: "Lista"
   };

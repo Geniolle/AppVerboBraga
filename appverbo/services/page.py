@@ -958,16 +958,20 @@ def get_page_data(
                 # ###################################################################################
                 # FILTRAR POR Nº ENTIDADE (ENTIDADE) PARA CONTACTO GERAL
                 # ###################################################################################
-                if menu_key == "contacto_geral" and selected_entity_id is not None:
+                if menu_key in ("contacto_geral", "extrato") and selected_entity_id is not None:
                     from appverbo.models.entity import Entity as _Entity
                     active_entity_internal_number = session.scalar(
                         select(_Entity.internal_number).where(_Entity.id == selected_entity_id)
                     )
                     if active_entity_internal_number is not None:
                         target_str = str(active_entity_internal_number).strip()
+                        entity_field_key = (
+                            "custom_n_cliente" if menu_key == "contacto_geral"
+                            else "numero_entidade"
+                        )
                         menu_history_rows = [
                             row for row in menu_history_rows
-                            if str(row.get("values", {}).get("custom_n_cliente") or "").strip() == target_str
+                            if str(row.get("values", {}).get(entity_field_key) or "").strip() == target_str
                         ]
                 if menu_history_rows:
                     menu_process_history_map[menu_key] = menu_history_rows

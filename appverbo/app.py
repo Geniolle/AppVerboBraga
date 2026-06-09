@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from appverbo.config.settings import settings
 from appverbo.routes.auth import router as auth_router
 from appverbo.routes.entities import router as entity_router
+from appverbo.routes.import_mt940 import router as import_mt940_router
 from appverbo.routes.profile import router as profile_router
 from appverbo.routes.users import router as user_router
 from appverbo.routes.webhooks import router as webhook_router
@@ -16,8 +18,24 @@ from appverbo.routes.webhooks import router as webhook_router
 logger = logging.getLogger(__name__)
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    _stop_scheduler = None
+    try:
+        from appverbo.scheduler import start_scheduler, stop_scheduler
+        start_scheduler()
+        _stop_scheduler = stop_scheduler
+    except ImportError as exc:
+        logger.warning("Scheduler not started (missing dependency): %s", exc)
+    try:
+        yield
+    finally:
+        if _stop_scheduler is not None:
+            _stop_scheduler()
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="AppVerboBraga User Admin")
+    app = FastAPI(title="AppVerboBraga User Admin", lifespan=_lifespan)
     app.mount("/static", StaticFiles(directory=str(settings.STATIC_DIR)), name="static")
     app.add_middleware(
         SessionMiddleware,
@@ -88,4 +106,5 @@ def create_app() -> FastAPI:
     app.include_router(webhook_router)
     app.include_router(entity_router)
     app.include_router(user_router)
+    app.include_router(import_mt940_router)
     return app

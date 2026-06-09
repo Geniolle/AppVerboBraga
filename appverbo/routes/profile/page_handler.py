@@ -2126,6 +2126,8 @@ def new_user_page(
             )
             if db_entity_internal_number is not None:
                 current_entity_internal_number = str(db_entity_internal_number)
+            else:
+                current_entity_internal_number = str(selected_entity_id)
 
         next_entity_internal_number = ""
         entity_edit_data = get_entity_edit_defaults()

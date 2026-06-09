@@ -73,6 +73,11 @@ class Settings:
     SONGS_TRANSCRIPTION_REQUEST_TIMEOUT_SECONDS: int
     SONGS_TRANSCRIPTION_DOWNLOAD_TIMEOUT_SECONDS: int
 
+    GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON: str
+    GOOGLE_DRIVE_MT940_FOLDER_ID: str
+    GOOGLE_DRIVE_MT940_BACKUP_FOLDER_NAME: str
+    MT940_IMPORT_MENU_KEY: str
+
     ALLOWED_ACCOUNT_STATUS: set[str]
     ENTITY_PROFILE_SCOPE_OWNER: str
     ENTITY_PROFILE_SCOPE_LEGADO: str
@@ -168,6 +173,18 @@ def _build_settings() -> Settings:
             "SONGS_TRANSCRIPTION_DOWNLOAD_TIMEOUT_SECONDS",
             180,
         ),
+        GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON=(
+            os.getenv("GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON", "") or ""
+        ).strip(),
+        GOOGLE_DRIVE_MT940_FOLDER_ID=(
+            os.getenv("GOOGLE_DRIVE_MT940_FOLDER_ID", "1eC7L09HlSjfMUT8vrNM-lekNLX-0FGlN") or ""
+        ).strip(),
+        GOOGLE_DRIVE_MT940_BACKUP_FOLDER_NAME=(
+            os.getenv("GOOGLE_DRIVE_MT940_BACKUP_FOLDER_NAME", "Backup MT940") or "Backup MT940"
+        ).strip(),
+        MT940_IMPORT_MENU_KEY=(
+            os.getenv("MT940_IMPORT_MENU_KEY", "extrato") or "extrato"
+        ).strip(),
         ALLOWED_ACCOUNT_STATUS={"active", "pending", "inactive", "blocked"},
         ENTITY_PROFILE_SCOPE_OWNER="owner",
         ENTITY_PROFILE_SCOPE_LEGADO="legado",

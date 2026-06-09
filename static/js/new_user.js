@@ -383,8 +383,8 @@ const menuProcessQuantityValuesMap = (
 const startupHash = window.location.hash || "";
 const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
-const processTextualTypes = new Set(["text", "textarea", "number", "email", "phone", "link"]);
-const processSupportedTypes = new Set(["text", "textarea", "number", "email", "phone", "date", "time", "flag", "list", "link"]);
+const processTextualTypes = new Set(["text", "textarea", "number", "currency", "email", "phone", "link"]);
+const processSupportedTypes = new Set(["text", "textarea", "number", "currency", "email", "phone", "date", "time", "flag", "list", "link", "file"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 const readOnlyDynamicProcessMenuKeys = new Set();
 
@@ -483,6 +483,13 @@ function normalizeProcessFieldType(value) {
     return cleanType;
   }
   return "text";
+}
+
+function formatCurrencyValue(rawValue) {
+  const normalized = String(rawValue || "").trim().replace(",", ".");
+  const num = parseFloat(normalized);
+  if (!Number.isFinite(num)) return rawValue || "-";
+  return num.toFixed(2).replace(".", ",");
 }
 
 function normalizeProcessFieldSize(rawSize, fieldType) {
@@ -1421,7 +1428,8 @@ function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionF
       normalizeProcessFieldType,
       normalizeDateInputValue,
       toSentenceCaseText,
-      isTruthyFlagValue
+      isTruthyFlagValue,
+      formatCurrencyValue
     },
     data: {
       menuProcessHistoryMap
@@ -1455,7 +1463,144 @@ function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionF
       dynamicProcessCreateCardEl
     }
   });
+  _syncMt940ImportButton(menuKey);
 }
+
+// ─── MT940 import button visibility & modal ───────────────────────────────────
+(function setupMt940ImportUi() {
+  var mt940ImportBtn = document.getElementById("mt940-import-btn");
+  var mt940Modal = document.getElementById("mt940-import-modal");
+  var mt940ModalClose = document.getElementById("mt940-modal-close");
+  var mt940FileInput = document.getElementById("mt940-file-input");
+  var mt940FileName = document.getElementById("mt940-file-name");
+  var mt940UploadBtn = document.getElementById("mt940-upload-btn");
+  var mt940DriveBtn = document.getElementById("mt940-drive-btn");
+  var mt940Feedback = document.getElementById("mt940-import-feedback");
+
+  function showFeedback(msg, isError) {
+    if (!mt940Feedback) return;
+    mt940Feedback.textContent = msg;
+    mt940Feedback.className = "appverbo-mt940-feedback-v1" + (isError ? " is-error" : "");
+    mt940Feedback.style.display = "";
+  }
+  function hideFeedback() {
+    if (mt940Feedback) mt940Feedback.style.display = "none";
+  }
+
+  function openModal() {
+    if (mt940Modal) { mt940Modal.style.display = "flex"; hideFeedback(); }
+  }
+  function closeModal() {
+    if (mt940Modal) mt940Modal.style.display = "none";
+  }
+
+  if (mt940ImportBtn) {
+    mt940ImportBtn.addEventListener("click", openModal);
+  }
+  if (mt940ModalClose) {
+    mt940ModalClose.addEventListener("click", closeModal);
+  }
+  if (mt940Modal) {
+    mt940Modal.addEventListener("click", function(e) {
+      if (e.target === mt940Modal) closeModal();
+    });
+  }
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && mt940Modal && mt940Modal.style.display !== "none") {
+      closeModal();
+    }
+  });
+
+  if (mt940FileInput) {
+    mt940FileInput.addEventListener("change", function() {
+      var file = mt940FileInput.files && mt940FileInput.files[0];
+      if (mt940FileName) {
+        mt940FileName.textContent = file ? file.name : "Nenhum ficheiro selecionado";
+      }
+      if (mt940UploadBtn) {
+        mt940UploadBtn.disabled = !file;
+      }
+      hideFeedback();
+    });
+  }
+
+  if (mt940UploadBtn) {
+    mt940UploadBtn.addEventListener("click", function() {
+      var file = mt940FileInput && mt940FileInput.files && mt940FileInput.files[0];
+      if (!file) return;
+      var formData = new FormData();
+      formData.append("file", file);
+      mt940UploadBtn.disabled = true;
+      mt940UploadBtn.textContent = "A importar...";
+      hideFeedback();
+      fetch("/import/mt940/upload", { method: "POST", body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          mt940UploadBtn.disabled = false;
+          mt940UploadBtn.textContent = "Importar ficheiro";
+          if (data.status === "ok" || data.status === "partial") {
+            showFeedback(
+              "Importado: " + data.linhas_inseridas + " novos registos, " +
+              data.duplicadas_ignoradas + " duplicados ignorados." +
+              (data.errors && data.errors.length ? " Avisos: " + data.errors.join("; ") : ""),
+              data.status === "partial"
+            );
+            if (mt940FileInput) { mt940FileInput.value = ""; }
+            if (mt940FileName) { mt940FileName.textContent = "Nenhum ficheiro selecionado"; }
+            window.location.reload();
+          } else {
+            showFeedback("Erro: " + (data.detail || JSON.stringify(data)), true);
+          }
+        })
+        .catch(function(err) {
+          mt940UploadBtn.disabled = false;
+          mt940UploadBtn.textContent = "Importar ficheiro";
+          showFeedback("Erro de rede: " + err, true);
+        });
+    });
+  }
+
+  if (mt940DriveBtn) {
+    mt940DriveBtn.addEventListener("click", function() {
+      mt940DriveBtn.disabled = true;
+      mt940DriveBtn.textContent = "A importar do Drive...";
+      hideFeedback();
+      fetch("/import/mt940/drive", { method: "POST" })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          mt940DriveBtn.disabled = false;
+          mt940DriveBtn.textContent = "Importar do Drive";
+          if (data.status === "ok" || data.status === "partial") {
+            showFeedback(
+              "Drive: " + data.ficheiros_processados + " ficheiro(s), " +
+              data.linhas_inseridas + " novos registos, " +
+              data.duplicadas_ignoradas + " duplicados ignorados." +
+              (data.errors && data.errors.length ? " Avisos: " + data.errors.join("; ") : ""),
+              data.status === "partial"
+            );
+            if (data.linhas_inseridas > 0) window.location.reload();
+          } else {
+            showFeedback("Erro: " + (data.detail || JSON.stringify(data)), true);
+          }
+        })
+        .catch(function(err) {
+          mt940DriveBtn.disabled = false;
+          mt940DriveBtn.textContent = "Importar do Drive";
+          showFeedback("Erro de rede: " + err, true);
+        });
+    });
+  }
+
+  window._mt940ImportBtnReady = true;
+})();
+
+function _syncMt940ImportButton(menuKey) {
+  var btn = document.getElementById("mt940-import-btn");
+  if (!btn) return;
+  var clean = typeof normalizeMenuKey === "function" ? normalizeMenuKey(menuKey) : String(menuKey || "").trim().toLowerCase();
+  btn.style.display = clean === "extrato" ? "" : "none";
+}
+
 function isMeuPerfilQuantityV4GeneratedTarget(targetEl) {
   if (
     profileEditUiUtilsApiV1 &&

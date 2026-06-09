@@ -21,8 +21,16 @@
       normalizeProcessFieldType,
       normalizeDateInputValue,
       toSentenceCaseText,
-      isTruthyFlagValue
+      isTruthyFlagValue,
+      formatCurrencyValue: _formatCurrencyValue
     } = helpers;
+    function formatCurrencyValue(rawValue) {
+      if (typeof _formatCurrencyValue === "function") return _formatCurrencyValue(rawValue);
+      const normalized = String(rawValue || "").trim().replace(",", ".");
+      const num = parseFloat(normalized);
+      if (!Number.isFinite(num)) return rawValue || "-";
+      return num.toFixed(2).replace(".", ",");
+    }
 
     const { menuProcessHistoryMap = {} } = data;
 
@@ -268,6 +276,8 @@
         const rawValue = String(values[fieldKey] || "").trim();
         if (fieldType === "flag") {
           valueEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
+        } else if (fieldType === "currency") {
+          valueEl.textContent = rawValue ? formatCurrencyValue(rawValue) : "-";
         } else if (fieldType === "link" && rawValue) {
           const linkEl = document.createElement("a");
           linkEl.href = resolveLinkHref(rawValue);
@@ -429,6 +439,8 @@
             && !normalizedFieldLabel.includes("estado");
           if (fieldType === "flag") {
             tdEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
+          } else if (fieldType === "currency") {
+            tdEl.textContent = rawValue ? formatCurrencyValue(rawValue) : "-";
           } else if (fieldType === "link" && rawValue) {
             const linkEl = document.createElement("a");
             linkEl.href = resolveLinkHref(rawValue);

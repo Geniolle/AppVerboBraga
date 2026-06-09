@@ -169,17 +169,19 @@ SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
     str(item["key"]).strip().lower(): str(item["label"])
     for item in SIDEBAR_SECTION_DEFAULTS
 }
-ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "textarea", "email", "phone", "number", "link"}
+ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "textarea", "email", "phone", "number", "link", "currency"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "text", "label": "Texto"},
     {"key": "textarea", "label": "Texto longo"},
     {"key": "number", "label": "Número"},
+    {"key": "currency", "label": "Valor monetário (0,00)"},
     {"key": "email", "label": "Email"},
     {"key": "phone", "label": "Telefone"},
     {"key": "link", "label": "Link"},
     {"key": "date", "label": "Data"},
     {"key": "time", "label": "Horário"},
     {"key": "flag", "label": "Flag"},
+    {"key": "file", "label": "Ficheiro (upload)"},
     {"key": "header", "label": "Cabeçalho (aba)"},
     {"key": "list", "label": "Lista"},
 )

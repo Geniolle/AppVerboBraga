@@ -977,7 +977,10 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         </section>
 
         <section id="dynamic-process-history-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1 appverbo-dynamic-process-history-card-v1" style="display: none;">
-          <h2 id="dynamic-process-history-active-title">Registos ativos</h2>
+          <div class="appverbo-history-card-header-v1">
+            <h2 id="dynamic-process-history-active-title">Registos ativos</h2>
+            <button id="mt940-import-btn" type="button" class="action-btn-secondary appverbo-mt940-import-btn-v1" style="display: none;">Importar MT940</button>
+          </div>
           <div id="dynamic-process-song-filters" class="appverbo-song-filters-v1" style="display: none;">
             <div class="field">
               <label for="dynamic-process-song-filter-name">Pesquisar por nome</label>
@@ -2367,6 +2370,34 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       </div>
     </main>
   </div>
+
+  <!-- MT940 Import Modal -->
+  <div id="mt940-import-modal" class="appverbo-modal-overlay-v1" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="mt940-modal-title">
+    <div class="appverbo-modal-box-v1">
+      <div class="appverbo-modal-header-v1">
+        <h3 id="mt940-modal-title">Importar extrato MT940</h3>
+        <button type="button" id="mt940-modal-close" class="appverbo-modal-close-v1" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="appverbo-modal-body-v1">
+        <div class="appverbo-mt940-section-v1">
+          <h4>Importar ficheiro local</h4>
+          <p class="appverbo-mt940-hint-v1">Selecione um ficheiro MT940 (.txt) do seu computador.</p>
+          <label class="appverbo-mt940-file-label-v1" for="mt940-file-input">
+            <span id="mt940-file-name">Nenhum ficheiro selecionado</span>
+            <input id="mt940-file-input" type="file" accept=".txt,.csv,.xlsx" class="appverbo-mt940-file-input-v1">
+          </label>
+          <button id="mt940-upload-btn" type="button" class="action-btn appverbo-mt940-action-btn-v1" disabled>Importar ficheiro</button>
+        </div>
+        <hr class="appverbo-mt940-divider-v1">
+        <div class="appverbo-mt940-section-v1">
+          <h4>Importar do Google Drive</h4>
+          <p class="appverbo-mt940-hint-v1">Lê os ficheiros MT940 da pasta configurada no Google Drive e move-os para backup após importação.</p>
+          <button id="mt940-drive-btn" type="button" class="action-btn-secondary appverbo-mt940-action-btn-v1">Importar do Drive</button>
+        </div>
+        <p id="mt940-import-feedback" class="appverbo-mt940-feedback-v1" aria-live="polite" style="display: none;"></p>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block scripts %}
@@ -2423,7 +2454,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
     };
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260606-core-readonly-actions-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260606-additional-fields-readonly-scope-v1"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260608-additional-fields-file-type-v2"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260603-lists-sessions-and-menu-by-session-v3"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
@@ -2446,8 +2477,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260607-dynamic-runtime-core-v14-n-user" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260607-dynamic-process-history-renderer-v11-cols-order" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260608-dynamic-runtime-core-v19-file-reload" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260608-dynamic-process-history-renderer-v12-currency" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
 <script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260606-process-subprocess-standards-v9-cancel-edit-close" defer></script>
 <script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260606-menu-dynamic-navigation-core-v13-sessoes" defer></script>
@@ -2455,7 +2486,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
-<script src="/static/js/modules/process_field_utils_v1.js?v=20260602-process-field-utils-time-v2" defer></script>
+<script src="/static/js/modules/process_field_utils_v1.js?v=20260608-process-field-utils-file-type-v2" defer></script>
 <script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260529-process-subsequent-rules-utils-bootstrap-fix-v1" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
 <script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260602-process-history-labels-utils-module-v3-generic-history-layout" defer></script>

@@ -498,6 +498,24 @@ def _normalize_process_state(raw_value: Any) -> str:
     return "ativo"
 
 
+_ENTITY_NUMBER_FIELD_PATTERNS = [
+    "n entidade", "num entidade", "numero entidade", "nr entidade", "n. entidade", "entidade",
+]
+_ENTITY_NUMBER_FIELD_KEYS = {
+    "numero_entidade", "custom_n_entidade", "entity_internal_number", "custom_n_cliente",
+}
+
+def _is_entity_number_field_v1(field_key: str, field_label: str) -> bool:
+    normalized_label = _normalize_lookup_text(field_label)
+    normalized_key = str(field_key or "").strip().lower()
+    if normalized_key in _ENTITY_NUMBER_FIELD_KEYS:
+        return True
+    for p in _ENTITY_NUMBER_FIELD_PATTERNS:
+        if p in normalized_label or p in normalized_key:
+            return True
+    return False
+
+
 def _resolve_department_name_field_key_v1(
     field_keys: list[str],
     field_meta_by_key: dict[str, dict[str, Any]],
@@ -3151,6 +3169,23 @@ async def update_dynamic_process_profile(request: Request):
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        # ── auto-populate entity-number fields before required check ──────────
+        # Fields matching the entity number pattern are auto-filled from the session
+        # entity even if not present in the submitted form (e.g. when the JS renders
+        # them in a different section than the server expects).
+        entity_auto_populated_keys: set[str] = set()
+        if active_entity_internal_number is not None and history_process_mode and not absence_process_mode:
+            for _fk in active_section_field_keys:
+                _fm = field_meta_by_key.get(_fk) or {}
+                _ft = _normalize_process_field_type(_fm.get("field_type"))
+                if _ft in ("flag", "file", "header"):
+                    continue
+                _input_name = f"process_field__{_fk}"
+                if str(submitted_form.get(_input_name) or "").strip():
+                    continue  # user submitted a value — don't override
+                if _is_entity_number_field_v1(_fk, str(_fm.get("label") or "")):
+                    entity_auto_populated_keys.add(_fk)
+
         missing_required_labels: list[str] = []
         for field_key in active_section_field_keys:
             field_meta = field_meta_by_key.get(field_key) or {}
@@ -3159,6 +3194,8 @@ async def update_dynamic_process_profile(request: Request):
                 continue
             if not bool(field_meta.get("is_required")):
                 continue
+            if field_key in entity_auto_populated_keys:
+                continue  # will be auto-populated from session entity
             input_name = f"process_field__{field_key}"
             clean_value = str(submitted_form.get(input_name) or "").strip()
             if clean_value:
@@ -3238,6 +3275,8 @@ async def update_dynamic_process_profile(request: Request):
                 continue
 
             clean_value = str(submitted_form.get(input_name) or "").strip()
+            if not clean_value and field_key in entity_auto_populated_keys:
+                clean_value = str(active_entity_internal_number or "").strip()
             if isinstance(field_size, int) and field_size > 0:
                 clean_value = clean_value[:field_size]
             if clean_value:
@@ -3271,8 +3310,12 @@ async def update_dynamic_process_profile(request: Request):
             submitted_section_values["__estado"] = _normalize_process_state(
                 submitted_form.get("process_state")
             )
+            if active_entity_internal_number is not None:
+                submitted_section_values["__numero_entidade"] = active_entity_internal_number
             if clean_menu_key == "contacto_geral" and active_entity_internal_number is not None:
                 submitted_section_values["custom_n_cliente"] = active_entity_internal_number
+            if clean_menu_key == "extrato" and active_entity_internal_number is not None:
+                submitted_section_values["numero_entidade"] = active_entity_internal_number
 
             if clean_menu_key == "contacto_geral" and requested_section_key == "custom_dados_membresia":
                 if requested_history_action == "update" and requested_history_record_id:
