@@ -142,6 +142,7 @@ def execute_update_menu_process_lists_v1(
         repository=repository,
         session=session,
         menu_key=payload.menu_key,
+        selected_entity_id=selected_entity_id,
     )
     if policy_error:
         return build_menu_return_url_with_message_v1(

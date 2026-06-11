@@ -7,40 +7,9 @@
   //###################################################################################
   // (1) HELPERS
   //###################################################################################
+
   function normalizeTextV1(value) {
     return String(value || "").trim();
-  }
-
-  function parseUrlV1(rawUrl) {
-    const cleanUrl = normalizeTextV1(rawUrl);
-    if (!cleanUrl) {
-      return null;
-    }
-
-    try {
-      return new URL(cleanUrl, window.location.origin);
-    }
-    catch (_error) {
-      return null;
-    }
-  }
-
-  function resolveTargetSelectorFromUrlV1(url) {
-    if (!url) {
-      return "";
-    }
-
-    const hash = normalizeTextV1(url.hash);
-    if (hash && hash !== "#") {
-      return hash.startsWith("#") ? hash : "#" + hash;
-    }
-
-    const targetParam = normalizeTextV1(url.searchParams.get("target"));
-    if (!targetParam) {
-      return "";
-    }
-
-    return targetParam.startsWith("#") ? targetParam : "#" + targetParam;
   }
 
   function resolveReturnUrlV1(triggerEl) {
@@ -53,19 +22,7 @@
       return dataUrl;
     }
 
-    const href = normalizeTextV1(triggerEl.getAttribute("href"));
-    if (href) {
-      return href;
-    }
-
-    return "";
-  }
-
-  function shouldForceNavigationV1(triggerEl) {
-    return Boolean(
-      triggerEl &&
-      normalizeTextV1(triggerEl.getAttribute("data-card-cancel-force-navigation")) === "1"
-    );
+    return normalizeTextV1(triggerEl.getAttribute("href"));
   }
 
   function resetClosestFormV1(triggerEl) {
@@ -81,6 +38,8 @@
     formEl.reset();
   }
 
+  // Closes the nearest <details> ancestor.
+  // Returns true if found and closed, false otherwise.
   function closeClosestDetailsV1(triggerEl) {
     if (!triggerEl || triggerEl.getAttribute("data-card-cancel-close-details") === "0") {
       return false;
@@ -95,54 +54,15 @@
     return true;
   }
 
-  function activateUsersNewTargetV1(rawReturnUrl) {
-    const parsedUrl = parseUrlV1(rawReturnUrl);
-    if (!parsedUrl) {
-      return false;
-    }
-
-    if (parsedUrl.origin !== window.location.origin) {
-      return false;
-    }
-
-    if (parsedUrl.pathname !== "/users/new" || parsedUrl.pathname !== window.location.pathname) {
-      return false;
-    }
-
-    const menuKey = normalizeTextV1(parsedUrl.searchParams.get("menu"));
-    if (!menuKey) {
-      return false;
-    }
-
-    if (typeof window.APPVERBO_CREATE_MENU_NAVIGATION_BRIDGE_API_V1 !== "function") {
-      return false;
-    }
-
-    const bridgeApi = window.APPVERBO_CREATE_MENU_NAVIGATION_BRIDGE_API_V1();
-    if (!bridgeApi || typeof bridgeApi.activateMenuTarget !== "function") {
-      return false;
-    }
-
-    const targetSelector = resolveTargetSelectorFromUrlV1(parsedUrl);
-    if (targetSelector && !document.querySelector(targetSelector)) {
-      return false;
-    }
-
-    bridgeApi.activateMenuTarget(menuKey, targetSelector);
-
-    try {
-      const nextUrl = parsedUrl.pathname + parsedUrl.search + parsedUrl.hash;
-      window.history.replaceState({}, document.title, nextUrl);
-    }
-    catch (_error) {
-    }
-
-    return true;
-  }
-
   //###################################################################################
   // (2) PUBLIC API
+  //
+  // Priority:
+  //   1. Close the nearest <details> (CREATE collapse) — no page reload needed.
+  //   2. Navigate to return_url via full page load — required for server-rendered
+  //      EDIT cards where the DOM can only be updated by the server.
   //###################################################################################
+
   function handleCardCancelCloseV1(triggerEl) {
     if (!triggerEl) {
       return false;
@@ -159,15 +79,6 @@
       return false;
     }
 
-    if (shouldForceNavigationV1(triggerEl)) {
-      window.location.assign(returnUrl);
-      return true;
-    }
-
-    if (activateUsersNewTargetV1(returnUrl)) {
-      return true;
-    }
-
     window.location.assign(returnUrl);
     return true;
   }
@@ -175,6 +86,7 @@
   //###################################################################################
   // (3) GLOBAL BIND
   //###################################################################################
+
   function bindCardCancelCloseV1() {
     if (window[BOUND_FLAG_V1]) {
       return;

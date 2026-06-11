@@ -56,6 +56,7 @@ def execute_update_menu_visibility_v1(
     *,
     session: Session,
     payload: UpdateMenuVisibilityInput,
+    selected_entity_id: object = None,
 ) -> tuple[bool, str]:
     repository = MenuAdminRepository(MENU_CONFIG)
 
@@ -63,6 +64,7 @@ def execute_update_menu_visibility_v1(
         repository=repository,
         session=session,
         menu_key=payload.menu_key,
+        selected_entity_id=selected_entity_id,
     )
     if policy_error:
         return False, policy_error

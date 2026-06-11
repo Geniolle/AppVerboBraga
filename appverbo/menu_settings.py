@@ -41,10 +41,8 @@ SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
 SIDEBAR_MENU_GLOBAL_SCOPE_KEYS = frozenset({MENU_SESSOES_KEY})
 SIDEBAR_MENU_ENTITY_LABEL_1001_KEYS = frozenset(
     {
-        "empresa",
         "contacto_geral",
         "departamentos",
-        MENU_MEU_PERFIL_KEY,
         "adicionar_musica",
         "ensaio",
         "contactos",
@@ -171,19 +169,19 @@ SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
 }
 ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "textarea", "email", "phone", "number", "link", "currency"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
+    {"key": "header", "label": "Cabeçalho (aba)"},
+    {"key": "date", "label": "Data"},
+    {"key": "email", "label": "Email"},
+    {"key": "file", "label": "Ficheiro (upload)"},
+    {"key": "flag", "label": "Flag"},
+    {"key": "time", "label": "Horário"},
+    {"key": "link", "label": "Link"},
+    {"key": "list", "label": "Lista"},
+    {"key": "number", "label": "Número"},
+    {"key": "phone", "label": "Telefone"},
     {"key": "text", "label": "Texto"},
     {"key": "textarea", "label": "Texto longo"},
-    {"key": "number", "label": "Número"},
     {"key": "currency", "label": "Valor monetário (0,00)"},
-    {"key": "email", "label": "Email"},
-    {"key": "phone", "label": "Telefone"},
-    {"key": "link", "label": "Link"},
-    {"key": "date", "label": "Data"},
-    {"key": "time", "label": "Horário"},
-    {"key": "flag", "label": "Flag"},
-    {"key": "file", "label": "Ficheiro (upload)"},
-    {"key": "header", "label": "Cabeçalho (aba)"},
-    {"key": "list", "label": "Lista"},
 )
 ADDITIONAL_FIELD_TYPE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_TYPES}
 ADDITIONAL_FIELD_DEFAULT_TYPE = "text"
@@ -1350,6 +1348,28 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
         for item in SIDEBAR_SECTION_DEFAULTS
         if _normalize_sidebar_section_key(item.get("key"))
     ]
+
+
+def get_merged_sidebar_section_options_v1(
+    menu_config: dict[str, Any] | None,
+    *,
+    selected_entity_id: object = None,
+) -> list[dict[str, Any]]:
+    clean_config = dict(menu_config or {})
+    sections = list(normalize_sidebar_sections(clean_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)) or [])
+
+    if selected_entity_id is not None:
+        entity_overrides = get_menu_entity_scope_overrides_v1(clean_config, selected_entity_id=selected_entity_id)
+        entity_sections = list(normalize_sidebar_sections(entity_overrides.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)) or [])
+        if entity_sections:
+            existing_keys = {str(row.get("key") or "").strip().lower() for row in sections}
+            for row in entity_sections:
+                row_key = str(row.get("key") or "").strip().lower()
+                if row_key and row_key not in existing_keys:
+                    sections.append(row)
+                    existing_keys.add(row_key)
+
+    return sections
 
 
 def _resolve_default_sidebar_section_key(menu_key: str, section_keys: set[str], ordered_section_keys: list[str]) -> str:
@@ -2915,6 +2935,40 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
         )
         changed = True
 
+    empresa_config_raw = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = 'empresa'
+            LIMIT 1
+            """
+        )
+    ).scalar_one_or_none()
+    if empresa_config_raw is not None:
+        empresa_config = _parse_menu_config(empresa_config_raw)
+        correct_scopes = list(MENU_VISIBILITY_SCOPES)
+        empresa_needs_update = (
+            empresa_config.get("visibility_scopes") != correct_scopes
+            or empresa_config.get("visibility_scope_mode") != MENU_VISIBILITY_SCOPE_ALL
+            or empresa_config.get("visibility_scope_label") != "Default"
+        )
+        if empresa_needs_update:
+            empresa_config["visibility_scopes"] = correct_scopes
+            empresa_config["visibility_scope_mode"] = MENU_VISIBILITY_SCOPE_ALL
+            empresa_config["visibility_scope_label"] = "Default"
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE lower(trim(menu_key)) = 'empresa'
+                    """
+                ),
+                {"menu_config": json.dumps(empresa_config, ensure_ascii=False)},
+            )
+            changed = True
+
     if changed:
         session.commit()
 
@@ -3223,9 +3277,11 @@ def get_sidebar_menu_settings(
                 _parse_menu_config(row.menu_config),
             ),
         )
+        # Processos extra (extra_db_keys) são sempre configurados pelo owner.
+        # Legado nunca possui overrides próprios — herda o config efetivo do owner.
         effective_menu_config_scope_id = resolve_menu_effective_config_scope_id_v1(
             menu_key,
-            selected_entity_id=selected_entity_id,
+            selected_entity_id=owner_entity_id,
             owner_entity_id=owner_entity_id,
             menu_config=raw_menu_config,
         )
@@ -3322,8 +3378,9 @@ def get_sidebar_menu_settings(
         (row for row in settings if str(row.get("key") or "").strip().lower() == "administrativo"),
         None,
     )
-    sidebar_section_options = normalize_sidebar_sections(
-        (administrativo_row or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    sidebar_section_options = get_merged_sidebar_section_options_v1(
+        (administrativo_row or {}).get("menu_config"),
+        selected_entity_id=selected_entity_id,
     )
     sidebar_section_keys = [
         str(item.get("key") or "").strip().lower()
@@ -3634,8 +3691,9 @@ def update_sidebar_menu_label(
         menu_config["visibility_scopes"] = get_menu_visibility_scopes(menu_config)
 
     administrative_config = _load_menu_config(session, "administrativo")
-    section_options = normalize_sidebar_sections(
-        administrative_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    section_options = get_merged_sidebar_section_options_v1(
+        administrative_config,
+        selected_entity_id=selected_entity_id,
     )
     section_keys = [
         str(item.get("key") or "").strip().lower()
@@ -5000,14 +5058,28 @@ def _extract_process_list_table_key_from_source_v1(raw_source: Any) -> str:
         return ""
 
     if clean_source.startswith(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):
-        return _normalize_process_list_table_key_v1(
-            clean_source[len(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):]
-        )
+        rest = clean_source[len(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):]
+        first_segment = rest.split(":")[0]
+        return _normalize_process_list_table_key_v1(first_segment)
 
     if clean_source.startswith("table_"):
         return _normalize_process_list_table_key_v1(clean_source[6:])
 
     return ""
+
+
+def _extract_process_list_column_from_source_v1(raw_source: Any) -> str:
+    clean_source = str(raw_source or "").strip().lower()
+
+    if not clean_source.startswith(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):
+        return ""
+
+    rest = clean_source[len(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1):]
+    colon_index = rest.find(":")
+    if colon_index < 0:
+        return ""
+
+    return _normalize_process_list_table_key_v1(rest[colon_index + 1:])
 
 
 def _format_process_list_table_label_v1(table_key: str) -> str:
@@ -5040,6 +5112,9 @@ def _normalize_process_list_source_key_v1(raw_source: Any) -> str:
 
     table_key = _extract_process_list_table_key_from_source_v1(raw_source)
     if table_key:
+        column_key = _extract_process_list_column_from_source_v1(raw_source)
+        if column_key:
+            return f"{PROCESS_LIST_SOURCE_TABLE_PREFIX_V1}{table_key}:{column_key}"
         return _build_process_list_table_source_key_v1(table_key)
 
     return PROCESS_LIST_SOURCE_MANUAL_V1
@@ -5049,7 +5124,11 @@ def _resolve_process_list_source_label_v1(source_key: str) -> str:
     clean_source_key = _normalize_process_list_source_key_v1(source_key)
     source_table_key = _extract_process_list_table_key_from_source_v1(clean_source_key)
     if source_table_key:
-        return f"Tabela: {_format_process_list_table_label_v1(source_table_key)} (automático)"
+        source_column_key = _extract_process_list_column_from_source_v1(clean_source_key)
+        table_label = _format_process_list_table_label_v1(source_table_key)
+        if source_column_key:
+            return f"Tabela: {table_label} · {source_column_key} (automático)"
+        return f"Tabela: {table_label} (automático)"
     return PROCESS_LIST_SOURCE_LABELS_V1.get(
         clean_source_key,
         PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_MANUAL_V1],
@@ -5338,32 +5417,14 @@ def _list_process_source_tables_v1(session: Session) -> list[str]:
 
 
 def get_process_list_source_options_v1(session: Session) -> list[dict[str, str]]:
-    options: list[dict[str, str]] = [
-        {"key": PROCESS_LIST_SOURCE_MANUAL_V1, "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_MANUAL_V1]},
-        {"key": PROCESS_LIST_SOURCE_USERS_V1, "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_USERS_V1]},
-        {
-            "key": PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1,
-            "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1],
-        },
-        {
-            "key": PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1,
-            "label": PROCESS_LIST_SOURCE_LABELS_V1[PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1],
-        },
+    return [
+        {"key": PROCESS_LIST_SOURCE_MANUAL_V1, "label": "Manual"},
+        {"key": "table", "label": "Tabela"},
     ]
 
-    for table_key in _list_process_source_tables_v1(session):
-        if table_key == "users":
-            continue
-        options.append(
-            {
-                "key": _build_process_list_table_source_key_v1(table_key),
-                "label": _resolve_process_list_source_label_v1(
-                    _build_process_list_table_source_key_v1(table_key)
-                ),
-            }
-        )
 
-    return options
+def get_process_list_source_tables_v1(session: Session) -> list[str]:
+    return _list_process_source_tables_v1(session)
 
 
 def _quote_sql_identifier_v1(raw_identifier: Any) -> str:
@@ -5456,13 +5517,23 @@ def _resolve_process_source_table_status_column_v1(columns: list[dict[str, str]]
 def _load_process_list_table_source_items_v1(
     session: Session,
     table_key: str,
+    column_override: str = "",
 ) -> list[str]:
     clean_table_key = _normalize_process_list_table_key_v1(table_key)
     if not clean_table_key:
         return []
 
     table_columns = _load_process_source_table_columns_v1(session, clean_table_key)
-    display_column = _resolve_process_source_table_display_column_v1(table_columns)
+
+    if column_override:
+        clean_column = _normalize_process_list_table_key_v1(column_override)
+        columns_by_name = {
+            str(c.get("column_name") or "").strip().lower(): c
+            for c in table_columns
+        }
+        display_column = clean_column if clean_column in columns_by_name else _resolve_process_source_table_display_column_v1(table_columns)
+    else:
+        display_column = _resolve_process_source_table_display_column_v1(table_columns)
     if not display_column:
         return []
 
@@ -5572,12 +5643,15 @@ def _resolve_process_lists_dynamic_sources_v1(
             )
             process_list["items_csv"] = ", ".join(process_list["items"])
         elif source_table_key:
-            if source_table_key not in table_source_items_cache:
-                table_source_items_cache[source_table_key] = _load_process_list_table_source_items_v1(
+            source_column_key = _extract_process_list_column_from_source_v1(source_key)
+            table_cache_key = source_key
+            if table_cache_key not in table_source_items_cache:
+                table_source_items_cache[table_cache_key] = _load_process_list_table_source_items_v1(
                     session,
                     source_table_key,
+                    column_override=source_column_key,
                 )
-            source_items = table_source_items_cache.get(source_table_key, [])
+            source_items = table_source_items_cache.get(table_cache_key, [])
             process_list["items"] = list(source_items)
             process_list["items_csv"] = ", ".join(source_items)
             process_list["option_rows"] = _build_process_list_option_rows_from_labels_v1(
@@ -5638,6 +5712,7 @@ def get_sidebar_menu_settings_v4(
         selected_entity_id=selected_entity_id,
     )
     process_list_source_options = get_process_list_source_options_v1(session)
+    process_list_source_tables = get_process_list_source_tables_v1(session)
 
     rows = session.execute(
         text(
@@ -5675,6 +5750,7 @@ def get_sidebar_menu_settings_v4(
         item["process_subsequent_fields"] = process_subsequent_fields
         item["process_quantity_fields"] = process_quantity_fields
         item["process_list_source_options"] = list(process_list_source_options)
+        item["process_list_source_tables"] = list(process_list_source_tables)
         item["process_list_options"] = [
             {"key": process_list["key"], "label": process_list["label"]}
             for process_list in process_lists

@@ -229,6 +229,11 @@
 
 [data-process-additional-fields-manager-v3="1"] [data-additional-field-required-wrap] {
   align-self: end;
+  grid-column: 4;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-client-number-wrap] {
+  grid-column: 5;
 }
 
 [data-process-additional-fields-manager-v3="1"] [data-additional-field-required-wrap] .profile-custom-flag-control {

@@ -11,6 +11,7 @@ from appverbo.menu_settings import (
     MENU_SECTION_OPTIONS,
     create_sidebar_menu_setting,
     delete_sidebar_menu_setting,
+    get_merged_sidebar_section_options_v1,
     get_owner_entity_scope_id_v1,
     get_sidebar_menu_settings,
     move_sidebar_menu_additional_field,
@@ -168,6 +169,19 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             page_size=page_size,
         )
 
+    def _get_owner_entity_internal_number_v1(self, session: Any) -> str:
+        try:
+            from sqlalchemy import select as _sa_select
+            from appverbo.models.entity import Entity as _Entity
+            _number = session.scalar(
+                _sa_select(_Entity.internal_number)
+                .where(_Entity.profile_scope == "owner")
+                .limit(1)
+            )
+            return str(_number).strip() if _number is not None else ""
+        except Exception:
+            return ""
+
     def _to_row_v1(
         self,
         *,
@@ -175,6 +189,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         raw_row: dict[str, Any],
         selected_entity_id: object = None,
         owner_entity_id: object = None,
+        owner_entity_internal_number: str = "",
     ) -> dict[str, Any]:
         row = dict(raw_row)
         menu_key = self.normalize_menu_key(row.get("key"))
@@ -205,7 +220,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             entity_scope_label_entity_id,
         )
         if entity_scope_label_entity_id is None:
-            entity_internal_number = "Default"
+            entity_internal_number = owner_entity_internal_number or "Default"
         else:
             scope_display = build_entity_scope_display_v1(
                 session,
@@ -247,6 +262,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         *,
         rows: list[dict[str, Any]],
         filters: MenuListFilters,
+        owner_entity_id: object = None,
     ) -> list[dict[str, Any]]:
         filtered_rows = list(rows)
 
@@ -264,6 +280,17 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
                 selected_entity_id=filters.entity_id,
             )
         ]
+
+        if (
+            filters.entity_id is not None
+            and owner_entity_id is not None
+            and int(filters.entity_id) != int(owner_entity_id)
+        ):
+            filtered_rows = [
+                row
+                for row in filtered_rows
+                if str(row.get("visibility_scope_mode") or "").strip().lower() != "owner"
+            ]
 
         status_values = set(filters.status_values or ())
         if status_values:
@@ -294,19 +321,21 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
     ) -> dict[str, Any]:
         resolved_filters = filters or MenuListFilters()
         owner_entity_id = get_owner_entity_scope_id_v1(session)
+        owner_entity_internal_number = self._get_owner_entity_internal_number_v1(session)
         rows = [
             self._to_row_v1(
                 session=session,
                 raw_row=raw_row,
                 selected_entity_id=resolved_filters.entity_id,
                 owner_entity_id=owner_entity_id,
+                owner_entity_internal_number=owner_entity_internal_number,
             )
             for raw_row in get_sidebar_menu_settings(
                 session,
                 selected_entity_id=resolved_filters.entity_id,
             )
         ]
-        rows = self._apply_filters_v1(rows=rows, filters=resolved_filters)
+        rows = self._apply_filters_v1(rows=rows, filters=resolved_filters, owner_entity_id=owner_entity_id)
 
         total_rows = len(rows)
         start_index = (resolved_filters.page - 1) * resolved_filters.page_size
@@ -380,6 +409,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             return None
 
         owner_entity_id = get_owner_entity_scope_id_v1(session)
+        owner_entity_internal_number = self._get_owner_entity_internal_number_v1(session)
 
         for row in get_sidebar_menu_settings(
             session,
@@ -393,6 +423,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
                     raw_row=row,
                     selected_entity_id=selected_entity_id,
                     owner_entity_id=owner_entity_id,
+                    owner_entity_internal_number=owner_entity_internal_number,
                 )
                 if not is_record_visible_for_selected_entity_v1(
                     record_entity_id=row_data.get("entity_scope_entity_id"),
@@ -875,18 +906,22 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         self,
         *,
         session: Any,
+        selected_entity_id: object = None,
     ) -> list[dict[str, str]]:
         administrativo_menu = self.get_by_key(session=session, menu_key="administrativo") or {}
         menu_config = dict(administrativo_menu.get("menu_config") or {})
-        dynamic_sections = normalize_sidebar_sections(menu_config.get("sidebar_sections"))
+        merged_sections = get_merged_sidebar_section_options_v1(
+            menu_config,
+            selected_entity_id=selected_entity_id,
+        )
 
-        if dynamic_sections:
+        if merged_sections:
             return [
                 {
                     "key": self._normalize_text(row.get("key")).lower(),
                     "label": self._normalize_text(row.get("label")),
                 }
-                for row in dynamic_sections
+                for row in merged_sections
                 if self._normalize_text(row.get("key")) and self._normalize_text(row.get("label"))
             ]
 

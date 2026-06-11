@@ -100,6 +100,7 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
     label_field="name",
     enabled=True,
     migration_status="reference",
+    table_name="entities",
     fields=ENTITY_FIELDS,
     columns=(
         AdminColumnConfig(key="name", label="ENTIDADE", source="name"),

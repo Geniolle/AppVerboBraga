@@ -31,6 +31,16 @@
         target: "create-user-card",
         hash: "create-user-card"
       }
+    },
+    {
+      key: "definicoes",
+      label: "Definições",
+      target: "#admin-definicoes-card",
+      route: {
+        adminTab: "definicoes",
+        target: "admin-definicoes-card",
+        hash: "admin-definicoes-card"
+      }
     }
   ]);
 
@@ -57,16 +67,6 @@
         target: "admin-menu-card",
         hash: "admin-menu-card"
       }
-    },
-    {
-      key: "definicoes",
-      label: "Definições",
-      target: "#admin-definicoes-card",
-      route: {
-        adminTab: "definicoes",
-        target: "admin-definicoes-card",
-        hash: "admin-definicoes-card"
-      }
     }
   ]);
 
@@ -77,12 +77,13 @@
   });
 
   const MENU_TARGET_ALIAS_LIBRARY_V1 = Object.freeze({
-    administrativo: Object.freeze({}),
+    administrativo: Object.freeze({
+      "#admin-definicoes-card-edit": "#admin-definicoes-card"
+    }),
     sessoes: Object.freeze({
       "#admin-menu-form": "#admin-menu-card",
       "#admin-menu-create-card": "#admin-menu-card",
-      "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card",
-      "#admin-definicoes-card-edit": "#admin-definicoes-card"
+      "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"
     })
   });
 
@@ -117,21 +118,6 @@
           "admin-menu-card-inactive",
           "settings-menu-edit-card"
         ])
-      }),
-      Object.freeze({
-        key: "definicoes",
-        targets: Object.freeze([
-          "#admin-definicoes-card",
-          "#admin-definicoes-card-create",
-          "#admin-definicoes-card-inactive",
-          "#admin-definicoes-card-edit"
-        ]),
-        cardIds: Object.freeze([
-          "admin-definicoes-card",
-          "admin-definicoes-card-create",
-          "admin-definicoes-card-inactive",
-          "admin-definicoes-card-edit"
-        ])
       })
     ]),
     administrativo: Object.freeze([
@@ -157,6 +143,21 @@
           "admin-users-created-card",
           "inactive-users-card"
         ])
+      }),
+      Object.freeze({
+        key: "definicoes",
+        targets: Object.freeze([
+          "#admin-definicoes-card",
+          "#admin-definicoes-card-create",
+          "#admin-definicoes-card-inactive",
+          "#admin-definicoes-card-edit"
+        ]),
+        cardIds: Object.freeze([
+          "admin-definicoes-card",
+          "admin-definicoes-card-create",
+          "admin-definicoes-card-inactive",
+          "admin-definicoes-card-edit"
+        ])
       })
     ])
   });
@@ -177,13 +178,13 @@
     "#create-user-card": "administrativo",
     "#create-entity-card": "administrativo",
     "#admin-subprocess-v2-entidade": "administrativo",
+    "#admin-definicoes-card": "administrativo",
+    "#admin-definicoes-card-create": "administrativo",
+    "#admin-definicoes-card-inactive": "administrativo",
+    "#admin-definicoes-card-edit": "administrativo",
     "#admin-menu-card-create": "sessoes",
     "#admin-menu-card": "sessoes",
     "#admin-menu-card-inactive": "sessoes",
-    "#admin-definicoes-card": "sessoes",
-    "#admin-definicoes-card-create": "sessoes",
-    "#admin-definicoes-card-inactive": "sessoes",
-    "#admin-definicoes-card-edit": "sessoes",
     "#admin-sidebar-sections-card": "sessoes",
     "#admin-sidebar-sections-form-card": "sessoes",
     "#settings-menu-edit-card": "sessoes"

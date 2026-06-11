@@ -80,6 +80,7 @@ class AdminSubprocessConfig:
     edit_mode_value: str = "edit"
     enabled: bool = True
     migration_status: str = "native"
+    table_name: str = ""
     fields: tuple[AdminFieldConfig, ...] = ()
     columns: tuple[AdminColumnConfig, ...] = ()
     actions: tuple[AdminActionConfig, ...] = ()
@@ -100,6 +101,8 @@ class AdminSubprocessState:
     field_options: dict[str, tuple[tuple[str, str], ...]] = field(default_factory=dict)
     active_fields: tuple[AdminFieldConfig, ...] | None = None
     active_columns: tuple[AdminColumnConfig, ...] | None = None
+    prefill_keys: set[str] = field(default_factory=set)
+    show_field_hints: bool = False
 
     @property
     def effective_fields(self) -> tuple[AdminFieldConfig, ...]:
@@ -130,6 +133,8 @@ class AdminSubprocessState:
 
         for field in self.effective_fields:
             if field.field_type in {"readonly", "hidden"} or field.readonly_on_create:
+                continue
+            if field.key in self.prefill_keys:
                 continue
 
             raw_value = self.create_data.get(field.key, "")

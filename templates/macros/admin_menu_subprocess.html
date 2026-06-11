@@ -27,7 +27,7 @@
 
           <div class="admin-subprocess-grid-v1">
             <div class="field admin-subprocess-field-v1">
-              <label for="admin_menu_create_label">Nome do menu *</label>
+              <label for="admin_menu_create_label">Nome do menu *{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(menu_label)</span>{% endif %}</label>
               <input
                 id="admin_menu_create_label"
                 name="menu_label"
@@ -38,7 +38,7 @@
             </div>
 
             <div class="field admin-subprocess-field-v1">
-              <label for="admin_menu_create_visibility_scope">Sistema</label>
+              <label for="admin_menu_create_visibility_scope">Sistema{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(menu_visibility_scope)</span>{% endif %}</label>
               <select id="admin_menu_create_visibility_scope" name="menu_visibility_scope">
                 <option value="all" selected>Default</option>
                 <option value="owner">Owner</option>
@@ -47,7 +47,7 @@
             </div>
 
             <div class="field admin-subprocess-field-v1">
-              <label for="admin_menu_create_section">Sessão</label>
+              <label for="admin_menu_create_section">Sessão{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(menu_section)</span>{% endif %}</label>
               <select id="admin_menu_create_section" name="menu_section">
                 <option value="">Sem sessão</option>
                 {% for section_key, section_label in state.section_options %}
@@ -228,11 +228,11 @@
         <table class="admin-subprocess-table-v1">
           <thead>
             <tr>
-              <th>Menu lateral</th>
-              <th>Sistema</th>
-              <th>Entidade</th>
-              <th>Estado</th>
-              <th>Ações</th>
+              <th>MENU</th>
+              <th>SISTEMA</th>
+              <th>Nº ENTIDADE</th>
+              <th>ESTADO</th>
+              <th>AÇÕES</th>
             </tr>
           </thead>
           <tbody>
@@ -240,7 +240,7 @@
               <tr>
                 <td>{{ row.get("label", "") }}</td>
                 <td>{{ row.get("visibility_scope_label", "-") }}</td>
-                <td>{{ row.get("entity_name", "Default") }}</td>
+                <td>{{ row.get("entity_internal_number", "Default") }}</td>
                 <td>
                   <span class="admin-subprocess-badge-v1 {% if status_value == 'ativo' %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
                     {{ row.get("status_label", "Ativo" if status_value == "ativo" else "Inativo") }}

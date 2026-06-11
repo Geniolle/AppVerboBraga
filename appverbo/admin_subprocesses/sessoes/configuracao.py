@@ -45,6 +45,15 @@ SIDEBAR_SECTION_FIELDS = (
             ("inativo", "Inativo"),
         ),
     ),
+    AdminFieldConfig(
+        key="entity_internal_number",
+        label="Nº Entidade",
+        input_name="section_entity_internal_number",
+        field_type="text",
+        required=False,
+        max_length=40,
+        placeholder="Default",
+    ),
 )
 
 
@@ -95,6 +104,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     edit_mode_value="edit",
     enabled=True,
     migration_status="native_next",
+    table_name="sidebar_menu_settings · menu_config.sidebar_sections",
     fields=SIDEBAR_SECTION_FIELDS,
     columns=SIDEBAR_SECTION_COLUMNS,
     actions=DEFAULT_ADMIN_ACTIONS,

@@ -116,7 +116,8 @@
     }
 
     if (rawValue.indexOf(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1) === 0) {
-      cleanTableKey = normalizeKey_v1(rawValue.slice(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1.length));
+      const rest = rawValue.slice(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1.length);
+      cleanTableKey = normalizeKey_v1(rest.split(":")[0]);
     } else if (rawValue.indexOf("table_") === 0) {
       cleanTableKey = normalizeKey_v1(rawValue.slice(6));
     }
@@ -126,6 +127,23 @@
     }
 
     return PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1[cleanTableKey] || cleanTableKey;
+  }
+
+  function normalizeColumnFromSource_v1(value) {
+    const rawValue = toSafeString_v1(value).trim().toLowerCase();
+
+    if (!rawValue || rawValue.indexOf(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1) !== 0) {
+      return "";
+    }
+
+    const rest = rawValue.slice(PROCESS_LIST_SOURCE_TABLE_PREFIX_V1.length);
+    const colonIndex = rest.indexOf(":");
+
+    if (colonIndex < 0) {
+      return "";
+    }
+
+    return normalizeKey_v1(rest.slice(colonIndex + 1));
   }
 
   function buildTableSourceKey_v1(tableKey) {
@@ -173,6 +191,10 @@
 
     const tableKey = normalizeTableKeyFromSource_v1(rawValue);
     if (tableKey) {
+      const columnKey = normalizeColumnFromSource_v1(rawValue);
+      if (columnKey) {
+        return PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 + tableKey + ":" + columnKey;
+      }
       return buildTableSourceKey_v1(tableKey);
     }
 
@@ -199,7 +221,12 @@
     const cleanSourceKey = normalizeSourceKey_v1(sourceKey);
     const tableKey = normalizeTableKeyFromSource_v1(cleanSourceKey);
     if (tableKey) {
-      return "Tabela: " + (formatTableLabel_v1(tableKey) || tableKey) + " (automático)";
+      const columnKey = normalizeColumnFromSource_v1(cleanSourceKey);
+      const tableLabel = formatTableLabel_v1(tableKey) || tableKey;
+      if (columnKey) {
+        return "Tabela: " + tableLabel + " · " + columnKey + " (automático)";
+      }
+      return "Tabela: " + tableLabel + " (automático)";
     }
     return PROCESS_LIST_SOURCE_OPTIONS_V1[cleanSourceKey] || PROCESS_LIST_SOURCE_OPTIONS_V1[PROCESS_LIST_SOURCE_MANUAL_V1];
   }
@@ -258,6 +285,10 @@
       editorLabel: form.querySelector("[data-process-list-editor-label]"),
       editorItems: form.querySelector("[data-process-list-editor-items]"),
       editorSource: form.querySelector("[data-process-list-editor-source]"),
+      editorTable: form.querySelector("[data-process-list-editor-table]"),
+      editorColumn: form.querySelector("[data-process-list-editor-column]"),
+      editorTableField: form.querySelector("[data-process-list-table-field]"),
+      editorColumnField: form.querySelector("[data-process-list-column-field]"),
       submitButton: form.querySelector("[data-process-list-editor-submit]"),
       cancelButton: form.querySelector("[data-process-list-editor-cancel]"),
       table: form.querySelector("[data-process-lists-table]"),
@@ -326,13 +357,96 @@
   // (4) EDITOR SUPERIOR
   //###################################################################################
 
+  function loadTableColumns_v1(tableKey, elements, selectedColumn) {
+    if (!elements || !elements.editorColumn) {
+      return;
+    }
+
+    const select = elements.editorColumn;
+    select.innerHTML = "<option value=\"\">Carregando...</option>";
+
+    fetch("/settings/menu/table-columns?table=" + encodeURIComponent(tableKey))
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (data) {
+        select.innerHTML = "<option value=\"\">Selecione o campo</option>";
+
+        if (data.ok && Array.isArray(data.columns)) {
+          data.columns.forEach(function (col) {
+            const opt = document.createElement("option");
+            opt.value = col;
+            opt.textContent = col;
+
+            if (col === selectedColumn) {
+              opt.selected = true;
+            }
+
+            select.appendChild(opt);
+          });
+        }
+      })
+      .catch(function () {
+        select.innerHTML = "<option value=\"\">Erro ao carregar campos</option>";
+      });
+  }
+
+  function buildFullSourceKeyFromEditor_v1(elements) {
+    const sourceValue = toSafeString_v1(
+      elements.editorSource ? elements.editorSource.value : ""
+    ).trim().toLowerCase();
+
+    if (sourceValue === "table") {
+      const tableValue = normalizeKey_v1(
+        elements.editorTable ? elements.editorTable.value : ""
+      );
+      const columnValue = normalizeKey_v1(
+        elements.editorColumn ? elements.editorColumn.value : ""
+      );
+
+      if (tableValue && columnValue) {
+        return PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 + tableValue + ":" + columnValue;
+      }
+
+      if (tableValue) {
+        return PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 + tableValue;
+      }
+
+      return PROCESS_LIST_SOURCE_MANUAL_V1;
+    }
+
+    return normalizeSourceKey_v1(sourceValue);
+  }
+
+  function syncEditorTableMode_v1(elements) {
+    if (!elements) {
+      return;
+    }
+
+    const sourceValue = toSafeString_v1(
+      elements.editorSource ? elements.editorSource.value : ""
+    ).trim().toLowerCase();
+    const isTable = sourceValue === "table";
+
+    if (elements.editorTableField) {
+      elements.editorTableField.style.display = isTable ? "" : "none";
+    }
+
+    if (elements.editorColumnField) {
+      elements.editorColumnField.style.display = isTable ? "" : "none";
+    }
+  }
+
   function syncEditorSourceMode_v1(elements) {
     if (!elements || !elements.editorItems) {
       return;
     }
 
-    const currentSourceKey = normalizeSourceKey_v1(elements.editorSource ? elements.editorSource.value : "");
-    const automaticSource = isAutomaticSource_v1(currentSourceKey);
+    const rawSourceValue = toSafeString_v1(
+      elements.editorSource ? elements.editorSource.value : ""
+    ).trim().toLowerCase();
+    const currentSourceKey = normalizeSourceKey_v1(buildFullSourceKeyFromEditor_v1(elements));
+    const automaticSource = isAutomaticSource_v1(currentSourceKey) || rawSourceValue === "table";
 
     elements.editorItems.disabled = automaticSource;
     elements.editorItems.placeholder = automaticSource
@@ -342,6 +456,8 @@
     if (automaticSource) {
       elements.editorItems.value = "";
     }
+
+    syncEditorTableMode_v1(elements);
   }
 
   function clearEditor_v1(state, elements) {
@@ -349,9 +465,19 @@
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorItems.value = "";
+
     if (elements.editorSource) {
       elements.editorSource.value = PROCESS_LIST_SOURCE_MANUAL_V1;
     }
+
+    if (elements.editorTable) {
+      elements.editorTable.value = "";
+    }
+
+    if (elements.editorColumn) {
+      elements.editorColumn.innerHTML = "<option value=\"\">Selecione o campo</option>";
+    }
+
     syncEditorSourceMode_v1(elements);
   }
 
@@ -384,18 +510,35 @@
     elements.editorKey.value = item.key || "";
     elements.editorLabel.value = item.label || "";
     elements.editorItems.value = item.itemsCsv || "";
+
     if (elements.editorSource) {
       const sourceKey = normalizeSourceKey_v1(item.sourceKey);
-      ensureEditorSourceOption_v1(elements, sourceKey);
-      elements.editorSource.value = sourceKey;
+      const tableKey = normalizeTableKeyFromSource_v1(sourceKey);
+
+      if (tableKey) {
+        const columnKey = normalizeColumnFromSource_v1(sourceKey);
+        elements.editorSource.value = "table";
+
+        if (elements.editorTable) {
+          elements.editorTable.value = tableKey;
+        }
+
+        if (tableKey) {
+          loadTableColumns_v1(tableKey, elements, columnKey);
+        }
+      } else {
+        ensureEditorSourceOption_v1(elements, sourceKey);
+        elements.editorSource.value = sourceKey;
+      }
     }
+
     syncEditorSourceMode_v1(elements);
     elements.editorLabel.focus();
   }
 
   function readEditorItem_v1(state, elements) {
     const label = toSafeString_v1(elements.editorLabel.value).trim();
-    const sourceKey = normalizeSourceKey_v1(elements.editorSource ? elements.editorSource.value : "");
+    const sourceKey = normalizeSourceKey_v1(buildFullSourceKeyFromEditor_v1(elements));
     const itemsCsv = isAutomaticSource_v1(sourceKey)
       ? ""
       : toSafeString_v1(elements.editorItems.value).trim();
@@ -602,6 +745,30 @@
 
     if (elements.editorSource) {
       elements.editorSource.addEventListener("change", function () {
+        if (elements.editorTable) {
+          elements.editorTable.value = "";
+        }
+
+        if (elements.editorColumn) {
+          elements.editorColumn.innerHTML = "<option value=\"\">Selecione o campo</option>";
+        }
+
+        syncEditorSourceMode_v1(elements);
+      });
+    }
+
+    if (elements.editorTable) {
+      elements.editorTable.addEventListener("change", function () {
+        const tableKey = normalizeKey_v1(elements.editorTable.value);
+
+        if (elements.editorColumn) {
+          elements.editorColumn.innerHTML = "<option value=\"\">Selecione o campo</option>";
+        }
+
+        if (tableKey) {
+          loadTableColumns_v1(tableKey, elements, "");
+        }
+
         syncEditorSourceMode_v1(elements);
       });
     }

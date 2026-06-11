@@ -220,6 +220,12 @@ def _normalize_target_selector_v1(value: object) -> str:
     return clean_value if clean_value.startswith("#") else f"#{clean_value}"
 
 
+def _set_admin_subprocess_show_hints_v1(state: Any, is_admin: bool) -> Any:
+    if state is not None and is_admin:
+        state.show_field_hints = True
+    return state
+
+
 def _filter_sessoes_rows_for_scope_v1(
     rows: list[dict[str, Any]] | tuple[dict[str, Any], ...],
     current_entity_scope: object,
@@ -230,6 +236,9 @@ def _filter_sessoes_rows_for_scope_v1(
     for raw_row in rows or []:
         row = dict(raw_row or {})
         row_scope_mode = str(row.get("visibility_scope_mode") or "").strip().lower()
+
+        if clean_entity_scope == "owner" and row_scope_mode not in {"owner", "all"}:
+            continue
 
         if row_scope_mode == "owner" and clean_entity_scope != "owner":
             continue
@@ -337,6 +346,8 @@ def _decorate_admin_subprocess_state_with_selected_entity_scope_v1(
             dict(state.create_data),
             is_create_data=True,
         )
+        if clean_entity_internal_number and hasattr(state, "prefill_keys"):
+            state.prefill_keys.add("entity_internal_number")
 
     return state
 
@@ -1695,10 +1706,21 @@ def _resolve_blank_admin_process_menu_v1(
     clean_sidebar_section_edit_key = str(raw_sidebar_section_edit_key or "").strip()
     clean_sidebar_sections_tab = str(raw_sidebar_sections_tab or "").strip().lower()
 
-    if clean_admin_tab in {"menu", "sessoes", "definicoes"}:
+    if clean_admin_tab in {"menu", "sessoes"}:
         return "sessoes"
 
+    if clean_admin_tab == "definicoes":
+        return "administrativo"
+
     if clean_admin_tab in {"entidade", "utilizador"}:
+        return "administrativo"
+
+    if clean_target in {
+        "#admin-definicoes-card",
+        "#admin-definicoes-card-edit",
+        "#admin-definicoes-card-create",
+        "#admin-definicoes-card-inactive",
+    }:
         return "administrativo"
 
     if clean_target in {
@@ -1706,10 +1728,6 @@ def _resolve_blank_admin_process_menu_v1(
         "#admin-menu-card",
         "#admin-menu-card-create",
         "#admin-menu-card-inactive",
-        "#admin-definicoes-card",
-        "#admin-definicoes-card-edit",
-        "#admin-definicoes-card-create",
-        "#admin-definicoes-card-inactive",
         "#admin-sidebar-sections-card",
         "#admin-sidebar-sections-form-card",
         "#admin-sidebar-sections-card-create",
@@ -1717,9 +1735,11 @@ def _resolve_blank_admin_process_menu_v1(
     }:
         return "sessoes"
 
+    if clean_definition_edit_id:
+        return "administrativo"
+
     if (
         clean_settings_edit_key
-        or clean_definition_edit_id
         or clean_sidebar_section_edit_key
         or clean_sidebar_sections_tab == "sessoes"
     ):
@@ -1740,7 +1760,18 @@ def _resolve_sessions_admin_tab_fallback_v1(
     sidebar_sections_tab: str,
     sidebar_section_edit_key: str,
 ) -> str:
-    if str(resolved_menu or "").strip().lower() != "administrativo":
+    clean_resolved_menu = str(resolved_menu or "").strip().lower()
+
+    if clean_resolved_menu == "sessoes":
+        # "entidade" is the default when no admin_tab is provided — treat it as
+        # "no explicit tab" and fall back to sessoes.  Any other valid tab
+        # (menu, definicoes, utilizador, etc.) was explicitly chosen by the
+        # user and must be respected.
+        if resolved_admin_tab == "entidade":
+            return "sessoes"
+        return resolved_admin_tab
+
+    if clean_resolved_menu != "administrativo":
         return resolved_admin_tab
 
     clean_target = str(target or "").strip().lower()
@@ -2172,6 +2203,8 @@ def new_user_page(
         sidebar_section_edit_data_v22 = dict(
             sessoes_admin_page_payload.get("sidebar_section_edit_data", {})
         )
+        if not sidebar_section_edit_data_v22.get("key") and not sidebar_section_edit_data_v22.get("entity_internal_number") and current_entity_internal_number:
+            sidebar_section_edit_data_v22["entity_internal_number"] = current_entity_internal_number
         if is_admin_menu_tab or (
             resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "definicoes"
         ):
@@ -2467,6 +2500,7 @@ def new_user_page(
             success=settings_success if resolved_admin_tab == "menu" else "",
             error=settings_error if resolved_admin_tab == "menu" else "",
             return_url=f"/users/new?menu={resolved_menu}&admin_tab=menu&target=admin-menu-card#admin-menu-card",
+            current_entity_scope=str(page_data.get("current_entity_scope") or "").strip().lower(),
         )
     elif resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "definicoes":
         definicoes_subprocess_config_v1 = get_admin_subprocess_config("definicoes")
@@ -2684,12 +2718,12 @@ def new_user_page(
         "admin_sidebar_icon_color_hex": str(admin_sidebar_icon_color_hex_v1),
         "admin_sidebar_section_text_color_hex": str(admin_sidebar_section_text_color_hex_v1),
         "admin_subprocess_state": (
-            admin_subprocess_state_utilizador_v1
+            _set_admin_subprocess_show_hints_v1(admin_subprocess_state_utilizador_v1, current_user_is_admin)
             if resolved_admin_tab == "utilizador"
             else (
-                admin_subprocess_state_definicoes_v1
+                _set_admin_subprocess_show_hints_v1(admin_subprocess_state_definicoes_v1, current_user_is_admin)
                 if resolved_admin_tab == "definicoes"
-                else admin_subprocess_state_v2
+                else _set_admin_subprocess_show_hints_v1(admin_subprocess_state_v2, current_user_is_admin)
             )
         ),
         "admin_subprocess_state_utilizador": admin_subprocess_state_utilizador_v1,
@@ -2697,7 +2731,7 @@ def new_user_page(
         "admin_subprocess_state_definicoes": admin_subprocess_state_definicoes_v1,
         "admin_subprocess_shadow_state_v1": admin_subprocess_state_utilizador_v1,
         "admin_subprocess_shadow_state": admin_subprocess_shadow_state_v1,
-        "admin_menu_state": admin_menu_state,
+        "admin_menu_state": _set_admin_subprocess_show_hints_v1(admin_menu_state, current_user_is_admin),
         "admin_menu_template_ready_v1": True,
         "admin_menu_template_mode": (str(request.query_params.get("admin_menu_template_mode") or "native").strip().lower() or "native"),
         "current_user_can_manage_all_entities": bool(entity_permissions["can_manage_all_entities"]),

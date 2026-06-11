@@ -3315,7 +3315,17 @@ async def update_dynamic_process_profile(request: Request):
             if clean_menu_key == "contacto_geral" and active_entity_internal_number is not None:
                 submitted_section_values["custom_n_cliente"] = active_entity_internal_number
             if clean_menu_key == "extrato" and active_entity_internal_number is not None:
-                submitted_section_values["numero_entidade"] = active_entity_internal_number
+                # If the user explicitly chose a different entity via the dropdown
+                # (e.g. Owner entity assigning the record to a sub-entity or "Default"),
+                # use that value. Otherwise fall back to the active entity's own number.
+                _explicit_n_entidade = None
+                for _fk, _fv in submitted_section_values.items():
+                    if _fk not in entity_auto_populated_keys and _is_entity_number_field_v1(
+                        _fk, str((field_meta_by_key.get(_fk) or {}).get("label") or "")
+                    ):
+                        _explicit_n_entidade = str(_fv).strip()
+                        break
+                submitted_section_values["numero_entidade"] = _explicit_n_entidade or str(active_entity_internal_number)
 
             if clean_menu_key == "contacto_geral" and requested_section_key == "custom_dados_membresia":
                 if requested_history_action == "update" and requested_history_record_id:

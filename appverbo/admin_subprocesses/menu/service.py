@@ -65,6 +65,22 @@ def split_admin_menu_rows(
 # ###################################################################################
 
 
+def _apply_legado_entity_number_display_v1(
+    rows: list[dict[str, Any]],
+    *,
+    current_entity_scope: str = "",
+) -> list[dict[str, Any]]:
+    if current_entity_scope != "legado":
+        return rows
+    result = []
+    for row in rows:
+        clean_row = dict(row)
+        if str(clean_row.get("entity_internal_number", "")).strip() == "1000":
+            clean_row["entity_internal_number"] = "Default"
+        result.append(clean_row)
+    return result
+
+
 def build_admin_menu_state(
     *,
     rows: Iterable[dict[str, Any]],
@@ -73,8 +89,12 @@ def build_admin_menu_state(
     success: str = "",
     error: str = "",
     return_url: str = "/users/new?menu=administrativo&admin_tab=menu&target=admin-menu-card#admin-menu-card",
+    current_entity_scope: str = "",
 ) -> AdminMenuState:
     active_rows, inactive_rows = split_admin_menu_rows(rows)
+    clean_entity_scope = str(current_entity_scope or "").strip().lower()
+    active_rows = _apply_legado_entity_number_display_v1(active_rows, current_entity_scope=clean_entity_scope)
+    inactive_rows = _apply_legado_entity_number_display_v1(inactive_rows, current_entity_scope=clean_entity_scope)
 
     normalized_section_options = tuple(
         (

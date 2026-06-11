@@ -30,7 +30,7 @@ def build_menu_admin_list_context_v1(
     filters: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     repository = MenuAdminRepository(MENU_CONFIG)
-    menu_section_options = repository.get_section_options(session=session)
+    menu_section_options = repository.get_section_options(session=session, selected_entity_id=selected_entity_id)
 
     if actor_user_id is None:
         return {
@@ -90,7 +90,27 @@ def build_menu_admin_list_context_v1(
 # ###################################################################################
 
 
-def _copy_process_additional_fields_source_v1(
+# Todos os campos cujo valor de referência pertence ao owner.
+# Quando o contexto é legado, estes campos são sempre copiados do owner
+# para garantir sincronização — legado não possui configuração própria,
+# apenas visualiza e usa o que o owner definiu.
+_OWNER_CONFIG_FIELDS_V1: tuple[str, ...] = (
+    "process_additional_fields",
+    "process_visible_fields",
+    "process_visible_field_header_map",
+    "process_visible_field_rows",
+    "process_field_options",
+    "process_selectable_field_options",
+    "process_header_options",
+    "process_lists",
+    "process_list_options",
+    "process_list_source_options",
+    "process_subsequent_fields",
+    "process_quantity_fields",
+)
+
+
+def _sync_owner_config_fields_v1(
     *,
     target_data: dict[str, Any],
     source_data: dict[str, Any],
@@ -98,15 +118,21 @@ def _copy_process_additional_fields_source_v1(
     clean_target_data = dict(target_data or {})
     clean_source_data = dict(source_data or {})
 
-    for source_key in (
-        "process_additional_fields",
-        "process_lists",
-        "process_list_options",
-        "process_list_source_options",
-    ):
-        clean_target_data[source_key] = list(clean_source_data.get(source_key) or [])
+    for field_key in _OWNER_CONFIG_FIELDS_V1:
+        value = clean_source_data.get(field_key)
+        if isinstance(value, dict):
+            clean_target_data[field_key] = dict(value)
+        else:
+            clean_target_data[field_key] = list(value or [])
 
     return clean_target_data
+
+
+def _clear_owner_config_fields_v1(edit_data: dict[str, Any]) -> dict[str, Any]:
+    for field_key in _OWNER_CONFIG_FIELDS_V1:
+        value = edit_data.get(field_key)
+        edit_data[field_key] = {} if isinstance(value, dict) else []
+    return edit_data
 
 
 def _apply_menu_additional_fields_access_v1(
@@ -150,11 +176,7 @@ def _apply_menu_additional_fields_access_v1(
     ).strip()
 
     if not bool(access.get("can_view")):
-        enriched_edit_data["process_additional_fields"] = []
-        enriched_edit_data["process_lists"] = []
-        enriched_edit_data["process_list_options"] = []
-        enriched_edit_data["process_list_source_options"] = []
-        return enriched_edit_data
+        return _clear_owner_config_fields_v1(enriched_edit_data)
 
     source_entity_id = access.get("source_entity_id")
     selected_scope_entity_id = access.get("selected_entity_id")
@@ -169,7 +191,7 @@ def _apply_menu_additional_fields_access_v1(
             menu_key=str(menu_edit_key or "").strip().lower(),
             selected_entity_id=source_entity_id,
         )
-        enriched_edit_data = _copy_process_additional_fields_source_v1(
+        enriched_edit_data = _sync_owner_config_fields_v1(
             target_data=enriched_edit_data,
             source_data=source_edit_data,
         )

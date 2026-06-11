@@ -100,14 +100,35 @@
                   <a
                     class="action-btn-cancel"
                     data-card-cancel-close="1"
+                    data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
                     href="{{ settings_edit_cancel_url }}"
                   >Cancelar</a>
                 </div>
               </form>
               {% else %}
+              {% set can_edit_legado_menu = (
+                settings_edit_data
+                and settings_edit_data.visibility_scope_mode == 'legado'
+                and (settings_edit_data.entity_internal_number|string) == (current_entity_internal_number|string)
+              ) %}
+              {% if can_edit_legado_menu %}
+              <form method="post" action="/settings/menu/edit-legado">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+              {% endif %}
               <div class="grid settings-general-grid settings-general-grid-menu-geral">
                 <div class="field">
                   <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                  {% if can_edit_legado_menu %}
+                  <input
+                    id="settings_edit_menu_label"
+                    name="menu_label"
+                    value="{{ settings_edit_data.label }}"
+                    maxlength="100"
+                    required
+                  >
+                  {% else %}
                   <input
                     id="settings_edit_menu_label"
                     value="{{ settings_edit_data.label }}"
@@ -115,9 +136,16 @@
                     disabled
                     class="readonly-field"
                   >
+                  {% endif %}
                 </div>
                 <div class="field">
                   <label for="settings_edit_menu_status">Estado atual</label>
+                  {% if can_edit_legado_menu %}
+                  <select id="settings_edit_menu_status" name="menu_status">
+                    <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
+                    <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
+                  </select>
+                  {% else %}
                   <input
                     id="settings_edit_menu_status"
                     value="{% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}Ativo{% else %}Inativo{% endif %}"
@@ -125,6 +153,7 @@
                     disabled
                     class="readonly-field"
                   >
+                  {% endif %}
                 </div>
                 <div class="field">
                   <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema</label>
@@ -137,14 +166,22 @@
                   >
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_sidebar_section_readonly">Sessão</label>
+                  <label for="settings_edit_menu_sidebar_section_field">Sessão</label>
+                  {% if can_edit_legado_menu %}
+                  <select id="settings_edit_menu_sidebar_section_field" name="menu_sidebar_section">
+                    {% for section_option in admin_menu_section_options_v1 %}
+                    <option value="{{ section_option.key }}" {% if section_option.key == settings_edit_data.sidebar_section_key %}selected{% endif %}>{{ section_option.label }}</option>
+                    {% endfor %}
+                  </select>
+                  {% else %}
                   <input
-                    id="settings_edit_menu_sidebar_section_readonly"
+                    id="settings_edit_menu_sidebar_section_field"
                     value="{{ settings_edit_data.sidebar_section_label if settings_edit_data.sidebar_section_label else '-' }}"
                     readonly
                     disabled
                     class="readonly-field"
                   >
+                  {% endif %}
                 </div>
                 <div class="field">
                   <label for="settings_edit_menu_entity_internal_number_readonly">Nº Entidade</label>
@@ -158,12 +195,19 @@
                 </div>
               </div>
               <div class="form-action-row">
+                {% if can_edit_legado_menu %}
+                <button type="submit" class="action-btn">Guardar</button>
+                {% endif %}
                 <a
                   class="action-btn-cancel"
                   data-card-cancel-close="1"
+                  data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
                   href="{{ settings_edit_cancel_url }}"
                 >Cancelar</a>
               </div>
+              {% if can_edit_legado_menu %}
+              </form>
+              {% endif %}
               {% endif %}
             </div>
             {% if settings_has_process_fields %}
@@ -532,19 +576,35 @@
 
                       <div class="field">
                         <label for="process-list-editor-source">Fonte de dados</label>
-                        {% set process_list_source_options = settings_edit_data.process_list_source_options|default([]) %}
                         <select
                           id="process-list-editor-source"
                           data-process-list-editor-source
                         >
-                          {% if process_list_source_options %}
-                            {% for source_option in process_list_source_options %}
-                              <option value="{{ source_option.key }}" {% if source_option.key == 'manual' %}selected{% endif %}>{{ source_option.label }}</option>
-                            {% endfor %}
-                          {% else %}
-                            <option value="manual" selected>Manual</option>
-                            <option value="users">Utilizador (automático)</option>
-                          {% endif %}
+                          <option value="manual" selected>Manual</option>
+                          <option value="table">Tabela</option>
+                        </select>
+                      </div>
+
+                      <div class="field" data-process-list-table-field style="display:none;">
+                        <label for="process-list-editor-table">Tabela</label>
+                        <select
+                          id="process-list-editor-table"
+                          data-process-list-editor-table
+                        >
+                          <option value="">Selecione a tabela</option>
+                          {% for table_key in settings_edit_data.process_list_source_tables|default([]) %}
+                            <option value="{{ table_key }}">{{ table_key }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field" data-process-list-column-field style="display:none;">
+                        <label for="process-list-editor-column">Campo</label>
+                        <select
+                          id="process-list-editor-column"
+                          data-process-list-editor-column
+                        >
+                          <option value="">Selecione o campo</option>
                         </select>
                       </div>
 
@@ -864,7 +924,7 @@
                       </div>
                       {% endif %}
 
-                      <div class="field">
+                      <div class="field" data-additional-field-client-number-wrap>
                         <label for="process-additional-field-editor-client-number">Nº Entidade</label>
                         <input
                           id="process-additional-field-editor-client-number"

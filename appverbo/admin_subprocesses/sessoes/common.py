@@ -165,29 +165,19 @@ def get_sessoes_visible_fields_v2(current_entity_scope: object = "") -> list[Any
         return fields
 
     visible_fields: list[Any] = []
-    entity_field_inserted = False
 
     for field in fields:
         field_key = str(getattr(field, "key", "") or "").strip().lower()
 
         if field_key == SESSOES_SYSTEM_FIELD_KEY_V2:
-            visible_fields.append(
-                replace(
-                    field,
-                    field_type="hidden",
-                    required=False,
-                )
-            )
+            visible_fields.append(replace(field, field_type="hidden", required=False))
             continue
 
-        if field_key == "status" and not entity_field_inserted:
+        if field_key == SESSOES_ENTITY_FIELD_KEY_V2:
             visible_fields.append(build_sessoes_entity_readonly_field_v2())
-            entity_field_inserted = True
+            continue
 
         visible_fields.append(field)
-
-    if not entity_field_inserted:
-        visible_fields.append(build_sessoes_entity_readonly_field_v2())
 
     return visible_fields
 

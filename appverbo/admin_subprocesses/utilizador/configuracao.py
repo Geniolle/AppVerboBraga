@@ -135,6 +135,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     edit_key_field="user_id",
     enabled=True,
     migration_status="native",
+    table_name="users",
     fields=USER_FIELDS,
     columns=USER_COLUMNS,
     actions=USER_ACTIONS,

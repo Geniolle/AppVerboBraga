@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from fastapi import Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from appverbo.core import SessionLocal
+from appverbo.menu_settings import (
+    _load_process_source_table_columns_v1,
+    _normalize_process_list_table_key_v1,
+)
 from appverbo.routes.profile.router import router
 from appverbo.services.session import get_current_user, get_session_entity_id
 from appverbo.use_cases.menu.update_menu_process_lists import (
@@ -13,7 +17,39 @@ from appverbo.use_cases.menu.update_menu_process_lists import (
 
 
 # ###################################################################################
-# (1) ENDPOINT - LISTAS DO PROCESSO
+# (1) ENDPOINT - COLUNAS DE TABELA (AJAX)
+# ###################################################################################
+
+
+@router.get("/settings/menu/table-columns")
+def get_table_columns_handler(request: Request, table: str = "") -> JSONResponse:
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return JSONResponse(
+                {"ok": False, "columns": []},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        clean_table = _normalize_process_list_table_key_v1(table)
+        if not clean_table:
+            return JSONResponse(
+                {"ok": False, "columns": []},
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
+        columns = _load_process_source_table_columns_v1(session, clean_table)
+        return JSONResponse(
+            {
+                "ok": True,
+                "columns": [c["column_name"] for c in columns],
+            }
+        )
+
+
+# ###################################################################################
+# (2) ENDPOINT - LISTAS DO PROCESSO
 # ###################################################################################
 
 

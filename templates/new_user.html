@@ -83,14 +83,14 @@
     }
   </style>
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260601-admin-table-search-v6-toolbar-absolute-parity">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260527-fields-config-v10-process-tabs-vertical-center">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260611-fields-config-v11-required-fixed-column">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260526-admin-tabs-top-subprocess-line-v11"></script>
 
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
-<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260605-admin-subprocess-scope-readonly-v4">
+<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260611-admin-subprocess-compact-preview-v5">
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260527-profile-field-order-v5-menu-order-priority" defer></script>
@@ -654,6 +654,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           <tr>
             <th>Menu</th>
             <th class="menu-col-key-hidden-v1">Chave</th>
+            <th>Sistema</th>
             <th>Sessão</th>
             <th>Nº Entidade</th>
             <th>Estado</th>
@@ -670,6 +671,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') ~ ' ' ~ (row.entity_internal_number or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
               <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
+              <td>{{ row.visibility_scope_label or "-" }}</td>
               <td>{{ row.group or row.section or "" }}</td>
               <td>{{ row.entity_internal_number or "Default" }}</td>
               <td><span class="entity-status entity-status-active">Ativo</span></td>
@@ -760,6 +762,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           <tr>
             <th>Menu</th>
             <th class="menu-col-key-hidden-v1">Chave</th>
+            <th>Sistema</th>
             <th>Sessão</th>
             <th>Nº Entidade</th>
             <th>Estado</th>
@@ -776,6 +779,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') ~ ' ' ~ (row.entity_internal_number or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
               <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
+              <td>{{ row.visibility_scope_label or "-" }}</td>
               <td>{{ row.group or row.section or "" }}</td>
               <td>{{ row.entity_internal_number or "Default" }}</td>
               <td><span class="entity-status entity-status-inactive">Inativo</span></td>
@@ -1632,7 +1636,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                                 <div class="entity-first-row">
                   <div class="field entity-first-row-client">
-                    <label for="entity_internal_number">Nº Cliente</label>
+                    <label for="entity_internal_number">Nº Entidade</label>
                     <input id="entity_internal_number" class="readonly-field" value="{{ next_entity_internal_number }}" readonly disabled>
                   </div>
                   <div class="field entity-first-row-name">
@@ -1742,7 +1746,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
                         <div class="entity-first-row">
               <div class="field entity-first-row-client">
-                <label for="edit_entity_internal_number">Nº Cliente</label>
+                <label for="edit_entity_internal_number">Nº Entidade</label>
                 <input id="edit_entity_internal_number" class="readonly-field" value="{{ entity_edit_data.internal_number }}" readonly disabled>
               </div>
               <div class="field entity-first-row-name">
@@ -1899,7 +1903,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Nº Cliente</th>
+                  <th>Nº Entidade</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1991,7 +1995,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Nº Cliente</th>
+                  <th>Nº Entidade</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -2455,7 +2459,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260606-core-readonly-actions-v1"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260608-additional-fields-file-type-v2"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260603-lists-sessions-and-menu-by-session-v3"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260609-lists-table-column-source-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260601-admin-table-search-v5-reusable-subprocess-toolbar"></script>
@@ -2478,9 +2482,9 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
 <script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260608-dynamic-runtime-core-v19-file-reload" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260608-dynamic-process-history-renderer-v12-currency" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260611-dynamic-process-history-renderer-v14-compact-table" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
-<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260606-process-subprocess-standards-v9-cancel-edit-close" defer></script>
+<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260611-process-subprocess-standards-v10-definicoes-to-administrativo" defer></script>
 <script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260606-menu-dynamic-navigation-core-v13-sessoes" defer></script>
 <script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260603-menu-navigation-controller-v10-dynamic-link-active" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
@@ -2494,7 +2498,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/user_dropdown_ui_v1.js?v=20260525-user-dropdown-ui-module-v1" defer></script>
 <script src="/static/js/modules/process_field_runtime_utils_v1.js?v=20260602-process-field-runtime-utils-time-v3" defer></script>
 <script src="/static/js/modules/process_absence_date_validation_v1.js?v=20260525-process-absence-date-validation-module-v1" defer></script>
-<script src="/static/js/modules/card_cancel_close_v1.js?v=20260605-card-cancel-close-v1" defer></script>
+<script src="/static/js/modules/card_cancel_close_v1.js?v=20260609-card-cancel-close-simplified-v1" defer></script>
 <script src="/static/js/modules/profile_edit_ui_utils_v1.js?v=20260525-profile-edit-ui-utils-module-v1" defer></script>
 <script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
 <script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260526-menu-navigation-bridge-process-title-v2" defer></script>
@@ -2519,7 +2523,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/home_charts_renderer_v1.js?v=20260525-home-charts-renderer-module-v1" defer></script>
 <script src="/static/js/modules/page_bootstrap_v1.js?v=20260527-page-bootstrap-v3-dropdown-minha-conta-sync" defer></script>
 <script src="/static/js/modules/sidebar_collapse_toggle_v1.js?v=20260526-sidebar-collapse-toggle-v1" defer></script>
-<script src="/static/js/new_user.js?v=20260602-new-user-textarea-song-v1" defer></script>
+<script src="/static/js/new_user.js?v=20260611-new-user-compact-preview-v2" defer></script>
 <script src="/static/js/modules/dynamic_process_silent_refresh_v1.js?v=20260603-dynamic-process-silent-refresh-v1" defer></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260525-top-menu-active-v41-admin-v7-bypass"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

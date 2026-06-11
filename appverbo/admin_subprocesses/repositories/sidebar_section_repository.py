@@ -327,6 +327,19 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
     ) -> dict[str, str]:
         return build_entity_scope_display_v1(session, entity_id)
 
+    def _get_owner_entity_internal_number_v1(self, session: Any) -> str:
+        try:
+            from sqlalchemy import select as _sa_select
+            from appverbo.models.entity import Entity as _Entity
+            _number = session.scalar(
+                _sa_select(_Entity.internal_number)
+                .where(_Entity.profile_scope == "owner")
+                .limit(1)
+            )
+            return str(_number).strip() if _number is not None else ""
+        except Exception:
+            return ""
+
     def _decorate_session_scope_metadata_v1(
         self,
         *,
@@ -334,6 +347,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         row: dict[str, Any],
         scope_origin: str,
         entity_scope_entity_id: object = None,
+        owner_entity_internal_number: str = "",
     ) -> dict[str, Any]:
         clean_row = dict(row or {})
         clean_scope_origin = str(scope_origin or "").strip().lower()
@@ -356,7 +370,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         clean_row["entity_scope_origin"] = SESSION_SCOPE_ORIGIN_DEFAULT_V1
         clean_row["entity_scope_entity_id"] = None
         clean_row["entity_name"] = "Default"
-        clean_row["entity_internal_number"] = "Default"
+        clean_row["entity_internal_number"] = owner_entity_internal_number or "Default"
         return clean_row
 
     def _normalize_scope_rows_v1(
@@ -366,6 +380,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         raw_sections: object,
         scope_origin: str,
         entity_scope_entity_id: object = None,
+        owner_entity_internal_number: str = "",
         append_defaults: bool,
     ) -> list[dict[str, Any]]:
         raw_items = raw_sections if isinstance(raw_sections, list) else []
@@ -390,6 +405,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                     row=normalized_row,
                     scope_origin=scope_origin,
                     entity_scope_entity_id=entity_scope_entity_id,
+                    owner_entity_internal_number=owner_entity_internal_number,
                 )
             )
 
@@ -406,10 +422,12 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
     ) -> dict[str, Any]:
         menu_config, found_row = self._load_administrativo_menu_config(session=session)
         parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
+        owner_entity_internal_number = self._get_owner_entity_internal_number_v1(session)
         global_rows = self._normalize_scope_rows_v1(
             session=session,
             raw_sections=menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY),
             scope_origin=SESSION_SCOPE_ORIGIN_DEFAULT_V1,
+            owner_entity_internal_number=owner_entity_internal_number,
             append_defaults=True,
         )
 
@@ -791,6 +809,22 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
 
         return filtered_rows
 
+    def _apply_legado_entity_number_display_v1(
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        current_entity_scope: str = "",
+    ) -> list[dict[str, Any]]:
+        if current_entity_scope != "legado":
+            return rows
+        result = []
+        for row in rows:
+            clean_row = dict(row)
+            if str(clean_row.get("entity_internal_number", "")).strip() == "1000":
+                clean_row["entity_internal_number"] = "Default"
+            result.append(clean_row)
+        return result
+
     def _apply_row_actions_metadata(
         self,
         rows: list[dict[str, Any]],
@@ -841,6 +875,10 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         rows = self._apply_row_actions_metadata(
             rows,
             current_entity_scope=current_entity_scope,
+        )
+        rows = self._apply_legado_entity_number_display_v1(
+            rows,
+            current_entity_scope=str(current_entity_scope or "").strip().lower(),
         )
 
         total_rows = len(rows)
@@ -984,6 +1022,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         section_label: str,
         section_visibility_scope_mode: str,
         section_status: str,
+        section_entity_internal_number: str = "",
         selected_entity_id: object = None,
         current_entity_scope: object = "",
     ) -> tuple[bool, str, str]:
@@ -993,6 +1032,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         clean_scope_mode = self.normalize_session_scope(section_visibility_scope_mode)
         clean_status = self.normalize_session_status(section_status)
         clean_current_entity_scope = self._normalize_key(current_entity_scope)
+        clean_entity_internal_number = self._normalize_text(section_entity_internal_number)
         parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
 
         if not clean_label:
@@ -1003,6 +1043,28 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             if clean_current_entity_scope == "owner"
             else SESSION_SCOPE_ORIGIN_ENTITY_V1
         )
+
+        # Owner specifying a specific entity via internal number (CREATE only — in EDIT the scope is immutable)
+        if (
+            clean_mode != "edit"
+            and scope_origin == SESSION_SCOPE_ORIGIN_DEFAULT_V1
+            and clean_entity_internal_number
+            and clean_entity_internal_number.lower() not in ("default", "")
+        ):
+            try:
+                from sqlalchemy import select as _sa_select
+                from appverbo.models.entity import Entity as _Entity
+                _target_number = int(clean_entity_internal_number)
+                _target_entity = session.scalar(
+                    _sa_select(_Entity).where(_Entity.internal_number == _target_number)
+                )
+                if _target_entity is None:
+                    return False, f"Entidade com Nº {clean_entity_internal_number} não encontrada.", ""
+                scope_origin = SESSION_SCOPE_ORIGIN_ENTITY_V1
+                parsed_selected_entity_id = _target_entity.id
+                clean_scope_mode = "legado"
+            except (ValueError, TypeError):
+                return False, "Nº Entidade inválido. Informe um número válido ou deixe em branco para Default.", ""
 
         if scope_origin == SESSION_SCOPE_ORIGIN_ENTITY_V1:
             if parsed_selected_entity_id is None:

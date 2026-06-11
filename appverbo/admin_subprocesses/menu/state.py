@@ -25,3 +25,4 @@ class AdminMenuState:
     create_title: str = "Criar menu"
     active_title: str = "Menus ativos"
     inactive_title: str = "Menus inativos"
+    show_field_hints: bool = False

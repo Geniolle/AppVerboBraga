@@ -19,8 +19,10 @@ from appverbo.use_cases.menu.move_menu import (
     normalize_move_menu_input_v1,
 )
 from appverbo.use_cases.menu.update_menu import (
+    execute_update_menu_legado_v1,
     execute_update_menu_v1,
     normalize_update_menu_input_v1,
+    normalize_update_menu_legado_input_v1,
 )
 
 
@@ -76,7 +78,56 @@ def edit_sidebar_menu_setting_handler_v1(
 
 
 # ###################################################################################
-# (2) ENDPOINT LEGADO - CRIAR MENU
+# (2) ENDPOINT - EDITAR CAMPOS DO MENU (Legado)
+# ###################################################################################
+
+
+@router.post("/settings/menu/edit-legado", response_class=HTMLResponse)
+def edit_menu_legado_handler_v1(
+    request: Request,
+    menu_key: str = Form(...),
+    menu_label: str = Form(...),
+    menu_status: str = Form("ativo"),
+    menu_sidebar_section: str = Form(""),
+    redirect_menu: str = Form("administrativo"),
+    redirect_target: str = Form("#settings-menu-edit-card"),
+    subprocess_return_url: str = Form(""),
+    return_url: str = Form(""),
+) -> RedirectResponse:
+    payload = normalize_update_menu_legado_input_v1(
+        menu_key=menu_key,
+        menu_label=menu_label,
+        menu_status=menu_status,
+        menu_sidebar_section=menu_sidebar_section,
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+        subprocess_return_url=subprocess_return_url or return_url,
+    )
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        outcome = execute_update_menu_legado_v1(
+            session=session,
+            actor_user=current_user,
+            selected_entity_id=get_session_entity_id(request),
+            payload=payload,
+        )
+
+    return RedirectResponse(
+        url=outcome.redirect_url,
+        status_code=outcome.redirect_status_code,
+    )
+
+
+# ###################################################################################
+# (3) ENDPOINT LEGADO - CRIAR MENU
 # ###################################################################################
 
 

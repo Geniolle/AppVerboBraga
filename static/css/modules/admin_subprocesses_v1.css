@@ -96,6 +96,30 @@
   cursor: default;
 }
 
+.admin-subprocess-field-v1 label .admin-field-input-hint-v1 {
+  font-size: 10px;
+  font-family: monospace;
+  font-weight: 600;
+  color: #1a3a5c;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 3px;
+}
+
+.admin-table-debug-hint-v1 {
+  margin: -4px 0 12px;
+  font-size: 11px;
+  color: #7a8fa8;
+}
+
+.admin-table-debug-hint-v1 code {
+  font-family: monospace;
+  background: #f0f4fa;
+  border: 1px solid #d0daea;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
 .admin-subprocess-scope-field-v1 {
   min-width: 180px;
 }
@@ -412,6 +436,27 @@ body.appverbo-admin-tab-utilizador
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
   }
+}
+
+.process-compact-preview-toggle-v1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 5px 12px;
+  background: none;
+  border: 1px solid #c0c8d8;
+  border-radius: 16px;
+  color: #4a6fa5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.process-compact-preview-toggle-v1:hover {
+  background: #eef2fa;
+  border-color: #7a9dd0;
 }
 
 /* APPVERBO_ADMIN_SUBPROCESSES_V1_END */

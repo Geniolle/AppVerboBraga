@@ -10,6 +10,7 @@ from appverbo.menu_settings import (
     SIDEBAR_MENU_PROTECTED_KEYS,
 )
 from appverbo.services.auth import is_admin_user
+from appverbo.services.permissions import get_user_entity_permissions
 
 
 # ###################################################################################
@@ -61,11 +62,40 @@ def ensure_menu_exists_v1(
     repository: Any,
     session: Session,
     menu_key: str,
+    selected_entity_id: object = None,
 ) -> str:
-    if repository.get_for_edit(session=session, edit_key=menu_key) is not None:
+    context = {"selected_entity_id": selected_entity_id} if selected_entity_id is not None else None
+    if repository.get_for_edit(session=session, edit_key=menu_key, context=context) is not None:
         return ""
 
     return "Menu não encontrado."
+
+
+def ensure_actor_can_edit_legado_menu_fields_v1(
+    *,
+    session: Session,
+    actor_user: dict[str, Any],
+    selected_entity_id: int | None,
+    menu_visibility_scope_mode: str,
+) -> str:
+    actor_id = int(actor_user["id"])
+    actor_login_email = str(actor_user["login_email"] or "")
+
+    if not is_admin_user(session, actor_id, actor_login_email):
+        return "Apenas administradores podem gerir o menu."
+
+    permissions = get_user_entity_permissions(
+        session, actor_id, actor_login_email, selected_entity_id
+    )
+
+    if permissions.get("can_manage_all_entities"):
+        return ""
+
+    clean_scope = str(menu_visibility_scope_mode or "").strip().lower()
+    if clean_scope in {"owner", "all"}:
+        return "Sem permissão para editar menus Owner ou Default."
+
+    return ""
 
 
 def ensure_menu_can_be_hidden_v1(

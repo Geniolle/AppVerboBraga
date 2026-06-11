@@ -4,6 +4,36 @@
 (function registerDynamicProcessHistoryRendererV1() {
   "use strict";
 
+  function applyCompactPreviewLimitV1(containerEl, limit) {
+    if (!containerEl || !Number.isFinite(limit) || limit <= 0) {
+      return;
+    }
+    const allItems = Array.from(containerEl.querySelectorAll(".personal-item"));
+    const countableItems = allItems.filter((el) => !el.dataset.historyStateItem);
+    if (countableItems.length <= limit) {
+      return;
+    }
+    const hiddenItems = countableItems.slice(limit);
+    hiddenItems.forEach((el) => {
+      el.style.display = "none";
+    });
+    const hiddenCount = hiddenItems.length;
+    const toggleEl = document.createElement("button");
+    toggleEl.type = "button";
+    toggleEl.className = "process-compact-preview-toggle-v1";
+    toggleEl.dataset.compactToggle = "1";
+    toggleEl.textContent = `Ver mais (${hiddenCount})`;
+    toggleEl.addEventListener("click", () => {
+      const expanded = containerEl.dataset.compactExpanded === "1";
+      hiddenItems.forEach((el) => {
+        el.style.display = expanded ? "none" : "";
+      });
+      toggleEl.textContent = expanded ? `Ver mais (${hiddenCount})` : "Ver menos";
+      containerEl.dataset.compactExpanded = expanded ? "0" : "1";
+    });
+    containerEl.appendChild(toggleEl);
+  }
+
   function renderDynamicProcessHistory(options = {}) {
     const {
       menuKey,
@@ -12,7 +42,8 @@
       recordLabels = {},
       helpers = {},
       data = {},
-      elements = {}
+      elements = {},
+      config = {}
     } = options;
 
     const {
@@ -33,6 +64,10 @@
     }
 
     const { menuProcessHistoryMap = {} } = data;
+    const rawCompactLimit = config.compactPreviewLimit;
+    const compactPreviewLimit = Number.isFinite(Number(rawCompactLimit)) && Number(rawCompactLimit) > 0
+      ? Number(rawCompactLimit)
+      : 0;
 
     const {
       dynamicProcessHistoryBlockEl,
@@ -102,6 +137,9 @@
       : [];
     const tableFields = normalizedFields.filter((field) => String(field.key || "").trim());
     let listFields = tableFields;
+    if (compactPreviewLimit > 0 && listFields.length > compactPreviewLimit) {
+      listFields = listFields.slice(0, compactPreviewLimit);
+    }
     if (cleanMenuKey === "contacto_geral" && cleanSectionKey === "custom_dados_membresia") {
       const fieldUser = tableFields.find(f => String(f.key || "").trim().toLowerCase() === "custom_n_user");
       const fieldCliente = tableFields.find(f => String(f.key || "").trim().toLowerCase() === "custom_n_cliente");
@@ -299,6 +337,7 @@
       if (showStateColumn) {
         const stateItemEl = document.createElement("div");
         stateItemEl.className = "personal-item";
+        stateItemEl.dataset.historyStateItem = "1";
 
         const stateLabelEl = document.createElement("span");
         stateLabelEl.className = "personal-label";

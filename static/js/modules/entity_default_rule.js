@@ -3,7 +3,7 @@
 
   const FIELD_NAME = 'numero_entidade';
   const HIDDEN_CLIENT_FIELD_NAME = 'numero_cliente';
-  const FIELD_LABEL = 'Nº Cliente';
+  const FIELD_LABEL = 'Nº Entidade';
   const STORAGE_KEY = 'APPVERBO_LOGGED_NUMERO_CLIENTE';
   const LOG_PREFIX = 'APPVERBO_ENTITY_DEFAULT_RULE_V5_NUMERO_CLIENTE';
 
@@ -170,7 +170,7 @@
         /*
           Fallback seguro:
           se a linha contém o texto visível da empresa logada já conhecido,
-          usa o Nº Cliente dessa linha.
+          usa o Nº Entidade dessa linha.
         */
         if (shellText && rowText && shellText.includes(rowText)) {
           return saveClientNumber(clientNumber);
@@ -266,7 +266,7 @@
         return value;
       })
       .catch(function (error) {
-        log('Erro ao buscar Nº Cliente na página de entidades', { error: String(error) });
+        log('Erro ao buscar Nº Entidade na página de entidades', { error: String(error) });
         return '';
       })
       .finally(function () {
@@ -355,7 +355,7 @@
     input.setAttribute('aria-readonly', 'true');
     input.className = 'entity-default-readonly-input';
     input.autocomplete = 'off';
-    input.placeholder = numeroCliente ? '' : 'A carregar Nº Cliente...';
+    input.placeholder = numeroCliente ? '' : 'A carregar Nº Entidade...';
     input.value = numeroCliente || '';
 
     const hiddenClient = document.createElement('input');
@@ -387,7 +387,7 @@
         field.placeholder = '';
       } else {
         field.value = '';
-        field.placeholder = 'A carregar Nº Cliente...';
+        field.placeholder = 'A carregar Nº Entidade...';
       }
     });
 
@@ -482,7 +482,7 @@
 
     if (!String(field.value || '').trim()) {
       event.preventDefault();
-      alert('Não foi possível identificar o Nº Cliente da entidade logada.');
+      alert('Não foi possível identificar o Nº Entidade da entidade logada.');
     }
   }, true);
 

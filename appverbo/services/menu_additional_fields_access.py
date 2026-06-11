@@ -111,9 +111,11 @@ def build_menu_additional_fields_access_v1(
         can_edit = process_owner_fields_enabled
         source_entity_id = parsed_selected_entity_id or owner_entity_id
     elif selected_entity_scope == settings.ENTITY_PROFILE_SCOPE_LEGADO:
-        can_view = bool(legacy_visualization_enabled and owner_entity_id is not None)
+        can_view = bool(owner_entity_id is not None)
         can_edit = False
         source_entity_id = owner_entity_id if can_view else None
+        if can_view:
+            process_owner_fields_enabled = True
 
     return {
         "selected_entity_id": parsed_selected_entity_id,

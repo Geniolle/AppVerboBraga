@@ -7,11 +7,11 @@ import unicodedata
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
-    MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_FIELD_LABELS,
     MENU_MEU_PERFIL_FIELD_OPTIONS,
     MENU_MEU_PERFIL_FIELDS_DEFAULT,
     MENU_MEU_PERFIL_KEY,
+    get_merged_sidebar_section_options_v1,
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
@@ -314,6 +314,8 @@ def _normalize_empresa_sidebar_setting_v1(sidebar_item: dict[str, Any]) -> dict[
     normalized_item["process_visible_field_header_map"] = process_visible_field_header_map
     normalized_item["process_visible_headers"] = [MENU_EMPRESA_SECTION_KEY]
     normalized_item["visible_field_headers"] = dict(process_visible_field_header_map)
+    # Profile page shows only entity data — quantity aggregates do not apply here.
+    normalized_item["process_quantity_fields"] = []
 
     return normalized_item
 
@@ -823,6 +825,43 @@ def get_page_data(
         normalized_sidebar_menu_settings.append(sidebar_item)
     sidebar_menu_settings = normalized_sidebar_menu_settings
 
+    # ── Owner entity: inject list options for Nº Entidade field in extrato ──
+    # The Owner entity (profile_scope="owner") can assign records to any sub-entity
+    # or mark them as "Default" (visible to all entities). For this we upgrade the
+    # custom_n_entidade field from "text" to "list" with dynamic options from DB.
+    if selected_entity_id is not None:
+        try:
+            from appverbo.models.entity import Entity as _Entity
+            _active_scope = session.scalar(
+                select(_Entity.profile_scope).where(_Entity.id == selected_entity_id)
+            )
+            if str(_active_scope or "").strip().lower() == "owner":
+                _all_entities = session.scalars(
+                    select(_Entity)
+                    .where(_Entity.internal_number.isnot(None))
+                    .order_by(_Entity.internal_number)
+                ).all()
+                _entity_list_options = [
+                    {"label": str(e.internal_number), "value": str(e.internal_number)}
+                    for e in _all_entities
+                ]
+                _entity_list_options.append({"label": "Default", "value": "Default"})
+
+                for _sm_item in sidebar_menu_settings:
+                    if str(_sm_item.get("key") or "").strip().lower() == "extrato":
+                        _af = _sm_item.get("additional_fields")
+                        if isinstance(_af, list):
+                            for _field in _af:
+                                if isinstance(_field, dict):
+                                    _fk = str(_field.get("key") or "").strip().lower()
+                                    _fl = str(_field.get("label") or "").strip().lower()
+                                    if "entidade" in _fk or "entidade" in _fl:
+                                        _field["field_type"] = "list"
+                                        _field["listOptions"] = _entity_list_options
+                        break
+        except Exception:
+            pass
+
     empresa_values_by_field = _resolve_empresa_entity_values_v1(
         session,
         selected_entity_id=selected_entity_id,
@@ -842,8 +881,9 @@ def get_page_data(
         ),
         None,
     )
-    sidebar_section_options = normalize_sidebar_sections(
-        (administrativo_menu or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    sidebar_section_options = get_merged_sidebar_section_options_v1(
+        (administrativo_menu or {}).get("menu_config", {}),
+        selected_entity_id=selected_entity_id,
     )
     actor_profile_fields: dict[str, str] = {}
     if actor_user_id is not None:
@@ -960,10 +1000,15 @@ def get_page_data(
                 # ###################################################################################
                 if menu_key in ("contacto_geral", "extrato") and selected_entity_id is not None:
                     from appverbo.models.entity import Entity as _Entity
-                    active_entity_internal_number = session.scalar(
-                        select(_Entity.internal_number).where(_Entity.id == selected_entity_id)
+                    _filter_entity = session.scalar(
+                        select(_Entity).where(_Entity.id == selected_entity_id)
                     )
-                    if active_entity_internal_number is not None:
+                    _active_is_owner = (
+                        str(getattr(_filter_entity, "profile_scope", "") or "").strip().lower() == "owner"
+                    )
+                    active_entity_internal_number = getattr(_filter_entity, "internal_number", None)
+                    if not _active_is_owner and active_entity_internal_number is not None:
+                        # Non-owner: show only their own records + "Default" records
                         target_str = str(active_entity_internal_number).strip()
                         entity_field_key = (
                             "custom_n_cliente" if menu_key == "contacto_geral"
@@ -972,7 +1017,9 @@ def get_page_data(
                         menu_history_rows = [
                             row for row in menu_history_rows
                             if str(row.get("values", {}).get(entity_field_key) or "").strip() == target_str
+                            or str(row.get("values", {}).get(entity_field_key) or "").strip().lower() == "default"
                         ]
+                    # Owner entity: no filter — sees all records from all entities
                 if menu_history_rows:
                     menu_process_history_map[menu_key] = menu_history_rows
             elif _is_history_process_menu_v1(menu_key, sidebar_item.get("label")):

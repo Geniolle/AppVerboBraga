@@ -51,6 +51,7 @@ MENU_COLUMNS = (
     AdminColumnConfig(key="label", label="MENU", source="label"),
     AdminColumnConfig(key="menu_key", label="CHAVE", source="key"),
     AdminColumnConfig(key="menu_section_label", label="GRUPO", source="menu_section_label"),
+    AdminColumnConfig(key="sistema", label="SISTEMA", source="visibility_scope_label"),
     AdminColumnConfig(key="entity_internal_number", label="Nº ENTIDADE", source="entity_internal_number"),
     AdminColumnConfig(key="status_label", label="ESTADO", source="status_label"),
 )
@@ -86,6 +87,7 @@ MENU_CONFIG = AdminSubprocessConfig(
     label_field="label",
     enabled=True,
     migration_status="native_next",
+    table_name="sidebar_menu_settings · menu_config",
     fields=MENU_FIELDS,
     columns=MENU_COLUMNS,
 )

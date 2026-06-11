@@ -127,6 +127,7 @@ DEFINICOES_CONFIG = AdminSubprocessConfig(
     label_field="parameter_name",
     enabled=True,
     migration_status="native",
+    table_name="sidebar_menu_settings · menu_config (definition_repository)",
     fields=DEFINICOES_FIELDS,
     columns=DEFINICOES_COLUMNS,
 )

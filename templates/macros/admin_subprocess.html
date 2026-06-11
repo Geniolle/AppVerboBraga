@@ -3,7 +3,7 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_field(field, value="", field_options=(), mode="create") %}
+{% macro render_admin_subprocess_field(field, value="", field_options=(), mode="create", show_hint=false) %}
   {% set is_readonly = field.field_type == "readonly" or (mode == "edit" and field.readonly_on_edit) or (mode != "edit" and field.readonly_on_create) %}
   {% set input_type = "text" if field.field_type in ("readonly", "select") and is_readonly else field.field_type %}
   {% if field.field_type == "hidden" %}
@@ -15,7 +15,7 @@
     >
   {% else %}
   <div class="field admin-subprocess-field-v1 {{ field.css_class }}">
-    <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+    <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}{% if show_hint %} <span class="admin-field-input-hint-v1">({{ field.input_name }})</span>{% endif %}</label>
 
     {% if field.field_type == "select" and not is_readonly %}
       <select
@@ -47,18 +47,19 @@
 {% macro render_admin_subprocess_fields_in_display_order(state, edit_data=None) %}
   {% set status_field_key = state.config.status_field|string %}
   {% set field_values = edit_data if edit_data else (state.create_data if state.create_data else {}) %}
+  {% set show_hints = state.show_field_hints %}
 
   {% for field in state.effective_fields %}
     {% if field.key != status_field_key %}
       {% set field_value = field_values.get(field.key, "") if field_values else "" %}
-      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create") }}
+      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints) }}
     {% endif %}
   {% endfor %}
 
   {% for field in state.effective_fields %}
     {% if field.key == status_field_key %}
       {% set field_value = field_values.get(field.key, "") if field_values else "" %}
-      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create") }}
+      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints) }}
     {% endif %}
   {% endfor %}
 {% endmacro %}

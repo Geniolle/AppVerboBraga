@@ -45,6 +45,7 @@ def get_menu_edit_defaults_v1() -> dict[str, Any]:
         "process_lists": [],
         "process_list_options": [],
         "process_list_source_options": [],
+        "process_list_source_tables": [],
         "process_quantity_fields": [],
         "process_subsequent_fields": [],
         "is_active": True,

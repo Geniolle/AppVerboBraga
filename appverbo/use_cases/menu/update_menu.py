@@ -15,6 +15,7 @@ from appverbo.use_cases.menu.outcome import (
     sanitize_menu_return_url_v1,
 )
 from appverbo.use_cases.menu.policies import (
+    ensure_actor_can_edit_legado_menu_fields_v1,
     ensure_actor_can_manage_menu_v1,
     ensure_actor_is_owner_for_menu_v1,
     ensure_menu_exists_v1,
@@ -131,6 +132,7 @@ def execute_update_menu_v1(
         repository=repository,
         session=session,
         menu_key=payload.menu_key,
+        selected_entity_id=selected_entity_id,
     )
     if policy_error:
         return build_menu_return_url_with_message_v1(
@@ -161,6 +163,133 @@ def execute_update_menu_v1(
             menu_key=payload.menu_key,
             menu_status=payload.menu_status,
         ),
+        selected_entity_id=selected_entity_id,
+    )
+
+    if not visibility_ok:
+        return build_menu_return_url_with_message_v1(
+            return_url=return_url,
+            message_key="error",
+            message=visibility_error,
+        )
+
+    return build_menu_return_url_with_message_v1(
+        return_url=return_url,
+        message_key="success",
+        message="Menu atualizado com sucesso.",
+    )
+
+
+# ###################################################################################
+# (3) USE CASE — EDITAR CAMPOS (Legado)
+# ###################################################################################
+
+
+@dataclass(frozen=True)
+class UpdateMenuLegadoInput:
+    menu_key: str
+    menu_label: str
+    menu_status: str
+    menu_sidebar_section: str
+    redirect_menu: str
+    redirect_target: str
+    subprocess_return_url: str
+
+
+def normalize_update_menu_legado_input_v1(
+    *,
+    menu_key: str,
+    menu_label: str,
+    menu_status: str = "ativo",
+    menu_sidebar_section: str = "",
+    redirect_menu: str = "administrativo",
+    redirect_target: str = "#settings-menu-edit-card",
+    subprocess_return_url: str = "",
+) -> UpdateMenuLegadoInput:
+    return UpdateMenuLegadoInput(
+        menu_key=str(menu_key or "").strip().lower(),
+        menu_label=str(menu_label or "").strip(),
+        menu_status=str(menu_status or "").strip().lower() or "ativo",
+        menu_sidebar_section=str(menu_sidebar_section or "").strip().lower(),
+        redirect_menu=str(redirect_menu or "administrativo").strip() or "administrativo",
+        redirect_target=str(redirect_target or "#settings-menu-edit-card").strip() or "#settings-menu-edit-card",
+        subprocess_return_url=str(subprocess_return_url or "").strip(),
+    )
+
+
+def execute_update_menu_legado_v1(
+    *,
+    session: Session,
+    actor_user: dict[str, Any],
+    selected_entity_id: int | None,
+    payload: UpdateMenuLegadoInput,
+) -> MenuActionOutcome:
+    repository = MenuAdminRepository(MENU_CONFIG)
+
+    if payload.subprocess_return_url:
+        return_url = sanitize_menu_return_url_v1(
+            payload.subprocess_return_url,
+            default_target=payload.redirect_target or "#settings-menu-edit-card",
+        )
+    else:
+        return_url = build_menu_settings_redirect_url_v1(
+            redirect_menu=payload.redirect_menu,
+            redirect_target=payload.redirect_target,
+            settings_edit_key=payload.menu_key,
+            settings_action="edit",
+            settings_tab="geral",
+        )
+
+    current_row = repository.get_for_edit(
+        session=session,
+        edit_key=payload.menu_key,
+        context={"selected_entity_id": selected_entity_id} if selected_entity_id is not None else None,
+    )
+    if current_row is None:
+        return build_menu_return_url_with_message_v1(
+            return_url=return_url,
+            message_key="error",
+            message="Menu não encontrado.",
+        )
+
+    current_scope = str(current_row.get("visibility_scope_mode") or "").strip().lower()
+
+    policy_error = ensure_actor_can_edit_legado_menu_fields_v1(
+        session=session,
+        actor_user=actor_user,
+        selected_entity_id=selected_entity_id,
+        menu_visibility_scope_mode=current_scope,
+    )
+    if policy_error:
+        return build_menu_return_url_with_message_v1(
+            return_url=return_url,
+            message_key="error",
+            message=policy_error,
+        )
+
+    ok, error_message = repository.update_menu_label(
+        session=session,
+        menu_key=payload.menu_key,
+        menu_label=payload.menu_label,
+        visibility_scope_mode=current_scope,
+        menu_sidebar_section=payload.menu_sidebar_section,
+        selected_entity_id=selected_entity_id,
+    )
+
+    if not ok:
+        return build_menu_return_url_with_message_v1(
+            return_url=return_url,
+            message_key="error",
+            message=error_message or "Não foi possível atualizar o menu.",
+        )
+
+    visibility_ok, visibility_error = execute_update_menu_visibility_v1(
+        session=session,
+        payload=normalize_update_menu_visibility_input_v1(
+            menu_key=payload.menu_key,
+            menu_status=payload.menu_status,
+        ),
+        selected_entity_id=selected_entity_id,
     )
 
     if not visibility_ok:

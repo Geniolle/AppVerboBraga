@@ -1360,6 +1360,10 @@ function setupAbsenceDateRangeValidation(sectionFields, inputsByFieldKey) {
 }
 
 function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionFields, recordLabels) {
+  const _historyMenuSetting = getSidebarMenuSetting(menuKey);
+  const _historyMenuConfig = (_historyMenuSetting && _historyMenuSetting.menu_config) ? _historyMenuSetting.menu_config : {};
+  const _rawCompactLimit = _historyMenuConfig.compact_preview_limit;
+  const _compactPreviewLimit = Number.isFinite(Number(_rawCompactLimit)) && Number(_rawCompactLimit) > 0 ? Number(_rawCompactLimit) : 0;
   if (
     pageRuntimeBridgesApiV1 &&
     typeof pageRuntimeBridgesApiV1.renderDynamicProcessHistory === "function"
@@ -1408,7 +1412,8 @@ function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionF
         dynamicProcessSubmitBtnEl,
         dynamicProcessCardEl,
         dynamicProcessCreateCardEl
-      }
+      },
+      config: { compactPreviewLimit: _compactPreviewLimit }
     });
     return;
   }
@@ -1461,7 +1466,8 @@ function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionF
       dynamicProcessSubmitBtnEl,
       dynamicProcessCardEl,
       dynamicProcessCreateCardEl
-    }
+    },
+    config: { compactPreviewLimit: _compactPreviewLimit }
   });
   _syncMt940ImportButton(menuKey);
 }
