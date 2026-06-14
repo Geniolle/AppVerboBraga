@@ -65,6 +65,118 @@
     return element;
   }
 
+  function bindFooterPageTarget_v1(element, targetPage, options) {
+    const safeOptions = options || {};
+    const normalizedTargetPage = clampNumber_v1(targetPage, 1, 100000, 1);
+
+    if (!(element instanceof Element)) {
+      return;
+    }
+
+    if (safeOptions.pageDataAttribute) {
+      element.setAttribute(String(safeOptions.pageDataAttribute), String(normalizedTargetPage));
+    }
+
+    if (typeof safeOptions.onPageChange === "function" && !element.disabled) {
+      element.addEventListener("click", () => {
+        safeOptions.onPageChange(normalizedTargetPage);
+      });
+    }
+  }
+
+  function renderFooterLoadMorePagination_v1(options) {
+    const safeOptions = options || {};
+    const container = safeOptions.container instanceof Element ? safeOptions.container : null;
+    const currentPage = clampNumber_v1(safeOptions.currentPage, 1, 100000, 1);
+    const totalPages = clampNumber_v1(safeOptions.totalPages, 1, 100000, 1);
+    const totalItems = clampNumber_v1(safeOptions.totalItems, 0, 1000000, 0);
+    const visibleCount = clampNumber_v1(safeOptions.visibleCount, 0, totalItems, 0);
+    const loadMoreLabel = toSafeString_v1(safeOptions.loadMoreLabel || "Mais").trim() || "Mais";
+
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = "";
+
+    const loadMoreWrap = createElement_v1("div", "admin-table-footer-load-more-v1");
+    const loadMoreCounter = createElement_v1(
+      "span",
+      "admin-table-footer-load-more-count-v1",
+      `[ ${formatCounterNumber_v1(visibleCount)} / ${formatCounterNumber_v1(totalItems)} ]`
+    );
+    const loadLessButton = createElement_v1("button", "admin-table-footer-load-less-btn-v1", "Menos");
+
+    if (visibleCount < totalItems) {
+      const loadMoreButton = createElement_v1("button", "admin-table-footer-load-more-btn-v1", loadMoreLabel);
+      loadMoreButton.type = "button";
+      bindFooterPageTarget_v1(loadMoreButton, Math.min(totalPages, currentPage + 1), safeOptions);
+      loadMoreWrap.appendChild(loadMoreButton);
+    }
+
+    loadLessButton.type = "button";
+    loadLessButton.disabled = currentPage <= 1;
+    bindFooterPageTarget_v1(loadLessButton, Math.max(1, currentPage - 1), safeOptions);
+
+    loadMoreWrap.appendChild(loadMoreCounter);
+    container.appendChild(loadMoreWrap);
+    container.appendChild(loadLessButton);
+  }
+
+  function renderFooterPagePagination_v1(options) {
+    const safeOptions = options || {};
+    const container = safeOptions.container instanceof Element ? safeOptions.container : null;
+    const currentPage = clampNumber_v1(safeOptions.currentPage, 1, 100000, 1);
+    const totalPages = clampNumber_v1(safeOptions.totalPages, 1, 100000, 1);
+    const showAllPages = safeOptions.showAllPages !== false;
+
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = "";
+
+    const previousButton = createElement_v1("button", "admin-table-footer-nav-btn-v1", "\u2039");
+    previousButton.type = "button";
+    previousButton.disabled = currentPage <= 1;
+    previousButton.setAttribute("aria-label", "Pagina anterior");
+    bindFooterPageTarget_v1(previousButton, Math.max(1, currentPage - 1), safeOptions);
+    container.appendChild(previousButton);
+
+    if (showAllPages) {
+      for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+        const isCurrentPage = pageNumber === currentPage;
+        const pageButton = createElement_v1(
+          "button",
+          isCurrentPage ? "admin-table-footer-page-v1 active" : "admin-table-footer-nav-btn-v1",
+          String(pageNumber)
+        );
+        pageButton.type = "button";
+
+        if (isCurrentPage) {
+          pageButton.disabled = true;
+          pageButton.setAttribute("aria-current", "page");
+        } else {
+          pageButton.setAttribute("aria-label", `Pagina ${pageNumber}`);
+          bindFooterPageTarget_v1(pageButton, pageNumber, safeOptions);
+        }
+
+        container.appendChild(pageButton);
+      }
+    } else {
+      const pageLabel = createElement_v1("span", "admin-table-footer-page-v1 active", String(currentPage));
+      pageLabel.setAttribute("aria-current", "page");
+      container.appendChild(pageLabel);
+    }
+
+    const nextButton = createElement_v1("button", "admin-table-footer-nav-btn-v1", "\u203A");
+    nextButton.type = "button";
+    nextButton.disabled = currentPage >= totalPages;
+    nextButton.setAttribute("aria-label", "Proxima pagina");
+    bindFooterPageTarget_v1(nextButton, Math.min(totalPages, currentPage + 1), safeOptions);
+    container.appendChild(nextButton);
+  }
+
   function clampNumber_v1(value, minValue, maxValue, fallbackValue) {
     const parsedValue = Number.parseInt(String(value || "").trim(), 10);
 
@@ -73,6 +185,20 @@
     }
 
     return Math.min(maxValue, Math.max(minValue, parsedValue));
+  }
+
+  function formatCounterNumber_v1(value) {
+    const parsedValue = Number.parseInt(String(value || "0").trim(), 10);
+
+    if (!Number.isFinite(parsedValue)) {
+      return "0";
+    }
+
+    try {
+      return new Intl.NumberFormat("pt-PT").format(parsedValue);
+    } catch (error) {
+      return String(parsedValue);
+    }
   }
 
   function canUseSessionStorage_v1() {
@@ -148,6 +274,17 @@
     return toSafeString_v1(item[key]);
   }
 
+  function defaultGetSearchText_v1(item) {
+    if (!item || typeof item !== "object") {
+      return "";
+    }
+
+    return Object.keys(item)
+      .filter((key) => key.indexOf("__") !== 0)
+      .map((key) => toSafeString_v1(item[key]))
+      .join(" ");
+  }
+
   function hasEnabledActions_v1(config) {
     if (!config || !config.actions) {
       return false;
@@ -189,6 +326,11 @@
       itemNamePlural: String(config.itemNamePlural || "itens").trim(),
       pageSizeDefault: clampNumber_v1(config.pageSizeDefault, 1, 100, 5),
       pageSizeOptions,
+      paginationMode: String(config.paginationMode || "pages").trim().toLowerCase() === "load_more"
+        ? "load_more"
+        : "pages",
+      loadMoreLabel: String(config.loadMoreLabel || "Mais").trim() || "Mais",
+      preserveStoredState: config.preserveStoredState !== false,
       columns: toArray_v1(config.columns).map(normalizeColumn_v1).filter((column) => column.key || column.label),
       selectors: {
         editorForm: selectors.editorForm || "[data-configurable-editor-form]",
@@ -198,7 +340,8 @@
         pagination: selectors.pagination || "[data-configurable-pagination]",
         pageSize: selectors.pageSize || "[data-configurable-page-size]",
         hiddenContainer: selectors.hiddenContainer || "[data-configurable-hidden-container]",
-        totalLabel: selectors.totalLabel || "[data-configurable-total-label]"
+        totalLabel: selectors.totalLabel || "[data-configurable-total-label]",
+        searchInput: selectors.searchInput || "[data-configurable-search]"
       },
       getItemId: typeof config.getItemId === "function" ? config.getItemId : defaultGetItemId_v1,
       readEditorItem: typeof config.readEditorItem === "function" ? config.readEditorItem : null,
@@ -206,6 +349,7 @@
       clearEditor: typeof config.clearEditor === "function" ? config.clearEditor : null,
       validateItem: typeof config.validateItem === "function" ? config.validateItem : null,
       syncHiddenInputs: typeof config.syncHiddenInputs === "function" ? config.syncHiddenInputs : null,
+      getSearchText: typeof config.getSearchText === "function" ? config.getSearchText : defaultGetSearchText_v1,
       onChange: typeof config.onChange === "function" ? config.onChange : null,
       onRender: typeof config.onRender === "function" ? config.onRender : null,
       initialItems: toArray_v1(config.initialItems),
@@ -237,12 +381,15 @@
   }
 
   function createInitialState_v1(config) {
-    const storedState = readStoredState_v1(config.stateStorageKey, config.pageSizeDefault);
+    const storedState = config.preserveStoredState
+      ? readStoredState_v1(config.stateStorageKey, config.pageSizeDefault)
+      : null;
 
     return {
       items: normalizeItems_v1(config.initialItems, config),
       page: storedState ? storedState.page : 1,
       pageSize: storedState ? storedState.pageSize : config.pageSizeDefault,
+      searchQuery: "",
       editingId: "",
       initialized: false
     };
@@ -254,6 +401,80 @@
     }
 
     writeStoredState_v1(manager.config.stateStorageKey, manager.state);
+  }
+
+  function isLoadMorePaginationMode_v1(manager) {
+    return Boolean(
+      manager &&
+      manager.config &&
+      manager.config.paginationMode === "load_more"
+    );
+  }
+
+  function resolveSearchText_v1(manager, item) {
+    if (!manager || !manager.config || typeof manager.config.getSearchText !== "function") {
+      return "";
+    }
+
+    return toSafeString_v1(
+      manager.config.getSearchText(item, {
+        manager,
+        root: manager.root,
+        elements: manager.elements,
+        state: manager.state
+      })
+    );
+  }
+
+  function resolveFilteredItems_v1(manager) {
+    const items = manager.getItems();
+    const searchQuery = normalizeLookup_v1(manager && manager.state ? manager.state.searchQuery : "");
+
+    if (!searchQuery) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      return normalizeLookup_v1(resolveSearchText_v1(manager, item)).includes(searchQuery);
+    });
+  }
+
+  function resolveVisibleItemsWindow_v1(manager) {
+    const items = resolveFilteredItems_v1(manager);
+    const totalItems = items.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
+
+    if (manager.state.page > totalPages) {
+      manager.state.page = totalPages;
+    }
+
+    if (isLoadMorePaginationMode_v1(manager)) {
+      const visibleCount = Math.min(
+        totalItems,
+        Math.max(1, manager.state.page) * manager.state.pageSize
+      );
+
+      return {
+        items,
+        totalItems,
+        totalPages,
+        startIndex: 0,
+        visibleCount,
+        visibleItems: items.slice(0, visibleCount)
+      };
+    }
+
+    const startIndex = (manager.state.page - 1) * manager.state.pageSize;
+    const visibleItems = items.slice(startIndex, startIndex + manager.state.pageSize);
+
+    return {
+      items,
+      totalItems,
+      totalPages,
+      startIndex,
+      visibleCount: visibleItems.length,
+      visibleItems
+    };
   }
 
   //###################################################################################
@@ -281,7 +502,8 @@
       pagination: resolveElement_v1(root, config.selectors.pagination),
       pageSize: resolveElement_v1(root, config.selectors.pageSize),
       hiddenContainer: resolveElement_v1(root, config.selectors.hiddenContainer),
-      totalLabel: resolveElement_v1(root, config.selectors.totalLabel)
+      totalLabel: resolveElement_v1(root, config.selectors.totalLabel),
+      searchInput: resolveElement_v1(root, config.selectors.searchInput)
     };
   }
 
@@ -399,16 +621,12 @@
       return;
     }
 
-    const items = manager.getItems();
-    const totalItems = items.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
-
-    if (manager.state.page > totalPages) {
-      manager.state.page = totalPages;
-    }
-
-    const startIndex = (manager.state.page - 1) * manager.state.pageSize;
-    const visibleItems = items.slice(startIndex, startIndex + manager.state.pageSize);
+    const allItems = manager.getItems();
+    const visibleWindow = resolveVisibleItemsWindow_v1(manager);
+    const totalItems = visibleWindow.totalItems;
+    const totalAllItems = allItems.length;
+    const startIndex = visibleWindow.startIndex;
+    const visibleItems = visibleWindow.visibleItems;
 
     tableBody.innerHTML = "";
 
@@ -469,11 +687,14 @@
 
     if (manager.elements.emptyState) {
       manager.elements.emptyState.style.display = totalItems ? "none" : "";
-      manager.elements.emptyState.textContent = `Sem ${manager.config.itemNamePlural} criados.`;
+      manager.elements.emptyState.textContent = manager.state.searchQuery && totalAllItems
+        ? "Sem resultados para a procura."
+        : `Sem ${manager.config.itemNamePlural} criados.`;
     }
 
     if (manager.elements.totalLabel) {
-      manager.elements.totalLabel.textContent = `${totalItems} ${totalItems === 1 ? manager.config.itemName : manager.config.itemNamePlural}`;
+      manager.elements.totalLabel.textContent =
+        `${totalAllItems} ${totalAllItems === 1 ? manager.config.itemName : manager.config.itemNamePlural}`;
     }
   }
 
@@ -522,12 +743,10 @@
       return;
     }
 
-    const totalItems = manager.state.items.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
-
-    if (manager.state.page > totalPages) {
-      manager.state.page = totalPages;
-    }
+    const visibleWindow = resolveVisibleItemsWindow_v1(manager);
+    const totalItems = visibleWindow.totalItems;
+    const totalPages = visibleWindow.totalPages;
+    const visibleCount = visibleWindow.visibleCount;
 
     paginationEl.innerHTML = "";
 
@@ -538,29 +757,27 @@
 
     paginationEl.style.display = "";
 
-    const previousButton = createElement_v1("button", "configurable-items-page-btn-v1", "Anterior");
-    previousButton.type = "button";
-    previousButton.disabled = manager.state.page <= 1;
-    previousButton.dataset.configurablePage = String(manager.state.page - 1);
-    paginationEl.appendChild(previousButton);
-
-    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-      const pageButton = createElement_v1("button", "configurable-items-page-btn-v1", String(pageNumber));
-      pageButton.type = "button";
-      pageButton.dataset.configurablePage = String(pageNumber);
-
-      if (pageNumber === manager.state.page) {
-        pageButton.classList.add("active");
-      }
-
-      paginationEl.appendChild(pageButton);
+    if (isLoadMorePaginationMode_v1(manager)) {
+      renderFooterLoadMorePagination_v1({
+        container: paginationEl,
+        currentPage: manager.state.page,
+        totalPages,
+        totalItems,
+        visibleCount,
+        loadMoreLabel: manager.config.loadMoreLabel,
+        pageDataAttribute: "data-configurable-page"
+      });
+      return;
     }
 
-    const nextButton = createElement_v1("button", "configurable-items-page-btn-v1", "Próxima");
-    nextButton.type = "button";
-    nextButton.disabled = manager.state.page >= totalPages;
-    nextButton.dataset.configurablePage = String(manager.state.page + 1);
-    paginationEl.appendChild(nextButton);
+    renderFooterPagePagination_v1({
+      container: paginationEl,
+      currentPage: manager.state.page,
+      totalPages,
+      showAllPages: true,
+      pageDataAttribute: "data-configurable-page"
+    });
+    return;
   }
 
   //###################################################################################
@@ -750,6 +967,21 @@
     });
   }
 
+  function bindSearchInput_v1(manager) {
+    if (!manager.elements.searchInput || manager.elements.searchInput.dataset.boundSearchV1 === "1") {
+      return;
+    }
+
+    manager.elements.searchInput.dataset.boundSearchV1 = "1";
+    manager.elements.searchInput.value = toSafeString_v1(manager.state.searchQuery);
+
+    manager.elements.searchInput.addEventListener("input", () => {
+      manager.state.searchQuery = toSafeString_v1(manager.elements.searchInput.value);
+      manager.state.page = 1;
+      manager.render();
+    });
+  }
+
   function bindEditorForm_v1(manager) {
     if (!manager.elements.editorForm || manager.elements.editorForm.dataset.boundEditorV1 === "1") {
       return;
@@ -904,10 +1136,12 @@
     manager.elements = resolveManagerElements_v1(root, config);
 
     root.dataset.configurableManagerActive = "1";
+    root.dataset.configurablePaginationModeV1 = config.paginationMode;
     root.classList.add("configurable-items-manager-v1");
 
     bindTableActions_v1(manager);
     bindPaginationActions_v1(manager);
+    bindSearchInput_v1(manager);
     bindEditorForm_v1(manager);
     bindParentFormSubmit_v1(manager);
 
@@ -920,6 +1154,8 @@
   }
 
   namespace.createConfigurableItemsManager_v1 = createConfigurableItemsManager_v1;
+  namespace.renderFooterLoadMorePagination_v1 = renderFooterLoadMorePagination_v1;
+  namespace.renderFooterPagePagination_v1 = renderFooterPagePagination_v1;
   namespace.normalizeLookup_v1 = normalizeLookup_v1;
   namespace.toSafeString_v1 = toSafeString_v1;
 })(window, document);

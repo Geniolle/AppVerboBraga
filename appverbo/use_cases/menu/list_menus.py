@@ -9,6 +9,7 @@ from appverbo.admin_subprocesses.repositories.menu_repository import (
     MenuAdminRepository,
     MenuListFilters,
 )
+from appverbo.services.entity_scope import load_entity_profile_scope_v1
 from appverbo.services.permissions import get_user_entity_permissions
 
 
@@ -81,9 +82,15 @@ def execute_list_menus_v1(
         page_size=page_size_value,
     )
 
+    resolved_selected_entity_id = permissions.get("selected_entity_id")
+    current_entity_scope = load_entity_profile_scope_v1(session, resolved_selected_entity_id)
+    if not current_entity_scope and permissions.get("can_manage_all_entities"):
+        current_entity_scope = "owner"
+
     list_result = repository.list_menus(
         session=session,
         filters=list_filters,
+        current_entity_scope=current_entity_scope,
     )
     all_rows = list(list_result.get("rows", []))
     active_rows = [

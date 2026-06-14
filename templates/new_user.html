@@ -66,12 +66,14 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260607-menu-n-entidade-grid">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260611-topbar-user-avatar-only">
   <link rel="stylesheet" href="/static/css/modules/default_admin_sidebar_v1.css?v=20260604-default-admin-sidebar-v1">
   <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v5-lyrics-preview">
   <style>
     :root {
       --topbar: {{ admin_topbar_color_hex|default('#334A62', true) }};
+      --topbar-brand-name-font-size: {{ topbar_brand_name_font_size_px|default(22, true) }}px;
+      --topbar-brand-name-max-width: {% if topbar_brand_name_max_width_px|default(0, true)|int > 0 %}{{ topbar_brand_name_max_width_px|int }}px{% else %}none{% endif %};
       --sidebar-bg: {{ admin_sidebar_bg_color_hex|default('#F3F3F4', true) }};
       --sidebar-active: {{ admin_sidebar_active_bg_color_hex|default('#E4E6EA', true) }};
       --sidebar-text-color: {{ admin_sidebar_text_color_hex|default('#5C6572', true) }};
@@ -83,7 +85,7 @@
     }
   </style>
   <link rel="stylesheet" href="/static/css/modules/admin_table_search_v1.css?v=20260601-admin-table-search-v6-toolbar-absolute-parity">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260611-fields-config-v11-required-fixed-column">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260614-configurable-search-other-tabs-v16">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260506-remover-card-interno-utilizador-v1">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260526-admin-tabs-top-subprocess-line-v11"></script>
@@ -240,7 +242,7 @@
 <!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_END -->
 
   <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_config_v1.css?v=20260516-admin-footer-config-v1">
-  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260526-admin-footer-standard-v9-last-visible-row">
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260614-admin-footer-standard-load-more-click-fix-v14">
 {% endblock %}
 
 {% block body %}
@@ -654,7 +656,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           <tr>
             <th>Menu</th>
             <th class="menu-col-key-hidden-v1">Chave</th>
-            <th>Sistema</th>
+            {% if current_entity_scope == "owner" %}<th>Sistema</th>{% endif %}
             <th>Sessão</th>
             <th>Nº Entidade</th>
             <th>Estado</th>
@@ -671,7 +673,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') ~ ' ' ~ (row.entity_internal_number or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
               <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
-              <td>{{ row.visibility_scope_label or "-" }}</td>
+              {% if current_entity_scope == "owner" %}<td>{{ row.visibility_scope_label or "-" }}</td>{% endif %}
               <td>{{ row.group or row.section or "" }}</td>
               <td>{{ row.entity_internal_number or "Default" }}</td>
               <td><span class="entity-status entity-status-active">Ativo</span></td>
@@ -762,7 +764,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           <tr>
             <th>Menu</th>
             <th class="menu-col-key-hidden-v1">Chave</th>
-            <th>Sistema</th>
+            {% if current_entity_scope == "owner" %}<th>Sistema</th>{% endif %}
             <th>Sessão</th>
             <th>Nº Entidade</th>
             <th>Estado</th>
@@ -779,7 +781,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 data-admin-menu-filter-text="{{ (row.label or row.name or row.title or row.key or '') ~ ' ' ~ (row.key or row.menu_key or '') ~ ' ' ~ (row.group or row.section or '') ~ ' ' ~ (row.entity_internal_number or '') }}">
               <td>{{ row.label or row.name or row.title or row.key }}</td>
               <td class="menu-col-key-hidden-v1">{{ row.key or row.menu_key }}</td>
-              <td>{{ row.visibility_scope_label or "-" }}</td>
+              {% if current_entity_scope == "owner" %}<td>{{ row.visibility_scope_label or "-" }}</td>{% endif %}
               <td>{{ row.group or row.section or "" }}</td>
               <td>{{ row.entity_internal_number or "Default" }}</td>
               <td><span class="entity-status entity-status-inactive">Inativo</span></td>
@@ -1062,9 +1064,19 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           </div>
         </section>
 
+                {% set active_profile_section_key_v1 = (requested_profile_section or initial_profile_section or "")|lower %}
+                {% set profile_personal_card_title_v1 = namespace(value="Dados pessoais") %}
+                {% if profile_personal_sections %}
+                  {% set profile_personal_card_title_v1.value = profile_personal_sections[0].label|default("Dados pessoais", true) %}
+                  {% for section in profile_personal_sections %}
+                    {% if section.key|default("", true)|lower == active_profile_section_key_v1 %}
+                      {% set profile_personal_card_title_v1.value = section.label|default(profile_personal_card_title_v1.value, true) %}
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
                 <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil">
           <div class="profile-card-header">
-            <h2>Dados pessoais do utilizador</h2>
+            <h2 data-profile-card-title data-profile-card-title-default="{{ profile_personal_card_title_v1.value }}">{{ profile_personal_card_title_v1.value }}</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-pessoal-card">Editar</button>
           </div>
           {% if profile_tab == "pessoal" and profile_success %}
@@ -1246,6 +1258,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                 value="{{ '' if user_personal_data.birth_date == '-' else user_personal_data.birth_date }}"
               >
               {% endif %}
+              {% if "autorizacao_whatsapp" in profile_personal_visible_fields %}
               <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
                 <label>
                   <input
@@ -1256,7 +1269,15 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
                   >
                   Autorizo a igreja a enviar avisos por WhatsApp
                 </label>
-              </div>              {% if "email" in profile_personal_visible_fields %}
+              </div>
+              {% else %}
+              <input
+                type="hidden"
+                name="whatsapp_notice_opt_in"
+                value="{% if user_personal_data.whatsapp_notice_opt_in_raw %}1{% else %}0{% endif %}"
+              >
+              {% endif %}
+              {% if "email" in profile_personal_visible_fields %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
                 <label for="edit_login_email">Email *</label>
                 <input
@@ -2457,11 +2478,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
       menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
     };
   </script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260606-core-readonly-actions-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260608-additional-fields-file-type-v2"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260609-lists-table-column-source-v1"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260523-quantity-pagination-state-v1"></script>
-  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260523-subsequent-pagination-state-v1"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260614-core-footer-load-more-shared-v7"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260614-additional-fields-search-v4"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260614-process-lists-search-v4"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260614-process-quantity-search-v4"></script>
+  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260614-subsequent-search-v4"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260601-admin-table-search-v5-reusable-subprocess-toolbar"></script>
   <script src="/static/js/modules/admin_definicoes_manager_v1.js?v=20260519-admin-definicoes-color-inline-v7"></script>
 <script src="/static/js/modules/post_save_context_navigation_guard_v3.js?v=20260525-post-save-guard-module-v1" defer></script>
@@ -2503,7 +2524,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/page_runtime_bridges_v1.js?v=20260525-page-runtime-bridges-module-v1" defer></script>
 <script src="/static/js/modules/menu_navigation_bridge_v1.js?v=20260526-menu-navigation-bridge-process-title-v2" defer></script>
 <script src="/static/js/modules/profile_allocation_multivalue_v1.js?v=20260525-profile-allocation-multivalue-module-v1" defer></script>
-<script src="/static/js/modules/profile_process_runtime_core_v1.js?v=20260603-profile-process-runtime-core-v2-session-list-rerender" defer></script>
+<script src="/static/js/modules/profile_process_runtime_core_v1.js?v=20260614-profile-card-title-sync-v1" defer></script>
 <script src="/static/js/modules/process_fields_builder_v1.js?v=20260525-process-fields-builder-module-v1" defer></script>
 <script src="/static/js/modules/process_additional_fields_builder_v1.js?v=20260525-process-additional-fields-builder-module-v1" defer></script>
 <script src="/static/js/modules/sidebar_sections_editor_v1.js?v=20260525-sidebar-sections-editor-module-v1" defer></script>
@@ -2534,6 +2555,6 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260529-fields-layout-order-v7-autosave-hierarchy-v2"></script>
-  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260605-admin-footer-standard-v5-menu-move-page-size-return" defer></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260614-fields-config-search-v4"></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260614-admin-footer-standard-v6-menu-load-more" defer></script>
 {% endblock %}

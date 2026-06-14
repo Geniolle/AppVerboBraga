@@ -409,6 +409,34 @@ ADMIN_PROCESS_TITLE_DEFINITION_DEFAULTS_V1: tuple[dict[str, str | tuple[str, ...
             "sidebar section text color",
         ),
     },
+    {
+        "parameter_name": "CABECALHO ENTIDADE NOME TAMANHO",
+        "parameter_type": "tamanho",
+        "initial_value": "22",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "cabecalho entidade nome tamanho",
+            "topbar entidade nome tamanho",
+            "entidade nome tamanho",
+            "brand name font size",
+        ),
+    },
+    {
+        "parameter_name": "CABECALHO ENTIDADE NOME LARGURA",
+        "parameter_type": "tamanho",
+        "initial_value": "0",
+        "process_name": "Geral",
+        "subprocess_name": "Geral",
+        "status": "active",
+        "aliases": (
+            "cabecalho entidade nome largura",
+            "topbar entidade nome largura",
+            "entidade nome largura",
+            "brand name max width",
+        ),
+    },
 )
 ADMIN_SIDEBAR_ICON_PARAMETER_NAME_V1 = "ICONE MENU LATERAL"
 ADMIN_SIDEBAR_ICON_PARAMETER_ALIASES_V1: tuple[str, ...] = (

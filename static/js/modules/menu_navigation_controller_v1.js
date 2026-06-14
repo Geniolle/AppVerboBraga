@@ -292,6 +292,15 @@
           context.setActiveSubmenu(defaultTarget);
         }
         context.applyContentForMenuTarget(menuKey, defaultTarget);
+        if (defaultTarget === "#dynamic-process-card") {
+          const dynamicCard =
+            typeof document !== "undefined"
+              ? document.getElementById("dynamic-process-card")
+              : null;
+          if (dynamicCard) {
+            dynamicCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
         if (
           menuKey === context.MEU_PERFIL_MENU_KEY &&
           typeof window.activateProfilePersonalSection === "function"

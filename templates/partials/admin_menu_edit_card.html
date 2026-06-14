@@ -255,6 +255,7 @@
               <h3>Configuração dos campos</h3>
 
                             <p class="muted process-tab-description-v1">Defina quais campos ficam visíveis no processo e a ordem de exibição.</p>
+                            <p class="muted process-tab-description-v1">Campos nativos do sistema e campos adicionais já criados são configurados nesta aba.</p>
 {% if settings_owner_fields_enabled %}
               {% if settings_process_select_options or settings_process_header_options %}
               <form method="post" action="/settings/menu/process-fields" data-process-fields-config-manager-v1="1">
@@ -334,9 +335,20 @@
                   </div>
 
                   <div class="configurable-items-list-v1 process-fields-config-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Campos configurados</h4>
-                      <span class="configurable-items-total-v1" data-process-fields-config-total-label>0 campos</span>
+                    <div class="configurable-items-list-head-v1 process-fields-config-list-head-v1">
+                      <div class="process-fields-config-heading-copy-v1">
+                        <h4 class="configurable-items-list-title-v1">Campos configurados</h4>
+                        <span class="configurable-items-total-v1" data-process-fields-config-total-label>0 campos</span>
+                      </div>
+                      <label class="process-fields-config-search-wrap-v1 admin-list-search-wrap-v1">
+                        <input
+                          type="search"
+                          class="process-fields-config-search-input-v1 admin-list-search-input-v1"
+                          data-process-fields-config-search
+                          placeholder="Procurar"
+                          aria-label="Procurar campos configurados"
+                        >
+                      </label>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -358,10 +370,15 @@
                       style="display: none;"
                     >Sem campos configurados.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
-                        <select data-process-fields-config-page-size>
+                    <div
+                      class="configurable-items-pagination-row-v1 admin-table-footer-standard-v1"
+                      data-admin-table-footer-mode-v1="load_more"
+                    >
+                      <label class="configurable-items-page-size-v1 admin-table-footer-page-size-v1">
+                        <select
+                          class="admin-table-footer-page-size-select-v1"
+                          data-process-fields-config-page-size
+                        >
                           <option value="5">5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
@@ -369,9 +386,16 @@
                           <option value="50" selected>50</option>
                           <option value="100">100</option>
                         </select>
+                        <span class="configurable-items-page-size-label-v1 admin-table-footer-label-v1">
+                          <span>entradas</span>
+                          <span>por página</span>
+                        </span>
                       </label>
 
-                      <div class="configurable-items-pagination-v1" data-process-fields-config-pagination></div>
+                      <div
+                        class="configurable-items-pagination-v1 admin-table-footer-pagination-v1 pagination"
+                        data-process-fields-config-pagination
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -474,9 +498,20 @@
                   </div>
 
                   <div class="configurable-items-list-v1 process-quantity-fields-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Regras criadas</h4>
-                      <span class="configurable-items-total-v1" data-process-quantity-total-label>0 regras</span>
+                    <div class="configurable-items-list-head-v1 configurable-items-list-head-search-v1">
+                      <div class="configurable-items-list-heading-copy-v1">
+                        <h4 class="configurable-items-list-title-v1">Regras criadas</h4>
+                        <span class="configurable-items-total-v1" data-process-quantity-total-label>0 regras</span>
+                      </div>
+                      <label class="configurable-items-list-search-wrap-v1 admin-list-search-wrap-v1">
+                        <input
+                          type="search"
+                          class="configurable-items-list-search-input-v1 admin-list-search-input-v1"
+                          data-process-quantity-search
+                          placeholder="Procurar"
+                          aria-label="Procurar regras de quantidade"
+                        >
+                      </label>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -502,10 +537,15 @@
                       style="display: none;"
                     >Sem regras criadas.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
-                        <select data-process-quantity-page-size>
+                    <div
+                      class="configurable-items-pagination-row-v1 admin-table-footer-standard-v1"
+                      data-admin-table-footer-mode-v1="load_more"
+                    >
+                      <label class="configurable-items-page-size-v1 admin-table-footer-page-size-v1">
+                        <select
+                          class="admin-table-footer-page-size-select-v1"
+                          data-process-quantity-page-size
+                        >
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
@@ -513,9 +553,16 @@
                           <option value="50">50</option>
                           <option value="100">100</option>
                         </select>
+                        <span class="configurable-items-page-size-label-v1 admin-table-footer-label-v1">
+                          <span>entradas</span>
+                          <span>por página</span>
+                        </span>
                       </label>
 
-                      <div class="configurable-items-pagination-v1" data-process-quantity-pagination></div>
+                      <div
+                        class="configurable-items-pagination-v1 admin-table-footer-pagination-v1 pagination"
+                        data-process-quantity-pagination
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -626,9 +673,20 @@
                   </div>
 
                   <div class="configurable-items-list-v1 process-lists-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Listas criadas</h4>
-                      <span class="configurable-items-total-v1" data-process-lists-total-label>0 listas</span>
+                    <div class="configurable-items-list-head-v1 configurable-items-list-head-search-v1">
+                      <div class="configurable-items-list-heading-copy-v1">
+                        <h4 class="configurable-items-list-title-v1">Listas criadas</h4>
+                        <span class="configurable-items-total-v1" data-process-lists-total-label>0 listas</span>
+                      </div>
+                      <label class="configurable-items-list-search-wrap-v1 admin-list-search-wrap-v1">
+                        <input
+                          type="search"
+                          class="configurable-items-list-search-input-v1 admin-list-search-input-v1"
+                          data-process-lists-search
+                          placeholder="Procurar"
+                          aria-label="Procurar listas"
+                        >
+                      </label>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -651,10 +709,15 @@
                       style="display: none;"
                     >Sem listas criadas.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
-                        <select data-process-lists-page-size>
+                    <div
+                      class="configurable-items-pagination-row-v1 admin-table-footer-standard-v1"
+                      data-admin-table-footer-mode-v1="load_more"
+                    >
+                      <label class="configurable-items-page-size-v1 admin-table-footer-page-size-v1">
+                        <select
+                          class="admin-table-footer-page-size-select-v1"
+                          data-process-lists-page-size
+                        >
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
@@ -662,9 +725,16 @@
                           <option value="50">50</option>
                           <option value="100">100</option>
                         </select>
+                        <span class="configurable-items-page-size-label-v1 admin-table-footer-label-v1">
+                          <span>entradas</span>
+                          <span>por página</span>
+                        </span>
                       </label>
 
-                      <div class="configurable-items-pagination-v1" data-process-lists-pagination></div>
+                      <div
+                        class="configurable-items-pagination-v1 admin-table-footer-pagination-v1 pagination"
+                        data-process-lists-pagination
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -709,7 +779,7 @@
                         <label for="process-subsequent-trigger-field">Campo acionador</label>
                         <select id="process-subsequent-trigger-field" data-process-subsequent-trigger-field>
                           <option value="">Selecione</option>
-                          {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                          {% for field in settings_process_select_options|default([]) %}
                           <option value="{{ field.key }}">{{ field.label }}</option>
                           {% endfor %}
                         </select>
@@ -719,7 +789,7 @@
                         <label for="process-subsequent-field">Campo subsequente</label>
                         <select id="process-subsequent-field" data-process-subsequent-field>
                           <option value="">Selecione</option>
-                          {% for field in settings_edit_data.process_additional_fields|default([]) %}
+                          {% for field in settings_process_select_options|default([]) %}
                           <option value="{{ field.key }}">{{ field.label }}</option>
                           {% endfor %}
                         </select>
@@ -750,9 +820,20 @@
                   </div>
 
                   <div class="configurable-items-list-v1 process-subsequent-fields-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Campos subsequentes criados</h4>
-                      <span class="configurable-items-total-v1" data-process-subsequent-fields-total-label>0 regras</span>
+                    <div class="configurable-items-list-head-v1 configurable-items-list-head-search-v1">
+                      <div class="configurable-items-list-heading-copy-v1">
+                        <h4 class="configurable-items-list-title-v1">Campos subsequentes criados</h4>
+                        <span class="configurable-items-total-v1" data-process-subsequent-fields-total-label>0 regras</span>
+                      </div>
+                      <label class="configurable-items-list-search-wrap-v1 admin-list-search-wrap-v1">
+                        <input
+                          type="search"
+                          class="configurable-items-list-search-input-v1 admin-list-search-input-v1"
+                          data-process-subsequent-fields-search
+                          placeholder="Procurar"
+                          aria-label="Procurar campos subsequentes"
+                        >
+                      </label>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -776,10 +857,15 @@
                       style="display: none;"
                     >Sem campos subsequentes criados.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
-                        <select data-process-subsequent-fields-page-size>
+                    <div
+                      class="configurable-items-pagination-row-v1 admin-table-footer-standard-v1"
+                      data-admin-table-footer-mode-v1="load_more"
+                    >
+                      <label class="configurable-items-page-size-v1 admin-table-footer-page-size-v1">
+                        <select
+                          class="admin-table-footer-page-size-select-v1"
+                          data-process-subsequent-fields-page-size
+                        >
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
@@ -787,9 +873,16 @@
                           <option value="50">50</option>
                           <option value="100">100</option>
                         </select>
+                        <span class="configurable-items-page-size-label-v1 admin-table-footer-label-v1">
+                          <span>entradas</span>
+                          <span>por página</span>
+                        </span>
                       </label>
 
-                      <div class="configurable-items-pagination-v1" data-process-subsequent-fields-pagination></div>
+                      <div
+                        class="configurable-items-pagination-v1 admin-table-footer-pagination-v1 pagination"
+                        data-process-subsequent-fields-pagination
+                      ></div>
                     </div>
                   </div>
                 </div>
@@ -805,6 +898,7 @@
               {% else %}
                                           <p class="muted process-tab-description-v1">Crie, edite, ordene e remova campos adicionais exibidos neste processo.</p>
               {% endif %}
+              <p class="muted process-tab-description-v1">Esta aba gere apenas campos personalizados. Campos nativos, como <strong>Autorização para avisos por WhatsApp</strong> no Meu perfil, ficam na aba <strong>Configuração dos campos</strong>.</p>
 <form
                 method="post"
                 action="/settings/menu/process-additional-fields"
@@ -850,6 +944,11 @@
 
                   <div class="configurable-items-editor-v1">
 <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                      <input
+                        type="hidden"
+                        id="process-additional-field-editor-key"
+                        data-additional-field-editor-key
+                      >
                       {% if settings_additional_fields_can_edit %}
                       <div class="field">
                         <label for="process-additional-field-editor-label">Nome do campo adicional</label>
@@ -955,9 +1054,20 @@
                   </div>
 
                   <div class="configurable-items-list-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Campos criados</h4>
-                      <span class="configurable-items-total-v1" data-configurable-total-label>0 campos</span>
+                    <div class="configurable-items-list-head-v1 configurable-items-list-head-search-v1">
+                      <div class="configurable-items-list-heading-copy-v1">
+                        <h4 class="configurable-items-list-title-v1">Campos criados</h4>
+                        <span class="configurable-items-total-v1" data-configurable-total-label>0 campos</span>
+                      </div>
+                      <label class="configurable-items-list-search-wrap-v1 admin-list-search-wrap-v1">
+                        <input
+                          type="search"
+                          class="configurable-items-list-search-input-v1 admin-list-search-input-v1"
+                          data-configurable-search
+                          placeholder="Procurar"
+                          aria-label="Procurar campos adicionais"
+                        >
+                      </label>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -977,17 +1087,24 @@
                       style="display: none;"
                     >Sem campos criados.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
+                    <div
+                      class="configurable-items-pagination-row-v1 admin-table-footer-standard-v1"
+                      data-admin-table-footer-mode-v1="load_more"
+                    >
+                      <label class="configurable-items-page-size-v1 admin-table-footer-page-size-v1">
                         <select
                           id="process-additional-fields-page-size"
+                          class="admin-table-footer-page-size-select-v1"
                           data-configurable-page-size
                         ></select>
+                        <span class="configurable-items-page-size-label-v1 admin-table-footer-label-v1">
+                          <span>entradas</span>
+                          <span>por página</span>
+                        </span>
                       </label>
 
                       <div
-                        class="configurable-items-pagination-v1"
+                        class="configurable-items-pagination-v1 admin-table-footer-pagination-v1 pagination"
                         data-configurable-pagination
                       ></div>
                     </div>

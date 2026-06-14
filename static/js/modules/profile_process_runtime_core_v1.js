@@ -7,21 +7,84 @@
 
     if (!window.__APPVERBO_PROFILE_PROCESS_RUNTIME_CORE_V1_READY) {
 function setupProfileProcessTabs() {
+  const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   if (!personalCardEl) {
     return;
   }
+  const profileCardTitleEl = personalCardEl.querySelector("[data-profile-card-title]");
+  const profilePersonalSections = (
+    Array.isArray(deps.profilePersonalSections) && deps.profilePersonalSections.length
+  )
+    ? deps.profilePersonalSections
+    : (Array.isArray(bootstrap.profilePersonalSections) ? bootstrap.profilePersonalSections : []);
+  const fallbackProfileCardTitle = String(
+    (profileCardTitleEl && profileCardTitleEl.getAttribute("data-profile-card-title-default")) ||
+    (profileCardTitleEl && profileCardTitleEl.textContent) ||
+    "Dados pessoais"
+  ).trim() || "Dados pessoais";
+  const profileSectionLabelsByKey = new Map();
+
+  //###################################################################################
+  // (1) SINCRONIZAR TITULO DO CARD COM A ABA ATIVA
+  //###################################################################################
+  function normalizeProfileSectionKeyV1(value) {
+    return String(value || "").trim().toLowerCase() || "geral";
+  }
+
+  function escapeProfileSectionSelectorValueV1(value) {
+    const cleanValue = String(value || "");
+    if (window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(cleanValue);
+    }
+    return cleanValue.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  }
+
+  profilePersonalSections.forEach((section) => {
+    const cleanSectionKey = normalizeProfileSectionKeyV1(section && section.key);
+    const cleanSectionLabel = String(section && section.label || "").trim();
+    if (!cleanSectionKey || !cleanSectionLabel || profileSectionLabelsByKey.has(cleanSectionKey)) {
+      return;
+    }
+    profileSectionLabelsByKey.set(cleanSectionKey, cleanSectionLabel);
+  });
+
+  function resolveProfileCardTitleV1(sectionKey) {
+    const cleanSectionKey = normalizeProfileSectionKeyV1(sectionKey);
+    const mappedTitle = String(profileSectionLabelsByKey.get(cleanSectionKey) || "").trim();
+    if (mappedTitle) {
+      return mappedTitle;
+    }
+    if (itemsEl) {
+      const sectionLinkEl = itemsEl.querySelector(
+        `.submenu-item[data-profile-section="${escapeProfileSectionSelectorValueV1(cleanSectionKey)}"]`
+      );
+      const linkTitle = String((sectionLinkEl && sectionLinkEl.textContent) || "").trim();
+      if (linkTitle) {
+        return linkTitle;
+      }
+    }
+    return fallbackProfileCardTitle;
+  }
+
+  function syncProfileCardTitleV1(sectionKey) {
+    if (!profileCardTitleEl) {
+      return;
+    }
+    profileCardTitleEl.textContent = resolveProfileCardTitleV1(sectionKey);
+  }
+
   const sectionPanes = personalCardEl.querySelectorAll("[data-profile-section-pane]");
   if (!sectionPanes.length) {
     return;
   }
 
   function activateSection(sectionKey) {
-    const normalizedSection = String(sectionKey || "").trim().toLowerCase() || "geral";
+    const normalizedSection = normalizeProfileSectionKeyV1(sectionKey);
     const availableSections = new Set(
       Array.from(sectionPanes)
         .map((paneEl) =>
-          String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
+          normalizeProfileSectionKeyV1(paneEl.getAttribute("data-profile-section-pane") || "geral")
         )
         .filter((section) => !hiddenMeuPerfilSectionKeys.has(section))
     );
@@ -29,11 +92,18 @@ function setupProfileProcessTabs() {
       ? normalizedSection
       : (Array.from(availableSections)[0] || "geral");
 
+    syncProfileCardTitleV1(effectiveSection);
+
     sectionPanes.forEach((paneEl) => {
-      const paneSection = String(
+      const paneSection = normalizeProfileSectionKeyV1(
         paneEl.getAttribute("data-profile-section-pane") || "geral"
-      ).trim().toLowerCase();
-      paneEl.style.display = !hiddenMeuPerfilSectionKeys.has(paneSection) && paneSection === effectiveSection ? "" : "none";
+      );
+      const isFieldHiddenBySubsequentRules = paneEl.dataset.profileSubsequentHiddenV1 === "1";
+      paneEl.style.display = (
+        !hiddenMeuPerfilSectionKeys.has(paneSection) &&
+        paneSection === effectiveSection &&
+        !isFieldHiddenBySubsequentRules
+      ) ? "" : "none";
     });
     const sectionInputEl = personalCardEl.querySelector("[data-meu-perfil-section-input]");
     if (sectionInputEl) {
@@ -48,6 +118,7 @@ function setupProfileProcessTabs() {
 }
 
 function collectCurrentMeuPerfilProcessValues() {
+  const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const valuesByField = {};
@@ -62,6 +133,20 @@ function collectCurrentMeuPerfilProcessValues() {
     country: "pais",
     birth_date: "data_nascimento",
     whatsapp_notice_opt_in: "autorizacao_whatsapp"
+  };
+  const readonlyFieldMap = {
+    edit_whatsapp_status: "whatsapp",
+    edit_account_status: "conta",
+    edit_member_status: "estado_membro",
+    edit_is_collaborator: "colaborador",
+    edit_entities_readonly: "entidades",
+    edit_whatsapp_last_check: "ultima_verificacao_whatsapp",
+    edit_whatsapp_last_error: "detalhe_verificacao"
+  };
+  const bootstrapReadonlyValues = {
+    conta: String(bootstrap.currentUserAccountStatus || "").trim(),
+    estado_membro: String(bootstrap.currentUserMemberStatus || "").trim(),
+    entidades: String(bootstrap.currentUserEntities || "").trim()
   };
 
   formEl.querySelectorAll("[name]").forEach((controlEl) => {
@@ -80,6 +165,24 @@ function collectCurrentMeuPerfilProcessValues() {
       return;
     }
     valuesByField[fieldKey] = String(controlEl.value || "").trim();
+  });
+
+  Object.keys(readonlyFieldMap).forEach((controlId) => {
+    const controlEl = formEl.querySelector("#" + controlId);
+    const fieldKey = normalizeMenuKey(readonlyFieldMap[controlId] || "");
+    if (!controlEl || !fieldKey) {
+      return;
+    }
+    valuesByField[fieldKey] = String(controlEl.value || "").trim();
+  });
+
+  Object.keys(bootstrapReadonlyValues).forEach((fieldKey) => {
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+    const fieldValue = String(bootstrapReadonlyValues[fieldKey] || "").trim();
+    if (!cleanFieldKey || !fieldValue || Object.prototype.hasOwnProperty.call(valuesByField, cleanFieldKey)) {
+      return;
+    }
+    valuesByField[cleanFieldKey] = fieldValue;
   });
 
   return valuesByField;

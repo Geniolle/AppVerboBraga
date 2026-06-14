@@ -760,6 +760,8 @@
       stateStorageKey: buildStorageKey_v3(root),
       pageSizeDefault: 5,
       pageSizeOptions: [5, 10, 20, 30, 50, 100],
+      paginationMode: "load_more",
+      loadMoreLabel: "Mais",
       initialItems,
       selectors: {
         editorForm: "[data-additional-field-editor-block]",
@@ -769,7 +771,8 @@
         pagination: "[data-configurable-pagination]",
         pageSize: "[data-configurable-page-size]",
         hiddenContainer: "[data-additional-fields-hidden-container]",
-        totalLabel: "[data-configurable-total-label]"
+        totalLabel: "[data-configurable-total-label]",
+        searchInput: "[data-configurable-search]"
       },
       columns: [
         {

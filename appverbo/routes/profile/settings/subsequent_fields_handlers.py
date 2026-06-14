@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from urllib.parse import parse_qsl, urlsplit
+
 from fastapi import Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from appverbo.core import SessionLocal
 from appverbo.routes.profile.router import router
@@ -11,13 +13,26 @@ from appverbo.use_cases.menu.update_menu_subsequent_fields import (
     normalize_update_menu_subsequent_fields_input_v1,
 )
 
+_SILENT_REFRESH_HEADER = "X-AppVerbo-Silent-Refresh"
+
+
+def _is_silent_request(request: Request) -> bool:
+    return request.headers.get(_SILENT_REFRESH_HEADER) == "1"
+
+
+def _parse_outcome_message(redirect_url: str) -> tuple[bool, str]:
+    params = dict(parse_qsl(urlsplit(redirect_url).query))
+    if "settings_success" in params:
+        return True, params["settings_success"]
+    return False, params.get("settings_error", "Não foi possível atualizar os campos subsequentes.")
+
 
 # ###################################################################################
 # (1) ENDPOINT - CAMPOS SUBSEQUENTES
 # ###################################################################################
 
 
-@router.post("/settings/menu/process-subsequent-fields", response_class=HTMLResponse)
+@router.post("/settings/menu/process-subsequent-fields", response_class=HTMLResponse, response_model=None)
 def edit_sidebar_menu_process_subsequent_fields_handler(
     request: Request,
     menu_key: str = Form(...),
@@ -30,7 +45,9 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
     redirect_target: str = Form("#settings-menu-edit-card"),
     subprocess_return_url: str = Form(""),
     return_url: str = Form(""),
-) -> RedirectResponse:
+) -> RedirectResponse | JSONResponse:
+    silent = _is_silent_request(request)
+
     payload = normalize_update_menu_subsequent_fields_input_v1(
         menu_key=menu_key,
         subsequent_field_key=list(subsequent_field_key or []),
@@ -47,6 +64,11 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
         current_user = get_current_user(request, session)
 
         if current_user is None:
+            if silent:
+                return JSONResponse(
+                    {"success": False, "message": "Sessão expirada. Efetue login para continuar."},
+                    status_code=status.HTTP_200_OK,
+                )
             return RedirectResponse(
                 url="/login?error=Efetue login para continuar.",
                 status_code=status.HTTP_302_FOUND,
@@ -57,6 +79,15 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             actor_user=current_user,
             selected_entity_id=get_session_entity_id(request),
             payload=payload,
+        )
+
+    if silent:
+        is_success, message = _parse_outcome_message(outcome.redirect_url)
+        if is_success:
+            return JSONResponse({"success": True, "message": message}, status_code=status.HTTP_200_OK)
+        return JSONResponse(
+            {"success": False, "message": message, "redirectUrl": outcome.redirect_url},
+            status_code=status.HTTP_200_OK,
         )
 
     return RedirectResponse(

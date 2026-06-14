@@ -20,6 +20,14 @@
       .replace(/^_|_$/g, "");
   }
 
+  function normalizeSearchText_v1(value) {
+    return toSafeString_v1(value)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
   function escapeHtml_v1(value) {
     return toSafeString_v1(value)
       .replace(/&/g, "&amp;")
@@ -125,6 +133,7 @@
       tableBody: form.querySelector("[data-process-quantity-table-body]"),
       emptyState: form.querySelector("[data-process-quantity-empty]"),
       totalLabel: form.querySelector("[data-process-quantity-total-label]"),
+      searchInput: form.querySelector("[data-process-quantity-search]"),
       pageSize: form.querySelector("[data-process-quantity-page-size]"),
       pagination: form.querySelector("[data-process-quantity-pagination]")
     };
@@ -216,6 +225,35 @@
     );
     Array.from(select.options || []).forEach(function (option) {
       option.selected = selectedValues.has(toSafeString_v1(option.value).trim());
+    });
+  }
+
+  function resolveSearchText_v1(item, elements) {
+    const repeatedLabel = (item.repeatedFieldKeys || [])
+      .map(function (fieldKey) {
+        return getOptionLabel_v1(elements.editorRepeatedFields, fieldKey) || fieldKey;
+      })
+      .join(" ");
+
+    return [
+      item.label,
+      getOptionLabel_v1(elements.editorQuantityField, item.quantityFieldKey) || "-",
+      repeatedLabel || "-",
+      getOptionLabel_v1(elements.editorHeaderKey, item.headerKey) || "Sem cabecalho",
+      item.maxItems || "10",
+      item.itemLabel || "Item"
+    ].join(" ");
+  }
+
+  function resolveFilteredItems_v1(state, elements) {
+    const searchQuery = normalizeSearchText_v1(state.searchQuery);
+
+    if (!searchQuery) {
+      return state.items.slice();
+    }
+
+    return state.items.filter(function (item) {
+      return normalizeSearchText_v1(resolveSearchText_v1(item, elements)).includes(searchQuery);
     });
   }
 
@@ -349,19 +387,22 @@
   }
 
   function renderTable_v1(state, elements) {
-    const totalItems = state.items.length;
+    const totalAllItems = state.items.length;
+    const filteredItems = resolveFilteredItems_v1(state, elements);
+    const totalItems = filteredItems.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
+
     if (state.page > totalPages) {
       state.page = totalPages;
     }
 
-    const start = (state.page - 1) * state.pageSize;
-    const visibleItems = state.items.slice(start, start + state.pageSize);
+    const visibleCount = Math.min(totalItems, Math.max(1, state.page) * state.pageSize);
+    const visibleItems = filteredItems.slice(0, visibleCount);
 
     elements.tableBody.innerHTML = "";
 
     visibleItems.forEach(function (item, visibleIndex) {
-      const absoluteIndex = start + visibleIndex;
+      const absoluteIndex = findItemIndex_v1(state, item.managerId);
       const row = document.createElement("tr");
       row.dataset.processQuantityItemId = item.managerId;
 
@@ -387,7 +428,7 @@
 
       actionsWrap.appendChild(createButton_v1("edit", "Editar", item.managerId, false));
       actionsWrap.appendChild(createButton_v1("up", "Subir", item.managerId, absoluteIndex === 0));
-      actionsWrap.appendChild(createButton_v1("down", "Descer", item.managerId, absoluteIndex === totalItems - 1));
+      actionsWrap.appendChild(createButton_v1("down", "Descer", item.managerId, absoluteIndex === totalAllItems - 1));
       actionsWrap.appendChild(createButton_v1("remove", "Remover", item.managerId, false));
 
       actionsTd.appendChild(actionsWrap);
@@ -397,14 +438,42 @@
 
     elements.table.style.display = totalItems ? "" : "none";
     elements.emptyState.style.display = totalItems ? "none" : "";
-    elements.totalLabel.textContent = totalItems + " " + (totalItems === 1 ? "regra" : "regras");
+    elements.emptyState.textContent = state.searchQuery && totalAllItems
+      ? "Sem resultados para a procura."
+      : "Sem regras criadas.";
+    elements.totalLabel.textContent = totalAllItems + " " + (totalAllItems === 1 ? "regra" : "regras");
 
-    renderPagination_v1(state, elements, totalPages);
+    renderPagination_v1(state, elements, totalPages, totalItems, visibleCount);
     saveStoredPaginationState_v1(state.storageKey, state);
   }
 
-  function renderPagination_v1(state, elements, totalPages) {
+  function renderPagination_v1(state, elements, totalPages, totalItems, visibleCount) {
     elements.pagination.innerHTML = "";
+
+    if (totalItems <= state.pageSize) {
+      elements.pagination.style.display = "none";
+      return;
+    }
+
+    elements.pagination.style.display = "";
+
+    const configurableCore = window.AppVerboConfigurableItems || {};
+
+    if (typeof configurableCore.renderFooterLoadMorePagination_v1 === "function") {
+      configurableCore.renderFooterLoadMorePagination_v1({
+        container: elements.pagination,
+        currentPage: state.page,
+        totalPages,
+        totalItems,
+        visibleCount,
+        loadMoreLabel: "Mais",
+        onPageChange: function (nextPage) {
+          state.page = Math.max(1, Math.min(totalPages, nextPage));
+          renderTable_v1(state, elements);
+        }
+      });
+      return;
+    }
 
     const previousButton = document.createElement("button");
     previousButton.type = "button";
@@ -483,6 +552,14 @@
       renderTable_v1(state, elements);
     });
 
+    if (elements.searchInput) {
+      elements.searchInput.addEventListener("input", function () {
+        state.searchQuery = toSafeString_v1(elements.searchInput.value);
+        state.page = 1;
+        renderTable_v1(state, elements);
+      });
+    }
+
     elements.tableBody.addEventListener("click", function (event) {
       const button = event.target.closest("[data-process-quantity-action]");
       if (!button) {
@@ -552,6 +629,7 @@
       page: 1,
       pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
       storageKey: buildPaginationStorageKey_v1(form),
+      searchQuery: "",
       editingId: ""
     };
 

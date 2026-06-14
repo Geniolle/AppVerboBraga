@@ -52,6 +52,11 @@
       .trim();
   }
 
+  function formatCounterNumberV2(value) {
+    const numericValue = Number.isFinite(value) ? value : toIntegerV2(value, 0);
+    return numericValue.toLocaleString("pt-PT");
+  }
+
   function escapeAttributeV2(value) {
     return toSafeStringV2(value)
       .replace(/&/g, "&amp;")
@@ -161,11 +166,36 @@
     const safeConfig = config || {};
     const tableId = toSafeStringV2(safeConfig.tableId).trim();
     const pageSize = toIntegerV2(safeConfig.pageSize, 5);
+    const paginationMode =
+      toSafeStringV2(safeConfig.paginationMode).trim().toLowerCase() === "load_more"
+        ? "load_more"
+        : "pages";
+    const paginationHtml =
+      paginationMode === "load_more"
+        ? [
+            '  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">',
+            '    <div class="admin-table-footer-load-more-v1">',
+            '      <button type="button" class="admin-table-footer-load-more-btn-v1" data-admin-table-footer-next-v1="1">Mais</button>',
+            '      <span class="admin-table-footer-load-more-count-v1" data-admin-table-footer-page-v1="1">[ 0 / 0 ]</span>',
+            "    </div>",
+            '    <button type="button" class="admin-table-footer-load-less-btn-v1" data-admin-table-footer-prev-v1="1" disabled>Menos</button>',
+            "  </div>",
+          ].join("")
+        : [
+            '  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">',
+            '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Pagina anterior" data-admin-table-footer-prev-v1="1" disabled>&#8249;</button>',
+            '    <span class="admin-table-footer-page-v1 active" aria-current="page" data-admin-table-footer-page-v1="1">1</span>',
+            '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Proxima pagina" data-admin-table-footer-next-v1="1" disabled>&#8250;</button>',
+            "  </div>",
+          ].join("");
     const ariaLabel = toSafeStringV2(safeConfig.ariaLabel || "Entradas por página");
 
     return [
       '<div class="admin-table-footer-standard-v1 table-footer admin-status-table-footer-v1" data-admin-table-footer-standard-v1="1"' +
         (tableId ? ' data-admin-table-id="' + escapeAttributeV2(tableId) + '"' : "") +
+        ' data-admin-table-footer-mode-v1="' +
+        escapeAttributeV2(paginationMode) +
+        '"' +
         ">",
       '  <div class="admin-table-footer-page-size-v1">',
       '    <select class="admin-table-footer-page-size-select-v1" aria-label="' +
@@ -180,11 +210,7 @@
       "    </select>",
       '    <span class="admin-table-footer-label-v1"><span>entradas</span><span>por página</span></span>',
       "  </div>",
-      '  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">',
-      '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Página anterior" data-admin-table-footer-prev-v1="1" disabled>&#8249;</button>',
-      '    <span class="admin-table-footer-page-v1 active" aria-current="page" data-admin-table-footer-page-v1="1">1</span>',
-      '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Próxima página" data-admin-table-footer-next-v1="1" disabled>&#8250;</button>',
-      "  </div>",
+      paginationHtml,
       "</div>",
     ].join("");
   }
@@ -240,6 +266,24 @@
     }
 
     return tbodyEl.querySelectorAll("tr").length > 0;
+  }
+
+  function isMenuTableV2(tableEl) {
+    if (!tableEl) {
+      return false;
+    }
+
+    const tableId = toSafeStringV2(tableEl.id).trim().toLowerCase();
+
+    if (tableId === "admin-menu-active-table" || tableId === "admin-menu-inactive-table") {
+      return true;
+    }
+
+    return tableEl.hasAttribute("data-admin-menu-table");
+  }
+
+  function resolvePaginationModeForTableV2(tableEl) {
+    return isMenuTableV2(tableEl) ? "load_more" : "pages";
   }
 
   function isEligibleTableV2(tableEl) {
@@ -312,6 +356,7 @@
     tempEl.innerHTML = buildFooterHtmlV2({
       tableId: tableId,
       pageSize: 5,
+      paginationMode: resolvePaginationModeForTableV2(tableEl),
       ariaLabel: "Entradas por página",
     });
 
@@ -396,9 +441,6 @@
 
     state.currentPage = clampV2(state.currentPage, 1, totalPages);
 
-    const startIndex = (state.currentPage - 1) * state.pageSize;
-    const endIndex = startIndex + state.pageSize;
-
     rows.forEach((rowEl) => {
       rowEl.classList.remove("admin-table-last-visible-row-v1");
       rowEl.style.display = "none";
@@ -406,21 +448,48 @@
 
     const visibleRows = [];
 
-    filteredRows.forEach((rowEl, index) => {
-      const isVisible = index >= startIndex && index < endIndex;
-      rowEl.style.display = isVisible ? "" : "none";
-      if (isVisible) {
-        visibleRows.push(rowEl);
-      }
-    });
+    if (state.paginationMode === "load_more") {
+      const visibleCount = Math.min(totalRows, state.currentPage * state.pageSize);
+
+      filteredRows.forEach((rowEl, index) => {
+        const isVisible = index < visibleCount;
+        rowEl.style.display = isVisible ? "" : "none";
+        if (isVisible) {
+          visibleRows.push(rowEl);
+        }
+      });
+
+      state.pageEl.textContent =
+        "[ " +
+        formatCounterNumberV2(visibleRows.length) +
+        " / " +
+        formatCounterNumberV2(totalRows) +
+        " ]";
+      state.prevEl.disabled = state.currentPage <= 1;
+      state.nextEl.disabled = visibleRows.length >= totalRows;
+      state.nextEl.style.display = visibleRows.length >= totalRows ? "none" : "";
+    } else {
+      const startIndex = (state.currentPage - 1) * state.pageSize;
+      const endIndex = startIndex + state.pageSize;
+
+      filteredRows.forEach((rowEl, index) => {
+        const isVisible = index >= startIndex && index < endIndex;
+        rowEl.style.display = isVisible ? "" : "none";
+        if (isVisible) {
+          visibleRows.push(rowEl);
+        }
+      });
+
+      state.pageEl.textContent = String(state.currentPage);
+      state.prevEl.disabled = state.currentPage <= 1;
+      state.nextEl.disabled = state.currentPage >= totalPages;
+      state.nextEl.style.display = "";
+    }
 
     if (visibleRows.length) {
       visibleRows[visibleRows.length - 1].classList.add("admin-table-last-visible-row-v1");
     }
 
-    state.pageEl.textContent = String(state.currentPage);
-    state.prevEl.disabled = state.currentPage <= 1;
-    state.nextEl.disabled = state.currentPage >= totalPages;
   }
 
   function getFooterForTableV2(tableEl) {
@@ -542,6 +611,11 @@
       prevEl: prevEl,
       nextEl: nextEl,
       pageEl: pageEl,
+      paginationMode:
+        toSafeStringV2(footerEl.dataset.adminTableFooterModeV1).trim().toLowerCase() ===
+        "load_more"
+          ? "load_more"
+          : "pages",
       currentPage: 1,
       pageSize: readTempPageSizeFromUrlV2(
         tableEl,

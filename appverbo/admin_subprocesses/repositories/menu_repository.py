@@ -6,6 +6,9 @@ from typing import Any
 
 from sqlalchemy import text
 
+from appverbo.admin_subprocesses.common.row_action_access import (
+    decorate_admin_subprocess_row_action_access_v1,
+)
 from appverbo.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
 from appverbo.menu_settings import (
     MENU_SECTION_OPTIONS,
@@ -221,12 +224,14 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         )
         if entity_scope_label_entity_id is None:
             entity_internal_number = owner_entity_internal_number or "Default"
+            entity_scope_origin = "default"
         else:
             scope_display = build_entity_scope_display_v1(
                 session,
                 entity_scope_label_entity_id,
             )
             entity_internal_number = str(scope_display.get("entity_internal_number") or "").strip() or "Default"
+            entity_scope_origin = "entity"
 
         return {
             **row,
@@ -248,6 +253,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             "menu_section_label": section_label,
             "group": section_label,
             "section": section_label,
+            "entity_scope_origin": entity_scope_origin,
             "entity_name": entity_scope_label,
             "entity_scope_label": entity_scope_label,
             "entity_scope_entity_id": entity_scope_label_entity_id,
@@ -318,6 +324,7 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         *,
         session: Any,
         filters: MenuListFilters | None = None,
+        current_entity_scope: object = "",
     ) -> dict[str, Any]:
         resolved_filters = filters or MenuListFilters()
         owner_entity_id = get_owner_entity_scope_id_v1(session)
@@ -334,6 +341,14 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
                 session,
                 selected_entity_id=resolved_filters.entity_id,
             )
+        ]
+        rows = [
+            decorate_admin_subprocess_row_action_access_v1(
+                subprocess_key=self.config.key,
+                row=row,
+                current_entity_scope=current_entity_scope,
+            )
+            for row in rows
         ]
         rows = self._apply_filters_v1(rows=rows, filters=resolved_filters, owner_entity_id=owner_entity_id)
 
@@ -940,9 +955,11 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         context: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         filters = self._normalize_filters_from_context(context)
+        current_entity_scope = str((context or {}).get("current_entity_scope") or "").strip().lower()
         result = self.list_menus(
             session=session,
             filters=filters,
+            current_entity_scope=current_entity_scope,
         )
         return list(result.get("rows", []))
 

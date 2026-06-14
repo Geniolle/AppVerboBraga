@@ -681,8 +681,11 @@
       itemName: "campo",
       itemNamePlural: "campos",
       stateStorageKey: construirStorageKeyV7(form),
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 20, 30, 50, 100],
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 50,
+      pageSizeOptions: [5, 10, 20, 25, 30, 50, 100],
+      paginationMode: "load_more",
+      loadMoreLabel: "Mais",
+      preserveStoredState: true,
       initialItems,
       selectors: {
         editorForm: "[data-process-fields-config-editor-block]",
@@ -692,7 +695,8 @@
         pagination: "[data-process-fields-config-pagination]",
         pageSize: "[data-process-fields-config-page-size]",
         hiddenContainer: "[data-process-fields-config-hidden-container]",
-        totalLabel: "[data-process-fields-config-total-label]"
+        totalLabel: "[data-process-fields-config-total-label]",
+        searchInput: "[data-process-fields-config-search]"
       },
       columns: [
         {
@@ -709,6 +713,13 @@
       ],
       getItemId: function (item, index) {
         return item.id || item.key || "field_" + (index + 1);
+      },
+      getSearchText: function (item) {
+        return [
+          item && item.label ? item.label : "",
+          item && item.headerLabel ? item.headerLabel : "",
+          item && item.kind ? item.kind : ""
+        ].join(" ");
       },
       readEditorItem: lerEditorItem_v7,
       loadEditorItem: carregarEditor_v7,

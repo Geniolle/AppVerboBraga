@@ -135,6 +135,10 @@ SIDEBAR_ICON_ALIAS_MAP: dict[str, str] = {
     "tutorial": "book",
     "help": "book",
     "manual": "book",
+    "calendar": "calendar",
+    "calendario": "calendar",
+    "agenda": "calendar",
+    "schedule": "calendar",
     "circle": "circle",
     "default": "circle",
 }
@@ -143,6 +147,9 @@ MENU_CONFIG_SIDEBAR_SECTIONS_KEY = "sidebar_sections"
 MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY = "sidebar_global_refresh_version"
 MENU_CONFIG_SIDEBAR_ICON_KEY = "sidebar_icon"
 MENU_CONFIG_MEU_PERFIL_HEADERS_AUTO_REPAIRED_V1_KEY = "meu_perfil_headers_auto_repaired_v1"
+MENU_CONFIG_MEU_PERFIL_CONFIGURABLE_BUILTIN_FIELDS_AUTO_SEEDED_V1_KEY = (
+    "meu_perfil_configurable_builtin_fields_auto_seeded_v1"
+)
 MENU_CONFIG_MEU_PERFIL_DEPARTMENT_MEMBERSHIP_FIELDS_AUTO_SEEDED_V1_KEY = (
     "meu_perfil_department_membership_fields_auto_seeded_v1"
 )
@@ -209,15 +216,6 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "telefone", "label": "Telefone"},
         {"key": "email", "label": "Email"},
         {"key": "pais", "label": "País"},
-        {"key": "data_nascimento", "label": "Data de nascimento"},
-        {"key": "whatsapp", "label": "WhatsApp"},
-        {"key": "autorizacao_whatsapp", "label": "Autorização para avisos por WhatsApp"},
-        {"key": "conta", "label": "Conta"},
-        {"key": "estado_membro", "label": "Estado de membro"},
-        {"key": "colaborador", "label": "Colaborador"},
-        {"key": "entidades", "label": "Entidades"},
-        {"key": "ultima_verificacao_whatsapp", "label": "Última verificação WhatsApp"},
-        {"key": "detalhe_verificacao", "label": "Detalhe da verificação"},
     ),
     "funcionarios": (
         {"key": "nome", "label": "Nome"},
@@ -249,6 +247,83 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
     ),
 }
 
+MENU_MEU_PERFIL_BUILTIN_FIELD_OPTIONS_V1: tuple[dict[str, str], ...] = (
+    {"key": "nome", "label": "Nome", "field_type": "text"},
+    {"key": "telefone", "label": "Telefone", "field_type": "phone"},
+    {"key": "email", "label": "Email", "field_type": "email"},
+    {"key": "pais", "label": "País", "field_type": "text"},
+    {"key": "data_nascimento", "label": "Data de nascimento", "field_type": "date"},
+    {"key": "whatsapp", "label": "WhatsApp", "field_type": "text"},
+    {"key": "autorizacao_whatsapp", "label": "Autorização para avisos por WhatsApp", "field_type": "flag"},
+    {"key": "conta", "label": "Conta", "field_type": "text"},
+    {"key": "estado_membro", "label": "Estado de membro", "field_type": "text"},
+    {"key": "colaborador", "label": "Colaborador", "field_type": "text"},
+    {"key": "entidades", "label": "Entidades", "field_type": "text"},
+    {"key": "ultima_verificacao_whatsapp", "label": "Última verificação WhatsApp", "field_type": "text"},
+    {"key": "detalhe_verificacao", "label": "Detalhe da verificação", "field_type": "text"},
+)
+MENU_MEU_PERFIL_BUILTIN_FIELD_OPTIONS_BY_KEY_V1 = {
+    str(item["key"]).strip().lower(): dict(item)
+    for item in MENU_MEU_PERFIL_BUILTIN_FIELD_OPTIONS_V1
+}
+MENU_MEU_PERFIL_CONFIG_BASE_FIELD_KEYS_V1 = ("nome", "telefone", "email", "pais")
+MENU_MEU_PERFIL_CONFIGURABLE_BUILTIN_FIELDS_V1: tuple[dict[str, Any], ...] = (
+    {
+        "key": "custom_data_nascimento",
+        "label": "Data de nascimento",
+        "field_type": "date",
+        "is_required": False,
+    },
+    {
+        "key": "custom_whatsapp",
+        "label": "WhatsApp",
+        "field_type": "text",
+        "is_required": False,
+    },
+    {
+        "key": "custom_autorizacao_whatsapp",
+        "label": "Autorização para avisos por WhatsApp",
+        "field_type": "flag",
+        "is_required": False,
+    },
+    {
+        "key": "custom_conta",
+        "label": "Conta",
+        "field_type": "text",
+        "is_required": False,
+    },
+    {
+        "key": "custom_estado_membro",
+        "label": "Estado de membro",
+        "field_type": "text",
+        "is_required": False,
+    },
+    {
+        "key": "custom_colaborador",
+        "label": "Colaborador",
+        "field_type": "text",
+        "is_required": False,
+    },
+    {
+        "key": "custom_entidades",
+        "label": "Entidades",
+        "field_type": "text",
+        "is_required": False,
+    },
+    {
+        "key": "custom_ultima_verificacao_whatsapp",
+        "label": "Última verificação WhatsApp",
+        "field_type": "text",
+        "is_required": False,
+    },
+    {
+        "key": "custom_detalhe_verificacao",
+        "label": "Detalhe da verificação",
+        "field_type": "text",
+        "is_required": False,
+    },
+)
+
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "home": ["resumo_geral", "indicadores", "graficos"],
     "administrativo": ["entidade", "utilizador"],
@@ -263,7 +338,7 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
 }
 
 MENU_MEU_PERFIL_FIELD_OPTIONS: tuple[dict[str, str], ...] = tuple(
-    MENU_PROCESS_FIELD_OPTIONS_BY_KEY[MENU_MEU_PERFIL_KEY]
+    MENU_MEU_PERFIL_BUILTIN_FIELD_OPTIONS_V1
 )
 MENU_MEU_PERFIL_FIELD_KEYS = tuple(item["key"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS)
 MENU_MEU_PERFIL_FIELD_LABELS = {
@@ -803,6 +878,8 @@ def infer_sidebar_icon_key(
         return "mail"
     if "tutorial" in joined or "ajuda" in joined or "manual" in joined:
         return "book"
+    if "calendar" in joined or "calend" in joined or "agenda" in joined:
+        return "calendar"
 
     return SIDEBAR_ICON_DEFAULT_KEY
 
@@ -836,6 +913,47 @@ def _normalize_custom_field_key(raw_key: str) -> str:
     if not clean_value.startswith("custom_"):
         clean_value = f"custom_{clean_value}"
     return clean_value
+
+
+def _normalize_meu_perfil_builtin_lookup_text_v1(raw_value: Any) -> str:
+    normalized = (
+        unicodedata.normalize("NFKD", str(raw_value or ""))
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .strip()
+        .lower()
+    )
+    normalized = normalized.replace("_", " ").replace("-", " ")
+    return " ".join(normalized.split())
+
+
+def _resolve_meu_perfil_builtin_duplicate_field_key_v1(
+    field_key: Any,
+    field_label: Any,
+) -> str:
+    clean_key = _normalize_custom_field_key(str(field_key or ""))
+    if not clean_key:
+        return ""
+
+    builtin_lookup_by_key: dict[str, str] = {}
+    for builtin_key, builtin_label in MENU_MEU_PERFIL_FIELD_LABELS.items():
+        normalized_key = _normalize_meu_perfil_builtin_lookup_text_v1(builtin_key)
+        normalized_label = _normalize_meu_perfil_builtin_lookup_text_v1(builtin_label)
+        if normalized_key:
+            builtin_lookup_by_key[normalized_key] = str(builtin_key or "").strip().lower()
+        if normalized_label:
+            builtin_lookup_by_key[normalized_label] = str(builtin_key or "").strip().lower()
+
+    normalized_custom_key = _normalize_meu_perfil_builtin_lookup_text_v1(
+        clean_key.removeprefix("custom_")
+    )
+    normalized_custom_label = _normalize_meu_perfil_builtin_lookup_text_v1(field_label)
+
+    if normalized_custom_key and normalized_custom_key in builtin_lookup_by_key:
+        return builtin_lookup_by_key[normalized_custom_key]
+    if normalized_custom_label and normalized_custom_label in builtin_lookup_by_key:
+        return builtin_lookup_by_key[normalized_custom_label]
+    return ""
 
 
 def _normalize_sentence_case_text(raw_text: Any) -> str:
@@ -1567,6 +1685,58 @@ def get_menu_process_field_options(
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     raw_options = MENU_PROCESS_FIELD_OPTIONS_BY_KEY.get(clean_menu_key, tuple())
     additional_options = get_menu_process_additional_fields(menu_config)
+    if clean_menu_key == MENU_MEU_PERFIL_KEY:
+        options: list[dict[str, Any]] = [dict(item) for item in raw_options]
+        option_index_by_key = {
+            str(item.get("key") or "").strip().lower(): index
+            for index, item in enumerate(options)
+            if str(item.get("key") or "").strip()
+        }
+        duplicate_builtin_overrides: dict[str, dict[str, Any]] = {}
+        regular_additional_options: list[dict[str, Any]] = []
+
+        for raw_additional in additional_options:
+            builtin_key = _resolve_meu_perfil_builtin_duplicate_field_key_v1(
+                raw_additional.get("key"),
+                raw_additional.get("label"),
+            )
+            if builtin_key:
+                duplicate_builtin_overrides[builtin_key] = dict(raw_additional)
+                continue
+
+            regular_additional_options.append(dict(raw_additional))
+
+        for builtin_field in MENU_MEU_PERFIL_CONFIGURABLE_BUILTIN_FIELDS_V1:
+            builtin_key = _resolve_meu_perfil_builtin_duplicate_field_key_v1(
+                builtin_field.get("key"),
+                builtin_field.get("label"),
+            )
+            if not builtin_key or builtin_key not in duplicate_builtin_overrides:
+                continue
+
+            builtin_option = dict(
+                MENU_MEU_PERFIL_BUILTIN_FIELD_OPTIONS_BY_KEY_V1.get(
+                    builtin_key,
+                    {"key": builtin_key, "label": builtin_key},
+                )
+            )
+            custom_label = str(
+                duplicate_builtin_overrides[builtin_key].get("label") or ""
+            ).strip()
+            if custom_label:
+                builtin_option["label"] = custom_label
+
+            existing_index = option_index_by_key.get(builtin_key)
+            if existing_index is None:
+                option_index_by_key[builtin_key] = len(options)
+                options.append(builtin_option)
+            else:
+                options[existing_index] = builtin_option
+
+        options.extend(regular_additional_options)
+
+        return options
+
     if clean_menu_key not in MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS and additional_options:
         return [dict(item) for item in additional_options]
     options = [dict(item) for item in raw_options]
@@ -1943,6 +2113,70 @@ def _normalize_seed_toggle_flag_v1(raw_value: Any) -> bool:
     if isinstance(raw_value, bool):
         return raw_value
     return str(raw_value or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
+
+
+# ###################################################################################
+# (MEU_PERFIL) AUTO-SEED DE CAMPOS NATIVOS CONFIGURAVEIS
+# ###################################################################################
+
+def _ensure_meu_perfil_configurable_builtin_fields_v1(
+    menu_config: dict[str, Any] | None,
+) -> tuple[dict[str, Any], bool]:
+    if not isinstance(menu_config, dict):
+        return {}, False
+
+    updated_menu_config = dict(menu_config)
+    additional_fields = normalize_menu_process_additional_fields(
+        updated_menu_config.get("additional_fields")
+    )
+    additional_fields_by_key = {
+        str(field.get("key") or "").strip().lower(): field
+        for field in additional_fields
+        if str(field.get("key") or "").strip()
+    }
+
+    changed = False
+    auto_seed_already_applied = _normalize_seed_toggle_flag_v1(
+        updated_menu_config.get(
+            MENU_CONFIG_MEU_PERFIL_CONFIGURABLE_BUILTIN_FIELDS_AUTO_SEEDED_V1_KEY
+        )
+    )
+
+    if not auto_seed_already_applied:
+        for raw_seed_field in MENU_MEU_PERFIL_CONFIGURABLE_BUILTIN_FIELDS_V1:
+            seed_key = _normalize_custom_field_key(raw_seed_field.get("key"))
+            seed_label = _normalize_additional_field_label(raw_seed_field.get("label"))
+            seed_type = _normalize_additional_field_type(raw_seed_field.get("field_type"))
+            seed_size = _normalize_additional_field_size(raw_seed_field.get("size"), seed_type)
+            seed_required = _normalize_seed_required_flag_v1(raw_seed_field.get("is_required"))
+
+            if not seed_key or not seed_label or seed_key in additional_fields_by_key:
+                continue
+
+            seed_field_payload: dict[str, Any] = {
+                "key": seed_key,
+                "label": seed_label,
+                "field_type": seed_type,
+                "is_required": bool(seed_required and seed_type != "header"),
+            }
+
+            if seed_size is not None:
+                seed_field_payload["size"] = seed_size
+
+            additional_fields.append(seed_field_payload)
+            additional_fields_by_key[seed_key] = seed_field_payload
+            changed = True
+
+        updated_menu_config["additional_fields"] = additional_fields
+        updated_menu_config[
+            MENU_CONFIG_MEU_PERFIL_CONFIGURABLE_BUILTIN_FIELDS_AUTO_SEEDED_V1_KEY
+        ] = True
+        changed = True
+
+    if not changed:
+        return dict(menu_config), False
+
+    return updated_menu_config, True
 
 
 def _ensure_meu_perfil_department_membership_fields_v1(
@@ -2809,6 +3043,11 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
     working_meu_perfil_config, meu_perfil_headers_repaired = _repair_meu_perfil_process_headers_v1(
         meu_perfil_config
     )
+    working_meu_perfil_config, meu_perfil_configurable_builtins_seeded = (
+        _ensure_meu_perfil_configurable_builtin_fields_v1(
+            working_meu_perfil_config
+        )
+    )
     working_meu_perfil_config, meu_perfil_department_fields_seeded = (
         _ensure_meu_perfil_department_membership_fields_v1(
             working_meu_perfil_config
@@ -2821,6 +3060,7 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
     )
     if (
         meu_perfil_headers_repaired
+        or meu_perfil_configurable_builtins_seeded
         or meu_perfil_department_fields_seeded
         or meu_perfil_roles_operations_moved
     ):
@@ -2952,11 +3192,13 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
             empresa_config.get("visibility_scopes") != correct_scopes
             or empresa_config.get("visibility_scope_mode") != MENU_VISIBILITY_SCOPE_ALL
             or empresa_config.get("visibility_scope_label") != "Default"
+            or empresa_config.get("requires_admin") is not False
         )
         if empresa_needs_update:
             empresa_config["visibility_scopes"] = correct_scopes
             empresa_config["visibility_scope_mode"] = MENU_VISIBILITY_SCOPE_ALL
             empresa_config["visibility_scope_label"] = "Default"
+            empresa_config["requires_admin"] = False
             session.execute(
                 text(
                     """
@@ -3128,6 +3370,7 @@ def get_sidebar_menu_settings(
 ) -> list[dict[str, Any]]:
     ensure_sidebar_menu_settings_defaults(session)
     active_entity_internal_number = None
+    selected_entity_profile_scope = ""
     if selected_entity_id is not None:
         from appverbo.models.entity import Entity as _Entity
         from sqlalchemy import select
@@ -3136,6 +3379,10 @@ def get_sidebar_menu_settings(
         )
         if active_entity_internal_number is not None:
             active_entity_internal_number = str(active_entity_internal_number).strip()
+        raw_profile_scope = session.scalar(
+            select(_Entity.profile_scope).where(_Entity.id == selected_entity_id)
+        )
+        selected_entity_profile_scope = str(raw_profile_scope or "").strip().lower()
     owner_entity_id = get_owner_entity_scope_id_v1(session)
     defaults_by_key = _sidebar_menu_defaults_by_key()
     rows = session.execute(
@@ -3176,9 +3423,19 @@ def get_sidebar_menu_settings(
                 _parse_menu_config(None if row is None else row.menu_config),
             ),
         )
+        # Para meu_perfil com entidade Legado: o config (additional_fields/tabs)
+        # é sempre definido pelo Owner — Legado nunca tem overrides próprios.
+        effective_config_selected_entity_id = selected_entity_id
+        if (
+            menu_key == MENU_MEU_PERFIL_KEY
+            and selected_entity_profile_scope == "legado"
+            and owner_entity_id is not None
+        ):
+            effective_config_selected_entity_id = owner_entity_id
+
         effective_menu_config_scope_id = resolve_menu_effective_config_scope_id_v1(
             menu_key,
-            selected_entity_id=selected_entity_id,
+            selected_entity_id=effective_config_selected_entity_id,
             owner_entity_id=owner_entity_id,
             menu_config=raw_menu_config,
         )
@@ -3519,6 +3776,13 @@ def _persist_sidebar_menu_display_order(
     if changed:
         session.commit()
 
+def _is_menu_visible_for_owner_scope_v1(item: dict[str, Any], owner_entity_id: int | None) -> bool:
+    entity_scope_entity_id = item.get("entity_scope_entity_id")
+    return entity_scope_entity_id is None or (
+        owner_entity_id is not None and entity_scope_entity_id == owner_entity_id
+    )
+
+
 def move_sidebar_menu_setting(
     session: Session,
     menu_key: str,
@@ -3535,19 +3799,39 @@ def move_sidebar_menu_setting(
 
     settings = get_sidebar_menu_settings(session)
     ordered_menu_keys = [str(item.get("key") or "").strip().lower() for item in settings if str(item.get("key") or "").strip()]
+
+    # Skip menus scoped to other entities when determining neighbors, so moves
+    # within the owner-visible list don't accidentally swap with hidden menus.
+    owner_entity_id = get_owner_entity_scope_id_v1(session)
+    settings_by_key = {
+        str(item.get("key") or "").strip().lower(): item
+        for item in settings
+        if str(item.get("key") or "").strip()
+    }
+    visible_ordered_keys = [
+        k for k in ordered_menu_keys
+        if _is_menu_visible_for_owner_scope_v1(settings_by_key.get(k, {}), owner_entity_id)
+    ]
+
     try:
-        current_index = ordered_menu_keys.index(clean_menu_key)
+        current_visible_index = visible_ordered_keys.index(clean_menu_key)
     except ValueError:
         return False, "Menu inválido."
 
     if clean_direction == "up":
-        if current_index <= 0:
+        if current_visible_index <= 0:
             return False, "Esta pasta já está no topo."
-        target_index = current_index - 1
+        target_key = visible_ordered_keys[current_visible_index - 1]
     else:
-        if current_index >= (len(ordered_menu_keys) - 1):
+        if current_visible_index >= (len(visible_ordered_keys) - 1):
             return False, "Esta pasta já está no fim."
-        target_index = current_index + 1
+        target_key = visible_ordered_keys[current_visible_index + 1]
+
+    try:
+        current_index = ordered_menu_keys.index(clean_menu_key)
+        target_index = ordered_menu_keys.index(target_key)
+    except ValueError:
+        return False, "Menu inválido."
 
     ordered_menu_keys[current_index], ordered_menu_keys[target_index] = (
         ordered_menu_keys[target_index],
@@ -6482,11 +6766,26 @@ def update_sidebar_menu_subsequent_fields(
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu não encontrado."
 
+    # Para meu_perfil com entidade Legado: gravar no scope do Owner (igual à leitura).
+    effective_selected_entity_id = selected_entity_id
+    if clean_menu_key == MENU_MEU_PERFIL_KEY:
+        parsed_eid = _coerce_menu_entity_scope_id_v1(selected_entity_id)
+        if parsed_eid is not None:
+            from appverbo.models.entity import Entity as _Entity
+            from sqlalchemy import select as _select
+            raw_profile_scope = session.scalar(
+                _select(_Entity.profile_scope).where(_Entity.id == parsed_eid)
+            )
+            if str(raw_profile_scope or "").strip().lower() == "legado":
+                owner_eid = get_owner_entity_scope_id_v1(session)
+                if owner_eid is not None:
+                    effective_selected_entity_id = owner_eid
+
     menu_config = _load_menu_config(session, clean_menu_key)
     normalized_fields = normalize_menu_process_subsequent_fields(raw_fields)
     menu_config = apply_entity_scoped_menu_config_updates_v1(
         menu_config,
-        selected_entity_id=selected_entity_id,
+        selected_entity_id=effective_selected_entity_id,
         updates={"subsequent_fields": normalized_fields},
     )
     _persist_menu_config(session, clean_menu_key, menu_config)

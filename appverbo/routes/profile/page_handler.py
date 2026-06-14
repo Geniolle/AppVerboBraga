@@ -750,6 +750,35 @@ ADMIN_TOPBAR_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str
 }
 
 # ###################################################################################
+# (X.4b) CONSTANTES DE ESTILO - NOME DA ENTIDADE NO CABECALHO (DEFINICOES)
+# ###################################################################################
+
+TOPBAR_BRAND_NAME_STYLE_DEFINITION_KEYS_V1: dict[str, dict[str, tuple[str, ...] | str]] = {
+    "font_size": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "cabecalho entidade nome tamanho",
+            "topbar entidade nome tamanho",
+            "entidade nome tamanho",
+            "brand name font size",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "topbar",
+    },
+    "max_width": {
+        "parameter_type": "tamanho",
+        "parameter_names": (
+            "cabecalho entidade nome largura",
+            "topbar entidade nome largura",
+            "entidade nome largura",
+            "brand name max width",
+        ),
+        "process_name": "geral",
+        "subprocess_name": "topbar",
+    },
+}
+
+# ###################################################################################
 # (X.5) CONSTANTES DE ESTILO - BARRA LATERAL (DEFINICOES)
 # ###################################################################################
 
@@ -1397,6 +1426,84 @@ def _resolve_admin_topbar_color_hex_from_definitions_v1(
     return "#334A62"
 
 
+def _parse_brand_name_font_size_px_v1(value: object) -> int | None:
+    raw_value = str(value or "").strip().lower().replace(",", ".").removesuffix("px").strip()
+    if not raw_value:
+        return None
+    try:
+        parsed_value = int(float(raw_value))
+    except (TypeError, ValueError):
+        return None
+    if parsed_value <= 0:
+        return None
+    return max(10, min(60, parsed_value))
+
+
+def _parse_brand_name_max_width_px_v1(value: object) -> int | None:
+    raw_value = str(value or "").strip().lower().replace(",", ".").removesuffix("px").strip()
+    if not raw_value or raw_value in {"0", "none", "auto"}:
+        return 0
+    try:
+        parsed_value = int(float(raw_value))
+    except (TypeError, ValueError):
+        return None
+    if parsed_value <= 0:
+        return 0
+    return max(80, min(800, parsed_value))
+
+
+def _resolve_topbar_brand_name_font_size_px_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_font_size_px: int = 22,
+) -> int:
+    config = TOPBAR_BRAND_NAME_STYLE_DEFINITION_KEYS_V1["font_size"]
+    normalized_parameter_type = _normalize_definition_lookup_text_v1(config["parameter_type"])
+    normalized_names = {
+        _normalize_definition_lookup_text_v1(n)
+        for n in config.get("parameter_names", ())
+        if str(n or "").strip()
+    }
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != normalized_parameter_type:
+            continue
+        if _normalize_definition_lookup_text_v1(row.parameter_name) not in normalized_names:
+            continue
+        parsed = _parse_brand_name_font_size_px_v1(row.initial_value)
+        if parsed is not None:
+            return parsed
+    fallback = _parse_brand_name_font_size_px_v1(default_font_size_px)
+    return fallback if fallback is not None else 22
+
+
+def _resolve_topbar_brand_name_max_width_px_from_definitions_v1(
+    *,
+    rows: list[AdminDefinition],
+    default_max_width_px: int = 0,
+) -> int:
+    config = TOPBAR_BRAND_NAME_STYLE_DEFINITION_KEYS_V1["max_width"]
+    normalized_parameter_type = _normalize_definition_lookup_text_v1(config["parameter_type"])
+    normalized_names = {
+        _normalize_definition_lookup_text_v1(n)
+        for n in config.get("parameter_names", ())
+        if str(n or "").strip()
+    }
+    for row in rows:
+        if _normalize_definition_lookup_text_v1(row.status) != "active":
+            continue
+        if _normalize_definition_lookup_text_v1(row.parameter_type) != normalized_parameter_type:
+            continue
+        if _normalize_definition_lookup_text_v1(row.parameter_name) not in normalized_names:
+            continue
+        parsed = _parse_brand_name_max_width_px_v1(row.initial_value)
+        if parsed is not None:
+            return parsed
+    fallback = _parse_brand_name_max_width_px_v1(default_max_width_px)
+    return fallback if fallback is not None else 0
+
+
 def _resolve_admin_sidebar_background_color_hex_from_definitions_v1(
     *,
     rows: list[AdminDefinition],
@@ -1976,6 +2083,8 @@ def new_user_page(
     admin_card_item_font_weight_v1 = 500
     admin_card_table_head_color_hex_v1 = "#000000"
     admin_topbar_color_hex_v1 = "#334A62"
+    topbar_brand_name_font_size_px_v1 = 22
+    topbar_brand_name_max_width_px_v1 = 0
     admin_sidebar_bg_color_hex_v1 = "#F3F3F4"
     admin_sidebar_active_bg_color_hex_v1 = "#E4E6EA"
     admin_sidebar_text_color_hex_v1 = "#5C6572"
@@ -2061,6 +2170,14 @@ def new_user_page(
         admin_topbar_color_hex_v1 = _resolve_admin_topbar_color_hex_from_definitions_v1(
             rows=admin_definition_rows_v1,
             default_color_hex="#334A62",
+        )
+        topbar_brand_name_font_size_px_v1 = _resolve_topbar_brand_name_font_size_px_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_font_size_px=22,
+        )
+        topbar_brand_name_max_width_px_v1 = _resolve_topbar_brand_name_max_width_px_from_definitions_v1(
+            rows=admin_definition_rows_v1,
+            default_max_width_px=0,
         )
         admin_sidebar_bg_color_hex_v1 = _resolve_admin_sidebar_background_color_hex_from_definitions_v1(
             rows=admin_definition_rows_v1,
@@ -2709,6 +2826,8 @@ def new_user_page(
         "admin_card_item_font_weight": int(admin_card_item_font_weight_v1),
         "admin_card_table_head_color_hex": str(admin_card_table_head_color_hex_v1),
         "admin_topbar_color_hex": str(admin_topbar_color_hex_v1),
+        "topbar_brand_name_font_size_px": int(topbar_brand_name_font_size_px_v1),
+        "topbar_brand_name_max_width_px": int(topbar_brand_name_max_width_px_v1),
         "admin_sidebar_bg_color_hex": str(admin_sidebar_bg_color_hex_v1),
         "admin_sidebar_active_bg_color_hex": str(admin_sidebar_active_bg_color_hex_v1),
         "admin_sidebar_text_color_hex": str(admin_sidebar_text_color_hex_v1),

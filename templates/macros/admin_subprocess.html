@@ -168,6 +168,7 @@
   {% set row_menu_key = "sessoes" if state.config.key in ("sessoes", "definicoes") else "administrativo" %}
   {% set move_key_field = state.config.move_key_field or state.config.identity_field %}
   {% set delete_key_field = state.config.delete_key_field or state.config.identity_field %}
+  {% set can_view = row.get("can_view", true) %}
   {% set can_move = row.get("can_move", true) %}
   {% set move_disabled_reason = row.get("move_disabled_reason", "Movimento indisponível neste registo.") %}
   {% set delete_disabled_reason = row.get("delete_disabled_reason", "Eliminação indisponível neste registo.") %}
@@ -223,6 +224,7 @@
     >&#9998;</span>
     {% endif %}
 
+    {% if can_view %}
     <button
       type="button"
       class="admin-subprocess-action-btn-v1"
@@ -232,6 +234,13 @@
       data-view-title="{{ state.config.singular_label }}"
       data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
     >&#128065;</button>
+    {% else %}
+    <span
+      class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1"
+      title="Visualização indisponível no sistema Legado."
+      aria-label="Visualização indisponível no sistema Legado."
+    >&#128065;</span>
+    {% endif %}
 
     {% if status_value != state.config.active_value and state.config.delete_endpoint and not row.get('is_deleted') %}
       {% if can_delete %}

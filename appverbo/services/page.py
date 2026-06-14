@@ -34,6 +34,8 @@ from appverbo.services.profile import (
     build_menu_process_field_storage_key,
     build_menu_process_quantity_storage_key,
     filter_process_fields_by_hidden_targets,
+    format_optional_datetime,
+    format_whatsapp_status,
     get_hidden_process_targets_from_rules,
     get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,
@@ -458,7 +460,14 @@ def _build_meu_perfil_visibility_values_v1(
             Member.email,
             Member.country,
             Member.birth_date,
+            Member.whatsapp_verification_status,
+            Member.whatsapp_notice_opt_in,
+            Member.whatsapp_last_check_at,
+            Member.whatsapp_last_error,
+            Member.member_status,
+            Member.is_collaborator,
             User.login_email,
+            User.account_status,
         )
         .join(User, User.member_id == Member.id)
         .where(User.id == actor_user_id)
@@ -473,6 +482,15 @@ def _build_meu_perfil_visibility_values_v1(
     values_by_field["email"] = str(row.login_email or row.email or "").strip().lower()
     values_by_field["pais"] = str(row.country or "").strip()
     values_by_field["data_nascimento"] = _format_profile_visibility_date_v1(row.birth_date)
+    values_by_field["whatsapp"] = format_whatsapp_status(row.whatsapp_verification_status)
+    values_by_field["autorizacao_whatsapp"] = "1" if bool(row.whatsapp_notice_opt_in) else "0"
+    values_by_field["conta"] = str(row.account_status or "-").strip() or "-"
+    values_by_field["estado_membro"] = str(row.member_status or "-").strip() or "-"
+    values_by_field["colaborador"] = "Sim" if bool(row.is_collaborator) else "Não"
+    values_by_field["ultima_verificacao_whatsapp"] = format_optional_datetime(
+        row.whatsapp_last_check_at
+    )
+    values_by_field["detalhe_verificacao"] = str(row.whatsapp_last_error or "-").strip() or "-"
 
     return values_by_field
 
@@ -653,6 +671,13 @@ def _build_meu_perfil_visibility_values_v2(
     actor_profile_fields: dict[str, str],
 ) -> dict[str, str]:
     values_by_field: dict[str, str] = dict(actor_profile_fields or {})
+    # Expose short-key versions of meu_perfil process fields so subsequent rules
+    # (which use short keys like "custom_estado_civil") can resolve correctly.
+    # actor_profile_fields stores them as "process__meu_perfil__custom_estado_civil".
+    _meu_perfil_prefix = "process__meu_perfil__"
+    for _long_key, _val in (actor_profile_fields or {}).items():
+        if _long_key.startswith(_meu_perfil_prefix):
+            values_by_field[_long_key[len(_meu_perfil_prefix):]] = _val
 
     if actor_user_id is None:
         return values_by_field
@@ -1064,7 +1089,10 @@ def get_page_data(
             if str(item.get("key") or "").strip()
         }
         if option_labels:
-            profile_personal_field_labels = option_labels
+            profile_personal_field_labels = {
+                **dict(MENU_MEU_PERFIL_FIELD_LABELS),
+                **option_labels,
+            }
         if option_types:
             profile_personal_field_types = option_types
         raw_header_map = sidebar_item.get("process_visible_field_header_map")
@@ -1249,8 +1277,10 @@ def get_page_data(
         clean_field_key = str(field_key or "").strip().lower()
         append_profile_header_section_v1(clean_field_key)
 
-    for header_key in profile_personal_field_header_map.values():
-        append_profile_header_section_v1(header_key)
+    visible_fields_set = {str(f or "").strip().lower() for f in profile_personal_visible_fields}
+    for field_key, header_key in profile_personal_field_header_map.items():
+        if str(field_key or "").strip().lower() in visible_fields_set:
+            append_profile_header_section_v1(header_key)
 
     first_profile_header_key = header_section_order[0] if header_section_order else ""
 
@@ -1682,6 +1712,8 @@ def ensure_new_user_template_context_defaults_v1(
     clean_context.setdefault("admin_card_item_font_weight", 500)
     clean_context.setdefault("admin_card_table_head_color_hex", "#000000")
     clean_context.setdefault("admin_topbar_color_hex", "#334A62")
+    clean_context.setdefault("topbar_brand_name_font_size_px", 22)
+    clean_context.setdefault("topbar_brand_name_max_width_px", 0)
     clean_context.setdefault("admin_sidebar_bg_color_hex", "#F3F3F4")
     clean_context.setdefault("admin_sidebar_active_bg_color_hex", "#E4E6EA")
     clean_context.setdefault("admin_sidebar_text_color_hex", "#5C6572")
