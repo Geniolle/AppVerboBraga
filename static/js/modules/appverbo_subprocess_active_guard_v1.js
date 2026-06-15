@@ -128,6 +128,14 @@
       return "contas";
     }
 
+    if (
+      adminTab === "perfil" ||
+      target.includes("admin-perfil-card") ||
+      hash.includes("admin-perfil-card")
+    ) {
+      return "perfil";
+    }
+
     return "";
   }
 

@@ -276,6 +276,7 @@
   {% else %}
     {% set card_id = state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' %}
   {% endif %}
+  {% set table_id = "admin-subprocess-" ~ state.config.key ~ "-" ~ status_value ~ "-table" %}
 <section
     id="{{ card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
@@ -289,7 +290,7 @@
 
     {% if rows %}
       <div class="admin-subprocess-table-wrap-v1">
-        <table id="admin-subprocess-{{ state.config.key }}-{{ status_value }}-table" class="admin-subprocess-table-v1" data-admin-table-standard-v1="1">
+        <table id="{{ table_id }}" class="admin-subprocess-table-v1" data-admin-table-standard-v1="1">
           <thead>
             <tr>
               {% for column in state.effective_columns %}
@@ -321,7 +322,7 @@
           </tbody>
         </table>
       </div>
-{% else %}
+    {% else %}
       <p class="empty">Sem registos.</p>
     {% endif %}
   </section>

@@ -65,6 +65,19 @@ def _serialize_process_view_authorization_status_v1(raw_value: Any) -> str:
     )
 
 
+def _normalize_process_view_authorization_visibility_scope_mode_v1(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    if clean_value in {"all", "todos os sistemas", "todos sistemas"}:
+        return "all"
+    return "entity"
+
+
+def _serialize_process_view_authorization_visibility_scope_mode_v1(raw_value: Any) -> str:
+    if _normalize_process_view_authorization_visibility_scope_mode_v1(raw_value) == "all":
+        return "Todos os sistemas"
+    return "Esta entidade"
+
+
 def _is_all_subprocess_rule_v1(raw_value: Any) -> bool:
     clean_value = _normalize_process_view_authorization_lookup_text_v1(raw_value)
     return clean_value in {
@@ -376,6 +389,7 @@ def list_process_view_authorization_rules_v1(
             or_(
                 ProcessViewAuthorizationRule.entity_id == int(selected_entity_id),
                 ProcessViewAuthorizationRule.entity_id.is_(None),
+                ProcessViewAuthorizationRule.visibility_scope_mode == "all",
             )
         )
 
@@ -405,11 +419,25 @@ def build_process_view_authorization_history_rows_v1(
     selected_entity_id: int | None,
     section_key: str = PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
 ) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for rule in list_process_view_authorization_rules_v1(
+    rules = list_process_view_authorization_rules_v1(
         session,
         selected_entity_id=selected_entity_id,
-    ):
+    )
+    entity_ids = {rule.entity_id for rule in rules if rule.entity_id is not None}
+    entity_name_by_id: dict[int, str] = {}
+    if entity_ids:
+        for entity in session.execute(
+            select(Entity).where(Entity.id.in_(entity_ids))
+        ).scalars():
+            entity_name_by_id[int(entity.id)] = str(entity.name or "").strip()
+
+    rows: list[dict[str, Any]] = []
+    for rule in rules:
+        entity_name = (
+            entity_name_by_id.get(int(rule.entity_id), "")
+            if rule.entity_id is not None
+            else ""
+        )
         rows.append(
             {
                 "record_id": str(rule.id),
@@ -418,6 +446,7 @@ def build_process_view_authorization_history_rows_v1(
                 ),
                 "section_key": section_key,
                 "values": {
+                    "custom_entidade": entity_name,
                     "custom_perfil": str(rule.profile_name or "").strip(),
                     "custom_processo": str(rule.process_label or "").strip(),
                     "custom_subprocesso": (
@@ -427,6 +456,9 @@ def build_process_view_authorization_history_rows_v1(
                     "custom_departamento": (
                         str(rule.department_name or "").strip()
                         or PROCESS_VIEW_AUTHORIZATION_ALL_DEPARTMENTS_LABEL
+                    ),
+                    "custom_visibilidade": _serialize_process_view_authorization_visibility_scope_mode_v1(
+                        rule.visibility_scope_mode
                     ),
                     "__estado": _serialize_process_view_authorization_status_v1(
                         rule.status
@@ -483,6 +515,9 @@ def save_process_view_authorization_rule_v1(
     ).strip()
     clean_status = _normalize_process_view_authorization_status_v1(
         submitted_section_values.get("__estado")
+    )
+    clean_visibility_scope_mode = _normalize_process_view_authorization_visibility_scope_mode_v1(
+        submitted_section_values.get("custom_visibilidade")
     )
 
     if not clean_profile_name:
@@ -546,6 +581,7 @@ def save_process_view_authorization_rule_v1(
     )
     target_rule.department_name = resolved_department_name
     target_rule.status = clean_status
+    target_rule.visibility_scope_mode = clean_visibility_scope_mode
     target_rule.updated_by_user_id = current_user_id
 
     try:
@@ -705,6 +741,7 @@ def build_process_view_authorized_sidebar_menu_keys_v1(
             or_(
                 ProcessViewAuthorizationRule.entity_id == int(selected_entity_id),
                 ProcessViewAuthorizationRule.entity_id.is_(None),
+                ProcessViewAuthorizationRule.visibility_scope_mode == "all",
             )
         )
 

@@ -466,6 +466,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                 "label": row.get("label"),
                 "visibility_scope_mode": row.get("visibility_scope_mode"),
                 "status": row.get("status"),
+                "perfil": str(row.get("perfil") or "").strip(),
             }
             for row in rows
             if self._normalize_key(row.get("key"))
@@ -534,6 +535,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             "status_label": self._session_status_label(clean_status),
             "is_active": clean_status == SESSION_STATUS_ACTIVE_V1,
             "can_delete": clean_key not in SIDEBAR_SECTION_DEFAULTS_BY_KEY,
+            "perfil": str(raw_row.get("perfil") or "").strip(),
         }
 
     def _append_missing_defaults(
@@ -678,6 +680,12 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         if not isinstance(raw_sections_after_legacy, list):
             raw_sections_after_legacy = []
 
+        perfil_by_key = {
+            self._normalize_key(row.get("key")): str(row.get("perfil") or "").strip()
+            for row in normalized_payload_rows
+            if self._normalize_key(row.get("key"))
+        }
+
         patched_rows: list[dict[str, Any]] = []
         seen_patched_keys: set[str] = set()
 
@@ -700,6 +708,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             normalized_row["status_label"] = self._session_status_label(normalized_row["status"])
             normalized_row["is_active"] = normalized_row["status"] == SESSION_STATUS_ACTIVE_V1
             normalized_row["can_delete"] = clean_key not in SIDEBAR_SECTION_DEFAULTS_BY_KEY
+            normalized_row["perfil"] = perfil_by_key.get(clean_key, normalized_row.get("perfil", ""))
             patched_rows.append(normalized_row)
 
         patched_rows = self._append_missing_defaults(patched_rows)
@@ -1023,6 +1032,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         section_visibility_scope_mode: str,
         section_status: str,
         section_entity_internal_number: str = "",
+        section_perfil: str = "",
         selected_entity_id: object = None,
         current_entity_scope: object = "",
     ) -> tuple[bool, str, str]:
@@ -1033,6 +1043,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         clean_status = self.normalize_session_status(section_status)
         clean_current_entity_scope = self._normalize_key(current_entity_scope)
         clean_entity_internal_number = self._normalize_text(section_entity_internal_number)
+        clean_perfil = self._normalize_text(section_perfil)
         parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
 
         if not clean_label:
@@ -1105,6 +1116,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                             "label": clean_label,
                             "visibility_scope_mode": clean_scope_mode,
                             "status": clean_status,
+                            "perfil": clean_perfil,
                         }
                     )
                 else:
@@ -1114,6 +1126,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                             "label": row.get("label"),
                             "visibility_scope_mode": row.get("visibility_scope_mode"),
                             "status": row.get("status"),
+                            "perfil": str(row.get("perfil") or "").strip(),
                         }
                     )
 
@@ -1134,6 +1147,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                         "label": row.get("label"),
                         "visibility_scope_mode": row.get("visibility_scope_mode"),
                         "status": row.get("status"),
+                        "perfil": str(row.get("perfil") or "").strip(),
                     }
                 )
 
@@ -1143,6 +1157,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                     "label": clean_label,
                     "visibility_scope_mode": clean_scope_mode,
                     "status": clean_status,
+                    "perfil": clean_perfil,
                 }
             )
 

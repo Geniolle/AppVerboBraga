@@ -1773,6 +1773,26 @@
         ) {
           editDefaultValue = bootstrapEntityInternalNumber;
         }
+        if (
+          cleanMenuKey === "administrativo" &&
+          selectedSectionKey === "custom_perfil_de_autorizacao" &&
+          fieldKey === "custom_entidade" &&
+          !editDefaultValue
+        ) {
+          editDefaultValue = liveFieldValue || String(
+            currentProcessValuesByField["custom_entidade"] || ""
+          ).trim();
+        }
+        if (
+          cleanMenuKey === "administrativo" &&
+          selectedSectionKey === "custom_perfil_de_autorizacao" &&
+          fieldKey === "custom_visibilidade" &&
+          !editDefaultValue
+        ) {
+          editDefaultValue = liveFieldValue || String(
+            currentProcessValuesByField["custom_visibilidade"] || ""
+          ).trim();
+        }
 
         if (dynamicProcessReadOnlyGridEl) {
           const readOnlyItemEl = document.createElement("div");
@@ -2070,6 +2090,16 @@
               controlEl.maxLength = fieldSize;
             }
             if (isEmpresaInternalNumber || isEntityInternalNumberField(fieldKey, fieldLabel)) {
+              controlEl.readOnly = true;
+              controlEl.disabled = true;
+              controlEl.classList.add("readonly-field");
+              controlEl.required = false;
+            }
+            if (
+              cleanMenuKey === "administrativo" &&
+              selectedSectionKey === "custom_perfil_de_autorizacao" &&
+              fieldKey === "custom_entidade"
+            ) {
               controlEl.readOnly = true;
               controlEl.disabled = true;
               controlEl.classList.add("readonly-field");

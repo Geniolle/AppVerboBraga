@@ -54,6 +54,14 @@ SIDEBAR_SECTION_FIELDS = (
         max_length=40,
         placeholder="Default",
     ),
+    AdminFieldConfig(
+        key="perfil",
+        label="Perfil",
+        input_name="section_perfil",
+        field_type="select",
+        required=True,
+        options=(("", "Selecionar perfil"),),
+    ),
 )
 
 

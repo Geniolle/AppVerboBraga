@@ -15,7 +15,8 @@
     "appverbo-admin-tab-sessoes",
     "appverbo-admin-tab-menu",
     "appverbo-admin-tab-definicoes",
-    "appverbo-admin-tab-contas"
+    "appverbo-admin-tab-contas",
+    "appverbo-admin-tab-perfil"
   ];
 
   function getCurrentUrlV7() {
@@ -674,6 +675,13 @@
       url.searchParams.set("admin_tab", "contas");
       url.searchParams.set("target", "admin-account-status-card");
       url.hash = "admin-account-status-card";
+      return url.pathname + url.search + url.hash;
+    }
+
+    if (tab === "perfil") {
+      url.searchParams.set("admin_tab", "perfil");
+      url.searchParams.set("target", "admin-perfil-card");
+      url.hash = "admin-perfil-card";
       return url.pathname + url.search + url.hash;
     }
 

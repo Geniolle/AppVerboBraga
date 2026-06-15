@@ -15,6 +15,10 @@ class ProcessViewAuthorizationRule(Base, TimestampMixin):
             "status IN ('active', 'inactive')",
             name="ck_process_view_authorization_rules_status",
         ),
+        CheckConstraint(
+            "visibility_scope_mode IN ('all', 'entity')",
+            name="ck_process_view_authorization_rules_visibility_scope_mode",
+        ),
         Index(
             "ix_process_view_authorization_rules_entity_status",
             "entity_id",
@@ -61,6 +65,13 @@ class ProcessViewAuthorizationRule(Base, TimestampMixin):
         nullable=False,
         default="active",
         server_default=text("'active'"),
+    )
+
+    visibility_scope_mode: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="entity",
+        server_default=text("'entity'"),
     )
 
     legacy_record_id: Mapped[Optional[str]] = mapped_column(String(40))

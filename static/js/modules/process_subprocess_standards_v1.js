@@ -67,6 +67,16 @@
         target: "admin-menu-card",
         hash: "admin-menu-card"
       }
+    },
+    {
+      key: "perfil",
+      label: "Perfil",
+      target: "#admin-perfil-card",
+      route: {
+        adminTab: "perfil",
+        target: "admin-perfil-card",
+        hash: "admin-perfil-card"
+      }
     }
   ]);
 

@@ -11,7 +11,8 @@
     "appverbo-admin-tab-sessoes",
     "appverbo-admin-tab-menu",
     "appverbo-admin-tab-definicoes",
-    "appverbo-admin-tab-contas"
+    "appverbo-admin-tab-contas",
+    "appverbo-admin-tab-perfil"
   ]);
   const SERVER_RENDER_TAB_IDS_V1 = Object.freeze({
     sessoes: Object.freeze([
@@ -34,6 +35,13 @@
       "admin-definicoes-card-edit",
       "admin-definicoes-card",
       "admin-definicoes-card-inactive"
+    ]),
+    perfil: Object.freeze([
+      "menu-tabs-card",
+      "admin-perfil-card-create",
+      "admin-perfil-card-edit",
+      "admin-perfil-card",
+      "admin-perfil-card-inactive"
     ])
   });
 
@@ -129,6 +137,14 @@
       hash.includes("admin-definicoes-card")
     ) {
       return "definicoes";
+    }
+
+    if (
+      adminTab === "perfil" ||
+      target.includes("admin-perfil-card") ||
+      hash.includes("admin-perfil-card")
+    ) {
+      return "perfil";
     }
 
     return "";

@@ -67,6 +67,28 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
+.admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+@media (max-width: 1700px) {
+  .admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1300px) {
+  .admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-subprocess-field-v1 label {
   display: block;
   margin-bottom: 6px;
@@ -96,7 +118,8 @@
   cursor: default;
 }
 
-.admin-subprocess-field-v1 label .admin-field-input-hint-v1 {
+.admin-subprocess-field-v1 label .admin-field-input-hint-v1,
+.field label .admin-field-input-hint-v1 {
   font-size: 10px;
   font-family: monospace;
   font-weight: 600;

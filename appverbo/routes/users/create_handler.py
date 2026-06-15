@@ -79,6 +79,9 @@ def _hydrate_admin_user_create_error_context_v1(
         error=joined_error,
     )
 
+    if admin_subprocess_state is not None and bool(clean_context.get("current_user_is_admin")):
+        admin_subprocess_state.show_field_hints = True
+
     clean_context["admin_subprocess_state_utilizador_v1"] = admin_subprocess_state
     clean_context["admin_subprocess_state_utilizador"] = admin_subprocess_state
     clean_context["admin_subprocess_state"] = admin_subprocess_state

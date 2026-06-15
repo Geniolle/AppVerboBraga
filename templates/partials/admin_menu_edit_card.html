@@ -52,7 +52,7 @@
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
                 <div class="grid settings-general-grid settings-general-grid-menu-geral">
                   <div class="field">
-                    <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                    <label for="settings_edit_menu_label">Nome no menu lateral *{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_label)</span>{% endif %}</label>
                     <input
                       id="settings_edit_menu_label"
                       name="menu_label"
@@ -62,14 +62,14 @@
                     >
                   </div>
                   <div class="field">
-                    <label for="settings_edit_menu_status">Estado atual</label>
+                    <label for="settings_edit_menu_status">Estado atual{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(is_active)</span>{% endif %}</label>
                     <select id="settings_edit_menu_status" name="menu_status">
                       <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
                       <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
                     </select>
                   </div>
                   <div class="field">
-                    <label for="settings_edit_menu_visibility_scope">Exibir no sistema</label>
+                    <label for="settings_edit_menu_visibility_scope">Exibir no sistema{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_visibility_scope)</span>{% endif %}</label>
                     <select id="settings_edit_menu_visibility_scope" name="menu_visibility_scope">
                       <option value="all" {% if settings_edit_data.visibility_scope_mode == "all" %}selected{% endif %}>Default</option>
                       <option value="owner" {% if settings_edit_data.visibility_scope_mode == "owner" %}selected{% endif %}>Owner</option>
@@ -77,7 +77,7 @@
                     </select>
                   </div>
                   <div class="field">
-                    <label for="settings_edit_menu_sidebar_section">Sessão</label>
+                    <label for="settings_edit_menu_sidebar_section">Sessão{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_sidebar_section)</span>{% endif %}</label>
                     <select id="settings_edit_menu_sidebar_section" name="menu_sidebar_section">
                       {% for section_option in admin_menu_section_options_v1 %}
                       <option value="{{ section_option.key }}" {% if section_option.key == settings_edit_data.sidebar_section_key %}selected{% endif %}>{{ section_option.label }}</option>
@@ -85,7 +85,7 @@
                     </select>
                   </div>
                   <div class="field">
-                    <label for="settings_edit_menu_entity_internal_number">Nº Entidade</label>
+                    <label for="settings_edit_menu_entity_internal_number">Nº Entidade{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(entity_internal_number)</span>{% endif %}</label>
                     <input
                       id="settings_edit_menu_entity_internal_number"
                       value="{{ settings_edit_data.entity_internal_number or 'Default' }}"
@@ -119,7 +119,7 @@
               {% endif %}
               <div class="grid settings-general-grid settings-general-grid-menu-geral">
                 <div class="field">
-                  <label for="settings_edit_menu_label">Nome no menu lateral *</label>
+                  <label for="settings_edit_menu_label">Nome no menu lateral *{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_label)</span>{% endif %}</label>
                   {% if can_edit_legado_menu %}
                   <input
                     id="settings_edit_menu_label"
@@ -139,7 +139,7 @@
                   {% endif %}
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_status">Estado atual</label>
+                  <label for="settings_edit_menu_status">Estado atual{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(is_active)</span>{% endif %}</label>
                   {% if can_edit_legado_menu %}
                   <select id="settings_edit_menu_status" name="menu_status">
                     <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
@@ -156,7 +156,7 @@
                   {% endif %}
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema</label>
+                  <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_visibility_scope)</span>{% endif %}</label>
                   <input
                     id="settings_edit_menu_visibility_scope_readonly"
                     value="{{ settings_edit_data.visibility_scope_label }}"
@@ -166,7 +166,7 @@
                   >
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_sidebar_section_field">Sessão</label>
+                  <label for="settings_edit_menu_sidebar_section_field">Sessão{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_sidebar_section)</span>{% endif %}</label>
                   {% if can_edit_legado_menu %}
                   <select id="settings_edit_menu_sidebar_section_field" name="menu_sidebar_section">
                     {% for section_option in admin_menu_section_options_v1 %}
@@ -184,7 +184,7 @@
                   {% endif %}
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_entity_internal_number_readonly">Nº Entidade</label>
+                  <label for="settings_edit_menu_entity_internal_number_readonly">Nº Entidade{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(entity_internal_number)</span>{% endif %}</label>
                   <input
                     id="settings_edit_menu_entity_internal_number_readonly"
                     value="{{ settings_edit_data.entity_internal_number or 'Default' }}"
@@ -212,9 +212,25 @@
             </div>
             {% if settings_has_process_fields %}
             <div class="admin-subsection">
-              <h3>Campos disponíveis</h3>
+              <div class="admin-menu-table-header-v1">
+                <div>
+                  <h3>Campos disponíveis</h3>
+                </div>
+                {% if settings_process_visible_field_rows %}
+                <div class="admin-menu-search-wrap-v1">
+                  <input
+                    type="search"
+                    id="settings-geral-campos-search"
+                    class="admin-menu-search-input-v1"
+                    placeholder="Procurar"
+                    autocomplete="off"
+                    aria-label="Procurar campos disponíveis"
+                  >
+                </div>
+                {% endif %}
+              </div>
               {% if settings_process_visible_field_rows %}
-              <table>
+              <table id="settings-geral-campos-disponiveis-table">
                 <thead>
                   <tr>
                     <th>Ordem</th>
@@ -234,7 +250,7 @@
                       {% set header_ns.label = option.label %}
                     {% endif %}
                   {% endfor %}
-                  <tr>
+                  <tr data-geral-campos-filter-text="{{ field_ns.label ~ ' ' ~ header_ns.label }}">
                     <td>{{ loop.index }}</td>
                     <td>{{ field_ns.label }}</td>
                     <td>{{ header_ns.label }}</td>
@@ -242,6 +258,49 @@
                   {% endfor %}
                 </tbody>
               </table>
+              <div
+                class="configurable-items-pagination-row-v1 admin-table-footer-standard-v1 table-footer"
+                data-admin-table-footer-standard-v1="1"
+                data-admin-table-id="settings-geral-campos-disponiveis-table"
+                data-admin-table-footer-mode-v1="load_more"
+              >
+                <label class="configurable-items-page-size-v1 admin-table-footer-page-size-v1">
+                  <select class="admin-table-footer-page-size-select-v1" data-admin-table-footer-page-size-v1="1">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <span class="admin-table-footer-label-v1">
+                    <span>entradas</span>
+                    <span>por página</span>
+                  </span>
+                </label>
+                <div
+                  class="configurable-items-pagination-v1 admin-table-footer-pagination-v1 pagination"
+                  data-admin-table-footer-pagination-v1="1"
+                >
+                  <div class="admin-table-footer-load-more-v1">
+                    <button
+                      type="button"
+                      class="admin-table-footer-load-more-btn-v1"
+                      data-admin-table-footer-next-v1="1"
+                    >Mais</button>
+                    <span
+                      class="admin-table-footer-load-more-count-v1"
+                      data-admin-table-footer-page-v1="1"
+                    >[ 0 / 0 ]</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="admin-table-footer-load-less-btn-v1"
+                    data-admin-table-footer-prev-v1="1"
+                    disabled
+                  >Menos</button>
+                </div>
+              </div>
               {% else %}
               <p class="empty">Sem campos definidos para este processo.</p>
               {% endif %}
@@ -291,7 +350,7 @@
                   <div class="configurable-items-editor-v1 process-fields-config-editor-v1">
                     <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1 process-fields-picker-row-v4 process-fields-config-editor-row-v5">
                       <div class="field">
-                        <label for="process-fields-config-editor-key">Nome do campo</label>
+                        <label for="process-fields-config-editor-key">Nome do campo{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(field_key)</span>{% endif %}</label>
                         <select id="process-fields-config-editor-key" data-process-fields-config-editor-key>
                           <option value="">Selecione</option>
                           {% for header_option in settings_process_header_options|default([]) %}
@@ -312,7 +371,7 @@
                       </div>
 
                       <div class="field process-fields-config-header-field-v6">
-                        <label for="process-fields-config-header-key">Cabeçalho do campo</label>
+                        <label for="process-fields-config-header-key">Cabeçalho do campo{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(header_key)</span>{% endif %}</label>
                         <select id="process-fields-config-header-key" data-process-fields-config-header-editor-key>
                           <option value="">Sem cabeçalho</option>
                           {% for header_option in settings_process_header_options|default([]) %}
@@ -328,7 +387,11 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="submit" class="action-btn" data-process-fields-config-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-process-fields-config-cancel>Cancelar</button>
+                          <button type="button" class="action-btn-cancel"
+                            data-process-fields-config-cancel
+                            data-card-cancel-close="1"
+                            data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -443,12 +506,12 @@
                       <input type="hidden" data-process-quantity-editor-key>
 
                       <div class="field">
-                        <label for="process-quantity-editor-label">Nome da regra</label>
+                        <label for="process-quantity-editor-label">Nome da regra{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(label)</span>{% endif %}</label>
                         <input id="process-quantity-editor-label" type="text" maxlength="80" data-process-quantity-editor-label>
                       </div>
 
                       <div class="field">
-                        <label for="process-quantity-editor-field">Campo origem da quantidade</label>
+                        <label for="process-quantity-editor-field">Campo origem da quantidade{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(quantity_field_key)</span>{% endif %}</label>
                         <select id="process-quantity-editor-field" data-process-quantity-editor-field>
                           <option value="">Selecione</option>
                           {% for field in settings_edit_data.process_selectable_field_options|default([]) %}
@@ -460,7 +523,7 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-quantity-editor-header-key">Cabeçalho do grupo</label>
+                        <label for="process-quantity-editor-header-key">Cabeçalho do grupo{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(header_key)</span>{% endif %}</label>
                         <select id="process-quantity-editor-header-key" data-process-quantity-editor-header-key>
                           <option value="">Sem cabeçalho</option>
                           {% for field in settings_edit_data.process_header_options|default([]) %}
@@ -470,17 +533,17 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-quantity-editor-max-items">Quantidade máxima</label>
+                        <label for="process-quantity-editor-max-items">Quantidade máxima{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(max_items)</span>{% endif %}</label>
                         <input id="process-quantity-editor-max-items" type="number" min="1" max="50" value="10" data-process-quantity-editor-max-items>
                       </div>
 
                       <div class="field">
-                        <label for="process-quantity-editor-item-label">Nome do item repetido</label>
+                        <label for="process-quantity-editor-item-label">Nome do item repetido{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(item_label)</span>{% endif %}</label>
                         <input id="process-quantity-editor-item-label" type="text" maxlength="40" value="Item" data-process-quantity-editor-item-label>
                       </div>
 
                       <div class="field full">
-                        <label for="process-quantity-editor-repeated-fields">Campos repetidos</label>
+                        <label for="process-quantity-editor-repeated-fields">Campos repetidos{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(repeated_field_keys)</span>{% endif %}</label>
                         <select id="process-quantity-editor-repeated-fields" multiple size="6" data-process-quantity-editor-repeated-fields>
                           {% for field in settings_edit_data.process_selectable_field_options|default([]) %}
                             <option value="{{ field.key }}">{{ field.label }}</option>
@@ -491,7 +554,11 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="button" class="action-btn" data-process-quantity-editor-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-process-quantity-editor-cancel>Cancelar</button>
+                          <button type="button" class="action-btn-cancel"
+                            data-process-quantity-editor-cancel
+                            data-card-cancel-close="1"
+                            data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -602,7 +669,7 @@
                       <input type="hidden" data-process-list-editor-key>
 
                       <div class="field">
-                        <label for="process-list-editor-label">Nome da lista</label>
+                        <label for="process-list-editor-label">Nome da lista{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(label)</span>{% endif %}</label>
                         <input
                           id="process-list-editor-label"
                           type="text"
@@ -612,7 +679,7 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-list-editor-items">Conteúdo da lista</label>
+                        <label for="process-list-editor-items">Conteúdo da lista{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(items_csv)</span>{% endif %}</label>
                         <input
                           id="process-list-editor-items"
                           type="text"
@@ -622,7 +689,7 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-list-editor-source">Fonte de dados</label>
+                        <label for="process-list-editor-source">Fonte de dados{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(source_key)</span>{% endif %}</label>
                         <select
                           id="process-list-editor-source"
                           data-process-list-editor-source
@@ -633,7 +700,7 @@
                       </div>
 
                       <div class="field" data-process-list-table-field style="display:none;">
-                        <label for="process-list-editor-table">Tabela</label>
+                        <label for="process-list-editor-table">Tabela{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(source_table)</span>{% endif %}</label>
                         <select
                           id="process-list-editor-table"
                           data-process-list-editor-table
@@ -646,7 +713,7 @@
                       </div>
 
                       <div class="field" data-process-list-column-field style="display:none;">
-                        <label for="process-list-editor-column">Campo</label>
+                        <label for="process-list-editor-column">Campo{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(column_key)</span>{% endif %}</label>
                         <select
                           id="process-list-editor-column"
                           data-process-list-editor-column
@@ -666,6 +733,8 @@
                             type="button"
                             class="action-btn-cancel"
                             data-process-list-editor-cancel
+                            data-card-cancel-close="1"
+                            data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -776,7 +845,7 @@
                       <input type="hidden" data-process-subsequent-field-editor-key>
 
                       <div class="field">
-                        <label for="process-subsequent-trigger-field">Campo acionador</label>
+                        <label for="process-subsequent-trigger-field">Campo acionador{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(trigger_field)</span>{% endif %}</label>
                         <select id="process-subsequent-trigger-field" data-process-subsequent-trigger-field>
                           <option value="">Selecione</option>
                           {% for field in settings_process_select_options|default([]) %}
@@ -786,7 +855,7 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-subsequent-field">Campo subsequente</label>
+                        <label for="process-subsequent-field">Campo subsequente{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(field_key)</span>{% endif %}</label>
                         <select id="process-subsequent-field" data-process-subsequent-field>
                           <option value="">Selecione</option>
                           {% for field in settings_process_select_options|default([]) %}
@@ -796,7 +865,7 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-subsequent-operator">Condição</label>
+                        <label for="process-subsequent-operator">Condição{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(operator)</span>{% endif %}</label>
                         <select id="process-subsequent-operator" data-process-subsequent-operator>
                           <option value="equals" selected>Igual a</option>
                           <option value="not_equals">Diferente de</option>
@@ -806,14 +875,18 @@
                       </div>
 
                       <div class="field">
-                        <label for="process-subsequent-trigger-value">Valor acionador</label>
+                        <label for="process-subsequent-trigger-value">Valor acionador{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(trigger_value)</span>{% endif %}</label>
                         <input id="process-subsequent-trigger-value" type="text" data-process-subsequent-trigger-value>
                       </div>
 
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="button" class="action-btn" data-process-subsequent-field-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-process-subsequent-field-cancel>Cancelar</button>
+                          <button type="button" class="action-btn-cancel"
+                            data-process-subsequent-field-cancel
+                            data-card-cancel-close="1"
+                            data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -951,7 +1024,7 @@
                       >
                       {% if settings_additional_fields_can_edit %}
                       <div class="field">
-                        <label for="process-additional-field-editor-label">Nome do campo adicional</label>
+                        <label for="process-additional-field-editor-label">Nome do campo adicional{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(label)</span>{% endif %}</label>
                         <input
                           id="process-additional-field-editor-label"
                           type="text"
@@ -961,7 +1034,7 @@
                       </div>
 
                                             <div class="field">
-                        <label for="process-additional-field-editor-type">Tipo do campo</label>
+                        <label for="process-additional-field-editor-type">Tipo do campo{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(field_type)</span>{% endif %}</label>
                         <select
                           id="process-additional-field-editor-type"
                           data-additional-field-editor-type
@@ -977,7 +1050,7 @@
                         id="process-additional-field-editor-size-field"
                         data-additional-field-size-wrap
                       >
-                        <label for="process-additional-field-editor-size">Tamanho máximo</label>
+                        <label for="process-additional-field-editor-size">Tamanho máximo{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(size)</span>{% endif %}</label>
                         <input
                           id="process-additional-field-editor-size"
                           type="number"
@@ -994,7 +1067,7 @@
                         data-additional-field-list-wrap
                         style="display: none;"
                       >
-                        <label for="process-additional-field-editor-list-key">Lista associada</label>
+                        <label for="process-additional-field-editor-list-key">Lista associada{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(list_key)</span>{% endif %}</label>
                         <select
                           id="process-additional-field-editor-list-key"
                           data-additional-field-editor-list-key
@@ -1018,13 +1091,13 @@
                             value="1"
                             data-additional-field-editor-required
                           >
-                          <span>Campo obrigatório</span>
+                          <span>Campo obrigatório{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(is_required)</span>{% endif %}</span>
                         </label>
                       </div>
                       {% endif %}
 
                       <div class="field" data-additional-field-client-number-wrap>
-                        <label for="process-additional-field-editor-client-number">Nº Entidade</label>
+                        <label for="process-additional-field-editor-client-number">Nº Entidade{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(entity_internal_number)</span>{% endif %}</label>
                         <input
                           id="process-additional-field-editor-client-number"
                           type="text"
@@ -1046,6 +1119,8 @@
                             type="button"
                             class="action-btn-cancel"
                             data-additional-field-editor-cancel
+                            data-card-cancel-close="1"
+                            data-card-cancel-return-url="{{ settings_edit_cancel_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1131,4 +1206,25 @@
           {% endif %}
           {% endif %}
         </section>
+        <script>
+        /* APPVERBO_SETTINGS_GERAL_CAMPOS_SEARCH_V1 */
+        (function () {
+          var searchEl = document.getElementById("settings-geral-campos-search");
+          var tableEl = document.getElementById("settings-geral-campos-disponiveis-table");
+          if (!searchEl || !tableEl) { return; }
+          searchEl.addEventListener("input", function () {
+            var term = searchEl.value.trim().toLowerCase();
+            var rows = tableEl.querySelectorAll("tbody tr");
+            rows.forEach(function (rowEl) {
+              if (!term) {
+                rowEl.removeAttribute("data-admin-search-match-v1");
+              } else {
+                var text = (rowEl.dataset.geralCamposFilterText || "").toLowerCase();
+                rowEl.dataset.adminSearchMatchV1 = text.indexOf(term) !== -1 ? "1" : "0";
+              }
+            });
+            tableEl.dispatchEvent(new CustomEvent("admin-table-filter-changed", { bubbles: true }));
+          });
+        }());
+        </script>
         {% endif %}

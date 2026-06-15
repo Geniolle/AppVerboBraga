@@ -328,3 +328,10 @@ html body :is(
   line-height: 1.2 !important;
 }
 /* APPVERBO_ADMIN_SUBPROCESS_PAGE_SIZE_FONT_PARITY_V2_END */
+
+/* APPVERBO_SETTINGS_MENU_EDIT_FOOTER_ALIGN_V1_START */
+#settings-tab-geral [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-pagination-v1,
+#settings-tab-campos-config [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-pagination-v1 {
+  align-items: end;
+}
+/* APPVERBO_SETTINGS_MENU_EDIT_FOOTER_ALIGN_V1_END */

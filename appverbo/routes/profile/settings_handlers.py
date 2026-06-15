@@ -6,6 +6,9 @@ from appverbo.routes.profile.settings import (
 from appverbo.routes.profile.settings import (
     definicoes_handlers as definicoes_handlers_v1,
 )
+from appverbo.routes.profile.settings import (
+    perfil_handlers as perfil_handlers_v1,
+)
 from appverbo.routes.profile.settings import menu_crud_handlers as menu_crud_handlers_v1
 from appverbo.routes.profile.settings import (
     process_fields_handlers as process_fields_handlers_v1,

@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from sqlalchemy import Boolean, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import text
 from sqlalchemy.sql.sqltypes import String
 
 from appverbo.models.base import Base, TimestampMixin
@@ -16,6 +17,13 @@ class Profile(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     description: Mapped[Optional[str]] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    entity_id: Mapped[Optional[int]] = mapped_column(ForeignKey("entities.id"), nullable=True)
+    visibility_scope_mode: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="entity",
+        server_default=text("'entity'"),
+    )
 
     users: Mapped[List["UserProfile"]] = relationship(back_populates="profile")
 

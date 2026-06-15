@@ -4,6 +4,7 @@ from .definicoes.configuracao import DEFINICOES_CONFIG
 from .entidade.configuracao import ENTIDADE_CONFIG
 from .menu.configuracao import MENU_CONFIG
 from .models import AdminSubprocessConfig
+from .perfil.configuracao import PERFIL_CONFIG
 from .sessoes.configuracao import SESSOES_CONFIG
 from .utilizador.configuracao import UTILIZADOR_CONFIG
 
@@ -57,6 +58,7 @@ ADMIN_SUBPROCESS_REGISTRY = {
     MENU_CONFIG.key: MENU_CONFIG,
     DEFINICOES_CONFIG.key: DEFINICOES_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,
+    PERFIL_CONFIG.key: PERFIL_CONFIG,
 }
 
 

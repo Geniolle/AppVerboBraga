@@ -283,7 +283,13 @@
   }
 
   function resolvePaginationModeForTableV2(tableEl) {
-    return isMenuTableV2(tableEl) ? "load_more" : "pages";
+    if (isMenuTableV2(tableEl)) {
+      return "load_more";
+    }
+    if (tableEl && tableEl.closest(".admin-subprocess-table-card-v1")) {
+      return "load_more";
+    }
+    return "pages";
   }
 
   function isEligibleTableV2(tableEl) {
