@@ -1,6 +1,6 @@
 {% macro render_admin_table_footer_standard_v1(table_id="", page_size=5, aria_label="Entradas por página") %}
 <div
-  class="admin-table-footer-standard-v1 table-footer admin-status-table-footer-v1"
+  class="admin-table-footer-standard-v1"
   data-admin-table-footer-standard-v1="1"
   {% if table_id %}data-admin-table-id="{{ table_id }}"{% endif %}
 >
@@ -23,7 +23,7 @@
     </span>
   </div>
 
-  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">
+  <div class="admin-table-footer-pagination-v1" data-admin-table-footer-pagination-v1="1">
     <button
       type="button"
       class="admin-table-footer-nav-btn-v1"

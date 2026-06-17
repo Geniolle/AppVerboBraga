@@ -255,7 +255,7 @@
     };
 
     const summarizeTableCellText = (rawValue, maxLength = 140) => {
-      const normalizedText = String(rawValue || "")
+      const normalizedText = (Array.isArray(rawValue) ? rawValue.join(", ") : String(rawValue || ""))
         .replace(/\s+/g, " ")
         .trim();
       if (!normalizedText) {
@@ -311,7 +311,10 @@
 
         const valueEl = document.createElement("strong");
         valueEl.className = "personal-value";
-        const rawValue = String(values[fieldKey] || "").trim();
+        const rawValueRaw = values[fieldKey];
+        const rawValue = Array.isArray(rawValueRaw)
+          ? rawValueRaw.join(", ")
+          : String(rawValueRaw || "").trim();
         if (fieldType === "flag") {
           valueEl.textContent = isTruthyFlagValue(rawValue) ? "Sim" : "Não";
         } else if (fieldType === "currency") {
@@ -390,13 +393,46 @@
         if (!inputEl) {
           return;
         }
-        const rawValue = String(values[fieldKey] || "").trim();
+        const rawValueRaw2 = values[fieldKey];
+        const rawValue = Array.isArray(rawValueRaw2)
+          ? rawValueRaw2.join(", ")
+          : String(rawValueRaw2 || "").trim();
+
+        // Handle modal picker (multiselect field)
+        const pickerContainer = dynamicProcessEditFormEl.querySelector(
+          `[data-chips-field-name="${inputName}"]`
+        );
+        if (pickerContainer) {
+          const selectedSet = new Set(
+            Array.isArray(rawValueRaw2)
+              ? rawValueRaw2.map((v) => String(v || "").trim()).filter(Boolean)
+              : rawValue.split(",").map((v) => v.trim()).filter(Boolean)
+          );
+          pickerContainer._selectedValues = selectedSet;
+          if (pickerContainer._refresh) pickerContainer._refresh();
+          return;
+        }
+
+        if (!inputEl) return;
         if (inputEl.type === "checkbox") {
           inputEl.checked = isTruthyFlagValue(rawValue);
           inputEl.dispatchEvent(new Event("input", { bubbles: true }));
           return;
         }
         if (inputEl.type === "file") {
+          return;
+        }
+        // Handle <select multiple>
+        if (inputEl.tagName === "SELECT" && inputEl.multiple) {
+          const selectedSet = new Set(
+            Array.isArray(rawValueRaw2)
+              ? rawValueRaw2.map((v) => String(v || "").trim()).filter(Boolean)
+              : rawValue.split(",").map((v) => v.trim()).filter(Boolean)
+          );
+          Array.from(inputEl.options).forEach((opt) => {
+            opt.selected = selectedSet.has(opt.value);
+          });
+          inputEl.dispatchEvent(new Event("change", { bubbles: true }));
           return;
         }
         let normalizedValue = rawValue;
@@ -410,6 +446,17 @@
         const stateSelectEl = dynamicProcessEditFormEl.querySelector("[name='process_state']");
         if (stateSelectEl) {
           stateSelectEl.value = resolveRowState(values);
+        }
+      }
+
+      // Populate numero_entidade (auto-injected field, name without prefix)
+      const entityNumVal = String(
+        values["__numero_entidade"] || values["numero_entidade"] || ""
+      ).trim();
+      if (entityNumVal) {
+        const entityNumInputEl = dynamicProcessEditFormEl.querySelector("[name='numero_entidade']");
+        if (entityNumInputEl) {
+          entityNumInputEl.value = entityNumVal;
         }
       }
 

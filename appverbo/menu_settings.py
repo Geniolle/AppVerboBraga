@@ -184,6 +184,7 @@ ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "time", "label": "Horário"},
     {"key": "link", "label": "Link"},
     {"key": "list", "label": "Lista"},
+    {"key": "multiselect", "label": "Multi-seleção (lista com checkboxes)"},
     {"key": "number", "label": "Número"},
     {"key": "phone", "label": "Telefone"},
     {"key": "text", "label": "Texto"},
@@ -1418,11 +1419,13 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
     seen_keys: set[str] = set()
     raw_items = raw_sections if isinstance(raw_sections, (list, tuple, set)) else []
     for raw_item in raw_items:
+        clean_department = ""
         if isinstance(raw_item, dict):
             clean_label = _normalize_sidebar_section_label(raw_item.get("label"))
             clean_key = _normalize_sidebar_section_key(raw_item.get("key"))
             clean_visibility_scopes = get_sidebar_section_visibility_scopes(raw_item)
             clean_status = raw_item.get("status", raw_item.get("is_active", "ativo"))
+            clean_department = " ".join(str(raw_item.get("department") or "").strip().split())
         else:
             clean_label = _normalize_sidebar_section_label(raw_item)
             clean_key = ""
@@ -1437,9 +1440,15 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
         if clean_key in seen_keys:
             continue
         seen_keys.add(clean_key)
-        normalized_sections.append(
-            _build_sidebar_section_payload(clean_key, clean_label, clean_visibility_scopes, clean_status)
+        normalized_section = _build_sidebar_section_payload(
+            clean_key,
+            clean_label,
+            clean_visibility_scopes,
+            clean_status,
         )
+        if clean_department:
+            normalized_section["department"] = clean_department
+        normalized_sections.append(normalized_section)
 
     for default_item in SIDEBAR_SECTION_DEFAULTS:
         default_key = _normalize_sidebar_section_key(default_item.get("key"))
@@ -5229,6 +5238,8 @@ PROCESS_LIST_SOURCE_USERS_V1 = "users"
 PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 = "sidebar_sections"
 PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 = "sidebar_menus_by_section"
 PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 = "table:"
+PROCESS_LIST_SOURCE_PROCESS_FIELD_RECORDS_PREFIX_V1 = "process_field_records:"
+PROCESS_LIST_SOURCE_PROCESS_MENU_HEADERS_PREFIX_V1 = "process_menu_headers_by_profile:"
 PROCESS_LIST_SOURCE_TABLE_EXCLUDED_KEYS_V1 = frozenset({"alembic_version", "sqlite_sequence"})
 PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1 = {
     "user_profiles": "profiles",
@@ -5241,6 +5252,13 @@ PROCESS_LIST_SOURCE_LABELS_V1 = {
 }
 PROCESS_LIST_SOURCE_TABLE_LABEL_OVERRIDES_V1 = {
     "profiles": "Perfil",
+    "members": "Membros",
+    "departments": "Departamentos",
+    "roles": "Funções",
+    "songs": "Músicas",
+    "users": "Utilizadores",
+    "entities": "Entidades",
+    "admin_definitions": "Definições",
 }
 PROCESS_LIST_SOURCE_TABLE_DISPLAY_COLUMN_PRIORITY_V1 = (
     "label",
@@ -5394,6 +5412,12 @@ def _normalize_process_list_source_key_v1(raw_source: Any) -> str:
     if _is_process_list_sidebar_menus_by_section_source_alias_v1(raw_source):
         return PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1
 
+    clean_raw = str(raw_source or "").strip()
+    if clean_raw.startswith(PROCESS_LIST_SOURCE_PROCESS_FIELD_RECORDS_PREFIX_V1):
+        return clean_raw
+    if clean_raw.startswith(PROCESS_LIST_SOURCE_PROCESS_MENU_HEADERS_PREFIX_V1):
+        return clean_raw
+
     table_key = _extract_process_list_table_key_from_source_v1(raw_source)
     if table_key:
         column_key = _extract_process_list_column_from_source_v1(raw_source)
@@ -5498,6 +5522,8 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
             source_key = PROCESS_LIST_SOURCE_USERS_V1
             items = []
 
+        raw_controller_field_key = str(raw_item.get("controller_field_key") or "").strip()
+
         normalized.append(
             {
                 "key": list_key,
@@ -5506,6 +5532,7 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
                 "items_csv": ", ".join(items),
                 "source_key": source_key,
                 "source_label": _resolve_process_list_source_label_v1(source_key),
+                "controller_field_key": raw_controller_field_key,
             }
         )
 
@@ -5668,7 +5695,7 @@ def _load_process_list_sidebar_menus_by_section_source_rows_v1(
     return option_rows
 
 
-def _list_process_source_tables_v1(session: Session) -> list[str]:
+def _list_process_source_tables_v1(session: Session) -> list[dict[str, str]]:
     rows = session.execute(
         text(
             """
@@ -5681,7 +5708,7 @@ def _list_process_source_tables_v1(session: Session) -> list[str]:
         )
     ).mappings().all()
 
-    table_keys: list[str] = []
+    table_entries: list[dict[str, str]] = []
     seen_table_keys: set[str] = set()
 
     for row in rows:
@@ -5695,9 +5722,12 @@ def _list_process_source_tables_v1(session: Session) -> list[str]:
             continue
 
         seen_table_keys.add(table_key)
-        table_keys.append(table_key)
+        table_entries.append({
+            "key": table_key,
+            "label": _format_process_list_table_label_v1(table_key),
+        })
 
-    return table_keys
+    return table_entries
 
 
 def get_process_list_source_options_v1(session: Session) -> list[dict[str, str]]:
@@ -5707,7 +5737,7 @@ def get_process_list_source_options_v1(session: Session) -> list[dict[str, str]]
     ]
 
 
-def get_process_list_source_tables_v1(session: Session) -> list[str]:
+def get_process_list_source_tables_v1(session: Session) -> list[dict[str, str]]:
     return _list_process_source_tables_v1(session)
 
 
@@ -5872,6 +5902,132 @@ def _load_process_list_table_source_items_v1(
     return items
 
 
+def _load_process_field_records_source_items_v1(
+    session: Session,
+    menu_key: str,
+    section_key: str,
+    field_key: str,
+) -> list[str]:
+    clean_menu_key = str(menu_key or "").strip().lower().replace("-", "_")
+    clean_section_key = str(section_key or "").strip().lower()
+    clean_field_key = str(field_key or "").strip().lower()
+    if not clean_menu_key or not clean_field_key:
+        return []
+
+    storage_key = f"process_records__{clean_menu_key}"
+
+    rows = session.execute(
+        text(
+            """
+            SELECT profile_custom_fields
+            FROM members
+            WHERE profile_custom_fields IS NOT NULL
+              AND profile_custom_fields::text LIKE :pattern
+            """
+        ),
+        {"pattern": f"%{storage_key}%"},
+    ).mappings().all()
+
+    seen: set[str] = set()
+    items: list[str] = []
+
+    for row in rows:
+        raw = str((row or {}).get("profile_custom_fields") or "").strip()
+        if not raw:
+            continue
+        try:
+            import json as _json
+            outer = _json.loads(raw)
+            if not isinstance(outer, dict):
+                continue
+            records_raw = outer.get(storage_key)
+            if not records_raw:
+                continue
+            records = _json.loads(records_raw) if isinstance(records_raw, str) else records_raw
+            if not isinstance(records, list):
+                continue
+            for rec in records:
+                if not isinstance(rec, dict):
+                    continue
+                values = rec.get("values") or {}
+                rec_section = str(rec.get("section_key") or "").strip().lower()
+                if clean_section_key and rec_section != clean_section_key:
+                    continue
+                estado = str(values.get("__estado") or "").strip().lower()
+                if estado and estado not in ("ativo", "active"):
+                    continue
+                value = str(values.get(clean_field_key) or "").strip()
+                if not value:
+                    continue
+                lookup = value.lower()
+                if lookup in seen:
+                    continue
+                seen.add(lookup)
+                items.append(value)
+        except Exception:
+            continue
+
+    return sorted(items)
+
+
+def _load_process_menu_headers_by_profile_v1(
+    session: Session,
+    menu_key: str,
+    section_key: str,
+    field_key: str,
+    selected_entity_id: object = None,
+) -> dict[str, Any]:
+    profile_values = _load_process_field_records_source_items_v1(
+        session, menu_key, section_key, field_key
+    )
+    if not profile_values:
+        return {"items": [], "source_map": {}}
+
+    rows = session.execute(
+        text(
+            "SELECT menu_key, menu_label, menu_config FROM sidebar_menu_settings WHERE is_active IS TRUE"
+        )
+    ).mappings().all()
+
+    menu_config_by_label: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        label = str((row or {}).get("menu_label") or "").strip()
+        if not label:
+            continue
+        try:
+            import json as _json
+            cfg = _json.loads(str((row or {}).get("menu_config") or "{}"))
+        except Exception:
+            cfg = {}
+        menu_config_by_label[label.lower()] = cfg
+
+    source_map: dict[str, list[str]] = {}
+    all_items: list[str] = []
+    seen_items: set[str] = set()
+
+    for profile_value in profile_values:
+        raw_cfg = menu_config_by_label.get(profile_value.lower())
+        if raw_cfg is None:
+            source_map[profile_value] = []
+            continue
+        effective_cfg = build_effective_menu_config_v1(raw_cfg, selected_entity_id=selected_entity_id)
+        additional_fields = get_menu_process_additional_fields(effective_cfg)
+        headers: list[str] = []
+        for f in additional_fields:
+            if str(f.get("field_type") or "").strip().lower() != "header":
+                continue
+            label = str(f.get("label") or f.get("key") or "").strip()
+            if not label:
+                continue
+            headers.append(label)
+            if label.lower() not in seen_items:
+                seen_items.add(label.lower())
+                all_items.append(label)
+        source_map[profile_value] = headers
+
+    return {"items": all_items, "source_map": source_map}
+
+
 def _resolve_process_lists_dynamic_sources_v1(
     session: Session,
     process_lists: list[dict[str, Any]],
@@ -5926,6 +6082,41 @@ def _resolve_process_lists_dynamic_sources_v1(
                 sidebar_menus_by_section_source_rows_cache
             )
             process_list["items_csv"] = ", ".join(process_list["items"])
+        elif source_key.startswith(PROCESS_LIST_SOURCE_PROCESS_FIELD_RECORDS_PREFIX_V1):
+            rest = source_key[len(PROCESS_LIST_SOURCE_PROCESS_FIELD_RECORDS_PREFIX_V1):]
+            parts = rest.split(":", 2)
+            pfr_menu_key = parts[0] if len(parts) > 0 else ""
+            pfr_section_key = parts[1] if len(parts) > 1 else ""
+            pfr_field_key = parts[2] if len(parts) > 2 else ""
+            source_items = _load_process_field_records_source_items_v1(
+                session,
+                pfr_menu_key,
+                pfr_section_key,
+                pfr_field_key,
+            )
+            process_list["items"] = source_items
+            process_list["items_csv"] = ", ".join(source_items)
+            process_list["option_rows"] = _build_process_list_option_rows_from_labels_v1(
+                source_items
+            )
+        elif source_key.startswith(PROCESS_LIST_SOURCE_PROCESS_MENU_HEADERS_PREFIX_V1):
+            rest = source_key[len(PROCESS_LIST_SOURCE_PROCESS_MENU_HEADERS_PREFIX_V1):]
+            parts = rest.split(":", 2)
+            pmh_menu_key = parts[0] if len(parts) > 0 else ""
+            pmh_section_key = parts[1] if len(parts) > 1 else ""
+            pmh_field_key = parts[2] if len(parts) > 2 else ""
+            pmh_result = _load_process_menu_headers_by_profile_v1(
+                session,
+                pmh_menu_key,
+                pmh_section_key,
+                pmh_field_key,
+                selected_entity_id=selected_entity_id,
+            )
+            source_items = pmh_result.get("items", [])
+            process_list["items"] = source_items
+            process_list["items_csv"] = ", ".join(source_items)
+            process_list["option_rows"] = _build_process_list_option_rows_from_labels_v1(source_items)
+            process_list["source_map"] = pmh_result.get("source_map", {})
         elif source_table_key:
             source_column_key = _extract_process_list_column_from_source_v1(source_key)
             table_cache_key = source_key
@@ -7330,9 +7521,9 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         seen_keys.add(unique_key)
 
-        if item_type == "list" and not item_list_key:
+        if item_type in ("list", "multiselect") and not item_list_key:
             item_list_key = _normalize_process_list_key_v8(item_label)
-        if item_type == "list" and not item_shared_value_key:
+        if item_type in ("list", "multiselect") and not item_shared_value_key:
             item_shared_value_key = item_list_key
 
         normalized_item: dict[str, Any] = {
@@ -7345,7 +7536,7 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if item_size is not None:
             normalized_item["size"] = item_size
 
-        if item_type == "list":
+        if item_type in ("list", "multiselect"):
             normalized_item["list_key"] = item_list_key
         if item_shared_value_key:
             normalized_item["shared_value_key"] = item_shared_value_key

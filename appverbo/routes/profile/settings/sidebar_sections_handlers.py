@@ -104,7 +104,7 @@ def save_one_sidebar_section_v19(
     section_status: str = Form("ativo"),
     section_status_override_v19: str = Form(""),
     section_entity_internal_number: str = Form(""),
-    section_perfil: str = Form(""),
+    section_department: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
     payload = normalize_save_session_input_v1(
@@ -115,7 +115,7 @@ def save_one_sidebar_section_v19(
         section_status=section_status,
         section_status_override=section_status_override_v19,
         section_entity_internal_number=section_entity_internal_number,
-        section_perfil=section_perfil,
+        section_department=section_department,
         sidebar_section_return_url=sidebar_section_return_url,
     )
 

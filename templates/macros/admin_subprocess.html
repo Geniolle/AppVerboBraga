@@ -3,7 +3,7 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_field(field, value="", field_options=(), mode="create", show_hint=false) %}
+{% macro render_admin_subprocess_field(field, value="", field_options=(), mode="create", show_hint=false, table_name="") %}
   {% set is_readonly = field.field_type == "readonly" or (mode == "edit" and field.readonly_on_edit) or (mode != "edit" and field.readonly_on_create) %}
   {% set input_type = "text" if field.field_type in ("readonly", "select") and is_readonly else field.field_type %}
   {% if field.field_type == "hidden" %}
@@ -48,18 +48,19 @@
   {% set status_field_key = state.config.status_field|string %}
   {% set field_values = edit_data if edit_data else (state.create_data if state.create_data else {}) %}
   {% set show_hints = state.show_field_hints %}
+  {% set config_table_name = state.config.table_name|default("") %}
 
   {% for field in state.effective_fields %}
     {% if field.key != status_field_key %}
       {% set field_value = field_values.get(field.key, "") if field_values else "" %}
-      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints) }}
+      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints, config_table_name) }}
     {% endif %}
   {% endfor %}
 
   {% for field in state.effective_fields %}
     {% if field.key == status_field_key %}
       {% set field_value = field_values.get(field.key, "") if field_values else "" %}
-      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints) }}
+      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints, config_table_name) }}
     {% endif %}
   {% endfor %}
 {% endmacro %}
@@ -134,7 +135,7 @@
       <div class="alert error">{{ state.error }}</div>
     {% endif %}
 
-    <h2>{{ state.config.edit_title }}</h2>
+    <h2>{{ state.config.edit_title }}{% if state.show_field_hints and state.config.table_name %} <span class="admin-field-input-hint-v1">({{ state.config.table_name }})</span>{% endif %}</h2>
 
     <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
       <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.edit_mode_value }}">
@@ -280,6 +281,8 @@
 <section
     id="{{ card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
+    data-admin-table-footer-enabled-v1="1"
+    data-admin-table-footer-mode-v1-preferred="load_more"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-status="{{ status_value }}"
     data-admin-card-group="{{ state.config.key }}"
@@ -301,16 +304,36 @@
           </thead>
           <tbody>
             {% for row in rows %}
-              <tr>
+              {% set row_key = row.get(state.config.identity_field, row.get("key", row.get("id", ""))) %}
+              {% set row_department_value = row.get("department_label", row.get("department", "")) %}
+              <tr
+                data-admin-row-key="{{ row_key }}"
+                data-admin-row-department="{{ row.get('department', '') }}"
+                data-admin-row-department-label="{{ row_department_value }}"
+              >
                 {% for column in state.effective_columns %}
                   {% set cell_value = row.get(column.source, "") %}
-                  <td class="{{ column.css_class }}">
+                  {% if (cell_value is none or (cell_value|string)|trim == "") and column.key == "department" %}
+                    {% set cell_value = row.get("department_label", row.get("department", "")) %}
+                  {% endif %}
+                  {% if (cell_value is none or (cell_value|string)|trim == "") and column.key == "system" %}
+                    {% set cell_value = row.get("visibility_scope_label", row.get("visibility_scope_mode", "")) %}
+                  {% endif %}
+                  <td
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    data-admin-column-source="{{ column.source }}"
+                    data-admin-cell-fallback="{{ cell_value }}"
+                  >
                     {% if column.key == "status" %}
                       <span class="admin-subprocess-badge-v1 {% if status_value == state.config.active_value %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
                         {{ cell_value or ("Ativo" if status_value == state.config.active_value else "Inativo") }}
                       </span>
                     {% else %}
-                      {{ cell_value }}
+                      <span
+                        class="admin-subprocess-cell-text-v1"
+                        data-admin-cell-text-v1="{{ cell_value }}"
+                      >{{ cell_value }}</span>
                     {% endif %}
                   </td>
                 {% endfor %}

@@ -1,6 +1,6 @@
 /* APPVERBO_ADMIN_STATUS_TABLES_V1_START */
 
-.admin-status-table-footer-v1 {
+.admin-status-table-footer-v1:not(.admin-table-footer-standard-v1) {
   align-items: center;
   border-top: 0;
   display: flex;
@@ -10,17 +10,17 @@
   padding-top: 10px;
 }
 
-.admin-status-table-footer-v1 select {
+.admin-status-table-footer-v1:not(.admin-table-footer-standard-v1) select {
   max-width: 72px;
   min-width: 64px;
   width: auto;
 }
 
-.admin-status-table-footer-v1 .pagination {
+.admin-status-table-footer-v1:not(.admin-table-footer-standard-v1) .pagination {
   margin-left: auto;
 }
 
-.admin-status-table-footer-v1 .pagination button {
+.admin-status-table-footer-v1:not(.admin-table-footer-standard-v1) .pagination button {
   align-items: center;
   border-radius: 999px;
   display: inline-flex;
@@ -3130,7 +3130,7 @@ html body :is(
   #admin-sidebar-sections-form-card,
   #settings-card,
   #admin-account-status-card
-) .table-footer {
+) .table-footer:not(.admin-table-footer-standard-v1) {
   align-items: center !important;
   color: #6b778c !important;
   display: flex !important;

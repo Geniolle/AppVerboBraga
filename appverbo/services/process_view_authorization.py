@@ -425,16 +425,23 @@ def build_process_view_authorization_history_rows_v1(
     )
     entity_ids = {rule.entity_id for rule in rules if rule.entity_id is not None}
     entity_name_by_id: dict[int, str] = {}
+    entity_internal_number_by_id: dict[int, str] = {}
     if entity_ids:
         for entity in session.execute(
             select(Entity).where(Entity.id.in_(entity_ids))
         ).scalars():
             entity_name_by_id[int(entity.id)] = str(entity.name or "").strip()
+            entity_internal_number_by_id[int(entity.id)] = str(entity.internal_number or "").strip()
 
     rows: list[dict[str, Any]] = []
     for rule in rules:
         entity_name = (
             entity_name_by_id.get(int(rule.entity_id), "")
+            if rule.entity_id is not None
+            else ""
+        )
+        entity_internal_number = (
+            entity_internal_number_by_id.get(int(rule.entity_id), "")
             if rule.entity_id is not None
             else ""
         )
@@ -447,15 +454,13 @@ def build_process_view_authorization_history_rows_v1(
                 "section_key": section_key,
                 "values": {
                     "custom_entidade": entity_name,
-                    "custom_perfil": str(rule.profile_name or "").strip(),
+                    "__numero_entidade": entity_internal_number,
+                    "numero_entidade": entity_internal_number,
+                    "custom_nome_do_perfil": str(rule.profile_name or "").strip(),
                     "custom_processo": str(rule.process_label or "").strip(),
                     "custom_subprocesso": (
                         str(rule.subprocess_label or "").strip()
                         or PROCESS_VIEW_AUTHORIZATION_ALL_SUBPROCESS_LABEL
-                    ),
-                    "custom_departamento": (
-                        str(rule.department_name or "").strip()
-                        or PROCESS_VIEW_AUTHORIZATION_ALL_DEPARTMENTS_LABEL
                     ),
                     "custom_visibilidade": _serialize_process_view_authorization_visibility_scope_mode_v1(
                         rule.visibility_scope_mode
@@ -505,14 +510,15 @@ def save_process_view_authorization_rule_v1(
     current_user_id: int | None,
     requested_history_action: str,
     requested_history_record_id: str,
-    submitted_section_values: dict[str, str],
+    submitted_section_values: dict[str, Any],
     section_key: str = PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
 ) -> tuple[str, list[dict[str, Any]], str]:
-    clean_profile_name = str(submitted_section_values.get("custom_perfil") or "").strip()
+    clean_profile_name = str(submitted_section_values.get("custom_nome_do_perfil") or "").strip()
     clean_process_label = str(submitted_section_values.get("custom_processo") or "").strip()
-    clean_subprocess_label = str(
-        submitted_section_values.get("custom_subprocesso") or ""
-    ).strip()
+    clean_subprocess_label = str(submitted_section_values.get("custom_subprocesso") or "").strip()
+    if not clean_subprocess_label:
+        clean_subprocess_label = PROCESS_VIEW_AUTHORIZATION_ALL_SUBPROCESS_LABEL
+
     clean_status = _normalize_process_view_authorization_status_v1(
         submitted_section_values.get("__estado")
     )
@@ -525,64 +531,64 @@ def save_process_view_authorization_rule_v1(
     if not clean_process_label:
         return "", [], "Processo é obrigatório."
 
-    resolved_department_name, department_error = (
-        _resolve_process_view_authorization_department_name_v1(
-            session,
-            selected_entity_id=selected_entity_id,
-            raw_department_name=submitted_section_values.get("custom_departamento"),
-        )
+    duplicate_query = select(ProcessViewAuthorizationRule).where(
+        ProcessViewAuthorizationRule.entity_id == selected_entity_id,
+        func.lower(func.trim(ProcessViewAuthorizationRule.profile_name)) == clean_profile_name.lower(),
+        func.lower(func.trim(ProcessViewAuthorizationRule.process_label)) == clean_process_label.lower(),
+        func.lower(func.trim(ProcessViewAuthorizationRule.subprocess_label)) == clean_subprocess_label.lower(),
     )
-    if department_error:
-        return "", [], department_error
+    if requested_history_action == "update" and requested_history_record_id:
+        try:
+            exclude_id = int(requested_history_record_id)
+            duplicate_query = duplicate_query.where(ProcessViewAuthorizationRule.id != exclude_id)
+        except (TypeError, ValueError):
+            pass
+    duplicate_exists = session.execute(duplicate_query).scalars().first()
+    if duplicate_exists:
+        return "", [], "Já existe uma regra com o mesmo perfil, processo e subprocesso para esta entidade."
 
     resolved_targets = resolve_process_view_authorization_targets_v1(
         sidebar_menu_settings,
         process_label=clean_process_label,
         subprocess_label=clean_subprocess_label,
     )
+    final_process_key = str(resolved_targets.get("process_key") or "").strip().lower() or None
+    final_process_label = str(resolved_targets.get("process_label") or clean_process_label).strip()[:120]
+    final_subprocess_key = resolve_menu_key_alias(resolved_targets.get("subprocess_key")) or None
+    final_subprocess_label = str(
+        resolved_targets.get("subprocess_label") or clean_subprocess_label
+    ).strip()[:120]
 
-    target_rule = None
     if requested_history_action == "update":
-        target_rule = _get_process_view_authorization_rule_for_scope_v1(
+        rule = _get_process_view_authorization_rule_for_scope_v1(
             session,
             record_id=requested_history_record_id,
             selected_entity_id=selected_entity_id,
         )
-        if target_rule is None:
+        if rule is None:
             return "", [], "Registo não encontrado para editar."
+        rule.updated_by_user_id = current_user_id
+        rule.profile_name = clean_profile_name[:100]
+        rule.process_key = final_process_key
+        rule.process_label = final_process_label
+        rule.subprocess_key = final_subprocess_key
+        rule.subprocess_label = final_subprocess_label
+        rule.status = clean_status
+        rule.visibility_scope_mode = clean_visibility_scope_mode
     else:
-        target_rule = ProcessViewAuthorizationRule(
+        rule = ProcessViewAuthorizationRule(
             entity_id=selected_entity_id,
             created_by_user_id=current_user_id,
+            updated_by_user_id=current_user_id,
+            profile_name=clean_profile_name[:100],
+            process_key=final_process_key,
+            process_label=final_process_label,
+            subprocess_key=final_subprocess_key,
+            subprocess_label=final_subprocess_label,
+            status=clean_status,
+            visibility_scope_mode=clean_visibility_scope_mode,
         )
-        session.add(target_rule)
-
-    if requested_history_action == "update":
-        if target_rule.entity_id is not None:
-            target_rule.entity_id = selected_entity_id
-    else:
-        target_rule.entity_id = selected_entity_id
-    target_rule.profile_name = clean_profile_name[:100]
-    target_rule.process_key = (
-        str(resolved_targets.get("process_key") or "").strip().lower() or None
-    )
-    target_rule.process_label = (
-        str(resolved_targets.get("process_label") or clean_process_label).strip()[:120]
-    )
-    target_rule.subprocess_key = (
-        resolve_menu_key_alias(resolved_targets.get("subprocess_key")) or None
-    )
-    target_rule.subprocess_label = (
-        str(
-            resolved_targets.get("subprocess_label")
-            or clean_subprocess_label
-            or PROCESS_VIEW_AUTHORIZATION_ALL_SUBPROCESS_LABEL
-        ).strip()[:120]
-    )
-    target_rule.department_name = resolved_department_name
-    target_rule.status = clean_status
-    target_rule.visibility_scope_mode = clean_visibility_scope_mode
-    target_rule.updated_by_user_id = current_user_id
+        session.add(rule)
 
     try:
         session.commit()

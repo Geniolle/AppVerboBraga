@@ -55,12 +55,15 @@ SIDEBAR_SECTION_FIELDS = (
         placeholder="Default",
     ),
     AdminFieldConfig(
-        key="perfil",
-        label="Perfil",
-        input_name="section_perfil",
+        key="department",
+        label="Departamento",
+        input_name="section_department",
         field_type="select",
-        required=True,
-        options=(("", "Selecionar perfil"),),
+        required=False,
+        options=(
+            ("", ""),
+            ("tesouraria", "Tesouraria"),
+        ),
     ),
 )
 
@@ -73,6 +76,7 @@ SIDEBAR_SECTION_COLUMNS = (
     AdminColumnConfig(key="label", label="NOME", source="label"),
     AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
     AdminColumnConfig(key="entity_internal_number", label="Nº ENTIDADE", source="entity_internal_number"),
+    AdminColumnConfig(key="department", label="DEPARTAMENTO", source="department_label"),
     AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
 )
 

@@ -97,6 +97,10 @@
             : [],
           optionRows: normalizeProcessListOptionRowsV1(
             processList && (processList.option_rows || processList.optionRows)
+          ),
+          sourceMap: (processList && processList.source_map) || null,
+          controllerFieldKey: normalizeMenuKey(
+            (processList && (processList.controller_field_key || processList.controllerFieldKey)) || ""
           )
         });
       });
@@ -1549,7 +1553,12 @@
       }
 
       if (dynamicProcessTitleEl) {
-        dynamicProcessTitleEl.textContent = sectionLabel || menuLabel;
+        const _tableMapForTitle = {
+          "administrativo|custom_perfil_de_autorizacao": "process_view_authorization_rules",
+          "perfil_de_autorizacao|custom_objeto_de_autorizacao": "process_view_authorization_rules",
+        };
+        const _tableNameForTitle = _tableMapForTitle[cleanMenuKey + "|" + cleanSectionKey];
+        dynamicProcessTitleEl.textContent = (sectionLabel || menuLabel) + (_tableNameForTitle ? " (" + _tableNameForTitle + ")" : "");
       }
       if (dynamicProcessDescriptionEl) {
         dynamicProcessDescriptionEl.textContent =
@@ -1975,6 +1984,172 @@
             renderedInputsByFieldKey.set(fieldKey, selectEl);
             fieldContainerEl.appendChild(labelEl);
             fieldContainerEl.appendChild(selectEl);
+          } else if (fieldType === "multiselect") {
+            // Modal picker: área clicável que abre popup com checkboxes
+            const rawMultiValue = field && field.value;
+            const preSelectedValues = new Set(
+              Array.isArray(rawMultiValue)
+                ? rawMultiValue.map((v) => String(v || "").trim()).filter(Boolean)
+                : String(rawMultiValue || "").split(",").map((v) => v.trim()).filter(Boolean)
+            );
+
+            const allListOptions = resolveDynamicProcessListOptionsForFieldV1({
+              field,
+              sectionFields,
+              processSetting,
+              processValuesByField: currentProcessValuesByField,
+              renderedInputsByFieldKey,
+              processListMetaByKey
+            });
+
+            // Picker container
+            const pickerEl = document.createElement("div");
+            pickerEl.className = "appverbo-ms-picker-v1";
+            pickerEl.dataset.chipsFieldName = inputName;
+            pickerEl._availableOptions = allListOptions;
+            pickerEl._selectedValues = new Set(preSelectedValues);
+
+            // Área clicável única: ícone + texto dinâmico
+            const msInnerEl = document.createElement("div");
+            msInnerEl.className = "appverbo-ms-inner-v1";
+            msInnerEl.setAttribute("role", "button");
+            msInnerEl.tabIndex = 0;
+
+            const msIconEl = document.createElement("span");
+            msIconEl.className = "appverbo-ms-icon-v1";
+            msIconEl.innerHTML = "&#9998;";
+
+            const msSummaryEl = document.createElement("span");
+            msSummaryEl.className = "appverbo-ms-summary-v1";
+
+            msInnerEl.appendChild(msIconEl);
+            msInnerEl.appendChild(msSummaryEl);
+            pickerEl.appendChild(msInnerEl);
+
+            // Refresh hidden inputs + texto da área
+            pickerEl._refresh = function () {
+              pickerEl.querySelectorAll("input[type='hidden']").forEach(function (el) { el.remove(); });
+              pickerEl._selectedValues.forEach(function (val) {
+                var hid = document.createElement("input");
+                hid.type = "hidden";
+                hid.name = inputName;
+                hid.value = val;
+                pickerEl.appendChild(hid);
+              });
+              var labels = Array.from(pickerEl._selectedValues);
+              if (labels.length > 0) {
+                msSummaryEl.textContent = labels.join(" · ");
+                msInnerEl.classList.remove("appverbo-ms-inner-empty-v1");
+              } else {
+                msSummaryEl.textContent = "Selecionar subprocessos";
+                msInnerEl.classList.add("appverbo-ms-inner-empty-v1");
+              }
+            };
+            pickerEl._refresh();
+
+            // Open modal (click ou Enter/Space)
+            function msOpenPicker() {
+              // Remove any existing modal
+              var existingModal = document.getElementById("appverbo-ms-modal-root-v1");
+              if (existingModal) existingModal.remove();
+
+              var backdrop = document.createElement("div");
+              backdrop.id = "appverbo-ms-modal-root-v1";
+              backdrop.className = "appverbo-ms-backdrop-v1";
+
+              var modalEl = document.createElement("div");
+              modalEl.className = "appverbo-ms-modal-v1";
+
+              // Header
+              var mhEl = document.createElement("div");
+              mhEl.className = "appverbo-ms-modal-header-v1";
+              var mTitleEl = document.createElement("h3");
+              mTitleEl.textContent = String(fieldLabel || "Selecionar");
+              var mCloseEl = document.createElement("button");
+              mCloseEl.type = "button";
+              mCloseEl.className = "appverbo-ms-modal-close-v1";
+              mCloseEl.innerHTML = "&times;";
+              mhEl.appendChild(mTitleEl);
+              mhEl.appendChild(mCloseEl);
+
+              // Body: checkboxes
+              var mbEl = document.createElement("div");
+              mbEl.className = "appverbo-ms-modal-body-v1";
+
+              var opts = pickerEl._availableOptions || [];
+              if (opts.length === 0) {
+                var emptyMsg = document.createElement("p");
+                emptyMsg.className = "appverbo-ms-modal-empty-v1";
+                emptyMsg.textContent = "Selecione um processo para ver as opções disponíveis.";
+                mbEl.appendChild(emptyMsg);
+              } else {
+                opts.forEach(function (opt) {
+                  var val = String((opt && (opt.value || opt.label)) || "");
+                  var lbl = String((opt && (opt.label || opt.value)) || "");
+                  if (!val) return;
+
+                  var rowEl = document.createElement("label");
+                  rowEl.className = "appverbo-ms-modal-row-v1";
+
+                  var cbEl = document.createElement("input");
+                  cbEl.type = "checkbox";
+                  cbEl.value = val;
+                  cbEl.checked = pickerEl._selectedValues.has(val);
+
+                  var spanEl = document.createElement("span");
+                  spanEl.textContent = lbl;
+
+                  rowEl.appendChild(cbEl);
+                  rowEl.appendChild(spanEl);
+                  mbEl.appendChild(rowEl);
+                });
+              }
+
+              // Footer
+              var mfEl = document.createElement("div");
+              mfEl.className = "appverbo-ms-modal-footer-v1";
+              var confirmEl = document.createElement("button");
+              confirmEl.type = "button";
+              confirmEl.className = "appverbo-ms-confirm-btn-v1";
+              confirmEl.textContent = "Confirmar";
+              var cancelEl = document.createElement("button");
+              cancelEl.type = "button";
+              cancelEl.className = "appverbo-ms-cancel-btn-v1";
+              cancelEl.textContent = "Cancelar";
+              mfEl.appendChild(confirmEl);
+              mfEl.appendChild(cancelEl);
+
+              modalEl.appendChild(mhEl);
+              modalEl.appendChild(mbEl);
+              modalEl.appendChild(mfEl);
+              backdrop.appendChild(modalEl);
+              document.body.appendChild(backdrop);
+
+              function closeModal() { backdrop.remove(); }
+
+              mCloseEl.addEventListener("click", closeModal);
+              cancelEl.addEventListener("click", closeModal);
+              backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closeModal(); });
+
+              confirmEl.addEventListener("click", function () {
+                var newSel = new Set();
+                mbEl.querySelectorAll("input[type='checkbox']:checked").forEach(function (cb) {
+                  newSel.add(cb.value);
+                });
+                pickerEl._selectedValues = newSel;
+                pickerEl._refresh();
+                closeModal();
+              });
+            }
+
+            msInnerEl.addEventListener("click", msOpenPicker);
+            msInnerEl.addEventListener("keydown", function (e) {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); msOpenPicker(); }
+            });
+
+            renderedInputsByFieldKey.set(fieldKey, pickerEl);
+            fieldContainerEl.appendChild(labelEl);
+            fieldContainerEl.appendChild(pickerEl);
           } else if (fieldType === "file") {
             // ── file picker with auto-import ──────────────────────────────────
             const fileInputEl = document.createElement("input");
@@ -2161,6 +2336,107 @@
 
         controllerEl.addEventListener("input", refreshDependentListFields);
         controllerEl.addEventListener("change", refreshDependentListFields);
+      });
+
+      // Cascading dropdowns: source_map-based dependent lists
+      sectionFields.forEach((field) => {
+        const depFieldKey = normalizeMenuKey(field && field.key);
+        const depListKey = normalizeMenuKey(field && (field.listKey || field.list_key));
+        const depListMeta = processListMetaByKey.get(depListKey);
+        if (!depListMeta || !depListMeta.sourceMap || !depListMeta.controllerFieldKey) return;
+
+        const controllerEl = renderedInputsByFieldKey.get(depListMeta.controllerFieldKey);
+        const dependentEl = renderedInputsByFieldKey.get(depFieldKey);
+        if (!controllerEl || !dependentEl) return;
+
+        const allOptionRows = depListMeta.optionRows || [];
+
+        function updateCascadeOptions() {
+          const selectedValue = String(controllerEl.value || "").trim();
+          const allowedLabels = new Set(
+            (depListMeta.sourceMap[selectedValue] || []).map((s) => String(s || "").trim())
+          );
+
+          // Modal picker (multiselect field_type)
+          if (dependentEl.classList && dependentEl.classList.contains("appverbo-ms-picker-v1")) {
+            // Close any open modal since available options are about to change
+            var openModal = document.getElementById("appverbo-ms-modal-root-v1");
+            if (openModal) openModal.remove();
+            // Update available options
+            const filteredRows = selectedValue
+              ? allOptionRows.filter((r) => {
+                  const lbl = String((r && (r.label || r.value)) || "").trim();
+                  return allowedLabels.has(lbl);
+                })
+              : allOptionRows;
+            dependentEl._availableOptions = filteredRows;
+            // Remove selected values no longer in filtered list
+            if (selectedValue && dependentEl._selectedValues) {
+              const allowedVals = new Set(
+                filteredRows.map((r) => String((r && (r.value || r.label)) || "").trim())
+              );
+              let changed = false;
+              dependentEl._selectedValues.forEach((val) => {
+                if (!allowedVals.has(val)) { dependentEl._selectedValues.delete(val); changed = true; }
+              });
+              if (changed && dependentEl._refresh) dependentEl._refresh();
+            }
+            return;
+          }
+
+          // Regular <select> (single or multiple)
+          const isMulti = dependentEl.multiple;
+          const previouslySelected = new Set(
+            Array.from(dependentEl.options)
+              .filter((o) => o.selected && o.value)
+              .map((o) => o.value)
+          );
+          while (dependentEl.options.length) dependentEl.remove(0);
+          if (!isMulti) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Selecione";
+            dependentEl.appendChild(placeholder);
+          }
+          if (!isMulti) {
+            const _depRawLabel = String((field && (field.label || field.key)) || "").trim();
+            const _depSourceKey = normalizeDynamicProcessListSourceKeyV1(
+              (depListMeta && depListMeta.sourceKey) || ""
+            );
+            const _syntheticField = Object.assign({}, field, { listSourceKey: _depSourceKey });
+            const _allOptLabel = buildDynamicProcessAllOptionLabelV1(_syntheticField);
+            const _genericFallback = _depRawLabel
+              ? `Todos os valores de ${_depRawLabel.toLowerCase()}`
+              : null;
+            if (_allOptLabel && _allOptLabel !== _genericFallback && _allOptLabel !== "Todos") {
+              const allOptEl = document.createElement("option");
+              allOptEl.value = _allOptLabel;
+              allOptEl.textContent = _allOptLabel;
+              if (previouslySelected.has(_allOptLabel)) allOptEl.selected = true;
+              dependentEl.appendChild(allOptEl);
+            }
+          }
+          const filteredRows = selectedValue
+            ? allOptionRows.filter((r) => {
+                const lbl = String((r && (r.label || r.value)) || "").trim();
+                return allowedLabels.has(lbl);
+              })
+            : allOptionRows;
+          filteredRows.forEach((optionRow) => {
+            const optEl = document.createElement("option");
+            optEl.value = String((optionRow && (optionRow.value || optionRow.label)) || "");
+            optEl.textContent = String((optionRow && (optionRow.label || optionRow.value)) || "");
+            if (previouslySelected.has(optEl.value)) optEl.selected = true;
+            dependentEl.appendChild(optEl);
+          });
+          if (!isMulti && !Array.from(dependentEl.options).some((o) => o.selected && o.value)) {
+            dependentEl.value = "";
+          }
+        }
+
+        controllerEl.addEventListener("change", updateCascadeOptions);
+        controllerEl.addEventListener("input", updateCascadeOptions);
+        if (controllerEl.value) updateCascadeOptions();
       });
 
       if (showStateField && dynamicProcessEditGridEl) {

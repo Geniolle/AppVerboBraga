@@ -408,7 +408,7 @@
         select.innerHTML = "<option value=\"\">Selecione o campo</option>";
 
         if (data.ok && Array.isArray(data.columns)) {
-          data.columns.forEach(function (col) {
+          data.columns.slice().sort(function (a, b) { return a.localeCompare(b); }).forEach(function (col) {
             const opt = document.createElement("option");
             opt.value = col;
             opt.textContent = col;
@@ -886,6 +886,15 @@
 
       renderTable_v1(state, elements);
       syncHiddenInputs_v1(state, elements);
+
+      if (action === "remove") {
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
+        return;
+      }
     });
 
     form.addEventListener("submit", function () {

@@ -27,7 +27,7 @@
 
           <div class="admin-subprocess-grid-v1">
             <div class="field admin-subprocess-field-v1">
-              <label for="admin_menu_create_label">Nome do menu *{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(menu_label)</span>{% endif %}</label>
+              <label for="admin_menu_create_label">Nome do menu *{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(sidebar_menu_settings · menu_config · menu_label)</span>{% endif %}</label>
               <input
                 id="admin_menu_create_label"
                 name="menu_label"
@@ -38,7 +38,7 @@
             </div>
 
             <div class="field admin-subprocess-field-v1">
-              <label for="admin_menu_create_visibility_scope">Sistema{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(menu_visibility_scope)</span>{% endif %}</label>
+              <label for="admin_menu_create_visibility_scope">Sistema{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(sidebar_menu_settings · menu_config · menu_visibility_scope)</span>{% endif %}</label>
               <select id="admin_menu_create_visibility_scope" name="menu_visibility_scope">
                 <option value="all" selected>Default</option>
                 <option value="owner">Owner</option>
@@ -47,7 +47,7 @@
             </div>
 
             <div class="field admin-subprocess-field-v1">
-              <label for="admin_menu_create_section">Sessão{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(menu_section)</span>{% endif %}</label>
+              <label for="admin_menu_create_section">Sessão{% if state.show_field_hints %} <span class="admin-field-input-hint-v1">(sidebar_menu_settings · menu_config · menu_section)</span>{% endif %}</label>
               <select id="admin_menu_create_section" name="menu_section">
                 <option value="">Sem sessão</option>
                 {% for section_key, section_label in state.section_options %}
@@ -245,6 +245,8 @@
   <section
     id="{{ state.active_target if status_value == 'ativo' else state.inactive_target }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
+    data-admin-table-footer-enabled-v1="1"
+    data-admin-table-footer-mode-v1-preferred="load_more"
     data-admin-subprocess="menu"
     data-admin-subprocess-status="{{ status_value }}"
     data-admin-card-group="menu"

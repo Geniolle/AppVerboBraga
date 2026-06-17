@@ -56,7 +56,7 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
   align-items: center;
   display: inline-flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   justify-content: center;
 }
 
@@ -66,7 +66,14 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
   border: 0;
   color: #0e5abc;
   cursor: pointer;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
@@ -80,14 +87,22 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
 }
 
 .admin-table-footer-load-less-btn-v1:disabled {
-  color: #94a3b8;
+  color: #0e5abc;
   cursor: not-allowed;
+  opacity: 1;
   text-decoration: none;
 }
 
 .admin-table-footer-load-more-count-v1 {
   color: #0e5abc;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
@@ -114,6 +129,7 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   justify-self: stretch;
   margin-left: 0;
+  min-height: 0;
   pointer-events: none;
   position: relative;
   width: 100%;
@@ -130,6 +146,7 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
 [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-load-more-v1 {
   grid-column: 2;
   justify-self: center;
+  margin-inline: 0;
 }
 
 [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-load-less-btn-v1 {
@@ -186,6 +203,8 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
   }
 
   [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-pagination-v1 {
+    width: auto;
+    min-height: 0;
     grid-template-columns: 1fr;
     justify-items: center;
   }
@@ -265,64 +284,84 @@ table tbody tr.admin-table-last-visible-row-v1 > td {
 
 /* APPVERBO_ADMIN_SUBPROCESS_PAGE_SIZE_FONT_PARITY_V2_START */
 /* Keep page-size typography in Entidade, Sessoes and Menu aligned with Utilizador. */
-html body :is(
-  #admin-users-created-card,
-  #recent-users-card,
-  #inactive-users-card,
-  #admin-user-shadow-readonly-card,
-  #admin-user-shadow-inactive-card,
-  #admin-entities-created-card,
-  #active-entities-card,
-  #recent-entities-card,
-  #inactive-entities-card,
-  #admin-entidade-v2-integrated-root,
-  #admin-sidebar-sections-card,
-  #admin-sidebar-sections-card-inactive,
-  #admin-menu-card,
-  #admin-menu-card-inactive
-) :is(
-  .table-footer:not(.admin-table-footer-standard-v1),
-  .table-limiter,
-  .table-limiter-left,
-  .table-footer:not(.admin-table-footer-standard-v1) .entries-per-page,
-  .table-footer:not(.admin-table-footer-standard-v1) .entries-per-page > span,
-  .table-footer:not(.admin-table-footer-standard-v1) .entries-per-page .entries-per-page-label,
-  .admin-subprocess-v2-summary-page-size-label,
-  .admin-subprocess-v2-page-size-label
-) {
+html
+  body
+  :is(
+    #admin-users-created-card,
+    #recent-users-card,
+    #inactive-users-card,
+    #admin-user-shadow-readonly-card,
+    #admin-user-shadow-inactive-card,
+    #admin-entities-created-card,
+    #active-entities-card,
+    #recent-entities-card,
+    #inactive-entities-card,
+    #admin-entidade-v2-integrated-root,
+    #admin-sidebar-sections-card,
+    #admin-sidebar-sections-card-inactive,
+    #admin-menu-card,
+    #admin-menu-card-inactive
+  )
+  :is(
+    .table-footer:not(.admin-table-footer-standard-v1),
+    .table-limiter,
+    .table-limiter-left,
+    .table-footer:not(.admin-table-footer-standard-v1) .entries-per-page,
+    .table-footer:not(.admin-table-footer-standard-v1) .entries-per-page > span,
+    .table-footer:not(.admin-table-footer-standard-v1) .entries-per-page .entries-per-page-label,
+    .admin-subprocess-v2-summary-page-size-label,
+    .admin-subprocess-v2-page-size-label
+  ) {
   color: #6b778c !important;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
   font-size: 11px !important;
   font-weight: 400 !important;
   letter-spacing: 0 !important;
   line-height: 1.2 !important;
 }
 
-html body :is(
-  #admin-users-created-card,
-  #recent-users-card,
-  #inactive-users-card,
-  #admin-user-shadow-readonly-card,
-  #admin-user-shadow-inactive-card,
-  #admin-entities-created-card,
-  #active-entities-card,
-  #recent-entities-card,
-  #inactive-entities-card,
-  #admin-entidade-v2-integrated-root,
-  #admin-sidebar-sections-card,
-  #admin-sidebar-sections-card-inactive,
-  #admin-menu-card,
-  #admin-menu-card-inactive
-) :is(
-  .table-footer:not(.admin-table-footer-standard-v1) select,
-  .entries-per-page select,
-  .table-limiter-select,
-  .admin-table-footer-standard-select-v1,
-  .admin-subprocess-v2-summary-page-size-select,
-  .admin-subprocess-v2-page-size-select
-) {
+html
+  body
+  :is(
+    #admin-users-created-card,
+    #recent-users-card,
+    #inactive-users-card,
+    #admin-user-shadow-readonly-card,
+    #admin-user-shadow-inactive-card,
+    #admin-entities-created-card,
+    #active-entities-card,
+    #recent-entities-card,
+    #inactive-entities-card,
+    #admin-entidade-v2-integrated-root,
+    #admin-sidebar-sections-card,
+    #admin-sidebar-sections-card-inactive,
+    #admin-menu-card,
+    #admin-menu-card-inactive
+  )
+  :is(
+    .table-footer:not(.admin-table-footer-standard-v1) select,
+    .entries-per-page select,
+    .table-limiter-select,
+    .admin-table-footer-standard-select-v1,
+    .admin-subprocess-v2-summary-page-size-select,
+    .admin-subprocess-v2-page-size-select
+  ) {
   color: #25385a !important;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif !important;
   font-size: 11px !important;
   font-weight: 400 !important;
   line-height: 1.2 !important;
@@ -331,7 +370,9 @@ html body :is(
 
 /* APPVERBO_SETTINGS_MENU_EDIT_FOOTER_ALIGN_V1_START */
 #settings-tab-geral [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-pagination-v1,
-#settings-tab-campos-config [data-admin-table-footer-mode-v1="load_more"] .admin-table-footer-pagination-v1 {
+#settings-tab-campos-config
+  [data-admin-table-footer-mode-v1="load_more"]
+  .admin-table-footer-pagination-v1 {
   align-items: end;
 }
 /* APPVERBO_SETTINGS_MENU_EDIT_FOOTER_ALIGN_V1_END */

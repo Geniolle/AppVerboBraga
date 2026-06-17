@@ -887,52 +887,30 @@ def get_page_data(
         except Exception:
             pass
 
-    # Inject custom_entidade into administrativo process_visible_field_rows / process_field_options
-    # so the "Entidade" column appears in the Perfil de autorização report view.
-    _AUTH_ENTIDADE_FIELD_KEY = "custom_entidade"
+    # Inject all Perfil de Autorização section fields into the administrativo menu at runtime.
+    # Fields are appended in display order; idempotent (each key injected at most once).
     _AUTH_SECTION_HEADER_KEY = "custom_perfil_de_autorizacao"
-    for _sm in sidebar_menu_settings:
-        if str(_sm.get("key") or "").strip().lower() != "administrativo":
-            continue
-        _pvfr = _sm.get("process_visible_field_rows")
-        if not isinstance(_pvfr, list):
-            _pvfr = []
-            _sm["process_visible_field_rows"] = _pvfr
-        if not any(
-            str(r.get("field_key") or "").strip().lower() == _AUTH_ENTIDADE_FIELD_KEY
-            for r in _pvfr
-        ):
-            insert_idx = next(
-                (
-                    i for i, r in enumerate(_pvfr)
-                    if str(r.get("header_key") or "").strip().lower() == _AUTH_SECTION_HEADER_KEY
-                ),
-                len(_pvfr),
-            )
-            _pvfr.insert(insert_idx, {
-                "field_key": _AUTH_ENTIDADE_FIELD_KEY,
-                "header_key": _AUTH_SECTION_HEADER_KEY,
-            })
-        _pfo = _sm.get("process_field_options")
-        if not isinstance(_pfo, list):
-            _pfo = []
-            _sm["process_field_options"] = _pfo
-        if not any(
-            str(item.get("key") or "").strip().lower() == _AUTH_ENTIDADE_FIELD_KEY
-            for item in _pfo
-        ):
-            _pfo.append({
-                "key": _AUTH_ENTIDADE_FIELD_KEY,
-                "label": "Entidade",
-                "field_type": "text",
-            })
-        break
-
-    # Inject custom_visibilidade (visibility_scope_mode) into the authorization rule form
-    _AUTH_VISIBILIDADE_FIELD_KEY = "custom_visibilidade"
     _AUTH_VISIBILIDADE_OPTIONS = [
         {"label": "Esta entidade", "value": "Esta entidade"},
         {"label": "Todos os sistemas", "value": "Todos os sistemas"},
+    ]
+    _AUTH_PVFR_ENTRIES = [
+        "custom_nome_do_perfil",
+        "custom_processo",
+        "custom_subprocesso",
+        "custom_entidade",
+        "custom_visibilidade",
+    ]
+    _AUTH_PFO_ENTRIES = [
+        {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
+        {"key": "custom_processo", "label": "Processo", "field_type": "list", "list_key": "list_auth_processo"},
+        {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "list", "list_key": "list_auth_subprocesso"},
+        {"key": "custom_entidade", "label": "Entidade", "field_type": "text"},
+        {"key": "custom_visibilidade", "label": "Sistema", "field_type": "list", "listOptions": _AUTH_VISIBILIDADE_OPTIONS},
+    ]
+    _AUTH_PROCESS_LISTS_ENTRIES = [
+        {"key": "list_auth_processo", "label": "Processo", "source_key": "sidebar_sections", "items": [], "option_rows": []},
+        {"key": "list_auth_subprocesso", "label": "Subprocesso", "source_key": "sidebar_menus_by_section", "items": [], "option_rows": []},
     ]
     for _sm in sidebar_menu_settings:
         if str(_sm.get("key") or "").strip().lower() != "administrativo":
@@ -941,28 +919,26 @@ def get_page_data(
         if not isinstance(_pvfr, list):
             _pvfr = []
             _sm["process_visible_field_rows"] = _pvfr
-        if not any(
-            str(r.get("field_key") or "").strip().lower() == _AUTH_VISIBILIDADE_FIELD_KEY
-            for r in _pvfr
-        ):
-            _pvfr.append({
-                "field_key": _AUTH_VISIBILIDADE_FIELD_KEY,
-                "header_key": _AUTH_SECTION_HEADER_KEY,
-            })
+        _existing_pvfr_keys = {str(r.get("field_key") or "").strip().lower() for r in _pvfr}
+        for _fk in _AUTH_PVFR_ENTRIES:
+            if _fk not in _existing_pvfr_keys:
+                _pvfr.append({"field_key": _fk, "header_key": _AUTH_SECTION_HEADER_KEY})
         _pfo = _sm.get("process_field_options")
         if not isinstance(_pfo, list):
             _pfo = []
             _sm["process_field_options"] = _pfo
-        if not any(
-            str(item.get("key") or "").strip().lower() == _AUTH_VISIBILIDADE_FIELD_KEY
-            for item in _pfo
-        ):
-            _pfo.append({
-                "key": _AUTH_VISIBILIDADE_FIELD_KEY,
-                "label": "Sistema",
-                "field_type": "list",
-                "listOptions": _AUTH_VISIBILIDADE_OPTIONS,
-            })
+        _existing_pfo_keys = {str(o.get("key") or "").strip().lower() for o in _pfo}
+        for _opt in _AUTH_PFO_ENTRIES:
+            if _opt["key"] not in _existing_pfo_keys:
+                _pfo.append(dict(_opt))
+        _pl = _sm.get("process_lists")
+        if not isinstance(_pl, list):
+            _pl = []
+            _sm["process_lists"] = _pl
+        _existing_pl_keys = {str(p.get("key") or "").strip().lower() for p in _pl}
+        for _pli in _AUTH_PROCESS_LISTS_ENTRIES:
+            if _pli["key"] not in _existing_pl_keys:
+                _pl.append(dict(_pli))
         break
 
     empresa_values_by_field = _resolve_empresa_entity_values_v1(

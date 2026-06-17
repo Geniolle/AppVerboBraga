@@ -3197,8 +3197,14 @@ async def update_dynamic_process_profile(request: Request):
             if field_key in entity_auto_populated_keys:
                 continue  # will be auto-populated from session entity
             input_name = f"process_field__{field_key}"
-            clean_value = str(submitted_form.get(input_name) or "").strip()
-            if clean_value:
+            field_type_for_req = _normalize_process_field_type(field_meta.get("field_type"))
+            if field_type_for_req == "multiselect":
+                has_value = bool(
+                    hasattr(submitted_form, "getlist") and submitted_form.getlist(input_name)
+                )
+            else:
+                has_value = bool(str(submitted_form.get(input_name) or "").strip())
+            if has_value:
                 continue
             field_label = str(field_meta.get("label") or field_key).strip() or field_key
             if field_label not in missing_required_labels:
@@ -3257,7 +3263,7 @@ async def update_dynamic_process_profile(request: Request):
             if quantity_storage_key:
                 existing_profile_fields.pop(quantity_storage_key, None)
 
-        submitted_section_values: dict[str, str] = {}
+        submitted_section_values: dict[str, Any] = {}
         for field_key in active_section_field_keys:
             field_meta = field_meta_by_key.get(field_key) or {}
             field_type = _normalize_process_field_type(field_meta.get("field_type"))
@@ -3272,6 +3278,15 @@ async def update_dynamic_process_profile(request: Request):
                 if not absence_process_mode:
                     existing_profile_fields[storage_key] = normalized_flag_value
                 submitted_section_values[field_key] = normalized_flag_value
+                continue
+
+            if field_type == "multiselect":
+                raw_multi = (
+                    [v.strip() for v in submitted_form.getlist(input_name) if v.strip()]
+                    if hasattr(submitted_form, "getlist")
+                    else [v.strip() for v in str(submitted_form.get(input_name) or "").split(",") if v.strip()]
+                )
+                submitted_section_values[field_key] = raw_multi
                 continue
 
             clean_value = str(submitted_form.get(input_name) or "").strip()

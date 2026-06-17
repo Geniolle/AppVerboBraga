@@ -79,6 +79,7 @@ def build_admin_subprocess_state_from_repository(
 
     rows = repository.list_rows(session, context or {})
     edit_data = None
+    field_options = repository.get_field_options(session, context or {})
 
     if str(edit_key or "").strip():
         edit_data = repository.get_for_edit(
@@ -97,4 +98,5 @@ def build_admin_subprocess_state_from_repository(
         success=success,
         error=error,
         return_url=return_url,
+        field_options=field_options,
     )

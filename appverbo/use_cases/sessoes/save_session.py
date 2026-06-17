@@ -79,7 +79,7 @@ def normalize_save_session_input_v1(
     section_status: str,
     section_status_override: str,
     section_entity_internal_number: str = "",
-    section_perfil: str = "",
+    section_department: str = "",
     sidebar_section_return_url: str,
 ) -> dict[str, str]:
     return {
@@ -89,7 +89,7 @@ def normalize_save_session_input_v1(
         "section_visibility_scope_mode": str(section_visibility_scope_mode or "").strip(),
         "section_status": str(section_status_override or section_status or "").strip(),
         "section_entity_internal_number": str(section_entity_internal_number or "").strip(),
-        "section_perfil": str(section_perfil or "").strip(),
+        "section_department": str(section_department or "").strip(),
         "sidebar_section_return_url": str(sidebar_section_return_url or "").strip(),
     }
 
@@ -356,7 +356,7 @@ def execute_save_session_v1(
         section_visibility_scope_mode=payload.get("section_visibility_scope_mode", "all"),
         section_status=payload.get("section_status", "ativo"),
         section_entity_internal_number=payload.get("section_entity_internal_number", ""),
-        section_perfil=payload.get("section_perfil", ""),
+        section_department=payload.get("section_department", ""),
         selected_entity_id=resolved_selected_entity_id,
         current_entity_scope=current_entity_scope,
     )

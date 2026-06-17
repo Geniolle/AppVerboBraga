@@ -11,8 +11,7 @@
     "appverbo-admin-tab-sessoes",
     "appverbo-admin-tab-menu",
     "appverbo-admin-tab-definicoes",
-    "appverbo-admin-tab-contas",
-    "appverbo-admin-tab-perfil"
+    "appverbo-admin-tab-contas"
   ]);
   const SERVER_RENDER_TAB_IDS_V1 = Object.freeze({
     sessoes: Object.freeze([
@@ -35,13 +34,6 @@
       "admin-definicoes-card-edit",
       "admin-definicoes-card",
       "admin-definicoes-card-inactive"
-    ]),
-    perfil: Object.freeze([
-      "menu-tabs-card",
-      "admin-perfil-card-create",
-      "admin-perfil-card-edit",
-      "admin-perfil-card",
-      "admin-perfil-card-inactive"
     ])
   });
 

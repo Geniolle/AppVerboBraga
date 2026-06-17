@@ -13,6 +13,13 @@ class BaseAdminSubprocessRepository(ABC):
     def __init__(self, config: AdminSubprocessConfig) -> None:
         self.config = config
 
+    def get_field_options(
+        self,
+        session: Any,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, tuple[tuple[str, str], ...]]:
+        return {}
+
     @abstractmethod
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         raise NotImplementedError

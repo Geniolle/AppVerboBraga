@@ -191,6 +191,50 @@
   vertical-align: middle;
 }
 
+html body :is(
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-card-inactive
+) .admin-subprocess-table-v1 td[data-admin-column-key="department"] {
+  color: var(--appverbo-admin-card-item-color-v1, #0f1f3a) !important;
+}
+
+html body :is(
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-card-inactive
+) .admin-subprocess-table-v1 td[data-admin-column-key="department"] .admin-subprocess-cell-text-v1 {
+  color: inherit !important;
+  display: inline;
+  font: inherit;
+}
+
+html body :is(
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-card-inactive
+) .admin-subprocess-table-v1 td[data-admin-column-key="department"]:empty::before,
+html body :is(
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-card-inactive
+) .admin-subprocess-table-v1 td[data-admin-column-key="department"] .admin-subprocess-cell-text-v1:empty::before {
+  color: inherit !important;
+  display: inline;
+  font: inherit;
+  white-space: normal;
+}
+
+html body :is(
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-card-inactive
+) .admin-subprocess-table-v1 td[data-admin-column-key="department"]:empty::before {
+  content: attr(data-admin-cell-fallback);
+}
+
+html body :is(
+  #admin-sidebar-sections-card,
+  #admin-sidebar-sections-card-inactive
+) .admin-subprocess-table-v1 td[data-admin-column-key="department"] .admin-subprocess-cell-text-v1:empty::before {
+  content: attr(data-admin-cell-text-v1);
+}
+
 .admin-subprocess-table-v1 th {
   color: #12213a;
   font-size: 11px;

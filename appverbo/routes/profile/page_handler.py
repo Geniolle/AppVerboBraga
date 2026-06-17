@@ -1751,8 +1751,6 @@ def _resolve_initial_menu_target(
             return _resolve_admin_menu_target_v1(settings_edit_key), ""
         if resolved_admin_tab == "definicoes":
             return _resolve_admin_definicoes_target_v1(definition_edit_id), ""
-        if resolved_admin_tab == "perfil":
-            return "#admin-perfil-card", ""
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "sessoes":
@@ -1786,7 +1784,7 @@ def _normalize_admin_tab_menu_v1(raw_admin_tab: object) -> str:
 
     clean_admin_tab = legacy_aliases.get(clean_admin_tab, clean_admin_tab)
 
-    if clean_admin_tab not in {"utilizador", "entidade", "menu", "sessoes", "definicoes", "perfil"}:
+    if clean_admin_tab not in {"utilizador", "entidade", "menu", "sessoes", "definicoes"}:
         return "entidade"
 
     return clean_admin_tab
@@ -1821,9 +1819,6 @@ def _resolve_blank_admin_process_menu_v1(
 
     if clean_admin_tab == "definicoes":
         return "administrativo"
-
-    if clean_admin_tab == "perfil":
-        return "sessoes"
 
     if clean_admin_tab in {"entidade", "utilizador"}:
         return "administrativo"
@@ -2259,7 +2254,6 @@ def new_user_page(
         is_utilizador_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "utilizador"
         is_sessoes_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "sessoes"
         is_definicoes_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "definicoes"
-        is_perfil_tab_v1 = is_admin_menu_scope_v1 and resolved_admin_tab == "perfil"
 
         should_load_entity_context_v1 = bool(
             parsed_entity_edit_id is not None or is_entidade_tab_v1
@@ -2520,7 +2514,6 @@ def new_user_page(
     admin_subprocess_state_v2 = None
     admin_menu_state = None
     admin_subprocess_state_definicoes_v1 = None
-    admin_subprocess_state_perfil_v1 = None
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V2_START
     # Entidade permanece no fluxo legado em /users/new.
@@ -2607,15 +2600,7 @@ def new_user_page(
                     get_sessoes_visible_columns_v2(current_entity_scope_for_sessoes)
                 )
 
-                _sessoes_profiles_v1 = session.execute(
-                    select(Profile)
-                    .where(Profile.is_active.is_(True))
-                    .order_by(Profile.name)
-                ).scalars().all()
-                admin_subprocess_state_v2.field_options["perfil"] = (
-                    ("", "Selecionar perfil"),
-                    *((str(p.id), p.name) for p in _sessoes_profiles_v1),
-                )
+
     elif resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "menu":
         admin_menu_state = build_admin_menu_state(
             rows=[
@@ -2721,29 +2706,6 @@ def new_user_page(
                         menu_rows_for_definicoes_subprocess_options_v1,
                         edit_subprocess_value_v1,
                     )
-                )
-    elif resolved_menu in {"administrativo", "sessoes"} and resolved_admin_tab == "perfil":
-        perfil_subprocess_config_v1 = get_admin_subprocess_config("perfil")
-
-        if perfil_subprocess_config_v1 is not None:
-            with SessionLocal() as perfil_subprocess_session_v1:
-                admin_subprocess_state_perfil_v1 = build_admin_subprocess_state_from_repository(
-                    config=perfil_subprocess_config_v1,
-                    session=perfil_subprocess_session_v1,
-                    edit_key=str(profile_edit_id or "").strip(),
-                    success=settings_success if resolved_admin_tab == "perfil" else "",
-                    error=settings_error if resolved_admin_tab == "perfil" else "",
-                    return_url=build_sessoes_admin_return_url_v2(
-                        admin_tab="perfil",
-                        target="admin-perfil-card",
-                    ),
-                    context={
-                        "page_state": page_state,
-                        "current_user": current_user,
-                        "selected_entity_id": selected_entity_id,
-                        "allowed_entity_ids": entity_permissions["allowed_entity_ids"],
-                        "can_manage_all_entities": entity_permissions["can_manage_all_entities"],
-                    },
                 )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
@@ -2885,17 +2847,12 @@ def new_user_page(
             else (
                 _set_admin_subprocess_show_hints_v1(admin_subprocess_state_definicoes_v1, current_user_is_admin)
                 if resolved_admin_tab == "definicoes"
-                else (
-                    _set_admin_subprocess_show_hints_v1(admin_subprocess_state_perfil_v1, current_user_is_admin)
-                    if resolved_admin_tab == "perfil"
-                    else _set_admin_subprocess_show_hints_v1(admin_subprocess_state_v2, current_user_is_admin)
-                )
+                else _set_admin_subprocess_show_hints_v1(admin_subprocess_state_v2, current_user_is_admin)
             )
         ),
         "admin_subprocess_state_utilizador": admin_subprocess_state_utilizador_v1,
         "admin_subprocess_state_definicoes_v1": admin_subprocess_state_definicoes_v1,
         "admin_subprocess_state_definicoes": admin_subprocess_state_definicoes_v1,
-        "admin_subprocess_state_perfil_v1": admin_subprocess_state_perfil_v1,
         "admin_subprocess_shadow_state_v1": admin_subprocess_state_utilizador_v1,
         "admin_subprocess_shadow_state": admin_subprocess_shadow_state_v1,
         "admin_menu_state": _set_admin_subprocess_show_hints_v1(admin_menu_state, current_user_is_admin),

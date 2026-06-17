@@ -15,8 +15,7 @@
     "appverbo-admin-tab-sessoes",
     "appverbo-admin-tab-menu",
     "appverbo-admin-tab-definicoes",
-    "appverbo-admin-tab-contas",
-    "appverbo-admin-tab-perfil"
+    "appverbo-admin-tab-contas"
   ];
 
   function getCurrentUrlV7() {
@@ -678,13 +677,6 @@
       return url.pathname + url.search + url.hash;
     }
 
-    if (tab === "perfil") {
-      url.searchParams.set("admin_tab", "perfil");
-      url.searchParams.set("target", "admin-perfil-card");
-      url.hash = "admin-perfil-card";
-      return url.pathname + url.search + url.hash;
-    }
-
     return "/users/new?menu=" + resolveMenuKeyForTabV7(tab);
   }
 
@@ -1078,12 +1070,15 @@
         return;
       }
 
-      renderAdminProcessOnlyV7();
+      const menuKey = cleanValueV7(url.searchParams.get("menu")) || getActiveSidebarMenuKeyV7() || "administrativo";
+      const defaultTab = menuKey === "sessoes" ? "sessoes" : "entidade";
 
-      const activeMenu = getActiveSidebarMenuKeyV7() || "administrativo";
-      if (window.history && typeof window.history.replaceState === "function") {
-        window.history.replaceState(window.history.state, document.title, "/users/new?menu=" + activeMenu);
+      if (shouldForceServerRenderForTabV7(defaultTab)) {
+        window.location.assign(buildAdminSubprocessUrlV7(defaultTab));
+        return;
       }
+
+      renderAdminSubprocessV7(defaultTab, { updateUrl: true });
     }
 
     markReadyV7();
@@ -1207,20 +1202,21 @@
           return;
         }
 
-        if (window.history && typeof window.history.replaceState === "function") {
-          window.history.replaceState(window.history.state, document.title, "/users/new?menu=" + activeMenuKeyClick);
+        const firstTab = activeMenuKeyClick === "sessoes" ? "sessoes" : "entidade";
+
+        if (shouldForceServerRenderForTabV7(firstTab)) {
+          window.location.assign(buildAdminSubprocessUrlV7(firstTab));
+          return;
         }
 
-        renderAdminProcessOnlyV7();
+        renderAdminSubprocessV7(firstTab, { updateUrl: true });
         markReadyV7();
       }, 0);
 
       window.setTimeout(function () {
         if (hasCustomSubprocessLinksV7()) {
           exitAdminProcessOnlyModeV7();
-          return;
         }
-        renderAdminProcessOnlyV7();
       }, 80);
       return;
     }

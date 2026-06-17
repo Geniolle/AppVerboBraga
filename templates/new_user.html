@@ -65,8 +65,8 @@
 </noscript>
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260601-admin-status-v11-heading-margin-variable">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260611-topbar-user-avatar-only">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260616-admin-status-v18-footer-disabled-blue">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260616-multiselect-modal-picker-v4">
   <link rel="stylesheet" href="/static/css/modules/default_admin_sidebar_v1.css?v=20260604-default-admin-sidebar-v1">
   <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v5-lyrics-preview">
   <style>
@@ -92,10 +92,11 @@
 
 <script src="/static/js/modules/admin_subprocesses_v2.js?v=20260507-admin-subprocess-v2-search-v1" defer></script>
 <script src="/static/js/modules/admin_subprocesses_v2_integration.js?v=20260511-entidade-v2-target-v1" defer></script>
-<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260614-sessoes-perfil-5col-responsive-v1">
+<link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260617-sessoes-department-cell-fallback-v2">
 <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-bloquear-sessoes-sidebar-legado-v39" defer></script>
+<script src="/static/js/modules/admin_subprocess_cell_fallback_v1.js?v=20260617-sessoes-department-cell-fallback-v2" defer></script>
 {% if current_user_is_admin %}<script>window.APPVERBO_ADMIN_FIELD_HINTS_V1 = true;</script>{% endif %}
-<script src="/static/js/modules/admin_field_hints_v1.js?v=20260615-admin-field-hints-v1" defer></script>
+<script src="/static/js/modules/admin_field_hints_v1.js?v=20260616-admin-field-hints-v5-no-table-in-fields" defer></script>
 <script src="/static/js/modules/menu_context_guard_v1.js?v=20260516-contexto-meu-perfil-v2" defer></script>
   <script src="/static/js/modules/profile_field_order.js?v=20260527-profile-field-order-v5-menu-order-priority" defer></script>
   <script src="/static/js/modules/admin_menu_scope_guard_v1.js?v=20260526-admin-menu-scope-v3-bypass-v7-nav" defer></script>
@@ -176,7 +177,7 @@
 })();
 </script>
       <link rel="stylesheet" href="/static/css/modules/admin_table_header_details_fix_v1.css?v=20260511-admin-table-header-details-fix-v2">
-  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260603-admin-subprocess-nav-v16-clean-admin-context" defer></script>
+  <script src="/static/js/modules/appverbo_navigation_smooth_v7.js?v=20260616-remove-perfil-tab-v1" defer></script>
   <script src="/static/js/modules/appverbo_subprocess_active_guard_v1.js?v=20260525-aba-ativa-subprocessos-v2-bypass-v7" defer></script>
   {# APPVERBO_MENU_NATIVE_ISOLATION_DISABLED_V1: desativado para evitar ocultar cards do subprocesso Menu #}
 <script>
@@ -244,7 +245,7 @@
 <!-- APPVERBO_PAGINA_DEFAULT_REFRESH_HOME_V1_END -->
 
   <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_config_v1.css?v=20260516-admin-footer-config-v1">
-  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260614-admin-footer-standard-load-more-click-fix-v14">
+  <link rel="stylesheet" href="/static/css/modules/admin_table_footer_standard_v1.css?v=20260616-admin-footer-standard-v23-process-editor-parity-clean">
 {% endblock %}
 
 {% block body %}
@@ -271,9 +272,6 @@
         {% endif %}
         {% if admin_tab == "definicoes" and admin_subprocess_state_definicoes_v1 %}
           {{ render_admin_subprocess_state(admin_subprocess_state_definicoes_v1) }}
-        {% endif %}
-        {% if admin_tab == "perfil" and admin_subprocess_state_perfil_v1 %}
-          {{ render_admin_subprocess_state(admin_subprocess_state_perfil_v1) }}
         {% endif %}
         <!-- APPVERBO_TOPCENTRAL_ACIMA_SESSOES_V39_END -->
 
@@ -578,7 +576,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         <input type="hidden" name="redirect_target" value="#admin-menu-card">
         <div class="grid settings-general-grid settings-general-grid-menu-geral">
           <div class="field">
-            <label for="settings_create_menu_label">Nome do menu *{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_label)</span>{% endif %}</label>
+            <label for="settings_create_menu_label">Nome do menu *{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(sidebar_menu_settings · menu_config · menu_label)</span>{% endif %}</label>
             <input
               id="settings_create_menu_label"
               name="menu_label"
@@ -588,7 +586,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             >
           </div>
           <div class="field">
-            <label for="settings_create_menu_visibility_scope">Exibir no sistema{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_visibility_scope)</span>{% endif %}</label>
+            <label for="settings_create_menu_visibility_scope">Exibir no sistema{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(sidebar_menu_settings · menu_config · menu_visibility_scope)</span>{% endif %}</label>
             <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
               <option value="all" selected>Default</option>
               <option value="owner">Owner</option>
@@ -596,7 +594,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             </select>
           </div>
           <div class="field">
-            <label for="settings_create_menu_section">Sessão{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(menu_section)</span>{% endif %}</label>
+            <label for="settings_create_menu_section">Sessão{% if current_user_is_admin %} <span class="admin-field-input-hint-v1">(sidebar_menu_settings · menu_config · menu_section)</span>{% endif %}</label>
             <select id="settings_create_menu_section" name="menu_section">
               {% for section_option in admin_menu_section_options_v1 %}
               <option value="{{ section_option.key }}">{{ section_option.label }}</option>
@@ -634,6 +632,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <section id="admin-menu-card"
          class="card process-window-card appverbo-admin-menu-visible-render-v1" data-admin-card-group="menu" data-admin-card-role="active"
          data-menu-scope="administrativo,sessoes"
+         data-admin-table-footer-enabled-v1="1"
+         data-admin-table-footer-mode-v1-preferred="load_more"
          data-admin-menu-visible-render="true"
          data-admin-menu-table-card="active"
          style="display:block !important; visibility:visible !important; opacity:1 !important;">
@@ -744,6 +744,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <section id="admin-menu-card-inactive"
          class="card process-window-card appverbo-admin-menu-visible-render-v1" data-admin-card-group="menu" data-admin-card-role="inactive"
          data-menu-scope="administrativo,sessoes"
+         data-admin-table-footer-enabled-v1="1"
+         data-admin-table-footer-mode-v1-preferred="load_more"
          data-admin-menu-table-card="inactive">
 
   <div class="admin-menu-table-header-v1">
@@ -1920,7 +1922,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         </section>
         {% endif %}
 
-        <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
+        <section id="recent-entities-card" class="card" data-menu-scope="administrativo" data-admin-subprocess="entidade" data-admin-card-group="entidade" data-admin-card-role="active" data-admin-table-footer-enabled-v1="1" data-admin-table-footer-mode-v1-preferred="load_more">
           <h2 class="admin-subprocess-active-title-v1">{% if current_user_can_manage_all_entities %}Entidades ativas{% else %}Dados gerais{% endif %}</h2>
           {% set active_recent_entities = recent_entities | list %}
           {% if not current_user_can_manage_all_entities %}
@@ -2015,7 +2017,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         </section>
 
         {% if current_user_can_manage_all_entities %}
-        <section id="inactive-entities-card" class="card" data-menu-scope="administrativo">
+        <section id="inactive-entities-card" class="card" data-menu-scope="administrativo" data-admin-subprocess="entidade" data-admin-card-group="entidade" data-admin-card-role="inactive" data-admin-table-footer-enabled-v1="1" data-admin-table-footer-mode-v1-preferred="load_more">
           <h2>Entidades inativas</h2>
           {% set inactive_entities_rows = inactive_entities if inactive_entities else (recent_entities | rejectattr("is_active") | list) %}
           {% if inactive_entities_rows %}
@@ -2487,7 +2489,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260614-core-footer-load-more-shared-v7"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260614-additional-fields-search-v4"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260614-process-lists-search-v4"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260616-process-lists-column-sort"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260614-process-quantity-search-v4"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260614-subsequent-search-v4"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260601-admin-table-search-v5-reusable-subprocess-toolbar"></script>
@@ -2509,16 +2511,16 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <script src="/static/js/modules/meu_perfil_edit_section_filter_v1.js?v=20260525-edit-section-filter-module-v1" defer></script>
 <script src="/static/js/modules/keep_current_process_after_profile_save_v1.js?v=20260525-keep-current-process-module-v1" defer></script>
 <script src="/static/js/modules/process_sections_builder_v1.js?v=20260601-process-sections-builder-shared-value-v2" defer></script>
-<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260608-dynamic-runtime-core-v19-file-reload" defer></script>
-<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260611-dynamic-process-history-renderer-v14-compact-table" defer></script>
+<script src="/static/js/modules/dynamic_process_runtime_core_v1.js?v=20260616-dynamic-runtime-core-v30-cascade-all-opt" defer></script>
+<script src="/static/js/modules/dynamic_process_history_renderer_v1.js?v=20260616-dynamic-process-history-renderer-v18-entity-fill" defer></script>
 <script src="/static/js/modules/song_process_ui_v1.js?v=20260602-song-process-ui-v3-layout" defer></script>
-<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260611-process-subprocess-standards-v10-definicoes-to-administrativo" defer></script>
+<script src="/static/js/modules/process_subprocess_standards_v1.js?v=20260616-remove-perfil-tab-v1" defer></script>
 <script src="/static/js/modules/menu_dynamic_navigation_core_v1.js?v=20260606-menu-dynamic-navigation-core-v13-sessoes" defer></script>
 <script src="/static/js/modules/menu_navigation_controller_v1.js?v=20260603-menu-navigation-controller-v10-dynamic-link-active" defer></script>
 <script src="/static/js/modules/submenu_overflow_menu_v2.js?v=20260526-submenu-overflow-file-v9-process-edit-menu" defer></script>
 <script src="/static/js/modules/menu_navigation_facade_v1.js?v=20260526-menu-navigation-facade-process-title-v2" defer></script>
 <script src="/static/js/modules/menu_config_runtime_v1.js?v=20260525-menu-config-runtime-module-v1" defer></script>
-<script src="/static/js/modules/process_field_utils_v1.js?v=20260608-process-field-utils-file-type-v2" defer></script>
+<script src="/static/js/modules/process_field_utils_v1.js?v=20260616-process-field-utils-multiselect-v3" defer></script>
 <script src="/static/js/modules/process_subsequent_rules_utils_v1.js?v=20260529-process-subsequent-rules-utils-bootstrap-fix-v1" defer></script>
 <script src="/static/js/modules/process_quantity_rules_utils_v1.js?v=20260525-process-quantity-rules-utils-module-v1" defer></script>
 <script src="/static/js/modules/process_history_labels_utils_v1.js?v=20260602-process-history-labels-utils-module-v3-generic-history-layout" defer></script>
@@ -2563,5 +2565,5 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
       <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260511-disable-sidebar-global-refresh-polling-noop-v2"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260614-fields-config-search-v4"></script>
-  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260614-admin-footer-standard-v6-menu-load-more" defer></script>
+  <script src="/static/js/modules/admin_table_footer_standard_v2.js?v=20260617-admin-footer-standard-v14-keep-load-more-visible" defer></script>
 {% endblock %}

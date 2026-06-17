@@ -1305,6 +1305,177 @@ body.appverbo-hide-submenu-tabs-v1 #menu-tabs-card {
   display: none !important;
 }
 
+/* Modal picker (field_type: multiselect) ─────────────────────────────── */
+
+/* Picker inline: summary text + edit button */
+.appverbo-ms-picker-v1 {
+  width: 100%;
+}
+
+/* Área clicável única */
+.appverbo-ms-inner-v1 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1.5px solid #3d5a99;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  box-sizing: border-box;
+  transition: background 0.15s, border-color 0.15s;
+  outline: none;
+}
+
+.appverbo-ms-inner-v1:hover,
+.appverbo-ms-inner-v1:focus {
+  background: #eef2fb;
+  border-color: #2a3f6f;
+}
+
+/* Estado vazio: texto e ícone em azul */
+.appverbo-ms-inner-empty-v1 .appverbo-ms-icon-v1,
+.appverbo-ms-inner-empty-v1 .appverbo-ms-summary-v1 {
+  color: #3d5a99;
+}
+
+/* Estado com valores: ícone discreto, texto escuro */
+.appverbo-ms-icon-v1 {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #888;
+  line-height: 1;
+}
+
+.appverbo-ms-summary-v1 {
+  flex: 1;
+  font-size: 13px;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Modal overlay */
+.appverbo-ms-backdrop-v1 {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appverbo-ms-modal-v1 {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  width: 380px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.appverbo-ms-modal-header-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.appverbo-ms-modal-header-v1 h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+}
+
+.appverbo-ms-modal-close-v1 {
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0 4px;
+}
+
+.appverbo-ms-modal-close-v1:hover { color: #333; }
+
+.appverbo-ms-modal-body-v1 {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 18px;
+}
+
+.appverbo-ms-modal-row-v1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.appverbo-ms-modal-row-v1:last-child { border-bottom: none; }
+
+.appverbo-ms-modal-row-v1 input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: #3d5a99;
+  cursor: pointer;
+}
+
+.appverbo-ms-modal-row-v1:hover { background: #f7f9fc; }
+
+.appverbo-ms-modal-empty-v1 {
+  color: #999;
+  font-size: 13px;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.appverbo-ms-modal-footer-v1 {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 18px;
+  border-top: 1px solid #eee;
+}
+
+.appverbo-ms-confirm-btn-v1 {
+  padding: 7px 18px;
+  background: #3d5a99;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.appverbo-ms-confirm-btn-v1:hover { background: #2d4a89; }
+
+.appverbo-ms-cancel-btn-v1 {
+  padding: 7px 18px;
+  background: #fff;
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.appverbo-ms-cancel-btn-v1:hover { background: #f5f5f5; }
+
 .profile-edit-toggle {
   margin: 0;
   padding: 8px 12px;

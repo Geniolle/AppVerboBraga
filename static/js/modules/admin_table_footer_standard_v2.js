@@ -13,17 +13,14 @@
     ".admin-subprocess-table-card-v1",
     ".admin-subprocess-v2-card",
     ".admin-user-shadow-readonly-card-v1",
-    "#admin-users-created-card",
-    "#inactive-users-card",
     "#admin-user-shadow-readonly-card",
     "#admin-user-shadow-inactive-card",
     "#admin-menu-card",
     "#admin-menu-card-inactive",
-    "#recent-entities-card",
-    "#inactive-entities-card",
     "[data-admin-subprocess]",
     "[data-admin-subprocess-shadow='utilizador']",
     "[data-admin-subprocess-shadow='utilizador-inactive']",
+    "[data-admin-table-footer-enabled-v1='1']",
   ].join(",");
   const TEMP_PAGE_SIZE_QUERY_PREFIX_V2 = "appverbo_table_page_size_";
 
@@ -63,6 +60,20 @@
       .replace(/"/g, "&quot;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+  }
+
+  function readPreferredPaginationModeV2(element) {
+    const preferredMode = element
+      ? toSafeStringV2(element.getAttribute("data-admin-table-footer-mode-v1-preferred"))
+          .trim()
+          .toLowerCase()
+      : "";
+
+    if (preferredMode === "load_more" || preferredMode === "pages") {
+      return preferredMode;
+    }
+
+    return "";
   }
 
   function ensureElementIdV2(element, prefix) {
@@ -173,7 +184,7 @@
     const paginationHtml =
       paginationMode === "load_more"
         ? [
-            '  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">',
+            '  <div class="admin-table-footer-pagination-v1" data-admin-table-footer-pagination-v1="1">',
             '    <div class="admin-table-footer-load-more-v1">',
             '      <button type="button" class="admin-table-footer-load-more-btn-v1" data-admin-table-footer-next-v1="1">Mais</button>',
             '      <span class="admin-table-footer-load-more-count-v1" data-admin-table-footer-page-v1="1">[ 0 / 0 ]</span>',
@@ -182,7 +193,7 @@
             "  </div>",
           ].join("")
         : [
-            '  <div class="admin-table-footer-pagination-v1 pagination" data-admin-table-footer-pagination-v1="1">',
+            '  <div class="admin-table-footer-pagination-v1" data-admin-table-footer-pagination-v1="1">',
             '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Pagina anterior" data-admin-table-footer-prev-v1="1" disabled>&#8249;</button>',
             '    <span class="admin-table-footer-page-v1 active" aria-current="page" data-admin-table-footer-page-v1="1">1</span>',
             '    <button type="button" class="admin-table-footer-nav-btn-v1" aria-label="Proxima pagina" data-admin-table-footer-next-v1="1" disabled>&#8250;</button>',
@@ -191,7 +202,7 @@
     const ariaLabel = toSafeStringV2(safeConfig.ariaLabel || "Entradas por página");
 
     return [
-      '<div class="admin-table-footer-standard-v1 table-footer admin-status-table-footer-v1" data-admin-table-footer-standard-v1="1"' +
+      '<div class="admin-table-footer-standard-v1" data-admin-table-footer-standard-v1="1"' +
         (tableId ? ' data-admin-table-id="' + escapeAttributeV2(tableId) + '"' : "") +
         ' data-admin-table-footer-mode-v1="' +
         escapeAttributeV2(paginationMode) +
@@ -232,6 +243,10 @@
   function cardLooksLikeAdminListV2(cardEl) {
     if (!cardEl) {
       return false;
+    }
+
+    if (cardEl.getAttribute("data-admin-table-footer-enabled-v1") === "1") {
+      return true;
     }
 
     if (cardEl.matches(ADMIN_LIST_CARD_SELECTOR_V2)) {
@@ -283,10 +298,21 @@
   }
 
   function resolvePaginationModeForTableV2(tableEl) {
+    const preferredMode =
+      readPreferredPaginationModeV2(tableEl) ||
+      readPreferredPaginationModeV2(tableEl ? getCardForElementV2(tableEl) : null);
+
+    if (preferredMode) {
+      return preferredMode;
+    }
+
     if (isMenuTableV2(tableEl)) {
       return "load_more";
     }
-    if (tableEl && tableEl.closest(".admin-subprocess-table-card-v1")) {
+    if (
+      tableEl &&
+      tableEl.closest(".admin-subprocess-table-card-v1, .admin-subprocess-v2-list-card")
+    ) {
       return "load_more";
     }
     return "pages";
@@ -472,8 +498,9 @@
         formatCounterNumberV2(totalRows) +
         " ]";
       state.prevEl.disabled = state.currentPage <= 1;
+      state.prevEl.style.display = state.currentPage <= 1 ? "none" : "";
       state.nextEl.disabled = visibleRows.length >= totalRows;
-      state.nextEl.style.display = visibleRows.length >= totalRows ? "none" : "";
+      state.nextEl.style.display = "";
     } else {
       const startIndex = (state.currentPage - 1) * state.pageSize;
       const endIndex = startIndex + state.pageSize;
@@ -489,6 +516,7 @@
       state.pageEl.textContent = String(state.currentPage);
       state.prevEl.disabled = state.currentPage <= 1;
       state.nextEl.disabled = state.currentPage >= totalPages;
+      state.prevEl.style.display = "";
       state.nextEl.style.display = "";
     }
 

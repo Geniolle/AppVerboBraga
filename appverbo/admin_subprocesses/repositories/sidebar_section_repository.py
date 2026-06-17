@@ -6,7 +6,7 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from appverbo.admin_subprocesses.common.row_action_access import (
     build_admin_subprocess_row_action_access_v1,
@@ -30,6 +30,21 @@ from appverbo.menu_settings import (
     update_sidebar_sections_v2,
 )
 from appverbo.services.entity_scope import build_entity_scope_display_v1
+from appverbo.models.department import Department
+
+
+_DEPARTMENT_LABELS: dict[str, str] = {
+    "tesouraria": "Tesouraria",
+}
+
+
+def _resolve_department_label_v1(department: str) -> str:
+    clean_department = str(department or "").strip()
+
+    if not clean_department:
+        return ""
+
+    return _DEPARTMENT_LABELS.get(clean_department, clean_department)
 
 
 SESSION_STATUS_ACTIVE_V1 = "ativo"
@@ -93,6 +108,106 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         return coerce_entity_scope_id_v1(
             clean_context.get("selected_entity_id") or clean_context.get("entity_id")
         )
+
+    def _resolve_allowed_entity_ids_from_context(
+        self,
+        context: dict[str, Any] | None,
+    ) -> tuple[int, ...]:
+        clean_context = context or {}
+        raw_allowed_entity_ids = clean_context.get("allowed_entity_ids")
+
+        if not isinstance(raw_allowed_entity_ids, (list, tuple, set)):
+            return ()
+
+        normalized_allowed_entity_ids: list[int] = []
+
+        for raw_entity_id in raw_allowed_entity_ids:
+            parsed_entity_id = coerce_entity_scope_id_v1(raw_entity_id)
+
+            if parsed_entity_id is None:
+                continue
+
+            normalized_allowed_entity_ids.append(parsed_entity_id)
+
+        return tuple(sorted(set(normalized_allowed_entity_ids)))
+
+    def _append_select_option_v1(
+        self,
+        options: list[tuple[str, str]],
+        seen_values: set[str],
+        *,
+        value: object,
+        label: object | None = None,
+    ) -> None:
+        clean_value = self._normalize_text(value)
+        clean_label = self._normalize_text(label if label is not None else value)
+
+        if not clean_value or not clean_label or clean_value in seen_values:
+            return
+
+        seen_values.add(clean_value)
+        options.append((clean_value, clean_label))
+
+    def _load_department_field_options_v1(
+        self,
+        *,
+        session: Any,
+        context: dict[str, Any] | None = None,
+    ) -> tuple[tuple[str, str], ...]:
+        selected_entity_id = self._resolve_selected_entity_id_from_context(context)
+        allowed_entity_ids = self._resolve_allowed_entity_ids_from_context(context)
+        target_entity_ids: tuple[int, ...] = (
+            (selected_entity_id,)
+            if selected_entity_id is not None
+            else allowed_entity_ids
+        )
+
+        options: list[tuple[str, str]] = [("", "")]
+        seen_values: set[str] = {""}
+
+        if target_entity_ids:
+            department_rows = session.execute(
+                select(Department.name)
+                .where(
+                    Department.entity_id.in_(target_entity_ids),
+                    Department.is_active.is_(True),
+                )
+                .order_by(Department.name.asc())
+            ).scalars().all()
+
+            for department_name in department_rows:
+                self._append_select_option_v1(
+                    options,
+                    seen_values,
+                    value=department_name,
+                )
+
+        for row in self.read_sidebar_sections(
+            session=session,
+            selected_entity_id=selected_entity_id,
+        ):
+            self._append_select_option_v1(
+                options,
+                seen_values,
+                value=row.get("department"),
+                label=_resolve_department_label_v1(
+                    str(row.get("department") or "").strip()
+                ),
+            )
+
+        return tuple(options)
+
+    def get_field_options(
+        self,
+        session: Any,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, tuple[tuple[str, str], ...]]:
+        return {
+            "department": self._load_department_field_options_v1(
+                session=session,
+                context=context,
+            ),
+        }
 
     def _slugify_session_key(self, value: object) -> str:
         raw_value = self._normalize_text(value).lower()
@@ -466,7 +581,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                 "label": row.get("label"),
                 "visibility_scope_mode": row.get("visibility_scope_mode"),
                 "status": row.get("status"),
-                "perfil": str(row.get("perfil") or "").strip(),
+                "department": str(row.get("department") or "").strip(),
             }
             for row in rows
             if self._normalize_key(row.get("key"))
@@ -535,7 +650,8 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             "status_label": self._session_status_label(clean_status),
             "is_active": clean_status == SESSION_STATUS_ACTIVE_V1,
             "can_delete": clean_key not in SIDEBAR_SECTION_DEFAULTS_BY_KEY,
-            "perfil": str(raw_row.get("perfil") or "").strip(),
+            "department": str(raw_row.get("department") or "").strip(),
+            "department_label": _resolve_department_label_v1(str(raw_row.get("department") or "").strip()),
         }
 
     def _append_missing_defaults(
@@ -680,8 +796,8 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         if not isinstance(raw_sections_after_legacy, list):
             raw_sections_after_legacy = []
 
-        perfil_by_key = {
-            self._normalize_key(row.get("key")): str(row.get("perfil") or "").strip()
+        department_by_key = {
+            self._normalize_key(row.get("key")): str(row.get("department") or "").strip()
             for row in normalized_payload_rows
             if self._normalize_key(row.get("key"))
         }
@@ -708,7 +824,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
             normalized_row["status_label"] = self._session_status_label(normalized_row["status"])
             normalized_row["is_active"] = normalized_row["status"] == SESSION_STATUS_ACTIVE_V1
             normalized_row["can_delete"] = clean_key not in SIDEBAR_SECTION_DEFAULTS_BY_KEY
-            normalized_row["perfil"] = perfil_by_key.get(clean_key, normalized_row.get("perfil", ""))
+            normalized_row["department"] = department_by_key.get(clean_key, normalized_row.get("department", ""))
             patched_rows.append(normalized_row)
 
         patched_rows = self._append_missing_defaults(patched_rows)
@@ -1032,7 +1148,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         section_visibility_scope_mode: str,
         section_status: str,
         section_entity_internal_number: str = "",
-        section_perfil: str = "",
+        section_department: str = "",
         selected_entity_id: object = None,
         current_entity_scope: object = "",
     ) -> tuple[bool, str, str]:
@@ -1043,7 +1159,8 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
         clean_status = self.normalize_session_status(section_status)
         clean_current_entity_scope = self._normalize_key(current_entity_scope)
         clean_entity_internal_number = self._normalize_text(section_entity_internal_number)
-        clean_perfil = self._normalize_text(section_perfil)
+        raw_department = self._normalize_text(section_department)
+        clean_department = "" if raw_department == "all" else raw_department
         parsed_selected_entity_id = coerce_entity_scope_id_v1(selected_entity_id)
 
         if not clean_label:
@@ -1116,7 +1233,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                             "label": clean_label,
                             "visibility_scope_mode": clean_scope_mode,
                             "status": clean_status,
-                            "perfil": clean_perfil,
+                            "department": clean_department,
                         }
                     )
                 else:
@@ -1126,7 +1243,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                             "label": row.get("label"),
                             "visibility_scope_mode": row.get("visibility_scope_mode"),
                             "status": row.get("status"),
-                            "perfil": str(row.get("perfil") or "").strip(),
+                            "department": str(row.get("department") or "").strip(),
                         }
                     )
 
@@ -1147,7 +1264,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                         "label": row.get("label"),
                         "visibility_scope_mode": row.get("visibility_scope_mode"),
                         "status": row.get("status"),
-                        "perfil": str(row.get("perfil") or "").strip(),
+                        "department": str(row.get("department") or "").strip(),
                     }
                 )
 
@@ -1157,7 +1274,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                     "label": clean_label,
                     "visibility_scope_mode": clean_scope_mode,
                     "status": clean_status,
-                    "perfil": clean_perfil,
+                    "department": clean_department,
                 }
             )
 
@@ -1222,6 +1339,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                 "label": row.get("label"),
                 "visibility_scope_mode": row.get("visibility_scope_mode"),
                 "status": row.get("status"),
+                "department": str(row.get("department") or "").strip(),
             }
             for row in current_rows
         ]
@@ -1337,6 +1455,7 @@ class SidebarSectionAdminRepository(BaseAdminSubprocessRepository):
                     "label": row.get("label"),
                     "visibility_scope_mode": row.get("visibility_scope_mode"),
                     "status": row.get("status"),
+                    "department": str(row.get("department") or "").strip(),
                 }
             )
 
