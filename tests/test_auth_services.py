@@ -9,9 +9,13 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
+    Profile,
     User,
     UserAccountStatus,
+    UserProfile,
 )
+from appverbo.admin_subprocesses.repositories.user_repository import UserAdminRepository
+from appverbo.admin_subprocesses.utilizador.configuracao import UTILIZADOR_CONFIG
 from appverbo.services.auth import (
     build_user_invite_token,
     ensure_user_for_member,
@@ -37,7 +41,9 @@ def _build_session_factory():
             Entity.__table__,
             Member.__table__,
             MemberEntity.__table__,
+            Profile.__table__,
             User.__table__,
+            UserProfile.__table__,
         ],
     )
     return sessionmaker(bind=engine, future=True)
@@ -178,3 +184,47 @@ def test_upsert_user_by_email_creates_user_for_existing_member_without_account()
             )
         ).scalar_one_or_none()
         assert link is not None
+
+
+def test_delete_inactive_user_physically_removes_user_and_profiles() -> None:
+    SessionLocal = _build_session_factory()
+    repository = UserAdminRepository(UTILIZADOR_CONFIG)
+
+    with SessionLocal() as session:
+        member = Member(
+            full_name="Ana Lopes",
+            primary_phone="912333444",
+            email="ana.lopes@example.com",
+            member_status=MemberStatus.ACTIVE.value,
+        )
+        profile = Profile(
+            name="Admin",
+            is_active=True,
+        )
+        session.add_all([member, profile])
+        session.flush()
+
+        user = User(
+            member_id=member.id,
+            login_email="ana.lopes@example.com",
+            password_hash=hash_password("SenhaForte123!"),
+            account_status=UserAccountStatus.INACTIVE.value,
+        )
+        session.add(user)
+        session.flush()
+
+        session.add(
+            UserProfile(
+                user_id=user.id,
+                profile_id=profile.id,
+                is_active=True,
+            )
+        )
+        session.commit()
+
+        repository.delete_inactive_user(session=session, user=user)
+        session.commit()
+
+        assert session.get(User, user.id) is None
+        assert session.scalar(select(func.count()).select_from(UserProfile)) == 0
+        assert session.get(Member, member.id) is not None

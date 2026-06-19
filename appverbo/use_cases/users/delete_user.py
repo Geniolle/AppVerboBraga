@@ -137,7 +137,7 @@ def execute_delete_user(
             )
         )
 
-    return _redirect_v1(success="Utilizador inativado com sucesso.")
+    return _redirect_v1(success="Utilizador eliminado com sucesso.")
 
 
 execute_delete_user_v1 = execute_delete_user

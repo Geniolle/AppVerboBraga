@@ -104,7 +104,7 @@ def execute_delete_user_v1(
             .values(created_by_user_id=None)
         )
         session.execute(delete(UserProfile).where(UserProfile.user_id == parsed_user_id))
-        user.account_status = UserAccountStatus.INACTIVE.value
+        session.delete(user)
 
         try:
             session.commit()
@@ -115,5 +115,5 @@ def execute_delete_user_v1(
             )
 
     return redirect_admin_users_v1(
-        success="Utilizador inativado com sucesso."
+        success="Utilizador eliminado com sucesso."
     )

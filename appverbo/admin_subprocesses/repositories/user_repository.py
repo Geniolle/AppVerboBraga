@@ -949,4 +949,4 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
     ) -> None:
         null_created_by_for_deleted_user(session, int(user.id))
         delete_user_profiles(session, int(user.id))
-        user.account_status = UserAccountStatus.INACTIVE.value
+        session.delete(user)
