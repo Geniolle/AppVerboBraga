@@ -110,23 +110,13 @@
           </nav>
         {% endif %}
       {% endfor %}
-    {# APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_START #}
-    <footer class="appverbo-sidebar-owner-footer" aria-label="Rodape da entidade owner">
-      <div class="appverbo-sidebar-owner-card" aria-label="Entidade owner">
-        <div class="appverbo-sidebar-owner-logo-wrap">
-          {% if sidebar_owner_entity_logo_url %}
-            <img class="appverbo-sidebar-owner-logo" src="{{ sidebar_owner_entity_logo_url }}" alt="Logo da entidade owner">
-          {% else %}
-            <span class="appverbo-sidebar-owner-logo appverbo-sidebar-owner-logo-fallback" aria-hidden="true">
-              {{ (sidebar_owner_entity_name[:1] if sidebar_owner_entity_name else "A")|upper }}
-            </span>
-          {% endif %}
-        </div>
-        <div class="appverbo-sidebar-owner-text">
-          <span class="appverbo-sidebar-owner-name">{{ sidebar_owner_entity_name if sidebar_owner_entity_name else "Owner nao configurado" }}</span>
-        </div>
+    {# APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V10_START #}
+    <footer class="appverbo-sidebar-owner-footer" aria-label="Rodape da marca">
+      <div class="brand-link" aria-label="Chapter v1.01">
+        <span class="logo">𝓖ênesis</span>
+        <span class="version">Chapter v1.01</span>
       </div>
     </footer>
-    {# APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_END #}
+    {# APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V10_END #}
 
 </aside>

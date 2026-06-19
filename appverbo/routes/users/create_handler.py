@@ -89,6 +89,12 @@ def _hydrate_admin_user_create_error_context_v1(
     clean_context["admin_subprocess_shadow_state"] = admin_subprocess_state
     clean_context.setdefault("error", joined_error)
 
+    if selected_entity_id_for_state is not None and not clean_context.get("current_entity_internal_number"):
+        from appverbo.models import Entity as _Entity
+        _ent = session.get(_Entity, int(selected_entity_id_for_state))
+        if _ent is not None:
+            clean_context["current_entity_internal_number"] = str(_ent.internal_number or "")
+
     return clean_context
 
 

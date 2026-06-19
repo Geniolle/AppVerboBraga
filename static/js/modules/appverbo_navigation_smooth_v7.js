@@ -916,6 +916,23 @@
       return !hasSubprocessBlocks;
     }
 
+    // O subprocesso Entidade usa blocos server-render (macro V1).
+    // Quando a pagina inicia noutra aba, ou os blocos foram ocultados por outra aba,
+    // deve recarregar em admin_tab=entidade para garantir que os dados aparecem.
+    if (cleanTab === "entidade") {
+      const entityBlock = document.querySelector(
+        "#recent-entities-card, " +
+        "[data-admin-subprocess='entidade']"
+      );
+      if (!entityBlock) {
+        return true;
+      }
+      const computedDisplay = (typeof getComputedStyle === "function")
+        ? getComputedStyle(entityBlock).display
+        : entityBlock.style.display;
+      return computedDisplay === "none";
+    }
+
     // O subprocesso Utilizador possui blocos server-render (shadow tables).
     // Quando a pagina inicia noutra aba, esses blocos podem nao existir no DOM.
     // Neste caso, o clique deve recarregar em admin_tab=utilizador.

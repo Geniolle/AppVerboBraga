@@ -178,9 +178,8 @@ def send_user_invite_v1(payload: UserInvitePayload) -> UserActionOutcome:
     )
 
     if email_sent:
-        return redirect_admin_users_v1(success="Convite gerado e enviado com sucesso.")
+        return redirect_admin_users_v1(success=f"Convite enviado por email para {payload.recipient_email}.")
 
     return redirect_admin_users_v1(
-        success="Não foi possível enviar email automático.",
-        error=f"{email_error} Link de ativação: {payload.invite_link}",
+        error=f"Falha ao enviar email ({email_error}). Link de ativação manual: {payload.invite_link}",
     )

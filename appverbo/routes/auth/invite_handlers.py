@@ -25,6 +25,69 @@ from appverbo.models import (
 
 from appverbo.routes.auth.router import router
 
+def _bootstrap_contacto_geral_record_v1(
+    session: Session,
+    member: Member,
+    entity_id: int,
+) -> None:
+    entity_internal_number = session.scalar(
+        select(Entity.internal_number).where(Entity.id == entity_id)
+    )
+    if entity_internal_number is None:
+        return
+
+    records_storage_key = build_menu_process_records_storage_key("contacto_geral")
+    target_str = str(entity_internal_number).strip()
+
+    existing_fields = parse_member_profile_fields(member.profile_custom_fields)
+    existing_records = parse_menu_process_records(existing_fields.get(records_storage_key))
+
+    for rec in existing_records:
+        if (
+            str(rec.get("section_key") or "").strip() == "custom_dados_membresia"
+            and str((rec.get("values") or {}).get("custom_n_cliente") or "").strip() == target_str
+        ):
+            return  # already has a record for this entity
+
+    max_seq = 0
+    members_of_entity = session.scalars(
+        select(Member)
+        .join(MemberEntity, MemberEntity.member_id == Member.id)
+        .where(MemberEntity.entity_id == entity_id)
+        .where(Member.profile_custom_fields.like(f'%"{records_storage_key}"%'))
+    ).all()
+
+    for m in members_of_entity:
+        m_fields = parse_member_profile_fields(m.profile_custom_fields)
+        m_records = parse_menu_process_records(m_fields.get(records_storage_key))
+        for r in m_records:
+            if str(r.get("section_key") or "").strip() == "custom_dados_membresia":
+                r_values = r.get("values") or {}
+                if str(r_values.get("custom_n_cliente") or "").strip() == target_str:
+                    val_str = str(r_values.get("custom_n_user") or "").strip()
+                    if val_str.isdigit():
+                        max_seq = max(max_seq, int(val_str))
+
+    next_seq = max_seq + 1
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    new_record: dict[str, Any] = {
+        "section_key": "custom_dados_membresia",
+        "created_at": now_str,
+        "values": {
+            "custom_n_user": f"{next_seq:05d}",
+            "custom_n_cliente": target_str,
+        },
+    }
+
+    updated_records = existing_records + [new_record]
+    updated_fields = dict(existing_fields)
+    serialized = serialize_menu_process_records(updated_records)
+    if serialized:
+        updated_fields[records_storage_key] = serialized
+        member.profile_custom_fields = serialize_member_profile_fields(updated_fields)
+        session.commit()
+
+
 def _resolve_invite_entity_for_member(
     session: Session,
     member_id: int,
@@ -297,6 +360,12 @@ def invite_accept_submit(
                 form_data=form_data,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
+
+        if invite_entity_id is not None:
+            try:
+                _bootstrap_contacto_geral_record_v1(session, member, invite_entity_id)
+            except Exception:
+                pass  # non-blocking — account activation already committed
 
         request.session["user_id"] = user.id
         request.session["user_name"] = member.full_name

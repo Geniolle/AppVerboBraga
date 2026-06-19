@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appverbo.models import Entity, Member, MemberStatus, Profile, User, UserAccountStatus
+from appverbo.models import Entity, Member, MemberEntity, MemberEntityStatus, MemberStatus, Profile, User, UserAccountStatus
 from appverbo.repositories.member_entity_repository import (
     get_primary_entity_for_member,
     replace_active_member_entity_link,
@@ -354,7 +354,94 @@ def execute_create_user(
                     + "#create-user-card",
                 )
 
-            errors.append("Já existe um utilizador com este email de login.")
+            # Active user: add to the selected entity instead of blocking
+            if existing_status == UserAccountStatus.ACTIVE.value and selected_entity is not None:
+                target_entity_id = int(selected_entity.id)
+                already_linked = session.scalar(
+                    select(MemberEntity).where(
+                        MemberEntity.member_id == int(existing_user.member_id),
+                        MemberEntity.entity_id == target_entity_id,
+                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                    )
+                )
+                if already_linked is not None:
+                    errors.append("Utilizador já está associado a esta entidade.")
+                else:
+                    session.add(MemberEntity(
+                        member_id=int(existing_user.member_id),
+                        entity_id=target_entity_id,
+                        status=MemberEntityStatus.ACTIVE.value,
+                    ))
+                    _active_profile: Profile | None = None
+                    if payload.clean_profile_id:
+                        try:
+                            _active_profile = session.get(Profile, int(payload.clean_profile_id))
+                        except (ValueError, Exception):
+                            pass
+                    if _active_profile is not None:
+                        replace_user_profile(
+                            session=session,
+                            user_id=int(existing_user.id),
+                            profile_id=int(_active_profile.id),
+                            is_active=True,
+                        )
+                    existing_user.account_status = UserAccountStatus.PENDING.value
+                    try:
+                        session.commit()
+                    except IntegrityError:
+                        session.rollback()
+                        errors.append("Falha ao associar utilizador à entidade.")
+                    else:
+                        invite_token = build_user_invite_token(
+                            int(existing_user.id),
+                            str(existing_user.login_email),
+                            target_entity_id,
+                        )
+                        invite_link = build_user_invite_link(request, invite_token)
+
+                        if payload.clean_invite_delivery == "link":
+                            return UserActionOutcome(
+                                kind="redirect",
+                                redirect_url=build_users_new_url(
+                                    success=f"Utilizador adicionado à entidade {selected_entity.name or ''}. Link de convite gerado.",
+                                    invite_link=invite_link,
+                                    menu="administrativo",
+                                    admin_tab="utilizador",
+                                )
+                                + "#create-user-card",
+                            )
+
+                        email_sent, email_error = send_user_invite_email(
+                            recipient_email=str(existing_user.login_email),
+                            recipient_name=payload.clean_full_name or str(existing_user.login_email),
+                            entity_name=selected_entity.name or "",
+                            invite_link=invite_link,
+                            invited_by_name=str(actor_user["full_name"]),
+                        )
+
+                        if email_sent:
+                            return UserActionOutcome(
+                                kind="redirect",
+                                redirect_url=build_users_new_url(
+                                    success=f"Utilizador adicionado à entidade {selected_entity.name or ''}. Convite enviado por email.",
+                                    menu="administrativo",
+                                    admin_tab="utilizador",
+                                )
+                                + "#create-user-card",
+                            )
+
+                        return UserActionOutcome(
+                            kind="redirect",
+                            redirect_url=build_users_new_url(
+                                success=f"Utilizador adicionado à entidade {selected_entity.name or ''}.",
+                                error=f"{email_error} Link de convite: {invite_link}",
+                                menu="administrativo",
+                                admin_tab="utilizador",
+                            )
+                            + "#create-user-card",
+                        )
+            else:
+                errors.append("Já existe um utilizador com este email de login.")
 
     if existing_member is not None and existing_user is None:
         can_manage_member = member_is_within_permissions_v1(

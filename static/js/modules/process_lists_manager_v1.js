@@ -100,6 +100,7 @@
   const PROCESS_LIST_SOURCE_USERS_V1 = "users";
   const PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 = "sidebar_sections";
   const PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 = "sidebar_menus_by_section";
+  const PROCESS_LIST_SOURCE_CURRENT_MENU_HEADERS_V1 = "current_menu_headers";
   const PROCESS_LIST_SOURCE_TABLE_PREFIX_V1 = "table:";
   const PROCESS_LIST_SOURCE_TABLE_KEY_ALIASES_V1 = Object.freeze(
     {
@@ -111,7 +112,8 @@
       [PROCESS_LIST_SOURCE_MANUAL_V1]: "Manual",
       [PROCESS_LIST_SOURCE_USERS_V1]: "Utilizador (automatico)",
       [PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1]: "Sessoes (automatico)",
-      [PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1]: "Subprocesso/Menu por sessao (automatico)"
+      [PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1]: "Subprocesso/Menu por sessao (automatico)",
+      [PROCESS_LIST_SOURCE_CURRENT_MENU_HEADERS_V1]: "Abas/Cabecalhos do processo atual (automatico)"
     }
   );
 
@@ -197,6 +199,17 @@
       return PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1;
     }
 
+    if (
+      normalizedValue === PROCESS_LIST_SOURCE_CURRENT_MENU_HEADERS_V1 ||
+      normalizedValue === "current_process_headers" ||
+      normalizedValue === "process_headers_current_menu" ||
+      normalizedValue === "cabecalhos_do_processo_atual" ||
+      normalizedValue === "abas_do_processo_atual" ||
+      normalizedValue === "abas_processo_atual"
+    ) {
+      return PROCESS_LIST_SOURCE_CURRENT_MENU_HEADERS_V1;
+    }
+
     const tableKey = normalizeTableKeyFromSource_v1(rawValue);
     if (tableKey) {
       const columnKey = normalizeColumnFromSource_v1(rawValue);
@@ -253,6 +266,7 @@
       cleanSourceKey === PROCESS_LIST_SOURCE_USERS_V1 ||
       cleanSourceKey === PROCESS_LIST_SOURCE_SIDEBAR_SECTIONS_V1 ||
       cleanSourceKey === PROCESS_LIST_SOURCE_SIDEBAR_MENUS_BY_SECTION_V1 ||
+      cleanSourceKey === PROCESS_LIST_SOURCE_CURRENT_MENU_HEADERS_V1 ||
       isTableSource_v1(cleanSourceKey)
     );
   }

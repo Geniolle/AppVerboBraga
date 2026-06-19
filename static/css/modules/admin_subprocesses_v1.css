@@ -56,37 +56,11 @@
 
 .admin-subprocess-grid-v1 {
   display: grid;
-  grid-template-columns: minmax(240px, 320px) minmax(220px, 260px) minmax(160px, 220px);
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
   align-items: end;
   width: 100%;
   min-width: 0;
-}
-
-.admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
-.admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
-}
-
-@media (max-width: 1700px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 1300px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="sessoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: 1fr;
-  }
 }
 
 .admin-subprocess-field-v1 label {
@@ -127,6 +101,91 @@
   text-transform: none;
   letter-spacing: 0;
   margin-left: 3px;
+}
+
+h2 .admin-field-input-hint-v1 {
+  font-size: 11px;
+  font-family: monospace;
+  font-weight: 500;
+  color: #7a8fa8;
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 8px;
+}
+
+.admin-subprocess-file-preview-v1 {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 8px;
+  border: 1px solid #d0d7e2;
+  border-radius: 6px;
+  padding: 8px;
+  background: #f8f9fb;
+}
+
+.admin-subprocess-remove-file-input-v1 {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.admin-subprocess-remove-file-btn-v1 {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 1px solid #cdd6e0;
+  background: #fff;
+  font-size: 13px;
+  color: #7a8fa8;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.admin-subprocess-remove-file-btn-v1:hover {
+  background: #fdeeee;
+  border-color: #d57a7a;
+  color: #b94a4a;
+}
+
+.admin-subprocess-remove-file-input-v1:checked + .admin-subprocess-remove-file-btn-v1 {
+  background: #fdeeee;
+  border-color: #d57a7a;
+  color: #b94a4a;
+}
+
+.admin-subprocess-file-preview-image-v1 {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.admin-subprocess-remove-file-placeholder-v1 {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  color: #b94a4a;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.admin-subprocess-remove-file-input-v1:checked ~ .admin-subprocess-file-preview-image-v1 {
+  display: none;
+}
+
+.admin-subprocess-remove-file-input-v1:checked ~ .admin-subprocess-remove-file-placeholder-v1 {
+  display: flex;
 }
 
 .admin-table-debug-hint-v1 {
@@ -386,6 +445,17 @@ body.appverbo-admin-tab-utilizador
   border-color: #e08b8b;
 }
 
+.admin-subprocess-action-btn-invite-v1 {
+  border-color: #9bbfe8;
+  background: #eef4fd;
+  color: #1a5fa8;
+}
+
+.admin-subprocess-action-btn-invite-v1:hover {
+  background: #d8eaf9;
+  border-color: #5a9ad6;
+}
+
 .admin-subprocess-action-btn-disabled-v1 {
   opacity: 0.55;
   cursor: not-allowed;
@@ -415,41 +485,6 @@ body.appverbo-admin-tab-utilizador
   color: #b91c1c;
 }
 
-@media (max-width: 1500px) {
-  .admin-subprocess-grid-v1 {
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-  }
-}
-
-@media (max-width: 1250px) {
-  .admin-subprocess-grid-v1 {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 1900px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1600px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1500px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1100px) {
-  .admin-subprocess-form-card-v1[data-admin-subprocess="definicoes"] .admin-subprocess-grid-v1 {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ###################################################################################
    (1) TIPOGRAFIA GLOBAL DOS ITENS DE SUBPROCESSOS

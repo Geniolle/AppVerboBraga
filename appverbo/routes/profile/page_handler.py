@@ -24,6 +24,7 @@ from appverbo.admin_subprocesses.runtime import build_admin_subprocess_state_fro
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.admin_subprocesses.utilizador.pagina import montar_estado_pagina_utilizador_v1
+from appverbo.admin_subprocesses.entidade.pagina import montar_estado_pagina_entidade_v1
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.db.bootstrap import ensure_admin_process_title_default_definitions_v1
 from appverbo.models import AdminDefinition
@@ -2755,13 +2756,31 @@ def new_user_page(
             )
     # APPVERBO_UTILIZADOR_SUBPROCESS_STATE_ISOLADO_V3_END
 
+    # APPVERBO_ENTIDADE_SUBPROCESS_STATE_V1_START
+    admin_subprocess_state_entidade_v1 = None
+
+    if resolved_admin_tab == "entidade" and resolved_menu in {"administrativo", "sessoes"}:
+        with SessionLocal() as entidade_subprocess_session_v1:
+            admin_subprocess_state_entidade_v1 = montar_estado_pagina_entidade_v1(
+                session=entidade_subprocess_session_v1,
+                entity_edit_id=str(parsed_entity_edit_id or ""),
+                view_mode=bool(entity_readonly_mode),
+                can_manage_all_entities=bool(entity_permissions.get("can_manage_all_entities")),
+                allowed_entity_ids=entity_permissions.get("allowed_entity_ids"),
+                success=settings_success or "",
+                error=error or "",
+            )
+    # APPVERBO_ENTIDADE_SUBPROCESS_STATE_V1_END
+
     _set_admin_subprocess_show_hints_v1(admin_subprocess_state_utilizador_v1, current_user_is_admin)
+    _set_admin_subprocess_show_hints_v1(admin_subprocess_state_entidade_v1, current_user_is_admin)
     _set_admin_subprocess_show_hints_v1(admin_subprocess_shadow_state_v1, current_user_is_admin)
 
 
 
     context = {
         "admin_subprocess_state_utilizador_v1": admin_subprocess_state_utilizador_v1,
+        "admin_subprocess_state_entidade_v1": admin_subprocess_state_entidade_v1,
         "page_state": page_state,
         "page_state_refresh_home_url": page_state.get("refresh_home_url", "/users/new?menu=home"),
         "request": request,

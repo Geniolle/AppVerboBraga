@@ -694,8 +694,15 @@
                           id="process-list-editor-source"
                           data-process-list-editor-source
                         >
+                          {% set process_list_source_options_v1 = settings_edit_data.process_list_source_options|default([]) %}
+                          {% if process_list_source_options_v1 %}
+                            {% for source_option in process_list_source_options_v1 %}
+                          <option value="{{ source_option.key }}"{% if source_option.key == 'manual' %} selected{% endif %}>{{ source_option.label }}</option>
+                            {% endfor %}
+                          {% else %}
                           <option value="manual" selected>Manual</option>
                           <option value="table">Tabela</option>
+                          {% endif %}
                         </select>
                       </div>
 

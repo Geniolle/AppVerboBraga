@@ -19,6 +19,7 @@ from appverbo.services.entity_admin_context import (
     build_entity_admin_context_v1,
     build_entity_admin_page_payload_v1,
 )
+from appverbo.services.entity_scope import is_record_visible_for_selected_entity_v1
 from appverbo.services.process_view_authorization import (
     PROCESS_VIEW_AUTHORIZATION_MENU_KEY,
     PROCESS_VIEW_AUTHORIZATION_SECTION_KEY,
@@ -43,6 +44,8 @@ from appverbo.services.profile import (
     parse_menu_process_records,
     parse_menu_process_quantity_values,
     parse_member_profile_fields,
+    serialize_member_profile_fields,
+    serialize_menu_process_records,
     serialize_menu_process_quantity_values,
 )
 from appverbo.services.songs import (
@@ -789,6 +792,266 @@ def _apply_meu_perfil_subsequent_visibility_v2(
 # APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_END
 
 
+# Label keywords → Member attribute for bootstrapping contacto_geral from Member model data
+_CG_BOOTSTRAP_LABEL_MAP: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("nome", "name", "designa"), "full_name"),
+    (("telef", "phone", "fone", "movél", "movel", "celular", "contacto"), "primary_phone"),
+    (("email", "mail", "correio"), "email"),
+    (("morada", "address", "endereco", "rua"), "address"),
+    (("cidade", "city"), "city"),
+    (("postal", "zip", "código postal", "cod. postal"), "postal_code"),
+    (("país", "pais", "country"), "country"),
+)
+
+
+def _get_contacto_geral_section_fields_v1(session: Session) -> list[dict[str, str]]:
+    """Read additional_fields of the custom_dados_membresia section from the DB config."""
+    try:
+        import json as _json
+        from sqlalchemy import text as _text
+        raw = session.execute(
+            _text("SELECT menu_config FROM sidebar_menu_settings WHERE menu_key = 'contacto_geral' LIMIT 1")
+        ).scalar()
+        if not raw:
+            return []
+        cfg = _json.loads(raw) if isinstance(raw, str) else {}
+        add_fields = cfg.get("additional_fields") or []
+        result: list[dict[str, str]] = []
+        in_section = False
+        for f in add_fields:
+            if not isinstance(f, dict):
+                continue
+            key = str(f.get("key") or "").strip().lower()
+            field_type = str(f.get("field_type") or "").strip().lower()
+            if field_type == "header":
+                in_section = (key == "custom_dados_membresia")
+                continue
+            if in_section and key:
+                result.append({"field_key": key, "label": str(f.get("label") or "")})
+        return result
+    except Exception:
+        return []
+
+
+def _build_bootstrap_values_from_member_v1(
+    m: Member,
+    section_fields: list[dict[str, Any]],
+    base_values: dict[str, str],
+) -> dict[str, str]:
+    values = dict(base_values)
+    for sf in section_fields:
+        field_key = str(sf.get("field_key") or "").strip().lower()
+        label_raw = str(sf.get("label") or "").strip().lower()
+        if not field_key or field_key in values:
+            continue
+        for hints, attr in _CG_BOOTSTRAP_LABEL_MAP:
+            if any(h in label_raw for h in hints) or any(h in field_key for h in hints):
+                attr_value = str(getattr(m, attr, "") or "").strip()
+                if attr_value:
+                    values[field_key] = attr_value
+                break
+    return values
+
+
+def _aggregate_contacto_geral_for_entity_v1(
+    session: Session,
+    entity_id: int,
+    history_storage_key: str,
+    visible_rows: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    from appverbo.models.entity import Entity as _CGEntity
+    from datetime import datetime, timezone as _tz
+
+    entity_row = session.get(_CGEntity, entity_id)
+    if entity_row is None:
+        return []
+
+    entity_internal_number = entity_row.internal_number
+    target_str = str(entity_internal_number).strip() if entity_internal_number is not None else ""
+    is_owner_entity = str(getattr(entity_row, "profile_scope", "") or "").strip().lower() == "owner"
+
+    # Direct members of this entity — always included, and eligible for bootstrap.
+    direct_members = session.scalars(
+        select(Member)
+        .join(MemberEntity, MemberEntity.member_id == Member.id)
+        .where(MemberEntity.entity_id == entity_id)
+    ).all()
+    direct_member_ids: set[int] = {int(m.id) for m in direct_members}
+
+    # Members from OTHER entities who already have contacto_geral records relevant
+    # to the current view:
+    #   - Owner entity: members with global admin profile who have any contacto_geral records
+    #   - Non-owner: members whose record has custom_n_cliente == target_str
+    extra_members: list[Member] = []
+    try:
+        if is_owner_entity:
+            from appverbo.models.profile import Profile as _Profile, UserProfile as _UserProfile
+            from appverbo.models.user import User as _CgUser
+            from appverbo.core import ADMIN_PROFILE_NAMES as _APN
+            from sqlalchemy import func as _func
+            admin_members_with_records = session.scalars(
+                select(Member)
+                .join(_CgUser, _CgUser.member_id == Member.id)
+                .join(_UserProfile, _UserProfile.user_id == _CgUser.id)
+                .join(_Profile, _Profile.id == _UserProfile.profile_id)
+                .where(
+                    _UserProfile.is_active.is_(True),
+                    _Profile.is_active.is_(True),
+                    _func.lower(_Profile.name).in_(_APN),
+                    Member.profile_custom_fields.like(f'%"{history_storage_key}"%'),
+                )
+            ).all()
+            for m in admin_members_with_records:
+                if int(m.id) not in direct_member_ids:
+                    extra_members.append(m)
+        elif target_str:
+            all_with_records = session.scalars(
+                select(Member).where(
+                    Member.profile_custom_fields.like(f'%"{history_storage_key}"%')
+                )
+            ).all()
+            for m in all_with_records:
+                if int(m.id) in direct_member_ids:
+                    continue
+                m_fields = parse_member_profile_fields(m.profile_custom_fields)
+                m_recs = parse_menu_process_records(m_fields.get(history_storage_key))
+                if any(
+                    str(r.get("section_key") or "").strip() == "custom_dados_membresia"
+                    and str((r.get("values") or {}).get("custom_n_cliente") or "").strip() == target_str
+                    for r in m_recs
+                ):
+                    extra_members.append(m)
+    except Exception:
+        pass
+
+    all_entity_members = list(direct_members) + extra_members
+
+    if not all_entity_members:
+        return []
+
+    # Build section fields for bootstrap from visible_rows (field_key matching).
+    # Fallback to DB config query if visible_rows is empty.
+    cg_section_fields: list[dict[str, Any]] = [
+        {"field_key": str(r.get("field_key") or "").strip().lower(), "label": ""}
+        for r in (visible_rows or [])
+        if isinstance(r, dict) and str(r.get("field_key") or "").strip()
+    ]
+    if not cg_section_fields:
+        cg_section_fields = _get_contacto_geral_section_fields_v1(session)
+
+    # Pass 1 — collect existing records and find max sequence number
+    member_records: dict[int, list[dict[str, Any]]] = {}
+    max_seq = 0
+    for m in all_entity_members:
+        m_fields = parse_member_profile_fields(m.profile_custom_fields)
+        m_recs = parse_menu_process_records(m_fields.get(history_storage_key))
+        member_records[int(m.id)] = m_recs
+        if target_str:
+            for r in m_recs:
+                if str(r.get("section_key") or "").strip() == "custom_dados_membresia":
+                    rv = r.get("values") or {}
+                    if str(rv.get("custom_n_cliente") or "").strip() == target_str:
+                        val = str(rv.get("custom_n_user") or "").strip()
+                        if val.isdigit():
+                            max_seq = max(max_seq, int(val))
+
+    _BOOTSTRAP_ONLY_KEYS = frozenset({"custom_n_user", "custom_n_cliente"})
+
+    # Pass 2 — build result, lazy-bootstrapping direct entity members without a
+    # proper record, and upgrading records that only have the two minimal bootstrap keys.
+    # For non-owner entities each member contributes exactly one record (their own entity
+    # record), preventing scatter across multiple members' profiles.
+    all_records: list[dict[str, Any]] = []
+    for m in all_entity_members:
+        m_recs = list(member_records.get(int(m.id), []))
+        is_direct = int(m.id) in direct_member_ids
+
+        entity_record = next(
+            (
+                r for r in m_recs
+                if str(r.get("section_key") or "").strip() == "custom_dados_membresia"
+                and str((r.get("values") or {}).get("custom_n_cliente") or "").strip() == target_str
+            ),
+            None,
+        ) if target_str else None
+
+        is_empty_bootstrap = (
+            entity_record is not None
+            and not (set(entity_record.get("values") or {}) - _BOOTSTRAP_ONLY_KEYS)
+        )
+
+        # Create new records only for direct entity members.
+        # Upgrade empty bootstrap records for any member (direct or extra).
+        should_act = target_str and (
+            (is_direct and entity_record is None) or is_empty_bootstrap
+        )
+        if should_act:
+            if entity_record is None:
+                max_seq += 1
+                n_user = f"{max_seq:05d}"
+                created_at = datetime.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%S")
+            else:
+                n_user = str((entity_record.get("values") or {}).get("custom_n_user") or f"{max_seq:05d}")
+                created_at = str(entity_record.get("created_at") or "")
+
+            base_values: dict[str, str] = {
+                "custom_n_user": n_user,
+                "custom_n_cliente": target_str,
+            }
+            boot_values = _build_bootstrap_values_from_member_v1(m, cg_section_fields, base_values)
+            new_record: dict[str, Any] = {
+                "section_key": "custom_dados_membresia",
+                "created_at": created_at,
+                "values": boot_values,
+            }
+            if is_empty_bootstrap:
+                m_recs = [r for r in m_recs if r is not entity_record] + [new_record]
+                entity_record = new_record
+            else:
+                m_recs = m_recs + [new_record]
+                entity_record = new_record
+
+            try:
+                from appverbo.db.session import SessionLocal as _SL
+                with _SL() as _ws:
+                    _wm = _ws.get(Member, int(m.id))
+                    if _wm is not None:
+                        _wm_fields = parse_member_profile_fields(_wm.profile_custom_fields)
+                        _serialized = serialize_menu_process_records(m_recs)
+                        if _serialized:
+                            _updated = dict(_wm_fields)
+                            _updated[history_storage_key] = _serialized
+                            _wm.profile_custom_fields = serialize_member_profile_fields(_updated)
+                            _ws.commit()
+            except Exception:
+                pass  # bootstrap is best-effort; record still appears in this response
+
+        # For non-owner entities: expose only this member's entity-specific record to
+        # avoid collecting records from other entities stored in the same JSON blob.
+        # For owner entities: expose all records (caller filters by entity).
+        if target_str and not is_owner_entity:
+            if entity_record is not None:
+                all_records.append(entity_record)
+        else:
+            all_records.extend(m_recs)
+
+    # Deduplicate by n_user within custom_dados_membresia — safety net for legacy data
+    # where the same contact may have been bootstrapped under multiple members' profiles.
+    seen_n_users: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for rec in all_records:
+        if str(rec.get("section_key") or "").strip() != "custom_dados_membresia":
+            deduped.append(rec)
+            continue
+        n_user = str((rec.get("values") or {}).get("custom_n_user") or "").strip()
+        if n_user and n_user in seen_n_users:
+            continue
+        if n_user:
+            seen_n_users.add(n_user)
+        deduped.append(rec)
+    return deduped
+
+
 def get_page_data(
     session: Session,
     actor_user_id: int | None = None,
@@ -889,7 +1152,10 @@ def get_page_data(
 
     # Inject all Perfil de Autorização section fields into the administrativo menu at runtime.
     # Fields are appended in display order; idempotent (each key injected at most once).
-    _AUTH_SECTION_HEADER_KEY = "custom_perfil_de_autorizacao"
+    _AUTH_TARGET_SECTION_KEYS = {
+        "administrativo": "custom_perfil_de_autorizacao",
+        "perfil_de_autorizacao": "custom_objeto_de_autorizacao",
+    }
     _AUTH_VISIBILIDADE_OPTIONS = [
         {"label": "Esta entidade", "value": "Esta entidade"},
         {"label": "Todos os sistemas", "value": "Todos os sistemas"},
@@ -908,12 +1174,90 @@ def get_page_data(
         {"key": "custom_entidade", "label": "Entidade", "field_type": "text"},
         {"key": "custom_visibilidade", "label": "Sistema", "field_type": "list", "listOptions": _AUTH_VISIBILIDADE_OPTIONS},
     ]
+    _auth_processo_option_rows: list[dict[str, str]] = []
+    _auth_subprocess_option_rows: list[dict[str, str]] = []
+    _auth_subprocess_items: list[str] = []
+    _auth_subprocess_source_map: dict[str, list[str]] = {}
+    _auth_subprocess_seen_labels: set[str] = set()
+    for _sm_row in sidebar_menu_settings:
+        if bool(_sm_row.get("is_deleted")) or not bool(_sm_row.get("is_active")):
+            continue
+        if not is_record_visible_for_selected_entity_v1(
+            record_entity_id=_sm_row.get("entity_scope_entity_id"),
+            selected_entity_id=selected_entity_id,
+        ):
+            continue
+        _visibility_scope_mode = str(
+            _sm_row.get("visibility_scope_mode") or ""
+        ).strip().lower()
+        if (
+            selected_entity_id is not None
+            and current_entity_scope != "owner"
+            and _visibility_scope_mode == "owner"
+        ):
+            continue
+        _sm_label = str(_sm_row.get("label") or "").strip()
+        _sm_key = str(_sm_row.get("key") or "").strip().lower()
+        if not _sm_label or not _sm_key:
+            continue
+        _auth_processo_option_rows.append({
+            "value": _sm_label,
+            "label": _sm_label,
+            "menu_key": _sm_key,
+            "section_key": str(_sm_row.get("sidebar_section_key") or "").strip().lower(),
+            "section_label": str(_sm_row.get("sidebar_section_label") or "").strip(),
+        })
+        _menu_header_labels: list[str] = []
+        _menu_header_seen_labels: set[str] = set()
+        for _header_option in _sm_row.get("process_header_options") or []:
+            if not isinstance(_header_option, dict):
+                continue
+            _header_key = str(_header_option.get("key") or "").strip().lower()
+            _header_label = str(
+                _header_option.get("label") or _header_option.get("key") or ""
+            ).strip()
+            _header_lookup = _normalize_process_lookup_text_v1(_header_label)
+            if not _header_key or not _header_label or not _header_lookup:
+                continue
+            if _header_lookup in _menu_header_seen_labels:
+                continue
+            _menu_header_seen_labels.add(_header_lookup)
+            _menu_header_labels.append(_header_label)
+            if _header_lookup in _auth_subprocess_seen_labels:
+                continue
+            _auth_subprocess_seen_labels.add(_header_lookup)
+            _auth_subprocess_items.append(_header_label)
+            _auth_subprocess_option_rows.append({
+                "value": _header_label,
+                "label": _header_label,
+                "header_key": _header_key,
+                "menu_key": _sm_key,
+            })
+        _auth_subprocess_source_map[_sm_label] = list(_menu_header_labels)
     _AUTH_PROCESS_LISTS_ENTRIES = [
-        {"key": "list_auth_processo", "label": "Processo", "source_key": "sidebar_sections", "items": [], "option_rows": []},
-        {"key": "list_auth_subprocesso", "label": "Subprocesso", "source_key": "sidebar_menus_by_section", "items": [], "option_rows": []},
+        {
+            "key": "list_auth_processo",
+            "label": "Processo",
+            "source_key": "manual",
+            "items": [],
+            "option_rows": _auth_processo_option_rows,
+            "controller_field_key": "",
+        },
+        {
+            "key": "list_auth_subprocesso",
+            "label": "Subprocesso",
+            "source_key": "manual",
+            "items": list(_auth_subprocess_items),
+            "option_rows": _auth_subprocess_option_rows,
+            "controller_field_key": "custom_processo",
+            "source_map": dict(_auth_subprocess_source_map),
+        },
     ]
     for _sm in sidebar_menu_settings:
-        if str(_sm.get("key") or "").strip().lower() != "administrativo":
+        _auth_section_header_key = _AUTH_TARGET_SECTION_KEYS.get(
+            str(_sm.get("key") or "").strip().lower()
+        )
+        if not _auth_section_header_key:
             continue
         _pvfr = _sm.get("process_visible_field_rows")
         if not isinstance(_pvfr, list):
@@ -922,24 +1266,67 @@ def get_page_data(
         _existing_pvfr_keys = {str(r.get("field_key") or "").strip().lower() for r in _pvfr}
         for _fk in _AUTH_PVFR_ENTRIES:
             if _fk not in _existing_pvfr_keys:
-                _pvfr.append({"field_key": _fk, "header_key": _AUTH_SECTION_HEADER_KEY})
+                _pvfr.append({"field_key": _fk, "header_key": _auth_section_header_key})
         _pfo = _sm.get("process_field_options")
         if not isinstance(_pfo, list):
             _pfo = []
             _sm["process_field_options"] = _pfo
-        _existing_pfo_keys = {str(o.get("key") or "").strip().lower() for o in _pfo}
+        _pfo_by_key = {
+            str(o.get("key") or "").strip().lower(): o
+            for o in _pfo
+            if isinstance(o, dict) and str(o.get("key") or "").strip()
+        }
         for _opt in _AUTH_PFO_ENTRIES:
-            if _opt["key"] not in _existing_pfo_keys:
+            _existing_pfo = _pfo_by_key.get(_opt["key"])
+            if not isinstance(_existing_pfo, dict):
                 _pfo.append(dict(_opt))
+                continue
+            _existing_pfo["label"] = _opt["label"]
+            _existing_pfo["field_type"] = _opt["field_type"]
+            if "list_key" in _opt:
+                _existing_pfo["list_key"] = _opt["list_key"]
+            if "listOptions" in _opt:
+                _existing_pfo["listOptions"] = list(_opt["listOptions"])
         _pl = _sm.get("process_lists")
         if not isinstance(_pl, list):
             _pl = []
             _sm["process_lists"] = _pl
-        _existing_pl_keys = {str(p.get("key") or "").strip().lower() for p in _pl}
+        _pl_by_key = {
+            str(p.get("key") or "").strip().lower(): p
+            for p in _pl
+            if isinstance(p, dict) and str(p.get("key") or "").strip()
+        }
         for _pli in _AUTH_PROCESS_LISTS_ENTRIES:
-            if _pli["key"] not in _existing_pl_keys:
+            _existing_pl = _pl_by_key.get(_pli["key"])
+            if not isinstance(_existing_pl, dict):
                 _pl.append(dict(_pli))
-        break
+                continue
+            _existing_pl["label"] = _pli["label"]
+            _existing_pl["source_key"] = _pli["source_key"]
+            _existing_pl["items"] = list(_pli.get("items") or [])
+            _existing_pl["items_csv"] = ", ".join(_existing_pl["items"])
+            _existing_pl["option_rows"] = [
+                dict(_option_row)
+                for _option_row in (_pli.get("option_rows") or [])
+                if isinstance(_option_row, dict)
+            ]
+            _existing_pl["controller_field_key"] = str(
+                _pli.get("controller_field_key") or ""
+            ).strip().lower()
+            if "source_map" in _pli:
+                _existing_pl["source_map"] = {
+                    str(_source_label or "").strip(): [
+                        str(_target_label or "").strip()
+                        for _target_label in (_target_labels or [])
+                        if str(_target_label or "").strip()
+                    ]
+                    for _source_label, _target_labels in (
+                        (_pli.get("source_map") or {}).items()
+                        if isinstance(_pli.get("source_map"), dict)
+                        else []
+                    )
+                    if str(_source_label or "").strip()
+                }
 
     empresa_values_by_field = _resolve_empresa_entity_values_v1(
         session,
@@ -1072,7 +1459,12 @@ def get_page_data(
                     menu_process_history_map[menu_key] = legacy_history_rows
             continue
         if history_storage_key:
-            menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
+            if menu_key == "contacto_geral" and selected_entity_id is not None:
+                menu_history_rows = _aggregate_contacto_geral_for_entity_v1(
+                    session, int(selected_entity_id), history_storage_key, visible_rows
+                )
+            else:
+                menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
                 # ###################################################################################
                 # FILTRAR POR Nº ENTIDADE (ENTIDADE) PARA CONTACTO GERAL
@@ -1823,6 +2215,7 @@ def ensure_new_user_template_context_defaults_v1(
     clean_context.setdefault("user_list_pagination", {})
     clean_context.setdefault("sidebar_owner_entity", {})
     clean_context.setdefault("current_entity_scope", "")
+    clean_context.setdefault("current_entity_internal_number", "")
     clean_context.setdefault("sidebar_owner_entity_name", "")
     clean_context.setdefault("sidebar_owner_entity_logo_url", "")
     clean_context.setdefault("sidebar_menu_settings", [])

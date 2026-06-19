@@ -428,6 +428,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
             "profile_id": str(profile_id_by_user_id.get(user_id) or "").strip(),
             "profile_name": profile_name_by_user_id.get(user_id, "-"),
             "is_entity_superuser": user_id in superuser_user_ids,
+            "can_invite": clean_status == USER_ACCOUNT_STATUS_PENDING_V1,
             "created_at": self._format_datetime_label(row.created_at),
             "created_at_label": self._format_datetime_label(row.created_at),
             "view_url": montar_url_exibir_utilizador_v1(user_id),

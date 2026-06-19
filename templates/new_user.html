@@ -66,7 +66,7 @@
 {# APPVERBO_ANTI_FLICKER_HEAD_GUARD_V2_END #}
 <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v2.css?v=20260521-admin-subprocess-responsive-split-v1">
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260616-admin-status-v18-footer-disabled-blue">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260616-multiselect-modal-picker-v4">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260619-sidebar-logo-great-vibes-v1">
   <link rel="stylesheet" href="/static/css/modules/default_admin_sidebar_v1.css?v=20260604-default-admin-sidebar-v1">
   <link rel="stylesheet" href="/static/css/modules/song_process_ui_v1.css?v=20260602-song-process-ui-v5-lyrics-preview">
   <style>
@@ -922,13 +922,11 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
 <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
         <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_END -->
 
-        <!-- APPVERBO_ADMIN_ENTIDADE_V2_USERS_NEW_START -->
-        {% if admin_tab == "entidade" and admin_subprocess_state and admin_subprocess_state.config.key == "entidade" %}
-          <div id="admin-entidade-v2-integrated-root" data-admin-entidade-v2-integrated="1" data-menu-scope="administrativo">
-            {{ render_admin_subprocess_v2_state(admin_subprocess_state) }}
-          </div>
+        <!-- APPVERBO_ADMIN_ENTIDADE_V1_USERS_NEW_START -->
+        {% if admin_tab == "entidade" and admin_subprocess_state_entidade_v1 %}
+          {{ render_admin_subprocess_state(admin_subprocess_state_entidade_v1) }}
         {% endif %}
-        <!-- APPVERBO_ADMIN_ENTIDADE_V2_USERS_NEW_END -->
+        <!-- APPVERBO_ADMIN_ENTIDADE_V1_USERS_NEW_END -->
 
 <section id="dynamic-process-create-card" class="card entity-panel-card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appverbo-dynamic-process-create-block-v1" style="display: none;">
           <button
@@ -1646,7 +1644,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_START -->
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_END -->
 
-        {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
+        {% if not admin_subprocess_state_entidade_v1 and not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
         <!-- APPVERBO_ADMIN_MENU_RENDER_V4_END -->
 
         <section id="create-entity-card" class="card entity-panel-card" data-menu-scope="administrativo">
@@ -1760,10 +1758,8 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
         </section>
         {% endif %}
 
-        {% if entity_edit_data is defined and entity_edit_data.id %}
-        <section id="edit-entity-card" class="card entity-panel-card" data-menu-scope="administrativo" data-readonly-mode="{% if entity_readonly_mode %}1{% else %}0{% endif %}">
-          <h2>{% if entity_readonly_mode %}Exibir entidade{% else %}Editar entidade{% endif %}</h2>
-          <p>Atualize os dados principais da entidade selecionada.</p>
+        {# Bloco hardcoded de edição de entidade removido — agora gerido pelo macro render_admin_subprocess_state via admin_subprocess_state_entidade_v1 #}
+        {% if false %}
 
           {% if entity_success %}
             <div class="alert ok">{{ entity_success }}</div>
@@ -1920,9 +1916,10 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
             </div>
           </form>
         </section>
-        {% endif %}
+        {% endif %}{# fim do bloco desactivado #}
 
-        <section id="recent-entities-card" class="card" data-menu-scope="administrativo" data-admin-subprocess="entidade" data-admin-card-group="entidade" data-admin-card-role="active" data-admin-table-footer-enabled-v1="1" data-admin-table-footer-mode-v1-preferred="load_more">
+        {# Tabelas manuais de entidade removidas — agora geridas pelo macro render_admin_subprocess_state #}
+        {% if false %}<section id="recent-entities-card-legacy-disabled" data-menu-scope="administrativo">
           <h2 class="admin-subprocess-active-title-v1">{% if current_user_can_manage_all_entities %}Entidades ativas{% else %}Dados gerais{% endif %}</h2>
           {% set active_recent_entities = recent_entities | list %}
           {% if not current_user_can_manage_all_entities %}
@@ -2106,7 +2103,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
           {% endif %}
         </section>
         {% endif %}
-
+        {% endif %}{# fim do bloco legacy de tabelas desactivado #}
 
                 {% if false and admin_tab == "menu" %}
         {% if current_user_can_manage_all_entities %}
@@ -2489,7 +2486,7 @@ html body #admin-menu-card-inactive .admin-menu-table-header-v1 h2 {
   </script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260614-core-footer-load-more-shared-v7"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260614-additional-fields-search-v4"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260616-process-lists-column-sort"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260617-process-lists-current-menu-headers-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260614-process-quantity-search-v4"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260614-subsequent-search-v4"></script>
   <script src="/static/js/modules/admin_table_search_manager_v1.js?v=20260601-admin-table-search-v5-reusable-subprocess-toolbar"></script>

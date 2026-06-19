@@ -27,6 +27,32 @@
           <option value="{{ option_value }}" {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
         {% endfor %}
       </select>
+    {% elif field.field_type == "file" %}
+      <input
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        type="file"
+        {% if field.accept %}accept="{{ field.accept }}"{% endif %}
+      >
+      {% if value and mode == "edit" %}
+        <div class="admin-subprocess-file-preview-v1">
+          <input
+            type="checkbox"
+            id="remove_admin_subprocess_{{ field.key }}"
+            name="{{ field.remove_input_name or ('remove_' ~ field.key) }}"
+            value="1"
+            class="admin-subprocess-remove-file-input-v1"
+          >
+          <label
+            for="remove_admin_subprocess_{{ field.key }}"
+            class="admin-subprocess-remove-file-btn-v1"
+            title="Remover ficheiro atual"
+            aria-label="Remover ficheiro atual"
+          >&#10005;</label>
+          <img class="admin-subprocess-file-preview-image-v1" src="{{ value }}" alt="Ficheiro atual">
+          <div class="admin-subprocess-remove-file-placeholder-v1">Marcado para remoção. Clique em Guardar para confirmar.</div>
+        </div>
+      {% endif %}
     {% else %}
       <input
         id="admin_subprocess_{{ field.key }}"
@@ -49,18 +75,23 @@
   {% set field_values = edit_data if edit_data else (state.create_data if state.create_data else {}) %}
   {% set show_hints = state.show_field_hints %}
   {% set config_table_name = state.config.table_name|default("") %}
+  {% set is_edit = edit_data is not none %}
 
   {% for field in state.effective_fields %}
     {% if field.key != status_field_key %}
-      {% set field_value = field_values.get(field.key, "") if field_values else "" %}
-      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints, config_table_name) }}
+      {% if (is_edit and field.visible_on_edit) or (not is_edit and field.visible_on_create) %}
+        {% set field_value = field_values.get(field.key, "") if field_values else "" %}
+        {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if is_edit else "create", show_hints, config_table_name) }}
+      {% endif %}
     {% endif %}
   {% endfor %}
 
   {% for field in state.effective_fields %}
     {% if field.key == status_field_key %}
-      {% set field_value = field_values.get(field.key, "") if field_values else "" %}
-      {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if edit_data else "create", show_hints, config_table_name) }}
+      {% if (is_edit and field.visible_on_edit) or (not is_edit and field.visible_on_create) %}
+        {% set field_value = field_values.get(field.key, "") if field_values else "" %}
+        {{ render_admin_subprocess_field(field, field_value, state.field_options.get(field.key, ()), "edit" if is_edit else "create", show_hints, config_table_name) }}
+      {% endif %}
     {% endif %}
   {% endfor %}
 {% endmacro %}
@@ -135,9 +166,9 @@
       <div class="alert error">{{ state.error }}</div>
     {% endif %}
 
-    <h2>{{ state.config.edit_title }}{% if state.show_field_hints and state.config.table_name %} <span class="admin-field-input-hint-v1">({{ state.config.table_name }})</span>{% endif %}</h2>
+    <h2>{% if state.view_mode and state.config.view_title %}{{ state.config.view_title }}{% else %}{{ state.config.edit_title }}{% endif %}{% if state.config.table_name %} <span class="admin-field-input-hint-v1">({{ state.config.table_name }})</span>{% endif %}</h2>
 
-    <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+    <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1"{% if state.config.form_enctype %} enctype="{{ state.config.form_enctype }}"{% endif %}>
       <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.edit_mode_value }}">
       <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ state.edit_key }}">
       <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
@@ -147,13 +178,15 @@
       </div>
 
       <div class="form-action-row admin-subprocess-actions-v1">
+        {% if not state.view_mode %}
         <button type="submit" class="action-btn">Guardar</button>
+        {% endif %}
         <a
           class="action-btn-cancel"
           data-card-cancel-close="1"
           data-card-cancel-return-url="{{ state.return_url }}"
           href="{{ state.return_url }}"
-        >Cancelar</a>
+        >{% if state.view_mode %}Fechar{% else %}Cancelar{% endif %}</a>
       </div>
     </form>
   </section>
@@ -243,6 +276,20 @@
     >&#128065;</span>
     {% endif %}
 
+    {% if state.config.invite_endpoint and row.get("can_invite") %}
+      {% set invite_key_field = state.config.invite_key_field or state.config.identity_field %}
+      <form method="post" action="{{ state.config.invite_endpoint }}" class="admin-subprocess-inline-form-v1">
+        <input type="hidden" name="{{ invite_key_field }}" value="{{ row_key }}">
+        <button
+          type="submit"
+          class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-invite-v1"
+          title="Enviar convite por email"
+          aria-label="Enviar convite por email"
+          onclick="return confirm('Enviar convite por email para {{ row_label }}?')"
+        >&#9993;</button>
+      </form>
+    {% endif %}
+
     {% if status_value != state.config.active_value and state.config.delete_endpoint and not row.get('is_deleted') %}
       {% if can_delete %}
         <form
@@ -274,6 +321,8 @@
 {% macro render_admin_subprocess_table(state, rows, title, status_value) %}
   {% if state.config.key == "utilizador" %}
     {% set card_id = "admin-users-created-card" if status_value == state.config.active_value else "inactive-users-card" %}
+  {% elif state.config.key == "entidade" %}
+    {% set card_id = "recent-entities-card" if status_value == state.config.active_value else "inactive-entities-card" %}
   {% else %}
     {% set card_id = state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' %}
   {% endif %}

@@ -2469,6 +2469,170 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
+def _handle_contacto_geral_create_invite_v1(
+    request: Request,
+    session: Any,
+    current_user: dict,
+    current_member: "Member",
+    submitted_section_values: dict[str, Any],
+    submitted_form: Any,
+    active_entity_id: int,
+    active_entity_internal_number: Any,
+    records_storage_key: str,
+    clean_menu_key: str,
+    existing_records: list,
+    existing_profile_fields: dict,
+) -> "RedirectResponse | None":
+    """
+    For contacto_geral create: find or create the member for the submitted email,
+    add them to the entity, save the contacto_geral record to the CURRENT USER's
+    profile, and send an invite email. Returns a redirect on success/error, or None
+    if no email was provided (falls through to the standard save flow).
+    """
+    submitted_email = ""
+    for k, v in submitted_section_values.items():
+        if "email" in k.lower() and "@" in str(v or ""):
+            submitted_email = str(v).strip().lower()
+            break
+    if not submitted_email:
+        return None
+
+    submitted_name = ""
+    for k, v in submitted_section_values.items():
+        if any(h in k.lower() for h in ("nome", "name")) and "custom_n" not in k.lower():
+            submitted_name = str(v or "").strip()
+            if submitted_name:
+                break
+
+    submitted_phone = ""
+    for k, v in submitted_section_values.items():
+        if any(h in k.lower() for h in ("telef", "phone", "fone")):
+            submitted_phone = str(v or "").strip()
+            if submitted_phone:
+                break
+
+    existing_user = session.scalar(
+        select(User).where(func.lower(User.login_email) == submitted_email)
+    )
+
+    entity_name = str(
+        session.scalar(select(Entity.name).where(Entity.id == active_entity_id)) or ""
+    )
+
+    # Duplicate check: block if email is already linked to this entity
+    if existing_user is not None:
+        existing_link = session.scalar(
+            select(MemberEntity).where(
+                MemberEntity.member_id == existing_user.member_id,
+                MemberEntity.entity_id == active_entity_id,
+            )
+        )
+        if existing_link is not None:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Já existe um contacto com este email nesta entidade.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+    should_send_invite = False
+    invite_link = ""
+    contact_member: "Member | None" = None
+
+    if existing_user is not None:
+        # existing_link is None here (verified above)
+        session.add(MemberEntity(
+            member_id=int(existing_user.member_id),
+            entity_id=active_entity_id,
+            status=MemberEntityStatus.ACTIVE.value,
+        ))
+        if existing_user.account_status == UserAccountStatus.PENDING.value:
+            should_send_invite = True
+            token = build_user_invite_token(int(existing_user.id), submitted_email, active_entity_id)
+            invite_link = build_user_invite_link(request, token)
+        contact_member = session.get(Member, int(existing_user.member_id))
+    else:
+        new_member = Member(
+            full_name=submitted_name or submitted_email,
+            email=submitted_email,
+            primary_phone=submitted_phone or "-",
+        )
+        session.add(new_member)
+        session.flush()
+        creator_id = int(current_user["id"]) if current_user.get("id") else None
+        new_user = User(
+            member_id=int(new_member.id),
+            login_email=submitted_email,
+            password_hash="",
+            account_status=UserAccountStatus.PENDING.value,
+            created_by_user_id=creator_id,
+        )
+        session.add(new_user)
+        session.flush()
+        session.add(MemberEntity(
+            member_id=int(new_member.id),
+            entity_id=active_entity_id,
+            status=MemberEntityStatus.ACTIVE.value,
+        ))
+        should_send_invite = True
+        token = build_user_invite_token(int(new_user.id), submitted_email, active_entity_id)
+        invite_link = build_user_invite_link(request, token)
+        contact_member = new_member
+
+    # Save contacto_geral record to the CONTACT's own profile, not the creator's
+    if contact_member is not None:
+        _c_fields = parse_member_profile_fields(contact_member.profile_custom_fields)
+        _c_records = parse_menu_process_records(_c_fields.get(records_storage_key))
+        _c_records.insert(0, {
+            "record_id": uuid4().hex,
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "section_key": "custom_dados_membresia",
+            "values": dict(submitted_section_values),
+        })
+        _serialized = serialize_menu_process_records(_c_records[:200])
+        if _serialized:
+            _c_fields[records_storage_key] = _serialized
+        else:
+            _c_fields.pop(records_storage_key, None)
+        contact_member.profile_custom_fields = serialize_member_profile_fields(_c_fields)
+
+    try:
+        session.commit()
+    except Exception:
+        session.rollback()
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                profile_error="Falha ao criar o contacto.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    if should_send_invite and invite_link:
+        try:
+            send_user_invite_email(
+                recipient_email=submitted_email,
+                recipient_name=submitted_name or submitted_email,
+                entity_name=entity_name,
+                invite_link=invite_link,
+            )
+        except Exception:
+            pass
+
+    if should_send_invite and invite_link:
+        success_msg = f"Contacto criado. Convite enviado para {submitted_email}."
+    else:
+        success_msg = "Contacto adicionado com sucesso."
+
+    return RedirectResponse(
+        url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+            profile_success=success_msg,
+        ),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
 @router.post("/users/profile/process-data")
 async def update_dynamic_process_profile(request: Request):
     submitted_form = await request.form()
@@ -3382,6 +3546,31 @@ async def update_dynamic_process_profile(request: Request):
                                             max_seq = max(max_seq, int(val_str))
                     next_seq = max_seq + 1
                     submitted_section_values["custom_n_user"] = f"{next_seq:05d}"
+        # contacto_geral create: find/create contact member, add to entity, send invite
+        if (
+            clean_menu_key == "contacto_geral"
+            and requested_section_key == "custom_dados_membresia"
+            and requested_history_action == "create"
+            and records_storage_key
+            and active_entity_id is not None
+            and active_entity_internal_number is not None
+        ):
+            _cg_redirect = _handle_contacto_geral_create_invite_v1(
+                request=request,
+                session=session,
+                current_user=current_user,
+                current_member=member,
+                submitted_section_values=submitted_section_values,
+                submitted_form=submitted_form,
+                active_entity_id=int(active_entity_id),
+                active_entity_internal_number=active_entity_internal_number,
+                records_storage_key=records_storage_key,
+                clean_menu_key=clean_menu_key,
+                existing_records=existing_records,
+                existing_profile_fields=existing_profile_fields,
+            )
+            if _cg_redirect is not None:
+                return _cg_redirect
         record_for_update = None
         if (
             history_process_mode

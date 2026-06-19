@@ -133,6 +133,9 @@ def resolve_process_view_authorization_targets_v1(
     section_label_by_key: dict[str, str] = {}
     menu_row_by_section_and_label: dict[tuple[str, str], dict[str, Any]] = {}
     menu_row_by_label: dict[str, dict[str, Any]] = {}
+    menu_row_by_key: dict[str, dict[str, Any]] = {}
+    process_header_key_by_menu_and_label: dict[tuple[str, str], str] = {}
+    process_header_label_by_menu_and_key: dict[tuple[str, str], str] = {}
 
     for raw_row in sidebar_menu_settings or []:
         if not isinstance(raw_row, dict):
@@ -141,6 +144,7 @@ def resolve_process_view_authorization_targets_v1(
         menu_key = resolve_menu_key_alias(raw_row.get("key"))
         if not menu_key:
             continue
+        menu_row_by_key.setdefault(menu_key, raw_row)
 
         section_key = str(raw_row.get("sidebar_section_key") or "").strip().lower()
         section_label = str(raw_row.get("sidebar_section_label") or "").strip()
@@ -161,12 +165,42 @@ def resolve_process_view_authorization_targets_v1(
                     (section_key, normalized_menu_label),
                     raw_row,
                 )
+        for raw_header_option in raw_row.get("process_header_options") or []:
+            if not isinstance(raw_header_option, dict):
+                continue
+            header_key = str(raw_header_option.get("key") or "").strip().lower()
+            header_label = str(
+                raw_header_option.get("label") or raw_header_option.get("key") or ""
+            ).strip()
+            normalized_header_label = (
+                _normalize_process_view_authorization_lookup_text_v1(header_label)
+            )
+            if not header_key or not header_label or not normalized_header_label:
+                continue
+            process_header_key_by_menu_and_label.setdefault(
+                (menu_key, normalized_header_label),
+                header_key,
+            )
+            process_header_label_by_menu_and_key.setdefault(
+                (menu_key, header_key),
+                header_label,
+            )
 
     resolved_process_key = section_key_by_label.get(normalized_process_label, "")
     resolved_process_label = (
         section_label_by_key.get(resolved_process_key)
         or clean_process_label
     )
+
+    # If process_label matches a menu label directly (e.g. when list_auth_processo uses active menus)
+    if not resolved_process_key and normalized_process_label:
+        matched_menu_row = menu_row_by_label.get(normalized_process_label)
+        if isinstance(matched_menu_row, dict):
+            resolved_process_key = resolve_menu_key_alias(matched_menu_row.get("key"))
+            resolved_process_label = (
+                str(matched_menu_row.get("label") or clean_process_label).strip()
+                or clean_process_label
+            )
 
     resolved_subprocess_key = ""
     resolved_subprocess_label = (
@@ -176,6 +210,24 @@ def resolve_process_view_authorization_targets_v1(
     )
 
     if not _is_all_subprocess_rule_v1(clean_subprocess_label):
+        if resolved_process_key and resolved_process_key in menu_row_by_key:
+            matched_header_key = process_header_key_by_menu_and_label.get(
+                (resolved_process_key, normalized_subprocess_label)
+            )
+            if matched_header_key:
+                resolved_subprocess_key = matched_header_key
+                resolved_subprocess_label = (
+                    process_header_label_by_menu_and_key.get(
+                        (resolved_process_key, matched_header_key)
+                    )
+                    or clean_subprocess_label
+                )
+                return {
+                    "process_key": resolved_process_key,
+                    "process_label": resolved_process_label,
+                    "subprocess_key": resolved_subprocess_key,
+                    "subprocess_label": resolved_subprocess_label,
+                }
         target_row = None
         if resolved_process_key:
             target_row = menu_row_by_section_and_label.get(
@@ -776,9 +828,8 @@ def build_process_view_authorized_sidebar_menu_keys_v1(
             rule,
             sidebar_menu_settings,
         )
-        if resolved_subprocess_key:
-            if resolved_subprocess_key in visible_candidate_rows_by_key:
-                authorized_menu_keys.add(resolved_subprocess_key)
+        if resolved_subprocess_key and resolved_subprocess_key in visible_candidate_rows_by_key:
+            authorized_menu_keys.add(resolved_subprocess_key)
             continue
 
         resolved_process_key, _ = _resolve_rule_process_target_v1(
@@ -786,6 +837,9 @@ def build_process_view_authorized_sidebar_menu_keys_v1(
             sidebar_menu_settings,
         )
         if not resolved_process_key:
+            continue
+        if resolved_process_key in visible_candidate_rows_by_key:
+            authorized_menu_keys.add(resolved_process_key)
             continue
 
         authorized_menu_keys.update(

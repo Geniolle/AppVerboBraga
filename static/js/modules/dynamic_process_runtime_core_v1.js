@@ -1647,11 +1647,16 @@
         (sectionFields.length || hasQuantityRulesForSection);
       let editToggleLabel = "Editar";
       if (historyProcessMode) {
-        const createActionLabel = toSentenceCaseText(
-          selectedSection && selectedSection.label
-            ? selectedSection.label
-            : historyRecordLabels.singular || "registo"
-        );
+        let createActionLabel;
+        if (cleanMenuKey === "contacto_geral" || cleanMenuKey === "contato") {
+          createActionLabel = "Contactos";
+        } else {
+          createActionLabel = toSentenceCaseText(
+            selectedSection && selectedSection.label
+              ? selectedSection.label
+              : historyRecordLabels.singular || "registo"
+          );
+        }
         editToggleLabel = `Criar ${createActionLabel}`;
       }
 

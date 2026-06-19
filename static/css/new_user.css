@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
 :root {
   --bg: #eceef2;
   --topbar: #2f86d7;
@@ -6833,7 +6835,7 @@ body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"]
 }
 /* APPVERBO_ADMIN_MENU_NATIVE_V4_END */
 
-/* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_START */
+/* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V9_START */
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -6843,64 +6845,57 @@ body.appverbo-menu-native-ok #submenu-items [data-appverbo-menu-inactive="true"]
   margin-top: auto;
   padding: 12px 14px 14px;
   flex: 0 0 auto;
-}
-
-.appverbo-sidebar-owner-card {
-  margin: 0;
-  padding: 10px 12px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid var(--sidebar-line);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.appverbo-sidebar-owner-logo-wrap {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  display: flex;
-  align-items: center;
   justify-content: center;
 }
 
-.appverbo-sidebar-owner-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  object-fit: cover;
-  display: block;
-  border: 1px solid var(--sidebar-line);
-  background: #fff;
-}
-
-.appverbo-sidebar-owner-logo-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-  color: #334155;
-}
-
-.appverbo-sidebar-owner-text {
-  min-width: 0;
-  display: flex;
+.brand-link {
+  display: inline-flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  text-decoration: none;
 }
 
-.appverbo-sidebar-owner-name {
-  font-size: 13px;
-  line-height: 1.2;
-  color: #0f172a;
-  font-weight: 800;
+.logo {
+  font-family: 'Great Vibes', cursive;
+  font-size: 30px;
+  font-weight: 400;
+  color: #111827;
+  line-height: 1.08;
+  display: block;
+  padding-bottom: 2px;
+  max-width: 100%;
+  overflow: visible;
   white-space: nowrap;
+}
+
+.version {
+  margin-top: 0;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: #111827;
+  opacity: 0.55;
+  letter-spacing: 0.8px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-/* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V7_END */
+
+body.appverbo-sidebar-collapsed .appverbo-sidebar-owner-footer {
+  padding: 10px 6px 12px;
+}
+
+body.appverbo-sidebar-collapsed .logo {
+  font-size: 24px;
+}
+
+body.appverbo-sidebar-collapsed .version {
+  display: none;
+}
+/* APPVERBO_SIDEBAR_OWNER_ENTITY_FOOTER_V9_END */
 
 /* APPVERBO_FIXED_SIDEBAR_SCROLL_RIGHT_V1_START */
 @media (min-width: 641px) {

@@ -23,6 +23,11 @@ class AdminFieldConfig:
     readonly_on_edit: bool = False
     css_class: str = ""
     options_source: str = ""
+    help_text: str = ""
+    accept: str = ""
+    remove_input_name: str = ""
+    visible_on_create: bool = True
+    visible_on_edit: bool = True
 
 
 @dataclass(frozen=True)
@@ -64,6 +69,8 @@ class AdminSubprocessConfig:
     update_endpoint: str = ""
     move_endpoint: str = ""
     delete_endpoint: str = ""
+    invite_endpoint: str = ""
+    invite_key_field: str = ""
     repository_name: str = ""
     repository_class: str = ""
     status_field: str = "status"
@@ -81,6 +88,8 @@ class AdminSubprocessConfig:
     enabled: bool = True
     migration_status: str = "native"
     table_name: str = ""
+    form_enctype: str = ""
+    view_title: str = ""
     fields: tuple[AdminFieldConfig, ...] = ()
     columns: tuple[AdminColumnConfig, ...] = ()
     actions: tuple[AdminActionConfig, ...] = ()
@@ -103,6 +112,7 @@ class AdminSubprocessState:
     active_columns: tuple[AdminColumnConfig, ...] | None = None
     prefill_keys: set[str] = field(default_factory=set)
     show_field_hints: bool = False
+    view_mode: bool = False
 
     @property
     def effective_fields(self) -> tuple[AdminFieldConfig, ...]:
