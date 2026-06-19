@@ -579,7 +579,7 @@ tituloBloco.appendChild(descricao);
     const cardListaSessoesV3 = formulario.closest(".card, section");
     moverBlocoCriacaoParaCardSeparadoSessoes_v3(cardListaSessoesV3, wrapper);
     aplicarFormularioCriacaoCompletoSessoes_v4(formulario, wrapper);
-    removerFooterListaSessoes_v4(wrapper);
+    removerFooterListaSessoes_v5(wrapper);
 
     return wrapper;
   }
