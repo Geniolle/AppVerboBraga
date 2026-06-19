@@ -5656,3 +5656,116 @@ input.action-btn-cancel,
 }
 
 /* APPVERBO_CREATE_CARD_STANDARD_V4_END */
+
+/* ###################################################################################
+   APPVERBO_TOP_SUBMENU_SAP_STYLE_V1_START
+################################################################################### */
+
+#menu-tabs-card {
+  padding: 0 !important;
+  margin-bottom: 14px;
+  background: #ffffff !important;
+  border: 1px solid #e3eaf4 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+#menu-tabs-card .menu-tabs,
+#menu-tabs-card #submenu-items.menu-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center !important;
+  gap: 26px;
+  min-height: 56px;
+  padding: 0 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #ffffff;
+  border-bottom: 1px solid #d9e2ef;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+#menu-tabs-card .menu-tabs::-webkit-scrollbar,
+#menu-tabs-card #submenu-items.menu-tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+#menu-tabs-card .menu-tabs::-webkit-scrollbar-thumb,
+#menu-tabs-card #submenu-items.menu-tabs::-webkit-scrollbar-thumb {
+  background: #cdd9ea;
+  border-radius: 999px;
+}
+
+#menu-tabs-card .menu-tabs .submenu-item,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center;
+  align-self: stretch;
+  width: auto !important;
+  min-width: auto !important;
+  height: 100%;
+  margin: 0;
+  padding: 18px 2px 14px !important;
+  border: 0 !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #1d2b3a !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: none !important;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+#menu-tabs-card .menu-tabs .submenu-item:hover,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item:hover {
+  background: #f5f9ff !important;
+  color: #0a6ed1 !important;
+  border-bottom-color: rgba(10, 110, 209, 0.22) !important;
+}
+
+#menu-tabs-card .menu-tabs .submenu-item.active,
+#menu-tabs-card .menu-tabs .submenu-item[aria-selected="true"],
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item.active,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item[aria-selected="true"] {
+  background: transparent !important;
+  color: #0a6ed1 !important;
+  border: 0 !important;
+  border-bottom: 3px solid #0a6ed1 !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+#menu-tabs-card .menu-tabs .submenu-item.active:hover,
+#menu-tabs-card .menu-tabs .submenu-item[aria-selected="true"]:hover,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item.active:hover,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item[aria-selected="true"]:hover {
+  background: #f5f9ff !important;
+  color: #0a6ed1 !important;
+  border-bottom-color: #0a6ed1 !important;
+}
+
+#menu-tabs-card .menu-tabs .submenu-item.active *,
+#menu-tabs-card .menu-tabs .submenu-item[aria-selected="true"] *,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item.active *,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item[aria-selected="true"] * {
+  color: inherit !important;
+}
+
+#menu-tabs-card .menu-tabs .submenu-item:focus-visible,
+#menu-tabs-card #submenu-items.menu-tabs .submenu-item:focus-visible {
+  outline: 2px solid #0a6ed1;
+  outline-offset: 3px;
+  border-radius: 4px !important;
+}
+
+/* APPVERBO_TOP_SUBMENU_SAP_STYLE_V1_END */
