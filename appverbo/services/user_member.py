@@ -19,26 +19,7 @@ def _build_temporary_password_hash_v1() -> str:
 
 
 # ###################################################################################
-# (2) NUMERACAO DE UTILIZADOR - PRESERVAR PREENCHIMENTO DE LACUNAS
-# ###################################################################################
-
-def _get_next_available_user_id_v1(session: Session) -> int:
-    used_user_ids = session.scalars(select(User.id).order_by(User.id.asc())).all()
-    next_candidate = 1
-
-    for raw_user_id in used_user_ids:
-        if not isinstance(raw_user_id, int) or raw_user_id < next_candidate:
-            continue
-        if raw_user_id == next_candidate:
-            next_candidate += 1
-            continue
-        break
-
-    return next_candidate
-
-
-# ###################################################################################
-# (3) SINCRONIZACAO DE STATUS MEMBER <-> USER
+# (2) SINCRONIZACAO DE STATUS MEMBER <-> USER
 # ###################################################################################
 
 def _normalize_user_account_status_v1(raw_status: Any) -> str:
@@ -69,7 +50,7 @@ def member_status_for_user_account_status_v1(raw_status: Any) -> str:
 
 
 # ###################################################################################
-# (4) HELPER CENTRAL DE GARANTIA DE USER POR MEMBER
+# (3) HELPER CENTRAL DE GARANTIA DE USER POR MEMBER
 # ###################################################################################
 
 def ensure_user_for_member(
@@ -129,7 +110,6 @@ def ensure_user_for_member(
             else _build_temporary_password_hash_v1()
         )
         user_kwargs: dict[str, Any] = {
-            "id": _get_next_available_user_id_v1(session),
             "member_id": int(member_id),
             "login_email": clean_email,
             "password_hash": password_hash,

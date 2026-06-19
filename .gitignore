@@ -44,3 +44,16 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Node / Expo
+node_modules/
+appverbo-mobile/node_modules/
+.expo/
+appverbo-mobile/.expo/
+dist/
+build/
+coverage/
+__pycache__/
+*.pyc
+.venv/
+.env
