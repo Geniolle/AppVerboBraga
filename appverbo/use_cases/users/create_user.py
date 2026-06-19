@@ -32,7 +32,7 @@ from appverbo.services.page import (
     build_users_new_url,
     get_entity_edit_defaults,
     get_entity_form_defaults,
-    get_next_entity_internal_number,
+    get_next_entity_number,
     get_page_data,
     get_user_edit_defaults,
 )
@@ -272,7 +272,7 @@ def _build_error_context(
     current_user_is_admin: bool,
     can_manage_all_entities: bool,
     user_personal_data: dict[str, Any],
-    next_entity_internal_number: int,
+    next_entity_number: int,
     page_data: dict[str, Any],
 ) -> dict[str, Any]:
     return {
@@ -292,7 +292,7 @@ def _build_error_context(
         "user_personal_data": user_personal_data,
         "entity_success": "",
         "entity_error": "",
-        "next_entity_internal_number": str(next_entity_internal_number),
+        "next_entity_number": str(next_entity_number),
         "profile_success": "",
         "profile_error": "",
         "settings_success": "",
@@ -344,7 +344,7 @@ def execute_create_user(
     user_personal_data = get_user_personal_data(
         session, int(actor_user["id"]), selected_entity_id
     )
-    next_entity_internal_number = get_next_entity_internal_number(session)
+    next_entity_number = get_next_entity_number(session)
 
     if not current_user_is_admin:
         return CreateUserOutcome(
@@ -495,7 +495,7 @@ def execute_create_user(
                 current_user_is_admin=current_user_is_admin,
                 can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
                 user_personal_data=user_personal_data,
-                next_entity_internal_number=next_entity_internal_number,
+                next_entity_number=next_entity_number,
                 page_data=page_data,
             ),
         )
@@ -575,7 +575,7 @@ def execute_create_user(
                 current_user_is_admin=current_user_is_admin,
                 can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
                 user_personal_data=user_personal_data,
-                next_entity_internal_number=next_entity_internal_number,
+                next_entity_number=next_entity_number,
                 page_data=page_data,
             ),
         )

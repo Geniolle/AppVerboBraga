@@ -20,8 +20,8 @@ def ensure_entities_optional_columns() -> None:
         return
 
     with engine.begin() as connection:
-        if "internal_number" not in existing_columns:
-            connection.execute(text("ALTER TABLE entities ADD COLUMN internal_number INTEGER"))
+        if "entity_number" not in existing_columns:
+            connection.execute(text("ALTER TABLE entities ADD COLUMN entity_number INTEGER"))
         if "tax_id" not in existing_columns:
             connection.execute(text("ALTER TABLE entities ADD COLUMN tax_id VARCHAR(40)"))
         if "email" not in existing_columns:
@@ -52,15 +52,15 @@ def ensure_entities_optional_columns() -> None:
         if engine.dialect.name == "postgresql":
             connection.execute(
                 text(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_entities_internal_number "
-                    "ON entities (internal_number) WHERE internal_number IS NOT NULL"
+                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_entities_entity_number "
+                    "ON entities (entity_number) WHERE entity_number IS NOT NULL"
                 )
             )
         else:
             connection.execute(
                 text(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_entities_internal_number "
-                    "ON entities (internal_number)"
+                    "CREATE UNIQUE INDEX IF NOT EXISTS uq_entities_entity_number "
+                    "ON entities (entity_number)"
                 )
             )
         try:
@@ -180,7 +180,7 @@ def ensure_required_global_profiles() -> None:
             session.commit()
 
 
-def normalize_entities_internal_numbers() -> None:
+def normalize_entities_entity_numbers() -> None:
     inspector = inspect(engine)
     try:
         table_names = set(inspector.get_table_names())
@@ -196,7 +196,7 @@ def normalize_entities_internal_numbers() -> None:
                 SELECT
                     id,
                     profile_scope,
-                    internal_number,
+                    entity_number,
                     created_at
                 FROM entities
                 ORDER BY
@@ -217,7 +217,7 @@ def normalize_entities_internal_numbers() -> None:
         if not rows:
             return
 
-        max_capacity = settings.ENTITY_INTERNAL_NUMBER_MAX - settings.ENTITY_INTERNAL_NUMBER_MIN + 1
+        max_capacity = settings.ENTITY_NUMBER_MAX - settings.ENTITY_NUMBER_MIN + 1
         if len(rows) > max_capacity:
             return
 
@@ -236,11 +236,11 @@ def normalize_entities_internal_numbers() -> None:
         )
 
         for row in rows:
-            row_number = getattr(row, "internal_number", None)
+            row_number = getattr(row, "entity_number", None)
             if not isinstance(row_number, int):
                 has_invalid_number = True
                 break
-            if row_number < settings.ENTITY_INTERNAL_NUMBER_MIN or row_number > settings.ENTITY_INTERNAL_NUMBER_MAX:
+            if row_number < settings.ENTITY_NUMBER_MIN or row_number > settings.ENTITY_NUMBER_MAX:
                 has_invalid_number = True
                 break
             if row_number in seen_numbers:
@@ -249,18 +249,18 @@ def normalize_entities_internal_numbers() -> None:
             seen_numbers.add(row_number)
 
         if owner_row is not None:
-            owner_number = getattr(owner_row, "internal_number", None)
-            owner_number_is_minimum = owner_number == settings.ENTITY_INTERNAL_NUMBER_MIN
+            owner_number = getattr(owner_row, "entity_number", None)
+            owner_number_is_minimum = owner_number == settings.ENTITY_NUMBER_MIN
 
         if not has_invalid_number and not has_duplicate_number and owner_number_is_minimum:
             return
 
-        connection.execute(text("UPDATE entities SET internal_number = NULL"))
+        connection.execute(text("UPDATE entities SET entity_number = NULL"))
 
-        next_number = settings.ENTITY_INTERNAL_NUMBER_MIN
+        next_number = settings.ENTITY_NUMBER_MIN
         for row in rows:
             connection.execute(
-                text("UPDATE entities SET internal_number = :number WHERE id = :entity_id"),
+                text("UPDATE entities SET entity_number = :number WHERE id = :entity_id"),
                 {"number": next_number, "entity_id": int(row.id)},
             )
             next_number += 1

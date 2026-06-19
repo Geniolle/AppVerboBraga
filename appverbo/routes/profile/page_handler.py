@@ -330,7 +330,7 @@ def new_user_page(
             resolved_menu = "home"
         # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
-        next_entity_internal_number = get_next_entity_internal_number(session)
+        next_entity_number = get_next_entity_number(session)
         entity_edit_data = get_entity_edit_data(
             session,
             parsed_entity_edit_id,
@@ -457,7 +457,7 @@ def new_user_page(
         "user_personal_data": user_personal_data,
         "entity_success": entity_success or "",
         "entity_error": entity_error or "",
-        "next_entity_internal_number": str(next_entity_internal_number),
+        "next_entity_number": str(next_entity_number),
         "profile_success": profile_success or "",
         "profile_error": profile_error or "",
         "settings_success": settings_success or "",

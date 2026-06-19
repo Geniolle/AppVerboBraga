@@ -109,7 +109,7 @@ def create_entity(
             selected_entity_id=selected_entity_id,
         )
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
-        next_entity_internal_number = get_next_entity_internal_number(session)
+        next_entity_number = get_next_entity_number(session)
 
         required_field_labels = validate_entity_required_fields_v1(entity_form_data)
         if invalid_profile_scope:
@@ -130,7 +130,7 @@ def create_entity(
                 "entity_error": (
                     "Preencha os campos obrigatórios: " + ", ".join(required_field_labels) + "."
                 ),
-                "next_entity_internal_number": str(next_entity_internal_number),
+                "next_entity_number": str(next_entity_number),
                 "profile_success": "",
                 "profile_error": "",
                 "profile_tab": "pessoal",
@@ -159,7 +159,7 @@ def create_entity(
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": "Já existe uma entidade com este nome.",
-                "next_entity_internal_number": str(next_entity_internal_number),
+                "next_entity_number": str(next_entity_number),
                 "profile_success": "",
                 "profile_error": "",
                 "profile_tab": "pessoal",
@@ -189,7 +189,7 @@ def create_entity(
                     "user_personal_data": user_personal_data,
                     "entity_success": "",
                     "entity_error": "Já existe uma entidade com perfil Owner. Apenas uma é permitida.",
-                    "next_entity_internal_number": str(next_entity_internal_number),
+                    "next_entity_number": str(next_entity_number),
                     "profile_success": "",
                     "profile_error": "",
                     "profile_tab": "pessoal",
@@ -218,7 +218,7 @@ def create_entity(
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": logo_error,
-                "next_entity_internal_number": str(next_entity_internal_number),
+                "next_entity_number": str(next_entity_number),
                 "profile_success": "",
                 "profile_error": "",
                 "profile_tab": "pessoal",
@@ -234,7 +234,7 @@ def create_entity(
             )
 
         entity = Entity(
-            internal_number=next_entity_internal_number,
+            entity_number=next_entity_number,
             logo_url=stored_logo_url or None,
             is_active=True,
         )
@@ -243,7 +243,7 @@ def create_entity(
 
         try:
             session.flush()
-            created_internal_number = entity.internal_number
+            created_entity_number = entity.entity_number
             session.commit()
         except IntegrityError:
             session.rollback()
@@ -262,7 +262,7 @@ def create_entity(
                 "user_personal_data": user_personal_data,
                 "entity_success": "",
                 "entity_error": "Não foi possível criar a entidade. Tente novamente.",
-                "next_entity_internal_number": str(get_next_entity_internal_number(session)),
+                "next_entity_number": str(get_next_entity_number(session)),
                 "profile_success": "",
                 "profile_error": "",
                 "profile_tab": "pessoal",
@@ -285,7 +285,7 @@ def create_entity(
     return RedirectResponse(
         url=(
             build_users_new_url(
-                entity_success=f"Entidade criada com sucesso. Número do cliente: {created_internal_number}.",
+                entity_success=f"Entidade criada com sucesso. Nº da entidade: {created_entity_number}.",
                 menu="administrativo",
                 admin_tab="entidade",
             )

@@ -20,7 +20,7 @@ from appverbo.db.bootstrap import (
     ensure_required_global_profiles,
     ensure_sidebar_menu_settings_table,
     get_allowed_global_profiles_for_form,
-    normalize_entities_internal_numbers,
+    normalize_entities_entity_numbers,
     normalize_profile_name,
 )
 from appverbo.db.session import SessionLocal, engine
@@ -78,8 +78,8 @@ ALLOWED_ACCOUNT_STATUS = settings.ALLOWED_ACCOUNT_STATUS
 ENTITY_PROFILE_SCOPE_OWNER = settings.ENTITY_PROFILE_SCOPE_OWNER
 ENTITY_PROFILE_SCOPE_LEGADO = settings.ENTITY_PROFILE_SCOPE_LEGADO
 ALLOWED_ENTITY_PROFILE_SCOPE = settings.ALLOWED_ENTITY_PROFILE_SCOPE
-ENTITY_INTERNAL_NUMBER_MIN = settings.ENTITY_INTERNAL_NUMBER_MIN
-ENTITY_INTERNAL_NUMBER_MAX = settings.ENTITY_INTERNAL_NUMBER_MAX
+ENTITY_NUMBER_MIN = settings.ENTITY_NUMBER_MIN
+ENTITY_NUMBER_MAX = settings.ENTITY_NUMBER_MAX
 GLOBAL_PROFILE_CHOICES = settings.GLOBAL_PROFILE_CHOICES
 ALLOWED_GLOBAL_PROFILE_NAMES = settings.ALLOWED_GLOBAL_PROFILE_NAMES
 ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED = settings.ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED
@@ -153,8 +153,8 @@ __all__ = [
     "ENTITY_PROFILE_SCOPE_OWNER",
     "ENTITY_PROFILE_SCOPE_LEGADO",
     "ALLOWED_ENTITY_PROFILE_SCOPE",
-    "ENTITY_INTERNAL_NUMBER_MIN",
-    "ENTITY_INTERNAL_NUMBER_MAX",
+    "ENTITY_NUMBER_MIN",
+    "ENTITY_NUMBER_MAX",
     "GLOBAL_PROFILE_CHOICES",
     "ALLOWED_GLOBAL_PROFILE_NAMES",
     "ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED",
@@ -167,7 +167,7 @@ __all__ = [
     "ensure_members_optional_columns",
     "ensure_required_global_profiles",
     "ensure_sidebar_menu_settings_table",
-    "normalize_entities_internal_numbers",
+    "normalize_entities_entity_numbers",
     "normalize_profile_name",
     "get_allowed_global_profiles_for_form",
     "Entity",

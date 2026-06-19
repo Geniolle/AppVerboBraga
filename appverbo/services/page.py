@@ -760,7 +760,7 @@ def get_page_data(
                 "nome": "Nome",
                 "telefone": "Telefone",
                 "email": "Email",
-                "pais": "PaÃ­s",
+                "pais": "País",
             }[required_field]
 
         if required_field not in profile_personal_visible_fields:
@@ -812,7 +812,7 @@ def get_page_data(
     apply_scope_filter = allowed_entity_ids is not None
 
     entities_stmt = (
-        select(Entity.id, Entity.name, Entity.internal_number)
+        select(Entity.id, Entity.name, Entity.entity_number)
        .where(Entity.is_active.is_(True))
        .order_by(Entity.name)
     )
@@ -828,7 +828,7 @@ def get_page_data(
     entity_rows_stmt = (
         select(
             Entity.id,
-            Entity.internal_number,
+            Entity.entity_number,
             Entity.name,
             Entity.acronym,
             Entity.tax_id,
@@ -1005,7 +1005,7 @@ def get_page_data(
     def serialize_entity_row(row: Any) -> dict[str, Any]:
         return {
             "id": row.id,
-            "internal_number": row.internal_number if row.internal_number is not None else "-",
+            "entity_number": row.entity_number if row.entity_number is not None else "-",
             "name": row.name,
             "acronym": row.acronym or "",
             "tax_id": row.tax_id or "",
@@ -1036,7 +1036,7 @@ def get_page_data(
             {
                 "id": row.id,
                 "name": row.name,
-                "internal_number": row.internal_number,
+                "entity_number": row.entity_number,
             }
             for row in entities
         ],
@@ -1208,7 +1208,7 @@ def get_entity_form_defaults() -> dict[str, str]:
 def get_entity_edit_defaults() -> dict[str, str]:
     return {
         "id": "",
-        "internal_number": "-",
+        "entity_number": "-",
         "name": "",
         "acronym": "",
         "tax_id": "",
@@ -1246,7 +1246,7 @@ def get_entity_edit_data(
 
     return {
         "id": str(entity.id),
-        "internal_number": str(entity.internal_number) if entity.internal_number is not None else "-",
+        "entity_number": str(entity.entity_number) if entity.entity_number is not None else "-",
         "name": entity.name or "",
         "acronym": entity.acronym or "",
         "tax_id": entity.tax_id or "",
@@ -1344,21 +1344,21 @@ def get_user_edit_data(
         "profile_id": str(profile_id) if profile_id is not None else "",
     }
 
-def get_next_entity_internal_number(session: Session) -> int:
+def get_next_entity_number(session: Session) -> int:
     used_numbers = session.scalars(
-        select(Entity.internal_number)
+        select(Entity.entity_number)
        .where(
-            Entity.internal_number.is_not(None),
-            Entity.internal_number >= ENTITY_INTERNAL_NUMBER_MIN,
-            Entity.internal_number <= ENTITY_INTERNAL_NUMBER_MAX,
+            Entity.entity_number.is_not(None),
+            Entity.entity_number >= ENTITY_NUMBER_MIN,
+            Entity.entity_number <= ENTITY_NUMBER_MAX,
         )
-       .order_by(Entity.internal_number.asc())
+       .order_by(Entity.entity_number.asc())
     ).all()
     used_set = {int(number) for number in used_numbers if isinstance(number, int)}
-    for candidate in range(ENTITY_INTERNAL_NUMBER_MIN, ENTITY_INTERNAL_NUMBER_MAX + 1):
+    for candidate in range(ENTITY_NUMBER_MIN, ENTITY_NUMBER_MAX + 1):
         if candidate not in used_set:
             return candidate
-    return ENTITY_INTERNAL_NUMBER_MAX
+    return ENTITY_NUMBER_MAX
 
 def build_users_new_url(**query_params: str) -> str:
     clean_query_params = {
@@ -1379,6 +1379,6 @@ __all__ = [
     "get_entity_edit_data",
     "get_user_edit_defaults",
     "get_user_edit_data",
-    "get_next_entity_internal_number",
+    "get_next_entity_number",
     "build_users_new_url",
 ]

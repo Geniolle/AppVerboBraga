@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from sqlalchemy import Boolean, CheckConstraint, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appverbo.models.base import Base, TimestampMixin
@@ -12,7 +12,7 @@ class Entity(Base, TimestampMixin):
     __tablename__ = "entities"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    internal_number: Mapped[Optional[int]] = mapped_column(Integer, unique=True)
+    entity_number: Mapped[Optional[int]] = mapped_column(Integer)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     acronym: Mapped[Optional[str]] = mapped_column(String(30))
     tax_id: Mapped[Optional[str]] = mapped_column(String(40))
@@ -35,6 +35,7 @@ class Entity(Base, TimestampMixin):
     roles: Mapped[List["Role"]] = relationship(back_populates="entity")
 
     __table_args__ = (
+        UniqueConstraint("entity_number", name="uq_entities_entity_number"),
         CheckConstraint(
             "profile_scope IN ('owner', 'legado')",
             name="ck_entities_profile_scope",

@@ -586,7 +586,7 @@ def upsert_user_by_email(
     primary_phone: str,
     entity_id: int | None,
 ) -> User:
-    from appverbo.services.page import get_next_entity_internal_number
+    from appverbo.services.page import get_next_entity_number
 
     clean_email = email.strip().lower()
     clean_name = full_name.strip() or clean_email.split("@")[0]
@@ -630,7 +630,7 @@ def upsert_user_by_email(
     if selected_entity is None:
         selected_entity = Entity(
             name="Entidade Principal",
-            internal_number=get_next_entity_internal_number(session),
+            entity_number=get_next_entity_number(session),
             is_active=True,
         )
         session.add(selected_entity)

@@ -106,7 +106,7 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
     SessionLocal = _build_session_factory()
 
     with SessionLocal() as session:
-        entity = Entity(internal_number=1, name="Igreja Central", is_active=True)
+        entity = Entity(entity_number=1, name="Igreja Central", is_active=True)
         profile = Profile(name="USER", is_active=True)
         session.add_all([entity, profile])
         session.commit()
@@ -129,7 +129,7 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
         ), patch.object(create_user_module, "get_page_data", return_value={}), patch.object(
             create_user_module, "get_user_personal_data", return_value={}
         ), patch.object(
-            create_user_module, "get_next_entity_internal_number", return_value=1
+            create_user_module, "get_next_entity_number", return_value=1
         ), patch.object(
             create_user_module,
             "_resolve_entity_from_user_email_v2",
@@ -187,7 +187,7 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
     SessionLocal = _build_session_factory()
 
     with SessionLocal() as session:
-        entity = Entity(internal_number=1, name="Igreja Norte", is_active=True)
+        entity = Entity(entity_number=1, name="Igreja Norte", is_active=True)
         profile = Profile(name="USER", is_active=True)
         member = Member(
             full_name="Carlos Base",
@@ -215,7 +215,7 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
         ), patch.object(create_user_module, "get_page_data", return_value={}), patch.object(
             create_user_module, "get_user_personal_data", return_value={}
         ), patch.object(
-            create_user_module, "get_next_entity_internal_number", return_value=1
+            create_user_module, "get_next_entity_number", return_value=1
         ), patch.object(
             create_user_module,
             "_resolve_entity_from_user_email_v2",

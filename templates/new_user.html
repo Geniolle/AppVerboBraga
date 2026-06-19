@@ -8,6 +8,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260619-top-submenu-sap-style-v1">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260619-process-shell-v4">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
@@ -24,7 +25,11 @@
 
     <main class="content">
       <div class="container">
-        <section id="menu-tabs-card" class="card menu-tabs-card">
+        <section id="menu-tabs-card" class="card menu-tabs-card appverbo-process-shell">
+          <div id="process-shell-header" class="process-shell-header">
+            <h1 id="process-shell-title" class="process-shell-title"></h1>
+            <div id="process-shell-actions" class="process-shell-actions"></div>
+          </div>
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
         </section>
 
@@ -579,7 +584,7 @@
               <div class="alert ok">{{ success }}</div>
             {% endif %}
 
-            <div class="entity-create-toolbar">
+            <div class="entity-create-toolbar appverbo-process-action-toolbar-v1">
             <details id="create-user-collapse" class="entity-create-collapse" {% if errors %}open{% endif %}>
               <summary>
                 <span>Criar utilizador</span>
@@ -794,8 +799,8 @@
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                                 <div class="entity-first-row">
                   <div class="field entity-first-row-client">
-                    <label for="entity_internal_number">Número do cliente</label>
-                    <input id="entity_internal_number" class="readonly-field" value="{{ next_entity_internal_number }}" readonly disabled>
+                    <label for="entity_number">Nº da entidade</label>
+                    <input id="entity_number" class="readonly-field" value="{{ next_entity_number }}" readonly disabled>
                   </div>
                   <div class="field entity-first-row-name">
                     <label for="entity_name">Nome da entidade *</label>
@@ -904,8 +909,8 @@
             <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
                         <div class="entity-first-row">
               <div class="field entity-first-row-client">
-                <label for="edit_entity_internal_number">Número do cliente</label>
-                <input id="edit_entity_internal_number" class="readonly-field" value="{{ entity_edit_data.internal_number }}" readonly disabled>
+                <label for="edit_entity_number">Nº da entidade</label>
+                <input id="edit_entity_number" class="readonly-field" value="{{ entity_edit_data.entity_number }}" readonly disabled>
               </div>
               <div class="field entity-first-row-name">
                 <label for="edit_entity_name">Nome da entidade *</label>
@@ -1047,6 +1052,9 @@
         {% endif %}
 
         <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
+          {% if entity_success and initial_menu_target == "#recent-entities-card" %}
+            <div class="alert ok">{{ entity_success }}</div>
+          {% endif %}
           <h2>{% if current_user_can_manage_all_entities %}Entidades criadas{% else %}Dados gerais{% endif %}</h2>
           {% set active_recent_entities = recent_entities | selectattr("is_active") | list %}
           {% if not current_user_can_manage_all_entities %}
@@ -1057,7 +1065,7 @@
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Número do cliente</th>
+                  <th>Nº DA ENTIDADE</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1076,7 +1084,7 @@
                 {% for row in active_recent_entities %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.internal_number }}</td>
+                    <td>{{ row.entity_number }}</td>
                     {% endif %}
                     <td>{{ row.name }}</td>
                     {% if current_user_can_manage_all_entities %}
@@ -1164,7 +1172,7 @@
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Número do cliente</th>
+                  <th>Nº DA ENTIDADE</th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1183,7 +1191,7 @@
                 {% for row in inactive_entities_rows %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.internal_number }}</td>
+                    <td>{{ row.entity_number }}</td>
                     {% endif %}
                     <td>{{ row.name }}</td>
                     {% if current_user_can_manage_all_entities %}
@@ -2586,8 +2594,9 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260619-process-shell-v3"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260619-top-submenu-runtime-v1"></script>
-  <script src="/static/js/new_user.js?v=20260619-top-submenu-runtime-v1"></script>
+  <script src="/static/js/new_user.js?v=20260619-entity-post-save-context-v3"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
 <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

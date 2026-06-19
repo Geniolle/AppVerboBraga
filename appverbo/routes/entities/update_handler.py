@@ -270,7 +270,8 @@ def update_entity(
             entity_success="Entidade atualizada com sucesso.",
             menu="administrativo",
             admin_tab="entidade",
+            target="#recent-entities-card",
         )
-        + "#create-entity-card",
+        + "#recent-entities-card",
         status_code=status.HTTP_303_SEE_OTHER,
     )

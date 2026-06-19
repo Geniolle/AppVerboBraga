@@ -69,8 +69,8 @@ class Settings:
     ENTITY_PROFILE_SCOPE_OWNER: str
     ENTITY_PROFILE_SCOPE_LEGADO: str
     ALLOWED_ENTITY_PROFILE_SCOPE: set[str]
-    ENTITY_INTERNAL_NUMBER_MIN: int
-    ENTITY_INTERNAL_NUMBER_MAX: int
+    ENTITY_NUMBER_MIN: int
+    ENTITY_NUMBER_MAX: int
     GLOBAL_PROFILE_CHOICES: tuple[dict[str, str], ...]
     ALLOWED_GLOBAL_PROFILE_NAMES: tuple[str, ...]
     ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED: tuple[str, ...]
@@ -138,8 +138,8 @@ def _build_settings() -> Settings:
         ENTITY_PROFILE_SCOPE_OWNER="owner",
         ENTITY_PROFILE_SCOPE_LEGADO="legado",
         ALLOWED_ENTITY_PROFILE_SCOPE={"owner", "legado"},
-        ENTITY_INTERNAL_NUMBER_MIN=1000,
-        ENTITY_INTERNAL_NUMBER_MAX=9999,
+        ENTITY_NUMBER_MIN=1000,
+        ENTITY_NUMBER_MAX=9999,
         GLOBAL_PROFILE_CHOICES=global_profile_choices,
         ALLOWED_GLOBAL_PROFILE_NAMES=allowed_global_profile_names,
         ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED=tuple(

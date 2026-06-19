@@ -293,7 +293,7 @@ def test_upsert_user_by_email_creates_user_for_existing_member_without_account()
 
     with SessionLocal() as session:
         entity = Entity(
-            internal_number=1,
+            entity_number=1,
             name="Igreja Central",
             is_active=True,
         )
