@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-import secrets
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -25,11 +23,11 @@ from appverbo.services.auth import (
     build_user_invite_link,
     build_user_invite_token,
     get_or_create_entity_superuser_profile,
-    hash_password,
     is_admin_user,
     is_allowed_global_profile,
     send_user_invite_email,
 )
+from appverbo.services.user_member import ensure_user_for_member
 from appverbo.services.page import (
     build_users_new_url,
     get_entity_edit_defaults,
@@ -546,15 +544,12 @@ def execute_create_user(
         if existing_member_link.entry_date is None:
             existing_member_link.entry_date = date.today()
 
-    user = User(
-        member_id=member.id,
-        login_email=payload.clean_email,
-        password_hash=hash_password(secrets.token_urlsafe(24)),
-        account_status=UserAccountStatus.PENDING.value,
+    user = ensure_user_for_member(
+        session,
+        member,
+        status=UserAccountStatus.PENDING.value,
         created_by_user_id=int(actor_user["id"]),
     )
-    session.add(user)
-    session.flush()
 
     session.add(
         UserProfile(

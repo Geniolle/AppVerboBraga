@@ -61,7 +61,9 @@ class Member(Base, TimestampMixin):
     first_collaboration_date: Mapped[Optional[date]] = mapped_column(Date)
 
     entity_links: Mapped[List["MemberEntity"]] = relationship(back_populates="member")
-    user_account: Mapped[Optional["User"]] = relationship(back_populates="member", uselist=False)
+    # Obrigatoriedade logica: os fluxos de aplicacao usam ensure_user_for_member e
+    # as migrations memberuser01/memberuser02 corrigem registos historicos sem conta.
+    user_account: Mapped["User"] = relationship(back_populates="member", uselist=False)
 
     __table_args__ = (
         CheckConstraint(
@@ -100,4 +102,3 @@ class MemberEntity(Base, TimestampMixin):
             name="ck_member_entities_status",
         ),
     )
-

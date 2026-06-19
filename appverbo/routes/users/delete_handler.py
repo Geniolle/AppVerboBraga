@@ -31,6 +31,20 @@ from appverbo.routes.users.helpers import (
     _member_is_within_permissions,
 )
 
+
+# ###################################################################################
+# (1) INATIVACAO LOGICA USER <-> MEMBER
+# ###################################################################################
+
+def _inactivate_user_and_member_v1(session: Session, user: User) -> None:
+    member = session.get(Member, int(user.member_id))
+    if member is None:
+        raise ValueError("Membro associado ao utilizador nao encontrado.")
+
+    user.account_status = UserAccountStatus.INACTIVE.value
+    member.member_status = MemberStatus.INACTIVE.value
+
+
 @router.post("/users/delete", response_class=HTMLResponse)
 def delete_user(
     request: Request,
@@ -147,16 +161,10 @@ def delete_user(
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
 
-        session.execute(
-            update(User)
-           .where(User.created_by_user_id == parsed_user_id)
-           .values(created_by_user_id=None)
-        )
-        session.execute(delete(UserProfile).where(UserProfile.user_id == parsed_user_id))
-        session.delete(user)
+        _inactivate_user_and_member_v1(session, user)
         try:
             session.commit()
-        except IntegrityError:
+        except (IntegrityError, ValueError):
             session.rollback()
             return RedirectResponse(
                 url=build_users_new_url(
@@ -170,7 +178,7 @@ def delete_user(
 
     return RedirectResponse(
         url=build_users_new_url(
-            success="Utilizador eliminado com sucesso.",
+            success="Utilizador inativado com sucesso.",
             menu="administrativo",
             admin_tab="utilizador",
         )

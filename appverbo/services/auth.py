@@ -7,12 +7,18 @@ import json
 import secrets
 import smtplib
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.message import EmailMessage
 from typing import Any
 from urllib.parse import quote
 
 from appverbo.core import *  # noqa: F403,F401
+from appverbo.services.passwords import hash_password, verify_password
+from appverbo.services.user_member import (
+    ensure_user_for_member,
+    ensure_user_for_member_v1,
+    member_status_for_user_account_status,
+)
 
 SIGNUP_COUNTRY_PHONE_OPTIONS: tuple[dict[str, str], ...] = (
     {
@@ -28,31 +34,6 @@ SIGNUP_COUNTRY_PHONE_OPTIONS: tuple[dict[str, str], ...] = (
         "placeholder": "+55 11 99999-9999",
     },
 )
-
-
-def hash_password(raw_password: str) -> str:
-    iterations = 390000
-    salt = secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", raw_password.encode("utf-8"), salt, iterations)
-    salt_b64 = base64.b64encode(salt).decode("utf-8")
-    digest_b64 = base64.b64encode(digest).decode("utf-8")
-    return f"pbkdf2_sha256${iterations}${salt_b64}${digest_b64}"
-
-def verify_password(raw_password: str, stored_hash: str) -> bool:
-    try:
-        scheme, iterations_text, salt_b64, digest_b64 = stored_hash.split("$", 3)
-        if scheme != "pbkdf2_sha256":
-            return False
-        iterations = int(iterations_text)
-        salt = base64.b64decode(salt_b64.encode("utf-8"))
-        expected_digest = base64.b64decode(digest_b64.encode("utf-8"))
-    except (ValueError, TypeError):
-        return False
-
-    candidate_digest = hashlib.pbkdf2_hmac(
-        "sha256", raw_password.encode("utf-8"), salt, iterations
-    )
-    return secrets.compare_digest(candidate_digest, expected_digest)
 
 def _urlsafe_b64encode(raw_bytes: bytes) -> str:
     return base64.urlsafe_b64encode(raw_bytes).decode("utf-8").rstrip("=")
@@ -615,6 +596,14 @@ def upsert_user_by_email(
         select(User).where(func.lower(User.login_email) == clean_email)
     ).scalar_one_or_none()
     if existing_user is not None:
+        existing_member = session.get(Member, int(existing_user.member_id))
+        if existing_member is not None:
+            existing_member.email = clean_email
+            existing_member.is_collaborator = True
+            existing_member.member_status = member_status_for_user_account_status(
+                existing_user.account_status
+            )
+        existing_user.login_email = clean_email
         return existing_user
 
     member = session.execute(
@@ -664,14 +653,11 @@ def upsert_user_by_email(
             )
         )
 
-    user = User(
-        member_id=member.id,
-        login_email=clean_email,
-        password_hash=hash_password(secrets.token_urlsafe(24)),
-        account_status=UserAccountStatus.ACTIVE.value,
+    user = ensure_user_for_member(
+        session,
+        member,
+        status=UserAccountStatus.ACTIVE.value,
     )
-    session.add(user)
-    session.flush()
     return user
 
 def render_login(
@@ -709,6 +695,8 @@ __all__ = [
     "verify_password",
     "_urlsafe_b64encode",
     "_urlsafe_b64decode",
+    "ensure_user_for_member_v1",
+    "ensure_user_for_member",
     "build_user_invite_token",
     "parse_user_invite_token",
     "build_user_invite_link",

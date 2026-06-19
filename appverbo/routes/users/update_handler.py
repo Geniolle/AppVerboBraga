@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.user_member import member_status_for_user_account_status
 from appverbo.models import (
     Entity,
     Member,
@@ -278,6 +279,7 @@ def update_user(
         member.email = clean_email
         user.login_email = clean_email
         user.account_status = clean_account_status
+        member.member_status = member_status_for_user_account_status(clean_account_status)
 
         if selected_entity is not None:
             primary_link = session.execute(

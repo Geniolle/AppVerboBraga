@@ -8,10 +8,10 @@ from sqlalchemy.exc import IntegrityError
 from appverbo.core import SessionLocal, templates
 from appverbo.models import Member, User, UserAccountStatus
 from appverbo.routes.auth.router import router
+from appverbo.services.passwords import hash_password
 from appverbo.services.auth import (
     build_password_reset_link,
     build_password_reset_token,
-    hash_password,
     is_password_reset_token_valid_for_user,
     parse_password_reset_token,
     render_login,
