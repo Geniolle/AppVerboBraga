@@ -11,12 +11,12 @@ from appverbo.routes.auth.router import router
 from appverbo.services.auth import (
     build_password_reset_link,
     build_password_reset_token,
-    hash_password,
     is_password_reset_token_valid_for_user,
     parse_password_reset_token,
     render_login,
     send_password_reset_email,
 )
+from appverbo.services.passwords import hash_password
 
 
 def render_password_reset_request_v1(

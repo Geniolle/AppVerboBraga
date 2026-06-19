@@ -24,6 +24,7 @@ from appverbo.models import (
 )
 
 from appverbo.routes.auth.router import router
+from appverbo.services.passwords import verify_password
 
 @router.post("/login", response_class=HTMLResponse)
 def login_v1(
