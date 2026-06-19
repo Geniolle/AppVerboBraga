@@ -1170,6 +1170,86 @@ if (
 }
 let activeMenuKey = "";
 
+
+//###################################################################################
+// (SUBMENU SUPERIOR REUTILIZAVEL) WRAPPER FINO DO CONTROLLER GENERICO
+//###################################################################################
+
+function normalizeTopSubmenuSelectionData_v1(selectedReference) {
+  if (!selectedReference) {
+    return null;
+  }
+
+  if (selectedReference.nodeType === 1 && selectedReference.dataset) {
+    const selectedDataset = {};
+
+    if (selectedReference.dataset.profileSection) {
+      selectedDataset.profileSection = String(selectedReference.dataset.profileSection || "");
+    }
+
+    if (selectedReference.dataset.dynamicProcessSection) {
+      selectedDataset.dynamicProcessSectionKey = String(selectedReference.dataset.dynamicProcessSection || "");
+    }
+
+    return selectedDataset;
+  }
+
+  if (typeof selectedReference !== "object" || Array.isArray(selectedReference)) {
+    return null;
+  }
+
+  const selectedDataset = {};
+
+  if (selectedReference.profileSection) {
+    selectedDataset.profileSection = String(selectedReference.profileSection || "");
+  }
+
+  if (selectedReference.dynamicProcessSectionKey || selectedReference.dynamicProcessSection) {
+    selectedDataset.dynamicProcessSectionKey = String(
+      selectedReference.dynamicProcessSectionKey || selectedReference.dynamicProcessSection || ""
+    );
+  }
+
+  return Object.keys(selectedDataset).length ? selectedDataset : null;
+}
+
+const topSubmenuController = (
+  itemsEl &&
+  window.AppVerboTopSubmenu &&
+  typeof window.AppVerboTopSubmenu.createTopSubmenuController === "function"
+)
+  ? window.AppVerboTopSubmenu.createTopSubmenuController({
+      container: itemsEl,
+      formatLabel: toSentenceCaseText,
+      onSelect: ({ item, linkEl }) => {
+        const menuKey = normalizeMenuKey(activeMenuKey);
+        if (!menuKey || !item) {
+          return;
+        }
+
+        closeAllProfileEdits();
+        selectedTargetByMenu[menuKey] = item.target;
+        setActiveSubmenu(item.target, linkEl);
+        applyContentForMenuTarget(menuKey, item.target);
+
+        if (item.dynamicProcessSectionKey) {
+          selectedDynamicSectionByMenu[menuKey] = String(item.dynamicProcessSectionKey);
+          renderDynamicProcessCard(menuKey, item.dynamicProcessSectionKey);
+        }
+
+        if (
+          menuKey === MEU_PERFIL_MENU_KEY &&
+          typeof window.activateProfilePersonalSection === "function"
+        ) {
+          const sectionKey = String(item.profileSection || "");
+          meuPerfilSelectedProfileSection = sectionKey;
+          window.activateProfilePersonalSection(sectionKey);
+          applyMeuPerfilProcessSubsequentVisibility();
+        }
+      }
+    })
+  : null;
+
 function renderHomeCharts() {
   if (!window.Chart) {
     return;
@@ -2362,14 +2442,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   }
   if (selectedSection) {
     selectedDynamicSectionByMenu[cleanMenuKey] = String(selectedSection.key || "");
-    if (itemsEl) {
-      const selectedLinkEl = itemsEl.querySelector(
-        `.submenu-item[data-dynamic-process-section="${String(selectedSection.key || "").replace(/"/g, '\\"')}"]`
-      );
-      if (selectedLinkEl) {
-        setActiveSubmenu("#dynamic-process-card", selectedLinkEl);
-      }
-    }
+    setActiveSubmenu("#dynamic-process-card", {
+      dynamicProcessSectionKey: String(selectedSection.key || "")
+    });
   }
 
   const menuLabel = toSentenceCaseText(menuData.menuLabel || "Processo");
@@ -2702,6 +2777,13 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
   if (!itemsEl) {
     return;
   }
+  if (topSubmenuController) {
+    topSubmenuController.setActive(
+      targetSelector,
+      normalizeTopSubmenuSelectionData_v1(selectedLinkEl) || selectedLinkEl || null
+    );
+    return;
+  }
   const links = itemsEl.querySelectorAll(".submenu-item");
   clearSubmenuActiveLinks(links);
   if (selectedLinkEl) {
@@ -2981,7 +3063,9 @@ function applyMeuPerfilProcessSubsequentVisibility() {
       `.submenu-item[data-profile-section="${String(meuPerfilSelectedProfileSection || "").replace(/"/g, '\\"')}"]`
     );
     if (selectedLinkEl && selectedLinkEl.style.display !== "none") {
-      setActiveSubmenu("#perfil-pessoal-card", selectedLinkEl);
+      setActiveSubmenu("#perfil-pessoal-card", {
+        profileSection: String(meuPerfilSelectedProfileSection || "")
+      });
       return;
     }
     const firstVisibleLinkEl = Array.from(itemsEl.querySelectorAll(".submenu-item[data-profile-section]")).find(
@@ -2989,7 +3073,9 @@ function applyMeuPerfilProcessSubsequentVisibility() {
     );
     if (firstVisibleLinkEl) {
       meuPerfilSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "");
-      setActiveSubmenu("#perfil-pessoal-card", firstVisibleLinkEl);
+      setActiveSubmenu("#perfil-pessoal-card", {
+        profileSection: String(meuPerfilSelectedProfileSection || "")
+      });
     }
   }
   renderMeuPerfilQuantityGroups();
@@ -4144,8 +4230,14 @@ function renderSubmenu(menuKey) {
     return;
   }
 
-  itemsEl.innerHTML = "";
   itemsEl.style.display = "flex";
+
+  if (topSubmenuController) {
+    topSubmenuController.render(Array.isArray(config.items) ? config.items : []);
+    return;
+  }
+
+  itemsEl.innerHTML = "";
 
   config.items.forEach((item) => {
     const link = document.createElement("a");
@@ -4258,14 +4350,9 @@ function activateMenu(menuKey, options = {}) {
     selectedTargetByMenu[menuKey] = defaultTarget;
     if (selectedDynamicItem && itemsEl) {
       const selectedSectionKey = String(selectedDynamicItem.dynamicProcessSectionKey || "");
-      const selectedLinkEl = itemsEl.querySelector(
-        `.submenu-item[data-dynamic-process-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
-      );
-      if (selectedLinkEl) {
-        setActiveSubmenu(defaultTarget, selectedLinkEl);
-      } else {
-        setActiveSubmenu(defaultTarget);
-      }
+      setActiveSubmenu(defaultTarget, {
+        dynamicProcessSectionKey: selectedSectionKey
+      });
       selectedDynamicSectionByMenu[menuKey] = selectedSectionKey;
       renderDynamicProcessCard(menuKey, selectedSectionKey);
     } else {
@@ -4287,14 +4374,9 @@ function activateMenu(menuKey, options = {}) {
         meuPerfilSelectedProfileSection = selectedSectionKey;
         window.activateProfilePersonalSection(selectedSectionKey);
         applyMeuPerfilProcessSubsequentVisibility();
-        const selectedLinkEl = itemsEl
-          ? itemsEl.querySelector(
-              `.submenu-item[data-profile-section="${selectedSectionKey.replace(/"/g, '\\"')}"]`
-            )
-          : null;
-        if (selectedLinkEl) {
-          setActiveSubmenu(defaultTarget, selectedLinkEl);
-        }
+        setActiveSubmenu(defaultTarget, {
+          profileSection: selectedSectionKey
+        });
       }
     }
     return;
