@@ -34,6 +34,7 @@ from appverbo.services.auth import (
     is_admin_user,
     is_allowed_global_profile,
 )
+from appverbo.services.user_member import member_status_for_user_account_status
 from appverbo.services.page import build_users_new_url
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.session import get_current_user, get_session_entity_id
@@ -352,6 +353,9 @@ def _apply_update_user_changes_v1(
     member.full_name = payload.clean_full_name
     member.primary_phone = payload.clean_primary_phone
     member.email = payload.clean_email
+    member.member_status = member_status_for_user_account_status(
+        payload.clean_account_status
+    )
 
     user.login_email = payload.clean_email
     user.account_status = payload.clean_account_status

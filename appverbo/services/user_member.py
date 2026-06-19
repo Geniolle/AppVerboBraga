@@ -28,6 +28,29 @@ def _build_temporary_password_hash_v1() -> str:
     return _hash_password_v1(secrets.token_urlsafe(24))
 
 
+# ###################################################################################
+# (2) NUMERACAO DE UTILIZADOR - PRESERVAR PREENCHIMENTO DE LACUNAS
+# ###################################################################################
+
+def _get_next_available_user_id_v1(session: Session) -> int:
+    used_user_ids = session.scalars(select(User.id).order_by(User.id.asc())).all()
+    next_candidate = 1
+
+    for raw_user_id in used_user_ids:
+        if not isinstance(raw_user_id, int) or raw_user_id < next_candidate:
+            continue
+        if raw_user_id == next_candidate:
+            next_candidate += 1
+            continue
+        break
+
+    return next_candidate
+
+
+# ###################################################################################
+# (3) SINCRONIZACAO DE STATUS MEMBER <-> USER
+# ###################################################################################
+
 def _normalize_user_account_status_v1(raw_status: Any) -> str:
     clean_status = str(raw_status or "").strip().lower()
     valid_statuses = {
@@ -38,14 +61,10 @@ def _normalize_user_account_status_v1(raw_status: Any) -> str:
     }
 
     if clean_status not in valid_statuses:
-        return UserAccountStatus.PENDING.value
+        raise ValueError(f"Estado de conta inválido: {raw_status!r}.")
 
     return clean_status
 
-
-# ###################################################################################
-# (2) SINCRONIZACAO DE STATUS MEMBER <-> USER
-# ###################################################################################
 
 def member_status_for_user_account_status_v1(raw_status: Any) -> str:
     normalized_status = _normalize_user_account_status_v1(raw_status)
@@ -60,17 +79,15 @@ def member_status_for_user_account_status_v1(raw_status: Any) -> str:
 
 
 # ###################################################################################
-# (3) HELPER CENTRAL DE GARANTIA DE USER POR MEMBER
+# (4) HELPER CENTRAL DE GARANTIA DE USER POR MEMBER
 # ###################################################################################
 
-def ensure_user_for_member_v1(
+def ensure_user_for_member(
     session: Session,
     member: Member,
-    *,
-    status: str = UserAccountStatus.PENDING.value,
+    status: str = "pending",
     created_by_user_id: int | None = None,
     password: str | None = None,
-    user_id: int | None = None,
 ) -> User:
     member_id = getattr(member, "id", None)
     if member_id is None:
@@ -89,31 +106,44 @@ def ensure_user_for_member_v1(
     requested_status = _normalize_user_account_status_v1(status)
     member_status = member_status_for_user_account_status_v1(requested_status)
 
-    user = session.execute(
+    user_by_member = session.execute(
         select(User).where(User.member_id == int(member_id))
     ).scalar_one_or_none()
 
-    if user is None:
-        user = session.execute(
-            select(User).where(func.lower(User.login_email) == clean_email)
-        ).scalar_one_or_none()
+    users_by_email = session.execute(
+        select(User).where(func.lower(User.login_email) == clean_email)
+    ).scalars().all()
+    if len(users_by_email) > 1:
+        raise ValueError(f"Email duplicado em utilizadores: {clean_email}.")
 
-        if user is not None and int(user.member_id) != int(member_id):
-            raise ValueError("Email já está associado a outro utilizador.")
+    user_by_email = users_by_email[0] if users_by_email else None
+    if user_by_email is not None and int(user_by_email.member_id) != int(member_id):
+        raise ValueError("Email já está associado a outro utilizador.")
 
-    password_value = str(password or "").strip()
-    password_hash = _hash_password_v1(password_value) if password_value else _build_temporary_password_hash_v1()
+    if (
+        user_by_member is not None
+        and user_by_email is not None
+        and int(user_by_member.id) != int(user_by_email.id)
+    ):
+        raise ValueError("Membro e email estão associados a utilizadores diferentes.")
 
-    if user is None:
+    user = user_by_member or user_by_email
+    user_was_created = user is None
+    password_value = "" if password is None else str(password)
+
+    if user_was_created:
+        password_hash = (
+            _hash_password_v1(password_value)
+            if password_value
+            else _build_temporary_password_hash_v1()
+        )
         user_kwargs: dict[str, Any] = {
+            "id": _get_next_available_user_id_v1(session),
             "member_id": int(member_id),
             "login_email": clean_email,
             "password_hash": password_hash,
             "account_status": requested_status,
         }
-
-        if isinstance(user_id, int) and user_id > 0:
-            user_kwargs["id"] = int(user_id)
 
         if isinstance(created_by_user_id, int) and created_by_user_id > 0:
             user_kwargs["created_by_user_id"] = int(created_by_user_id)
@@ -123,9 +153,10 @@ def ensure_user_for_member_v1(
         session.flush()
 
     user.login_email = clean_email
-    user.password_hash = password_hash if password_value else (
-        user.password_hash if str(user.password_hash or "").strip() else password_hash
-    )
+    if password_value and not user_was_created:
+        user.password_hash = _hash_password_v1(password_value)
+    elif not str(user.password_hash or "").strip():
+        user.password_hash = _build_temporary_password_hash_v1()
     user.account_status = requested_status
     member.member_status = member_status
     member.is_collaborator = True
@@ -136,7 +167,7 @@ def ensure_user_for_member_v1(
     return user
 
 
-ensure_user_for_member = ensure_user_for_member_v1
+ensure_user_for_member_v1 = ensure_user_for_member
 member_status_for_user_account_status = member_status_for_user_account_status_v1
 
 

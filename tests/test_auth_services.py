@@ -166,6 +166,28 @@ def test_ensure_user_for_member_uses_supplied_password() -> None:
         assert session.scalar(select(func.count()).select_from(User)) == 1
 
 
+def test_upsert_user_by_email_creates_member_and_user_together() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        user = upsert_user_by_email(
+            session=session,
+            email="novo.utilizador@example.com",
+            full_name="Novo Utilizador",
+            primary_phone="912555666",
+            entity_id=None,
+        )
+        session.commit()
+
+        member = session.get(Member, user.member_id)
+
+        assert member is not None
+        assert member.user_account is not None
+        assert member.user_account.id == user.id
+        assert session.scalar(select(func.count()).select_from(Member)) == 1
+        assert session.scalar(select(func.count()).select_from(User)) == 1
+
+
 def test_upsert_user_by_email_creates_user_for_existing_member_without_account() -> None:
     SessionLocal = _build_session_factory()
 
@@ -233,14 +255,12 @@ def test_delete_inactive_user_inactivates_user_and_keeps_member_linked() -> None
         session.add_all([member, profile])
         session.flush()
 
-        user = User(
-            member_id=member.id,
-            login_email="ana.lopes@example.com",
-            password_hash=hash_password("SenhaForte123!"),
-            account_status=UserAccountStatus.INACTIVE.value,
+        user = ensure_user_for_member(
+            session,
+            member,
+            status=UserAccountStatus.INACTIVE.value,
+            password="SenhaForte123!",
         )
-        session.add(user)
-        session.flush()
 
         session.add(
             UserProfile(
@@ -264,3 +284,94 @@ def test_delete_inactive_user_inactivates_user_and_keeps_member_linked() -> None
         assert stored_member.user_account is not None
         assert stored_member.user_account.id == user.id
         assert session.scalar(select(func.count()).select_from(UserProfile)) == 1
+
+
+def test_user_update_synchronizes_member_status() -> None:
+    SessionLocal = _build_session_factory()
+    repository = UserAdminRepository(UTILIZADOR_CONFIG)
+
+    with SessionLocal() as session:
+        member = Member(
+            full_name="Rui Estado",
+            primary_phone="914111222",
+            email="rui.estado@example.com",
+        )
+        profile = Profile(name="USER", is_active=True)
+        session.add_all([member, profile])
+        session.flush()
+        user = ensure_user_for_member(
+            session,
+            member,
+            status=UserAccountStatus.ACTIVE.value,
+        )
+
+        repository.apply_user_update(
+            session=session,
+            user=user,
+            member=member,
+            full_name=member.full_name,
+            primary_phone=member.primary_phone,
+            login_email=member.email,
+            account_status=UserAccountStatus.BLOCKED.value,
+            selected_entity=None,
+            selected_profile=profile,
+        )
+        session.commit()
+
+        assert user.account_status == UserAccountStatus.BLOCKED.value
+        assert member.member_status == MemberStatus.INACTIVE.value
+
+        repository.apply_user_update(
+            session=session,
+            user=user,
+            member=member,
+            full_name=member.full_name,
+            primary_phone=member.primary_phone,
+            login_email=member.email,
+            account_status=UserAccountStatus.ACTIVE.value,
+            selected_entity=None,
+            selected_profile=profile,
+        )
+        session.commit()
+
+        assert user.account_status == UserAccountStatus.ACTIVE.value
+        assert member.member_status == MemberStatus.ACTIVE.value
+
+
+def test_pending_user_invite_token_keeps_member_user_identity() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        member = Member(
+            full_name="Marta Convite",
+            primary_phone="913222333",
+            email="marta.convite@example.com",
+        )
+        session.add(member)
+        session.flush()
+        user = ensure_user_for_member(session, member)
+        session.commit()
+
+        token = build_user_invite_token(user.id, user.login_email, 15)
+        payload = parse_user_invite_token(token)
+
+        assert payload is not None
+        assert payload["uid"] == user.id
+        assert payload["email"] == user.login_email
+        assert payload["entity_id"] == 15
+        assert user.account_status == UserAccountStatus.PENDING.value
+        assert member.user_account.id == user.id
+
+        activated_user = ensure_user_for_member(
+            session,
+            member,
+            status=UserAccountStatus.ACTIVE.value,
+            password="ConviteSeguro123!",
+        )
+        session.commit()
+
+        assert activated_user.id == user.id
+        assert verify_password("ConviteSeguro123!", activated_user.password_hash)
+        assert activated_user.account_status == UserAccountStatus.ACTIVE.value
+        assert member.member_status == MemberStatus.ACTIVE.value
+        assert session.scalar(select(func.count()).select_from(User)) == 1

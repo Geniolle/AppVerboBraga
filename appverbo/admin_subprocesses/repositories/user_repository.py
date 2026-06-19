@@ -27,6 +27,7 @@ from appverbo.repositories.member_entity_repository import (
     get_active_entity_ids_for_member,
     replace_active_member_entity_link,
 )
+from appverbo.repositories.user_profile_repository import replace_user_profile
 from appverbo.services.auth import is_admin_user
 from appverbo.services.user_member import member_status_for_user_account_status
 from appverbo.services.user_status import (

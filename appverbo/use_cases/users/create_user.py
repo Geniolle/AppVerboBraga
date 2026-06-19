@@ -107,34 +107,6 @@ def normalize_create_user_input_v1(
 normalize_create_user_input = normalize_create_user_input_v1
 
 
-# ###################################################################################
-# (3) NUMERACAO DE UTILIZADOR - PREENCHER LACUNAS DE ID
-# ###################################################################################
-
-def get_next_available_user_id_v1(session: Session) -> int:
-    used_user_ids = session.scalars(
-        select(User.id).order_by(User.id.asc())
-    ).all()
-
-    next_candidate = 1
-
-    for raw_user_id in used_user_ids:
-        if not isinstance(raw_user_id, int):
-            continue
-
-        if raw_user_id < next_candidate:
-            continue
-
-        if raw_user_id == next_candidate:
-            next_candidate += 1
-            continue
-
-        if raw_user_id > next_candidate:
-            break
-
-    return next_candidate
-
-
 def _build_error_context_v1(
     *,
     request: Request,
@@ -530,7 +502,6 @@ def execute_create_user(
         member,
         status=UserAccountStatus.PENDING.value,
         created_by_user_id=actor_user_id,
-        user_id=get_next_available_user_id_v1(session),
     )
 
     replace_user_profile(

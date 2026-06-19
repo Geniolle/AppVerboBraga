@@ -61,6 +61,8 @@ class Member(Base, TimestampMixin):
     first_collaboration_date: Mapped[Optional[date]] = mapped_column(Date)
 
     entity_links: Mapped[List["MemberEntity"]] = relationship(back_populates="member")
+    # Obrigatoriedade lógica: os fluxos de aplicação usam ensure_user_for_member e
+    # as migrations memberuser01/memberuser02 corrigem registos históricos sem conta.
     user_account: Mapped["User"] = relationship(back_populates="member", uselist=False)
 
     __table_args__ = (

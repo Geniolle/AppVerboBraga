@@ -101,7 +101,6 @@ async def oauth_callback(request: Request, provider: str) -> RedirectResponse:
                 primary_phone="N/D",
                 entity_id=None,
             )
-            user.account_status = UserAccountStatus.ACTIVE.value
             session.commit()
         except IntegrityError:
             session.rollback()

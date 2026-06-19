@@ -126,7 +126,6 @@ def upgrade() -> None:
         select(
             members.c.id.label("id"),
             members.c.email.label("email"),
-            members.c.member_status.label("member_status"),
         )
         .select_from(members.outerjoin(users, users.c.member_id == members.c.id))
         .where(users.c.id.is_(None))
@@ -136,7 +135,6 @@ def upgrade() -> None:
     for row in missing_member_rows:
         member_id = int(row.id)
         clean_email = str(row.email or "").strip().lower()
-        member_status = str(row.member_status or "").strip().lower()
 
         if not clean_email or "@" not in clean_email:
             raise RuntimeError(
@@ -151,7 +149,7 @@ def upgrade() -> None:
                 f"'{clean_email}' ja pertence ao utilizador do membro {existing_member_id}."
             )
 
-        account_status = "inactive" if member_status == "inactive" else "pending"
+        account_status = "pending"
         password_hash = _build_temporary_password_hash()
 
         conn.execute(
