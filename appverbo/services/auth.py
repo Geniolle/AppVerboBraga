@@ -13,6 +13,7 @@ from typing import Any
 from urllib.parse import quote
 
 from appverbo.core import *  # noqa: F403,F401
+from appverbo.services.passwords import hash_password, verify_password
 from appverbo.services.user_member import (
     ensure_user_for_member,
     ensure_user_for_member_v1,
@@ -34,31 +35,6 @@ SIGNUP_COUNTRY_PHONE_OPTIONS: tuple[dict[str, str], ...] = (
     },
 )
 
-
-def hash_password(raw_password: str) -> str:
-    iterations = 390000
-    salt = secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", raw_password.encode("utf-8"), salt, iterations)
-    salt_b64 = base64.b64encode(salt).decode("utf-8")
-    digest_b64 = base64.b64encode(digest).decode("utf-8")
-    return f"pbkdf2_sha256${iterations}${salt_b64}${digest_b64}"
-
-
-def verify_password(raw_password: str, stored_hash: str) -> bool:
-    try:
-        scheme, iterations_text, salt_b64, digest_b64 = stored_hash.split("$", 3)
-        if scheme != "pbkdf2_sha256":
-            return False
-        iterations = int(iterations_text)
-        salt = base64.b64decode(salt_b64.encode("utf-8"))
-        expected_digest = base64.b64decode(digest_b64.encode("utf-8"))
-    except (ValueError, TypeError):
-        return False
-
-    candidate_digest = hashlib.pbkdf2_hmac(
-        "sha256", raw_password.encode("utf-8"), salt, iterations
-    )
-    return secrets.compare_digest(candidate_digest, expected_digest)
 
 def _urlsafe_b64encode(raw_bytes: bytes) -> str:
     return base64.urlsafe_b64encode(raw_bytes).decode("utf-8").rstrip("=")

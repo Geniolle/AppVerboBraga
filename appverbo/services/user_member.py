@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import base64
-import hashlib
 import secrets
 from typing import Any
 
@@ -9,23 +7,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from appverbo.models import Member, MemberStatus, User, UserAccountStatus
+from appverbo.services.passwords import hash_password
 
 
 # ###################################################################################
-# (1) HASH E TEMPORARIOS DE PASSWORD
+# (1) PASSWORD TEMPORARIA
 # ###################################################################################
-
-def _hash_password_v1(raw_password: str) -> str:
-    iterations = 390000
-    salt = secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", raw_password.encode("utf-8"), salt, iterations)
-    salt_b64 = base64.b64encode(salt).decode("utf-8")
-    digest_b64 = base64.b64encode(digest).decode("utf-8")
-    return f"pbkdf2_sha256${iterations}${salt_b64}${digest_b64}"
-
 
 def _build_temporary_password_hash_v1() -> str:
-    return _hash_password_v1(secrets.token_urlsafe(24))
+    return hash_password(secrets.token_urlsafe(24))
 
 
 # ###################################################################################
@@ -85,6 +75,7 @@ def member_status_for_user_account_status_v1(raw_status: Any) -> str:
 def ensure_user_for_member(
     session: Session,
     member: Member,
+    *,
     status: str = "pending",
     created_by_user_id: int | None = None,
     password: str | None = None,
@@ -133,7 +124,7 @@ def ensure_user_for_member(
 
     if user_was_created:
         password_hash = (
-            _hash_password_v1(password_value)
+            hash_password(password_value)
             if password_value
             else _build_temporary_password_hash_v1()
         )
@@ -154,7 +145,7 @@ def ensure_user_for_member(
 
     user.login_email = clean_email
     if password_value and not user_was_created:
-        user.password_hash = _hash_password_v1(password_value)
+        user.password_hash = hash_password(password_value)
     elif not str(user.password_hash or "").strip():
         user.password_hash = _build_temporary_password_hash_v1()
     user.account_status = requested_status
@@ -164,6 +155,7 @@ def ensure_user_for_member(
     if user.created_by_user_id is None and isinstance(created_by_user_id, int) and created_by_user_id > 0:
         user.created_by_user_id = int(created_by_user_id)
 
+    session.flush()
     return user
 
 

@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -19,12 +20,11 @@ from appverbo.admin_subprocesses.utilizador.configuracao import UTILIZADOR_CONFI
 from appverbo.services.auth import (
     build_user_invite_token,
     get_signup_country_options,
-    hash_password,
     parse_user_invite_token,
     upsert_user_by_email,
     validate_signup_phone_country,
-    verify_password,
 )
+from appverbo.services.passwords import hash_password, verify_password
 from appverbo.services.user_member import ensure_user_for_member
 
 
@@ -136,6 +136,77 @@ def test_ensure_user_for_member_creates_and_reuses_user() -> None:
         session.commit()
 
         assert reused_user.id == created_user.id
+        assert session.scalar(select(func.count()).select_from(User)) == 1
+
+
+def test_users_member_id_unique_constraint_rejects_second_account() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        member = Member(
+            full_name="Conta Única",
+            primary_phone="915111222",
+            email="conta.unica@example.com",
+        )
+        session.add(member)
+        session.flush()
+        ensure_user_for_member(session, member)
+        session.commit()
+
+        session.add(
+            User(
+                member_id=member.id,
+                login_email="segunda.conta@example.com",
+                password_hash=hash_password("PasswordSegura123!"),
+                account_status=UserAccountStatus.PENDING.value,
+            )
+        )
+
+        try:
+            session.flush()
+        except IntegrityError:
+            session.rollback()
+        else:
+            raise AssertionError("users.member_id deveria impedir uma segunda conta.")
+
+        assert session.scalar(select(func.count()).select_from(User)) == 1
+
+
+def test_users_login_email_unique_constraint_rejects_duplicate() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        first_member = Member(
+            full_name="Primeira Conta",
+            primary_phone="915333444",
+            email="email.unico@example.com",
+        )
+        second_member = Member(
+            full_name="Segunda Conta",
+            primary_phone="915555666",
+            email="outro.member@example.com",
+        )
+        session.add_all([first_member, second_member])
+        session.flush()
+        ensure_user_for_member(session, first_member)
+        session.commit()
+
+        session.add(
+            User(
+                member_id=second_member.id,
+                login_email="email.unico@example.com",
+                password_hash=hash_password("PasswordSegura123!"),
+                account_status=UserAccountStatus.PENDING.value,
+            )
+        )
+
+        try:
+            session.flush()
+        except IntegrityError:
+            session.rollback()
+        else:
+            raise AssertionError("users.login_email deveria impedir emails duplicados.")
+
         assert session.scalar(select(func.count()).select_from(User)) == 1
 
 

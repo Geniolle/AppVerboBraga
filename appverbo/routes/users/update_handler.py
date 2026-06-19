@@ -38,6 +38,7 @@ def update_user_v1(
                     status_code=status.HTTP_302_FOUND,
                 )
 
+            # O use case aplica account_status e member_status na mesma transação.
             outcome = execute_update_user(
                 session=session,
                 actor_user=current_user,

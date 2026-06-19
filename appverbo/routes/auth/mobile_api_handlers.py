@@ -11,7 +11,8 @@ from appverbo.core import SessionLocal
 from appverbo.models import Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
 from appverbo.routes.auth.router import router
 from appverbo.schemas.auth import LoginFormSchema
-from appverbo.services.auth import is_admin_user, verify_password
+from appverbo.services.auth import is_admin_user
+from appverbo.services.passwords import verify_password
 from appverbo.services.page import get_home_dashboard_data, get_page_data
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import get_user_personal_data
