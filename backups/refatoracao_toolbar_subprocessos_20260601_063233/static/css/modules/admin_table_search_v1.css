@@ -1,0 +1,66 @@
+/* APPVERBO_ADMIN_TABLE_SEARCH_V1_START */
+
+.admin-list-toolbar-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.admin-list-total-v1 {
+  margin: 0;
+  color: #274060;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-list-search-wrap-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 220px;
+  width: min(100%, 320px);
+}
+
+.admin-list-search-input-v1 {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #bcc9dd;
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: #ffffff;
+  color: #13233c;
+  font-size: 13px;
+}
+
+.admin-list-search-input-v1::placeholder {
+  color: #6a7f9d;
+}
+
+.admin-list-search-input-v1:focus {
+  outline: 0;
+  border-color: #2b6fd8;
+  box-shadow: 0 0 0 2px rgba(43, 111, 216, 0.12);
+}
+
+/* APPVERBO_ADMIN_SUBPROCESS_TOOLBAR_PARITY_V1_START */
+/* Padrao reutilizavel para qualquer subprocesso que recebe toolbar de pesquisa/total. */
+.admin-list-toolbar-title-v1 {
+  margin-bottom: 12px !important;
+}
+/* APPVERBO_ADMIN_SUBPROCESS_TOOLBAR_PARITY_V1_END */
+
+@media (max-width: 700px) {
+  .admin-list-toolbar-v1 {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-list-search-wrap-v1 {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* APPVERBO_ADMIN_TABLE_SEARCH_V1_END */

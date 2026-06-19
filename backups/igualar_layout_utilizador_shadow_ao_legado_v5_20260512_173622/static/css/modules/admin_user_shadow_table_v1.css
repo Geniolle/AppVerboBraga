@@ -1,0 +1,209 @@
+.admin-user-shadow-readonly-card-v1 {
+  margin-bottom: 16px;
+}
+
+.admin-user-shadow-readonly-card-v1 .profile-card-header {
+  margin-bottom: 16px;
+}
+
+.admin-user-shadow-toolbar-v1 {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.admin-user-shadow-search-wrap-v1 {
+  width: min(260px, 100%);
+}
+
+.admin-user-shadow-search-wrap-v1 .admin-table-search-input {
+  width: 100%;
+  min-height: 34px;
+}
+
+.admin-user-shadow-table-shell-v1 {
+  width: 100%;
+}
+
+.admin-user-shadow-table-v1 {
+  width: 100%;
+  table-layout: auto;
+}
+
+.admin-user-shadow-table-v1 th,
+.admin-user-shadow-table-v1 td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.admin-user-shadow-table-v1 th:nth-child(2),
+.admin-user-shadow-table-v1 td:nth-child(2),
+.admin-user-shadow-table-v1 th:nth-child(3),
+.admin-user-shadow-table-v1 td:nth-child(3) {
+  white-space: normal;
+}
+
+.admin-user-shadow-actions-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.admin-user-shadow-action-btn-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #c8d5ef;
+  border-radius: 8px;
+  background: #f3f7ff;
+  color: #174ea6;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.admin-user-shadow-action-btn-v1:hover,
+.admin-user-shadow-action-btn-v1:focus {
+  background: #e8f0ff;
+  border-color: #8fb3ef;
+  color: #0d47a1;
+  text-decoration: none;
+}
+
+.admin-user-shadow-status-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e7f8ee;
+  color: #16723a;
+  border: 1px solid #a8e2bd;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-user-shadow-status-v1.status-pill-inactive,
+.admin-user-shadow-status-v1.status-pill-inativo {
+  background: #f2f4f7;
+  color: #596579;
+  border-color: #d5dbe7;
+}
+
+.admin-user-shadow-status-v1.status-pill-pending,
+.admin-user-shadow-status-v1.status-pill-pendente {
+  background: #fff7e6;
+  color: #8a5a00;
+  border-color: #f1d08a;
+}
+
+.admin-user-shadow-status-v1.status-pill-blocked,
+.admin-user-shadow-status-v1.status-pill-bloqueado {
+  background: #fdecec;
+  color: #a61b1b;
+  border-color: #efb4b4;
+}
+
+.admin-user-shadow-footer-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-user-shadow-page-size-label-v1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #536176;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-user-shadow-page-size-label-v1 select {
+  width: 72px;
+  min-width: 72px;
+  max-width: 72px;
+  height: 34px;
+  padding: 4px 8px;
+  border: 1px solid #cdd7ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.admin-user-shadow-pagination-v1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #536176;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.admin-user-shadow-pagination-actions-v1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-user-shadow-pagination-actions-v1 button,
+.admin-user-shadow-pagination-actions-v1 span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-user-shadow-pagination-actions-v1 button {
+  border: 1px solid #d7e0f0;
+  background: #ffffff;
+  color: #2c4a73;
+  cursor: pointer;
+}
+
+.admin-user-shadow-pagination-actions-v1 button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-user-shadow-pagination-actions-v1 span {
+  border: 1px solid #1f5fbf;
+  background: #1f5fbf;
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .admin-user-shadow-toolbar-v1 {
+    justify-content: stretch;
+  }
+
+  .admin-user-shadow-search-wrap-v1 {
+    width: 100%;
+  }
+
+  .admin-user-shadow-footer-v1 {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-user-shadow-pagination-v1 {
+    margin-left: 0;
+  }
+}

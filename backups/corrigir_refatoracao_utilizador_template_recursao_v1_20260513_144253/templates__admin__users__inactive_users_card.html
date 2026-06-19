@@ -1,0 +1,19 @@
+{% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
+
+{% macro render_inactive_users_card_v1(state) %}
+<section
+  id="admin-user-shadow-inactive-card"
+  class="card admin-user-shadow-readonly-card-v1 admin-user-shadow-inactive-card-v1"
+  data-menu-scope="administrativo"
+  data-admin-subprocess-shadow="utilizador-inactive"
+>
+  <h3>{{ state.config.inactive_title }}</h3>
+
+  {% if state.inactive_rows %}
+    {{ render_admin_user_table_v1("inactive", state.inactive_rows, state.config.columns) }}
+  {% else %}
+    <p class="empty">Sem utilizadores inativos, pendentes ou bloqueados no processo nativo.</p>
+  {% endif %}
+</section>
+{% endmacro %}
+

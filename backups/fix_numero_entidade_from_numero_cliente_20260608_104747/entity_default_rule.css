@@ -1,0 +1,54 @@
+﻿/* Regra global: Estado + Nº Entidade */
+
+.entity-default-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  align-items: end;
+}
+
+.generated-entity-number-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.generated-entity-number-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #253858;
+}
+
+.generated-entity-number-field input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #c8d2e0;
+  border-radius: 5px;
+  padding: 0 10px;
+  background: #ffffff;
+  font-size: 13px;
+  outline: none;
+}
+
+.generated-entity-number-field input:focus {
+  border-color: #4058c9;
+  box-shadow: 0 0 0 2px rgba(64, 88, 201, 0.12);
+}
+
+.entity-default-readonly-input {
+  background: #f3f5f8 !important;
+  color: #344054;
+  cursor: not-allowed;
+}
+
+.entity-default-required {
+  color: #d92d20;
+}
+
+@media (max-width: 768px) {
+  .entity-default-pair {
+    grid-template-columns: 1fr;
+  }
+}

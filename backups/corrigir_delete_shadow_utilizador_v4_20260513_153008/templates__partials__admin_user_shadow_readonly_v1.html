@@ -1,0 +1,70 @@
+﻿{% from "admin/users/active_users_card.html" import render_active_users_card_v1 %}
+{% from "admin/users/inactive_users_card.html" import render_inactive_users_card_v1 %}
+
+{% macro render_admin_user_shadow_readonly_v12(state) %}
+<link rel="stylesheet" href="/static/css/modules/admin_user_shadow_table_v1.css?v=20260512-utilizador-shadow-layout-v15">
+
+<section
+  class="card admin-user-shadow-readonly-card-v1"
+  data-menu-scope="administrativo"
+>
+  <div class="profile-card-header">
+    <div>
+      <h2>Utilizadores - leitura nativa</h2>
+      <p class="muted">
+        Leitura nativa do processo Utilizador com pesquisa, paginação, visualização e edição.
+      </p>
+    </div>
+  </div>
+
+  {{ render_active_users_card_v1(state) }}
+  {{ render_inactive_users_card_v1(state) }}
+</section>
+
+<script src="/static/js/modules/admin_user_shadow_table_v1.js?v=20260513-utilizador-shadow-table-only-v18" defer></script>
+<script src="/static/js/modules/admin_user_action_navigation_v1.js?v=20260513-utilizador-action-navigation-v1" defer></script>
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v11(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v10(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v9(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v8(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v7(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v6(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v5(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v4(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v3(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v2(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v1(state) %}
+  {{ render_admin_user_shadow_readonly_v12(state) }}
+{% endmacro %}

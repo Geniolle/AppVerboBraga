@@ -1,0 +1,22 @@
+{% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
+
+{% macro render_active_users_card_v1(state) %}
+<section
+  id="admin-user-shadow-readonly-card"
+  class="card admin-user-shadow-readonly-card-v1"
+  data-menu-scope="administrativo"
+  data-admin-subprocess-shadow="utilizador"
+>
+  <div class="admin-subsection">
+    <h3>{{ state.config.active_title }}</h3>
+    <p class="muted">Total: {{ state.active_rows|length }}</p>
+
+    {% if state.active_rows %}
+      {{ render_admin_user_table_v1("active", state.active_rows, state.config.columns) }}
+    {% else %}
+      <p class="empty">Sem utilizadores ativos no processo nativo.</p>
+    {% endif %}
+  </div>
+</section>
+{% endmacro %}
+

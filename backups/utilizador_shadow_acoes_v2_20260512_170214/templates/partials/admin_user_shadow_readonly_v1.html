@@ -1,0 +1,70 @@
+{% macro render_admin_user_shadow_cell_v1(row, column) %}
+  {% set value = row.get(column.source, "-") %}
+  {% if column.source == "status_label" %}
+    <span class="status-pill status-pill-{{ row.get('status', '') }}">{{ value }}</span>
+  {% else %}
+    {{ value }}
+  {% endif %}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_table_v1(rows, columns) %}
+<div class="admin-table-wrap">
+  <table class="admin-subprocess-table-v1 admin-user-shadow-table-v1">
+    <thead>
+      <tr>
+        {% for column in columns %}
+        <th>{{ column.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr data-admin-user-shadow-row="{{ row.get('id', '') }}">
+        {% for column in columns %}
+        <td>{{ render_admin_user_shadow_cell_v1(row, column) }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v1(state) %}
+<section
+  id="admin-user-shadow-readonly-card"
+  class="card admin-user-shadow-readonly-card-v1"
+  data-menu-scope="administrativo"
+  data-admin-subprocess-shadow="utilizador"
+>
+  <div class="profile-card-header">
+    <div>
+      <h2>Utilizadores - leitura nativa</h2>
+      <p class="muted">
+        Validação do novo processo único. Este bloco é apenas leitura e não altera a criação, edição ou envio de convites.
+      </p>
+    </div>
+  </div>
+
+  <div class="admin-subsection">
+    <h3>{{ state.config.active_title }}</h3>
+    <p class="muted">Total: {{ state.active_rows|length }}</p>
+
+    {% if state.active_rows %}
+      {{ render_admin_user_shadow_table_v1(state.active_rows, state.config.columns) }}
+    {% else %}
+      <p class="empty">Sem utilizadores ativos no processo nativo.</p>
+    {% endif %}
+  </div>
+
+  <div class="admin-subsection">
+    <h3>{{ state.config.inactive_title }}</h3>
+
+    {% if state.inactive_rows %}
+      {{ render_admin_user_shadow_table_v1(state.inactive_rows, state.config.columns) }}
+    {% else %}
+      <p class="empty">Sem utilizadores inativos, pendentes ou bloqueados no processo nativo.</p>
+    {% endif %}
+  </div>
+</section>
+{% endmacro %}

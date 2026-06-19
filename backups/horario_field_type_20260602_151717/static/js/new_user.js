@@ -1,0 +1,2163 @@
+// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3
+// O fluxo de navegacao pos-save foi extraido para:
+// static/js/modules/post_save_context_navigation_guard_v3.js
+const APPVERBO_POST_SAVE_CONTEXT_KEY_V3 = "appverbo:post-save-context-v3";
+
+const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+const MEU_PERFIL_MENU_KEY = "meu_perfil";
+const EMPRESA_MENU_KEY = "empresa";
+const EMPRESA_INTERNAL_NUMBER_FIELD_KEY = "entity_internal_number";
+const EMPRESA_LOGO_UPLOAD_FIELD_KEY = "entity_logo_file";
+const EMPRESA_LOGO_CURRENT_FIELD_KEY = "entity_logo_current";
+const LEGACY_DOCUMENTOS_MENU_KEY = "documentos";
+const processFieldUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_FIELD_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_FIELD_UTILS_API_V1({
+        legacyDocumentosMenuKey: LEGACY_DOCUMENTOS_MENU_KEY,
+        meuPerfilMenuKey: MEU_PERFIL_MENU_KEY
+      })
+    : null;
+const processSubsequentRulesUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_SUBSEQUENT_RULES_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_SUBSEQUENT_RULES_UTILS_API_V1({
+        normalizeMenuKey,
+        normalizeLookupText
+      })
+    : null;
+const processQuantityRulesUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_QUANTITY_RULES_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_QUANTITY_RULES_UTILS_API_V1({
+        normalizeMenuKey,
+        toSentenceCaseText
+      })
+    : null;
+const processHistoryLabelsUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_HISTORY_LABELS_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_HISTORY_LABELS_UTILS_API_V1({
+        normalizeLookupText
+      })
+    : null;
+const avatarUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_AVATAR_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_AVATAR_UTILS_API_V1()
+    : null;
+const processFieldRuntimeUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_FIELD_RUNTIME_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_FIELD_RUNTIME_UTILS_API_V1({
+        normalizeLookupText
+      })
+    : null;
+const processAbsenceDateValidationApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_ABSENCE_DATE_VALIDATION_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_ABSENCE_DATE_VALIDATION_API_V1({
+        normalizeProcessFieldType,
+        normalizeMenuKey,
+        isStartDateField,
+        isEndDateField,
+        normalizeDateInputValue
+      })
+    : null;
+const profileEditUiUtilsApiV1 =
+  typeof window.APPVERBO_CREATE_PROFILE_EDIT_UI_UTILS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROFILE_EDIT_UI_UTILS_API_V1()
+    : null;
+const pageRuntimeBridgesApiV1 =
+  typeof window.APPVERBO_CREATE_PAGE_RUNTIME_BRIDGES_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PAGE_RUNTIME_BRIDGES_API_V1()
+    : null;
+const menuNavigationBridgeApiV1 =
+  typeof window.APPVERBO_CREATE_MENU_NAVIGATION_BRIDGE_API_V1 === "function"
+    ? window.APPVERBO_CREATE_MENU_NAVIGATION_BRIDGE_API_V1()
+    : null;
+const processSubprocessStandardsApiV1 =
+  typeof window.APPVERBO_CREATE_PROCESS_SUBPROCESS_STANDARDS_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROCESS_SUBPROCESS_STANDARDS_API_V1()
+    : null;
+
+//###################################################################################
+// (0) TEMA PADRAO DAS ABAS DE SUBPROCESSO
+//###################################################################################
+const SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1 = Object.freeze({
+  sizeBootstrapKeys: Object.freeze([
+    "subprocessTitleFontSizePx",
+    "adminSubprocessTitleFontSizePx",
+    "adminProcessTitleFontSizePx",
+  ]),
+  colorBootstrapKeys: Object.freeze([
+    "subprocessTitleColorHex",
+    "adminSubprocessTitleColorHex",
+    "adminProcessTitleColorHex",
+  ]),
+  fontFamilyBootstrapKeys: Object.freeze([
+    "subprocessTitleFontFamily",
+    "adminSubprocessTitleFontFamily",
+    "adminProcessTitleFontFamily",
+  ]),
+  defaultSizePx: 20,
+  defaultColorHex: "#0F172A",
+  defaultFontFamily: '"Segoe UI", Tahoma, Arial, sans-serif',
+  minSizePx: 16,
+  maxSizePx: 28,
+});
+
+const SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1 = Object.freeze({
+  sizeBootstrapKeys: Object.freeze([
+    "subprocessCardItemFontSizePx",
+    "adminSubprocessCardItemFontSizePx",
+    "adminCardItemFontSizePx",
+  ]),
+  colorBootstrapKeys: Object.freeze([
+    "subprocessCardItemColorHex",
+    "adminSubprocessCardItemColorHex",
+    "adminCardItemColorHex",
+  ]),
+  fontFamilyBootstrapKeys: Object.freeze([
+    "subprocessCardItemFontFamily",
+    "adminSubprocessCardItemFontFamily",
+    "adminCardItemFontFamily",
+  ]),
+  fontWeightBootstrapKeys: Object.freeze([
+    "subprocessCardItemFontWeight",
+    "adminSubprocessCardItemFontWeight",
+    "adminCardItemFontWeight",
+  ]),
+  defaultSizePx: 12,
+  defaultColorHex: "#0F1F3A",
+  defaultFontFamily: 'Inter, "Segoe UI", sans-serif',
+  defaultFontWeight: 500,
+  minSizePx: 10,
+  maxSizePx: 24,
+  minWeight: 300,
+  maxWeight: 900,
+});
+
+const SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1 = Object.freeze({
+  colorBootstrapKeys: Object.freeze([
+    "subprocessCardTableHeadColorHex",
+    "adminSubprocessCardTableHeadColorHex",
+    "adminCardTableHeadColorHex",
+  ]),
+  defaultColorHex: "#000000",
+  defaultFontWeight: 700,
+});
+
+function setupSubprocessTabsThemeV1() {
+  if (!processSubprocessStandardsApiV1) {
+    return;
+  }
+  if (typeof processSubprocessStandardsApiV1.ensureDefaultSubprocessTabThemeV1 === "function") {
+    processSubprocessStandardsApiV1.ensureDefaultSubprocessTabThemeV1();
+  }
+
+  if (typeof processSubprocessStandardsApiV1.applySubprocessTabThemeV1 !== "function") {
+    return;
+  }
+
+  const activeColor = String(
+    bootstrap.subprocessTabsActiveColorHex ||
+    bootstrap.adminTabsColorHex ||
+    ""
+  ).trim();
+  const inactiveColor = String(
+    bootstrap.subprocessTabsInactiveColorHex ||
+    ""
+  ).trim();
+  const indicatorColor = String(
+    bootstrap.subprocessTabsIndicatorColorHex ||
+    activeColor
+  ).trim();
+  const borderColor = String(
+    bootstrap.subprocessTabsBorderColorHex ||
+    ""
+  ).trim();
+
+  const parsePositiveIntegerV1 = (value) => {
+    const parsedValue = Number.parseInt(String(value || "").trim(), 10);
+    if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+      return null;
+    }
+    return parsedValue;
+  };
+  const clampValueV1 = (value, min, max) => {
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+    return Math.min(max, Math.max(min, value));
+  };
+  const resolveFirstBootstrapValueV1 = (keys = []) => {
+    for (let index = 0; index < keys.length; index += 1) {
+      const key = String(keys[index] || "").trim();
+      if (!key) {
+        continue;
+      }
+      const value = bootstrap[key];
+      if (typeof value === "undefined" || value === null) {
+        continue;
+      }
+      const cleanValue = String(value).trim();
+      if (!cleanValue) {
+        continue;
+      }
+      return cleanValue;
+    }
+    return "";
+  };
+  const normalizeFontFamilyTokenV1 = (value) => {
+    const cleanValue = String(value || "").trim();
+    if (!cleanValue) {
+      return "";
+    }
+    if (cleanValue.length > 120) {
+      return "";
+    }
+    if (/[\r\n;{}]/.test(cleanValue)) {
+      return "";
+    }
+    return cleanValue;
+  };
+
+  const rootEl = (
+    typeof document !== "undefined" &&
+    document.documentElement
+  )
+    ? document.documentElement
+    : null;
+  if (rootEl) {
+    const bootstrapTabTextSizePx = parsePositiveIntegerV1(
+      bootstrap.subprocessTabsTextSizePx ||
+      bootstrap.adminTabsTextSizePx
+    );
+    const resolvedTabTextSizePx = clampValueV1(
+      bootstrapTabTextSizePx || 14,
+      12,
+      20
+    );
+    const bootstrapTitleSizePx = parsePositiveIntegerV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.sizeBootstrapKeys)
+    );
+    const resolvedTitleSizePx = clampValueV1(
+      bootstrapTitleSizePx || SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.defaultSizePx,
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.minSizePx,
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.maxSizePx
+    );
+    const bootstrapTabsGapPx = parsePositiveIntegerV1(bootstrap.subprocessTabsGapPx);
+    const resolvedTabsGapPx = clampValueV1(bootstrapTabsGapPx || 16, 8, 36);
+    const bootstrapTitleColor = resolveFirstBootstrapValueV1(
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.colorBootstrapKeys
+    );
+    const resolvedTitleColor = (
+      bootstrapTitleColor ||
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.defaultColorHex
+    );
+    const bootstrapTitleFontFamily = normalizeFontFamilyTokenV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.fontFamilyBootstrapKeys)
+    );
+    const resolvedTitleFontFamily = (
+      bootstrapTitleFontFamily ||
+      SUBPROCESS_PROCESS_TITLE_STYLE_CONFIG_V1.defaultFontFamily
+    );
+    const bootstrapCardItemSizePx = parsePositiveIntegerV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.sizeBootstrapKeys)
+    );
+    const resolvedCardItemSizePx = clampValueV1(
+      bootstrapCardItemSizePx || SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultSizePx,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.minSizePx,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.maxSizePx
+    );
+    const bootstrapCardItemColor = resolveFirstBootstrapValueV1(
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.colorBootstrapKeys
+    );
+    const resolvedCardItemColor = (
+      bootstrapCardItemColor ||
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultColorHex
+    );
+    const bootstrapCardItemFontFamily = normalizeFontFamilyTokenV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.fontFamilyBootstrapKeys)
+    );
+    const resolvedCardItemFontFamily = (
+      bootstrapCardItemFontFamily ||
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultFontFamily
+    );
+    const bootstrapCardItemFontWeight = parsePositiveIntegerV1(
+      resolveFirstBootstrapValueV1(SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.fontWeightBootstrapKeys)
+    );
+    const resolvedCardItemFontWeight = clampValueV1(
+      bootstrapCardItemFontWeight || SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.defaultFontWeight,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.minWeight,
+      SUBPROCESS_CARD_ITEM_STYLE_CONFIG_V1.maxWeight
+    );
+    const bootstrapCardTableHeadColor = resolveFirstBootstrapValueV1(
+      SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1.colorBootstrapKeys
+    );
+    const resolvedCardTableHeadColor = (
+      bootstrapCardTableHeadColor ||
+      SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1.defaultColorHex
+    );
+
+    rootEl.style.setProperty("--appverbo-subprocess-title-font-size", `${resolvedTitleSizePx}px`);
+    rootEl.style.setProperty("--appverbo-subprocess-tab-font-size", `${resolvedTabTextSizePx}px`);
+    rootEl.style.setProperty("--appverbo-subprocess-tabs-gap", `${resolvedTabsGapPx}px`);
+    rootEl.style.setProperty("--appverbo-subprocess-title-color", resolvedTitleColor);
+    rootEl.style.setProperty("--appverbo-subprocess-title-font-family", resolvedTitleFontFamily);
+    rootEl.style.setProperty("--appverbo-admin-card-item-font-size-v1", `${resolvedCardItemSizePx}px`);
+    rootEl.style.setProperty("--appverbo-admin-card-item-color-v1", resolvedCardItemColor);
+    rootEl.style.setProperty("--appverbo-admin-card-item-font-family-v1", resolvedCardItemFontFamily);
+    rootEl.style.setProperty("--appverbo-admin-card-item-font-weight-v1", String(resolvedCardItemFontWeight));
+    rootEl.style.setProperty("--appverbo-admin-card-table-head-color-v1", resolvedCardTableHeadColor);
+    rootEl.style.setProperty(
+      "--appverbo-admin-card-table-head-font-weight-v1",
+      String(SUBPROCESS_CARD_TABLE_HEAD_STYLE_CONFIG_V1.defaultFontWeight)
+    );
+  }
+
+  if (activeColor || inactiveColor || indicatorColor || borderColor) {
+    processSubprocessStandardsApiV1.applySubprocessTabThemeV1({
+      activeColor: activeColor || undefined,
+      inactiveColor: inactiveColor || undefined,
+      indicatorColor: indicatorColor || undefined,
+      borderColor: borderColor || undefined
+    });
+  }
+}
+
+setupSubprocessTabsThemeV1();
+const currentUserName = bootstrap.currentUserName || "";
+const currentUserEmail = bootstrap.currentUserEmail || "";
+const currentUserIsAdmin = Boolean(bootstrap.currentUserIsAdmin);
+const currentUserCanManageAllEntities = Boolean(bootstrap.currentUserCanManageAllEntities);
+const dashboardData = bootstrap.dashboardData || {};
+const currentUserPhone = bootstrap.currentUserPhone || "";
+const currentUserAccountStatus = bootstrap.currentUserAccountStatus || "";
+const currentUserMemberStatus = bootstrap.currentUserMemberStatus || "";
+const currentUserEntities = bootstrap.currentUserEntities || "";
+const currentUserAddress = bootstrap.currentUserAddress || "";
+const currentUserCity = bootstrap.currentUserCity || "";
+const currentUserFreguesia = bootstrap.currentUserFreguesia || "";
+const currentUserPostalCode = bootstrap.currentUserPostalCode || "";
+const profilePersonalSections = Array.isArray(bootstrap.profilePersonalSections) ? bootstrap.profilePersonalSections : [];
+const profilePersonalFieldLabels = (
+  bootstrap.profilePersonalFieldLabels &&
+  typeof bootstrap.profilePersonalFieldLabels === "object" &&
+  !Array.isArray(bootstrap.profilePersonalFieldLabels)
+)
+  ? bootstrap.profilePersonalFieldLabels
+  : {};
+const initialProfileTab = bootstrap.initialProfileTab || "pessoal";
+const initialMenu = normalizeMenuKey(bootstrap.initialMenu || "home") || "home";
+const initialMenuTarget = bootstrap.initialMenuTarget || "";
+const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "";
+const initialAdminTab = bootstrap.initialAdminTab || "entidade";
+const currentEntityId = Number.parseInt(String(bootstrap.currentEntityId || "").trim(), 10);
+const settingsAction = bootstrap.settingsAction || "";
+const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
+const settingsEditKey = normalizeMenuKey(bootstrap.settingsEditKey || "");
+const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
+window.sidebarMenuSettings = sidebarMenuSettings;
+const sidebarMenuSettingsByKey = new Map();
+const visibleSidebarMenuKeys = new Set(
+  (Array.isArray(bootstrap.visibleSidebarMenuKeys) ? bootstrap.visibleSidebarMenuKeys : [])
+    .map((menuKey) => normalizeMenuKey(menuKey))
+    .filter(Boolean)
+);
+const menuProcessValuesMap = (
+  bootstrap.menuProcessValuesMap &&
+  typeof bootstrap.menuProcessValuesMap === "object" &&
+  !Array.isArray(bootstrap.menuProcessValuesMap)
+)
+  ? bootstrap.menuProcessValuesMap
+  : {};
+const menuProcessHistoryMap = (
+  bootstrap.menuProcessHistoryMap &&
+  typeof bootstrap.menuProcessHistoryMap === "object" &&
+  !Array.isArray(bootstrap.menuProcessHistoryMap)
+)
+  ? bootstrap.menuProcessHistoryMap
+  : {};
+const menuProcessQuantityValuesMap = (
+  bootstrap.menuProcessQuantityValuesMap &&
+  typeof bootstrap.menuProcessQuantityValuesMap === "object" &&
+  !Array.isArray(bootstrap.menuProcessQuantityValuesMap)
+)
+  ? bootstrap.menuProcessQuantityValuesMap
+  : {};
+const startupHash = window.location.hash || "";
+const dynamicProcessDataByMenu = {};
+const selectedDynamicSectionByMenu = {};
+const processTextualTypes = new Set(["text", "textarea", "number", "email", "phone", "link"]);
+const processSupportedTypes = new Set(["text", "textarea", "number", "email", "phone", "date", "flag", "list", "link"]);
+const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
+const readOnlyDynamicProcessMenuKeys = new Set();
+
+
+function normalizeSettingsTabKey(value) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.normalizeSettingsTabKey === "function") {
+    return processFieldUtilsApiV1.normalizeSettingsTabKey(value);
+  }
+  const cleanTab = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const aliases = {
+    "geral": "geral",
+    "configuracao-campos": "campos-config",
+    "configuracao-dos-campos": "campos-config",
+    "campos-configuracao": "campos-config",
+    "campos-config": "campos-config",
+    "config-fields": "campos-config",
+    "campos-adicionais": "campos-adicionais",
+    "campos-quantidade": "campos-quantidade",
+    "campos_quantidade": "campos-quantidade",
+    "quantity-fields": "campos-quantidade",
+    "additional-fields": "campos-adicionais",
+    "adicionais": "campos-adicionais",
+    "lista": "lista",
+    "listas": "lista",
+    "campos-subsequentes": "campos-subsequentes",
+    "campos_subsequentes": "campos-subsequentes",
+    "subsequentes": "campos-subsequentes",
+    "subsequent": "campos-subsequentes",
+    "subsequent-rules": "campos-subsequentes"
+  };
+  return aliases[cleanTab] || "";
+}
+
+function normalizeMenuKey(value) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.normalizeMenuKey === "function") {
+    return processFieldUtilsApiV1.normalizeMenuKey(value);
+  }
+  const cleanKey = String(value || "").trim().toLowerCase();
+  if (cleanKey === LEGACY_DOCUMENTOS_MENU_KEY) {
+    return MEU_PERFIL_MENU_KEY;
+  }
+  if (cleanKey === "configuracao") {
+    return "administrativo";
+  }
+  return cleanKey;
+}
+
+function isEmpresaProcessField(menuKey, fieldKey) {
+  return (
+    normalizeMenuKey(menuKey) === EMPRESA_MENU_KEY &&
+    normalizeMenuKey(fieldKey) !== ""
+  );
+}
+
+function isEmpresaReadOnlyField(menuKey, fieldKey) {
+  return (
+    isEmpresaProcessField(menuKey, fieldKey) &&
+    normalizeMenuKey(fieldKey) === EMPRESA_INTERNAL_NUMBER_FIELD_KEY
+  );
+}
+
+function isEmpresaLogoUploadField(menuKey, fieldKey) {
+  return (
+    isEmpresaProcessField(menuKey, fieldKey) &&
+    normalizeMenuKey(fieldKey) === EMPRESA_LOGO_UPLOAD_FIELD_KEY
+  );
+}
+
+function isEmpresaLogoCurrentField(menuKey, fieldKey) {
+  return (
+    isEmpresaProcessField(menuKey, fieldKey) &&
+    normalizeMenuKey(fieldKey) === EMPRESA_LOGO_CURRENT_FIELD_KEY
+  );
+}
+
+sidebarMenuSettings.forEach((setting) => {
+  const menuKey = normalizeMenuKey(setting && setting.key);
+  if (!menuKey) {
+    return;
+  }
+  sidebarMenuSettingsByKey.set(menuKey, setting);
+});
+
+function normalizeProcessFieldType(value) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.normalizeProcessFieldType === "function") {
+    return processFieldUtilsApiV1.normalizeProcessFieldType(value);
+  }
+  const cleanType = String(value || "text").trim().toLowerCase();
+  if (processSupportedTypes.has(cleanType)) {
+    return cleanType;
+  }
+  return "text";
+}
+
+function normalizeProcessFieldSize(rawSize, fieldType) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.normalizeProcessFieldSize === "function") {
+    return processFieldUtilsApiV1.normalizeProcessFieldSize(rawSize, fieldType);
+  }
+  if (!processTextualTypes.has(fieldType)) {
+    return null;
+  }
+  const parsedSize = Number.parseInt(String(rawSize || "").trim(), 10);
+  const maxSize = fieldType === "textarea" ? 4000 : 255;
+  const defaultSize = fieldType === "textarea" ? 4000 : 255;
+  if (!Number.isFinite(parsedSize)) {
+    return defaultSize;
+  }
+  return Math.min(maxSize, Math.max(1, parsedSize));
+}
+
+function normalizeProcessFieldRequired(rawRequired) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.normalizeProcessFieldRequired === "function") {
+    return processFieldUtilsApiV1.normalizeProcessFieldRequired(rawRequired);
+  }
+  if (typeof rawRequired === "boolean") {
+    return rawRequired;
+  }
+  const cleanValue = String(rawRequired || "").trim().toLowerCase();
+  return ["1", "true", "sim", "yes", "on"].includes(cleanValue);
+}
+
+function getProcessStorageKey(menuKey, fieldKey) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.getProcessStorageKey === "function") {
+    return processFieldUtilsApiV1.getProcessStorageKey(menuKey, fieldKey);
+  }
+  const cleanMenuKey = normalizeMenuKey(menuKey);
+  const cleanFieldKey = normalizeMenuKey(fieldKey);
+  if (!cleanMenuKey || !cleanFieldKey) {
+    return "";
+  }
+  return `process__${cleanMenuKey}__${cleanFieldKey}`;
+}
+
+function toSentenceCaseText(value) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.toSentenceCaseText === "function") {
+    return processFieldUtilsApiV1.toSentenceCaseText(value);
+  }
+  const cleanText = String(value || "").trim().replace(/\s+/g, " ");
+  if (!cleanText) {
+    return "";
+  }
+  const loweredText = cleanText.toLocaleLowerCase("pt-PT");
+  if (loweredText.length === 1) {
+    return loweredText.toLocaleUpperCase("pt-PT");
+  }
+  return loweredText[0].toLocaleUpperCase("pt-PT") + loweredText.slice(1);
+}
+
+function normalizeLookupText(value) {
+  if (processFieldUtilsApiV1 && typeof processFieldUtilsApiV1.normalizeLookupText === "function") {
+    return processFieldUtilsApiV1.normalizeLookupText(value);
+  }
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function getSidebarMenuSetting(menuKey) {
+  return sidebarMenuSettingsByKey.get(normalizeMenuKey(menuKey)) || null;
+}
+
+function normalizeProcessSubsequentOperator(value) {
+  if (
+    processSubsequentRulesUtilsApiV1 &&
+    typeof processSubsequentRulesUtilsApiV1.normalizeProcessSubsequentOperator === "function"
+  ) {
+    return processSubsequentRulesUtilsApiV1.normalizeProcessSubsequentOperator(value);
+  }
+  const cleanOperator = String(value || "equals").trim().toLowerCase();
+  return processSubsequentOperators.has(cleanOperator) ? cleanOperator : "equals";
+}
+
+function normalizeProcessSubsequentRules(rawRules) {
+  if (
+    processSubsequentRulesUtilsApiV1 &&
+    typeof processSubsequentRulesUtilsApiV1.normalizeProcessSubsequentRules === "function"
+  ) {
+    return processSubsequentRulesUtilsApiV1.normalizeProcessSubsequentRules(rawRules);
+  }
+  if (!Array.isArray(rawRules)) {
+    return [];
+  }
+  return rawRules
+    .map((rawRule) => {
+      if (!rawRule || typeof rawRule !== "object") {
+        return null;
+      }
+      const triggerField = normalizeMenuKey(rawRule.trigger_field);
+      const targetField = normalizeMenuKey(rawRule.field_key || rawRule.subsequent_field);
+      if (!triggerField || !targetField) {
+        return null;
+      }
+      const operator = normalizeProcessSubsequentOperator(rawRule.operator || rawRule.condition);
+      return {
+        key: normalizeMenuKey(rawRule.key),
+        triggerField,
+        targetField,
+        operator,
+        triggerValue: operator === "is_empty" || operator === "is_not_empty"
+          ? ""
+          : String(rawRule.trigger_value || "").trim()
+      };
+    })
+    .filter(Boolean);
+}
+
+function isProcessSubsequentRuleSatisfied(rule, valuesByField = {}) {
+  if (
+    processSubsequentRulesUtilsApiV1 &&
+    typeof processSubsequentRulesUtilsApiV1.isProcessSubsequentRuleSatisfied === "function"
+  ) {
+    return processSubsequentRulesUtilsApiV1.isProcessSubsequentRuleSatisfied(rule, valuesByField);
+  }
+  const currentValue = String(valuesByField[rule.triggerField] || "").trim();
+  const normalizedCurrentValue = normalizeLookupText(currentValue);
+  const normalizedRuleValue = normalizeLookupText(rule.triggerValue);
+  switch (normalizeProcessSubsequentOperator(rule.operator)) {
+    case "is_empty":
+      return currentValue === "";
+    case "is_not_empty":
+      return currentValue !== "";
+    case "not_equals":
+      return normalizedCurrentValue !== normalizedRuleValue;
+    default:
+      return normalizedCurrentValue === normalizedRuleValue;
+  }
+}
+
+function getHiddenProcessTargets(rules, valuesByField = {}) {
+  if (
+    processSubsequentRulesUtilsApiV1 &&
+    typeof processSubsequentRulesUtilsApiV1.getHiddenProcessTargets === "function"
+  ) {
+    return processSubsequentRulesUtilsApiV1.getHiddenProcessTargets(rules, valuesByField);
+  }
+  const groupedRules = new Map();
+  normalizeProcessSubsequentRules(rules).forEach((rule) => {
+    if (!groupedRules.has(rule.targetField)) {
+      groupedRules.set(rule.targetField, []);
+    }
+    groupedRules.get(rule.targetField).push(rule);
+  });
+  const hiddenTargets = new Set();
+  groupedRules.forEach((targetRules, targetField) => {
+    if (!targetRules.every((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField))) {
+      hiddenTargets.add(targetField);
+    }
+  });
+  return hiddenTargets;
+}
+
+function getFieldSectionMap(setting) {
+  if (
+    processQuantityRulesUtilsApiV1 &&
+    typeof processQuantityRulesUtilsApiV1.getFieldSectionMap === "function"
+  ) {
+    return processQuantityRulesUtilsApiV1.getFieldSectionMap(setting);
+  }
+  const sectionMap = new Map();
+  const rows = Array.isArray(setting && setting.process_visible_field_rows)
+    ? setting.process_visible_field_rows
+    : [];
+  rows.forEach((row) => {
+    const fieldKey = normalizeMenuKey(row && row.field_key);
+    if (!fieldKey) {
+      return;
+    }
+    sectionMap.set(fieldKey, normalizeMenuKey(row && row.header_key));
+  });
+  return sectionMap;
+}
+
+function getProcessQuantityStorageKey(menuKey, ruleKey) {
+  if (
+    processQuantityRulesUtilsApiV1 &&
+    typeof processQuantityRulesUtilsApiV1.getProcessQuantityStorageKey === "function"
+  ) {
+    return processQuantityRulesUtilsApiV1.getProcessQuantityStorageKey(menuKey, ruleKey);
+  }
+  const cleanMenuKey = normalizeMenuKey(menuKey);
+  const cleanRuleKey = normalizeMenuKey(ruleKey);
+  if (!cleanMenuKey || !cleanRuleKey) {
+    return "";
+  }
+  return `quantity__${cleanMenuKey}__${cleanRuleKey}`;
+}
+
+function normalizeProcessQuantityItems(rawItems) {
+  if (
+    processQuantityRulesUtilsApiV1 &&
+    typeof processQuantityRulesUtilsApiV1.normalizeProcessQuantityItems === "function"
+  ) {
+    return processQuantityRulesUtilsApiV1.normalizeProcessQuantityItems(rawItems);
+  }
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+  return rawItems
+    .map((rawItem) => {
+      if (!rawItem || typeof rawItem !== "object") {
+        return null;
+      }
+      const normalizedItem = {};
+      Object.keys(rawItem).forEach((rawKey) => {
+        const cleanKey = normalizeMenuKey(rawKey);
+        if (!cleanKey) {
+          return;
+        }
+        normalizedItem[cleanKey] = String(rawItem[rawKey] || "").trim();
+      });
+      return normalizedItem;
+    })
+    .filter(Boolean);
+}
+
+function normalizeProcessQuantityRules(rawRules) {
+  if (
+    processQuantityRulesUtilsApiV1 &&
+    typeof processQuantityRulesUtilsApiV1.normalizeProcessQuantityRules === "function"
+  ) {
+    return processQuantityRulesUtilsApiV1.normalizeProcessQuantityRules(rawRules);
+  }
+  if (!Array.isArray(rawRules)) {
+    return [];
+  }
+  return rawRules
+    .map((rawRule, index) => {
+      if (!rawRule || typeof rawRule !== "object") {
+        return null;
+      }
+      const key = normalizeMenuKey(rawRule.key || rawRule.rule_key || rawRule.ruleKey)
+        || `qty_regra_${index + 1}`;
+      const label = toSentenceCaseText(rawRule.label || rawRule.rule_label || rawRule.name || "Regra");
+      const quantityFieldKey = normalizeMenuKey(rawRule.quantity_field_key || rawRule.quantityFieldKey);
+      const headerKey = normalizeMenuKey(rawRule.header_key || rawRule.headerKey);
+      const itemLabel = toSentenceCaseText(rawRule.item_label || rawRule.itemLabel || "Item") || "Item";
+      const maxItemsRaw = Number.parseInt(String(rawRule.max_items || rawRule.maxItems || "1").trim(), 10);
+      const maxItems = Number.isFinite(maxItemsRaw) ? Math.min(Math.max(maxItemsRaw, 1), 50) : 1;
+      const repeatedFieldKeys = Array.isArray(rawRule.repeated_field_keys || rawRule.repeatedFieldKeys)
+        ? (rawRule.repeated_field_keys || rawRule.repeatedFieldKeys)
+        : [];
+      const cleanRepeatedFieldKeys = [];
+      const seenRepeatedFieldKeys = new Set();
+      repeatedFieldKeys.forEach((rawFieldKey) => {
+        const cleanFieldKey = normalizeMenuKey(rawFieldKey);
+        if (!cleanFieldKey || seenRepeatedFieldKeys.has(cleanFieldKey)) {
+          return;
+        }
+        seenRepeatedFieldKeys.add(cleanFieldKey);
+        cleanRepeatedFieldKeys.push(cleanFieldKey);
+      });
+      if (!quantityFieldKey || !cleanRepeatedFieldKeys.length) {
+        return null;
+      }
+      return {
+        key,
+        label,
+        quantityFieldKey,
+        repeatedFieldKeys: cleanRepeatedFieldKeys,
+        headerKey,
+        maxItems,
+        itemLabel
+      };
+    })
+    .filter(Boolean);
+}
+
+function getProcessQuantityRepeatedFieldKeys(setting) {
+  if (
+    processQuantityRulesUtilsApiV1 &&
+    typeof processQuantityRulesUtilsApiV1.getProcessQuantityRepeatedFieldKeys === "function"
+  ) {
+    return processQuantityRulesUtilsApiV1.getProcessQuantityRepeatedFieldKeys(setting);
+  }
+  const repeatedFieldKeys = new Set();
+  normalizeProcessQuantityRules(setting && setting.process_quantity_fields).forEach((rule) => {
+    rule.repeatedFieldKeys.forEach((fieldKey) => {
+      repeatedFieldKeys.add(fieldKey);
+    });
+  });
+  return repeatedFieldKeys;
+}
+
+function isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) {
+  if (
+    processHistoryLabelsUtilsApiV1 &&
+    typeof processHistoryLabelsUtilsApiV1.isAbsenceProcessMenu === "function"
+  ) {
+    return processHistoryLabelsUtilsApiV1.isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel);
+  }
+  const joined = [
+    normalizeLookupText(menuKey),
+    normalizeLookupText(menuLabel),
+    normalizeLookupText(sectionLabel)
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (!joined) {
+    return false;
+  }
+  return joined.includes("assiduidade") || joined.includes("ausencia");
+}
+
+function isHistoryProcessMenu(menuKey, menuLabel, sectionLabel) {
+  if (
+    processHistoryLabelsUtilsApiV1 &&
+    typeof processHistoryLabelsUtilsApiV1.isHistoryProcessMenu === "function"
+  ) {
+    return processHistoryLabelsUtilsApiV1.isHistoryProcessMenu(menuKey, menuLabel, sectionLabel);
+  }
+  const joined = [
+    normalizeLookupText(menuKey),
+    normalizeLookupText(menuLabel),
+    normalizeLookupText(sectionLabel)
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (!joined) {
+    return false;
+  }
+  return (
+    isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) ||
+    joined.includes("departamento") ||
+    joined.includes("musica")
+  );
+}
+
+function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
+  if (
+    processHistoryLabelsUtilsApiV1 &&
+    typeof processHistoryLabelsUtilsApiV1.getHistoryRecordLabels === "function"
+  ) {
+    return processHistoryLabelsUtilsApiV1.getHistoryRecordLabels(menuKey, menuLabel, sectionLabel);
+  }
+  const joined = [
+    normalizeLookupText(menuKey),
+    normalizeLookupText(menuLabel),
+    normalizeLookupText(sectionLabel)
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel)) {
+    return { singular: "ausencia", plural: "ausencias" };
+  }
+  if (joined.includes("departamento")) {
+    return { singular: "departamento", plural: "departamentos" };
+  }
+  if (joined.includes("musica")) {
+    return { singular: "musica", plural: "musicas" };
+  }
+  return { singular: "registo", plural: "registos" };
+}
+
+function buildProcessSections(setting, processValuesByField = {}) {
+  if (typeof window.APPVERBO_BUILD_PROCESS_SECTIONS_V1 !== "function") {
+    return [];
+  }
+
+  return window.APPVERBO_BUILD_PROCESS_SECTIONS_V1({
+    setting,
+    processValuesByField,
+    helpers: {
+      normalizeMenuKey,
+      getProcessQuantityRepeatedFieldKeys,
+      toSentenceCaseText,
+      normalizeProcessFieldType,
+      normalizeProcessFieldSize,
+      normalizeProcessFieldRequired,
+      getProcessStorageKey
+    }
+  });
+}
+const menuRuntimeV1 = (
+  typeof window.APPVERBO_BUILD_MENU_CONFIG_RUNTIME_V1 === "function"
+)
+  ? window.APPVERBO_BUILD_MENU_CONFIG_RUNTIME_V1({
+      dashboardData,
+      currentUserName,
+      currentUserEmail,
+      currentUserPhone,
+      currentUserAccountStatus,
+      currentUserMemberStatus,
+      currentUserEntities,
+      currentUserIsAdmin,
+      profilePersonalSections,
+      initialProfileTab,
+      initialAdminTab,
+      startupHash,
+      settingsEditKey,
+      initialMenu,
+      initialMenuTarget,
+      initialDynamicProcessSection,
+      dynamicProcessDataByMenu,
+      selectedDynamicSectionByMenu,
+      MEU_PERFIL_MENU_KEY,
+      normalizeMenuKey
+    })
+  : {
+      menuConfig: {},
+      selectedTargetByMenu: {},
+      meuPerfilSelectedProfileSection: "",
+      hiddenMeuPerfilSectionKeys: new Set(),
+      activeMenuKey: ""
+    };
+
+const menuConfig = (
+  menuRuntimeV1 &&
+  menuRuntimeV1.menuConfig &&
+  typeof menuRuntimeV1.menuConfig === "object"
+)
+  ? menuRuntimeV1.menuConfig
+  : {};
+const selectedTargetByMenu = (
+  menuRuntimeV1 &&
+  menuRuntimeV1.selectedTargetByMenu &&
+  typeof menuRuntimeV1.selectedTargetByMenu === "object"
+)
+  ? menuRuntimeV1.selectedTargetByMenu
+  : {};
+let meuPerfilSelectedProfileSection = String(
+  (menuRuntimeV1 && menuRuntimeV1.meuPerfilSelectedProfileSection) || ""
+);
+let hiddenMeuPerfilSectionKeys = (
+  menuRuntimeV1 &&
+  menuRuntimeV1.hiddenMeuPerfilSectionKeys instanceof Set
+)
+  ? menuRuntimeV1.hiddenMeuPerfilSectionKeys
+  : new Set();
+let activeMenuKey = String((menuRuntimeV1 && menuRuntimeV1.activeMenuKey) || "");
+const moduleBootstrapRunnerBridgeApiV1 =
+  typeof window.APPVERBO_CREATE_MODULE_BOOTSTRAP_RUNNER_BRIDGE_API_V1 === "function"
+    ? window.APPVERBO_CREATE_MODULE_BOOTSTRAP_RUNNER_BRIDGE_API_V1()
+    : null;
+
+function runModuleBootstrapStepV1(step, context = {}) {
+  if (
+    moduleBootstrapRunnerBridgeApiV1 &&
+    typeof moduleBootstrapRunnerBridgeApiV1.runStep === "function"
+  ) {
+    moduleBootstrapRunnerBridgeApiV1.runStep(step, context);
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_MODULE_BOOTSTRAP_STEP_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_MODULE_BOOTSTRAP_STEP_V1(step, context);
+}
+
+// APPVERBO_MENU_DYNAMIC_MERGE_V1_START
+runModuleBootstrapStepV1("menuDynamicMergeV1", {
+  sidebarMenuSettings,
+  visibleSidebarMenuKeys,
+  menuConfig,
+  menuProcessValuesMap,
+  dynamicProcessDataByMenu,
+  selectedDynamicSectionByMenu,
+  MEU_PERFIL_MENU_KEY,
+  initialMenu,
+  initialDynamicProcessSection,
+  normalizeMenuKey,
+  toSentenceCaseText,
+  buildProcessSections,
+  forceMerge: true
+});
+// APPVERBO_MENU_DYNAMIC_MERGE_V1_END
+
+const pageDomRegistryV1 = (
+  typeof window.APPVERBO_BUILD_PAGE_DOM_REGISTRY_V1 === "function"
+)
+  ? window.APPVERBO_BUILD_PAGE_DOM_REGISTRY_V1()
+  : {
+      itemsEl: document.getElementById("submenu-items"),
+      menuTabsCardEl: document.getElementById("menu-tabs-card"),
+      submenuProcessTitleEl: document.getElementById("submenu-process-title"),
+      menuButtons: document.querySelectorAll(".menu-item"),
+      scopedCards: document.querySelectorAll("[data-menu-scope]"),
+      userMenuEl: document.getElementById("user-menu"),
+      userMenuTriggerEl: document.getElementById("user-menu-trigger"),
+      userDropdownEl: document.getElementById("user-dropdown"),
+      userAvatarImageEl: document.getElementById("user-avatar-image"),
+      dropdownAvatarImageEl: document.getElementById("dropdown-avatar-image"),
+      userDropdownLinks: document.querySelectorAll("[data-dropdown-target]"),
+      profileEditButtons: document.querySelectorAll("[data-edit-target]"),
+      profileEditCancelButtons: document.querySelectorAll("[data-edit-cancel]"),
+      trainingOutrosEnabledEl: document.getElementById("edit_training_outros_enabled"),
+      trainingOutrosInputEl: document.getElementById("edit_training_outros"),
+      processFieldsBuilderEl: document.getElementById("process-fields-builder"),
+      dynamicProcessCreateCardEl: document.getElementById("dynamic-process-create-card"),
+      dynamicProcessCardEl: document.getElementById("dynamic-process-card"),
+      dynamicProcessTitleEl: document.getElementById("dynamic-process-title"),
+      dynamicProcessDescriptionEl: document.getElementById("dynamic-process-description"),
+      dynamicProcessSectionLabelEl: document.getElementById("dynamic-process-section-label"),
+      dynamicProcessReadOnlyEl: document.getElementById("dynamic-process-readonly"),
+      dynamicProcessReadOnlyGridEl: document.getElementById("dynamic-process-readonly-grid"),
+      dynamicProcessEditGridEl: document.getElementById("dynamic-process-edit-grid"),
+      dynamicProcessEditFormEl: document.getElementById("dynamic-process-edit-form"),
+      dynamicProcessMenuKeyInputEl: document.getElementById("dynamic-process-menu-key"),
+      dynamicProcessSectionKeyInputEl: document.getElementById("dynamic-process-section-key"),
+      dynamicProcessHistoryActionInputEl: document.getElementById("dynamic-process-history-action"),
+      dynamicProcessHistoryRecordIdInputEl: document.getElementById("dynamic-process-history-record-id"),
+      dynamicProcessSubmitBtnEl: document.getElementById("dynamic-process-submit-btn"),
+      dynamicProcessEditToggleEl: document.getElementById("dynamic-process-edit-toggle"),
+      dynamicProcessEmptyEl: document.getElementById("dynamic-process-empty"),
+      dynamicProcessHistoryBlockEl: document.getElementById("dynamic-process-history-block"),
+      dynamicProcessHistoryTitleEl: document.getElementById("dynamic-process-history-title"),
+      dynamicProcessHistoryTableEl: document.getElementById("dynamic-process-history-table"),
+      dynamicProcessHistoryHeadEl: document.getElementById("dynamic-process-history-head"),
+      dynamicProcessHistoryBodyEl: document.getElementById("dynamic-process-history-body"),
+      dynamicProcessHistoryEmptyEl: document.getElementById("dynamic-process-history-empty"),
+      dynamicProcessHistoryActiveCardEl: document.getElementById("dynamic-process-history-active-card"),
+      dynamicProcessHistoryActiveTitleEl: document.getElementById("dynamic-process-history-active-title"),
+      dynamicProcessHistoryActiveTableEl: document.getElementById("dynamic-process-history-active-table"),
+      dynamicProcessHistoryActiveHeadEl: document.getElementById("dynamic-process-history-active-head"),
+      dynamicProcessHistoryActiveBodyEl: document.getElementById("dynamic-process-history-active-body"),
+      dynamicProcessHistoryActiveEmptyEl: document.getElementById("dynamic-process-history-active-empty"),
+      dynamicProcessHistoryInactiveCardEl: document.getElementById("dynamic-process-history-inactive-card"),
+      dynamicProcessHistoryInactiveTitleEl: document.getElementById("dynamic-process-history-inactive-title"),
+      dynamicProcessHistoryInactiveTableEl: document.getElementById("dynamic-process-history-inactive-table"),
+      dynamicProcessHistoryInactiveHeadEl: document.getElementById("dynamic-process-history-inactive-head"),
+      dynamicProcessHistoryInactiveBodyEl: document.getElementById("dynamic-process-history-inactive-body"),
+      dynamicProcessHistoryInactiveEmptyEl: document.getElementById("dynamic-process-history-inactive-empty")
+    };
+const {
+  itemsEl,
+  menuTabsCardEl,
+  submenuProcessTitleEl,
+  menuButtons,
+  scopedCards,
+  userMenuEl,
+  userMenuTriggerEl,
+  userDropdownEl,
+  userAvatarImageEl,
+  dropdownAvatarImageEl,
+  userDropdownLinks,
+  profileEditButtons,
+  profileEditCancelButtons,
+  trainingOutrosEnabledEl,
+  trainingOutrosInputEl,
+  processFieldsBuilderEl,
+  dynamicProcessCreateCardEl,
+  dynamicProcessCardEl,
+  dynamicProcessTitleEl,
+  dynamicProcessDescriptionEl,
+  dynamicProcessSectionLabelEl,
+  dynamicProcessReadOnlyEl,
+  dynamicProcessReadOnlyGridEl,
+  dynamicProcessEditGridEl,
+  dynamicProcessEditFormEl,
+  dynamicProcessMenuKeyInputEl,
+  dynamicProcessSectionKeyInputEl,
+  dynamicProcessHistoryActionInputEl,
+  dynamicProcessHistoryRecordIdInputEl,
+  dynamicProcessSubmitBtnEl,
+  dynamicProcessEditToggleEl,
+  dynamicProcessEmptyEl,
+  dynamicProcessHistoryBlockEl,
+  dynamicProcessHistoryTitleEl,
+  dynamicProcessHistoryTableEl,
+  dynamicProcessHistoryHeadEl,
+  dynamicProcessHistoryBodyEl,
+  dynamicProcessHistoryEmptyEl,
+  dynamicProcessHistoryActiveCardEl,
+  dynamicProcessHistoryActiveTitleEl,
+  dynamicProcessHistoryActiveTableEl,
+  dynamicProcessHistoryActiveHeadEl,
+  dynamicProcessHistoryActiveBodyEl,
+  dynamicProcessHistoryActiveEmptyEl,
+  dynamicProcessHistoryInactiveCardEl,
+  dynamicProcessHistoryInactiveTitleEl,
+  dynamicProcessHistoryInactiveTableEl,
+  dynamicProcessHistoryInactiveHeadEl,
+  dynamicProcessHistoryInactiveBodyEl,
+  dynamicProcessHistoryInactiveEmptyEl
+} = pageDomRegistryV1;
+const userDropdownUiApiV1 =
+  typeof window.APPVERBO_CREATE_USER_DROPDOWN_UI_API_V1 === "function"
+    ? window.APPVERBO_CREATE_USER_DROPDOWN_UI_API_V1()
+    : null;
+const homeChartsRendererApiV1 =
+  typeof window.APPVERBO_CREATE_HOME_CHARTS_RENDERER_API_V1 === "function"
+    ? window.APPVERBO_CREATE_HOME_CHARTS_RENDERER_API_V1()
+    : null;
+
+function renderHomeCharts() {
+  if (
+    homeChartsRendererApiV1 &&
+    typeof homeChartsRendererApiV1.renderHomeCharts === "function"
+  ) {
+    homeChartsRendererApiV1.renderHomeCharts(dashboardData);
+    return;
+  }
+  if (!window.Chart) {
+    return;
+  }
+
+  const entityCanvas = document.getElementById("home-entities-chart");
+  if (entityCanvas && !entityCanvas.dataset.chartReady) {
+    new Chart(entityCanvas, {
+      type: "doughnut",
+      data: {
+        labels: (dashboardData.entity_status || {}).labels || [],
+        datasets: [
+          {
+            data: (dashboardData.entity_status || {}).values || [],
+            backgroundColor: ["#1f7a49", "#d07a31"],
+            borderColor: "#ffffff",
+            borderWidth: 2
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom" } }
+      }
+    });
+    entityCanvas.dataset.chartReady = "1";
+  }
+
+  const profileCanvas = document.getElementById("home-profiles-chart");
+  if (profileCanvas && !profileCanvas.dataset.chartReady) {
+    new Chart(profileCanvas, {
+      type: "bar",
+      data: {
+        labels: (dashboardData.users_by_profile || {}).labels || [],
+        datasets: [
+          {
+            label: "Utilizadores",
+            data: (dashboardData.users_by_profile || {}).values || [],
+            backgroundColor: ["#2f6db4", "#3f84d6", "#58a3ec"],
+            borderRadius: 7,
+            maxBarThickness: 62
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { precision: 0 }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+    profileCanvas.dataset.chartReady = "1";
+  }
+}
+
+function getInitials(name) {
+  if (avatarUtilsApiV1 && typeof avatarUtilsApiV1.getInitials === "function") {
+    return avatarUtilsApiV1.getInitials(name);
+  }
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) {
+    return "U";
+  }
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function buildAvatarDataUri(name) {
+  if (avatarUtilsApiV1 && typeof avatarUtilsApiV1.buildAvatarDataUri === "function") {
+    return avatarUtilsApiV1.buildAvatarDataUri(name);
+  }
+  const initials = getInitials(name);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#3777dc"/>
+          <stop offset="100%" stop-color="#244ea5"/>
+        </linearGradient>
+      </defs>
+      <rect width="96" height="96" rx="48" fill="url(#g)"/>
+      <text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="34" font-weight="700">${initials}</text>
+    </svg>
+  `;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+
+function closeUserDropdown() {
+  if (userDropdownUiApiV1 && typeof userDropdownUiApiV1.closeUserDropdown === "function") {
+    userDropdownUiApiV1.closeUserDropdown(userDropdownEl, userMenuTriggerEl);
+    return;
+  }
+  if (!userDropdownEl || !userMenuTriggerEl) {
+    return;
+  }
+  userDropdownEl.hidden = true;
+  userMenuTriggerEl.setAttribute("aria-expanded", "false");
+}
+
+function openUserDropdown() {
+  if (userDropdownUiApiV1 && typeof userDropdownUiApiV1.openUserDropdown === "function") {
+    userDropdownUiApiV1.openUserDropdown(userDropdownEl, userMenuTriggerEl);
+    return;
+  }
+  if (!userDropdownEl || !userMenuTriggerEl) {
+    return;
+  }
+  userDropdownEl.hidden = false;
+  userMenuTriggerEl.setAttribute("aria-expanded", "true");
+}
+
+function toggleUserDropdown() {
+  if (userDropdownUiApiV1 && typeof userDropdownUiApiV1.toggleUserDropdown === "function") {
+    userDropdownUiApiV1.toggleUserDropdown(userDropdownEl, userMenuTriggerEl);
+    return;
+  }
+  if (!userDropdownEl || !userMenuTriggerEl) {
+    return;
+  }
+  const expanded = userMenuTriggerEl.getAttribute("aria-expanded") === "true";
+  if (expanded) {
+    closeUserDropdown();
+  } else {
+    openUserDropdown();
+  }
+}
+
+function isTruthyFlagValue(value) {
+  if (processFieldRuntimeUtilsApiV1 && typeof processFieldRuntimeUtilsApiV1.isTruthyFlagValue === "function") {
+    return processFieldRuntimeUtilsApiV1.isTruthyFlagValue(value);
+  }
+  const cleanValue = String(value || "").trim().toLowerCase();
+  return ["1", "true", "sim", "yes", "on"].includes(cleanValue);
+}
+
+function getDynamicProcessInputType(fieldType) {
+  if (
+    processFieldRuntimeUtilsApiV1 &&
+    typeof processFieldRuntimeUtilsApiV1.getDynamicProcessInputType === "function"
+  ) {
+    return processFieldRuntimeUtilsApiV1.getDynamicProcessInputType(fieldType);
+  }
+  if (fieldType === "email") {
+    return "email";
+  }
+  if (fieldType === "number") {
+    return "number";
+  }
+  if (fieldType === "phone") {
+    return "tel";
+  }
+  if (fieldType === "link") {
+    return "url";
+  }
+  if (fieldType === "date") {
+    return "date";
+  }
+  return "text";
+}
+
+function normalizeDateInputValue(rawValue) {
+  if (
+    processFieldRuntimeUtilsApiV1 &&
+    typeof processFieldRuntimeUtilsApiV1.normalizeDateInputValue === "function"
+  ) {
+    return processFieldRuntimeUtilsApiV1.normalizeDateInputValue(rawValue);
+  }
+  const cleanValue = String(rawValue || "").trim();
+  if (!cleanValue) {
+    return "";
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanValue)) {
+    return cleanValue;
+  }
+  const slashMatch = cleanValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashMatch) {
+    const [, day, month, year] = slashMatch;
+    return `${year}-${month}-${day}`;
+  }
+  return "";
+}
+
+function isStartDateField(field) {
+  if (
+    processFieldRuntimeUtilsApiV1 &&
+    typeof processFieldRuntimeUtilsApiV1.isStartDateField === "function"
+  ) {
+    return processFieldRuntimeUtilsApiV1.isStartDateField(field);
+  }
+  const joined = `${normalizeLookupText(field.key)} ${normalizeLookupText(field.label)}`.trim();
+  if (!joined) {
+    return false;
+  }
+  return joined.includes("data inicio") || joined.includes(" inicio") || joined.endsWith("inicio");
+}
+
+function isEndDateField(field) {
+  if (
+    processFieldRuntimeUtilsApiV1 &&
+    typeof processFieldRuntimeUtilsApiV1.isEndDateField === "function"
+  ) {
+    return processFieldRuntimeUtilsApiV1.isEndDateField(field);
+  }
+  const joined = `${normalizeLookupText(field.key)} ${normalizeLookupText(field.label)}`.trim();
+  if (!joined) {
+    return false;
+  }
+  return joined.includes("data fim") || joined.includes(" fim") || joined.endsWith("fim");
+}
+
+function setupAbsenceDateRangeValidation(sectionFields, inputsByFieldKey) {
+  if (
+    processAbsenceDateValidationApiV1 &&
+    typeof processAbsenceDateValidationApiV1.setupAbsenceDateRangeValidation === "function"
+  ) {
+    processAbsenceDateValidationApiV1.setupAbsenceDateRangeValidation(sectionFields, inputsByFieldKey);
+    return;
+  }
+  if (!Array.isArray(sectionFields) || !inputsByFieldKey || typeof inputsByFieldKey.get !== "function") {
+    return;
+  }
+  let startDateInputEl = null;
+  let endDateInputEl = null;
+  sectionFields.forEach((field) => {
+    if (normalizeProcessFieldType(field.fieldType) !== "date") {
+      return;
+    }
+    const inputEl = inputsByFieldKey.get(normalizeMenuKey(field.key));
+    if (!inputEl) {
+      return;
+    }
+    if (!startDateInputEl && isStartDateField(field)) {
+      startDateInputEl = inputEl;
+    }
+    if (!endDateInputEl && isEndDateField(field)) {
+      endDateInputEl = inputEl;
+    }
+  });
+  if (!startDateInputEl || !endDateInputEl) {
+    return;
+  }
+
+  const syncDateRangeRule = () => {
+    const startDateValue = normalizeDateInputValue(startDateInputEl.value);
+    const endDateValue = normalizeDateInputValue(endDateInputEl.value);
+    if (startDateValue) {
+      endDateInputEl.min = startDateValue;
+    } else {
+      endDateInputEl.removeAttribute("min");
+    }
+    if (startDateValue && endDateValue && endDateValue < startDateValue) {
+      endDateInputEl.setCustomValidity("Data fim nao pode ser menor que a data inicio.");
+    } else {
+      endDateInputEl.setCustomValidity("");
+    }
+  };
+
+  startDateInputEl.addEventListener("input", syncDateRangeRule);
+  endDateInputEl.addEventListener("input", syncDateRangeRule);
+  syncDateRangeRule();
+}
+
+function renderDynamicProcessHistory(menuKey, sectionKey, sectionLabel, sectionFields, recordLabels) {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.renderDynamicProcessHistory === "function"
+  ) {
+    pageRuntimeBridgesApiV1.renderDynamicProcessHistory({
+      menuKey,
+      sectionKey,
+      sectionLabel,
+      sectionFields,
+      recordLabels,
+      helpers: {
+        normalizeMenuKey,
+        normalizeLookupText,
+        normalizeProcessFieldType,
+        normalizeDateInputValue,
+        toSentenceCaseText,
+        isTruthyFlagValue
+      },
+      data: {
+        menuProcessHistoryMap
+      },
+      elements: {
+        dynamicProcessHistoryBlockEl,
+        dynamicProcessHistoryTableEl,
+        dynamicProcessHistoryHeadEl,
+        dynamicProcessHistoryBodyEl,
+        dynamicProcessHistoryEmptyEl,
+        dynamicProcessHistoryActiveCardEl,
+        dynamicProcessHistoryActiveTitleEl,
+        dynamicProcessHistoryActiveTableEl,
+        dynamicProcessHistoryActiveHeadEl,
+        dynamicProcessHistoryActiveBodyEl,
+        dynamicProcessHistoryActiveEmptyEl,
+        dynamicProcessHistoryInactiveCardEl,
+        dynamicProcessHistoryInactiveTitleEl,
+        dynamicProcessHistoryInactiveTableEl,
+        dynamicProcessHistoryInactiveHeadEl,
+        dynamicProcessHistoryInactiveBodyEl,
+        dynamicProcessHistoryInactiveEmptyEl,
+        dynamicProcessHistoryTitleEl,
+        dynamicProcessReadOnlyGridEl,
+        dynamicProcessReadOnlyEl,
+        dynamicProcessEditFormEl,
+        dynamicProcessHistoryActionInputEl,
+        dynamicProcessHistoryRecordIdInputEl,
+        dynamicProcessSubmitBtnEl,
+        dynamicProcessCardEl,
+        dynamicProcessCreateCardEl
+      }
+    });
+    return;
+  }
+  if (typeof window.APPVERBO_RENDER_DYNAMIC_PROCESS_HISTORY_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RENDER_DYNAMIC_PROCESS_HISTORY_V1({
+    menuKey,
+    sectionKey,
+    sectionLabel,
+    sectionFields,
+    recordLabels,
+    helpers: {
+      normalizeMenuKey,
+      normalizeLookupText,
+      normalizeProcessFieldType,
+      normalizeDateInputValue,
+      toSentenceCaseText,
+      isTruthyFlagValue
+    },
+    data: {
+      menuProcessHistoryMap
+    },
+    elements: {
+      dynamicProcessHistoryBlockEl,
+      dynamicProcessHistoryTableEl,
+      dynamicProcessHistoryHeadEl,
+      dynamicProcessHistoryBodyEl,
+      dynamicProcessHistoryEmptyEl,
+      dynamicProcessHistoryActiveCardEl,
+      dynamicProcessHistoryActiveTitleEl,
+      dynamicProcessHistoryActiveTableEl,
+      dynamicProcessHistoryActiveHeadEl,
+      dynamicProcessHistoryActiveBodyEl,
+      dynamicProcessHistoryActiveEmptyEl,
+      dynamicProcessHistoryInactiveCardEl,
+      dynamicProcessHistoryInactiveTitleEl,
+      dynamicProcessHistoryInactiveTableEl,
+      dynamicProcessHistoryInactiveHeadEl,
+      dynamicProcessHistoryInactiveBodyEl,
+      dynamicProcessHistoryInactiveEmptyEl,
+      dynamicProcessHistoryTitleEl,
+      dynamicProcessReadOnlyGridEl,
+      dynamicProcessReadOnlyEl,
+      dynamicProcessEditFormEl,
+      dynamicProcessHistoryActionInputEl,
+      dynamicProcessHistoryRecordIdInputEl,
+      dynamicProcessSubmitBtnEl,
+      dynamicProcessCardEl,
+      dynamicProcessCreateCardEl
+    }
+  });
+}
+function isMeuPerfilQuantityV4GeneratedTarget(targetEl) {
+  if (
+    profileEditUiUtilsApiV1 &&
+    typeof profileEditUiUtilsApiV1.isMeuPerfilQuantityV4GeneratedTarget === "function"
+  ) {
+    return profileEditUiUtilsApiV1.isMeuPerfilQuantityV4GeneratedTarget(targetEl);
+  }
+  if (!targetEl || typeof targetEl.closest !== "function") {
+    return false;
+  }
+
+  if (targetEl.dataset && (
+    targetEl.dataset.appverboQuantityFieldKeyV4 ||
+    targetEl.dataset.appverboQuantityRuleKeyV4
+  )) {
+    return true;
+  }
+
+  return Boolean(
+    targetEl.closest("[data-appverbo-quantity-edit-generated-v4='1']")
+  );
+}
+
+function closeAllProfileEdits() {
+  if (
+    profileEditUiUtilsApiV1 &&
+    typeof profileEditUiUtilsApiV1.closeAllProfileEdits === "function"
+  ) {
+    profileEditUiUtilsApiV1.closeAllProfileEdits({
+      dynamicProcessCreateCardEl,
+      dynamicProcessCardEl,
+      syncTrainingOutrosState
+    });
+    return;
+  }
+  const editingCards = document.querySelectorAll(".card.editing");
+  editingCards.forEach((card) => {
+    card.classList.remove("editing");
+    const form = card.querySelector(".profile-edit-form");
+    if (form) {
+      form.reset();
+    }
+  });
+  if (dynamicProcessCreateCardEl) {
+    dynamicProcessCreateCardEl.classList.remove("is-editing");
+  }
+  if (dynamicProcessCardEl) {
+    dynamicProcessCardEl.classList.remove("dynamic-process-history-show-readonly");
+  }
+  syncTrainingOutrosState();
+}
+
+const profileAllocationMultiValueApiV1 =
+  typeof window.APPVERBO_CREATE_PROFILE_ALLOCATION_MULTIVALUE_API_V1 === "function"
+    ? window.APPVERBO_CREATE_PROFILE_ALLOCATION_MULTIVALUE_API_V1({
+        normalizeLookupText
+      })
+    : null;
+
+function normalizeProfileMultiValueList(rawValue) {
+  if (!profileAllocationMultiValueApiV1 || typeof profileAllocationMultiValueApiV1.normalizeProfileMultiValueList !== "function") {
+    return String(rawValue || "")
+      .split(/\r?\n|,/)
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+  }
+  return profileAllocationMultiValueApiV1.normalizeProfileMultiValueList(rawValue);
+}
+
+function isAllocationProfileSection(sectionKey) {
+  if (!profileAllocationMultiValueApiV1 || typeof profileAllocationMultiValueApiV1.isAllocationProfileSection !== "function") {
+    const cleanSection = normalizeLookupText(sectionKey);
+    return Boolean(cleanSection && cleanSection.includes("alocacao"));
+  }
+  return profileAllocationMultiValueApiV1.isAllocationProfileSection(sectionKey);
+}
+
+function setProfileControlValue(controlEl, value) {
+  if (!profileAllocationMultiValueApiV1 || typeof profileAllocationMultiValueApiV1.setProfileControlValue !== "function") {
+    if (controlEl) {
+      controlEl.value = String(value || "").trim();
+    }
+    return;
+  }
+  profileAllocationMultiValueApiV1.setProfileControlValue(controlEl, value);
+}
+
+function setupAllocationFieldMultiValue(fieldEl) {
+  if (!profileAllocationMultiValueApiV1 || typeof profileAllocationMultiValueApiV1.setupAllocationFieldMultiValue !== "function") {
+    return;
+  }
+  profileAllocationMultiValueApiV1.setupAllocationFieldMultiValue(fieldEl);
+}
+
+function setupAllocationSectionMultiValue(personalCardEl, sectionKey) {
+  if (!profileAllocationMultiValueApiV1 || typeof profileAllocationMultiValueApiV1.setupAllocationSectionMultiValue !== "function") {
+    return;
+  }
+  profileAllocationMultiValueApiV1.setupAllocationSectionMultiValue(personalCardEl, sectionKey);
+}
+
+//###################################################################################
+// (DYNAMIC PROCESS) INITIALIZAR RUNTIME CORE V1
+//###################################################################################
+function setupDynamicProcessRuntimeCoreV1() {
+  if (typeof window.APPVERBO_SETUP_DYNAMIC_PROCESS_RUNTIME_CORE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_SETUP_DYNAMIC_PROCESS_RUNTIME_CORE_V1({
+    MEU_PERFIL_MENU_KEY,
+    menuProcessValuesMap,
+    menuProcessHistoryMap,
+    menuProcessQuantityValuesMap,
+    sidebarMenuSettings,
+    dynamicProcessDataByMenu,
+    selectedDynamicSectionByMenu,
+    itemsEl,
+    dynamicProcessCardEl,
+    dynamicProcessCreateCardEl,
+    dynamicProcessReadOnlyEl,
+    dynamicProcessReadOnlyGridEl,
+    dynamicProcessEditGridEl,
+    dynamicProcessEditFormEl,
+    dynamicProcessTitleEl,
+    dynamicProcessDescriptionEl,
+    dynamicProcessSectionLabelEl,
+    dynamicProcessMenuKeyInputEl,
+    dynamicProcessSectionKeyInputEl,
+    dynamicProcessHistoryActionInputEl,
+    dynamicProcessHistoryRecordIdInputEl,
+    dynamicProcessSubmitBtnEl,
+    dynamicProcessEditToggleEl,
+    dynamicProcessEmptyEl,
+    dynamicProcessHistoryBlockEl,
+    dynamicProcessHistoryActiveCardEl,
+    dynamicProcessHistoryInactiveCardEl,
+    dynamicProcessHistoryTableEl,
+    dynamicProcessHistoryHeadEl,
+    dynamicProcessHistoryBodyEl,
+    dynamicProcessHistoryEmptyEl,
+    dynamicProcessHistoryActiveTableEl,
+    dynamicProcessHistoryActiveHeadEl,
+    dynamicProcessHistoryActiveBodyEl,
+    dynamicProcessHistoryActiveEmptyEl,
+    dynamicProcessHistoryInactiveTableEl,
+    dynamicProcessHistoryInactiveHeadEl,
+    dynamicProcessHistoryInactiveBodyEl,
+    dynamicProcessHistoryInactiveEmptyEl
+  });
+}
+
+setupDynamicProcessRuntimeCoreV1();
+
+// APPVERBO_PROFILE_PROCESS_RUNTIME_CORE_V1_START
+runModuleBootstrapStepV1("profileProcessRuntimeCoreV1");
+// APPVERBO_PROFILE_PROCESS_RUNTIME_CORE_V1_END
+
+function syncTrainingOutrosState() {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.runSetupBridgeStep === "function"
+  ) {
+    pageRuntimeBridgesApiV1.runSetupBridgeStep("syncTrainingOutrosState", {
+      trainingOutrosInputEl,
+      trainingOutrosEnabledEl
+    });
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_SETUP_BRIDGE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_SETUP_BRIDGE_V1("syncTrainingOutrosState", {
+    trainingOutrosInputEl,
+    trainingOutrosEnabledEl
+  });
+}
+
+function setupTableLimiter(prefix) {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.runSetupBridgeStep === "function"
+  ) {
+    pageRuntimeBridgesApiV1.runSetupBridgeStep("setupTableLimiter", { prefix });
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_SETUP_BRIDGE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_SETUP_BRIDGE_V1("setupTableLimiter", { prefix });
+}
+
+function setupReadOnlyCards() {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.runSetupBridgeStep === "function"
+  ) {
+    pageRuntimeBridgesApiV1.runSetupBridgeStep("setupReadOnlyCards");
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_SETUP_BRIDGE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_SETUP_BRIDGE_V1("setupReadOnlyCards");
+}
+
+function setupProcessFieldsBuilder() {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.runSetupBridgeStep === "function"
+  ) {
+    pageRuntimeBridgesApiV1.runSetupBridgeStep("setupProcessFieldsBuilder");
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_SETUP_BRIDGE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_SETUP_BRIDGE_V1("setupProcessFieldsBuilder");
+}
+
+function setupProcessAdditionalFieldsBuilder() {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.runSetupBridgeStep === "function"
+  ) {
+    pageRuntimeBridgesApiV1.runSetupBridgeStep("setupProcessAdditionalFieldsBuilder");
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_SETUP_BRIDGE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_SETUP_BRIDGE_V1("setupProcessAdditionalFieldsBuilder");
+}
+
+
+// APPVERBO_PROCESS_ADDITIONAL_FIELDS_MANAGER_V2_MOVED_TO_MODULE
+// Implementacao extraida para static/js/modules/process_additional_fields_manager_v2.js
+
+function setupProcessEditTabs() {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.runSetupBridgeStep === "function"
+  ) {
+    pageRuntimeBridgesApiV1.runSetupBridgeStep("setupProcessEditTabs", {
+      settingsAction,
+      settingsTab
+    });
+    return;
+  }
+  if (typeof window.APPVERBO_RUN_SETUP_BRIDGE_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_RUN_SETUP_BRIDGE_V1("setupProcessEditTabs", {
+    settingsAction,
+    settingsTab
+  });
+}
+
+//###################################################################################
+// (DYNAMIC PROCESS) WRAPPERS DE ACESSO V1
+//###################################################################################
+function renderDynamicProcessCard(menuKey, sectionKey, options = {}) {
+  if (typeof window.renderDynamicProcessCard !== "function") {
+    return;
+  }
+  window.renderDynamicProcessCard(menuKey, sectionKey, options);
+}
+
+function collectCurrentMeuPerfilQuantityValues() {
+  if (typeof window.collectCurrentMeuPerfilQuantityValues !== "function") {
+    return {};
+  }
+  return window.collectCurrentMeuPerfilQuantityValues();
+}
+
+function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
+  if (typeof window.syncMeuPerfilQuantityHiddenInputs !== "function") {
+    return;
+  }
+  window.syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule);
+}
+
+let appverboMenuNavigationFacadeV1 = null;
+
+function sanitizeMenuProcessTitleLabelV1(value) {
+  let cleanLabel = String(value || "").trim().replace(/\s+/g, " ");
+  if (!cleanLabel) {
+    return "";
+  }
+
+  // Remove prefixos de icone textual no formato "[*]" / "[H]" etc.
+  cleanLabel = cleanLabel.replace(/^\[[^\]]+\]\s*/g, "").trim();
+  return cleanLabel;
+}
+
+function resolveMenuButtonLabelV1(menuKey) {
+  const menuButton = Array.from(menuButtons || []).find(
+    (button) => normalizeMenuKey(button && button.dataset ? button.dataset.menu : "") === menuKey
+  );
+  if (!menuButton) {
+    return "";
+  }
+
+  const dataLabel = sanitizeMenuProcessTitleLabelV1(
+    menuButton.getAttribute("data-menu-label")
+  );
+  if (dataLabel) {
+    return dataLabel;
+  }
+
+  const labelEl = menuButton.querySelector(".menu-item-label");
+  const labelText = sanitizeMenuProcessTitleLabelV1(
+    labelEl ? labelEl.textContent : ""
+  );
+  if (labelText) {
+    return labelText;
+  }
+
+  const fallbackText = sanitizeMenuProcessTitleLabelV1(menuButton.textContent || "");
+  return fallbackText;
+}
+
+function resolveMenuProcessTitleLabelV1(menuKey, explicitTitle = "") {
+  const cleanExplicitTitle = String(explicitTitle || "").trim();
+  if (cleanExplicitTitle) {
+    return toSentenceCaseText(cleanExplicitTitle);
+  }
+
+  const buttonLabel = resolveMenuButtonLabelV1(menuKey);
+  if (buttonLabel) {
+    return buttonLabel;
+  }
+
+  const config = menuConfig && menuConfig[menuKey];
+  const configTitle = String((config && config.title) || "").trim();
+  if (configTitle) {
+    return toSentenceCaseText(configTitle);
+  }
+
+  return toSentenceCaseText(String(menuKey || ""));
+}
+
+function updateSubmenuProcessTitleV1(menuKey, explicitTitle = "") {
+  if (!submenuProcessTitleEl) {
+    return;
+  }
+
+  const resolvedMenuKey = normalizeMenuKey(menuKey || activeMenuKey || initialMenu || "");
+  let title = resolveMenuProcessTitleLabelV1(resolvedMenuKey, explicitTitle);
+  if (!title) {
+    title = String(submenuProcessTitleEl.textContent || "").trim();
+  }
+  if (!title && resolvedMenuKey) {
+    title = toSentenceCaseText(String(resolvedMenuKey || "").replace(/_/g, " "));
+  }
+  submenuProcessTitleEl.textContent = title;
+  submenuProcessTitleEl.style.display = title ? "block" : "";
+  submenuProcessTitleEl.setAttribute("data-menu-key", String(resolvedMenuKey || ""));
+}
+
+const initialProcessTitleMenuKeyV1 = normalizeMenuKey(activeMenuKey || initialMenu || "");
+if (initialProcessTitleMenuKeyV1) {
+  updateSubmenuProcessTitleV1(initialProcessTitleMenuKeyV1);
+}
+
+function buildMenuNavigationBridgeContextV1() {
+  return {
+    menuConfig,
+    itemsEl,
+    menuTabsCardEl,
+    menuButtons,
+    MEU_PERFIL_MENU_KEY,
+    toSentenceCaseText,
+    normalizeMenuKey,
+    closeAllProfileEdits,
+    setActiveSubmenu,
+    applyContentForMenuTarget,
+    applyContentForMenu,
+    renderDynamicProcessCard,
+    updateSubmenuProcessTitle: updateSubmenuProcessTitleV1,
+    resolveMenuProcessTitleLabel: resolveMenuProcessTitleLabelV1,
+    applyMeuPerfilProcessSubsequentVisibility,
+    selectedTargetByMenu,
+    selectedDynamicSectionByMenu,
+    setActiveMenuKey: (nextMenuKey) => {
+      activeMenuKey = nextMenuKey;
+    },
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
+    setMeuPerfilSelectedProfileSection: (nextSectionKey) => {
+      meuPerfilSelectedProfileSection = String(nextSectionKey || "");
+    }
+  };
+}
+
+function getMenuNavigationFacadeV1() {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.getMenuNavigationFacade === "function"
+  ) {
+    return menuNavigationBridgeApiV1.getMenuNavigationFacade(buildMenuNavigationBridgeContextV1());
+  }
+  if (appverboMenuNavigationFacadeV1) {
+    return appverboMenuNavigationFacadeV1;
+  }
+  if (typeof window.APPVERBO_CREATE_MENU_NAVIGATION_FACADE_V1 !== "function") {
+    return null;
+  }
+  appverboMenuNavigationFacadeV1 = window.APPVERBO_CREATE_MENU_NAVIGATION_FACADE_V1({
+    menuConfig,
+    itemsEl,
+    menuTabsCardEl,
+    menuButtons,
+    MEU_PERFIL_MENU_KEY,
+    toSentenceCaseText,
+    normalizeMenuKey,
+    closeAllProfileEdits,
+    setActiveSubmenu,
+    applyContentForMenuTarget,
+    applyContentForMenu,
+    renderDynamicProcessCard,
+    updateSubmenuProcessTitle: updateSubmenuProcessTitleV1,
+    applyMeuPerfilProcessSubsequentVisibility,
+    selectedTargetByMenu,
+    selectedDynamicSectionByMenu,
+    setActiveMenuKey: (nextMenuKey) => {
+      activeMenuKey = nextMenuKey;
+    },
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
+    setMeuPerfilSelectedProfileSection: (nextSectionKey) => {
+      meuPerfilSelectedProfileSection = String(nextSectionKey || "");
+    }
+  });
+  return appverboMenuNavigationFacadeV1;
+}
+
+function getMenuNavigationControllerV1() {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.getMenuNavigationController === "function"
+  ) {
+    return menuNavigationBridgeApiV1.getMenuNavigationController(buildMenuNavigationBridgeContextV1());
+  }
+  const facade = getMenuNavigationFacadeV1();
+  if (!facade || typeof facade.getController !== "function") {
+    return null;
+  }
+  return facade.getController();
+}
+
+function renderSubmenu(menuKey) {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.renderSubmenu === "function"
+  ) {
+    menuNavigationBridgeApiV1.renderSubmenu(menuKey, buildMenuNavigationBridgeContextV1());
+    return;
+  }
+  const facade = getMenuNavigationFacadeV1();
+  if (!facade || typeof facade.renderSubmenu !== "function") {
+    return;
+  }
+  facade.renderSubmenu(menuKey);
+}
+
+function getDefaultTargetForMenu(menuKey, config, options = {}) {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.getDefaultTargetForMenu === "function"
+  ) {
+    return menuNavigationBridgeApiV1.getDefaultTargetForMenu(
+      menuKey,
+      config,
+      options,
+      buildMenuNavigationBridgeContextV1()
+    );
+  }
+  const facade = getMenuNavigationFacadeV1();
+  if (!facade || typeof facade.getDefaultTargetForMenu !== "function") {
+    return "";
+  }
+  return facade.getDefaultTargetForMenu(menuKey, config, options);
+}
+
+function activateMenu(menuKey, options = {}) {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.activateMenu === "function"
+  ) {
+    menuNavigationBridgeApiV1.activateMenu(menuKey, options, buildMenuNavigationBridgeContextV1());
+    return;
+  }
+  const facade = getMenuNavigationFacadeV1();
+  if (!facade || typeof facade.activateMenu !== "function") {
+    return;
+  }
+  facade.activateMenu(menuKey, options);
+}
+
+function activateMenuTarget(menuKey, targetSelector) {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.activateMenuTarget === "function"
+  ) {
+    menuNavigationBridgeApiV1.activateMenuTarget(
+      menuKey,
+      targetSelector,
+      buildMenuNavigationBridgeContextV1()
+    );
+    return;
+  }
+  const facade = getMenuNavigationFacadeV1();
+  if (!facade || typeof facade.activateMenuTarget !== "function") {
+    return;
+  }
+  facade.activateMenuTarget(menuKey, targetSelector);
+}
+
+function handleHashNavigation(rawHash) {
+  if (
+    menuNavigationBridgeApiV1 &&
+    typeof menuNavigationBridgeApiV1.handleHashNavigation === "function"
+  ) {
+    menuNavigationBridgeApiV1.handleHashNavigation(rawHash, buildMenuNavigationBridgeContextV1());
+    return;
+  }
+  const facade = getMenuNavigationFacadeV1();
+  if (!facade || typeof facade.handleHashNavigation !== "function") {
+    return;
+  }
+  facade.handleHashNavigation(rawHash);
+}
+function setupPageSupportIntegrations() {
+  if (
+    pageRuntimeBridgesApiV1 &&
+    typeof pageRuntimeBridgesApiV1.setupPageSupportIntegrations === "function"
+  ) {
+    pageRuntimeBridgesApiV1.setupPageSupportIntegrations(currentEntityId);
+    return;
+  }
+  if (typeof window.APPVERBO_SETUP_PAGE_SUPPORT_INTEGRATIONS_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_SETUP_PAGE_SUPPORT_INTEGRATIONS_V1({
+    currentEntityId
+  });
+}
+
+runModuleBootstrapStepV1("pageBootstrapV1", {
+  buildAvatarDataUri,
+  currentUserName,
+  userAvatarImageEl,
+  dropdownAvatarImageEl,
+  menuButtons,
+  normalizeMenuKey,
+  activateMenu,
+  profileEditButtons,
+  closeAllProfileEdits,
+  dynamicProcessCreateCardEl,
+  dynamicProcessEditToggleEl,
+  dynamicProcessHistoryActionInputEl,
+  dynamicProcessHistoryRecordIdInputEl,
+  dynamicProcessSubmitBtnEl,
+  dynamicProcessEditFormEl,
+  dynamicProcessCardEl,
+  profileEditCancelButtons,
+  trainingOutrosEnabledEl,
+  syncTrainingOutrosState,
+  userMenuTriggerEl,
+  toggleUserDropdown,
+  userDropdownLinks,
+  menuConfig,
+  selectedTargetByMenu,
+  activateMenuTarget,
+  closeUserDropdown,
+  userMenuEl,
+  userDropdownEl,
+  handleHashNavigation,
+  renderHomeCharts,
+  setupReadOnlyCards,
+  setupProfileProcessTabs,
+  setupMeuPerfilQuantityRules,
+  setupConditionalProcessVisibility,
+  setupProcessEditTabs,
+  setupProcessFieldsBuilder,
+  setupProcessAdditionalFieldsManagerV2_guard_v1,
+  setupPageSupportIntegrations,
+  setupTableLimiter,
+  initialMenu
+});
+
+
+
+//###################################################################################
+// (MENU) CHAVE UNICA PARA ITENS DINAMICOS DO PROCESSO - V1
+//###################################################################################
+
+function buildMenuItemUniqueKey_v1(item) {
+  if (typeof window.APPVERBO_BUILD_MENU_ITEM_UNIQUE_KEY_V1 === "function") {
+    return window.APPVERBO_BUILD_MENU_ITEM_UNIQUE_KEY_V1(item);
+  }
+  const target = String(item && item.target ? item.target : "").trim();
+  const sectionKey = String(item && item.dynamicProcessSectionKey ? item.dynamicProcessSectionKey : "").trim();
+  const profileSection = String(item && item.profileSection ? item.profileSection : "").trim();
+  const label = String(item && item.label ? item.label : "").trim();
+  return `${target}::${sectionKey}::${profileSection}::${label}`;
+}
+
+//###################################################################################
+// (99) COMPATIBILIDADE - BLOQUEIO DO MANAGER V2 QUANDO O V3 ESTIVER ATIVO
+//###################################################################################
+
+function setupProcessAdditionalFieldsManagerV2_guard_v1() {
+  if (typeof window.APPVERBO_SETUP_PROCESS_ADDITIONAL_FIELDS_MANAGER_V2_GUARD_V1 !== "function") {
+    return;
+  }
+
+  window.APPVERBO_SETUP_PROCESS_ADDITIONAL_FIELDS_MANAGER_V2_GUARD_V1();
+}
+
+// APPVERBO_MEU_PERFIL_QUANTITY_RENDERER_V1_START
+runModuleBootstrapStepV1("meuPerfilQuantityRendererV1");
+// APPVERBO_MEU_PERFIL_QUANTITY_RENDERER_V1_END
+
+// APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_START
+runModuleBootstrapStepV1("meuPerfilQuantityReadonlyRendererV1");
+// APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
+
+// APPVERBO_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_START
+runModuleBootstrapStepV1("meuPerfilQuantityOriginDedupV1");
+// APPVERBO_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_END
+
+// APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_START
+runModuleBootstrapStepV1("meuPerfilEditSectionFilterV1");
+// APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
+
+// APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
+// Fluxo legado desativado para evitar listeners duplicados no submit do Meu perfil.
+// APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
+
+// APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_START
+// Fluxo legado desativado para evitar sobreposição com FRONTEND_RETURN_URL_POST_SAVE_V6.
+// APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_END
+
+// APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_START
+// Fluxo legado desativado para evitar sobreposição com FRONTEND_RETURN_URL_POST_SAVE_V6.
+// APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_END
+
+// APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_START
+runModuleBootstrapStepV1("frontendReturnUrlPostSaveV6", {
+  initialMenu,
+  profilePersonalSections,
+  normalizeMenuKey,
+  normalizeLookupText
+});
+// APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_END
+
+// APPVERBO_INITIAL_PROFILE_SECTION_FROM_URL_V1_START
+runModuleBootstrapStepV1("initialProfileSectionFromUrlV1", {
+  normalizeMenuKey,
+  normalizeLookupText,
+  profilePersonalSections
+});
+// APPVERBO_INITIAL_PROFILE_SECTION_FROM_URL_V1_END
+
+// APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_START
+runModuleBootstrapStepV1("meuPerfilSubsequentVisibilityV1", {
+  activeMenuKey,
+  MEU_PERFIL_MENU_KEY,
+  sidebarMenuSettings,
+  profilePersonalSections,
+  normalizeMenuKey,
+  normalizeLookupText,
+  getSidebarMenuSetting,
+  normalizeProcessFieldType,
+  normalizeProcessSubsequentRules,
+  getHiddenProcessTargets,
+  isMeuPerfilQuantityV4GeneratedTarget,
+  menuButtons
+});
+// APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
+/* APPVERBO_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
+runModuleBootstrapStepV1("autoDismissFlashMessagesV1");
+/* APPVERBO_AUTO_DISMISS_FLASH_MESSAGES_V1_END */
+
+// APPVERBO_MEU_PERFIL_QUANTITY_SUBMIT_SYNC_V1_START
+runModuleBootstrapStepV1("meuPerfilQuantitySubmitSyncV1", {
+  collectCurrentMeuPerfilQuantityValues,
+  syncMeuPerfilQuantityHiddenInputs
+});
+// APPVERBO_MEU_PERFIL_QUANTITY_SUBMIT_SYNC_V1_END
+
+// APPVERBO_MESSAGE_DISMISS_SAFE_V5_START
+runModuleBootstrapStepV1("messageDismissSafeV5");
+// APPVERBO_MESSAGE_DISMISS_SAFE_V5_END
+
+// APPVERBO_MARK_READY_V1_START
+runModuleBootstrapStepV1("markReadyV1");
+// APPVERBO_MARK_READY_V1_END

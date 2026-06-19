@@ -1,0 +1,160 @@
+﻿/* APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_V1_START */
+
+/*
+  Padrao global do rodape de tabelas administrativas.
+  Aplica-se a:
+  - Entidade: .table-limiter
+  - Utilizador: .admin-status-table-footer-v1
+  - Subprocessos genericos: .admin-subprocess-table-footer-v1
+*/
+
+.table-limiter,
+.admin-status-table-footer-v1,
+.admin-subprocess-table-footer-v1 {
+  width: 100% !important;
+  margin-top: 10px !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  color: #5f6877 !important;
+}
+
+.table-limiter-left,
+.admin-subprocess-table-footer-left-v1 {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  color: #5f6877 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+.admin-status-table-footer-v1 > span {
+  color: #5f6877 !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+}
+
+.table-limiter-select,
+.admin-status-table-footer-v1 select,
+.admin-subprocess-table-footer-v1 select {
+  width: auto !important;
+  min-width: 84px !important;
+  max-width: none !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  border: 1px solid #cfd5df !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  color: #253046 !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+}
+
+.table-limiter-right,
+.admin-subprocess-table-footer-right-v1,
+.admin-status-table-footer-v1 .pagination {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin-left: auto !important;
+}
+
+.table-limiter-nav-btn,
+.admin-status-table-footer-v1 .pagination button,
+.admin-subprocess-table-footer-v1 .pagination button {
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid #d3dced !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: #2f6db4 !important;
+  font-family: inherit !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+}
+
+.table-limiter-nav-btn:hover,
+.admin-status-table-footer-v1 .pagination button:hover,
+.admin-subprocess-table-footer-v1 .pagination button:hover {
+  background: #eef3ff !important;
+  color: #1f4eb7 !important;
+  border-color: #becdf0 !important;
+}
+
+.table-limiter-nav-btn:disabled,
+.admin-status-table-footer-v1 .pagination button:disabled,
+.admin-subprocess-table-footer-v1 .pagination button:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background: transparent !important;
+  color: #7a879d !important;
+  border-color: #d9dee8 !important;
+}
+
+.table-limiter-page,
+.admin-status-table-footer-v1 .pagination button.active,
+.admin-subprocess-table-footer-v1 .pagination button.active {
+  min-width: 30px !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 !important;
+  border-radius: 999px !important;
+  background: #2f6db4 !important;
+  color: #ffffff !important;
+  border: 1px solid #2f6db4 !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 720px) {
+  .table-limiter,
+  .admin-status-table-footer-v1,
+  .admin-subprocess-table-footer-v1 {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .table-limiter-right,
+  .admin-subprocess-table-footer-right-v1,
+  .admin-status-table-footer-v1 .pagination {
+    margin-left: 0 !important;
+  }
+}
+
+/* APPVERBO_ADMIN_TABLE_FOOTER_STANDARD_V1_END */

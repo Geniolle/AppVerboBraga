@@ -1,0 +1,149 @@
+{% macro render_admin_user_shadow_cell_v4(row, column) %}
+  {% set value = row.get(column.source, "-") %}
+  {% if column.source == "status_label" %}
+    <span class="admin-user-shadow-status-v1 status-pill-{{ row.get('status', '') }}">{{ value }}</span>
+  {% else %}
+    {{ value }}
+  {% endif %}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_actions_v3(row) %}
+  {% set user_id = row.get('id', '') %}
+  {% set view_url = "/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id=" ~ user_id ~ "&user_readonly=1&readonly=1&mode=view&target=edit-user-card#edit-user-card" %}
+  {% set edit_url = "/users/new?menu=administrativo&admin_tab=utilizador&user_edit_id=" ~ user_id ~ "&target=edit-user-card#edit-user-card" %}
+
+  <div class="admin-user-shadow-actions-v1" role="group" aria-label="Ações do utilizador">
+    <a
+      class="admin-user-shadow-action-btn-v1 admin-user-shadow-action-view-v1"
+      href="{{ view_url }}"
+      title="Visualizar utilizador"
+      aria-label="Visualizar utilizador"
+    >Ver</a>
+    <a
+      class="admin-user-shadow-action-btn-v1 admin-user-shadow-action-edit-v1"
+      href="{{ edit_url }}"
+      title="Editar utilizador"
+      aria-label="Editar utilizador"
+    >Editar</a>
+  </div>
+{% endmacro %}
+
+{% macro render_admin_user_shadow_table_v4(table_key, rows, columns) %}
+<div
+  class="admin-user-shadow-table-shell-v1"
+  data-admin-user-shadow-table
+  data-admin-user-shadow-table-key="{{ table_key }}"
+>
+  <div class="admin-user-shadow-toolbar-v1">
+    <div class="admin-user-shadow-search-wrap-v1">
+      <label class="sr-only" for="admin-user-shadow-search-{{ table_key }}">Procurar</label>
+      <input
+        id="admin-user-shadow-search-{{ table_key }}"
+        class="admin-table-search-input"
+        type="search"
+        placeholder="Procurar"
+        data-admin-user-shadow-search
+      >
+    </div>
+  </div>
+
+  <div class="admin-table-wrap">
+    <table class="admin-subprocess-table-v1 admin-user-shadow-table-v1">
+      <thead>
+        <tr>
+          {% for column in columns %}
+          <th>{{ column.label }}</th>
+          {% endfor %}
+          <th>AÇÕES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr data-admin-user-shadow-row="{{ row.get('id', '') }}">
+          {% for column in columns %}
+          <td>{{ render_admin_user_shadow_cell_v4(row, column) }}</td>
+          {% endfor %}
+          <td>{{ render_admin_user_shadow_actions_v3(row) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="admin-user-shadow-footer-v1">
+    <label class="admin-user-shadow-page-size-label-v1">
+      <select data-admin-user-shadow-page-size>
+        <option value="5" selected>5</option>
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+      </select>
+      entradas por página
+    </label>
+
+    <div class="admin-user-shadow-pagination-v1">
+      <span data-admin-user-shadow-summary></span>
+      <div class="admin-user-shadow-pagination-actions-v1">
+        <button type="button" data-admin-user-shadow-prev aria-label="Página anterior">‹</button>
+        <span data-admin-user-shadow-current-page>1</span>
+        <button type="button" data-admin-user-shadow-next aria-label="Próxima página">›</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v4(state) %}
+<link rel="stylesheet" href="/static/css/modules/admin_user_shadow_table_v1.css?v=20260512-utilizador-shadow-layout-v4">
+
+<section
+  id="admin-user-shadow-readonly-card"
+  class="card admin-user-shadow-readonly-card-v1"
+  data-menu-scope="administrativo"
+  data-admin-subprocess-shadow="utilizador"
+>
+  <div class="profile-card-header">
+    <div>
+      <h2>Utilizadores - leitura nativa</h2>
+      <p class="muted">
+        Validação do novo processo único. Este bloco usa a leitura nativa com pesquisa, paginação e ações legadas.
+      </p>
+    </div>
+  </div>
+
+  <div class="admin-subsection">
+    <h3>{{ state.config.active_title }}</h3>
+    <p class="muted">Total: {{ state.active_rows|length }}</p>
+
+    {% if state.active_rows %}
+      {{ render_admin_user_shadow_table_v4("active", state.active_rows, state.config.columns) }}
+    {% else %}
+      <p class="empty">Sem utilizadores ativos no processo nativo.</p>
+    {% endif %}
+  </div>
+
+  <div class="admin-subsection">
+    <h3>{{ state.config.inactive_title }}</h3>
+
+    {% if state.inactive_rows %}
+      {{ render_admin_user_shadow_table_v4("inactive", state.inactive_rows, state.config.columns) }}
+    {% else %}
+      <p class="empty">Sem utilizadores inativos, pendentes ou bloqueados no processo nativo.</p>
+    {% endif %}
+  </div>
+
+  <script src="/static/js/modules/admin_user_shadow_table_v1.js?v=20260512-utilizador-shadow-table-v1" defer></script>
+</section>
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v3(state) %}
+  {{ render_admin_user_shadow_readonly_v4(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v2(state) %}
+  {{ render_admin_user_shadow_readonly_v4(state) }}
+{% endmacro %}
+
+{% macro render_admin_user_shadow_readonly_v1(state) %}
+  {{ render_admin_user_shadow_readonly_v4(state) }}
+{% endmacro %}
