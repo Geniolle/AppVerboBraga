@@ -27,12 +27,8 @@ from appverbo.repositories.member_entity_repository import (
     get_active_entity_ids_for_member,
     replace_active_member_entity_link,
 )
-from appverbo.repositories.user_profile_repository import (
-    delete_user_profiles,
-    replace_user_profile,
-)
-from appverbo.repositories.user_repository import null_created_by_for_deleted_user
 from appverbo.services.auth import is_admin_user
+from appverbo.services.user_member import member_status_for_user_account_status
 from appverbo.services.user_status import (
     USER_ACCOUNT_STATUS_ACTIVE_V1,
     USER_ACCOUNT_STATUS_BLOCKED_V1,
@@ -923,6 +919,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         member.full_name = str(full_name or "").strip()
         member.primary_phone = str(primary_phone or "").strip()
         member.email = str(login_email or "").strip().lower()
+        member.member_status = member_status_for_user_account_status(account_status)
 
         user.login_email = str(login_email or "").strip().lower()
         user.account_status = str(account_status or "").strip().lower()
@@ -947,6 +944,7 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
         session: Any,
         user: User,
     ) -> None:
-        null_created_by_for_deleted_user(session, int(user.id))
-        delete_user_profiles(session, int(user.id))
-        session.delete(user)
+        user.account_status = UserAccountStatus.INACTIVE.value
+        member = session.get(Member, int(user.member_id))
+        if member is not None:
+            member.member_status = member_status_for_user_account_status(user.account_status)

@@ -56,7 +56,7 @@ def execute_delete_user(
     clean_user_id = str(user_id or "").strip()
 
     if not clean_user_id.isdigit():
-        return _redirect_v1(error="Utilizador inválido para eliminação.")
+        return _redirect_v1(error="Utilizador inválido para inativação.")
 
     parsed_user_id = int(clean_user_id)
     repository = UserAdminRepository(UTILIZADOR_CONFIG)
@@ -132,12 +132,12 @@ def execute_delete_user(
         )
         return _redirect_v1(
             error=(
-                "Não foi possível eliminar utilizador porque existem registos relacionados. "
+                "Não foi possível inativar utilizador porque existem registos relacionados. "
                 "Remova ou desative as dependências associadas primeiro."
             )
         )
 
-    return _redirect_v1(success="Utilizador eliminado com sucesso.")
+    return _redirect_v1(success="Utilizador inativado com sucesso.")
 
 
 execute_delete_user_v1 = execute_delete_user

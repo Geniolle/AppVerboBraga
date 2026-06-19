@@ -618,8 +618,6 @@ def execute_create_user(
         created_by_user_id=int(actor_user["id"]),
         user_id=get_next_available_user_id_v1(session),
     )
-    user.login_email = payload.clean_email
-    user.account_status = UserAccountStatus.PENDING.value
 
     session.add(
         UserProfile(

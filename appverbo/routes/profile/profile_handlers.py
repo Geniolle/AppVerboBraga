@@ -2552,8 +2552,6 @@ def _handle_contacto_geral_create_invite_v1(
             status=UserAccountStatus.PENDING.value,
             created_by_user_id=creator_id,
         )
-        new_user.login_email = submitted_email
-        new_user.account_status = UserAccountStatus.PENDING.value
 
         session.add(MemberEntity(
             member_id=int(existing_member.id),
@@ -2649,6 +2647,8 @@ def _handle_contacto_geral_create_invite_v1(
             email=submitted_email,
             primary_phone=submitted_phone or "-",
         )
+        new_member.member_status = MemberStatus.ACTIVE.value
+        new_member.is_collaborator = True
         session.add(new_member)
         session.flush()
         creator_id = int(current_user["id"]) if current_user.get("id") else None
@@ -2658,8 +2658,6 @@ def _handle_contacto_geral_create_invite_v1(
             status=UserAccountStatus.PENDING.value,
             created_by_user_id=creator_id,
         )
-        new_user.login_email = submitted_email
-        new_user.account_status = UserAccountStatus.PENDING.value
         session.add(MemberEntity(
             member_id=int(new_member.id),
             entity_id=active_entity_id,

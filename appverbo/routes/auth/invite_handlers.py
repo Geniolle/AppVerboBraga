@@ -346,8 +346,15 @@ def invite_accept_submit(
         member.freguesia = clean_freguesia
         member.postal_code = clean_postal_code
         member.birth_date = parsed_birth_date
-        user.password_hash = hash_password(password)
-        user.account_status = UserAccountStatus.ACTIVE.value
+        member.member_status = MemberStatus.ACTIVE.value
+        member.is_collaborator = True
+
+        user = ensure_user_for_member(
+            session,
+            member,
+            status=UserAccountStatus.ACTIVE.value,
+            password=password,
+        )
 
         try:
             session.commit()

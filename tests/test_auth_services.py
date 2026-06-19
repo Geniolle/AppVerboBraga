@@ -18,7 +18,6 @@ from appverbo.admin_subprocesses.repositories.user_repository import UserAdminRe
 from appverbo.admin_subprocesses.utilizador.configuracao import UTILIZADOR_CONFIG
 from appverbo.services.auth import (
     build_user_invite_token,
-    ensure_user_for_member,
     get_signup_country_options,
     hash_password,
     parse_user_invite_token,
@@ -26,6 +25,7 @@ from appverbo.services.auth import (
     validate_signup_phone_country,
     verify_password,
 )
+from appverbo.services.user_member import ensure_user_for_member
 
 
 def _build_session_factory():
@@ -125,6 +125,7 @@ def test_ensure_user_for_member_creates_and_reuses_user() -> None:
         assert created_user.account_status == UserAccountStatus.PENDING.value
         assert created_user.created_by_user_id == 77
         assert created_user.password_hash.startswith("pbkdf2_sha256$")
+        assert member.member_status == MemberStatus.ACTIVE.value
 
         reused_user = ensure_user_for_member(
             session,
@@ -135,6 +136,33 @@ def test_ensure_user_for_member_creates_and_reuses_user() -> None:
         session.commit()
 
         assert reused_user.id == created_user.id
+        assert session.scalar(select(func.count()).select_from(User)) == 1
+
+
+def test_ensure_user_for_member_uses_supplied_password() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        member = Member(
+            full_name="João Costa",
+            primary_phone="912111222",
+            email="joao.costa@example.com",
+            member_status=MemberStatus.ACTIVE.value,
+        )
+        session.add(member)
+        session.flush()
+
+        user = ensure_user_for_member(
+            session,
+            member,
+            status=UserAccountStatus.ACTIVE.value,
+            password="SenhaForte123!",
+        )
+        session.commit()
+
+        assert user.account_status == UserAccountStatus.ACTIVE.value
+        assert member.member_status == MemberStatus.ACTIVE.value
+        assert verify_password("SenhaForte123!", user.password_hash)
         assert session.scalar(select(func.count()).select_from(User)) == 1
 
 
@@ -175,6 +203,7 @@ def test_upsert_user_by_email_creates_user_for_existing_member_without_account()
         assert user.password_hash.startswith("pbkdf2_sha256$")
         assert session.scalar(select(func.count()).select_from(User)) == 1
         assert session.scalar(select(func.count()).select_from(MemberEntity)) == 1
+        assert member.member_status == MemberStatus.ACTIVE.value
 
         link = session.execute(
             select(MemberEntity).where(
@@ -186,7 +215,7 @@ def test_upsert_user_by_email_creates_user_for_existing_member_without_account()
         assert link is not None
 
 
-def test_delete_inactive_user_physically_removes_user_and_profiles() -> None:
+def test_delete_inactive_user_inactivates_user_and_keeps_member_linked() -> None:
     SessionLocal = _build_session_factory()
     repository = UserAdminRepository(UTILIZADOR_CONFIG)
 
@@ -225,6 +254,13 @@ def test_delete_inactive_user_physically_removes_user_and_profiles() -> None:
         repository.delete_inactive_user(session=session, user=user)
         session.commit()
 
-        assert session.get(User, user.id) is None
-        assert session.scalar(select(func.count()).select_from(UserProfile)) == 0
-        assert session.get(Member, member.id) is not None
+        stored_user = session.get(User, user.id)
+        stored_member = session.get(Member, member.id)
+
+        assert stored_user is not None
+        assert stored_user.account_status == UserAccountStatus.INACTIVE.value
+        assert stored_member is not None
+        assert stored_member.member_status == MemberStatus.INACTIVE.value
+        assert stored_member.user_account is not None
+        assert stored_member.user_account.id == user.id
+        assert session.scalar(select(func.count()).select_from(UserProfile)) == 1

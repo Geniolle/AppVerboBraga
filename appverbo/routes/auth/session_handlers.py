@@ -302,9 +302,8 @@ def signup(
             session,
             member,
             status=UserAccountStatus.ACTIVE.value,
+            password=password,
         )
-        user.password_hash = hash_password(password)
-        user.account_status = UserAccountStatus.ACTIVE.value
 
         selected_entity: Entity | None = None
         if parsed_entity_id is not None:

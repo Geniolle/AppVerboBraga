@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi import Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import delete, update
 from sqlalchemy.exc import IntegrityError
 
 from appverbo.admin_subprocesses.utilizador.common import (
@@ -12,7 +11,7 @@ from appverbo.admin_subprocesses.utilizador.common import (
     redirect_login_required_v1,
 )
 from appverbo.core import SessionLocal
-from appverbo.models import User, UserAccountStatus, UserProfile
+from appverbo.models import Member, MemberStatus, User, UserAccountStatus
 from appverbo.services.auth import is_admin_user
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.session import get_current_user, get_session_entity_id
@@ -20,7 +19,7 @@ from appverbo.services.user_status import is_user_account_status_non_active_v1
 
 
 # ###################################################################################
-# (1) USE CASE PRINCIPAL DE ELIMINACAO DE UTILIZADOR
+# (1) USE CASE PRINCIPAL DE INATIVACAO DE UTILIZADOR
 # ###################################################################################
 
 def execute_delete_user_v1(
@@ -32,7 +31,7 @@ def execute_delete_user_v1(
 
     if not clean_user_id.isdigit():
         return redirect_admin_users_v1(
-            error="Utilizador inv\u00e1lido para elimina\u00e7\u00e3o."
+            error="Utilizador inv\u00e1lido para inativa\u00e7\u00e3o."
         )
 
     parsed_user_id = int(clean_user_id)
@@ -47,7 +46,7 @@ def execute_delete_user_v1(
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return redirect_admin_users_v1(
-                error="Apenas administradores podem eliminar utilizadores."
+                error="Apenas administradores podem inativar utilizadores."
             )
 
         entity_permissions = get_user_entity_permissions(
@@ -59,7 +58,7 @@ def execute_delete_user_v1(
 
         if parsed_user_id == int(current_user["id"]):
             return redirect_admin_users_v1(
-                error="N\u00e3o \u00e9 permitido eliminar o pr\u00f3prio utilizador ligado."
+                error="N\u00e3o \u00e9 permitido inativar o pr\u00f3prio utilizador ligado."
             )
 
         user = session.get(User, parsed_user_id)
@@ -75,12 +74,12 @@ def execute_delete_user_v1(
             entity_permissions,
         ):
             return redirect_admin_users_v1(
-                error="Sem permiss\u00e3o para eliminar este utilizador."
+                error="Sem permiss\u00e3o para inativar este utilizador."
             )
 
         if not is_user_account_status_non_active_v1(user.account_status):
             return redirect_admin_users_v1(
-                error="S\u00f3 \u00e9 permitido eliminar utilizadores n\u00e3o ativos."
+                error="S\u00f3 \u00e9 permitido inativar utilizadores n\u00e3o ativos."
             )
 
         target_is_active_admin = (
@@ -98,22 +97,19 @@ def execute_delete_user_v1(
             if not can_delete_admin:
                 return redirect_admin_users_v1(error=admin_delete_error)
 
-        session.execute(
-            update(User)
-            .where(User.created_by_user_id == parsed_user_id)
-            .values(created_by_user_id=None)
-        )
-        session.execute(delete(UserProfile).where(UserProfile.user_id == parsed_user_id))
-        session.delete(user)
+        user.account_status = UserAccountStatus.INACTIVE.value
+        member = session.get(Member, int(user.member_id))
+        if member is not None:
+            member.member_status = MemberStatus.INACTIVE.value
 
         try:
             session.commit()
         except IntegrityError:
             session.rollback()
             return redirect_admin_users_v1(
-                error="N\u00e3o foi poss\u00edvel eliminar utilizador."
+                error="N\u00e3o foi poss\u00edvel inativar utilizador."
             )
 
     return redirect_admin_users_v1(
-        success="Utilizador eliminado com sucesso."
+        success="Utilizador inativado com sucesso."
     )

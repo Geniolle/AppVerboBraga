@@ -61,7 +61,7 @@ class Member(Base, TimestampMixin):
     first_collaboration_date: Mapped[Optional[date]] = mapped_column(Date)
 
     entity_links: Mapped[List["MemberEntity"]] = relationship(back_populates="member")
-    user_account: Mapped[Optional["User"]] = relationship(back_populates="member", uselist=False)
+    user_account: Mapped["User"] = relationship(back_populates="member", uselist=False)
 
     __table_args__ = (
         CheckConstraint(
@@ -100,4 +100,3 @@ class MemberEntity(Base, TimestampMixin):
             name="ck_member_entities_status",
         ),
     )
-
