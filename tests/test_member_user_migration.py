@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import sqlalchemy as sa
 
-from migrations.versions import memberuser02_enforce_member_user_backfill as migration
+from migrations.versions import memberuser03_add_member_user_backfill as migration
 
 
 def _build_migration_database() -> tuple[sa.Engine, sa.Table, sa.Table]:
@@ -73,3 +73,34 @@ def test_member_user_backfill_fails_clearly_for_duplicate_email() -> None:
             assert "duplicado@example.com" in str(exc)
         else:
             raise AssertionError("A migration deveria falhar para emails duplicados.")
+
+
+def test_member_user_backfill_fails_for_existing_user_email_from_other_member() -> None:
+    engine, members, users = _build_migration_database()
+
+    with engine.begin() as connection:
+        connection.execute(
+            members.insert(),
+            [
+                {"id": 7, "email": "ocupado@example.com", "member_status": "active"},
+                {"id": 8, "email": "livre@example.com", "member_status": "active"},
+            ],
+        )
+        connection.execute(
+            users.insert().values(
+                member_id=8,
+                login_email="ocupado@example.com",
+                password_hash="pbkdf2_sha256$390000$c2FsdA==$ZGlnZXN0",
+                account_status="active",
+                created_by_user_id=None,
+            )
+        )
+
+        try:
+            with patch.object(migration.op, "get_bind", return_value=connection):
+                migration.upgrade()
+        except RuntimeError as exc:
+            assert "ja pertence ao utilizador do membro 8" in str(exc)
+            assert "ocupado@example.com" in str(exc)
+        else:
+            raise AssertionError("A migration deveria falhar para login_email ja ocupado.")
