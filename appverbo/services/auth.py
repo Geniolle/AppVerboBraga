@@ -7,7 +7,7 @@ import json
 import secrets
 import smtplib
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from email.message import EmailMessage
 from typing import Any
 from urllib.parse import quote
@@ -37,6 +37,88 @@ def hash_password(raw_password: str) -> str:
     salt_b64 = base64.b64encode(salt).decode("utf-8")
     digest_b64 = base64.b64encode(digest).decode("utf-8")
     return f"pbkdf2_sha256${iterations}${salt_b64}${digest_b64}"
+
+
+def _build_temporary_password_hash_v1() -> str:
+    return hash_password(secrets.token_urlsafe(24))
+
+
+def ensure_user_for_member_v1(
+    session: Session,
+    member: Member,
+    *,
+    status: str = UserAccountStatus.PENDING.value,
+    created_by_user_id: int | None = None,
+    user_id: int | None = None,
+) -> User:
+    member_id = getattr(member, "id", None)
+    if member_id is None:
+        session.flush()
+        member_id = getattr(member, "id", None)
+
+    if member_id is None:
+        raise ValueError("Membro precisa estar persistido antes de garantir a conta.")
+
+    clean_email = str(member.email or "").strip().lower()
+    if not clean_email:
+        raise ValueError("Email do membro é obrigatório para garantir a conta.")
+
+    member.email = clean_email
+
+    requested_status = str(status or "").strip().lower()
+    valid_statuses = {
+        UserAccountStatus.PENDING.value,
+        UserAccountStatus.ACTIVE.value,
+        UserAccountStatus.INACTIVE.value,
+        UserAccountStatus.BLOCKED.value,
+    }
+    if requested_status not in valid_statuses:
+        requested_status = UserAccountStatus.PENDING.value
+
+    user = session.execute(
+        select(User).where(User.member_id == int(member_id))
+    ).scalar_one_or_none()
+
+    if user is None:
+        user = session.execute(
+            select(User).where(func.lower(User.login_email) == clean_email)
+        ).scalar_one_or_none()
+
+        if user is not None and int(user.member_id) != int(member_id):
+            raise ValueError("Email já está associado a outro utilizador.")
+
+    if user is None:
+        user_kwargs: dict[str, Any] = {
+            "member_id": int(member_id),
+            "login_email": clean_email,
+            "password_hash": _build_temporary_password_hash_v1(),
+            "account_status": requested_status,
+        }
+
+        if isinstance(user_id, int) and user_id > 0:
+            user_kwargs["id"] = int(user_id)
+
+        if isinstance(created_by_user_id, int) and created_by_user_id > 0:
+            user_kwargs["created_by_user_id"] = int(created_by_user_id)
+
+        user = User(**user_kwargs)
+        session.add(user)
+        session.flush()
+        return user
+
+    user.login_email = clean_email
+
+    if not str(user.password_hash or "").strip():
+        user.password_hash = _build_temporary_password_hash_v1()
+
+    current_status = str(user.account_status or "").strip().lower()
+    if current_status not in valid_statuses:
+        user.account_status = requested_status
+
+    if user.created_by_user_id is None and isinstance(created_by_user_id, int) and created_by_user_id > 0:
+        user.created_by_user_id = int(created_by_user_id)
+
+    return user
 
 def verify_password(raw_password: str, stored_hash: str) -> bool:
     try:
@@ -664,14 +746,11 @@ def upsert_user_by_email(
             )
         )
 
-    user = User(
-        member_id=member.id,
-        login_email=clean_email,
-        password_hash=hash_password(secrets.token_urlsafe(24)),
-        account_status=UserAccountStatus.ACTIVE.value,
+    user = ensure_user_for_member_v1(
+        session,
+        member,
+        status=UserAccountStatus.ACTIVE.value,
     )
-    session.add(user)
-    session.flush()
     return user
 
 def render_login(
@@ -709,6 +788,8 @@ __all__ = [
     "verify_password",
     "_urlsafe_b64encode",
     "_urlsafe_b64decode",
+    "ensure_user_for_member_v1",
+    "ensure_user_for_member",
     "build_user_invite_token",
     "parse_user_invite_token",
     "build_user_invite_link",
@@ -729,3 +810,5 @@ __all__ = [
     "upsert_user_by_email",
     "render_login",
 ]
+
+ensure_user_for_member = ensure_user_for_member_v1

@@ -2514,10 +2514,100 @@ def _handle_contacto_geral_create_invite_v1(
     existing_user = session.scalar(
         select(User).where(func.lower(User.login_email) == submitted_email)
     )
+    existing_member = session.scalar(
+        select(Member).where(func.lower(Member.email) == submitted_email)
+    )
 
     entity_name = str(
         session.scalar(select(Entity.name).where(Entity.id == active_entity_id)) or ""
     )
+
+    if existing_user is None and existing_member is not None:
+        existing_link = session.scalar(
+            select(MemberEntity).where(
+                MemberEntity.member_id == int(existing_member.id),
+                MemberEntity.entity_id == active_entity_id,
+            )
+        )
+        if existing_link is not None:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    menu=clean_menu_key,
+                    profile_error="Já existe um contacto com este email nesta entidade.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        existing_member.full_name = submitted_name or existing_member.full_name or submitted_email
+        existing_member.primary_phone = submitted_phone or existing_member.primary_phone or "-"
+        existing_member.email = submitted_email
+        existing_member.member_status = MemberStatus.ACTIVE.value
+        existing_member.is_collaborator = True
+
+        creator_id = int(current_user["id"]) if current_user.get("id") else None
+        new_user = ensure_user_for_member(
+            session,
+            existing_member,
+            status=UserAccountStatus.PENDING.value,
+            created_by_user_id=creator_id,
+        )
+        new_user.login_email = submitted_email
+        new_user.account_status = UserAccountStatus.PENDING.value
+
+        session.add(MemberEntity(
+            member_id=int(existing_member.id),
+            entity_id=active_entity_id,
+            status=MemberEntityStatus.ACTIVE.value,
+        ))
+
+        _c_fields = parse_member_profile_fields(existing_member.profile_custom_fields)
+        _c_records = parse_menu_process_records(_c_fields.get(records_storage_key))
+        _c_records.insert(0, {
+            "record_id": uuid4().hex,
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+            "section_key": "custom_dados_membresia",
+            "values": dict(submitted_section_values),
+        })
+        _serialized = serialize_menu_process_records(_c_records[:200])
+        if _serialized:
+            _c_fields[records_storage_key] = _serialized
+        else:
+            _c_fields.pop(records_storage_key, None)
+        existing_member.profile_custom_fields = serialize_member_profile_fields(_c_fields)
+
+        try:
+            session.commit()
+        except Exception:
+            session.rollback()
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                    profile_error="Falha ao criar o contacto.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        token = build_user_invite_token(int(new_user.id), submitted_email, active_entity_id)
+        invite_link = build_user_invite_link(request, token)
+        try:
+            send_user_invite_email(
+                recipient_email=submitted_email,
+                recipient_name=submitted_name or submitted_email,
+                entity_name=entity_name,
+                invite_link=invite_link,
+                invited_by_name=str(current_user.get("full_name") or "Administrador"),
+            )
+        except Exception:
+            pass
+
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(
+                submitted_form,
+                menu=clean_menu_key,
+                profile_success=f"Contacto criado. Convite enviado para {submitted_email}.",
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
     # Duplicate check: block if email is already linked to this entity
     if existing_user is not None:
@@ -2562,15 +2652,14 @@ def _handle_contacto_geral_create_invite_v1(
         session.add(new_member)
         session.flush()
         creator_id = int(current_user["id"]) if current_user.get("id") else None
-        new_user = User(
-            member_id=int(new_member.id),
-            login_email=submitted_email,
-            password_hash="",
-            account_status=UserAccountStatus.PENDING.value,
+        new_user = ensure_user_for_member(
+            session,
+            new_member,
+            status=UserAccountStatus.PENDING.value,
             created_by_user_id=creator_id,
         )
-        session.add(new_user)
-        session.flush()
+        new_user.login_email = submitted_email
+        new_user.account_status = UserAccountStatus.PENDING.value
         session.add(MemberEntity(
             member_id=int(new_member.id),
             entity_id=active_entity_id,
@@ -2616,6 +2705,7 @@ def _handle_contacto_geral_create_invite_v1(
                 recipient_name=submitted_name or submitted_email,
                 entity_name=entity_name,
                 invite_link=invite_link,
+                invited_by_name=str(current_user.get("full_name") or "Administrador"),
             )
         except Exception:
             pass

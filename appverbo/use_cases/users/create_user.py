@@ -1,7 +1,5 @@
 
 from __future__ import annotations
-
-import secrets
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,8 +19,8 @@ from appverbo.repositories.user_repository import get_user_by_email_ci
 from appverbo.services.auth import (
     build_user_invite_link,
     build_user_invite_token,
+    ensure_user_for_member,
     get_or_create_entity_superuser_profile,
-    hash_password,
     is_admin_user,
     is_allowed_global_profile,
     send_user_invite_email,
@@ -527,16 +525,15 @@ def execute_create_user(
         entity_id=int(selected_entity.id),
     )
 
-    user = User(
-        id=get_next_available_user_id_v1(session),
-        member_id=int(member.id),
-        login_email=payload.clean_email,
-        password_hash=hash_password(secrets.token_urlsafe(24)),
-        account_status=UserAccountStatus.PENDING.value,
+    user = ensure_user_for_member(
+        session,
+        member,
+        status=UserAccountStatus.PENDING.value,
         created_by_user_id=actor_user_id,
+        user_id=get_next_available_user_id_v1(session),
     )
-    session.add(user)
-    session.flush()
+    user.login_email = payload.clean_email
+    user.account_status = UserAccountStatus.PENDING.value
 
     replace_user_profile(
         session=session,

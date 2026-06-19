@@ -278,15 +278,66 @@ def signup(
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = upsert_user_by_email(
-            session=session,
-            email=clean_email,
-            full_name=clean_full_name,
-            primary_phone=clean_primary_phone,
-            entity_id=parsed_entity_id,
+        member = session.execute(
+            select(Member).where(func.lower(Member.email) == clean_email)
+        ).scalar_one_or_none()
+        if member is None:
+            member = Member(
+                full_name=clean_full_name,
+                primary_phone=clean_primary_phone,
+                email=clean_email,
+                member_status=MemberStatus.ACTIVE.value,
+                is_collaborator=True,
+            )
+            session.add(member)
+            session.flush()
+        else:
+            member.full_name = clean_full_name
+            member.primary_phone = clean_primary_phone
+            member.email = clean_email
+            member.member_status = MemberStatus.ACTIVE.value
+            member.is_collaborator = True
+
+        user = ensure_user_for_member(
+            session,
+            member,
+            status=UserAccountStatus.ACTIVE.value,
         )
         user.password_hash = hash_password(password)
         user.account_status = UserAccountStatus.ACTIVE.value
+
+        selected_entity: Entity | None = None
+        if parsed_entity_id is not None:
+            selected_entity = session.get(Entity, parsed_entity_id)
+        if selected_entity is None:
+            selected_entity = session.execute(
+                select(Entity).where(Entity.is_active.is_(True)).order_by(Entity.id).limit(1)
+            ).scalars().first()
+        if selected_entity is None:
+            selected_entity = Entity(
+                name="Entidade Principal",
+                internal_number=get_next_entity_internal_number(session),
+                is_active=True,
+            )
+            session.add(selected_entity)
+            session.flush()
+
+        active_link = session.execute(
+            select(MemberEntity).where(
+                MemberEntity.member_id == int(member.id),
+                MemberEntity.entity_id == int(selected_entity.id),
+                MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+            )
+        ).scalar_one_or_none()
+        if active_link is None:
+            session.add(
+                MemberEntity(
+                    member_id=int(member.id),
+                    entity_id=int(selected_entity.id),
+                    status=MemberEntityStatus.ACTIVE.value,
+                    entry_date=date.today(),
+                )
+            )
 
         try:
             session.commit()

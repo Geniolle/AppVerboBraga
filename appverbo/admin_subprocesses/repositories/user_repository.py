@@ -20,6 +20,7 @@ from appverbo.models import (
     MemberEntityStatus,
     Profile,
     User,
+    UserAccountStatus,
     UserProfile,
 )
 from appverbo.repositories.member_entity_repository import (
@@ -948,4 +949,4 @@ class UserAdminRepository(BaseAdminSubprocessRepository):
     ) -> None:
         null_created_by_for_deleted_user(session, int(user.id))
         delete_user_profiles(session, int(user.id))
-        session.delete(user)
+        user.account_status = UserAccountStatus.INACTIVE.value
