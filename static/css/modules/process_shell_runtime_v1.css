@@ -457,6 +457,13 @@
   margin-top: 0 !important;
   min-height: var(--ui-control-height, 38px) !important;
 }
+/* APPVERBO_USER_CREATE_HIDE_LINK_BUTTON_V1_START */
+#create-user-card #create-user-collapse[open] ~ #create-user-generate-link-shortcut-btn,
+#create-user-card #create-user-collapse[open] ~ .entity-create-link-slot {
+  display: none !important;
+}
+/* APPVERBO_USER_CREATE_HIDE_LINK_BUTTON_V1_END */
+
 /* APPVERBO_PROCESS_ACTION_TOOLBAR_ALIGN_V1_END */
 
 /* APPVERBO_PROCESS_CARD_HEADER_TUNE_V1_START */
@@ -893,5 +900,187 @@
   overflow: visible;
 }
 /* APPVERBO_TABLE_ACTION_MENU_FLOATING_FIX_V1_END */
+
+/* APPVERBO_TOAST_V1_START */
+
+.appverbo-toast-viewport-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+  position: fixed;
+  width: 360px;
+  z-index: 9500;
+}
+
+.appverbo-toast-bottom-right-v1 {
+  bottom: 24px;
+  right: 24px;
+}
+
+.appverbo-toast-bottom-center-v1 {
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.appverbo-toast-viewport-v1 > * {
+  pointer-events: auto;
+}
+
+.appverbo-toast-v1 {
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #64748b;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.14), 0 1px 4px rgba(15, 23, 42, 0.08);
+  display: flex;
+  gap: 12px;
+  padding: 14px 12px 14px 16px;
+}
+
+.appverbo-toast-success-v1 {
+  border-left-color: #16a34a;
+}
+
+.appverbo-toast-error-v1 {
+  border-left-color: #dc2626;
+}
+
+.appverbo-toast-warning-v1 {
+  border-left-color: #d97706;
+}
+
+.appverbo-toast-info-v1 {
+  border-left-color: #0a6ed1;
+}
+
+.appverbo-toast-icon-v1 {
+  color: #64748b;
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.appverbo-toast-success-v1 .appverbo-toast-icon-v1 {
+  color: #16a34a;
+}
+
+.appverbo-toast-error-v1 .appverbo-toast-icon-v1 {
+  color: #dc2626;
+}
+
+.appverbo-toast-warning-v1 .appverbo-toast-icon-v1 {
+  color: #d97706;
+}
+
+.appverbo-toast-info-v1 .appverbo-toast-icon-v1 {
+  color: #0a6ed1;
+}
+
+.appverbo-toast-content-v1 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.appverbo-toast-title-v1 {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.appverbo-toast-message-v1 {
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.appverbo-toast-close-v1 {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 18px;
+  height: 22px;
+  justify-content: center;
+  line-height: 1;
+  margin-top: -1px;
+  padding: 0;
+  width: 22px;
+}
+
+.appverbo-toast-close-v1:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.appverbo-toast-close-v1:focus-visible {
+  outline: 2px solid #0a6ed1;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .appverbo-toast-viewport-v1 {
+    bottom: 16px !important;
+    right: 16px !important;
+    width: calc(100vw - 32px);
+  }
+
+  .appverbo-toast-bottom-center-v1 {
+    left: 16px !important;
+    transform: none !important;
+  }
+}
+
+body.appverbo-url-feedback-active-v1 .card .alert.ok,
+body.appverbo-url-feedback-active-v1 .card .alert.error,
+body.appverbo-url-feedback-active-v1 .card .alert {
+  display: none !important;
+}
+
+/* APPVERBO_TOAST_V1_END */
+
+/* APPVERBO_RESPONSIVE_COLUMNS_V1_START */
+.appverbo-hide-col-1 th:nth-child(1),
+.appverbo-hide-col-1 td:nth-child(1) { display: none !important; }
+.appverbo-hide-col-2 th:nth-child(2),
+.appverbo-hide-col-2 td:nth-child(2) { display: none !important; }
+.appverbo-hide-col-3 th:nth-child(3),
+.appverbo-hide-col-3 td:nth-child(3) { display: none !important; }
+.appverbo-hide-col-4 th:nth-child(4),
+.appverbo-hide-col-4 td:nth-child(4) { display: none !important; }
+.appverbo-hide-col-5 th:nth-child(5),
+.appverbo-hide-col-5 td:nth-child(5) { display: none !important; }
+.appverbo-hide-col-6 th:nth-child(6),
+.appverbo-hide-col-6 td:nth-child(6) { display: none !important; }
+.appverbo-hide-col-7 th:nth-child(7),
+.appverbo-hide-col-7 td:nth-child(7) { display: none !important; }
+.appverbo-hide-col-8 th:nth-child(8),
+.appverbo-hide-col-8 td:nth-child(8) { display: none !important; }
+.appverbo-hide-col-9 th:nth-child(9),
+.appverbo-hide-col-9 td:nth-child(9) { display: none !important; }
+.appverbo-hide-col-10 th:nth-child(10),
+.appverbo-hide-col-10 td:nth-child(10) { display: none !important; }
+.appverbo-hide-col-11 th:nth-child(11),
+.appverbo-hide-col-11 td:nth-child(11) { display: none !important; }
+.appverbo-hide-col-12 th:nth-child(12),
+.appverbo-hide-col-12 td:nth-child(12) { display: none !important; }
+.appverbo-hide-col-13 th:nth-child(13),
+.appverbo-hide-col-13 td:nth-child(13) { display: none !important; }
+.appverbo-hide-col-14 th:nth-child(14),
+.appverbo-hide-col-14 td:nth-child(14) { display: none !important; }
+.appverbo-hide-col-15 th:nth-child(15),
+.appverbo-hide-col-15 td:nth-child(15) { display: none !important; }
+/* APPVERBO_RESPONSIVE_COLUMNS_V1_END */
 
 /* APPVERBO_PROCESS_SHELL_RUNTIME_V1_END */

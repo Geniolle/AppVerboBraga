@@ -3,16 +3,16 @@
 <table id="{{ table_id }}">
   <thead>
     <tr>
-      <th>ID</th>
-      <th>Nº DA ENTIDADE</th>
-      <th>Nome</th>
-      <th>Email</th>
-      <th>Telefone</th>
-      <th>Entidade</th>
-      <th>Sistema</th>
-      <th>Estado</th>
-      <th>Criado em</th>
-      <th>Ações</th>
+      <th data-appverbo-column-key="id" data-appverbo-hide-order="80">ID</th>
+      <th data-appverbo-column-key="entity_number" data-appverbo-hide-order="70">Nº DA ENTIDADE</th>
+      <th data-appverbo-column-key="name" data-appverbo-hide-order="60">Nome</th>
+      <th data-appverbo-column-key="email" data-appverbo-hide-order="50">Email</th>
+      <th data-appverbo-column-key="phone" data-appverbo-hide-order="40">Telefone</th>
+      <th data-appverbo-column-key="entity" data-appverbo-hide-order="30">Entidade</th>
+      <th data-appverbo-column-key="system" data-appverbo-hide-order="20">Sistema</th>
+      <th data-appverbo-column-key="created_at" data-appverbo-hide-order="10">Criado em</th>
+      <th data-appverbo-column-key="status" data-appverbo-column-mandatory="1">Estado</th>
+      <th data-appverbo-column-key="actions" data-appverbo-column-mandatory="1">Ações</th>
     </tr>
   </thead>
   <tbody>
@@ -25,6 +25,7 @@
       <td>{{ row.primary_phone }}</td>
       <td>{{ row.entity_name }}</td>
       <td>{{ row.system_name }}</td>
+      <td>{{ row.created_at }}</td>
       <td>
         {% if row.account_status_is_active or row.account_status == "active" %}
         <span class="entity-status entity-status-active">
@@ -44,7 +45,6 @@
         </span>
         {% endif %}
       </td>
-      <td>{{ row.created_at }}</td>
       <td>
         <div class="table-actions">
           <a

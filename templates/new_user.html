@@ -8,7 +8,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260619-top-submenu-sap-style-v1">
-  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260621-actions-icons-v2">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260621-user-create-hide-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
@@ -580,26 +580,12 @@
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
         <section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
-            {% if success %}
-              <div class="alert ok">{{ success }}</div>
-            {% endif %}
-
             <div class="entity-create-toolbar appverbo-process-action-toolbar-v1">
-            <details id="create-user-collapse" class="entity-create-collapse" {% if errors %}open{% endif %}>
+            <details id="create-user-collapse" class="entity-create-collapse" data-appverbo-user-create-details="1"{% if errors %} open{% endif %}>
               <summary>
                 <span>Criar utilizador</span>
               </summary>
               <div class="entity-create-body">
-                {% if errors %}
-                  <div class="alert error">
-                    <ul>
-                      {% for error in errors %}
-                        <li>{{ error }}</li>
-                      {% endfor %}
-                    </ul>
-                  </div>
-                {% endif %}
-
                 <div class="admin-subsection">
                   <form id="create-user-form" method="post" action="/users/new">
                     <input type="hidden" name="return_menu" value="administrativo">
@@ -688,7 +674,7 @@
                       <button
                         type="button"
                         class="action-btn-cancel"
-                        onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                        onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;} if(window.AppVerboSyncUserCreateActionModeV1){window.AppVerboSyncUserCreateActionModeV1(document);}"
                       >Cancelar</button>
                     </div>
                   </form>
@@ -699,8 +685,9 @@
               id="create-user-generate-link-shortcut-btn"
               type="button"
               class="action-btn-secondary entity-create-link-shortcut"
+              data-appverbo-hide-when-user-create-open="1"
             >Gerar link</button>
-            <div class="entity-create-link-slot" aria-live="polite">
+            <div class="entity-create-link-slot" aria-live="polite" data-appverbo-hide-when-user-create-open="1">
               {% if generated_invite_link %}
               <div class="entity-create-link-output">
                 <input
@@ -726,20 +713,6 @@
         {% if user_edit_data is defined and user_edit_data.id %}
         <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
-
-          {% if success %}
-            <div class="alert ok">{{ success }}</div>
-          {% endif %}
-
-          {% if errors %}
-            <div class="alert error">
-              <ul>
-                {% for error in errors %}
-                  <li>{{ error }}</li>
-                {% endfor %}
-              </ul>
-            </div>
-          {% endif %}
 
           <div class="admin-subsection">
             <form method="post" action="/users/update">
@@ -825,11 +798,11 @@
 
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_START -->
         <section id="inactive-users-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores não ativos</h2>
+          <h2>Utilizadores inativos</h2>
           {{ render_admin_user_table_v1(
             inactive_users,
             "inactive-users-table",
-            "Sem Utilizadores não ativos.",
+            "Sem utilizadores inativos.",
             true
           ) }}
         </section>
@@ -837,19 +810,12 @@
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
         <section id="create-entity-card" class="card entity-panel-card" data-menu-scope="administrativo">
-          {% if entity_success %}
-            <div class="alert ok">{{ entity_success }}</div>
-          {% endif %}
-          <details class="entity-create-collapse" {% if entity_error %}open{% endif %}>
+          <details class="entity-create-collapse">
             <summary>
               <span class="entity-create-toggle-icon" aria-hidden="true"></span>
               <span>Criar entidade</span>
             </summary>
             <div class="entity-create-body">
-              {% if entity_error %}
-                <div class="alert error">{{ entity_error }}</div>
-              {% endif %}
-
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                 <input type="hidden" name="return_menu" value="administrativo">
                 <input type="hidden" name="return_admin_tab" value="entidade">
@@ -954,13 +920,6 @@
         <section id="edit-entity-card" class="card entity-panel-card" data-menu-scope="administrativo" data-readonly-mode="{% if entity_readonly_mode %}1{% else %}0{% endif %}">
           <h2>{% if entity_readonly_mode %}Exibir entidade{% else %}Editar entidade{% endif %}</h2>
           <p>Atualize os dados principais da entidade selecionada.</p>
-
-          {% if entity_success %}
-            <div class="alert ok">{{ entity_success }}</div>
-          {% endif %}
-          {% if entity_error %}
-            <div class="alert error">{{ entity_error }}</div>
-          {% endif %}
 
           <form method="post" action="/entities/update" enctype="multipart/form-data">
             <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
@@ -1112,9 +1071,6 @@
         {% endif %}
 
         <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
-          {% if entity_success and initial_menu_target == "#recent-entities-card" %}
-            <div class="alert ok">{{ entity_success }}</div>
-          {% endif %}
           <h2>{% if current_user_can_manage_all_entities %}Entidades criadas{% else %}Dados gerais{% endif %}</h2>
           {% set active_recent_entities = recent_entities | selectattr("is_active") | list %}
           {% if not current_user_can_manage_all_entities %}
@@ -1381,12 +1337,6 @@
               <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
             {% endif %}
           </div>
-          {% endif %}
-          {% if settings_success %}
-            <div class="alert ok">{{ settings_success }}</div>
-          {% endif %}
-          {% if settings_error %}
-            <div class="alert error">{{ settings_error }}</div>
           {% endif %}
           <div id="settings-tab-geral" class="process-edit-pane active" data-process-edit-pane="geral">
             <div class="admin-subsection">
@@ -2255,12 +2205,6 @@
             {% endif %}
           </div>
           <p>Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.</p>
-          {% if settings_success %}
-            <div class="alert ok">{{ settings_success }}</div>
-          {% endif %}
-          {% if settings_error %}
-            <div class="alert error">{{ settings_error }}</div>
-          {% endif %}
           <table id="menu-settings-table">
             <thead>
               <tr>
@@ -2407,12 +2351,6 @@
             {% endif %}
           </div>
           <p>Processos disponíveis nesta pasta do menu lateral.</p>
-          {% if settings_success and initial_menu == "configuracao" %}
-            <div class="alert ok">{{ settings_success }}</div>
-          {% endif %}
-          {% if settings_error and initial_menu == "configuracao" %}
-            <div class="alert error">{{ settings_error }}</div>
-          {% endif %}
           <table id="menu-settings-table-configuracao">
             <thead>
               <tr>
@@ -2553,12 +2491,6 @@
         <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil">
           <h2>Configuração da pasta Meu perfil</h2>
           <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
-          {% if settings_success and initial_menu == "meu_perfil" %}
-            <div class="alert ok">{{ settings_success }}</div>
-          {% endif %}
-          {% if settings_error and initial_menu == "meu_perfil" %}
-            <div class="alert error">{{ settings_error }}</div>
-          {% endif %}
           {% for row in sidebar_menu_settings %}
             {% if row.key == "meu_perfil" %}
             <table>
@@ -2692,9 +2624,9 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260621-actions-icons-v2"></script>
-  <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260619-top-submenu-runtime-v1"></script>
-  <script src="/static/js/new_user.js?v=20260619-entity-post-save-context-v3"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260621-responsive-cols-v1"></script>
+  <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
+  <script src="/static/js/new_user.js?v=20260621-trackpad-swipe-v2"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
 <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

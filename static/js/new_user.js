@@ -142,6 +142,17 @@ function redirectToStoredPostSaveContextV3(storedContext) {
     return false;
   }
 
+  const currentAdminTab = String(currentUrl.searchParams.get("admin_tab") || "").trim();
+  const currentHasFeedback = isAppVerboPostSaveFeedbackUrlV3(currentUrl);
+  const storedAdminTab = String(targetUrl.searchParams.get("admin_tab") || "").trim();
+  const storedMenu = String(targetUrl.searchParams.get("menu") || "").trim();
+
+  if (currentHasFeedback && currentAdminTab) {
+    if (!storedAdminTab || storedAdminTab !== currentAdminTab || storedMenu === "home") {
+      return false;
+    }
+  }
+
   targetUrl.searchParams.set("appverbo_after_save", "1");
   copyPostSaveFeedbackParamsV3(currentUrl, targetUrl);
 
@@ -179,7 +190,9 @@ if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
     currentUrlForRefreshGuard &&
     (
       String(currentUrlForRefreshGuard.searchParams.get("menu") || "").trim() ||
+      String(currentUrlForRefreshGuard.searchParams.get("admin_tab") || "").trim() ||
       String(currentUrlForRefreshGuard.searchParams.get("target") || "").trim() ||
+      String(currentUrlForRefreshGuard.searchParams.get("dynamic_process_section") || "").trim() ||
       String(currentUrlForRefreshGuard.searchParams.get("profile_section") || "").trim()
     )
   );
@@ -203,6 +216,15 @@ if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
   }
 }
 // APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_END
+
+(function initAppVerboFeedbackToastsFromUrl() {
+  if (
+    window.AppVerboProcessShell &&
+    typeof window.AppVerboProcessShell.enhanceFeedbackToasts === "function"
+  ) {
+    window.AppVerboProcessShell.enhanceFeedbackToasts({ source: "url" });
+  }
+})();
 
 const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
 const MEU_PERFIL_MENU_KEY = "meu_perfil";
@@ -1260,6 +1282,7 @@ const topSubmenuController = (
   ? window.AppVerboTopSubmenu.createTopSubmenuController({
       container: itemsEl,
       formatLabel: toSentenceCaseText,
+      enableTrackpadSwipe: true,
       onSelect: ({ item, linkEl }) => {
         const menuKey = normalizeMenuKey(activeMenuKey);
         if (!menuKey || !item) {
@@ -3265,6 +3288,10 @@ function enhanceProcessShellTables(root) {
   if (typeof window.AppVerboProcessShell.enhanceConfirmableActions === "function") {
     window.AppVerboProcessShell.enhanceConfirmableActions({ root: document });
   }
+
+  if (typeof window.AppVerboProcessShell.enhanceResponsiveTableColumns === "function") {
+    window.AppVerboProcessShell.enhanceResponsiveTableColumns({ root: scopeRoot });
+  }
 }
 
 function setupTableLimiter(prefix) {
@@ -4623,6 +4650,62 @@ function setupGeneratedInviteLinkCopy() {
   });
 }
 
+// APPVERBO_USER_CREATE_ACTION_MODE_V1_START
+(function setupUserCreateActionModeV1() {
+  "use strict";
+
+  function syncUserCreateActionModeV1(root) {
+    var scope = root || document;
+    var card = scope.querySelector
+      ? scope.querySelector("#create-user-card")
+      : document.querySelector("#create-user-card");
+    if (!card) {
+      return;
+    }
+    var details = card.querySelector("#create-user-collapse");
+    var isCreateOpen = Boolean(details && details.open);
+    card
+      .querySelectorAll("[data-appverbo-hide-when-user-create-open='1']")
+      .forEach(function (el) {
+        el.hidden = isCreateOpen;
+        el.setAttribute("aria-hidden", isCreateOpen ? "true" : "false");
+      });
+  }
+
+  document.addEventListener("toggle", function (event) {
+    if (
+      event.target &&
+      event.target.matches &&
+      event.target.matches("#create-user-collapse")
+    ) {
+      syncUserCreateActionModeV1(document);
+    }
+  }, true);
+
+  document.addEventListener("click", function (event) {
+    var cancelBtn = event.target && event.target.closest
+      ? event.target.closest("#create-user-card .action-btn-cancel")
+      : null;
+    if (!cancelBtn) {
+      return;
+    }
+    window.setTimeout(function () {
+      syncUserCreateActionModeV1(document);
+    }, 0);
+  }, true);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      syncUserCreateActionModeV1(document);
+    });
+  } else {
+    syncUserCreateActionModeV1(document);
+  }
+
+  window.AppVerboSyncUserCreateActionModeV1 = syncUserCreateActionModeV1;
+})();
+// APPVERBO_USER_CREATE_ACTION_MODE_V1_END
+
 function setupCreateUserGenerateLinkShortcut() {
   const shortcutButtonEl = document.getElementById("create-user-generate-link-shortcut-btn");
   if (!shortcutButtonEl) {
@@ -4783,7 +4866,8 @@ if (
   (
     typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function" ||
     typeof window.AppVerboProcessShell.enhanceLoadMoreTables === "function" ||
-    typeof window.AppVerboProcessShell.enhanceSearchableTableCards === "function"
+    typeof window.AppVerboProcessShell.enhanceSearchableTableCards === "function" ||
+    typeof window.AppVerboProcessShell.enhanceResponsiveTableColumns === "function"
   )
 ) {
   enhanceProcessShellTables(document);
@@ -6661,9 +6745,37 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
           currentUrl.searchParams.set("target", formTarget);
         }
 
-        const formAdminTab = readFirstFormValuePostSaveV3(form, ["return_admin_tab", "admin_tab"]);
-        if (formAdminTab && currentUrl.searchParams.get("menu") === "administrativo") {
+        const formAdminTab = normalizePostSaveKeyV3(
+          readFirstFormValuePostSaveV3(form, [
+            "return_admin_tab",
+            "admin_tab",
+            "active_admin_tab"
+          ])
+        );
+
+        if (formAdminTab) {
           currentUrl.searchParams.set("admin_tab", formAdminTab);
+        }
+
+        if (
+          currentUrl.searchParams.get("menu") === "administrativo" &&
+          !currentUrl.searchParams.get("admin_tab") &&
+          (
+            actionLookup.includes("/users/delete") ||
+            actionLookup.includes("/users/update") ||
+            actionLookup.includes("/users/new") ||
+            actionLookup.includes("/users/resend")
+          )
+        ) {
+          currentUrl.searchParams.set("admin_tab", "utilizador");
+        }
+
+        if (
+          currentUrl.searchParams.get("menu") === "administrativo" &&
+          !currentUrl.searchParams.get("admin_tab") &&
+          actionLookup.includes("/entities/")
+        ) {
+          currentUrl.searchParams.set("admin_tab", "entidade");
         }
 
         const settingsEditKey = normalizePostSaveKeyV3(

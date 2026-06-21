@@ -12,7 +12,12 @@
     typeof global.AppVerboProcessShell.createTableActionsMenuController === "function" &&
     typeof global.AppVerboProcessShell.enhanceTableActionMenus === "function" &&
     typeof global.AppVerboProcessShell.createConfirmDialogController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceConfirmableActions === "function"
+    typeof global.AppVerboProcessShell.enhanceConfirmableActions === "function" &&
+    typeof global.AppVerboProcessShell.createToastController === "function" &&
+    typeof global.AppVerboProcessShell.showToast === "function" &&
+    typeof global.AppVerboProcessShell.enhanceFeedbackToasts === "function" &&
+    typeof global.AppVerboProcessShell.createResponsiveTableColumnsController === "function" &&
+    typeof global.AppVerboProcessShell.enhanceResponsiveTableColumns === "function"
   ) {
     return;
   }
@@ -43,6 +48,7 @@
   let confirmDelegationReady = false;
   let activeMenuScrollHandler = null;
   let activeMenuResizeHandler = null;
+  let _feedbackToastController = null;
 
   //###################################################################################
   // (2) UTILITÁRIOS
@@ -1899,6 +1905,396 @@
     confirmDelegationReady = true;
   }
 
+  //###################################################################################
+  // (10) TOAST NOTIFICATIONS
+  //###################################################################################
+
+  function createToastController(config) {
+    const safeConfig = config && typeof config === "object" ? config : {};
+    const root = safeConfig.root || (global.document && global.document.body) || null;
+    const position = normalizeText(safeConfig.position, "bottom-right");
+    const defaultAutoCloseMs = parsePositiveInteger(safeConfig.autoCloseMs, 4500);
+
+    if (!root) {
+      return null;
+    }
+
+    const ownerDocument = root.ownerDocument || global.document;
+    if (!ownerDocument) {
+      return null;
+    }
+
+    let viewportEl = ownerDocument.querySelector(".appverbo-toast-viewport-v1");
+    if (!viewportEl) {
+      viewportEl = ownerDocument.createElement("div");
+      viewportEl.className = "appverbo-toast-viewport-v1 appverbo-toast-" + position + "-v1";
+      viewportEl.setAttribute("aria-live", "polite");
+      viewportEl.setAttribute("aria-atomic", "false");
+      root.appendChild(viewportEl);
+    }
+
+    let destroyed = false;
+
+    function resolveTypeConfig(type) {
+      const safeType = normalizeText(type, "info");
+      if (safeType === "success") {
+        return { title: "Sucesso", icon: "✓", className: "appverbo-toast-success-v1" };
+      }
+      if (safeType === "error") {
+        return { title: "Erro", icon: "✕", className: "appverbo-toast-error-v1" };
+      }
+      if (safeType === "warning") {
+        return { title: "Aviso", icon: "⚠", className: "appverbo-toast-warning-v1" };
+      }
+      return { title: "Informação", icon: "ℹ", className: "appverbo-toast-info-v1" };
+    }
+
+    function showToast(options) {
+      if (destroyed || !viewportEl) {
+        return null;
+      }
+
+      const safeOptions = options && typeof options === "object" ? options : {};
+      const type = normalizeText(safeOptions.type, "info");
+      const message = normalizeText(safeOptions.message, "");
+      const autoCloseMs = parsePositiveInteger(safeOptions.autoCloseMs, defaultAutoCloseMs);
+
+      if (!message) {
+        return null;
+      }
+
+      const typeConfig = resolveTypeConfig(type);
+      const customTitle = typeof safeOptions.title === "string" ? safeOptions.title : typeConfig.title;
+
+      const toastEl = ownerDocument.createElement("div");
+      toastEl.className = "appverbo-toast-v1 " + typeConfig.className;
+      toastEl.setAttribute("role", "status");
+
+      const iconEl = ownerDocument.createElement("div");
+      iconEl.className = "appverbo-toast-icon-v1";
+      iconEl.setAttribute("aria-hidden", "true");
+      iconEl.textContent = typeConfig.icon;
+
+      const contentEl = ownerDocument.createElement("div");
+      contentEl.className = "appverbo-toast-content-v1";
+
+      if (customTitle) {
+        const titleEl = ownerDocument.createElement("div");
+        titleEl.className = "appverbo-toast-title-v1";
+        titleEl.textContent = customTitle;
+        contentEl.appendChild(titleEl);
+      }
+
+      const messageEl = ownerDocument.createElement("div");
+      messageEl.className = "appverbo-toast-message-v1";
+      messageEl.textContent = message;
+      contentEl.appendChild(messageEl);
+
+      const closeBtnEl = ownerDocument.createElement("button");
+      closeBtnEl.type = "button";
+      closeBtnEl.className = "appverbo-toast-close-v1";
+      closeBtnEl.setAttribute("aria-label", "Fechar mensagem");
+      closeBtnEl.textContent = "×";
+
+      toastEl.appendChild(iconEl);
+      toastEl.appendChild(contentEl);
+      toastEl.appendChild(closeBtnEl);
+      viewportEl.appendChild(toastEl);
+
+      let timerId = 0;
+
+      function removeToastEl() {
+        global.clearTimeout(timerId);
+        if (toastEl.parentNode) {
+          toastEl.parentNode.removeChild(toastEl);
+        }
+      }
+
+      closeBtnEl.addEventListener("click", removeToastEl);
+
+      if (autoCloseMs > 0) {
+        timerId = global.setTimeout(removeToastEl, autoCloseMs);
+      }
+
+      return { el: toastEl, remove: removeToastEl };
+    }
+
+    function clearToasts() {
+      if (viewportEl) {
+        viewportEl.textContent = "";
+      }
+    }
+
+    function destroy() {
+      if (destroyed) {
+        return;
+      }
+
+      destroyed = true;
+      clearToasts();
+
+      if (viewportEl && viewportEl.parentNode) {
+        viewportEl.parentNode.removeChild(viewportEl);
+      }
+    }
+
+    return { showToast, clearToasts, destroy };
+  }
+
+  function getOrCreateFeedbackToastController() {
+    if (!_feedbackToastController) {
+      _feedbackToastController = createToastController({
+        position: "bottom-right",
+        autoCloseMs: 4500
+      });
+    }
+
+    return _feedbackToastController;
+  }
+
+  function showToast(options) {
+    const controller = getOrCreateFeedbackToastController();
+    return controller ? controller.showToast(options) : null;
+  }
+
+  function enhanceFeedbackToasts(config) {
+    const safeConfig = config && typeof config === "object" ? config : {};
+    const source = normalizeText(safeConfig.source, "url");
+
+    if (source !== "url") {
+      return;
+    }
+
+    let url;
+    try {
+      url = new URL(global.location.href);
+    } catch (e) {
+      return;
+    }
+
+    const feedbackMessages = [];
+
+    url.searchParams.forEach(function (rawValue, rawKey) {
+      const key = String(rawKey || "").trim().toLowerCase();
+      const message = String(rawValue || "").trim();
+
+      if (!message) {
+        return;
+      }
+
+      let type = "";
+      if (key === "success" || key.endsWith("_success")) {
+        type = "success";
+      } else if (key === "error" || key.endsWith("_error")) {
+        type = "error";
+      }
+
+      if (type) {
+        feedbackMessages.push({ type: type, message: message });
+      }
+    });
+
+    if (!feedbackMessages.length) {
+      return;
+    }
+
+    const controller = getOrCreateFeedbackToastController();
+    if (!controller) {
+      return;
+    }
+
+    feedbackMessages.forEach(function (feedback) {
+      controller.showToast({ type: feedback.type, message: feedback.message });
+    });
+
+    const docRoot = global.document;
+    if (docRoot && docRoot.body) {
+      docRoot.body.classList.add("appverbo-url-feedback-active-v1");
+    }
+  }
+
+  //###################################################################################
+  // (11) RESPONSIVE TABLE COLUMNS
+  //###################################################################################
+
+  const responsiveTableControllersByTable = new WeakMap();
+  const _activeResponsiveControllers = new Set();
+  let _responsiveWindowListenerAdded = false;
+
+  function _normalizeColKey(text) {
+    return String(text || "")
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^\w]/g, "");
+  }
+
+  function createResponsiveTableColumnsController(config) {
+    config = config || {};
+    const table = config.table;
+    const card = config.card;
+    if (!table || !card) {
+      return null;
+    }
+    if (responsiveTableControllersByTable.has(table)) {
+      return responsiveTableControllersByTable.get(table);
+    }
+
+    const mandatoryKeys = Array.isArray(config.mandatoryColumnKeys)
+      ? config.mandatoryColumnKeys.map(_normalizeColKey)
+      : ["estado", "acoes", "actions", "status"];
+
+    const headerRow = table.querySelector("thead tr");
+    if (!headerRow) {
+      return null;
+    }
+    const ths = Array.from(headerRow.querySelectorAll("th"));
+    if (!ths.length) {
+      return null;
+    }
+
+    const columns = ths.map(function (th, i) {
+      const keyAttr = _normalizeColKey(th.dataset.appverboColumnKey || "");
+      const textKey = _normalizeColKey(th.textContent);
+      const key = keyAttr || textKey;
+      const hideOrder = parseInt(th.dataset.appverboHideOrder || "0", 10);
+      const mandatoryAttr = th.dataset.appverboColumnMandatory === "1";
+      const mandatory = mandatoryAttr || mandatoryKeys.some(function (mk) {
+        return mk === key || mk === keyAttr || mk === textKey;
+      });
+      return { th: th, index: i + 1, key: key, hideOrder: hideOrder, mandatory: mandatory };
+    });
+
+    const hideable = columns
+      .filter(function (c) { return !c.mandatory && c.hideOrder > 0; })
+      .sort(function (a, b) { return a.hideOrder - b.hideOrder; });
+
+    let destroyed = false;
+    let rafId = null;
+    let currentHidden = new Set();
+
+    function _applyHidden(newHidden) {
+      columns.forEach(function (col) {
+        const hide = newHidden.has(col.index);
+        const was = currentHidden.has(col.index);
+        if (hide && !was) {
+          table.classList.add("appverbo-hide-col-" + col.index);
+        } else if (!hide && was) {
+          table.classList.remove("appverbo-hide-col-" + col.index);
+        }
+      });
+      currentHidden = new Set(newHidden);
+    }
+
+    function _recalc() {
+      if (destroyed) {
+        return;
+      }
+      _applyHidden(new Set());
+
+      var cardWidth = card.clientWidth;
+      if (!cardWidth) {
+        return;
+      }
+      var tableWidth = table.scrollWidth;
+      if (tableWidth <= cardWidth) {
+        return;
+      }
+
+      var colWidths = columns.map(function (c) { return c.th.offsetWidth || 0; });
+      var excess = tableWidth - cardWidth;
+      var newHidden = new Set();
+
+      for (var i = 0; i < hideable.length; i++) {
+        if (excess <= 0) {
+          break;
+        }
+        var col = hideable[i];
+        newHidden.add(col.index);
+        excess -= colWidths[col.index - 1];
+      }
+
+      _applyHidden(newHidden);
+    }
+
+    function schedule() {
+      if (destroyed || rafId !== null) {
+        return;
+      }
+      rafId = requestAnimationFrame(function () {
+        rafId = null;
+        _recalc();
+      });
+    }
+
+    var ro = null;
+    if (typeof ResizeObserver === "function") {
+      ro = new ResizeObserver(schedule);
+      ro.observe(card);
+    }
+
+    schedule();
+
+    var controller = {
+      recalculate: schedule,
+      destroy: function () {
+        destroyed = true;
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        if (ro) {
+          ro.disconnect();
+          ro = null;
+        }
+        _applyHidden(new Set());
+        responsiveTableControllersByTable.delete(table);
+        _activeResponsiveControllers.delete(controller);
+      },
+    };
+
+    responsiveTableControllersByTable.set(table, controller);
+    _activeResponsiveControllers.add(controller);
+    return controller;
+  }
+
+  function enhanceResponsiveTableColumns(config) {
+    config = config || {};
+    var root = config.root || (global.document || null);
+    var tableSelector = config.tableSelector || DEFAULT_TABLE_SELECTOR;
+    var cardSelector = config.cardSelector || DEFAULT_CARD_SELECTOR;
+    var mandatoryColumnKeys = Array.isArray(config.mandatoryColumnKeys)
+      ? config.mandatoryColumnKeys
+      : ["estado", "acoes", "actions", "status"];
+
+    if (!root || typeof root.querySelectorAll !== "function") {
+      return;
+    }
+
+    Array.from(root.querySelectorAll(cardSelector)).forEach(function (card) {
+      Array.from(card.querySelectorAll(tableSelector)).forEach(function (table) {
+        createResponsiveTableColumnsController({ table: table, card: card, mandatoryColumnKeys: mandatoryColumnKeys });
+      });
+    });
+
+    if (!_responsiveWindowListenerAdded && global.window && typeof global.window.addEventListener === "function") {
+      _responsiveWindowListenerAdded = true;
+      var winRaf = null;
+      global.window.addEventListener("resize", function () {
+        if (winRaf !== null) {
+          return;
+        }
+        winRaf = requestAnimationFrame(function () {
+          winRaf = null;
+          _activeResponsiveControllers.forEach(function (ctrl) {
+            ctrl.recalculate();
+          });
+        });
+      }, { passive: true });
+    }
+  }
+
   global.AppVerboProcessShell = {
     ...(global.AppVerboProcessShell || {}),
     createProcessHeaderController,
@@ -1910,5 +2306,10 @@
     enhanceTableActionMenus,
     createConfirmDialogController,
     enhanceConfirmableActions,
+    createToastController,
+    showToast,
+    enhanceFeedbackToasts,
+    createResponsiveTableColumnsController,
+    enhanceResponsiveTableColumns,
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -106,7 +106,126 @@
 
 
   //###################################################################################
-  // (2) CRIAR CONTROLLER REUTILIZAVEL
+  // (2) HELPER — NAVEGAÇÃO POR TRACKPAD
+  //###################################################################################
+
+  function setupTrackpadTabNavigationV1(container, options, getState, triggerSelect) {
+    var swipeThresholdPx = Number.isFinite(Number(options.swipeThresholdPx))
+      ? Number(options.swipeThresholdPx)
+      : 48;
+    var swipeCooldownMs = Number.isFinite(Number(options.swipeCooldownMs))
+      ? Number(options.swipeCooldownMs)
+      : 500;
+    var invertSwipe = options.invertSwipe === true;
+    var lastNavigationAt = 0;
+
+    var doc = container.ownerDocument || document;
+
+    function isBlockedByOverlay() {
+      if (doc.querySelector(".appverbo-confirm-overlay-v1")) {
+        return true;
+      }
+      if (doc.querySelector(".appverbo-row-actions-popup-floating-v1")) {
+        return true;
+      }
+      return false;
+    }
+
+    function isInteractiveEl(el) {
+      if (!el) {
+        return false;
+      }
+      var tag = (el.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "select" || tag === "textarea") {
+        return true;
+      }
+      if (el.isContentEditable) {
+        return true;
+      }
+      return false;
+    }
+
+    function handleWheel(event) {
+      // Only pixel-mode — trackpad on macOS always uses pixel mode
+      if (event.deltaMode !== 0) {
+        return;
+      }
+
+      var dx = event.deltaX;
+      var horizontal = Math.abs(dx);
+      var vertical = Math.abs(event.deltaY);
+
+      // Too small — could be accidental drift
+      if (horizontal < swipeThresholdPx) {
+        return;
+      }
+
+      // Vertical-dominant — let the page scroll normally
+      if (vertical > horizontal * 0.65) {
+        return;
+      }
+
+      // Gesture is clearly horizontal.
+      // Call preventDefault() NOW — before any guard — to block browser back/forward navigation.
+      event.preventDefault();
+
+      // Guard: interactive element under cursor or focused
+      if (isInteractiveEl(event.target)) {
+        return;
+      }
+      if (isInteractiveEl(doc.activeElement)) {
+        return;
+      }
+
+      // Guard: blocking overlay (confirm dialog or actions popup)
+      if (isBlockedByOverlay()) {
+        return;
+      }
+
+      // Guard: cooldown — one navigation per gesture
+      var now = Date.now();
+      if (now - lastNavigationAt < swipeCooldownMs) {
+        return;
+      }
+
+      var currentState = getState();
+      var items = currentState.items || [];
+      var activeLinkEl = currentState.activeLinkEl;
+
+      if (!items.length || !activeLinkEl) {
+        return;
+      }
+
+      var activeIndex = parseInt(String(activeLinkEl.dataset.submenuIndex || "-1"), 10);
+      if (!Number.isFinite(activeIndex) || activeIndex < 0) {
+        return;
+      }
+
+      // dx > 0: fingers moved left → go to next tab (right direction in bar)
+      // dx < 0: fingers moved right → go to previous tab (left direction in bar)
+      var rawDirection = dx > 0 ? 1 : -1;
+      var direction = invertSwipe ? -rawDirection : rawDirection;
+      var nextIndex = activeIndex + direction;
+
+      if (nextIndex < 0 || nextIndex >= items.length) {
+        return;
+      }
+
+      lastNavigationAt = now;
+      triggerSelect(nextIndex, event);
+    }
+
+    // Listen on document with capture:true so the event is intercepted before
+    // the browser can act on it (history navigation) and before any inner handler
+    doc.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+
+    return function destroySwipe() {
+      doc.removeEventListener("wheel", handleWheel, { capture: true });
+    };
+  }
+
+  //###################################################################################
+  // (3) CRIAR CONTROLLER REUTILIZAVEL
   //###################################################################################
 
   function createTopSubmenuController(config) {
@@ -116,6 +235,14 @@
       ? safeConfig.formatLabel
       : (value) => String(value || "");
     const onSelect = typeof safeConfig.onSelect === "function" ? safeConfig.onSelect : null;
+    const enableTrackpadSwipe = safeConfig.enableTrackpadSwipe !== false;
+    const swipeThresholdPx = Number.isFinite(Number(safeConfig.swipeThresholdPx))
+      ? Number(safeConfig.swipeThresholdPx)
+      : 48;
+    const swipeCooldownMs = Number.isFinite(Number(safeConfig.swipeCooldownMs))
+      ? Number(safeConfig.swipeCooldownMs)
+      : 500;
+    const invertTrackpadSwipe = safeConfig.invertTrackpadSwipe === true;
 
     if (!container || typeof container.addEventListener !== "function") {
       return {
@@ -261,6 +388,50 @@
 
     container.addEventListener("click", handleContainerClick);
 
+    function activateIndexForSwipeV1(nextIndex) {
+      const links = Array.from(container.querySelectorAll(".submenu-item"));
+      if (!links.length || nextIndex < 0 || nextIndex >= links.length) {
+        return false;
+      }
+      const nextLink = links[nextIndex];
+      if (!nextLink) {
+        return false;
+      }
+
+      // Visual update immediately so there is no stale active state
+      setLinkAsActive(nextLink);
+
+      // Dispatch a synthetic click so handleContainerClick runs the exact same
+      // path as a real user click, including event.preventDefault() on the <a>
+      // and the full onSelect callback with a real event object.
+      nextLink.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, cancelable: true, view: global })
+      );
+
+      // Reinforce after onSelect in case render() re-ran and cleared activeLinkEl
+      if (typeof global.requestAnimationFrame === "function") {
+        global.requestAnimationFrame(function () {
+          if (!state.isDestroyed && container.contains(nextLink)) {
+            setLinkAsActive(nextLink);
+          }
+        });
+      }
+
+      return true;
+    }
+
+    var destroySwipe = null;
+    if (enableTrackpadSwipe) {
+      destroySwipe = setupTrackpadTabNavigationV1(
+        container,
+        { swipeThresholdPx: swipeThresholdPx, swipeCooldownMs: swipeCooldownMs, invertSwipe: invertTrackpadSwipe },
+        function getState() { return state; },
+        function triggerSelect(nextIndex) {
+          activateIndexForSwipeV1(nextIndex);
+        }
+      );
+    }
+
     function render(items, options) {
       if (state.isDestroyed) {
         return;
@@ -339,6 +510,10 @@
       }
 
       container.removeEventListener("click", handleContainerClick);
+      if (destroySwipe) {
+        destroySwipe();
+        destroySwipe = null;
+      }
       clear();
       state.isDestroyed = true;
     }
@@ -353,7 +528,7 @@
 
 
   //###################################################################################
-  // (3) EXPOR API GLOBAL SEGURA
+  // (4) EXPOR API GLOBAL SEGURA
   //###################################################################################
 
   global.AppVerboTopSubmenu = {
