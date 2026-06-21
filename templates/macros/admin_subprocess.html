@@ -38,6 +38,8 @@
     id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
+    data-menu-scope="administrativo"
+    style="display:none"
   >
     {% if state.success %}
       <div class="alert ok">{{ state.success }}</div>
@@ -107,7 +109,7 @@
   {% set row_status_label = row.get("status_label", "Ativo" if status_value == state.config.active_value else "Inativo") %}
   {% set row_system_label = row.get("visibility_scope_label", "") %}
 
-  <div class="admin-subprocess-row-actions-v1">
+  <div class="table-actions admin-subprocess-row-actions-v1">
     {% if status_value == state.config.active_value and state.config.move_endpoint %}
       <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
         <input type="hidden" name="section_key" value="{{ row_key }}">
@@ -146,10 +148,11 @@
 
 {% macro render_admin_subprocess_table(state, rows, title, status_value) %}
   <section
-    id="{{ state.config.default_target if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
+    id="{{ state.config.default_target ~ '-active' if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-status="{{ status_value }}"
+    data-menu-scope="administrativo"
   >
     <h2>{{ title }}</h2>
 

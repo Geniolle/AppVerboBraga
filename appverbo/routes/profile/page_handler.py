@@ -422,12 +422,12 @@ def new_user_page(
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
 
-    if resolved_admin_tab == "sessoes":
+    if current_user_is_admin:
         sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
 
         if sessoes_subprocess_config_v2 is not None:
             all_sidebar_sections_for_subprocess_v2 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
-            clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip()
+            clean_sidebar_section_edit_key_v2 = str(sidebar_section_edit_key or "").strip() if resolved_admin_tab == "sessoes" else ""
 
             admin_subprocess_state_v2 = build_admin_subprocess_state(
                 config=sessoes_subprocess_config_v2,

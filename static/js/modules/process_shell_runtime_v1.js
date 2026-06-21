@@ -1496,6 +1496,12 @@
       typeof actionEl.className === "string" ? actionEl.className : ""
     ].filter(Boolean).join(" ").toLowerCase();
 
+    if (/\bsubir\b|move_up|mover.*cima/.test(raw)) {
+      return "move_up";
+    }
+    if (/\bdescer\b|move_down|mover.*baixo/.test(raw)) {
+      return "move_down";
+    }
     if (/exibir|ver\b|visualizar|detalhe|eye/.test(raw)) {
       return "view";
     }
@@ -1509,6 +1515,12 @@
   }
 
   function getRowActionLabelV1(actionType, fallbackText) {
+    if (actionType === "move_up") {
+      return "Subir";
+    }
+    if (actionType === "move_down") {
+      return "Descer";
+    }
     if (actionType === "view") {
       return "Exibir detalhes";
     }
@@ -1522,6 +1534,12 @@
   }
 
   function getRowActionIconSvgV1(actionType) {
+    if (actionType === "move_up") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
+    }
+    if (actionType === "move_down") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>';
+    }
     if (actionType === "view") {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
     }

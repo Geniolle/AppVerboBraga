@@ -881,6 +881,13 @@
 }
 /* APPVERBO_TABLE_ACTION_MENU_ICONS_FORCE_V2_END */
 
+/* APPVERBO_ROW_ACTIONS_MOVE_ICONS_V1_START */
+.appverbo-row-actions-item-move_up-v1 .appverbo-row-actions-icon-v1,
+.appverbo-row-actions-item-move_down-v1 .appverbo-row-actions-icon-v1 {
+  color: #0a6ed1 !important;
+}
+/* APPVERBO_ROW_ACTIONS_MOVE_ICONS_V1_END */
+
 /* APPVERBO_TABLE_ACTION_MENU_FLOATING_FIX_V1_START */
 .appverbo-row-actions-popup-v1.appverbo-row-actions-popup-floating-v1 {
   left: 0;

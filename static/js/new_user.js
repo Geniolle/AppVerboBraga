@@ -1153,6 +1153,8 @@ if (initialAdminTab === "entidade") {
   adminSelectedTarget = "#create-entity-card";
 } else if (initialAdminTab === "contas") {
   adminSelectedTarget = "#admin-account-status-card";
+} else if (initialAdminTab === "sessoes") {
+  adminSelectedTarget = "#admin-sidebar-sections-card";
 }
 if (startupHash === "#home-summary-card") {
   homeSelectedTarget = startupHash;
@@ -2816,11 +2818,16 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "settings-menu-edit-card" ||
         card.id === "admin-account-status-card"
       );
+    const isSessoesGroupedBlock =
+      menuKey === "administrativo" &&
+      targetSelector === "#admin-sidebar-sections-card" &&
+      card.getAttribute("data-admin-subprocess") === "sessoes";
     card.style.display =
       targetSelector === ("#" + card.id) ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock
+      isSettingsGroupedBlock ||
+      isSessoesGroupedBlock
         ? ""
         : "none";
   });

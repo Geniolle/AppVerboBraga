@@ -1,3 +1,18 @@
+// APPVERBO_LEGACY_SESSOES_GUARD_V31_START
+// Guard único que detecta renderização nativa de Sessões (admin_subprocess "sessoes").
+// Todos os blocos legados que injetam/criam conteúdo devem verificar esta função antes de correr.
+// Seletores: [data-admin-subprocess="sessoes"] é o atributo definido pelo macro render_admin_subprocess_state.
+function shouldDisableLegacySidebarSectionsRuntimeV1() {
+  return Boolean(
+    document.querySelector('[data-admin-subprocess="sessoes"]') ||
+    document.querySelector("[data-admin-subprocess-key='sessoes']") ||
+    document.querySelector("[data-appverbo-native-admin-subprocess='sessoes']") ||
+    document.querySelector("[data-admin-tab-pane='sessoes']") ||
+    document.querySelector("#admin-sidebar-sections-card[data-appverbo-native-render='1']")
+  );
+}
+// APPVERBO_LEGACY_SESSOES_GUARD_V31_END
+
 (function () {
   "use strict";
 
@@ -195,14 +210,14 @@
     return sessao.visibility_scope_label || "Owner e Legado";
   }
 
-  function criarBotaoAcaoSessoesLayout_v2(tipo, titulo, texto) {
+  function criarBotaoAcaoSessoesLayout_v2(tipo, titulo) {
     const botao = document.createElement("button");
     botao.type = "button";
     botao.className = "appverbo-sidebar-section-action-btn-v2";
     botao.dataset.sidebarSectionActionV2 = tipo;
     botao.title = titulo;
     botao.setAttribute("aria-label", titulo);
-    botao.textContent = texto;
+    botao.textContent = titulo;
     return botao;
   }
 
@@ -393,11 +408,11 @@
     tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sidebar-section-actions-v2";
-    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("up", "Subir sessão", "↑"));
-    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("down", "Descer sessão", "↓"));
-    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("view", "Visualizar detalhes", "👁"));
-    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("edit", "Editar sessão", "✎"));
+    actions.className = "table-actions appverbo-sidebar-section-actions-v2";
+    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("up", "Subir sessão"));
+    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("down", "Descer sessão"));
+    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("view", "Exibir detalhes"));
+    actions.appendChild(criarBotaoAcaoSessoesLayout_v2("edit", "Editar informações"));
 
     tdAcoes.appendChild(actions);
 
@@ -1251,6 +1266,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function iniciarSessoesLayout_v2() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     instalarLayoutSessoes_v2();
 
     window.setTimeout(instalarLayoutSessoes_v2, 100);
@@ -1413,14 +1432,14 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   // (3) CRIAR TABELA DA LISTAGEM
   //###################################################################################
 
-  function criarBotaoAcaoSessoesV6(tipo, titulo, texto) {
+  function criarBotaoAcaoSessoesV6(tipo, titulo) {
     const botao = document.createElement("button");
     botao.type = "button";
     botao.className = "appverbo-sidebar-section-action-btn-v2 appverbo-sidebar-section-action-btn-v6";
     botao.dataset.sidebarSectionActionV6 = tipo;
     botao.title = titulo;
     botao.setAttribute("aria-label", titulo);
-    botao.textContent = texto;
+    botao.textContent = titulo;
     return botao;
   }
 
@@ -1498,14 +1517,19 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdAcoes.innerHTML = "";
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sidebar-section-actions-v2";
-    actions.appendChild(criarBotaoAcaoSessoesV6("up", "Subir sessão", "↑"));
-    actions.appendChild(criarBotaoAcaoSessoesV6("down", "Descer sessão", "↓"));
-    actions.appendChild(criarBotaoAcaoSessoesV6("view", "Visualizar detalhes", "👁"));
-    actions.appendChild(criarBotaoAcaoSessoesV6("edit", "Editar sessão", "✎"));
+    actions.className = "table-actions appverbo-sidebar-section-actions-v2";
+    actions.appendChild(criarBotaoAcaoSessoesV6("up", "Subir sessão"));
+    actions.appendChild(criarBotaoAcaoSessoesV6("down", "Descer sessão"));
+    actions.appendChild(criarBotaoAcaoSessoesV6("view", "Exibir detalhes"));
+    actions.appendChild(criarBotaoAcaoSessoesV6("edit", "Editar informações"));
 
     tdAcoes.appendChild(actions);
     atualizarEstadoBotoesSessoesV6(tbody);
+
+    const tabela = linha.closest("table");
+    if (tabela && window.AppVerboProcessShell && typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
+      window.AppVerboProcessShell.enhanceTableActionMenus({ root: tabela, actionsSelector: ".table-actions" });
+    }
   }
 
   function restaurarLinhaSessoesV8(linha, valores, tbody) {
@@ -1715,11 +1739,11 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sidebar-section-actions-v2";
-    actions.appendChild(criarBotaoAcaoSessoesV6("up", "Subir sessão", "↑"));
-    actions.appendChild(criarBotaoAcaoSessoesV6("down", "Descer sessão", "↓"));
-    actions.appendChild(criarBotaoAcaoSessoesV6("view", "Visualizar detalhes", "👁"));
-    actions.appendChild(criarBotaoAcaoSessoesV6("edit", "Editar sessão", "✎"));
+    actions.className = "table-actions appverbo-sidebar-section-actions-v2";
+    actions.appendChild(criarBotaoAcaoSessoesV6("up", "Subir sessão"));
+    actions.appendChild(criarBotaoAcaoSessoesV6("down", "Descer sessão"));
+    actions.appendChild(criarBotaoAcaoSessoesV6("view", "Exibir detalhes"));
+    actions.appendChild(criarBotaoAcaoSessoesV6("edit", "Editar informações"));
 
     tdAcoes.appendChild(actions);
 
@@ -1860,6 +1884,46 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     formulario.appendChild(tableWrap);
 
     atualizarEstadoBotoesSessoesV6(tbody);
+
+    if (window.AppVerboProcessShell && typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
+      window.AppVerboProcessShell.enhanceTableActionMenus({ root: table, actionsSelector: ".table-actions" });
+    }
+
+    // Delegação document-level para clicks dentro do popup (após Process Shell fechar e devolver o popup à linha)
+    if (!window.__appverboSessoesV6DocClickInstalled) {
+      window.__appverboSessoesV6DocClickInstalled = true;
+      document.addEventListener("click", function (event) {
+        const botao = event.target.closest("[data-sidebar-section-action-v6]");
+        if (!botao) {
+          return;
+        }
+        const linha = botao.closest("tr.appverbo-sidebar-section-row-v6");
+        const acao = botao.dataset.sidebarSectionActionV6;
+        if (!linha) {
+          return;
+        }
+        const tbodyEl = linha.parentElement;
+        const formularioEl = linha.closest("form");
+        if (acao === "up" || acao === "down") {
+          moverLinhaSessoesV6(linha, acao);
+        }
+        if (acao === "view") {
+          const label = linha.querySelector('[name="section_label"]');
+          const key = linha.querySelector('[name="section_key"]');
+          const sistema = linha.querySelector('[name="section_visibility_scope_mode"]');
+          const estado = linha.querySelector('[name="section_status"]');
+          alert(
+            "Nome da sessão: " + ((label && label.value) || "") +
+            "\nChave: " + ((key && key.value) || "") +
+            "\nSistema: " + obterLabelSistemaSessoesV6(sistema && sistema.value, "") +
+            "\nEstado: " + obterLabelEstadoSessoesV6(estado && estado.value)
+          );
+        }
+        if (acao === "edit") {
+          abrirEdicaoLinhaSessoesV8(linha, formularioEl, tbodyEl);
+        }
+      });
+    }
 
     return tbody;
   }
@@ -2087,6 +2151,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function iniciarReidratacaoSessoesV6() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     window.setTimeout(function () {
       reidratarSessoesBdV6(false);
     }, 300);
@@ -2959,6 +3027,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function iniciarSessoesEstadoV9() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     window.setTimeout(function () {
       instalarSessoesEstadoV9(true);
     }, 500);
@@ -3199,6 +3271,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function instalarScopeCorretoSessoesV12() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     executarScopeCorretoSessoesV12();
 
     window.setTimeout(executarScopeCorretoSessoesV12, 80);
@@ -3342,6 +3418,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function instalarSubmitPersistirEstadoV19() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     if (window.__appverboSessoesPersistirEstadoV19 === true) {
       return;
     }
@@ -3783,6 +3863,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   //###################################################################################
 
   function iniciarSessoesAtivasV23() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     if (!abaSessoesAtivaV24()) {
       removerCardSessoesAtivasForaDoSubprocessoV24();
       return;
@@ -3909,6 +3993,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function aplicarVisibilidadeCardsSessoesV25() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     const deveMostrar = estaNoSubprocessoSessoesRealV25();
 
     obterCardsSessoesV25().forEach((card) => {
@@ -3986,6 +4074,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   //###################################################################################
 
   function instalarVisualizarSessaoV30() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     if (window.__appverboSessoesVisualizarV30 === true) {
       return;
     }
@@ -4113,6 +4205,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function aplicarVisibilidadeSessoesSemPiscarV26(root) {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     const deveMostrar = aplicarClassesHtmlSessoesSemPiscarV26();
     const cards = obterCardsSessoesSemPiscarV26(root);
 
@@ -4175,6 +4271,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   });
 
   function iniciarSessoesSemPiscarV26() {
+    if (typeof shouldDisableLegacySidebarSectionsRuntimeV1 === "function" && shouldDisableLegacySidebarSectionsRuntimeV1()) {
+      return;
+    }
+
     aplicarVisibilidadeSessoesSemPiscarV26(document);
 
     if (!observer.__appverboStartedV26) {
