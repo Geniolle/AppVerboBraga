@@ -467,48 +467,14 @@ def resolve_active_entity_by_email(
     return None, "Não foi possível determinar automaticamente a entidade pelo email."
 
 def is_admin_user(session: Session, user_id: int, login_email: str) -> bool:
-    if not ADMIN_PROFILE_NAMES:
-        return False
-
-    admin_profile_id = session.execute(
-        select(Profile.id)
-       .join(UserProfile, UserProfile.profile_id == Profile.id)
-       .where(
-            UserProfile.user_id == user_id,
-            UserProfile.is_active.is_(True),
-            Profile.is_active.is_(True),
-            func.lower(Profile.name).in_(ADMIN_PROFILE_NAMES),
-        )
-       .limit(1)
+    from appverbo.services.user_system import is_owner_system_v1
+    clean_email = (login_email or "").strip().lower()
+    if ADMIN_LOGIN_EMAIL and clean_email == ADMIN_LOGIN_EMAIL:
+        return True
+    system_type = session.execute(
+        select(User.system_type).where(User.id == user_id)
     ).scalar_one_or_none()
-    return admin_profile_id is not None
-
-def is_allowed_global_profile(profile: Profile | None) -> bool:
-    if profile is None:
-        return False
-    profile_name = normalize_profile_name(profile.name)
-    if not profile_name:
-        return False
-    return profile_name in ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED
-
-def get_or_create_entity_superuser_profile(session: Session) -> Profile:
-    clean_name = ENTITY_SUPERUSER_PROFILE_NAME.strip() or "SUPER USER"
-    profile = session.execute(
-        select(Profile).where(func.lower(Profile.name) == clean_name.lower()).limit(1)
-    ).scalar_one_or_none()
-    if profile is not None:
-        if not profile.is_active:
-            profile.is_active = True
-        return profile
-
-    profile = Profile(
-        name=clean_name,
-        description="Perfil global SUPER USER.",
-        is_active=True,
-    )
-    session.add(profile)
-    session.flush()
-    return profile
+    return is_owner_system_v1(system_type)
 
 def get_oauth_client(provider: str):
     if provider == "google" and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
@@ -710,8 +676,6 @@ __all__ = [
     "get_entities_for_auth",
     "resolve_active_entity_by_email",
     "is_admin_user",
-    "is_allowed_global_profile",
-    "get_or_create_entity_superuser_profile",
     "get_oauth_client",
     "fetch_oauth_userinfo",
     "upsert_user_by_email",

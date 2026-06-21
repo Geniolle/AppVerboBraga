@@ -11,10 +11,8 @@ from appverbo.models import (
     Member,
     MemberEntity,
     MemberEntityStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 import appverbo.use_cases.users.create_user as create_user_module
 from appverbo.use_cases.users.create_user import (
@@ -36,9 +34,7 @@ def _build_session_factory():
             Entity.__table__,
             Member.__table__,
             MemberEntity.__table__,
-            Profile.__table__,
             User.__table__,
-            UserProfile.__table__,
         ],
     )
     return sessionmaker(bind=engine, future=True)
@@ -60,14 +56,14 @@ def test_normalize_create_user_input_success() -> None:
         full_name="  Joao Silva  ",
         primary_phone=" 912345678 ",
         email="  JOAO@EXAMPLE.COM ",
-        profile_id=" 10 ",
+        system_type="owner",
         invite_delivery="link",
     )
 
     assert payload.clean_full_name == "Joao Silva"
     assert payload.clean_primary_phone == "912345678"
     assert payload.clean_email == "joao@example.com"
-    assert payload.clean_profile_id == "10"
+    assert payload.clean_system_type == "owner"
     assert payload.clean_invite_delivery == "link"
     assert payload.form_data["entity_id"] == ""
     assert payload.form_data["entity_name"] == ""
@@ -79,7 +75,6 @@ def test_normalize_create_user_input_invalid_delivery_defaults_to_email() -> Non
         full_name="Ana",
         primary_phone="999",
         email="ana@example.com",
-        profile_id="",
         invite_delivery="sms",
     )
 
@@ -91,7 +86,6 @@ def test_normalize_create_user_input_required_fields() -> None:
         full_name=" ",
         primary_phone=" ",
         email=" ",
-        profile_id="",
         invite_delivery="email",
     )
 
@@ -107,15 +101,14 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
 
     with SessionLocal() as session:
         entity = Entity(entity_number=1, name="Igreja Central", is_active=True)
-        profile = Profile(name="USER", is_active=True)
-        session.add_all([entity, profile])
+        session.add(entity)
         session.commit()
 
         payload = normalize_create_user_input(
             full_name="Maria Gestora",
             primary_phone="913111222",
             email="maria.gestora@example.com",
-            profile_id=str(profile.id),
+            system_type="default",
             invite_delivery="link",
         )
 
@@ -134,10 +127,6 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
             create_user_module,
             "_resolve_entity_from_user_email_v2",
             return_value=(entity, ""),
-        ), patch.object(
-            create_user_module,
-            "get_or_create_entity_superuser_profile",
-            return_value=profile,
         ), patch.object(
             create_user_module,
             "build_user_invite_link",
@@ -160,18 +149,15 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
         assert outcome.kind == "redirect"
         assert session.scalar(select(func.count()).select_from(Member)) == 1
         assert session.scalar(select(func.count()).select_from(User)) == 1
-        assert session.scalar(select(func.count()).select_from(UserProfile)) == 1
 
         member = session.execute(select(Member)).scalar_one()
         user = session.execute(select(User)).scalar_one()
-        user_profile = session.execute(select(UserProfile)).scalar_one()
 
         assert member.email == "maria.gestora@example.com"
         assert user.member_id == member.id
         assert user.login_email == "maria.gestora@example.com"
         assert user.account_status == UserAccountStatus.PENDING.value
-        assert user_profile.user_id == user.id
-        assert user_profile.profile_id == profile.id
+        assert user.system_type == "default"
 
         link = session.execute(
             select(MemberEntity).where(
@@ -188,20 +174,19 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
 
     with SessionLocal() as session:
         entity = Entity(entity_number=1, name="Igreja Norte", is_active=True)
-        profile = Profile(name="USER", is_active=True)
         member = Member(
             full_name="Carlos Base",
             primary_phone="913333444",
             email="carlos.base@example.com",
         )
-        session.add_all([entity, profile, member])
+        session.add_all([entity, member])
         session.commit()
 
         payload = normalize_create_user_input(
             full_name="Carlos Atualizado",
             primary_phone="913999888",
             email="CARLOS.BASE@example.com",
-            profile_id=str(profile.id),
+            system_type="default",
             invite_delivery="link",
         )
 
@@ -220,10 +205,6 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
             create_user_module,
             "_resolve_entity_from_user_email_v2",
             return_value=(entity, ""),
-        ), patch.object(
-            create_user_module,
-            "get_or_create_entity_superuser_profile",
-            return_value=profile,
         ), patch.object(
             create_user_module,
             "build_user_invite_link",

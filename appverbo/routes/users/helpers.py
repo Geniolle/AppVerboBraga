@@ -17,11 +17,8 @@ from appverbo.models import (
     Member,
     MemberEntity,
     MemberEntityStatus,
-    MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 def _extract_email_domain(raw_email: str) -> str:
@@ -127,14 +124,6 @@ def _member_is_within_permissions(
        .limit(1)
     )
     return scoped_link_id is not None
-
-def _is_admin_profile(profile: Profile | None) -> bool:
-    if profile is None:
-        return False
-    profile_name = (profile.name or "").strip().lower()
-    if not profile_name:
-        return False
-    return profile_name in ADMIN_PROFILE_NAMES
 
 def _get_active_entity_ids_for_member(session: Session, member_id: int) -> list[int]:
     rows = session.scalars(

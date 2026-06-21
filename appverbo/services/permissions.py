@@ -5,9 +5,16 @@ from typing import Any
 from appverbo.core import *  # noqa: F403,F401
 
 def owner_entity_exists(session: Session) -> bool:
+    # ###################################################################################
+    # (1) CONSIDERAR APENAS OWNER ATIVA
+    # ###################################################################################
+    # Uma Owner inativa nao pode bloquear o fallback administrativo global.
     owner_id = session.scalar(
         select(Entity.id)
-       .where(Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER)
+       .where(
+            Entity.profile_scope == ENTITY_PROFILE_SCOPE_OWNER,
+            Entity.is_active.is_(True),
+        )
        .limit(1)
     )
     return owner_id is not None

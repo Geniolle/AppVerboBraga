@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,11 +22,11 @@ class User(Base, TimestampMixin):
     account_status: Mapped[str] = mapped_column(
         String(20), nullable=False, default=UserAccountStatus.PENDING.value
     )
+    system_type: Mapped[str] = mapped_column(String(20), nullable=False, default="default")
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     created_by_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
 
     member: Mapped["Member"] = relationship(back_populates="user_account")
-    profiles: Mapped[List["UserProfile"]] = relationship(back_populates="user")
 
     __table_args__ = (
         CheckConstraint(

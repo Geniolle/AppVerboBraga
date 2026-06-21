@@ -17,10 +17,8 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 from appverbo.routes.entities.router import router
@@ -29,16 +27,21 @@ from appverbo.routes.entities.router import router
 def delete_entity(
     request: Request,
     entity_id: str = Form(...),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> HTMLResponse:
     clean_entity_id = entity_id.strip()
     if not clean_entity_id.isdigit():
         return RedirectResponse(
-            url=build_users_new_url(
+            url=build_return_url_v1(
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                default_menu="administrativo",
+                default_admin_tab="entidade",
+                default_hash="#recent-entities-card",
                 entity_error="Entidade inválida para exclusão.",
-                menu="administrativo",
-                admin_tab="entidade",
-            )
-            + "#recent-entities-card",
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -57,12 +60,14 @@ def delete_entity(
         )
         if not current_user_is_admin:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#recent-entities-card",
                     entity_error="Apenas administradores podem excluir entidades.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         entity_permissions = get_user_entity_permissions(
@@ -73,37 +78,43 @@ def delete_entity(
         )
         if not is_entity_within_permissions(parsed_entity_id, entity_permissions):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#recent-entities-card",
                     entity_error="Sem permissão para eliminar esta entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         entity = session.get(Entity, parsed_entity_id)
         if entity is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#recent-entities-card",
                     entity_error="Entidade não encontrada.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_START
         if entity.is_active:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error="Só é permitido eliminar entidades inativas.",
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_END
@@ -115,13 +126,15 @@ def delete_entity(
         )
         if linked_users_count and int(linked_users_count) > 0:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error="Não pode excluir entidade com utilizadores associados. Inative a entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -135,12 +148,14 @@ def delete_entity(
         except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#recent-entities-card",
                     entity_error="Não foi possível excluir a entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -148,11 +163,13 @@ def delete_entity(
         (BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
-        url=build_users_new_url(
+        url=build_return_url_v1(
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            default_menu="administrativo",
+            default_admin_tab="entidade",
+            default_hash="#recent-entities-card",
             entity_success="Entidade excluida com sucesso.",
-            menu="administrativo",
-            admin_tab="entidade",
-        )
-        + "#recent-entities-card",
+        ),
         status_code=status.HTTP_303_SEE_OTHER,
     )

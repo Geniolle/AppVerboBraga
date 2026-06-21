@@ -1,28 +1,16 @@
 from __future__ import annotations
 
-import secrets
-from datetime import date, datetime, timezone
-from typing import Any
-
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import Form, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import delete, select
 
 from appverbo.core import *  # noqa: F403,F401
-from appverbo.services.user_status import is_user_account_status_inactive_v1
 from appverbo.services import *  # noqa: F403,F401
 from appverbo.models import (
-    Entity,
     Member,
     MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 from appverbo.routes.users.router import router
@@ -32,33 +20,25 @@ from appverbo.routes.users.helpers import (
 )
 
 
-# ###################################################################################
-# (1) INATIVACAO LOGICA USER <-> MEMBER
-# ###################################################################################
-
-def _inactivate_user_and_member_v1(session: Session, user: User) -> None:
-    member = session.get(Member, int(user.member_id))
-    if member is None:
-        raise ValueError("Membro associado ao utilizador nao encontrado.")
-
-    user.account_status = UserAccountStatus.INACTIVE.value
-    member.member_status = MemberStatus.INACTIVE.value
-
-
 @router.post("/users/delete", response_class=HTMLResponse)
 def delete_user(
     request: Request,
     user_id: str = Form(...),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> RedirectResponse:
     clean_user_id = user_id.strip()
     if not clean_user_id.isdigit():
         return RedirectResponse(
-            url=build_users_new_url(
+            url=build_return_url_v1(
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
                 error="Utilizador inválido para eliminação.",
-                menu="administrativo",
-                admin_tab="utilizador",
-            )
-            + "#create-user-card",
+                default_menu="administrativo",
+                default_admin_tab="utilizador",
+                default_hash="#create-user-card",
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
     parsed_user_id = int(clean_user_id)
@@ -74,12 +54,14 @@ def delete_user(
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Apenas administradores podem eliminar utilizadores.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         entity_permissions = get_user_entity_permissions(
@@ -91,24 +73,28 @@ def delete_user(
 
         if parsed_user_id == int(current_user["id"]):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Não é permitido eliminar o próprio utilizador ligado.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         user = session.get(User, parsed_user_id)
         if user is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Utilizador não encontrado.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -118,28 +104,18 @@ def delete_user(
             entity_permissions,
         ):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Sem permissão para eliminar este utilizador.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        # APPVERBO_DELETE_ONLY_INACTIVE_USER_V1_START
-        if not is_user_account_status_inactive_v1(user.account_status):
-            return RedirectResponse(
-                url=build_users_new_url(
-                    error="Só é permitido eliminar utilizadores inativos.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-        # APPVERBO_DELETE_ONLY_INACTIVE_USER_V1_END
-
+        # Impede eliminação do último administrador ativo
         target_is_active_admin = (
             str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
             and is_admin_user(session, int(user.id), str(user.login_email or ""))
@@ -152,36 +128,59 @@ def delete_user(
             )
             if not can_delete_admin:
                 return RedirectResponse(
-                    url=build_users_new_url(
+                    url=build_return_url_v1(
+                        return_menu=return_menu,
+                        return_admin_tab=return_admin_tab,
                         error=admin_delete_error,
-                        menu="administrativo",
-                        admin_tab="utilizador",
-                    )
-                    + "#create-user-card",
+                        default_menu="administrativo",
+                        default_admin_tab="utilizador",
+                        default_hash="#create-user-card",
+                    ),
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
 
-        _inactivate_user_and_member_v1(session, user)
+        member_id = int(user.member_id)
+
+        # Eliminar o utilizador
+        session.delete(user)
+        session.flush()
+
+        # Verificar se o membro tem outros utilizadores
+        other_users_count = session.scalar(
+            select(func.count(User.id)).where(User.member_id == member_id)
+        ) or 0
+
+        if other_users_count == 0:
+            # Sem outros utilizadores: apagar ligações de entidade e o próprio membro
+            session.execute(delete(MemberEntity).where(MemberEntity.member_id == member_id))
+            member = session.get(Member, member_id)
+            if member is not None:
+                session.delete(member)
+
         try:
             session.commit()
-        except (IntegrityError, ValueError):
+        except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
-                    error="Não foi possível eliminar utilizador.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    error="Não foi possível eliminar o utilizador. Verifique se não existem dependências.",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
     return RedirectResponse(
-        url=build_users_new_url(
-            success="Utilizador inativado com sucesso.",
-            menu="administrativo",
-            admin_tab="utilizador",
-        )
-        + "#create-user-card",
+        url=build_return_url_v1(
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            success="Utilizador eliminado com sucesso.",
+            default_menu="administrativo",
+            default_admin_tab="utilizador",
+            default_hash="#create-user-card",
+        ),
         status_code=status.HTTP_303_SEE_OTHER,
     )

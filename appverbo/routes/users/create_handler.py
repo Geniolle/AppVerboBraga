@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from appverbo.core import SessionLocal, templates
 from appverbo.routes.users.router import router
 from appverbo.services.page import build_users_new_url
+from appverbo.services.navigation_context import build_return_url_v1
 from appverbo.services.session import get_current_user, get_session_entity_id
 from appverbo.use_cases.users import execute_create_user, normalize_create_user_input_v1
 
@@ -21,15 +22,20 @@ def create_user_v1(
     full_name: str = Form(...),
     primary_phone: str = Form(...),
     email: str = Form(...),
-    profile_id: str = Form(""),
+    entity_id: str = Form(""),
+    system_type: str = Form("default"),
     invite_delivery: str = Form("email"),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ):
     try:
         payload = normalize_create_user_input_v1(
             full_name=full_name,
             primary_phone=primary_phone,
             email=email,
-            profile_id=profile_id,
+            entity_id=entity_id,
+            system_type=system_type,
             invite_delivery=invite_delivery,
         )
 
@@ -73,12 +79,14 @@ def create_user_v1(
             "Consulte os logs recentes do servico web para ver o detalhe tecnico."
         )
         return RedirectResponse(
-            url=build_users_new_url(
+            url=build_return_url_v1(
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
                 error=safe_error,
-                menu="administrativo",
-                admin_tab="utilizador",
-            )
-            + "#create-user-card",
+                default_menu="administrativo",
+                default_admin_tab="utilizador",
+                default_hash="#create-user-card",
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 

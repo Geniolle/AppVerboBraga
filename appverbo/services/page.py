@@ -16,6 +16,17 @@ from appverbo.menu_settings import (
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
+from appverbo.services.user_system import (
+    normalize_user_system_type_v1,
+    get_user_system_type_label_v1,
+    is_owner_system_v1,
+)
+from appverbo.services.user_entity_scope import (
+    can_select_user_entity_v1,
+    get_actor_system_type_v1,
+    get_actor_primary_entity_v1,
+    get_entities_for_user_form_v1,
+)
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.user_status import (
     is_user_account_status_active_v1,
@@ -401,7 +412,6 @@ def get_page_data(
     actor_login_email: str = "",
     selected_entity_id: int | None = None,
 ) -> dict[str, Any]:
-    entity_superuser_profile_name = ENTITY_SUPERUSER_PROFILE_NAME.strip() or "SUPER USER"
     permissions = {
         "is_admin": False,
         "has_owner_membership": False,
@@ -420,6 +430,24 @@ def get_page_data(
         allowed_entity_ids = set(permissions["allowed_entity_ids"])
         selected_entity_id = permissions["selected_entity_id"]
     current_user_is_admin = bool(permissions["is_admin"])
+
+    # APPVERBO_ACTOR_ENTITY_CONTEXT_V1_START
+    _actor_system_type = "default"
+    _actor_entity_id: int | None = None
+    _actor_entity_name = ""
+    _actor_entity_number = None
+    _entities_for_user_form: list[dict[str, Any]] = []
+    if actor_user_id is not None:
+        _actor_system_type = get_actor_system_type_v1(session, actor_user_id)
+        _actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
+        if _actor_primary_entity is not None:
+            _actor_entity_id = _actor_primary_entity["id"]
+            _actor_entity_name = _actor_primary_entity["name"]
+            _actor_entity_number = _actor_primary_entity["entity_number"]
+        if can_select_user_entity_v1(_actor_system_type):
+            _entities_for_user_form = get_entities_for_user_form_v1(session, _actor_system_type)
+    # APPVERBO_ACTOR_ENTITY_CONTEXT_V1_END
+
     current_entity_scope = ""
     if selected_entity_id is not None:
         raw_entity_scope = session.execute(
@@ -823,8 +851,6 @@ def get_page_data(
             entities_stmt = entities_stmt.where(Entity.id == -1)
     entities = session.execute(entities_stmt).all()
 
-    profiles_for_form = get_allowed_global_profiles_for_form(session)
-
     entity_rows_stmt = (
         select(
             Entity.id,
@@ -866,6 +892,7 @@ def get_page_data(
         select(
             User.id,
             User.member_id,
+            User.system_type,
             Member.full_name,
             Member.primary_phone,
             User.login_email,
@@ -900,9 +927,10 @@ def get_page_data(
 
     entity_name_by_member_id: dict[int, str] = {}
     entity_id_by_member_id: dict[int, int] = {}
+    entity_number_by_member_id: dict[int, int | None] = {}
     if member_ids:
         entity_name_stmt = (
-            select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name)
+            select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name, Entity.entity_number)
            .join(Entity, Entity.id == MemberEntity.entity_id)
            .where(MemberEntity.member_id.in_(member_ids))
            .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
@@ -917,32 +945,7 @@ def get_page_data(
             if member_id_value not in entity_name_by_member_id:
                 entity_id_by_member_id[member_id_value] = int(row.entity_id)
                 entity_name_by_member_id[member_id_value] = row.name
-
-    profile_name_by_user_id: dict[int, str] = {}
-    superuser_user_ids: set[int] = set()
-    if user_ids:
-        profile_rows = session.execute(
-            select(UserProfile.user_id, Profile.name)
-           .join(Profile, Profile.id == UserProfile.profile_id)
-           .where(UserProfile.user_id.in_(user_ids), UserProfile.is_active.is_(True))
-           .order_by(UserProfile.user_id.asc(), UserProfile.id.asc())
-        ).all()
-        for row in profile_rows:
-            user_id_value = int(row.user_id)
-            if user_id_value not in profile_name_by_user_id:
-                profile_name_by_user_id[user_id_value] = row.name
-
-        superuser_rows = session.execute(
-            select(UserProfile.user_id)
-           .join(Profile, Profile.id == UserProfile.profile_id)
-           .where(
-                UserProfile.user_id.in_(user_ids),
-                UserProfile.is_active.is_(True),
-                Profile.is_active.is_(True),
-                func.lower(Profile.name) == entity_superuser_profile_name.lower(),
-            )
-        ).all()
-        superuser_user_ids = {int(row.user_id) for row in superuser_rows}
+                entity_number_by_member_id[member_id_value] = row.entity_number
 
     all_users = [
         {
@@ -957,8 +960,11 @@ def get_page_data(
             "account_status_is_inactive": is_user_account_status_inactive_v1(row.account_status),
             "entity_id": entity_id_by_member_id.get(int(row.member_id)),
             "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
-            "profile_name": profile_name_by_user_id.get(int(row.id), "-"),
-            "is_entity_superuser": int(row.id) in superuser_user_ids,
+            "entity_number": entity_number_by_member_id.get(int(row.member_id)),
+            "system_type": normalize_user_system_type_v1(row.system_type),
+            "system_name": get_user_system_type_label_v1(row.system_type),
+            "profile_name": get_user_system_type_label_v1(row.system_type),
+            "is_entity_superuser": is_owner_system_v1(row.system_type),
             "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
         }
         for row in user_rows
@@ -1040,7 +1046,6 @@ def get_page_data(
             }
             for row in entities
         ],
-        "profiles": profiles_for_form,
         "account_status_summary": account_status_summary,
         "recent_entities": [serialize_entity_row(row) for row in recent_entities],
         "inactive_entities": [serialize_entity_row(row) for row in inactive_entities_rows],
@@ -1064,6 +1069,13 @@ def get_page_data(
         "entity_permissions": permissions,
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
         "current_entity_scope": current_entity_scope,
+        "current_user_system_type": _actor_system_type,
+        "current_user_system_label": get_user_system_type_label_v1(_actor_system_type),
+        "current_user_entity_id": _actor_entity_id,
+        "current_user_entity_name": _actor_entity_name,
+        "current_user_entity_number": _actor_entity_number,
+        "can_select_user_entity": can_select_user_entity_v1(_actor_system_type),
+        "entities_for_user_form": _entities_for_user_form,
         "sidebar_menu_settings": sidebar_menu_settings,
         "sidebar_section_options": sidebar_section_options,
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
@@ -1125,31 +1137,21 @@ def get_home_dashboard_data(
     else:
         scoped_user_ids = []
 
-    profile_count_map: dict[str, int] = {}
+    system_count_map: dict[str, int] = {"default": 0, "owner": 0, "legado": 0}
     if not apply_scope_filter or scoped_user_ids:
-        user_profile_join_condition = (
-            (UserProfile.profile_id == Profile.id)
-            & (UserProfile.is_active.is_(True))
-        )
+        system_stmt = select(User.system_type, func.count(User.id)).group_by(User.system_type)
         if apply_scope_filter:
-            user_profile_join_condition = (
-                user_profile_join_condition
-                & (UserProfile.user_id.in_(scoped_user_ids))
-            )
+            system_stmt = system_stmt.where(User.id.in_(scoped_user_ids))
+        for row in session.execute(system_stmt).all():
+            key = str(row[0] or "default").strip().lower()
+            if key in system_count_map:
+                system_count_map[key] = int(row[1])
 
-        profile_rows = session.execute(
-            select(Profile.name, func.count(func.distinct(UserProfile.user_id)))
-           .select_from(Profile)
-           .outerjoin(UserProfile, user_profile_join_condition)
-           .where(func.lower(Profile.name).in_(ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED))
-           .group_by(Profile.id, Profile.name)
-        ).all()
-        for row in profile_rows:
-            profile_count_map[normalize_profile_name(row.name)] = int(row[1])
-
-    profile_labels = list(ALLOWED_GLOBAL_PROFILE_NAMES)
+    profile_labels = ["Default", "Owner", "Legado"]
     profile_values = [
-        profile_count_map.get(normalize_profile_name(label), 0) for label in profile_labels
+        system_count_map.get("default", 0),
+        system_count_map.get("owner", 0),
+        system_count_map.get("legado", 0),
     ]
 
     total_entities = active_entities + inactive_entities
@@ -1182,8 +1184,9 @@ def get_form_defaults() -> dict[str, str]:
         "email": "",
         "entity_id": "",
         "entity_name": "",
+        "entity_number": "",
         "account_status": UserAccountStatus.ACTIVE.value,
-        "profile_id": "",
+        "system_type": "default",
     }
 
 def get_entity_form_defaults() -> dict[str, str]:
@@ -1274,8 +1277,9 @@ def get_user_edit_defaults() -> dict[str, str]:
         "email": "",
         "entity_id": "",
         "entity_name": "",
+        "entity_number": "",
         "account_status": UserAccountStatus.ACTIVE.value,
-        "profile_id": "",
+        "system_type": "default",
     }
 
 def get_user_edit_data(
@@ -1291,6 +1295,7 @@ def get_user_edit_data(
         select(
             User.id,
             User.member_id,
+            User.system_type,
             Member.full_name,
             Member.primary_phone,
             User.login_email,
@@ -1319,12 +1324,17 @@ def get_user_edit_data(
     if allowed_entity_ids is not None and member_entity_id is None:
         return defaults
 
-    profile_id = session.scalar(
-        select(UserProfile.profile_id)
-       .where(UserProfile.user_id == row.id, UserProfile.is_active.is_(True))
-       .order_by(UserProfile.id.asc())
-       .limit(1)
-    )
+    entity_number_value: int | None = None
+    entity_name_value = ""
+    if member_entity_id is not None:
+        entity_row = session.execute(
+            select(Entity.name, Entity.entity_number)
+           .where(Entity.id == member_entity_id)
+           .limit(1)
+        ).one_or_none()
+        if entity_row is not None:
+            entity_name_value = entity_row.name or ""
+            entity_number_value = entity_row.entity_number
 
     return {
         "id": str(row.id),
@@ -1332,16 +1342,10 @@ def get_user_edit_data(
         "primary_phone": row.primary_phone or "",
         "email": row.login_email or "",
         "entity_id": str(member_entity_id) if member_entity_id is not None else "",
-        "entity_name": (
-            session.execute(
-                select(Entity.name).where(Entity.id == member_entity_id).limit(1)
-            ).scalar_one_or_none()
-            if member_entity_id is not None
-            else ""
-        )
-        or "",
+        "entity_name": entity_name_value,
+        "entity_number": str(entity_number_value) if entity_number_value is not None else "",
         "account_status": row.account_status or UserAccountStatus.ACTIVE.value,
-        "profile_id": str(profile_id) if profile_id is not None else "",
+        "system_type": normalize_user_system_type_v1(row.system_type),
     }
 
 def get_next_entity_number(session: Session) -> int:

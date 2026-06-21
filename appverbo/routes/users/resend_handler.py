@@ -20,15 +20,24 @@ from appverbo.routes.users.router import router
 from appverbo.services import *  # noqa: F403,F401
 
 
-def _redirect_admin_users(success: str = "", error: str = "") -> RedirectResponse:
+def _redirect_admin_users(
+    success: str = "",
+    error: str = "",
+    return_menu: str = "",
+    return_admin_tab: str = "",
+    return_target: str = "",
+) -> RedirectResponse:
     return RedirectResponse(
-        url=build_users_new_url(
+        url=build_return_url_v1(
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            return_target=return_target,
             success=success,
             error=error,
-            menu="administrativo",
-            admin_tab="utilizador",
-        )
-        + "#create-user-card",
+            default_menu="administrativo",
+            default_admin_tab="utilizador",
+            default_hash="#create-user-card",
+        ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
@@ -37,17 +46,30 @@ def _prepare_user_invite_payload(
     request: Request,
     user_id: str,
     raw_entity_id: str = "",
+    return_menu: str = "",
+    return_admin_tab: str = "",
+    return_target: str = "",
 ) -> tuple[dict[str, Any] | None, RedirectResponse | None]:
     clean_user_id = user_id.strip()
     if not clean_user_id.isdigit():
-        return None, _redirect_admin_users(error="Utilizador inválido para gerar convite.")
+        return None, _redirect_admin_users(
+            error="Utilizador inválido para gerar convite.",
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            return_target=return_target,
+        )
 
     parsed_user_id = int(clean_user_id)
     clean_entity_id = raw_entity_id.strip()
     parsed_entity_id: int | None = None
     if clean_entity_id:
         if not clean_entity_id.isdigit():
-            return None, _redirect_admin_users(error="Entidade inválida para gerar convite.")
+            return None, _redirect_admin_users(
+                error="Entidade inválida para gerar convite.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
+            )
         parsed_entity_id = int(clean_entity_id)
 
     with SessionLocal() as session:
@@ -62,7 +84,10 @@ def _prepare_user_invite_payload(
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return None, _redirect_admin_users(
-                error="Apenas administradores podem gerar convites."
+                error="Apenas administradores podem gerar convites.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
 
         entity_permissions = get_user_entity_permissions(
@@ -78,11 +103,19 @@ def _prepare_user_invite_payload(
             )
         ).one_or_none()
         if user_row is None:
-            return None, _redirect_admin_users(error="Utilizador não encontrado.")
+            return None, _redirect_admin_users(
+                error="Utilizador não encontrado.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
+            )
 
         if str(user_row.account_status or "").strip().lower() != UserAccountStatus.PENDING.value:
             return None, _redirect_admin_users(
-                error="Só é possível gerar convite para utilizadores pendentes."
+                error="Só é possível gerar convite para utilizadores pendentes.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
 
         if not _member_is_within_permissions(
@@ -91,13 +124,19 @@ def _prepare_user_invite_payload(
             entity_permissions,
         ):
             return None, _redirect_admin_users(
-                error="Sem permissão para gerar convite deste utilizador."
+                error="Sem permissão para gerar convite deste utilizador.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
 
         member = session.get(Member, int(user_row.member_id))
         if member is None:
             return None, _redirect_admin_users(
-                error="Membro associado ao utilizador não encontrado."
+                error="Membro associado ao utilizador não encontrado.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
 
         allowed_entity_ids = sorted(set(entity_permissions.get("allowed_entity_ids") or set()))
@@ -114,7 +153,10 @@ def _prepare_user_invite_payload(
         if not entity_permissions.get("can_manage_all_entities"):
             if not allowed_entity_ids:
                 return None, _redirect_admin_users(
-                    error="Sem permissão para gerar convite deste utilizador."
+                    error="Sem permissão para gerar convite deste utilizador.",
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    return_target=return_target,
                 )
             entity_links_stmt = entity_links_stmt.where(
                 MemberEntity.entity_id.in_(allowed_entity_ids)
@@ -123,7 +165,10 @@ def _prepare_user_invite_payload(
         entity_link_rows = session.execute(entity_links_stmt).all()
         if not entity_link_rows:
             return None, _redirect_admin_users(
-                error="Utilizador sem entidade ativa para gerar convite."
+                error="Utilizador sem entidade ativa para gerar convite.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
 
         entity_name_by_id: dict[int, str] = {
@@ -142,7 +187,10 @@ def _prepare_user_invite_payload(
 
         if invite_entity_id is None:
             return None, _redirect_admin_users(
-                error="Não foi possível determinar a entidade do convite."
+                error="Não foi possível determinar a entidade do convite.",
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                return_target=return_target,
             )
 
         entity_name = entity_name_by_id.get(invite_entity_id, "-")
@@ -166,16 +214,27 @@ def _generate_user_invite(
     request: Request,
     user_id: str,
     raw_entity_id: str = "",
+    return_menu: str = "",
+    return_admin_tab: str = "",
+    return_target: str = "",
 ) -> RedirectResponse:
     invite_payload, redirect_response = _prepare_user_invite_payload(
         request=request,
         user_id=user_id,
         raw_entity_id=raw_entity_id,
+        return_menu=return_menu,
+        return_admin_tab=return_admin_tab,
+        return_target=return_target,
     )
     if redirect_response is not None:
         return redirect_response
     if invite_payload is None:
-        return _redirect_admin_users(error="Não foi possível gerar convite.")
+        return _redirect_admin_users(
+            error="Não foi possível gerar convite.",
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            return_target=return_target,
+        )
 
     email_sent, email_error = send_user_invite_email(
         recipient_email=str(invite_payload["recipient_email"]),
@@ -185,11 +244,19 @@ def _generate_user_invite(
         invited_by_name=str(invite_payload["invited_by_name"]),
     )
     if email_sent:
-        return _redirect_admin_users(success="Convite gerado e enviado com sucesso.")
+        return _redirect_admin_users(
+            success="Convite gerado e enviado com sucesso.",
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            return_target=return_target,
+        )
 
     return _redirect_admin_users(
         success="Não foi possível enviar email automático.",
         error=f"{email_error} Link de ativação: {invite_payload['invite_link']}",
+        return_menu=return_menu,
+        return_admin_tab=return_admin_tab,
+        return_target=return_target,
     )
 
 
@@ -198,13 +265,33 @@ def generate_user_invite(
     request: Request,
     user_id: str = Form(...),
     entity_id: str = Form(""),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> RedirectResponse:
-    return _generate_user_invite(request=request, user_id=user_id, raw_entity_id=entity_id)
+    return _generate_user_invite(
+        request=request,
+        user_id=user_id,
+        raw_entity_id=entity_id,
+        return_menu=return_menu,
+        return_admin_tab=return_admin_tab,
+        return_target=return_target,
+    )
 
 
 @router.post("/users/resend-invite", response_class=HTMLResponse)
 def resend_user_invite(
     request: Request,
     user_id: str = Form(...),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> RedirectResponse:
-    return _generate_user_invite(request=request, user_id=user_id, raw_entity_id="")
+    return _generate_user_invite(
+        request=request,
+        user_id=user_id,
+        raw_entity_id="",
+        return_menu=return_menu,
+        return_admin_tab=return_admin_tab,
+        return_target=return_target,
+    )

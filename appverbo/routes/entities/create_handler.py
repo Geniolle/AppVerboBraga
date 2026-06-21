@@ -17,10 +17,8 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 from appverbo.routes.entities.router import router
@@ -43,6 +41,9 @@ def create_entity(
     entity_profile_scope: str = Form(ENTITY_PROFILE_SCOPE_LEGADO),
     entity_logo_file: UploadFile | None = File(default=None),
     description: str | None = Form(default=None),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> HTMLResponse:
     entity_form_data, invalid_profile_scope = clean_entity_form_data_v1(
         name=name,
@@ -93,12 +94,14 @@ def create_entity(
         )
         if not entity_permissions["can_manage_all_entities"]:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#create-entity-card",
                     entity_error="Apenas a entidade Owner pode criar novas entidades.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#create-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -283,13 +286,13 @@ def create_entity(
             )
 
     return RedirectResponse(
-        url=(
-            build_users_new_url(
-                entity_success=f"Entidade criada com sucesso. Nº da entidade: {created_entity_number}.",
-                menu="administrativo",
-                admin_tab="entidade",
-            )
-            + "#create-entity-card"
+        url=build_return_url_v1(
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            default_menu="administrativo",
+            default_admin_tab="entidade",
+            default_hash="#create-entity-card",
+            entity_success=f"Entidade criada com sucesso. Nº da entidade: {created_entity_number}.",
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )

@@ -13,7 +13,6 @@ from appverbo.models import (
     User,
     UserAccountStatus,
 )
-from appverbo.routes.users.delete_handler import _inactivate_user_and_member_v1
 from appverbo.services.auth import (
     build_user_invite_token,
     get_signup_country_options,
@@ -22,6 +21,7 @@ from appverbo.services.auth import (
     validate_signup_phone_country,
 )
 from appverbo.services.passwords import hash_password, verify_password
+from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.user_member import (
     ensure_user_for_member,
     member_status_for_user_account_status,
@@ -266,6 +266,102 @@ def test_ensure_user_for_member_uses_supplied_password() -> None:
         assert session.scalar(select(func.count()).select_from(User)) == 1
 
 
+def test_get_user_entity_permissions_keeps_admin_global_access_without_active_owner() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        inactive_owner = Entity(
+            entity_number=1000,
+            name="Owner Inativa",
+            profile_scope="owner",
+            is_active=False,
+        )
+        active_entity = Entity(
+            entity_number=1001,
+            name="Entidade Ativa",
+            profile_scope="legado",
+            is_active=True,
+        )
+        member = Member(
+            full_name="Admin Global",
+            primary_phone="912345678",
+            email="admin.global@example.com",
+            member_status=MemberStatus.ACTIVE.value,
+        )
+        session.add_all([inactive_owner, active_entity, member])
+        session.flush()
+
+        user = User(
+            member_id=member.id,
+            login_email="admin.global@example.com",
+            password_hash=hash_password("SenhaForte123!"),
+            account_status=UserAccountStatus.ACTIVE.value,
+            system_type="owner",
+        )
+        session.add(user)
+        session.commit()
+
+        permissions = get_user_entity_permissions(session, user.id, user.login_email, None)
+
+        assert permissions["is_admin"] is True
+        assert permissions["has_owner_membership"] is False
+        assert permissions["can_manage_all_entities"] is True
+        assert permissions["selected_entity_id"] == active_entity.id
+        assert permissions["allowed_entity_ids"] == {inactive_owner.id, active_entity.id}
+
+
+def test_get_user_entity_permissions_stays_restricted_when_active_owner_exists() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        active_owner = Entity(
+            entity_number=1000,
+            name="Owner Ativa",
+            profile_scope="owner",
+            is_active=True,
+        )
+        active_entity = Entity(
+            entity_number=1001,
+            name="Entidade Ativa",
+            profile_scope="legado",
+            is_active=True,
+        )
+        member = Member(
+            full_name="Admin Restrito",
+            primary_phone="919999999",
+            email="admin.restrito@example.com",
+            member_status=MemberStatus.ACTIVE.value,
+        )
+        session.add_all([active_owner, active_entity, member])
+        session.flush()
+
+        user = User(
+            member_id=member.id,
+            login_email="admin.restrito@example.com",
+            password_hash=hash_password("SenhaForte123!"),
+            account_status=UserAccountStatus.ACTIVE.value,
+            system_type="owner",
+        )
+        session.add(user)
+        session.flush()
+        session.add(
+            MemberEntity(
+                member_id=member.id,
+                entity_id=active_entity.id,
+                status=MemberEntityStatus.ACTIVE.value,
+            )
+        )
+        session.commit()
+
+        permissions = get_user_entity_permissions(session, user.id, user.login_email, None)
+
+        assert permissions["is_admin"] is True
+        assert permissions["has_owner_membership"] is False
+        assert permissions["can_manage_all_entities"] is False
+        assert permissions["selected_entity_id"] == active_entity.id
+        assert permissions["allowed_entity_ids"] == {active_entity.id}
+
+
 def test_upsert_user_by_email_creates_member_and_user_together() -> None:
     SessionLocal = _build_session_factory()
 
@@ -335,41 +431,6 @@ def test_upsert_user_by_email_creates_user_for_existing_member_without_account()
             )
         ).scalar_one_or_none()
         assert link is not None
-
-
-def test_inactivate_user_and_member_keeps_user_linked() -> None:
-    SessionLocal = _build_session_factory()
-
-    with SessionLocal() as session:
-        member = Member(
-            full_name="Ana Lopes",
-            primary_phone="912333444",
-            email="ana.lopes@example.com",
-            member_status=MemberStatus.ACTIVE.value,
-        )
-        session.add(member)
-        session.flush()
-
-        user = ensure_user_for_member(
-            session,
-            member,
-            status=UserAccountStatus.ACTIVE.value,
-            password="SenhaForte123!",
-        )
-        session.commit()
-
-        _inactivate_user_and_member_v1(session, user)
-        session.commit()
-
-        stored_user = session.get(User, user.id)
-        stored_member = session.get(Member, member.id)
-
-        assert stored_user is not None
-        assert stored_user.account_status == UserAccountStatus.INACTIVE.value
-        assert stored_member is not None
-        assert stored_member.member_status == MemberStatus.INACTIVE.value
-        assert stored_member.user_account is not None
-        assert stored_member.user_account.id == user.id
 
 
 def test_member_status_mapping_for_account_status() -> None:

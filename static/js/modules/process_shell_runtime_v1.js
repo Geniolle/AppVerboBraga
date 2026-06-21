@@ -10,7 +10,9 @@
     typeof global.AppVerboProcessShell.createSearchableTableController === "function" &&
     typeof global.AppVerboProcessShell.enhanceSearchableTableCards === "function" &&
     typeof global.AppVerboProcessShell.createTableActionsMenuController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceTableActionMenus === "function"
+    typeof global.AppVerboProcessShell.enhanceTableActionMenus === "function" &&
+    typeof global.AppVerboProcessShell.createConfirmDialogController === "function" &&
+    typeof global.AppVerboProcessShell.enhanceConfirmableActions === "function"
   ) {
     return;
   }
@@ -38,6 +40,9 @@
 
   let rowActionsDelegationReady = false;
   let currentOpenActionMenuInstance = null;
+  let confirmDelegationReady = false;
+  let activeMenuScrollHandler = null;
+  let activeMenuResizeHandler = null;
 
   //###################################################################################
   // (2) UTILITÁRIOS
@@ -303,6 +308,57 @@
     return normalizeText(getActionDescriptorText(elementEl), labels.fallback);
   }
 
+  function getViewportSafeMenuPosition(triggerEl, popupEl) {
+    const MARGIN = 8;
+    const GAP = 6;
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const popupRect = popupEl.getBoundingClientRect();
+    const popupWidth = popupRect.width || popupEl.offsetWidth || 200;
+    const popupHeight = popupRect.height || popupEl.offsetHeight || 120;
+    const vw = global.innerWidth || 0;
+    const vh = global.innerHeight || 0;
+
+    let top = triggerRect.bottom + GAP;
+    let left = triggerRect.right - popupWidth;
+
+    if (top + popupHeight > vh - MARGIN) {
+      const topAbove = triggerRect.top - popupHeight - GAP;
+      top = topAbove >= MARGIN ? topAbove : Math.max(MARGIN, vh - popupHeight - MARGIN);
+    }
+
+    if (left < MARGIN) {
+      left = MARGIN;
+    }
+    if (left + popupWidth > vw - MARGIN) {
+      left = vw - popupWidth - MARGIN;
+    }
+
+    return { top, left };
+  }
+
+  function detachMenuPositionListeners() {
+    if (activeMenuScrollHandler) {
+      global.removeEventListener("scroll", activeMenuScrollHandler, true);
+      activeMenuScrollHandler = null;
+    }
+    if (activeMenuResizeHandler) {
+      global.removeEventListener("resize", activeMenuResizeHandler);
+      activeMenuResizeHandler = null;
+    }
+  }
+
+  function attachMenuPositionListeners() {
+    detachMenuPositionListeners();
+    activeMenuScrollHandler = function () {
+      closeCurrentActionMenu();
+    };
+    activeMenuResizeHandler = function () {
+      closeCurrentActionMenu();
+    };
+    global.addEventListener("scroll", activeMenuScrollHandler, true);
+    global.addEventListener("resize", activeMenuResizeHandler);
+  }
+
   function closeCurrentActionMenu(options) {
     if (!currentOpenActionMenuInstance) {
       return;
@@ -312,8 +368,29 @@
     const instance = currentOpenActionMenuInstance;
     currentOpenActionMenuInstance = null;
 
+    detachMenuPositionListeners();
+
     if (instance.popupEl) {
-      instance.popupEl.hidden = true;
+      const popupEl = instance.popupEl;
+
+      popupEl.hidden = true;
+      popupEl.style.top = "";
+      popupEl.style.left = "";
+      popupEl.style.visibility = "";
+      popupEl.classList.remove("appverbo-row-actions-popup-floating-v1");
+
+      const placeholder = instance._portalPlaceholder;
+      const originalParent = instance._portalOriginalParent;
+
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.insertBefore(popupEl, placeholder);
+        placeholder.parentNode.removeChild(placeholder);
+      } else if (originalParent) {
+        originalParent.appendChild(popupEl);
+      }
+
+      instance._portalPlaceholder = null;
+      instance._portalOriginalParent = null;
     }
 
     if (instance.triggerEl) {
@@ -334,8 +411,33 @@
     }
 
     currentOpenActionMenuInstance = instance;
-    instance.popupEl.hidden = false;
-    instance.triggerEl.setAttribute("aria-expanded", "true");
+
+    const popupEl = instance.popupEl;
+    const triggerEl = instance.triggerEl;
+    const ownerDocument = triggerEl.ownerDocument || global.document;
+
+    const originalParent = popupEl.parentNode;
+    const placeholder = ownerDocument.createComment("appverbo-popup-placeholder");
+    if (originalParent) {
+      originalParent.insertBefore(placeholder, popupEl);
+    }
+
+    instance._portalPlaceholder = placeholder;
+    instance._portalOriginalParent = originalParent;
+
+    ownerDocument.body.appendChild(popupEl);
+    popupEl.classList.add("appverbo-row-actions-popup-floating-v1");
+
+    popupEl.style.visibility = "hidden";
+    popupEl.hidden = false;
+
+    const pos = getViewportSafeMenuPosition(triggerEl, popupEl);
+    popupEl.style.top = pos.top + "px";
+    popupEl.style.left = pos.left + "px";
+    popupEl.style.visibility = "";
+
+    triggerEl.setAttribute("aria-expanded", "true");
+    attachMenuPositionListeners();
   }
 
   function toggleActionMenu(instance) {
@@ -1377,24 +1479,91 @@
   // (9) MENU REUTILIZÁVEL DA COLUNA AÇÕES
   //###################################################################################
 
-  function normalizeActionItemElement(elementEl, label, actionKind) {
+  function getRowActionTypeV1(actionEl) {
+    if (!actionEl) {
+      return "default";
+    }
+    const raw = [
+      actionEl.getAttribute("title"),
+      actionEl.getAttribute("aria-label"),
+      actionEl.textContent,
+      typeof actionEl.className === "string" ? actionEl.className : ""
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    if (/exibir|ver\b|visualizar|detalhe|eye/.test(raw)) {
+      return "view";
+    }
+    if (/editar|modificar|pencil/.test(raw)) {
+      return "edit";
+    }
+    if (/eliminar|excluir|apagar|remover|delete|trash|danger/.test(raw)) {
+      return "delete";
+    }
+    return "default";
+  }
+
+  function getRowActionLabelV1(actionType, fallbackText) {
+    if (actionType === "view") {
+      return "Exibir detalhes";
+    }
+    if (actionType === "edit") {
+      return "Editar informações";
+    }
+    if (actionType === "delete") {
+      return "Eliminar";
+    }
+    return normalizeText(fallbackText, "Abrir");
+  }
+
+  function getRowActionIconSvgV1(actionType) {
+    if (actionType === "view") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+    if (actionType === "edit") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>';
+    }
+    if (actionType === "delete") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>';
+  }
+
+  function applyRowActionIconContentV1(actionEl, actionType, label) {
+    if (!actionEl) {
+      return;
+    }
+    let className = "appverbo-row-actions-item-v1 appverbo-row-actions-item-" + actionType + "-v1";
+    if (actionType === "delete") {
+      className += " appverbo-row-actions-danger-v1";
+    }
+    actionEl.className = className;
+    actionEl.setAttribute("role", "menuitem");
+    actionEl.removeAttribute("aria-label");
+    actionEl.innerHTML =
+      '<span class="appverbo-row-actions-icon-v1" aria-hidden="true">' +
+      getRowActionIconSvgV1(actionType) +
+      "</span>" +
+      '<span class="appverbo-row-actions-text-v1">' +
+      label +
+      "</span>";
+  }
+
+  function normalizeActionItemElement(elementEl, label, actionType) {
     if (!elementEl) {
       return null;
     }
 
-    const baseClassName = "appverbo-row-actions-item-v1";
-    const dangerClassName = actionKind === "delete" ? " appverbo-row-actions-danger-v1" : "";
-
     if (elementEl.tagName === "A" || elementEl.tagName === "BUTTON") {
-      elementEl.className = `${baseClassName}${dangerClassName}`;
-      elementEl.textContent = label;
-      elementEl.setAttribute("role", "menuitem");
-      elementEl.removeAttribute("aria-label");
+      applyRowActionIconContentV1(elementEl, actionType, label);
       return elementEl;
     }
 
     if (elementEl.tagName === "INPUT") {
-      elementEl.className = `${baseClassName}${dangerClassName}`;
+      let className = "appverbo-row-actions-item-v1 appverbo-row-actions-item-" + actionType + "-v1";
+      if (actionType === "delete") {
+        className += " appverbo-row-actions-danger-v1";
+      }
+      elementEl.className = className;
       elementEl.value = label;
       elementEl.setAttribute("role", "menuitem");
       elementEl.removeAttribute("aria-label");
@@ -1450,9 +1619,10 @@
           return;
         }
 
-        const actionKind = resolveActionKind(submitEl);
-        const label = resolveActionLabel(actionKind, submitEl, labels);
-        const normalizedSubmitEl = normalizeActionItemElement(submitEl, label, actionKind);
+        const actionType = getRowActionTypeV1(submitEl);
+        const fallbackText = submitEl.textContent || submitEl.value || "";
+        const label = getRowActionLabelV1(actionType, fallbackText);
+        const normalizedSubmitEl = normalizeActionItemElement(submitEl, label, actionType);
         if (!normalizedSubmitEl) {
           return;
         }
@@ -1462,9 +1632,10 @@
         return;
       }
 
-      const actionKind = resolveActionKind(sourceEl);
-      const label = resolveActionLabel(actionKind, sourceEl, labels);
-      const normalizedItemEl = normalizeActionItemElement(sourceEl, label, actionKind);
+      const actionType = getRowActionTypeV1(sourceEl);
+      const fallbackText = sourceEl.textContent || sourceEl.value || "";
+      const label = getRowActionLabelV1(actionType, fallbackText);
+      const normalizedItemEl = normalizeActionItemElement(sourceEl, label, actionType);
       if (!normalizedItemEl) {
         return;
       }
@@ -1619,6 +1790,115 @@
     }, []);
   }
 
+  //###################################################################################
+  // (6) CONFIRM DIALOG
+  //###################################################################################
+
+  function createConfirmDialogController(config) {
+    var existing = global.document && global.document.querySelector(".appverbo-confirm-overlay-v1");
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
+
+    var safeConfig = (config && typeof config === "object") ? config : {};
+    var title = normalizeText(safeConfig.title, "Confirmar");
+    var message = normalizeText(safeConfig.message, "Tem a certeza?");
+    var confirmLabel = normalizeText(safeConfig.confirmLabel, "Confirmar");
+    var cancelLabel = normalizeText(safeConfig.cancelLabel, "Cancelar");
+    var isDanger = safeConfig.danger !== false && safeConfig.danger !== 0 && Boolean(safeConfig.danger);
+
+    return new Promise(function (resolve) {
+      var overlay = global.document.createElement("div");
+      overlay.className = "appverbo-confirm-overlay-v1";
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("aria-labelledby", "appverbo-confirm-title-v1");
+
+      var dialog = global.document.createElement("div");
+      dialog.className = "appverbo-confirm-dialog-v1";
+
+      var titleEl = global.document.createElement("h3");
+      titleEl.className = "appverbo-confirm-title-v1";
+      titleEl.id = "appverbo-confirm-title-v1";
+      titleEl.textContent = title;
+
+      var messageEl = global.document.createElement("p");
+      messageEl.className = "appverbo-confirm-message-v1";
+      messageEl.textContent = message;
+
+      var actionsEl = global.document.createElement("div");
+      actionsEl.className = "appverbo-confirm-actions-v1";
+
+      var cancelBtn = global.document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "appverbo-confirm-cancel-v1";
+      cancelBtn.textContent = cancelLabel;
+
+      var confirmBtn = global.document.createElement("button");
+      confirmBtn.type = "button";
+      confirmBtn.className = "appverbo-confirm-action-v1" + (isDanger ? " appverbo-confirm-action-danger-v1" : "");
+      confirmBtn.textContent = confirmLabel;
+
+      actionsEl.appendChild(cancelBtn);
+      actionsEl.appendChild(confirmBtn);
+      dialog.appendChild(titleEl);
+      dialog.appendChild(messageEl);
+      dialog.appendChild(actionsEl);
+      overlay.appendChild(dialog);
+
+      function closeDialog(result) {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        global.document.removeEventListener("keydown", onKeydown);
+        resolve(result);
+      }
+
+      function onKeydown(e) {
+        if (e.key === "Escape") closeDialog(false);
+      }
+
+      cancelBtn.addEventListener("click", function () { closeDialog(false); });
+      confirmBtn.addEventListener("click", function () { closeDialog(true); });
+
+      overlay.addEventListener("click", function (e) {
+        if (e.target === overlay) closeDialog(false);
+      });
+
+      global.document.addEventListener("keydown", onKeydown);
+      global.document.body.appendChild(overlay);
+      confirmBtn.focus();
+    });
+  }
+
+  function enhanceConfirmableActions(config) {
+    if (confirmDelegationReady) return;
+
+    if (!global.document || typeof global.document.addEventListener !== "function") return;
+
+    global.document.addEventListener("submit", function (e) {
+      var form = e.target;
+      if (!form || typeof form.getAttribute !== "function") return;
+      if (!form.getAttribute("data-appverbo-confirm")) return;
+      if (form.getAttribute("data-appverbo-confirming")) return;
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      createConfirmDialogController({
+        title: form.getAttribute("data-appverbo-confirm-title") || "Confirmar",
+        message: form.getAttribute("data-appverbo-confirm-message") || "Tem a certeza?",
+        confirmLabel: form.getAttribute("data-appverbo-confirm-action-label") || "Confirmar",
+        cancelLabel: form.getAttribute("data-appverbo-confirm-cancel-label") || "Cancelar",
+        danger: !!form.getAttribute("data-appverbo-confirm-danger"),
+      }).then(function (confirmed) {
+        if (!confirmed) return;
+        form.setAttribute("data-appverbo-confirming", "1");
+        form.submit();
+      });
+    }, true);
+
+    confirmDelegationReady = true;
+  }
+
   global.AppVerboProcessShell = {
     ...(global.AppVerboProcessShell || {}),
     createProcessHeaderController,
@@ -1627,6 +1907,8 @@
     createSearchableTableController,
     enhanceSearchableTableCards,
     createTableActionsMenuController,
-    enhanceTableActionMenus
+    enhanceTableActionMenus,
+    createConfirmDialogController,
+    enhanceConfirmableActions,
   };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -673,4 +673,225 @@
 }
 /* APPVERBO_CARD_SEARCH_FOCUS_TUNE_V1_END */
 
+/* APPVERBO_CONFIRM_DIALOG_V1_START */
+.appverbo-confirm-overlay-v1 {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.45);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 9000;
+}
+
+.appverbo-confirm-dialog-v1 {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.10);
+  max-width: 440px;
+  padding: 28px 28px 22px;
+  width: calc(100% - 32px);
+}
+
+.appverbo-confirm-title-v1 {
+  color: #122033;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 10px;
+}
+
+.appverbo-confirm-message-v1 {
+  color: #4b5a6e;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 22px;
+}
+
+.appverbo-confirm-actions-v1 {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.appverbo-confirm-cancel-v1 {
+  background: #f2f5fa;
+  border: 1px solid #d0d8e8;
+  border-radius: 6px;
+  color: #3a4a5c;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 18px;
+}
+
+.appverbo-confirm-cancel-v1:hover {
+  background: #e4eaf5;
+}
+
+.appverbo-confirm-action-v1 {
+  background: #2b66b7;
+  border: 1px solid #2056a0;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 18px;
+}
+
+.appverbo-confirm-action-v1:hover {
+  background: #1d4d8a;
+}
+
+.appverbo-confirm-action-danger-v1 {
+  background: #c0392b;
+  border-color: #a93226;
+}
+
+.appverbo-confirm-action-danger-v1:hover {
+  background: #a93226;
+}
+/* APPVERBO_CONFIRM_DIALOG_V1_END */
+
+/* APPVERBO_TABLE_ACTION_MENU_ICONS_V1_START */
+.appverbo-row-actions-popup-v1 .appverbo-row-actions-item-v1,
+.appverbo-row-actions-popup-v1 a,
+.appverbo-row-actions-popup-v1 button {
+  align-items: center !important;
+  display: flex !important;
+  gap: 10px !important;
+  justify-content: flex-start !important;
+  min-height: 36px !important;
+  padding: 8px 10px !important;
+  text-align: left !important;
+}
+
+.appverbo-row-actions-icon-v1 {
+  align-items: center;
+  color: #64748b;
+  display: inline-flex;
+  flex: 0 0 16px;
+  height: 16px;
+  justify-content: center;
+  width: 16px;
+}
+
+.appverbo-row-actions-icon-v1 svg {
+  display: block;
+  height: 16px;
+  stroke: currentColor;
+  width: 16px;
+}
+
+.appverbo-row-actions-text-v1 {
+  color: inherit;
+  flex: 1 1 auto;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.appverbo-row-actions-item-view-v1 .appverbo-row-actions-icon-v1 {
+  color: #64748b;
+}
+
+.appverbo-row-actions-item-edit-v1 .appverbo-row-actions-icon-v1 {
+  color: #0a6ed1;
+}
+
+.appverbo-row-actions-item-delete-v1 .appverbo-row-actions-icon-v1,
+.appverbo-row-actions-danger-v1 .appverbo-row-actions-icon-v1 {
+  color: #b42318;
+}
+
+.appverbo-row-actions-popup-v1 .appverbo-row-actions-danger-v1,
+.appverbo-row-actions-popup-v1 .appverbo-row-actions-item-delete-v1 {
+  color: #b42318 !important;
+}
+/* APPVERBO_TABLE_ACTION_MENU_ICONS_V1_END */
+
+/* APPVERBO_TABLE_ACTION_MENU_ICONS_FORCE_V2_START */
+.appverbo-row-actions-popup-v1 .appverbo-row-actions-item-v1 {
+  align-items: center !important;
+  display: flex !important;
+  gap: 10px !important;
+  justify-content: flex-start !important;
+  min-height: 36px !important;
+  padding: 8px 12px !important;
+}
+
+.appverbo-row-actions-icon-v1 {
+  align-items: center !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  flex: 0 0 16px !important;
+  height: 16px !important;
+  justify-content: center !important;
+  width: 16px !important;
+}
+
+.appverbo-row-actions-icon-v1 svg {
+  display: block !important;
+  height: 16px !important;
+  stroke: currentColor !important;
+  width: 16px !important;
+}
+
+.appverbo-row-actions-text-v1 {
+  color: inherit !important;
+  flex: 1 1 auto !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+}
+
+.appverbo-row-actions-item-view-v1 .appverbo-row-actions-icon-v1 {
+  color: #64748b !important;
+}
+
+.appverbo-row-actions-item-edit-v1 .appverbo-row-actions-icon-v1 {
+  color: #0a6ed1 !important;
+}
+
+.appverbo-row-actions-item-delete-v1 .appverbo-row-actions-icon-v1,
+.appverbo-row-actions-danger-v1 .appverbo-row-actions-icon-v1 {
+  color: #b42318 !important;
+}
+
+.appverbo-row-actions-item-delete-v1,
+.appverbo-row-actions-danger-v1 {
+  color: #b42318 !important;
+}
+
+.appverbo-row-actions-item-default-v1 .appverbo-row-actions-icon-v1 {
+  color: #64748b !important;
+}
+/* APPVERBO_TABLE_ACTION_MENU_ICONS_FORCE_V2_END */
+
+/* APPVERBO_TABLE_ACTION_MENU_FLOATING_FIX_V1_START */
+.appverbo-row-actions-popup-v1.appverbo-row-actions-popup-floating-v1 {
+  left: 0;
+  max-width: min(240px, calc(100vw - 16px));
+  overflow: visible !important;
+  position: fixed !important;
+  right: auto;
+  top: 0;
+  z-index: 3000;
+}
+
+.appverbo-row-actions-popup-v1[hidden] {
+  display: none !important;
+}
+
+.card.appverbo-searchable-card-v1 {
+  overflow: visible;
+}
+/* APPVERBO_TABLE_ACTION_MENU_FLOATING_FIX_V1_END */
+
 /* APPVERBO_PROCESS_SHELL_RUNTIME_V1_END */

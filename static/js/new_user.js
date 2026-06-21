@@ -3261,6 +3261,10 @@ function enhanceProcessShellTables(root) {
   if (typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
     window.AppVerboProcessShell.enhanceTableActionMenus({ root: scopeRoot });
   }
+
+  if (typeof window.AppVerboProcessShell.enhanceConfirmableActions === "function") {
+    window.AppVerboProcessShell.enhanceConfirmableActions({ root: document });
+  }
 }
 
 function setupTableLimiter(prefix) {
@@ -6655,6 +6659,11 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
         if (formTarget) {
           currentUrl.searchParams.set("target", formTarget);
+        }
+
+        const formAdminTab = readFirstFormValuePostSaveV3(form, ["return_admin_tab", "admin_tab"]);
+        if (formAdminTab && currentUrl.searchParams.get("menu") === "administrativo") {
+          currentUrl.searchParams.set("admin_tab", formAdminTab);
         }
 
         const settingsEditKey = normalizePostSaveKeyV3(

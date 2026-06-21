@@ -17,10 +17,8 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 from appverbo.routes.entities.router import router
@@ -46,6 +44,9 @@ def update_entity(
     entity_profile_scope: str = Form(ENTITY_PROFILE_SCOPE_LEGADO),
     remove_logo: str | None = Form(default=None),
     entity_logo_file: UploadFile | None = File(default=None),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> HTMLResponse:
     clean_entity_id = entity_id.strip()
     entity_form_data, invalid_profile_scope = clean_entity_form_data_v1(
@@ -70,12 +71,14 @@ def update_entity(
 
     if not clean_entity_id.isdigit():
         return RedirectResponse(
-            url=build_users_new_url(
+            url=build_return_url_v1(
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
+                default_menu="administrativo",
+                default_admin_tab="entidade",
+                default_hash="#edit-entity-card",
                 entity_error="Entidade inválida para edição.",
-                menu="administrativo",
-                admin_tab="entidade",
-            )
-            + "#edit-entity-card",
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -114,24 +117,28 @@ def update_entity(
         can_manage_all_entities = bool(entity_permissions["can_manage_all_entities"])
         if not is_entity_within_permissions(parsed_entity_id, entity_permissions):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#recent-entities-card",
                     entity_error="Sem permissão para editar esta entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#recent-entities-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         entity = session.get(Entity, parsed_entity_id)
         if entity is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#create-entity-card",
                     entity_error="Entidade não encontrada.",
-                    menu="administrativo",
-                    admin_tab="entidade",
-                )
-                + "#create-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         if not can_manage_all_entities:
@@ -143,28 +150,32 @@ def update_entity(
 
         if required_field_labels:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error=(
                         "Preencha os campos obrigatórios: "
                         + ", ".join(required_field_labels)
                         + "."
                     ),
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         if invalid_profile_scope:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error="Perfil de partilha inválido.",
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -175,26 +186,30 @@ def update_entity(
         )
         if duplicate_id is not None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error="Já existe outra entidade com este nome.",
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         if clean_profile_scope == ENTITY_PROFILE_SCOPE_OWNER:
             if not entity_permissions["can_manage_all_entities"]:
                 return RedirectResponse(
-                    url=build_users_new_url(
+                    url=build_return_url_v1(
+                        return_menu=return_menu,
+                        return_admin_tab=return_admin_tab,
+                        default_menu="administrativo",
+                        default_admin_tab="entidade",
+                        default_hash="#edit-entity-card",
                         entity_error="Apenas a entidade Owner pode definir perfil Owner.",
-                        menu="administrativo",
-                        admin_tab="entidade",
                         entity_edit_id=str(parsed_entity_id),
-                    )
-                    + "#edit-entity-card",
+                    ),
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
             existing_owner_id = get_existing_owner_entity_id_v1(
@@ -203,27 +218,51 @@ def update_entity(
             )
             if existing_owner_id is not None:
                 return RedirectResponse(
-                    url=build_users_new_url(
+                    url=build_return_url_v1(
+                        return_menu=return_menu,
+                        return_admin_tab=return_admin_tab,
+                        default_menu="administrativo",
+                        default_admin_tab="entidade",
+                        default_hash="#edit-entity-card",
                         entity_error="Já existe outra entidade com perfil Owner. Apenas uma é permitida.",
-                        menu="administrativo",
-                        admin_tab="entidade",
                         entity_edit_id=str(parsed_entity_id),
-                    )
-                    + "#edit-entity-card",
+                    ),
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
+
+        # ###################################################################################
+        # (1) IMPEDIR OWNER INATIVA
+        # ###################################################################################
+        if (
+            (entity.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
+            and clean_status != "active"
+        ):
+            return RedirectResponse(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
+                    entity_error="A entidade Owner não pode ser definida como inativa.",
+                    entity_edit_id=str(parsed_entity_id),
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
 
         current_logo_url = entity.logo_url or ""
         stored_logo_url, logo_error = save_entity_logo_upload(entity_logo_file)
         if logo_error:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error=logo_error,
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -252,13 +291,15 @@ def update_entity(
             if stored_logo_url.startswith("/static/entities/"):
                 (BASE_DIR / stored_logo_url.lstrip("/")).unlink(missing_ok=True)
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
+                    default_menu="administrativo",
+                    default_admin_tab="entidade",
+                    default_hash="#edit-entity-card",
                     entity_error="Não foi possível gravar alterações da entidade.",
-                    menu="administrativo",
-                    admin_tab="entidade",
                     entity_edit_id=str(parsed_entity_id),
-                )
-                + "#edit-entity-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -266,12 +307,13 @@ def update_entity(
         (BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
-        url=build_users_new_url(
+        url=build_return_url_v1(
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
+            default_menu="administrativo",
+            default_admin_tab="entidade",
+            default_hash="#recent-entities-card",
             entity_success="Entidade atualizada com sucesso.",
-            menu="administrativo",
-            admin_tab="entidade",
-            target="#recent-entities-card",
-        )
-        + "#recent-entities-card",
+        ),
         status_code=status.HTTP_303_SEE_OTHER,
     )

@@ -4,11 +4,12 @@
   <thead>
     <tr>
       <th>ID</th>
+      <th>Nº DA ENTIDADE</th>
       <th>Nome</th>
       <th>Email</th>
       <th>Telefone</th>
       <th>Entidade</th>
-      <th>Perfil</th>
+      <th>Sistema</th>
       <th>Estado</th>
       <th>Criado em</th>
       <th>Ações</th>
@@ -18,15 +19,20 @@
     {% for row in rows %}
     <tr>
       <td>{{ row.id }}</td>
+      <td>{{ row.entity_number if row.entity_number is not none and row.entity_number != "" else "-" }}</td>
       <td>{{ row.full_name }}</td>
       <td>{{ row.login_email }}</td>
       <td>{{ row.primary_phone }}</td>
       <td>{{ row.entity_name }}</td>
-      <td>{{ row.profile_name }}</td>
+      <td>{{ row.system_name }}</td>
       <td>
         {% if row.account_status_is_active or row.account_status == "active" %}
         <span class="entity-status entity-status-active">
           {{ row.account_status_label if row.account_status_label is defined else "Ativo" }}
+        </span>
+        {% elif row.account_status == "pending" %}
+        <span class="entity-status entity-status-pending">
+          {{ row.account_status_label if row.account_status_label is defined else "Pendente" }}
         </span>
         {% elif row.account_status_is_inactive or row.account_status == "inactive" %}
         <span class="entity-status entity-status-inactive">
@@ -56,8 +62,19 @@
             &#9998;
           </a>
           {% if allow_delete %}
-          <form method="post" action="/users/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este utilizador');">
+          <form
+            method="post"
+            action="/users/delete"
+            data-appverbo-confirm="1"
+            data-appverbo-confirm-title="Eliminar utilizador"
+            data-appverbo-confirm-message="Tem a certeza que pretende eliminar este utilizador?"
+            data-appverbo-confirm-action-label="Eliminar"
+            data-appverbo-confirm-danger="1"
+          >
             <input type="hidden" name="user_id" value="{{ row.id }}">
+            <input type="hidden" name="return_menu" value="administrativo">
+            <input type="hidden" name="return_admin_tab" value="utilizador">
+            <input type="hidden" name="return_target" value="#create-user-card">
             <button
               type="submit"
               class="table-icon-btn table-icon-btn-danger"

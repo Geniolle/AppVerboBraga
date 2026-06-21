@@ -54,6 +54,16 @@
   color: #b42318;
 }
 
+/* APPVERBO_STATUS_BADGE_PENDING_V1_START */
+.entity-status-pending,
+.user-status-pending,
+.appverbo-status-pending-v1 {
+  background: #fef3c7;
+  border: 1px solid #facc15;
+  color: #92400e;
+}
+/* APPVERBO_STATUS_BADGE_PENDING_V1_END */
+
 /* APPVERBO_ADMIN_STATUS_TABLES_V1_END */
 
 /* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_START */

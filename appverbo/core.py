@@ -17,11 +17,8 @@ from appverbo.config.settings import settings
 from appverbo.db.bootstrap import (
     ensure_entities_optional_columns,
     ensure_members_optional_columns,
-    ensure_required_global_profiles,
     ensure_sidebar_menu_settings_table,
-    get_allowed_global_profiles_for_form,
     normalize_entities_entity_numbers,
-    normalize_profile_name,
 )
 from appverbo.db.session import SessionLocal, engine
 from appverbo.integrations.oauth import oauth
@@ -31,10 +28,8 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 BASE_DIR = settings.BASE_DIR
@@ -54,8 +49,6 @@ MICROSOFT_CLIENT_ID = settings.MICROSOFT_CLIENT_ID
 MICROSOFT_CLIENT_SECRET = settings.MICROSOFT_CLIENT_SECRET
 GITHUB_CLIENT_ID = settings.GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET = settings.GITHUB_CLIENT_SECRET
-ADMIN_PROFILE_NAMES = settings.ADMIN_PROFILE_NAMES
-ENTITY_SUPERUSER_PROFILE_NAME = settings.ENTITY_SUPERUSER_PROFILE_NAME
 
 WHATSAPP_GRAPH_API_VERSION = settings.WHATSAPP_GRAPH_API_VERSION
 WHATSAPP_ACCESS_TOKEN = settings.WHATSAPP_ACCESS_TOKEN
@@ -74,15 +67,13 @@ SMTP_FROM_EMAIL = settings.SMTP_FROM_EMAIL
 SMTP_FROM_NAME = settings.SMTP_FROM_NAME
 SMTP_USE_TLS = settings.SMTP_USE_TLS
 
+ADMIN_LOGIN_EMAIL = settings.ADMIN_LOGIN_EMAIL
 ALLOWED_ACCOUNT_STATUS = settings.ALLOWED_ACCOUNT_STATUS
 ENTITY_PROFILE_SCOPE_OWNER = settings.ENTITY_PROFILE_SCOPE_OWNER
 ENTITY_PROFILE_SCOPE_LEGADO = settings.ENTITY_PROFILE_SCOPE_LEGADO
 ALLOWED_ENTITY_PROFILE_SCOPE = settings.ALLOWED_ENTITY_PROFILE_SCOPE
 ENTITY_NUMBER_MIN = settings.ENTITY_NUMBER_MIN
 ENTITY_NUMBER_MAX = settings.ENTITY_NUMBER_MAX
-GLOBAL_PROFILE_CHOICES = settings.GLOBAL_PROFILE_CHOICES
-ALLOWED_GLOBAL_PROFILE_NAMES = settings.ALLOWED_GLOBAL_PROFILE_NAMES
-ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED = settings.ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED
 
 templates = Jinja2Templates(directory=str(Path(BASE_DIR) / "templates"))
 app = FastAPI(title="AppVerboBraga User Admin")
@@ -132,8 +123,6 @@ __all__ = [
     "MICROSOFT_CLIENT_SECRET",
     "GITHUB_CLIENT_ID",
     "GITHUB_CLIENT_SECRET",
-    "ADMIN_PROFILE_NAMES",
-    "ENTITY_SUPERUSER_PROFILE_NAME",
     "WHATSAPP_GRAPH_API_VERSION",
     "WHATSAPP_ACCESS_TOKEN",
     "WHATSAPP_PHONE_NUMBER_ID",
@@ -149,15 +138,13 @@ __all__ = [
     "SMTP_FROM_EMAIL",
     "SMTP_FROM_NAME",
     "SMTP_USE_TLS",
+    "ADMIN_LOGIN_EMAIL",
     "ALLOWED_ACCOUNT_STATUS",
     "ENTITY_PROFILE_SCOPE_OWNER",
     "ENTITY_PROFILE_SCOPE_LEGADO",
     "ALLOWED_ENTITY_PROFILE_SCOPE",
     "ENTITY_NUMBER_MIN",
     "ENTITY_NUMBER_MAX",
-    "GLOBAL_PROFILE_CHOICES",
-    "ALLOWED_GLOBAL_PROFILE_NAMES",
-    "ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED",
     "engine",
     "SessionLocal",
     "templates",
@@ -165,18 +152,13 @@ __all__ = [
     "oauth",
     "ensure_entities_optional_columns",
     "ensure_members_optional_columns",
-    "ensure_required_global_profiles",
     "ensure_sidebar_menu_settings_table",
     "normalize_entities_entity_numbers",
-    "normalize_profile_name",
-    "get_allowed_global_profiles_for_form",
     "Entity",
     "Member",
     "MemberEntity",
     "MemberEntityStatus",
     "MemberStatus",
-    "Profile",
     "User",
     "UserAccountStatus",
-    "UserProfile",
 ]

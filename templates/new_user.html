@@ -8,7 +8,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260619-top-submenu-sap-style-v1">
-  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260619-process-shell-v4">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260621-actions-icons-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
@@ -602,6 +602,9 @@
 
                 <div class="admin-subsection">
                   <form id="create-user-form" method="post" action="/users/new">
+                    <input type="hidden" name="return_menu" value="administrativo">
+                    <input type="hidden" name="return_admin_tab" value="utilizador">
+                    <input type="hidden" name="return_target" value="#create-user-card">
                     <div class="grid">
                       <div class="field">
                         <label for="full_name">Nome completo *</label>
@@ -619,25 +622,64 @@
                         <label for="create_user_status">Estado da conta</label>
                         <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
                       </div>
+                      {% if can_select_user_entity %}
                       <div class="field">
-                        <label for="entity_auto_name">Entidade (automática pelo email)</label>
+                        <label for="create_user_entity_id">Entidade *</label>
+                        <select
+                          id="create_user_entity_id"
+                          name="entity_id"
+                          required
+                          onchange="(function(s){var o=s.options[s.selectedIndex];var n=document.getElementById('create_user_entity_number');if(n){n.value=o?o.dataset.entityNumber||'':'';};})(this)"
+                        >
+                          <option value="">— Selecione uma entidade —</option>
+                          {% for entity in entities_for_user_form %}
+                          <option
+                            value="{{ entity.id }}"
+                            data-entity-number="{{ entity.entity_number if entity.entity_number is not none else '' }}"
+                            {% if form_data.entity_id == entity.id | string %}selected{% endif %}
+                          >{{ entity.name }}{% if entity.entity_number is not none %} (Nº {{ entity.entity_number }}){% endif %}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="create_user_entity_number">Nº da Entidade</label>
                         <input
-                          id="entity_auto_name"
-                          value="{{ form_data.entity_name if form_data.entity_name else 'Será definida pelo email; se não encontrar domínio, usa a entidade atual' }}"
+                          id="create_user_entity_number"
+                          value="{{ form_data.entity_number if form_data.entity_number else '' }}"
                           readonly
                           disabled
                           class="readonly-field"
                         >
                       </div>
-                      <div class="field full">
-                        <label for="profile_id">Perfil global (opcional)</label>
-                        <select id="profile_id" name="profile_id">
-                          <option value="">Sem perfil</option>
-                          {% for profile in profiles %}
-                            <option value="{{ profile.id }}" {% if form_data.profile_id == profile.id|string %}selected{% endif %}>
-                              {{ profile.name }}
-                            </option>
-                          {% endfor %}
+                      {% else %}
+                      <div class="field">
+                        <label for="entity_auto_name">Entidade</label>
+                        <input
+                          id="entity_auto_name"
+                          value="{{ current_user_entity_name if current_user_entity_name else '—' }}"
+                          readonly
+                          disabled
+                          class="readonly-field"
+                        >
+                        <input type="hidden" name="entity_id" value="{{ current_user_entity_id if current_user_entity_id else '' }}">
+                      </div>
+                      <div class="field">
+                        <label for="entity_auto_number">Nº da Entidade</label>
+                        <input
+                          id="entity_auto_number"
+                          value="{{ current_user_entity_number if current_user_entity_number is not none else '—' }}"
+                          readonly
+                          disabled
+                          class="readonly-field"
+                        >
+                      </div>
+                      {% endif %}
+                      <div class="field">
+                        <label for="system_type">Sistema</label>
+                        <select id="system_type" name="system_type">
+                          <option value="default" {% if not form_data.system_type or form_data.system_type == "default" %}selected{% endif %}>Default</option>
+                          <option value="owner" {% if form_data.system_type == "owner" %}selected{% endif %}>Owner</option>
+                          <option value="legado" {% if form_data.system_type == "legado" %}selected{% endif %}>Legado</option>
                         </select>
                       </div>
                     </div>
@@ -702,6 +744,9 @@
           <div class="admin-subsection">
             <form method="post" action="/users/update">
               <input type="hidden" name="user_id" value="{{ user_edit_data.id }}">
+              <input type="hidden" name="return_menu" value="administrativo">
+              <input type="hidden" name="return_admin_tab" value="utilizador">
+              <input type="hidden" name="return_target" value="#edit-user-card">
               <div class="grid">
                 <div class="field">
                   <label for="edit_user_full_name">Nome completo *</label>
@@ -735,15 +780,24 @@
                   >
                   <input type="hidden" name="entity_id" value="{{ user_edit_data.entity_id }}">
                 </div>
-                <div class="field full">
-                  <label for="edit_user_profile_id">Perfil global (opcional)</label>
-                  <select id="edit_user_profile_id" name="profile_id">
-                    <option value="">Sem perfil</option>
-                    {% for profile in profiles %}
-                      <option value="{{ profile.id }}" {% if user_edit_data.profile_id == profile.id|string %}selected{% endif %}>
-                        {{ profile.name }}
-                      </option>
-                    {% endfor %}
+                <div class="field">
+                  <label for="edit_user_entity_number">Nº DA ENTIDADE</label>
+                  <input
+                    id="edit_user_entity_number"
+                    name="entity_number"
+                    type="text"
+                    value="{{ user_edit_data.entity_number if user_edit_data.entity_number else '' }}"
+                    class="readonly-field"
+                    readonly
+                    placeholder="-"
+                  >
+                </div>
+                <div class="field">
+                  <label for="edit_user_system_type">Sistema</label>
+                  <select id="edit_user_system_type" name="system_type" {% if user_readonly_mode %}disabled{% endif %}>
+                    <option value="default" {% if not user_edit_data.system_type or user_edit_data.system_type == "default" %}selected{% endif %}>Default</option>
+                    <option value="owner" {% if user_edit_data.system_type == "owner" %}selected{% endif %}>Owner</option>
+                    <option value="legado" {% if user_edit_data.system_type == "legado" %}selected{% endif %}>Legado</option>
                   </select>
                 </div>
               </div>
@@ -797,6 +851,9 @@
               {% endif %}
 
               <form method="post" action="/entities/new" enctype="multipart/form-data">
+                <input type="hidden" name="return_menu" value="administrativo">
+                <input type="hidden" name="return_admin_tab" value="entidade">
+                <input type="hidden" name="return_target" value="#create-entity-card">
                                 <div class="entity-first-row">
                   <div class="field entity-first-row-client">
                     <label for="entity_number">Nº da entidade</label>
@@ -907,6 +964,9 @@
 
           <form method="post" action="/entities/update" enctype="multipart/form-data">
             <input type="hidden" name="entity_id" value="{{ entity_edit_data.id }}">
+            <input type="hidden" name="return_menu" value="administrativo">
+            <input type="hidden" name="return_admin_tab" value="entidade">
+            <input type="hidden" name="return_target" value="#edit-entity-card">
                         <div class="entity-first-row">
               <div class="field entity-first-row-client">
                 <label for="edit_entity_number">Nº da entidade</label>
@@ -1121,8 +1181,19 @@
                         {% if current_user_can_manage_all_entities %}
                         {% if not row.is_active %}
 <!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_START -->
-<form method="post" action="/entities/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar esta entidade');">
+<form
+                            method="post"
+                            action="/entities/delete"
+                            data-appverbo-confirm="1"
+                            data-appverbo-confirm-title="Eliminar entidade"
+                            data-appverbo-confirm-message="Tem a certeza que pretende eliminar esta entidade?"
+                            data-appverbo-confirm-action-label="Eliminar"
+                            data-appverbo-confirm-danger="1"
+                          >
                           <input type="hidden" name="entity_id" value="{{ row.id }}">
+                          <input type="hidden" name="return_menu" value="administrativo">
+                          <input type="hidden" name="return_admin_tab" value="entidade">
+                          <input type="hidden" name="return_target" value="#recent-entities-card">
                           <button
                             type="submit"
                             class="table-icon-btn table-icon-btn-danger"
@@ -1228,8 +1299,19 @@
                         {% if current_user_can_manage_all_entities %}
                         {% if not row.is_active %}
 <!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_START -->
-<form method="post" action="/entities/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar esta entidade');">
+<form
+                            method="post"
+                            action="/entities/delete"
+                            data-appverbo-confirm="1"
+                            data-appverbo-confirm-title="Eliminar entidade"
+                            data-appverbo-confirm-message="Tem a certeza que pretende eliminar esta entidade?"
+                            data-appverbo-confirm-action-label="Eliminar"
+                            data-appverbo-confirm-danger="1"
+                          >
                           <input type="hidden" name="entity_id" value="{{ row.id }}">
+                          <input type="hidden" name="return_menu" value="administrativo">
+                          <input type="hidden" name="return_admin_tab" value="entidade">
+                          <input type="hidden" name="return_target" value="#recent-entities-card">
                           <button
                             type="submit"
                             class="table-icon-btn table-icon-btn-danger"
@@ -2284,7 +2366,15 @@
                         &#9998;
                       </a>
                       {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
-                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                      <form
+                        method="post"
+                        action="/settings/menu/delete"
+                        data-appverbo-confirm="1"
+                        data-appverbo-confirm-title="Eliminar menu"
+                        data-appverbo-confirm-message="Tem a certeza que pretende eliminar este menu?"
+                        data-appverbo-confirm-action-label="Eliminar"
+                        data-appverbo-confirm-danger="1"
+                      >
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="redirect_menu" value="administrativo">
                         <input type="hidden" name="redirect_target" value="#admin-account-status-card">
@@ -2428,7 +2518,15 @@
                         &#9998;
                       </a>
                       {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
-                      <form method="post" action="/settings/menu/delete" onsubmit="return confirm('Tem a certeza que pretende eliminar este menu?');">
+                      <form
+                        method="post"
+                        action="/settings/menu/delete"
+                        data-appverbo-confirm="1"
+                        data-appverbo-confirm-title="Eliminar menu"
+                        data-appverbo-confirm-message="Tem a certeza que pretende eliminar este menu?"
+                        data-appverbo-confirm-action-label="Eliminar"
+                        data-appverbo-confirm-danger="1"
+                      >
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="redirect_menu" value="administrativo">
                         <input type="hidden" name="redirect_target" value="#admin-account-status-card">
@@ -2594,7 +2692,7 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260619-process-shell-v3"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260621-actions-icons-v2"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260619-top-submenu-runtime-v1"></script>
   <script src="/static/js/new_user.js?v=20260619-entity-post-save-context-v3"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
@@ -2611,4 +2709,24 @@
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
   <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
+  <script>
+    (function () {
+      var systemSelect = document.getElementById('edit_user_system_type');
+      var entityNumberInput = document.getElementById('edit_user_entity_number');
+      if (!systemSelect || !entityNumberInput) return;
+
+      function applyEntityNumberState() {
+        if (systemSelect.value === 'owner') {
+          entityNumberInput.removeAttribute('readonly');
+          entityNumberInput.classList.remove('readonly-field');
+        } else {
+          entityNumberInput.setAttribute('readonly', '');
+          entityNumberInput.classList.add('readonly-field');
+        }
+      }
+
+      applyEntityNumberState();
+      systemSelect.addEventListener('change', applyEntityNumberState);
+    })();
+  </script>
 {% endblock %}

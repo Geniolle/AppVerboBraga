@@ -33,10 +33,8 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 from appverbo.routes.profile.router import router

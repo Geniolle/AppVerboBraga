@@ -19,16 +19,13 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 
 from appverbo.routes.users.router import router
 from appverbo.routes.users.helpers import (
     _ensure_not_last_active_admin_for_member,
-    _is_admin_profile,
     _member_is_within_permissions,
     _resolve_entity_from_user_email,
 )
@@ -41,25 +38,32 @@ def update_user(
     primary_phone: str = Form(...),
     email: str = Form(...),
     entity_id: str = Form(""),
+    entity_number: str = Form(""),
     account_status: str = Form(UserAccountStatus.ACTIVE.value),
-    profile_id: str = Form(""),
+    system_type: str = Form("default"),
+    return_menu: str = Form(""),
+    return_admin_tab: str = Form(""),
+    return_target: str = Form(""),
 ) -> RedirectResponse:
     clean_user_id = user_id.strip()
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
     clean_email = email.strip().lower()
     clean_account_status = account_status.strip().lower()
-    clean_profile_id = profile_id.strip()
+    clean_system_type = normalize_user_system_type_v1(system_type)
+    clean_entity_number = entity_number.strip()
     clean_entity_id = entity_id.strip()
 
     if not clean_user_id.isdigit():
         return RedirectResponse(
-            url=build_users_new_url(
+            url=build_return_url_v1(
+                return_menu=return_menu,
+                return_admin_tab=return_admin_tab,
                 error="Utilizador inválido para edição.",
-                menu="administrativo",
-                admin_tab="utilizador",
-            )
-            + "#create-user-card",
+                default_menu="administrativo",
+                default_admin_tab="utilizador",
+                default_hash="#create-user-card",
+            ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
     parsed_user_id = int(clean_user_id)
@@ -75,12 +79,14 @@ def update_user(
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Apenas administradores podem editar utilizadores.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
         entity_permissions = get_user_entity_permissions(
@@ -93,12 +99,14 @@ def update_user(
         user = session.get(User, parsed_user_id)
         if user is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Utilizador não encontrado.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -108,24 +116,28 @@ def update_user(
             entity_permissions,
         ):
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Sem permissão para editar este utilizador.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
         member = session.get(Member, user.member_id)
         if member is None:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Membro associado ao utilizador não encontrado.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
-                )
-                + "#create-user-card",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#create-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
@@ -201,17 +213,6 @@ def update_user(
         if selected_entity is None and entity_resolution_error:
             errors.append(entity_resolution_error)
 
-        selected_profile: Profile | None = None
-        if clean_profile_id:
-            try:
-                selected_profile = session.get(Profile, int(clean_profile_id))
-            except ValueError:
-                errors.append("Perfil selecionado inválido.")
-            if selected_profile is None and not errors:
-                errors.append("Perfil selecionado não existe.")
-            elif not is_allowed_global_profile(selected_profile):
-                errors.append("Perfil global inválido. Escolha ADMIN, SUPER USER ou USER.")
-
         duplicate_member_id = session.scalar(
             select(Member.id).where(
                 func.lower(Member.email) == clean_email,
@@ -232,18 +233,17 @@ def update_user(
 
         if errors:
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error=" ".join(errors),
-                    menu="administrativo",
-                    admin_tab="utilizador",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#edit-user-card",
                     user_edit_id=str(parsed_user_id),
-                )
-                + "#edit-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
-
-        if selected_profile is None:
-            selected_profile = get_or_create_entity_superuser_profile(session)
 
         current_is_active_admin = (
             str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
@@ -251,7 +251,7 @@ def update_user(
         )
         resulting_is_admin = (
             (bool(ADMIN_LOGIN_EMAIL) and clean_email == ADMIN_LOGIN_EMAIL)
-            or _is_admin_profile(selected_profile)
+            or is_owner_system_v1(clean_system_type)
         )
         resulting_is_active_admin = (
             clean_account_status == UserAccountStatus.ACTIVE.value and resulting_is_admin
@@ -264,13 +264,15 @@ def update_user(
             )
             if not can_change_admin_state:
                 return RedirectResponse(
-                    url=build_users_new_url(
+                    url=build_return_url_v1(
+                        return_menu=return_menu,
+                        return_admin_tab=return_admin_tab,
                         error=admin_state_error,
-                        menu="administrativo",
-                        admin_tab="utilizador",
+                        default_menu="administrativo",
+                        default_admin_tab="utilizador",
+                        default_hash="#edit-user-card",
                         user_edit_id=str(parsed_user_id),
-                    )
-                    + "#edit-user-card",
+                    ),
                     status_code=status.HTTP_303_SEE_OTHER,
                 )
 
@@ -301,36 +303,35 @@ def update_user(
                 primary_link.entity_id = selected_entity.id
                 primary_link.status = MemberEntityStatus.ACTIVE.value
 
-        session.execute(delete(UserProfile).where(UserProfile.user_id == user.id))
-        session.add(
-            UserProfile(
-                user_id=user.id,
-                profile_id=selected_profile.id,
-                is_active=True,
-            )
-        )
+        user.system_type = clean_system_type
+        if clean_system_type == "owner" and selected_entity is not None and clean_entity_number.isdigit():
+            selected_entity.entity_number = int(clean_entity_number)
 
         try:
             session.commit()
         except IntegrityError:
             session.rollback()
             return RedirectResponse(
-                url=build_users_new_url(
+                url=build_return_url_v1(
+                    return_menu=return_menu,
+                    return_admin_tab=return_admin_tab,
                     error="Não foi possível atualizar utilizador.",
-                    menu="administrativo",
-                    admin_tab="utilizador",
+                    default_menu="administrativo",
+                    default_admin_tab="utilizador",
+                    default_hash="#edit-user-card",
                     user_edit_id=str(parsed_user_id),
-                )
-                + "#edit-user-card",
+                ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
     return RedirectResponse(
-        url=build_users_new_url(
+        url=build_return_url_v1(
+            return_menu=return_menu,
+            return_admin_tab=return_admin_tab,
             success="Utilizador atualizado com sucesso.",
-            menu="administrativo",
-            admin_tab="utilizador",
-        )
-        + "#create-user-card",
+            default_menu="administrativo",
+            default_admin_tab="utilizador",
+            default_hash="#create-user-card",
+        ),
         status_code=status.HTTP_303_SEE_OTHER,
     )

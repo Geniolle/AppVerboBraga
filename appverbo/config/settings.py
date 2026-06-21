@@ -44,8 +44,7 @@ class Settings:
     MICROSOFT_CLIENT_SECRET: str | None
     GITHUB_CLIENT_ID: str | None
     GITHUB_CLIENT_SECRET: str | None
-    ADMIN_PROFILE_NAMES: tuple[str, ...]
-    ENTITY_SUPERUSER_PROFILE_NAME: str
+    ADMIN_LOGIN_EMAIL: str
 
     WHATSAPP_GRAPH_API_VERSION: str
     WHATSAPP_ACCESS_TOKEN: str
@@ -71,9 +70,6 @@ class Settings:
     ALLOWED_ENTITY_PROFILE_SCOPE: set[str]
     ENTITY_NUMBER_MIN: int
     ENTITY_NUMBER_MAX: int
-    GLOBAL_PROFILE_CHOICES: tuple[dict[str, str], ...]
-    ALLOWED_GLOBAL_PROFILE_NAMES: tuple[str, ...]
-    ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED: tuple[str, ...]
 
 
 def _build_settings() -> Settings:
@@ -82,13 +78,6 @@ def _build_settings() -> Settings:
     static_dir = base_dir / "static"
     entity_logos_dir = static_dir / "entities"
     entity_logos_dir.mkdir(parents=True, exist_ok=True)
-
-    global_profile_choices = (
-        {"name": "ADMIN", "description": "Perfil administrativo global."},
-        {"name": "SUPER USER", "description": "Perfil com permissoes elevadas."},
-        {"name": "USER", "description": "Perfil base de utilizador."},
-    )
-    allowed_global_profile_names = tuple(choice["name"] for choice in global_profile_choices)
 
     return Settings(
         BASE_DIR=base_dir,
@@ -111,14 +100,7 @@ def _build_settings() -> Settings:
         MICROSOFT_CLIENT_SECRET=os.getenv("MICROSOFT_CLIENT_SECRET"),
         GITHUB_CLIENT_ID=os.getenv("GITHUB_CLIENT_ID"),
         GITHUB_CLIENT_SECRET=os.getenv("GITHUB_CLIENT_SECRET"),
-        ADMIN_PROFILE_NAMES=tuple(
-            name.strip().lower()
-            for name in (os.getenv("ADMIN_PROFILE_NAMES", "admin,administrador") or "").split(",")
-            if name.strip()
-        ),
-        ENTITY_SUPERUSER_PROFILE_NAME=(
-            os.getenv("ENTITY_SUPERUSER_PROFILE_NAME", "SUPER USER") or "SUPER USER"
-        ).strip(),
+        ADMIN_LOGIN_EMAIL=(os.getenv("ADMIN_LOGIN_EMAIL", "") or "").strip().lower(),
         WHATSAPP_GRAPH_API_VERSION=(os.getenv("WHATSAPP_GRAPH_API_VERSION", "v22.0") or "v22.0").strip(),
         WHATSAPP_ACCESS_TOKEN=(os.getenv("WHATSAPP_ACCESS_TOKEN", "") or "").strip(),
         WHATSAPP_PHONE_NUMBER_ID=(os.getenv("WHATSAPP_PHONE_NUMBER_ID", "") or "").strip(),
@@ -140,11 +122,6 @@ def _build_settings() -> Settings:
         ALLOWED_ENTITY_PROFILE_SCOPE={"owner", "legado"},
         ENTITY_NUMBER_MIN=1000,
         ENTITY_NUMBER_MAX=9999,
-        GLOBAL_PROFILE_CHOICES=global_profile_choices,
-        ALLOWED_GLOBAL_PROFILE_NAMES=allowed_global_profile_names,
-        ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED=tuple(
-            choice["name"].strip().lower() for choice in global_profile_choices
-        ),
     )
 
 

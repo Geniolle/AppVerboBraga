@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-import re
-from typing import Any
-
-from sqlalchemy import func, inspect, select, text
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import NoSuchTableError
-from sqlalchemy.orm import Session
 
 from appverbo.config.settings import settings
 from appverbo.db.session import SessionLocal, engine
-from appverbo.models import Profile
 
 
 def ensure_entities_optional_columns() -> None:
@@ -133,51 +128,6 @@ def ensure_sidebar_menu_settings_table() -> None:
         connection.execute(text("ALTER TABLE sidebar_menu_settings ADD COLUMN menu_config TEXT"))
 
 
-def normalize_profile_name(value: str | None) -> str:
-    return re.sub(r"\s+", " ", (value or "").strip()).lower()
-
-
-def ensure_required_global_profiles() -> None:
-    inspector = inspect(engine)
-    try:
-        table_names = set(inspector.get_table_names())
-    except NoSuchTableError:
-        return
-    if "profiles" not in table_names:
-        return
-
-    with SessionLocal() as session:
-        existing_profiles = session.execute(
-            select(Profile).where(func.lower(Profile.name).in_(settings.ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED))
-        ).scalars().all()
-        existing_by_normalized_name = {
-            normalize_profile_name(profile.name): profile for profile in existing_profiles
-        }
-
-        changed = False
-        for choice in settings.GLOBAL_PROFILE_CHOICES:
-            normalized_name = normalize_profile_name(choice["name"])
-            profile = existing_by_normalized_name.get(normalized_name)
-            if profile is None:
-                session.add(
-                    Profile(
-                        name=choice["name"],
-                        description=choice["description"],
-                        is_active=True,
-                    )
-                )
-                changed = True
-                continue
-
-            if not profile.is_active:
-                profile.is_active = True
-                changed = True
-            if not (profile.description or "").strip():
-                profile.description = choice["description"]
-                changed = True
-
-        if changed:
-            session.commit()
 
 
 def normalize_entities_entity_numbers() -> None:
@@ -266,26 +216,3 @@ def normalize_entities_entity_numbers() -> None:
             next_number += 1
 
 
-def get_allowed_global_profiles_for_form(session: Session) -> list[dict[str, Any]]:
-    profile_rows = session.execute(
-        select(Profile.id, Profile.name)
-       .where(
-            Profile.is_active.is_(True),
-            func.lower(Profile.name).in_(settings.ALLOWED_GLOBAL_PROFILE_NAMES_NORMALIZED),
-        )
-       .order_by(Profile.id.asc())
-    ).all()
-
-    row_by_normalized_name: dict[str, Any] = {}
-    for row in profile_rows:
-        normalized_name = normalize_profile_name(row.name)
-        if normalized_name not in row_by_normalized_name:
-            row_by_normalized_name[normalized_name] = row
-
-    profiles_for_form: list[dict[str, Any]] = []
-    for choice in settings.GLOBAL_PROFILE_CHOICES:
-        row = row_by_normalized_name.get(normalize_profile_name(choice["name"]))
-        if row is None:
-            continue
-        profiles_for_form.append({"id": row.id, "name": choice["name"]})
-    return profiles_for_form

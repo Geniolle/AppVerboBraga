@@ -19,7 +19,6 @@ from appverbo.models.modules import (
     EntityModuleEntitlement,
     SidebarMenuItem,
 )
-from appverbo.models.profile import Profile, UserProfile
 from appverbo.models.sidebar_menu_setting import SidebarMenuSetting
 from appverbo.models.user import User
 
@@ -41,8 +40,6 @@ __all__ = [
     "AppModule",
     "EntityModuleEntitlement",
     "SidebarMenuItem",
-    "Profile",
-    "UserProfile",
     "SidebarMenuSetting",
     "User",
 ]

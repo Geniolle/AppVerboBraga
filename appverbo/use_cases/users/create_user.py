@@ -14,18 +14,19 @@ from appverbo.models import (
     MemberEntity,
     MemberEntityStatus,
     MemberStatus,
-    Profile,
     User,
     UserAccountStatus,
-    UserProfile,
 )
 from appverbo.services.auth import (
     build_user_invite_link,
     build_user_invite_token,
-    get_or_create_entity_superuser_profile,
     is_admin_user,
-    is_allowed_global_profile,
     send_user_invite_email,
+)
+from appverbo.services.user_system import normalize_user_system_type_v1
+from appverbo.services.user_entity_scope import (
+    get_actor_system_type_v1,
+    get_actor_primary_entity_v1,
 )
 from appverbo.services.user_member import ensure_user_for_member
 from appverbo.services.page import (
@@ -202,7 +203,7 @@ class CreateUserInput:
     clean_full_name: str
     clean_primary_phone: str
     clean_email: str
-    clean_profile_id: str
+    clean_system_type: str
     clean_invite_delivery: str
     form_data: dict[str, str]
     errors: list[str]
@@ -222,13 +223,15 @@ def normalize_create_user_input_v1(
     full_name: str,
     primary_phone: str,
     email: str,
-    profile_id: str,
+    entity_id: str = "",
+    system_type: str = "default",
     invite_delivery: str,
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
     clean_email = email.strip().lower()
-    clean_profile_id = profile_id.strip()
+    clean_entity_id = (entity_id or "").strip()
+    clean_system_type = normalize_user_system_type_v1(system_type)
     clean_invite_delivery = invite_delivery.strip().lower()
     if clean_invite_delivery not in {"email", "link"}:
         clean_invite_delivery = "email"
@@ -237,9 +240,10 @@ def normalize_create_user_input_v1(
         "full_name": clean_full_name,
         "primary_phone": clean_primary_phone,
         "email": clean_email,
-        "entity_id": "",
+        "entity_id": clean_entity_id,
         "entity_name": "",
-        "profile_id": clean_profile_id,
+        "entity_number": "",
+        "system_type": clean_system_type,
     }
 
     errors: list[str] = []
@@ -254,7 +258,7 @@ def normalize_create_user_input_v1(
         clean_full_name=clean_full_name,
         clean_primary_phone=clean_primary_phone,
         clean_email=clean_email,
-        clean_profile_id=clean_profile_id,
+        clean_system_type=clean_system_type,
         clean_invite_delivery=clean_invite_delivery,
         form_data=form_data,
         errors=errors,
@@ -359,17 +363,68 @@ def execute_create_user(
     form_data = dict(payload.form_data)
     selected_entity = None
 
-    selected_entity, entity_resolution_error = _resolve_entity_from_user_email_v2(
-        session,
-        payload.clean_email,
-        entity_permissions,
-        selected_entity_id,
-    )
+    # APPVERBO_ENTITY_SCOPE_RESOLUTION_V1_START
+    # A entidade do novo utilizador depende do sistema_type do utilizador LOGADO:
+    # - owner → escolhe qualquer entidade ativa no dropdown (entity_id submetido)
+    # - legado/default → fica restrito à entidade do próprio ator (ignora form entity_id)
+    actor_system_type = get_actor_system_type_v1(session, int(actor_user["id"]))
+
+    if actor_system_type == "owner":
+        submitted_entity_id = form_data.get("entity_id", "")
+        if submitted_entity_id:
+            try:
+                _owner_eid = int(submitted_entity_id)
+            except (TypeError, ValueError):
+                _owner_eid = 0
+            if _owner_eid > 0:
+                _candidate = session.execute(
+                    select(Entity).where(
+                        Entity.id == _owner_eid,
+                        Entity.is_active.is_(True),
+                    )
+                ).scalar_one_or_none()
+                if _candidate is not None:
+                    selected_entity = _candidate
+                else:
+                    errors.append("Entidade selecionada não existe ou está inativa.")
+            else:
+                errors.append("Selecione uma entidade válida.")
+        if selected_entity is None and not errors:
+            # Fallback: resolução por domínio de email
+            selected_entity, entity_resolution_error = _resolve_entity_from_user_email_v2(
+                session,
+                payload.clean_email,
+                entity_permissions,
+                selected_entity_id,
+            )
+            if selected_entity is None and entity_resolution_error:
+                errors.append(entity_resolution_error)
+    else:
+        # Legado / Default: entidade do ator logado
+        _actor_entity = get_actor_primary_entity_v1(session, int(actor_user["id"]))
+        if _actor_entity is None:
+            errors.append(
+                "O utilizador logado não tem entidade associada. Contacte o administrador."
+            )
+        else:
+            selected_entity = session.execute(
+                select(Entity).where(
+                    Entity.id == _actor_entity["id"],
+                    Entity.is_active.is_(True),
+                )
+            ).scalar_one_or_none()
+            if selected_entity is None:
+                errors.append("Entidade do utilizador logado está inativa ou não foi encontrada.")
+
     if selected_entity is not None:
         form_data["entity_id"] = str(selected_entity.id)
         form_data["entity_name"] = selected_entity.name or ""
-    elif entity_resolution_error:
-        errors.append(entity_resolution_error)
+        form_data["entity_number"] = (
+            str(selected_entity.entity_number)
+            if selected_entity.entity_number is not None
+            else ""
+        )
+    # APPVERBO_ENTITY_SCOPE_RESOLUTION_V1_END
 
     existing_member: Member | None = None
     existing_user_row: Any | None = None
@@ -473,17 +528,6 @@ def execute_create_user(
                 errors.append("Sem permissão para utilizar este email noutra entidade.")
                 existing_member = None
 
-    selected_profile: Profile | None = None
-    if payload.clean_profile_id:
-        try:
-            selected_profile = session.get(Profile, int(payload.clean_profile_id))
-        except ValueError:
-            errors.append("Perfil selecionado inválido.")
-        if selected_profile is None and not errors:
-            errors.append("Perfil selecionado não existe.")
-        elif not is_allowed_global_profile(selected_profile):
-            errors.append("Perfil global inválido. Escolha ADMIN, SUPER USER ou USER.")
-
     if errors:
         return CreateUserOutcome(
             kind="template",
@@ -499,9 +543,6 @@ def execute_create_user(
                 page_data=page_data,
             ),
         )
-
-    if selected_profile is None:
-        selected_profile = get_or_create_entity_superuser_profile(session)
 
     if existing_member is None:
         member = Member(
@@ -550,14 +591,7 @@ def execute_create_user(
         status=UserAccountStatus.PENDING.value,
         created_by_user_id=int(actor_user["id"]),
     )
-
-    session.add(
-        UserProfile(
-            user_id=user.id,
-            profile_id=selected_profile.id,
-            is_active=True,
-        )
-    )
+    user.system_type = payload.clean_system_type
 
     try:
         session.commit()
