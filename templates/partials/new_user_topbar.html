@@ -1,5 +1,28 @@
+  <link rel="stylesheet" href="/static/css/modules/sidebar_collapse_v1.css?v=20260622-sidebar-collapse-v1">
+  <script>
+    try {
+      if (window.localStorage.getItem("appverbo:sidebar-collapsed-v1") === "1") {
+        document.body.classList.add("appverbo-sidebar-collapsed");
+      }
+    } catch (error) {
+      // Preferencia visual opcional.
+    }
+  </script>
   <header class="topbar">
     <div class="topbar-left">
+      <button
+        id="sidebar-collapse-toggle"
+        class="sidebar-collapse-toggle"
+        type="button"
+        aria-label="Ocultar menu lateral"
+        aria-controls="app-sidebar"
+        aria-expanded="true"
+        title="Ocultar menu lateral"
+      >
+        <span class="sidebar-collapse-toggle-line" aria-hidden="true"></span>
+        <span class="sidebar-collapse-toggle-line" aria-hidden="true"></span>
+        <span class="sidebar-collapse-toggle-line" aria-hidden="true"></span>
+      </button>
       <div class="brand">
         <span class="brand-mark">
           {% if user_personal_data.primary_entity_logo_url %}
