@@ -1090,4 +1090,100 @@ body.appverbo-url-feedback-active-v1 .card .alert {
 .appverbo-hide-col-15 td:nth-child(15) { display: none !important; }
 /* APPVERBO_RESPONSIVE_COLUMNS_V1_END */
 
+/* ###################################################################################
+   APPVERBO_PROCESS_ACTION_CARD_STANDARD_V2_START
+################################################################################### */
+
+.card.appverbo-process-action-card-v1 {
+  background: #f7faff !important;
+  border: 1px solid #d8e1ef !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  padding: 14px 16px !important;
+  width: 100% !important;
+}
+
+.card.appverbo-process-action-card-v1 .appverbo-process-action-toolbar-v1 {
+  align-items: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  justify-content: flex-start !important;
+  margin: 0 !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+.appverbo-process-action-toolbar-v1 > .appverbo-process-action-details-v1 {
+  align-self: center !important;
+  margin: 0 !important;
+}
+
+.appverbo-process-action-toolbar-v1 > .appverbo-process-action-details-v1[open] {
+  flex: 1 1 100% !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.appverbo-process-action-toolbar-v1 summary,
+.appverbo-process-action-toggle-v1 {
+  align-items: center !important;
+  background: #0f4fb7 !important;
+  border: 1px solid #0f4fb7 !important;
+  border-radius: 4px !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  justify-content: center !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  min-height: 38px !important;
+  padding: 0 16px !important;
+  text-decoration: none !important;
+}
+
+.appverbo-process-action-toolbar-v1 summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.appverbo-process-action-toolbar-v1 summary::marker {
+  content: "" !important;
+}
+
+.appverbo-process-action-details-v1[open] > .appverbo-process-action-toggle-v1 {
+  display: none !important;
+}
+
+.appverbo-process-action-toolbar-v1 .action-btn,
+.appverbo-process-action-toolbar-v1 .action-btn-cancel,
+.appverbo-process-action-toolbar-v1 .action-btn-secondary,
+.appverbo-process-action-toolbar-v1 .entity-create-link-shortcut {
+  align-items: center !important;
+  display: inline-flex !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  justify-content: center !important;
+  line-height: 1.2 !important;
+  min-height: 38px !important;
+  padding: 0 16px !important;
+}
+
+.appverbo-process-action-panel-v1,
+.appverbo-process-action-card-v1 .entity-create-body {
+  margin-top: 14px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* APPVERBO_PROCESS_ACTION_CARD_STANDARD_V2_END */
+
 /* APPVERBO_PROCESS_SHELL_RUNTIME_V1_END */

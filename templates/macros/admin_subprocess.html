@@ -36,7 +36,7 @@
 {% macro render_admin_subprocess_form(state) %}
   <section
     id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
-    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1"
+    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appverbo-process-action-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-menu-scope="administrativo"
     style="display:none"
@@ -70,34 +70,36 @@
         </div>
       </form>
     {% else %}
-      <details class="entity-create-collapse admin-subprocess-create-collapse-v1">
-        <summary>
-          <span>{{ state.config.create_title }}</span>
-        </summary>
+      <div class="appverbo-process-action-toolbar-v1">
+        <details class="entity-create-collapse admin-subprocess-create-collapse-v1 appverbo-process-action-details-v1">
+          <summary class="appverbo-process-action-toggle-v1">
+            <span>{{ state.config.create_title }}</span>
+          </summary>
 
-        <div class="entity-create-body">
-          <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
-            <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
-            <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
-            <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <div class="entity-create-body appverbo-process-action-panel-v1">
+            <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+              <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
+              <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
+              <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
-            <div class="admin-subprocess-grid-v1">
-              {% for field in state.config.fields %}
-                {{ render_admin_subprocess_field(field, "") }}
-              {% endfor %}
-            </div>
+              <div class="admin-subprocess-grid-v1">
+                {% for field in state.config.fields %}
+                  {{ render_admin_subprocess_field(field, "") }}
+                {% endfor %}
+              </div>
 
-            <div class="form-action-row admin-subprocess-actions-v1">
-              <button type="submit" class="action-btn">Guardar</button>
-              <button
-                type="button"
-                class="action-btn-cancel"
-                onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
-              >Cancelar</button>
-            </div>
-          </form>
-        </div>
-      </details>
+              <div class="form-action-row admin-subprocess-actions-v1">
+                <button type="submit" class="action-btn">Guardar</button>
+                <button
+                  type="button"
+                  class="action-btn-cancel"
+                  onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                >Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </details>
+      </div>
     {% endif %}
   </section>
 {% endmacro %}

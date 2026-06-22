@@ -8,7 +8,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260619-top-submenu-sap-style-v1">
-  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260621-actions-move-v1">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260621-process-action-card-v2">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
@@ -579,13 +579,13 @@
 
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
+        <section id="create-user-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
             <div class="entity-create-toolbar appverbo-process-action-toolbar-v1">
-            <details id="create-user-collapse" class="entity-create-collapse" data-appverbo-user-create-details="1"{% if errors %} open{% endif %}>
-              <summary>
+            <details id="create-user-collapse" class="entity-create-collapse appverbo-process-action-details-v1" data-appverbo-user-create-details="1"{% if errors %} open{% endif %}>
+              <summary class="appverbo-process-action-toggle-v1">
                 <span>Criar utilizador</span>
               </summary>
-              <div class="entity-create-body">
+              <div class="entity-create-body appverbo-process-action-panel-v1">
                 <div class="admin-subsection">
                   <form id="create-user-form" method="post" action="/users/new">
                     <input type="hidden" name="return_menu" value="administrativo">
@@ -809,13 +809,13 @@
         <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_END -->
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
-        <section id="create-entity-card" class="card entity-panel-card" data-menu-scope="administrativo">
-          <details class="entity-create-collapse">
-            <summary>
-              <span class="entity-create-toggle-icon" aria-hidden="true"></span>
+        <section id="create-entity-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo">
+          <div class="appverbo-process-action-toolbar-v1">
+          <details class="entity-create-collapse appverbo-process-action-details-v1">
+            <summary class="appverbo-process-action-toggle-v1">
               <span>Criar entidade</span>
             </summary>
-            <div class="entity-create-body">
+            <div class="entity-create-body appverbo-process-action-panel-v1">
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                 <input type="hidden" name="return_menu" value="administrativo">
                 <input type="hidden" name="return_admin_tab" value="entidade">
@@ -913,6 +913,7 @@
               </form>
             </div>
           </details>
+          </div>
         </section>
         {% endif %}
 
