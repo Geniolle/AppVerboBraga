@@ -36,7 +36,7 @@
     {% set sidebar_sections = dynamic_sidebar_sections.items if dynamic_sidebar_sections.items else fallback_sidebar_sections %}
     {# APPVERBO_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_END #}
 
-    <aside class="sidebar">
+    <aside id="app-sidebar" class="sidebar">
       {% for section_key, section_label in sidebar_sections %}
         {% set section_state = namespace(has_items=false) %}
 
@@ -79,9 +79,11 @@
                   type="button"
                   class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
                   data-menu="{{ setting.key|lower }}"
+                  title="{{ setting.label }}"
+                  aria-label="{{ setting.label }}"
                 >
-                  <span class="menu-icon">{{ menu_icons.get(setting.key, "[+]") }}</span>
-                  <span>{{ setting.label }}</span>
+                  <span class="menu-icon" aria-hidden="true">{{ menu_icons.get(setting.key, "[+]") }}</span>
+                  <span class="menu-label">{{ setting.label }}</span>
                 </button>
               {% endif %}
             {% endfor %}
@@ -89,3 +91,4 @@
         {% endif %}
       {% endfor %}
     </aside>
+    <script src="/static/js/modules/sidebar_collapse_v1.js?v=20260622-sidebar-collapse-v1" defer></script>
