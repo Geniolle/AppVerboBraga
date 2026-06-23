@@ -1,5 +1,23 @@
+<link rel="stylesheet" href="/static/css/modules/sidebar_collapse_v1.css?v=20260622-sidebar-collapse-v1">
+<script>
+(function(){try{if(localStorage.getItem("appverbo:sidebar-collapsed-v1")==="1"){document.body.classList.add("appverbo-sidebar-collapsed");}}catch(e){}})();
+</script>
+
   <header class="topbar">
     <div class="topbar-left">
+      <button
+        id="sidebar-collapse-toggle"
+        class="sidebar-collapse-toggle"
+        type="button"
+        aria-controls="app-sidebar"
+        aria-expanded="true"
+        aria-label="Ocultar menu lateral"
+        title="Ocultar menu lateral"
+      >
+        <span class="sidebar-collapse-toggle-line"></span>
+        <span class="sidebar-collapse-toggle-line"></span>
+        <span class="sidebar-collapse-toggle-line"></span>
+      </button>
       <div class="brand">
         <span class="brand-mark">
           {% if user_personal_data.primary_entity_logo_url %}
@@ -44,3 +62,4 @@
       </div>
     </div>
   </header>
+<script src="/static/js/modules/sidebar_collapse_v1.js?v=20260622-sidebar-collapse-v1" defer></script>

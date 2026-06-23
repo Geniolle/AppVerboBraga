@@ -1,0 +1,113 @@
+:root {
+  --appverbo-sidebar-expanded-width: 234px;
+  --appverbo-sidebar-collapsed-width: 64px;
+}
+
+/* ── Botão hambúrguer na topbar ── */
+.sidebar-collapse-toggle {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.sidebar-collapse-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-collapse-toggle-line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+/* ── Ícones SVG do menu ── */
+.menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-icon-svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ── Transição suave da sidebar ── */
+.sidebar {
+  transition: width 0.22s ease, min-width 0.22s ease;
+  overflow: hidden;
+}
+
+/* ── Estado recolhido ── */
+body.appverbo-sidebar-collapsed .layout {
+  grid-template-columns: var(--appverbo-sidebar-collapsed-width) minmax(0, 1fr) !important;
+}
+
+body.appverbo-sidebar-collapsed .sidebar {
+  width: var(--appverbo-sidebar-collapsed-width) !important;
+  min-width: var(--appverbo-sidebar-collapsed-width) !important;
+  overflow: hidden;
+}
+
+body.appverbo-sidebar-collapsed .menu-section {
+  display: none;
+}
+
+body.appverbo-sidebar-collapsed .menu-label {
+  display: none;
+}
+
+body.appverbo-sidebar-collapsed .menu-item {
+  justify-content: center;
+  padding: 11px 0;
+  gap: 0;
+}
+
+body.appverbo-sidebar-collapsed .menu-icon {
+  width: 100%;
+  justify-content: center;
+}
+
+body.appverbo-sidebar-collapsed .sidebar-icon-svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ── Ajuste de largura para breakpoints existentes quando expandido ── */
+@media (max-width: 1200px) {
+  :root {
+    --appverbo-sidebar-expanded-width: 210px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --appverbo-sidebar-expanded-width: 190px;
+  }
+}
+
+/* ── Mobile: ocultar sidebar no colapso também ── */
+@media (max-width: 640px) {
+  body.appverbo-sidebar-collapsed .sidebar {
+    display: none;
+  }
+
+  body.appverbo-sidebar-collapsed .layout {
+    grid-template-columns: 1fr !important;
+  }
+}
