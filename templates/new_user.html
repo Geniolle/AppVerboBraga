@@ -604,10 +604,6 @@
                         <label for="email">Email *</label>
                         <input id="email" name="email" type="email" required value="{{ form_data.email }}">
                       </div>
-                      <div class="field">
-                        <label for="create_user_status">Estado da conta</label>
-                        <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
-                      </div>
                       {% if can_select_user_entity %}
                       <div class="field">
                         <label for="create_user_entity_id">Entidade *</label>
@@ -662,6 +658,10 @@
                         >
                       </div>
                       {% endif %}
+                      <div class="field">
+                        <label for="create_user_status">Estado da conta</label>
+                        <input id="create_user_status" value="pendente (convite enviado por email)" readonly disabled class="readonly-field">
+                      </div>
                     </div>
                     <div class="form-action-row">
                       <button type="submit" name="invite_delivery" value="email" class="action-btn">Enviar convite</button>
