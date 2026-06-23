@@ -134,6 +134,14 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
     migration_status="reference",
     fields=ENTITY_FIELDS,
     columns=(
+        AdminColumnConfig(
+            key="entity_number",
+            label="Nº DA ENTIDADE",
+            source="entity_number",
+            sortable=True,
+            sort_type="number",
+            default_sort="asc",
+        ),
         AdminColumnConfig(key="name", label="ENTIDADE", source="name"),
         AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
     ),

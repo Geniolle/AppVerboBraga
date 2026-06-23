@@ -133,6 +133,83 @@
   text-transform: uppercase;
 }
 
+th[data-admin-sortable-column="1"] {
+  white-space: nowrap;
+}
+
+.admin-subprocess-sort-button-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
+  box-shadow: none;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.admin-subprocess-sort-button-v1:hover,
+.admin-subprocess-sort-button-v1:focus,
+.admin-subprocess-sort-button-v1:focus-visible,
+.admin-subprocess-sort-button-v1:active {
+  background: transparent;
+  color: inherit;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.admin-subprocess-sort-button-v1:focus-visible {
+  outline: 1px solid #d5dceb;
+  outline-offset: 2px;
+  border-radius: 4px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: #8f9db0;
+}
+
+.admin-subprocess-sort-label-v1 {
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-subprocess-sort-button-v1::selection,
+.admin-subprocess-sort-label-v1::selection,
+.admin-subprocess-sort-indicator-v1::selection {
+  background: transparent;
+  color: inherit;
+}
+
+.admin-subprocess-sort-indicator-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  color: #4a607f;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.admin-subprocess-sort-button-v1:hover .admin-subprocess-sort-indicator-v1,
+.admin-subprocess-sort-button-v1:focus .admin-subprocess-sort-indicator-v1,
+.admin-subprocess-sort-button-v1:focus-visible .admin-subprocess-sort-indicator-v1,
+.admin-subprocess-sort-button-v1:active .admin-subprocess-sort-indicator-v1 {
+  color: #4a607f;
+}
+
 .admin-subprocess-table-v1 th:last-child,
 .admin-subprocess-table-v1 td:last-child {
   text-align: right;

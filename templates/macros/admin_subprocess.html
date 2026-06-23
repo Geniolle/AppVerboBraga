@@ -149,6 +149,16 @@
 
 
 {% macro render_admin_subprocess_table(state, rows, title, status_value) %}
+  {% set sort_state = namespace(has_sortable_columns=false, default_key="", default_direction="") %}
+  {% for column in state.config.columns %}
+    {% if column.sortable %}
+      {% set sort_state.has_sortable_columns = true %}
+    {% endif %}
+    {% if not sort_state.default_key and column.default_sort in ("asc", "desc") %}
+      {% set sort_state.default_key = column.key %}
+      {% set sort_state.default_direction = column.default_sort %}
+    {% endif %}
+  {% endfor %}
   <section
     id="{{ state.config.default_target ~ '-active' if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
@@ -160,11 +170,40 @@
 
     {% if rows %}
       <div class="admin-subprocess-table-wrap-v1">
-        <table class="admin-subprocess-table-v1">
+        <table
+          class="admin-subprocess-table-v1"
+          {% if sort_state.has_sortable_columns %}data-admin-sortable-table="1"{% endif %}
+        >
           <thead>
             <tr>
               {% for column in state.config.columns %}
-                <th class="{{ column.css_class }}">{{ column.label }}</th>
+                {% if column.sortable %}
+                  {% set column_sort_direction = column.default_sort if column.key == sort_state.default_key else "" %}
+                  {% set column_aria_sort = "ascending" if column_sort_direction == "asc" else ("descending" if column_sort_direction == "desc" else "none") %}
+                  <th
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    data-admin-sortable-column="1"
+                    aria-sort="{{ column_aria_sort }}"
+                  >
+                    <button
+                      type="button"
+                      class="admin-subprocess-sort-button-v1"
+                      data-admin-sort-button
+                      data-admin-sort-key="{{ column.key }}"
+                      data-admin-sort-type="{{ column.sort_type }}"
+                      data-admin-default-sort="{{ column.default_sort }}"
+                      data-admin-sort-direction="{{ column_sort_direction }}"
+                      aria-label="Ordenar por {{ column.label }}"
+                      aria-pressed="{{ 'true' if column_sort_direction else 'false' }}"
+                    >
+                      <span class="admin-subprocess-sort-label-v1">{{ column.label }}</span>
+                      <span class="admin-subprocess-sort-indicator-v1" aria-hidden="true">⇅</span>
+                    </button>
+                  </th>
+                {% else %}
+                  <th class="{{ column.css_class }}" data-admin-column-key="{{ column.key }}">{{ column.label }}</th>
+                {% endif %}
               {% endfor %}
               <th>AÇÕES</th>
             </tr>
@@ -174,7 +213,11 @@
               <tr>
                 {% for column in state.config.columns %}
                   {% set cell_value = row.get(column.source, "") %}
-                  <td class="{{ column.css_class }}">
+                  <td
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    data-admin-sort-value="{{ cell_value }}"
+                  >
                     {% if column.key == "status" %}
                       <span class="admin-subprocess-badge-v1 {% if status_value == state.config.active_value %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
                         {{ cell_value or ("Ativo" if status_value == state.config.active_value else "Inativo") }}

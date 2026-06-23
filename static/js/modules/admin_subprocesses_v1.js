@@ -1,18 +1,181 @@
-
 // APPVERBO_ADMIN_SUBPROCESSES_V1_START
 (function () {
   "use strict";
 
+  const ADMIN_SUBPROCESS_SORT_INDICATOR_V1 = "⇅";
+  const adminSubprocessSortableControllersV1 = new WeakMap();
+  const adminSubprocessTextCollatorV1 = (
+    typeof Intl !== "undefined" &&
+    typeof Intl.Collator === "function"
+  )
+    ? new Intl.Collator("pt-PT", { numeric: true, sensitivity: "base" })
+    : null;
+
   //###################################################################################
-  // (1) VISUALIZAR DETALHES GENERICO
+  // (1) UTILITARIOS DE ORDENACAO
   //###################################################################################
 
-  function instalarVisualizarAdminSubprocessV1() {
-    if (window.__appverboAdminSubprocessV1 === true) {
+  function normalizeAdminSubprocessSortDirectionV1(direction) {
+    const normalizedDirection = String(direction || "").trim().toLowerCase();
+    return normalizedDirection === "desc" ? "desc" : normalizedDirection === "asc" ? "asc" : "";
+  }
+
+  function normalizeAdminSubprocessSortTypeV1(sortType) {
+    return String(sortType || "").trim().toLowerCase() === "number" ? "number" : "text";
+  }
+
+  function normalizeAdminSubprocessSortTextV1(value) {
+    return String(value == null ? "" : value).trim();
+  }
+
+  function parseAdminSubprocessNumericValueV1(value) {
+    const normalizedValue = normalizeAdminSubprocessSortTextV1(value)
+      .replace(/\s+/g, "")
+      .replace(/\.(?=\d{3}(?:\D|$))/g, "")
+      .replace(",", ".");
+
+    if (!normalizedValue) {
+      return null;
+    }
+
+    const parsedValue = Number.parseFloat(normalizedValue);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+  }
+
+  function compareAdminSubprocessTextValuesV1(leftValue, rightValue) {
+    if (adminSubprocessTextCollatorV1) {
+      return adminSubprocessTextCollatorV1.compare(leftValue, rightValue);
+    }
+
+    return leftValue.localeCompare(rightValue, undefined, {
+      numeric: true,
+      sensitivity: "base"
+    });
+  }
+
+  function buildAdminSubprocessComparableValueV1(rawValue, sortType) {
+    const normalizedText = normalizeAdminSubprocessSortTextV1(rawValue);
+
+    if (!normalizedText) {
+      return {
+        rank: 2,
+        textValue: "",
+        numberValue: null
+      };
+    }
+
+    if (sortType === "number") {
+      const parsedNumber = parseAdminSubprocessNumericValueV1(normalizedText);
+
+      if (parsedNumber !== null) {
+        return {
+          rank: 0,
+          textValue: normalizedText.toLocaleLowerCase(),
+          numberValue: parsedNumber
+        };
+      }
+
+      return {
+        rank: 1,
+        textValue: normalizedText.toLocaleLowerCase(),
+        numberValue: null
+      };
+    }
+
+    return {
+      rank: 0,
+      textValue: normalizedText.toLocaleLowerCase(),
+      numberValue: null
+    };
+  }
+
+  function compareAdminSubprocessRowValuesV1(leftRow, rightRow, sortType, direction) {
+    if (leftRow.comparable.rank !== rightRow.comparable.rank) {
+      return leftRow.comparable.rank - rightRow.comparable.rank;
+    }
+
+    let comparisonResult = 0;
+
+    if (
+      sortType === "number" &&
+      typeof leftRow.comparable.numberValue === "number" &&
+      typeof rightRow.comparable.numberValue === "number"
+    ) {
+      comparisonResult = leftRow.comparable.numberValue - rightRow.comparable.numberValue;
+    }
+    else {
+      comparisonResult = compareAdminSubprocessTextValuesV1(
+        leftRow.comparable.textValue,
+        rightRow.comparable.textValue
+      );
+    }
+
+    if (comparisonResult === 0) {
+      return leftRow.originalIndex - rightRow.originalIndex;
+    }
+
+    return direction === "desc" ? comparisonResult * -1 : comparisonResult;
+  }
+
+  function collectAdminSubprocessTableRowsV1(tbodyEl) {
+    return Array.from(tbodyEl.children).filter((rowEl) => {
+      return (
+        rowEl &&
+        rowEl.tagName === "TR" &&
+        !rowEl.classList.contains("appverbo-table-empty-search-row-v1")
+      );
+    });
+  }
+
+  function ensureAdminSubprocessOriginalOrderV1(tableEl) {
+    const tbodyEl = tableEl.tBodies && tableEl.tBodies[0] ? tableEl.tBodies[0] : null;
+
+    if (!tbodyEl) {
       return;
     }
 
-    window.__appverboAdminSubprocessV1 = true;
+    let nextOriginalIndex = 0;
+    collectAdminSubprocessTableRowsV1(tbodyEl).forEach((rowEl) => {
+      const existingIndex = Number.parseInt(
+        rowEl.getAttribute("data-admin-sort-original-index") || "",
+        10
+      );
+
+      if (Number.isFinite(existingIndex)) {
+        nextOriginalIndex = Math.max(nextOriginalIndex, existingIndex + 1);
+        return;
+      }
+
+      rowEl.setAttribute("data-admin-sort-original-index", String(nextOriginalIndex));
+      nextOriginalIndex += 1;
+    });
+  }
+
+  function refreshAdminSubprocessTableStateV1(tableEl) {
+    if (
+      !window.AppVerboProcessShell ||
+      typeof window.AppVerboProcessShell.enhanceLoadMoreTables !== "function"
+    ) {
+      return;
+    }
+
+    const rootEl = tableEl.closest(".card") || tableEl.parentElement || document;
+    window.AppVerboProcessShell.enhanceLoadMoreTables({
+      root: rootEl,
+      rowsSelector: "tbody tr"
+    });
+  }
+
+  //###################################################################################
+  // (2) VISUALIZAR DETALHES GENERICO
+  //###################################################################################
+
+  function instalarVisualizarAdminSubprocessV1() {
+    if (window.__appverboAdminSubprocessViewV1 === true) {
+      return;
+    }
+
+    window.__appverboAdminSubprocessViewV1 = true;
 
     document.addEventListener("click", function (event) {
       const button = event.target.closest("[data-admin-subprocess-view]");
@@ -31,14 +194,280 @@
   }
 
   //###################################################################################
-  // (2) INICIAR
+  // (3) CONTROLLER DE TABELA ORDENAVEL
   //###################################################################################
 
+  function createAdminSubprocessSortableTableControllerV1(tableEl) {
+    if (!tableEl) {
+      return null;
+    }
+
+    if (adminSubprocessSortableControllersV1.has(tableEl)) {
+      return adminSubprocessSortableControllersV1.get(tableEl);
+    }
+
+    const tbodyEl = tableEl.tBodies && tableEl.tBodies[0] ? tableEl.tBodies[0] : null;
+    const headerButtons = Array.from(tableEl.querySelectorAll("[data-admin-sort-button]"));
+
+    if (!tbodyEl || !headerButtons.length) {
+      return null;
+    }
+
+    const headerButtonStates = headerButtons.map((buttonEl) => {
+      const headerCellEl = buttonEl.closest("th");
+      return {
+        buttonEl,
+        headerCellEl,
+        indicatorEl: buttonEl.querySelector(".admin-subprocess-sort-indicator-v1"),
+        sortKey: String(buttonEl.getAttribute("data-admin-sort-key") || "").trim(),
+        sortType: normalizeAdminSubprocessSortTypeV1(
+          buttonEl.getAttribute("data-admin-sort-type")
+        ),
+        defaultSortDirection: normalizeAdminSubprocessSortDirectionV1(
+          buttonEl.getAttribute("data-admin-default-sort")
+        ),
+        columnIndex: headerCellEl ? headerCellEl.cellIndex : -1
+      };
+    }).filter((headerState) => {
+      return Boolean(headerState.sortKey) && headerState.columnIndex >= 0;
+    });
+
+    if (!headerButtonStates.length) {
+      return null;
+    }
+
+    const headerButtonStateByElement = new WeakMap();
+    const rowSortStateByRow = new WeakMap();
+
+    headerButtonStates.forEach((headerState) => {
+      headerButtonStateByElement.set(headerState.buttonEl, headerState);
+    });
+
+    let activeSortKey = "";
+    let activeSortDirection = "";
+    let initialized = false;
+
+    function ensureAdminSubprocessRowSortStateV1(rowEl) {
+      let rowState = rowSortStateByRow.get(rowEl);
+
+      if (rowState) {
+        return rowState;
+      }
+
+      rowState = {
+        comparableBySortKey: new Map()
+      };
+      rowSortStateByRow.set(rowEl, rowState);
+      return rowState;
+    }
+
+    function readAdminSubprocessCellSortValueByIndexV1(rowEl, columnIndex) {
+      const cellEl = rowEl.cells && rowEl.cells.length > columnIndex
+        ? rowEl.cells[columnIndex]
+        : null;
+
+      if (!cellEl) {
+        return "";
+      }
+
+      if (cellEl.hasAttribute("data-admin-sort-value")) {
+        return cellEl.getAttribute("data-admin-sort-value") || "";
+      }
+
+      return cellEl.textContent || "";
+    }
+
+    function resolveAdminSubprocessComparableValueV1(rowEl, headerState) {
+      const rowState = ensureAdminSubprocessRowSortStateV1(rowEl);
+      const cacheKey = headerState.sortKey + "::" + headerState.sortType;
+
+      if (rowState.comparableBySortKey.has(cacheKey)) {
+        return rowState.comparableBySortKey.get(cacheKey);
+      }
+
+      const comparableValue = buildAdminSubprocessComparableValueV1(
+        readAdminSubprocessCellSortValueByIndexV1(rowEl, headerState.columnIndex),
+        headerState.sortType
+      );
+
+      rowState.comparableBySortKey.set(cacheKey, comparableValue);
+      return comparableValue;
+    }
+
+    function updateSortUi() {
+      headerButtonStates.forEach((headerState) => {
+        const buttonDirection = headerState.sortKey === activeSortKey ? activeSortDirection : "";
+
+        headerState.buttonEl.setAttribute("data-admin-sort-direction", buttonDirection);
+        headerState.buttonEl.setAttribute("aria-pressed", buttonDirection ? "true" : "false");
+
+        if (headerState.indicatorEl) {
+          headerState.indicatorEl.textContent = ADMIN_SUBPROCESS_SORT_INDICATOR_V1;
+        }
+
+        if (headerState.headerCellEl) {
+          const ariaSortValue = buttonDirection === "asc"
+            ? "ascending"
+            : buttonDirection === "desc"
+              ? "descending"
+              : "none";
+          headerState.headerCellEl.setAttribute("aria-sort", ariaSortValue);
+        }
+      });
+    }
+
+    function resolveNextSortDirection(headerState) {
+      if (!headerState || !headerState.sortKey) {
+        return "asc";
+      }
+
+      if (headerState.sortKey === activeSortKey) {
+        return activeSortDirection === "asc" ? "desc" : "asc";
+      }
+
+      return headerState.defaultSortDirection || "asc";
+    }
+
+    function applySort(headerState, direction) {
+      if (!headerState || !headerState.sortKey) {
+        return;
+      }
+
+      const sortKey = headerState.sortKey;
+      const sortType = headerState.sortType;
+      const sortDirection = normalizeAdminSubprocessSortDirectionV1(direction) || "asc";
+
+      ensureAdminSubprocessOriginalOrderV1(tableEl);
+
+      const sortableRows = collectAdminSubprocessTableRowsV1(tbodyEl).map((rowEl) => {
+        const rowState = ensureAdminSubprocessRowSortStateV1(rowEl);
+        const originalIndex = Number.parseInt(
+          rowEl.getAttribute("data-admin-sort-original-index") || "",
+          10
+        );
+
+        rowState.originalIndex = Number.isFinite(originalIndex) ? originalIndex : 0;
+
+        return {
+          rowEl,
+          comparable: resolveAdminSubprocessComparableValueV1(rowEl, headerState),
+          originalIndex: rowState.originalIndex
+        };
+      });
+
+      sortableRows.sort((leftRow, rightRow) => {
+        return compareAdminSubprocessRowValuesV1(leftRow, rightRow, sortType, sortDirection);
+      });
+
+      const rowsFragment = tbodyEl.ownerDocument.createDocumentFragment();
+      sortableRows.forEach((rowState) => {
+        rowsFragment.appendChild(rowState.rowEl);
+      });
+      tbodyEl.appendChild(rowsFragment);
+
+      activeSortKey = sortKey;
+      activeSortDirection = sortDirection;
+      updateSortUi();
+      refreshAdminSubprocessTableStateV1(tableEl);
+
+      tableEl.dispatchEvent(new CustomEvent("appverbo:table-sorted", {
+        bubbles: true,
+        detail: {
+          sortKey,
+          sortType,
+          direction: sortDirection
+        }
+      }));
+    }
+
+    function handleHeaderClick(event) {
+      const buttonEl = event.target.closest("[data-admin-sort-button]");
+      const headerState = buttonEl
+        ? headerButtonStateByElement.get(buttonEl) || null
+        : null;
+
+      if (!buttonEl || !headerState || !tableEl.contains(buttonEl)) {
+        return;
+      }
+
+      event.preventDefault();
+      applySort(headerState, resolveNextSortDirection(headerState));
+    }
+
+    function init() {
+      if (initialized) {
+        return;
+      }
+
+      ensureAdminSubprocessOriginalOrderV1(tableEl);
+      tableEl.addEventListener("click", handleHeaderClick);
+      initialized = true;
+
+      const defaultHeaderState = headerButtonStates.find((headerState) => {
+        return Boolean(headerState.defaultSortDirection);
+      });
+
+      if (defaultHeaderState) {
+        applySort(
+          defaultHeaderState,
+          defaultHeaderState.defaultSortDirection || "asc"
+        );
+      }
+      else {
+        updateSortUi();
+      }
+    }
+
+    function destroy() {
+      if (!initialized) {
+        return;
+      }
+
+      tableEl.removeEventListener("click", handleHeaderClick);
+      adminSubprocessSortableControllersV1.delete(tableEl);
+      initialized = false;
+    }
+
+    const controller = {
+      init,
+      destroy
+    };
+
+    adminSubprocessSortableControllersV1.set(tableEl, controller);
+    return controller;
+  }
+
+  function instalarOrdenacaoAdminSubprocessV1(rootNode) {
+    const safeRootNode = rootNode && typeof rootNode.querySelectorAll === "function"
+      ? rootNode
+      : document;
+    const sortableTables = Array.from(
+      safeRootNode.querySelectorAll("[data-admin-sortable-table='1']")
+    );
+
+    sortableTables.forEach((tableEl) => {
+      const controller = createAdminSubprocessSortableTableControllerV1(tableEl);
+
+      if (controller) {
+        controller.init();
+      }
+    });
+  }
+
+  //###################################################################################
+  // (4) INICIAR
+  //###################################################################################
+
+  function instalarAdminSubprocessesV1() {
+    instalarVisualizarAdminSubprocessV1();
+    instalarOrdenacaoAdminSubprocessV1(document);
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", instalarVisualizarAdminSubprocessV1);
+    document.addEventListener("DOMContentLoaded", instalarAdminSubprocessesV1);
   }
   else {
-    instalarVisualizarAdminSubprocessV1();
+    instalarAdminSubprocessesV1();
   }
 })();
 // APPVERBO_ADMIN_SUBPROCESSES_V1_END

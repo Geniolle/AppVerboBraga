@@ -873,7 +873,11 @@ def get_page_data(
             Entity.is_active,
             Entity.created_at,
         )
-       .order_by(Entity.id.desc())
+       .order_by(
+            Entity.entity_number.is_(None),
+            Entity.entity_number.asc(),
+            Entity.id.asc(),
+        )
     )
     if apply_scope_filter:
         if scoped_entity_ids:
@@ -1012,6 +1016,7 @@ def get_page_data(
         return {
             "id": row.id,
             "entity_number": row.entity_number if row.entity_number is not None else "-",
+            "entity_number_sort_value": row.entity_number if row.entity_number is not None else "",
             "name": row.name,
             "acronym": row.acronym or "",
             "tax_id": row.tax_id or "",

@@ -13,8 +13,8 @@
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260505-corrigir-ordem-abas-sessoes-v5">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260505-corrigir-ordem-abas-sessoes-v5" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260623-admin-entity-sort-v2">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260623-admin-entity-sort-v2" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -1078,11 +1078,30 @@
             {% set active_recent_entities = active_recent_entities[:1] %}
           {% endif %}
           {% if active_recent_entities %}
-            <table id="recent-entities-table">
+            <table id="recent-entities-table" {% if current_user_can_manage_all_entities %}data-admin-sortable-table="1"{% endif %}>
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Nº DA ENTIDADE</th>
+                  <th
+                    data-admin-column-key="entity_number"
+                    data-admin-sortable-column="1"
+                    aria-sort="ascending"
+                  >
+                    <button
+                      type="button"
+                      class="admin-subprocess-sort-button-v1"
+                      data-admin-sort-button
+                      data-admin-sort-key="entity_number"
+                      data-admin-sort-type="number"
+                      data-admin-default-sort="asc"
+                      data-admin-sort-direction="asc"
+                      aria-label="Ordenar por Nº DA ENTIDADE"
+                      aria-pressed="true"
+                    >
+                      <span class="admin-subprocess-sort-label-v1">Nº DA ENTIDADE</span>
+                      <span class="admin-subprocess-sort-indicator-v1" aria-hidden="true">⇅</span>
+                    </button>
+                  </th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1101,7 +1120,7 @@
                 {% for row in active_recent_entities %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.entity_number }}</td>
+                    <td data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
                     {% endif %}
                     <td>{{ row.name }}</td>
                     {% if current_user_can_manage_all_entities %}
@@ -1196,11 +1215,30 @@
           <h2>Entidades inativas</h2>
           {% set inactive_entities_rows = inactive_entities if inactive_entities else (recent_entities | rejectattr("is_active") | list) %}
           {% if inactive_entities_rows %}
-            <table id="inactive-entities-table">
+            <table id="inactive-entities-table" data-admin-sortable-table="1">
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Nº DA ENTIDADE</th>
+                  <th
+                    data-admin-column-key="entity_number"
+                    data-admin-sortable-column="1"
+                    aria-sort="ascending"
+                  >
+                    <button
+                      type="button"
+                      class="admin-subprocess-sort-button-v1"
+                      data-admin-sort-button
+                      data-admin-sort-key="entity_number"
+                      data-admin-sort-type="number"
+                      data-admin-default-sort="asc"
+                      data-admin-sort-direction="asc"
+                      aria-label="Ordenar por Nº DA ENTIDADE"
+                      aria-pressed="true"
+                    >
+                      <span class="admin-subprocess-sort-label-v1">Nº DA ENTIDADE</span>
+                      <span class="admin-subprocess-sort-indicator-v1" aria-hidden="true">⇅</span>
+                    </button>
+                  </th>
                   {% endif %}
                   <th>Nome</th>
                   {% if current_user_can_manage_all_entities %}
@@ -1219,7 +1257,7 @@
                 {% for row in inactive_entities_rows %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.entity_number }}</td>
+                    <td data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
                     {% endif %}
                     <td>{{ row.name }}</td>
                     {% if current_user_can_manage_all_entities %}
