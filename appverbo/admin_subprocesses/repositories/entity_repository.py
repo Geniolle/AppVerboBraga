@@ -44,7 +44,7 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
 
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         Entity = self._resolve_entity_model()
-        rows = session.query(Entity).order_by(Entity.id.asc()).all()
+        rows = session.query(Entity).order_by(Entity.entity_number.asc(), Entity.id.asc()).all()
         return [self._to_row(row) for row in rows]
 
     def get_for_edit(
