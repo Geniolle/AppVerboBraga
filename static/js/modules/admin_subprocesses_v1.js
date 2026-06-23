@@ -41,6 +41,16 @@
       .trim();
   }
 
+  function obterRotuloCabecalhoAdminSubprocessV1(value) {
+    const normalizedValue = normalizarTextoAdminSubprocessV1(value);
+
+    if (normalizedValue === "numero da entidade") {
+      return "N" + String.fromCharCode(186) + " DA ENTIDADE";
+    }
+
+    return String(value || "").trim();
+  }
+
   function obterNumeroAdminSubprocessV1(value) {
     const textoLimpo = String(value || "")
       .replace(/\s+/g, "")
@@ -147,6 +157,7 @@
 
     headers.forEach(function (header, index) {
       const rawLabel = String(header.textContent || "").trim();
+      const visibleLabel = obterRotuloCabecalhoAdminSubprocessV1(rawLabel);
       const normalizedLabel = normalizarTextoAdminSubprocessV1(rawLabel);
       const isActionsHeader = normalizedLabel === "acoes" || index === headers.length - 1;
 
@@ -170,9 +181,9 @@
       button.dataset.sortIndex = String(index);
       button.dataset.sortHeader = rawLabel;
       button.dataset.sortDirection = defaultDirection;
-      button.setAttribute("aria-label", "Ordenar por " + rawLabel);
+      button.setAttribute("aria-label", "Ordenar por " + visibleLabel);
 
-      labelSpan.textContent = rawLabel;
+      labelSpan.textContent = visibleLabel;
 
       indicatorSpan.className = "admin-subprocess-sort-indicator-v1";
       indicatorSpan.setAttribute("aria-hidden", "true");
