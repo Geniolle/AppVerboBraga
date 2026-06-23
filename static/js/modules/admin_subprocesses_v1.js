@@ -2,6 +2,11 @@
 (function () {
   "use strict";
 
+  const TEXTO_COLLATOR_ADMIN_SUBPROCESS_V1 = new Intl.Collator("pt", {
+    numeric: true,
+    sensitivity: "base"
+  });
+
   //###################################################################################
   // (1) VISUALIZAR DETALHES GENERICO
   //###################################################################################
@@ -64,33 +69,85 @@
 
   function obterValorCelulaAdminSubprocessV1(row, columnIndex) {
     const cell = row.cells[columnIndex];
-    return cell ? String(cell.dataset.sortValue || cell.textContent || "") : "";
+
+    if (!cell) {
+      return "";
+    }
+
+    if (Object.prototype.hasOwnProperty.call(cell.dataset, "sortValue")) {
+      return String(cell.dataset.sortValue || "");
+    }
+
+    return String(cell.textContent || "");
   }
 
-  function colunaNumericaAdminSubprocessV1(headerText) {
+  function colunaNumericaAdminSubprocessV1(headerText, columnKey) {
     const normalizedHeader = normalizarTextoAdminSubprocessV1(headerText);
-    return normalizedHeader.includes("numero") || normalizedHeader.includes("n da entidade");
+    const normalizedKey = normalizarTextoAdminSubprocessV1(columnKey);
+
+    return (
+      normalizedKey === "id"
+      || normalizedKey === "entity_number"
+      || normalizedHeader === "id"
+      || normalizedHeader.includes("numero")
+      || normalizedHeader.includes("n da entidade")
+    );
   }
 
-  function compararLinhasAdminSubprocessV1(rowA, rowB, columnIndex, isNumericColumn) {
-    const rawA = obterValorCelulaAdminSubprocessV1(rowA, columnIndex).trim();
-    const rawB = obterValorCelulaAdminSubprocessV1(rowB, columnIndex).trim();
-    const emptyA = rawA === "";
-    const emptyB = rawB === "";
+  function normalizarDirecaoOrdenacaoAdminSubprocessV1(value) {
+    const cleanValue = String(value || "").trim().toLowerCase();
 
-    if (emptyA !== emptyB) {
-      return emptyA ? 1 : -1;
-    }
+    return cleanValue === "asc" || cleanValue === "desc" ? cleanValue : "none";
+  }
 
-    if (isNumericColumn) {
-      return obterNumeroAdminSubprocessV1(rawA) - obterNumeroAdminSubprocessV1(rawB);
-    }
-
-    return normalizarTextoAdminSubprocessV1(rawA).localeCompare(
-      normalizarTextoAdminSubprocessV1(rawB),
-      "pt",
-      { numeric: true, sensitivity: "base" }
+  function obterConfiguracaoCabecalhoAdminSubprocessV1(header, index, headers, hasExplicitSortableHeaders) {
+    const rawLabel = String(header.textContent || "").trim();
+    const columnKey = String(header.dataset.appverboColumnKey || header.dataset.adminSubprocessColumnKey || "").trim();
+    const normalizedLabel = normalizarTextoAdminSubprocessV1(rawLabel);
+    const normalizedKey = normalizarTextoAdminSubprocessV1(columnKey);
+    const isActionsHeader = normalizedKey === "actions" || normalizedLabel === "acoes" || index === headers.length - 1;
+    const explicitSortable = header.dataset.appverboSortable === "1" || header.dataset.adminSubprocessSortable === "1";
+    const isSortable = hasExplicitSortableHeaders ? explicitSortable : Boolean(rawLabel && !isActionsHeader);
+    const configuredSortType = String(header.dataset.appverboSortType || header.dataset.adminSubprocessSortType || "").trim().toLowerCase();
+    const isNumericColumn = configuredSortType === "number" || colunaNumericaAdminSubprocessV1(rawLabel, columnKey);
+    const sortType = isNumericColumn ? "number" : "text";
+    const configuredDefaultSort = normalizarDirecaoOrdenacaoAdminSubprocessV1(
+      header.dataset.appverboDefaultSort || header.dataset.adminSubprocessDefaultSort || ""
     );
+    const defaultSort = configuredDefaultSort !== "none"
+      ? configuredDefaultSort
+      : (!hasExplicitSortableHeaders && isNumericColumn ? "asc" : "none");
+
+    return {
+      rawLabel: rawLabel,
+      visibleLabel: obterRotuloCabecalhoAdminSubprocessV1(rawLabel),
+      columnKey: columnKey,
+      isSortable: isSortable,
+      sortType: sortType,
+      defaultSort: defaultSort,
+      isActionsHeader: isActionsHeader
+    };
+  }
+
+  function compararItensOrdenacaoAdminSubprocessV1(itemA, itemB, sortType, direction) {
+    if (itemA.empty !== itemB.empty) {
+      return itemA.empty ? 1 : -1;
+    }
+
+    let result = 0;
+
+    if (sortType === "number") {
+      result = itemA.numberValue - itemB.numberValue;
+    }
+    else {
+      result = TEXTO_COLLATOR_ADMIN_SUBPROCESS_V1.compare(itemA.textValue, itemB.textValue);
+    }
+
+    if (result === 0) {
+      result = itemA.originalIndex - itemB.originalIndex;
+    }
+
+    return direction === "asc" ? result : -result;
   }
 
   function atualizarIndicadoresAdminSubprocessV1(table, activeButton, direction) {
@@ -102,7 +159,7 @@
       button.dataset.sortDirection = isActive ? direction : "none";
 
       if (indicator) {
-        indicator.textContent = isActive ? (direction === "asc" ? "▲" : "▼") : "⇅";
+        indicator.textContent = "⇅";
       }
 
       if (header) {
@@ -111,41 +168,53 @@
     });
   }
 
-  function ordenarTabelaAdminSubprocessV1(table, button) {
+  function aplicarOrdenacaoTabelaAdminSubprocessV1(table, button, direction) {
     const tbody = table.querySelector("tbody");
     const columnIndex = Number(button.dataset.sortIndex || "0");
-    const headerText = button.dataset.sortHeader || button.textContent || "";
-    const isNumericColumn = colunaNumericaAdminSubprocessV1(headerText);
-    const currentDirection = button.dataset.sortDirection === "asc" ? "asc" : "desc";
-    const nextDirection = currentDirection === "asc" ? "desc" : "asc";
+    const sortType = button.dataset.sortType === "number" ? "number" : "text";
+    const cleanDirection = direction === "desc" ? "desc" : "asc";
 
     if (!tbody) {
       return;
     }
 
-    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const rows = Array.from(tbody.rows);
 
-    rows.forEach(function (row, rowIndex) {
+    const sortableItems = rows.map(function (row, rowIndex) {
       if (!row.dataset.adminSubprocessOriginalIndex) {
         row.dataset.adminSubprocessOriginalIndex = String(rowIndex);
       }
+
+      const rawValue = obterValorCelulaAdminSubprocessV1(row, columnIndex).trim();
+
+      return {
+        row: row,
+        empty: rawValue === "",
+        numberValue: sortType === "number" ? obterNumeroAdminSubprocessV1(rawValue) : 0,
+        textValue: sortType === "text" ? normalizarTextoAdminSubprocessV1(rawValue) : "",
+        originalIndex: Number(row.dataset.adminSubprocessOriginalIndex || String(rowIndex))
+      };
     });
 
-    rows.sort(function (rowA, rowB) {
-      let result = compararLinhasAdminSubprocessV1(rowA, rowB, columnIndex, isNumericColumn);
-
-      if (result === 0) {
-        result = Number(rowA.dataset.adminSubprocessOriginalIndex || "0") - Number(rowB.dataset.adminSubprocessOriginalIndex || "0");
-      }
-
-      return nextDirection === "asc" ? result : -result;
+    sortableItems.sort(function (itemA, itemB) {
+      return compararItensOrdenacaoAdminSubprocessV1(itemA, itemB, sortType, cleanDirection);
     });
 
-    rows.forEach(function (row) {
-      tbody.appendChild(row);
+    const fragment = document.createDocumentFragment();
+
+    sortableItems.forEach(function (item) {
+      fragment.appendChild(item.row);
     });
 
-    atualizarIndicadoresAdminSubprocessV1(table, button, nextDirection);
+    tbody.appendChild(fragment);
+    atualizarIndicadoresAdminSubprocessV1(table, button, cleanDirection);
+  }
+
+  function ordenarTabelaAdminSubprocessV1(table, button) {
+    const currentDirection = button.dataset.sortDirection === "asc" ? "asc" : "desc";
+    const nextDirection = currentDirection === "asc" ? "desc" : "asc";
+
+    aplicarOrdenacaoTabelaAdminSubprocessV1(table, button, nextDirection);
   }
 
   function prepararTabelaOrdenavelAdminSubprocessV1(table) {
@@ -154,58 +223,78 @@
     }
 
     const headers = Array.from(table.querySelectorAll("thead th"));
+    const hasExplicitSortableHeaders = headers.some(function (header) {
+      return header.dataset.appverboSortable === "1" || header.dataset.adminSubprocessSortable === "1";
+    });
+    let defaultSortButton = null;
+    let defaultSortDirection = "none";
 
     headers.forEach(function (header, index) {
-      const rawLabel = String(header.textContent || "").trim();
-      const visibleLabel = obterRotuloCabecalhoAdminSubprocessV1(rawLabel);
-      const normalizedLabel = normalizarTextoAdminSubprocessV1(rawLabel);
-      const isActionsHeader = normalizedLabel === "acoes" || index === headers.length - 1;
+      const config = obterConfiguracaoCabecalhoAdminSubprocessV1(
+        header,
+        index,
+        headers,
+        hasExplicitSortableHeaders
+      );
 
-      if (!rawLabel || isActionsHeader) {
+      if (!config.rawLabel || !config.isSortable || config.isActionsHeader) {
         return;
       }
 
-      const defaultDirection = colunaNumericaAdminSubprocessV1(rawLabel) ? "asc" : "none";
-      const defaultIndicator = defaultDirection === "asc" ? "▲" : "⇅";
       const button = document.createElement("button");
       const labelSpan = document.createElement("span");
       const indicatorSpan = document.createElement("span");
 
       header.textContent = "";
       header.classList.add("admin-subprocess-sortable-th-v1");
-      header.setAttribute("aria-sort", defaultDirection === "asc" ? "ascending" : "none");
+      header.setAttribute("aria-sort", config.defaultSort === "asc" ? "ascending" : (config.defaultSort === "desc" ? "descending" : "none"));
 
       button.type = "button";
       button.className = "admin-subprocess-sort-btn-v1";
       button.dataset.adminSubprocessSortButton = "true";
       button.dataset.sortIndex = String(index);
-      button.dataset.sortHeader = rawLabel;
-      button.dataset.sortDirection = defaultDirection;
-      button.setAttribute("aria-label", "Ordenar por " + visibleLabel);
+      button.dataset.sortHeader = config.rawLabel;
+      button.dataset.sortKey = config.columnKey;
+      button.dataset.sortType = config.sortType;
+      button.dataset.sortDirection = config.defaultSort;
+      button.setAttribute("aria-label", "Ordenar por " + config.visibleLabel);
 
-      labelSpan.textContent = visibleLabel;
+      labelSpan.textContent = config.visibleLabel;
 
       indicatorSpan.className = "admin-subprocess-sort-indicator-v1";
       indicatorSpan.setAttribute("aria-hidden", "true");
-      indicatorSpan.textContent = defaultIndicator;
+      indicatorSpan.textContent = "⇅";
 
       button.appendChild(labelSpan);
       button.appendChild(indicatorSpan);
       header.appendChild(button);
+
+      if (!defaultSortButton && config.defaultSort !== "none") {
+        defaultSortButton = button;
+        defaultSortDirection = config.defaultSort;
+      }
     });
 
     table.dataset.adminSubprocessSortableReady = "true";
+
+    if (defaultSortButton && defaultSortDirection !== "none") {
+      aplicarOrdenacaoTabelaAdminSubprocessV1(table, defaultSortButton, defaultSortDirection);
+    }
+  }
+
+  function obterTabelasOrdenaveisAdminSubprocessV1() {
+    return document.querySelectorAll(".admin-subprocess-table-v1, [data-appverbo-sortable-table='1']");
   }
 
   function instalarOrdenacaoAdminSubprocessV1() {
     if (window.__appverboAdminSubprocessSortV1 === true) {
-      document.querySelectorAll(".admin-subprocess-table-v1").forEach(prepararTabelaOrdenavelAdminSubprocessV1);
+      obterTabelasOrdenaveisAdminSubprocessV1().forEach(prepararTabelaOrdenavelAdminSubprocessV1);
       return;
     }
 
     window.__appverboAdminSubprocessSortV1 = true;
 
-    document.querySelectorAll(".admin-subprocess-table-v1").forEach(prepararTabelaOrdenavelAdminSubprocessV1);
+    obterTabelasOrdenaveisAdminSubprocessV1().forEach(prepararTabelaOrdenavelAdminSubprocessV1);
 
     document.addEventListener("click", function (event) {
       const button = event.target.closest("[data-admin-subprocess-sort-button]");

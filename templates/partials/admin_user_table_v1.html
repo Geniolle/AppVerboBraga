@@ -1,13 +1,13 @@
 {% macro render_admin_user_table_v1(rows, table_id, empty_message, allow_delete=False) %}
 {% if rows %}
-<table id="{{ table_id }}">
+<table id="{{ table_id }}" class="admin-user-table-v1" data-appverbo-sortable-table="1">
   <thead>
     <tr>
-      <th data-appverbo-column-key="id" data-appverbo-hide-order="80">ID</th>
-      <th data-appverbo-column-key="entity_number" data-appverbo-hide-order="70">Nº DA ENTIDADE</th>
+      <th data-appverbo-column-key="id" data-appverbo-hide-order="80" data-appverbo-sortable="1" data-appverbo-sort-type="number" data-appverbo-default-sort="asc">ID</th>
       <th data-appverbo-column-key="name" data-appverbo-hide-order="60">Nome</th>
       <th data-appverbo-column-key="email" data-appverbo-hide-order="50">Email</th>
       <th data-appverbo-column-key="phone" data-appverbo-hide-order="40">Telefone</th>
+      <th data-appverbo-column-key="entity_number" data-appverbo-hide-order="35">Nº DA ENTIDADE</th>
       <th data-appverbo-column-key="entity" data-appverbo-hide-order="30">Entidade</th>
       <th data-appverbo-column-key="system" data-appverbo-hide-order="20">Sistema</th>
       <th data-appverbo-column-key="created_at" data-appverbo-hide-order="10">Criado em</th>
@@ -18,11 +18,11 @@
   <tbody>
     {% for row in rows %}
     <tr>
-      <td>{{ row.id }}</td>
-      <td>{{ row.entity_number if row.entity_number is not none and row.entity_number != "" else "-" }}</td>
+      <td data-sort-value="{{ row.id }}">{{ row.id }}</td>
       <td>{{ row.full_name }}</td>
       <td>{{ row.login_email }}</td>
       <td>{{ row.primary_phone }}</td>
+      <td data-sort-value="{{ row.entity_number if row.entity_number is not none and row.entity_number != '' else '' }}">{{ row.entity_number if row.entity_number is not none and row.entity_number != "" else "-" }}</td>
       <td>{{ row.entity_name }}</td>
       <td>{{ row.system_name }}</td>
       <td>{{ row.created_at }}</td>
