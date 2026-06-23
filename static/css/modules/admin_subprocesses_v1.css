@@ -132,6 +132,7 @@
   text-transform: uppercase;
 }
 
+.admin-subprocess-sortable-th-v1,
 .admin-subprocess-table-v1 th.admin-subprocess-sortable-th-v1 {
   padding: 0;
 }
@@ -144,20 +145,35 @@
   min-height: 38px;
   padding: 10px 12px;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: inherit;
+  box-shadow: none;
   box-sizing: border-box;
   font: inherit;
   font-weight: inherit;
   text-align: left;
   text-transform: inherit;
   cursor: pointer;
+  user-select: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .admin-subprocess-sort-btn-v1:hover,
-.admin-subprocess-sort-btn-v1:focus-visible {
-  background: #f3f6fb;
+.admin-subprocess-sort-btn-v1:focus,
+.admin-subprocess-sort-btn-v1:focus-visible,
+.admin-subprocess-sort-btn-v1:active {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   outline: none;
+}
+
+.admin-subprocess-sort-btn-v1:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
 .admin-subprocess-sort-indicator-v1 {
@@ -217,34 +233,3 @@
   background: #dfeaff;
   border-color: #7fa8f2;
 }
-
-.admin-subprocess-badge-v1 {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 3px 9px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.admin-subprocess-badge-active-v1 {
-  border-color: #badbcc;
-  background: #e9f7ef;
-  color: #0f5132;
-}
-
-.admin-subprocess-badge-inactive-v1 {
-  border-color: #f0c36d;
-  background: #fff7e0;
-  color: #8a5a00;
-}
-
-@media (max-width: 1100px) {
-  .admin-subprocess-grid-v1 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* APPVERBO_ADMIN_SUBPROCESSES_V1_END */
