@@ -1136,7 +1136,71 @@ if (initialProfileTab === "morada") {
 } else if (initialProfileTab === "treinamento") {
   profileSelectedTarget = "#dados-treinamento-card";
 }
-let adminSelectedTarget = "#dynamic-process-card";
+// APPVERBO_ADMIN_TARGET_RESOLVER_V1_START
+const NATIVE_ADMIN_TARGETS_V1 = new Set([
+  "#create-entity-card",
+  "#edit-entity-card",
+  "#recent-entities-card",
+  "#inactive-entities-card",
+  "#create-user-card",
+  "#edit-user-card",
+  "#admin-users-created-card",
+  "#inactive-users-card",
+  "#admin-account-create-card",
+  "#admin-account-status-card",
+  "#admin-sidebar-sections-card",
+  "#admin-sidebar-sections-form-card",
+  "#settings-card",
+  "#settings-menu-edit-card"
+]);
+function normalizeTargetV1(value) {
+  const cleanValue = String(value || "").trim();
+  if (!cleanValue) {
+    return "";
+  }
+  return cleanValue.startsWith("#") ? cleanValue : "#" + cleanValue;
+}
+function isNativeAdminTargetV1(value) {
+  return NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
+}
+function resolveAdminSelectedTargetV1({
+  initialAdminTab,
+  startupHash: rawHash,
+  initialMenuTarget: rawTarget,
+  settingsEditKey: rawSettingsKey
+}) {
+  let cleanHash = normalizeTargetV1(rawHash);
+  if (cleanHash === "#edit-user-card") {
+    cleanHash = "#create-user-card";
+  } else if (cleanHash === "#edit-entity-card") {
+    cleanHash = "#create-entity-card";
+  }
+  const cleanTarget = normalizeTargetV1(rawTarget);
+  const cleanTab = String(initialAdminTab || "").trim().toLowerCase();
+  if (isNativeAdminTargetV1(cleanHash)) {
+    return cleanHash;
+  }
+  if (isNativeAdminTargetV1(cleanTarget)) {
+    return cleanTarget;
+  }
+  if (rawSettingsKey) {
+    return "#settings-menu-edit-card";
+  }
+  if (cleanTab === "sessoes") {
+    return "#admin-sidebar-sections-card";
+  }
+  if (cleanTab === "entidade") {
+    return "#create-entity-card";
+  }
+  if (cleanTab === "utilizador") {
+    return "#create-user-card";
+  }
+  if (cleanTab === "contas") {
+    return "#admin-account-status-card";
+  }
+  return "#dynamic-process-card";
+}
+// APPVERBO_ADMIN_TARGET_RESOLVER_V1_END
 let meuPerfilSelectedTarget = "#perfil-pessoal-card";
 const requestedMeuPerfilProfileSection = normalizeMenuKey(
   (typeof window !== "undefined" && window.location && window.location.search)
@@ -1149,54 +1213,15 @@ let meuPerfilSelectedProfileSection = (
   ? String(requestedMeuPerfilProfileSection || profilePersonalSections[0].key || "")
   : "";
 let hiddenMeuPerfilSectionKeys = new Set();
-if (initialAdminTab === "entidade") {
-  adminSelectedTarget = "#create-entity-card";
-} else if (initialAdminTab === "contas") {
-  adminSelectedTarget = "#admin-account-status-card";
-} else if (initialAdminTab === "sessoes") {
-  adminSelectedTarget = "#admin-sidebar-sections-card";
-}
 if (startupHash === "#home-summary-card") {
   homeSelectedTarget = startupHash;
 }
-if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
-  adminSelectedTarget = "#create-user-card";
-} else if (startupHash === "#admin-users-created-card" || startupHash === "#inactive-users-card") {
-  adminSelectedTarget = startupHash;
-} else if (
-  startupHash === "#create-entity-card" ||
-  startupHash === "#edit-entity-card" ||
-  startupHash === "#recent-entities-card" ||
-  startupHash === "#inactive-entities-card"
-) {
-  adminSelectedTarget = startupHash === "#recent-entities-card" || startupHash === "#inactive-entities-card"
-    ? startupHash
-    : "#create-entity-card";
-} else if (startupHash === "#admin-account-status-card") {
-  adminSelectedTarget = "#admin-account-status-card";
-} else if (startupHash === "#settings-menu-edit-card") {
-  adminSelectedTarget = "#settings-menu-edit-card";
-} else if (startupHash === "#admin-sidebar-sections-form-card" || startupHash === "#admin-sidebar-sections-card") {
-  adminSelectedTarget = startupHash;
-}
-if (!startupHash && settingsEditKey) {
-  adminSelectedTarget = "#settings-menu-edit-card";
-}
-const NATIVE_ADMIN_TARGETS_V1 = new Set([
-  "#create-entity-card",
-  "#edit-entity-card",
-  "#recent-entities-card",
-  "#inactive-entities-card",
-  "#create-user-card",
-  "#edit-user-card",
-  "#admin-users-created-card",
-  "#inactive-users-card",
-  "#admin-account-status-card",
-  "#admin-sidebar-sections-card",
-  "#admin-sidebar-sections-form-card",
-  "#settings-card",
-  "#settings-menu-edit-card"
-]);
+const adminSelectedTarget = resolveAdminSelectedTargetV1({
+  initialAdminTab,
+  startupHash,
+  initialMenuTarget,
+  settingsEditKey
+});
 const selectedTargetByMenu = {
   home: homeSelectedTarget,
   perfil: profileSelectedTarget,
@@ -2801,7 +2826,35 @@ function applyContentForMenu(menuKey) {
   }
 }
 
+// APPVERBO_ADMIN_SUBPROCESS_GROUP_V1_START
+function getAdminSubprocessKeyByTargetV1(target) {
+  const cleanTarget = normalizeTargetV1(target);
+  const targetMap = {
+    "#create-entity-card": "entidade",
+    "#edit-entity-card": "entidade",
+    "#recent-entities-card": "entidade",
+    "#inactive-entities-card": "entidade",
+    "#create-user-card": "utilizador",
+    "#edit-user-card": "utilizador",
+    "#admin-users-created-card": "utilizador",
+    "#inactive-users-card": "utilizador",
+    "#admin-sidebar-sections-card": "sessoes",
+    "#admin-sidebar-sections-form-card": "sessoes",
+    "#admin-sidebar-sections-card-active": "sessoes",
+    "#admin-sidebar-sections-card-inactive": "sessoes",
+    "#settings-card": "menu",
+    "#settings-menu-edit-card": "menu",
+    "#admin-account-status-card": "contas",
+    "#admin-account-create-card": "contas"
+  };
+  return targetMap[cleanTarget] || "";
+}
+// APPVERBO_ADMIN_SUBPROCESS_GROUP_V1_END
+
 function applyContentForMenuTarget(menuKey, targetSelector) {
+  const adminSubprocessKey = menuKey === "administrativo"
+    ? getAdminSubprocessKeyByTargetV1(targetSelector)
+    : "";
   scopedCards.forEach((card) => {
     const rawScope = card.getAttribute("data-menu-scope") || "";
     const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
@@ -2809,6 +2862,9 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
       card.style.display = "none";
       return;
     }
+    const isAdminSubprocessGroupedBlock =
+      !!adminSubprocessKey &&
+      card.getAttribute("data-admin-subprocess") === adminSubprocessKey;
     const isEntityGroupedBlock =
       menuKey === "administrativo" &&
       targetSelector === "#create-entity-card" &&
@@ -2829,22 +2885,22 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
       );
     const isSettingsGroupedBlock =
       menuKey === "administrativo" &&
-      targetSelector === "#settings-menu-edit-card" &&
+      (
+        targetSelector === "#admin-account-create-card" ||
+        targetSelector === "#admin-account-status-card" ||
+        targetSelector === "#settings-menu-edit-card"
+      ) &&
       (
         card.id === "admin-account-create-card" ||
         card.id === "settings-menu-edit-card" ||
         card.id === "admin-account-status-card"
       );
-    const isSessoesGroupedBlock =
-      menuKey === "administrativo" &&
-      targetSelector === "#admin-sidebar-sections-card" &&
-      card.getAttribute("data-admin-subprocess") === "sessoes";
     card.style.display =
       targetSelector === ("#" + card.id) ||
+      isAdminSubprocessGroupedBlock ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock ||
-      isSessoesGroupedBlock
+      isSettingsGroupedBlock
         ? ""
         : "none";
   });
@@ -4359,11 +4415,8 @@ function getDefaultTargetForMenu(menuKey, config, options = {}) {
   const { forceFirstItem = false } = options;
   if (!Array.isArray(config.items) || !config.items.length) {
     const savedTarget = selectedTargetByMenu[menuKey];
-    if (savedTarget === "#settings-menu-edit-card") {
-      const settingsCardEl = document.querySelector(savedTarget);
-      if (settingsCardEl) {
-        return savedTarget;
-      }
+    if (menuKey === "administrativo" && NATIVE_ADMIN_TARGETS_V1.has(savedTarget)) {
+      return savedTarget;
     }
     return "";
   }
@@ -4372,14 +4425,11 @@ function getDefaultTargetForMenu(menuKey, config, options = {}) {
   }
   const savedTarget = selectedTargetByMenu[menuKey];
   if (savedTarget) {
-    if (config.items.some((item) => item.target === savedTarget)) {
+    if (menuKey === "administrativo" && NATIVE_ADMIN_TARGETS_V1.has(savedTarget)) {
       return savedTarget;
     }
-    if (savedTarget === "#settings-menu-edit-card") {
-      const settingsCardEl = document.querySelector(savedTarget);
-      if (settingsCardEl) {
-        return savedTarget;
-      }
+    if (config.items.some((item) => item.target === savedTarget)) {
+      return savedTarget;
     }
   }
   return config.items[0].target;
@@ -4513,6 +4563,7 @@ function handleHashNavigation(rawHash) {
     "#inactive-entities-card": "administrativo",
     "#admin-account-status-card": "administrativo",
     "#admin-sidebar-sections-card": "administrativo",
+    "#admin-sidebar-sections-form-card": "administrativo",
     "#admin-account-create-card": "administrativo",
     "#settings-menu-edit-card": "administrativo"
   };

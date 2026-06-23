@@ -1403,9 +1403,19 @@
                     >
                   </div>
                   <div class="field">
-                    <label for="settings_edit_menu_visibility_scope">Exibir no sistema</label>
+                    <label for="settings_edit_menu_entity_number">Nº da entidade</label>
+                    <input
+                      id="settings_edit_menu_entity_number"
+                      value="{{ selected_entity_number }}"
+                      readonly
+                      disabled
+                      class="readonly-field"
+                    >
+                  </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_visibility_scope">Sistema</label>
                     <select id="settings_edit_menu_visibility_scope" name="menu_visibility_scope">
-                      <option value="all" {% if settings_edit_data.visibility_scope_mode == "all" %}selected{% endif %}>Owner e Legado</option>
+                      <option value="all" {% if settings_edit_data.visibility_scope_mode == "all" %}selected{% endif %}>Default</option>
                       <option value="owner" {% if settings_edit_data.visibility_scope_mode == "owner" %}selected{% endif %}>Owner</option>
                       <option value="legado" {% if settings_edit_data.visibility_scope_mode == "legado" %}selected{% endif %}>Legado</option>
                     </select>
@@ -1447,7 +1457,17 @@
                   >
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema</label>
+                  <label for="settings_edit_menu_entity_number_readonly">Nº da entidade</label>
+                  <input
+                    id="settings_edit_menu_entity_number_readonly"
+                    value="{{ selected_entity_number }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_visibility_scope_readonly">Sistema</label>
                   <input
                     id="settings_edit_menu_visibility_scope_readonly"
                     value="{{ settings_edit_data.visibility_scope_label }}"
@@ -2204,38 +2224,58 @@
         {% endif %}
 
         {% if current_user_can_manage_all_entities %}
-        <section id="admin-account-create-card" class="card" data-menu-scope="administrativo">
-          <div class="profile-card-header">
-            <h2>Criar pasta no menu lateral</h2>
-            <a class="table-link-btn" href="#admin-account-status-card">Ver lista</a>
+        <section id="admin-account-create-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo">
+          <div class="appverbo-process-action-toolbar-v1">
+            <details id="create-menu-collapse" class="entity-create-collapse appverbo-process-action-details-v1">
+              <summary class="appverbo-process-action-toggle-v1">
+                <span>Criar menu</span>
+              </summary>
+              <div class="entity-create-body appverbo-process-action-panel-v1">
+                <form method="post" action="/settings/menu/create">
+                  <input type="hidden" name="redirect_menu" value="administrativo">
+                  <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                  <div class="grid settings-general-grid">
+                    <div class="field">
+                      <label for="settings_create_menu_label">Nome no menu lateral *</label>
+                      <input
+                        id="settings_create_menu_label"
+                        name="menu_label"
+                        maxlength="100"
+                        placeholder="Ex.: Assiduidade"
+                        required
+                      >
+                    </div>
+                    <div class="field">
+                      <label for="settings_create_menu_entity_number">Nº da entidade</label>
+                      <input
+                        id="settings_create_menu_entity_number"
+                        value="{{ selected_entity_number }}"
+                        readonly
+                        disabled
+                        class="readonly-field"
+                      >
+                    </div>
+                    <div class="field">
+                      <label for="settings_create_menu_visibility_scope">Sistema</label>
+                      <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
+                        <option value="all" selected>Default</option>
+                        <option value="owner">Owner</option>
+                        <option value="legado">Legado</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-action-row">
+                    <button type="submit" class="action-btn">Criar menu</button>
+                    <button
+                      type="button"
+                      class="action-btn-cancel"
+                      onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                    >Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            </details>
           </div>
-          <form method="post" action="/settings/menu/create">
-            <input type="hidden" name="redirect_menu" value="administrativo">
-            <input type="hidden" name="redirect_target" value="#admin-account-status-card">
-            <div class="grid settings-general-grid">
-              <div class="field">
-                <label for="settings_create_menu_label">Nome da pasta *</label>
-                <input
-                  id="settings_create_menu_label"
-                  name="menu_label"
-                  maxlength="100"
-                  placeholder="Ex.: Assiduidade"
-                  required
-                >
-              </div>
-              <div class="field">
-                <label for="settings_create_menu_visibility_scope">Exibir no sistema</label>
-                <select id="settings_create_menu_visibility_scope" name="menu_visibility_scope">
-                  <option value="all" selected>Owner e Legado</option>
-                  <option value="owner">Owner</option>
-                  <option value="legado">Legado</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-action-row">
-              <button type="submit" class="action-btn">Criar pasta</button>
-            </div>
-          </form>
         </section>
         {% endif %}
 
@@ -2244,8 +2284,7 @@
             <h2>Definições</h2>
             {% if current_user_can_manage_all_entities %}
             <div class="table-actions">
-              <a class="table-link-btn" href="#admin-sidebar-sections-card">Sessoes do sidebar</a>
-              <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+              <a class="table-link-btn" href="#admin-sidebar-sections-card">Sessões do sidebar</a>
             </div>
             {% endif %}
           </div>
@@ -2254,6 +2293,7 @@
             <thead>
               <tr>
                 <th>Menu lateral</th>
+                <th>Sessão</th>
                 {% if current_entity_scope == "owner" %}
                 <th>Sistema</th>
                 {% endif %}
@@ -2266,6 +2306,7 @@
                 {% if not row.is_deleted %}
                 <tr>
                   <td>{{ row.label }}</td>
+                  <td>{{ row.sidebar_section_label if row.sidebar_section_label else "-" }}</td>
                   {% if current_entity_scope == "owner" %}
                   <td>{{ row.visibility_scope_label }}</td>
                   {% endif %}
@@ -2392,7 +2433,7 @@
           <div class="profile-card-header">
             <h2>Configuração</h2>
             {% if current_user_can_manage_all_entities %}
-            <a class="table-link-btn" href="#admin-account-create-card">Criar pasta</a>
+            <a class="table-link-btn" href="#admin-account-create-card">Criar menu</a>
             {% endif %}
           </div>
           <p>Processos disponíveis nesta pasta do menu lateral.</p>
@@ -2400,6 +2441,7 @@
             <thead>
               <tr>
                 <th>Menu lateral</th>
+                <th>Sessão</th>
                 {% if current_entity_scope == "owner" %}
                 <th>Sistema</th>
                 {% endif %}
@@ -2412,6 +2454,7 @@
                 {% if not row.is_deleted %}
                 <tr>
                   <td>{{ row.label }}</td>
+                  <td>{{ row.sidebar_section_label if row.sidebar_section_label else "-" }}</td>
                   {% if current_entity_scope == "owner" %}
                   <td>{{ row.visibility_scope_label }}</td>
                   {% endif %}
@@ -2671,7 +2714,7 @@
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260621-actions-move-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260623-native-admin-target-v2"></script>
+  <script src="/static/js/new_user.js?v=20260623-admin-subprocess-group-v2"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
 <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-sistema-label-default-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

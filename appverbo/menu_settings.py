@@ -1537,6 +1537,7 @@ def update_sidebar_menu_label(
     menu_label: str,
     visibility_scope_mode: str | None = None,
     sidebar_section_key: str | None = None,
+    entity_number: int | None = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     clean_menu_label = _normalize_sentence_case_text(menu_label)
@@ -1586,6 +1587,9 @@ def update_sidebar_menu_label(
             )
         else:
             menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = current_section_key
+
+    if entity_number is not None:
+        menu_config["entity_number"] = int(entity_number)
 
     session.execute(
         text(

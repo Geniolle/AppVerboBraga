@@ -36,6 +36,7 @@ from appverbo.services.session import get_current_user
 from appverbo.services.auth import is_admin_user
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.session import get_session_entity_id
+from appverbo.repositories.entity_repository import get_entity_by_id
 from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
 
 
@@ -995,12 +996,17 @@ def edit_sidebar_menu_setting_handler_v1(
                     status_code=HTTP_303_SEE_OTHER,
                 )
 
+        _session_entity_id = get_session_entity_id(request)
+        _session_entity = get_entity_by_id(session, _session_entity_id) if _session_entity_id is not None else None
+        _session_entity_number = _session_entity.entity_number if _session_entity is not None else None
+
         ok, error_message = update_sidebar_menu_label(
             session,
             clean_menu_key,
             menu_label,
             menu_visibility_scope,
             menu_sidebar_section,
+            entity_number=_session_entity_number,
         )
         if not ok:
             return RedirectResponse(

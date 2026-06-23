@@ -340,6 +340,15 @@ def new_user_page(
             allowed_entity_ids=entity_permissions["allowed_entity_ids"],
         )
 
+        selected_entity_number: int | None = None
+        if selected_entity_id is not None:
+            _sel_entity_num = session.execute(
+                select(Entity.entity_number)
+                .where(Entity.id == selected_entity_id)
+                .limit(1)
+            ).scalar_one_or_none()
+            selected_entity_number = _sel_entity_num
+
         active_sidebar_sections_v22, inactive_sidebar_sections_v22, sidebar_section_edit_data_v22 = _split_sidebar_sections_for_page_v22(
             page_data,
             sidebar_section_edit_key,
@@ -461,6 +470,7 @@ def new_user_page(
         "settings_success": settings_success or "",
         "settings_error": settings_error or "",
         "settings_edit_data": settings_edit_data,
+        "selected_entity_number": str(selected_entity_number) if selected_entity_number is not None else "",
         "settings_edit_key": clean_settings_edit_key,
         "settings_action": clean_settings_action,
         "settings_tab": clean_settings_tab,
