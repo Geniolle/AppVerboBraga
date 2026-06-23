@@ -133,7 +133,8 @@
   text-transform: uppercase;
 }
 
-th[data-admin-sortable-column="1"] {
+th[data-admin-sortable-column="1"],
+th[data-appverbo-sortable="1"] {
   white-space: nowrap;
 }
 

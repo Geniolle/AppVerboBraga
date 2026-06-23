@@ -904,7 +904,7 @@ def get_page_data(
             User.created_at,
         )
        .join(Member, Member.id == User.member_id)
-       .order_by(User.id.desc())
+       .order_by(User.id.asc())
     ).all()
 
     if apply_scope_filter:

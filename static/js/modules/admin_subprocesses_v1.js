@@ -3,6 +3,15 @@
   "use strict";
 
   const ADMIN_SUBPROCESS_SORT_INDICATOR_V1 = "⇅";
+  const ADMIN_SUBPROCESS_SORTABLE_TABLE_SELECTOR_V1 = [
+    "[data-admin-sortable-table='1']",
+    "[data-appverbo-sortable-table='1']",
+    "table.admin-subprocess-table-v1"
+  ].join(", ");
+  const ADMIN_SUBPROCESS_SORT_BUTTON_SELECTOR_V1 = [
+    "[data-admin-sort-button]",
+    "[data-appverbo-sort-button]"
+  ].join(", ");
   const adminSubprocessSortableControllersV1 = new WeakMap();
   const adminSubprocessTextCollatorV1 = (
     typeof Intl !== "undefined" &&
@@ -26,6 +35,24 @@
 
   function normalizeAdminSubprocessSortTextV1(value) {
     return String(value == null ? "" : value).trim();
+  }
+
+  function readAdminSubprocessSortAttributeV1(element, attributeNames) {
+    if (!element || !Array.isArray(attributeNames)) {
+      return "";
+    }
+
+    for (let index = 0; index < attributeNames.length; index += 1) {
+      const attributeName = attributeNames[index];
+
+      if (!attributeName || !element.hasAttribute(attributeName)) {
+        continue;
+      }
+
+      return element.getAttribute(attributeName) || "";
+    }
+
+    return "";
   }
 
   function parseAdminSubprocessNumericValueV1(value) {
@@ -127,6 +154,45 @@
     });
   }
 
+  function resolveAdminSubprocessSortHeaderStateV1(buttonEl) {
+    const headerCellEl = buttonEl ? buttonEl.closest("th") : null;
+    const sortKey = normalizeAdminSubprocessSortTextV1(
+      readAdminSubprocessSortAttributeV1(buttonEl, [
+        "data-admin-sort-key",
+        "data-appverbo-sort-key"
+      ]) || readAdminSubprocessSortAttributeV1(headerCellEl, [
+        "data-admin-column-key",
+        "data-appverbo-column-key"
+      ])
+    );
+
+    return {
+      buttonEl,
+      headerCellEl,
+      indicatorEl: buttonEl ? buttonEl.querySelector(".admin-subprocess-sort-indicator-v1") : null,
+      sortKey,
+      sortType: normalizeAdminSubprocessSortTypeV1(
+        readAdminSubprocessSortAttributeV1(buttonEl, [
+          "data-admin-sort-type",
+          "data-appverbo-sort-type"
+        ]) || readAdminSubprocessSortAttributeV1(headerCellEl, [
+          "data-admin-sort-type",
+          "data-appverbo-sort-type"
+        ])
+      ),
+      defaultSortDirection: normalizeAdminSubprocessSortDirectionV1(
+        readAdminSubprocessSortAttributeV1(buttonEl, [
+          "data-admin-default-sort",
+          "data-appverbo-default-sort"
+        ]) || readAdminSubprocessSortAttributeV1(headerCellEl, [
+          "data-admin-default-sort",
+          "data-appverbo-default-sort"
+        ])
+      ),
+      columnIndex: headerCellEl ? headerCellEl.cellIndex : -1
+    };
+  }
+
   function ensureAdminSubprocessOriginalOrderV1(tableEl) {
     const tbodyEl = tableEl.tBodies && tableEl.tBodies[0] ? tableEl.tBodies[0] : null;
 
@@ -207,27 +273,14 @@
     }
 
     const tbodyEl = tableEl.tBodies && tableEl.tBodies[0] ? tableEl.tBodies[0] : null;
-    const headerButtons = Array.from(tableEl.querySelectorAll("[data-admin-sort-button]"));
+    const headerButtons = Array.from(tableEl.querySelectorAll(ADMIN_SUBPROCESS_SORT_BUTTON_SELECTOR_V1));
 
     if (!tbodyEl || !headerButtons.length) {
       return null;
     }
 
     const headerButtonStates = headerButtons.map((buttonEl) => {
-      const headerCellEl = buttonEl.closest("th");
-      return {
-        buttonEl,
-        headerCellEl,
-        indicatorEl: buttonEl.querySelector(".admin-subprocess-sort-indicator-v1"),
-        sortKey: String(buttonEl.getAttribute("data-admin-sort-key") || "").trim(),
-        sortType: normalizeAdminSubprocessSortTypeV1(
-          buttonEl.getAttribute("data-admin-sort-type")
-        ),
-        defaultSortDirection: normalizeAdminSubprocessSortDirectionV1(
-          buttonEl.getAttribute("data-admin-default-sort")
-        ),
-        columnIndex: headerCellEl ? headerCellEl.cellIndex : -1
-      };
+      return resolveAdminSubprocessSortHeaderStateV1(buttonEl);
     }).filter((headerState) => {
       return Boolean(headerState.sortKey) && headerState.columnIndex >= 0;
     });
@@ -268,6 +321,10 @@
 
       if (!cellEl) {
         return "";
+      }
+
+      if (cellEl.hasAttribute("data-sort-value")) {
+        return cellEl.getAttribute("data-sort-value") || "";
       }
 
       if (cellEl.hasAttribute("data-admin-sort-value")) {
@@ -381,7 +438,7 @@
     }
 
     function handleHeaderClick(event) {
-      const buttonEl = event.target.closest("[data-admin-sort-button]");
+      const buttonEl = event.target.closest(ADMIN_SUBPROCESS_SORT_BUTTON_SELECTOR_V1);
       const headerState = buttonEl
         ? headerButtonStateByElement.get(buttonEl) || null
         : null;
@@ -395,12 +452,14 @@
     }
 
     function init() {
-      if (initialized) {
+      if (initialized || tableEl.dataset.adminSubprocessSortableReady === "1") {
+        initialized = true;
         return;
       }
 
       ensureAdminSubprocessOriginalOrderV1(tableEl);
       tableEl.addEventListener("click", handleHeaderClick);
+      tableEl.dataset.adminSubprocessSortableReady = "1";
       initialized = true;
 
       const defaultHeaderState = headerButtonStates.find((headerState) => {
@@ -424,6 +483,7 @@
       }
 
       tableEl.removeEventListener("click", handleHeaderClick);
+      tableEl.dataset.adminSubprocessSortableReady = "0";
       adminSubprocessSortableControllersV1.delete(tableEl);
       initialized = false;
     }
@@ -441,9 +501,27 @@
     const safeRootNode = rootNode && typeof rootNode.querySelectorAll === "function"
       ? rootNode
       : document;
-    const sortableTables = Array.from(
-      safeRootNode.querySelectorAll("[data-admin-sortable-table='1']")
-    );
+    const sortableTables = [];
+    const seenTables = new Set();
+
+    if (
+      typeof safeRootNode.matches === "function" &&
+      safeRootNode.matches(ADMIN_SUBPROCESS_SORTABLE_TABLE_SELECTOR_V1)
+    ) {
+      sortableTables.push(safeRootNode);
+      seenTables.add(safeRootNode);
+    }
+
+    Array.from(
+      safeRootNode.querySelectorAll(ADMIN_SUBPROCESS_SORTABLE_TABLE_SELECTOR_V1)
+    ).forEach((tableEl) => {
+      if (seenTables.has(tableEl)) {
+        return;
+      }
+
+      sortableTables.push(tableEl);
+      seenTables.add(tableEl);
+    });
 
     sortableTables.forEach((tableEl) => {
       const controller = createAdminSubprocessSortableTableControllerV1(tableEl);
