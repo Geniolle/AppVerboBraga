@@ -49,7 +49,7 @@ SIDEBAR_SECTION_FIELDS = (
         field_type="select",
         required=True,
         options=(
-            ("all", "Owner e Legado"),
+            ("all", "Default"),
             ("owner", "Owner"),
             ("legado", "Legado"),
         ),

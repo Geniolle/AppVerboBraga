@@ -114,19 +114,27 @@
   width: 100%;
 }
 
-.admin-subprocess-table-v1 {
+.admin-subprocess-table-v1,
+table[data-admin-sortable-table="1"],
+table[data-appverbo-sortable-table="1"] {
   border-collapse: collapse;
 }
 
 .admin-subprocess-table-v1 th,
-.admin-subprocess-table-v1 td {
+.admin-subprocess-table-v1 td,
+table[data-admin-sortable-table="1"] th,
+table[data-admin-sortable-table="1"] td,
+table[data-appverbo-sortable-table="1"] th,
+table[data-appverbo-sortable-table="1"] td {
   padding: 10px 12px;
   border-bottom: 1px solid #e3e8f2;
   text-align: left;
   vertical-align: middle;
 }
 
-.admin-subprocess-table-v1 th {
+.admin-subprocess-table-v1 th,
+table[data-admin-sortable-table="1"] th,
+table[data-appverbo-sortable-table="1"] th {
   color: #12213a;
   font-size: 11px;
   font-weight: 800;
@@ -212,7 +220,11 @@ th[data-appverbo-sortable="1"] {
 }
 
 .admin-subprocess-table-v1 th:last-child,
-.admin-subprocess-table-v1 td:last-child {
+.admin-subprocess-table-v1 td:last-child,
+table[data-admin-sortable-table="1"] th:last-child,
+table[data-admin-sortable-table="1"] td:last-child,
+table[data-appverbo-sortable-table="1"] th:last-child,
+table[data-appverbo-sortable-table="1"] td:last-child {
   text-align: right;
 }
 

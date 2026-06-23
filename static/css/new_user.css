@@ -5772,3 +5772,13 @@ input.action-btn-cancel,
 }
 
 /* APPVERBO_TOP_SUBMENU_SAP_STYLE_V2_END */
+
+/* APPVERBO_USER_CREATE_SUMMARY_HIDE_V1_START */
+#create-user-collapse[open] > summary.appverbo-process-action-toggle-v1 {
+  display: none !important;
+}
+
+#create-user-collapse[open] > .entity-create-body {
+  margin-top: 0 !important;
+}
+/* APPVERBO_USER_CREATE_SUMMARY_HIDE_V1_END */

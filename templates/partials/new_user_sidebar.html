@@ -15,9 +15,12 @@
       {% for section in sidebar_section_options %}
         {% set section_key = section.key|default("", true)|lower %}
         {% set section_label = section.label|default(section_key, true) %}
+        {% set section_is_active = section.is_active|default(false) %}
 
-        {% if section_key %}
-          {% set dynamic_sidebar_sections.items = dynamic_sidebar_sections.items + [(section_key, section_label)] %}
+        {% if section_key and section_is_active %}
+          {% if not current_entity_scope or current_entity_scope in section.visibility_scopes %}
+            {% set dynamic_sidebar_sections.items = dynamic_sidebar_sections.items + [(section_key, section_label)] %}
+          {% endif %}
         {% endif %}
       {% endfor %}
     {% endif %}
@@ -47,8 +50,8 @@
           {% endif %}
         {% endfor %}
 
+        <div class="menu-section">{{ section_label }}</div>
         {% if section_state.has_items %}
-          <div class="menu-section">{{ section_label }}</div>
           <nav class="menu-list" aria-label="Menu {{ section_label|lower }}">
             {% for setting in sidebar_menu_settings %}
               {% set current_section = setting.menu_section|default("", true) %}

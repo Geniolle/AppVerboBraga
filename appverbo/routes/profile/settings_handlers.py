@@ -307,7 +307,7 @@ def _sidebar_section_scope_label_v19(value: object) -> str:
     if clean_value == "legado":
         return "Legado"
 
-    return "Owner e Legado"
+    return "Default"
 
 
 def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:

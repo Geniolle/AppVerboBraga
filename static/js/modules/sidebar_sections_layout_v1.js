@@ -124,11 +124,11 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     }
 
     return [
-      { key: "sistema", label: "Sistema", visibility_scope_mode: "all", visibility_scope_label: "Owner e Legado" },
-      { key: "geral", label: "Geral", visibility_scope_mode: "all", visibility_scope_label: "Owner e Legado" },
-      { key: "dados_gerais", label: "Dados gerais", visibility_scope_mode: "all", visibility_scope_label: "Owner e Legado" },
-      { key: "igreja", label: "Igreja", visibility_scope_mode: "all", visibility_scope_label: "Owner e Legado" },
-      { key: "tesouraria", label: "Tesouraria", visibility_scope_mode: "all", visibility_scope_label: "Owner e Legado" }
+      { key: "sistema", label: "Sistema", visibility_scope_mode: "all", visibility_scope_label: "Default" },
+      { key: "geral", label: "Geral", visibility_scope_mode: "all", visibility_scope_label: "Default" },
+      { key: "dados_gerais", label: "Dados gerais", visibility_scope_mode: "all", visibility_scope_label: "Default" },
+      { key: "igreja", label: "Igreja", visibility_scope_mode: "all", visibility_scope_label: "Default" },
+      { key: "tesouraria", label: "Tesouraria", visibility_scope_mode: "all", visibility_scope_label: "Default" }
     ];
   }
 
@@ -207,7 +207,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
       return "Legado";
     }
 
-    return sessao.visibility_scope_label || "Owner e Legado";
+    return sessao.visibility_scope_label || "Default";
   }
 
   function criarBotaoAcaoSessoesLayout_v2(tipo, titulo) {
@@ -544,7 +544,7 @@ tituloBloco.appendChild(descricao);
         key: "nova_pasta_" + contador,
         label: "Nova pasta",
         visibility_scope_mode: "all",
-        visibility_scope_label: "Owner e Legado"
+        visibility_scope_label: "Default"
       };
 
       const linha = criarLinhaTabelaSessoesLayout_v2(novaSessao);
@@ -914,7 +914,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return "Legado";
     }
 
-    return "Owner e Legado";
+    return "Default";
   }
 
   function normalizarEstadoSessoesCreate_v5(valor) {
@@ -1052,7 +1052,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     sistemaSelect.required = true;
 
     [
-      ["all", "Owner e Legado"],
+      ["all", "Default"],
       ["owner", "Owner"],
       ["legado", "Legado"]
     ].forEach(function (item) {
@@ -1336,7 +1336,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return "Legado";
     }
 
-    return fallback || "Owner e Legado";
+    return fallback || "Default";
   }
 
   function criarCampoOcultoSessoesV6(nome, valor) {
@@ -1449,7 +1449,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     select.className = "appverbo-sidebar-section-edit-select-v8";
 
     [
-      ["all", "Owner e Legado"],
+      ["all", "Default"],
       ["owner", "Owner"],
       ["legado", "Legado"]
     ].forEach(function (item) {
@@ -1723,7 +1723,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
     tdSistema.textContent = obterLabelSistemaSessoesV6(
       sessao.visibility_scope_mode,
-      sessao.visibility_scope_label || "Owner e Legado"
+      sessao.visibility_scope_label || "Default"
     );
 
     const tdEstado = document.createElement("td");
@@ -2007,7 +2007,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     sistemaLabel.textContent = "Sistema *";
 
     const sistemaSelect = document.createElement("select");
-    sistemaSelect.appendChild(criarOpcaoSelectSessoesV6("all", "Owner e Legado"));
+    sistemaSelect.appendChild(criarOpcaoSelectSessoesV6("all", "Default"));
     sistemaSelect.appendChild(criarOpcaoSelectSessoesV6("owner", "Owner"));
     sistemaSelect.appendChild(criarOpcaoSelectSessoesV6("legado", "Legado"));
 
@@ -2245,7 +2245,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return "Legado";
     }
 
-    return fallback || "Owner e Legado";
+    return fallback || "Default";
   }
 
   function criarCampoOcultoSessoesEstadoV9(nome, valor) {
@@ -2441,7 +2441,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     select.className = "appverbo-sidebar-section-edit-select-v9";
 
     [
-      ["all", "Owner e Legado"],
+      ["all", "Default"],
       ["owner", "Owner"],
       ["legado", "Legado"]
     ].forEach(function (item) {
@@ -3534,7 +3534,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return "Legado";
     }
 
-    return fallback || "Owner e Legado";
+    return fallback || "Default";
   }
 
   function normalizarSessaoAtivaV23(sessao) {

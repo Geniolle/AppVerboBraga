@@ -1176,13 +1176,27 @@ if (startupHash === "#create-user-card" || startupHash === "#edit-user-card") {
   adminSelectedTarget = "#admin-account-status-card";
 } else if (startupHash === "#settings-menu-edit-card") {
   adminSelectedTarget = "#settings-menu-edit-card";
+} else if (startupHash === "#admin-sidebar-sections-form-card" || startupHash === "#admin-sidebar-sections-card") {
+  adminSelectedTarget = startupHash;
 }
 if (!startupHash && settingsEditKey) {
   adminSelectedTarget = "#settings-menu-edit-card";
 }
-if (!startupHash && initialMenu === "administrativo" && !settingsEditKey) {
-  adminSelectedTarget = "#dynamic-process-card";
-}
+const NATIVE_ADMIN_TARGETS_V1 = new Set([
+  "#create-entity-card",
+  "#edit-entity-card",
+  "#recent-entities-card",
+  "#inactive-entities-card",
+  "#create-user-card",
+  "#edit-user-card",
+  "#admin-users-created-card",
+  "#inactive-users-card",
+  "#admin-account-status-card",
+  "#admin-sidebar-sections-card",
+  "#admin-sidebar-sections-form-card",
+  "#settings-card",
+  "#settings-menu-edit-card"
+]);
 const selectedTargetByMenu = {
   home: homeSelectedTarget,
   perfil: profileSelectedTarget,
@@ -1190,7 +1204,10 @@ const selectedTargetByMenu = {
   [MEU_PERFIL_MENU_KEY]: meuPerfilSelectedTarget
 };
 Object.keys(dynamicProcessDataByMenu).forEach((menuKey) => {
-  if (menuKey === "administrativo" && selectedTargetByMenu[menuKey] === "#settings-menu-edit-card") {
+  if (
+    menuKey === "administrativo" &&
+    NATIVE_ADMIN_TARGETS_V1.has(selectedTargetByMenu[menuKey])
+  ) {
     return;
   }
   selectedTargetByMenu[menuKey] = "#dynamic-process-card";

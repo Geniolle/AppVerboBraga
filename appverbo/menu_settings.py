@@ -237,7 +237,7 @@ def _resolve_visibility_scope_label_from_mode(scope_mode: Any) -> str:
         return "Owner"
     if clean_mode == "legado":
         return "Legado"
-    return "Owner e Legado"
+    return "Default"
 
 def normalize_menu_visibility_scopes(raw_scopes: Any) -> list[str]:
     if isinstance(raw_scopes, str):
