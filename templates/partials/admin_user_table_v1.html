@@ -27,8 +27,7 @@
       <th data-appverbo-column-key="phone" data-appverbo-hide-order="50">Telefone</th>
       <th data-appverbo-column-key="entity_number" data-appverbo-hide-order="40">Nº DA ENTIDADE</th>
       <th data-appverbo-column-key="entity" data-appverbo-hide-order="30">Entidade</th>
-      <th data-appverbo-column-key="system" data-appverbo-hide-order="20">Sistema</th>
-      <th data-appverbo-column-key="created_at" data-appverbo-hide-order="10">Criado em</th>
+      <th data-appverbo-column-key="created_at" data-appverbo-hide-order="20">Criado em</th>
       <th data-appverbo-column-key="status" data-appverbo-column-mandatory="1">Estado</th>
       <th data-appverbo-column-key="actions" data-appverbo-column-mandatory="1">Ações</th>
     </tr>
@@ -42,7 +41,6 @@
       <td>{{ row.primary_phone }}</td>
       <td data-sort-value="{{ row.entity_number if row.entity_number is not none and row.entity_number != '' else '' }}">{{ row.entity_number if row.entity_number is not none and row.entity_number != "" else "-" }}</td>
       <td>{{ row.entity_name }}</td>
-      <td>{{ row.system_name }}</td>
       <td>{{ row.created_at }}</td>
       <td>
         {% if row.account_status_is_active or row.account_status == "active" %}

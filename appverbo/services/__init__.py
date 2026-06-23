@@ -1,5 +1,6 @@
 from appverbo.services.user_system import *  # noqa: F403,F401
 from appverbo.services.auth import *  # noqa: F403,F401
+from appverbo.services.phone_country import *  # noqa: F403,F401
 from appverbo.services.entities import *  # noqa: F403,F401
 from appverbo.services.navigation_context import *  # noqa: F403,F401
 from appverbo.services.page import *  # noqa: F403,F401

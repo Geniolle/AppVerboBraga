@@ -615,13 +615,15 @@
                           id="create_user_entity_id"
                           name="entity_id"
                           required
-                          onchange="(function(s){var o=s.options[s.selectedIndex];var n=document.getElementById('create_user_entity_number');if(n){n.value=o?o.dataset.entityNumber||'':'';};})(this)"
+                          data-user-entity-select="1"
+                          data-user-entity-number-target="create_user_entity_number"
                         >
                           <option value="">— Selecione uma entidade —</option>
                           {% for entity in entities_for_user_form %}
                           <option
                             value="{{ entity.id }}"
                             data-entity-number="{{ entity.entity_number if entity.entity_number is not none else '' }}"
+                            data-entity-name="{{ entity.name }}"
                             {% if form_data.entity_id == entity.id | string %}selected{% endif %}
                           >{{ entity.name }}{% if entity.entity_number is not none %} (Nº {{ entity.entity_number }}){% endif %}</option>
                           {% endfor %}
@@ -660,14 +662,6 @@
                         >
                       </div>
                       {% endif %}
-                      <div class="field">
-                        <label for="system_type">Sistema</label>
-                        <select id="system_type" name="system_type">
-                          <option value="default" {% if not form_data.system_type or form_data.system_type == "default" %}selected{% endif %}>Default</option>
-                          <option value="owner" {% if form_data.system_type == "owner" %}selected{% endif %}>Owner</option>
-                          <option value="legado" {% if form_data.system_type == "legado" %}selected{% endif %}>Legado</option>
-                        </select>
-                      </div>
                     </div>
                     <div class="form-action-row">
                       <button type="submit" name="invite_delivery" value="email" class="action-btn">Enviar convite</button>
@@ -734,16 +728,40 @@
                   <input id="edit_user_email" name="email" type="email" required value="{{ user_edit_data.email }}">
                 </div>
                 <div class="field">
-                  <label for="edit_user_account_status">Estado da conta *</label>
-                  <select id="edit_user_account_status" name="account_status" required>
-                    <option value="active" {% if user_edit_data.account_status == "active" %}selected{% endif %}>Ativo</option>
-                    <option value="pending" {% if user_edit_data.account_status == "pending" %}selected{% endif %}>Pendente</option>
-                    <option value="inactive" {% if user_edit_data.account_status == "inactive" %}selected{% endif %}>Inativo</option>
-                    <option value="blocked" {% if user_edit_data.account_status == "blocked" %}selected{% endif %}>Bloqueado</option>
+                  <label for="edit_user_entity_id">Nº DA ENTIDADE</label>
+                  {% set selected_edit_entity_id = user_edit_data.entity_id | string %}
+                  {% set edit_entity_in_options = namespace(found=false) %}
+                  {% for entity in entities_for_user_edit_form %}
+                    {% if selected_edit_entity_id == entity.id | string %}
+                      {% set edit_entity_in_options.found = true %}
+                    {% endif %}
+                  {% endfor %}
+                  <select
+                    id="edit_user_entity_id"
+                    name="entity_id"
+                    {% if not user_readonly_mode %}required{% endif %}
+                    data-user-entity-select="1"
+                    data-user-entity-name-target="edit_user_entity_name"
+                    {% if user_readonly_mode or not entities_for_user_edit_form %}disabled{% endif %}
+                  >
+                    <option
+                      value=""
+                      data-entity-number="{{ user_edit_data.entity_number if user_edit_data.entity_number else '' }}"
+                      data-entity-name="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
+                      {% if not edit_entity_in_options.found %}selected{% endif %}
+                    >{% if user_edit_data.entity_number %}{{ user_edit_data.entity_number }}{% else %}— Selecione uma entidade —{% endif %}</option>
+                    {% for entity in entities_for_user_edit_form %}
+                    <option
+                      value="{{ entity.id }}"
+                      data-entity-number="{{ entity.entity_number if entity.entity_number is not none else '' }}"
+                      data-entity-name="{{ entity.name }}"
+                      {% if selected_edit_entity_id == entity.id | string %}selected{% endif %}
+                    >{{ entity.entity_number }}</option>
+                    {% endfor %}
                   </select>
                 </div>
                 <div class="field">
-                  <label for="edit_user_entity_name">Entidade (automática pelo email)</label>
+                  <label for="edit_user_entity_name">Entidade (automática pelo Nº da Entidade)</label>
                   <input
                     id="edit_user_entity_name"
                     value="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
@@ -751,26 +769,14 @@
                     disabled
                     class="readonly-field"
                   >
-                  <input type="hidden" name="entity_id" value="{{ user_edit_data.entity_id }}">
                 </div>
                 <div class="field">
-                  <label for="edit_user_entity_number">Nº DA ENTIDADE</label>
-                  <input
-                    id="edit_user_entity_number"
-                    name="entity_number"
-                    type="text"
-                    value="{{ user_edit_data.entity_number if user_edit_data.entity_number else '' }}"
-                    class="readonly-field"
-                    readonly
-                    placeholder="-"
-                  >
-                </div>
-                <div class="field">
-                  <label for="edit_user_system_type">Sistema</label>
-                  <select id="edit_user_system_type" name="system_type" {% if user_readonly_mode %}disabled{% endif %}>
-                    <option value="default" {% if not user_edit_data.system_type or user_edit_data.system_type == "default" %}selected{% endif %}>Default</option>
-                    <option value="owner" {% if user_edit_data.system_type == "owner" %}selected{% endif %}>Owner</option>
-                    <option value="legado" {% if user_edit_data.system_type == "legado" %}selected{% endif %}>Legado</option>
+                  <label for="edit_user_account_status">Estado da conta *</label>
+                  <select id="edit_user_account_status" name="account_status" required>
+                    <option value="active" {% if user_edit_data.account_status == "active" %}selected{% endif %}>Ativo</option>
+                    <option value="pending" {% if user_edit_data.account_status == "pending" %}selected{% endif %}>Pendente</option>
+                    <option value="inactive" {% if user_edit_data.account_status == "inactive" %}selected{% endif %}>Inativo</option>
+                    <option value="blocked" {% if user_edit_data.account_status == "blocked" %}selected{% endif %}>Bloqueado</option>
                   </select>
                 </div>
               </div>
@@ -1007,7 +1013,17 @@
                 <label for="edit_entity_country">País *</label>
                 <input id="edit_entity_country" name="country" maxlength="50" required value="{{ entity_edit_data.country }}">
               </div>
-              <div class="field entity-fourth-row-status">
+              <div class="field entity-fourth-row-created-at">
+                <label for="edit_entity_created_at">Data da criação</label>
+                <input id="edit_entity_created_at" class="readonly-field" value="{{ entity_edit_data.created_at }}" readonly disabled>
+              </div>
+            </div>
+            <div class="entity-fifth-row entity-fifth-row-edit">
+              <div class="field entity-fifth-row-logo">
+                <label for="edit_entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
+                <input id="edit_entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+              </div>
+              <div class="field entity-edit-status-row">
                 <label for="edit_entity_status">Estado da entidade *</label>
                 {% if current_user_can_manage_all_entities %}
                 <select id="edit_entity_status" name="entity_status" required>
@@ -1024,16 +1040,6 @@
                 >
                 <input type="hidden" name="entity_status" value="{{ entity_edit_data.status }}">
                 {% endif %}
-              </div>
-              <div class="field entity-fourth-row-created-at">
-                <label for="edit_entity_created_at">Data da criação</label>
-                <input id="edit_entity_created_at" class="readonly-field" value="{{ entity_edit_data.created_at }}" readonly disabled>
-              </div>
-            </div>
-            <div class="entity-fifth-row entity-fifth-row-edit">
-              <div class="field entity-fifth-row-logo">
-                <label for="edit_entity_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
-                <input id="edit_entity_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
               </div>
             </div>
 
@@ -1397,13 +1403,6 @@
                     >
                   </div>
                   <div class="field">
-                    <label for="settings_edit_menu_status">Estado atual</label>
-                    <select id="settings_edit_menu_status" name="menu_status">
-                      <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
-                      <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
-                    </select>
-                  </div>
-                  <div class="field">
                     <label for="settings_edit_menu_visibility_scope">Exibir no sistema</label>
                     <select id="settings_edit_menu_visibility_scope" name="menu_visibility_scope">
                       <option value="all" {% if settings_edit_data.visibility_scope_mode == "all" %}selected{% endif %}>Owner e Legado</option>
@@ -1417,6 +1416,13 @@
                       {% for section_option in sidebar_section_options %}
                       <option value="{{ section_option.key }}" {% if section_option.key == settings_edit_data.sidebar_section_key %}selected{% endif %}>{{ section_option.label }}</option>
                       {% endfor %}
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="settings_edit_menu_status">Estado atual</label>
+                    <select id="settings_edit_menu_status" name="menu_status">
+                      <option value="ativo" {% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}selected{% endif %}>Ativo</option>
+                      <option value="inativo" {% if not settings_edit_data.is_active or settings_edit_data.is_deleted %}selected{% endif %}>Inativo</option>
                     </select>
                   </div>
                 </div>
@@ -1441,16 +1447,6 @@
                   >
                 </div>
                 <div class="field">
-                  <label for="settings_edit_menu_status">Estado atual</label>
-                  <input
-                    id="settings_edit_menu_status"
-                    value="{% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}Ativo{% else %}Inativo{% endif %}"
-                    readonly
-                    disabled
-                    class="readonly-field"
-                  >
-                </div>
-                <div class="field">
                   <label for="settings_edit_menu_visibility_scope_readonly">Exibir no sistema</label>
                   <input
                     id="settings_edit_menu_visibility_scope_readonly"
@@ -1465,6 +1461,16 @@
                   <input
                     id="settings_edit_menu_sidebar_section_readonly"
                     value="{{ settings_edit_data.sidebar_section_label if settings_edit_data.sidebar_section_label else '-' }}"
+                    readonly
+                    disabled
+                    class="readonly-field"
+                  >
+                </div>
+                <div class="field">
+                  <label for="settings_edit_menu_status">Estado atual</label>
+                  <input
+                    id="settings_edit_menu_status"
+                    value="{% if settings_edit_data.is_active and not settings_edit_data.is_deleted %}Ativo{% else %}Inativo{% endif %}"
                     readonly
                     disabled
                     class="readonly-field"
@@ -2680,24 +2686,5 @@
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
   <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260430-sidebar-global-refresh-v1"></script>
   <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260502-process-fields-v7-header-load-fix-v1"></script>
-  <script>
-    (function () {
-      var systemSelect = document.getElementById('edit_user_system_type');
-      var entityNumberInput = document.getElementById('edit_user_entity_number');
-      if (!systemSelect || !entityNumberInput) return;
-
-      function applyEntityNumberState() {
-        if (systemSelect.value === 'owner') {
-          entityNumberInput.removeAttribute('readonly');
-          entityNumberInput.classList.remove('readonly-field');
-        } else {
-          entityNumberInput.setAttribute('readonly', '');
-          entityNumberInput.classList.add('readonly-field');
-        }
-      }
-
-      applyEntityNumberState();
-      systemSelect.addEventListener('change', applyEntityNumberState);
-    })();
-  </script>
+  <script src="/static/js/modules/user_entity_selector_v1.js?v=20260623-user-entity-selector-v1"></script>
 {% endblock %}

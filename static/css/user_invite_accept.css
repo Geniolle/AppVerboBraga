@@ -98,7 +98,8 @@ label {
   letter-spacing: 0.02em;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: var(--ui-control-height);
   border: 1px solid var(--ui-control-border-color);
@@ -109,16 +110,24 @@ input {
   background: #fff;
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: none;
   border-color: var(--ui-control-focus-border);
   box-shadow: var(--ui-control-focus-ring);
 }
 
 input[readonly],
-input[disabled] {
+input[disabled],
+select[disabled] {
   background: var(--readonly-bg);
   color: #5d6b80;
+}
+
+.field-help {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
 .actions {

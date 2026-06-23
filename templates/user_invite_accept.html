@@ -3,7 +3,7 @@
 {% block title %}Ativar conta{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/user_invite_accept.css?v=20260424a">
+  <link rel="stylesheet" href="/static/css/user_invite_accept.css?v=20260623-invite-country-v1">
 {% endblock %}
 
 {% block body %}
@@ -40,8 +40,36 @@
               <input id="invite_full_name" name="full_name" required value="{{ form_data.full_name }}">
             </div>
             <div class="field">
+              <label for="invite_country">País *</label>
+              <select id="invite_country" name="country" required>
+                <option value="" disabled {% if not form_data.country %}selected{% endif %}>Selecione o país</option>
+                {% for option in supported_phone_countries %}
+                  <option
+                    value="{{ option.value }}"
+                    data-calling-code="{{ option.calling_code }}"
+                    data-phone-placeholder="{{ option.placeholder }}"
+                    {% if form_data.country == option.value %}selected{% endif %}
+                  >
+                    {{ option.label }} ({{ option.calling_code }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
               <label for="invite_primary_phone">Telefone principal *</label>
-              <input id="invite_primary_phone" name="primary_phone" required value="{{ form_data.primary_phone }}">
+              <input
+                id="invite_primary_phone"
+                name="primary_phone"
+                required
+                value="{{ form_data.primary_phone }}"
+                placeholder="{{ phone_placeholder }}"
+              >
+              <small class="field-help">
+                O telefone deve começar com o prefixo internacional do país selecionado.
+                {% if selected_phone_country %}
+                  Exemplo para {{ selected_phone_country.label }}: {{ selected_phone_country.calling_code }}.
+                {% endif %}
+              </small>
             </div>
             <div class="field full">
               <label for="invite_address">Morada *</label>

@@ -56,17 +56,17 @@ def test_normalize_create_user_input_success() -> None:
         full_name="  Joao Silva  ",
         primary_phone=" 912345678 ",
         email="  JOAO@EXAMPLE.COM ",
-        system_type="owner",
         invite_delivery="link",
     )
 
     assert payload.clean_full_name == "Joao Silva"
     assert payload.clean_primary_phone == "912345678"
     assert payload.clean_email == "joao@example.com"
-    assert payload.clean_system_type == "owner"
+    assert payload.clean_system_type == "default"
     assert payload.clean_invite_delivery == "link"
     assert payload.form_data["entity_id"] == ""
     assert payload.form_data["entity_name"] == ""
+    assert "system_type" not in payload.form_data
     assert payload.errors == []
 
 
@@ -108,7 +108,6 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
             full_name="Maria Gestora",
             primary_phone="913111222",
             email="maria.gestora@example.com",
-            system_type="default",
             invite_delivery="link",
         )
 
@@ -186,7 +185,6 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
             full_name="Carlos Atualizado",
             primary_phone="913999888",
             email="CARLOS.BASE@example.com",
-            system_type="default",
             invite_delivery="link",
         )
 

@@ -13,26 +13,15 @@ from typing import Any
 from urllib.parse import quote
 
 from appverbo.core import *  # noqa: F403,F401
+from appverbo.services.phone_country import (
+    get_supported_phone_countries,
+    validate_phone_prefix_for_country,
+)
 from appverbo.services.passwords import hash_password, verify_password
 from appverbo.services.user_member import (
     ensure_user_for_member,
     ensure_user_for_member_v1,
     member_status_for_user_account_status,
-)
-
-SIGNUP_COUNTRY_PHONE_OPTIONS: tuple[dict[str, str], ...] = (
-    {
-        "value": "PT",
-        "label": "Portugal",
-        "calling_code": "+351",
-        "placeholder": "+351 910 000 000",
-    },
-    {
-        "value": "BR",
-        "label": "Brasil",
-        "calling_code": "+55",
-        "placeholder": "+55 11 99999-9999",
-    },
 )
 
 def _urlsafe_b64encode(raw_bytes: bytes) -> str:
@@ -358,31 +347,11 @@ def get_login_defaults() -> dict[str, str]:
 
 
 def get_signup_country_options() -> list[dict[str, str]]:
-    return [dict(option) for option in SIGNUP_COUNTRY_PHONE_OPTIONS]
+    return get_supported_phone_countries()
 
 
 def validate_signup_phone_country(country: str, primary_phone: str) -> str:
-    clean_country = (country or "").strip().upper()
-    clean_phone = (primary_phone or "").strip()
-    if not clean_country:
-        return "País é obrigatório."
-    if not clean_phone:
-        return "Telefone principal é obrigatório."
-
-    selected_option = next(
-        (option for option in SIGNUP_COUNTRY_PHONE_OPTIONS if option["value"] == clean_country),
-        None,
-    )
-    if selected_option is None:
-        return "País inválido."
-
-    expected_code = selected_option["calling_code"]
-    if not clean_phone.startswith(expected_code):
-        return (
-            f"Telefone inválido para {selected_option['label']}. "
-            f"Use o código {expected_code}."
-        )
-    return ""
+    return validate_phone_prefix_for_country(country, primary_phone)
 
 def get_oauth_flags() -> dict[str, bool]:
     return {

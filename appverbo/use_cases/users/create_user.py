@@ -23,9 +23,7 @@ from appverbo.services.auth import (
     is_admin_user,
     send_user_invite_email,
 )
-from appverbo.services.user_system import normalize_user_system_type_v1
 from appverbo.services.user_entity_scope import (
-    get_actor_system_type_v1,
     get_actor_primary_entity_v1,
 )
 from appverbo.services.user_member import ensure_user_for_member
@@ -39,6 +37,12 @@ from appverbo.services.page import (
 )
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import get_user_personal_data
+
+
+# ###################################################################################
+# (1) COMPATIBILIDADE LEGADA DO SYSTEM TYPE
+# ###################################################################################
+LEGACY_USER_SYSTEM_TYPE_DEFAULT = "default"
 
 
 def _extract_email_domain(raw_email: str) -> str:
@@ -224,14 +228,13 @@ def normalize_create_user_input_v1(
     primary_phone: str,
     email: str,
     entity_id: str = "",
-    system_type: str = "default",
     invite_delivery: str,
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
     clean_email = email.strip().lower()
     clean_entity_id = (entity_id or "").strip()
-    clean_system_type = normalize_user_system_type_v1(system_type)
+    clean_system_type = LEGACY_USER_SYSTEM_TYPE_DEFAULT
     clean_invite_delivery = invite_delivery.strip().lower()
     if clean_invite_delivery not in {"email", "link"}:
         clean_invite_delivery = "email"
@@ -243,7 +246,6 @@ def normalize_create_user_input_v1(
         "entity_id": clean_entity_id,
         "entity_name": "",
         "entity_number": "",
-        "system_type": clean_system_type,
     }
 
     errors: list[str] = []
@@ -364,12 +366,10 @@ def execute_create_user(
     selected_entity = None
 
     # APPVERBO_ENTITY_SCOPE_RESOLUTION_V1_START
-    # A entidade do novo utilizador depende do sistema_type do utilizador LOGADO:
-    # - owner → escolhe qualquer entidade ativa no dropdown (entity_id submetido)
-    # - legado/default → fica restrito à entidade do próprio ator (ignora form entity_id)
-    actor_system_type = get_actor_system_type_v1(session, int(actor_user["id"]))
-
-    if actor_system_type == "owner":
+    # A entidade do novo utilizador depende das permissões ativas do utilizador logado:
+    # - can_manage_all_entities → escolhe qualquer entidade ativa no dropdown
+    # - restantes → ficam restritos à entidade ativa do próprio ator
+    if entity_permissions.get("can_manage_all_entities"):
         submitted_entity_id = form_data.get("entity_id", "")
         if submitted_entity_id:
             try:

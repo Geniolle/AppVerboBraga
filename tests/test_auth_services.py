@@ -20,6 +20,10 @@ from appverbo.services.auth import (
     upsert_user_by_email,
     validate_signup_phone_country,
 )
+from appverbo.services.phone_country import (
+    normalize_country_code,
+    normalize_phone_value,
+)
 from appverbo.services.passwords import hash_password, verify_password
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.user_member import (
@@ -79,6 +83,24 @@ def test_signup_country_options_include_supported_codes() -> None:
         "calling_code": "+55",
         "placeholder": "+55 11 99999-9999",
     } in options
+    assert {
+        "value": "US",
+        "label": "Estados Unidos",
+        "calling_code": "+1",
+        "placeholder": "+1 202 555 0100",
+    } in options
+
+
+def test_normalize_country_code_accepts_code_and_legacy_label() -> None:
+    assert normalize_country_code("pt") == "PT"
+    assert normalize_country_code("Portugal") == "PT"
+    assert normalize_country_code("Moçambique") == "MZ"
+    assert normalize_country_code("Reino Unido") == "GB"
+
+
+def test_normalize_phone_value_removes_visual_formatting() -> None:
+    assert normalize_phone_value("+351 912 345 678") == "+351912345678"
+    assert normalize_phone_value("+55 (11) 99999-9999") == "+5511999999999"
 
 
 def test_validate_signup_phone_country_accepts_matching_calling_code() -> None:
@@ -89,11 +111,11 @@ def test_validate_signup_phone_country_accepts_matching_calling_code() -> None:
 def test_validate_signup_phone_country_rejects_wrong_calling_code() -> None:
     assert (
         validate_signup_phone_country("PT", "+55 11 99999-9999")
-        == "Telefone inválido para Portugal. Use o código +351."
+        == "O telefone deve começar com o prefixo internacional do país selecionado. Exemplo para Portugal: +351."
     )
     assert (
         validate_signup_phone_country("BR", "+351 912 345 678")
-        == "Telefone inválido para Brasil. Use o código +55."
+        == "O telefone deve começar com o prefixo internacional do país selecionado. Exemplo para Brasil: +55."
     )
 
 

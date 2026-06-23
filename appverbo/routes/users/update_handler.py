@@ -29,6 +29,36 @@ from appverbo.routes.users.helpers import (
     _member_is_within_permissions,
     _resolve_entity_from_user_email,
 )
+from appverbo.services.permissions import is_entity_within_permissions
+
+
+# ###################################################################################
+# (1) VALIDACAO EXPLICITA DA ENTIDADE SELECIONADA
+# ###################################################################################
+def _resolve_explicit_user_entity_v1(
+    session: Session,
+    raw_entity_id: str,
+    permissions: dict[str, Any],
+) -> tuple[Entity | None, str]:
+    clean_entity_id = (raw_entity_id or "").strip()
+    if not clean_entity_id:
+        return None, ""
+    if not clean_entity_id.isdigit():
+        return None, "Selecione uma entidade válida."
+
+    parsed_entity_id = int(clean_entity_id)
+    if not is_entity_within_permissions(parsed_entity_id, permissions):
+        return None, "Não tem permissão para associar utilizador a esta entidade."
+
+    entity = session.execute(
+        select(Entity).where(
+            Entity.id == parsed_entity_id,
+            Entity.is_active.is_(True),
+        )
+    ).scalar_one_or_none()
+    if entity is None:
+        return None, "Entidade selecionada não existe ou está inativa."
+    return entity, ""
 
 @router.post("/users/update", response_class=HTMLResponse)
 def update_user(
@@ -38,9 +68,7 @@ def update_user(
     primary_phone: str = Form(...),
     email: str = Form(...),
     entity_id: str = Form(""),
-    entity_number: str = Form(""),
     account_status: str = Form(UserAccountStatus.ACTIVE.value),
-    system_type: str = Form("default"),
     return_menu: str = Form(""),
     return_admin_tab: str = Form(""),
     return_target: str = Form(""),
@@ -50,8 +78,6 @@ def update_user(
     clean_primary_phone = primary_phone.strip()
     clean_email = email.strip().lower()
     clean_account_status = account_status.strip().lower()
-    clean_system_type = normalize_user_system_type_v1(system_type)
-    clean_entity_number = entity_number.strip()
     clean_entity_id = entity_id.strip()
 
     if not clean_user_id.isdigit():
@@ -151,11 +177,23 @@ def update_user(
         if clean_account_status not in ALLOWED_ACCOUNT_STATUS:
             errors.append("Estado de conta inválido.")
 
-        selected_entity, entity_resolution_error = _resolve_entity_from_user_email(
+        selected_entity = None
+        entity_resolution_error = ""
+        explicit_entity, explicit_entity_error = _resolve_explicit_user_entity_v1(
             session,
-            clean_email,
+            clean_entity_id,
             entity_permissions,
         )
+        if explicit_entity_error:
+            errors.append(explicit_entity_error)
+        elif explicit_entity is not None:
+            selected_entity = explicit_entity
+        else:
+            selected_entity, entity_resolution_error = _resolve_entity_from_user_email(
+                session,
+                clean_email,
+                entity_permissions,
+            )
         # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_START
         # Ao editar um utilizador existente, não devemos bloquear a atualização só porque
         # o domínio do email do utilizador não corresponde ao domínio/email da entidade.
@@ -165,23 +203,7 @@ def update_user(
         # 2. Se não for possível resolver pelo email, mantém a entidade já ligada ao membro.
         # 3. A entidade atual pode estar inativa; ainda assim deve ser mantida para permitir
         #    alteração de estado do utilizador sem forçar nova resolução por domínio.
-        if selected_entity is None and clean_entity_id.isdigit():
-            explicit_entity = session.get(Entity, int(clean_entity_id))
-
-            if explicit_entity is not None:
-                can_use_explicit_entity = bool(entity_permissions.get("can_manage_all_entities"))
-
-                if not can_use_explicit_entity:
-                    allowed_entity_ids = sorted(
-                        set(entity_permissions.get("allowed_entity_ids") or set())
-                    )
-                    can_use_explicit_entity = int(explicit_entity.id) in allowed_entity_ids
-
-                if can_use_explicit_entity:
-                    selected_entity = explicit_entity
-                    entity_resolution_error = ""
-
-        if selected_entity is None:
+        if selected_entity is None and not clean_entity_id:
             current_entity_stmt = (
                 select(Entity)
                 .join(MemberEntity, MemberEntity.entity_id == Entity.id)
@@ -249,9 +271,10 @@ def update_user(
             str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
             and is_admin_user(session, int(user.id), str(user.login_email or ""))
         )
+        stored_user_system_type = normalize_user_system_type_v1(user.system_type)
         resulting_is_admin = (
             (bool(ADMIN_LOGIN_EMAIL) and clean_email == ADMIN_LOGIN_EMAIL)
-            or is_owner_system_v1(clean_system_type)
+            or is_owner_system_v1(stored_user_system_type)
         )
         resulting_is_active_admin = (
             clean_account_status == UserAccountStatus.ACTIVE.value and resulting_is_admin
@@ -284,12 +307,12 @@ def update_user(
         member.member_status = member_status_for_user_account_status(clean_account_status)
 
         if selected_entity is not None:
-            primary_link = session.execute(
+            member_links = session.execute(
                 select(MemberEntity)
                .where(MemberEntity.member_id == member.id)
-               .order_by(MemberEntity.id.asc())
-               .limit(1)
-            ).scalar_one_or_none()
+                .order_by(MemberEntity.id.asc())
+            ).scalars().all()
+            primary_link = member_links[0] if member_links else None
             if primary_link is None:
                 session.add(
                     MemberEntity(
@@ -302,10 +325,17 @@ def update_user(
             else:
                 primary_link.entity_id = selected_entity.id
                 primary_link.status = MemberEntityStatus.ACTIVE.value
+                if primary_link.entry_date is None:
+                    primary_link.entry_date = date.today()
+                primary_link.exit_date = None
 
-        user.system_type = clean_system_type
-        if clean_system_type == "owner" and selected_entity is not None and clean_entity_number.isdigit():
-            selected_entity.entity_number = int(clean_entity_number)
+                for duplicate_link in member_links[1:]:
+                    if int(duplicate_link.entity_id) != int(selected_entity.id):
+                        continue
+                    if duplicate_link.status != MemberEntityStatus.INACTIVE.value:
+                        duplicate_link.status = MemberEntityStatus.INACTIVE.value
+                    if duplicate_link.exit_date is None:
+                        duplicate_link.exit_date = date.today()
 
         try:
             session.commit()

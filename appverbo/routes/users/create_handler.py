@@ -23,7 +23,6 @@ def create_user_v1(
     primary_phone: str = Form(...),
     email: str = Form(...),
     entity_id: str = Form(""),
-    system_type: str = Form("default"),
     invite_delivery: str = Form("email"),
     return_menu: str = Form(""),
     return_admin_tab: str = Form(""),
@@ -35,7 +34,6 @@ def create_user_v1(
             primary_phone=primary_phone,
             email=email,
             entity_id=entity_id,
-            system_type=system_type,
             invite_delivery=invite_delivery,
         )
 

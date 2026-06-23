@@ -16,16 +16,9 @@ from appverbo.menu_settings import (
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
-from appverbo.services.user_system import (
-    normalize_user_system_type_v1,
-    get_user_system_type_label_v1,
-    is_owner_system_v1,
-)
 from appverbo.services.user_entity_scope import (
-    can_select_user_entity_v1,
-    get_actor_system_type_v1,
     get_actor_primary_entity_v1,
-    get_entities_for_user_form_v1,
+    get_entities_for_user_edit_form_v1,
 )
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.user_status import (
@@ -432,20 +425,21 @@ def get_page_data(
     current_user_is_admin = bool(permissions["is_admin"])
 
     # APPVERBO_ACTOR_ENTITY_CONTEXT_V1_START
-    _actor_system_type = "default"
     _actor_entity_id: int | None = None
     _actor_entity_name = ""
     _actor_entity_number = None
     _entities_for_user_form: list[dict[str, Any]] = []
+    _entities_for_user_edit_form: list[dict[str, Any]] = []
+    _can_select_user_entity = bool(permissions["can_manage_all_entities"])
     if actor_user_id is not None:
-        _actor_system_type = get_actor_system_type_v1(session, actor_user_id)
         _actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
         if _actor_primary_entity is not None:
             _actor_entity_id = _actor_primary_entity["id"]
             _actor_entity_name = _actor_primary_entity["name"]
             _actor_entity_number = _actor_primary_entity["entity_number"]
-        if can_select_user_entity_v1(_actor_system_type):
-            _entities_for_user_form = get_entities_for_user_form_v1(session, _actor_system_type)
+        if _can_select_user_entity:
+            _entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
+        _entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
     # APPVERBO_ACTOR_ENTITY_CONTEXT_V1_END
 
     current_entity_scope = ""
@@ -896,7 +890,6 @@ def get_page_data(
         select(
             User.id,
             User.member_id,
-            User.system_type,
             Member.full_name,
             Member.primary_phone,
             User.login_email,
@@ -965,10 +958,6 @@ def get_page_data(
             "entity_id": entity_id_by_member_id.get(int(row.member_id)),
             "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
             "entity_number": entity_number_by_member_id.get(int(row.member_id)),
-            "system_type": normalize_user_system_type_v1(row.system_type),
-            "system_name": get_user_system_type_label_v1(row.system_type),
-            "profile_name": get_user_system_type_label_v1(row.system_type),
-            "is_entity_superuser": is_owner_system_v1(row.system_type),
             "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
         }
         for row in user_rows
@@ -991,7 +980,6 @@ def get_page_data(
         if row["account_status"] != UserAccountStatus.ACTIVE.value
     ]
     # APPVERBO_NON_ACTIVE_USERS_LIST_V1_END
-    superuser_users = [row for row in all_users if row["is_entity_superuser"]]
     recent_users = all_users[:10]
 
     account_status_map = {
@@ -1070,17 +1058,15 @@ def get_page_data(
         "active_created_users": active_created_users,
         "inactive_users": inactive_users,
         "pending_users": pending_users,
-        "superuser_users": superuser_users,
         "entity_permissions": permissions,
         "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
         "current_entity_scope": current_entity_scope,
-        "current_user_system_type": _actor_system_type,
-        "current_user_system_label": get_user_system_type_label_v1(_actor_system_type),
         "current_user_entity_id": _actor_entity_id,
         "current_user_entity_name": _actor_entity_name,
         "current_user_entity_number": _actor_entity_number,
-        "can_select_user_entity": can_select_user_entity_v1(_actor_system_type),
+        "can_select_user_entity": _can_select_user_entity,
         "entities_for_user_form": _entities_for_user_form,
+        "entities_for_user_edit_form": _entities_for_user_edit_form,
         "sidebar_menu_settings": sidebar_menu_settings,
         "sidebar_section_options": sidebar_section_options,
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
@@ -1191,7 +1177,6 @@ def get_form_defaults() -> dict[str, str]:
         "entity_name": "",
         "entity_number": "",
         "account_status": UserAccountStatus.ACTIVE.value,
-        "system_type": "default",
     }
 
 def get_entity_form_defaults() -> dict[str, str]:
@@ -1284,7 +1269,6 @@ def get_user_edit_defaults() -> dict[str, str]:
         "entity_name": "",
         "entity_number": "",
         "account_status": UserAccountStatus.ACTIVE.value,
-        "system_type": "default",
     }
 
 def get_user_edit_data(
@@ -1300,7 +1284,6 @@ def get_user_edit_data(
         select(
             User.id,
             User.member_id,
-            User.system_type,
             Member.full_name,
             Member.primary_phone,
             User.login_email,
@@ -1350,7 +1333,6 @@ def get_user_edit_data(
         "entity_name": entity_name_value,
         "entity_number": str(entity_number_value) if entity_number_value is not None else "",
         "account_status": row.account_status or UserAccountStatus.ACTIVE.value,
-        "system_type": normalize_user_system_type_v1(row.system_type),
     }
 
 def get_next_entity_number(session: Session) -> int:

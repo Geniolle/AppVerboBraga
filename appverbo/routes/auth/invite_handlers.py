@@ -61,6 +61,7 @@ def render_invite_accept(
 ) -> HTMLResponse:
     defaults = {
         "full_name": "",
+        "country": "",
         "primary_phone": "",
         "address": "",
         "city": "",
@@ -72,6 +73,14 @@ def render_invite_accept(
     }
     if form_data:
         defaults.update(form_data)
+    defaults["country"] = normalize_country_code(defaults.get("country", ""))
+
+    selected_phone_country = get_supported_phone_country_option(defaults["country"])
+    phone_placeholder = (
+        selected_phone_country["placeholder"]
+        if selected_phone_country is not None
+        else "+351 910 000 000"
+    )
 
     context = {
         "request": request,
@@ -79,6 +88,9 @@ def render_invite_accept(
         "error": error,
         "success": success,
         "form_data": defaults,
+        "supported_phone_countries": get_supported_phone_countries(),
+        "selected_phone_country": selected_phone_country,
+        "phone_placeholder": phone_placeholder,
         "account_already_active": account_already_active,
     }
     return templates.TemplateResponse(
@@ -149,6 +161,7 @@ def invite_accept_page(
             token=clean_token,
             form_data={
                 "full_name": member.full_name or "",
+                "country": normalize_country_code(member.country or ""),
                 "primary_phone": member.primary_phone or "",
                 "address": member.address or "",
                 "city": member.city or "",
@@ -177,8 +190,8 @@ def invite_accept_submit(
 ) -> HTMLResponse:
     clean_token = token.strip()
     clean_full_name = full_name.strip()
-    clean_primary_phone = primary_phone.strip()
-    clean_country = country.strip()
+    clean_primary_phone = normalize_phone_value(primary_phone)
+    clean_country = normalize_country_code(country)
     clean_address = address.strip()
     clean_city = city.strip()
     clean_freguesia = freguesia.strip()
@@ -196,6 +209,7 @@ def invite_accept_submit(
 
     form_data: dict[str, str] = {
         "full_name": clean_full_name,
+        "country": clean_country,
         "primary_phone": clean_primary_phone,
         "address": clean_address,
         "city": clean_city,
@@ -209,8 +223,9 @@ def invite_accept_submit(
     errors: list[str] = []
     if not clean_full_name:
         errors.append("Nome completo é obrigatório.")
-    if not clean_primary_phone:
-        errors.append("Telefone principal é obrigatório.")
+    phone_country_error = validate_phone_prefix_for_country(clean_country, clean_primary_phone)
+    if phone_country_error:
+        errors.append(phone_country_error)
     if not clean_address:
         errors.append("Morada é obrigatória.")
     if not clean_city:
@@ -276,6 +291,7 @@ def invite_accept_submit(
 
         member.full_name = clean_full_name
         member.primary_phone = clean_primary_phone
+        member.country = clean_country or None
         member.address = clean_address
         member.city = clean_city
         member.freguesia = clean_freguesia
