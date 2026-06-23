@@ -1,4 +1,3 @@
-
 /* APPVERBO_ADMIN_SUBPROCESSES_V1_START */
 
 .admin-subprocess-card-v1 {
@@ -131,6 +130,48 @@
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.admin-subprocess-table-v1 th.admin-subprocess-sortable-th-v1 {
+  padding: 0;
+}
+
+.admin-subprocess-sort-btn-v1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 38px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  box-sizing: border-box;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.admin-subprocess-sort-btn-v1:hover,
+.admin-subprocess-sort-btn-v1:focus-visible {
+  background: #f3f6fb;
+  outline: none;
+}
+
+.admin-subprocess-sort-indicator-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  font-size: 10px;
+  opacity: 0.72;
+}
+
+.admin-subprocess-number-column-v1 {
+  width: 1%;
+  white-space: nowrap;
 }
 
 .admin-subprocess-table-v1 th:last-child,

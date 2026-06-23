@@ -30,9 +30,11 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
 
     def _to_row(self, entity: Any) -> dict[str, Any]:
         is_active = bool(getattr(entity, "is_active", False))
+        entity_number = getattr(entity, "entity_number", None)
         return {
             "id": getattr(entity, "id", None),
             "key": str(getattr(entity, "id", "") or ""),
+            "entity_number": entity_number if entity_number is not None else "",
             "name": getattr(entity, "name", "") or getattr(entity, "legal_name", "") or "",
             "label": getattr(entity, "name", "") or getattr(entity, "legal_name", "") or "",
             "status": "active" if is_active else "inactive",
@@ -42,7 +44,7 @@ class EntityAdminRepository(BaseAdminSubprocessRepository):
 
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         Entity = self._resolve_entity_model()
-        rows = session.query(Entity).order_by(Entity.id.asc()).all()
+        rows = session.query(Entity).order_by(Entity.entity_number.asc(), Entity.id.asc()).all()
         return [self._to_row(row) for row in rows]
 
     def get_for_edit(

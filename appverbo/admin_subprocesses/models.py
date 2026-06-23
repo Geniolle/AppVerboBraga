@@ -7,6 +7,8 @@ from typing import Any, Literal
 
 AdminSubprocessMode = Literal["create", "edit"]
 AdminSubprocessStatus = Literal["ativo", "inativo"]
+AdminColumnSortType = Literal["text", "number"]
+AdminColumnDefaultSort = Literal["", "asc", "desc"]
 
 
 @dataclass(frozen=True)
@@ -31,6 +33,9 @@ class AdminColumnConfig:
     source: str
     align: str = "left"
     css_class: str = ""
+    sortable: bool = False
+    sort_type: AdminColumnSortType = "text"
+    default_sort: AdminColumnDefaultSort = ""
 
 
 @dataclass(frozen=True)
