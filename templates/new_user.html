@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260624-col-align-fix-v1">
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260624-number-col-left-v1">
   <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260623-admin-user-sort-v3" defer></script>
 {% endblock %}
 
@@ -1087,11 +1087,13 @@
           <h2>{% if current_user_can_manage_all_entities %}Entidades criadas{% else %}Dados gerais{% endif %}</h2>
           {% set active_recent_entities = recent_entities if current_user_can_manage_all_entities else recent_entities[:1] %}
           {% if active_recent_entities %}
+            <div class="admin-subprocess-table-wrap-v1">
             <table id="recent-entities-table" {% if current_user_can_manage_all_entities %}data-admin-sortable-table="1"{% endif %}>
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
                   <th
+                    class="admin-col-number-v1"
                     data-admin-column-key="entity_number"
                     data-admin-sortable-column="1"
                     aria-sort="ascending"
@@ -1112,40 +1114,40 @@
                     </button>
                   </th>
                   {% endif %}
-                  <th>Nome</th>
+                  <th class="admin-col-main-v1">Nome</th>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Perfil</th>
+                  <th class="admin-col-text-v1">Perfil</th>
                   {% endif %}
-                  <th>Telefone</th>
-                  <th>Morada</th>
-                  <th>Estado</th>
+                  <th class="admin-col-text-v1">Telefone</th>
+                  <th class="admin-col-text-v1">Morada</th>
+                  <th class="admin-col-status-v1">Estado</th>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Criado em</th>
+                  <th class="admin-col-date-v1">Criado em</th>
                   {% endif %}
-                  <th>Ações</th>
+                  <th class="admin-col-actions-v1">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {% for row in active_recent_entities %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
-                    <td data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
+                    <td class="admin-col-number-v1" data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
                     {% endif %}
-                    <td>{{ row.name }}</td>
+                    <td class="admin-col-main-v1">{{ row.name }}</td>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.profile_scope_label }}</td>
+                    <td class="admin-col-text-v1">{{ row.profile_scope_label }}</td>
                     {% endif %}
-                    <td>{{ row.phone if row.phone else '-' }}</td>
-                    <td>{{ row.address if row.address else '-' }}</td>
-                    <td>
+                    <td class="admin-col-text-v1">{{ row.phone if row.phone else '-' }}</td>
+                    <td class="admin-col-text-v1">{{ row.address if row.address else '-' }}</td>
+                    <td class="admin-col-status-v1">
                       <span class="entity-status {% if row.is_active %}entity-status-active{% else %}entity-status-inactive{% endif %}">
                         {{ row.status_label }}
                       </span>
                     </td>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.created_at }}</td>
+                    <td class="admin-col-date-v1">{{ row.created_at }}</td>
                     {% endif %}
-                    <td>
+                    <td class="admin-col-actions-v1">
                       <div class="table-actions">
                         <a
                           class="table-icon-btn"
@@ -1197,6 +1199,7 @@
                 {% endfor %}
               </tbody>
             </table>
+            </div>
             {% if current_user_can_manage_all_entities %}
             <div id="recent-entities-limiter" class="table-limiter">
               <div class="table-limiter-left">
@@ -1223,11 +1226,13 @@
         <section id="inactive-entities-card" class="card" data-menu-scope="administrativo">
           <h2>Entidades inativas</h2>
           {% if inactive_entities %}
+            <div class="admin-subprocess-table-wrap-v1">
             <table id="inactive-entities-table" data-admin-sortable-table="1">
               <thead>
                 <tr>
                   {% if current_user_can_manage_all_entities %}
                   <th
+                    class="admin-col-number-v1"
                     data-admin-column-key="entity_number"
                     data-admin-sortable-column="1"
                     aria-sort="ascending"
@@ -1248,40 +1253,40 @@
                     </button>
                   </th>
                   {% endif %}
-                  <th>Nome</th>
+                  <th class="admin-col-main-v1">Nome</th>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Perfil</th>
+                  <th class="admin-col-text-v1">Perfil</th>
                   {% endif %}
-                  <th>Telefone</th>
-                  <th>Morada</th>
-                  <th>Estado</th>
+                  <th class="admin-col-text-v1">Telefone</th>
+                  <th class="admin-col-text-v1">Morada</th>
+                  <th class="admin-col-status-v1">Estado</th>
                   {% if current_user_can_manage_all_entities %}
-                  <th>Criado em</th>
+                  <th class="admin-col-date-v1">Criado em</th>
                   {% endif %}
-                  <th>Ações</th>
+                  <th class="admin-col-actions-v1">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {% for row in inactive_entities %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
-                    <td data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
+                    <td class="admin-col-number-v1" data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
                     {% endif %}
-                    <td>{{ row.name }}</td>
+                    <td class="admin-col-main-v1">{{ row.name }}</td>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.profile_scope_label }}</td>
+                    <td class="admin-col-text-v1">{{ row.profile_scope_label }}</td>
                     {% endif %}
-                    <td>{{ row.phone if row.phone else '-' }}</td>
-                    <td>{{ row.address if row.address else '-' }}</td>
-                    <td>
+                    <td class="admin-col-text-v1">{{ row.phone if row.phone else '-' }}</td>
+                    <td class="admin-col-text-v1">{{ row.address if row.address else '-' }}</td>
+                    <td class="admin-col-status-v1">
                       <span class="entity-status entity-status-inactive">
                         {{ row.status_label }}
                       </span>
                     </td>
                     {% if current_user_can_manage_all_entities %}
-                    <td>{{ row.created_at }}</td>
+                    <td class="admin-col-date-v1">{{ row.created_at }}</td>
                     {% endif %}
-                    <td>
+                    <td class="admin-col-actions-v1">
                       <div class="table-actions">
                         <a
                           class="table-icon-btn"
@@ -1333,6 +1338,7 @@
                 {% endfor %}
               </tbody>
             </table>
+            </div>
             <div id="inactive-entities-limiter" class="table-limiter">
               <div class="table-limiter-left">
                 <select id="inactive-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades inativas)">
@@ -2513,7 +2519,7 @@
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260624-load-less-three-col-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260624-menu-fix-col-v1"></script>
+  <script src="/static/js/new_user.js?v=20260624-menu-entity-col-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260624-menu-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

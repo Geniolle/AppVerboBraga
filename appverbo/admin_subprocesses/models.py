@@ -36,6 +36,7 @@ class AdminColumnConfig:
     sortable: bool = False
     sort_type: AdminColumnSortType = "text"
     default_sort: AdminColumnDefaultSort = ""
+    hide_order: int = 0
 
 
 @dataclass(frozen=True)

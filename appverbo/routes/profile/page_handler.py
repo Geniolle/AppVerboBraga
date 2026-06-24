@@ -533,7 +533,7 @@ def new_user_page(
                 from appverbo.admin_subprocesses.repositories.menu_repository import MenuAdminRepository
 
                 _menu_repo_v1 = MenuAdminRepository(menu_subprocess_config_v1)
-                _menu_rows_v1 = _menu_repo_v1.list_rows(session)
+                _menu_rows_v1 = _menu_repo_v1.list_rows(session, context={"entity_number": selected_entity_number})
                 _menu_return_url_v1 = (
                     "/users/new?menu=sessoes&admin_tab=contas"
                     "&target=menu-subprocess-card-active#menu-subprocess-card-active"

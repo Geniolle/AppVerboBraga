@@ -14,6 +14,10 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
         raw_rows = get_sidebar_menu_settings(session)
         result: list[dict[str, Any]] = []
 
+        ctx = context or {}
+        entity_number = ctx.get("entity_number")
+        entity_number_display = str(entity_number) if entity_number is not None else "-"
+
         for raw_row in raw_rows:
             row = dict(raw_row)
             is_active = bool(row.get("is_active"))
@@ -25,6 +29,8 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             else:
                 row["status"] = "inativo"
                 row["status_label"] = "Inativo"
+
+            row["entity_number"] = entity_number_display
 
             result.append(row)
 

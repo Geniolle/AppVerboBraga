@@ -1188,6 +1188,8 @@ const ESTRUTURAS_NATIVE_TARGETS_V1 = new Set([
   "#menu-subprocess-card-active",
   "#menu-subprocess-card-inactive",
   "#admin-sidebar-sections-card",
+  "#admin-sidebar-sections-card-active",
+  "#admin-sidebar-sections-card-inactive",
   "#admin-sidebar-sections-form-card",
   "#settings-card",
   "#settings-menu-edit-card"
