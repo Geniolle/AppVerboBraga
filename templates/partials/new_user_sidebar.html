@@ -33,17 +33,7 @@
         {% set section_state = namespace(has_items=false) %}
 
         {% for setting in sidebar_menu_settings %}
-          {% set current_section = setting.menu_section|default("", true) %}
-
-          {% if not current_section %}
-            {% if setting.key == "administrativo" %}
-              {% set current_section = "sistema" %}
-            {% elif setting.key == "home" %}
-              {% set current_section = "geral" %}
-            {% else %}
-              {% set current_section = "igreja" %}
-            {% endif %}
-          {% endif %}
+          {% set current_section = setting.sidebar_section_key|default(setting.menu_section|default("", true), true) %}
 
           {% if setting.key in visible_sidebar_menu_keys and current_section == section_key %}
             {% set section_state.has_items = true %}
@@ -54,17 +44,7 @@
         {% if section_state.has_items %}
           <nav class="menu-list" aria-label="Menu {{ section_label|lower }}">
             {% for setting in sidebar_menu_settings %}
-              {% set current_section = setting.menu_section|default("", true) %}
-
-              {% if not current_section %}
-                {% if setting.key == "administrativo" %}
-                  {% set current_section = "sistema" %}
-                {% elif setting.key == "home" %}
-                  {% set current_section = "geral" %}
-                {% else %}
-                  {% set current_section = "igreja" %}
-                {% endif %}
-              {% endif %}
+              {% set current_section = setting.sidebar_section_key|default(setting.menu_section|default("", true), true) %}
 
               {% if setting.key in visible_sidebar_menu_keys and current_section == section_key %}
                 <button

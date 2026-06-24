@@ -8,7 +8,7 @@
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260623-user-create-summary-hide-v1">
-  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260621-process-action-card-v2">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260624-hidden-override-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
@@ -1353,7 +1353,7 @@
         {% endif %}
 
         {% if settings_edit_data %}
-        {% set settings_edit_origin_menu = "administrativo" %}
+        {% set settings_edit_origin_menu = "sessoes" %}
         {% set settings_edit_cancel_target = "#admin-account-status-card" %}
         {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
         {% if settings_edit_data.key == "administrativo" and not settings_process_field_options %}
@@ -1368,7 +1368,7 @@
         {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
         {% set settings_has_process_fields = true %}
         {% set settings_owner_fields_enabled = current_user_can_manage_all_entities %}
-        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo">
+        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes">
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
           {% if settings_has_process_fields %}
@@ -2224,7 +2224,7 @@
         {% endif %}
 
         {% if current_user_can_manage_all_entities %}
-        <section id="admin-account-create-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo">
+        <section id="admin-account-create-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo,sessoes">
           <div class="appverbo-process-action-toolbar-v1">
             <details id="create-menu-collapse" class="entity-create-collapse appverbo-process-action-details-v1">
               <summary class="appverbo-process-action-toggle-v1">
@@ -2232,7 +2232,7 @@
               </summary>
               <div class="entity-create-body appverbo-process-action-panel-v1">
                 <form method="post" action="/settings/menu/create">
-                  <input type="hidden" name="redirect_menu" value="administrativo">
+                  <input type="hidden" name="redirect_menu" value="sessoes">
                   <input type="hidden" name="redirect_target" value="#admin-account-status-card">
                   <div class="grid settings-general-grid">
                     <div class="field">
@@ -2279,16 +2279,16 @@
         </section>
         {% endif %}
 
-        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo">
-          <div class="profile-card-header">
-            <h2>Definições</h2>
+        <section id="admin-account-status-card" class="card" data-menu-scope="administrativo,sessoes">
+          <div class="profile-card-header appverbo-card-header-v1">
+            <h2>Menus ativos</h2>
             {% if current_user_can_manage_all_entities %}
             <div class="table-actions">
               <a class="table-link-btn" href="#admin-sidebar-sections-card">Sessões do sidebar</a>
             </div>
             {% endif %}
           </div>
-          <p>Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.</p>
+          {% if active_menu_rows %}
           <table id="menu-settings-table">
             <thead>
               <tr>
@@ -2302,8 +2302,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for row in sidebar_menu_settings %}
-                {% if not row.is_deleted %}
+              {% for row in active_menu_rows %}
                 <tr>
                   <td>{{ row.label }}</td>
                   <td>{{ row.sidebar_section_label if row.sidebar_section_label else "-" }}</td>
@@ -2311,11 +2310,7 @@
                   <td>{{ row.visibility_scope_label }}</td>
                   {% endif %}
                   <td>
-                    {% if row.is_active and not row.is_deleted %}
-                      <span class="entity-status entity-status-active">Ativo</span>
-                    {% else %}
-                      <span class="entity-status entity-status-inactive">Inativo</span>
-                    {% endif %}
+                    <span class="entity-status entity-status-active">Ativo</span>
                   </td>
                   <td>
                     <div class="table-actions">
@@ -2324,7 +2319,7 @@
                       <form method="post" action="/settings/menu/move">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="direction" value="up">
-                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_menu" value="sessoes">
                         <input type="hidden" name="redirect_target" value="#admin-account-status-card">
                         <button
                           type="submit"
@@ -2348,7 +2343,7 @@
                       <form method="post" action="/settings/menu/move">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="direction" value="down">
-                        <input type="hidden" name="redirect_menu" value="administrativo">
+                        <input type="hidden" name="redirect_menu" value="sessoes">
                         <input type="hidden" name="redirect_target" value="#admin-account-status-card">
                         <button
                           type="submit"
@@ -2369,7 +2364,7 @@
                       </span>
                       {% endif %}
                       {% endif %}
-                      {% if row.key in ['home', 'administrativo'] and row.is_active and not row.is_deleted %}
+                      {% if row.key in ['home', 'administrativo'] %}
                       <span
                         class="table-icon-btn table-icon-btn-disabled"
                         title="Menu obrigatório"
@@ -2380,22 +2375,92 @@
                       {% else %}
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
-                        title="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
-                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar menu{% else %}Exibir menu{% endif %}"
+                        href="/users/new?menu=sessoes&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="Ocultar menu"
+                        aria-label="Ocultar menu"
                       >
                         &#128065;
                       </a>
                       {% endif %}
                       <a
                         class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        href="/users/new?menu=sessoes&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
                         title="Editar menu"
                         aria-label="Editar menu"
                       >
                         &#9998;
                       </a>
-                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div id="menu-settings-limiter" class="table-limiter">
+            <div class="table-limiter-left">
+              <select id="menu-settings-page-size" class="table-limiter-select" aria-label="Entradas por página (menus ativos)">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+              <span>entradas por página</span>
+            </div>
+            <div class="table-limiter-right">
+              <button id="menu-settings-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
+              <span id="menu-settings-page" class="table-limiter-page">1</span>
+              <button id="menu-settings-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+            </div>
+          </div>
+          {% else %}
+            <p class="empty">Sem menus ativos.</p>
+          {% endif %}
+        </section>
+
+        <section id="inactive-menu-settings-card" class="card" data-menu-scope="administrativo,sessoes">
+          <h2>Menus inativos</h2>
+          {% if inactive_menu_rows %}
+          <table id="inactive-menu-settings-table">
+            <thead>
+              <tr>
+                <th>Menu lateral</th>
+                <th>Sessão</th>
+                {% if current_entity_scope == "owner" %}
+                <th>Sistema</th>
+                {% endif %}
+                <th>Estado</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in inactive_menu_rows %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td>{{ row.sidebar_section_label if row.sidebar_section_label else "-" }}</td>
+                  {% if current_entity_scope == "owner" %}
+                  <td>{{ row.visibility_scope_label }}</td>
+                  {% endif %}
+                  <td>
+                    <span class="entity-status entity-status-inactive">Inativo</span>
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=sessoes&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
+                        title="Exibir menu"
+                        aria-label="Exibir menu"
+                      >
+                        &#128065;
+                      </a>
+                      <a
+                        class="table-icon-btn"
+                        href="/users/new?menu=sessoes&admin_tab=contas&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
+                        title="Editar menu"
+                        aria-label="Editar menu"
+                      >
+                        &#9998;
+                      </a>
+                      {% if row.can_delete %}
                       <form
                         method="post"
                         action="/settings/menu/delete"
@@ -2406,8 +2471,8 @@
                         data-appverbo-confirm-danger="1"
                       >
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
-                        <input type="hidden" name="redirect_menu" value="administrativo">
-                        <input type="hidden" name="redirect_target" value="#admin-account-status-card">
+                        <input type="hidden" name="redirect_menu" value="sessoes">
+                        <input type="hidden" name="redirect_target" value="#inactive-menu-settings-card">
                         <button
                           type="submit"
                           class="table-icon-btn table-icon-btn-danger"
@@ -2421,10 +2486,27 @@
                     </div>
                   </td>
                 </tr>
-                {% endif %}
               {% endfor %}
             </tbody>
           </table>
+          <div id="inactive-menu-settings-limiter" class="table-limiter">
+            <div class="table-limiter-left">
+              <select id="inactive-menu-settings-page-size" class="table-limiter-select" aria-label="Entradas por página (menus inativos)">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+              </select>
+              <span>entradas por página</span>
+            </div>
+            <div class="table-limiter-right">
+              <button id="inactive-menu-settings-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
+              <span id="inactive-menu-settings-page" class="table-limiter-page">1</span>
+              <button id="inactive-menu-settings-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
+            </div>
+          </div>
+          {% else %}
+            <p class="empty">Sem menus inativos.</p>
+          {% endif %}
         </section>
 
 
@@ -2712,11 +2794,11 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260621-actions-move-v1"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260624-load-less-three-col-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260623-admin-subprocess-group-v2"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260505-limpar-brigas-topcentral-v32"></script>
-<script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-sistema-label-default-v1"></script>
+  <script src="/static/js/new_user.js?v=20260624-sessoes-limiter-v1"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260623-estruturas-sessoes-default-v1"></script>
+  <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260503-respect-backend-post-save-v1"></script>

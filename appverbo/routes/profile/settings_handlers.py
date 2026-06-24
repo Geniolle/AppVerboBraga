@@ -314,7 +314,7 @@ def _sidebar_section_scope_label_v19(value: object) -> str:
 def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-    fallback = "/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
+    fallback = "/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     raw_url = _normalize_sidebar_section_text_v19(return_url) or fallback
 
     if raw_url.startswith("http://") or raw_url.startswith("https://") or raw_url.startswith("//"):
@@ -348,7 +348,7 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
 
         if key == "menu":
             found_menu = True
-            clean_params.append(("menu", "administrativo"))
+            clean_params.append(("menu", "sessoes"))
             continue
 
         if key == "admin_tab":
@@ -369,7 +369,7 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
         clean_params.append((key, value))
 
     if not found_menu:
-        clean_params.append(("menu", "administrativo"))
+        clean_params.append(("menu", "sessoes"))
 
     if not found_admin_tab:
         clean_params.append(("admin_tab", "sessoes"))

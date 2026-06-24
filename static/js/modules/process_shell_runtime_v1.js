@@ -722,6 +722,7 @@
     const labels = {
       entriesPerPage: "entradas por página",
       loadMore: "Mais",
+      loadLess: "Menos",
       ...(safeConfig.labels && typeof safeConfig.labels === "object" ? safeConfig.labels : {})
     };
 
@@ -732,6 +733,7 @@
     let activeFilter = null;
     let pageSizeSelectEl = safeConfig.pageSizeSelect || footerEl.querySelector("select") || null;
     let loadMoreButtonEl = safeConfig.loadMoreButton || footerEl.querySelector(".appverbo-load-more-btn-v1") || null;
+    let loadLessButtonEl = safeConfig.loadLessButton || null;
     let counterEl = safeConfig.counterEl || footerEl.querySelector(".appverbo-load-more-counter-v1") || null;
     let pageSize = parsePositiveInteger(
       (pageSizeSelectEl && pageSizeSelectEl.value) || safeConfig.initialPageSize,
@@ -792,6 +794,17 @@
       const statusWrapperEl = ownerDocument.createElement("div");
       statusWrapperEl.className = "appverbo-load-more-status-v1";
 
+      const loadLessWrapperEl = ownerDocument.createElement("div");
+      loadLessWrapperEl.className = "appverbo-load-more-less-v1";
+
+      if (!loadLessButtonEl) {
+        loadLessButtonEl = ownerDocument.createElement("button");
+      }
+
+      loadLessButtonEl.type = "button";
+      loadLessButtonEl.className = "appverbo-load-more-btn-v1";
+      loadLessButtonEl.textContent = labels.loadLess;
+
       if (!loadMoreButtonEl) {
         loadMoreButtonEl = ownerDocument.createElement("button");
       }
@@ -816,13 +829,18 @@
       statusWrapperEl.appendChild(loadMoreButtonEl);
       statusWrapperEl.appendChild(counterEl);
 
+      loadLessWrapperEl.appendChild(loadLessButtonEl);
+
       footerEl.appendChild(pageSizeWrapperEl);
       footerEl.appendChild(statusWrapperEl);
+      footerEl.appendChild(loadLessWrapperEl);
     }
 
     function updateCounterAndButton() {
       const totalRows = filteredRows.length;
       const safeVisibleCount = Math.min(Math.max(visibleCount, 0), totalRows);
+      const canShowMore = safeVisibleCount < totalRows;
+      const canShowLess = safeVisibleCount > pageSize;
 
       if (counterEl) {
         counterEl.textContent = `[ ${safeVisibleCount} / ${totalRows} ]`;
@@ -830,15 +848,29 @@
 
       if (loadMoreButtonEl) {
         loadMoreButtonEl.textContent = labels.loadMore;
-        loadMoreButtonEl.disabled = safeVisibleCount >= totalRows || totalRows === 0;
-        loadMoreButtonEl.hidden = totalRows === 0;
+        loadMoreButtonEl.disabled = !canShowMore || totalRows === 0;
+        loadMoreButtonEl.hidden = totalRows === 0 || !canShowMore;
         loadMoreButtonEl.setAttribute(
           "aria-disabled",
-          safeVisibleCount >= totalRows || totalRows === 0 ? "true" : "false"
+          (!canShowMore || totalRows === 0) ? "true" : "false"
         );
 
         if (tableEl.id) {
           loadMoreButtonEl.setAttribute("aria-controls", tableEl.id);
+        }
+      }
+
+      if (loadLessButtonEl) {
+        loadLessButtonEl.textContent = labels.loadLess;
+        loadLessButtonEl.disabled = !canShowLess || totalRows === 0;
+        loadLessButtonEl.hidden = totalRows === 0 || !canShowLess;
+        loadLessButtonEl.setAttribute(
+          "aria-disabled",
+          (!canShowLess || totalRows === 0) ? "true" : "false"
+        );
+
+        if (tableEl.id) {
+          loadLessButtonEl.setAttribute("aria-controls", tableEl.id);
         }
       }
     }
@@ -947,6 +979,15 @@
       render();
     }
 
+    function loadLess() {
+      if (destroyed || !filteredRows.length) {
+        return;
+      }
+
+      visibleCount = Math.max(pageSize, Math.floor((visibleCount - 1) / pageSize) * pageSize);
+      render();
+    }
+
     function handlePageSizeChange() {
       pageSize = readPageSize();
       visibleCount = Math.min(filteredRows.length, pageSize);
@@ -955,6 +996,10 @@
 
     function handleLoadMoreClick() {
       loadMore();
+    }
+
+    function handleLoadLessClick() {
+      loadLess();
     }
 
     function init() {
@@ -975,6 +1020,10 @@
         loadMoreButtonEl.addEventListener("click", handleLoadMoreClick);
       }
 
+      if (loadLessButtonEl) {
+        loadLessButtonEl.addEventListener("click", handleLoadLessClick);
+      }
+
       initialized = true;
       reset();
     }
@@ -992,6 +1041,10 @@
         loadMoreButtonEl.removeEventListener("click", handleLoadMoreClick);
       }
 
+      if (loadLessButtonEl) {
+        loadLessButtonEl.removeEventListener("click", handleLoadLessClick);
+      }
+
       destroyed = true;
       initialized = false;
       footerEl.dataset.appverboLoadMoreReady = "0";
@@ -1003,6 +1056,7 @@
       init,
       render,
       loadMore,
+      loadLess,
       reset,
       setRowsFilter,
       clearRowsFilter,

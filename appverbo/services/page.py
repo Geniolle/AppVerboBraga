@@ -452,6 +452,14 @@ def get_page_data(
         current_entity_scope = str(raw_entity_scope or "").strip().lower()
 
     sidebar_menu_settings = get_sidebar_menu_settings(session)
+    active_menu_rows = [
+        row for row in sidebar_menu_settings
+        if row.get("is_active") and not row.get("is_deleted")
+    ]
+    inactive_menu_rows = [
+        row for row in sidebar_menu_settings
+        if not row.get("is_active")
+    ]
     visible_sidebar_menu_keys = get_visible_sidebar_menu_keys(
         sidebar_menu_settings,
         current_user_is_admin=current_user_is_admin,
@@ -1068,6 +1076,8 @@ def get_page_data(
         "entities_for_user_form": _entities_for_user_form,
         "entities_for_user_edit_form": _entities_for_user_edit_form,
         "sidebar_menu_settings": sidebar_menu_settings,
+        "active_menu_rows": active_menu_rows,
+        "inactive_menu_rows": inactive_menu_rows,
         "sidebar_section_options": sidebar_section_options,
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
         "menu_process_values_map": menu_process_values_map,

@@ -40,6 +40,60 @@ from appverbo.models import (
 from appverbo.routes.profile.router import router
 
 
+ESTRUTURAS_MENU_KEY_V1 = "sessoes"
+ESTRUTURAS_MENU_TARGETS_V1 = {
+    "#admin-account-create-card",
+    "#admin-account-status-card",
+    "#settings-card",
+    "#settings-menu-edit-card",
+}
+ESTRUTURAS_SESSOES_TARGETS_V1 = {
+    "#admin-sidebar-sections-card",
+    "#admin-sidebar-sections-form-card",
+}
+
+
+def _normalize_card_target_v1(raw_target: str) -> str:
+    clean_target = str(raw_target or "").strip()
+    if not clean_target:
+        return ""
+    return clean_target if clean_target.startswith("#") else f"#{clean_target.lstrip('#')}"
+
+
+def _resolve_estruturas_navigation_context_v1(
+    *,
+    resolved_menu: str,
+    resolved_admin_tab: str,
+    settings_edit_key: str,
+    target: str,
+    sidebar_section_edit_key: str,
+) -> tuple[str, str]:
+    clean_menu = resolve_menu_key_alias(resolved_menu)
+    clean_admin_tab = str(resolved_admin_tab or "").strip().lower()
+    if clean_admin_tab in {"menu", "definicoes"}:
+        clean_admin_tab = "contas"
+
+    clean_target = _normalize_card_target_v1(target)
+    is_sessoes_context = (
+        bool(str(sidebar_section_edit_key or "").strip())
+        or clean_admin_tab == "sessoes"
+        or clean_target in ESTRUTURAS_SESSOES_TARGETS_V1
+    )
+    is_menu_context = (
+        bool(str(settings_edit_key or "").strip())
+        or clean_admin_tab == "contas"
+        or clean_target in ESTRUTURAS_MENU_TARGETS_V1
+    )
+
+    if clean_menu == ESTRUTURAS_MENU_KEY_V1:
+        return clean_menu, "contas" if is_menu_context else "sessoes"
+
+    if clean_menu == "administrativo" and (is_sessoes_context or is_menu_context):
+        return ESTRUTURAS_MENU_KEY_V1, "sessoes" if is_sessoes_context else "contas"
+
+    return clean_menu, clean_admin_tab
+
+
 def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
     if not isinstance(menu_row, dict):
         return "__empty__"
@@ -103,6 +157,12 @@ def _resolve_initial_menu_target(
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
         return "#create-entity-card", ""
+    if clean_menu_key == ESTRUTURAS_MENU_KEY_V1:
+        if settings_edit_key:
+            return "#settings-menu-edit-card", ""
+        if resolved_admin_tab == "contas":
+            return "#admin-account-status-card", ""
+        return "#admin-sidebar-sections-card", ""
     if clean_menu_key == "configuracao":
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
@@ -247,11 +307,23 @@ def new_user_page(
     resolved_menu = resolve_menu_key_alias(menu)
     if not resolved_menu:
         resolved_menu = "home"
-    resolved_admin_tab = admin_tab.strip().lower()
-    if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes"}:
-        resolved_admin_tab = "entidade"
-    if resolved_admin_tab == "definicoes":
-        resolved_admin_tab = "contas"
+    clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
+    clean_target_from_query = _normalize_card_target_v1(target)
+    resolved_menu, resolved_admin_tab = _resolve_estruturas_navigation_context_v1(
+        resolved_menu=resolved_menu,
+        resolved_admin_tab=admin_tab.strip().lower(),
+        settings_edit_key=clean_settings_edit_key,
+        target=clean_target_from_query,
+        sidebar_section_edit_key=sidebar_section_edit_key,
+    )
+    if resolved_menu == ESTRUTURAS_MENU_KEY_V1:
+        if resolved_admin_tab not in {"contas", "sessoes"}:
+            resolved_admin_tab = "contas"
+    else:
+        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes"}:
+            resolved_admin_tab = "entidade"
+        if resolved_admin_tab == "definicoes":
+            resolved_admin_tab = "contas"
     parsed_entity_edit_id: int | None = None
     clean_entity_edit_id = entity_edit_id.strip()
     if clean_entity_edit_id.isdigit():
@@ -269,7 +341,6 @@ def new_user_page(
         user_view.strip().lower() in readonly_truthy_values
         and parsed_user_edit_id is not None
     )
-    clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_settings_action = settings_action.strip().lower()
     if clean_settings_action not in {"toggle", "edit", "delete", "create"}:
         clean_settings_action = "edit"
@@ -401,7 +472,6 @@ def new_user_page(
     )
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
-    clean_target_from_query = str(target or "").strip()
     clean_profile_section_from_query = str(profile_section or "").strip().lower()
     clean_dynamic_section_from_query = str(
         dynamic_process_section or section_key or ""
@@ -416,7 +486,7 @@ def new_user_page(
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
-    if resolved_admin_tab == "sessoes":
+    if resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
         if str(sidebar_section_edit_key or "").strip():
             initial_menu_target = "#admin-sidebar-sections-form-card"
         else:
@@ -444,7 +514,9 @@ def new_user_page(
                 edit_key=clean_sidebar_section_edit_key_v2,
                 success=settings_success if resolved_admin_tab == "sessoes" else "",
                 error=settings_error if resolved_admin_tab == "sessoes" else "",
-                return_url="/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
+                menu_key=ESTRUTURAS_MENU_KEY_V1,
+                menu_scope="administrativo,sessoes",
+                return_url="/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 

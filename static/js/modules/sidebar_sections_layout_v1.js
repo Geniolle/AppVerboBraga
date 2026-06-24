@@ -515,7 +515,7 @@ tituloBloco.appendChild(descricao);
     cancelar.className = "action-btn-cancel appverbo-sidebar-section-cancel-btn-v3";
     cancelar.textContent = "Cancelar";
     cancelar.addEventListener("click", function () {
-      window.location.assign("/users/new?menu=administrativo&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card");
+      window.location.assign("/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card");
     });
 
     footer.appendChild(gravar);
@@ -524,7 +524,7 @@ tituloBloco.appendChild(descricao);
     }
     footer.appendChild(nota);
 
-    wrapper.appendChild(criarCampoOcultoSessoesLayout_v2("redirect_menu", "administrativo"));
+    wrapper.appendChild(criarCampoOcultoSessoesLayout_v2("redirect_menu", "sessoes"));
     wrapper.appendChild(criarCampoOcultoSessoesLayout_v2("redirect_target", "#admin-sidebar-sections-card"));
     wrapper.appendChild(cabecalho);
 
@@ -859,7 +859,7 @@ if (!cardLista || !cardLista.parentElement) {
       createCard = document.createElement("section");
       createCard.id = "admin-sidebar-sections-create-card";
       createCard.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v3";
-      createCard.dataset.menuScope = "administrativo";
+      createCard.dataset.menuScope = "administrativo,sessoes";
       cardLista.parentElement.insertBefore(createCard, cardLista);
     }
 
@@ -1816,7 +1816,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     formulario.method = "post";
     formulario.action = "/settings/menu/sidebar-sections";
 
-    formulario.appendChild(criarCampoOcultoSessoesV6("redirect_menu", "administrativo"));
+    formulario.appendChild(criarCampoOcultoSessoesV6("redirect_menu", "sessoes"));
     formulario.appendChild(criarCampoOcultoSessoesV6("redirect_target", "#admin-sidebar-sections-card"));
 
     const descricao = document.createElement("p");
@@ -2620,7 +2620,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const formulario = obterOuCriarFormularioEstadoV9(cardLista);
 
     formulario.innerHTML = "";
-    formulario.appendChild(criarCampoOcultoSessoesEstadoV9("redirect_menu", "administrativo"));
+    formulario.appendChild(criarCampoOcultoSessoesEstadoV9("redirect_menu", "sessoes"));
     formulario.appendChild(criarCampoOcultoSessoesEstadoV9("redirect_target", "#admin-sidebar-sections-card"));
 
     let titulo = cardLista.querySelector(".appverbo-sidebar-section-list-main-title-v9");
@@ -3186,8 +3186,11 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const href = normalizarTextoSessoesScopeV12(window.location.href);
 
     return hash.includes("admin-sidebar-sections-card") ||
+      search.includes("target=admin-sidebar-sections-card") ||
+      search.includes("target=admin-sidebar-sections-form-card") ||
       search.includes("admin_tab=sessoes") ||
       search.includes("admin_tab=sessões") ||
+      search.includes("sidebar_section_edit_key=") ||
       href.includes("dynamic_process_section=sidebar") ||
       href.includes("dynamic_process_section=sessoes") ||
       href.includes("dynamic_process_section=sessões");
@@ -3366,7 +3369,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     url.searchParams.delete("success");
     url.searchParams.delete("error");
 
-    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("menu", "sessoes");
     url.searchParams.set("admin_tab", "sessoes");
     url.searchParams.set("sidebar_sections_tab", "sessoes");
     url.searchParams.set("target", "admin-sidebar-sections-card");
@@ -3732,7 +3735,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       url.searchParams.delete(parametro);
     });
 
-    url.searchParams.set("menu", "administrativo");
+    url.searchParams.set("menu", "sessoes");
     url.searchParams.set("admin_tab", "sessoes");
     url.searchParams.set("sidebar_sections_tab", "sessoes");
     url.searchParams.set("target", "admin-sidebar-sections-card");
@@ -3805,7 +3808,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const card = document.createElement("section");
     card.id = "admin-sidebar-sections-active-card-v23";
     card.className = "card appverbo-sidebar-sections-active-card-v23";
-    card.dataset.menuScope = "administrativo";
+    card.dataset.menuScope = "administrativo,sessoes";
 
     const title = document.createElement("h2");
     title.textContent = "Sessões ativas";

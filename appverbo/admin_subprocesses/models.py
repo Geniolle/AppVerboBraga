@@ -97,6 +97,8 @@ class AdminSubprocessState:
     inactive_rows: list[dict[str, Any]] = field(default_factory=list)
     success: str = ""
     error: str = ""
+    menu_key: str = "administrativo"
+    menu_scope: str = "administrativo"
     return_url: str = ""
 
     @property

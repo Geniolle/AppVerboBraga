@@ -361,6 +361,14 @@
 }
 /* APPVERBO_LOAD_MORE_REMOVE_DUPLICATE_TOP_LINE_V1_END */
 
+/* APPVERBO_LOAD_LESS_BTN_V1_START */
+.appverbo-load-more-less-v1 {
+  align-items: center;
+  display: flex;
+  justify-content: flex-end;
+}
+/* APPVERBO_LOAD_LESS_BTN_V1_END */
+
 /* APPVERBO_PROCESS_SHELL_TITLE_WEIGHT_TUNE_V1_START */
 .process-shell-title,
 #process-shell-title {
@@ -1185,5 +1193,63 @@ body.appverbo-url-feedback-active-v1 .card .alert {
 }
 
 /* APPVERBO_PROCESS_ACTION_CARD_STANDARD_V2_END */
+
+/* APPVERBO_LOAD_MORE_THREE_COLUMN_V1_START */
+.appverbo-load-more-footer-v1 {
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;
+  align-items: center !important;
+  justify-content: normal !important;
+  width: 100% !important;
+}
+
+.appverbo-load-more-footer-v1 .appverbo-load-more-page-size-v1 {
+  grid-column: 1 !important;
+  justify-self: start !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.appverbo-load-more-footer-v1 .appverbo-load-more-status-v1 {
+  grid-column: 2 !important;
+  justify-self: center !important;
+  left: auto !important;
+  position: static !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+.appverbo-load-more-footer-v1 .appverbo-load-more-less-v1 {
+  grid-column: 3 !important;
+  justify-self: end !important;
+}
+
+@media (max-width: 720px) {
+  .appverbo-load-more-footer-v1 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .appverbo-load-more-footer-v1 .appverbo-load-more-status-v1 {
+    align-self: center !important;
+  }
+
+  .appverbo-load-more-footer-v1 .appverbo-load-more-less-v1 {
+    align-self: center !important;
+  }
+}
+/* APPVERBO_LOAD_MORE_THREE_COLUMN_V1_END */
+
+/* APPVERBO_LOAD_MORE_HIDDEN_OVERRIDE_V1_START */
+.appverbo-load-more-footer-v1[hidden] {
+  display: none !important;
+}
+
+.appverbo-load-more-footer-v1 .appverbo-load-more-btn-v1[hidden],
+.appverbo-load-more-footer-v1 .appverbo-load-more-counter-v1[hidden] {
+  display: none !important;
+}
+/* APPVERBO_LOAD_MORE_HIDDEN_OVERRIDE_V1_END */
 
 /* APPVERBO_PROCESS_SHELL_RUNTIME_V1_END */

@@ -39,7 +39,7 @@
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appverbo-process-action-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-role="form"
-    data-menu-scope="administrativo"
+    data-menu-scope="{{ state.menu_scope or 'administrativo' }}"
     style="display:none"
   >
     {% if state.success %}
@@ -143,7 +143,7 @@
       class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
       title="Editar"
       aria-label="Editar"
-      href="/users/new?menu=administrativo&amp;admin_tab={{ state.config.key }}{% if state.config.key == 'sessoes' %}&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
+      href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.key == 'sessoes' %}&amp;admin_tab=sessoes&amp;sidebar_sections_tab=sessoes{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >✎</a>
   </div>
 {% endmacro %}
@@ -166,13 +166,14 @@
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-role="{{ 'active-table' if status_value == state.config.active_value else 'inactive-table' }}"
     data-admin-subprocess-status="{{ status_value }}"
-    data-menu-scope="administrativo"
+    data-menu-scope="{{ state.menu_scope or 'administrativo' }}"
   >
     <h2>{{ title }}</h2>
 
     {% if rows %}
       <div class="admin-subprocess-table-wrap-v1">
         <table
+          id="{{ state.config.key }}-{{ status_value }}-table"
           class="admin-subprocess-table-v1"
           {% if sort_state.has_sortable_columns %}data-admin-sortable-table="1"{% endif %}
         >
@@ -237,6 +238,7 @@
           </tbody>
         </table>
       </div>
+      <div id="{{ state.config.key }}-{{ status_value }}-limiter" class="table-limiter"></div>
     {% else %}
       <p class="empty">Sem registos.</p>
     {% endif %}

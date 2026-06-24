@@ -60,6 +60,7 @@ MENU_CONFIG_SIDEBAR_SECTIONS_KEY = "sidebar_sections"
 MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY = "sidebar_global_refresh_version"
 MENU_LEGACY_KEY_ALIAS = {
     "configuracao": "administrativo",
+    "estruturas": "sessoes",
     MENU_MEU_PERFIL_LEGACY_KEY: MENU_MEU_PERFIL_KEY,
 }
 SIDEBAR_SECTION_DEFAULTS: tuple[dict[str, Any], ...] = (
@@ -548,6 +549,38 @@ def _resolve_default_sidebar_section_key(menu_key: str, section_keys: set[str], 
 
     return ordered_section_keys[0]
 
+
+def resolve_menu_sidebar_section_key(
+    menu_key: Any,
+    menu_config: dict[str, Any] | None,
+    valid_section_keys: set[str],
+    ordered_section_keys: list[str],
+) -> str:
+    clean_menu_config = menu_config if isinstance(menu_config, dict) else {}
+
+    raw_sidebar_section_key = clean_menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
+    clean_sidebar_section_key = _normalize_sidebar_section_key(raw_sidebar_section_key)
+    if clean_sidebar_section_key in valid_section_keys:
+        return clean_sidebar_section_key
+
+    legacy_section_key = (
+        clean_menu_config.get("menu_section")
+        or clean_menu_config.get("section_key")
+        or clean_menu_config.get("section")
+    )
+    clean_legacy_section_key = _normalize_sidebar_section_key(legacy_section_key)
+    if clean_legacy_section_key in valid_section_keys:
+        return clean_legacy_section_key
+
+    normalized_legacy_section_key = normalize_menu_section_key(legacy_section_key, menu_key)
+    if normalized_legacy_section_key in valid_section_keys:
+        return normalized_legacy_section_key
+
+    return _resolve_default_sidebar_section_key(
+        _resolve_legacy_menu_alias(menu_key),
+        valid_section_keys,
+        ordered_section_keys,
+    )
 
 
 PT_PT_LABEL_REPLACEMENTS: tuple[tuple[str, str], ...] = (
@@ -1365,35 +1398,20 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
     for setting_row in settings:
         clean_menu_key = str(setting_row.get("key") or "").strip().lower()
         menu_config = setting_row.get("menu_config")
-        if isinstance(menu_config, dict):
-            configured_section_key = _normalize_sidebar_section_key(
-                menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
-            )
-        else:
-            configured_section_key = ""
-        if configured_section_key not in sidebar_section_keys_set:
-            configured_section_key = _resolve_default_sidebar_section_key(
-                clean_menu_key,
-                sidebar_section_keys_set,
-                sidebar_section_keys,
-            )
+        configured_section_key = resolve_menu_sidebar_section_key(
+            clean_menu_key,
+            menu_config,
+            sidebar_section_keys_set,
+            sidebar_section_keys,
+        )
         setting_row["sidebar_section_key"] = configured_section_key
         setting_row["sidebar_section_label"] = (
             sidebar_section_labels_by_key.get(configured_section_key)
             or SIDEBAR_SECTION_DEFAULTS_BY_KEY.get(configured_section_key)
             or configured_section_key
         )
-
-    for setting in settings:
-        clean_setting_key = _normalize_menu_key(setting.get("key"))
-        setting_row = db_by_key.get(clean_setting_key)
-        section_config = _parse_menu_config(None if setting_row is None else setting_row.menu_config)
-        section_key = normalize_menu_section_key(
-            section_config.get("menu_section"),
-            clean_setting_key,
-        )
-        setting["menu_section"] = section_key
-        setting["menu_section_label"] = get_menu_section_label(section_key)
+        setting_row["menu_section"] = configured_section_key
+        setting_row["menu_section_label"] = setting_row["sidebar_section_label"]
 
 
     return settings
@@ -1587,6 +1605,8 @@ def update_sidebar_menu_label(
             )
         else:
             menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = current_section_key
+
+    menu_config.pop("menu_section", None)
 
     if entity_number is not None:
         menu_config["entity_number"] = int(entity_number)
@@ -2204,6 +2224,19 @@ def create_sidebar_menu_setting_v2(
 
         return max_display_order + 1
 
+    administrative_config = _load_menu_config(session, "administrativo")
+    available_sidebar_section_options = normalize_sidebar_sections(
+        administrative_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+    available_sidebar_section_keys = [
+        str(item.get("key") or "").strip().lower()
+        for item in available_sidebar_section_options
+        if str(item.get("key") or "").strip()
+    ]
+    if not available_sidebar_section_keys:
+        available_sidebar_section_keys = list(MENU_SECTION_LABELS.keys())
+    available_sidebar_section_keys_set = set(available_sidebar_section_keys)
+
     ####################################################################################
     # (3) MONTAR OU ATUALIZAR CONFIGURACAO DA PASTA
     ####################################################################################
@@ -2231,11 +2264,13 @@ def create_sidebar_menu_setting_v2(
         if display_order is None:
             menu_config[MENU_CONFIG_DISPLAY_ORDER_KEY] = _next_display_order_v2()
 
-        if not str(menu_config.get("menu_section") or "").strip():
-            menu_config["menu_section"] = "igreja"
-
-        if not str(menu_config.get("sidebar_section") or "").strip():
-            menu_config["sidebar_section"] = menu_config.get("menu_section") or "igreja"
+        menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = resolve_menu_sidebar_section_key(
+            clean_menu_key,
+            menu_config,
+            available_sidebar_section_keys_set,
+            available_sidebar_section_keys,
+        )
+        menu_config.pop("menu_section", None)
 
         return menu_config
 
@@ -4288,29 +4323,9 @@ def _resolve_menu_sidebar_section_key_v2(
     section_keys: set[str],
     ordered_section_keys: list[str],
 ) -> str:
-    raw_section_key = (
-        menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
-        or menu_config.get("menu_section")
-        or menu_config.get("section_key")
-        or menu_config.get("section")
-    )
-
-    clean_section_key = _normalize_sidebar_section_key(raw_section_key)
-    if clean_section_key in section_keys:
-        return clean_section_key
-
-    normalized_section_key = normalize_menu_section_key(raw_section_key, menu_key)
-    if normalized_section_key in section_keys:
-        return normalized_section_key
-
-    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
-    default_system_section = MENU_SECTION_BY_SYSTEM_MENU_KEY.get(clean_menu_key, "")
-
-    if default_system_section in section_keys:
-        return default_system_section
-
-    return _resolve_default_sidebar_section_key(
-        clean_menu_key,
+    return resolve_menu_sidebar_section_key(
+        menu_key,
+        menu_config,
         section_keys,
         ordered_section_keys,
     )
