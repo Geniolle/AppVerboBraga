@@ -98,6 +98,7 @@ class AdminSubprocessConfig:
     toggle_url_extra_params: str = ""
     move_up_condition_field: str = ""
     move_down_condition_field: str = ""
+    table_css_class: str = ""
 
 
 @dataclass

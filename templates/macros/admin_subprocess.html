@@ -229,7 +229,7 @@
       <div class="admin-subprocess-table-wrap-v1">
         <table
           id="{{ state.config.key }}-{{ status_value }}-table"
-          class="admin-subprocess-table-v1"
+          class="admin-subprocess-table-v1 {{ state.config.table_css_class }}"
           {% if sort_state.has_sortable_columns %}data-admin-sortable-table="1"{% endif %}
         >
           <thead>
@@ -263,7 +263,7 @@
                   <th class="{{ column.css_class }}" data-admin-column-key="{{ column.key }}">{{ column.label }}</th>
                 {% endif %}
               {% endfor %}
-              <th>AÇÕES</th>
+              <th class="admin-col-actions-v1">AÇÕES</th>
             </tr>
           </thead>
           <tbody>
@@ -285,7 +285,7 @@
                     {% endif %}
                   </td>
                 {% endfor %}
-                <td>
+                <td class="admin-col-actions-v1">
                   {{ render_admin_subprocess_row_actions(state, row, status_value) }}
                 </td>
               </tr>

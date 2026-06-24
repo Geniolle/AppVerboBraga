@@ -120,7 +120,7 @@
     const mapa = {
       utilizador: "/users/new?menu=administrativo&admin_tab=utilizador",
       entidade: "/users/new?menu=administrativo&admin_tab=entidade",
-      menu: "/users/new?menu=sessoes&admin_tab=contas&target=admin-account-status-card#admin-account-status-card",
+      menu: "/users/new?menu=sessoes&admin_tab=contas&target=menu-subprocess-card-active#menu-subprocess-card-active",
       sessoes: "/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     };
 

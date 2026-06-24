@@ -69,9 +69,9 @@ SIDEBAR_SECTION_FIELDS = (
 
 
 DEFAULT_COLUMNS = (
-    AdminColumnConfig(key="label", label="NOME", source="label"),
-    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label"),
-    AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
+    AdminColumnConfig(key="label", label="NOME", source="label", css_class="admin-col-main-v1"),
+    AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
+    AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1"),
 )
 
 
@@ -141,9 +141,10 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
             sortable=True,
             sort_type="number",
             default_sort="asc",
+            css_class="admin-col-system-v1",
         ),
-        AdminColumnConfig(key="name", label="ENTIDADE", source="name"),
-        AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
+        AdminColumnConfig(key="name", label="ENTIDADE", source="name", css_class="admin-col-main-v1"),
+        AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1"),
     ),
     actions=DEFAULT_ACTIVE_ACTIONS,
     menu_scope="administrativo",
@@ -320,9 +321,10 @@ MENU_CONFIG = AdminSubprocessConfig(
     migration_status="native",
     fields=MENU_FIELDS,
     columns=(
-        AdminColumnConfig(key="label", label="MENU LATERAL", source="label"),
-        AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label"),
-        AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
+        AdminColumnConfig(key="label", label="MENU LATERAL", source="label", css_class="admin-col-main-v1"),
+        AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label", css_class="admin-col-section-v1"),
+        AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
+        AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1"),
     ),
     actions=MENU_ACTIONS,
     menu_scope="administrativo,sessoes",
@@ -333,6 +335,7 @@ MENU_CONFIG = AdminSubprocessConfig(
     toggle_url_extra_params="admin_tab=contas&settings_action=toggle",
     move_up_condition_field="can_move_up",
     move_down_condition_field="can_move_down",
+    table_css_class="admin-subprocess-table-equal-v1",
 )
 
 

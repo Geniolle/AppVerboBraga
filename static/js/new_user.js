@@ -999,7 +999,7 @@ function buildStructuredProcessMenuItemsV1(menuKey, dynamicItems = []) {
   } else if (cleanMenuKey === ESTRUTURAS_MENU_KEY_V1) {
     baseItems = [
       { label: "Sessões", target: "#admin-sidebar-sections-card" },
-      { label: "Menu", target: "#admin-account-status-card" }
+      { label: "Menu", target: "#menu-subprocess-card-active" }
     ];
   }
 
@@ -1184,6 +1184,9 @@ const NATIVE_ADMIN_TARGETS_V1 = new Set([
 const ESTRUTURAS_NATIVE_TARGETS_V1 = new Set([
   "#admin-account-create-card",
   "#admin-account-status-card",
+  "#menu-subprocess-card",
+  "#menu-subprocess-card-active",
+  "#menu-subprocess-card-inactive",
   "#admin-sidebar-sections-card",
   "#admin-sidebar-sections-form-card",
   "#settings-card",
@@ -1250,7 +1253,7 @@ function resolveAdminSelectedTargetV1({
     return "#create-user-card";
   }
   if (cleanTab === "contas") {
-    return "#admin-account-status-card";
+    return "#menu-subprocess-card-active";
   }
   return "#dynamic-process-card";
 }
@@ -2895,8 +2898,11 @@ function getAdminSubprocessKeyByTargetV1(target) {
     "#admin-sidebar-sections-card-inactive": "sessoes",
     "#settings-card": "menu",
     "#settings-menu-edit-card": "menu",
-    "#admin-account-status-card": "contas",
-    "#admin-account-create-card": "contas"
+    "#admin-account-status-card": "menu",
+    "#admin-account-create-card": "menu",
+    "#menu-subprocess-card": "menu",
+    "#menu-subprocess-card-active": "menu",
+    "#menu-subprocess-card-inactive": "menu"
   };
   return targetMap[cleanTarget] || "";
 }
@@ -2979,8 +2985,8 @@ function normalizeSubmenuTargetAlias(targetSelector) {
     "#edit-entity-card": "#create-entity-card",
     "#recent-entities-card": "#create-entity-card",
     "#inactive-entities-card": "#create-entity-card",
-    "#admin-account-create-card": "#admin-account-status-card",
-    "#settings-menu-edit-card": "#admin-account-status-card",
+    "#admin-account-create-card": "#menu-subprocess-card-active",
+    "#settings-menu-edit-card": "#menu-subprocess-card-active",
     "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"
   };
   return targetAliasMap[cleanTarget] || cleanTarget;

@@ -312,4 +312,64 @@ table[data-appverbo-sortable-table="1"] td:last-child {
   }
 }
 
+/* === Equal-column fixed-layout table === */
+
+.admin-subprocess-table-equal-v1 {
+  table-layout: fixed;
+}
+
+.admin-subprocess-table-equal-v1 th,
+.admin-subprocess-table-equal-v1 td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.admin-subprocess-table-equal-v1 .admin-col-main-v1,
+.admin-subprocess-table-equal-v1 .admin-col-section-v1,
+.admin-subprocess-table-equal-v1 .admin-col-system-v1,
+.admin-subprocess-table-equal-v1 .admin-col-status-v1,
+.admin-subprocess-table-equal-v1 .admin-col-actions-v1 {
+  width: 20%;
+  white-space: normal;
+}
+
+.admin-subprocess-table-equal-v1 .admin-col-main-v1 {
+  text-align: left;
+}
+
+.admin-subprocess-table-equal-v1 .admin-col-actions-v1 {
+  text-align: right;
+}
+
+.admin-subprocess-table-equal-v1 .admin-subprocess-row-actions-v1 {
+  justify-content: flex-end;
+}
+
+/* === Column type classes for admin subprocess tables === */
+
+.admin-col-main-v1 {
+  /* main label column — takes remaining space, no fixed width */
+}
+
+.admin-col-section-v1 {
+  width: 160px;
+  white-space: nowrap;
+}
+
+.admin-col-system-v1 {
+  width: 90px;
+  white-space: nowrap;
+}
+
+.admin-col-status-v1 {
+  width: 100px;
+  white-space: nowrap;
+}
+
+.admin-col-actions-v1 {
+  width: 110px;
+  white-space: nowrap;
+  text-align: right;
+}
+
 /* APPVERBO_ADMIN_SUBPROCESSES_V1_END */
