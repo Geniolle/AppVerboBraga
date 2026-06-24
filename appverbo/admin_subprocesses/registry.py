@@ -146,6 +146,10 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
         AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
     ),
     actions=DEFAULT_ACTIVE_ACTIONS,
+    menu_scope="administrativo",
+    empty_active_message="Sem entidades ativas.",
+    empty_inactive_message="Sem entidades inativas.",
+    edit_url_extra_params="admin_tab=entidade",
 )
 
 
@@ -182,6 +186,10 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     fields=SIDEBAR_SECTION_FIELDS,
     columns=DEFAULT_COLUMNS,
     actions=DEFAULT_ACTIVE_ACTIONS,
+    menu_scope="administrativo,sessoes",
+    empty_active_message="Sem sessões ativas.",
+    empty_inactive_message="Sem sessões inativas.",
+    edit_url_extra_params="admin_tab=sessoes&sidebar_sections_tab=sessoes",
 )
 
 
@@ -195,13 +203,17 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     edit_target="edit-user-card",
     create_title="Criar utilizador",
     edit_title="Editar utilizador",
-    active_title="Utilizadores ativos",
+    active_title="Utilizadores criados",
     inactive_title="Utilizadores inativos",
     save_endpoint="/users/update",
     repository_name="user",
     repository_class="",
     enabled=False,
     migration_status="legacy_pending",
+    menu_scope="administrativo",
+    empty_active_message="Sem utilizadores ativos.",
+    empty_inactive_message="Sem utilizadores inativos.",
+    edit_url_extra_params="admin_tab=utilizador",
 )
 
 
@@ -211,17 +223,27 @@ MENU_CONFIG = AdminSubprocessConfig(
     singular_label="Menu",
     plural_label="Menus",
     edit_param="settings_edit_key",
-    default_target="settings-card",
-    edit_target="settings-card",
+    default_target="admin-account-status-card",
+    edit_target="settings-menu-edit-card",
     create_title="Criar menu",
     edit_title="Editar menu",
     active_title="Menus ativos",
     inactive_title="Menus inativos",
     save_endpoint="/settings/menu/save",
+    move_endpoint="/settings/menu/move",
     repository_name="menu",
     repository_class="",
     enabled=False,
     migration_status="legacy_pending",
+    menu_scope="administrativo,sessoes",
+    empty_active_message="Sem menus ativos.",
+    empty_inactive_message="Sem menus inativos.",
+    edit_url_extra_params="admin_tab=contas&settings_action=edit",
+    columns=(
+        AdminColumnConfig(key="label", label="MENU LATERAL", source="label"),
+        AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label"),
+        AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
+    ),
 )
 
 
@@ -242,6 +264,9 @@ CONTAS_CONFIG = AdminSubprocessConfig(
     repository_class="",
     enabled=False,
     migration_status="legacy_pending",
+    menu_scope="administrativo,sessoes",
+    empty_active_message="Sem contas ativas.",
+    empty_inactive_message="Sem contas inativas.",
 )
 
 

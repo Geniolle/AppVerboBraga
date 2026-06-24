@@ -85,6 +85,14 @@ class AdminSubprocessConfig:
     fields: tuple[AdminFieldConfig, ...] = ()
     columns: tuple[AdminColumnConfig, ...] = ()
     actions: tuple[AdminActionConfig, ...] = ()
+    empty_active_message: str = ""
+    empty_inactive_message: str = ""
+    searchable: bool = True
+    paginated: bool = True
+    page_size_options: tuple[int, ...] = (5, 10, 20)
+    default_page_size: int = 5
+    menu_scope: str = ""
+    edit_url_extra_params: str = ""
 
 
 @dataclass

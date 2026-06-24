@@ -89,12 +89,13 @@ def build_admin_subprocess_state(
     success: str = "",
     error: str = "",
     menu_key: str = "administrativo",
-    menu_scope: str = "administrativo",
+    menu_scope: str = "",
     return_url: str = "",
 ) -> AdminSubprocessState:
     row_list = [dict(row) for row in rows]
     active_rows, inactive_rows = split_admin_subprocess_rows(row_list, config)
     edit_data = find_admin_subprocess_row(row_list, config, edit_key)
+    effective_menu_scope = menu_scope or config.menu_scope or "administrativo"
 
     return AdminSubprocessState(
         config=config,
@@ -106,6 +107,6 @@ def build_admin_subprocess_state(
         success=success,
         error=error,
         menu_key=menu_key,
-        menu_scope=menu_scope,
+        menu_scope=effective_menu_scope,
         return_url=return_url,
     )

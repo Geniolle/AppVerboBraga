@@ -515,7 +515,6 @@ def new_user_page(
                 success=settings_success if resolved_admin_tab == "sessoes" else "",
                 error=settings_error if resolved_admin_tab == "sessoes" else "",
                 menu_key=ESTRUTURAS_MENU_KEY_V1,
-                menu_scope="administrativo,sessoes",
                 return_url="/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END

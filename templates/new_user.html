@@ -1079,10 +1079,7 @@
 
         <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
           <h2>{% if current_user_can_manage_all_entities %}Entidades criadas{% else %}Dados gerais{% endif %}</h2>
-          {% set active_recent_entities = recent_entities | selectattr("is_active") | list %}
-          {% if not current_user_can_manage_all_entities %}
-            {% set active_recent_entities = active_recent_entities[:1] %}
-          {% endif %}
+          {% set active_recent_entities = recent_entities if current_user_can_manage_all_entities else recent_entities[:1] %}
           {% if active_recent_entities %}
             <table id="recent-entities-table" {% if current_user_can_manage_all_entities %}data-admin-sortable-table="1"{% endif %}>
               <thead>
@@ -1219,8 +1216,7 @@
         {% if current_user_can_manage_all_entities %}
         <section id="inactive-entities-card" class="card" data-menu-scope="administrativo">
           <h2>Entidades inativas</h2>
-          {% set inactive_entities_rows = inactive_entities if inactive_entities else (recent_entities | rejectattr("is_active") | list) %}
-          {% if inactive_entities_rows %}
+          {% if inactive_entities %}
             <table id="inactive-entities-table" data-admin-sortable-table="1">
               <thead>
                 <tr>
@@ -1260,7 +1256,7 @@
                 </tr>
               </thead>
               <tbody>
-                {% for row in inactive_entities_rows %}
+                {% for row in inactive_entities %}
                   <tr>
                     {% if current_user_can_manage_all_entities %}
                     <td data-admin-column-key="entity_number" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
