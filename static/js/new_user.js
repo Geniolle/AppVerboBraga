@@ -5008,8 +5008,8 @@ if (
 setupTableLimiter("recent-entities");
 setupTableLimiter("inactive-entities");
 setupTableLimiter("admin-users");
-setupTableLimiter("menu-settings");
-setupTableLimiter("inactive-menu-settings");
+setupTableLimiter("menu-ativo");
+setupTableLimiter("menu-inativo");
 setupTableLimiter("sessoes-ativo");
 setupTableLimiter("sessoes-inativo");
 const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => normalizeMenuKey(btn.dataset.menu)));

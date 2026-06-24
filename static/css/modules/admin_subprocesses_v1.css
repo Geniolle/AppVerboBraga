@@ -267,6 +267,22 @@ table[data-appverbo-sortable-table="1"] td:last-child {
   border-color: #7fa8f2;
 }
 
+.admin-subprocess-action-btn-disabled-v1 {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.admin-subprocess-action-btn-danger-v1 {
+  color: #c0392b;
+  border-color: #e8b4b8;
+}
+
+.admin-subprocess-action-btn-danger-v1:hover {
+  background: #fde8e8;
+  border-color: #c0392b;
+}
+
 .admin-subprocess-badge-v1 {
   display: inline-flex;
   align-items: center;

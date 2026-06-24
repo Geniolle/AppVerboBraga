@@ -46,6 +46,9 @@ ESTRUTURAS_MENU_TARGETS_V1 = {
     "#admin-account-status-card",
     "#settings-card",
     "#settings-menu-edit-card",
+    "#menu-subprocess-card",
+    "#menu-subprocess-card-active",
+    "#menu-subprocess-card-inactive",
 }
 ESTRUTURAS_SESSOES_TARGETS_V1 = {
     "#admin-sidebar-sections-card",
@@ -153,7 +156,7 @@ def _resolve_initial_menu_target(
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "contas":
-            return "#admin-account-status-card", ""
+            return "#menu-subprocess-card-active", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
         return "#create-entity-card", ""
@@ -161,7 +164,7 @@ def _resolve_initial_menu_target(
         if settings_edit_key:
             return "#settings-menu-edit-card", ""
         if resolved_admin_tab == "contas":
-            return "#admin-account-status-card", ""
+            return "#menu-subprocess-card-active", ""
         return "#admin-sidebar-sections-card", ""
     if clean_menu_key == "configuracao":
         if settings_edit_key:
@@ -519,6 +522,35 @@ def new_user_page(
             )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_START
+    admin_subprocess_menu_state_v1 = None
+
+    if current_user_is_admin:
+        menu_subprocess_config_v1 = get_admin_subprocess_config("menu")
+
+        if menu_subprocess_config_v1 is not None and menu_subprocess_config_v1.enabled:
+            try:
+                from appverbo.admin_subprocesses.repositories.menu_repository import MenuAdminRepository
+
+                _menu_repo_v1 = MenuAdminRepository(menu_subprocess_config_v1)
+                _menu_rows_v1 = _menu_repo_v1.list_rows(session)
+                _menu_return_url_v1 = (
+                    "/users/new?menu=sessoes&admin_tab=contas"
+                    "&target=menu-subprocess-card-active#menu-subprocess-card-active"
+                )
+                admin_subprocess_menu_state_v1 = build_admin_subprocess_state(
+                    config=menu_subprocess_config_v1,
+                    rows=_menu_rows_v1,
+                    edit_key="",
+                    menu_key=ESTRUTURAS_MENU_KEY_V1,
+                    return_url=_menu_return_url_v1,
+                    success=settings_success if resolved_admin_tab == "contas" else "",
+                    error=settings_error if resolved_admin_tab == "contas" else "",
+                )
+            except Exception:
+                admin_subprocess_menu_state_v1 = None
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_END
+
     context = {
         "request": request,
         "errors": [error] if error else [],
@@ -559,6 +591,7 @@ def new_user_page(
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
+        "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "current_user_can_manage_all_entities": bool(
             entity_permissions["can_manage_all_entities"]
         ),

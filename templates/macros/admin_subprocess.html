@@ -111,22 +111,34 @@
   {% set row_label = row.get(state.config.label_field, row.get("label", row.get("name", ""))) %}
   {% set row_status_label = row.get("status_label", "Ativo" if status_value == state.config.active_value else "Inativo") %}
   {% set row_system_label = row.get("visibility_scope_label", "") %}
+  {% set _form_key_field = state.config.action_form_key_field or "section_key" %}
 
   <div class="table-actions admin-subprocess-row-actions-v1">
     {% if status_value == state.config.active_value and state.config.move_endpoint %}
-      <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
-        <input type="hidden" name="section_key" value="{{ row_key }}">
-        <input type="hidden" name="direction" value="up">
-        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">↑</button>
-      </form>
+      {% set _can_move_up = row.get(state.config.move_up_condition_field, True) if state.config.move_up_condition_field else True %}
+      {% set _can_move_down = row.get(state.config.move_down_condition_field, True) if state.config.move_down_condition_field else True %}
 
-      <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
-        <input type="hidden" name="section_key" value="{{ row_key }}">
-        <input type="hidden" name="direction" value="down">
-        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
-        <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">↓</button>
-      </form>
+      {% if _can_move_up %}
+        <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="direction" value="up">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">↑</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no topo" aria-label="Já está no topo">↑</span>
+      {% endif %}
+
+      {% if _can_move_down %}
+        <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="direction" value="down">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">↓</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no fim" aria-label="Já está no fim">↓</span>
+      {% endif %}
     {% endif %}
 
     <button
@@ -145,6 +157,47 @@
       aria-label="Editar"
       href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >✎</a>
+
+    {% if state.config.toggle_url_extra_params %}
+      <a
+        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+        title="{{ 'Ocultar' if status_value == state.config.active_value else 'Exibir' }}"
+        aria-label="{{ 'Ocultar' if status_value == state.config.active_value else 'Exibir' }}"
+        href="/users/new?menu={{ state.menu_key or 'administrativo' }}&amp;{{ state.config.toggle_url_extra_params }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
+      >&#128065;</a>
+    {% endif %}
+
+    {% if state.config.delete_endpoint %}
+      {% set _delete_ns = namespace(condition_field="", requires_confirmation=false, confirmation_message="") %}
+      {% for _act in state.config.actions %}
+        {% if _act.key == "delete" %}
+          {% set _delete_ns.condition_field = _act.condition_field %}
+          {% set _delete_ns.requires_confirmation = _act.requires_confirmation %}
+          {% set _delete_ns.confirmation_message = _act.confirmation_message %}
+        {% endif %}
+      {% endfor %}
+
+      {% set _can_delete = row.get(_delete_ns.condition_field, True) if _delete_ns.condition_field else True %}
+
+      {% if _can_delete %}
+        <form
+          method="post"
+          action="{{ state.config.delete_endpoint }}"
+          class="admin-subprocess-inline-form-v1"
+          {% if _delete_ns.requires_confirmation %}
+            data-appverbo-confirm="1"
+            data-appverbo-confirm-title="Eliminar"
+            data-appverbo-confirm-message="{{ _delete_ns.confirmation_message or 'Tem a certeza que pretende eliminar?' }}"
+            data-appverbo-confirm-action-label="Eliminar"
+            data-appverbo-confirm-danger="1"
+          {% endif %}
+        >
+          <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1" title="Eliminar" aria-label="Eliminar">&#128465;</button>
+        </form>
+      {% endif %}
+    {% endif %}
   </div>
 {% endmacro %}
 

@@ -48,6 +48,7 @@ class AdminActionConfig:
     visible_when: tuple[str, ...] = ("ativo", "inativo")
     requires_confirmation: bool = False
     confirmation_message: str = ""
+    condition_field: str = ""
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,10 @@ class AdminSubprocessConfig:
     default_page_size: int = 5
     menu_scope: str = ""
     edit_url_extra_params: str = ""
+    action_form_key_field: str = ""
+    toggle_url_extra_params: str = ""
+    move_up_condition_field: str = ""
+    move_down_condition_field: str = ""
 
 
 @dataclass

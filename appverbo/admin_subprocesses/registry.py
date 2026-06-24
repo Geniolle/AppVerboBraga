@@ -217,33 +217,122 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
 )
 
 
+MENU_FIELDS = (
+    AdminFieldConfig(
+        key="menu_label",
+        label="Nome no menu lateral",
+        input_name="menu_label",
+        field_type="text",
+        required=True,
+        max_length=100,
+        placeholder="Ex.: Assiduidade",
+    ),
+    AdminFieldConfig(
+        key="menu_visibility_scope",
+        label="Sistema",
+        input_name="menu_visibility_scope",
+        field_type="select",
+        required=True,
+        options=(
+            ("all", "Default"),
+            ("owner", "Owner"),
+            ("legado", "Legado"),
+        ),
+    ),
+)
+
+
+MENU_ACTIONS = (
+    AdminActionConfig(
+        key="move_up",
+        label="Subir",
+        icon="↑",
+        action_type="post",
+        visible_when=("ativo",),
+    ),
+    AdminActionConfig(
+        key="move_down",
+        label="Descer",
+        icon="↓",
+        action_type="post",
+        visible_when=("ativo",),
+    ),
+    AdminActionConfig(
+        key="view",
+        label="Visualizar",
+        icon="👁",
+        action_type="button",
+        visible_when=("ativo", "inativo"),
+    ),
+    AdminActionConfig(
+        key="edit",
+        label="Editar",
+        icon="✎",
+        action_type="link",
+        visible_when=("ativo", "inativo"),
+    ),
+    AdminActionConfig(
+        key="toggle",
+        label="Alternar visibilidade",
+        icon="👁",
+        action_type="toggle_link",
+        visible_when=("ativo", "inativo"),
+    ),
+    AdminActionConfig(
+        key="delete",
+        label="Eliminar",
+        icon="🗑",
+        action_type="post_delete",
+        visible_when=("inativo",),
+        condition_field="can_delete",
+        requires_confirmation=True,
+        confirmation_message="Tem a certeza que pretende eliminar este menu?",
+    ),
+)
+
+
 MENU_CONFIG = AdminSubprocessConfig(
     key="menu",
     label="Menu",
     singular_label="Menu",
     plural_label="Menus",
     edit_param="settings_edit_key",
-    default_target="admin-account-status-card",
+    default_target="menu-subprocess-card",
     edit_target="settings-menu-edit-card",
     create_title="Criar menu",
     edit_title="Editar menu",
     active_title="Menus ativos",
     inactive_title="Menus inativos",
-    save_endpoint="/settings/menu/save",
-    move_endpoint="/settings/menu/move",
+    save_endpoint="/settings/menu/menu-save",
+    move_endpoint="/settings/menu/menu-move",
+    delete_endpoint="/settings/menu/menu-delete",
     repository_name="menu",
-    repository_class="",
-    enabled=False,
-    migration_status="legacy_pending",
-    menu_scope="administrativo,sessoes",
-    empty_active_message="Sem menus ativos.",
-    empty_inactive_message="Sem menus inativos.",
-    edit_url_extra_params="admin_tab=contas&settings_action=edit",
+    repository_class="appverbo.admin_subprocesses.repositories.menu_repository.MenuAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="subprocess_mode",
+    edit_key_field="subprocess_edit_key",
+    return_url_field="subprocess_return_url",
+    enabled=True,
+    migration_status="native",
+    fields=MENU_FIELDS,
     columns=(
         AdminColumnConfig(key="label", label="MENU LATERAL", source="label"),
         AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label"),
         AdminColumnConfig(key="status", label="ESTADO", source="status_label"),
     ),
+    actions=MENU_ACTIONS,
+    menu_scope="administrativo,sessoes",
+    empty_active_message="Sem menus ativos.",
+    empty_inactive_message="Sem menus inativos.",
+    edit_url_extra_params="admin_tab=contas&settings_action=edit",
+    action_form_key_field="menu_key",
+    toggle_url_extra_params="admin_tab=contas&settings_action=toggle",
+    move_up_condition_field="can_move_up",
+    move_down_condition_field="can_move_down",
 )
 
 

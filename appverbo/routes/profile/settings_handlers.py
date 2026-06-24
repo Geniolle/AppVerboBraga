@@ -2088,3 +2088,121 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
+
+
+_MENU_SUBPROCESS_DEFAULT_RETURN_URL = (
+    "/users/new?menu=sessoes&admin_tab=contas&target=menu-subprocess-card-active"
+    "#menu-subprocess-card-active"
+)
+
+
+@router.post("/settings/menu/menu-save", response_class=HTMLResponse)
+def menu_subprocess_save_handler_v1(
+    request: Request,
+    menu_label: str = Form(...),
+    menu_visibility_scope: str = Form("all"),
+    subprocess_mode: str = Form("create"),
+    subprocess_edit_key: str = Form(""),
+    subprocess_return_url: str = Form(_MENU_SUBPROCESS_DEFAULT_RETURN_URL),
+) -> RedirectResponse:
+    clean_return_url = str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=HTTP_302_FOUND)
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=f"{clean_return_url}&error=Apenas administradores podem alterar definições do menu.",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        ok, error_message, _new_key = create_sidebar_menu_setting(
+            session,
+            menu_label,
+            menu_visibility_scope,
+        )
+
+        if not ok:
+            return RedirectResponse(
+                url=f"{clean_return_url}&error={error_message or 'Não foi possível criar o menu.'}",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=f"{clean_return_url}&success=Menu criado com sucesso.",
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/menu-move", response_class=HTMLResponse)
+def menu_subprocess_move_handler_v1(
+    request: Request,
+    menu_key: str = Form(...),
+    direction: str = Form(...),
+    subprocess_return_url: str = Form(_MENU_SUBPROCESS_DEFAULT_RETURN_URL),
+) -> RedirectResponse:
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+    clean_return_url = str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=HTTP_302_FOUND)
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=f"{clean_return_url}&error=Apenas administradores podem alterar definições do menu.",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        ok, error_message = move_sidebar_menu_setting(session, clean_menu_key, direction)
+
+        if not ok:
+            return RedirectResponse(
+                url=f"{clean_return_url}&error={error_message or 'Não foi possível mover o menu.'}",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=f"{clean_return_url}&success=Ordem do menu atualizada com sucesso.",
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/menu-delete", response_class=HTMLResponse)
+def menu_subprocess_delete_handler_v1(
+    request: Request,
+    menu_key: str = Form(...),
+    subprocess_return_url: str = Form(_MENU_SUBPROCESS_DEFAULT_RETURN_URL),
+) -> RedirectResponse:
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+    clean_return_url = str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=HTTP_302_FOUND)
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return RedirectResponse(
+                url=f"{clean_return_url}&error=Apenas administradores podem alterar definições do menu.",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        ok, error_message = delete_sidebar_menu_setting(session, clean_menu_key)
+
+        if not ok:
+            return RedirectResponse(
+                url=f"{clean_return_url}&error={error_message or 'Não foi possível eliminar o menu.'}",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
+        return RedirectResponse(
+            url=f"{clean_return_url}&success=Menu eliminado com sucesso.",
+            status_code=HTTP_303_SEE_OTHER,
+        )
