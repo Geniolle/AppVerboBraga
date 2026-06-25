@@ -68,6 +68,10 @@ body.appverbo-sidebar-collapsed .menu-section {
   display: none;
 }
 
+body.appverbo-sidebar-collapsed .sidebar-brand-footer {
+  display: none;
+}
+
 body.appverbo-sidebar-collapsed .menu-label {
   display: none;
 }

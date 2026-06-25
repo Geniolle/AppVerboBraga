@@ -307,9 +307,9 @@ table[data-appverbo-sortable-table="1"] td:last-child {
 }
 
 .admin-subprocess-badge-inactive-v1 {
-  border-color: #f0c36d;
-  background: #fff7e0;
-  color: #8a5a00;
+  border-color: #f1b4b4;
+  background: #fdeaea;
+  color: #c0392b;
 }
 
 @media (max-width: 1100px) {
@@ -483,82 +483,41 @@ td.admin-col-country-v1 {
   white-space: normal;
 }
 
-/* === Entity process table — fixed proportional layout === */
+/* === Entity process table ===
+ *
+ * Auto layout (inherits from admin-subprocess-table-v1).
+ * Each column class owns its white-space: nowrap rule.
+ * The main column (admin-col-main-v1) intentionally has no nowrap so it
+ * compresses naturally — this is what allows the JS responsive algorithm
+ * to eliminate horizontal overflow after hiding optional columns.
+ * JS recalcAdminResponsiveTableV1() hides lower-priority columns via scrollWidth.
+ */
 
 .admin-entity-table-v1 {
   width: 100%;
-  table-layout: fixed;
 }
 
-.admin-entity-table-v1 th.admin-col-number-v1,
-.admin-entity-table-v1 td.admin-col-number-v1 {
-  width: 7%;
-  text-align: center;
-  white-space: nowrap;
+.admin-entity-table-v1 th:not(.admin-col-actions-v1),
+.admin-entity-table-v1 td:not(.admin-col-actions-v1) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
 }
 
 .admin-entity-table-v1 th.admin-col-main-v1,
 .admin-entity-table-v1 td.admin-col-main-v1 {
-  width: 15%;
-  min-width: unset;
-  text-align: left;
-}
-
-.admin-entity-table-v1 th.admin-col-system-v1,
-.admin-entity-table-v1 td.admin-col-system-v1 {
-  width: 7%;
-  text-align: center;
-}
-
-.admin-entity-table-v1 th.admin-col-email-v1,
-.admin-entity-table-v1 td.admin-col-email-v1 {
-  width: 12%;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-entity-table-v1 th.admin-col-phone-v1,
-.admin-entity-table-v1 td.admin-col-phone-v1 {
-  width: 8%;
-  text-align: center;
-}
-
-.admin-entity-table-v1 th.admin-col-address-v1,
-.admin-entity-table-v1 td.admin-col-address-v1 {
-  width: 14%;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-entity-table-v1 th.admin-col-country-v1,
-.admin-entity-table-v1 td.admin-col-country-v1 {
-  width: 6%;
-  text-align: center;
-}
-
-.admin-entity-table-v1 th.admin-col-date-v1,
-.admin-entity-table-v1 td.admin-col-date-v1 {
-  width: 9%;
-  text-align: center;
-}
-
-.admin-entity-table-v1 th.admin-col-status-v1,
-.admin-entity-table-v1 td.admin-col-status-v1 {
-  width: 9%;
-  text-align: center;
+  min-width: 120px;
+  max-width: 280px;
 }
 
 .admin-entity-table-v1 th.admin-col-actions-v1,
 .admin-entity-table-v1 td.admin-col-actions-v1 {
-  width: 13%;
-  text-align: right;
-  white-space: nowrap;
-  max-width: none;
   padding-right: 12px;
+}
+
+.admin-entity-table-v1[data-admin-sortable-table] th.admin-col-number-v1,
+.admin-entity-table-v1[data-admin-sortable-table] td.admin-col-number-v1 {
+  text-align: left;
 }
 
 .admin-entity-table-v1 td.admin-col-actions-v1 .table-actions {

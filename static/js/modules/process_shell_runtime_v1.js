@@ -1556,6 +1556,12 @@
     if (/\bdescer\b|move_down|mover.*baixo/.test(raw)) {
       return "move_down";
     }
+    if (/\breativar\b/.test(raw)) {
+      return "reactivate";
+    }
+    if (/\bocultar\b/.test(raw)) {
+      return "hide_menu";
+    }
     if (/exibir|ver\b|visualizar|detalhe|eye/.test(raw)) {
       return "view";
     }
@@ -1575,6 +1581,12 @@
     if (actionType === "move_down") {
       return "Descer";
     }
+    if (actionType === "reactivate") {
+      return "Reativar menu";
+    }
+    if (actionType === "hide_menu") {
+      return "Ocultar menu";
+    }
     if (actionType === "view") {
       return "Exibir detalhes";
     }
@@ -1593,6 +1605,12 @@
     }
     if (actionType === "move_down") {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>';
+    }
+    if (actionType === "reactivate") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    }
+    if (actionType === "hide_menu") {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
     }
     if (actionType === "view") {
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>';

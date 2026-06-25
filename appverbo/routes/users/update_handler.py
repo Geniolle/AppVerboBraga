@@ -69,6 +69,7 @@ def update_user(
     email: str = Form(...),
     entity_id: str = Form(""),
     account_status: str = Form(UserAccountStatus.ACTIVE.value),
+    system_profile: str = Form(""),
     return_menu: str = Form(""),
     return_admin_tab: str = Form(""),
     return_target: str = Form(""),
@@ -79,6 +80,7 @@ def update_user(
     clean_email = email.strip().lower()
     clean_account_status = account_status.strip().lower()
     clean_entity_id = entity_id.strip()
+    raw_system_profile = system_profile.strip()
 
     if not clean_user_id.isdigit():
         return RedirectResponse(
@@ -135,6 +137,12 @@ def update_user(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+
+        clean_system_type = (
+            normalize_user_system_type_v1(raw_system_profile)
+            if raw_system_profile
+            else normalize_user_system_type_v1(user.system_type)
+        )
 
         if not _member_is_within_permissions(
             session,
@@ -271,10 +279,9 @@ def update_user(
             str(user.account_status or "").strip().lower() == UserAccountStatus.ACTIVE.value
             and is_admin_user(session, int(user.id), str(user.login_email or ""))
         )
-        stored_user_system_type = normalize_user_system_type_v1(user.system_type)
         resulting_is_admin = (
             (bool(ADMIN_LOGIN_EMAIL) and clean_email == ADMIN_LOGIN_EMAIL)
-            or is_owner_system_v1(stored_user_system_type)
+            or is_owner_system_v1(clean_system_type)
         )
         resulting_is_active_admin = (
             clean_account_status == UserAccountStatus.ACTIVE.value and resulting_is_admin
@@ -304,6 +311,7 @@ def update_user(
         member.email = clean_email
         user.login_email = clean_email
         user.account_status = clean_account_status
+        user.system_type = clean_system_type
         member.member_status = member_status_for_user_account_status(clean_account_status)
 
         if selected_entity is not None:

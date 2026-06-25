@@ -5,15 +5,15 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-footer-grid-3col-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260625-user-limiter-cleanup-v1">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260625-badge-colors-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260625-status-col-stack-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260625-entity-email-country-cols-v1">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260625-global-entidade-utilizador-v1" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260625-badge-colors-v1">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260625-entity-responsive-fix-v1" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -713,6 +713,14 @@
                         <label for="email">Email *</label>
                         <input id="email" name="email" type="email" required value="{{ form_data.email }}">
                       </div>
+                      <div class="field">
+                        <label for="create_user_system_profile">Perfil no Sistema</label>
+                        <select id="create_user_system_profile" name="system_profile">
+                          <option value="default" {% if not form_data.system_profile or form_data.system_profile == "default" %}selected{% endif %}>User</option>
+                          <option value="owner" {% if form_data.system_profile == "owner" %}selected{% endif %}>Admin</option>
+                          <option value="super_user" {% if form_data.system_profile == "super_user" %}selected{% endif %}>Super User</option>
+                        </select>
+                      </div>
                       {% if can_select_user_entity %}
                       <div class="field">
                         <label for="create_user_entity_id">Entidade *</label>
@@ -835,6 +843,21 @@
                 <div class="field">
                   <label for="edit_user_email">Email *</label>
                   <input id="edit_user_email" name="email" type="email" required value="{{ user_edit_data.email }}">
+                </div>
+                <div class="field">
+                  <label for="edit_user_system_profile">Perfil no Sistema</label>
+                  {% if user_edit_data.system_type == "legado" %}
+                  <select id="edit_user_system_profile" disabled>
+                    <option value="legado" selected>Legado</option>
+                  </select>
+                  <input type="hidden" name="system_profile" value="legado">
+                  {% else %}
+                  <select id="edit_user_system_profile" name="system_profile" {% if user_readonly_mode %}disabled{% endif %}>
+                    <option value="default" {% if user_edit_data.system_type == "default" %}selected{% endif %}>User</option>
+                    <option value="owner" {% if user_edit_data.system_type == "owner" %}selected{% endif %}>Admin</option>
+                    <option value="super_user" {% if user_edit_data.system_type == "super_user" %}selected{% endif %}>Super User</option>
+                  </select>
+                  {% endif %}
                 </div>
                 <div class="field">
                   <label for="edit_user_entity_id">Nº DA ENTIDADE</label>
@@ -1178,10 +1201,10 @@
                 <thead>
                   <tr>
                     <th class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">Nome</th>
-                    <th class="admin-col-email-v1" data-admin-column-key="email" data-admin-responsive-priority="6">Email</th>
-                    <th class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">Telefone</th>
+                    <th class="admin-col-email-v1" data-admin-column-key="email" data-admin-responsive-priority="4">Email</th>
+                    <th class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="2">Telefone</th>
                     <th class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="7">Morada</th>
-                    <th class="admin-col-country-v1" data-admin-column-key="country" data-admin-responsive-priority="3">País</th>
+                    <th class="admin-col-country-v1" data-admin-column-key="country" data-admin-responsive-priority="5">País</th>
                     <th class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">Estado</th>
                     <th class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">Ações</th>
                   </tr>
@@ -1190,10 +1213,10 @@
                   {% for row in _dados_gerais_entities %}
                     <tr>
                       <td class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">{{ row.name }}</td>
-                      <td class="admin-col-email-v1" data-admin-column-key="email" data-admin-responsive-priority="6">{{ row.email if row.email else '-' }}</td>
-                      <td class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">{{ row.phone if row.phone else '-' }}</td>
+                      <td class="admin-col-email-v1" data-admin-column-key="email" data-admin-responsive-priority="4">{{ row.email if row.email else '-' }}</td>
+                      <td class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="2">{{ row.phone if row.phone else '-' }}</td>
                       <td class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="7">{{ row.address if row.address else '-' }}</td>
-                      <td class="admin-col-country-v1" data-admin-column-key="country" data-admin-responsive-priority="3">{{ row.country if row.country else '-' }}</td>
+                      <td class="admin-col-country-v1" data-admin-column-key="country" data-admin-responsive-priority="5">{{ row.country if row.country else '-' }}</td>
                       <td class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">
                         <span class="entity-status {% if row.is_active %}entity-status-active{% else %}entity-status-inactive{% endif %}">
                           {{ row.status_label }}
@@ -2373,10 +2396,10 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260430-lists-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260624-load-less-three-col-v1"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260624-menu-entity-col-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260624-menu-fix-v1"></script>
+  <script src="/static/js/new_user.js?v=20260625-admin-client-nav-v1"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260625-client-nav-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

@@ -612,6 +612,22 @@
 
     scheduleRecalc();
     window.addEventListener("resize", scheduleRecalc);
+
+    // Re-run when a table's card becomes visible after tab switching
+    const seenCards = new Set();
+    const cardObserver = new MutationObserver(function () {
+      scheduleRecalc();
+    });
+    tables.forEach(function (table) {
+      const card = table.closest("[data-menu-scope]");
+      if (card && !seenCards.has(card)) {
+        seenCards.add(card);
+        cardObserver.observe(card, {
+          attributes: true,
+          attributeFilter: ["style"]
+        });
+      }
+    });
   }
 
   //###################################################################################

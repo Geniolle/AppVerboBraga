@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-ALLOWED_USER_SYSTEM_TYPES = {"default", "owner", "legado"}
+ALLOWED_USER_SYSTEM_TYPES = {"default", "owner", "super_user", "legado"}
 
 _USER_SYSTEM_TYPE_LABELS: dict[str, str] = {
-    "default": "Default",
-    "owner": "Owner",
+    "default": "User",
+    "owner": "Admin",
+    "super_user": "Super User",
     "legado": "Legado",
 }
+
+SYSTEM_PROFILE_CHOICES = (
+    ("default", "User"),
+    ("owner", "Admin"),
+    ("super_user", "Super User"),
+)
 
 
 def normalize_user_system_type_v1(value: str | None) -> str:
@@ -24,6 +31,7 @@ def is_owner_system_v1(value: str | None) -> bool:
 
 __all__ = [
     "ALLOWED_USER_SYSTEM_TYPES",
+    "SYSTEM_PROFILE_CHOICES",
     "normalize_user_system_type_v1",
     "get_user_system_type_label_v1",
     "is_owner_system_v1",

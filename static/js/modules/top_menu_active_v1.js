@@ -329,13 +329,8 @@
 
     if (deveNavegarComRefreshLimpo_v4(aba)) {
       event.preventDefault();
-      event.stopPropagation();
-
-      if (typeof event.stopImmediatePropagation === "function") {
-        event.stopImmediatePropagation();
-      }
-
-      navegarComRefreshLimpo_v4(aba);
+      guardarAbaAtiva_v4(aba);
+      // URL actualizada pelo onSelect em new_user.js via history.pushState (sem reload)
       return;
     }
 

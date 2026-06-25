@@ -24,6 +24,7 @@ def create_user_v1(
     email: str = Form(...),
     entity_id: str = Form(""),
     invite_delivery: str = Form("email"),
+    system_profile: str = Form("default"),
     return_menu: str = Form(""),
     return_admin_tab: str = Form(""),
     return_target: str = Form(""),
@@ -35,6 +36,7 @@ def create_user_v1(
             email=email,
             entity_id=entity_id,
             invite_delivery=invite_delivery,
+            system_profile=system_profile,
         )
 
         with SessionLocal() as session:

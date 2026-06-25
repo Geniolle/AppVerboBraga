@@ -27,6 +27,10 @@ from appverbo.services.user_status import (
     normalize_user_account_status_v1,
     user_account_status_label_pt_v1,
 )
+from appverbo.services.user_system import (
+    get_user_system_type_label_v1,
+    normalize_user_system_type_v1,
+)
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     build_menu_process_field_storage_key,
@@ -907,6 +911,7 @@ def get_page_data(
             Member.primary_phone,
             User.login_email,
             User.account_status,
+            User.system_type,
             User.created_at,
         )
        .join(Member, Member.id == User.member_id)
@@ -974,6 +979,8 @@ def get_page_data(
             "entity_id": entity_id_by_member_id.get(int(row.member_id)),
             "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
             "entity_number": entity_number_by_member_id.get(int(row.member_id)),
+            "system_type": normalize_user_system_type_v1(row.system_type),
+            "system_type_label": get_user_system_type_label_v1(row.system_type),
             "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
         }
         for row in user_rows
@@ -1299,6 +1306,7 @@ def get_user_edit_defaults() -> dict[str, str]:
         "entity_name": "",
         "entity_number": "",
         "account_status": UserAccountStatus.ACTIVE.value,
+        "system_type": "default",
     }
 
 def get_user_edit_data(
@@ -1318,6 +1326,7 @@ def get_user_edit_data(
             Member.primary_phone,
             User.login_email,
             User.account_status,
+            User.system_type,
         )
        .join(Member, Member.id == User.member_id)
        .where(User.id == user_id)
@@ -1363,6 +1372,7 @@ def get_user_edit_data(
         "entity_name": entity_name_value,
         "entity_number": str(entity_number_value) if entity_number_value is not None else "",
         "account_status": row.account_status or UserAccountStatus.ACTIVE.value,
+        "system_type": normalize_user_system_type_v1(row.system_type),
     }
 
 def get_next_entity_number(session: Session) -> int:

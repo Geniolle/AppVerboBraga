@@ -37,6 +37,7 @@ from appverbo.services.page import (
 )
 from appverbo.services.permissions import get_user_entity_permissions
 from appverbo.services.profile import get_user_personal_data
+from appverbo.services.user_system import normalize_user_system_type_v1
 
 
 # ###################################################################################
@@ -229,12 +230,13 @@ def normalize_create_user_input_v1(
     email: str,
     entity_id: str = "",
     invite_delivery: str,
+    system_profile: str = "",
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
     clean_primary_phone = primary_phone.strip()
     clean_email = email.strip().lower()
     clean_entity_id = (entity_id or "").strip()
-    clean_system_type = LEGACY_USER_SYSTEM_TYPE_DEFAULT
+    clean_system_type = normalize_user_system_type_v1(system_profile) if system_profile.strip() else LEGACY_USER_SYSTEM_TYPE_DEFAULT
     clean_invite_delivery = invite_delivery.strip().lower()
     if clean_invite_delivery not in {"email", "link"}:
         clean_invite_delivery = "email"
@@ -246,6 +248,7 @@ def normalize_create_user_input_v1(
         "entity_id": clean_entity_id,
         "entity_name": "",
         "entity_number": "",
+        "system_profile": clean_system_type,
     }
 
     errors: list[str] = []

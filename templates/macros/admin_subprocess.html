@@ -170,8 +170,8 @@
     {% if state.config.toggle_url_extra_params %}
       <a
         class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
-        title="{{ 'Ocultar' if status_value == state.config.active_value else 'Exibir' }}"
-        aria-label="{{ 'Ocultar' if status_value == state.config.active_value else 'Exibir' }}"
+        title="{{ 'Ocultar menu' if status_value == state.config.active_value else 'Reativar menu' }}"
+        aria-label="{{ 'Ocultar menu' if status_value == state.config.active_value else 'Reativar menu' }}"
         href="/users/new?menu={{ state.menu_key or 'administrativo' }}&amp;{{ state.config.toggle_url_extra_params }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
       >&#128065;</a>
     {% endif %}

@@ -234,6 +234,15 @@ const currentUserEmail = bootstrap.currentUserEmail || "";
 const currentUserIsAdmin = Boolean(bootstrap.currentUserIsAdmin);
 const currentUserCanManageTenantStructure = Boolean(bootstrap.currentUserCanManageTenantStructure);
 const currentUserCanManageAllEntities = currentUserCanManageTenantStructure;
+
+const APPVERBO_DEBUG_TABS_V1 =
+  new URLSearchParams(window.location.search).get("debug_tabs") === "1" ||
+  window.localStorage.getItem("appverboDebugTabs") === "1";
+
+function debugTabsLogV1(label, payload = {}) {
+  if (!APPVERBO_DEBUG_TABS_V1) return;
+  console.log("[AppVerbo Tabs Debug]", label, payload);
+}
 const dashboardData = bootstrap.dashboardData || {};
 const currentUserPhone = bootstrap.currentUserPhone || "";
 const currentUserAccountStatus = bootstrap.currentUserAccountStatus || "";
@@ -975,6 +984,8 @@ if (currentUserIsAdmin) {
 }
 
 const ESTRUTURAS_MENU_KEY_V1 = "sessoes";
+const EMPRESA_MENU_KEY_V1 = "empresa";
+const EMPRESA_NATIVE_TARGETS_V1 = new Set(["#empresa-card"]);
 
 function filterProcessExtraMenuItemsV1(dynamicItems) {
   return (Array.isArray(dynamicItems) ? dynamicItems : []).filter((item) => {
@@ -1037,6 +1048,17 @@ function mergeDynamicProcessMenus() {
 
     const cleanMenuLabel = toSentenceCaseText(setting.label) || "Processo";
     const existingConfig = menuConfig[menuKey];
+
+    if (menuKey === EMPRESA_MENU_KEY_V1) {
+      menuConfig[EMPRESA_MENU_KEY_V1] = {
+        ...(existingConfig || {}),
+        title: cleanMenuLabel,
+        singleView: true,
+        toggleOnMenuClick: true,
+        items: [{ label: "Dados institucionais", target: "#empresa-card" }]
+      };
+      return;
+    }
 
     const menuValuesByField = (
       menuProcessValuesMap &&
@@ -1221,6 +1243,10 @@ function isNativeTargetForMenuV1(menuKey, value) {
     return ESTRUTURAS_NATIVE_TARGETS_V1.has(cleanTarget);
   }
 
+  if (cleanMenuKey === EMPRESA_MENU_KEY_V1) {
+    return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget);
+  }
+
   return false;
 }
 function resolveAdminSelectedTargetV1({
@@ -1392,8 +1418,43 @@ const topSubmenuController = (
 
         closeAllProfileEdits();
         selectedTargetByMenu[menuKey] = item.target;
+        debugTabsLogV1("onSelect:before-apply", { menuKey, target: item.target });
         setActiveSubmenu(item.target, linkEl);
         applyContentForMenuTarget(menuKey, item.target);
+
+        if (
+          menuKey === "administrativo" &&
+          window.history &&
+          typeof window.history.pushState === "function"
+        ) {
+          let adminTabParam = getAdminSubprocessKeyByTargetV1(item.target);
+          if (!adminTabParam && item.target === "#dynamic-process-card" && item.dynamicProcessSectionKey) {
+            adminTabParam = String(item.dynamicProcessSectionKey).trim().toLowerCase();
+          }
+          if (adminTabParam) {
+            try {
+              const nextUrl = new URL(window.location.href);
+              nextUrl.searchParams.set("menu", "administrativo");
+              nextUrl.searchParams.set("admin_tab", adminTabParam);
+              nextUrl.searchParams.delete("entity_edit_id");
+              nextUrl.searchParams.delete("entity_view");
+              nextUrl.searchParams.delete("user_edit_id");
+              nextUrl.searchParams.delete("user_view");
+              nextUrl.searchParams.delete("target");
+              nextUrl.hash = "";
+              const newPath = nextUrl.pathname + nextUrl.search;
+              if (newPath !== window.location.pathname + window.location.search) {
+                history.pushState(
+                  { menu: "administrativo", adminTab: adminTabParam, target: item.target },
+                  document.title,
+                  newPath
+                );
+              }
+            } catch (_) {}
+          }
+        }
+
+        debugTabsLogV1("onSelect:after-apply", { menuKey, target: item.target });
 
         if (item.dynamicProcessSectionKey) {
           selectedDynamicSectionByMenu[menuKey] = String(item.dynamicProcessSectionKey);
@@ -2523,6 +2584,7 @@ function collectCurrentDynamicProcessValues(menuKey) {
 }
 
 function renderDynamicProcessCard(menuKey, sectionKey) {
+  debugTabsLogV1("renderDynamicProcessCard", { menuKey, sectionKey });
   if (!dynamicProcessCardEl) {
     return;
   }
@@ -2912,6 +2974,13 @@ function getAdminSubprocessKeyByTargetV1(target) {
 // APPVERBO_ADMIN_SUBPROCESS_GROUP_V1_END
 
 function applyContentForMenuTarget(menuKey, targetSelector) {
+  debugTabsLogV1("applyContent:start", {
+    menuKey,
+    targetSelector,
+    visibleCards: scopedCards
+      ? Array.from(scopedCards).filter((c) => c.style.display !== "none").map((c) => c.id || c.className)
+      : []
+  });
   const supportsStructuredAdminGroups = (
     menuKey === "administrativo" ||
     menuKey === ESTRUTURAS_MENU_KEY_V1
@@ -2971,6 +3040,13 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
   }
+  debugTabsLogV1("applyContent:end", {
+    menuKey,
+    targetSelector,
+    visibleCards: scopedCards
+      ? Array.from(scopedCards).filter((c) => c.style.display !== "none").map((c) => c.id || c.className)
+      : []
+  });
 }
 
 function clearSubmenuActiveLinks(links) {
@@ -2996,6 +3072,7 @@ function normalizeSubmenuTargetAlias(targetSelector) {
 }
 
 function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
+  debugTabsLogV1("setActiveSubmenu", { targetSelector });
   if (!itemsEl) {
     return;
   }
@@ -4503,6 +4580,7 @@ function getDefaultTargetForMenu(menuKey, config, options = {}) {
 }
 
 function activateMenu(menuKey, options = {}) {
+  debugTabsLogV1("activateMenu:start", { menuKey, options });
   const config = menuConfig[menuKey];
   if (!config) {
     return;
@@ -4559,6 +4637,7 @@ function activateMenu(menuKey, options = {}) {
     } else {
       setActiveSubmenu(defaultTarget);
     }
+    debugTabsLogV1("activateMenu:before-apply", { menuKey, defaultTarget });
     applyContentForMenuTarget(menuKey, defaultTarget);
     if (
       menuKey === MEU_PERFIL_MENU_KEY &&
@@ -8563,3 +8642,39 @@ function appverboAutoDismissFlashMessages_v1() {
 
 document.addEventListener("DOMContentLoaded", appverboAutoDismissFlashMessages_v1);
 /* APPVERBO_AUTO_DISMISS_FLASH_MESSAGES_V1_END */
+
+// APPVERBO_ADMIN_POPSTATE_NAV_V1_START
+window.addEventListener("popstate", function () {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const menuKeyFromUrl = normalizeMenuKey(String(params.get("menu") || "").trim());
+    if (menuKeyFromUrl !== "administrativo" || !menuConfig["administrativo"]) {
+      return;
+    }
+    const adminTab = String(params.get("admin_tab") || "").trim().toLowerCase();
+    const resolvedTarget = resolveAdminSelectedTargetV1({
+      initialAdminTab: adminTab,
+      startupHash: "",
+      initialMenuTarget: String(params.get("target") || ""),
+      settingsEditKey: ""
+    });
+    if (!resolvedTarget) {
+      return;
+    }
+    selectedTargetByMenu["administrativo"] = resolvedTarget;
+    setActiveSubmenu(resolvedTarget);
+    applyContentForMenuTarget("administrativo", resolvedTarget);
+    if (resolvedTarget === "#dynamic-process-card") {
+      const sectionKey = adminTab || String(selectedDynamicSectionByMenu["administrativo"] || "");
+      if (sectionKey) {
+        selectedDynamicSectionByMenu["administrativo"] = sectionKey;
+      }
+      renderDynamicProcessCard(
+        "administrativo",
+        String(selectedDynamicSectionByMenu["administrativo"] || "")
+      );
+    }
+    debugTabsLogV1("popstate:admin-restored", { adminTab, resolvedTarget });
+  } catch (_) {}
+});
+// APPVERBO_ADMIN_POPSTATE_NAV_V1_END

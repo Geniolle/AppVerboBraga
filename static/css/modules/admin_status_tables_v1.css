@@ -58,9 +58,9 @@
 .entity-status-pending,
 .user-status-pending,
 .appverbo-status-pending-v1 {
-  background: #fef3c7;
-  border: 1px solid #facc15;
-  color: #92400e;
+  background: transparent;
+  border-color: transparent;
+  color: #d97706;
 }
 /* APPVERBO_STATUS_BADGE_PENDING_V1_END */
 
