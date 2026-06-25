@@ -533,12 +533,95 @@
   }
 
   //###################################################################################
-  // (4) INICIAR
+  // (4) COLUNAS RESPONSIVAS PARA TABELAS ADMIN
+  //###################################################################################
+
+  function recalcAdminResponsiveTableV1(tableEl) {
+    const wrap = tableEl.closest(".admin-subprocess-table-wrap-v1");
+    if (!wrap || wrap.offsetParent === null) {
+      return;
+    }
+
+    const allHeaderEls = Array.from(tableEl.querySelectorAll("thead th"));
+
+    const optionalKeys = allHeaderEls
+      .filter(function (th) {
+        return (
+          th.hasAttribute("data-admin-responsive-priority") &&
+          !th.hasAttribute("data-admin-always-visible")
+        );
+      })
+      .map(function (th) {
+        return th.getAttribute("data-admin-column-key") || "";
+      })
+      .filter(Boolean);
+
+    optionalKeys.sort(function (keyA, keyB) {
+      const thA = tableEl.querySelector(
+        "thead th[data-admin-column-key=\"" + keyA + "\"]"
+      );
+      const thB = tableEl.querySelector(
+        "thead th[data-admin-column-key=\"" + keyB + "\"]"
+      );
+      const pA = thA ? parseInt(thA.getAttribute("data-admin-responsive-priority"), 10) || 0 : 0;
+      const pB = thB ? parseInt(thB.getAttribute("data-admin-responsive-priority"), 10) || 0 : 0;
+      if (pB !== pA) {
+        return pB - pA;
+      }
+      return allHeaderEls.indexOf(thB) - allHeaderEls.indexOf(thA);
+    });
+
+    optionalKeys.forEach(function (key) {
+      tableEl
+        .querySelectorAll("[data-admin-column-key=\"" + key + "\"]")
+        .forEach(function (el) {
+          el.classList.remove("admin-col-hidden-v1");
+        });
+    });
+
+    for (let i = 0; i < optionalKeys.length; i++) {
+      if (tableEl.scrollWidth <= wrap.clientWidth + 2) {
+        break;
+      }
+      tableEl
+        .querySelectorAll("[data-admin-column-key=\"" + optionalKeys[i] + "\"]")
+        .forEach(function (el) {
+          el.classList.add("admin-col-hidden-v1");
+        });
+    }
+  }
+
+  function initAdminResponsiveColumnsV1() {
+    const tables = Array.from(
+      document.querySelectorAll("table[data-admin-responsive-table=\"1\"]")
+    );
+    if (!tables.length) {
+      return;
+    }
+
+    let rafHandle = null;
+    function scheduleRecalc() {
+      if (rafHandle !== null) {
+        return;
+      }
+      rafHandle = requestAnimationFrame(function () {
+        rafHandle = null;
+        tables.forEach(recalcAdminResponsiveTableV1);
+      });
+    }
+
+    scheduleRecalc();
+    window.addEventListener("resize", scheduleRecalc);
+  }
+
+  //###################################################################################
+  // (5) INICIAR
   //###################################################################################
 
   function instalarAdminSubprocessesV1() {
     instalarVisualizarAdminSubprocessV1();
     instalarOrdenacaoAdminSubprocessV1(document);
+    initAdminResponsiveColumnsV1();
   }
 
   if (document.readyState === "loading") {
