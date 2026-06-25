@@ -294,6 +294,7 @@ def _build_error_context(
         "user_readonly_mode": False,
         "current_user": current_user,
         "current_user_is_admin": current_user_is_admin,
+        "current_user_can_manage_tenant_structure": bool(can_manage_all_entities),
         "current_user_can_manage_all_entities": bool(can_manage_all_entities),
         "user_personal_data": user_personal_data,
         "entity_success": "",

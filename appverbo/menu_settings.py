@@ -15,6 +15,7 @@ MENU_MEU_PERFIL_LEGACY_KEY = "documentos"
 SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "home", "label": "Home", "requires_admin": False},
     {"key": "administrativo", "label": "Administrativo", "requires_admin": True},
+    {"key": "empresa", "label": "Empresa", "requires_admin": True},
     {"key": MENU_MEU_PERFIL_KEY, "label": "Meu perfil", "requires_admin": True},
     {"key": "funcionarios", "label": "Funcionarios", "requires_admin": True},
     {"key": "financeiro", "label": "Financeiro", "requires_admin": True},
@@ -45,6 +46,7 @@ MENU_SECTION_LABELS = {
 }
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
+    "empresa": "dados_gerais",
     "home": "geral",
     MENU_MEU_PERFIL_KEY: "igreja",
     "funcionarios": "igreja",
@@ -101,6 +103,10 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "utilizador", "label": "Utilizador"},
         {"key": "definicoes", "label": "Definições"},
     ),
+    "empresa": (
+        {"key": "dados_gerais", "label": "Dados gerais"},
+        {"key": "morada", "label": "Morada"},
+    ),
     MENU_MEU_PERFIL_KEY: (
         {"key": "nome", "label": "Nome"},
         {"key": "telefone", "label": "Telefone"},
@@ -148,6 +154,7 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "home": ["resumo_geral", "indicadores", "graficos"],
     "administrativo": ["entidade", "utilizador", "definicoes"],
+    "empresa": ["dados_gerais", "morada"],
     MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email"],
     "funcionarios": ["nome", "telefone", "email"],
     "financeiro": ["nome", "estado", "criado_em"],

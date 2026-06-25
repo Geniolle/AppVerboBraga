@@ -141,15 +141,24 @@
       {% endif %}
     {% endif %}
 
-    <button
-      type="button"
-      class="admin-subprocess-action-btn-v1"
-      title="Visualizar detalhes"
-      aria-label="Visualizar detalhes"
-      data-admin-subprocess-view
-      data-view-title="{{ state.config.singular_label }}"
-      data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
-    >👁</button>
+    {% if state.config.view_link_param %}
+      <a
+        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+        title="Visualizar detalhes"
+        aria-label="Visualizar detalhes"
+        href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;{{ state.config.edit_param }}={{ row_key }}&amp;{{ state.config.view_link_param }}=1#{{ state.config.edit_target }}"
+      >&#128065;</a>
+    {% else %}
+      <button
+        type="button"
+        class="admin-subprocess-action-btn-v1"
+        title="Visualizar detalhes"
+        aria-label="Visualizar detalhes"
+        data-admin-subprocess-view
+        data-view-title="{{ state.config.singular_label }}"
+        data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
+      >👁</button>
+    {% endif %}
 
     <a
       class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
@@ -168,18 +177,20 @@
     {% endif %}
 
     {% if state.config.delete_endpoint %}
-      {% set _delete_ns = namespace(condition_field="", requires_confirmation=false, confirmation_message="") %}
+      {% set _delete_ns = namespace(visible_when=(), condition_field="", requires_confirmation=false, confirmation_message="") %}
       {% for _act in state.config.actions %}
         {% if _act.key == "delete" %}
+          {% set _delete_ns.visible_when = _act.visible_when %}
           {% set _delete_ns.condition_field = _act.condition_field %}
           {% set _delete_ns.requires_confirmation = _act.requires_confirmation %}
           {% set _delete_ns.confirmation_message = _act.confirmation_message %}
         {% endif %}
       {% endfor %}
 
+      {% set _delete_visible = (not _delete_ns.visible_when) or (status_value in _delete_ns.visible_when) %}
       {% set _can_delete = row.get(_delete_ns.condition_field, True) if _delete_ns.condition_field else True %}
 
-      {% if _can_delete %}
+      {% if _delete_visible and _can_delete %}
         <form
           method="post"
           action="{{ state.config.delete_endpoint }}"
@@ -203,34 +214,44 @@
 
 
 {% macro render_admin_subprocess_table(state, rows, title, status_value) %}
-  {% set sort_state = namespace(has_sortable_columns=false, default_key="", default_direction="") %}
+  {% set sort_state = namespace(has_sortable_columns=false, has_responsive_columns=false, default_key="", default_direction="") %}
   {% for column in state.config.columns %}
     {% if column.sortable %}
       {% set sort_state.has_sortable_columns = true %}
+    {% endif %}
+    {% if column.responsive_priority %}
+      {% set sort_state.has_responsive_columns = true %}
     {% endif %}
     {% if not sort_state.default_key and column.default_sort in ("asc", "desc") %}
       {% set sort_state.default_key = column.key %}
       {% set sort_state.default_direction = column.default_sort %}
     {% endif %}
   {% endfor %}
+
+  {% set _is_active = (status_value == state.config.active_value) %}
+  {% set _card_id = (state.config.active_card_id if _is_active else state.config.inactive_card_id) or (state.config.default_target ~ ('-active' if _is_active else '-inactive')) %}
+  {% set _table_id = (state.config.active_table_id if _is_active else state.config.inactive_table_id) or (state.config.key ~ '-' ~ status_value ~ '-table') %}
+  {% set _limiter_id = (state.config.active_limiter_id if _is_active else state.config.inactive_limiter_id) or (state.config.key ~ '-' ~ status_value ~ '-limiter') %}
+
   <section
-    id="{{ state.config.default_target ~ '-active' if status_value == state.config.active_value else state.config.default_target ~ '-inactive' }}"
+    id="{{ _card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
-    data-admin-subprocess-role="{{ 'active-table' if status_value == state.config.active_value else 'inactive-table' }}"
+    data-admin-subprocess-role="{{ 'active-table' if _is_active else 'inactive-table' }}"
     data-admin-subprocess-status="{{ status_value }}"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
   >
     <h2>{{ title }}</h2>
 
-    {% set _empty_msg = (state.config.empty_active_message if status_value == state.config.active_value else state.config.empty_inactive_message) %}
-    {% set _empty_fallback = "Sem " ~ state.config.plural_label|lower ~ (" ativos." if status_value == state.config.active_value else " inativos.") %}
+    {% set _empty_msg = (state.config.empty_active_message if _is_active else state.config.empty_inactive_message) %}
+    {% set _empty_fallback = "Sem " ~ state.config.plural_label|lower ~ (" ativos." if _is_active else " inativos.") %}
     {% if rows %}
       <div class="admin-subprocess-table-wrap-v1">
         <table
-          id="{{ state.config.key }}-{{ status_value }}-table"
+          id="{{ _table_id }}"
           class="admin-subprocess-table-v1 {{ state.config.table_css_class }}"
           {% if sort_state.has_sortable_columns %}data-admin-sortable-table="1"{% endif %}
+          {% if sort_state.has_responsive_columns %}data-admin-responsive-table="1"{% endif %}
         >
           <thead>
             <tr>
@@ -243,6 +264,8 @@
                     data-admin-column-key="{{ column.key }}"
                     data-admin-sortable-column="1"
                     aria-sort="{{ column_aria_sort }}"
+                    {% if column.responsive_priority %}data-admin-responsive-priority="{{ column.responsive_priority }}"{% endif %}
+                    {% if column.always_visible %}data-admin-always-visible="1"{% endif %}
                   >
                     <button
                       type="button"
@@ -260,10 +283,15 @@
                     </button>
                   </th>
                 {% else %}
-                  <th class="{{ column.css_class }}" data-admin-column-key="{{ column.key }}">{{ column.label }}</th>
+                  <th
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    {% if column.responsive_priority %}data-admin-responsive-priority="{{ column.responsive_priority }}"{% endif %}
+                    {% if column.always_visible %}data-admin-always-visible="1"{% endif %}
+                  >{{ column.label }}</th>
                 {% endif %}
               {% endfor %}
-              <th class="admin-col-actions-v1">AÇÕES</th>
+              <th class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1">AÇÕES</th>
             </tr>
           </thead>
           <tbody>
@@ -271,21 +299,33 @@
               <tr>
                 {% for column in state.config.columns %}
                   {% set cell_value = row.get(column.source, "") %}
+                  {% set _sort_val = row.get(column.sort_value_source, cell_value) if column.sort_value_source else cell_value %}
                   <td
                     class="{{ column.css_class }}"
                     data-admin-column-key="{{ column.key }}"
-                    data-admin-sort-value="{{ cell_value }}"
+                    data-admin-sort-value="{{ _sort_val }}"
+                    {% if column.responsive_priority %}data-admin-responsive-priority="{{ column.responsive_priority }}"{% endif %}
+                    {% if column.always_visible %}data-admin-always-visible="1"{% endif %}
                   >
                     {% if column.key == "status" %}
-                      <span class="admin-subprocess-badge-v1 {% if status_value == state.config.active_value %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
-                        {{ cell_value or ("Ativo" if status_value == state.config.active_value else "Inativo") }}
-                      </span>
+                      {% if state.config.status_badge_class %}
+                        {% if column.status_class_source %}
+                          {% set _badge_suffix = row.get(column.status_class_source, status_value) %}
+                        {% else %}
+                          {% set _badge_suffix = status_value %}
+                        {% endif %}
+                        <span class="{{ state.config.status_badge_class }} {{ state.config.status_badge_class }}-{{ _badge_suffix }}">{{ cell_value or ("Ativo" if _is_active else "Inativo") }}</span>
+                      {% else %}
+                        <span class="admin-subprocess-badge-v1 {% if _is_active %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
+                          {{ cell_value or ("Ativo" if _is_active else "Inativo") }}
+                        </span>
+                      {% endif %}
                     {% else %}
                       {{ cell_value }}
                     {% endif %}
                   </td>
                 {% endfor %}
-                <td class="admin-col-actions-v1">
+                <td class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1">
                   {{ render_admin_subprocess_row_actions(state, row, status_value) }}
                 </td>
               </tr>
@@ -293,7 +333,7 @@
           </tbody>
         </table>
       </div>
-      <div id="{{ state.config.key }}-{{ status_value }}-limiter" class="table-limiter"></div>
+      <div id="{{ _limiter_id }}" class="table-limiter"></div>
     {% else %}
       <p class="empty">{{ _empty_msg or _empty_fallback }}</p>
     {% endif %}
@@ -301,8 +341,13 @@
 {% endmacro %}
 
 
-{% macro render_admin_subprocess_state(state) %}
-  {{ render_admin_subprocess_form(state) }}
+{% macro render_admin_subprocess_tables(state) %}
   {{ render_admin_subprocess_table(state, state.active_rows, state.config.active_title, state.config.active_value) }}
   {{ render_admin_subprocess_table(state, state.inactive_rows, state.config.inactive_title, state.config.inactive_value) }}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_state(state) %}
+  {{ render_admin_subprocess_form(state) }}
+  {{ render_admin_subprocess_tables(state) }}
 {% endmacro %}

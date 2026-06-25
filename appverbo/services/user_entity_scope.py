@@ -117,7 +117,7 @@ def get_entities_for_user_edit_form_v1(
     session: Session,
     permissions: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    if permissions.get("can_manage_all_entities"):
+    if permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
         return _get_active_entities_for_scope_v1(
             session,
             require_entity_number=True,

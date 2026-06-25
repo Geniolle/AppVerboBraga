@@ -92,7 +92,7 @@ def create_entity(
             current_user["login_email"],
             selected_entity_id,
         )
-        if not entity_permissions["can_manage_all_entities"]:
+        if not entity_permissions.get("can_create_legacy_entities", entity_permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=build_return_url_v1(
                     return_menu=return_menu,

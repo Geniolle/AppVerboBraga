@@ -10,8 +10,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
-from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
+from appverbo.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
+from appverbo.admin_subprocesses.models import AdminSubprocessState
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
@@ -134,7 +135,7 @@ def _resolve_initial_menu_target(
     resolved_profile_tab: str,
     resolved_admin_tab: str,
     settings_edit_key: str,
-    can_manage_all_entities: bool,
+    can_manage_tenant_structure: bool,
     sidebar_menu_settings: list[dict[str, Any]],
 ) -> tuple[str, str]:
     clean_menu_key = resolve_menu_key_alias(resolved_menu)
@@ -144,6 +145,8 @@ def _resolve_initial_menu_target(
         if isinstance(raw_row, dict) and str(raw_row.get("key") or "").strip()
     }
 
+    if clean_menu_key == "empresa":
+        return "#empresa-card", ""
     if clean_menu_key == "home":
         return "#home-summary-card", ""
     if clean_menu_key == "perfil":
@@ -470,7 +473,7 @@ def new_user_page(
         resolved_profile_tab=resolved_profile_tab,
         resolved_admin_tab=resolved_admin_tab,
         settings_edit_key=clean_settings_edit_key,
-        can_manage_all_entities=bool(entity_permissions["can_manage_all_entities"]),
+        can_manage_tenant_structure=bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
     )
 
@@ -551,6 +554,34 @@ def new_user_page(
                 admin_subprocess_menu_state_v1 = None
     # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_END
 
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V1_START
+    def _normalize_user_rows_v1(rows: list[dict]) -> list[dict]:
+        result = []
+        for row in rows:
+            r = dict(row)
+            en = r.get("entity_number")
+            r["entity_number"] = str(en) if en is not None else "-"
+            r["entity_number_sort_value"] = str(en) if en is not None else ""
+            result.append(r)
+        return result
+
+    admin_subprocess_entity_state = None
+    admin_subprocess_user_state = AdminSubprocessState(
+        config=UTILIZADOR_CONFIG,
+        active_rows=_normalize_user_rows_v1(page_data.get("active_created_users", [])),
+        inactive_rows=_normalize_user_rows_v1(page_data.get("inactive_users", [])),
+        return_url="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card",
+    )
+
+    if bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))):
+        admin_subprocess_entity_state = AdminSubprocessState(
+            config=ENTIDADE_CONFIG,
+            active_rows=list(page_data.get("recent_entities", [])),
+            inactive_rows=list(page_data.get("inactive_entities", [])),
+            return_url="/users/new?menu=administrativo&admin_tab=entidade#recent-entities-card",
+        )
+    # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V1_END
+
     context = {
         "request": request,
         "errors": [error] if error else [],
@@ -592,9 +623,10 @@ def new_user_page(
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
-        "current_user_can_manage_all_entities": bool(
-            entity_permissions["can_manage_all_entities"]
-        ),
+        "admin_subprocess_entity_state": admin_subprocess_entity_state,
+        "admin_subprocess_user_state": admin_subprocess_user_state,
+        "current_user_can_manage_tenant_structure": bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
+        "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
         **page_data,
     }
     return templates.TemplateResponse(request, "new_user.html", context)

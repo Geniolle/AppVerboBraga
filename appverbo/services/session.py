@@ -44,14 +44,14 @@ def get_entity_context_for_user(
         login_email,
         entity_id,
     )
-    can_manage_all_entities = bool(permissions["can_manage_all_entities"])
+    can_manage_tenant_structure = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
 
     if entity_id is not None:
         selected_entity = session.get(Entity, entity_id)
         if selected_entity is None or not selected_entity.is_active:
             return None
 
-        if can_manage_all_entities:
+        if can_manage_tenant_structure:
             return {
                 "id": int(selected_entity.id),
                 "name": selected_entity.name or "",
@@ -96,7 +96,7 @@ def get_entity_context_for_user(
             "logo_url": linked_entity.logo_url or "",
         }
 
-    if can_manage_all_entities:
+    if can_manage_tenant_structure:
         first_active_entity = session.execute(
             select(Entity.id, Entity.name, Entity.logo_url)
            .where(Entity.is_active.is_(True))

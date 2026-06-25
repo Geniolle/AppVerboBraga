@@ -409,8 +409,13 @@ def get_page_data(
         "is_admin": False,
         "has_owner_membership": False,
         "can_manage_all_entities": False,
+        "can_manage_tenant_structure": False,
+        "can_create_legacy_entities": False,
+        "can_create_legacy_admin_users": False,
         "selected_entity_id": selected_entity_id,
         "allowed_entity_ids": set(),
+        "allowed_structure_entity_ids": set(),
+        "allowed_data_entity_ids": set(),
     }
     allowed_entity_ids: set[int] | None = None
     if actor_user_id is not None:
@@ -430,7 +435,7 @@ def get_page_data(
     _actor_entity_number = None
     _entities_for_user_form: list[dict[str, Any]] = []
     _entities_for_user_edit_form: list[dict[str, Any]] = []
-    _can_select_user_entity = bool(permissions["can_manage_all_entities"])
+    _can_select_user_entity = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
     if actor_user_id is not None:
         _actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
         if _actor_primary_entity is not None:
@@ -908,15 +913,18 @@ def get_page_data(
        .order_by(User.id.asc())
     ).all()
 
+    # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
+    # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
+    _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
     if apply_scope_filter:
-        if scoped_entity_ids:
+        if _data_entity_ids:
             scoped_member_ids = {
                 int(raw_id)
                 for raw_id in session.execute(
                     select(MemberEntity.member_id)
                    .where(
                         MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                        MemberEntity.entity_id.in_(scoped_entity_ids),
+                        MemberEntity.entity_id.in_(_data_entity_ids),
                     )
                    .distinct()
                 ).scalars().all()
@@ -1028,15 +1036,25 @@ def get_page_data(
             "description": row.description or "",
             "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
             "profile_scope_label": (
-                "Owner"
+                "Gestora do tenant"
                 if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
-                else "Legado"
+                else "Entidade operacional"
             ),
             "logo_url": row.logo_url or "",
             "is_active": bool(row.is_active),
             "status_label": "Ativa" if row.is_active else "Inativa",
             "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
         }
+
+    # Perfil institucional da entidade ativa (processo Empresa).
+    # Restrito a allowed_data_entity_ids — não usa escopo estrutural.
+    company_profile_data: dict[str, Any] | None = None
+    if selected_entity_id is not None:
+        _data_ids = permissions.get("allowed_data_entity_ids") or set()
+        if selected_entity_id in _data_ids:
+            _company_entity = session.get(Entity, selected_entity_id)
+            if _company_entity is not None:
+                company_profile_data = serialize_entity_row(_company_entity)
 
     return {
         "entities": [
@@ -1067,7 +1085,9 @@ def get_page_data(
         "inactive_users": inactive_users,
         "pending_users": pending_users,
         "entity_permissions": permissions,
-        "current_user_can_manage_all_entities": bool(permissions["can_manage_all_entities"]),
+        "company_profile_data": company_profile_data,
+        "current_user_can_manage_tenant_structure": bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False))),
+        "current_user_can_manage_all_entities": bool(permissions.get("can_manage_all_entities", False)),
         "current_entity_scope": current_entity_scope,
         "current_user_entity_id": _actor_entity_id,
         "current_user_entity_name": _actor_entity_name,

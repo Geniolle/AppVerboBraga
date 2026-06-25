@@ -1217,6 +1217,20 @@ body.appverbo-url-feedback-active-v1 .card .alert {
   position: static !important;
   top: auto !important;
   transform: none !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+
+.appverbo-load-more-footer-v1 .appverbo-load-more-btn-v1 {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+}
+
+.appverbo-load-more-footer-v1 .appverbo-load-more-counter-v1 {
+  width: auto !important;
+  margin: 0 !important;
 }
 
 .appverbo-load-more-footer-v1 .appverbo-load-more-less-v1 {

@@ -75,7 +75,13 @@ def get_user_entity_permissions(
     is_admin = is_admin_user(session, user_id, login_email)
     has_owner_membership = user_has_owner_entity_membership(session, user_id)
     has_bootstrap_owner_gap = is_admin and not owner_entity_exists(session)
-    can_manage_all_entities = is_admin and (has_owner_membership or has_bootstrap_owner_gap)
+
+    # Owner é gestora da estrutura do tenant, não administradora global dos dados das entidades Legado.
+    # can_manage_tenant_structure = pode criar/gerir estrutura (entidades, admins iniciais),
+    # mas NÃO autoriza leitura de dados operacionais das entidades Legado.
+    can_manage_tenant_structure = is_admin and (has_owner_membership or has_bootstrap_owner_gap)
+    can_create_legacy_entities = can_manage_tenant_structure
+    can_create_legacy_admin_users = can_manage_tenant_structure
 
     linked_entity_ids = _get_user_linked_entity_ids(
         session,
@@ -88,11 +94,11 @@ def get_user_entity_permissions(
     if selected_entity_id is not None:
         selected_entity = session.get(Entity, selected_entity_id)
         if selected_entity is not None and selected_entity.is_active:
-            if can_manage_all_entities or selected_entity_id in linked_entity_ids_set:
+            if can_manage_tenant_structure or selected_entity_id in linked_entity_ids_set:
                 resolved_selected_entity_id = int(selected_entity_id)
     if resolved_selected_entity_id is None and linked_entity_ids:
         resolved_selected_entity_id = linked_entity_ids[0]
-    if resolved_selected_entity_id is None and can_manage_all_entities:
+    if resolved_selected_entity_id is None and can_manage_tenant_structure:
         first_active_entity_id = session.scalar(
             select(Entity.id)
            .where(Entity.is_active.is_(True))
@@ -102,27 +108,48 @@ def get_user_entity_permissions(
         if first_active_entity_id is not None:
             resolved_selected_entity_id = int(first_active_entity_id)
 
-    if can_manage_all_entities:
-        allowed_entity_ids = {
+    # allowed_structure_entity_ids: escopo estrutural do tenant.
+    # Gestora do tenant vê todas as entidades para administração estrutural.
+    # Entidades Legado veem apenas a própria entidade.
+    if can_manage_tenant_structure:
+        allowed_structure_entity_ids = {
             int(raw_id) for raw_id in session.execute(select(Entity.id)).scalars().all()
         }
     elif resolved_selected_entity_id is not None:
-        allowed_entity_ids = {resolved_selected_entity_id}
+        allowed_structure_entity_ids = {resolved_selected_entity_id}
     else:
-        allowed_entity_ids = set()
+        allowed_structure_entity_ids = set()
+
+    # allowed_data_entity_ids: escopo de dados operacionais.
+    # Determinado pelas entidades onde o utilizador tem vínculo ativo,
+    # independentemente de ser gestora do tenant.
+    # A gestora do tenant NÃO acede automaticamente a dados operacionais das entidades Legado.
+    if linked_entity_ids_set:
+        allowed_data_entity_ids: set[int] = linked_entity_ids_set
+    elif resolved_selected_entity_id is not None:
+        # Fallback para bootstrap gap ou utilizadores sem vínculo ativo
+        allowed_data_entity_ids = {resolved_selected_entity_id}
+    else:
+        allowed_data_entity_ids = set()
 
     return {
         "is_admin": bool(is_admin),
         "has_owner_membership": bool(has_owner_membership),
-        "can_manage_all_entities": bool(can_manage_all_entities),
+        "can_manage_tenant_structure": bool(can_manage_tenant_structure),
+        "can_create_legacy_entities": bool(can_create_legacy_entities),
+        "can_create_legacy_admin_users": bool(can_create_legacy_admin_users),
         "selected_entity_id": resolved_selected_entity_id,
-        "allowed_entity_ids": allowed_entity_ids,
+        "allowed_data_entity_ids": allowed_data_entity_ids,
+        "allowed_structure_entity_ids": allowed_structure_entity_ids,
+        # Aliases deprecated — mantidos para compatibilidade enquanto migração não é completa
+        "can_manage_all_entities": bool(can_manage_tenant_structure),
+        "allowed_entity_ids": allowed_structure_entity_ids,
     }
 
 def is_entity_within_permissions(entity_id: int, permissions: dict[str, Any]) -> bool:
-    if permissions.get("can_manage_all_entities"):
+    if permissions.get("can_manage_tenant_structure") or permissions.get("can_manage_all_entities"):
         return True
-    allowed_ids = permissions.get("allowed_entity_ids") or set()
+    allowed_ids = permissions.get("allowed_structure_entity_ids") or permissions.get("allowed_entity_ids") or set()
     return int(entity_id) in allowed_ids
 
 __all__ = [

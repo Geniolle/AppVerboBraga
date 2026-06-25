@@ -37,6 +37,10 @@ class AdminColumnConfig:
     sort_type: AdminColumnSortType = "text"
     default_sort: AdminColumnDefaultSort = ""
     hide_order: int = 0
+    responsive_priority: int = 0
+    always_visible: bool = False
+    status_class_source: str = ""
+    sort_value_source: str = ""
 
 
 @dataclass(frozen=True)
@@ -100,6 +104,14 @@ class AdminSubprocessConfig:
     move_up_condition_field: str = ""
     move_down_condition_field: str = ""
     table_css_class: str = ""
+    active_card_id: str = ""
+    inactive_card_id: str = ""
+    active_table_id: str = ""
+    inactive_table_id: str = ""
+    active_limiter_id: str = ""
+    inactive_limiter_id: str = ""
+    status_badge_class: str = ""
+    view_link_param: str = ""
 
 
 @dataclass

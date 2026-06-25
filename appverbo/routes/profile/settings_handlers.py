@@ -105,7 +105,7 @@ def _require_menu_settings_owner_v1(
         selected_entity_id,
     )
 
-    if not permissions["can_manage_all_entities"]:
+    if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
         return RedirectResponse(
             url=_build_settings_redirect_url(
                 error_message="Apenas Owner pode alterar definições do menu.",
@@ -576,7 +576,7 @@ def save_one_sidebar_section_v19(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -735,7 +735,7 @@ def move_one_sidebar_section_v25(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -872,7 +872,7 @@ def edit_sidebar_sections_v2(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode alterar sessões do sidebar.",
@@ -1238,7 +1238,7 @@ def move_sidebar_menu_additional_field_handler(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode mover campos.",
@@ -1543,7 +1543,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar campos adicionais por processo.",
@@ -1653,7 +1653,7 @@ def edit_sidebar_menu_process_fields_handler(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar campos do processo.",
@@ -1903,7 +1903,7 @@ def edit_sidebar_menu_process_lists_handler(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar listas do processo.",
@@ -2023,7 +2023,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             selected_entity_id,
         )
 
-        if not permissions["can_manage_all_entities"]:
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar campos subsequentes.",

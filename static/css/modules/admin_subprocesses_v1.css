@@ -392,6 +392,21 @@ td.admin-col-address-v1 {
   white-space: nowrap;
 }
 
+th.admin-col-email-v1,
+td.admin-col-email-v1 {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+th.admin-col-country-v1,
+td.admin-col-country-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 90px;
+}
+
 .admin-col-hidden-v1 {
   display: none !important;
 }
@@ -416,7 +431,11 @@ td.admin-col-address-v1 {
 [data-appverbo-sortable-table] th.admin-col-date-v1,
 [data-appverbo-sortable-table] td.admin-col-date-v1,
 [data-appverbo-sortable-table] th.admin-col-number-v1,
-[data-appverbo-sortable-table] td.admin-col-number-v1 {
+[data-appverbo-sortable-table] td.admin-col-number-v1,
+[data-admin-sortable-table] th.admin-col-country-v1,
+[data-admin-sortable-table] td.admin-col-country-v1,
+[data-appverbo-sortable-table] th.admin-col-country-v1,
+[data-appverbo-sortable-table] td.admin-col-country-v1 {
   text-align: center;
 }
 
@@ -473,37 +492,58 @@ td.admin-col-address-v1 {
 
 .admin-entity-table-v1 th.admin-col-number-v1,
 .admin-entity-table-v1 td.admin-col-number-v1 {
-  width: 8%;
+  width: 7%;
   text-align: center;
   white-space: nowrap;
 }
 
 .admin-entity-table-v1 th.admin-col-main-v1,
 .admin-entity-table-v1 td.admin-col-main-v1 {
-  width: 18%;
+  width: 15%;
   min-width: unset;
   text-align: left;
 }
 
 .admin-entity-table-v1 th.admin-col-system-v1,
 .admin-entity-table-v1 td.admin-col-system-v1 {
-  width: 9%;
+  width: 7%;
   text-align: center;
+}
+
+.admin-entity-table-v1 th.admin-col-email-v1,
+.admin-entity-table-v1 td.admin-col-email-v1 {
+  width: 12%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-entity-table-v1 th.admin-col-phone-v1,
 .admin-entity-table-v1 td.admin-col-phone-v1 {
-  width: 10%;
+  width: 8%;
   text-align: center;
 }
 
 .admin-entity-table-v1 th.admin-col-address-v1,
 .admin-entity-table-v1 td.admin-col-address-v1 {
-  width: 25%;
+  width: 14%;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.admin-entity-table-v1 th.admin-col-country-v1,
+.admin-entity-table-v1 td.admin-col-country-v1 {
+  width: 6%;
+  text-align: center;
+}
+
+.admin-entity-table-v1 th.admin-col-date-v1,
+.admin-entity-table-v1 td.admin-col-date-v1 {
+  width: 9%;
+  text-align: center;
 }
 
 .admin-entity-table-v1 th.admin-col-status-v1,
@@ -512,15 +552,9 @@ td.admin-col-address-v1 {
   text-align: center;
 }
 
-.admin-entity-table-v1 th.admin-col-date-v1,
-.admin-entity-table-v1 td.admin-col-date-v1 {
-  width: 13%;
-  text-align: center;
-}
-
 .admin-entity-table-v1 th.admin-col-actions-v1,
 .admin-entity-table-v1 td.admin-col-actions-v1 {
-  width: 8%;
+  width: 13%;
   text-align: right;
   white-space: nowrap;
   max-width: none;

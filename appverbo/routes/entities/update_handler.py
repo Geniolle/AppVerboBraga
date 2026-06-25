@@ -114,7 +114,7 @@ def update_entity(
             current_user["login_email"],
             selected_entity_id,
         )
-        can_manage_all_entities = bool(entity_permissions["can_manage_all_entities"])
+        can_manage_tenant_structure = bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)))
         if not is_entity_within_permissions(parsed_entity_id, entity_permissions):
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -141,7 +141,7 @@ def update_entity(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
-        if not can_manage_all_entities:
+        if not can_manage_tenant_structure:
             clean_status = "active" if entity.is_active else "inactive"
 
         required_field_labels = validate_entity_required_fields_v1(entity_form_data)
@@ -199,7 +199,7 @@ def update_entity(
             )
 
         if clean_profile_scope == ENTITY_PROFILE_SCOPE_OWNER:
-            if not entity_permissions["can_manage_all_entities"]:
+            if not entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False)):
                 return RedirectResponse(
                     url=build_return_url_v1(
                         return_menu=return_menu,
@@ -281,7 +281,7 @@ def update_entity(
             entity_form_data,
             include_description=isinstance(description, str),
         )
-        if can_manage_all_entities:
+        if can_manage_tenant_structure:
             entity.is_active = clean_status == "active"
 
         try:

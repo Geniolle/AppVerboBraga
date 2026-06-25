@@ -1,20 +1,19 @@
 {% extends "base.html" %}
 
-{% from "macros/admin_subprocess.html" import render_admin_subprocess_state %}
-{% from "partials/admin_user_table_v1.html" import render_admin_user_table_v1 %}
+{% from "macros/admin_subprocess.html" import render_admin_subprocess_state, render_admin_subprocess_tables %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260504-admin-status-tables-pagination-v2">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260623-user-create-summary-hide-v1">
-  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260624-hidden-override-v1">
+<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-footer-grid-3col-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260625-user-limiter-cleanup-v1">
+  <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260625-status-col-stack-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260430-fields-config-v6-static-grid">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
-  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260624-entity-table-fixed-layout-v1">
-  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260624-entity-responsive-cols-v1" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_subprocesses_v1.css?v=20260625-entity-email-country-cols-v1">
+  <script src="/static/js/modules/admin_subprocesses_v1.js?v=20260625-global-entidade-utilizador-v1" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -137,6 +136,110 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa">
+          <h2>Perfil institucional da entidade ativa</h2>
+          <p>Estes dados pertencem à entidade atualmente ativa e serão refletidos no cadastro da entidade.</p>
+          {% if entity_error and initial_menu == "empresa" %}
+            <div class="alert error">{{ entity_error }}</div>
+          {% endif %}
+          {% if entity_success and initial_menu == "empresa" %}
+            <div class="alert ok">{{ entity_success }}</div>
+          {% endif %}
+          {% if company_profile_data %}
+          <form method="post" action="/empresa/update" enctype="multipart/form-data">
+            <input type="hidden" name="entity_id" value="{{ company_profile_data.id }}">
+            <div class="entity-first-row">
+              <div class="field entity-first-row-client">
+                <label>Nº da entidade</label>
+                <input class="readonly-field" value="{{ company_profile_data.entity_number or '-' }}" readonly disabled>
+              </div>
+              <div class="field entity-first-row-name">
+                <label for="empresa_name">Nome da entidade *</label>
+                <input id="empresa_name" name="name" required value="{{ company_profile_data.name }}">
+              </div>
+              <div class="field entity-first-row-acronym">
+                <label for="empresa_acronym">Acrónimo (opcional)</label>
+                <input id="empresa_acronym" name="acronym" maxlength="5" value="{{ company_profile_data.acronym }}">
+              </div>
+              <div class="field entity-first-row-tax">
+                <label for="empresa_tax_id">Nº Identificação Fiscal *</label>
+                <input id="empresa_tax_id" name="tax_id" maxlength="20" required value="{{ company_profile_data.tax_id }}">
+              </div>
+            </div>
+            <div class="entity-second-row">
+              <div class="field entity-second-row-profile">
+                <label>Papel no tenant</label>
+                <input class="readonly-field" value="{{ company_profile_data.profile_scope_label }}" readonly disabled>
+              </div>
+              <div class="field entity-second-row-email">
+                <label for="empresa_email">Email *</label>
+                <input id="empresa_email" name="email" type="email" required value="{{ company_profile_data.email }}">
+              </div>
+              <div class="field entity-second-row-phone">
+                <label for="empresa_phone">Telefone *</label>
+                <input id="empresa_phone" name="phone" maxlength="15" required value="{{ company_profile_data.phone }}">
+              </div>
+              <div class="field entity-second-row-responsible">
+                <label for="empresa_responsible_name">Nome do responsável *</label>
+                <input id="empresa_responsible_name" name="responsible_name" required value="{{ company_profile_data.responsible_name }}">
+              </div>
+            </div>
+            <div class="entity-third-row">
+              <div class="field entity-third-row-address">
+                <label for="empresa_address">Morada *</label>
+                <input id="empresa_address" name="address" required value="{{ company_profile_data.address }}">
+              </div>
+              <div class="field entity-third-row-door">
+                <label for="empresa_door_number">Nº da porta *</label>
+                <input id="empresa_door_number" name="door_number" maxlength="15" required value="{{ company_profile_data.door_number }}">
+              </div>
+              <div class="field entity-third-row-freguesia">
+                <label for="empresa_freguesia">Freguesia *</label>
+                <input id="empresa_freguesia" name="freguesia" required value="{{ company_profile_data.freguesia }}">
+              </div>
+              <div class="field entity-third-row-postal">
+                <label for="empresa_postal_code">Código postal *</label>
+                <input id="empresa_postal_code" name="postal_code" maxlength="30" required value="{{ company_profile_data.postal_code }}">
+              </div>
+            </div>
+            <div class="entity-fourth-row">
+              <div class="field entity-fourth-row-city">
+                <label for="empresa_city">Cidade *</label>
+                <input id="empresa_city" name="city" maxlength="120" required value="{{ company_profile_data.city }}">
+              </div>
+              <div class="field entity-fourth-row-country">
+                <label for="empresa_country">País *</label>
+                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
+              </div>
+            </div>
+            <div class="entity-fifth-row entity-fifth-row-edit">
+              <div class="field entity-fifth-row-logo">
+                <label for="empresa_logo_file">Imagem/ícone da entidade (ficheiro opcional)</label>
+                <input id="empresa_logo_file" name="entity_logo_file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+              </div>
+            </div>
+            {% if company_profile_data.logo_url %}
+            <div class="entity-edit-logo-row">
+              <div class="field entity-edit-current-logo">
+                <label>Logo atual</label>
+                <div class="entity-edit-current-logo-preview">
+                  <input id="empresa_remove_logo_checkbox" class="entity-edit-remove-logo-input" type="checkbox" name="remove_logo" value="1">
+                  <label for="empresa_remove_logo_checkbox" class="entity-edit-remove-logo-btn" title="Remover logo atual" aria-label="Remover logo atual">&#10005;</label>
+                  <img class="entity-edit-current-logo-image" src="{{ company_profile_data.logo_url }}" alt="Logo atual da entidade">
+                  <div class="entity-edit-remove-logo-placeholder">Logo marcado para remoção. Clique em Guardar para confirmar.</div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            <div class="form-action-row">
+              <button type="submit" class="action-btn">Guardar</button>
+            </div>
+          </form>
+          {% else %}
+          <p class="empty">Sem entidade ativa associada. Contacte o administrador.</p>
+          {% endif %}
         </section>
 
         <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil">
@@ -796,31 +899,11 @@
           </div>
         </section>
         {% endif %}
-        <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_START -->
-        <section id="admin-users-created-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores criados</h2>
-          {{ render_admin_user_table_v1(
-            active_created_users,
-            "admin-users-table",
-            "Sem utilizadores ativos.",
-            false
-          ) }}
-        </section>
-        <!-- APPVERBO_ADMIN_USERS_ACTIVE_SECTION_V9_END -->
+        {% if admin_subprocess_user_state is not none %}
+          {{ render_admin_subprocess_tables(admin_subprocess_user_state) }}
+        {% endif %}
 
-        <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_START -->
-        <section id="inactive-users-card" class="card" data-menu-scope="administrativo">
-          <h2>Utilizadores inativos</h2>
-          {{ render_admin_user_table_v1(
-            inactive_users,
-            "inactive-users-table",
-            "Sem utilizadores inativos.",
-            true
-          ) }}
-        </section>
-        <!-- APPVERBO_ADMIN_USERS_INACTIVE_SECTION_V9_END -->
-
-        {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_all_entities %}
+        {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_tenant_structure %}
         <section id="create-entity-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo">
           <div class="appverbo-process-action-toolbar-v1">
           <details class="entity-create-collapse appverbo-process-action-details-v1">
@@ -854,8 +937,8 @@
                   <div class="field entity-second-row-profile">
                     <label for="entity_profile_scope">Perfil da entidade *</label>
                     <select id="entity_profile_scope" name="entity_profile_scope" required>
-                      <option value="owner" {% if entity_form_data.profile_scope == "owner" %}selected{% endif %}>Owner</option>
-                      <option value="legado" {% if entity_form_data.profile_scope != "owner" %}selected{% endif %}>Legado</option>
+                      <option value="owner" {% if entity_form_data.profile_scope == "owner" %}selected{% endif %}>Gestora do tenant</option>
+                      <option value="legado" {% if entity_form_data.profile_scope != "owner" %}selected{% endif %}>Entidade operacional</option>
                     </select>
                   </div>
                   <div class="field entity-second-row-email">
@@ -958,12 +1041,12 @@
               </div>
             </div>
             <div class="entity-second-row">
-              {% if current_user_can_manage_all_entities %}
+              {% if current_user_can_manage_tenant_structure %}
               <div class="field entity-second-row-profile">
                 <label for="edit_entity_profile_scope">Perfil da entidade *</label>
                 <select id="edit_entity_profile_scope" name="entity_profile_scope" required>
-                  <option value="owner" {% if entity_edit_data.profile_scope == "owner" %}selected{% endif %}>Owner</option>
-                  <option value="legado" {% if entity_edit_data.profile_scope != "owner" %}selected{% endif %}>Legado</option>
+                  <option value="owner" {% if entity_edit_data.profile_scope == "owner" %}selected{% endif %}>Gestora do tenant</option>
+                  <option value="legado" {% if entity_edit_data.profile_scope != "owner" %}selected{% endif %}>Entidade operacional</option>
                 </select>
               </div>
               {% else %}
@@ -973,7 +1056,7 @@
                 <input
                   id="edit_entity_profile_scope_readonly"
                   class="readonly-field"
-                  value="{% if entity_edit_data.profile_scope == 'owner' %}Owner{% else %}Legado{% endif %}"
+                  value="{% if entity_edit_data.profile_scope == 'owner' %}Gestora do tenant{% else %}Entidade operacional{% endif %}"
                   readonly
                   disabled
                 >
@@ -1031,7 +1114,7 @@
               </div>
               <div class="field entity-edit-status-row">
                 <label for="edit_entity_status">Estado da entidade *</label>
-                {% if current_user_can_manage_all_entities %}
+                {% if current_user_can_manage_tenant_structure %}
                 <select id="edit_entity_status" name="entity_status" required>
                   <option value="active" {% if entity_edit_data.status == "active" %}selected{% endif %}>Ativa</option>
                   <option value="inactive" {% if entity_edit_data.status == "inactive" %}selected{% endif %}>Inativa</option>
@@ -1083,283 +1166,54 @@
         </section>
         {% endif %}
 
-        <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
-          <h2>{% if current_user_can_manage_all_entities %}Entidades criadas{% else %}Dados gerais{% endif %}</h2>
-          {% set active_recent_entities = recent_entities if current_user_can_manage_all_entities else recent_entities[:1] %}
-          {% if active_recent_entities %}
-            <div class="admin-subprocess-table-wrap-v1">
-            <table id="recent-entities-table" class="admin-entity-table-v1" data-admin-responsive-table="1" {% if current_user_can_manage_all_entities %}data-admin-sortable-table="1"{% endif %}>
-              <thead>
-                <tr>
-                  {% if current_user_can_manage_all_entities %}
-                  <th
-                    class="admin-col-number-v1"
-                    data-admin-column-key="entity_number"
-                    data-admin-responsive-priority="2"
-                    data-admin-sortable-column="1"
-                    aria-sort="ascending"
-                  >
-                    <button
-                      type="button"
-                      class="admin-subprocess-sort-button-v1"
-                      data-admin-sort-button
-                      data-admin-sort-key="entity_number"
-                      data-admin-sort-type="number"
-                      data-admin-default-sort="asc"
-                      data-admin-sort-direction="asc"
-                      aria-label="Ordenar por Nº DA ENTIDADE"
-                      aria-pressed="true"
-                    >
-                      <span class="admin-subprocess-sort-label-v1">Nº DA ENTIDADE</span>
-                      <span class="admin-subprocess-sort-indicator-v1" aria-hidden="true">⇅</span>
-                    </button>
-                  </th>
-                  {% endif %}
-                  <th class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">Nome</th>
-                  {% if current_user_can_manage_all_entities %}
-                  <th class="admin-col-system-v1" data-admin-column-key="profile" data-admin-responsive-priority="3">Perfil</th>
-                  {% endif %}
-                  <th class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">Telefone</th>
-                  <th class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="6">Morada</th>
-                  <th class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">Estado</th>
-                  {% if current_user_can_manage_all_entities %}
-                  <th class="admin-col-date-v1" data-admin-column-key="created_at" data-admin-responsive-priority="5">Criado em</th>
-                  {% endif %}
-                  <th class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in active_recent_entities %}
+        {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is not none %}
+          {{ render_admin_subprocess_tables(admin_subprocess_entity_state) }}
+        {% else %}
+          <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
+            <h2>Dados gerais</h2>
+            {% set _dados_gerais_entities = recent_entities[:1] %}
+            {% if _dados_gerais_entities %}
+              <div class="admin-subprocess-table-wrap-v1">
+              <table id="recent-entities-table" class="admin-entity-table-v1" data-admin-responsive-table="1">
+                <thead>
                   <tr>
-                    {% if current_user_can_manage_all_entities %}
-                    <td class="admin-col-number-v1" data-admin-column-key="entity_number" data-admin-responsive-priority="2" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
-                    {% endif %}
-                    <td class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">{{ row.name }}</td>
-                    {% if current_user_can_manage_all_entities %}
-                    <td class="admin-col-system-v1" data-admin-column-key="profile" data-admin-responsive-priority="3">{{ row.profile_scope_label }}</td>
-                    {% endif %}
-                    <td class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">{{ row.phone if row.phone else '-' }}</td>
-                    <td class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="6">{{ row.address if row.address else '-' }}</td>
-                    <td class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">
-                      <span class="entity-status {% if row.is_active %}entity-status-active{% else %}entity-status-inactive{% endif %}">
-                        {{ row.status_label }}
-                      </span>
-                    </td>
-                    {% if current_user_can_manage_all_entities %}
-                    <td class="admin-col-date-v1" data-admin-column-key="created_at" data-admin-responsive-priority="5">{{ row.created_at }}</td>
-                    {% endif %}
-                    <td class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">
-                      <div class="table-actions">
-                        <a
-                          class="table-icon-btn"
-                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
-                          title="Exibir entidade"
-                          aria-label="Exibir entidade"
-                        >
-                          &#128065;
-                        </a>
-                        <a
-                          class="table-icon-btn"
-                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card"
-                          title="Modificar entidade"
-                          aria-label="Modificar entidade"
-                        >
-                          &#9998;
-                        </a>
-                        {% if current_user_can_manage_all_entities %}
-                        {% if not row.is_active %}
-<!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_START -->
-<form
-                            method="post"
-                            action="/entities/delete"
-                            data-appverbo-confirm="1"
-                            data-appverbo-confirm-title="Eliminar entidade"
-                            data-appverbo-confirm-message="Tem a certeza que pretende eliminar esta entidade?"
-                            data-appverbo-confirm-action-label="Eliminar"
-                            data-appverbo-confirm-danger="1"
-                          >
-                          <input type="hidden" name="entity_id" value="{{ row.id }}">
-                          <input type="hidden" name="return_menu" value="administrativo">
-                          <input type="hidden" name="return_admin_tab" value="entidade">
-                          <input type="hidden" name="return_target" value="#recent-entities-card">
-                          <button
-                            type="submit"
-                            class="table-icon-btn table-icon-btn-danger"
-                            title="Eliminar entidade"
-                            aria-label="Eliminar entidade"
-                          >
-                            &#128465;
-                          </button>
-                        </form>
-<!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_END -->
-{% endif %}
-                        {% endif %}
-                      </div>
-                    </td>
+                    <th class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">Nome</th>
+                    <th class="admin-col-email-v1" data-admin-column-key="email" data-admin-responsive-priority="6">Email</th>
+                    <th class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">Telefone</th>
+                    <th class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="7">Morada</th>
+                    <th class="admin-col-country-v1" data-admin-column-key="country" data-admin-responsive-priority="3">País</th>
+                    <th class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">Estado</th>
+                    <th class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">Ações</th>
                   </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            </div>
-            {% if current_user_can_manage_all_entities %}
-            <div id="recent-entities-limiter" class="table-limiter">
-              <div class="table-limiter-left">
-                <select id="recent-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades ativas)">
-                  <option value="5" selected>5</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-                <span>entradas por página</span>
+                </thead>
+                <tbody>
+                  {% for row in _dados_gerais_entities %}
+                    <tr>
+                      <td class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">{{ row.name }}</td>
+                      <td class="admin-col-email-v1" data-admin-column-key="email" data-admin-responsive-priority="6">{{ row.email if row.email else '-' }}</td>
+                      <td class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">{{ row.phone if row.phone else '-' }}</td>
+                      <td class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="7">{{ row.address if row.address else '-' }}</td>
+                      <td class="admin-col-country-v1" data-admin-column-key="country" data-admin-responsive-priority="3">{{ row.country if row.country else '-' }}</td>
+                      <td class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">
+                        <span class="entity-status {% if row.is_active %}entity-status-active{% else %}entity-status-inactive{% endif %}">
+                          {{ row.status_label }}
+                        </span>
+                      </td>
+                      <td class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">
+                        <div class="table-actions">
+                          <a class="table-icon-btn" href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card" title="Exibir entidade" aria-label="Exibir entidade">&#128065;</a>
+                          <a class="table-icon-btn" href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card" title="Modificar entidade" aria-label="Modificar entidade">&#9998;</a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
               </div>
-              <div class="table-limiter-right">
-                <button id="recent-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
-                <span id="recent-entities-page" class="table-limiter-page">1</span>
-                <button id="recent-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
-              </div>
-            </div>
+            {% else %}
+              <p class="empty">Sem entidades ativas criadas ainda.</p>
             {% endif %}
-          {% else %}
-            <p class="empty">Sem entidades ativas criadas ainda.</p>
-          {% endif %}
-        </section>
-
-        {% if current_user_can_manage_all_entities %}
-        <section id="inactive-entities-card" class="card" data-menu-scope="administrativo">
-          <h2>Entidades inativas</h2>
-          {% if inactive_entities %}
-            <div class="admin-subprocess-table-wrap-v1">
-            <table id="inactive-entities-table" class="admin-entity-table-v1" data-admin-responsive-table="1" data-admin-sortable-table="1">
-              <thead>
-                <tr>
-                  {% if current_user_can_manage_all_entities %}
-                  <th
-                    class="admin-col-number-v1"
-                    data-admin-column-key="entity_number"
-                    data-admin-responsive-priority="2"
-                    data-admin-sortable-column="1"
-                    aria-sort="ascending"
-                  >
-                    <button
-                      type="button"
-                      class="admin-subprocess-sort-button-v1"
-                      data-admin-sort-button
-                      data-admin-sort-key="entity_number"
-                      data-admin-sort-type="number"
-                      data-admin-default-sort="asc"
-                      data-admin-sort-direction="asc"
-                      aria-label="Ordenar por Nº DA ENTIDADE"
-                      aria-pressed="true"
-                    >
-                      <span class="admin-subprocess-sort-label-v1">Nº DA ENTIDADE</span>
-                      <span class="admin-subprocess-sort-indicator-v1" aria-hidden="true">⇅</span>
-                    </button>
-                  </th>
-                  {% endif %}
-                  <th class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">Nome</th>
-                  {% if current_user_can_manage_all_entities %}
-                  <th class="admin-col-system-v1" data-admin-column-key="profile" data-admin-responsive-priority="3">Perfil</th>
-                  {% endif %}
-                  <th class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">Telefone</th>
-                  <th class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="6">Morada</th>
-                  <th class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">Estado</th>
-                  {% if current_user_can_manage_all_entities %}
-                  <th class="admin-col-date-v1" data-admin-column-key="created_at" data-admin-responsive-priority="5">Criado em</th>
-                  {% endif %}
-                  <th class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in inactive_entities %}
-                  <tr>
-                    {% if current_user_can_manage_all_entities %}
-                    <td class="admin-col-number-v1" data-admin-column-key="entity_number" data-admin-responsive-priority="2" data-admin-sort-value="{{ row.entity_number_sort_value }}">{{ row.entity_number }}</td>
-                    {% endif %}
-                    <td class="admin-col-main-v1" data-admin-column-key="name" data-admin-always-visible="1" data-admin-responsive-priority="1">{{ row.name }}</td>
-                    {% if current_user_can_manage_all_entities %}
-                    <td class="admin-col-system-v1" data-admin-column-key="profile" data-admin-responsive-priority="3">{{ row.profile_scope_label }}</td>
-                    {% endif %}
-                    <td class="admin-col-phone-v1" data-admin-column-key="phone" data-admin-responsive-priority="4">{{ row.phone if row.phone else '-' }}</td>
-                    <td class="admin-col-text-v1 admin-col-address-v1" data-admin-column-key="address" data-admin-responsive-priority="6">{{ row.address if row.address else '-' }}</td>
-                    <td class="admin-col-status-v1" data-admin-column-key="status" data-admin-always-visible="1" data-admin-responsive-priority="1">
-                      <span class="entity-status entity-status-inactive">
-                        {{ row.status_label }}
-                      </span>
-                    </td>
-                    {% if current_user_can_manage_all_entities %}
-                    <td class="admin-col-date-v1" data-admin-column-key="created_at" data-admin-responsive-priority="5">{{ row.created_at }}</td>
-                    {% endif %}
-                    <td class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1" data-admin-responsive-priority="1">
-                      <div class="table-actions">
-                        <a
-                          class="table-icon-btn"
-                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}&entity_view=1#edit-entity-card"
-                          title="Exibir entidade"
-                          aria-label="Exibir entidade"
-                        >
-                          &#128065;
-                        </a>
-                        <a
-                          class="table-icon-btn"
-                          href="/users/new?menu=administrativo&admin_tab=entidade&entity_edit_id={{ row.id }}#edit-entity-card"
-                          title="Modificar entidade"
-                          aria-label="Modificar entidade"
-                        >
-                          &#9998;
-                        </a>
-                        {% if current_user_can_manage_all_entities %}
-                        {% if not row.is_active %}
-<!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_START -->
-<form
-                            method="post"
-                            action="/entities/delete"
-                            data-appverbo-confirm="1"
-                            data-appverbo-confirm-title="Eliminar entidade"
-                            data-appverbo-confirm-message="Tem a certeza que pretende eliminar esta entidade?"
-                            data-appverbo-confirm-action-label="Eliminar"
-                            data-appverbo-confirm-danger="1"
-                          >
-                          <input type="hidden" name="entity_id" value="{{ row.id }}">
-                          <input type="hidden" name="return_menu" value="administrativo">
-                          <input type="hidden" name="return_admin_tab" value="entidade">
-                          <input type="hidden" name="return_target" value="#recent-entities-card">
-                          <button
-                            type="submit"
-                            class="table-icon-btn table-icon-btn-danger"
-                            title="Eliminar entidade"
-                            aria-label="Eliminar entidade"
-                          >
-                            &#128465;
-                          </button>
-                        </form>
-<!-- APPVERBO_ENTITY_DELETE_INACTIVE_ONLY_V1_END -->
-{% endif %}
-                        {% endif %}
-                      </div>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            </div>
-            <div id="inactive-entities-limiter" class="table-limiter">
-              <div class="table-limiter-left">
-                <select id="inactive-entities-page-size" class="table-limiter-select" aria-label="Entradas por página (entidades inativas)">
-                  <option value="5" selected>5</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                </select>
-                <span>entradas por página</span>
-              </div>
-              <div class="table-limiter-right">
-                <button id="inactive-entities-prev" class="table-limiter-nav-btn" type="button" aria-label="Página anterior">&#8249;</button>
-                <span id="inactive-entities-page" class="table-limiter-page">1</span>
-                <button id="inactive-entities-next" class="table-limiter-nav-btn" type="button" aria-label="Próxima página">&#8250;</button>
-              </div>
-            </div>
-          {% else %}
-            <p class="empty">Sem entidades inativas.</p>
-          {% endif %}
-        </section>
+          </section>
         {% endif %}
 
         {% if settings_edit_data %}
@@ -1377,7 +1231,7 @@
         {% set settings_process_header_options = settings_edit_data.process_header_options or [] %}
         {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
         {% set settings_has_process_fields = true %}
-        {% set settings_owner_fields_enabled = current_user_can_manage_all_entities %}
+        {% set settings_owner_fields_enabled = current_user_can_manage_tenant_structure %}
         <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes">
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
@@ -1396,7 +1250,7 @@
           <div id="settings-tab-geral" class="process-edit-pane active" data-process-edit-pane="geral">
             <div class="admin-subsection">
                             <p class="muted process-tab-description-v1">Atualize os dados principais do processo no menu lateral.</p>
-{% if current_user_can_manage_all_entities %}
+{% if current_user_can_manage_tenant_structure %}
               <form method="post" action="/settings/menu/edit">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
@@ -2239,7 +2093,7 @@
         <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
           <div class="profile-card-header">
             <h2>Configuração</h2>
-            {% if current_user_can_manage_all_entities %}
+            {% if current_user_can_manage_tenant_structure %}
             <a class="table-link-btn" href="#menu-subprocess-card">Criar menu</a>
             {% endif %}
           </div>
@@ -2274,7 +2128,7 @@
                   </td>
                   <td>
                     <div class="table-actions">
-                      {% if current_user_can_manage_all_entities %}
+                      {% if current_user_can_manage_tenant_structure %}
                       {% if row.can_move_up %}
                       <form method="post" action="/settings/menu/move">
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
@@ -2350,7 +2204,7 @@
                       >
                         &#9998;
                       </a>
-                      {% if current_user_can_manage_all_entities and row.can_delete and (not row.is_active or row.is_deleted) %}
+                      {% if current_user_can_manage_tenant_structure and row.can_delete and (not row.is_active or row.is_deleted) %}
                       <form
                         method="post"
                         action="/settings/menu/delete"
@@ -2382,7 +2236,7 @@
           </table>
         </section>
 
-        {% if current_user_can_manage_all_entities %}
+        {% if current_user_can_manage_tenant_structure %}
         <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil">
           <h2>Configuração da pasta Meu perfil</h2>
           <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
@@ -2485,7 +2339,7 @@
       currentUserName: {{ current_user.full_name|tojson }},
       currentUserEmail: {{ current_user.login_email|tojson }},
       currentUserIsAdmin: {{ current_user_is_admin|tojson }},
-      currentUserCanManageAllEntities: {{ current_user_can_manage_all_entities|tojson }},
+      currentUserCanManageTenantStructure: {{ current_user_can_manage_tenant_structure|tojson }},
       dashboardData: {{ dashboard_data|tojson }},
       currentUserPhone: {{ user_personal_data.primary_phone|tojson }},
       currentUserAccountStatus: {{ user_personal_data.account_status|tojson }},

@@ -6,6 +6,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from appverbo.config.settings import settings
 from appverbo.routes.auth import router as auth_router
+from appverbo.routes.empresa import router as empresa_router
 from appverbo.routes.entities import router as entity_router
 from appverbo.routes.profile import router as profile_router
 from appverbo.routes.users import router as user_router
@@ -26,5 +27,6 @@ def create_app() -> FastAPI:
     app.include_router(profile_router)
     app.include_router(webhook_router)
     app.include_router(entity_router)
+    app.include_router(empresa_router)
     app.include_router(user_router)
     return app
