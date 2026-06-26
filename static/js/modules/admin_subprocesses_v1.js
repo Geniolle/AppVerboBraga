@@ -782,6 +782,28 @@
     window.history.replaceState(window.history.state, document.title, nextUrl);
   }
 
+  function _syncSidebarGlobalRefreshBaselineAfterLocalAjaxSaveV1() {
+    var refreshApi = window.AppVerboSidebarGlobalRefreshV1;
+
+    if (
+      !refreshApi ||
+      typeof refreshApi.refreshBaseline !== "function"
+    ) {
+      return Promise.resolve();
+    }
+
+    if (typeof refreshApi.pauseOnce === "function") {
+      refreshApi.pauseOnce();
+    }
+
+    return Promise.resolve(refreshApi.refreshBaseline("local_ajax_save"))
+      .catch(function (error) {
+        _logReturnAfterSaveAjaxV1("sidebar_refresh:sync_error", {
+          error: String(error)
+        });
+      });
+  }
+
   function _importRequiredCardV1(sourceDocument, cardId) {
     var sourceCard = sourceDocument ? sourceDocument.getElementById(cardId) : null;
 
@@ -1029,6 +1051,9 @@
           return _refreshSessoesCardsWithoutReloadV1(cleanRedirectUrl)
             .then(function () {
               _replaceHistoryUrlV1(cleanRedirectUrl);
+              return _syncSidebarGlobalRefreshBaselineAfterLocalAjaxSaveV1();
+            })
+            .then(function () {
               _showSessoesSaveAjaxSuccessV1(data.message);
             });
         })
