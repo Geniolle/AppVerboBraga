@@ -1040,14 +1040,12 @@ def edit_sidebar_menu_setting_handler_v1(
                     status_code=HTTP_303_SEE_OTHER,
                 )
 
+        _success_target = "menu-subprocess-card-active" if make_visible else "menu-subprocess-card-inactive"
         return RedirectResponse(
             url=_build_settings_redirect_url(
                 success_message="Menu atualizado com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="geral",
+                redirect_target=_success_target,
             ),
             status_code=HTTP_303_SEE_OTHER,
         )

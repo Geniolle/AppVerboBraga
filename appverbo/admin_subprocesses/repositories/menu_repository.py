@@ -23,7 +23,10 @@ class MenuAdminRepository(BaseAdminSubprocessRepository):
             is_active = bool(row.get("is_active"))
             is_deleted = bool(row.get("is_deleted"))
 
-            if is_active and not is_deleted:
+            if is_deleted:
+                continue
+
+            if is_active:
                 row["status"] = "ativo"
                 row["status_label"] = "Ativo"
             else:

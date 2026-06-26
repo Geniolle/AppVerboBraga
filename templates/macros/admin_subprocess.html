@@ -167,11 +167,11 @@
       href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >✎</a>
 
-    {% if state.config.toggle_url_extra_params %}
+    {% if state.config.toggle_url_extra_params and status_value == state.config.active_value %}
       <a
         class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
-        title="{{ 'Ocultar menu' if status_value == state.config.active_value else 'Reativar menu' }}"
-        aria-label="{{ 'Ocultar menu' if status_value == state.config.active_value else 'Reativar menu' }}"
+        title="Ocultar menu"
+        aria-label="Ocultar menu"
         href="/users/new?menu={{ state.menu_key or 'administrativo' }}&amp;{{ state.config.toggle_url_extra_params }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
       >&#128065;</a>
     {% endif %}
@@ -191,6 +191,13 @@
       {% set _can_delete = row.get(_delete_ns.condition_field, True) if _delete_ns.condition_field else True %}
 
       {% if _delete_visible and _can_delete %}
+        {% set _del_active_card = state.config.active_card_id or (state.config.default_target ~ '-active') %}
+        {% set _del_inactive_card = state.config.inactive_card_id or (state.config.default_target ~ '-inactive') %}
+        {% if status_value == state.config.inactive_value %}
+          {% set _delete_return_url = state.return_url|replace(_del_active_card, _del_inactive_card) %}
+        {% else %}
+          {% set _delete_return_url = state.return_url %}
+        {% endif %}
         <form
           method="post"
           action="{{ state.config.delete_endpoint }}"
@@ -204,7 +211,7 @@
           {% endif %}
         >
           <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
-          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ _delete_return_url }}">
           <button type="submit" class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1" title="Eliminar" aria-label="Eliminar">&#128465;</button>
         </form>
       {% endif %}

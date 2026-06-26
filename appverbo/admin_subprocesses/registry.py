@@ -449,7 +449,7 @@ MENU_ACTIONS = (
         label="Alternar visibilidade",
         icon="👁",
         action_type="toggle_link",
-        visible_when=("ativo", "inativo"),
+        visible_when=("ativo",),
     ),
     AdminActionConfig(
         key="delete",
