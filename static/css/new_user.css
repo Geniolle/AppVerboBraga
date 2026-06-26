@@ -274,7 +274,8 @@ body {
 }
 
    .layout {
-  min-height: calc(100vh - 62px);
+  height: calc(100vh - 62px);
+  overflow: hidden;
   display: grid;
   grid-template-columns: 234px minmax(0, 1fr);
 }
@@ -285,18 +286,20 @@ body {
   padding: 14px 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 .sidebar-brand-footer {
   margin-top: auto;
   padding: 14px 18px 18px;
   border-top: 1px solid var(--sidebar-line);
+  text-align: center;
 }
 
 .brand-link {
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   text-decoration: none;
   color: #5c6572;
   transition: color 0.15s;
@@ -486,6 +489,7 @@ body {
    .content {
   padding: 24px;
   min-width: 0;
+  overflow-y: auto;
 }
 
    .container {
@@ -579,7 +583,6 @@ body {
    .entity-create-link-slot {
   flex: 1 1 420px;
   min-width: min(420px, 100%);
-  min-height: var(--ui-control-height);
 }
 
    .entity-create-link-output {
@@ -1842,11 +1845,18 @@ th {
 @media (max-width: 760px) {
  .layout {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
  .sidebar {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    overflow-y: visible;
+  }
+
+  .content {
+    overflow-y: visible;
   }
 }
 

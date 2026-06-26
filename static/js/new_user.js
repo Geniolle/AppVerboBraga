@@ -406,6 +406,10 @@ function toSentenceCaseText(value) {
   return loweredText[0].toLocaleUpperCase("pt-PT") + loweredText.slice(1);
 }
 
+function normalizeMenuLabelPreserveCase(value) {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
 function normalizeLookupText(value) {
   return String(value || "")
     .trim()
@@ -920,7 +924,7 @@ if (currentUserIsAdmin) {
       ]
     },
     [MEU_PERFIL_MENU_KEY]: {
-      title: "Meu perfil",
+      title: "Meus dados",
       description: "Dados do meu perfil.",
       singleView: true,
       toggleOnMenuClick: true,
@@ -1040,13 +1044,20 @@ function mergeDynamicProcessMenus() {
       return;
     }
     if (menuKey === MEU_PERFIL_MENU_KEY) {
+      const sidebarLabel = normalizeMenuLabelPreserveCase(setting.label);
+      if (sidebarLabel) {
+        menuConfig[MEU_PERFIL_MENU_KEY] = {
+          ...menuConfig[MEU_PERFIL_MENU_KEY],
+          title: sidebarLabel
+        };
+      }
       return;
     }
     if (visibleSidebarMenuKeys.size && !visibleSidebarMenuKeys.has(menuKey)) {
       return;
     }
 
-    const cleanMenuLabel = toSentenceCaseText(setting.label) || "Processo";
+    const cleanMenuLabel = normalizeMenuLabelPreserveCase(setting.label) || "Processo";
     const existingConfig = menuConfig[menuKey];
 
     if (menuKey === EMPRESA_MENU_KEY_V1) {
@@ -1461,14 +1472,14 @@ const topSubmenuController = (
           renderDynamicProcessCard(menuKey, item.dynamicProcessSectionKey);
         }
 
-        if (
-          menuKey === MEU_PERFIL_MENU_KEY &&
-          typeof window.activateProfilePersonalSection === "function"
-        ) {
+        if (menuKey === MEU_PERFIL_MENU_KEY) {
           const sectionKey = String(item.profileSection || "");
           meuPerfilSelectedProfileSection = sectionKey;
-          window.activateProfilePersonalSection(sectionKey);
+          if (typeof window.activateProfilePersonalSection === "function") {
+            window.activateProfilePersonalSection(sectionKey);
+          }
           applyMeuPerfilProcessSubsequentVisibility();
+          syncActiveTabTitle("#submenu-items", "#perfil-pessoal-card .profile-card-header h2", ["Mais"]);
         }
       }
     })
@@ -4579,6 +4590,27 @@ function getDefaultTargetForMenu(menuKey, config, options = {}) {
   return config.items[0].target;
 }
 
+function syncActiveTabTitle(tabsContainerSelector, titleSelector, ignoredLabels) {
+  var ignored = new Set(
+    (Array.isArray(ignoredLabels) ? ignoredLabels : ["Mais"])
+      .map(function (s) { return String(s || "").trim().toLowerCase(); })
+  );
+  var container = document.querySelector(tabsContainerSelector);
+  var titleEl = document.querySelector(titleSelector);
+  if (!container || !titleEl) {
+    return;
+  }
+  var activeTab = container.querySelector(".submenu-item.active");
+  if (!activeTab) {
+    return;
+  }
+  var label = String(activeTab.textContent || "").trim();
+  if (!label || ignored.has(label.toLowerCase())) {
+    return;
+  }
+  titleEl.textContent = label;
+}
+
 function activateMenu(menuKey, options = {}) {
   debugTabsLogV1("activateMenu:start", { menuKey, options });
   const config = menuConfig[menuKey];
@@ -4639,10 +4671,7 @@ function activateMenu(menuKey, options = {}) {
     }
     debugTabsLogV1("activateMenu:before-apply", { menuKey, defaultTarget });
     applyContentForMenuTarget(menuKey, defaultTarget);
-    if (
-      menuKey === MEU_PERFIL_MENU_KEY &&
-      typeof window.activateProfilePersonalSection === "function"
-    ) {
+    if (menuKey === MEU_PERFIL_MENU_KEY) {
       let selectedSectionItem = menuItems.find(
         (item) => String(item.profileSection || "") === meuPerfilSelectedProfileSection
       );
@@ -4652,11 +4681,14 @@ function activateMenu(menuKey, options = {}) {
       if (selectedSectionItem) {
         const selectedSectionKey = String(selectedSectionItem.profileSection || "");
         meuPerfilSelectedProfileSection = selectedSectionKey;
-        window.activateProfilePersonalSection(selectedSectionKey);
+        if (typeof window.activateProfilePersonalSection === "function") {
+          window.activateProfilePersonalSection(selectedSectionKey);
+        }
         applyMeuPerfilProcessSubsequentVisibility();
         setActiveSubmenu(defaultTarget, {
           profileSection: selectedSectionKey
         });
+        syncActiveTabTitle("#submenu-items", "#perfil-pessoal-card .profile-card-header h2", ["Mais"]);
       }
     }
     return;
@@ -4934,12 +4966,17 @@ function setupCreateUserGenerateLinkShortcut() {
   }
   const linkSlotEl = document.querySelector(".entity-create-link-slot");
 
+  if (linkSlotEl && !linkSlotEl.querySelector(".entity-create-link-output, .entity-create-link-message")) {
+    linkSlotEl.style.display = "none";
+  }
+
   function renderGenerateLinkContent(contentEl) {
     if (!linkSlotEl) {
       return;
     }
     linkSlotEl.innerHTML = "";
     linkSlotEl.appendChild(contentEl);
+    linkSlotEl.style.display = "";
   }
 
   function showGenerateLinkMessage(message) {

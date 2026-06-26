@@ -45,6 +45,7 @@
     var resizeObs = null;
     var mutObs = null;
     var recalcTimer = null;
+    var _pendingRafId = null; // guards against queuing duplicate rAF recalculates
 
     // Returns all tab items (excludes the "Mais" button itself)
     function getAllTabs() {
@@ -135,7 +136,10 @@
           //   uses event delegation and receives bubbled events from hidden elements too.
           tab.click();
           closeMenu();
-          setTimeout(refreshDropdownActiveStates, 30);
+          // Re-evaluate overflow after the tab click. The click triggers onSelect()
+          // which may clear our display:none!important via style.display="". The
+          // double-rAF gives the browser two frames to settle before measuring.
+          scheduleRafRecalculate("dropdown-click");
         });
         moreMenu.appendChild(btn);
       });
@@ -148,8 +152,10 @@
       }
     }
 
-    function recalculate() {
+    function recalculate(reason) {
       if (destroyed) return;
+      _pendingRafId = null;
+      dbg("recalculate — trigger:", reason || "direct");
 
       // Restore the button if a render() call removed it
       ensureButtonInContainer();
@@ -210,7 +216,7 @@
       }
       dbg("anyOverflow:", anyOverflow,
           "(scrollOverflow:", scrollW > clientW + 1, ")");
-      if (!anyOverflow) { dbg("all tabs fit — no Mais button needed"); return; }
+      if (!anyOverflow) { dbg("DECISION: all tabs fit — hiding Mais"); return; }
 
       // 5. Show "Mais" button and log its dimensions
       if (!moreBtn) return;
@@ -224,7 +230,7 @@
       //    positive (e.g. caused by sub-pixel rounding). Hide moreBtn and exit.
       if (moreBtnBCRRight <= effectiveRight + SAFETY_PX) {
         moreBtn.style.display = "none";
-        dbg("all tabs + Mais fit → false positive, hiding Mais");
+        dbg("DECISION: all tabs + Mais fit — false positive, hiding Mais");
         return;
       }
 
@@ -258,12 +264,23 @@
         return t.classList.contains(activeClass);
       });
       moreBtn.classList.toggle("appverbo-tabs-more-btn-active-v1", hasActive);
-      dbg("Mais button shown — hasActiveInDropdown:", hasActive);
+      dbg("DECISION: Mais shown — visible:", cutIndex, "hidden:", hiddenTabs.length, "activeInDropdown:", hasActive);
     }
 
-    function scheduleRecalculate() {
+    function scheduleRecalculate(reason) {
       clearTimeout(recalcTimer);
-      recalcTimer = setTimeout(recalculate, 80);
+      recalcTimer = setTimeout(function () { recalculate(reason || "scheduled"); }, 80);
+    }
+
+    // Double-rAF recalculate: runs after 2 browser frames, de-duplicated via _pendingRafId.
+    // Used after class changes so the browser has time to reflow before we measure.
+    function scheduleRafRecalculate(reason) {
+      if (_pendingRafId !== null) return; // already queued
+      _pendingRafId = requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          recalculate(reason || "raf");
+        });
+      });
     }
 
     function init() {
@@ -298,12 +315,17 @@
 
       // MutationObserver watches for:
       // childList — render() / replaceChildren() removing the "Mais" button (top submenu)
-      // attributes(class) — tab activation to keep dropdown state in sync
+      // attributes(class) — tab activation; also triggers recalculate because
+      //   onSelect() may call applyMeuPerfilProcessSubsequentVisibility() which does
+      //   linkEl.style.display="" on all profile-section tabs, clearing the
+      //   display:none!important set by our overflow algorithm. Without a follow-up
+      //   recalculate(), the hidden tabs reappear and moreBtn is pushed off-screen.
       mutObs = new MutationObserver(function (mutations) {
         // If moreBtn was swept out by replaceChildren / innerHTML = "", re-attach it
         if (moreBtn && !container.contains(moreBtn)) {
+          dbg("MutationObserver: moreBtn removed — re-appending");
           container.appendChild(moreBtn);
-          scheduleRecalculate();
+          scheduleRecalculate("moreBtn-removed");
           return;
         }
 
@@ -314,9 +336,13 @@
         });
 
         if (childrenChanged) {
-          scheduleRecalculate();
+          dbg("MutationObserver: childList changed");
+          scheduleRecalculate("childList");
         } else if (classChanged) {
+          dbg("MutationObserver: active class changed — syncing dropdown + scheduling recalculate");
           refreshDropdownActiveStates();
+          // Must recalculate: onSelect() may have cleared overflow-hidden inline styles.
+          scheduleRafRecalculate("classChanged");
         }
       });
 
@@ -329,15 +355,15 @@
 
       // ResizeObserver for container width changes (e.g., sidebar open/close)
       if (typeof ResizeObserver !== "undefined") {
-        resizeObs = new ResizeObserver(scheduleRecalculate);
+        resizeObs = new ResizeObserver(function () { scheduleRecalculate("resize"); });
         resizeObs.observe(container);
       }
 
       // Initial pass — layout may not be stable on first call (fonts, CSS vars)
       // Double rAF gives the browser two frames to settle before measuring.
-      recalculate();
+      recalculate("init");
       requestAnimationFrame(function () {
-        requestAnimationFrame(recalculate);
+        requestAnimationFrame(function () { recalculate("init-raf"); });
       });
     }
 
@@ -406,7 +432,7 @@
   setTimeout(ensureAll, 150);
   setTimeout(function () {
     ensureAll();
-    _controllers.forEach(function (c) { c.recalculate(); });
+    _controllers.forEach(function (c) { c.recalculate("late-init"); });
   }, 600);
 
   // Public API

@@ -16,7 +16,7 @@ SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "home", "label": "Home", "requires_admin": False},
     {"key": "administrativo", "label": "Administrativo", "requires_admin": True},
     {"key": "empresa", "label": "Empresa", "requires_admin": True},
-    {"key": MENU_MEU_PERFIL_KEY, "label": "Meu perfil", "requires_admin": True},
+    {"key": MENU_MEU_PERFIL_KEY, "label": "Meus dados", "requires_admin": True},
     {"key": "funcionarios", "label": "Funcionarios", "requires_admin": True},
     {"key": "financeiro", "label": "Financeiro", "requires_admin": True},
     {"key": "relatorios", "label": "Relatorios", "requires_admin": True},
@@ -342,6 +342,12 @@ def _normalize_sentence_case_text(raw_text: Any) -> str:
     return f"{lowered_text[0].upper()}{lowered_text[1:]}"
 
 
+def _normalize_menu_label_preserve_case(raw_label: Any) -> str:
+    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    clean_label = " ".join(clean_label.strip().split())
+    return clean_label
+
+
 def _build_custom_field_key_from_label(label: str) -> str:
     normalized = (
         unicodedata.normalize("NFKD", label or "")
@@ -632,7 +638,7 @@ def _fix_common_mojibake(raw_text: str) -> str:
     return fixed_text
 
 def _normalize_system_menu_label(menu_key: Any, menu_label: Any) -> str:
-    clean_menu_label = _normalize_sentence_case_text(menu_label)
+    clean_menu_label = _normalize_menu_label_preserve_case(menu_label)
     return clean_menu_label
 
 
@@ -1096,7 +1102,7 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
                     SET menu_key = :canonical_key,
                         menu_label = CASE
                             WHEN trim(menu_label) = '' OR trim(menu_label) = 'Documentos'
-                            THEN 'Meu perfil'
+                            THEN 'Meus dados'
                             ELSE menu_label
                         END
                     WHERE lower(trim(menu_key)) = :legacy_key
@@ -1185,7 +1191,7 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
                 WHERE menu_key = :menu_key
                 """
             ),
-            {"menu_key": MENU_MEU_PERFIL_KEY, "menu_label": "Meu perfil"},
+            {"menu_key": MENU_MEU_PERFIL_KEY, "menu_label": "Meus dados"},
         )
         changed = True
 
@@ -1565,7 +1571,7 @@ def update_sidebar_menu_label(
     entity_number: int | None = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
-    clean_menu_label = _normalize_sentence_case_text(menu_label)
+    clean_menu_label = _normalize_menu_label_preserve_case(menu_label)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu inválido."
@@ -1618,6 +1624,9 @@ def update_sidebar_menu_label(
     if entity_number is not None:
         menu_config["entity_number"] = int(entity_number)
 
+    if clean_menu_key == "administrativo":
+        menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = build_sidebar_global_refresh_version_v1()
+
     session.execute(
         text(
             """
@@ -1633,6 +1642,23 @@ def update_sidebar_menu_label(
             "menu_config": json.dumps(menu_config, ensure_ascii=False),
         },
     )
+
+    if clean_menu_key != "administrativo":
+        administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = build_sidebar_global_refresh_version_v1()
+        session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": "administrativo",
+                "menu_config": json.dumps(administrative_config, ensure_ascii=False),
+            },
+        )
+
     session.commit()
     return True, ""
 
@@ -2075,7 +2101,7 @@ def create_sidebar_menu_setting(
     menu_label: str,
     visibility_scope_mode: str | None = None,
 ) -> tuple[bool, str, str]:
-    clean_menu_label = _normalize_sentence_case_text(menu_label)
+    clean_menu_label = _normalize_menu_label_preserve_case(menu_label)
     if not clean_menu_label:
         return False, "Nome da pasta é obrigatório.", ""
 
@@ -2198,7 +2224,7 @@ def create_sidebar_menu_setting_v2(
     # (1) NORMALIZAR NOME E CHAVE DA PASTA
     ####################################################################################
 
-    clean_menu_label = _normalize_sentence_case_text(menu_label)
+    clean_menu_label = _normalize_menu_label_preserve_case(menu_label)
     if not clean_menu_label:
         return False, "Informe o nome da pasta.", ""
 
