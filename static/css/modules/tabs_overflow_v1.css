@@ -90,6 +90,7 @@
    "Mais" button — top submenu (menu-tabs) context
    --------------------------------------------------------------- */
 #submenu-items.menu-tabs .appverbo-tabs-more-btn-v1 {
+  margin-left: auto;
   color: #2f3850;
   background: #f9fbff;
   border: 1px solid #dce3f2;

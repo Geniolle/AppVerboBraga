@@ -155,74 +155,108 @@
       ensureButtonInContainer();
 
       var tabs = getAllTabs();
-      dbg("recalculate — tabs found:", tabs.length, "container:", container.id || container.className);
+      dbg("recalculate — tabs found:", tabs.length,
+          "container:", container.id || container.className);
       if (!tabs.length) {
         if (moreBtn) moreBtn.style.display = "none";
         return;
       }
 
-      // 1. Reset: show all tabs, hide "Mais"
+      // 1. Reset: show all tabs, hide "Mais".
+      //    Use removeProperty so the CSS cascade takes over cleanly.
+      //    #menu-tabs-card .submenu-item has display:inline-flex !important,
+      //    which would override a plain style.display="none" but NOT removeProperty
+      //    (removeProperty restores to the CSS cascade — inline-flex — which is correct here).
       tabs.forEach(function (t) {
-        t.style.display = "";
+        t.style.removeProperty("display");
         delete t.dataset.tabsOverflowHidden;
       });
       if (moreBtn) moreBtn.style.display = "none";
 
-      // 2. Guard: container must be rendered and have width
-      var containerRect = container.getBoundingClientRect();
-      dbg("containerWidth:", containerRect.width.toFixed(1), "containerRight:", containerRect.right.toFixed(1));
-      if (!containerRect.width) { dbg("SKIP — container has no width"); return; }
+      // 2. Guard: container must be rendered and have measurable width
+      var clientW = container.clientWidth;
+      var scrollW = container.scrollWidth;
+      dbg("clientWidth:", clientW, "scrollWidth:", scrollW);
+      if (!clientW) { dbg("SKIP — container has no clientWidth"); return; }
 
-      // 3. Detect overflow: any tab whose right edge exceeds the container right
-      //    Works because .appverbo-tabs-overflow-v1 sets flex-wrap:nowrap on the container
-      var anyOverflow = tabs.some(function (t) {
-        return t.getBoundingClientRect().right > containerRect.right + 1;
-      });
-      dbg("anyOverflow:", anyOverflow);
-      if (!anyOverflow) { dbg("all tabs fit — no Mais button needed"); return; }
-
-      // 4. Show "Mais" button to measure its natural width
-      if (!moreBtn) return;
-      moreBtn.style.display = "";
-      var moreBtnRect = moreBtn.getBoundingClientRect();
-      var moreBtnWidth = moreBtnRect.width || 70;
-      dbg("moreBtnWidth:", moreBtnWidth.toFixed(1));
-
-      // 5. The right boundary beyond which a tab is considered overflowing
-      var reservedRight = containerRect.right - moreBtnWidth - SAFETY_PX;
-      dbg("availableRight (reservedRight):", reservedRight.toFixed(1));
-
-      // 6. Find the first tab that exceeds the reserved boundary
-      var cutIndex = -1;
-      for (var i = 0; i < tabs.length; i++) {
-        var tabRight = tabs[i].getBoundingClientRect().right;
-        if (tabRight > reservedRight + 1) {
-          cutIndex = Math.max(i, 1); // always keep at least one tab visible
-          dbg("cutIndex:", cutIndex, "— first overflow tab:", tabs[cutIndex].textContent.trim(), "(right:", tabRight.toFixed(1), "> reservedRight:", reservedRight.toFixed(1) + ")");
-          break;
+      // 3. Effective visible right boundary.
+      //    The container may extend past its parent's clipping edge (when the parent
+      //    has overflow:hidden and the container has no explicit width constraint).
+      //    Use the minimum of container BCR.right and parent BCR.right.
+      var containerBCR = container.getBoundingClientRect();
+      var effectiveRight = containerBCR.right;
+      if (container.parentElement) {
+        var parentRight = container.parentElement.getBoundingClientRect().right;
+        if (parentRight < effectiveRight) {
+          effectiveRight = parentRight;
+          dbg("parent clips → effectiveRight:", effectiveRight.toFixed(1));
         }
       }
 
-      // All tabs fit within the reserved space — no overflow needed
-      if (cutIndex < 0) {
-        dbg("all tabs fit within reservedRight — hiding Mais button");
+      // 4. Detect overflow with three complementary checks:
+      //    A) scrollWidth > clientWidth  — content overflows the container's own box
+      //    B) tab's offsetLeft+offsetWidth > clientWidth  — offset-coord overflow
+      //    C) tab's BCR.right > effectiveRight  — overflow detected via parent boundary
+      var anyOverflow = (scrollW > clientW + 1);
+      if (!anyOverflow) {
+        anyOverflow = tabs.some(function (t) {
+          var tabEnd = t.offsetLeft + t.offsetWidth;
+          var bcrRight = t.getBoundingClientRect().right;
+          dbg("  tab:", t.textContent.trim(),
+              "offsetLeft:", t.offsetLeft, "offsetWidth:", t.offsetWidth,
+              "tabEnd:", tabEnd, "bcrRight:", bcrRight.toFixed(1));
+          return (tabEnd > clientW + 1) || (bcrRight > effectiveRight + 1);
+        });
+      }
+      dbg("anyOverflow:", anyOverflow,
+          "(scrollOverflow:", scrollW > clientW + 1, ")");
+      if (!anyOverflow) { dbg("all tabs fit — no Mais button needed"); return; }
+
+      // 5. Show "Mais" button and log its dimensions
+      if (!moreBtn) return;
+      moreBtn.style.display = "";
+      var moreBtnBCRRight = moreBtn.getBoundingClientRect().right;
+      dbg("moreBtnWidth:", moreBtn.offsetWidth,
+          "moreBtnRight (with all tabs):", moreBtnBCRRight.toFixed(1),
+          "effectiveRight:", effectiveRight.toFixed(1));
+
+      // 6. If moreBtn ALREADY fits with all tabs visible → anyOverflow was a false
+      //    positive (e.g. caused by sub-pixel rounding). Hide moreBtn and exit.
+      if (moreBtnBCRRight <= effectiveRight + SAFETY_PX) {
         moreBtn.style.display = "none";
+        dbg("all tabs + Mais fit → false positive, hiding Mais");
         return;
       }
 
-      // 7. Hide overflow tabs
-      var hiddenTabs = [];
-      for (var j = cutIndex; j < tabs.length; j++) {
-        tabs[j].style.display = "none";
+      // 7. Hide tabs from the right one at a time until the moreBtn fits.
+      //    This approach avoids estimating padding/gap; it measures actual BCR
+      //    positions after each DOM change so the result is always exact.
+      //    Use setProperty("display","none","important") to beat any CSS
+      //    display:…!important rule on the items (e.g. display:inline-flex !important).
+      var hiddenTabsRev = [];
+      var j = tabs.length - 1;
+      while (j >= 1) {
+        tabs[j].style.setProperty("display", "none", "important");
         tabs[j].dataset.tabsOverflowHidden = "1";
-        hiddenTabs.push(tabs[j]);
+        hiddenTabsRev.push(tabs[j]);
+        var mbRight = moreBtn.getBoundingClientRect().right;
+        dbg("hidden tab[" + j + "]:", tabs[j].textContent.trim(),
+            "→ moreBtnRight now:", mbRight.toFixed(1));
+        if (mbRight <= effectiveRight + SAFETY_PX) break; // moreBtn fits
+        j--;
       }
+
+      // Build hidden-tabs array in correct (left-to-right) order for the dropdown
+      var hiddenTabs = hiddenTabsRev.reverse();
+      var cutIndex = tabs.length - hiddenTabs.length; // first hidden tab index
       dbg("visible tabs:", cutIndex, "/ hidden tabs:", hiddenTabs.length,
           "— first hidden:", hiddenTabs[0] ? hiddenTabs[0].textContent.trim() : "none");
 
       // 8. Build dropdown and sync active indicator on "Mais" button
       buildDropdown(hiddenTabs);
-      var hasActive = hiddenTabs.some(function (t) { return t.classList.contains(activeClass); });
+      var hasActive = hiddenTabs.some(function (t) {
+        return t.classList.contains(activeClass);
+      });
       moreBtn.classList.toggle("appverbo-tabs-more-btn-active-v1", hasActive);
       dbg("Mais button shown — hasActiveInDropdown:", hasActive);
     }
@@ -317,7 +351,7 @@
       if (mutObs) { mutObs.disconnect(); mutObs = null; }
       if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
       getAllTabs().forEach(function (t) {
-        t.style.display = "";
+        t.style.removeProperty("display");
         delete t.dataset.tabsOverflowHidden;
       });
       container.classList.remove("appverbo-tabs-overflow-v1");
