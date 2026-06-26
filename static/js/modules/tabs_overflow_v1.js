@@ -7,6 +7,18 @@
   // Gap between button bottom and dropdown top
   var MENU_OFFSET_Y = 4;
 
+  // Debug: activate with localStorage.setItem("appverboDebugTabsOverflow","1")
+  var DEBUG = (function () {
+    try { return localStorage.getItem("appverboDebugTabsOverflow") === "1"; }
+    catch (e) { return false; }
+  })();
+
+  function dbg() {
+    if (!DEBUG) return;
+    var args = Array.prototype.slice.call(arguments);
+    console.log.apply(console, ["[TabsOverflow]"].concat(args));
+  }
+
   // Tab groups to manage. Add entries here to extend to other containers.
   var TAB_GROUPS = [
     {
@@ -143,6 +155,7 @@
       ensureButtonInContainer();
 
       var tabs = getAllTabs();
+      dbg("recalculate — tabs found:", tabs.length, "container:", container.id || container.className);
       if (!tabs.length) {
         if (moreBtn) moreBtn.style.display = "none";
         return;
@@ -157,34 +170,42 @@
 
       // 2. Guard: container must be rendered and have width
       var containerRect = container.getBoundingClientRect();
-      if (!containerRect.width) return;
+      dbg("containerWidth:", containerRect.width.toFixed(1), "containerRight:", containerRect.right.toFixed(1));
+      if (!containerRect.width) { dbg("SKIP — container has no width"); return; }
 
       // 3. Detect overflow: any tab whose right edge exceeds the container right
       //    Works because .appverbo-tabs-overflow-v1 sets flex-wrap:nowrap on the container
       var anyOverflow = tabs.some(function (t) {
         return t.getBoundingClientRect().right > containerRect.right + 1;
       });
-      if (!anyOverflow) return;
+      dbg("anyOverflow:", anyOverflow);
+      if (!anyOverflow) { dbg("all tabs fit — no Mais button needed"); return; }
 
       // 4. Show "Mais" button to measure its natural width
       if (!moreBtn) return;
       moreBtn.style.display = "";
-      var moreBtnWidth = moreBtn.getBoundingClientRect().width || 70;
+      var moreBtnRect = moreBtn.getBoundingClientRect();
+      var moreBtnWidth = moreBtnRect.width || 70;
+      dbg("moreBtnWidth:", moreBtnWidth.toFixed(1));
 
       // 5. The right boundary beyond which a tab is considered overflowing
       var reservedRight = containerRect.right - moreBtnWidth - SAFETY_PX;
+      dbg("availableRight (reservedRight):", reservedRight.toFixed(1));
 
       // 6. Find the first tab that exceeds the reserved boundary
       var cutIndex = -1;
       for (var i = 0; i < tabs.length; i++) {
-        if (tabs[i].getBoundingClientRect().right > reservedRight + 1) {
+        var tabRight = tabs[i].getBoundingClientRect().right;
+        if (tabRight > reservedRight + 1) {
           cutIndex = Math.max(i, 1); // always keep at least one tab visible
+          dbg("cutIndex:", cutIndex, "— first overflow tab:", tabs[cutIndex].textContent.trim(), "(right:", tabRight.toFixed(1), "> reservedRight:", reservedRight.toFixed(1) + ")");
           break;
         }
       }
 
       // All tabs fit within the reserved space — no overflow needed
       if (cutIndex < 0) {
+        dbg("all tabs fit within reservedRight — hiding Mais button");
         moreBtn.style.display = "none";
         return;
       }
@@ -196,11 +217,14 @@
         tabs[j].dataset.tabsOverflowHidden = "1";
         hiddenTabs.push(tabs[j]);
       }
+      dbg("visible tabs:", cutIndex, "/ hidden tabs:", hiddenTabs.length,
+          "— first hidden:", hiddenTabs[0] ? hiddenTabs[0].textContent.trim() : "none");
 
       // 8. Build dropdown and sync active indicator on "Mais" button
       buildDropdown(hiddenTabs);
       var hasActive = hiddenTabs.some(function (t) { return t.classList.contains(activeClass); });
       moreBtn.classList.toggle("appverbo-tabs-more-btn-active-v1", hasActive);
+      dbg("Mais button shown — hasActiveInDropdown:", hasActive);
     }
 
     function scheduleRecalculate() {
@@ -275,7 +299,12 @@
         resizeObs.observe(container);
       }
 
+      // Initial pass — layout may not be stable on first call (fonts, CSS vars)
+      // Double rAF gives the browser two frames to settle before measuring.
       recalculate();
+      requestAnimationFrame(function () {
+        requestAnimationFrame(recalculate);
+      });
     }
 
     function destroy() {

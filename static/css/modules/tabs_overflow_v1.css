@@ -10,6 +10,14 @@
   position: relative;
 }
 
+/* Prevent any flex child from shrinking — essential for overflow detection.
+   Without this, flex-shrink:1 (default) makes all tabs shrink to fit the
+   container, so getBoundingClientRect().right never exceeds containerRight
+   and the "Mais" button never appears. */
+.appverbo-tabs-overflow-v1 > * {
+  flex-shrink: 0;
+}
+
 /* Override scroll on settings context */
 #settings-menu-edit-card .process-edit-tabs.appverbo-tabs-overflow-v1 {
   overflow-x: hidden !important;
@@ -111,10 +119,14 @@
   border-color: #183f82 !important;
 }
 
-/* Neutralize equal-width tab constraint in overflow mode */
+/* Neutralize equal-width tab constraint and prevent shrinking in overflow mode.
+   flex-shrink:0 is mandatory: without it tabs shrink to fit and overflow
+   is never detected, so the "Mais" button never appears. */
 #submenu-items.menu-tabs.appverbo-tabs-overflow-v1 .submenu-item {
   width: auto !important;
   min-width: auto !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap;
 }
 
 /* Arrow glyph */
