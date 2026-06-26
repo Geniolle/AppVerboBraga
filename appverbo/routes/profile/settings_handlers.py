@@ -503,6 +503,44 @@ def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
     return urlunsplit(("", "", "/users/new", urlencode(params), "admin-sidebar-sections-card"))
 
 
+def _is_sidebar_section_ajax_request_v1(request: Request) -> bool:
+    requested_with = str(request.headers.get("X-Requested-With") or "").strip()
+
+    if requested_with == "XMLHttpRequest":
+        return True
+
+    accept = str(request.headers.get("Accept") or "").strip().lower()
+    return "application/json" in accept
+
+
+def _sidebar_section_json_error_v1(
+    message: str,
+    *,
+    status_code: int,
+    redirect_url: str = "",
+) -> JSONResponse:
+    payload = {
+        "ok": False,
+        "message": message,
+        "error": message,
+    }
+
+    if redirect_url:
+        payload["redirect_url"] = redirect_url
+
+    return JSONResponse(payload, status_code=status_code)
+
+
+def _sidebar_section_json_success_v1(message: str, redirect_url: str) -> JSONResponse:
+    return JSONResponse(
+        {
+            "ok": True,
+            "message": message,
+            "redirect_url": redirect_url,
+        }
+    )
+
+
 def _make_unique_sidebar_section_key_v19(base_key: str, used_keys: set[str]) -> str:
     clean_base_key = _slugify_sidebar_section_key_v19(base_key)
 
@@ -644,6 +682,8 @@ def save_one_sidebar_section_v19(
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
     _dbg_save = _debug_sessoes_flow_enabled_v1(request)
+    _is_ajax = _is_sidebar_section_ajax_request_v1(request)
+
     if _dbg_save:
         _log_sessoes_flow_v1(
             "save:start",
@@ -652,6 +692,7 @@ def save_one_sidebar_section_v19(
             section_label=section_label,
             section_status=section_status,
             sidebar_section_return_url=sidebar_section_return_url,
+            is_ajax=_is_ajax,
         )
 
     safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
@@ -663,12 +704,24 @@ def save_one_sidebar_section_v19(
         current_user = get_current_user(request, session)
 
         if current_user is None:
+            if _is_ajax:
+                return _sidebar_section_json_error_v1(
+                    "Efetue login para continuar.",
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    redirect_url="/login?error=Efetue login para continuar.",
+                )
             return RedirectResponse(
                 url="/login?error=Efetue login para continuar.",
                 status_code=status.HTTP_302_FOUND,
             )
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            if _is_ajax:
+                return _sidebar_section_json_error_v1(
+                    "Apenas administradores podem alterar sessões do sidebar.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    redirect_url=safe_return_url,
+                )
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -684,6 +737,12 @@ def save_one_sidebar_section_v19(
         )
 
         if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+            if _is_ajax:
+                return _sidebar_section_json_error_v1(
+                    "Apenas Owner pode alterar sessões do sidebar.",
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    redirect_url=safe_return_url,
+                )
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -702,9 +761,19 @@ def save_one_sidebar_section_v19(
             if clean_mode == "edit" and clean_original_key:
                 if _dbg_save:
                     _log_sessoes_flow_v1("save:error_redirect", motivo="label_vazio", clean_mode=clean_mode, edit_key=clean_original_key, tem_edit_key=True, tem_form_card=True)
+                if _is_ajax:
+                    return _sidebar_section_json_error_v1(
+                        "Informe o nome da sessão.",
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    )
                 return _redirect_sidebar_section_edit_error_v19(clean_original_key, "Informe o nome da sessão.")
             if _dbg_save:
                 _log_sessoes_flow_v1("save:error_redirect", motivo="label_vazio", clean_mode=clean_mode, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
+            if _is_ajax:
+                return _sidebar_section_json_error_v1(
+                    "Informe o nome da sessão.",
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                )
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -746,6 +815,11 @@ def save_one_sidebar_section_v19(
             if not found_section:
                 if _dbg_save:
                     _log_sessoes_flow_v1("save:error_redirect", motivo="sessao_nao_encontrada", clean_original_key=clean_original_key, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
+                if _is_ajax:
+                    return _sidebar_section_json_error_v1(
+                        "Sessão não encontrada para edição.",
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    )
                 return _redirect_sidebar_section_message_v19(
                     safe_return_url,
                     "error",
@@ -788,12 +862,22 @@ def save_one_sidebar_section_v19(
             if clean_mode == "edit" and clean_original_key:
                 if _dbg_save:
                     _log_sessoes_flow_v1("save:error_redirect", motivo="update_falhou", clean_mode=clean_mode, edit_key=clean_original_key, tem_edit_key=True, tem_form_card=True)
+                if _is_ajax:
+                    return _sidebar_section_json_error_v1(
+                        error_message or "Não foi possível gravar a sessão.",
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    )
                 return _redirect_sidebar_section_edit_error_v19(
                     clean_original_key,
                     error_message or "Não foi possível gravar a sessão.",
                 )
             if _dbg_save:
                 _log_sessoes_flow_v1("save:error_redirect", motivo="update_falhou", clean_mode=clean_mode, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
+            if _is_ajax:
+                return _sidebar_section_json_error_v1(
+                    error_message or "Não foi possível gravar a sessão.",
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                )
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -825,6 +909,9 @@ def save_one_sidebar_section_v19(
                 tem_form_card="admin-sidebar-sections-form-card" in _success_url,
                 tem_appverbo_after_save="appverbo_after_save=1" in _success_url,
             )
+
+        if _is_ajax:
+            return _sidebar_section_json_success_v1(_success_msg, _success_url)
 
         return RedirectResponse(url=_success_url, status_code=status.HTTP_303_SEE_OTHER)
 
@@ -1971,7 +2058,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "NÃ£o foi possÃ­vel atualizar os Campos Quantidade.",
+                    error_message=error_message or "Não foi possível atualizar os Campos Quantidade.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,

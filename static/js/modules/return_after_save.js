@@ -21,6 +21,25 @@
   // APPVERBO_DEBUG_SESSOES_FLOW_V1_END
 
   //###################################################################################
+  // APPVERBO_DEBUG_RETURN_AFTER_SAVE_V1_START
+  //###################################################################################
+
+  function _isDebugReturnAfterSaveEnabled() {
+    return localStorage.getItem("appverboDebugReturnAfterSave") === "1";
+  }
+
+  function _logReturnAfterSave(event, data) {
+    if (!_isDebugReturnAfterSaveEnabled()) { return; }
+    console.log("[RETURN_AFTER_SAVE]", event, data || {});
+  }
+
+  function _isSessoesSaveForm(form) {
+    return (form.getAttribute("action") || "").includes("/settings/menu/sidebar-section-save");
+  }
+
+  // APPVERBO_DEBUG_RETURN_AFTER_SAVE_V1_END
+
+  //###################################################################################
   // (2) CONFIGURACAO
   //###################################################################################
 
@@ -199,20 +218,47 @@
         return;
       }
 
+      const formAction = form.getAttribute("action") || "";
       const submitter = event.submitter || document.activeElement;
+      const submitterText = normalizeText(
+        submitter ? (submitter.textContent || submitter.value || "") : ""
+      );
+      const currentUrl = getCurrentRelativeUrl();
 
-      if (!isSaveSubmitter(submitter)) {
+      if (_isSessoesSaveForm(form)) {
+        _logReturnAfterSave("submit", {
+          form_action: formAction,
+          submitter_text: submitterText,
+          current_url: currentUrl,
+          ignored: true,
+          reason: "sessoes_save_form"
+        });
         return;
       }
 
-      const _urlToSave = getCurrentRelativeUrl();
+      if (!isSaveSubmitter(submitter)) {
+        _logReturnAfterSave("submit", {
+          form_action: formAction,
+          submitter_text: submitterText,
+          current_url: currentUrl,
+          ignored: true,
+          reason: "not_save_submitter"
+        });
+        return;
+      }
+
+      _logReturnAfterSave("submit", {
+        form_action: formAction,
+        submitter_text: submitterText,
+        current_url: currentUrl,
+        ignored: false,
+        reason: "will_save_url"
+      });
+
+      const _urlToSave = currentUrl;
       sessionStorage.setItem(STORAGE_KEY, _urlToSave);
       sessionStorage.setItem(STORAGE_TIME_KEY, String(Date.now()));
-      _logSessoesFlowUi("submit:url_saved", {
-        url_saved: _urlToSave,
-        form_action: form.action || "",
-        submitter_text: (event.submitter || document.activeElement || {}).textContent || ""
-      });
+      _logReturnAfterSave("saved", { saved_url: _urlToSave, timestamp: Date.now() });
     },
     true
   );

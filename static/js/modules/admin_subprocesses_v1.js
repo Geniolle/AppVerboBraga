@@ -649,6 +649,416 @@
   }
 
   //###################################################################################
+  // (4B) AJAX SAVE — SESSOES
+  //###################################################################################
+
+  function _isDebugReturnAfterSaveEnabledAjaxV1() {
+    try {
+      return localStorage.getItem("appverboDebugReturnAfterSave") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function _logReturnAfterSaveAjaxV1(event, data) {
+    if (!_isDebugReturnAfterSaveEnabledAjaxV1()) {
+      return;
+    }
+
+    console.log("[RETURN_AFTER_SAVE]", event, data || {});
+  }
+
+  function _isSessoesSaveFormAjaxV1(form) {
+    return (form.getAttribute("action") || "").includes("/settings/menu/sidebar-section-save");
+  }
+
+  function _normalizeSessoesAjaxMessageV1(message, fallback) {
+    var cleanMessage = String(message || "").trim();
+    return cleanMessage || String(fallback || "").trim();
+  }
+
+  function _clearSessoesSaveAjaxFeedbackV1(root) {
+    if (!root || !root.querySelectorAll) {
+      return;
+    }
+
+    Array.from(root.querySelectorAll(".sessoes-ajax-feedback-v1")).forEach(function (element) {
+      element.remove();
+    });
+  }
+
+  function _insertSessoesSaveAjaxFeedbackV1(container, className, message) {
+    if (!container) {
+      return null;
+    }
+
+    var feedback = document.createElement("div");
+    feedback.className = className + " sessoes-ajax-feedback-v1";
+    feedback.setAttribute("role", "alert");
+    feedback.textContent = message;
+
+    var anchor = container.querySelector(".admin-subprocess-actions-v1");
+    if (anchor && anchor.parentNode === container) {
+      container.insertBefore(feedback, anchor);
+    } else {
+      container.appendChild(feedback);
+    }
+
+    return feedback;
+  }
+
+  function _showSessoesSaveAjaxErrorV1(form, message) {
+    var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Não foi possível gravar a sessão.");
+    _clearSessoesSaveAjaxFeedbackV1(form);
+    _insertSessoesSaveAjaxFeedbackV1(form, "alert error", safeMessage);
+  }
+
+  function _showSessoesSaveAjaxSuccessV1(message) {
+    var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Sessão atualizada com sucesso.");
+
+    if (
+      window.AppVerboProcessShell &&
+      typeof window.AppVerboProcessShell.showToast === "function"
+    ) {
+      window.AppVerboProcessShell.showToast({
+        type: "success",
+        message: safeMessage
+      });
+      return;
+    }
+
+    var createCard = document.getElementById("admin-sidebar-sections-card");
+    if (!createCard) {
+      return;
+    }
+
+    _clearSessoesSaveAjaxFeedbackV1(createCard);
+    _insertSessoesSaveAjaxFeedbackV1(createCard, "alert ok", safeMessage);
+  }
+
+  function _setSessoesSaveButtonStateV1(button, isPending, originalText) {
+    if (!button) {
+      return;
+    }
+
+    button.disabled = Boolean(isPending);
+    button.textContent = isPending ? "A gravar..." : originalText;
+  }
+
+  function _buildCleanSessoesUrlV1(rawUrl) {
+    var url;
+
+    try {
+      url = new URL(rawUrl || window.location.href, window.location.origin);
+    } catch (error) {
+      url = new URL(window.location.href);
+    }
+
+    [
+      "sidebar_section_edit_key",
+      "dynamic_process_section",
+      "appverbo_after_save",
+      "success",
+      "error",
+      "sidebar_section_return_url"
+    ].forEach(function (paramName) {
+      url.searchParams.delete(paramName);
+    });
+
+    url.searchParams.set("menu", "sessoes");
+    url.searchParams.set("admin_tab", "sessoes");
+    url.searchParams.set("sidebar_sections_tab", "sessoes");
+    url.searchParams.set("target", "admin-sidebar-sections-card");
+    url.hash = "admin-sidebar-sections-card";
+
+    return url.pathname + url.search + url.hash;
+  }
+
+  function _replaceHistoryUrlV1(nextUrl) {
+    if (!nextUrl || !window.history || typeof window.history.replaceState !== "function") {
+      return;
+    }
+
+    window.history.replaceState(window.history.state, document.title, nextUrl);
+  }
+
+  function _importRequiredCardV1(sourceDocument, cardId) {
+    var sourceCard = sourceDocument ? sourceDocument.getElementById(cardId) : null;
+
+    if (!sourceCard) {
+      throw new Error("Card ausente no HTML atualizado: " + cardId);
+    }
+
+    return document.importNode(sourceCard, true);
+  }
+
+  function _ensureVisibleCardV1(card) {
+    if (!card) {
+      return card;
+    }
+
+    card.hidden = false;
+    card.style.display = "";
+    return card;
+  }
+
+  function _replaceSessoesCreateCardV1(nextCreateCard) {
+    var currentCreateCard = document.getElementById("admin-sidebar-sections-card");
+    var currentEditCard = document.getElementById("admin-sidebar-sections-form-card");
+    var activeCard = document.getElementById("admin-sidebar-sections-card-active");
+    var visibleCreateCard = _ensureVisibleCardV1(nextCreateCard);
+
+    if (currentCreateCard && currentCreateCard.parentNode) {
+      currentCreateCard.replaceWith(visibleCreateCard);
+      return visibleCreateCard;
+    }
+
+    if (currentEditCard && currentEditCard.parentNode) {
+      currentEditCard.replaceWith(visibleCreateCard);
+      return visibleCreateCard;
+    }
+
+    if (activeCard && activeCard.parentNode) {
+      activeCard.parentNode.insertBefore(visibleCreateCard, activeCard);
+      return visibleCreateCard;
+    }
+
+    throw new Error("Não foi possível localizar a área principal de Sessões para substituir o card.");
+  }
+
+  function _replaceSessoesListCardV1(cardId, nextCard) {
+    var currentCard = document.getElementById(cardId);
+
+    if (!currentCard || !currentCard.parentNode) {
+      throw new Error("Card atual não encontrado: " + cardId);
+    }
+
+    currentCard.replaceWith(nextCard);
+    return nextCard;
+  }
+
+  function _enhanceSessoesCardsV1(cards) {
+    var uniqueRoots = [];
+    var seenRoots = new Set();
+
+    cards.forEach(function (card) {
+      if (!card || seenRoots.has(card)) {
+        return;
+      }
+
+      seenRoots.add(card);
+      uniqueRoots.push(card);
+      instalarOrdenacaoAdminSubprocessV1(card);
+    });
+
+    if (window.AppVerboProcessShell) {
+      uniqueRoots.forEach(function (root) {
+        if (typeof window.AppVerboProcessShell.enhanceSearchableTableCards === "function") {
+          window.AppVerboProcessShell.enhanceSearchableTableCards({ root: root });
+        }
+
+        if (typeof window.AppVerboProcessShell.enhanceLoadMoreTables === "function") {
+          window.AppVerboProcessShell.enhanceLoadMoreTables({ root: root });
+        }
+
+        if (typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
+          window.AppVerboProcessShell.enhanceTableActionMenus({ root: root });
+        }
+
+        if (typeof window.AppVerboProcessShell.enhanceResponsiveTableColumns === "function") {
+          window.AppVerboProcessShell.enhanceResponsiveTableColumns({ root: root });
+        }
+      });
+
+      if (typeof window.AppVerboProcessShell.enhanceConfirmableActions === "function") {
+        window.AppVerboProcessShell.enhanceConfirmableActions({ root: document });
+      }
+    }
+
+    if (typeof window.AppVerboAplicarVisibilidadeCardsSessoesV25 === "function") {
+      window.AppVerboAplicarVisibilidadeCardsSessoesV25();
+    }
+
+    if (typeof window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 === "function") {
+      window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26(document);
+    }
+  }
+
+  function _refreshSessoesCardsWithoutReloadV1(cleanUrl) {
+    return fetch(cleanUrl, {
+      method: "GET",
+      credentials: "same-origin",
+      headers: {
+        "Accept": "text/html"
+      }
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        return response.text();
+      })
+      .then(function (html) {
+        var parser = new DOMParser();
+        var sourceDocument = parser.parseFromString(html, "text/html");
+
+        var createCard = _importRequiredCardV1(sourceDocument, "admin-sidebar-sections-card");
+        var activeCard = _importRequiredCardV1(sourceDocument, "admin-sidebar-sections-card-active");
+        var inactiveCard = _importRequiredCardV1(sourceDocument, "admin-sidebar-sections-card-inactive");
+
+        var mountedCreateCard = _replaceSessoesCreateCardV1(createCard);
+        var mountedActiveCard = _replaceSessoesListCardV1("admin-sidebar-sections-card-active", activeCard);
+        var mountedInactiveCard = _replaceSessoesListCardV1("admin-sidebar-sections-card-inactive", inactiveCard);
+
+        _enhanceSessoesCardsV1([
+          mountedCreateCard,
+          mountedActiveCard,
+          mountedInactiveCard
+        ]);
+
+        return {
+          createCard: mountedCreateCard,
+          activeCard: mountedActiveCard,
+          inactiveCard: mountedInactiveCard
+        };
+      });
+  }
+
+  function _submitSessoesSaveFallbackV1(form) {
+    if (
+      typeof HTMLFormElement !== "undefined" &&
+      HTMLFormElement.prototype &&
+      typeof HTMLFormElement.prototype.submit === "function"
+    ) {
+      HTMLFormElement.prototype.submit.call(form);
+      return;
+    }
+
+    form.submit();
+  }
+
+  function _markSessoesFallbackSubmitErrorV1(error) {
+    var safeError = error instanceof Error ? error : new Error(String(error || "fallback_submit"));
+    safeError._appverboShouldFallbackSubmit = true;
+    return safeError;
+  }
+
+  function instalarSessoesSaveAjaxV1() {
+    if (window.__appverboSessoesSaveAjaxV1 === true) {
+      return;
+    }
+
+    window.__appverboSessoesSaveAjaxV1 = true;
+
+    document.addEventListener("submit", function (event) {
+      var form = event.target;
+      if (!form || !_isSessoesSaveFormAjaxV1(form)) {
+        return;
+      }
+
+      if (
+        typeof window.fetch !== "function" ||
+        typeof window.FormData !== "function" ||
+        typeof window.DOMParser !== "function"
+      ) {
+        return;
+      }
+
+      if (form.dataset.sessoesAjaxSubmittingV1 === "1") {
+        event.preventDefault();
+        return;
+      }
+
+      event.preventDefault();
+      form.dataset.sessoesAjaxSubmittingV1 = "1";
+      _clearSessoesSaveAjaxFeedbackV1(form);
+
+      var submitBtn = event.submitter || form.querySelector("[type='submit']");
+      var originalBtnText = submitBtn ? (submitBtn.textContent || "").trim() : "";
+      _setSessoesSaveButtonStateV1(submitBtn, true, originalBtnText);
+
+      _logReturnAfterSaveAjaxV1("ajax:start", {
+        form_action: form.getAttribute("action") || ""
+      });
+
+      fetch(form.action, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "Accept": "application/json"
+        },
+        body: new FormData(form)
+      })
+        .catch(function (error) {
+          throw _markSessoesFallbackSubmitErrorV1(error);
+        })
+        .then(function (response) {
+          return response.text().then(function (body) {
+            var data = {};
+
+            try {
+              data = body ? JSON.parse(body) : {};
+            } catch (error) {
+              throw _markSessoesFallbackSubmitErrorV1(error);
+            }
+
+            return { status: response.status, ok: response.ok, data: data || {} };
+          });
+        })
+        .then(function (result) {
+          var data = result.data || {};
+          var cleanRedirectUrl = _buildCleanSessoesUrlV1(data.redirect_url || window.location.href);
+
+          _logReturnAfterSaveAjaxV1("ajax:response", {
+            ok: data.ok,
+            http_ok: result.ok,
+            status: result.status,
+            redirect_url: data.redirect_url || "",
+            clean_redirect_url: cleanRedirectUrl
+          });
+
+          if (!data.ok) {
+            throw new Error(_normalizeSessoesAjaxMessageV1(
+              data.message || data.error,
+              "Não foi possível gravar a sessão."
+            ));
+          }
+
+          return _refreshSessoesCardsWithoutReloadV1(cleanRedirectUrl)
+            .then(function () {
+              _replaceHistoryUrlV1(cleanRedirectUrl);
+              _showSessoesSaveAjaxSuccessV1(data.message);
+            });
+        })
+        .then(function () {
+          delete form.dataset.sessoesAjaxSubmittingV1;
+        })
+        .catch(function (error) {
+          var message = _normalizeSessoesAjaxMessageV1(
+            error && error.message,
+            "Não foi possível gravar a sessão."
+          );
+
+          _logReturnAfterSaveAjaxV1("ajax:error", {
+            error: String(message || error)
+          });
+
+          delete form.dataset.sessoesAjaxSubmittingV1;
+          _setSessoesSaveButtonStateV1(submitBtn, false, originalBtnText);
+
+          if (error && error._appverboShouldFallbackSubmit === true) {
+            _submitSessoesSaveFallbackV1(form);
+            return;
+          }
+
+          _showSessoesSaveAjaxErrorV1(form, message);
+        });
+    }, false);
+  }
+
+  //###################################################################################
   // (5) INICIAR
   //###################################################################################
 
@@ -656,6 +1066,7 @@
     instalarVisualizarAdminSubprocessV1();
     instalarOrdenacaoAdminSubprocessV1(document);
     initAdminResponsiveColumnsV1();
+    instalarSessoesSaveAjaxV1();
   }
 
   if (document.readyState === "loading") {
