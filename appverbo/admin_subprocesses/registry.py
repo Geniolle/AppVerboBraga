@@ -69,9 +69,9 @@ SIDEBAR_SECTION_FIELDS = (
 
 
 DEFAULT_COLUMNS = (
-    AdminColumnConfig(key="label", label="NOME", source="label", css_class="admin-col-main-v1"),
+    AdminColumnConfig(key="label", label="NOME", source="label", css_class="admin-col-main-v1", always_visible=True),
     AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
-    AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1"),
+    AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1", always_visible=True),
 )
 
 
@@ -153,7 +153,6 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
             sort_type="number",
             default_sort="asc",
             responsive_priority=2,
-            always_visible=True,
             sort_value_source="entity_number_sort_value",
         ),
         AdminColumnConfig(
@@ -493,11 +492,11 @@ MENU_CONFIG = AdminSubprocessConfig(
     migration_status="native",
     fields=MENU_FIELDS,
     columns=(
-        AdminColumnConfig(key="label", label="MENU LATERAL", source="label", css_class="admin-col-main-v1"),
+        AdminColumnConfig(key="label", label="MENU LATERAL", source="label", css_class="admin-col-main-v1", always_visible=True),
         AdminColumnConfig(key="entity_number", label="Nº DA ENTIDADE", source="entity_number", css_class="admin-col-number-v1"),
         AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label", css_class="admin-col-section-v1"),
         AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
-        AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1"),
+        AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1", always_visible=True),
     ),
     table_css_class="admin-subprocess-table-menu-v1",
     actions=MENU_ACTIONS,

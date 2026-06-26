@@ -6,6 +6,21 @@
   "use strict";
 
   //###################################################################################
+  // APPVERBO_DEBUG_SESSOES_FLOW_V1_START
+  //###################################################################################
+
+  function _isDebugSessoesFlowEnabled() {
+    return localStorage.getItem("appverboDebugSessoesFlow") === "1";
+  }
+
+  function _logSessoesFlowUi(event, data) {
+    if (!_isDebugSessoesFlowEnabled()) { return; }
+    console.log("[SESSOES_FLOW_UI]", event, data || {});
+  }
+
+  // APPVERBO_DEBUG_SESSOES_FLOW_V1_END
+
+  //###################################################################################
   // (2) CONFIGURACAO
   //###################################################################################
 
@@ -190,8 +205,14 @@
         return;
       }
 
-      sessionStorage.setItem(STORAGE_KEY, getCurrentRelativeUrl());
+      const _urlToSave = getCurrentRelativeUrl();
+      sessionStorage.setItem(STORAGE_KEY, _urlToSave);
       sessionStorage.setItem(STORAGE_TIME_KEY, String(Date.now()));
+      _logSessoesFlowUi("submit:url_saved", {
+        url_saved: _urlToSave,
+        form_action: form.action || "",
+        submitter_text: (event.submitter || document.activeElement || {}).textContent || ""
+      });
     },
     true
   );
@@ -209,6 +230,13 @@
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_TIME_KEY);
 
+    _logSessoesFlowUi("restore:start", {
+      saved_url: savedUrl,
+      current_url: currentUrl,
+      age_ms: savedTime ? Date.now() - savedTime : null,
+      is_backend_post_save: isBackendPostSaveReturnUrl(currentUrl)
+    });
+
     //###################################################################################
     // (5.1) BACKEND COMO FONTE DE VERDADE POS-SAVE
     //###################################################################################
@@ -216,22 +244,38 @@
     // Nao devemos restaurar URL antiga do sessionStorage, pois ela pode ter sido capturada
     // antes da navegacao interna do menu lateral e apontar para menu=home.
     if (isBackendPostSaveReturnUrl(currentUrl)) {
+      _logSessoesFlowUi("restore:skip", { motivo: "backend_post_save", current_url: currentUrl });
       return;
     }
 
     if (!savedUrl || !savedTime) {
+      _logSessoesFlowUi("restore:skip", { motivo: "no_saved_url_or_time" });
       return;
     }
 
     if (Date.now() - savedTime > MAX_AGE_MS) {
+      _logSessoesFlowUi("restore:skip", { motivo: "expired", age_ms: Date.now() - savedTime });
       return;
     }
 
-    if (!shouldReturnToSavedUrl(savedUrl, currentUrl)) {
+    const _shouldReturn = shouldReturnToSavedUrl(savedUrl, currentUrl);
+    _logSessoesFlowUi("restore:should_return", {
+      saved_url: savedUrl,
+      current_url: currentUrl,
+      should_return: _shouldReturn,
+      saved_hash: savedUrl ? new URL(savedUrl, window.location.origin).hash : "",
+      current_hash: currentUrl ? new URL(currentUrl, window.location.origin).hash : "",
+      saved_edit_key: savedUrl ? new URL(savedUrl, window.location.origin).searchParams.get("sidebar_section_edit_key") : "",
+      current_edit_key: currentUrl ? new URL(currentUrl, window.location.origin).searchParams.get("sidebar_section_edit_key") : ""
+    });
+
+    if (!_shouldReturn) {
       return;
     }
 
     const finalUrl = mergeMessageParams(savedUrl, currentUrl);
+
+    _logSessoesFlowUi("restore:redirect", { final_url: finalUrl, current_url: currentUrl });
 
     if (finalUrl && finalUrl !== currentUrl) {
       window.location.replace(finalUrl);

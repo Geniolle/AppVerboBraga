@@ -39,6 +39,32 @@ from appverbo.services.session import get_session_entity_id
 from appverbo.repositories.entity_repository import get_entity_by_id
 from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
 
+# APPVERBO_DEBUG_SESSOES_FLOW_V1_START
+import logging as _logging_sessoes
+import os as _os_sessoes
+
+_SESSOES_FLOW_LOGGER = _logging_sessoes.getLogger(__name__)
+
+
+def _debug_sessoes_flow_enabled_v1(request=None) -> bool:
+    if _os_sessoes.environ.get("APPVERBO_DEBUG_SESSOES_FLOW") == "1":
+        return True
+    if request is not None:
+        try:
+            qs = dict(request.query_params)
+            if qs.get("debug_sessoes") == "1":
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def _log_sessoes_flow_v1(event: str, **payload) -> None:
+    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
+    _SESSOES_FLOW_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
+
+# APPVERBO_DEBUG_SESSOES_FLOW_V1_END
+
 
 def _build_settings_redirect_url(
     error_message: str = "",
@@ -314,8 +340,13 @@ def _sidebar_section_scope_label_v19(value: object) -> str:
 def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+    _dbg = _debug_sessoes_flow_enabled_v1()
+
     fallback = "/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     raw_url = _normalize_sidebar_section_text_v19(return_url) or fallback
+
+    if _dbg:
+        _log_sessoes_flow_v1("sanitize:start", raw_url=raw_url)
 
     if raw_url.startswith("http://") or raw_url.startswith("https://") or raw_url.startswith("//"):
         raw_url = fallback
@@ -380,11 +411,27 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     if not found_target:
         clean_params.append(("target", "admin-sidebar-sections-card"))
 
-    return urlunsplit(("", "", "/users/new", urlencode(clean_params), "admin-sidebar-sections-card"))
+    sanitized = urlunsplit(("", "", "/users/new", urlencode(clean_params), "admin-sidebar-sections-card"))
+
+    if _dbg:
+        removed = [k for k, _ in parse_qsl((urlsplit(raw_url)).query, keep_blank_values=True) if k in blocked_params]
+        _log_sessoes_flow_v1(
+            "sanitize:done",
+            sanitized_url=sanitized,
+            params_removidos=removed,
+            fragment="admin-sidebar-sections-card",
+        )
+
+    return sanitized
 
 
 def _append_sidebar_section_message_v19(return_url: str, message_key: str, message: str) -> str:
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+    _dbg = _debug_sessoes_flow_enabled_v1()
+
+    if _dbg:
+        _log_sessoes_flow_v1("append_message:start", message_key=message_key, base_return_url=return_url)
 
     parts = urlsplit(return_url)
     params = [
@@ -394,20 +441,66 @@ def _append_sidebar_section_message_v19(return_url: str, message_key: str, messa
     ]
     params.append((message_key, message))
 
-    return urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
+    final_url = urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
+
+    if _dbg:
+        _log_sessoes_flow_v1("append_message:done", final_url=final_url)
+
+    return final_url
 
 
 def _redirect_sidebar_section_message_v19(
     return_url: str,
     message_key: str,
     message: str,
+    after_save: bool = False,
 ) -> RedirectResponse:
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
     safe_return_url = _sanitize_sidebar_section_return_url_v19(return_url)
+    url = _append_sidebar_section_message_v19(safe_return_url, message_key, message)
+
+    if after_save:
+        parts = urlsplit(url)
+        params = list(parse_qsl(parts.query, keep_blank_values=True))
+        params.append(("appverbo_after_save", "1"))
+        url = urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
 
     return RedirectResponse(
-        url=_append_sidebar_section_message_v19(safe_return_url, message_key, message),
+        url=url,
         status_code=status.HTTP_303_SEE_OTHER,
     )
+
+
+def _redirect_sidebar_section_edit_error_v19(original_key: str, error: str) -> RedirectResponse:
+    from urllib.parse import urlencode, urlunsplit
+
+    params = [
+        ("menu", "sessoes"),
+        ("admin_tab", "sessoes"),
+        ("sidebar_sections_tab", "sessoes"),
+        ("target", "admin-sidebar-sections-form-card"),
+        ("sidebar_section_edit_key", original_key),
+        ("error", error),
+    ]
+    url = urlunsplit(("", "", "/users/new", urlencode(params), "admin-sidebar-sections-form-card"))
+    return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
+
+
+def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
+    """URL de sucesso pós-save de Sessões — sempre limpa, sem estado de edição."""
+    from urllib.parse import urlencode, urlunsplit
+
+    params = [
+        ("menu", "sessoes"),
+        ("admin_tab", "sessoes"),
+        ("sidebar_sections_tab", "sessoes"),
+        ("target", "admin-sidebar-sections-card"),
+        ("appverbo_after_save", "1"),
+    ]
+    if message:
+        params.append(("success", message))
+    return urlunsplit(("", "", "/users/new", urlencode(params), "admin-sidebar-sections-card"))
 
 
 def _make_unique_sidebar_section_key_v19(base_key: str, used_keys: set[str]) -> str:
@@ -550,7 +643,21 @@ def save_one_sidebar_section_v19(
     section_status_override_v19: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
+    _dbg_save = _debug_sessoes_flow_enabled_v1(request)
+    if _dbg_save:
+        _log_sessoes_flow_v1(
+            "save:start",
+            section_mode=section_mode,
+            original_section_key=original_section_key,
+            section_label=section_label,
+            section_status=section_status,
+            sidebar_section_return_url=sidebar_section_return_url,
+        )
+
     safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
+
+    if _dbg_save:
+        _log_sessoes_flow_v1("save:safe_return_url", safe_return_url=safe_return_url)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -592,6 +699,12 @@ def save_one_sidebar_section_v19(
         clean_status = _normalize_sidebar_section_status_v19(effective_status)
 
         if not clean_label:
+            if clean_mode == "edit" and clean_original_key:
+                if _dbg_save:
+                    _log_sessoes_flow_v1("save:error_redirect", motivo="label_vazio", clean_mode=clean_mode, edit_key=clean_original_key, tem_edit_key=True, tem_form_card=True)
+                return _redirect_sidebar_section_edit_error_v19(clean_original_key, "Informe o nome da sessão.")
+            if _dbg_save:
+                _log_sessoes_flow_v1("save:error_redirect", motivo="label_vazio", clean_mode=clean_mode, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -631,6 +744,8 @@ def save_one_sidebar_section_v19(
                     )
 
             if not found_section:
+                if _dbg_save:
+                    _log_sessoes_flow_v1("save:error_redirect", motivo="sessao_nao_encontrada", clean_original_key=clean_original_key, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
                 return _redirect_sidebar_section_message_v19(
                     safe_return_url,
                     "error",
@@ -670,6 +785,15 @@ def save_one_sidebar_section_v19(
         )
 
         if not ok:
+            if clean_mode == "edit" and clean_original_key:
+                if _dbg_save:
+                    _log_sessoes_flow_v1("save:error_redirect", motivo="update_falhou", clean_mode=clean_mode, edit_key=clean_original_key, tem_edit_key=True, tem_form_card=True)
+                return _redirect_sidebar_section_edit_error_v19(
+                    clean_original_key,
+                    error_message or "Não foi possível gravar a sessão.",
+                )
+            if _dbg_save:
+                _log_sessoes_flow_v1("save:error_redirect", motivo="update_falhou", clean_mode=clean_mode, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -683,15 +807,26 @@ def save_one_sidebar_section_v19(
             target_status=clean_status,
         )
 
-        return _redirect_sidebar_section_message_v19(
-            safe_return_url,
-            "success",
-            (
-                "Sessão atualizada com sucesso."
-                if clean_mode == "edit"
-                else "Sessão criada com sucesso."
-            ),
+        _success_msg = (
+            "Sessão atualizada com sucesso."
+            if clean_mode == "edit"
+            else "Sessão criada com sucesso."
         )
+        _success_url = _build_sidebar_sections_success_url_v1(_success_msg)
+
+        if _dbg_save:
+            _log_sessoes_flow_v1(
+                "save:success_redirect",
+                clean_mode=clean_mode,
+                target_section_key=target_section_key,
+                clean_status=clean_status,
+                success_url=_success_url,
+                tem_edit_key="sidebar_section_edit_key" in _success_url,
+                tem_form_card="admin-sidebar-sections-form-card" in _success_url,
+                tem_appverbo_after_save="appverbo_after_save=1" in _success_url,
+            )
+
+        return RedirectResponse(url=_success_url, status_code=status.HTTP_303_SEE_OTHER)
 
 # APPVERBO_SESSOES_SAVE_ONE_V19_END
 

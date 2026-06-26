@@ -111,7 +111,7 @@
 }
 
 .admin-subprocess-table-wrap-v1 {
-  overflow-x: auto;
+  overflow-x: hidden;
   max-width: 100%;
   width: 100%;
 }
@@ -409,6 +409,72 @@ td.admin-col-country-v1 {
 
 .admin-col-hidden-v1 {
   display: none !important;
+}
+
+/* === Responsive table global rules (data-admin-responsive-table="1") === */
+
+table[data-admin-responsive-table="1"] {
+  width: 100%;
+  max-width: 100%;
+}
+
+table[data-admin-responsive-table="1"] th,
+table[data-admin-responsive-table="1"] td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table[data-admin-responsive-table="1"] th.admin-col-main-v1,
+table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
+  min-width: 100px;
+  white-space: normal;
+}
+
+/* compact mode: JS applies this class on the wrap when optional cols are exhausted */
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td {
+  padding: 6px 6px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-main-v1,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
+  min-width: 80px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-status-v1,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-status-v1 {
+  width: 90px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-actions-v1,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-actions-v1 {
+  width: 76px;
+  padding-right: 8px;
+}
+
+/* ultra-compact mode: JS applies when compact mode is still insufficient */
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td {
+  padding: 5px 4px;
+  font-size: 12px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-main-v1,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
+  min-width: 60px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-status-v1,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-status-v1 {
+  width: 76px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-actions-v1,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-actions-v1 {
+  width: 64px;
+  min-width: unset;
+  padding-right: 4px;
 }
 
 /* Sortable-table specificity overrides for center-aligned columns */

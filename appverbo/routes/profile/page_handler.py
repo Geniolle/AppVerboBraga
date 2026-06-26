@@ -40,6 +40,31 @@ from appverbo.models import (
 
 from appverbo.routes.profile.router import router
 
+# APPVERBO_DEBUG_SESSOES_FLOW_V1_START
+import logging as _logging_page
+import os as _os_page
+
+_SESSOES_PAGE_LOGGER = _logging_page.getLogger(__name__)
+
+
+def _debug_sessoes_page_enabled_v1(request=None) -> bool:
+    if _os_page.environ.get("APPVERBO_DEBUG_SESSOES_FLOW") == "1":
+        return True
+    if request is not None:
+        try:
+            if dict(request.query_params).get("debug_sessoes") == "1":
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def _log_sessoes_page_v1(event: str, **payload) -> None:
+    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
+    _SESSOES_PAGE_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
+
+# APPVERBO_DEBUG_SESSOES_FLOW_V1_END
+
 
 ESTRUTURAS_MENU_KEY_V1 = "sessoes"
 ESTRUTURAS_MENU_TARGETS_V1 = {
@@ -307,6 +332,8 @@ def new_user_page(
     sidebar_section_edit_key: str = "",
     appverbo_after_save: str = "",
 ) -> HTMLResponse:
+    _dbg_page = _debug_sessoes_page_enabled_v1(request)
+
     resolved_profile_tab = profile_tab.strip().lower()
     if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
         resolved_profile_tab = "pessoal"
@@ -315,6 +342,20 @@ def new_user_page(
         resolved_menu = "home"
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_target_from_query = _normalize_card_target_v1(target)
+
+    if _dbg_page and (resolved_menu == ESTRUTURAS_MENU_KEY_V1 or sidebar_section_edit_key):
+        _log_sessoes_page_v1(
+            "page:start",
+            raw_menu=menu,
+            resolved_menu=resolved_menu,
+            raw_admin_tab=admin_tab,
+            target=target,
+            sidebar_section_edit_key=sidebar_section_edit_key,
+            success=settings_success,
+            error=settings_error,
+            appverbo_after_save=appverbo_after_save,
+        )
+
     resolved_menu, resolved_admin_tab = _resolve_estruturas_navigation_context_v1(
         resolved_menu=resolved_menu,
         resolved_admin_tab=admin_tab.strip().lower(),
@@ -322,6 +363,15 @@ def new_user_page(
         target=clean_target_from_query,
         sidebar_section_edit_key=sidebar_section_edit_key,
     )
+
+    if _dbg_page and (resolved_menu == ESTRUTURAS_MENU_KEY_V1 or sidebar_section_edit_key):
+        _log_sessoes_page_v1(
+            "page:navigation_context",
+            resolved_menu=resolved_menu,
+            resolved_admin_tab=resolved_admin_tab,
+            target=clean_target_from_query,
+            sidebar_section_edit_key=sidebar_section_edit_key,
+        )
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1:
         if resolved_admin_tab not in {"contas", "sessoes"}:
             resolved_admin_tab = "contas"
@@ -404,6 +454,25 @@ def new_user_page(
         ):
             resolved_menu = "home"
         # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
+
+        # APPVERBO_SESSOES_POST_SAVE_GUARD_V1_START
+        # Se é um retorno pós-save de Sessões, limpar sidebar_section_edit_key antes de
+        # qualquer uso. Garante que o card de edição não reabre mesmo que a URL ainda
+        # contenha o parâmetro por algum motivo.
+        if (
+            is_post_save_return
+            and resolved_menu == ESTRUTURAS_MENU_KEY_V1
+            and resolved_admin_tab == "sessoes"
+        ):
+            if _dbg_page:
+                _log_sessoes_page_v1(
+                    "page:post_save_guard",
+                    sidebar_section_edit_key_antes=sidebar_section_edit_key,
+                    acao="limpar_edit_key",
+                )
+            sidebar_section_edit_key = ""
+        # APPVERBO_SESSOES_POST_SAVE_GUARD_V1_END
+
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
         next_entity_number = get_next_entity_number(session)
         entity_edit_data = get_entity_edit_data(
@@ -492,11 +561,33 @@ def new_user_page(
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
+    if _dbg_page and resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
+        _log_sessoes_page_v1(
+            "page:initial_target_before",
+            initial_menu_target=initial_menu_target,
+            sidebar_section_edit_key=sidebar_section_edit_key,
+            appverbo_after_save=appverbo_after_save,
+        )
+
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
         if str(sidebar_section_edit_key or "").strip():
             initial_menu_target = "#admin-sidebar-sections-form-card"
+            if _dbg_page:
+                _log_sessoes_page_v1(
+                    "page:sessoes_target_decision",
+                    sidebar_section_edit_key=sidebar_section_edit_key,
+                    chosen_initial_menu_target="#admin-sidebar-sections-form-card",
+                    motivo="edit_key_present",
+                )
         else:
             initial_menu_target = "#admin-sidebar-sections-card"
+            if _dbg_page:
+                _log_sessoes_page_v1(
+                    "page:sessoes_target_decision",
+                    sidebar_section_edit_key=sidebar_section_edit_key,
+                    chosen_initial_menu_target="#admin-sidebar-sections-card",
+                    motivo="no_edit_key",
+                )
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
@@ -524,6 +615,16 @@ def new_user_page(
                 return_url="/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
     # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
+
+    if _dbg_page and admin_subprocess_state_v2 is not None and resolved_admin_tab == "sessoes":
+        _log_sessoes_page_v1(
+            "page:admin_subprocess_state",
+            is_editing=admin_subprocess_state_v2.is_editing,
+            edit_key=getattr(admin_subprocess_state_v2, "edit_key", None),
+            return_url=getattr(admin_subprocess_state_v2, "return_url", None),
+            active_count=len(active_sidebar_sections_v22 or []),
+            inactive_count=len(inactive_sidebar_sections_v22 or []),
+        )
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None

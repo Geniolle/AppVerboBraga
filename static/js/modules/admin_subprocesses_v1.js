@@ -542,6 +542,9 @@
       return;
     }
 
+    // Reset compact states before measuring
+    wrap.classList.remove("admin-table-compact-v1", "admin-table-ultra-compact-v1");
+
     const allHeaderEls = Array.from(tableEl.querySelectorAll("thead th"));
 
     const optionalKeys = allHeaderEls
@@ -571,6 +574,7 @@
       return allHeaderEls.indexOf(thB) - allHeaderEls.indexOf(thA);
     });
 
+    // Show all optional columns before re-evaluating
     optionalKeys.forEach(function (key) {
       tableEl
         .querySelectorAll("[data-admin-column-key=\"" + key + "\"]")
@@ -579,6 +583,7 @@
         });
     });
 
+    // Hide optional columns by priority until table fits or all are hidden
     for (let i = 0; i < optionalKeys.length; i++) {
       if (tableEl.scrollWidth <= wrap.clientWidth + 2) {
         break;
@@ -586,8 +591,21 @@
       tableEl
         .querySelectorAll("[data-admin-column-key=\"" + optionalKeys[i] + "\"]")
         .forEach(function (el) {
-          el.classList.add("admin-col-hidden-v1");
+          if (!el.hasAttribute("data-admin-always-visible")) {
+            el.classList.add("admin-col-hidden-v1");
+          }
         });
+    }
+
+    // If still overflowing after hiding all optional columns, apply compact mode
+    if (tableEl.scrollWidth > wrap.clientWidth + 2) {
+      wrap.classList.add("admin-table-compact-v1");
+      void wrap.offsetWidth; // force reflow so CSS changes take effect before re-measuring
+    }
+
+    // If compact mode is still insufficient, apply ultra-compact
+    if (tableEl.scrollWidth > wrap.clientWidth + 2) {
+      wrap.classList.add("admin-table-ultra-compact-v1");
     }
   }
 
