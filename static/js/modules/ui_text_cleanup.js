@@ -150,3 +150,31 @@
   window.setTimeout(runCleanup, 400);
   window.setTimeout(runCleanup, 1000);
 })();
+
+// APPVERBO_AUTHORIZATION_PROFILE_CREATE_BUTTON_LOADER_V1_START
+(function loadAuthorizationProfileCreateButtonV1() {
+  "use strict";
+
+  if (!window.location || window.location.pathname !== "/users/new") {
+    return;
+  }
+
+  function appendAuthorizationProfileCreateButtonScriptV1() {
+    if (document.querySelector("[data-auth-profile-create-button-v1='1']")) {
+      return;
+    }
+
+    const scriptEl = document.createElement("script");
+    scriptEl.src = "/static/js/modules/authorization_profile_create_button_v1.js?v=20260626-auth-profile-create-v1";
+    scriptEl.defer = true;
+    scriptEl.setAttribute("data-auth-profile-create-button-v1", "1");
+    document.body.appendChild(scriptEl);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", appendAuthorizationProfileCreateButtonScriptV1);
+  } else {
+    appendAuthorizationProfileCreateButtonScriptV1();
+  }
+})();
+// APPVERBO_AUTHORIZATION_PROFILE_CREATE_BUTTON_LOADER_V1_END
