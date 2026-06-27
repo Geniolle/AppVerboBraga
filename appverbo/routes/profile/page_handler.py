@@ -411,7 +411,9 @@ def new_user_page(
     sidebar_section_edit_key: str = "",
     auth_profile_edit_key: str = "",
     appverbo_after_save: str = "",
+    debug_flicker: str | None = None,
 ) -> HTMLResponse:
+    is_debug_flicker = (debug_flicker == "1") or (request.query_params.get("debug_flicker") == "1")
     _dbg_page = _debug_sessoes_page_enabled_v1(request)
 
     resolved_profile_tab = profile_tab.strip().lower()
@@ -860,6 +862,23 @@ def new_user_page(
         "admin_subprocess_user_state": admin_subprocess_user_state,
         "current_user_can_manage_tenant_structure": bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
+        "debug_flicker": is_debug_flicker,
         **page_data,
     }
+
+    # ###################################################################################
+    # TEMPORARY: DEBUG FLICKER VALIDATION
+    # ###################################################################################
+    if is_debug_flicker:
+        print(
+            f"[APPVERBO FLICKER DEBUG BACKEND]\n"
+            f"- menu resolvido: {resolved_menu}\n"
+            f"- admin_tab resolvido: {resolved_admin_tab}\n"
+            f"- target resolvido: {initial_menu_target}\n"
+            f"- admin_subprocess_state presente: {admin_subprocess_state_v2 is not None}\n"
+            f"- qual subprocesso administrativo montado: {admin_subprocess_state_v2.config.key if admin_subprocess_state_v2 else 'Nenhum'}\n"
+            f"- template renderizando Sessões: {'Sim' if admin_subprocess_state_v2 and admin_subprocess_state_v2.config.key == 'sessoes' else 'Não'}\n"
+            f"- template renderizando Perfil de autorização: {'Sim' if auth_profile_subprocess_state_v1 is not None else 'Não'}"
+        )
+
     return templates.TemplateResponse(request, "new_user.html", context)

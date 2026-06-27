@@ -34,13 +34,26 @@
 
 
 {% macro render_admin_subprocess_form(state) %}
+  {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
+  {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
+  {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
+  {% set _is_active_subprocess = 
+    (_initial_menu_resolved == state.menu_key and (_initial_menu_resolved != 'administrativo' and _initial_menu_resolved != 'sessoes')) or
+    ((_initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes') and (
+      state.config.key == _admin_tab_resolved or 
+      (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
+      (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes')
+    ))
+  %}
+  {% set _show_form = _is_active_subprocess and (state.is_editing or _initial_menu_target_resolved == '#' ~ (state.config.edit_target if state.is_editing else state.config.default_target)) %}
+
   <section
     id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appverbo-process-action-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-role="form"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
-    style="display:none"
+    {% if not _show_form %}style="display: none;"{% endif %}
   >
     {% if state.success %}
       <div class="alert ok">{{ state.success }}</div>
@@ -240,6 +253,17 @@
   {% set _table_id = (state.config.active_table_id if _is_active else state.config.inactive_table_id) or (state.config.key ~ '-' ~ status_value ~ '-table') %}
   {% set _limiter_id = (state.config.active_limiter_id if _is_active else state.config.inactive_limiter_id) or (state.config.key ~ '-' ~ status_value ~ '-limiter') %}
 
+  {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
+  {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
+  {% set _is_active_subprocess = 
+    (_initial_menu_resolved == state.menu_key and (_initial_menu_resolved != 'administrativo' and _initial_menu_resolved != 'sessoes')) or
+    ((_initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes') and (
+      state.config.key == _admin_tab_resolved or 
+      (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
+      (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes')
+    ))
+  %}
+
   <section
     id="{{ _card_id }}"
     class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
@@ -247,6 +271,7 @@
     data-admin-subprocess-role="{{ 'active-table' if _is_active else 'inactive-table' }}"
     data-admin-subprocess-status="{{ status_value }}"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
+    {% if not _is_active_subprocess %}style="display: none;"{% endif %}
   >
     <h2>{{ title }}</h2>
 

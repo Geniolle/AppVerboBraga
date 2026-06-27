@@ -6036,14 +6036,47 @@ setupTableLimiter("menu-ativo");
 setupTableLimiter("menu-inativo");
 setupTableLimiter("sessoes-ativo");
 setupTableLimiter("sessoes-inativo");
+// APPVERBO_PREVENT_AUTH_PROFILE_FALLBACK_V1_START
+// Função para validar se o perfil de autorização foi explicitamente solicitado.
+function hasExplicitAuthProfileContextV1() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const menuKey = normalizeMenuKey(params.get("menu") || "");
+    const targetKey = String(params.get("target") || "").trim();
+    const hashKey = window.location.hash || "";
+
+    return (
+      menuKey === "perfil_de_autorizacao" ||
+      targetKey === "#auth-profile-card" ||
+      hashKey === "#auth-profile-card" ||
+      (params.get("appverbo_after_save") === "1" && menuKey === "perfil_de_autorizacao")
+    );
+  } catch (err) {
+    return false;
+  }
+}
+// APPVERBO_PREVENT_AUTH_PROFILE_FALLBACK_V1_END
+
 const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => normalizeMenuKey(btn.dataset.menu)));
 let startupMenu = menuConfig[initialMenu] ? initialMenu : "home";
+
+// APPVERBO_FALLBACK_TO_HOME_RULE_V1_START
+// Se o menu inicial pretendido for perfil_de_autorizacao mas não foi solicitado explicitamente,
+// forçamos o fallback para "home".
+if (startupMenu === "perfil_de_autorizacao" && !hasExplicitAuthProfileContextV1()) {
+  startupMenu = "home";
+}
+// APPVERBO_FALLBACK_TO_HOME_RULE_V1_END
+
 if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
   if (sidebarMenuKeys.has("home")) {
     startupMenu = "home";
   } else {
-    const firstSidebarMenu = Array.from(sidebarMenuKeys.values())[0];
-    startupMenu = firstSidebarMenu || "home";
+    // Garantimos que perfil_de_autorizacao nunca é selecionado como fallback implícito
+    const fallbackMenu = Array.from(sidebarMenuKeys.values()).find(
+      (key) => key !== "perfil_de_autorizacao"
+    );
+    startupMenu = fallbackMenu || "home";
   }
 }
 activateMenu(startupMenu, { resetDynamicToFirst: false });

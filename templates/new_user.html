@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% from "macros/admin_subprocess.html" import render_admin_subprocess_state, render_admin_subprocess_form, render_admin_subprocess_tables %}
+{% from "macros/admin_subprocess.html" import render_admin_subprocess_state, render_admin_subprocess_form, render_admin_subprocess_tables with context %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
@@ -19,6 +19,18 @@
 {% endblock %}
 
 {% block body %}
+  {% if debug_flicker %}
+  <!--
+  [APPVERBO FLICKER DEBUG BACKEND]
+  - menu resolvido: {{ initial_menu }}
+  - admin_tab resolvido: {{ admin_tab }}
+  - target resolvido: {{ initial_menu_target }}
+  - admin_subprocess_state presente: {{ admin_subprocess_state is not none }}
+  - qual subprocesso administrativo montado: {{ admin_subprocess_state.config.key if admin_subprocess_state else 'Nenhum' }}
+  - template renderizando Sessões: {{ 'Sim' if admin_subprocess_state and admin_subprocess_state.config.key == 'sessoes' else 'Não' }}
+  - template renderizando Perfil de autorização: {{ 'Sim' if auth_profile_subprocess_state is not none else 'Não' }}
+  -->
+  {% endif %}
   {% include "partials/new_user_topbar.html" %}
 
   <div class="layout">
@@ -138,7 +150,7 @@
           <div id="dynamic-process-inactive-limiter" class="table-limiter"></div>
         </section>
 
-        <section id="home-summary-card" class="card" data-menu-scope="home">
+        <section id="home-summary-card" class="card" data-menu-scope="home" {% if initial_menu != 'home' %}style="display: none;"{% endif %}>
           <div class="home-summary-head">
             <h2>Resumo geral do sistema</h2>
             <p>Visao padrao com indicadores de entidades e utilizadores por perfil global.</p>
@@ -177,7 +189,7 @@
           </div>
         </section>
 
-        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa">
+        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa" {% if initial_menu != 'empresa' %}style="display: none;"{% endif %}>
           <h2>Perfil institucional da entidade ativa</h2>
           <p>Estes dados pertencem à entidade atualmente ativa e serão refletidos no cadastro da entidade.</p>
           {% if entity_error and initial_menu == "empresa" %}
@@ -281,7 +293,7 @@
           {% endif %}
         </section>
 
-        <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil">
+        <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil" {% if initial_menu not in ['perfil', 'meu_perfil'] or (initial_menu_target and initial_menu_target != '#perfil-pessoal-card') %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados pessoais do utilizador</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-pessoal-card">Editar</button>
@@ -550,7 +562,7 @@
           </form>
         </section>
 
-        <section id="perfil-morada-card" class="card" data-menu-scope="perfil">
+        <section id="perfil-morada-card" class="card" data-menu-scope="perfil" {% if initial_menu != 'perfil' or initial_menu_target != '#perfil-morada-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados de morada</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-morada-card">Editar</button>
@@ -622,7 +634,7 @@
             </div>
           </form>
         </section>
-        <section id="dados-treinamento-card" class="card" data-menu-scope="perfil">
+        <section id="dados-treinamento-card" class="card" data-menu-scope="perfil" {% if initial_menu != 'perfil' or initial_menu_target != '#dados-treinamento-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados de treinamento</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="dados-treinamento-card">Editar</button>
@@ -720,14 +732,14 @@
             </div>
           </form>
         </section>
-        <section id="sessao-card" class="card" data-menu-scope="links,contato">
+        <section id="sessao-card" class="card" data-menu-scope="links,contato" {% if initial_menu not in ['links', 'contato'] or (initial_menu_target and initial_menu_target != '#sessao-card') %}style="display: none;"{% endif %}>
           <h2>Sessão</h2>
           <p>Ligado como <strong>{{ current_user.full_name }}</strong> ({{ current_user.login_email }})</p>
         </section>
 
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial">
+        <section id="create-user-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
             <div class="entity-create-toolbar appverbo-process-action-toolbar-v1">
             <details id="create-user-collapse" class="entity-create-collapse appverbo-process-action-details-v1" data-appverbo-user-create-details="1"{% if errors %} open{% endif %}>
               <summary class="appverbo-process-action-toggle-v1">
@@ -861,7 +873,7 @@
         {% endif %}
 
         {% if user_edit_data is defined and user_edit_data.id %}
-        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}">
+        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           <div class="admin-subsection">
@@ -966,7 +978,7 @@
         {% endif %}
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_tenant_structure %}
-        <section id="create-entity-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo">
+        <section id="create-entity-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#create-entity-card' %}style="display: none;"{% endif %}>
           <div class="appverbo-process-action-toolbar-v1">
           <details class="entity-create-collapse appverbo-process-action-details-v1">
             <summary class="appverbo-process-action-toggle-v1">
@@ -1075,7 +1087,7 @@
         {% endif %}
 
         {% if entity_edit_data is defined and entity_edit_data.id %}
-        <section id="edit-entity-card" class="card entity-panel-card" data-menu-scope="administrativo" data-readonly-mode="{% if entity_readonly_mode %}1{% else %}0{% endif %}">
+        <section id="edit-entity-card" class="card entity-panel-card" data-menu-scope="administrativo" data-readonly-mode="{% if entity_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu != 'administrativo' or initial_menu_target != '#edit-entity-card' %}style="display: none;"{% endif %}>
           <h2>{% if entity_readonly_mode %}Exibir entidade{% else %}Editar entidade{% endif %}</h2>
           <p>Atualize os dados principais da entidade selecionada.</p>
 
@@ -1231,7 +1243,7 @@
         {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_entity_state) }}
         {% else %}
-          <section id="recent-entities-card" class="card" data-menu-scope="administrativo">
+          <section id="recent-entities-card" class="card" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#recent-entities-card' %}style="display: none;"{% endif %}>
             <h2>Dados gerais</h2>
             {% set _dados_gerais_entities = recent_entities[:1] %}
             {% if _dados_gerais_entities %}
@@ -1294,7 +1306,7 @@
         {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
         {% set settings_has_process_fields = true %}
         {% set settings_owner_fields_enabled = current_user_can_manage_tenant_structure %}
-        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes">
+        <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes" {% if initial_menu not in ['administrativo', 'sessoes'] or initial_menu_target != '#settings-menu-edit-card' %}style="display: none;"{% endif %}>
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
           {% if settings_has_process_fields %}
@@ -2158,7 +2170,7 @@
         <!-- APPVERBO_MENU_SUBPROCESS_TABLES_V1_END -->
 
 
-        <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao">
+        <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao" {% if initial_menu != 'configuracao' or (initial_menu_target and initial_menu_target != '#configuracao-account-status-card') %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Configuração</h2>
             {% if current_user_can_manage_tenant_structure %}
@@ -2305,7 +2317,7 @@
         </section>
 
         {% if current_user_can_manage_tenant_structure %}
-        <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil">
+        <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil" {% if initial_menu != 'meu_perfil' or (initial_menu_target and initial_menu_target != '#meu-perfil-folder-settings-card') %}style="display: none;"{% endif %}>
           <h2>Configuração da pasta Meu perfil</h2>
           <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
           {% for row in sidebar_menu_settings %}
@@ -2362,7 +2374,7 @@
         </section>
         {% endif %}
 
-        <section id="recent-users-card" class="card" data-menu-scope="meu_perfil,funcionarios,financeiro,relatorios,tutorial">
+        <section id="recent-users-card" class="card" data-menu-scope="meu_perfil,funcionarios,financeiro,relatorios,tutorial" {% if initial_menu not in ['meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'tutorial'] or (initial_menu_target and initial_menu_target != '#recent-users-card') %}style="display: none;"{% endif %}>
           <h2>Últimos utilizadores criados</h2>
           {% if recent_users %}
             <table>
@@ -2400,6 +2412,7 @@
 {% endblock %}
 
 {% block scripts %}
+  <script src="/static/js/modules/debug_flicker_cards_v1.js?v=20260627-flicker-debug-v1"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
   <script>
@@ -2444,7 +2457,7 @@
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260627-auth-profile-flicker-fix-v1"></script>
+  <script src="/static/js/new_user.js?v=20260627-default-menu-fallback-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260625-client-nav-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
