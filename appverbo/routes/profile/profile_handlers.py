@@ -12,6 +12,11 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
+from appverbo.admin_subprocesses.repositories.auth_profile_repository import (
+    AUTH_PROFILE_MENU_KEY,
+    AuthorizationProfileAdminRepository,
+)
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
     MENU_MEU_PERFIL_FIELD_LABELS,
@@ -26,8 +31,13 @@ from appverbo.menu_settings import (
 )
 from appverbo.services import *  # noqa: F403,F401
 from appverbo.services.profile import (
+    build_menu_process_records_storage_key,
     build_menu_process_quantity_storage_key,
     get_menu_process_quantity_repeated_field_keys,
+    parse_member_profile_fields,
+    parse_menu_process_records,
+    serialize_member_profile_fields,
+    serialize_menu_process_records,
     parse_menu_process_quantity_values,
     serialize_menu_process_quantity_values,
 )
@@ -39,6 +49,9 @@ from appverbo.models import (
     MemberStatus,
     User,
     UserAccountStatus,
+)
+from appverbo.dynamic_process_layout import (
+    resolve_dynamic_process_layout_config,
 )
 
 from appverbo.routes.profile.router import router
@@ -558,6 +571,173 @@ def _build_post_save_redirect_url_v6(
     )
 # APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_END
 
+
+@router.post("/users/profile/auth-profile-save")
+async def save_authorization_profile_subprocess(request: Request) -> RedirectResponse:
+    submitted_form = await request.form()
+    requested_mode = str(submitted_form.get("auth_profile_mode") or "").strip().lower()
+    if requested_mode not in {"create", "edit"}:
+        requested_mode = "create"
+
+    requested_edit_key = str(
+        submitted_form.get("original_auth_profile_key") or ""
+    ).strip().lower()
+    clean_label = str(submitted_form.get("auth_profile_label") or "").strip()
+    clean_scope_mode = str(
+        submitted_form.get("auth_profile_visibility_scope_mode") or ""
+    ).strip().lower()
+    clean_status = _normalize_process_state(
+        submitted_form.get("auth_profile_status")
+    )
+    raw_return_url = str(
+        submitted_form.get("auth_profile_return_url") or ""
+    ).strip()
+
+    def _build_auth_profile_fallback_url(
+        *,
+        is_editing: bool = False,
+        extra_params: dict[str, Any] | None = None,
+    ) -> str:
+        params = {
+            "menu": AUTH_PROFILE_MENU_KEY,
+            "target": "#auth-profile-form-card" if is_editing else "#auth-profile-card",
+        }
+        if is_editing and requested_edit_key:
+            params["auth_profile_edit_key"] = requested_edit_key
+        for raw_key, raw_value in (extra_params or {}).items():
+            clean_key = str(raw_key or "").strip()
+            clean_value = str(raw_value or "").strip()
+            if clean_key and clean_value:
+                params[clean_key] = clean_value
+        return _append_after_save_marker_to_users_new_url_v6(
+            build_users_new_url(**params)
+        )
+
+    def _redirect_with_profile_feedback(message: str, *, is_error: bool) -> RedirectResponse:
+        extra_params = {
+            ("profile_error" if is_error else "profile_success"): message,
+        }
+        if is_error and requested_mode == "edit" and requested_edit_key:
+            extra_params["target"] = "#auth-profile-form-card"
+            extra_params["auth_profile_edit_key"] = requested_edit_key
+        safe_url = _sanitize_users_new_return_url_post_save_v6(
+            raw_return_url,
+            extra_params,
+        )
+        return RedirectResponse(
+            url=safe_url or _build_auth_profile_fallback_url(
+                is_editing=is_error and requested_mode == "edit" and bool(requested_edit_key),
+                extra_params=extra_params,
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        page_data = get_page_data(
+            session,
+            actor_user_id=current_user["id"],
+            actor_login_email=current_user["login_email"],
+            selected_entity_id=selected_entity_id,
+        )
+        visible_menu_keys = {
+            str(raw_key or "").strip().lower()
+            for raw_key in page_data.get("visible_sidebar_menu_keys", [])
+            if str(raw_key or "").strip()
+        }
+        if AUTH_PROFILE_MENU_KEY not in visible_menu_keys:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    menu="home",
+                    error="Sem permissão para aceder ao Perfil de autorização.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if not clean_label:
+            return _redirect_with_profile_feedback(
+                "Informe o perfil.",
+                is_error=True,
+            )
+
+        auth_profile_config = get_admin_subprocess_config(AUTH_PROFILE_MENU_KEY)
+        if auth_profile_config is None:
+            return _redirect_with_profile_feedback(
+                "Configuração do Perfil de autorização não encontrada.",
+                is_error=True,
+            )
+
+        entity_number = ""
+        if selected_entity_id is not None:
+            resolved_entity_number = session.execute(
+                select(Entity.entity_number)
+                .where(Entity.id == selected_entity_id)
+                .limit(1)
+            ).scalar_one_or_none()
+            if resolved_entity_number is not None:
+                entity_number = str(resolved_entity_number)
+
+        auth_profile_repo = AuthorizationProfileAdminRepository(auth_profile_config)
+        save_ok, save_reason, saved_key = auth_profile_repo.save_row(
+            session,
+            {
+                "label": clean_label,
+                "visibility_scope_mode": clean_scope_mode,
+                "status": clean_status,
+            },
+            context={
+                "user_id": current_user["id"],
+                "entity_number": entity_number,
+            },
+            edit_key=requested_edit_key if requested_mode == "edit" else "",
+        )
+
+        if not save_ok:
+            error_message = "Falha ao guardar o perfil."
+            if save_reason == "empty_label":
+                error_message = "Informe o perfil."
+            elif save_reason == "duplicate_key":
+                error_message = "Já existe um perfil com esse nome."
+            elif save_reason == "edit_key_not_found":
+                error_message = "Perfil não encontrado para edição."
+            elif save_reason == "member_not_found":
+                error_message = "Membro associado ao utilizador não encontrado."
+            return _redirect_with_profile_feedback(
+                error_message,
+                is_error=True,
+            )
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            return _redirect_with_profile_feedback(
+                "Falha ao guardar o perfil.",
+                is_error=True,
+            )
+
+    success_message = (
+        "Perfil atualizado com sucesso."
+        if requested_mode == "edit" and requested_edit_key
+        else "Perfil criado com sucesso."
+    )
+    return RedirectResponse(
+        url=_sanitize_users_new_return_url_post_save_v6(
+            raw_return_url,
+            {"profile_success": success_message},
+        ) or _build_auth_profile_fallback_url(
+            extra_params={"profile_success": success_message},
+        ),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
@@ -1028,6 +1208,9 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     requested_section_key = str(submitted_form.get("section_key") or "").strip()
     requested_history_action = str(submitted_form.get("history_action") or "").strip().lower()
     requested_history_record_id = str(submitted_form.get("history_record_id") or "").strip()
+    requested_history_record_state = str(
+        submitted_form.get("history_record_state") or ""
+    ).strip().lower()
 
     if not clean_menu_key:
         return RedirectResponse(
@@ -1075,18 +1258,26 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         quantity_rules = _normalize_process_quantity_rules(
             process_setting.get("process_quantity_fields")
         )
-        absence_process_mode = _is_absence_process(clean_menu_key, process_setting)
-        history_process_mode = _is_history_process(
+        dynamic_process_layout_config_v1 = resolve_dynamic_process_layout_config(
             clean_menu_key,
-            process_setting,
-            requested_section_key,
+            str(process_setting.get("label") or clean_menu_key),
+            process_setting.get("menu_config")
+            if isinstance(process_setting.get("menu_config"), dict)
+            else process_setting,
+            visible_field_rows=process_setting.get("process_visible_field_rows"),
+            field_options=process_setting.get("process_field_options"),
         )
-        record_label_singular = (
-            "ausência" if absence_process_mode
-            else "perfil" if _is_authorization_profile_process(clean_menu_key, process_setting)
-            else "registo"
+        absence_process_mode = _is_absence_process(clean_menu_key, process_setting)
+        history_process_mode = bool(
+            dynamic_process_layout_config_v1.get("uses_record_history")
         )
-        if requested_history_action not in {"", "create", "update", "delete"}:
+        record_label_singular = str(
+            dynamic_process_layout_config_v1.get("singular_label") or "registo"
+        ).strip() or "registo"
+        record_state_enabled = bool(
+            dynamic_process_layout_config_v1.get("state_enabled")
+        )
+        if requested_history_action not in {"", "create", "update", "delete", "toggle_status"}:
             requested_history_action = "create"
         if not history_process_mode:
             requested_history_action = "create"
@@ -1291,6 +1482,69 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        if history_process_mode and requested_history_action == "toggle_status":
+            if not record_state_enabled:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                        profile_error=f"{record_label_singular.capitalize()} não suporta alteração de estado.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+            if not requested_history_record_id:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                        profile_error=f"{record_label_singular.capitalize()} inválido para alterar estado.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            next_state = _normalize_process_state(requested_history_record_state)
+            updated = False
+            for row in existing_records:
+                if str(row.get("record_id") or "").strip() != requested_history_record_id:
+                    continue
+                row_values = row.get("values") if isinstance(row.get("values"), dict) else {}
+                normalized_row_values = dict(row_values)
+                normalized_row_values["__estado"] = next_state
+                row["values"] = normalized_row_values
+                updated = True
+                break
+
+            if not updated:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                        profile_error=f"{record_label_singular.capitalize()} não encontrado para alterar estado.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            if records_storage_key:
+                serialized_records = serialize_menu_process_records(existing_records[:200])
+                if serialized_records:
+                    existing_profile_fields[records_storage_key] = serialized_records
+                else:
+                    existing_profile_fields.pop(records_storage_key, None)
+
+            member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                        profile_error=f"Falha ao alterar o estado do {record_label_singular}.",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            status_action_label = "reativado" if next_state == "ativo" else "inativado"
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
+                    profile_success=f"{record_label_singular.capitalize()} {status_action_label} com sucesso.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         missing_required_labels: list[str] = []
         for field_key in active_section_field_keys:
             field_meta = field_meta_by_key.get(field_key) or {}
@@ -1343,7 +1597,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
         if missing_required_quantity_labels:
             return RedirectResponse(
                 url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
-                    profile_error="Preencha os campos obrigatÃ³rios: " + ", ".join(missing_required_quantity_labels) + ".",
+                    profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_quantity_labels) + ".",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -1407,7 +1661,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
-        if history_process_mode and not absence_process_mode:
+        if history_process_mode and record_state_enabled:
             submitted_section_values["__estado"] = _normalize_process_state(
                 submitted_form.get("process_state")
             )

@@ -58,3 +58,5 @@ __pycache__/
 .venv/
 .env
 backups/
+*_output.txt
+diff_output.txt

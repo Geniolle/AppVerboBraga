@@ -9,6 +9,11 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from appverbo.admin_subprocesses.registry import get_admin_subprocess_config
+from appverbo.dynamic_process_layout import (
+    resolve_dynamic_process_layout_config,
+)
+
 MENU_MEU_PERFIL_KEY = "meu_perfil"
 MENU_MEU_PERFIL_LEGACY_KEY = "documentos"
 
@@ -1088,6 +1093,22 @@ def _parse_menu_config(raw_menu_config: Any) -> dict[str, Any]:
     return {}
 
 
+def _build_admin_subprocess_sidebar_metadata(menu_key: str) -> dict[str, Any]:
+    config = get_admin_subprocess_config(menu_key)
+    if config is None or not config.enabled:
+        return {}
+
+    return {
+        "admin_subprocess_key": config.key,
+        "admin_subprocess_label": config.label,
+        "admin_subprocess_singular_label": config.singular_label,
+        "admin_subprocess_plural_label": config.plural_label,
+        "admin_subprocess_default_target": f"#{config.default_target}".replace("##", "#"),
+        "admin_subprocess_edit_target": f"#{config.edit_target}".replace("##", "#"),
+        "admin_subprocess_edit_param": config.edit_param,
+    }
+
+
 def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
     existing_rows = session.execute(text("SELECT menu_key FROM sidebar_menu_settings")).all()
     existing_keys = {_normalize_menu_key(row.menu_key) for row in existing_rows}
@@ -1279,6 +1300,13 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         process_header_options = get_menu_process_header_options(menu_key, menu_config)
         process_visible_field_header_map = get_menu_process_visible_field_header_map(menu_key, menu_config)
         process_visible_field_rows = get_menu_process_visible_field_rows(menu_key, menu_config)
+        process_layout_config = resolve_dynamic_process_layout_config(
+            menu_key,
+            menu_label,
+            menu_config,
+            visible_field_rows=process_visible_field_rows,
+            field_options=process_field_options,
+        )
 
         settings.append(
             {
@@ -1304,7 +1332,23 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
                 "process_field_options": process_field_options,
                 "process_selectable_field_options": process_selectable_field_options,
                 "process_header_options": process_header_options,
+                "process_layout": process_layout_config["layout"],
+                "is_list_process": process_layout_config["is_list_process"],
+                "process_record_singular_label": process_layout_config["singular_label"],
+                "process_record_plural_label": process_layout_config["plural_label"],
+                "process_record_create_title": process_layout_config["create_title"],
+                "process_record_edit_title": process_layout_config["edit_title"],
+                "process_record_active_title": process_layout_config["active_title"],
+                "process_record_inactive_title": process_layout_config["inactive_title"],
+                "process_record_empty_active_message": process_layout_config["empty_active_message"],
+                "process_record_empty_inactive_message": process_layout_config["empty_inactive_message"],
+                "process_record_state_enabled": process_layout_config["state_enabled"],
+                "process_record_status_field_key": process_layout_config["status_field_key"],
+                "process_record_show_system_column": process_layout_config["show_system_column"],
+                "process_record_include_remaining_fields": process_layout_config["include_remaining_fields"],
+                "process_list_columns": process_layout_config["list_columns"],
                 "additional_field_type_options": [dict(item) for item in ADDITIONAL_FIELD_TYPES],
+                **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": default_index,
                 "_has_explicit_order": explicit_display_order is not None,
                 "_effective_order": effective_display_order,
@@ -1344,6 +1388,13 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         process_header_options = get_menu_process_header_options(menu_key, menu_config)
         process_visible_field_header_map = get_menu_process_visible_field_header_map(menu_key, menu_config)
         process_visible_field_rows = get_menu_process_visible_field_rows(menu_key, menu_config)
+        process_layout_config = resolve_dynamic_process_layout_config(
+            menu_key,
+            menu_label,
+            menu_config,
+            visible_field_rows=process_visible_field_rows,
+            field_options=process_field_options,
+        )
 
         settings.append(
             {
@@ -1365,7 +1416,23 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
                 "process_field_options": process_field_options,
                 "process_selectable_field_options": process_selectable_field_options,
                 "process_header_options": process_header_options,
+                "process_layout": process_layout_config["layout"],
+                "is_list_process": process_layout_config["is_list_process"],
+                "process_record_singular_label": process_layout_config["singular_label"],
+                "process_record_plural_label": process_layout_config["plural_label"],
+                "process_record_create_title": process_layout_config["create_title"],
+                "process_record_edit_title": process_layout_config["edit_title"],
+                "process_record_active_title": process_layout_config["active_title"],
+                "process_record_inactive_title": process_layout_config["inactive_title"],
+                "process_record_empty_active_message": process_layout_config["empty_active_message"],
+                "process_record_empty_inactive_message": process_layout_config["empty_inactive_message"],
+                "process_record_state_enabled": process_layout_config["state_enabled"],
+                "process_record_status_field_key": process_layout_config["status_field_key"],
+                "process_record_show_system_column": process_layout_config["show_system_column"],
+                "process_record_include_remaining_fields": process_layout_config["include_remaining_fields"],
+                "process_list_columns": process_layout_config["list_columns"],
                 "additional_field_type_options": [dict(item) for item in ADDITIONAL_FIELD_TYPES],
+                **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": fallback_order,
                 "_has_explicit_order": explicit_display_order is not None,
                 "_effective_order": effective_display_order,

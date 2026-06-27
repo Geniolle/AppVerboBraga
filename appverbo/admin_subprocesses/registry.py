@@ -274,6 +274,124 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 )
 
 
+AUTHORIZATION_PROFILE_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Perfil",
+        input_name="auth_profile_label",
+        field_type="text",
+        required=True,
+        max_length=120,
+        placeholder="Informe o perfil",
+    ),
+    AdminFieldConfig(
+        key="visibility_scope_mode",
+        label="Sistema",
+        input_name="auth_profile_visibility_scope_mode",
+        field_type="select",
+        required=True,
+        options=(
+            ("all", "Default"),
+            ("owner", "Owner"),
+            ("legado", "Legado"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="status",
+        label="Estado",
+        input_name="auth_profile_status",
+        field_type="select",
+        required=True,
+        options=(
+            ("ativo", "Ativo"),
+            ("inativo", "Inativo"),
+        ),
+    ),
+)
+
+
+AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
+    key="perfil_de_autorizacao",
+    label="Perfil de autorização",
+    singular_label="Perfil",
+    plural_label="Perfis",
+    edit_param="auth_profile_edit_key",
+    default_target="auth-profile-card",
+    edit_target="auth-profile-form-card",
+    create_title="Criar perfil",
+    edit_title="Editar perfil",
+    active_title="Perfis ativos",
+    inactive_title="Perfis inativos",
+    save_endpoint="/users/profile/auth-profile-save",
+    create_endpoint="/users/profile/auth-profile-save",
+    update_endpoint="/users/profile/auth-profile-save",
+    repository_name="auth_profile",
+    repository_class="appverbo.admin_subprocesses.repositories.auth_profile_repository.AuthorizationProfileAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="auth_profile_mode",
+    edit_key_field="original_auth_profile_key",
+    return_url_field="auth_profile_return_url",
+    create_mode_value="create",
+    edit_mode_value="edit",
+    enabled=True,
+    migration_status="native",
+    fields=AUTHORIZATION_PROFILE_FIELDS,
+    columns=(
+        AdminColumnConfig(
+            key="label",
+            label="PERFIL",
+            source="label",
+            css_class="admin-col-main-v1",
+            always_visible=True,
+            sortable=True,
+            default_sort="asc",
+        ),
+        AdminColumnConfig(
+            key="system",
+            label="SISTEMA",
+            source="visibility_scope_label",
+            css_class="admin-col-system-v1",
+        ),
+        AdminColumnConfig(
+            key="status",
+            label="ESTADO",
+            source="status_label",
+            css_class="admin-col-status-v1",
+            always_visible=True,
+        ),
+    ),
+    actions=(
+        AdminActionConfig(
+            key="view",
+            label="Visualizar",
+            icon="👁",
+            action_type="button",
+            visible_when=("ativo", "inativo"),
+        ),
+        AdminActionConfig(
+            key="edit",
+            label="Editar",
+            icon="✎",
+            action_type="link",
+            visible_when=("ativo", "inativo"),
+        ),
+    ),
+    menu_scope="perfil_de_autorizacao",
+    empty_active_message="Sem perfis ativos.",
+    empty_inactive_message="Sem perfis inativos.",
+    active_card_id="auth-profile-active-card",
+    inactive_card_id="auth-profile-inactive-card",
+    active_table_id="auth-profile-active-table",
+    inactive_table_id="auth-profile-inactive-table",
+    active_limiter_id="auth-profile-active-limiter",
+    inactive_limiter_id="auth-profile-inactive-limiter",
+)
+
+
 USER_DELETE_ACTION = AdminActionConfig(
     key="delete",
     label="Eliminar",
@@ -537,6 +655,7 @@ CONTAS_CONFIG = AdminSubprocessConfig(
 ADMIN_SUBPROCESS_REGISTRY = {
     ENTIDADE_CONFIG.key: ENTIDADE_CONFIG,
     SESSOES_CONFIG.key: SESSOES_CONFIG,
+    AUTHORIZATION_PROFILE_CONFIG.key: AUTHORIZATION_PROFILE_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,

@@ -507,6 +507,28 @@ Sempre que uma aba, subprocesso ou lista administrativa tiver a opção de criar
 8. Este padrão é global e deve ser reaproveitado em todas as abas que tenham ação de criação.
 <!-- APPVERBO_CREATE_CARD_STANDARD_RULE_V4_END -->
 
+<!-- APPVERBO_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_START -->
+## Regra global para processos dinâmicos listáveis
+
+Sempre que for criado ou configurado um novo processo dinâmico/listável no AppVerboBraga:
+
+1. O processo deve usar o layout standard de gestão/listagem, sem HTML específico duplicado por processo.
+2. O layout standard deve conter:
+   - card/bloco de ação com botão **Criar [singular]**;
+   - card de **[plural] ativos**;
+   - card de **[plural] inativos**;
+   - pesquisa;
+   - tabela com cabeçalho e colunas;
+   - paginação;
+   - seletor de entradas por página e contador/rodapé;
+   - estado persistido no registo;
+   - ações reutilizáveis de editar, ativar/inativar e, quando aplicável, eliminar.
+3. A definição de que um processo é listável deve ficar numa configuração central reutilizável, por exemplo `process_layout: "list"`, ou equivalente já suportado pelo projeto.
+4. Os labels singular/plural devem nascer da configuração central do processo, com fallback genérico apenas quando não existir label específico.
+5. É proibido criar hacks visuais, `MutationObserver`, scripts externos ou branches soltas só para um processo quando o comportamento esperado for standard.
+6. O backend e o frontend devem reutilizar a mesma definição central do processo listável.
+<!-- APPVERBO_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_END -->
+
 <!-- APPVERBO_SESSOES_DB_FIELDS_CREATE_RULE_V4_START -->
 ## Regra para campos de criação baseados na edição/BD
 

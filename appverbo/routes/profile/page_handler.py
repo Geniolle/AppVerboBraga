@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appverbo.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
+from appverbo.admin_subprocesses.repositories.auth_profile_repository import AuthorizationProfileAdminRepository
 from appverbo.admin_subprocesses.service import build_admin_subprocess_state
 from appverbo.admin_subprocesses.models import AdminSubprocessState
 # APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
@@ -162,6 +163,7 @@ def _resolve_initial_menu_target(
     settings_edit_key: str,
     can_manage_tenant_structure: bool,
     sidebar_menu_settings: list[dict[str, Any]],
+    query_edit_params: dict[str, str] | None = None,
 ) -> tuple[str, str]:
     clean_menu_key = resolve_menu_key_alias(resolved_menu)
     settings_by_key = {
@@ -203,6 +205,21 @@ def _resolve_initial_menu_target(
 
     matched_menu_row = settings_by_key.get(clean_menu_key)
     if matched_menu_row is not None:
+        native_default_target = _normalize_card_target_v1(
+            matched_menu_row.get("admin_subprocess_default_target")
+        )
+        native_edit_target = _normalize_card_target_v1(
+            matched_menu_row.get("admin_subprocess_edit_target")
+        )
+        native_edit_param = str(
+            matched_menu_row.get("admin_subprocess_edit_param") or ""
+        ).strip()
+        active_edit_value = str((query_edit_params or {}).get(native_edit_param) or "").strip()
+
+        if native_default_target:
+            if native_edit_target and active_edit_value:
+                return native_edit_target, ""
+            return native_default_target, ""
         return "#dynamic-process-card", _resolve_first_dynamic_section_key(matched_menu_row)
     return "", ""
 
@@ -330,6 +347,7 @@ def new_user_page(
     dynamic_process_section: str = "",
     section_key: str = "",
     sidebar_section_edit_key: str = "",
+    auth_profile_edit_key: str = "",
     appverbo_after_save: str = "",
 ) -> HTMLResponse:
     _dbg_page = _debug_sessoes_page_enabled_v1(request)
@@ -544,6 +562,10 @@ def new_user_page(
         settings_edit_key=clean_settings_edit_key,
         can_manage_tenant_structure=bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
+        query_edit_params={
+            "sidebar_section_edit_key": sidebar_section_edit_key,
+            "auth_profile_edit_key": auth_profile_edit_key,
+        },
     )
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
@@ -625,6 +647,39 @@ def new_user_page(
             active_count=len(active_sidebar_sections_v22 or []),
             inactive_count=len(inactive_sidebar_sections_v22 or []),
         )
+
+    auth_profile_subprocess_state_v1 = None
+
+    auth_profile_menu_visible = (
+        resolved_menu == "perfil_de_autorizacao"
+        or "perfil_de_autorizacao" in visible_menu_keys
+    )
+
+    if auth_profile_menu_visible:
+        auth_profile_subprocess_config_v1 = get_admin_subprocess_config("perfil_de_autorizacao")
+
+        if auth_profile_subprocess_config_v1 is not None and auth_profile_subprocess_config_v1.enabled:
+            try:
+                auth_profile_repo_v1 = AuthorizationProfileAdminRepository(
+                    auth_profile_subprocess_config_v1
+                )
+                auth_profile_rows_v1 = auth_profile_repo_v1.list_rows(
+                    session,
+                    context={"user_id": current_user["id"]},
+                )
+                auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
+                    config=auth_profile_subprocess_config_v1,
+                    rows=auth_profile_rows_v1,
+                    edit_key=str(auth_profile_edit_key or "").strip()
+                    if resolved_menu == "perfil_de_autorizacao"
+                    else "",
+                    menu_key="perfil_de_autorizacao",
+                    return_url="/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
+                    success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
+                    error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
+                )
+            except Exception:
+                auth_profile_subprocess_state_v1 = None
 
     # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None
@@ -718,11 +773,13 @@ def new_user_page(
         "requested_dynamic_process_section": clean_dynamic_section_from_query,
         "appverbo_after_save": is_post_save_return,
         "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
+        "auth_profile_edit_key": str(auth_profile_edit_key or "").strip().lower(),
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
+        "auth_profile_subprocess_state": auth_profile_subprocess_state_v1,
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "admin_subprocess_entity_state": admin_subprocess_entity_state,
         "admin_subprocess_user_state": admin_subprocess_user_state,

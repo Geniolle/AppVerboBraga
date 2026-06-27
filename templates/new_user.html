@@ -40,6 +40,10 @@
         {% endif %}
         <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
 
+        {% if auth_profile_subprocess_state %}
+          {{ render_admin_subprocess_state(auth_profile_subprocess_state) }}
+        {% endif %}
+
         <!-- APPVERBO_MENU_SUBPROCESS_V1_START -->
         {% if admin_subprocess_menu_state %}
           {{ render_admin_subprocess_form(admin_subprocess_menu_state) }}
@@ -58,7 +62,7 @@
 
 
 
-<section id="dynamic-process-card" class="card" style="display: none;">
+<section id="dynamic-process-card" class="card appverbo-process-action-card-v1" style="display: none;">
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
             <button
@@ -84,6 +88,7 @@
             <input id="dynamic-process-section-key" type="hidden" name="section_key" value="">
             <input id="dynamic-process-history-action" type="hidden" name="history_action" value="create">
             <input id="dynamic-process-history-record-id" type="hidden" name="history_record_id" value="">
+            <input id="dynamic-process-history-record-state" type="hidden" name="history_record_state" value="">
             <div id="dynamic-process-edit-grid" class="personal-grid"></div>
             <div class="profile-edit-actions">
               <button id="dynamic-process-submit-btn" type="submit">Guardar</button>
@@ -99,6 +104,38 @@
             <p id="dynamic-process-history-empty" class="empty" style="display: none;">Sem ausências criadas.</p>
           </div>
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
+        </section>
+
+        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" style="display: none;">
+          <h2 id="dynamic-process-active-title">Registos ativos</h2>
+          <div class="admin-subprocess-table-wrap-v1">
+            <table
+              id="dynamic-process-active-table"
+              class="admin-subprocess-table-v1"
+              data-admin-responsive-table="1"
+            >
+              <thead id="dynamic-process-active-head"></thead>
+              <tbody id="dynamic-process-active-body"></tbody>
+            </table>
+          </div>
+          <p id="dynamic-process-active-empty" class="empty" style="display: none;">Sem registos ativos.</p>
+          <div id="dynamic-process-active-limiter" class="table-limiter"></div>
+        </section>
+
+        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" style="display: none;">
+          <h2 id="dynamic-process-inactive-title">Registos inativos</h2>
+          <div class="admin-subprocess-table-wrap-v1">
+            <table
+              id="dynamic-process-inactive-table"
+              class="admin-subprocess-table-v1"
+              data-admin-responsive-table="1"
+            >
+              <thead id="dynamic-process-inactive-head"></thead>
+              <tbody id="dynamic-process-inactive-body"></tbody>
+            </table>
+          </div>
+          <p id="dynamic-process-inactive-empty" class="empty" style="display: none;">Sem registos inativos.</p>
+          <div id="dynamic-process-inactive-limiter" class="table-limiter"></div>
         </section>
 
         <section id="home-summary-card" class="card" data-menu-scope="home">
@@ -2406,7 +2443,7 @@
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260626-link-slot-compact-v1"></script>
+  <script src="/static/js/new_user.js?v=20260627-auth-profile-native-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260625-client-nav-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
