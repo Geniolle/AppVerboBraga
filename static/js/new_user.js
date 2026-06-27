@@ -604,6 +604,20 @@ function isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) {
   return joined.includes("assiduidade") || joined.includes("ausencia");
 }
 
+function isAuthorizationProfileProcessMenu(menuKey, menuLabel, sectionLabel) {
+  const joined = [
+    normalizeLookupText(menuKey),
+    normalizeLookupText(menuLabel),
+    normalizeLookupText(sectionLabel)
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (!joined) {
+    return false;
+  }
+  return joined.includes("autorizacao");
+}
+
 function isHistoryProcessMenu(menuKey, menuLabel, sectionLabel) {
   const joined = [
     normalizeLookupText(menuKey),
@@ -615,7 +629,11 @@ function isHistoryProcessMenu(menuKey, menuLabel, sectionLabel) {
   if (!joined) {
     return false;
   }
-  return isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) || joined.includes("departamento");
+  return (
+    isAbsenceProcessMenu(menuKey, menuLabel, sectionLabel) ||
+    isAuthorizationProfileProcessMenu(menuKey, menuLabel, sectionLabel) ||
+    joined.includes("departamento")
+  );
 }
 
 function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
@@ -631,6 +649,9 @@ function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
   }
   if (joined.includes("departamento")) {
     return { singular: "departamento", plural: "departamentos" };
+  }
+  if (isAuthorizationProfileProcessMenu(menuKey, menuLabel, sectionLabel)) {
+    return { singular: "perfil", plural: "perfis" };
   }
   return { singular: "registo", plural: "registos" };
 }
@@ -2755,7 +2776,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     dynamicProcessEditToggleEl.style.display = "none";
     if (!absenceProcessMode && (sectionFields.length || hasQuantityRulesForSection)) {
       dynamicProcessEditToggleEl.style.display = "";
-      dynamicProcessEditToggleEl.textContent = historyProcessMode ? "Criar" : "Editar";
+      dynamicProcessEditToggleEl.textContent = historyProcessMode ? `Criar ${historyRecordLabels.singular}` : "Editar";
     }
   }
   if (dynamicProcessEmptyEl) {

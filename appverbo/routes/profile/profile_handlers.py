@@ -91,6 +91,13 @@ def _is_absence_process(menu_key: str, process_setting: dict[str, Any] | None = 
         return False
     return ("assiduidade" in joined) or ("ausencia" in joined)
 
+def _is_authorization_profile_process(menu_key: str, process_setting: dict[str, Any] | None = None) -> bool:
+    parts = [_normalize_lookup_text(menu_key)]
+    if isinstance(process_setting, dict):
+        parts.append(_normalize_lookup_text(process_setting.get("label")))
+    joined = " ".join(part for part in parts if part)
+    return bool(joined) and "autorizacao" in joined
+
 def _is_history_process(
     menu_key: str,
     process_setting: dict[str, Any] | None = None,
@@ -104,6 +111,8 @@ def _is_history_process(
     if not joined:
         return False
     if _is_absence_process(menu_key, process_setting):
+        return True
+    if _is_authorization_profile_process(menu_key, process_setting):
         return True
     return "departamento" in joined
 
@@ -1072,7 +1081,11 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             process_setting,
             requested_section_key,
         )
-        record_label_singular = "ausência" if absence_process_mode else "registo"
+        record_label_singular = (
+            "ausência" if absence_process_mode
+            else "perfil" if _is_authorization_profile_process(clean_menu_key, process_setting)
+            else "registo"
+        )
         if requested_history_action not in {"", "create", "update", "delete"}:
             requested_history_action = "create"
         if not history_process_mode:
