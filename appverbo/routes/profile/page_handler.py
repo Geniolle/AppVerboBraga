@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Form, Query, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
@@ -222,6 +223,67 @@ def _resolve_initial_menu_target(
             return native_default_target, ""
         return "#dynamic-process-card", _resolve_first_dynamic_section_key(matched_menu_row)
     return "", ""
+
+
+def _find_sidebar_menu_setting_by_key_v1(
+    sidebar_menu_settings: list[dict[str, Any]],
+    menu_key: str,
+) -> dict[str, Any] | None:
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+
+    for raw_row in sidebar_menu_settings:
+        if not isinstance(raw_row, dict):
+            continue
+
+        row_key = resolve_menu_key_alias(raw_row.get("key"))
+
+        if row_key == clean_menu_key:
+            return raw_row
+
+    return None
+
+
+def _resolve_dynamic_process_section_for_menu_v1(
+    sidebar_menu_settings: list[dict[str, Any]],
+    menu_key: str,
+) -> str:
+    menu_row = _find_sidebar_menu_setting_by_key_v1(sidebar_menu_settings, menu_key)
+
+    if menu_row is None:
+        return ""
+
+    resolved_section = _resolve_first_dynamic_section_key(menu_row)
+
+    if resolved_section == "__empty__":
+        return ""
+
+    return resolved_section
+
+
+def _build_auth_profile_return_url_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+    dynamic_process_section: str = "",
+    target: str = "",
+) -> str:
+    clean_target = _normalize_card_target_v1(target) or "#auth-profile-card"
+    clean_dynamic_section = str(dynamic_process_section or "").strip()
+
+    if not clean_dynamic_section:
+        clean_dynamic_section = _resolve_dynamic_process_section_for_menu_v1(
+            sidebar_menu_settings,
+            "perfil_de_autorizacao",
+        )
+
+    query_params: dict[str, str] = {
+        "menu": "perfil_de_autorizacao",
+        "target": clean_target,
+    }
+
+    if clean_dynamic_section:
+        query_params["dynamic_process_section"] = clean_dynamic_section
+
+    return f"/users/new?{urlencode(query_params)}{clean_target}"
 
 
 # APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
@@ -660,6 +722,21 @@ def new_user_page(
 
         if auth_profile_subprocess_config_v1 is not None and auth_profile_subprocess_config_v1.enabled:
             try:
+                clean_auth_profile_edit_key_v1 = (
+                    str(auth_profile_edit_key or "").strip()
+                    if resolved_menu == "perfil_de_autorizacao"
+                    else ""
+                )
+                auth_profile_return_target_v1 = (
+                    "#auth-profile-form-card"
+                    if clean_auth_profile_edit_key_v1
+                    else "#auth-profile-card"
+                )
+                auth_profile_return_url_v1 = _build_auth_profile_return_url_v1(
+                    sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
+                    dynamic_process_section=clean_dynamic_section_from_query,
+                    target=auth_profile_return_target_v1,
+                )
                 auth_profile_repo_v1 = AuthorizationProfileAdminRepository(
                     auth_profile_subprocess_config_v1
                 )
@@ -670,11 +747,9 @@ def new_user_page(
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
-                    edit_key=str(auth_profile_edit_key or "").strip()
-                    if resolved_menu == "perfil_de_autorizacao"
-                    else "",
+                    edit_key=clean_auth_profile_edit_key_v1,
                     menu_key="perfil_de_autorizacao",
-                    return_url="/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
+                    return_url=auth_profile_return_url_v1,
                     success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
                     error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
                 )

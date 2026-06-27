@@ -144,6 +144,7 @@ function redirectToStoredPostSaveContextV3(storedContext) {
 
   const currentAdminTab = String(currentUrl.searchParams.get("admin_tab") || "").trim();
   const currentHasFeedback = isAppVerboPostSaveFeedbackUrlV3(currentUrl);
+  const currentMenu = String(currentUrl.searchParams.get("menu") || "").trim();
   const storedAdminTab = String(targetUrl.searchParams.get("admin_tab") || "").trim();
   const storedMenu = String(targetUrl.searchParams.get("menu") || "").trim();
 
@@ -151,6 +152,14 @@ function redirectToStoredPostSaveContextV3(storedContext) {
     if (!storedAdminTab || storedAdminTab !== currentAdminTab || storedMenu === "home") {
       return false;
     }
+  }
+
+  if (
+    currentHasFeedback &&
+    currentMenu === "perfil_de_autorizacao" &&
+    storedMenu === "perfil_de_autorizacao"
+  ) {
+    return false;
   }
 
   targetUrl.searchParams.set("appverbo_after_save", "1");

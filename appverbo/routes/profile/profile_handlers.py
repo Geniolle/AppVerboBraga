@@ -593,17 +593,49 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         submitted_form.get("auth_profile_return_url") or ""
     ).strip()
 
+    def _read_auth_profile_return_param(param_name: str) -> str:
+        clean_param_name = str(param_name or "").strip()
+
+        if not clean_param_name:
+            return ""
+
+        try:
+            parsed_return_url = urlsplit(raw_return_url)
+        except Exception:
+            return ""
+
+        if parsed_return_url.scheme or parsed_return_url.netloc:
+            return ""
+
+        path = parsed_return_url.path or "/users/new"
+
+        if path != "/users/new":
+            return ""
+
+        return str(
+            dict(parse_qsl(parsed_return_url.query, keep_blank_values=True)).get(clean_param_name) or ""
+        ).strip()
+
     def _build_auth_profile_fallback_url(
         *,
-        is_editing: bool = False,
+        target_form_card: bool = False,
+        include_edit_key: bool = False,
         extra_params: dict[str, Any] | None = None,
     ) -> str:
+        resolved_target = "#auth-profile-form-card" if target_form_card else "#auth-profile-card"
         params = {
             "menu": AUTH_PROFILE_MENU_KEY,
-            "target": "#auth-profile-form-card" if is_editing else "#auth-profile-card",
+            "target": resolved_target,
         }
-        if is_editing and requested_edit_key:
+
+        resolved_dynamic_section = _read_auth_profile_return_param("dynamic_process_section")
+
+        if resolved_dynamic_section:
+            params["dynamic_process_section"] = resolved_dynamic_section
+
+        if include_edit_key and requested_edit_key:
             params["auth_profile_edit_key"] = requested_edit_key
+
         for raw_key, raw_value in (extra_params or {}).items():
             clean_key = str(raw_key or "").strip()
             clean_value = str(raw_value or "").strip()
@@ -626,7 +658,8 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         )
         return RedirectResponse(
             url=safe_url or _build_auth_profile_fallback_url(
-                is_editing=is_error and requested_mode == "edit" and bool(requested_edit_key),
+                target_form_card=is_error and requested_mode == "edit" and bool(requested_edit_key),
+                include_edit_key=is_error and requested_mode == "edit" and bool(requested_edit_key),
                 extra_params=extra_params,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -733,6 +766,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             raw_return_url,
             {"profile_success": success_message},
         ) or _build_auth_profile_fallback_url(
+            target_form_card=requested_mode == "edit",
             extra_params={"profile_success": success_message},
         ),
         status_code=status.HTTP_303_SEE_OTHER,
