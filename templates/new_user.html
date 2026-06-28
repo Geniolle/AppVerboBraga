@@ -40,10 +40,26 @@
       <div class="container">
         <section id="menu-tabs-card" class="card menu-tabs-card appverbo-process-shell">
           <div id="process-shell-header" class="process-shell-header">
-            <h1 id="process-shell-title" class="process-shell-title"></h1>
+            <h1 id="process-shell-title" class="process-shell-title">{{ initial_menu_label }}</h1>
             <div id="process-shell-actions" class="process-shell-actions"></div>
           </div>
-          <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu"></div>
+          <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu" {% if not initial_menu_tabs %}style="display: none;"{% endif %}>
+            {% if initial_menu_tabs %}
+              {% for tab in initial_menu_tabs %}
+                {% set is_active = (loop.index0 == active_tab_index) %}
+                <a
+                  href="{{ tab.target }}"
+                  class="submenu-item {% if is_active %}active{% endif %}"
+                  role="tab"
+                  aria-selected="{{ 'true' if is_active else 'false' }}"
+                  data-submenu-index="{{ loop.index0 }}"
+                  {% if tab.dynamic_process_section %}data-dynamic-process-section="{{ tab.dynamic_process_section }}"{% endif %}
+                >
+                  {{ tab.label }}
+                </a>
+              {% endfor %}
+            {% endif %}
+          </div>
         </section>
 
 <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
@@ -54,6 +70,10 @@
 
         {% if auth_profile_subprocess_state %}
           {{ render_admin_subprocess_state(auth_profile_subprocess_state) }}
+        {% endif %}
+
+        {% if auth_objeto_subprocess_state %}
+          {{ render_admin_subprocess_state(auth_objeto_subprocess_state) }}
         {% endif %}
 
         <!-- APPVERBO_MENU_SUBPROCESS_V1_START -->
@@ -74,7 +94,7 @@
 
 
 
-<section id="dynamic-process-card" class="card appverbo-process-action-card-v1" style="display: none;">
+<section id="dynamic-process-card" class="card appverbo-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
             <button
@@ -104,7 +124,7 @@
             <div id="dynamic-process-edit-grid" class="personal-grid"></div>
             <div class="profile-edit-actions">
               <button id="dynamic-process-submit-btn" type="submit">Guardar</button>
-              <button type="button" class="profile-cancel-btn" data-edit-cancel="dynamic-process-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="dynamic-process-card">Cancelar</button>
             </div>
           </form>
           <div id="dynamic-process-history-block" class="admin-subsection" style="display: none;">
@@ -117,8 +137,8 @@
           </div>
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
         </section>
-
-        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" style="display: none;">
+ 
+        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-active-title">Registos ativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
             <table
@@ -133,8 +153,8 @@
           <p id="dynamic-process-active-empty" class="empty" style="display: none;">Sem registos ativos.</p>
           <div id="dynamic-process-active-limiter" class="table-limiter"></div>
         </section>
-
-        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" style="display: none;">
+ 
+        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-inactive-title">Registos inativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
             <table
@@ -557,7 +577,7 @@
             </div>
             <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
-              <button type="button" class="profile-cancel-btn" data-edit-cancel="perfil-pessoal-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="perfil-pessoal-card">Cancelar</button>
             </div>
           </form>
         </section>
@@ -630,7 +650,7 @@
             </div>
             <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
-              <button type="button" class="profile-cancel-btn" data-edit-cancel="perfil-morada-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="perfil-morada-card">Cancelar</button>
             </div>
           </form>
         </section>
@@ -728,7 +748,7 @@
             </div>
             <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
-              <button type="button" class="profile-cancel-btn" data-edit-cancel="dados-treinamento-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="dados-treinamento-card">Cancelar</button>
             </div>
           </form>
         </section>
@@ -836,7 +856,7 @@
                       <button
                         type="button"
                         class="action-btn-cancel"
-                        onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;} if(window.AppVerboSyncUserCreateActionModeV1){window.AppVerboSyncUserCreateActionModeV1(document);}"
+                        data-appverbo-cancel="1"
                       >Cancelar</button>
                     </div>
                   </form>
@@ -967,7 +987,14 @@
                 {% if not user_readonly_mode %}
                 <button type="submit" class="action-btn">Guardar</button>
                 {% endif %}
-                <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=utilizador#create-user-card">{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+                <button
+                  type="button"
+                  class="action-btn-cancel"
+                  data-appverbo-cancel="1"
+                  data-appverbo-cancel-target="edit-user-card"
+                  data-appverbo-cancel-return-target="admin-users-created-card"
+                  data-appverbo-cancel-return-url="/users/new?menu=administrativo&admin_tab=utilizador#admin-users-created-card"
+                >{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</button>
               </div>
             </form>
           </div>
@@ -1076,7 +1103,7 @@
                   <button
                     type="button"
                     class="action-btn-cancel"
-                    onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                    data-appverbo-cancel="1"
                   >Cancelar</button>
                 </div>
               </form>
@@ -1234,7 +1261,14 @@
               {% if not entity_readonly_mode %}
               <button type="submit" class="action-btn">Guardar</button>
               {% endif %}
-              <a class="action-btn-cancel" href="/users/new?menu=administrativo&admin_tab=entidade#create-entity-card">{% if entity_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</a>
+              <button
+                type="button"
+                class="action-btn-cancel"
+                data-appverbo-cancel="1"
+                data-appverbo-cancel-target="edit-entity-card"
+                data-appverbo-cancel-return-target="recent-entities-card"
+                data-appverbo-cancel-return-url="/users/new?menu=administrativo&admin_tab=entidade#recent-entities-card"
+              >{% if entity_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</button>
             </div>
           </form>
         </section>
@@ -1376,10 +1410,14 @@
                 </div>
                 <div class="form-action-row">
                   <button type="submit" class="action-btn">Guardar</button>
-                  <a
+                  <button
+                    type="button"
                     class="action-btn-cancel"
-                    href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
-                  >Cancelar</a>
+                    data-appverbo-cancel="1"
+                    data-appverbo-cancel-target="settings-menu-edit-card"
+                    data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                    data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  >Cancelar</button>
                 </div>
               </form>
               {% else %}
@@ -1436,10 +1474,14 @@
                 </div>
               </div>
               <div class="form-action-row">
-                <a
+                <button
+                  type="button"
                   class="action-btn-cancel"
-                  href="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
-                >Cancelar</a>
+                  data-appverbo-cancel="1"
+                  data-appverbo-cancel-target="settings-menu-edit-card"
+                  data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                  data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                >Cancelar</button>
               </div>
               {% endif %}
             </div>
@@ -1557,7 +1599,7 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="submit" class="action-btn" data-process-fields-config-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-process-fields-config-cancel>Cancelar</button>
+                          <button type="button" class="action-btn-cancel" data-appverbo-cancel="1" data-process-fields-config-cancel>Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -1691,7 +1733,7 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="button" class="action-btn" data-process-quantity-editor-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-process-quantity-editor-cancel>Cancelar</button>
+                          <button type="button" class="action-btn-cancel" data-appverbo-cancel="1" data-process-quantity-editor-cancel>Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -1800,6 +1842,7 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
+                            data-appverbo-cancel="1"
                             data-process-list-editor-cancel
                           >Cancelar</button>
                         </div>
@@ -1918,7 +1961,7 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="button" class="action-btn" data-process-subsequent-field-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-process-subsequent-field-cancel>Cancelar</button>
+                          <button type="button" class="action-btn-cancel" data-appverbo-cancel="1" data-process-subsequent-field-cancel>Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -2095,6 +2138,7 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
+                            data-appverbo-cancel="1"
                             data-additional-field-editor-cancel
                           >Cancelar</button>
                         </div>
@@ -2456,8 +2500,9 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260502-process-quantity-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260430-subsequent-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
+  <script src="/static/js/modules/appverbo_cancel_controller_v1.js?v=20260628-global-cancel-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260627-default-menu-fallback-v1"></script>
+  <script src="/static/js/new_user.js?v=20260628-global-cancel-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260625-client-nav-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

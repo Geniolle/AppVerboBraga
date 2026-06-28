@@ -112,6 +112,9 @@ class AdminSubprocessConfig:
     inactive_limiter_id: str = ""
     status_badge_class: str = ""
     view_link_param: str = ""
+    uses_dynamic_fields: bool = False
+    dynamic_fields_menu_key: str = ""
+    dynamic_fields_section_header_key: str = ""
 
 
 @dataclass
@@ -127,6 +130,8 @@ class AdminSubprocessState:
     menu_key: str = "administrativo"
     menu_scope: str = "administrativo"
     return_url: str = ""
+    resolved_dynamic_fields: list[dict[str, Any]] = field(default_factory=list)
+    edit_values: dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_editing(self) -> bool:

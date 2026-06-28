@@ -17,6 +17,9 @@ from appverbo.admin_subprocesses.repositories.auth_profile_repository import (
     AUTH_PROFILE_MENU_KEY,
     AuthorizationProfileAdminRepository,
 )
+from appverbo.admin_subprocesses.repositories.objeto_autorizacao_repository import (
+    ObjetoAutorizacaoAdminRepository,
+)
 from appverbo.core import *  # noqa: F403,F401
 from appverbo.menu_settings import (
     MENU_MEU_PERFIL_FIELD_LABELS,
@@ -550,6 +553,11 @@ def _build_post_save_redirect_url_v6(
         return safe_return_url
 
     normalized_params = dict(params)
+    if hasattr(submitted_form, "get"):
+        submitted_section = str(submitted_form.get("section_key") or "").strip()
+        if submitted_section:
+            normalized_params.setdefault("dynamic_process_section", submitted_section)
+            normalized_params.setdefault("target", "#dynamic-process-card")
 
     has_profile_context = any(
         str(normalized_params.get(key) or "").strip()
@@ -622,7 +630,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         include_edit_key: bool = False,
         extra_params: dict[str, Any] | None = None,
     ) -> str:
-        resolved_target = "#auth-profile-form-card" if target_form_card else "#auth-profile-card"
+        resolved_target = "#auth-profile-form-card" if target_form_card else "#auth-profile-active-card"
         params = {
             "menu": AUTH_PROFILE_MENU_KEY,
             "target": resolved_target,
@@ -771,6 +779,191 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
+
+@router.post("/users/profile/auth-objeto-save")
+async def save_objeto_autorizacao_subprocess(request: Request) -> RedirectResponse:
+    submitted_form = await request.form()
+    requested_mode = str(submitted_form.get("auth_objeto_mode") or "").strip().lower()
+    if requested_mode not in {"create", "edit"}:
+        requested_mode = "create"
+
+    requested_edit_key = str(
+        submitted_form.get("original_auth_objeto_key") or ""
+    ).strip().lower()
+
+    dynamic_field_values: dict[str, str] = {}
+    for _field_name, _field_value in submitted_form.multi_items():
+        _clean_fname = str(_field_name or "").strip()
+        if _clean_fname.startswith("process_field__"):
+            _fkey = _clean_fname[len("process_field__"):]
+            if _fkey:
+                dynamic_field_values[_fkey] = str(_field_value or "").strip()
+
+    clean_label = str(submitted_form.get("auth_objeto_label") or "").strip()
+    if not clean_label and dynamic_field_values:
+        clean_label = next(
+            (v for v in dynamic_field_values.values() if v),
+            "",
+        )
+
+    clean_scope_mode = str(
+        submitted_form.get("auth_objeto_visibility_scope_mode") or ""
+    ).strip().lower()
+    clean_status = _normalize_process_state(
+        submitted_form.get("auth_objeto_status")
+    )
+    raw_return_url = str(
+        submitted_form.get("auth_objeto_return_url") or ""
+    ).strip()
+
+    def _build_auth_objeto_fallback_url(
+        *,
+        target_form_card: bool = False,
+        extra_params: dict[str, Any] | None = None,
+    ) -> str:
+        resolved_target = "#auth-objeto-form-card" if target_form_card else "#auth-objeto-card"
+        params: dict[str, str] = {
+            "menu": AUTH_PROFILE_MENU_KEY,
+            "target": resolved_target,
+        }
+        if target_form_card and requested_edit_key:
+            params["auth_objeto_edit_key"] = requested_edit_key
+        for raw_key, raw_value in (extra_params or {}).items():
+            clean_key = str(raw_key or "").strip()
+            clean_value = str(raw_value or "").strip()
+            if clean_key and clean_value:
+                params[clean_key] = clean_value
+        return _append_after_save_marker_to_users_new_url_v6(
+            build_users_new_url(**params)
+        )
+
+    def _redirect_with_objeto_feedback(message: str, *, is_error: bool) -> RedirectResponse:
+        extra_params = {
+            ("profile_error" if is_error else "profile_success"): message,
+        }
+        if is_error and requested_mode == "edit" and requested_edit_key:
+            extra_params["target"] = "#auth-objeto-form-card"
+            extra_params["auth_objeto_edit_key"] = requested_edit_key
+        safe_url = _sanitize_users_new_return_url_post_save_v6(
+            raw_return_url,
+            extra_params,
+        )
+        return RedirectResponse(
+            url=safe_url or _build_auth_objeto_fallback_url(
+                target_form_card=is_error and requested_mode == "edit" and bool(requested_edit_key),
+                extra_params=extra_params,
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        page_data = get_page_data(
+            session,
+            actor_user_id=current_user["id"],
+            actor_login_email=current_user["login_email"],
+            selected_entity_id=selected_entity_id,
+        )
+        visible_menu_keys = {
+            str(raw_key or "").strip().lower()
+            for raw_key in page_data.get("visible_sidebar_menu_keys", [])
+            if str(raw_key or "").strip()
+        }
+        if AUTH_PROFILE_MENU_KEY not in visible_menu_keys:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    menu="home",
+                    error="Sem permissão para aceder ao Perfil de autorização.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if not clean_label:
+            return _redirect_with_objeto_feedback(
+                "Informe o objeto de autorização.",
+                is_error=True,
+            )
+
+        auth_objeto_config = get_admin_subprocess_config("objeto_de_autorizacao")
+        if auth_objeto_config is None:
+            return _redirect_with_objeto_feedback(
+                "Configuração do Objeto de autorização não encontrada.",
+                is_error=True,
+            )
+
+        entity_number = ""
+        if selected_entity_id is not None:
+            resolved_entity_number = session.execute(
+                select(Entity.entity_number)
+                .where(Entity.id == selected_entity_id)
+                .limit(1)
+            ).scalar_one_or_none()
+            if resolved_entity_number is not None:
+                entity_number = str(resolved_entity_number)
+
+        auth_objeto_repo = ObjetoAutorizacaoAdminRepository(auth_objeto_config)
+        save_ok, save_reason, saved_key = auth_objeto_repo.save_row(
+            session,
+            {
+                "label": clean_label,
+                "visibility_scope_mode": clean_scope_mode,
+                "status": clean_status,
+                "dynamic_values": dynamic_field_values,
+            },
+            context={
+                "user_id": current_user["id"],
+                "entity_number": entity_number,
+            },
+            edit_key=requested_edit_key if requested_mode == "edit" else "",
+        )
+
+        if not save_ok:
+            error_message = "Falha ao guardar o objeto de autorização."
+            if save_reason == "empty_label":
+                error_message = "Informe o objeto de autorização."
+            elif save_reason == "duplicate_key":
+                error_message = "Já existe um objeto com esse nome."
+            elif save_reason == "edit_key_not_found":
+                error_message = "Objeto não encontrado para edição."
+            elif save_reason == "member_not_found":
+                error_message = "Membro associado ao utilizador não encontrado."
+            return _redirect_with_objeto_feedback(
+                error_message,
+                is_error=True,
+            )
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            return _redirect_with_objeto_feedback(
+                "Falha ao guardar o objeto de autorização.",
+                is_error=True,
+            )
+
+    success_message = (
+        "Objeto atualizado com sucesso."
+        if requested_mode == "edit" and requested_edit_key
+        else "Objeto criado com sucesso."
+    )
+    return RedirectResponse(
+        url=_sanitize_users_new_return_url_post_save_v6(
+            raw_return_url,
+            {"profile_success": success_message},
+        ) or _build_auth_objeto_fallback_url(
+            target_form_card=requested_mode == "edit",
+            extra_params={"profile_success": success_message},
+        ),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
 
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:

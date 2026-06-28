@@ -392,6 +392,118 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
 )
 
 
+OBJETO_AUTORIZACAO_TECHNICAL_FIELDS = (
+    AdminFieldConfig(
+        key="visibility_scope_mode",
+        label="Sistema",
+        input_name="auth_objeto_visibility_scope_mode",
+        field_type="select",
+        required=True,
+        options=(
+            ("all", "Default"),
+            ("owner", "Owner"),
+            ("legado", "Legado"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="status",
+        label="Estado",
+        input_name="auth_objeto_status",
+        field_type="select",
+        required=True,
+        options=(
+            ("ativo", "Ativo"),
+            ("inativo", "Inativo"),
+        ),
+    ),
+)
+
+
+OBJETO_AUTORIZACAO_CONFIG = AdminSubprocessConfig(
+    key="objeto_de_autorizacao",
+    label="Objeto de autorização",
+    singular_label="Objeto",
+    plural_label="Objetos de autorização",
+    edit_param="auth_objeto_edit_key",
+    default_target="auth-objeto-card",
+    edit_target="auth-objeto-form-card",
+    create_title="Criar objeto de autorização",
+    edit_title="Editar objeto de autorização",
+    active_title="Objetos de autorização ativos",
+    inactive_title="Objetos de autorização inativos",
+    save_endpoint="/users/profile/auth-objeto-save",
+    create_endpoint="/users/profile/auth-objeto-save",
+    update_endpoint="/users/profile/auth-objeto-save",
+    repository_name="objeto_de_autorizacao",
+    repository_class="appverbo.admin_subprocesses.repositories.objeto_autorizacao_repository.ObjetoAutorizacaoAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="auth_objeto_mode",
+    edit_key_field="original_auth_objeto_key",
+    return_url_field="auth_objeto_return_url",
+    create_mode_value="create",
+    edit_mode_value="edit",
+    enabled=True,
+    migration_status="native",
+    uses_dynamic_fields=True,
+    dynamic_fields_menu_key="perfil_de_autorizacao",
+    dynamic_fields_section_header_key="custom_objeto_de_autorizacao",
+    fields=OBJETO_AUTORIZACAO_TECHNICAL_FIELDS,
+    columns=(
+        AdminColumnConfig(
+            key="label",
+            label="OBJETO",
+            source="label",
+            css_class="admin-col-main-v1",
+            always_visible=True,
+            sortable=True,
+            default_sort="asc",
+        ),
+        AdminColumnConfig(
+            key="system",
+            label="SISTEMA",
+            source="visibility_scope_label",
+            css_class="admin-col-system-v1",
+        ),
+        AdminColumnConfig(
+            key="status",
+            label="ESTADO",
+            source="status_label",
+            css_class="admin-col-status-v1",
+            always_visible=True,
+        ),
+    ),
+    actions=(
+        AdminActionConfig(
+            key="view",
+            label="Visualizar",
+            icon="👁",
+            action_type="button",
+            visible_when=("ativo", "inativo"),
+        ),
+        AdminActionConfig(
+            key="edit",
+            label="Editar",
+            icon="✎",
+            action_type="link",
+            visible_when=("ativo", "inativo"),
+        ),
+    ),
+    menu_scope="perfil_de_autorizacao",
+    empty_active_message="Sem objetos de autorização ativos.",
+    empty_inactive_message="Sem objetos de autorização inativos.",
+    active_card_id="auth-objeto-active-card",
+    inactive_card_id="auth-objeto-inactive-card",
+    active_table_id="auth-objeto-active-table",
+    inactive_table_id="auth-objeto-inactive-table",
+    active_limiter_id="auth-objeto-active-limiter",
+    inactive_limiter_id="auth-objeto-inactive-limiter",
+)
+
+
 USER_DELETE_ACTION = AdminActionConfig(
     key="delete",
     label="Eliminar",
@@ -656,6 +768,7 @@ ADMIN_SUBPROCESS_REGISTRY = {
     ENTIDADE_CONFIG.key: ENTIDADE_CONFIG,
     SESSOES_CONFIG.key: SESSOES_CONFIG,
     AUTHORIZATION_PROFILE_CONFIG.key: AUTHORIZATION_PROFILE_CONFIG,
+    OBJETO_AUTORIZACAO_CONFIG.key: OBJETO_AUTORIZACAO_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,

@@ -457,9 +457,21 @@ function getSidebarAdminSubprocessSettingV1(menuKey) {
 }
 
 function getSidebarAdminSubprocessMenuKeyByTargetV1(targetSelector) {
-  const cleanTarget = normalizeTargetV1(targetSelector);
+  let cleanTarget = normalizeTargetV1(targetSelector);
   if (!cleanTarget) {
     return "";
+  }
+
+  // Support active/inactive/form suffixes for dynamic/native targets
+  if (cleanTarget.endsWith("-active")) {
+    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 7);
+  } else if (cleanTarget.endsWith("-inactive")) {
+    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 9);
+  } else if (cleanTarget.endsWith("-form-card")) {
+    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 10) + "-card";
+  }
+  if (cleanTarget === "#auth-profile") {
+    cleanTarget = "#auth-profile-card";
   }
 
   const matchingSetting = (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
@@ -467,7 +479,12 @@ function getSidebarAdminSubprocessMenuKeyByTargetV1(targetSelector) {
     if (!resolvedSetting) {
       return false;
     }
-    return cleanTarget === resolvedSetting.defaultTarget || cleanTarget === resolvedSetting.editTarget;
+    return (
+      cleanTarget === resolvedSetting.defaultTarget ||
+      cleanTarget === resolvedSetting.editTarget ||
+      normalizeTargetV1(targetSelector) === resolvedSetting.defaultTarget ||
+      normalizeTargetV1(targetSelector) === resolvedSetting.editTarget
+    );
   });
 
   return matchingSetting ? normalizeMenuKey(matchingSetting.key) : "";
@@ -1182,10 +1199,19 @@ function buildStructuredProcessMenuItemsV1(menuKey, dynamicItems = []) {
       { label: "Sessões", target: "#admin-sidebar-sections-card" },
       { label: "Menu", target: "#menu-subprocess-card-active" }
     ];
+  } else if (cleanMenuKey === "perfil_de_autorizacao") {
+    baseItems = [
+      { label: "Perfis", target: "#auth-profile-card" },
+      { label: "Objeto de autorização", target: "#auth-objeto-card" }
+    ];
   }
 
   if (!Array.isArray(baseItems)) {
     return null;
+  }
+
+  if (cleanMenuKey === "perfil_de_autorizacao") {
+    return baseItems;
   }
 
   const mergedItems = filterProcessExtraMenuItemsV1(dynamicItems);
@@ -1237,7 +1263,7 @@ function mergeDynamicProcessMenus() {
       return;
     }
 
-    if (nativeSubprocessSetting) {
+    if (nativeSubprocessSetting && menuKey !== ESTRUTURAS_MENU_KEY_V1 && menuKey !== "perfil_de_autorizacao") {
       delete dynamicProcessDataByMenu[menuKey];
       delete selectedDynamicSectionByMenu[menuKey];
 
@@ -1345,6 +1371,30 @@ function mergeDynamicProcessMenus() {
 
 mergeDynamicProcessMenus();
 
+// APPVERBO_AUTH_PROFILE_MENUCONFIG_INIT_V1_START
+// perfil_de_autorizacao é um subprocesso nativo que pode não estar em sidebarMenuSettings.
+// Garante que menuConfig tem sempre a entrada quando o menu é visível no DOM.
+if (
+  !menuConfig["perfil_de_autorizacao"] &&
+  (
+    visibleSidebarMenuKeys.has("perfil_de_autorizacao") ||
+    document.getElementById("auth-profile-card") ||
+    document.getElementById("auth-profile-active-card") ||
+    document.getElementById("auth-objeto-card") ||
+    document.getElementById("auth-objeto-active-card")
+  )
+) {
+  menuConfig["perfil_de_autorizacao"] = {
+    title: "Perfil de autorização",
+    singleView: true,
+    items: [
+      { label: "Perfis", target: "#auth-profile-card" },
+      { label: "Objeto de autorização", target: "#auth-objeto-card" }
+    ]
+  };
+}
+// APPVERBO_AUTH_PROFILE_MENUCONFIG_INIT_V1_END
+
 const itemsEl = document.getElementById("submenu-items");
 const processShellHeaderEl = document.getElementById("process-shell-header");
 const processShellTitleEl = document.getElementById("process-shell-title");
@@ -1358,7 +1408,6 @@ const userAvatarImageEl = document.getElementById("user-avatar-image");
 const dropdownAvatarImageEl = document.getElementById("dropdown-avatar-image");
 const userDropdownLinks = document.querySelectorAll("[data-dropdown-target]");
 const profileEditButtons = document.querySelectorAll("[data-edit-target]");
-const profileEditCancelButtons = document.querySelectorAll("[data-edit-cancel]");
 const trainingOutrosEnabledEl = document.getElementById("edit_training_outros_enabled");
 const trainingOutrosInputEl = document.getElementById("edit_training_outros");
 const processFieldsBuilderEl = document.getElementById("process-fields-builder");
@@ -1446,29 +1495,43 @@ function isNativeAdminTargetV1(value) {
 }
 function isNativeTargetForMenuV1(menuKey, value) {
   const cleanMenuKey = normalizeMenuKey(menuKey);
-  const cleanTarget = normalizeTargetV1(value);
+  let cleanTarget = normalizeTargetV1(value);
 
   if (!cleanTarget) {
     return false;
   }
 
+  // Normalize subprocess target suffixes (like -active, -inactive, -form-card)
+  if (cleanTarget.endsWith("-active")) {
+    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 7);
+  } else if (cleanTarget.endsWith("-inactive")) {
+    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 9);
+  } else if (cleanTarget.endsWith("-form-card")) {
+    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 10) + "-card";
+  }
+  if (cleanTarget === "#auth-profile") {
+    cleanTarget = "#auth-profile-card";
+  }
+
   if (cleanMenuKey === "administrativo") {
-    return NATIVE_ADMIN_TARGETS_V1.has(cleanTarget);
+    return NATIVE_ADMIN_TARGETS_V1.has(cleanTarget) || NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
   }
 
   if (cleanMenuKey === ESTRUTURAS_MENU_KEY_V1) {
-    return ESTRUTURAS_NATIVE_TARGETS_V1.has(cleanTarget);
+    return ESTRUTURAS_NATIVE_TARGETS_V1.has(cleanTarget) || ESTRUTURAS_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
   }
 
   if (cleanMenuKey === EMPRESA_MENU_KEY_V1) {
-    return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget);
+    return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget) || EMPRESA_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
   }
 
   const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(cleanMenuKey);
   if (sidebarAdminSubprocessSetting) {
     return (
       cleanTarget === sidebarAdminSubprocessSetting.defaultTarget ||
-      cleanTarget === sidebarAdminSubprocessSetting.editTarget
+      cleanTarget === sidebarAdminSubprocessSetting.editTarget ||
+      normalizeTargetV1(value) === sidebarAdminSubprocessSetting.defaultTarget ||
+      normalizeTargetV1(value) === sidebarAdminSubprocessSetting.editTarget
     );
   }
 
@@ -3816,7 +3879,15 @@ function getAdminSubprocessKeyByTargetV1(target) {
     "#admin-account-create-card": "menu",
     "#menu-subprocess-card": "menu",
     "#menu-subprocess-card-active": "menu",
-    "#menu-subprocess-card-inactive": "menu"
+    "#menu-subprocess-card-inactive": "menu",
+    "#auth-profile-card": "perfil_de_autorizacao",
+    "#auth-profile-form-card": "perfil_de_autorizacao",
+    "#auth-profile-active-card": "perfil_de_autorizacao",
+    "#auth-profile-inactive-card": "perfil_de_autorizacao",
+    "#auth-objeto-card": "objeto_de_autorizacao",
+    "#auth-objeto-form-card": "objeto_de_autorizacao",
+    "#auth-objeto-active-card": "objeto_de_autorizacao",
+    "#auth-objeto-inactive-card": "objeto_de_autorizacao"
   };
   return targetMap[cleanTarget] || "";
 }
@@ -3834,6 +3905,7 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
   const supportsStructuredAdminGroups = (
     menuKey === "administrativo" ||
     menuKey === ESTRUTURAS_MENU_KEY_V1 ||
+    menuKey === "perfil_de_autorizacao" ||
     !!sidebarAdminSubprocessSetting
   );
   const adminSubprocessKey = supportsStructuredAdminGroups
@@ -3933,7 +4005,13 @@ function normalizeSubmenuTargetAlias(targetSelector) {
     "#inactive-entities-card": "#create-entity-card",
     "#admin-account-create-card": "#menu-subprocess-card-active",
     "#settings-menu-edit-card": "#menu-subprocess-card-active",
-    "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"
+    "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card",
+    "#auth-profile-active-card": "#auth-profile-card",
+    "#auth-profile-inactive-card": "#auth-profile-card",
+    "#auth-profile-form-card": "#auth-profile-card",
+    "#auth-objeto-active-card": "#auth-objeto-card",
+    "#auth-objeto-inactive-card": "#auth-objeto-card",
+    "#auth-objeto-form-card": "#auth-objeto-card"
   };
   return targetAliasMap[cleanTarget] || cleanTarget;
 }
@@ -3966,6 +4044,15 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
 }
 
 function closeAllProfileEdits() {
+  if (
+    window.AppVerboCancelControllerV1 &&
+    typeof window.AppVerboCancelControllerV1.closeAllOpenEditors === "function"
+  ) {
+    window.AppVerboCancelControllerV1.closeAllOpenEditors(document);
+    syncTrainingOutrosState();
+    return;
+  }
+
   const editingCards = document.querySelectorAll(".card.editing");
   editingCards.forEach((card) => {
     card.classList.remove("editing");
@@ -3975,6 +4062,36 @@ function closeAllProfileEdits() {
     }
   });
   syncTrainingOutrosState();
+}
+
+function resetDynamicProcessCancelStateV1() {
+  if (dynamicProcessHistoryActionInputEl) {
+    dynamicProcessHistoryActionInputEl.value = "create";
+  }
+  if (dynamicProcessHistoryRecordIdInputEl) {
+    dynamicProcessHistoryRecordIdInputEl.value = "";
+  }
+  if (dynamicProcessHistoryRecordStateInputEl) {
+    dynamicProcessHistoryRecordStateInputEl.value = "";
+  }
+  if (dynamicProcessSubmitBtnEl) {
+    dynamicProcessSubmitBtnEl.textContent = "Guardar";
+  }
+
+  const currentMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl && dynamicProcessMenuKeyInputEl.value);
+  const currentSetting = getSidebarMenuSetting(currentMenuKey);
+
+  if (dynamicProcessTitleEl && currentSetting) {
+    const layoutConfig = getDynamicProcessLayoutConfig(
+      currentSetting,
+      currentSetting.label || currentMenuKey,
+      ""
+    );
+
+    if (layoutConfig.isListProcess) {
+      dynamicProcessTitleEl.textContent = layoutConfig.createTitle;
+    }
+  }
 }
 
 function normalizeProfileMultiValueList(rawValue) {
@@ -4357,6 +4474,25 @@ function syncTrainingOutrosState() {
     trainingOutrosInputEl.value = "";
   }
 }
+
+document.addEventListener("appverbo:cancelled", function (event) {
+  const detail = event && event.detail ? event.detail : {};
+  const card = detail.card;
+  const cardId = card && card.id ? card.id : "";
+
+  if (cardId === "dynamic-process-card") {
+    resetDynamicProcessCancelStateV1();
+  }
+
+  if (
+    cardId === "dynamic-process-card" ||
+    cardId === "perfil-pessoal-card" ||
+    cardId === "perfil-morada-card" ||
+    cardId === "dados-treinamento-card"
+  ) {
+    syncTrainingOutrosState();
+  }
+});
 
 function enhanceProcessShellTables(root) {
   const scopeRoot = root || document;
@@ -5673,47 +5809,6 @@ if (dynamicProcessEditToggleEl) {
   });
 }
 
-profileEditCancelButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const cardId = button.getAttribute("data-edit-cancel");
-    if (!cardId) {
-      return;
-    }
-    const card = document.getElementById(cardId);
-    if (!card) {
-      return;
-    }
-    card.classList.remove("editing");
-    const form = card.querySelector(".profile-edit-form");
-    if (form) {
-      form.reset();
-    }
-    if (cardId === "dynamic-process-card") {
-      if (dynamicProcessHistoryActionInputEl) {
-        dynamicProcessHistoryActionInputEl.value = "create";
-      }
-      if (dynamicProcessHistoryRecordIdInputEl) {
-        dynamicProcessHistoryRecordIdInputEl.value = "";
-      }
-      if (dynamicProcessHistoryRecordStateInputEl) {
-        dynamicProcessHistoryRecordStateInputEl.value = "";
-      }
-      const currentMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl && dynamicProcessMenuKeyInputEl.value);
-      const currentSetting = getSidebarMenuSetting(currentMenuKey);
-      if (dynamicProcessTitleEl && currentSetting) {
-        const layoutConfig = getDynamicProcessLayoutConfig(
-          currentSetting,
-          currentSetting.label || currentMenuKey,
-          ""
-        );
-        if (layoutConfig.isListProcess) {
-          dynamicProcessTitleEl.textContent = layoutConfig.createTitle;
-        }
-      }
-    }
-  });
-});
-
 if (trainingOutrosEnabledEl) {
   trainingOutrosEnabledEl.addEventListener("change", () => {
     syncTrainingOutrosState();
@@ -5832,18 +5927,6 @@ function setupGeneratedInviteLinkCopy() {
     ) {
       syncUserCreateActionModeV1(document);
     }
-  }, true);
-
-  document.addEventListener("click", function (event) {
-    var cancelBtn = event.target && event.target.closest
-      ? event.target.closest("#create-user-card .action-btn-cancel")
-      : null;
-    if (!cancelBtn) {
-      return;
-    }
-    window.setTimeout(function () {
-      syncUserCreateActionModeV1(document);
-    }, 0);
   }, true);
 
   if (document.readyState === "loading") {

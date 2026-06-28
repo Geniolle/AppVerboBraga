@@ -436,6 +436,22 @@ Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppVe
 8. Não posicionar Guardar/Cancelar no lado direito da tela, salvo exceção explícita aprovada.
 <!-- APPVERBO_SAVE_CANCEL_BUTTON_RULE_V1_END -->
 
+<!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_START -->
+## Regra global para o botão Cancelar
+
+Todo botão **Cancelar** do AppVerboBraga deve usar obrigatoriamente o controller global `static/js/modules/appverbo_cancel_controller_v1.js`.
+
+Regras:
+
+1. É proibido criar `onclick` inline para **Cancelar**.
+2. É proibido criar lógica de cancelamento específica por processo quando o controller global já resolver o caso.
+3. Novos processos, cards, editores e formulários devem usar `data-appverbo-cancel="1"`.
+4. Quando existir um alvo explícito, usar `data-appverbo-cancel-target` e, se necessário, `data-appverbo-cancel-return-target`.
+5. O cancelamento deve fechar ou resetar apenas o contexto visual local.
+6. O botão **Cancelar** nunca pode fazer `POST`, chamar endpoint, navegar por `href` de ação, nem gravar dados.
+7. A regra aplica-se a processos atuais e futuros.
+<!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_END -->
+
 <!-- APPVERBO_CREATE_ENTRY_BLOCK_RULE_V1_START -->
 ## Regra global para criação de entradas em abas/subprocessos
 
@@ -528,6 +544,25 @@ Sempre que for criado ou configurado um novo processo dinâmico/listável no App
 5. É proibido criar hacks visuais, `MutationObserver`, scripts externos ou branches soltas só para um processo quando o comportamento esperado for standard.
 6. O backend e o frontend devem reutilizar a mesma definição central do processo listável.
 <!-- APPVERBO_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_END -->
+
+<!-- APPVERBO_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_START -->
+## Regra de campos em subprocessos admin (AdminSubprocessConfig)
+
+Apenas os processos **Administrativo** e **Estruturas** (sessoes) podem ter campos hardcoded em `AdminSubprocessConfig.fields`.
+
+Todos os outros subprocessos dinâmicos (ex: Objeto de autorização) **devem** ler os seus campos de conteúdo da configuração do processo:
+
+1. Definir `uses_dynamic_fields=True` em `AdminSubprocessConfig`.
+2. Definir `dynamic_fields_menu_key` com a chave do processo pai (ex: `"perfil_de_autorizacao"`).
+3. Definir `dynamic_fields_section_header_key` com a chave do header configurado (ex: `"custom_objeto_de_autorizacao"`).
+4. O resolver reutilizável é `resolve_subprocess_section_fields_v1` em `appverbo/services/process_tabs.py` — filtra `process_visible_field_rows` por `header_key` e retorna os campos configurados.
+5. A função centralizadora de exceção é `is_system_hardcoded_process(menu_key)` em `appverbo/services/process_tabs.py` — retorna `True` apenas para `{"administrativo", "sessoes"}`.
+6. Os campos técnicos (Sistema, Estado) ficam em `fields=` do config. Os campos de conteúdo vêm de `resolved_dynamic_fields` no estado.
+7. O formulário Jinja2 renderiza `state.resolved_dynamic_fields` (com `name="process_field__<key>"`) antes dos campos técnicos de `state.config.fields`.
+8. O save handler lê `process_field__*` do formulário e passa `dynamic_values` ao repositório.
+9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico em `objeto_de_autorizacao`/`custom_objeto_label` para compatibilidade.
+10. É proibido adicionar campos de conteúdo hardcoded num subprocesso dinâmico — os campos devem vir sempre de `Configuração dos campos`.
+<!-- APPVERBO_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
 
 <!-- APPVERBO_SESSOES_DB_FIELDS_CREATE_RULE_V4_START -->
 ## Regra para campos de criação baseados na edição/BD
@@ -1010,3 +1045,50 @@ Na aba **Sessões**, a ordem visual correta é:
    - classes `appverbo-sessoes-*`;
 5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
 <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
+
+<!-- APPVERBO_UNIFIED_SUBMENU_TABS_V1_START -->
+## Regra definitiva: Abas e Cards Orientados pelo Backend
+
+Todo processo ou menu que possui abas superiores deve seguir obrigatoriamente a arquitetura unificada orientada pelo backend:
+
+1. As abas do menu ativo devem ser resolvidas pelo backend (usando `resolve_process_tabs_v1`) e renderizadas diretamente no Jinja2 template dentro do elemento `#submenu-items`.
+2. O JavaScript não deve destruir ou recriar os elementos do menu sob `#submenu-items` se eles já vierem renderizados do backend e corresponderem às abas configuradas.
+3. A visibilidade inicial dos cards e tabelas na primeira pintura (first paint) deve ser definida pelo backend usando o atributo `style="display: none;"` baseado no parâmetro `initial_menu_target`.
+4. Os cards dinâmicos do processo (`#dynamic-process-card`, `#dynamic-process-active-card`, `#dynamic-process-inactive-card`) e os cards nativos do subprocesso só devem ser exibidos se fizerem parte da aba atualmente ativa.
+5. Após ações de guardar ou eliminar dados de processos dinâmicos ou nativos, o redirecionamento pós-save deve conter os parâmetros corretos (`menu`, `target`, `dynamic_process_section`) para retornar o utilizador à aba exata em que se encontrava, preservando a coerência visual e evitando dupla navegação.
+<!-- APPVERBO_UNIFIED_SUBMENU_TABS_V1_END -->
+
+<!-- APPVERBO_SUBPROCESS_GROUP_VISIBILITY_V1_START -->
+## Regra definitiva: Agrupamento de Cards de Subprocesso Nativo
+
+Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter os seus cards (formulário, tabela ativa, tabela inativa) tratados como **grupo** pelo JavaScript:
+
+1. **`process_tabs.py`**: A aba principal do subprocesso deve apontar para o `default_target` do `AdminSubprocessConfig` (ex: `#auth-profile-card`), não para o card da tabela ativa (ex: `#auth-profile-active-card`). O `default_target` é o card que contém o accordion de criação.
+
+2. **`getAdminSubprocessKeyByTargetV1`** em `new_user.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"objeto_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `perfil_de_autorizacao` e `objeto_de_autorizacao`), cada um tem a sua própria chave para que o JS possa distingui-los.
+
+3. **`supportsStructuredAdminGroups`** em `applyContentForMenuTarget`: O `menuKey` do subprocesso (o menu pai, ex: `"perfil_de_autorizacao"`) deve estar incluído nesta condição. Subprocessos filhos no mesmo menu partilham o mesmo `menuKey` mas têm `data-admin-subprocess` distintos.
+
+4. **`normalizeSubmenuTargetAlias`** em `new_user.js`: Os targets de tabela (active-card, inactive-card) e de edição (form-card) devem ser alias do `default_target` para que a aba correta fique ativa no submenu quando qualquer um desses cards é visível.
+
+5. **`menuConfig`**: Se o subprocesso é nativo (não está em `sidebarMenuSettings`), o `menuConfig` deve ser inicializado explicitamente após `mergeDynamicProcessMenus()` verificando `visibleSidebarMenuKeys` ou a presença dos cards no DOM.
+
+6. **`_build_*_return_url`** no backend: A URL de retorno pós-save deve apontar para o `default_target` do subprocesso, não para o card da tabela ativa. Isso garante que a aba principal é seleccionada após guardar.
+
+### Subprocessos nativos actuais e os seus targets:
+
+| Subprocesso (config key) | `default_target` | `menu_scope` | `menuConfig` key |
+|---|---|---|---|
+| `sessoes` | `admin-sidebar-sections-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
+| `perfil_de_autorizacao` | `auth-profile-card` | `perfil_de_autorizacao` | inicializado por APPVERBO_AUTH_PROFILE_MENUCONFIG_INIT_V1 |
+| `objeto_de_autorizacao` | `auth-objeto-card` | `perfil_de_autorizacao` | partilhado com `perfil_de_autorizacao` (mesma entrada no menuConfig, aba diferente) |
+| `menu` | `menu-subprocess-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
+| `entidade` | `create-entity-card` | `administrativo` | `administrativo` (via sidebarMenuSettings) |
+
+**Nota:** Quando dois subprocessos partilham o mesmo `menu_scope` (ex: `perfil_de_autorizacao` e `objeto_de_autorizacao`), o macro `admin_subprocess.html` usa a lista de targets do config (`default_target`, `edit_target`, `active_card_id`, `inactive_card_id`) para determinar se o subprocesso está activo. Apenas os cards do subprocesso cujos targets correspondem ao `initial_menu_target` ficam visíveis no servidor. O JavaScript usa o `data-admin-subprocess` (= `config.key`) para o agrupamento correcto.
+
+### Proibido:
+- Apontar a aba principal para `*-active-card` ou `*-inactive-card` (reservados para as tabelas).
+- Usar `_build_*_return_url` para forçar o redirect para `*-active-card` quando o `default_target` é suficiente.
+- Criar patches visuais específicos por processo quando a regra de agrupamento padrão resolve.
+<!-- APPVERBO_SUBPROCESS_GROUP_VISIBILITY_V1_END -->

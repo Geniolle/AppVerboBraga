@@ -37,14 +37,25 @@
   {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
   {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
   {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
-  {% set _is_active_subprocess = 
-    (_initial_menu_resolved == state.menu_key and (_initial_menu_resolved != 'administrativo' and _initial_menu_resolved != 'sessoes')) or
-    ((_initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes') and (
-      state.config.key == _admin_tab_resolved or 
-      (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
-      (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes')
-    ))
-  %}
+  {% set _is_active_subprocess = False %}
+  {% if _initial_menu_resolved == state.menu_key %}
+    {% if _initial_menu_resolved == 'perfil_de_autorizacao' %}
+      {% set _sub_targets = ['#' ~ state.config.default_target, '#' ~ state.config.edit_target] %}
+      {% if state.config.active_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.active_card_id] %}{% endif %}
+      {% if state.config.inactive_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.inactive_card_id] %}{% endif %}
+      {% if _initial_menu_target_resolved in _sub_targets %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% elif _initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes' %}
+      {% if state.config.key == _admin_tab_resolved or
+            (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
+            (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes') %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% else %}
+      {% set _is_active_subprocess = True %}
+    {% endif %}
+  {% endif %}
   {% set _show_form = _is_active_subprocess and (state.is_editing or _initial_menu_target_resolved == '#' ~ (state.config.edit_target if state.is_editing else state.config.default_target)) %}
 
   <section
@@ -65,6 +76,7 @@
 
     {% if state.is_editing %}
       <h2>{{ state.config.edit_title }}</h2>
+      {% set _cancel_return_target = state.config.active_card_id or state.config.default_target %}
 
       <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
         <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.edit_mode_value }}">
@@ -72,6 +84,20 @@
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
         <div class="admin-subprocess-grid-v1">
+          {% if state.resolved_dynamic_fields %}
+            {% for dyn_field in state.resolved_dynamic_fields %}
+              {% set _dyn_value = state.edit_values.get(dyn_field.key, "") if state.edit_values else "" %}
+              <div class="field admin-subprocess-field-v1">
+                <label for="admin_subprocess_dyn_{{ dyn_field.key }}">{{ dyn_field.label }}</label>
+                <input
+                  id="admin_subprocess_dyn_{{ dyn_field.key }}"
+                  name="process_field__{{ dyn_field.key }}"
+                  type="text"
+                  value="{{ _dyn_value }}"
+                >
+              </div>
+            {% endfor %}
+          {% endif %}
           {% for field in state.config.fields %}
             {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else "" %}
             {{ render_admin_subprocess_field(field, field_value) }}
@@ -80,7 +106,14 @@
 
         <div class="form-action-row admin-subprocess-actions-v1">
           <button type="submit" class="action-btn">Guardar</button>
-          <a class="action-btn-cancel" href="{{ state.return_url }}">Cancelar</a>
+          <button
+            type="button"
+            class="action-btn-cancel"
+            data-appverbo-cancel="1"
+            data-appverbo-cancel-target="{{ state.config.edit_target }}"
+            data-appverbo-cancel-return-target="{{ _cancel_return_target }}"
+            data-appverbo-cancel-return-url="{{ state.return_url }}"
+          >Cancelar</button>
         </div>
       </form>
     {% else %}
@@ -97,6 +130,19 @@
               <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
               <div class="admin-subprocess-grid-v1">
+                {% if state.resolved_dynamic_fields %}
+                  {% for dyn_field in state.resolved_dynamic_fields %}
+                    <div class="field admin-subprocess-field-v1">
+                      <label for="admin_subprocess_dyn_create_{{ dyn_field.key }}">{{ dyn_field.label }}</label>
+                      <input
+                        id="admin_subprocess_dyn_create_{{ dyn_field.key }}"
+                        name="process_field__{{ dyn_field.key }}"
+                        type="text"
+                        value=""
+                      >
+                    </div>
+                  {% endfor %}
+                {% endif %}
                 {% for field in state.config.fields %}
                   {{ render_admin_subprocess_field(field, "") }}
                 {% endfor %}
@@ -107,7 +153,7 @@
                 <button
                   type="button"
                   class="action-btn-cancel"
-                  onclick="const form=this.closest('form'); const details=this.closest('details'); if(form){form.reset();} if(details){details.open=false;}"
+                  data-appverbo-cancel="1"
                 >Cancelar</button>
               </div>
             </form>
@@ -255,14 +301,26 @@
 
   {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
   {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
-  {% set _is_active_subprocess = 
-    (_initial_menu_resolved == state.menu_key and (_initial_menu_resolved != 'administrativo' and _initial_menu_resolved != 'sessoes')) or
-    ((_initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes') and (
-      state.config.key == _admin_tab_resolved or 
-      (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
-      (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes')
-    ))
-  %}
+  {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
+  {% set _is_active_subprocess = False %}
+  {% if _initial_menu_resolved == state.menu_key %}
+    {% if _initial_menu_resolved == 'perfil_de_autorizacao' %}
+      {% set _sub_targets = ['#' ~ state.config.default_target, '#' ~ state.config.edit_target] %}
+      {% if state.config.active_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.active_card_id] %}{% endif %}
+      {% if state.config.inactive_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.inactive_card_id] %}{% endif %}
+      {% if _initial_menu_target_resolved in _sub_targets %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% elif _initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes' %}
+      {% if state.config.key == _admin_tab_resolved or
+            (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
+            (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes') %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% else %}
+      {% set _is_active_subprocess = True %}
+    {% endif %}
+  {% endif %}
 
   <section
     id="{{ _card_id }}"
