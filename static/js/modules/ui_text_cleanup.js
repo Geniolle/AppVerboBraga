@@ -150,3 +150,75 @@
   window.setTimeout(runCleanup, 400);
   window.setTimeout(runCleanup, 1000);
 })();
+
+//###################################################################################
+// APPVERBO_STANDARD_LIST_PROCESS_LOADER_V1_START
+//###################################################################################
+
+(function loadStandardListProcessRuntimeV1() {
+  "use strict";
+
+  if (!window.location || window.location.pathname !== "/users/new") {
+    return;
+  }
+
+  function appendRuntimeScript() {
+    if (document.querySelector("script[data-standard-list-process-runtime-v1='1']")) {
+      return;
+    }
+
+    const scriptEl = document.createElement("script");
+    scriptEl.src = "/static/js/modules/standard_list_process_v1.js?v=20260627-standard-list-v1";
+    scriptEl.defer = true;
+    scriptEl.setAttribute("data-standard-list-process-runtime-v1", "1");
+    document.body.appendChild(scriptEl);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", appendRuntimeScript);
+  } else {
+    appendRuntimeScript();
+  }
+})();
+
+//###################################################################################
+// APPVERBO_STANDARD_LIST_PROCESS_SUBMIT_V1_START
+//###################################################################################
+
+(function setupStandardListProcessSubmitV1() {
+  "use strict";
+
+  if (!window.location || window.location.pathname !== "/users/new") {
+    return;
+  }
+
+  function ensureHidden(formEl, name, value) {
+    let inputEl = formEl.querySelector("input[name='" + name + "']");
+
+    if (!inputEl) {
+      inputEl = document.createElement("input");
+      inputEl.type = "hidden";
+      inputEl.name = name;
+      formEl.appendChild(inputEl);
+    }
+
+    inputEl.value = value || "";
+  }
+
+  document.addEventListener("submit", function interceptStandardListSubmit(event) {
+    const formEl = event.target && event.target.closest
+      ? event.target.closest(".standard-list-process-create-card-v1 form")
+      : null;
+
+    if (!formEl) {
+      return;
+    }
+
+    formEl.action = "/users/profile/standard-list-process-save";
+    ensureHidden(formEl, "process_return_url", window.location.pathname + window.location.search + window.location.hash);
+  }, true);
+})();
+
+//###################################################################################
+// APPVERBO_STANDARD_LIST_PROCESS_V1_END
+//###################################################################################
