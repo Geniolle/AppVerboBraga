@@ -7,5 +7,6 @@ router = APIRouter()
 from appverbo.routes.profile import page_handler  # noqa: F401,E402
 from appverbo.routes.profile import settings_handlers  # noqa: F401,E402
 from appverbo.routes.profile import profile_handlers  # noqa: F401,E402
+from appverbo.routes.profile import authorization_profile_runtime  # noqa: F401,E402
 
 __all__ = ["router"]
