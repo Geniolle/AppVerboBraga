@@ -297,6 +297,94 @@
     }) || null;
   }
 
+  function isEditingModeActive_v7(state, currentValue, editingItem) {
+    return Boolean(
+      editingItem ||
+      (state && state.editingId) ||
+      normalizarChave_v7(currentValue)
+    );
+  }
+
+  function getResolvedFieldOptions_v7(state) {
+    return Array.isArray(state && state.fieldOptions) ? state.fieldOptions.slice() : [];
+  }
+
+  function getResolvedHeaderOptions_v7(state) {
+    return Array.isArray(state && state.headerOptions) ? state.headerOptions.slice() : [];
+  }
+
+  function ensureEditingFieldOption_v7(options, editingItem) {
+    const resolvedOptions = Array.isArray(options) ? options.slice() : [];
+
+    if (!editingItem || !normalizarChave_v7(editingItem.key)) {
+      return resolvedOptions;
+    }
+
+    if (localizarPorChave_v7(resolvedOptions, editingItem.key)) {
+      return resolvedOptions;
+    }
+
+    resolvedOptions.push({
+      key: editingItem.key,
+      label: textoSeguro_v7(editingItem.label || editingItem.key),
+      fieldType: "text",
+      isEditingFallback: true
+    });
+
+    return resolvedOptions;
+  }
+
+  function ensureEditingHeaderOption_v7(options, editingItem) {
+    const resolvedOptions = Array.isArray(options) ? options.slice() : [];
+
+    if (!editingItem || !normalizarChave_v7(editingItem.headerKey)) {
+      return resolvedOptions;
+    }
+
+    if (localizarPorChave_v7(resolvedOptions, editingItem.headerKey)) {
+      return resolvedOptions;
+    }
+
+    resolvedOptions.push(
+      {
+        key: editingItem.headerKey,
+        label: textoSeguro_v7(editingItem.headerLabel || editingItem.headerKey),
+        fieldType: "header",
+        isEditingFallback: true
+      }
+    );
+
+    return resolvedOptions;
+  }
+
+  function buildFieldOptionsForEditorMode_v7(state, currentValue, editingItem) {
+    const configuredKeys = new Set(
+      Array.isArray(state && state.items)
+        ? state.items.map(function (item) {
+            return normalizarChave_v7(item.key);
+          }).filter(Boolean)
+        : []
+    );
+    const isEditingMode = isEditingModeActive_v7(state, currentValue, editingItem);
+    const resolvedOptions = isEditingMode
+      ? ensureEditingFieldOption_v7(getResolvedFieldOptions_v7(state), editingItem)
+      : getResolvedFieldOptions_v7(state);
+
+    return resolvedOptions.filter(function (item) {
+      const itemKey = normalizarChave_v7(item.key);
+
+      if (!itemKey) {
+        return false;
+      }
+
+      if (!configuredKeys.has(itemKey)) {
+        return true;
+      }
+
+      return isEditingMode && itemKey === normalizarChave_v7(currentValue);
+    });
+  }
+
   function reconstruirSelectCampo_v7(elements, state, selectedKey) {
     const editingItem = obterEditingItem_v7(state);
     const currentValue = normalizarChave_v7(
@@ -305,29 +393,22 @@
       elements.editorKey.value ||
       (editingItem ? editingItem.key : "")
     );
+    const fieldOptions = buildFieldOptionsForEditorMode_v7(state, currentValue, editingItem);
 
-    const configuredKeys = new Set(
-      state.items.map(function (item) {
-        return normalizarChave_v7(item.key);
-      })
-    );
+    if (!fieldOptions.length && !currentValue && !Array.isArray(state && state.fieldOptions)) {
+      return;
+    }
 
     elements.editorKey.innerHTML = "";
     elements.editorKey.appendChild(criarOption_v7("", "Selecione", "", ""));
 
-    state.fieldOptions.forEach(function (item) {
-      const itemKey = normalizarChave_v7(item.key);
-
-      if (configuredKeys.has(itemKey) && itemKey !== currentValue) {
-        return;
-      }
-
+    fieldOptions.forEach(function (item) {
       elements.editorKey.appendChild(
         criarOption_v7(item.key, item.label, currentValue, "field")
       );
     });
 
-    if (currentValue && !localizarPorChave_v7(state.fieldOptions, currentValue)) {
+    if (currentValue && elements.editorKey.value !== currentValue) {
       elements.editorKey.appendChild(
         criarOption_v7(
           currentValue,
@@ -344,17 +425,22 @@
   function reconstruirSelectCabecalho_v7(elements, state, selectedKey) {
     const editingItem = obterEditingItem_v7(state);
     const currentValue = normalizarChave_v7(selectedKey || elements.headerKey.value);
+    const headerOptions = ensureEditingHeaderOption_v7(getResolvedHeaderOptions_v7(state), editingItem);
+
+    if (!headerOptions.length && !currentValue && !Array.isArray(state && state.headerOptions)) {
+      return;
+    }
 
     elements.headerKey.innerHTML = "";
     elements.headerKey.appendChild(criarOption_v7("", "Sem cabeçalho", currentValue, ""));
 
-    state.headerOptions.forEach(function (item) {
+    headerOptions.forEach(function (item) {
       elements.headerKey.appendChild(
         criarOption_v7(item.key, item.label, currentValue, "header")
       );
     });
 
-    if (currentValue && !localizarPorChave_v7(state.headerOptions, currentValue)) {
+    if (currentValue && elements.headerKey.value !== currentValue) {
       elements.headerKey.appendChild(
         criarOption_v7(
           currentValue,
@@ -818,8 +904,9 @@
       validateItem: validarEditorItem_v7,
       syncHiddenInputs: sincronizarHiddenInputs_v7,
       onRender: function (context) {
-        reconstruirSelectCampo_v7(elements, context.state);
-        reconstruirSelectCabecalho_v7(elements, context.state);
+        const editingItem = obterEditingItem_v7(context.state);
+        reconstruirSelectCampo_v7(elements, context.state, editingItem ? editingItem.key : "");
+        reconstruirSelectCabecalho_v7(elements, context.state, editingItem ? editingItem.headerKey : "");
       }
     });
 
