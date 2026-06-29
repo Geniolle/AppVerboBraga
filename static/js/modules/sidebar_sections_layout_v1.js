@@ -40,6 +40,38 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     return texto || padrao || "";
   }
 
+  function marcarBotaoCancelarGlobalSessoesV1(botao) {
+    if (!botao) {
+      return;
+    }
+
+    botao.dataset.appverboCancel = "1";
+    botao.dataset.appverboCancelLocal = "1";
+  }
+
+  function vincularReacaoCancelarGlobalSessoesV1(botao, listenerRoot, callback) {
+    if (!botao || botao.dataset.appverboCancelReactionBoundV1 === "1") {
+      return;
+    }
+
+    const root = listenerRoot || botao.parentElement || document;
+
+    marcarBotaoCancelarGlobalSessoesV1(botao);
+    botao.dataset.appverboCancelReactionBoundV1 = "1";
+
+    root.addEventListener("appverbo:cancelled", function (event) {
+      const detail = event && event.detail ? event.detail : {};
+
+      if (detail.trigger !== botao) {
+        return;
+      }
+
+      if (typeof callback === "function") {
+        callback(event);
+      }
+    });
+  }
+
   function labelPorChaveSessoesLayout_v2(chave) {
     const mapa = {
       sistema: "Sistema",
@@ -514,9 +546,6 @@ tituloBloco.appendChild(descricao);
     cancelar.type = "button";
     cancelar.className = "action-btn-cancel appverbo-sidebar-section-cancel-btn-v3";
     cancelar.textContent = "Cancelar";
-    cancelar.addEventListener("click", function () {
-      window.location.assign("/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card");
-    });
 
     footer.appendChild(gravar);
     if (typeof cancelar !== "undefined" && cancelar) {
@@ -590,6 +619,11 @@ tituloBloco.appendChild(descricao);
 
     atualizarEstadoBotoesSessoesLayout_v2(tbody);
     aplicarBlocoCriacaoSessoes_v1(formulario, wrapper);
+
+    vincularReacaoCancelarGlobalSessoesV1(cancelar, wrapper, function () {
+      const novoWrapper = criarTabelaSessoesLayout_v2(formulario, sessoes);
+      wrapper.replaceWith(novoWrapper);
+    });
 
     const cardListaSessoesV3 = formulario.closest(".card, section");
     moverBlocoCriacaoParaCardSeparadoSessoes_v3(cardListaSessoesV3, wrapper);
@@ -766,8 +800,7 @@ tituloBloco.appendChild(descricao);
     }
 
     abrirBtn.addEventListener("click", abrirFormularioCriacao);
-
-    cancelarBtn.addEventListener("click", function () {
+    vincularReacaoCancelarGlobalSessoesV1(cancelarBtn, createBlock, function () {
       fecharFormularioCriacao();
     });
 
@@ -1198,7 +1231,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     });
 
     abrirBtn.addEventListener("click", abrirFormulario);
-    cancelarBtn.addEventListener("click", fecharFormulario);
+    vincularReacaoCancelarGlobalSessoesV1(cancelarBtn, formPanel, fecharFormulario);
 
     guardarBtn.addEventListener("click", function () {
       const dados = validarFormulario();
@@ -1662,7 +1695,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       submeterFormularioSessoesV6(formulario);
     });
 
-    cancelarBtn.addEventListener("click", function () {
+    vincularReacaoCancelarGlobalSessoesV1(cancelarBtn, actions, function () {
       restaurarLinhaSessoesV8(linha, valoresOriginais, tbody);
     });
 
@@ -2076,7 +2109,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       nomeInput.focus();
     });
 
-    cancelarBtn.addEventListener("click", limparCriacao);
+    vincularReacaoCancelarGlobalSessoesV1(cancelarBtn, block, limparCriacao);
 
     guardarBtn.addEventListener("click", function () {
       const nomeSessao = String(nomeInput.value || "").trim();
@@ -2772,7 +2805,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       nomeInput.focus();
     });
 
-    cancelarBtn.addEventListener("click", fechar);
+    vincularReacaoCancelarGlobalSessoesV1(cancelarBtn, block, fechar);
 
     guardarBtn.addEventListener("click", function () {
       const nome = String(nomeInput.value || "").trim();
@@ -2931,7 +2964,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       submeterFormularioEstadoV9();
     });
 
-    cancelarBtn.addEventListener("click", function () {
+    vincularReacaoCancelarGlobalSessoesV1(cancelarBtn, actions, function () {
       renderizarListaEstadoV9();
     });
 

@@ -35,6 +35,31 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
+  function showAlertDialog_v1(options) {
+    const safeOptions = options && typeof options === "object" ? options : {};
+    const title = toSafeString_v1(safeOptions.title).trim() || "Validacao";
+    const message = toSafeString_v1(safeOptions.message).trim();
+
+    if (!message) {
+      return null;
+    }
+
+    if (
+      window.AppVerboDialogV1 &&
+      typeof window.AppVerboDialogV1.alert === "function"
+    ) {
+      return window.AppVerboDialogV1.alert({
+        title,
+        message
+      });
+    }
+
+    if (window.console && typeof window.console.warn === "function") {
+      window.console.warn("[AppVerboConfigurableItems]", message);
+    }
+    return null;
+  }
+
   function resolveElement_v1(root, selector) {
     if (!selector) {
       return null;
@@ -706,7 +731,10 @@
 
         if (validationResult && validationResult.valid === false) {
           if (validationResult.message) {
-            window.alert(validationResult.message);
+            showAlertDialog_v1({
+              title: "Validacao",
+              message: validationResult.message
+            });
           }
           return;
         }
@@ -834,5 +862,6 @@
 
   namespace.createConfigurableItemsManager_v1 = createConfigurableItemsManager_v1;
   namespace.normalizeLookup_v1 = normalizeLookup_v1;
+  namespace.showAlertDialog_v1 = showAlertDialog_v1;
   namespace.toSafeString_v1 = toSafeString_v1;
 })(window, document);

@@ -5,6 +5,8 @@
 (function () {
   "use strict";
 
+  const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppVerboProcessFieldOptionsResolverV1";
+
   function toSafeString_v1(value) {
     return String(value === null || value === undefined ? "" : value);
   }
@@ -18,6 +20,27 @@
       .replace(/[^a-z0-9_]+/g, "_")
       .replace(/_+/g, "_")
       .replace(/^_|_$/g, "");
+  }
+
+  function getFieldOptionsResolver_v1() {
+    return window[FIELD_OPTIONS_RESOLVER_NAMESPACE] || null;
+  }
+
+  function showValidationMessage_v1(message) {
+    if (
+      window.AppVerboDialogV1 &&
+      typeof window.AppVerboDialogV1.alert === "function"
+    ) {
+      window.AppVerboDialogV1.alert({
+        title: "Validacao",
+        message: message
+      });
+      return;
+    }
+
+    if (window.console && typeof window.console.warn === "function") {
+      window.console.warn("[ProcessQuantityFieldsManagerV1]", message);
+    }
   }
 
   function escapeHtml_v1(value) {
@@ -163,6 +186,107 @@
     });
   }
 
+  function snapshotSelectOptions_v1(select) {
+    const resolver = getFieldOptionsResolver_v1();
+
+    if (resolver && typeof resolver.createOptionSnapshot_v1 === "function") {
+      return resolver.createOptionSnapshot_v1(select);
+    }
+
+    return [];
+  }
+
+  function rebuildSelectOptions_v1(select, options, config) {
+    if (!select) {
+      return;
+    }
+
+    const safeConfig = config && typeof config === "object" ? config : {};
+    const previousValue = safeConfig.multiple
+      ? getSelectedValues_v1(select)
+      : toSafeString_v1(select.value).trim();
+
+    select.innerHTML = "";
+
+    if (!safeConfig.multiple) {
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = safeConfig.placeholder || "Selecione";
+      select.appendChild(emptyOption);
+    }
+
+    (Array.isArray(options) ? options : []).forEach(function (item) {
+      const option = document.createElement("option");
+      option.value = item.key || "";
+      option.textContent = item.label || item.key || "";
+      select.appendChild(option);
+    });
+
+    if (safeConfig.multiple) {
+      selectMultipleValues_v1(select, previousValue);
+      return;
+    }
+
+    select.value = previousValue || "";
+  }
+
+  function updateFieldOptions_v1(form, elements, state, optionCache) {
+    const resolver = getFieldOptionsResolver_v1();
+
+    if (!resolver || typeof resolver.resolveScopeOptions_v1 !== "function") {
+      return;
+    }
+
+    const resolved = resolver.resolveScopeOptions_v1(
+      form.closest("#settings-menu-edit-card") || form,
+      Array.isArray(optionCache && optionCache.staticOptions) ? optionCache.staticOptions : []
+    );
+    const selectableOptions = Array.isArray(resolved.selectableOptions)
+      ? resolved.selectableOptions
+      : [];
+    const quantityOptions = selectableOptions.filter(function (option) {
+      return option.fieldType === "number";
+    });
+
+    rebuildSelectOptions_v1(elements.editorQuantityField, quantityOptions, {
+      placeholder: "Selecione"
+    });
+    rebuildSelectOptions_v1(elements.editorRepeatedFields, selectableOptions, {
+      multiple: true
+    });
+    rebuildSelectOptions_v1(elements.editorHeaderKey, resolved.headerOptions, {
+      placeholder: "Sem cabecalho"
+    });
+
+    renderTable_v1(state, elements);
+  }
+
+  function bindFieldOptionsRefresh_v1(form, elements, state, optionCache) {
+    if (!form || form.dataset.processQuantityOptionsBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processQuantityOptionsBoundV1 = "1";
+
+    document.addEventListener("appverbo:configurable-items-change", function (event) {
+      const additionalRoot = event && event.target && typeof event.target.closest === "function"
+        ? event.target.closest("[data-process-additional-fields-manager-v3='1']")
+        : null;
+
+      if (!additionalRoot) {
+        return;
+      }
+
+      const formScope = form.closest("#settings-menu-edit-card") || form;
+
+      if (!formScope.contains(additionalRoot)) {
+        return;
+      }
+
+      updateFieldOptions_v1(form, elements, state, optionCache);
+    });
+  }
+
   function syncHiddenInputs_v1(state, elements) {
     elements.hiddenContainer.innerHTML = "";
 
@@ -234,20 +358,20 @@
 
   function validateItem_v1(item, state) {
     if (!item.label) {
-      window.alert("Informe o nome da regra.");
+      showValidationMessage_v1("Informe o nome da regra.");
       return false;
     }
     if (!item.quantityFieldKey) {
-      window.alert("Selecione o campo origem da quantidade.");
+      showValidationMessage_v1("Selecione o campo origem da quantidade.");
       return false;
     }
     if (!Array.isArray(item.repeatedFieldKeys) || !item.repeatedFieldKeys.length) {
-      window.alert("Selecione ao menos um campo repetido.");
+      showValidationMessage_v1("Selecione ao menos um campo repetido.");
       return false;
     }
     const parsedMaxItems = Number.parseInt(item.maxItems, 10);
     if (!Number.isFinite(parsedMaxItems) || parsedMaxItems <= 0) {
-      window.alert("Informe uma quantidade máxima válida.");
+      showValidationMessage_v1("Informe uma quantidade maxima valida.");
       return false;
     }
     const duplicate = state.items.some(function (existing) {
@@ -255,7 +379,7 @@
         && normalizeKey_v1(existing.label) === normalizeKey_v1(item.label);
     });
     if (duplicate) {
-      window.alert("Já existe uma regra com esse nome.");
+      showValidationMessage_v1("Ja existe uma regra com esse nome.");
       return false;
     }
     return true;
@@ -396,6 +520,26 @@
     state.items.splice(toIndex, 0, item);
   }
 
+  function bindGlobalCancelReaction_v1(form, elements, state) {
+    if (!form || !elements || !elements.cancelButton || form.dataset.processQuantityCancelBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processQuantityCancelBoundV1 = "1";
+    elements.cancelButton.dataset.appverboCancel = "1";
+    elements.cancelButton.dataset.appverboCancelLocal = "1";
+
+    form.addEventListener("appverbo:cancelled", function (event) {
+      const detail = event && event.detail ? event.detail : {};
+
+      if (detail.trigger !== elements.cancelButton) {
+        return;
+      }
+
+      clearEditor_v1(state, elements);
+    });
+  }
+
   function bindEvents_v1(form, state, elements) {
     elements.submitButton.addEventListener("click", function (event) {
       event.preventDefault();
@@ -413,11 +557,6 @@
         return;
       }
       form.submit();
-    });
-
-    elements.cancelButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      clearEditor_v1(state, elements);
     });
 
     elements.pageSize.addEventListener("change", function () {
@@ -496,9 +635,17 @@
       pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
       editingId: ""
     };
+    const optionCache = {
+      staticOptions: snapshotSelectOptions_v1(elements.editorQuantityField)
+        .concat(snapshotSelectOptions_v1(elements.editorRepeatedFields))
+        .concat(snapshotSelectOptions_v1(elements.editorHeaderKey))
+    };
 
     form.dataset.processQuantityFieldsManagerBoundV1 = "1";
 
+    updateFieldOptions_v1(form, elements, state, optionCache);
+    bindFieldOptionsRefresh_v1(form, elements, state, optionCache);
+    bindGlobalCancelReaction_v1(form, elements, state);
     bindEvents_v1(form, state, elements);
     syncHiddenInputs_v1(state, elements);
     renderTable_v1(state, elements);

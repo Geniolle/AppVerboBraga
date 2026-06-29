@@ -3471,6 +3471,34 @@ def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
     menu_config["process_visible_headers"] = visible_headers
     menu_config["process_visible_field_rows"] = visible_rows
     menu_config["process_visible_field_header_map"] = field_header_map
+    menu_config["process_visible_fields_configured"] = True
+
+    legacy_visible_fields: list[str] = []
+    emitted_legacy_keys: set[str] = set()
+    active_header_key = ""
+
+    for row in visible_rows:
+        field_key = str(row.get("field_key") or "").strip().lower()
+        header_key = str(row.get("header_key") or "").strip().lower()
+
+        if header_key and header_key != active_header_key:
+            if header_key not in emitted_legacy_keys:
+                legacy_visible_fields.append(header_key)
+                emitted_legacy_keys.add(header_key)
+
+            active_header_key = header_key
+
+        if not header_key:
+            active_header_key = ""
+
+        if not field_key or field_key in emitted_legacy_keys:
+            continue
+
+        legacy_visible_fields.append(field_key)
+        emitted_legacy_keys.add(field_key)
+
+    menu_config["visible_fields"] = legacy_visible_fields
+    menu_config["visible_field_headers"] = field_header_map
 
     return menu_config
 
@@ -3498,141 +3526,11 @@ def update_sidebar_menu_additional_fields_v4(
 
     menu_config = _load_menu_config(session, clean_menu_key)
 
-    old_header_map: dict[str, str] = {}
-
-    old_rows = menu_config.get("process_visible_field_rows")
-    if isinstance(old_rows, list):
-        for old_row in old_rows:
-            if not isinstance(old_row, dict):
-                continue
-
-            field_key = str(old_row.get("field_key") or "").strip().lower()
-            header_key = str(old_row.get("header_key") or "").strip().lower()
-
-            if field_key and header_key:
-                old_header_map[field_key] = header_key
-
-    legacy_header_map = menu_config.get("visible_field_headers")
-    if isinstance(legacy_header_map, dict):
-        for raw_field_key, raw_header_key in legacy_header_map.items():
-            field_key = str(raw_field_key or "").strip().lower()
-            header_key = str(raw_header_key or "").strip().lower()
-
-            if field_key and header_key:
-                old_header_map[field_key] = header_key
-
     normalized_fields = normalize_menu_process_additional_fields(fields)
-    menu_config["additional_fields"] = normalized_fields
-
-    selectable_options = get_menu_process_selectable_field_options(
-        clean_menu_key,
+    menu_config = _rebuild_menu_process_hierarchy_from_additional_fields_v1(
         menu_config,
+        normalized_fields,
     )
-    header_options = get_menu_process_header_options(
-        clean_menu_key,
-        menu_config,
-    )
-
-    selectable_keys = {
-        str(item.get("key") or "").strip().lower()
-        for item in selectable_options
-        if str(item.get("key") or "").strip()
-    }
-    header_keys = {
-        str(item.get("key") or "").strip().lower()
-        for item in header_options
-        if str(item.get("key") or "").strip()
-    }
-
-    raw_configured_fields = menu_config.get("process_visible_fields")
-    configured_flag = (
-        "process_visible_fields" in menu_config
-        or bool(menu_config.get("process_visible_fields_configured"))
-    )
-
-    if isinstance(raw_configured_fields, (list, tuple, set)):
-        raw_visible_fields = list(raw_configured_fields)
-    else:
-        raw_visible_fields = []
-
-    if not raw_visible_fields:
-        raw_rows = menu_config.get("process_visible_field_rows")
-
-        if isinstance(raw_rows, list):
-            for raw_row in raw_rows:
-                if not isinstance(raw_row, dict):
-                    continue
-
-                raw_visible_fields.append(raw_row.get("field_key"))
-
-    clean_visible_fields: list[str] = []
-    seen_fields: set[str] = set()
-
-    for raw_field in raw_visible_fields:
-        field_key = str(raw_field or "").strip().lower()
-
-        if not field_key:
-            continue
-
-        if field_key in seen_fields:
-            continue
-
-        if field_key not in selectable_keys:
-            continue
-
-        seen_fields.add(field_key)
-        clean_visible_fields.append(field_key)
-
-    process_visible_field_rows: list[dict[str, str]] = []
-    process_visible_field_header_map: dict[str, str] = {}
-
-    for field_key in clean_visible_fields:
-        header_key = old_header_map.get(field_key, "")
-
-        if header_key not in header_keys:
-            header_key = ""
-
-        if header_key:
-            process_visible_field_header_map[field_key] = header_key
-
-        process_visible_field_rows.append(
-            {
-                "field_key": field_key,
-                "header_key": header_key,
-            }
-        )
-
-    legacy_visible_fields: list[str] = []
-    emitted_legacy_keys: set[str] = set()
-    active_header_key = ""
-
-    for row in process_visible_field_rows:
-        field_key = row["field_key"]
-        header_key = row["header_key"]
-
-        if header_key and header_key != active_header_key:
-            if header_key not in emitted_legacy_keys:
-                legacy_visible_fields.append(header_key)
-                emitted_legacy_keys.add(header_key)
-
-            active_header_key = header_key
-
-        if not header_key:
-            active_header_key = ""
-
-        if field_key in emitted_legacy_keys:
-            continue
-
-        legacy_visible_fields.append(field_key)
-        emitted_legacy_keys.add(field_key)
-
-    if configured_flag:
-        menu_config["process_visible_fields"] = clean_visible_fields
-        menu_config["process_visible_field_header_map"] = process_visible_field_header_map
-        menu_config["process_visible_field_rows"] = process_visible_field_rows
-        menu_config["process_visible_fields_configured"] = True
-        menu_config["visible_fields"] = legacy_visible_fields
-        menu_config["visible_field_headers"] = process_visible_field_header_map
 
     refresh_token = str(uuid4())
     menu_config["process_additional_fields_refresh_version"] = refresh_token

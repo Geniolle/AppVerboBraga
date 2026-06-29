@@ -88,6 +88,22 @@
     return ["1", "true", "sim", "yes", "on"].includes(normalizeLookup_v3(value));
   }
 
+  function showValidationMessage_v3(message) {
+    const core = window.AppVerboConfigurableItems || {};
+
+    if (typeof core.showAlertDialog_v1 === "function") {
+      core.showAlertDialog_v1({
+        title: "Validacao",
+        message
+      });
+      return;
+    }
+
+    if (window.console && typeof window.console.warn === "function") {
+      window.console.warn("[ProcessAdditionalFieldsManagerV3]", message);
+    }
+  }
+
   function normalizeSize_v3(value, fieldType) {
     if (!TEXTUAL_TYPES.has(fieldType)) {
       return "";
@@ -337,7 +353,7 @@
     });
 
     if (duplicated) {
-      return { valid: false, message: "Ja existe um campo com esta chave." };
+      return { valid: false, message: "Já existe um campo com esta chave." };
     }
 
     return { valid: true };
@@ -381,13 +397,39 @@
 
     if (validationResult && validationResult.valid === false) {
       if (validationResult.message) {
-        window.alert(validationResult.message);
+        showValidationMessage_v3(validationResult.message);
       }
 
       return;
     }
 
     manager.addOrUpdate(item);
+  }
+
+  function bindGlobalCancelReaction_v3(root, cancelButton, manager, datasetKey) {
+    if (!root || !cancelButton || !manager) {
+      return;
+    }
+
+    const boundKey = datasetKey || "additionalFieldsCancelBoundV3";
+
+    if (root.dataset[boundKey] === "1") {
+      return;
+    }
+
+    root.dataset[boundKey] = "1";
+    cancelButton.dataset.appverboCancel = "1";
+    cancelButton.dataset.appverboCancelLocal = "1";
+
+    root.addEventListener("appverbo:cancelled", (event) => {
+      const detail = event && event.detail ? event.detail : {};
+
+      if (detail.trigger !== cancelButton) {
+        return;
+      }
+
+      manager.clearEditing();
+    });
   }
 
   function bindEditorExtras_v3(root, manager) {
@@ -414,11 +456,7 @@
     }
 
     if (cancelButton) {
-      cancelButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        manager.clearEditing();
-        clearEditor_v3({ root });
-      });
+      bindGlobalCancelReaction_v3(root, cancelButton, manager, "additionalFieldsCancelBoundV3");
     }
 
     updateEditorVisibility_v3(root);
@@ -538,7 +576,7 @@
 
     if (validationResult && validationResult.valid === false) {
       if (validationResult.message) {
-        window.alert(validationResult.message);
+        showValidationMessage_v3(validationResult.message);
       }
 
       return false;
@@ -571,11 +609,7 @@
 
     if (cancelButton) {
       cancelButton.textContent = "Cancelar";
-      cancelButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        manager.clearEditing();
-        clearEditor_v4({ root });
-      });
+      bindGlobalCancelReaction_v3(root, cancelButton, manager, "additionalFieldsCancelBoundV4");
     }
 
     if (parentForm && parentForm.dataset.additionalFieldsTopSubmitBoundV4 !== "1") {

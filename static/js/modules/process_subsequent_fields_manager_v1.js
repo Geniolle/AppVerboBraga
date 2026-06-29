@@ -5,6 +5,8 @@
 (function () {
   "use strict";
 
+  const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppVerboProcessFieldOptionsResolverV1";
+
   //###################################################################################
   // (1) FUNCOES BASE
   //###################################################################################
@@ -22,6 +24,27 @@
       .replace(/[^a-z0-9_]+/g, "_")
       .replace(/_+/g, "_")
       .replace(/^_|_$/g, "");
+  }
+
+  function getFieldOptionsResolver_v1() {
+    return window[FIELD_OPTIONS_RESOLVER_NAMESPACE] || null;
+  }
+
+  function showValidationMessage_v1(message) {
+    if (
+      window.AppVerboDialogV1 &&
+      typeof window.AppVerboDialogV1.alert === "function"
+    ) {
+      window.AppVerboDialogV1.alert({
+        title: "Validacao",
+        message: message
+      });
+      return;
+    }
+
+    if (window.console && typeof window.console.warn === "function") {
+      window.console.warn("[ProcessSubsequentFieldsManagerV1]", message);
+    }
   }
 
   function escapeHtml_v1(value) {
@@ -55,6 +78,89 @@
     };
 
     return labels[value] || value || "-";
+  }
+
+  function snapshotSelectOptions_v1(select) {
+    const resolver = getFieldOptionsResolver_v1();
+
+    if (resolver && typeof resolver.createOptionSnapshot_v1 === "function") {
+      return resolver.createOptionSnapshot_v1(select);
+    }
+
+    return [];
+  }
+
+  function rebuildSelectOptions_v1(select, options, config) {
+    if (!select) {
+      return;
+    }
+
+    const safeConfig = config && typeof config === "object" ? config : {};
+    const previousValue = toSafeString_v1(select.value).trim();
+
+    select.innerHTML = "";
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = safeConfig.placeholder || "Selecione";
+    select.appendChild(emptyOption);
+
+    (Array.isArray(options) ? options : []).forEach(function (item) {
+      const option = document.createElement("option");
+      option.value = item.key || "";
+      option.textContent = item.label || item.key || "";
+      select.appendChild(option);
+    });
+
+    select.value = previousValue || "";
+  }
+
+  function updateFieldOptions_v1(form, elements, state, optionCache) {
+    const resolver = getFieldOptionsResolver_v1();
+
+    if (!resolver || typeof resolver.resolveScopeOptions_v1 !== "function") {
+      return;
+    }
+
+    const resolved = resolver.resolveScopeOptions_v1(
+      form.closest("#settings-menu-edit-card") || form,
+      Array.isArray(optionCache && optionCache.staticOptions) ? optionCache.staticOptions : []
+    );
+
+    rebuildSelectOptions_v1(elements.triggerField, resolved.selectableOptions, {
+      placeholder: "Selecione"
+    });
+    rebuildSelectOptions_v1(elements.subsequentField, resolved.selectableOptions, {
+      placeholder: "Selecione"
+    });
+
+    renderTable_v1(state, elements);
+  }
+
+  function bindFieldOptionsRefresh_v1(form, elements, state, optionCache) {
+    if (!form || form.dataset.processSubsequentOptionsBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processSubsequentOptionsBoundV1 = "1";
+
+    document.addEventListener("appverbo:configurable-items-change", function (event) {
+      const additionalRoot = event && event.target && typeof event.target.closest === "function"
+        ? event.target.closest("[data-process-additional-fields-manager-v3='1']")
+        : null;
+
+      if (!additionalRoot) {
+        return;
+      }
+
+      const formScope = form.closest("#settings-menu-edit-card") || form;
+
+      if (!formScope.contains(additionalRoot)) {
+        return;
+      }
+
+      updateFieldOptions_v1(form, elements, state, optionCache);
+    });
   }
 
   function createButton_v1(action, label, itemId, disabled) {
@@ -205,12 +311,12 @@
 
   function validateItem_v1(item, state) {
     if (!item.triggerField) {
-      window.alert("Selecione o campo acionador.");
+      showValidationMessage_v1("Selecione o campo acionador.");
       return false;
     }
 
     if (!item.fieldKey) {
-      window.alert("Selecione o campo subsequente.");
+      showValidationMessage_v1("Selecione o campo subsequente.");
       return false;
     }
 
@@ -223,7 +329,7 @@
     });
 
     if (duplicate) {
-      window.alert("Ja existe uma regra igual criada.");
+      showValidationMessage_v1("Ja existe uma regra igual criada.");
       return false;
     }
 
@@ -370,6 +476,26 @@
     state.items.splice(toIndex, 0, item);
   }
 
+  function bindGlobalCancelReaction_v1(form, elements, state) {
+    if (!form || !elements || !elements.cancelButton || form.dataset.processSubsequentCancelBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processSubsequentCancelBoundV1 = "1";
+    elements.cancelButton.dataset.appverboCancel = "1";
+    elements.cancelButton.dataset.appverboCancelLocal = "1";
+
+    form.addEventListener("appverbo:cancelled", function (event) {
+      const detail = event && event.detail ? event.detail : {};
+
+      if (detail.trigger !== elements.cancelButton) {
+        return;
+      }
+
+      clearEditor_v1(state, elements);
+    });
+  }
+
   function bindEvents_v1(form, state, elements) {
     elements.submitButton.addEventListener("click", function (event) {
       event.preventDefault();
@@ -390,11 +516,6 @@
       }
 
       form.submit();
-    });
-
-    elements.cancelButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      clearEditor_v1(state, elements);
     });
 
     elements.pageSize.addEventListener("change", function () {
@@ -481,9 +602,16 @@
       pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
       editingId: ""
     };
+    const optionCache = {
+      staticOptions: snapshotSelectOptions_v1(elements.triggerField)
+        .concat(snapshotSelectOptions_v1(elements.subsequentField))
+    };
 
     form.dataset.processSubsequentFieldsManagerBoundV1 = "1";
 
+    updateFieldOptions_v1(form, elements, state, optionCache);
+    bindFieldOptionsRefresh_v1(form, elements, state, optionCache);
+    bindGlobalCancelReaction_v1(form, elements, state);
     bindEvents_v1(form, state, elements);
     syncHiddenInputs_v1(state, elements);
     renderTable_v1(state, elements);

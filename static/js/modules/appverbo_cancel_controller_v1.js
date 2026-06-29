@@ -22,6 +22,7 @@
   ].join(", ");
 
   const LOCAL_EDITOR_CANCEL_SELECTOR_V1 = [
+    "[data-appverbo-cancel-local]",
     "[data-additional-field-editor-cancel]",
     "[data-process-fields-config-cancel]",
     "[data-process-list-editor-cancel]",
@@ -166,6 +167,16 @@
         [
           "[data-process-fields-config-editor-block]",
           "[data-additional-field-editor-block]",
+          "[data-process-additional-fields-manager-v3]",
+          "form[data-process-lists-manager-v1='1']",
+          "form[data-process-quantity-fields-manager-v1='1']",
+          "form[data-process-subsequent-fields-manager-v1='1']",
+          ".appverbo-create-entry-block-v1",
+          ".appverbo-create-entry-card-v5",
+          ".appverbo-create-entry-panel-v1",
+          ".appverbo-create-entry-panel-v5",
+          ".appverbo-sidebar-section-edit-actions-v8",
+          ".appverbo-sidebar-section-edit-actions-v9",
           ".profile-edit-form",
           "[data-admin-subprocess-role='form']",
           DETAILS_SELECTOR_V1,
@@ -268,7 +279,8 @@
       detail
     });
 
-    document.dispatchEvent(cancelEvent);
+    const eventTarget = detail && detail.trigger ? detail.trigger : document;
+    eventTarget.dispatchEvent(cancelEvent);
   }
 
   //###################################################################################

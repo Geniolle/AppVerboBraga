@@ -24,6 +24,23 @@
       .replace(/^_|_$/g, "");
   }
 
+  function showValidationMessage_v1(message) {
+    if (
+      window.AppVerboDialogV1 &&
+      typeof window.AppVerboDialogV1.alert === "function"
+    ) {
+      window.AppVerboDialogV1.alert({
+        title: "Validacao",
+        message: message
+      });
+      return;
+    }
+
+    if (window.console && typeof window.console.warn === "function") {
+      window.console.warn("[ProcessListsManagerV1]", message);
+    }
+  }
+
   function escapeHtml_v1(value) {
     return toSafeString_v1(value)
       .replace(/&/g, "&amp;")
@@ -163,7 +180,7 @@
 
   function validateItem_v1(item, state) {
     if (!item.label) {
-      window.alert("Informe o nome da lista.");
+      showValidationMessage_v1("Informe o nome da lista.");
       return false;
     }
 
@@ -173,7 +190,7 @@
     });
 
     if (duplicate) {
-      window.alert("Ja existe uma lista com esse nome.");
+      showValidationMessage_v1("Ja existe uma lista com esse nome.");
       return false;
     }
 
@@ -316,6 +333,26 @@
     state.items.splice(toIndex, 0, item);
   }
 
+  function bindGlobalCancelReaction_v1(form, elements, state) {
+    if (!form || !elements || !elements.cancelButton || form.dataset.processListsCancelBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processListsCancelBoundV1 = "1";
+    elements.cancelButton.dataset.appverboCancel = "1";
+    elements.cancelButton.dataset.appverboCancelLocal = "1";
+
+    form.addEventListener("appverbo:cancelled", function (event) {
+      const detail = event && event.detail ? event.detail : {};
+
+      if (detail.trigger !== elements.cancelButton) {
+        return;
+      }
+
+      clearEditor_v1(state, elements);
+    });
+  }
+
   function bindEvents_v1(form, state, elements) {
     elements.submitButton.addEventListener("click", function (event) {
       event.preventDefault();
@@ -336,11 +373,6 @@
       }
 
       form.submit();
-    });
-
-    elements.cancelButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      clearEditor_v1(state, elements);
     });
 
     elements.pageSize.addEventListener("change", function () {
@@ -428,6 +460,7 @@
 
     form.dataset.processListsManagerBoundV1 = "1";
 
+    bindGlobalCancelReaction_v1(form, elements, state);
     bindEvents_v1(form, state, elements);
     syncHiddenInputs_v1(state, elements);
     renderTable_v1(state, elements);

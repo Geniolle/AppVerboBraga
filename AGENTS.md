@@ -447,9 +447,11 @@ Regras:
 2. É proibido criar lógica de cancelamento específica por processo quando o controller global já resolver o caso.
 3. Novos processos, cards, editores e formulários devem usar `data-appverbo-cancel="1"`.
 4. Quando existir um alvo explícito, usar `data-appverbo-cancel-target` e, se necessário, `data-appverbo-cancel-return-target`.
-5. O cancelamento deve fechar ou resetar apenas o contexto visual local.
-6. O botão **Cancelar** nunca pode fazer `POST`, chamar endpoint, navegar por `href` de ação, nem gravar dados.
-7. A regra aplica-se a processos atuais e futuros.
+5. Botões **Cancelar** criados dinamicamente por JavaScript também devem receber `data-appverbo-cancel="1"`.
+6. Managers específicos não devem controlar o clique diretamente; quando precisarem limpar estado interno, devem reagir ao evento `appverbo:cancelled`.
+7. O cancelamento deve fechar ou resetar apenas o contexto visual local.
+8. É proibido usar `window.location.assign`, `window.location.href`, `window.location.replace`, `href` de ação, `onclick` inline ou `POST` para implementar **Cancelar**.
+9. A regra aplica-se a processos atuais e futuros.
 <!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_END -->
 
 <!-- APPVERBO_CREATE_ENTRY_BLOCK_RULE_V1_START -->
@@ -1092,3 +1094,26 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 - Usar `_build_*_return_url` para forçar o redirect para `*-active-card` quando o `default_target` é suficiente.
 - Criar patches visuais específicos por processo quando a regra de agrupamento padrão resolve.
 <!-- APPVERBO_SUBPROCESS_GROUP_VISIBILITY_V1_END -->
+
+<!-- APPVERBO_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_START -->
+## Regra global: validações UI e fonte única de campos configuráveis
+
+Sempre que uma validação ou mensagem de erro precisar ser mostrada na UI do AppVerboBraga:
+
+1. Não usar `alert()` nem `window.alert()` no fluxo final entregue ao utilizador.
+2. Usar um dialog/modal reutilizável do sistema, preferencialmente via módulo partilhado.
+3. O dialog deve abrir centrado, bloquear a interação de fundo e ter pelo menos título, mensagem e botão de confirmação.
+4. A regra vale para managers de listas configuráveis, abas configuráveis do processo e subprocessos administrativos.
+
+Sempre que uma área depender de “campos disponíveis” derivados de “Campos adicionais”:
+
+1. A fonte de verdade deve ser única e partir da configuração persistida do próprio processo.
+2. É proibido manter listas paralelas desalinhadas entre:
+   - `Campos criados`;
+   - selects de `campos disponíveis`;
+   - `process_visible_fields`;
+   - `process_visible_field_rows`;
+   - renderização final do processo.
+3. Depois de criar, editar, remover ou reordenar um campo adicional, os consumidores dependentes devem reconstruir as opções a partir do resolver partilhado.
+4. A correção deve ser reutilizável para processos atuais e futuros, sem branch específica por menu.
+<!-- APPVERBO_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_END -->

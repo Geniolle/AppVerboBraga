@@ -12,6 +12,7 @@
 
   const FORM_SELECTOR = "form[data-process-fields-config-manager-v1='1']";
   const CORE_NAMESPACE = "AppVerboConfigurableItems";
+  const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppVerboProcessFieldOptionsResolverV1";
 
   //###################################################################################
   // (2) HELPERS GERAIS
@@ -80,6 +81,26 @@
     }
 
     return option;
+  }
+
+  function getFieldOptionsResolver_v7() {
+    return window[FIELD_OPTIONS_RESOLVER_NAMESPACE] || null;
+  }
+
+  function showValidationMessage_v7(message) {
+    const core = window[CORE_NAMESPACE];
+
+    if (core && typeof core.showAlertDialog_v1 === "function") {
+      core.showAlertDialog_v1({
+        title: "Validacao",
+        message
+      });
+      return;
+    }
+
+    if (window.console && typeof window.console.warn === "function") {
+      window.console.warn("[ProcessFieldsConfigManagerV7]", message);
+    }
   }
 
   //###################################################################################
@@ -178,6 +199,70 @@
     return originalOptions.filter(function (item) {
       return item.kind === "header";
     });
+  }
+
+  function relabelItens_v7(state) {
+    if (!state || !Array.isArray(state.items)) {
+      return;
+    }
+
+    state.items.forEach(function (item) {
+      item.label = labelCampo_v7(state, item.key);
+
+      if (item.headerKey && !localizarPorChave_v7(state.headerOptions, item.headerKey)) {
+        item.headerKey = "";
+      }
+
+      item.headerLabel = labelCabecalho_v7(state, item.headerKey);
+    });
+  }
+
+  function resolverOpcoesDisponiveisV7(form, optionCache) {
+    const fallbackOriginalOptions = Array.isArray(optionCache && optionCache.originalOptions)
+      ? optionCache.originalOptions
+      : [];
+    const fallbackStaticOptions = Array.isArray(optionCache && optionCache.staticOptions)
+      ? optionCache.staticOptions
+      : [];
+    const resolver = getFieldOptionsResolver_v7();
+
+    if (resolver && typeof resolver.resolveScopeOptions_v1 === "function") {
+      const resolvedOptions = resolver.resolveScopeOptions_v1(
+        form.closest("#settings-menu-edit-card") || form,
+        fallbackStaticOptions
+      );
+
+      return {
+        fieldOptions: Array.isArray(resolvedOptions.selectableOptions)
+          ? resolvedOptions.selectableOptions
+          : [],
+        headerOptions: Array.isArray(resolvedOptions.headerOptions)
+          ? resolvedOptions.headerOptions
+          : []
+      };
+    }
+
+    return {
+      fieldOptions: fallbackOriginalOptions.filter(function (item) { return item.kind !== "header"; }),
+      headerOptions: lerHeaderOptions_v7(
+        form.__processFieldsConfigElementsV7 || obterElementos_v7(form),
+        fallbackOriginalOptions
+      )
+    };
+  }
+
+  function atualizarOpcoesDisponiveisV7(form, elements, manager, optionCache) {
+    if (!manager || !manager.state) {
+      return;
+    }
+
+    const resolvedOptions = resolverOpcoesDisponiveisV7(form, optionCache);
+
+    manager.state.fieldOptions = resolvedOptions.fieldOptions;
+    manager.state.headerOptions = resolvedOptions.headerOptions;
+    relabelItens_v7(manager.state);
+    manager.render();
+    manager.syncHiddenInputs();
   }
 
   function localizarPorChave_v7(options, key) {
@@ -522,6 +607,26 @@
     HTMLFormElement.prototype.submit.call(form);
   }
 
+  function vincularCancelamentoGlobalV7(form, elements, manager) {
+    if (!form || !elements || !elements.cancelButton || form.dataset.processFieldsConfigCancelBoundV7 === "1") {
+      return;
+    }
+
+    form.dataset.processFieldsConfigCancelBoundV7 = "1";
+    elements.cancelButton.dataset.appverboCancel = "1";
+    elements.cancelButton.dataset.appverboCancelLocal = "1";
+
+    form.addEventListener("appverbo:cancelled", function (event) {
+      const detail = event && event.detail ? event.detail : {};
+
+      if (detail.trigger !== elements.cancelButton) {
+        return;
+      }
+
+      manager.clearEditing();
+    });
+  }
+
   function vincularBotoesFormulario_v7(form, elements, manager) {
     if (form.dataset.processFieldsConfigSubmitBoundV7 === "1") {
       return;
@@ -550,7 +655,7 @@
 
         if (validationResult && validationResult.valid === false) {
           if (validationResult.message) {
-            window.alert(validationResult.message);
+            showValidationMessage_v7(validationResult.message);
           }
 
           return;
@@ -564,11 +669,6 @@
       submitNativo_v7(form);
     });
 
-    elements.cancelButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      manager.clearEditing();
-    });
-
     if (form.dataset.processFieldsConfigSubmitNativeBoundV8 !== "1") {
       form.dataset.processFieldsConfigSubmitNativeBoundV8 = "1";
 
@@ -577,6 +677,32 @@
         desativarInputsLegadosV8(form, elements);
       });
     }
+  }
+
+  function vincularAtualizacaoOpcoesV7(form, elements, manager, optionCache) {
+    if (!form || form.dataset.processFieldsConfigOptionsBoundV7 === "1") {
+      return;
+    }
+
+    form.dataset.processFieldsConfigOptionsBoundV7 = "1";
+
+    document.addEventListener("appverbo:configurable-items-change", function (event) {
+      const additionalRoot = event && event.target && typeof event.target.closest === "function"
+        ? event.target.closest("[data-process-additional-fields-manager-v3='1']")
+        : null;
+
+      if (!additionalRoot) {
+        return;
+      }
+
+      const formScope = form.closest("#settings-menu-edit-card") || form;
+
+      if (!formScope.contains(additionalRoot)) {
+        return;
+      }
+
+      atualizarOpcoesDisponiveisV7(form, elements, manager, optionCache);
+    });
   }
 
   //###################################################################################
@@ -605,14 +731,25 @@
 
     const originalOptions = lerOpcoesOriginais_v7(elements);
 
+    const optionCache = {
+      originalOptions,
+      staticOptions: originalOptions.filter(function (item) {
+        return !normalizarChave_v7(item.key).startsWith("custom_");
+      })
+    };
+
     const provisionalState = {
-      fieldOptions: originalOptions.filter(function (item) { return item.kind !== "header"; }),
-      headerOptions: lerHeaderOptions_v7(elements, originalOptions),
+      fieldOptions: [],
+      headerOptions: [],
       items: [],
       page: 1,
       pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
       editingId: ""
     };
+
+    const resolvedInitialOptions = resolverOpcoesDisponiveisV7(form, optionCache);
+    provisionalState.fieldOptions = resolvedInitialOptions.fieldOptions;
+    provisionalState.headerOptions = resolvedInitialOptions.headerOptions;
 
     const initialItems = juntarItensSemDuplicados_v7(
       lerItensHidden_v7(elements, provisionalState),
@@ -658,12 +795,8 @@
       validateItem: validarEditorItem_v7,
       syncHiddenInputs: sincronizarHiddenInputs_v7,
       onRender: function (context) {
-        const state = context.state;
-        state.fieldOptions = provisionalState.fieldOptions;
-        state.headerOptions = provisionalState.headerOptions;
-
-        reconstruirSelectCampo_v7(elements, state);
-        reconstruirSelectCabecalho_v7(elements, state);
+        reconstruirSelectCampo_v7(elements, context.state);
+        reconstruirSelectCabecalho_v7(elements, context.state);
       }
     });
 
@@ -676,6 +809,8 @@
 
     reconstruirSelectCampo_v7(elements, manager.state);
     reconstruirSelectCabecalho_v7(elements, manager.state);
+    vincularAtualizacaoOpcoesV7(form, elements, manager, optionCache);
+    vincularCancelamentoGlobalV7(form, elements, manager);
     vincularBotoesFormulario_v7(form, elements, manager);
     manager.syncHiddenInputs();
 
