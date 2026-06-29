@@ -15,6 +15,8 @@ from appverbo.menu_settings import (
     update_sidebar_menu_process_quantity_fields_v1,
 )
 from appverbo.models import Base, SidebarMenuSetting
+from appverbo.services.profile import resolve_field_list_options_v1
+from appverbo.services.process_tabs import resolve_subprocess_section_fields_v1
 
 
 def test_administrativo_process_field_options_defaults() -> None:
@@ -106,11 +108,298 @@ def test_menu_process_field_options_keep_header_and_field_with_same_label() -> N
     assert [item["key"] for item in header_options] == ["custom_header_perfil"]
 
 
+def test_normalize_additional_fields_list_legacy_defaults_to_manual() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {"label": "Perfil", "field_type": "list", "list_key": "perfil_manual"},
+        ]
+    )
+
+    assert normalized == [
+        {
+            "key": "custom_perfil",
+            "label": "Perfil",
+            "field_type": "list",
+            "is_required": False,
+            "list_source_type": "manual",
+            "manual_list_key": "perfil_manual",
+            "list_key": "perfil_manual",
+        }
+    ]
+
+
+def test_normalize_additional_fields_list_automatic_keeps_source_metadata() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {
+                "label": "Nome do perfil",
+                "field_type": "list",
+                "list_source_type": "automatic",
+                "automatic_source_process_key": "perfil_de_autorizacao",
+                "automatic_source_section_key": "perfis",
+                "automatic_source_field_key": "custom_nome_do_perfil",
+                "automatic_only_active": "1",
+            },
+        ]
+    )
+
+    assert normalized == [
+        {
+            "key": "custom_nome_do_perfil",
+            "label": "Nome do perfil",
+            "field_type": "list",
+            "is_required": False,
+            "list_source_type": "automatic",
+            "manual_list_key": "",
+            "list_key": "",
+            "automatic_source_process_key": "perfil_de_autorizacao",
+            "automatic_source_section_key": "perfis",
+            "automatic_source_field_key": "custom_nome_do_perfil",
+            "automatic_only_active": True,
+        }
+    ]
+
+
+def test_resolve_field_list_options_manual_uses_current_process_list() -> None:
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="empresa",
+        field_definition={
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_key": "perfil_manual",
+        },
+        sidebar_menu_settings=[
+            {
+                "key": "empresa",
+                "process_lists": [
+                    {"key": "perfil_manual", "items": ["Pastor", "Líder", "Colaborador"]},
+                ],
+            }
+        ],
+        visible_sidebar_menu_keys={"empresa"},
+        menu_process_history_map={},
+    )
+
+    assert resolved == [
+        {"value": "Pastor", "label": "Pastor", "status": "active"},
+        {"value": "Líder", "label": "Líder", "status": "active"},
+        {"value": "Colaborador", "label": "Colaborador", "status": "active"},
+    ]
+
+
+def test_resolve_field_list_options_automatic_filters_active_records() -> None:
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="empresa",
+        field_definition={
+            "field_type": "list",
+            "list_source_type": "automatic",
+            "automatic_source_process_key": "perfil_de_autorizacao",
+            "automatic_source_section_key": "perfis",
+            "automatic_source_field_key": "custom_nome_do_perfil",
+            "automatic_only_active": "1",
+        },
+        sidebar_menu_settings=[
+            {"key": "empresa", "process_lists": []},
+            {
+                "key": "perfil_de_autorizacao",
+                "process_record_status_field_key": "__estado",
+                "process_field_options": [
+                    {"key": "custom_nome_do_perfil", "field_type": "text"},
+                ],
+            },
+        ],
+        visible_sidebar_menu_keys={"empresa", "perfil_de_autorizacao"},
+        menu_process_history_map={
+            "perfil_de_autorizacao": [
+                {
+                    "section_key": "perfis",
+                    "values": {
+                        "custom_nome_do_perfil": "Extrato",
+                        "__estado": "ativo",
+                    },
+                },
+                {
+                    "section_key": "perfis",
+                    "values": {
+                        "custom_nome_do_perfil": "Financeiro",
+                        "__estado": "inativo",
+                    },
+                },
+                {
+                    "section_key": "perfis",
+                    "values": {
+                        "custom_nome_do_perfil": "Extrato",
+                        "__estado": "ativo",
+                    },
+                },
+            ]
+        },
+    )
+
+    assert resolved == [
+        {"value": "Extrato", "label": "Extrato", "status": "active"},
+    ]
+
+
+def test_resolve_field_list_options_automatic_honours_visible_source_process() -> None:
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="empresa",
+        field_definition={
+            "field_type": "list",
+            "list_source_type": "automatic",
+            "automatic_source_process_key": "perfil_de_autorizacao",
+            "automatic_source_section_key": "perfis",
+            "automatic_source_field_key": "custom_nome_do_perfil",
+        },
+        sidebar_menu_settings=[
+            {"key": "empresa", "process_lists": []},
+            {
+                "key": "perfil_de_autorizacao",
+                "process_field_options": [
+                    {"key": "custom_nome_do_perfil", "field_type": "text"},
+                ],
+            },
+        ],
+        visible_sidebar_menu_keys={"empresa"},
+        menu_process_history_map={
+            "perfil_de_autorizacao": [
+                {
+                    "section_key": "perfis",
+                    "values": {"custom_nome_do_perfil": "Extrato"},
+                },
+            ]
+        },
+    )
+
+    assert resolved == []
+
+
+def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "perfil_de_autorizacao",
+        "custom_objeto_de_autorizacao",
+        [
+            {
+                "key": "perfil_de_autorizacao",
+                "process_additional_fields": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                        "is_required": True,
+                        "list_source_type": "manual",
+                        "manual_list_key": "lista_processos",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    }
+                ],
+                "process_lists": [
+                    {"key": "lista_processos", "items": ["Financeiro", "Tesouraria"]},
+                ],
+            }
+        ],
+    )
+
+    assert resolved_fields == [
+        {
+            "key": "custom_processo",
+            "label": "Processo",
+            "field_type": "list",
+            "input_type": "select",
+            "required": True,
+            "size": None,
+            "list_source_type": "manual",
+            "manual_list_key": "lista_processos",
+            "list_key": "lista_processos",
+            "automatic_source_process_key": "",
+            "automatic_source_section_key": "",
+            "automatic_source_field_key": "",
+            "automatic_only_active": False,
+            "options": [
+                {"value": "Financeiro", "label": "Financeiro", "status": "active"},
+                {"value": "Tesouraria", "label": "Tesouraria", "status": "active"},
+            ],
+            "header_key": "custom_objeto_de_autorizacao",
+            "header_label": "Objeto de autorização",
+        }
+    ]
+
+
+def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "perfil_de_autorizacao",
+        "custom_objeto_de_autorizacao",
+        [
+            {
+                "key": "perfil_de_autorizacao",
+                "process_additional_fields": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "list",
+                        "list_source_type": "automatic",
+                        "automatic_source_process_key": "perfil_de_autorizacao",
+                        "automatic_source_section_key": "perfis",
+                        "automatic_source_field_key": "custom_nome_do_perfil",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {
+                        "field_key": "custom_subprocesso",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    }
+                ],
+            }
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao"},
+        menu_process_history_map={},
+    )
+
+    assert resolved_fields == [
+        {
+            "key": "custom_subprocesso",
+            "label": "Subprocesso",
+            "field_type": "list",
+            "input_type": "select",
+            "required": False,
+            "size": None,
+            "list_source_type": "automatic",
+            "manual_list_key": "",
+            "list_key": "",
+            "automatic_source_process_key": "perfil_de_autorizacao",
+            "automatic_source_section_key": "perfis",
+            "automatic_source_field_key": "custom_nome_do_perfil",
+            "automatic_only_active": False,
+            "options": [],
+            "header_key": "custom_objeto_de_autorizacao",
+            "header_label": "Objeto de autorização",
+        }
+    ]
+
+
 def test_normalize_sidebar_sections_ensures_defaults() -> None:
     normalized = normalize_sidebar_sections([])
-    assert [item["key"] for item in normalized][:2] == ["geral", "igreja"]
-    assert normalized[0]["visibility_scope_mode"] == "all"
-    assert normalized[1]["visibility_scope_mode"] == "all"
+    keys = [item["key"] for item in normalized]
+    assert "sistema" in keys
+    assert "geral" in keys
+    assert "igreja" in keys
+    assert keys[0] == "sistema"
+    for item in normalized:
+        assert item["visibility_scope_mode"] == "all"
 
 
 def test_normalize_sidebar_sections_from_string() -> None:

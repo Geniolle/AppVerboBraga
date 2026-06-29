@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 from .models import AdminSubprocessConfig, AdminSubprocessState
-from appverbo.services.process_tabs import resolve_subprocess_section_fields_v1
 
 
 INACTIVE_STATUS_VALUES = {
@@ -93,6 +92,9 @@ def build_admin_subprocess_state(
     menu_scope: str = "",
     return_url: str = "",
     sidebar_menu_settings: list[dict[str, Any]] | None = None,
+    visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+    menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
+    active_entity_id: int | None = None,
 ) -> AdminSubprocessState:
     row_list = [dict(row) for row in rows]
     active_rows, inactive_rows = split_admin_subprocess_rows(row_list, config)
@@ -101,10 +103,14 @@ def build_admin_subprocess_state(
 
     resolved_dynamic_fields: list[dict[str, Any]] = []
     if config.uses_dynamic_fields and sidebar_menu_settings is not None:
+        from appverbo.services.process_tabs import resolve_subprocess_section_fields_v1
         resolved_dynamic_fields = resolve_subprocess_section_fields_v1(
             config.dynamic_fields_menu_key,
             config.dynamic_fields_section_header_key,
             sidebar_menu_settings,
+            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+            menu_process_history_map=menu_process_history_map,
+            active_entity_id=active_entity_id,
         )
 
     edit_values: dict[str, Any] = {}

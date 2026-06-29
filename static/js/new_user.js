@@ -852,12 +852,18 @@ function buildProcessSections(setting, processValuesByField = {}) {
     const optionRequiredRaw = Object.prototype.hasOwnProperty.call(option, "is_required")
       ? option.is_required
       : option.required;
+    const resolvedListOptions = Array.isArray(option.list_options)
+      ? option.list_options.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
+    const optionListKey = normalizeMenuKey(option.list_key || option.listKey);
     optionMetaByKey.set(optionKey, {
       label: optionLabel,
       fieldType: optionType,
       size: optionSize,
-      listKey: normalizeMenuKey(option.list_key || option.listKey),
-      listOptions: processListsByKey.get(normalizeMenuKey(option.list_key || option.listKey)) || [],
+      listKey: optionListKey,
+      listOptions: resolvedListOptions.length
+        ? resolvedListOptions
+        : processListsByKey.get(optionListKey) || [],
       isRequired: normalizeProcessFieldRequired(optionRequiredRaw)
     });
   });
@@ -6288,6 +6294,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
       const fieldType = normalizeProcessFieldType(option.field_type);
       const listKey = normalizeMenuKey(option.list_key || option.listKey);
+      const resolvedListOptions = Array.isArray(option.list_options)
+        ? option.list_options.map((item) => toSafeStringMeuPerfilQuantityV1(item).trim()).filter(Boolean)
+        : [];
 
       fieldMetaMap.set(fieldKey, {
         key: fieldKey,
@@ -6300,7 +6309,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
             : option.required
         ),
         listKey,
-        listOptions: listOptionsByKey.get(listKey) || []
+        listOptions: resolvedListOptions.length
+          ? resolvedListOptions
+          : listOptionsByKey.get(listKey) || []
       });
     });
 

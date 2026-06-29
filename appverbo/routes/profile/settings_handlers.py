@@ -1728,6 +1728,12 @@ def edit_sidebar_menu_process_additional_fields_v1(
     additional_field_required: list[str] = Form(default=[]),
     additional_field_size: list[str] = Form(default=[]),
     additional_field_list_key: list[str] = Form(default=[]),
+    additional_field_list_source_type: list[str] = Form(default=[]),
+    additional_field_manual_list_key: list[str] = Form(default=[]),
+    additional_field_automatic_source_process_key: list[str] = Form(default=[]),
+    additional_field_automatic_source_section_key: list[str] = Form(default=[]),
+    additional_field_automatic_source_field_key: list[str] = Form(default=[]),
+    additional_field_automatic_only_active: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
 ) -> RedirectResponse:
@@ -1783,6 +1789,12 @@ def edit_sidebar_menu_process_additional_fields_v1(
             len(additional_field_required),
             len(additional_field_size),
             len(additional_field_list_key),
+            len(additional_field_list_source_type),
+            len(additional_field_manual_list_key),
+            len(additional_field_automatic_source_process_key),
+            len(additional_field_automatic_source_section_key),
+            len(additional_field_automatic_source_field_key),
+            len(additional_field_automatic_only_active),
         )
 
         payload_fields: list[dict[str, str]] = []
@@ -1796,6 +1808,12 @@ def edit_sidebar_menu_process_additional_fields_v1(
                     "is_required": additional_field_required[row_index] if row_index < len(additional_field_required) else "",
                     "size": additional_field_size[row_index] if row_index < len(additional_field_size) else "",
                     "list_key": additional_field_list_key[row_index] if row_index < len(additional_field_list_key) else "",
+                    "list_source_type": additional_field_list_source_type[row_index] if row_index < len(additional_field_list_source_type) else "",
+                    "manual_list_key": additional_field_manual_list_key[row_index] if row_index < len(additional_field_manual_list_key) else "",
+                    "automatic_source_process_key": additional_field_automatic_source_process_key[row_index] if row_index < len(additional_field_automatic_source_process_key) else "",
+                    "automatic_source_section_key": additional_field_automatic_source_section_key[row_index] if row_index < len(additional_field_automatic_source_section_key) else "",
+                    "automatic_source_field_key": additional_field_automatic_source_field_key[row_index] if row_index < len(additional_field_automatic_source_field_key) else "",
+                    "automatic_only_active": additional_field_automatic_only_active[row_index] if row_index < len(additional_field_automatic_only_active) else "",
                 }
             )
 

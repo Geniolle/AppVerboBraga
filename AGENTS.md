@@ -293,6 +293,25 @@ Sempre que alterar `templates/new_user.html` ou assets usados por ele:
 ```bash
 node --check static/js/new_user.js
 node --check static/js/modules/<ficheiro_alterado>.js
+```
+
+## 16) Regra global para campos adicionais do tipo Lista
+
+Sempre que um campo adicional tiver `field_type = list`, a configuração deve suportar obrigatoriamente duas fontes:
+
+1. **Manual**
+2. **Automática**
+
+Regras:
+
+1. A fonte **Manual** reutiliza exclusivamente as listas criadas na aba **Listas** do mesmo processo.
+2. A fonte **Automática** deve ler registos reais de um processo/aba/campo configurado, sem hardcode por processo.
+3. Toda resolução de opções de lista deve passar por um resolver reutilizável centralizado.
+4. A configuração do campo deve persistir os metadados da fonte escolhida junto da definição do campo adicional.
+5. Campos antigos que só tenham `list_key` devem continuar compatíveis, assumindo fonte **Manual** por padrão.
+6. A resolução automática deve respeitar entidade ativa, permissões, owner, legado e separação multi-tenant já aplicadas ao contexto atual.
+7. Se a origem automática ficar incompleta ou apontar para processo/aba/campo removido, a UI não pode quebrar; deve apresentar estado controlado e lista vazia quando necessário.
+8. É proibido criar listas automáticas hardcoded para processos específicos como **Perfil de autorização** ou **Objeto de autorização**.
 
 <!-- APPVERBO_STATIC_GRID_RULE_V1_START -->
 
@@ -565,6 +584,42 @@ Todos os outros subprocessos dinâmicos (ex: Objeto de autorização) **devem** 
 9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico em `objeto_de_autorizacao`/`custom_objeto_label` para compatibilidade.
 10. É proibido adicionar campos de conteúdo hardcoded num subprocesso dinâmico — os campos devem vir sempre de `Configuração dos campos`.
 <!-- APPVERBO_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
+
+<!-- APPVERBO_LIST_FIELD_RESOLUTION_RULE_V1_START -->
+## Regra de resolução de opções para campos dinâmicos do tipo Lista
+
+Quando um campo de subprocesso dinâmico (`uses_dynamic_fields=True`) tem `field_type = list`, as opções do select devem ser resolvidas pela cadeia abaixo. Estas regras são obrigatórias para qualquer novo campo, processo ou funcionalidade.
+
+1. **Campo lista sempre renderiza select.** Um campo com `field_type = list` deve produzir `input_type = "select"` — independentemente de ter ou não opções resolvidas. Um select vazio é estado válido e não deve bloquear o formulário.
+
+2. **Renderização e resolução de opções são responsabilidades separadas.** O template Jinja2 renderiza o select com base em `field.input_type`. O resolver (`resolve_field_list_options_v1`) é chamado no backend antes do render; o template nunca faz resolução em runtime.
+
+3. **Listas manuais vêm exclusivamente da aba Listas do processo atual.** O campo deve ter `list_source_type = "manual"` e `manual_list_key` com a chave da lista. O resolver lê `sidebar_menu_settings` do processo `current_menu_key`, localiza a entrada com `key == manual_list_key` nos dados de lista, e retorna os itens. Campos legados com apenas `list_key` são tratados como fonte manual com `manual_list_key = list_key`.
+
+4. **Listas automáticas vêm de registos reais da origem configurada.** O campo deve ter `list_source_type = "automatic"`, `automatic_source_process_key`, `automatic_source_section_key` e `automatic_source_field_key`. O resolver busca `menu_process_history_map[automatic_source_process_key]`, filtra os registos pelo campo configurado e, se `automatic_only_active = True`, exclui registos inativos.
+
+5. **O cabeçalho é agrupador, não fonte de dados.** `dynamic_fields_section_header_key` serve apenas para filtrar quais campos pertencem à secção. O campo de origem de uma lista automática é `automatic_source_field_key`, não o header.
+
+6. **Toda resolução deve respeitar entidade ativa, owner, legado e multi-tenant.** Os parâmetros `active_entity_id`, `visible_sidebar_menu_keys` e `menu_process_history_map` são obrigatórios na assinatura dos resolvers e devem ser propagados até ao nível mais baixo sem omissão.
+
+7. **Nenhum processo ou campo pode ser hardcoded nos resolvers.** `resolve_field_list_options_v1` e `_build_render_field_meta_map_v1` devem funcionar para qualquer combinação de `menu_key`, `manual_list_key` e `automatic_source_*` — sem `if menu_key == "perfil_de_autorizacao"` ou similar.
+
+### Cadeia de normalização obrigatória para metadados de campos lista
+
+Sempre que `normalize_menu_process_additional_fields` processar um campo com `field_type = list`, deve propagar **todos** os campos abaixo para o item normalizado:
+
+| Campo | Fonte canónica |
+|---|---|
+| `list_source_type` | `"manual"` \| `"automatic"` (inferido se ausente) |
+| `manual_list_key` | `manual_list_key` → `list_key` → vazio |
+| `list_key` | Mesmo valor que `manual_list_key` |
+| `automatic_source_process_key` | campo homónimo na definição raw |
+| `automatic_source_section_key` | campo homónimo |
+| `automatic_source_field_key` | campo homónimo |
+| `automatic_only_active` | booleano (aceita `"1"`, `"true"`, `"sim"`, `"yes"`, `"on"`) |
+
+A versão actual desta normalização é `normalize_menu_process_additional_fields_v3` em `appverbo/menu_settings.py`. Não reverter para v2.
+<!-- APPVERBO_LIST_FIELD_RESOLUTION_RULE_V1_END -->
 
 <!-- APPVERBO_SESSOES_DB_FIELDS_CREATE_RULE_V4_START -->
 ## Regra para campos de criação baseados na edição/BD
@@ -1117,3 +1172,27 @@ Sempre que uma área depender de “campos disponíveis” derivados de “Campo
 3. Depois de criar, editar, remover ou reordenar um campo adicional, os consumidores dependentes devem reconstruir as opções a partir do resolver partilhado.
 4. A correção deve ser reutilizável para processos atuais e futuros, sem branch específica por menu.
 <!-- APPVERBO_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_END -->
+
+<!-- APPVERBO_DYNAMIC_RENDER_FIELDS_RULE_V1_START -->
+## Regra para renderização de campos dinâmicos configurados
+
+Nos processos dinâmicos e subprocessos admin que renderizam campos vindos de configuração:
+
+1. O renderer não pode decidir o tipo do campo apenas por `label`, `field_key` ou fallback visual.
+2. Todo campo configurado em `process_visible_field_rows` deve ser enriquecido com os metadados completos de `Campos adicionais`.
+3. O enriquecimento deve incluir, no mínimo:
+   - `field_type`
+   - `required`
+   - `size`
+   - `list_source_type`
+   - `manual_list_key`
+   - `automatic_source_process_key`
+   - `automatic_source_section_key`
+   - `automatic_source_field_key`
+   - `automatic_only_active`
+   - `options` resolvidas
+4. Campo com `field_type = list` deve renderizar sempre como `select`, mesmo quando ainda não existirem opções.
+5. É proibido fazer fallback para `input text` quando o campo está configurado como lista.
+6. Listas manuais e automáticas devem usar resolver reutilizável central, sem hardcode por processo ou por campo.
+7. Se a definição completa do campo existir em `Campos adicionais`, o renderer deve respeitá-la antes de qualquer fallback legado.
+<!-- APPVERBO_DYNAMIC_RENDER_FIELDS_RULE_V1_END -->

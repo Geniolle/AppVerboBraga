@@ -2678,6 +2678,94 @@ def normalize_menu_process_additional_fields_v2(raw_fields: Any) -> list[dict[st
 normalize_menu_process_additional_fields = normalize_menu_process_additional_fields_v2
 
 
+if "_original_normalize_menu_process_additional_fields_for_list_v2" not in globals():
+    _original_normalize_menu_process_additional_fields_for_list_v2 = normalize_menu_process_additional_fields
+
+
+def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[str, Any]]:
+    normalized = _original_normalize_menu_process_additional_fields_for_list_v2(raw_fields)
+
+    if not isinstance(raw_fields, (list, tuple, set)):
+        return normalized
+
+    def _nmlk(raw_key: Any) -> str:
+        clean = str(raw_key or "").strip().lower()
+        return re.sub(r"[^a-z0-9_]+", "_", clean).strip("_")
+
+    raw_by_key: dict[str, dict[str, Any]] = {}
+    raw_by_label: dict[str, dict[str, Any]] = {}
+    raw_by_index: dict[int, dict[str, Any]] = {}
+
+    for index, raw_item in enumerate(raw_fields):
+        if not isinstance(raw_item, dict):
+            continue
+        raw_by_index[index] = raw_item
+        raw_key = _normalize_custom_field_key(str(raw_item.get("key") or ""))
+        if raw_key:
+            raw_by_key[raw_key] = raw_item
+        raw_label = _normalize_additional_field_label(raw_item.get("label"))
+        if raw_label:
+            raw_by_label[raw_label.lower()] = raw_item
+
+    for index, item in enumerate(normalized):
+        if str(item.get("field_type") or "").strip().lower() != "list":
+            continue
+
+        item_key = str(item.get("key") or "").strip().lower()
+        item_label = str(item.get("label") or "").strip().lower()
+        raw_item = (
+            raw_by_key.get(item_key)
+            or raw_by_label.get(item_label)
+            or raw_by_index.get(index)
+            or {}
+        )
+
+        raw_source_type = str(
+            raw_item.get("list_source_type") or raw_item.get("listSourceType") or ""
+        ).strip().lower()
+        if raw_source_type not in {"manual", "automatic"}:
+            has_auto_source = bool(
+                raw_item.get("automatic_source_process_key")
+                or raw_item.get("automaticSourceProcessKey")
+                or raw_item.get("automatic_source_field_key")
+                or raw_item.get("automaticSourceFieldKey")
+            )
+            raw_source_type = "automatic" if has_auto_source else "manual"
+        item["list_source_type"] = raw_source_type
+
+        manual_key = _nmlk(
+            raw_item.get("manual_list_key")
+            or raw_item.get("manualListKey")
+            or raw_item.get("list_key")
+            or raw_item.get("listKey")
+        )
+        item["manual_list_key"] = manual_key
+        item["list_key"] = manual_key
+
+        item["automatic_source_process_key"] = _nmlk(
+            raw_item.get("automatic_source_process_key")
+            or raw_item.get("automaticSourceProcessKey")
+        )
+        item["automatic_source_section_key"] = _nmlk(
+            raw_item.get("automatic_source_section_key")
+            or raw_item.get("automaticSourceSectionKey")
+        )
+        item["automatic_source_field_key"] = _nmlk(
+            raw_item.get("automatic_source_field_key")
+            or raw_item.get("automaticSourceFieldKey")
+        )
+
+        raw_only_active = raw_item.get("automatic_only_active") or raw_item.get("automaticOnlyActive")
+        item["automatic_only_active"] = str(raw_only_active or "").strip().lower() in {
+            "1", "true", "sim", "yes", "on"
+        }
+
+    return normalized
+
+
+normalize_menu_process_additional_fields = normalize_menu_process_additional_fields_v3
+
+
 if "_original_get_sidebar_menu_settings_for_lists_v1" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v1 = get_sidebar_menu_settings
 
@@ -4235,6 +4323,15 @@ def _normalize_process_list_key_v8(raw_key: Any) -> str:
     return clean_value
 
 
+def _normalize_additional_field_list_source_type_v1(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    return "automatic" if clean_value == "automatic" else "manual"
+
+
+def _normalize_additional_field_source_key_v1(raw_value: Any) -> str:
+    return _normalize_menu_key(raw_value)
+
+
 def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_fields, (list, tuple, set)):
         return []
@@ -4268,6 +4365,12 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         item_size: int | None = None
         item_is_required = False
         item_list_key = ""
+        item_list_source_type = "manual"
+        item_manual_list_key = ""
+        item_automatic_source_process_key = ""
+        item_automatic_source_section_key = ""
+        item_automatic_source_field_key = ""
+        item_automatic_only_active = False
 
         if isinstance(raw_item, dict):
             item_label = _normalize_additional_field_label(raw_item.get("label"))
@@ -4287,6 +4390,36 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
                 or raw_item.get("listKey")
                 or raw_item.get("process_list_key")
                 or raw_item.get("processListKey")
+            )
+            item_manual_list_key = _normalize_process_list_key_v8(
+                raw_item.get("manual_list_key")
+                or raw_item.get("manualListKey")
+                or item_list_key
+            )
+            item_automatic_source_process_key = _normalize_additional_field_source_key_v1(
+                raw_item.get("automatic_source_process_key")
+                or raw_item.get("automaticSourceProcessKey")
+            )
+            item_automatic_source_section_key = _normalize_additional_field_source_key_v1(
+                raw_item.get("automatic_source_section_key")
+                or raw_item.get("automaticSourceSectionKey")
+            )
+            item_automatic_source_field_key = _normalize_additional_field_source_key_v1(
+                raw_item.get("automatic_source_field_key")
+                or raw_item.get("automaticSourceFieldKey")
+            )
+            item_automatic_only_active = _normalize_additional_field_required(
+                raw_item.get("automatic_only_active")
+                or raw_item.get("automaticOnlyActive")
+            )
+            item_list_source_type = _normalize_additional_field_list_source_type_v1(
+                raw_item.get("list_source_type")
+                or raw_item.get("listSourceType")
+                or ("automatic" if (
+                    item_automatic_source_process_key
+                    or item_automatic_source_section_key
+                    or item_automatic_source_field_key
+                ) else "manual")
             )
         else:
             item_label = _normalize_additional_field_label(raw_item)
@@ -4322,8 +4455,12 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         seen_keys.add(unique_key)
 
-        if item_type == "list" and not item_list_key:
-            item_list_key = _normalize_process_list_key_v8(item_label)
+        if item_type == "list":
+            if not item_manual_list_key:
+                item_manual_list_key = item_list_key
+            if item_list_source_type == "manual" and not item_manual_list_key:
+                item_manual_list_key = _normalize_process_list_key_v8(item_label)
+            item_list_key = item_manual_list_key if item_list_source_type == "manual" else ""
 
         normalized_item: dict[str, Any] = {
             "key": unique_key,
@@ -4336,7 +4473,14 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
             normalized_item["size"] = item_size
 
         if item_type == "list":
+            normalized_item["list_source_type"] = item_list_source_type
+            normalized_item["manual_list_key"] = item_manual_list_key
             normalized_item["list_key"] = item_list_key
+            if item_list_source_type == "automatic":
+                normalized_item["automatic_source_process_key"] = item_automatic_source_process_key
+                normalized_item["automatic_source_section_key"] = item_automatic_source_section_key
+                normalized_item["automatic_source_field_key"] = item_automatic_source_field_key
+                normalized_item["automatic_only_active"] = bool(item_automatic_only_active)
 
         normalized.append(normalized_item)
 

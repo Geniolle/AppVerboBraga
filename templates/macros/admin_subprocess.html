@@ -33,6 +33,49 @@
 {% endmacro %}
 
 
+{% macro render_admin_subprocess_dynamic_field(field, value="", id_prefix="admin_subprocess_dyn") %}
+  {% set _field_type = field.field_type|default("text") %}
+  {% set _input_type = field.input_type|default("text") %}
+  {% if _field_type != "header" %}
+    <div class="field admin-subprocess-field-v1">
+      <label for="{{ id_prefix }}_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+
+      {% if _input_type == "select" %}
+        <select
+          id="{{ id_prefix }}_{{ field.key }}"
+          name="process_field__{{ field.key }}"
+          {% if field.required %}required{% endif %}
+        >
+          <option value="">Selecione</option>
+          {% for option in field.options|default([]) %}
+            {% set _option_value = option.value if option.value is defined else option.get("value", "") %}
+            {% set _option_label = option.label if option.label is defined else option.get("label", _option_value) %}
+            <option value="{{ _option_value }}" {% if value|string == _option_value|string %}selected{% endif %}>{{ _option_label }}</option>
+          {% endfor %}
+        </select>
+      {% elif _input_type == "checkbox" %}
+        <input
+          id="{{ id_prefix }}_{{ field.key }}"
+          name="process_field__{{ field.key }}"
+          type="checkbox"
+          value="1"
+          {% if value|string|lower in ["1", "true", "sim", "yes", "on"] %}checked{% endif %}
+        >
+      {% else %}
+        <input
+          id="{{ id_prefix }}_{{ field.key }}"
+          name="process_field__{{ field.key }}"
+          type="{{ _input_type }}"
+          value="{{ value }}"
+          {% if field.required %}required{% endif %}
+          {% if field.size %}maxlength="{{ field.size }}"{% endif %}
+        >
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+
 {% macro render_admin_subprocess_form(state) %}
   {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
   {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
@@ -87,15 +130,7 @@
           {% if state.resolved_dynamic_fields %}
             {% for dyn_field in state.resolved_dynamic_fields %}
               {% set _dyn_value = state.edit_values.get(dyn_field.key, "") if state.edit_values else "" %}
-              <div class="field admin-subprocess-field-v1">
-                <label for="admin_subprocess_dyn_{{ dyn_field.key }}">{{ dyn_field.label }}</label>
-                <input
-                  id="admin_subprocess_dyn_{{ dyn_field.key }}"
-                  name="process_field__{{ dyn_field.key }}"
-                  type="text"
-                  value="{{ _dyn_value }}"
-                >
-              </div>
+              {{ render_admin_subprocess_dynamic_field(dyn_field, _dyn_value, "admin_subprocess_dyn_edit") }}
             {% endfor %}
           {% endif %}
           {% for field in state.config.fields %}
@@ -132,15 +167,7 @@
               <div class="admin-subprocess-grid-v1">
                 {% if state.resolved_dynamic_fields %}
                   {% for dyn_field in state.resolved_dynamic_fields %}
-                    <div class="field admin-subprocess-field-v1">
-                      <label for="admin_subprocess_dyn_create_{{ dyn_field.key }}">{{ dyn_field.label }}</label>
-                      <input
-                        id="admin_subprocess_dyn_create_{{ dyn_field.key }}"
-                        name="process_field__{{ dyn_field.key }}"
-                        type="text"
-                        value=""
-                      >
-                    </div>
+                    {{ render_admin_subprocess_dynamic_field(dyn_field, "", "admin_subprocess_dyn_create") }}
                   {% endfor %}
                 {% endif %}
                 {% for field in state.config.fields %}

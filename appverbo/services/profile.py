@@ -439,6 +439,208 @@ def serialize_menu_process_records(values: list[dict[str, Any]] | tuple[dict[str
         return None
     return json.dumps(normalized_records, ensure_ascii=False)
 
+
+def normalize_process_list_source_type_v1(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    return "automatic" if clean_value == "automatic" else "manual"
+
+
+def _normalize_process_list_source_key_v1(raw_value: Any) -> str:
+    return str(raw_value or "").strip().lower()
+
+
+def _normalize_process_record_state_v1(raw_value: Any) -> str:
+    clean_value = _normalize_process_list_source_key_v1(raw_value)
+    if clean_value in {"inactive", "inativo", "0", "false", "off"}:
+        return "inactive"
+    return "active"
+
+
+def _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
+    raw_keys: set[str] | list[str] | tuple[str, ...] | None,
+) -> set[str]:
+    if not isinstance(raw_keys, (set, list, tuple)):
+        return set()
+    return {
+        clean_key
+        for clean_key in (
+            _normalize_process_list_source_key_v1(raw_key)
+            for raw_key in raw_keys
+        )
+        if clean_key
+    }
+
+
+def resolve_field_list_options_v1(
+    *,
+    active_entity_id: int | None = None,
+    current_menu_key: str,
+    field_definition: dict[str, Any] | None,
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+    visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+    menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
+) -> list[dict[str, str]]:
+    del active_entity_id
+
+    if not isinstance(field_definition, dict):
+        return []
+
+    field_type = _normalize_process_list_source_key_v1(
+        field_definition.get("field_type") or field_definition.get("type")
+    )
+    if field_type != "list":
+        return []
+
+    settings = [
+        dict(item)
+        for item in (sidebar_menu_settings or [])
+        if isinstance(item, dict)
+    ]
+    settings_by_key = {
+        clean_key: item
+        for item in settings
+        for clean_key in [_normalize_process_list_source_key_v1(item.get("key"))]
+        if clean_key
+    }
+    clean_current_menu_key = _normalize_process_list_source_key_v1(current_menu_key)
+    current_setting = settings_by_key.get(clean_current_menu_key, {})
+    list_source_type = normalize_process_list_source_type_v1(
+        field_definition.get("list_source_type")
+        or field_definition.get("listSourceType")
+        or ("automatic" if (
+            field_definition.get("automatic_source_process_key")
+            or field_definition.get("automaticSourceProcessKey")
+            or field_definition.get("automatic_source_field_key")
+            or field_definition.get("automaticSourceFieldKey")
+        ) else "manual")
+    )
+    visible_keys = _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
+        visible_sidebar_menu_keys
+    )
+
+    if list_source_type == "manual":
+        manual_list_key = _normalize_process_list_source_key_v1(
+            field_definition.get("manual_list_key")
+            or field_definition.get("manualListKey")
+            or field_definition.get("list_key")
+            or field_definition.get("listKey")
+        )
+        if not manual_list_key:
+            return []
+
+        for process_list in current_setting.get("process_lists") or []:
+            if not isinstance(process_list, dict):
+                continue
+            process_list_key = _normalize_process_list_source_key_v1(
+                process_list.get("key")
+            )
+            if process_list_key != manual_list_key:
+                continue
+            return [
+                {
+                    "value": clean_value,
+                    "label": clean_value,
+                    "status": "active",
+                }
+                for clean_value in [
+                    str(raw_item or "").strip()
+                    for raw_item in (process_list.get("items") or [])
+                ]
+                if clean_value
+            ]
+        return []
+
+    source_process_key = _normalize_process_list_source_key_v1(
+        field_definition.get("automatic_source_process_key")
+        or field_definition.get("automaticSourceProcessKey")
+    )
+    source_section_key = _normalize_process_list_source_key_v1(
+        field_definition.get("automatic_source_section_key")
+        or field_definition.get("automaticSourceSectionKey")
+    )
+    source_field_key = _normalize_process_list_source_key_v1(
+        field_definition.get("automatic_source_field_key")
+        or field_definition.get("automaticSourceFieldKey")
+    )
+    only_active = str(
+        field_definition.get("automatic_only_active")
+        or field_definition.get("automaticOnlyActive")
+        or ""
+    ).strip().lower() in {"1", "true", "sim", "yes", "on"}
+
+    if not source_process_key or not source_section_key or not source_field_key:
+        return []
+    if visible_keys and source_process_key not in visible_keys:
+        return []
+
+    source_setting = settings_by_key.get(source_process_key)
+    if not isinstance(source_setting, dict):
+        return []
+
+    available_field_keys = {
+        clean_key
+        for option in (source_setting.get("process_field_options") or [])
+        if isinstance(option, dict)
+        for clean_key in [_normalize_process_list_source_key_v1(option.get("key"))]
+        if clean_key
+    }
+    if available_field_keys and source_field_key not in available_field_keys:
+        return []
+
+    history_rows = (
+        menu_process_history_map.get(source_process_key)
+        if isinstance(menu_process_history_map, dict)
+        else []
+    )
+    if not isinstance(history_rows, list):
+        return []
+
+    status_field_key = _normalize_process_list_source_key_v1(
+        source_setting.get("process_record_status_field_key") or "__estado"
+    ) or "__estado"
+    resolved_options: list[dict[str, str]] = []
+    seen_lookup: set[str] = set()
+
+    for raw_row in history_rows:
+        if not isinstance(raw_row, dict):
+            continue
+
+        row_section_key = _normalize_process_list_source_key_v1(
+            raw_row.get("section_key")
+        )
+        if source_section_key and row_section_key != source_section_key:
+            continue
+
+        values = raw_row.get("values")
+        if not isinstance(values, dict):
+            continue
+
+        raw_option_value = str(values.get(source_field_key) or "").strip()
+        if not raw_option_value:
+            continue
+
+        option_status = _normalize_process_record_state_v1(
+            values.get(status_field_key, values.get("__estado"))
+        )
+        if only_active and option_status != "active":
+            continue
+
+        option_lookup = _normalize_process_rule_lookup_text(raw_option_value)
+        if not option_lookup or option_lookup in seen_lookup:
+            continue
+
+        seen_lookup.add(option_lookup)
+        resolved_options.append(
+            {
+                "value": raw_option_value,
+                "label": raw_option_value,
+                "status": option_status,
+            }
+        )
+
+    return resolved_options
+
+
 def parse_profile_custom_fields(raw_value: Any) -> dict[str, str]:
     normalized: dict[str, str] = {}
     for clean_key, clean_field_value in parse_member_profile_fields(raw_value).items():
@@ -683,6 +885,8 @@ __all__ = [
     "serialize_menu_process_quantity_values",
     "parse_menu_process_records",
     "serialize_menu_process_records",
+    "normalize_process_list_source_type_v1",
+    "resolve_field_list_options_v1",
     "parse_profile_custom_fields",
     "serialize_profile_custom_fields",
     "format_whatsapp_status",

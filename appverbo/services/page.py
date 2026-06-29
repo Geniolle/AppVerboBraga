@@ -40,6 +40,7 @@ from appverbo.services.profile import (
     get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,
     resolve_meu_perfil_builtin_duplicate_field_key,
+    resolve_field_list_options_v1,
     parse_menu_process_records,
     parse_menu_process_quantity_values,
     parse_member_profile_fields,
@@ -152,6 +153,78 @@ def _apply_meu_perfil_subsequent_visibility_v2(
         field_header_map,
     )
 # APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_END
+
+
+def _serialize_resolved_list_option_labels_v1(
+    resolved_options: list[dict[str, str]] | None,
+) -> list[str]:
+    if not isinstance(resolved_options, list):
+        return []
+    return [
+        clean_label
+        for clean_label in [
+            str(
+                (raw_option or {}).get("label")
+                or (raw_option or {}).get("value")
+                or ""
+            ).strip()
+            for raw_option in resolved_options
+            if isinstance(raw_option, dict)
+        ]
+        if clean_label
+    ]
+
+
+def _decorate_sidebar_list_field_options_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+    menu_process_history_map: dict[str, list[dict[str, Any]]],
+    selected_entity_id: int | None,
+) -> None:
+    for sidebar_item in sidebar_menu_settings:
+        if not isinstance(sidebar_item, dict):
+            continue
+
+        menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
+        if not menu_key:
+            continue
+
+        for collection_key in ("process_additional_fields", "process_field_options"):
+            raw_fields = sidebar_item.get(collection_key)
+            if not isinstance(raw_fields, list):
+                continue
+
+            decorated_fields: list[dict[str, Any]] = []
+            for raw_field in raw_fields:
+                if not isinstance(raw_field, dict):
+                    continue
+
+                field_definition = dict(raw_field)
+                field_type = str(
+                    field_definition.get("field_type") or field_definition.get("type") or ""
+                ).strip().lower()
+
+                if field_type == "list":
+                    resolved_options = resolve_field_list_options_v1(
+                        active_entity_id=selected_entity_id,
+                        current_menu_key=menu_key,
+                        field_definition=field_definition,
+                        sidebar_menu_settings=sidebar_menu_settings,
+                        visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+                        menu_process_history_map=menu_process_history_map,
+                    )
+                    field_definition["resolved_list_options"] = [
+                        dict(option)
+                        for option in resolved_options
+                    ]
+                    field_definition["list_options"] = _serialize_resolved_list_option_labels_v1(
+                        resolved_options
+                    )
+
+                decorated_fields.append(field_definition)
+
+            sidebar_item[collection_key] = decorated_fields
 
 
 
@@ -544,6 +617,12 @@ def get_page_data(
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
             if menu_history_rows:
                 menu_process_history_map[menu_key] = menu_history_rows
+    _decorate_sidebar_list_field_options_v1(
+        sidebar_menu_settings=sidebar_menu_settings,
+        visible_sidebar_menu_keys=set(visible_sidebar_menu_keys),
+        menu_process_history_map=menu_process_history_map,
+        selected_entity_id=selected_entity_id,
+    )
     profile_personal_visible_fields = list(MENU_MEU_PERFIL_FIELDS_DEFAULT)
     profile_personal_field_labels = dict(MENU_MEU_PERFIL_FIELD_LABELS)
     profile_personal_field_types: dict[str, str] = {}
@@ -662,13 +741,27 @@ def get_page_data(
                 is_required = str(raw_required or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
             if field_type == "header":
                 is_required = False
-            list_key = str(custom_field.get("list_key") or "").strip().lower()
+            list_key = str(
+                custom_field.get("manual_list_key")
+                or custom_field.get("list_key")
+                or ""
+            ).strip().lower()
+            resolved_list_options = custom_field.get("list_options")
             profile_personal_custom_field_meta[clean_key] = {
                 "field_type": field_type,
                 "size": field_size,
                 "is_required": is_required,
                 "list_key": list_key,
-                "list_options": list(process_lists_by_key.get(list_key, [])) if field_type == "list" else [],
+                "list_source_type": str(custom_field.get("list_source_type") or "manual").strip().lower() or "manual",
+                "automatic_source_process_key": str(custom_field.get("automatic_source_process_key") or "").strip().lower(),
+                "automatic_source_section_key": str(custom_field.get("automatic_source_section_key") or "").strip().lower(),
+                "automatic_source_field_key": str(custom_field.get("automatic_source_field_key") or "").strip().lower(),
+                "automatic_only_active": bool(custom_field.get("automatic_only_active")),
+                "list_options": (
+                    list(resolved_list_options)
+                    if field_type == "list" and isinstance(resolved_list_options, list)
+                    else list(process_lists_by_key.get(list_key, [])) if field_type == "list" else []
+                ),
             }
         visible_raw = sidebar_item.get("process_visible_fields") or []
         visible_fields: list[str] = []

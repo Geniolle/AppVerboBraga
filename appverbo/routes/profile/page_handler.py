@@ -775,6 +775,10 @@ def new_user_page(
                     return_url=auth_profile_return_url_v1,
                     success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
                     error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
+                    sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
+                    visible_sidebar_menu_keys=visible_menu_keys,
+                    menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
+                    active_entity_id=selected_entity_id,
                 )
             except Exception:
                 auth_profile_subprocess_state_v1 = None
@@ -816,6 +820,9 @@ def new_user_page(
                     success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
                     error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
                     sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
+                    visible_sidebar_menu_keys=visible_menu_keys,
+                    menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
+                    active_entity_id=selected_entity_id,
                 )
             except Exception:
                 auth_objeto_subprocess_state_v1 = None

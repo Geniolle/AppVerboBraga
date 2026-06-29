@@ -88,6 +88,10 @@
       .replace(/^_|_$/g, "");
   }
 
+  function normalizeListSourceType_v3(value) {
+    return normalizeLookup_v3(value) === "automatic" ? "automatic" : "manual";
+  }
+
   function normalizeRequired_v3(value) {
     if (typeof value === "boolean") {
       return value;
@@ -187,7 +191,74 @@
     );
   }
 
-  function getListLabelByKey_v3(root, listKey) {
+  function getProcessFieldResolver_v3() {
+    return window.AppVerboProcessFieldOptionsResolverV1 || {};
+  }
+
+  function ensureSelectOption_v3(select, value, label) {
+    if (!select) {
+      return;
+    }
+
+    const cleanValue = toSafeString_v3(value).trim();
+    if (!cleanValue) {
+      return;
+    }
+
+    const matchedOption = Array.from(select.options || []).find((option) => {
+      return toSafeString_v3(option.value).trim() === cleanValue;
+    });
+
+    if (matchedOption) {
+      return;
+    }
+
+    const option = document.createElement("option");
+    option.value = cleanValue;
+    option.textContent = toSafeString_v3(label).trim() || cleanValue;
+    option.dataset.appverboInjectedOption = "1";
+    select.appendChild(option);
+  }
+
+  function replaceSelectOptions_v3(select, options, placeholder) {
+    if (!select) {
+      return;
+    }
+
+    const currentValue = toSafeString_v3(select.value).trim();
+    select.innerHTML = "";
+
+    if (placeholder) {
+      const placeholderOption = document.createElement("option");
+      placeholderOption.value = "";
+      placeholderOption.textContent = placeholder;
+      select.appendChild(placeholderOption);
+    }
+
+    (Array.isArray(options) ? options : []).forEach((option) => {
+      if (!option || typeof option !== "object") {
+        return;
+      }
+
+      const cleanValue = toSafeString_v3(option.key).trim();
+      if (!cleanValue) {
+        return;
+      }
+
+      const optionElement = document.createElement("option");
+      optionElement.value = cleanValue;
+      optionElement.textContent = toSafeString_v3(option.label || cleanValue).trim() || cleanValue;
+      select.appendChild(optionElement);
+    });
+
+    if (currentValue) {
+      ensureSelectOption_v3(select, currentValue, currentValue);
+    }
+
+    select.value = currentValue;
+  }
+
+  function getManualListLabelByKey_v3(root, listKey) {
     const cleanListKey = normalizeListKey_v3(listKey);
 
     if (!cleanListKey) {
@@ -207,6 +278,149 @@
     }
 
     return cleanListKey;
+  }
+
+  function getAutomaticSourceLabelParts_v3(processKey, sectionKey, fieldKey) {
+    const resolver = getProcessFieldResolver_v3();
+    const processLabel = typeof resolver.getProcessSourceProcessLabel_v1 === "function"
+      ? resolver.getProcessSourceProcessLabel_v1(processKey)
+      : toSafeString_v3(processKey).trim();
+    const sectionLabel = typeof resolver.getProcessSourceSectionLabel_v1 === "function"
+      ? resolver.getProcessSourceSectionLabel_v1(processKey, sectionKey)
+      : toSafeString_v3(sectionKey).trim();
+    const fieldLabel = typeof resolver.getProcessSourceFieldLabel_v1 === "function"
+      ? resolver.getProcessSourceFieldLabel_v1(processKey, sectionKey, fieldKey)
+      : toSafeString_v3(fieldKey).trim();
+
+    return {
+      processLabel,
+      sectionLabel,
+      fieldLabel
+    };
+  }
+
+  function getListSourceSummary_v3(root, item) {
+    if (normalizeFieldType_v3(item.fieldType) !== "list") {
+      return "-";
+    }
+
+    if (normalizeListSourceType_v3(item.listSourceType) === "automatic") {
+      const parts = getAutomaticSourceLabelParts_v3(
+        item.automaticSourceProcessKey,
+        item.automaticSourceSectionKey,
+        item.automaticSourceFieldKey
+      );
+      const summaryParts = [
+        toSafeString_v3(parts.processLabel).trim(),
+        toSafeString_v3(parts.sectionLabel).trim(),
+        toSafeString_v3(parts.fieldLabel).trim()
+      ].filter(Boolean);
+
+      return summaryParts.length
+        ? `Automática: ${summaryParts.join(" > ")}`
+        : "Automática: configuração incompleta";
+    }
+
+    return `Manual: ${getManualListLabelByKey_v3(root, item.manualListKey || item.listKey)}`;
+  }
+
+  function refreshAutomaticSourceOptions_v3(root, selectedValues) {
+    const resolver = getProcessFieldResolver_v3();
+    const editor = getEditorRoot_v3(root);
+    const processSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
+    const sectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
+    const fieldSelect = editor.querySelector("[data-additional-field-editor-source-field-key]");
+    const selectedProcessKey = toSafeString_v3(
+      selectedValues && selectedValues.processKey !== undefined
+        ? selectedValues.processKey
+        : getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")
+    ).trim();
+    const selectedSectionKey = toSafeString_v3(
+      selectedValues && selectedValues.sectionKey !== undefined
+        ? selectedValues.sectionKey
+        : getInputValue_v3(editor, "[data-additional-field-editor-source-section-key]")
+    ).trim();
+    const selectedFieldKey = toSafeString_v3(
+      selectedValues && selectedValues.fieldKey !== undefined
+        ? selectedValues.fieldKey
+        : getInputValue_v3(editor, "[data-additional-field-editor-source-field-key]")
+    ).trim();
+
+    if (processSelect && typeof resolver.getProcessSourceProcessOptions_v1 === "function") {
+      replaceSelectOptions_v3(
+        processSelect,
+        resolver.getProcessSourceProcessOptions_v1(root),
+        "Selecione o processo"
+      );
+      ensureSelectOption_v3(
+        processSelect,
+        selectedProcessKey,
+        typeof resolver.getProcessSourceProcessLabel_v1 === "function"
+          ? resolver.getProcessSourceProcessLabel_v1(selectedProcessKey)
+          : selectedProcessKey
+      );
+      processSelect.value = selectedProcessKey;
+    }
+
+    if (sectionSelect && typeof resolver.getProcessSourceSectionOptions_v1 === "function") {
+      replaceSelectOptions_v3(
+        sectionSelect,
+        resolver.getProcessSourceSectionOptions_v1(selectedProcessKey),
+        "Selecione a secao"
+      );
+      ensureSelectOption_v3(
+        sectionSelect,
+        selectedSectionKey,
+        typeof resolver.getProcessSourceSectionLabel_v1 === "function"
+          ? resolver.getProcessSourceSectionLabel_v1(selectedProcessKey, selectedSectionKey)
+          : selectedSectionKey
+      );
+      sectionSelect.value = selectedSectionKey;
+    }
+
+    if (fieldSelect && typeof resolver.getProcessSourceFieldOptions_v1 === "function") {
+      replaceSelectOptions_v3(
+        fieldSelect,
+        resolver.getProcessSourceFieldOptions_v1(selectedProcessKey, selectedSectionKey),
+        "Selecione o campo"
+      );
+      ensureSelectOption_v3(
+        fieldSelect,
+        selectedFieldKey,
+        typeof resolver.getProcessSourceFieldLabel_v1 === "function"
+          ? resolver.getProcessSourceFieldLabel_v1(selectedProcessKey, selectedSectionKey, selectedFieldKey)
+          : selectedFieldKey
+      );
+      fieldSelect.value = selectedFieldKey;
+    }
+  }
+
+  function resetListSourceFields_v3(root, options) {
+    const editor = getEditorRoot_v3(root);
+    const safeOptions = options && typeof options === "object" ? options : {};
+    const resetSourceType = safeOptions.resetSourceType !== false;
+    const resetManual = safeOptions.resetManual !== false;
+    const resetAutomatic = safeOptions.resetAutomatic !== false;
+
+    if (resetSourceType) {
+      setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
+    }
+
+    if (resetManual) {
+      setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
+    }
+
+    if (resetAutomatic) {
+      setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", "");
+      setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", "");
+      setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", "");
+      setInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]", "");
+      refreshAutomaticSourceOptions_v3(root, {
+        processKey: "",
+        sectionKey: "",
+        fieldKey: ""
+      });
+    }
   }
 
   //###################################################################################
@@ -236,6 +450,12 @@
     const requiredValues = getLegacyValues_v3(container, "additional_field_required");
     const sizes = getLegacyValues_v3(container, "additional_field_size");
     const listKeys = getLegacyValues_v3(container, "additional_field_list_key");
+    const listSourceTypes = getLegacyValues_v3(container, "additional_field_list_source_type");
+    const manualListKeys = getLegacyValues_v3(container, "additional_field_manual_list_key");
+    const automaticSourceProcessKeys = getLegacyValues_v3(container, "additional_field_automatic_source_process_key");
+    const automaticSourceSectionKeys = getLegacyValues_v3(container, "additional_field_automatic_source_section_key");
+    const automaticSourceFieldKeys = getLegacyValues_v3(container, "additional_field_automatic_source_field_key");
+    const automaticOnlyActiveValues = getLegacyValues_v3(container, "additional_field_automatic_only_active");
 
     const rowsCount = Math.max(
       keys.length,
@@ -243,7 +463,13 @@
       types.length,
       requiredValues.length,
       sizes.length,
-      listKeys.length
+      listKeys.length,
+      listSourceTypes.length,
+      manualListKeys.length,
+      automaticSourceProcessKeys.length,
+      automaticSourceSectionKeys.length,
+      automaticSourceFieldKeys.length,
+      automaticOnlyActiveValues.length
     );
 
     const items = [];
@@ -256,6 +482,21 @@
         continue;
       }
 
+      const automaticSourceProcessKey = normalizeLookup_v3(automaticSourceProcessKeys[index]);
+      const automaticSourceSectionKey = normalizeLookup_v3(automaticSourceSectionKeys[index]);
+      const automaticSourceFieldKey = normalizeLookup_v3(automaticSourceFieldKeys[index]);
+      const listSourceType = fieldType === "list"
+        ? normalizeListSourceType_v3(
+            listSourceTypes[index] ||
+            (automaticSourceProcessKey || automaticSourceSectionKey || automaticSourceFieldKey
+              ? "automatic"
+              : "manual")
+          )
+        : "manual";
+      const manualListKey = fieldType === "list"
+        ? normalizeListKey_v3(manualListKeys[index] || listKeys[index])
+        : "";
+
       items.push({
         id: key || `custom_field_${index + 1}`,
         key,
@@ -263,7 +504,15 @@
         fieldType,
         isRequired: fieldType === "header" ? false : normalizeRequired_v3(requiredValues[index]),
         size: normalizeSize_v3(sizes[index], fieldType),
-        listKey: fieldType === "list" ? normalizeListKey_v3(listKeys[index]) : "",
+        listKey: fieldType === "list" && listSourceType === "manual" ? manualListKey : "",
+        listSourceType,
+        manualListKey,
+        automaticSourceProcessKey,
+        automaticSourceSectionKey,
+        automaticSourceFieldKey,
+        automaticOnlyActive: fieldType === "list"
+          ? normalizeRequired_v3(automaticOnlyActiveValues[index])
+          : false,
         order: index + 1
       });
     }
@@ -284,7 +533,17 @@
     setInputValue_v3(editor, "[data-additional-field-editor-type]", "text");
     setInputValue_v3(editor, "[data-additional-field-editor-size]", "255");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
     setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]", "");
+    refreshAutomaticSourceOptions_v3(root, {
+      processKey: "",
+      sectionKey: "",
+      fieldKey: ""
+    });
 
     updateEditorVisibility_v3(root);
 
@@ -304,7 +563,17 @@
     setInputValue_v3(editor, "[data-additional-field-editor-type]", item.fieldType || "text");
     setInputValue_v3(editor, "[data-additional-field-editor-size]", item.size || "");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", item.isRequired ? "1" : "");
-    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", item.listKey || "");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", item.listSourceType || "manual");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", item.manualListKey || item.listKey || "");
+    setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", item.automaticSourceProcessKey || "");
+    setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", item.automaticSourceSectionKey || "");
+    setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", item.automaticSourceFieldKey || "");
+    setInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]", item.automaticOnlyActive ? "1" : "");
+    refreshAutomaticSourceOptions_v3(root, {
+      processKey: item.automaticSourceProcessKey || "",
+      sectionKey: item.automaticSourceSectionKey || "",
+      fieldKey: item.automaticSourceFieldKey || ""
+    });
 
     updateEditorVisibility_v3(root);
 
@@ -324,6 +593,21 @@
     const rawKey = explicitRawKey || label;
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
     const key = normalizeFieldKey_v3(rawKey);
+    const listSourceType = normalizeListSourceType_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
+    );
+    const manualListKey = normalizeListKey_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-list-key]")
+    );
+    const automaticSourceProcessKey = normalizeLookup_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")
+    );
+    const automaticSourceSectionKey = normalizeLookup_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-source-section-key]")
+    );
+    const automaticSourceFieldKey = normalizeLookup_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-source-field-key]")
+    );
 
     return {
       id: key,
@@ -335,9 +619,17 @@
         ? false
         : normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]")),
       size: normalizeSize_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]"), fieldType),
+      listSourceType: fieldType === "list" ? listSourceType : "manual",
+      manualListKey: fieldType === "list" ? manualListKey : "",
       listKey: fieldType === "list"
-        ? normalizeListKey_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]"))
-        : ""
+        ? (listSourceType === "manual" ? manualListKey : "")
+        : "",
+      automaticSourceProcessKey: fieldType === "list" ? automaticSourceProcessKey : "",
+      automaticSourceSectionKey: fieldType === "list" ? automaticSourceSectionKey : "",
+      automaticSourceFieldKey: fieldType === "list" ? automaticSourceFieldKey : "",
+      automaticOnlyActive: fieldType === "list"
+        ? normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]"))
+        : false
     };
   }
 
@@ -460,8 +752,20 @@
       return { valid: false, message: "Informe a chave do campo." };
     }
 
-    if (item.fieldType === "list" && !item.listKey) {
-      return { valid: false, message: "Selecione a lista associada ao campo." };
+    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListKey) {
+      return { valid: false, message: "Selecione a lista manual associada ao campo." };
+    }
+
+    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "automatic") {
+      if (!item.automaticSourceProcessKey) {
+        return { valid: false, message: "Selecione o processo de origem da lista." };
+      }
+      if (!item.automaticSourceSectionKey) {
+        return { valid: false, message: "Selecione a secao de origem da lista." };
+      }
+      if (!item.automaticSourceFieldKey) {
+        return { valid: false, message: "Selecione o campo de origem da lista." };
+      }
     }
 
     const duplicated = findGroupDuplicate_v3(item, context);
@@ -481,16 +785,65 @@
   function updateEditorVisibility_v3(root) {
     const editor = getEditorRoot_v3(root);
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const listSourceType = normalizeListSourceType_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
+    );
     const sizeWrap = editor.querySelector("[data-additional-field-size-wrap]");
-    const listWrap = editor.querySelector("[data-additional-field-list-wrap]");
+    const listSourceWrap = editor.querySelector("[data-additional-field-list-source-wrap]");
+    const manualListWrap = editor.querySelector("[data-additional-field-list-wrap]");
+    const automaticProcessWrap = editor.querySelector("[data-additional-field-automatic-process-wrap]");
+    const automaticSectionWrap = editor.querySelector("[data-additional-field-automatic-section-wrap]");
+    const automaticFieldWrap = editor.querySelector("[data-additional-field-automatic-field-wrap]");
+    const automaticOnlyActiveWrap = editor.querySelector("[data-additional-field-automatic-only-active-wrap]");
     const requiredWrap = editor.querySelector("[data-additional-field-required-wrap]");
+    const isListField = fieldType === "list";
+
+    if (!isListField) {
+      resetListSourceFields_v3(root, {
+        resetSourceType: true,
+        resetManual: true,
+        resetAutomatic: true
+      });
+    } else if (listSourceType === "manual") {
+      resetListSourceFields_v3(root, {
+        resetSourceType: false,
+        resetManual: false,
+        resetAutomatic: true
+      });
+    } else {
+      resetListSourceFields_v3(root, {
+        resetSourceType: false,
+        resetManual: true,
+        resetAutomatic: false
+      });
+    }
 
     if (sizeWrap) {
       sizeWrap.style.display = TEXTUAL_TYPES.has(fieldType) ? "" : "none";
     }
 
-    if (listWrap) {
-      listWrap.style.display = fieldType === "list" ? "" : "none";
+    if (listSourceWrap) {
+      listSourceWrap.style.display = isListField ? "" : "none";
+    }
+
+    if (manualListWrap) {
+      manualListWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
+    }
+
+    if (automaticProcessWrap) {
+      automaticProcessWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+    }
+
+    if (automaticSectionWrap) {
+      automaticSectionWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+    }
+
+    if (automaticFieldWrap) {
+      automaticFieldWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+    }
+
+    if (automaticOnlyActiveWrap) {
+      automaticOnlyActiveWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
     }
 
     if (requiredWrap) {
@@ -566,11 +919,44 @@
 
     const editor = getEditorRoot_v3(root);
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const listSourceTypeSelect = editor.querySelector("[data-additional-field-editor-list-source-type]");
+    const sourceProcessSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
+    const sourceSectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
     const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
     const cancelButton = editor.querySelector("[data-additional-field-editor-cancel]");
 
     if (typeSelect) {
-      typeSelect.addEventListener("change", () => updateEditorVisibility_v3(root));
+      typeSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (listSourceTypeSelect) {
+      listSourceTypeSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (sourceProcessSelect) {
+      sourceProcessSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root, {
+          processKey: sourceProcessSelect.value,
+          sectionKey: "",
+          fieldKey: ""
+        });
+      });
+    }
+
+    if (sourceSectionSelect) {
+      sourceSectionSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root, {
+          processKey: sourceProcessSelect ? sourceProcessSelect.value : "",
+          sectionKey: sourceSectionSelect.value,
+          fieldKey: ""
+        });
+      });
     }
 
     if (submitButton) {
@@ -603,13 +989,21 @@
 
     context.items.forEach((item) => {
       const fieldType = normalizeFieldType_v3(item.fieldType);
+      const listSourceType = normalizeListSourceType_v3(item.listSourceType);
+      const manualListKey = normalizeListKey_v3(item.manualListKey || item.listKey);
 
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_key", item.key || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_label", item.label || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_type", fieldType));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_required", item.isRequired ? "1" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_size", normalizeSize_v3(item.size, fieldType)));
-      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_key", fieldType === "list" ? item.listKey || "" : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_key", fieldType === "list" && listSourceType === "manual" ? manualListKey : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_source_type", fieldType === "list" ? listSourceType : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_manual_list_key", fieldType === "list" ? manualListKey : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_process_key", fieldType === "list" ? item.automaticSourceProcessKey || "" : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_section_key", fieldType === "list" ? item.automaticSourceSectionKey || "" : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_field_key", fieldType === "list" ? item.automaticSourceFieldKey || "" : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_only_active", fieldType === "list" && item.automaticOnlyActive ? "1" : ""));
     });
   }
 
@@ -644,7 +1038,16 @@
     const label = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-label]")).trim();
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
     const size = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]")).trim();
+    const listSourceType = normalizeListSourceType_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
+    );
     const listKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]")).trim();
+    const automaticSourceProcessKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")).trim();
+    const automaticSourceSectionKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-section-key]")).trim();
+    const automaticSourceFieldKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-field-key]")).trim();
+    const automaticOnlyActive = normalizeRequired_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]")
+    );
     const isRequired = normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]"));
 
     if (manager && manager.state && manager.state.editingId) {
@@ -654,7 +1057,12 @@
     return Boolean(
       label ||
       listKey ||
+      automaticSourceProcessKey ||
+      automaticSourceSectionKey ||
+      automaticSourceFieldKey ||
+      automaticOnlyActive ||
       isRequired ||
+      (fieldType === "list" && listSourceType !== "manual") ||
       fieldType !== "text" ||
       (size && size !== "255" && size !== "30")
     );
@@ -727,11 +1135,44 @@
     const editor = getEditorRoot_v3(root);
     const parentForm = root.closest("form");
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const listSourceTypeSelect = editor.querySelector("[data-additional-field-editor-list-source-type]");
+    const sourceProcessSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
+    const sourceSectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
     const submitButton = editor.querySelector("[data-additional-field-editor-submit]");
     const cancelButton = editor.querySelector("[data-additional-field-editor-cancel]");
 
     if (typeSelect) {
-      typeSelect.addEventListener("change", () => updateEditorVisibility_v3(root));
+      typeSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (listSourceTypeSelect) {
+      listSourceTypeSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (sourceProcessSelect) {
+      sourceProcessSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root, {
+          processKey: sourceProcessSelect.value,
+          sectionKey: "",
+          fieldKey: ""
+        });
+      });
+    }
+
+    if (sourceSectionSelect) {
+      sourceSectionSelect.addEventListener("change", () => {
+        refreshAutomaticSourceOptions_v3(root, {
+          processKey: sourceProcessSelect ? sourceProcessSelect.value : "",
+          sectionKey: sourceSectionSelect.value,
+          fieldKey: ""
+        });
+      });
     }
 
     if (submitButton) {
@@ -835,10 +1276,10 @@
           }
         },
         {
-          key: "listKey",
-          label: "Lista",
+          key: "listSource",
+          label: "Lista/Fonte",
           render: function (item) {
-            return item.fieldType === "list" ? getListLabelByKey_v3(root, item.listKey) : "-";
+            return getListSourceSummary_v3(root, item);
           }
         }
       ],
@@ -858,6 +1299,7 @@
 
     root.dataset.additionalFieldsManagerReadyV3 = "1";
     bindEditorExtras_v4(root, manager);
+    refreshAutomaticSourceOptions_v3(root);
     manager.syncHiddenInputs();
 
     return manager;
