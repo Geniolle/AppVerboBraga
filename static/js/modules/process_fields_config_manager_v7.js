@@ -327,10 +327,22 @@
       );
     });
 
+    if (currentValue && !localizarPorChave_v7(state.fieldOptions, currentValue)) {
+      elements.editorKey.appendChild(
+        criarOption_v7(
+          currentValue,
+          textoSeguro_v7((editingItem && editingItem.label) || labelCampo_v7(state, currentValue) || currentValue),
+          currentValue,
+          "field"
+        )
+      );
+    }
+
     elements.editorKey.value = currentValue;
   }
 
   function reconstruirSelectCabecalho_v7(elements, state, selectedKey) {
+    const editingItem = obterEditingItem_v7(state);
     const currentValue = normalizarChave_v7(selectedKey || elements.headerKey.value);
 
     elements.headerKey.innerHTML = "";
@@ -341,6 +353,17 @@
         criarOption_v7(item.key, item.label, currentValue, "header")
       );
     });
+
+    if (currentValue && !localizarPorChave_v7(state.headerOptions, currentValue)) {
+      elements.headerKey.appendChild(
+        criarOption_v7(
+          currentValue,
+          textoSeguro_v7((editingItem && editingItem.headerLabel) || labelCabecalho_v7(state, currentValue) || currentValue),
+          currentValue,
+          "header"
+        )
+      );
+    }
 
     elements.headerKey.value = currentValue;
   }

@@ -73,6 +73,14 @@
     return cleanKey;
   }
 
+  function getFieldGroup_v3(fieldType) {
+    return normalizeFieldType_v3(fieldType) === "header" ? "header" : "field";
+  }
+
+  function buildGroupScopedFieldKey_v3(label, fieldType) {
+    return normalizeFieldKey_v3(`${getFieldGroup_v3(fieldType)}_${label}`);
+  }
+
   function normalizeListKey_v3(value) {
     return normalizeLookup_v3(value)
       .replace(/[^a-z0-9_]+/g, "_")
@@ -312,13 +320,15 @@
     const editor = getEditorRoot_v3(root);
 
     const label = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-label]")).trim();
-    const rawKey = getInputValue_v3(editor, "[data-additional-field-editor-key]") || label;
+    const explicitRawKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-key]")).trim();
+    const rawKey = explicitRawKey || label;
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
     const key = normalizeFieldKey_v3(rawKey);
 
     return {
       id: key,
       key,
+      explicitKey: normalizeFieldKey_v3(explicitRawKey),
       label,
       fieldType,
       isRequired: fieldType === "header"
@@ -331,9 +341,117 @@
     };
   }
 
-  function validateEditorItem_v3(item, context) {
+  function findGroupDuplicate_v3(item, context) {
     const editingId = toSafeString_v3(context.state.editingId);
+    const itemGroup = getFieldGroup_v3(item.fieldType);
+    const normalizedItemKey = normalizeLookup_v3(item.key);
+    const normalizedItemLabel = normalizeLookup_v3(item.label);
 
+    return context.items.find((existingItem) => {
+      const sameId = toSafeString_v3(existingItem.__managerId) === editingId;
+
+      if (sameId) {
+        return false;
+      }
+
+      if (getFieldGroup_v3(existingItem.fieldType) !== itemGroup) {
+        return false;
+      }
+
+      return (
+        normalizeLookup_v3(existingItem.key) === normalizedItemKey ||
+        normalizeLookup_v3(existingItem.label) === normalizedItemLabel
+      );
+    });
+  }
+
+  function buildUniqueFieldKey_v3(baseKey, context) {
+    const editingId = toSafeString_v3(context.state.editingId);
+    const normalizedBaseKey = normalizeFieldKey_v3(baseKey);
+    const usedKeys = new Set(
+      context.items
+        .filter((existingItem) => toSafeString_v3(existingItem.__managerId) !== editingId)
+        .map((existingItem) => normalizeLookup_v3(existingItem.key))
+        .filter(Boolean)
+    );
+
+    let uniqueKey = normalizedBaseKey;
+    let suffixIndex = 2;
+
+    while (usedKeys.has(normalizeLookup_v3(uniqueKey))) {
+      uniqueKey = `${normalizedBaseKey}_${suffixIndex}`;
+      suffixIndex += 1;
+    }
+
+    return uniqueKey;
+  }
+
+  function resolvePreferredFieldKey_v3(item, context) {
+    if (item.explicitKey) {
+      return item.explicitKey;
+    }
+
+    const normalizedLabel = normalizeLookup_v3(item.label);
+    const crossGroupLabelExists = context.items.some((existingItem) => {
+      const sameId = toSafeString_v3(existingItem.__managerId) === toSafeString_v3(context.state.editingId);
+
+      if (sameId) {
+        return false;
+      }
+
+      return (
+        normalizeLookup_v3(existingItem.label) === normalizedLabel &&
+        getFieldGroup_v3(existingItem.fieldType) !== getFieldGroup_v3(item.fieldType)
+      );
+    });
+
+    if (crossGroupLabelExists) {
+      return buildGroupScopedFieldKey_v3(item.label, item.fieldType);
+    }
+
+    return item.key;
+  }
+
+  function ensureUniqueCrossGroupKey_v3(item, context) {
+    const preferredKey = resolvePreferredFieldKey_v3(item, context);
+    const normalizedItemKey = normalizeLookup_v3(preferredKey);
+    const editingId = toSafeString_v3(context.state.editingId);
+    const conflictingItem = context.items.find((existingItem) => {
+      const sameId = toSafeString_v3(existingItem.__managerId) === editingId;
+
+      if (sameId) {
+        return false;
+      }
+
+      return normalizeLookup_v3(existingItem.key) === normalizedItemKey;
+    });
+
+    if (!conflictingItem) {
+      return {
+        ...item,
+        id: preferredKey,
+        key: preferredKey
+      };
+    }
+
+    if (getFieldGroup_v3(conflictingItem.fieldType) === getFieldGroup_v3(item.fieldType)) {
+      return {
+        ...item,
+        id: preferredKey,
+        key: preferredKey
+      };
+    }
+
+    const uniqueKey = buildUniqueFieldKey_v3(preferredKey, context);
+
+    return {
+      ...item,
+      id: uniqueKey,
+      key: uniqueKey
+    };
+  }
+
+  function validateEditorItem_v3(item, context) {
     if (!item.label) {
       return { valid: false, message: "Informe o nome do campo." };
     }
@@ -346,14 +464,15 @@
       return { valid: false, message: "Selecione a lista associada ao campo." };
     }
 
-    const duplicated = context.items.some((existingItem) => {
-      const sameKey = normalizeLookup_v3(existingItem.key) === normalizeLookup_v3(item.key);
-      const sameId = toSafeString_v3(existingItem.__managerId) === editingId;
-      return sameKey && !sameId;
-    });
+    const duplicated = findGroupDuplicate_v3(item, context);
 
     if (duplicated) {
-      return { valid: false, message: "Já existe um campo com esta chave." };
+      return {
+        valid: false,
+        message: getFieldGroup_v3(item.fieldType) === "header"
+          ? "Já existe um cabeçalho com este nome."
+          : "Já existe um campo com este nome."
+      };
     }
 
     return { valid: true };
@@ -403,7 +522,13 @@
       return;
     }
 
-    manager.addOrUpdate(item);
+    manager.addOrUpdate(ensureUniqueCrossGroupKey_v3(item, {
+      manager,
+      root,
+      elements: manager.elements,
+      state: manager.state,
+      items: manager.getItems()
+    }));
   }
 
   function bindGlobalCancelReaction_v3(root, cancelButton, manager, datasetKey) {
@@ -582,7 +707,13 @@
       return false;
     }
 
-    manager.addOrUpdate(item);
+    manager.addOrUpdate(ensureUniqueCrossGroupKey_v3(item, {
+      manager,
+      root,
+      elements: manager.elements,
+      state: manager.state,
+      items: manager.getItems()
+    }));
     return true;
   }
 

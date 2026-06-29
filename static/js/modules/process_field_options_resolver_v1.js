@@ -38,6 +38,10 @@
     return "text";
   }
 
+  function getFieldGroup_v1(fieldType) {
+    return normalizeFieldType_v1(fieldType) === "header" ? "header" : "field";
+  }
+
   function stripHeaderSuffix_v1(label) {
     return toSafeString_v1(label)
       .replace(/\s*-\s*cabe[çc]alho\s*$/i, "")
@@ -71,16 +75,19 @@
 
   function dedupeOptions_v1(options) {
     const normalizedOptions = [];
-    const seenKeys = new Set();
+    const seenIdentities = new Set();
 
     (Array.isArray(options) ? options : []).forEach((rawOption) => {
       const option = normalizeOption_v1(rawOption);
+      const optionIdentity = option
+        ? `${getFieldGroup_v1(option.fieldType)}::${option.key}`
+        : "";
 
-      if (!option || seenKeys.has(option.key)) {
+      if (!option || seenIdentities.has(optionIdentity)) {
         return;
       }
 
-      seenKeys.add(option.key);
+      seenIdentities.add(optionIdentity);
       normalizedOptions.push(option);
     });
 

@@ -368,6 +368,14 @@ def _build_custom_field_key_from_label(label: str) -> str:
     return f"custom_{normalized}"
 
 
+def _get_additional_field_group_key(field_type: Any) -> str:
+    return "header" if _normalize_additional_field_type(field_type) == "header" else "field"
+
+
+def _build_group_scoped_custom_field_key(label: str, field_type: Any) -> str:
+    return _build_custom_field_key_from_label(f"{_get_additional_field_group_key(field_type)} {label}")
+
+
 def _build_menu_key_from_label(label: str) -> str:
     normalized = (
         unicodedata.normalize("NFKD", label or "")
@@ -688,8 +696,26 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
     normalized: list[dict[str, Any]] = []
     allowed_operators = {"equals", "not_equals", "is_empty", "is_not_empty"}
-    seen_labels: set[str] = set()
+    seen_labels_by_group: dict[str, set[str]] = {"header": set(), "field": set()}
     seen_keys: set[str] = set()
+    label_groups: dict[str, set[str]] = {}
+
+    for raw_item in raw_fields:
+        if isinstance(raw_item, dict):
+            item_label = _normalize_additional_field_label(raw_item.get("label"))
+            item_type = _normalize_additional_field_type(
+                raw_item.get("field_type", raw_item.get("type"))
+            )
+        else:
+            item_label = _normalize_additional_field_label(raw_item)
+            item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+
+        if not item_label:
+            continue
+
+        label_groups.setdefault(item_label.lower(), set()).add(
+            _get_additional_field_group_key(item_type)
+        )
 
     for raw_item in raw_fields:
         item_label = ""
@@ -722,12 +748,18 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if not item_label:
             continue
 
+        field_group_key = _get_additional_field_group_key(item_type)
         normalized_label_key = item_label.lower()
-        if normalized_label_key in seen_labels:
+        if normalized_label_key in seen_labels_by_group[field_group_key]:
             continue
-        seen_labels.add(normalized_label_key)
 
-        candidate_key = item_key or _build_custom_field_key_from_label(item_label)
+        seen_labels_by_group[field_group_key].add(normalized_label_key)
+
+        candidate_key = item_key or (
+            _build_group_scoped_custom_field_key(item_label, item_type)
+            if len(label_groups.get(normalized_label_key, set())) > 1
+            else _build_custom_field_key_from_label(item_label)
+        )
         unique_key = candidate_key
         suffix_index = 2
         while unique_key in seen_keys:
@@ -3291,13 +3323,35 @@ def update_sidebar_menu_process_quantity_fields_v1(
 # (MENU) HIERARQUIA DOS CAMPOS ADICIONAIS - PATCH SEGURO V2
 # //###################################################################################
 
+def _get_additional_field_group_key_v1(field_type: Any) -> str:
+    return _get_additional_field_group_key(field_type)
+
+
 def normalize_menu_process_additional_fields_v1(raw_fields: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_fields, (list, tuple, set)):
         return []
 
     normalized: list[dict[str, Any]] = []
     seen_keys: set[str] = set()
-    seen_labels: set[str] = set()
+    seen_labels_by_group: dict[str, set[str]] = {"header": set(), "field": set()}
+    label_groups: dict[str, set[str]] = {}
+
+    for raw_item in raw_fields:
+        if isinstance(raw_item, dict):
+            item_label = _normalize_additional_field_label(raw_item.get("label"))
+            item_type = _normalize_additional_field_type(
+                raw_item.get("field_type", raw_item.get("type"))
+            )
+        else:
+            item_label = _normalize_additional_field_label(raw_item)
+            item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+
+        if not item_label:
+            continue
+
+        label_groups.setdefault(item_label.lower(), set()).add(
+            _get_additional_field_group_key_v1(item_type)
+        )
 
     for row_index, raw_item in enumerate(raw_fields):
         item_label = ""
@@ -3335,13 +3389,18 @@ def normalize_menu_process_additional_fields_v1(raw_fields: Any) -> list[dict[st
         if not item_label:
             continue
 
+        field_group_key = _get_additional_field_group_key_v1(item_type)
         normalized_label_key = item_label.lower()
-        if normalized_label_key in seen_labels:
+        if normalized_label_key in seen_labels_by_group[field_group_key]:
             continue
 
-        seen_labels.add(normalized_label_key)
+        seen_labels_by_group[field_group_key].add(normalized_label_key)
 
-        candidate_key = item_key or _build_custom_field_key_from_label(item_label)
+        candidate_key = item_key or (
+            _build_group_scoped_custom_field_key(item_label, item_type)
+            if len(label_groups.get(normalized_label_key, set())) > 1
+            else _build_custom_field_key_from_label(item_label)
+        )
         unique_key = candidate_key
         suffix_index = 2
 
@@ -4181,8 +4240,26 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         return []
 
     normalized: list[dict[str, Any]] = []
-    seen_labels: set[str] = set()
+    seen_labels_by_group: dict[str, set[str]] = {"header": set(), "field": set()}
     seen_keys: set[str] = set()
+    label_groups: dict[str, set[str]] = {}
+
+    for raw_item in raw_fields:
+        if isinstance(raw_item, dict):
+            item_label = _normalize_additional_field_label(raw_item.get("label"))
+            item_type = _normalize_additional_field_type(
+                raw_item.get("field_type", raw_item.get("type"))
+            )
+        else:
+            item_label = _normalize_additional_field_label(raw_item)
+            item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
+
+        if not item_label:
+            continue
+
+        label_groups.setdefault(item_label.lower(), set()).add(
+            _get_additional_field_group_key_v1(item_type)
+        )
 
     for raw_item in raw_fields:
         item_label = ""
@@ -4223,14 +4300,19 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if not item_label:
             continue
 
+        field_group_key = _get_additional_field_group_key_v1(item_type)
         normalized_label_key = item_label.lower()
 
-        if normalized_label_key in seen_labels:
+        if normalized_label_key in seen_labels_by_group[field_group_key]:
             continue
 
-        seen_labels.add(normalized_label_key)
+        seen_labels_by_group[field_group_key].add(normalized_label_key)
 
-        candidate_key = item_key or _build_custom_field_key_from_label(item_label)
+        candidate_key = item_key or (
+            _build_group_scoped_custom_field_key(item_label, item_type)
+            if len(label_groups.get(normalized_label_key, set())) > 1
+            else _build_custom_field_key_from_label(item_label)
+        )
         unique_key = candidate_key
         suffix_index = 2
 
@@ -4258,7 +4340,20 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         normalized.append(normalized_item)
 
-    return normalized
+    if not normalized:
+        return normalized
+
+    header_items = [
+        dict(item)
+        for item in normalized
+        if str(item.get("field_type") or "").strip().lower() == "header"
+    ]
+    non_header_items = [
+        dict(item)
+        for item in normalized
+        if str(item.get("field_type") or "").strip().lower() != "header"
+    ]
+    return header_items + non_header_items
 
 
 # ###################################################################################

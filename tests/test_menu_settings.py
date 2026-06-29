@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from appverbo.menu_settings import (
     get_menu_process_default_visible_fields,
     get_menu_process_field_options,
+    get_menu_process_header_options,
+    get_menu_process_selectable_field_options,
     get_sidebar_menu_settings,
     normalize_menu_process_additional_fields,
     normalize_menu_process_quantity_fields,
@@ -47,6 +49,61 @@ def test_normalize_additional_fields_places_headers_first() -> None:
     assert normalized[0]["label"] == "Departamento"
     assert normalized[1]["label"].lower().startswith("data")
     assert normalized[2]["label"] == "Motivo"
+
+
+def test_normalize_additional_fields_allows_same_label_across_groups() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {"label": "Perfil", "field_type": "header"},
+            {"label": "Perfil", "field_type": "text"},
+        ]
+    )
+
+    assert [item["field_type"] for item in normalized] == ["header", "text"]
+    assert [item["key"] for item in normalized] == ["custom_header_perfil", "custom_field_perfil"]
+
+
+def test_normalize_additional_fields_blocks_duplicate_inside_same_group() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {"label": "Perfil", "field_type": "text"},
+            {"label": "Perfil", "field_type": "list", "list_key": "perfil"},
+        ]
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["field_type"] == "text"
+    assert normalized[0]["key"] == "custom_perfil"
+
+
+def test_normalize_additional_fields_blocks_duplicate_inside_header_group() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {"label": "Perfil", "field_type": "header"},
+            {"label": "Perfil", "field_type": "header"},
+        ]
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["field_type"] == "header"
+    assert normalized[0]["key"] == "custom_perfil"
+
+
+def test_menu_process_field_options_keep_header_and_field_with_same_label() -> None:
+    menu_config = {
+        "additional_fields": [
+            {"label": "Perfil", "field_type": "header"},
+            {"label": "Perfil", "field_type": "text"},
+        ]
+    }
+
+    options = get_menu_process_field_options("perfil_de_autorizacao", menu_config)
+    selectable_options = get_menu_process_selectable_field_options("perfil_de_autorizacao", menu_config)
+    header_options = get_menu_process_header_options("perfil_de_autorizacao", menu_config)
+
+    assert [item["key"] for item in options] == ["custom_header_perfil", "custom_field_perfil"]
+    assert [item["key"] for item in selectable_options] == ["custom_field_perfil"]
+    assert [item["key"] for item in header_options] == ["custom_header_perfil"]
 
 
 def test_normalize_sidebar_sections_ensures_defaults() -> None:
