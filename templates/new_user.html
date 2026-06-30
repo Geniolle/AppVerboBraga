@@ -1741,7 +1741,18 @@
                   <div class="configurable-items-list-v1 process-quantity-fields-created-v1">
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Regras criadas</h4>
-                      <span class="configurable-items-total-v1" data-process-quantity-total-label>0 regras</span>
+                      <div class="configurable-items-list-head-actions-v1">
+                        <label class="appverbo-card-search-v1">
+                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                          <input
+                            type="search"
+                            data-configurable-search
+                            placeholder="Pesquisar..."
+                            aria-label="Pesquisar regras criadas"
+                          >
+                        </label>
+                        <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-quantity-total-label>0 regras</span>
+                      </div>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -1767,17 +1778,17 @@
                       style="display: none;"
                     >Sem regras criadas.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
+                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appverbo-load-more-page-size-v1">
                         <select data-process-quantity-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
                         </select>
-                      </label>
+                        <span>entradas por página</span>
+                      </div>
 
-                      <div class="configurable-items-pagination-v1" data-process-quantity-pagination></div>
+                      <div class="appverbo-load-more-status-v1" data-process-quantity-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -1852,7 +1863,18 @@
                   <div class="configurable-items-list-v1 process-lists-created-v1">
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Listas criadas</h4>
-                      <span class="configurable-items-total-v1" data-process-lists-total-label>0 listas</span>
+                      <div class="configurable-items-list-head-actions-v1">
+                        <label class="appverbo-card-search-v1">
+                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                          <input
+                            type="search"
+                            data-configurable-search
+                            placeholder="Pesquisar..."
+                            aria-label="Pesquisar listas criadas"
+                          >
+                        </label>
+                        <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-lists-total-label>0 listas</span>
+                      </div>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -1874,17 +1896,17 @@
                       style="display: none;"
                     >Sem listas criadas.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
+                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appverbo-load-more-page-size-v1">
                         <select data-process-lists-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
                         </select>
-                      </label>
+                        <span>entradas por página</span>
+                      </div>
 
-                      <div class="configurable-items-pagination-v1" data-process-lists-pagination></div>
+                      <div class="appverbo-load-more-status-v1" data-process-lists-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -1969,7 +1991,18 @@
                   <div class="configurable-items-list-v1 process-subsequent-fields-created-v1">
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Campos subsequentes criados</h4>
-                      <span class="configurable-items-total-v1" data-process-subsequent-fields-total-label>0 regras</span>
+                      <div class="configurable-items-list-head-actions-v1">
+                        <label class="appverbo-card-search-v1">
+                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                          <input
+                            type="search"
+                            placeholder="Pesquisar..."
+                            data-configurable-search
+                            aria-label="Pesquisar campos subsequentes criados"
+                          >
+                        </label>
+                        <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-subsequent-fields-total-label>0 campos subsequentes</span>
+                      </div>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -1993,17 +2026,17 @@
                       style="display: none;"
                     >Sem campos subsequentes criados.</p>
 
-                    <div class="configurable-items-pagination-row-v1">
-                      <label class="configurable-items-page-size-v1">
-                        Entradas por página
+                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appverbo-load-more-page-size-v1">
                         <select data-process-subsequent-fields-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
                           <option value="20">20</option>
                         </select>
-                      </label>
+                        <span>entradas por página</span>
+                      </div>
 
-                      <div class="configurable-items-pagination-v1" data-process-subsequent-fields-pagination></div>
+                      <div class="appverbo-load-more-status-v1" data-process-subsequent-fields-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -2586,9 +2619,9 @@
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260630-load-more-v2"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260630-active-menus-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260628-dialog-hook-v1"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260628-field-options-refresh-v1"></script>
-  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260628-field-options-refresh-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260630-core-migration-v1"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260630-core-migration-v1"></script>
+  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260630-configurable-core-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
   <script src="/static/js/modules/appverbo_cancel_controller_v1.js?v=20260628-global-cancel-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>

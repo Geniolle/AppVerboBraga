@@ -2,12 +2,18 @@
 // APPVERBOBRAGA - PROCESS LISTS MANAGER V1
 //###################################################################################
 
-(function () {
+(function (window, document) {
   "use strict";
 
+  const FORM_SELECTOR = "form[data-process-lists-manager-v1='1']";
+
   //###################################################################################
-  // (1) FUNCOES BASE
+  // (1) HELPERS
   //###################################################################################
+
+  function getCore_v1() {
+    return window.AppVerboConfigurableItems || {};
+  }
 
   function toSafeString_v1(value) {
     return String(value === null || value === undefined ? "" : value);
@@ -25,13 +31,23 @@
   }
 
   function showValidationMessage_v1(message) {
+    const core = getCore_v1();
+
+    if (typeof core.showAlertDialog_v1 === "function") {
+      core.showAlertDialog_v1({
+        title: "Validacao",
+        message
+      });
+      return;
+    }
+
     if (
       window.AppVerboDialogV1 &&
       typeof window.AppVerboDialogV1.alert === "function"
     ) {
       window.AppVerboDialogV1.alert({
         title: "Validacao",
-        message: message
+        message
       });
       return;
     }
@@ -41,40 +57,12 @@
     }
   }
 
-  function escapeHtml_v1(value) {
-    return toSafeString_v1(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function createButton_v1(action, label, itemId, disabled) {
-    const button = document.createElement("button");
-    const icons = {
-      edit: "&#9998;",
-      up: "&#8593;",
-      down: "&#8595;",
-      remove: "&#128465;"
-    };
-
-    button.type = "button";
-    button.className = "configurable-items-action-btn-v1";
-    button.dataset.processListAction = action;
-    button.dataset.processListItemId = itemId;
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.innerHTML = icons[action] || label;
-
-    if (disabled) {
-      button.disabled = true;
-    }
-
-    return button;
+  function submitNative_v1(form) {
+    HTMLFormElement.prototype.submit.call(form);
   }
 
   //###################################################################################
-  // (2) LEITURA DO DOM
+  // (2) ELEMENTOS E LEITURA INICIAL
   //###################################################################################
 
   function getElements_v1(form) {
@@ -91,51 +79,162 @@
       emptyState: form.querySelector("[data-process-lists-empty]"),
       totalLabel: form.querySelector("[data-process-lists-total-label]"),
       pageSize: form.querySelector("[data-process-lists-page-size]"),
-      pagination: form.querySelector("[data-process-lists-pagination]")
+      pagination: form.querySelector("[data-process-lists-pagination]"),
+      searchInput: form.querySelector("[data-configurable-search]")
     };
   }
 
+  function hasRequiredElements_v1(elements) {
+    return Boolean(
+      elements &&
+      elements.legacyContainer &&
+      elements.hiddenContainer &&
+      elements.editorKey &&
+      elements.editorLabel &&
+      elements.editorItems &&
+      elements.submitButton &&
+      elements.cancelButton &&
+      elements.table &&
+      elements.tableBody &&
+      elements.emptyState &&
+      elements.pageSize &&
+      elements.pagination
+    );
+  }
+
   function readInput_v1(row, name) {
-    const input = row.querySelector("[name='" + name + "']");
+    const input = row.querySelector(`[name='${name}']`);
     return input ? toSafeString_v1(input.value).trim() : "";
   }
 
   function readInitialItems_v1(elements) {
-    const rows = Array.from(elements.legacyContainer.querySelectorAll("[data-process-list-row]"));
+    const rows = Array.from(
+      elements.legacyContainer.querySelectorAll("[data-process-list-row]")
+    );
 
     return rows
-      .map(function (row, index) {
+      .map((row, index) => {
         const label = readInput_v1(row, "process_list_label");
-        const key = readInput_v1(row, "process_list_key") || normalizeKey_v1(label) || "lista_" + (index + 1);
+        const key = readInput_v1(row, "process_list_key") || normalizeKey_v1(label) || `lista_${index + 1}`;
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
 
         return {
-          managerId: "list_" + index + "_" + key,
-          key: key,
-          label: label,
-          itemsCsv: itemsCsv
+          managerId: `list_${index}_${key}`,
+          key,
+          label,
+          itemsCsv
         };
       })
-      .filter(function (item) {
-        return item.label || item.itemsCsv;
-      });
+      .filter((item) => item.label || item.itemsCsv);
   }
 
   //###################################################################################
-  // (3) SINCRONIZACAO COM BACKEND
+  // (3) EDITOR E COMPATIBILIDADE DE SUBMIT
   //###################################################################################
 
-  function syncHiddenInputs_v1(state, elements) {
+  function clearEditor_v1(context) {
+    const elements = context && context.elements ? context.elements : context;
+    const manager = context && context.manager ? context.manager : null;
+
+    if (manager && manager.root) {
+      manager.root.classList.remove("configurable-items-editing-v1");
+    }
+
+    if (!elements) {
+      return;
+    }
+
+    elements.editorKey.value = "";
+    elements.editorLabel.value = "";
+    elements.editorItems.value = "";
+  }
+
+  function loadEditorItem_v1(item, context) {
+    const elements = context && context.elements ? context.elements : null;
+    const manager = context && context.manager ? context.manager : null;
+
+    if (!item || !elements) {
+      return;
+    }
+
+    if (manager && manager.root) {
+      manager.root.classList.add("configurable-items-editing-v1");
+    }
+
+    elements.editorKey.value = item.key || "";
+    elements.editorLabel.value = item.label || "";
+    elements.editorItems.value = item.itemsCsv || "";
+    elements.editorLabel.focus();
+  }
+
+  function readEditorItem_v1(context) {
+    const state = context && context.state ? context.state : {};
+    const elements = context && context.elements ? context.elements : {};
+    const label = toSafeString_v1(elements.editorLabel ? elements.editorLabel.value : "").trim();
+    const itemsCsv = toSafeString_v1(elements.editorItems ? elements.editorItems.value : "").trim();
+    const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
+    const editingId = toSafeString_v1(state.editingId).trim();
+    const key = currentKey || normalizeKey_v1(label);
+
+    return {
+      managerId: editingId || `tmp_${Date.now()}`,
+      key,
+      label,
+      itemsCsv
+    };
+  }
+
+  function validateItem_v1(item, context) {
+    const items = context && Array.isArray(context.items) ? context.items : [];
+    const editingId = context && context.state ? toSafeString_v1(context.state.editingId).trim() : "";
+
+    if (!item.label) {
+      return {
+        valid: false,
+        message: "Informe o nome da lista."
+      };
+    }
+
+    const normalizedLabel = normalizeKey_v1(item.label);
+    const duplicate = items.some((existing) => {
+      const existingId = toSafeString_v1(existing.__managerId || existing.managerId).trim();
+      return existingId !== editingId && normalizeKey_v1(existing.label) === normalizedLabel;
+    });
+
+    if (duplicate) {
+      return {
+        valid: false,
+        message: "Ja existe uma lista com esse nome."
+      };
+    }
+
+    return { valid: true };
+  }
+
+  function hasDraft_v1(elements, manager) {
+    return Boolean(
+      (manager && manager.state && manager.state.editingId) ||
+      toSafeString_v1(elements.editorLabel.value).trim() ||
+      toSafeString_v1(elements.editorItems.value).trim()
+    );
+  }
+
+  function syncHiddenInputs_v1(context) {
+    const elements = context && context.elements ? context.elements : null;
+    const items = context && Array.isArray(context.items) ? context.items : [];
+
+    if (!elements || !elements.hiddenContainer) {
+      return;
+    }
+
     elements.hiddenContainer.innerHTML = "";
 
-    state.items.forEach(function (item) {
-      const fields = [
+    items.forEach((item) => {
+      [
         ["process_list_key", item.key],
         ["process_list_label", item.label],
         ["process_list_items_csv", item.itemsCsv]
-      ];
-
-      fields.forEach(function (field) {
+      ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
         input.name = field[0];
@@ -145,196 +244,8 @@
     });
   }
 
-  //###################################################################################
-  // (4) EDITOR SUPERIOR
-  //###################################################################################
-
-  function clearEditor_v1(state, elements) {
-    state.editingId = "";
-    elements.editorKey.value = "";
-    elements.editorLabel.value = "";
-    elements.editorItems.value = "";
-  }
-
-  function loadEditor_v1(item, state, elements) {
-    state.editingId = item.managerId;
-    elements.editorKey.value = item.key || "";
-    elements.editorLabel.value = item.label || "";
-    elements.editorItems.value = item.itemsCsv || "";
-    elements.editorLabel.focus();
-  }
-
-  function readEditorItem_v1(state, elements) {
-    const label = toSafeString_v1(elements.editorLabel.value).trim();
-    const itemsCsv = toSafeString_v1(elements.editorItems.value).trim();
-    const currentKey = toSafeString_v1(elements.editorKey.value).trim();
-    const key = currentKey || normalizeKey_v1(label);
-
-    return {
-      managerId: state.editingId || "tmp_" + Date.now(),
-      key: key,
-      label: label,
-      itemsCsv: itemsCsv
-    };
-  }
-
-  function validateItem_v1(item, state) {
-    if (!item.label) {
-      showValidationMessage_v1("Informe o nome da lista.");
-      return false;
-    }
-
-    const duplicate = state.items.some(function (existing) {
-      return existing.managerId !== item.managerId
-        && normalizeKey_v1(existing.label) === normalizeKey_v1(item.label);
-    });
-
-    if (duplicate) {
-      showValidationMessage_v1("Ja existe uma lista com esse nome.");
-      return false;
-    }
-
-    return true;
-  }
-
-  function addOrUpdateFromEditor_v1(state, elements) {
-    const item = readEditorItem_v1(state, elements);
-
-    if (!validateItem_v1(item, state)) {
-      return false;
-    }
-
-    const currentIndex = state.items.findIndex(function (existing) {
-      return existing.managerId === item.managerId;
-    });
-
-    if (currentIndex >= 0) {
-      state.items[currentIndex] = item;
-    } else {
-      item.managerId = "tmp_" + Date.now() + "_" + normalizeKey_v1(item.label);
-      state.items.push(item);
-      state.page = Math.max(1, Math.ceil(state.items.length / state.pageSize));
-    }
-
-    clearEditor_v1(state, elements);
-    return true;
-  }
-
-  function hasDraft_v1(elements, state) {
-    return Boolean(
-      state.editingId ||
-      toSafeString_v1(elements.editorLabel.value).trim() ||
-      toSafeString_v1(elements.editorItems.value).trim()
-    );
-  }
-
-  //###################################################################################
-  // (5) TABELA E PAGINACAO
-  //###################################################################################
-
-  function renderTable_v1(state, elements) {
-    const totalItems = state.items.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
-
-    if (state.page > totalPages) {
-      state.page = totalPages;
-    }
-
-    const start = (state.page - 1) * state.pageSize;
-    const visibleItems = state.items.slice(start, start + state.pageSize);
-
-    elements.tableBody.innerHTML = "";
-
-    visibleItems.forEach(function (item, visibleIndex) {
-      const absoluteIndex = start + visibleIndex;
-      const row = document.createElement("tr");
-
-      row.dataset.processListItemId = item.managerId;
-      row.innerHTML = [
-        "<td>" + escapeHtml_v1(item.label) + "</td>",
-        "<td>" + escapeHtml_v1(item.itemsCsv || "-") + "</td>"
-      ].join("");
-
-      const actionsTd = document.createElement("td");
-      const actionsWrap = document.createElement("div");
-
-      actionsTd.className = "configurable-items-actions-cell-v1";
-      actionsWrap.className = "configurable-items-actions-v1";
-
-      actionsWrap.appendChild(createButton_v1("edit", "Editar", item.managerId, false));
-      actionsWrap.appendChild(createButton_v1("up", "Subir", item.managerId, absoluteIndex === 0));
-      actionsWrap.appendChild(createButton_v1("down", "Descer", item.managerId, absoluteIndex === totalItems - 1));
-      actionsWrap.appendChild(createButton_v1("remove", "Remover", item.managerId, false));
-
-      actionsTd.appendChild(actionsWrap);
-      row.appendChild(actionsTd);
-      elements.tableBody.appendChild(row);
-    });
-
-    elements.table.style.display = totalItems ? "" : "none";
-    elements.emptyState.style.display = totalItems ? "none" : "";
-    elements.totalLabel.textContent = totalItems + " " + (totalItems === 1 ? "lista" : "listas");
-
-    renderPagination_v1(state, elements, totalPages);
-  }
-
-  function renderPagination_v1(state, elements, totalPages) {
-    elements.pagination.innerHTML = "";
-
-    const previousButton = document.createElement("button");
-    previousButton.type = "button";
-    previousButton.className = "table-limiter-nav-btn";
-    previousButton.innerHTML = "&#8249;";
-    previousButton.disabled = state.page <= 1;
-    previousButton.addEventListener("click", function () {
-      if (state.page > 1) {
-        state.page -= 1;
-        renderTable_v1(state, elements);
-      }
-    });
-
-    const pageLabel = document.createElement("span");
-    pageLabel.className = "table-limiter-page";
-    pageLabel.textContent = String(state.page);
-
-    const nextButton = document.createElement("button");
-    nextButton.type = "button";
-    nextButton.className = "table-limiter-nav-btn";
-    nextButton.innerHTML = "&#8250;";
-    nextButton.disabled = state.page >= totalPages;
-    nextButton.addEventListener("click", function () {
-      if (state.page < totalPages) {
-        state.page += 1;
-        renderTable_v1(state, elements);
-      }
-    });
-
-    elements.pagination.appendChild(previousButton);
-    elements.pagination.appendChild(pageLabel);
-    elements.pagination.appendChild(nextButton);
-  }
-
-  //###################################################################################
-  // (6) ACOES
-  //###################################################################################
-
-  function findItemIndex_v1(state, itemId) {
-    return state.items.findIndex(function (item) {
-      return item.managerId === itemId;
-    });
-  }
-
-  function moveItem_v1(state, fromIndex, toIndex) {
-    if (fromIndex < 0 || toIndex < 0 || fromIndex >= state.items.length || toIndex >= state.items.length) {
-      return;
-    }
-
-    const item = state.items.splice(fromIndex, 1)[0];
-    state.items.splice(toIndex, 0, item);
-  }
-
-  function bindGlobalCancelReaction_v1(form, elements, state) {
-    if (!form || !elements || !elements.cancelButton || form.dataset.processListsCancelBoundV1 === "1") {
+  function bindCancel_v1(form, elements, manager) {
+    if (!form || !elements.cancelButton || form.dataset.processListsCancelBoundV1 === "1") {
       return;
     }
 
@@ -342,142 +253,149 @@
     elements.cancelButton.dataset.appverboCancel = "1";
     elements.cancelButton.dataset.appverboCancelLocal = "1";
 
-    form.addEventListener("appverbo:cancelled", function (event) {
+    form.addEventListener("appverbo:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
 
       if (detail.trigger !== elements.cancelButton) {
         return;
       }
 
-      clearEditor_v1(state, elements);
+      manager.clearEditing();
     });
   }
 
-  function bindEvents_v1(form, state, elements) {
-    elements.submitButton.addEventListener("click", function (event) {
+  function bindSubmit_v1(form, elements, manager) {
+    if (!form || !elements.submitButton || form.dataset.processListsSubmitBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processListsSubmitBoundV1 = "1";
+
+    elements.submitButton.addEventListener("click", (event) => {
       event.preventDefault();
 
-      if (hasDraft_v1(elements, state)) {
-        const ok = addOrUpdateFromEditor_v1(state, elements);
+      if (hasDraft_v1(elements, manager)) {
+        const item = readEditorItem_v1({
+          manager,
+          elements: manager.elements,
+          state: manager.state
+        });
+        const validationResult = validateItem_v1(item, {
+          manager,
+          elements: manager.elements,
+          state: manager.state,
+          items: manager.getItems()
+        });
 
-        if (!ok) {
+        if (validationResult && validationResult.valid === false) {
+          if (validationResult.message) {
+            showValidationMessage_v1(validationResult.message);
+          }
           return;
         }
+
+        manager.addOrUpdate(item);
       }
 
-      syncHiddenInputs_v1(state, elements);
-
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-        return;
-      }
-
-      form.submit();
+      manager.syncHiddenInputs();
+      submitNative_v1(form);
     });
 
-    elements.pageSize.addEventListener("change", function () {
-      state.pageSize = Number.parseInt(elements.pageSize.value, 10) || 5;
-      state.page = 1;
-      renderTable_v1(state, elements);
-    });
+    if (form.dataset.processListsSubmitNativeBoundV1 === "1") {
+      return;
+    }
 
-    elements.tableBody.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-process-list-action]");
-
-      if (!button) {
-        return;
-      }
-
-      const action = button.dataset.processListAction;
-      const itemId = button.dataset.processListItemId;
-      const index = findItemIndex_v1(state, itemId);
-
-      if (index < 0) {
-        return;
-      }
-
-      if (action === "edit") {
-        loadEditor_v1(state.items[index], state, elements);
-        return;
-      }
-
-      if (action === "up") {
-        moveItem_v1(state, index, index - 1);
-      }
-
-      if (action === "down") {
-        moveItem_v1(state, index, index + 1);
-      }
-
-      if (action === "remove") {
-        state.items.splice(index, 1);
-      }
-
-      renderTable_v1(state, elements);
-      syncHiddenInputs_v1(state, elements);
-    });
-
-    form.addEventListener("submit", function () {
-      syncHiddenInputs_v1(state, elements);
+    form.dataset.processListsSubmitNativeBoundV1 = "1";
+    form.addEventListener("submit", () => {
+      manager.syncHiddenInputs();
     });
   }
 
   //###################################################################################
-  // (7) INICIALIZACAO
+  // (4) INICIALIZACAO
   //###################################################################################
 
   function setupProcessListsManager_v1(form) {
     if (!form || form.dataset.processListsManagerBoundV1 === "1") {
-      return;
+      return null;
+    }
+
+    const core = getCore_v1();
+
+    if (!core || typeof core.createConfigurableItemsManager_v1 !== "function") {
+      return null;
     }
 
     const elements = getElements_v1(form);
 
-    if (
-      !elements.legacyContainer ||
-      !elements.hiddenContainer ||
-      !elements.editorKey ||
-      !elements.editorLabel ||
-      !elements.editorItems ||
-      !elements.submitButton ||
-      !elements.cancelButton ||
-      !elements.table ||
-      !elements.tableBody ||
-      !elements.emptyState ||
-      !elements.totalLabel ||
-      !elements.pageSize ||
-      !elements.pagination
-    ) {
-      return;
+    if (!hasRequiredElements_v1(elements)) {
+      return null;
     }
-
-    const state = {
-      items: readInitialItems_v1(elements),
-      page: 1,
-      pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
-      editingId: ""
-    };
 
     form.dataset.processListsManagerBoundV1 = "1";
 
-    bindGlobalCancelReaction_v1(form, elements, state);
-    bindEvents_v1(form, state, elements);
-    syncHiddenInputs_v1(state, elements);
-    renderTable_v1(state, elements);
+    const manager = core.createConfigurableItemsManager_v1({
+      root: form,
+      itemName: "lista",
+      itemNamePlural: "listas",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
+      pageSizeOptions: [5, 10, 20],
+      initialItems: readInitialItems_v1(elements),
+      selectors: {
+        editorForm: "[data-process-list-editor-block]",
+        table: "[data-process-lists-table]",
+        tableBody: "[data-process-lists-table-body]",
+        emptyState: "[data-process-lists-empty]",
+        pagination: "[data-process-lists-pagination]",
+        pageSize: "[data-process-lists-page-size]",
+        hiddenContainer: "[data-process-lists-hidden-container]",
+        totalLabel: "[data-process-lists-total-label]",
+        searchInput: "[data-configurable-search]"
+      },
+      columns: [
+        {
+          key: "label",
+          label: "Nome da lista"
+        },
+        {
+          key: "itemsCsv",
+          label: "Conteúdo da lista",
+          render: (item) => item.itemsCsv || "-"
+        }
+      ],
+      getItemId: (item, index) => item.managerId || item.__managerId || item.key || `list_${index + 1}`,
+      readEditorItem: readEditorItem_v1,
+      loadEditorItem: loadEditorItem_v1,
+      clearEditor: clearEditor_v1,
+      validateItem: validateItem_v1,
+      syncHiddenInputs: syncHiddenInputs_v1
+    });
+
+    if (!manager) {
+      form.dataset.processListsManagerBoundV1 = "";
+      return null;
+    }
+
+    bindCancel_v1(form, elements, manager);
+    bindSubmit_v1(form, elements, manager);
+    manager.syncHiddenInputs();
+
+    return manager;
   }
 
   function setupAllProcessListsManagers_v1() {
-    document
-      .querySelectorAll("form[data-process-lists-manager-v1='1']")
-      .forEach(setupProcessListsManager_v1);
+    Array.from(document.querySelectorAll(FORM_SELECTOR)).forEach(setupProcessListsManager_v1);
   }
+
+  //###################################################################################
+  // (5) BOOT
+  //###################################################################################
+
+  window.setupProcessListsManagerV1 = setupAllProcessListsManagers_v1;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupAllProcessListsManagers_v1);
   } else {
     setupAllProcessListsManagers_v1();
   }
-
-  window.setTimeout(setupAllProcessListsManagers_v1, 150);
-  window.setTimeout(setupAllProcessListsManagers_v1, 600);
-})();
+})(window, document);

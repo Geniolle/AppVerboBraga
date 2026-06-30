@@ -2,14 +2,19 @@
 // APPVERBOBRAGA - PROCESS SUBSEQUENT FIELDS MANAGER V1
 //###################################################################################
 
-(function () {
+(function (window, document) {
   "use strict";
 
+  const FORM_SELECTOR = "form[data-process-subsequent-fields-manager-v1='1']";
   const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppVerboProcessFieldOptionsResolverV1";
 
   //###################################################################################
-  // (1) FUNCOES BASE
+  // (1) HELPERS
   //###################################################################################
+
+  function getCore_v1() {
+    return window.AppVerboConfigurableItems || {};
+  }
 
   function toSafeString_v1(value) {
     return String(value === null || value === undefined ? "" : value);
@@ -31,13 +36,23 @@
   }
 
   function showValidationMessage_v1(message) {
+    const core = getCore_v1();
+
+    if (typeof core.showAlertDialog_v1 === "function") {
+      core.showAlertDialog_v1({
+        title: "Validacao",
+        message
+      });
+      return;
+    }
+
     if (
       window.AppVerboDialogV1 &&
       typeof window.AppVerboDialogV1.alert === "function"
     ) {
       window.AppVerboDialogV1.alert({
         title: "Validacao",
-        message: message
+        message
       });
       return;
     }
@@ -47,12 +62,8 @@
     }
   }
 
-  function escapeHtml_v1(value) {
-    return toSafeString_v1(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  function submitNative_v1(form) {
+    HTMLFormElement.prototype.submit.call(form);
   }
 
   function getOptionLabel_v1(select, value) {
@@ -115,7 +126,7 @@
     select.value = previousValue || "";
   }
 
-  function updateFieldOptions_v1(form, elements, state, optionCache) {
+  function updateFieldOptions_v1(form, elements, manager, optionCache) {
     const resolver = getFieldOptionsResolver_v1();
 
     if (!resolver || typeof resolver.resolveScopeOptions_v1 !== "function") {
@@ -134,10 +145,12 @@
       placeholder: "Selecione"
     });
 
-    renderTable_v1(state, elements);
+    if (manager && typeof manager.render === "function") {
+      manager.render();
+    }
   }
 
-  function bindFieldOptionsRefresh_v1(form, elements, state, optionCache) {
+  function bindFieldOptionsRefresh_v1(form, elements, manager, optionCache) {
     if (!form || form.dataset.processSubsequentOptionsBoundV1 === "1") {
       return;
     }
@@ -159,32 +172,8 @@
         return;
       }
 
-      updateFieldOptions_v1(form, elements, state, optionCache);
+      updateFieldOptions_v1(form, elements, manager, optionCache);
     });
-  }
-
-  function createButton_v1(action, label, itemId, disabled) {
-    const button = document.createElement("button");
-    const icons = {
-      edit: "&#9998;",
-      up: "&#8593;",
-      down: "&#8595;",
-      remove: "&#128465;"
-    };
-
-    button.type = "button";
-    button.className = "configurable-items-action-btn-v1";
-    button.dataset.processSubsequentAction = action;
-    button.dataset.processSubsequentItemId = itemId;
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.innerHTML = icons[action] || label;
-
-    if (disabled) {
-      button.disabled = true;
-    }
-
-    return button;
   }
 
   //###################################################################################
@@ -209,6 +198,26 @@
       pageSize: form.querySelector("[data-process-subsequent-fields-page-size]"),
       pagination: form.querySelector("[data-process-subsequent-fields-pagination]")
     };
+  }
+
+  function hasRequiredElements_v1(elements) {
+    return Boolean(
+      elements &&
+      elements.legacyContainer &&
+      elements.hiddenContainer &&
+      elements.editorKey &&
+      elements.triggerField &&
+      elements.subsequentField &&
+      elements.operator &&
+      elements.triggerValue &&
+      elements.submitButton &&
+      elements.cancelButton &&
+      elements.table &&
+      elements.tableBody &&
+      elements.emptyState &&
+      elements.pageSize &&
+      elements.pagination
+    );
   }
 
   function readInput_v1(row, name) {
@@ -246,10 +255,17 @@
   // (3) SINCRONIZACAO COM BACKEND
   //###################################################################################
 
-  function syncHiddenInputs_v1(state, elements) {
+  function syncHiddenInputs_v1(context) {
+    const elements = context && context.elements ? context.elements : null;
+    const items = context && Array.isArray(context.items) ? context.items : [];
+
+    if (!elements || !elements.hiddenContainer) {
+      return;
+    }
+
     elements.hiddenContainer.innerHTML = "";
 
-    state.items.forEach(function (item) {
+    items.forEach(function (item) {
       const fields = [
         ["subsequent_field_key", item.key],
         ["subsequent_trigger_field", item.triggerField],
@@ -272,8 +288,13 @@
   // (4) EDITOR SUPERIOR
   //###################################################################################
 
-  function clearEditor_v1(state, elements) {
-    state.editingId = "";
+  function clearEditor_v1(context) {
+    const elements = context && context.elements ? context.elements : context;
+
+    if (!elements) {
+      return;
+    }
+
     elements.editorKey.value = "";
     elements.triggerField.value = "";
     elements.subsequentField.value = "";
@@ -281,8 +302,13 @@
     elements.triggerValue.value = "";
   }
 
-  function loadEditor_v1(item, state, elements) {
-    state.editingId = item.managerId;
+  function loadEditorItem_v1(item, context) {
+    const elements = context && context.elements ? context.elements : null;
+
+    if (!item || !elements) {
+      return;
+    }
+
     elements.editorKey.value = item.key || "";
     elements.triggerField.value = item.triggerField || "";
     elements.subsequentField.value = item.fieldKey || "";
@@ -291,16 +317,18 @@
     elements.triggerField.focus();
   }
 
-  function readEditorItem_v1(state, elements) {
-    const triggerField = toSafeString_v1(elements.triggerField.value).trim();
-    const fieldKey = toSafeString_v1(elements.subsequentField.value).trim();
-    const operator = toSafeString_v1(elements.operator.value).trim() || "equals";
-    const triggerValue = toSafeString_v1(elements.triggerValue.value).trim();
-    const currentKey = toSafeString_v1(elements.editorKey.value).trim();
+  function readEditorItem_v1(context) {
+    const state = context && context.state ? context.state : {};
+    const elements = context && context.elements ? context.elements : {};
+    const triggerField = toSafeString_v1(elements.triggerField ? elements.triggerField.value : "").trim();
+    const fieldKey = toSafeString_v1(elements.subsequentField ? elements.subsequentField.value : "").trim();
+    const operator = toSafeString_v1(elements.operator ? elements.operator.value : "").trim() || "equals";
+    const triggerValue = toSafeString_v1(elements.triggerValue ? elements.triggerValue.value : "").trim();
+    const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
     const key = currentKey || "sub_" + normalizeKey_v1(triggerField + "_" + fieldKey + "_" + operator + "_" + Date.now());
 
     return {
-      managerId: state.editingId || "tmp_" + Date.now(),
+      managerId: toSafeString_v1(state.editingId).trim() || "tmp_" + Date.now(),
       key: key,
       triggerField: triggerField,
       fieldKey: fieldKey,
@@ -309,19 +337,27 @@
     };
   }
 
-  function validateItem_v1(item, state) {
+  function validateItem_v1(item, context) {
+    const items = context && Array.isArray(context.items) ? context.items : [];
+    const editingId = context && context.state ? toSafeString_v1(context.state.editingId).trim() : "";
+
     if (!item.triggerField) {
-      showValidationMessage_v1("Selecione o campo acionador.");
-      return false;
+      return {
+        valid: false,
+        message: "Selecione o campo acionador."
+      };
     }
 
     if (!item.fieldKey) {
-      showValidationMessage_v1("Selecione o campo subsequente.");
-      return false;
+      return {
+        valid: false,
+        message: "Selecione o campo subsequente."
+      };
     }
 
-    const duplicate = state.items.some(function (existing) {
-      return existing.managerId !== item.managerId
+    const duplicate = items.some(function (existing) {
+      const existingId = toSafeString_v1(existing.__managerId || existing.managerId).trim();
+      return existingId !== editingId
         && existing.triggerField === item.triggerField
         && existing.fieldKey === item.fieldKey
         && existing.operator === item.operator
@@ -329,39 +365,18 @@
     });
 
     if (duplicate) {
-      showValidationMessage_v1("Ja existe uma regra igual criada.");
-      return false;
+      return {
+        valid: false,
+        message: "Ja existe uma regra igual criada."
+      };
     }
 
-    return true;
+    return { valid: true };
   }
 
-  function addOrUpdateFromEditor_v1(state, elements) {
-    const item = readEditorItem_v1(state, elements);
-
-    if (!validateItem_v1(item, state)) {
-      return false;
-    }
-
-    const currentIndex = state.items.findIndex(function (existing) {
-      return existing.managerId === item.managerId;
-    });
-
-    if (currentIndex >= 0) {
-      state.items[currentIndex] = item;
-    } else {
-      item.managerId = "tmp_" + Date.now() + "_" + normalizeKey_v1(item.triggerField + "_" + item.fieldKey);
-      state.items.push(item);
-      state.page = Math.max(1, Math.ceil(state.items.length / state.pageSize));
-    }
-
-    clearEditor_v1(state, elements);
-    return true;
-  }
-
-  function hasDraft_v1(elements, state) {
+  function hasDraft_v1(elements, manager) {
     return Boolean(
-      state.editingId ||
+      (manager && manager.state && manager.state.editingId) ||
       toSafeString_v1(elements.triggerField.value).trim() ||
       toSafeString_v1(elements.subsequentField.value).trim() ||
       toSafeString_v1(elements.triggerValue.value).trim() ||
@@ -370,114 +385,11 @@
   }
 
   //###################################################################################
-  // (5) TABELA E PAGINACAO
+  // (5) ACOES
   //###################################################################################
 
-  function renderTable_v1(state, elements) {
-    const totalItems = state.items.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
-
-    if (state.page > totalPages) {
-      state.page = totalPages;
-    }
-
-    const start = (state.page - 1) * state.pageSize;
-    const visibleItems = state.items.slice(start, start + state.pageSize);
-
-    elements.tableBody.innerHTML = "";
-
-    visibleItems.forEach(function (item, visibleIndex) {
-      const absoluteIndex = start + visibleIndex;
-      const row = document.createElement("tr");
-
-      row.dataset.processSubsequentItemId = item.managerId;
-      row.innerHTML = [
-        "<td>" + escapeHtml_v1(getOptionLabel_v1(elements.triggerField, item.triggerField) || "-") + "</td>",
-        "<td>" + escapeHtml_v1(getOptionLabel_v1(elements.subsequentField, item.fieldKey) || "-") + "</td>",
-        "<td>" + escapeHtml_v1(getOperatorLabel_v1(item.operator)) + "</td>",
-        "<td>" + escapeHtml_v1(item.triggerValue || "-") + "</td>"
-      ].join("");
-
-      const actionsTd = document.createElement("td");
-      const actionsWrap = document.createElement("div");
-
-      actionsTd.className = "configurable-items-actions-cell-v1";
-      actionsWrap.className = "configurable-items-actions-v1";
-
-      actionsWrap.appendChild(createButton_v1("edit", "Editar", item.managerId, false));
-      actionsWrap.appendChild(createButton_v1("up", "Subir", item.managerId, absoluteIndex === 0));
-      actionsWrap.appendChild(createButton_v1("down", "Descer", item.managerId, absoluteIndex === totalItems - 1));
-      actionsWrap.appendChild(createButton_v1("remove", "Remover", item.managerId, false));
-
-      actionsTd.appendChild(actionsWrap);
-      row.appendChild(actionsTd);
-      elements.tableBody.appendChild(row);
-    });
-
-    elements.table.style.display = totalItems ? "" : "none";
-    elements.emptyState.style.display = totalItems ? "none" : "";
-    elements.totalLabel.textContent = totalItems + " " + (totalItems === 1 ? "regra" : "regras");
-
-    renderPagination_v1(state, elements, totalPages);
-  }
-
-  function renderPagination_v1(state, elements, totalPages) {
-    elements.pagination.innerHTML = "";
-
-    const previousButton = document.createElement("button");
-    previousButton.type = "button";
-    previousButton.className = "table-limiter-nav-btn";
-    previousButton.innerHTML = "&#8249;";
-    previousButton.disabled = state.page <= 1;
-    previousButton.addEventListener("click", function () {
-      if (state.page > 1) {
-        state.page -= 1;
-        renderTable_v1(state, elements);
-      }
-    });
-
-    const pageLabel = document.createElement("span");
-    pageLabel.className = "table-limiter-page";
-    pageLabel.textContent = String(state.page);
-
-    const nextButton = document.createElement("button");
-    nextButton.type = "button";
-    nextButton.className = "table-limiter-nav-btn";
-    nextButton.innerHTML = "&#8250;";
-    nextButton.disabled = state.page >= totalPages;
-    nextButton.addEventListener("click", function () {
-      if (state.page < totalPages) {
-        state.page += 1;
-        renderTable_v1(state, elements);
-      }
-    });
-
-    elements.pagination.appendChild(previousButton);
-    elements.pagination.appendChild(pageLabel);
-    elements.pagination.appendChild(nextButton);
-  }
-
-  //###################################################################################
-  // (6) ACOES
-  //###################################################################################
-
-  function findItemIndex_v1(state, itemId) {
-    return state.items.findIndex(function (item) {
-      return item.managerId === itemId;
-    });
-  }
-
-  function moveItem_v1(state, fromIndex, toIndex) {
-    if (fromIndex < 0 || toIndex < 0 || fromIndex >= state.items.length || toIndex >= state.items.length) {
-      return;
-    }
-
-    const item = state.items.splice(fromIndex, 1)[0];
-    state.items.splice(toIndex, 0, item);
-  }
-
-  function bindGlobalCancelReaction_v1(form, elements, state) {
-    if (!form || !elements || !elements.cancelButton || form.dataset.processSubsequentCancelBoundV1 === "1") {
+  function bindCancel_v1(form, elements, manager) {
+    if (!form || !elements.cancelButton || form.dataset.processSubsequentCancelBoundV1 === "1") {
       return;
     }
 
@@ -492,143 +404,169 @@
         return;
       }
 
-      clearEditor_v1(state, elements);
+      manager.clearEditing();
     });
   }
 
-  function bindEvents_v1(form, state, elements) {
+  function bindSubmit_v1(form, elements, manager) {
+    if (!form || !elements.submitButton || form.dataset.processSubsequentSubmitBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processSubsequentSubmitBoundV1 = "1";
+
     elements.submitButton.addEventListener("click", function (event) {
       event.preventDefault();
 
-      if (hasDraft_v1(elements, state)) {
-        const ok = addOrUpdateFromEditor_v1(state, elements);
+      if (hasDraft_v1(elements, manager)) {
+        const item = readEditorItem_v1({
+          manager: manager,
+          elements: manager.elements,
+          state: manager.state
+        });
+        const validationResult = validateItem_v1(item, {
+          manager: manager,
+          elements: manager.elements,
+          state: manager.state,
+          items: manager.getItems()
+        });
 
-        if (!ok) {
+        if (validationResult && validationResult.valid === false) {
+          if (validationResult.message) {
+            showValidationMessage_v1(validationResult.message);
+          }
           return;
         }
+
+        manager.addOrUpdate(item);
       }
 
-      syncHiddenInputs_v1(state, elements);
-
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-        return;
-      }
-
-      form.submit();
+      manager.syncHiddenInputs();
+      submitNative_v1(form);
     });
 
-    elements.pageSize.addEventListener("change", function () {
-      state.pageSize = Number.parseInt(elements.pageSize.value, 10) || 5;
-      state.page = 1;
-      renderTable_v1(state, elements);
-    });
+    if (form.dataset.processSubsequentSubmitNativeBoundV1 === "1") {
+      return;
+    }
 
-    elements.tableBody.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-process-subsequent-action]");
-
-      if (!button) {
-        return;
-      }
-
-      const action = button.dataset.processSubsequentAction;
-      const itemId = button.dataset.processSubsequentItemId;
-      const index = findItemIndex_v1(state, itemId);
-
-      if (index < 0) {
-        return;
-      }
-
-      if (action === "edit") {
-        loadEditor_v1(state.items[index], state, elements);
-        return;
-      }
-
-      if (action === "up") {
-        moveItem_v1(state, index, index - 1);
-      }
-
-      if (action === "down") {
-        moveItem_v1(state, index, index + 1);
-      }
-
-      if (action === "remove") {
-        state.items.splice(index, 1);
-      }
-
-      renderTable_v1(state, elements);
-      syncHiddenInputs_v1(state, elements);
-    });
-
+    form.dataset.processSubsequentSubmitNativeBoundV1 = "1";
     form.addEventListener("submit", function () {
-      syncHiddenInputs_v1(state, elements);
+      manager.syncHiddenInputs();
     });
   }
 
   //###################################################################################
-  // (7) INICIALIZACAO
+  // (6) INICIALIZACAO
   //###################################################################################
 
   function setupProcessSubsequentFieldsManager_v1(form) {
     if (!form || form.dataset.processSubsequentFieldsManagerBoundV1 === "1") {
-      return;
+      return null;
+    }
+
+    const core = getCore_v1();
+
+    if (!core || typeof core.createConfigurableItemsManager_v1 !== "function") {
+      return null;
     }
 
     const elements = getElements_v1(form);
 
-    if (
-      !elements.legacyContainer ||
-      !elements.hiddenContainer ||
-      !elements.editorKey ||
-      !elements.triggerField ||
-      !elements.subsequentField ||
-      !elements.operator ||
-      !elements.triggerValue ||
-      !elements.submitButton ||
-      !elements.cancelButton ||
-      !elements.table ||
-      !elements.tableBody ||
-      !elements.emptyState ||
-      !elements.totalLabel ||
-      !elements.pageSize ||
-      !elements.pagination
-    ) {
-      return;
+    if (!hasRequiredElements_v1(elements)) {
+      return null;
     }
 
-    const state = {
-      items: readInitialItems_v1(elements),
-      page: 1,
-      pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
-      editingId: ""
-    };
+    form.dataset.processSubsequentFieldsManagerBoundV1 = "1";
+
     const optionCache = {
       staticOptions: snapshotSelectOptions_v1(elements.triggerField)
         .concat(snapshotSelectOptions_v1(elements.subsequentField))
     };
+    const manager = core.createConfigurableItemsManager_v1({
+      root: form,
+      itemName: "campo subsequente",
+      itemNamePlural: "campos subsequentes",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
+      pageSizeOptions: [5, 10, 20],
+      initialItems: readInitialItems_v1(elements),
+      selectors: {
+        editorForm: "[data-process-subsequent-field-editor-block]",
+        table: "[data-process-subsequent-fields-table]",
+        tableBody: "[data-process-subsequent-fields-table-body]",
+        emptyState: "[data-process-subsequent-fields-empty]",
+        pagination: "[data-process-subsequent-fields-pagination]",
+        pageSize: "[data-process-subsequent-fields-page-size]",
+        hiddenContainer: "[data-process-subsequent-fields-hidden-container]",
+        totalLabel: "[data-process-subsequent-fields-total-label]",
+        searchInput: "[data-configurable-search]"
+      },
+      columns: [
+        {
+          key: "triggerField",
+          label: "Campo acionador",
+          render: function (item) {
+            return getOptionLabel_v1(elements.triggerField, item.triggerField) || "-";
+          }
+        },
+        {
+          key: "fieldKey",
+          label: "Campo subsequente",
+          render: function (item) {
+            return getOptionLabel_v1(elements.subsequentField, item.fieldKey) || "-";
+          }
+        },
+        {
+          key: "operator",
+          label: "Condição",
+          render: function (item) {
+            return getOperatorLabel_v1(item.operator);
+          }
+        },
+        {
+          key: "triggerValue",
+          label: "Valor acionador",
+          render: function (item) {
+            return item.triggerValue || "-";
+          }
+        }
+      ],
+      getItemId: function (item, index) {
+        return item.managerId || item.__managerId || item.key || ("subsequent_" + (index + 1));
+      },
+      readEditorItem: readEditorItem_v1,
+      loadEditorItem: loadEditorItem_v1,
+      clearEditor: clearEditor_v1,
+      validateItem: validateItem_v1,
+      syncHiddenInputs: syncHiddenInputs_v1
+    });
 
-    form.dataset.processSubsequentFieldsManagerBoundV1 = "1";
+    if (!manager) {
+      form.dataset.processSubsequentFieldsManagerBoundV1 = "";
+      return null;
+    }
 
-    updateFieldOptions_v1(form, elements, state, optionCache);
-    bindFieldOptionsRefresh_v1(form, elements, state, optionCache);
-    bindGlobalCancelReaction_v1(form, elements, state);
-    bindEvents_v1(form, state, elements);
-    syncHiddenInputs_v1(state, elements);
-    renderTable_v1(state, elements);
+    updateFieldOptions_v1(form, elements, manager, optionCache);
+    bindFieldOptionsRefresh_v1(form, elements, manager, optionCache);
+    bindCancel_v1(form, elements, manager);
+    bindSubmit_v1(form, elements, manager);
+    manager.syncHiddenInputs();
+
+    return manager;
   }
 
   function setupAllProcessSubsequentFieldsManagers_v1() {
-    document
-      .querySelectorAll("form[data-process-subsequent-fields-manager-v1='1']")
-      .forEach(setupProcessSubsequentFieldsManager_v1);
+    Array.from(document.querySelectorAll(FORM_SELECTOR)).forEach(setupProcessSubsequentFieldsManager_v1);
   }
+
+  //###################################################################################
+  // (7) BOOT
+  //###################################################################################
+
+  window.setupProcessSubsequentFieldsManagerV1 = setupAllProcessSubsequentFieldsManagers_v1;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupAllProcessSubsequentFieldsManagers_v1);
   } else {
     setupAllProcessSubsequentFieldsManagers_v1();
   }
-
-  window.setTimeout(setupAllProcessSubsequentFieldsManagers_v1, 150);
-  window.setTimeout(setupAllProcessSubsequentFieldsManagers_v1, 600);
-})();
+})(window, document);

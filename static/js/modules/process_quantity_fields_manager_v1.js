@@ -2,10 +2,19 @@
 // APPVERBOBRAGA - PROCESS QUANTITY FIELDS MANAGER V1
 //###################################################################################
 
-(function () {
+(function (window, document) {
   "use strict";
 
+  const FORM_SELECTOR = "form[data-process-quantity-fields-manager-v1='1']";
   const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppVerboProcessFieldOptionsResolverV1";
+
+  //###################################################################################
+  // (1) HELPERS
+  //###################################################################################
+
+  function getCore_v1() {
+    return window.AppVerboConfigurableItems || {};
+  }
 
   function toSafeString_v1(value) {
     return String(value === null || value === undefined ? "" : value);
@@ -27,13 +36,23 @@
   }
 
   function showValidationMessage_v1(message) {
+    const core = getCore_v1();
+
+    if (typeof core.showAlertDialog_v1 === "function") {
+      core.showAlertDialog_v1({
+        title: "Validacao",
+        message
+      });
+      return;
+    }
+
     if (
       window.AppVerboDialogV1 &&
       typeof window.AppVerboDialogV1.alert === "function"
     ) {
       window.AppVerboDialogV1.alert({
         title: "Validacao",
-        message: message
+        message
       });
       return;
     }
@@ -43,37 +62,13 @@
     }
   }
 
-  function escapeHtml_v1(value) {
-    return toSafeString_v1(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+  function submitNative_v1(form) {
+    HTMLFormElement.prototype.submit.call(form);
   }
 
-  function createButton_v1(action, label, itemId, disabled) {
-    const button = document.createElement("button");
-    const icons = {
-      edit: "&#9998;",
-      up: "&#8593;",
-      down: "&#8595;",
-      remove: "&#128465;"
-    };
-
-    button.type = "button";
-    button.className = "configurable-items-action-btn-v1";
-    button.dataset.processQuantityAction = action;
-    button.dataset.processQuantityItemId = itemId;
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.innerHTML = icons[action] || label;
-
-    if (disabled) {
-      button.disabled = true;
-    }
-
-    return button;
-  }
+  //###################################################################################
+  // (2) DOM E LEITURA INICIAL
+  //###################################################################################
 
   function getElements_v1(form) {
     return {
@@ -93,51 +88,77 @@
       emptyState: form.querySelector("[data-process-quantity-empty]"),
       totalLabel: form.querySelector("[data-process-quantity-total-label]"),
       pageSize: form.querySelector("[data-process-quantity-page-size]"),
-      pagination: form.querySelector("[data-process-quantity-pagination]")
+      pagination: form.querySelector("[data-process-quantity-pagination]"),
+      searchInput: form.querySelector("[data-configurable-search]")
     };
   }
 
+  function hasRequiredElements_v1(elements) {
+    return Boolean(
+      elements &&
+      elements.legacyContainer &&
+      elements.hiddenContainer &&
+      elements.editorKey &&
+      elements.editorLabel &&
+      elements.editorQuantityField &&
+      elements.editorRepeatedFields &&
+      elements.editorHeaderKey &&
+      elements.editorMaxItems &&
+      elements.editorItemLabel &&
+      elements.submitButton &&
+      elements.cancelButton &&
+      elements.table &&
+      elements.tableBody &&
+      elements.emptyState &&
+      elements.pageSize &&
+      elements.pagination
+    );
+  }
+
   function readInput_v1(row, name) {
-    const input = row.querySelector("[name='" + name + "']");
+    const input = row.querySelector(`[name='${name}']`);
     return input ? toSafeString_v1(input.value).trim() : "";
   }
 
   function parseRepeatedFieldKeys_v1(rawValue) {
     const cleanValue = toSafeString_v1(rawValue).trim();
+
     if (!cleanValue) {
       return [];
     }
+
     try {
       const parsed = JSON.parse(cleanValue);
+
       if (Array.isArray(parsed)) {
         return parsed
-          .map(function (item) {
-            return toSafeString_v1(item).trim();
-          })
+          .map((item) => toSafeString_v1(item).trim())
           .filter(Boolean);
       }
     } catch (error) {
       // Ignore invalid persisted JSON and fallback to CSV-like parsing.
     }
+
     return cleanValue
       .split(/[,\n;\r]+/)
-      .map(function (item) {
-        return toSafeString_v1(item).trim();
-      })
+      .map((item) => toSafeString_v1(item).trim())
       .filter(Boolean);
   }
 
   function readInitialItems_v1(elements) {
-    const rows = Array.from(elements.legacyContainer.querySelectorAll("[data-process-quantity-field-row]"));
+    const rows = Array.from(
+      elements.legacyContainer.querySelectorAll("[data-process-quantity-field-row]")
+    );
 
     return rows
-      .map(function (row, index) {
+      .map((row, index) => {
         const label = readInput_v1(row, "quantity_rule_label");
-        const key = readInput_v1(row, "quantity_rule_key") || ("qty_" + normalizeKey_v1(label || ("regra_" + (index + 1))));
+        const key = readInput_v1(row, "quantity_rule_key") || `qty_${normalizeKey_v1(label || `regra_${index + 1}`)}`;
+
         return {
-          managerId: "quantity_" + index + "_" + key,
-          key: key,
-          label: label,
+          managerId: `quantity_${index}_${key}`,
+          key,
+          label,
           quantityFieldKey: readInput_v1(row, "quantity_field_key"),
           repeatedFieldKeys: parseRepeatedFieldKeys_v1(readInput_v1(row, "quantity_repeated_field_keys_json")),
           headerKey: readInput_v1(row, "quantity_header_key"),
@@ -145,19 +166,24 @@
           itemLabel: readInput_v1(row, "quantity_item_label") || "Item"
         };
       })
-      .filter(function (item) {
-        return item.label || item.quantityFieldKey || item.repeatedFieldKeys.length;
-      });
+      .filter((item) => item.label || item.quantityFieldKey || item.repeatedFieldKeys.length);
   }
+
+  //###################################################################################
+  // (3) OPCOES DOS SELECTS
+  //###################################################################################
 
   function getOptionLabel_v1(select, value) {
     const cleanValue = toSafeString_v1(value).trim();
+
     if (!select || !cleanValue) {
       return "";
     }
-    const option = Array.from(select.options).find(function (item) {
+
+    const option = Array.from(select.options).find((item) => {
       return toSafeString_v1(item.value).trim() === cleanValue;
     });
+
     return option ? toSafeString_v1(option.textContent).trim() : cleanValue;
   }
 
@@ -165,10 +191,9 @@
     if (!select) {
       return [];
     }
+
     return Array.from(select.selectedOptions || [])
-      .map(function (option) {
-        return toSafeString_v1(option.value).trim();
-      })
+      .map((option) => toSafeString_v1(option.value).trim())
       .filter(Boolean);
   }
 
@@ -176,12 +201,14 @@
     if (!select) {
       return;
     }
+
     const selectedValues = new Set(
       Array.isArray(values)
-        ? values.map(function (item) { return toSafeString_v1(item).trim(); }).filter(Boolean)
+        ? values.map((item) => toSafeString_v1(item).trim()).filter(Boolean)
         : []
     );
-    Array.from(select.options || []).forEach(function (option) {
+
+    Array.from(select.options || []).forEach((option) => {
       option.selected = selectedValues.has(toSafeString_v1(option.value).trim());
     });
   }
@@ -215,7 +242,7 @@
       select.appendChild(emptyOption);
     }
 
-    (Array.isArray(options) ? options : []).forEach(function (item) {
+    (Array.isArray(options) ? options : []).forEach((item) => {
       const option = document.createElement("option");
       option.value = item.key || "";
       option.textContent = item.label || item.key || "";
@@ -230,7 +257,7 @@
     select.value = previousValue || "";
   }
 
-  function updateFieldOptions_v1(form, elements, state, optionCache) {
+  function updateFieldOptions_v1(form, elements, manager, optionCache) {
     const resolver = getFieldOptionsResolver_v1();
 
     if (!resolver || typeof resolver.resolveScopeOptions_v1 !== "function") {
@@ -244,9 +271,7 @@
     const selectableOptions = Array.isArray(resolved.selectableOptions)
       ? resolved.selectableOptions
       : [];
-    const quantityOptions = selectableOptions.filter(function (option) {
-      return option.fieldType === "number";
-    });
+    const quantityOptions = selectableOptions.filter((option) => option.fieldType === "number");
 
     rebuildSelectOptions_v1(elements.editorQuantityField, quantityOptions, {
       placeholder: "Selecione"
@@ -258,17 +283,19 @@
       placeholder: "Sem cabecalho"
     });
 
-    renderTable_v1(state, elements);
+    if (manager) {
+      manager.render();
+    }
   }
 
-  function bindFieldOptionsRefresh_v1(form, elements, state, optionCache) {
+  function bindFieldOptionsRefresh_v1(form, elements, manager, optionCache) {
     if (!form || form.dataset.processQuantityOptionsBoundV1 === "1") {
       return;
     }
 
     form.dataset.processQuantityOptionsBoundV1 = "1";
 
-    document.addEventListener("appverbo:configurable-items-change", function (event) {
+    document.addEventListener("appverbo:configurable-items-change", (event) => {
       const additionalRoot = event && event.target && typeof event.target.closest === "function"
         ? event.target.closest("[data-process-additional-fields-manager-v3='1']")
         : null;
@@ -283,15 +310,26 @@
         return;
       }
 
-      updateFieldOptions_v1(form, elements, state, optionCache);
+      updateFieldOptions_v1(form, elements, manager, optionCache);
     });
   }
 
-  function syncHiddenInputs_v1(state, elements) {
+  //###################################################################################
+  // (4) EDITOR E SUBMIT
+  //###################################################################################
+
+  function syncHiddenInputs_v1(context) {
+    const elements = context && context.elements ? context.elements : null;
+    const items = context && Array.isArray(context.items) ? context.items : [];
+
+    if (!elements || !elements.hiddenContainer) {
+      return;
+    }
+
     elements.hiddenContainer.innerHTML = "";
 
-    state.items.forEach(function (item) {
-      const fields = [
+    items.forEach((item) => {
+      [
         ["quantity_rule_key", item.key],
         ["quantity_rule_label", item.label],
         ["quantity_field_key", item.quantityFieldKey],
@@ -299,9 +337,7 @@
         ["quantity_header_key", item.headerKey],
         ["quantity_max_items", item.maxItems],
         ["quantity_item_label", item.itemLabel]
-      ];
-
-      fields.forEach(function (field) {
+      ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
         input.name = field[0];
@@ -311,8 +347,18 @@
     });
   }
 
-  function clearEditor_v1(state, elements) {
-    state.editingId = "";
+  function clearEditor_v1(context) {
+    const elements = context && context.elements ? context.elements : context;
+    const manager = context && context.manager ? context.manager : null;
+
+    if (manager && manager.root) {
+      manager.root.classList.remove("configurable-items-editing-v1");
+    }
+
+    if (!elements) {
+      return;
+    }
+
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorQuantityField.value = "";
@@ -322,8 +368,18 @@
     elements.editorItemLabel.value = "Item";
   }
 
-  function loadEditor_v1(item, state, elements) {
-    state.editingId = item.managerId;
+  function loadEditorItem_v1(item, context) {
+    const elements = context && context.elements ? context.elements : null;
+    const manager = context && context.manager ? context.manager : null;
+
+    if (!item || !elements) {
+      return;
+    }
+
+    if (manager && manager.root) {
+      manager.root.classList.add("configurable-items-editing-v1");
+    }
+
     elements.editorKey.value = item.key || "";
     elements.editorLabel.value = item.label || "";
     elements.editorQuantityField.value = item.quantityFieldKey || "";
@@ -334,194 +390,92 @@
     elements.editorLabel.focus();
   }
 
-  function readEditorItem_v1(state, elements) {
-    const label = toSafeString_v1(elements.editorLabel.value).trim();
-    const quantityFieldKey = toSafeString_v1(elements.editorQuantityField.value).trim();
+  function readEditorItem_v1(context) {
+    const state = context && context.state ? context.state : {};
+    const elements = context && context.elements ? context.elements : {};
+    const label = toSafeString_v1(elements.editorLabel ? elements.editorLabel.value : "").trim();
+    const quantityFieldKey = toSafeString_v1(elements.editorQuantityField ? elements.editorQuantityField.value : "").trim();
     const repeatedFieldKeys = getSelectedValues_v1(elements.editorRepeatedFields);
-    const headerKey = toSafeString_v1(elements.editorHeaderKey.value).trim();
-    const maxItems = toSafeString_v1(elements.editorMaxItems.value).trim() || "10";
-    const itemLabel = toSafeString_v1(elements.editorItemLabel.value).trim() || "Item";
-    const currentKey = toSafeString_v1(elements.editorKey.value).trim();
-    const key = currentKey || ("qty_" + normalizeKey_v1(label || itemLabel));
+    const headerKey = toSafeString_v1(elements.editorHeaderKey ? elements.editorHeaderKey.value : "").trim();
+    const maxItems = toSafeString_v1(elements.editorMaxItems ? elements.editorMaxItems.value : "").trim() || "10";
+    const itemLabel = toSafeString_v1(elements.editorItemLabel ? elements.editorItemLabel.value : "").trim() || "Item";
+    const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
+    const editingId = toSafeString_v1(state.editingId).trim();
+    const key = currentKey || `qty_${normalizeKey_v1(label || itemLabel)}`;
 
     return {
-      managerId: state.editingId || "tmp_" + Date.now(),
-      key: key,
-      label: label,
-      quantityFieldKey: quantityFieldKey,
-      repeatedFieldKeys: repeatedFieldKeys,
-      headerKey: headerKey,
-      maxItems: maxItems,
-      itemLabel: itemLabel
+      managerId: editingId || `tmp_${Date.now()}`,
+      key,
+      label,
+      quantityFieldKey,
+      repeatedFieldKeys,
+      headerKey,
+      maxItems,
+      itemLabel
     };
   }
 
-  function validateItem_v1(item, state) {
+  function validateItem_v1(item, context) {
+    const items = context && Array.isArray(context.items) ? context.items : [];
+    const editingId = context && context.state ? toSafeString_v1(context.state.editingId).trim() : "";
+
     if (!item.label) {
-      showValidationMessage_v1("Informe o nome da regra.");
-      return false;
+      return {
+        valid: false,
+        message: "Informe o nome da regra."
+      };
     }
+
     if (!item.quantityFieldKey) {
-      showValidationMessage_v1("Selecione o campo origem da quantidade.");
-      return false;
+      return {
+        valid: false,
+        message: "Selecione o campo origem da quantidade."
+      };
     }
+
     if (!Array.isArray(item.repeatedFieldKeys) || !item.repeatedFieldKeys.length) {
-      showValidationMessage_v1("Selecione ao menos um campo repetido.");
-      return false;
+      return {
+        valid: false,
+        message: "Selecione ao menos um campo repetido."
+      };
     }
+
     const parsedMaxItems = Number.parseInt(item.maxItems, 10);
+
     if (!Number.isFinite(parsedMaxItems) || parsedMaxItems <= 0) {
-      showValidationMessage_v1("Informe uma quantidade maxima valida.");
-      return false;
+      return {
+        valid: false,
+        message: "Informe uma quantidade maxima valida."
+      };
     }
-    const duplicate = state.items.some(function (existing) {
-      return existing.managerId !== item.managerId
-        && normalizeKey_v1(existing.label) === normalizeKey_v1(item.label);
+
+    const normalizedLabel = normalizeKey_v1(item.label);
+    const duplicate = items.some((existing) => {
+      const existingId = toSafeString_v1(existing.__managerId || existing.managerId).trim();
+      return existingId !== editingId && normalizeKey_v1(existing.label) === normalizedLabel;
     });
+
     if (duplicate) {
-      showValidationMessage_v1("Ja existe uma regra com esse nome.");
-      return false;
+      return {
+        valid: false,
+        message: "Ja existe uma regra com esse nome."
+      };
     }
-    return true;
+
+    return { valid: true };
   }
 
-  function addOrUpdateFromEditor_v1(state, elements) {
-    const item = readEditorItem_v1(state, elements);
-    if (!validateItem_v1(item, state)) {
-      return false;
-    }
-
-    const currentIndex = state.items.findIndex(function (existing) {
-      return existing.managerId === item.managerId;
-    });
-
-    if (currentIndex >= 0) {
-      state.items[currentIndex] = item;
-    } else {
-      item.managerId = "tmp_" + Date.now() + "_" + normalizeKey_v1(item.label || item.itemLabel);
-      state.items.push(item);
-      state.page = Math.max(1, Math.ceil(state.items.length / state.pageSize));
-    }
-
-    clearEditor_v1(state, elements);
-    return true;
-  }
-
-  function hasDraft_v1(elements, state) {
+  function hasDraft_v1(elements, manager) {
     return Boolean(
-      state.editingId ||
+      (manager && manager.state && manager.state.editingId) ||
       toSafeString_v1(elements.editorLabel.value).trim() ||
       toSafeString_v1(elements.editorQuantityField.value).trim() ||
       getSelectedValues_v1(elements.editorRepeatedFields).length
     );
   }
 
-  function renderTable_v1(state, elements) {
-    const totalItems = state.items.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
-    if (state.page > totalPages) {
-      state.page = totalPages;
-    }
-
-    const start = (state.page - 1) * state.pageSize;
-    const visibleItems = state.items.slice(start, start + state.pageSize);
-
-    elements.tableBody.innerHTML = "";
-
-    visibleItems.forEach(function (item, visibleIndex) {
-      const absoluteIndex = start + visibleIndex;
-      const row = document.createElement("tr");
-      row.dataset.processQuantityItemId = item.managerId;
-
-      const repeatedLabel = (item.repeatedFieldKeys || [])
-        .map(function (fieldKey) {
-          return getOptionLabel_v1(elements.editorRepeatedFields, fieldKey) || fieldKey;
-        })
-        .join(", ");
-
-      row.innerHTML = [
-        "<td>" + escapeHtml_v1(item.label) + "</td>",
-        "<td>" + escapeHtml_v1(getOptionLabel_v1(elements.editorQuantityField, item.quantityFieldKey) || "-") + "</td>",
-        "<td>" + escapeHtml_v1(repeatedLabel || "-") + "</td>",
-        "<td>" + escapeHtml_v1(getOptionLabel_v1(elements.editorHeaderKey, item.headerKey) || "Sem cabeçalho") + "</td>",
-        "<td>" + escapeHtml_v1(item.maxItems || "10") + "</td>",
-        "<td>" + escapeHtml_v1(item.itemLabel || "Item") + "</td>"
-      ].join("");
-
-      const actionsTd = document.createElement("td");
-      const actionsWrap = document.createElement("div");
-      actionsTd.className = "configurable-items-actions-cell-v1";
-      actionsWrap.className = "configurable-items-actions-v1";
-
-      actionsWrap.appendChild(createButton_v1("edit", "Editar", item.managerId, false));
-      actionsWrap.appendChild(createButton_v1("up", "Subir", item.managerId, absoluteIndex === 0));
-      actionsWrap.appendChild(createButton_v1("down", "Descer", item.managerId, absoluteIndex === totalItems - 1));
-      actionsWrap.appendChild(createButton_v1("remove", "Remover", item.managerId, false));
-
-      actionsTd.appendChild(actionsWrap);
-      row.appendChild(actionsTd);
-      elements.tableBody.appendChild(row);
-    });
-
-    elements.table.style.display = totalItems ? "" : "none";
-    elements.emptyState.style.display = totalItems ? "none" : "";
-    elements.totalLabel.textContent = totalItems + " " + (totalItems === 1 ? "regra" : "regras");
-
-    renderPagination_v1(state, elements, totalPages);
-  }
-
-  function renderPagination_v1(state, elements, totalPages) {
-    elements.pagination.innerHTML = "";
-
-    const previousButton = document.createElement("button");
-    previousButton.type = "button";
-    previousButton.className = "table-limiter-nav-btn";
-    previousButton.innerHTML = "&#8249;";
-    previousButton.disabled = state.page <= 1;
-    previousButton.addEventListener("click", function () {
-      if (state.page > 1) {
-        state.page -= 1;
-        renderTable_v1(state, elements);
-      }
-    });
-
-    const pageLabel = document.createElement("span");
-    pageLabel.className = "table-limiter-page";
-    pageLabel.textContent = String(state.page);
-
-    const nextButton = document.createElement("button");
-    nextButton.type = "button";
-    nextButton.className = "table-limiter-nav-btn";
-    nextButton.innerHTML = "&#8250;";
-    nextButton.disabled = state.page >= totalPages;
-    nextButton.addEventListener("click", function () {
-      if (state.page < totalPages) {
-        state.page += 1;
-        renderTable_v1(state, elements);
-      }
-    });
-
-    elements.pagination.appendChild(previousButton);
-    elements.pagination.appendChild(pageLabel);
-    elements.pagination.appendChild(nextButton);
-  }
-
-  function findItemIndex_v1(state, itemId) {
-    return state.items.findIndex(function (item) {
-      return item.managerId === itemId;
-    });
-  }
-
-  function moveItem_v1(state, fromIndex, toIndex) {
-    if (fromIndex < 0 || toIndex < 0 || fromIndex >= state.items.length || toIndex >= state.items.length) {
-      return;
-    }
-    const item = state.items.splice(fromIndex, 1)[0];
-    state.items.splice(toIndex, 0, item);
-  }
-
-  function bindGlobalCancelReaction_v1(form, elements, state) {
-    if (!form || !elements || !elements.cancelButton || form.dataset.processQuantityCancelBoundV1 === "1") {
+  function bindCancel_v1(form, elements, manager) {
+    if (!form || !elements.cancelButton || form.dataset.processQuantityCancelBoundV1 === "1") {
       return;
     }
 
@@ -529,140 +483,180 @@
     elements.cancelButton.dataset.appverboCancel = "1";
     elements.cancelButton.dataset.appverboCancelLocal = "1";
 
-    form.addEventListener("appverbo:cancelled", function (event) {
+    form.addEventListener("appverbo:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
 
       if (detail.trigger !== elements.cancelButton) {
         return;
       }
 
-      clearEditor_v1(state, elements);
+      manager.clearEditing();
     });
   }
 
-  function bindEvents_v1(form, state, elements) {
-    elements.submitButton.addEventListener("click", function (event) {
+  function bindSubmit_v1(form, elements, manager) {
+    if (!form || !elements.submitButton || form.dataset.processQuantitySubmitBoundV1 === "1") {
+      return;
+    }
+
+    form.dataset.processQuantitySubmitBoundV1 = "1";
+
+    elements.submitButton.addEventListener("click", (event) => {
       event.preventDefault();
 
-      if (hasDraft_v1(elements, state)) {
-        const ok = addOrUpdateFromEditor_v1(state, elements);
-        if (!ok) {
+      if (hasDraft_v1(elements, manager)) {
+        const item = readEditorItem_v1({
+          manager,
+          elements: manager.elements,
+          state: manager.state
+        });
+        const validationResult = validateItem_v1(item, {
+          manager,
+          elements: manager.elements,
+          state: manager.state,
+          items: manager.getItems()
+        });
+
+        if (validationResult && validationResult.valid === false) {
+          if (validationResult.message) {
+            showValidationMessage_v1(validationResult.message);
+          }
           return;
         }
+
+        manager.addOrUpdate(item);
       }
 
-      syncHiddenInputs_v1(state, elements);
-      if (typeof form.requestSubmit === "function") {
-        form.requestSubmit();
-        return;
-      }
-      form.submit();
+      manager.syncHiddenInputs();
+      submitNative_v1(form);
     });
 
-    elements.pageSize.addEventListener("change", function () {
-      state.pageSize = Number.parseInt(elements.pageSize.value, 10) || 5;
-      state.page = 1;
-      renderTable_v1(state, elements);
-    });
+    if (form.dataset.processQuantitySubmitNativeBoundV1 === "1") {
+      return;
+    }
 
-    elements.tableBody.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-process-quantity-action]");
-      if (!button) {
-        return;
-      }
-
-      const action = button.dataset.processQuantityAction;
-      const itemId = button.dataset.processQuantityItemId;
-      const index = findItemIndex_v1(state, itemId);
-      if (index < 0) {
-        return;
-      }
-
-      if (action === "edit") {
-        loadEditor_v1(state.items[index], state, elements);
-        return;
-      }
-      if (action === "up") {
-        moveItem_v1(state, index, index - 1);
-      }
-      if (action === "down") {
-        moveItem_v1(state, index, index + 1);
-      }
-      if (action === "remove") {
-        state.items.splice(index, 1);
-      }
-
-      renderTable_v1(state, elements);
-      syncHiddenInputs_v1(state, elements);
-    });
-
-    form.addEventListener("submit", function () {
-      syncHiddenInputs_v1(state, elements);
+    form.dataset.processQuantitySubmitNativeBoundV1 = "1";
+    form.addEventListener("submit", () => {
+      manager.syncHiddenInputs();
     });
   }
+
+  //###################################################################################
+  // (5) INICIALIZACAO
+  //###################################################################################
 
   function setupProcessQuantityFieldsManager_v1(form) {
     if (!form || form.dataset.processQuantityFieldsManagerBoundV1 === "1") {
-      return;
+      return null;
+    }
+
+    const core = getCore_v1();
+
+    if (!core || typeof core.createConfigurableItemsManager_v1 !== "function") {
+      return null;
     }
 
     const elements = getElements_v1(form);
-    if (
-      !elements.legacyContainer ||
-      !elements.hiddenContainer ||
-      !elements.editorKey ||
-      !elements.editorLabel ||
-      !elements.editorQuantityField ||
-      !elements.editorRepeatedFields ||
-      !elements.editorHeaderKey ||
-      !elements.editorMaxItems ||
-      !elements.editorItemLabel ||
-      !elements.submitButton ||
-      !elements.cancelButton ||
-      !elements.table ||
-      !elements.tableBody ||
-      !elements.emptyState ||
-      !elements.totalLabel ||
-      !elements.pageSize ||
-      !elements.pagination
-    ) {
-      return;
+
+    if (!hasRequiredElements_v1(elements)) {
+      return null;
     }
 
-    const state = {
-      items: readInitialItems_v1(elements),
-      page: 1,
-      pageSize: Number.parseInt(elements.pageSize.value, 10) || 5,
-      editingId: ""
-    };
+    form.dataset.processQuantityFieldsManagerBoundV1 = "1";
+
     const optionCache = {
       staticOptions: snapshotSelectOptions_v1(elements.editorQuantityField)
         .concat(snapshotSelectOptions_v1(elements.editorRepeatedFields))
         .concat(snapshotSelectOptions_v1(elements.editorHeaderKey))
     };
+    const manager = core.createConfigurableItemsManager_v1({
+      root: form,
+      itemName: "regra",
+      itemNamePlural: "regras",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
+      pageSizeOptions: [5, 10, 20],
+      initialItems: readInitialItems_v1(elements),
+      selectors: {
+        editorForm: ".process-quantity-fields-editor-grid-v1",
+        table: "[data-process-quantity-table]",
+        tableBody: "[data-process-quantity-table-body]",
+        emptyState: "[data-process-quantity-empty]",
+        pagination: "[data-process-quantity-pagination]",
+        pageSize: "[data-process-quantity-page-size]",
+        hiddenContainer: "[data-process-quantity-fields-hidden-container]",
+        totalLabel: "[data-process-quantity-total-label]",
+        searchInput: "[data-configurable-search]"
+      },
+      columns: [
+        {
+          key: "label",
+          label: "Regra"
+        },
+        {
+          key: "quantityFieldKey",
+          label: "Campo origem",
+          render: (item) => getOptionLabel_v1(elements.editorQuantityField, item.quantityFieldKey) || "-"
+        },
+        {
+          key: "repeatedFieldKeys",
+          label: "Campos repetidos",
+          render: (item) => {
+            return (item.repeatedFieldKeys || [])
+              .map((fieldKey) => getOptionLabel_v1(elements.editorRepeatedFields, fieldKey) || fieldKey)
+              .join(", ") || "-";
+          }
+        },
+        {
+          key: "headerKey",
+          label: "Cabeçalho",
+          render: (item) => getOptionLabel_v1(elements.editorHeaderKey, item.headerKey) || "Sem cabeçalho"
+        },
+        {
+          key: "maxItems",
+          label: "Limite",
+          render: (item) => item.maxItems || "10"
+        },
+        {
+          key: "itemLabel",
+          label: "Item",
+          render: (item) => item.itemLabel || "Item"
+        }
+      ],
+      getItemId: (item, index) => item.managerId || item.__managerId || item.key || `quantity_${index + 1}`,
+      readEditorItem: readEditorItem_v1,
+      loadEditorItem: loadEditorItem_v1,
+      clearEditor: clearEditor_v1,
+      validateItem: validateItem_v1,
+      syncHiddenInputs: syncHiddenInputs_v1
+    });
 
-    form.dataset.processQuantityFieldsManagerBoundV1 = "1";
+    if (!manager) {
+      form.dataset.processQuantityFieldsManagerBoundV1 = "";
+      return null;
+    }
 
-    updateFieldOptions_v1(form, elements, state, optionCache);
-    bindFieldOptionsRefresh_v1(form, elements, state, optionCache);
-    bindGlobalCancelReaction_v1(form, elements, state);
-    bindEvents_v1(form, state, elements);
-    syncHiddenInputs_v1(state, elements);
-    renderTable_v1(state, elements);
+    updateFieldOptions_v1(form, elements, manager, optionCache);
+    bindFieldOptionsRefresh_v1(form, elements, manager, optionCache);
+    bindCancel_v1(form, elements, manager);
+    bindSubmit_v1(form, elements, manager);
+    manager.syncHiddenInputs();
+
+    return manager;
   }
 
   function setupAllProcessQuantityFieldsManagers_v1() {
-    document
-      .querySelectorAll("form[data-process-quantity-fields-manager-v1='1']")
-      .forEach(setupProcessQuantityFieldsManager_v1);
+    Array.from(document.querySelectorAll(FORM_SELECTOR)).forEach(setupProcessQuantityFieldsManager_v1);
   }
+
+  //###################################################################################
+  // (6) BOOT
+  //###################################################################################
+
+  window.setupProcessQuantityFieldsManagerV1 = setupAllProcessQuantityFieldsManagers_v1;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", setupAllProcessQuantityFieldsManagers_v1);
   } else {
     setupAllProcessQuantityFieldsManagers_v1();
   }
-
-  window.setTimeout(setupAllProcessQuantityFieldsManagers_v1, 150);
-  window.setTimeout(setupAllProcessQuantityFieldsManagers_v1, 600);
-})();
+})(window, document);
