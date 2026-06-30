@@ -95,8 +95,7 @@
   white-space: nowrap;
 }
 
-.configurable-items-action-btn-v1,
-.configurable-items-page-btn-v1 {
+.configurable-items-action-btn-v1 {
   border: 1px solid #c5cfdf;
   background: #f8fafc;
   color: #243149;
@@ -108,45 +107,53 @@
   cursor: pointer;
 }
 
-.configurable-items-action-btn-v1:hover,
-.configurable-items-page-btn-v1:hover {
+.configurable-items-action-btn-v1:hover {
   background: #edf3ff;
   border-color: #b5c7ee;
 }
 
-.configurable-items-action-btn-v1:disabled,
-.configurable-items-page-btn-v1:disabled {
+.configurable-items-action-btn-v1:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
-.configurable-items-page-btn-v1.active {
-  background: #0e5abc;
-  border-color: #0e5abc;
-  color: #ffffff;
+.configurable-items-pagination-footer-v1 {
+  border-top: 1px solid #d9e2ef !important;
+  margin-top: 12px;
 }
 
 .configurable-items-pagination-row-v1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px 16px;
   margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #d9e2ef;
   flex-wrap: wrap;
 }
 
 .configurable-items-page-size-v1 {
   display: inline-flex;
   align-items: center;
+  flex-direction: row-reverse;
   gap: 8px;
-  color: #64728a;
-  font-size: 13px;
-  font-weight: 600;
+  color: #5f6877;
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: none;
 }
 
 .configurable-items-page-size-v1 select {
-  min-width: 80px;
-  min-height: 32px;
+  border: 1px solid #d4ddeb;
+  border-radius: 8px;
+  color: #253046;
+  font-size: 12px;
+  height: 30px;
+  min-height: 30px;
+  min-width: 60px;
+  padding: 0 6px;
+  width: auto;
 }
 
 .configurable-items-pagination-v1 {
@@ -182,8 +189,7 @@
     grid-template-columns: 1fr;
   }
 
-  .configurable-items-list-head-v1,
-  .configurable-items-pagination-row-v1 {
+  .configurable-items-list-head-v1 {
     align-items: stretch;
     flex-direction: column;
   }
@@ -344,32 +350,19 @@
 
 /* APPVERBO_SEARCH_INPUT_V1_START */
 
-.configurable-items-search-wrap-v1 {
-  flex: 1 1 auto;
+.configurable-items-list-head-actions-v1 {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  min-width: 0;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
-.configurable-items-search-v1 {
-  min-height: 34px;
-  min-width: 160px;
-  max-width: 260px;
-  width: 100%;
-  border: 1px solid #c5cfdf;
-  border-radius: 7px;
-  background: #f8fafc;
-  color: #243149;
-  font-size: 13px;
-  padding: 0 10px;
-  box-sizing: border-box;
-}
-
-.configurable-items-search-v1:focus {
-  border-color: #7fa5ef;
-  outline: none;
-  background: #ffffff;
+@media (max-width: 860px) {
+  .configurable-items-list-head-actions-v1 {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 600px) {
@@ -377,14 +370,14 @@
     flex-wrap: wrap;
   }
 
-  .configurable-items-search-wrap-v1 {
-    order: 3;
-    width: 100%;
-    justify-content: flex-start;
+  .configurable-items-list-head-actions-v1 {
+    flex-wrap: wrap;
   }
 
-  .configurable-items-total-v1 {
-    order: 2;
+  .configurable-items-list-head-actions-v1 .appverbo-card-search-v1 {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
   }
 }
 

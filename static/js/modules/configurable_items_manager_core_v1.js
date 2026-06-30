@@ -201,7 +201,7 @@
   function createInitialState_v1(config) {
     return {
       items: normalizeItems_v1(config.initialItems, config),
-      page: 1,
+      visibleCount: config.pageSizeDefault,
       pageSize: config.pageSizeDefault,
       editingId: "",
       searchQuery: "",
@@ -462,19 +462,12 @@
     const filteredItems = getVisibleItems_v1(manager);
     const totalAllItems = manager.state.items.length;
     const totalItems = filteredItems.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
-
-    if (manager.state.page > totalPages) {
-      manager.state.page = totalPages;
-    }
-
-    const startIndex = (manager.state.page - 1) * manager.state.pageSize;
-    const visibleItems = filteredItems.slice(startIndex, startIndex + manager.state.pageSize);
+    const visibleItems = filteredItems.slice(0, manager.state.visibleCount);
 
     tableBody.innerHTML = "";
 
     visibleItems.forEach((item, visibleIndex) => {
-      const absoluteIndex = startIndex + visibleIndex;
+      const absoluteIndex = visibleIndex;
       const itemId = item.__managerId;
       const fullItemIndex = manager.state.items.findIndex((it) => it.__managerId === itemId);
       const row = document.createElement("tr");
@@ -563,7 +556,7 @@
 
     pageSizeEl.addEventListener("change", () => {
       manager.state.pageSize = clampNumber_v1(pageSizeEl.value, 1, 100, manager.config.pageSizeDefault);
-      manager.state.page = 1;
+      manager.state.visibleCount = manager.state.pageSize;
       manager.render();
       notifyChange_v1(manager);
     });
@@ -576,45 +569,64 @@
       return;
     }
 
-    const totalItems = getVisibleItems_v1(manager).length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
+    const footerEl = paginationEl.parentElement;
 
-    if (manager.state.page > totalPages) {
-      manager.state.page = totalPages;
+    let lessEl = footerEl
+      ? footerEl.querySelector(".configurable-items-less-v1")
+      : null;
+
+    if (!lessEl && footerEl) {
+      lessEl = document.createElement("div");
+      lessEl.className = "appverbo-load-more-less-v1 configurable-items-less-v1";
+      footerEl.appendChild(lessEl);
     }
 
-    paginationEl.innerHTML = "";
+    const filteredItems = getVisibleItems_v1(manager);
+    const totalItems = filteredItems.length;
+    const currentCount = Math.min(manager.state.visibleCount, totalItems);
+    const showMais = currentCount < totalItems;
+    const showMenos = manager.state.visibleCount > manager.state.pageSize;
 
-    if (totalItems <= manager.state.pageSize) {
+    paginationEl.innerHTML = "";
+    if (lessEl) {
+      lessEl.innerHTML = "";
+    }
+
+    if (!showMais && !showMenos) {
       paginationEl.style.display = "none";
+      if (lessEl) {
+        lessEl.style.display = "none";
+      }
       return;
     }
 
     paginationEl.style.display = "";
-
-    const previousButton = createElement_v1("button", "configurable-items-page-btn-v1", "Anterior");
-    previousButton.type = "button";
-    previousButton.disabled = manager.state.page <= 1;
-    previousButton.dataset.configurablePage = String(manager.state.page - 1);
-    paginationEl.appendChild(previousButton);
-
-    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-      const pageButton = createElement_v1("button", "configurable-items-page-btn-v1", String(pageNumber));
-      pageButton.type = "button";
-      pageButton.dataset.configurablePage = String(pageNumber);
-
-      if (pageNumber === manager.state.page) {
-        pageButton.classList.add("active");
-      }
-
-      paginationEl.appendChild(pageButton);
+    if (lessEl) {
+      lessEl.style.display = "";
     }
 
-    const nextButton = createElement_v1("button", "configurable-items-page-btn-v1", "Próxima");
-    nextButton.type = "button";
-    nextButton.disabled = manager.state.page >= totalPages;
-    nextButton.dataset.configurablePage = String(manager.state.page + 1);
-    paginationEl.appendChild(nextButton);
+    if (showMais) {
+      const moreBtn = createElement_v1("button", "appverbo-load-more-btn-v1", "Mais");
+      moreBtn.type = "button";
+      moreBtn.addEventListener("click", () => {
+        manager.state.visibleCount += manager.state.pageSize;
+        manager.render();
+      });
+      paginationEl.appendChild(moreBtn);
+    }
+
+    const counter = createElement_v1("span", "appverbo-load-more-counter-v1", `[ ${currentCount} / ${totalItems} ]`);
+    paginationEl.appendChild(counter);
+
+    if (showMenos && lessEl) {
+      const lessBtn = createElement_v1("button", "appverbo-load-more-btn-v1", "Menos");
+      lessBtn.type = "button";
+      lessBtn.addEventListener("click", () => {
+        manager.state.visibleCount = manager.state.pageSize;
+        manager.render();
+      });
+      lessEl.appendChild(lessBtn);
+    }
   }
 
   //###################################################################################
@@ -718,7 +730,7 @@
     } else {
       item.__managerOrder = manager.state.items.length + 1;
       manager.state.items.push(item);
-      manager.state.page = Math.max(1, Math.ceil(manager.state.items.length / manager.state.pageSize));
+      manager.state.visibleCount = manager.state.items.length;
     }
 
     manager.state.editingId = "";
@@ -748,22 +760,7 @@
   }
 
   function bindPaginationActions_v1(manager) {
-    if (!manager.elements.pagination || manager.elements.pagination.dataset.boundPaginationV1 === "1") {
-      return;
-    }
-
-    manager.elements.pagination.dataset.boundPaginationV1 = "1";
-
-    manager.elements.pagination.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-configurable-page]");
-
-      if (!button || button.disabled) {
-        return;
-      }
-
-      manager.state.page = clampNumber_v1(button.dataset.configurablePage, 1, 100000, 1);
-      manager.render();
-    });
+    // Load-more buttons have direct event listeners from renderPagination_v1
   }
 
   function bindEditorForm_v1(manager) {
@@ -832,7 +829,7 @@
 
     searchEl.addEventListener("input", () => {
       manager.state.searchQuery = searchEl.value || "";
-      manager.state.page = 1;
+      manager.state.visibleCount = manager.state.pageSize;
       manager.render();
     });
   }
@@ -896,7 +893,7 @@
 
       setItems(items) {
         this.state.items = normalizeItems_v1(items, this.config);
-        this.state.page = 1;
+        this.state.visibleCount = this.state.pageSize;
         this.render();
         notifyChange_v1(this);
       },
