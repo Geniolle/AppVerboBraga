@@ -586,8 +586,12 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
   text-align: left;
 }
 
+/* Specificity (0,3,1) — beats new_user.css .card td:last-child .table-actions (0,3,1) because this file loads after */
+.admin-subprocess-table-v1 td.admin-col-actions-v1 .table-actions,
 .admin-entity-table-v1 td.admin-col-actions-v1 .table-actions {
+  display: flex;
   justify-content: flex-end;
+  width: 100%;
 }
 
 /* APPVERBO_ADMIN_SUBPROCESSES_V1_END */

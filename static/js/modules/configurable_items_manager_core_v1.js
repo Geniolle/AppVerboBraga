@@ -444,7 +444,7 @@
       row.appendChild(th);
     });
 
-    const actionsTh = createElement_v1("th", "configurable-items-actions-col-v1", "Ações");
+    const actionsTh = createElement_v1("th", "configurable-items-actions-col-v1 admin-col-actions-v1", "Ações");
     row.appendChild(actionsTh);
 
     thead.innerHTML = "";
@@ -500,7 +500,7 @@
       });
 
       const actionsTd = document.createElement("td");
-      actionsTd.className = "configurable-items-actions-cell-v1";
+      actionsTd.className = "configurable-items-actions-cell-v1 admin-col-actions-v1";
       actionsTd.appendChild(createRawActionsContainer_v1(manager, itemId, fullItemIndex, totalAllItems));
       row.appendChild(actionsTd);
       tableBody.appendChild(row);

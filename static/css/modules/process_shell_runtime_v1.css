@@ -580,7 +580,19 @@
 .table-actions.appverbo-row-actions-ready-v1 {
   align-items: center;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+th.admin-col-actions-v1,
+td.admin-col-actions-v1 {
+  text-align: right;
+  white-space: nowrap;
+}
+
+td.admin-col-actions-v1 .table-actions {
+  justify-content: flex-end;
+  width: 100%;
 }
 
 .appverbo-row-actions-menu-v1 {

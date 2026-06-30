@@ -269,10 +269,13 @@
   vertical-align: middle;
 }
 
-.configurable-items-actions-cell-v1 .table-actions {
+/* Specificity (0,3,1) — beats new_user.css .card td:last-child .table-actions (0,3,1) because this file loads after */
+.configurable-items-table-v1 td.configurable-items-actions-cell-v1 .table-actions {
+  display: flex;
   justify-content: flex-end;
   width: 100%;
 }
+
 
 .configurable-items-actions-v1 {
   display: inline-flex;
