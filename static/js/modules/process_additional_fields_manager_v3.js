@@ -90,7 +90,7 @@
 
   function normalizeListSourceType_v3(value) {
     const clean = normalizeLookup_v3(value);
-    if (clean === "automatic" || clean === "field_list") return clean;
+    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "profile_menu_tabs") return clean;
     return "manual";
   }
 
@@ -308,6 +308,14 @@
 
     const listSourceType = normalizeListSourceType_v3(item.listSourceType);
 
+    if (listSourceType === "active_menus") {
+      return "Menus ativos";
+    }
+
+    if (listSourceType === "profile_menu_tabs") {
+      return "Abas do perfil selecionado";
+    }
+
     if (listSourceType === "automatic" || listSourceType === "field_list") {
       const parts = getAutomaticSourceLabelParts_v3(
         item.automaticSourceProcessKey,
@@ -326,7 +334,8 @@
         : `${prefix}: configuração incompleta`;
     }
 
-    return `Manual: ${getManualListLabelByKey_v3(root, item.manualListKey || item.listKey)}`;
+    const manualCsvText = item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "");
+    return manualCsvText ? `Manual: ${manualCsvText}` : "Manual: -";
   }
 
   function refreshAutomaticSourceOptions_v3(root, selectedValues) {
@@ -387,7 +396,9 @@
       const currentListSourceType = normalizeListSourceType_v3(
         getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
       );
-      let rawFieldOptions = resolver.getProcessSourceFieldOptions_v1(selectedProcessKey, selectedSectionKey);
+      let rawFieldOptions = resolver
+        .getProcessSourceFieldOptions_v1(selectedProcessKey, selectedSectionKey)
+        .filter((opt) => opt && opt.fieldType !== "header");
       if (currentListSourceType === "field_list") {
         rawFieldOptions = rawFieldOptions.filter((opt) => opt && opt.fieldType === "list");
       }
@@ -415,7 +426,7 @@
     }
 
     if (resetManual) {
-      setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
+      setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
     }
 
     if (resetAutomatic) {
@@ -460,6 +471,7 @@
     const listKeys = getLegacyValues_v3(container, "additional_field_list_key");
     const listSourceTypes = getLegacyValues_v3(container, "additional_field_list_source_type");
     const manualListKeys = getLegacyValues_v3(container, "additional_field_manual_list_key");
+    const manualListItemsCsvValues = getLegacyValues_v3(container, "additional_field_manual_list_items");
     const automaticSourceProcessKeys = getLegacyValues_v3(container, "additional_field_automatic_source_process_key");
     const automaticSourceSectionKeys = getLegacyValues_v3(container, "additional_field_automatic_source_section_key");
     const automaticSourceFieldKeys = getLegacyValues_v3(container, "additional_field_automatic_source_field_key");
@@ -504,6 +516,12 @@
       const manualListKey = fieldType === "list"
         ? normalizeListKey_v3(manualListKeys[index] || listKeys[index])
         : "";
+      const manualListItemsCsvRaw = fieldType === "list" && listSourceType === "manual"
+        ? toSafeString_v3(manualListItemsCsvValues[index] || "").trim()
+        : "";
+      const manualListItemsParsed = manualListItemsCsvRaw
+        ? manualListItemsCsvRaw.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
+        : [];
 
       items.push({
         id: key || `custom_field_${index + 1}`,
@@ -515,6 +533,8 @@
         listKey: fieldType === "list" && listSourceType === "manual" ? manualListKey : "",
         listSourceType,
         manualListKey,
+        manualListItemsCsv: manualListItemsCsvRaw,
+        manualListItems: manualListItemsParsed,
         automaticSourceProcessKey,
         automaticSourceSectionKey,
         automaticSourceFieldKey,
@@ -542,7 +562,7 @@
     setInputValue_v3(editor, "[data-additional-field-editor-size]", "255");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
-    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
+    setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", "");
@@ -572,7 +592,7 @@
     setInputValue_v3(editor, "[data-additional-field-editor-size]", item.size || "");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", item.isRequired ? "1" : "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", item.listSourceType || "manual");
-    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", item.manualListKey || item.listKey || "");
+    setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "") || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", item.automaticSourceProcessKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", item.automaticSourceSectionKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", item.automaticSourceFieldKey || "");
@@ -604,9 +624,13 @@
     const listSourceType = normalizeListSourceType_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
     );
-    const manualListKey = normalizeListKey_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-list-key]")
-    );
+    const manualItemsRaw = toSafeString_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-manual-items]")
+    ).trim();
+    const manualListItemsParsed = manualItemsRaw
+      ? manualItemsRaw.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
+      : [];
+    const manualListItemsCsv = manualListItemsParsed.join(", ");
     const automaticSourceProcessKey = normalizeLookup_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")
     );
@@ -628,10 +652,10 @@
         : normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]")),
       size: normalizeSize_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]"), fieldType),
       listSourceType: fieldType === "list" ? listSourceType : "manual",
-      manualListKey: fieldType === "list" ? manualListKey : "",
-      listKey: fieldType === "list"
-        ? (listSourceType === "manual" ? manualListKey : "")
-        : "",
+      manualListKey: "",
+      listKey: "",
+      manualListItemsCsv: fieldType === "list" && listSourceType === "manual" ? manualListItemsCsv : "",
+      manualListItems: fieldType === "list" && listSourceType === "manual" ? manualListItemsParsed : [],
       automaticSourceProcessKey: fieldType === "list" ? automaticSourceProcessKey : "",
       automaticSourceSectionKey: fieldType === "list" ? automaticSourceSectionKey : "",
       automaticSourceFieldKey: fieldType === "list" ? automaticSourceFieldKey : "",
@@ -760,8 +784,8 @@
       return { valid: false, message: "Informe a chave do campo." };
     }
 
-    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListKey) {
-      return { valid: false, message: "Selecione a lista manual associada ao campo." };
+    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListItemsCsv) {
+      return { valid: false, message: "Informe pelo menos uma opção da lista manual." };
     }
 
     if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "automatic") {
@@ -825,6 +849,12 @@
       resetListSourceFields_v3(root, {
         resetSourceType: false,
         resetManual: false,
+        resetAutomatic: true
+      });
+    } else if (listSourceType === "active_menus" || listSourceType === "profile_menu_tabs") {
+      resetListSourceFields_v3(root, {
+        resetSourceType: false,
+        resetManual: true,
         resetAutomatic: true
       });
     } else {
@@ -1010,6 +1040,9 @@
       const fieldType = normalizeFieldType_v3(item.fieldType);
       const listSourceType = normalizeListSourceType_v3(item.listSourceType);
       const manualListKey = normalizeListKey_v3(item.manualListKey || item.listKey);
+      const manualItemsCsv = fieldType === "list" && listSourceType === "manual"
+        ? toSafeString_v3(item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "")).trim()
+        : "";
 
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_key", item.key || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_label", item.label || ""));
@@ -1019,6 +1052,7 @@
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_key", fieldType === "list" && listSourceType === "manual" ? manualListKey : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_source_type", fieldType === "list" ? listSourceType : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_manual_list_key", fieldType === "list" ? manualListKey : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_manual_list_items", manualItemsCsv));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_process_key", fieldType === "list" ? item.automaticSourceProcessKey || "" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_section_key", fieldType === "list" ? item.automaticSourceSectionKey || "" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_field_key", fieldType === "list" ? item.automaticSourceFieldKey || "" : ""));
@@ -1060,7 +1094,7 @@
     const listSourceType = normalizeListSourceType_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
     );
-    const listKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]")).trim();
+    const listKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-manual-items]")).trim();
     const automaticSourceProcessKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")).trim();
     const automaticSourceSectionKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-section-key]")).trim();
     const automaticSourceFieldKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-field-key]")).trim();
@@ -1256,7 +1290,7 @@
       itemName: "campo",
       itemNamePlural: "campos",
       pageSizeDefault: 5,
-      pageSizeOptions: [5, 10, 25],
+      pageSizeOptions: [5, 10, 20],
       initialItems,
       selectors: {
         editorForm: "[data-additional-field-editor-block]",

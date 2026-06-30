@@ -44,6 +44,12 @@
         <select
           id="{{ id_prefix }}_{{ field.key }}"
           name="process_field__{{ field.key }}"
+          data-admin-subprocess-field-key="{{ field.key }}"
+          {% if field.list_source_type|default("") == "profile_menu_tabs" %}
+          data-admin-subprocess-dependent-select="1"
+          data-admin-subprocess-dependent-source-key="{{ field.dependent_field_key|default('') }}"
+          data-admin-subprocess-dependent-options='{{ field.dependent_options_map|default({})|tojson|forceescape }}'
+          {% endif %}
           {% if field.required %}required{% endif %}
         >
           <option value="">Selecione</option>
@@ -188,6 +194,121 @@
         </details>
       </div>
     {% endif %}
+
+    <script>
+      (function () {
+        if (window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__) {
+          window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
+          return;
+        }
+
+        function normalizeLookup(value) {
+          return String(value === null || value === undefined ? "" : value)
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function rebuildDependentOptions(selectEl, optionsMap, selectedValue) {
+          if (!selectEl) {
+            return;
+          }
+
+          const currentValue = String(selectedValue === null || selectedValue === undefined ? selectEl.value : selectedValue).trim();
+          const matchedOptions = optionsMap[selectEl.dataset.adminSubprocessResolvedKey || ""] || [];
+          selectEl.innerHTML = "";
+
+          const placeholderOption = document.createElement("option");
+          placeholderOption.value = "";
+          placeholderOption.textContent = "Selecione";
+          selectEl.appendChild(placeholderOption);
+
+          matchedOptions.forEach((option) => {
+            if (!option || typeof option !== "object") {
+              return;
+            }
+
+            const optionValue = String(option.value || "").trim();
+            const optionLabel = String(option.label || optionValue).trim();
+
+            if (!optionValue) {
+              return;
+            }
+
+            const optionEl = document.createElement("option");
+            optionEl.value = optionValue;
+            optionEl.textContent = optionLabel || optionValue;
+            selectEl.appendChild(optionEl);
+          });
+
+          if (currentValue && Array.from(selectEl.options).some((option) => String(option.value || "").trim() === currentValue)) {
+            selectEl.value = currentValue;
+          } else {
+            selectEl.value = "";
+          }
+        }
+
+        function resolveDependentOptionsKey(controllerEl, optionsMap) {
+          const controllerValue = String(controllerEl && controllerEl.value ? controllerEl.value : "").trim();
+          const normalizedControllerValue = normalizeLookup(controllerValue);
+
+          if (!normalizedControllerValue) {
+            return "";
+          }
+
+          return Object.keys(optionsMap).find((candidateKey) => {
+            return normalizeLookup(candidateKey) === normalizedControllerValue;
+          }) || "";
+        }
+
+        function bindDependentSelect(selectEl) {
+          if (!selectEl || selectEl.dataset.adminSubprocessDependentBound === "1") {
+            return;
+          }
+
+          let optionsMap = {};
+
+          try {
+            optionsMap = JSON.parse(selectEl.dataset.adminSubprocessDependentOptions || "{}");
+          } catch (error) {
+            optionsMap = {};
+          }
+
+          const sourceFieldKey = String(selectEl.dataset.adminSubprocessDependentSourceKey || "").trim();
+          if (!sourceFieldKey) {
+            return;
+          }
+
+          const formEl = selectEl.closest("form");
+          if (!formEl) {
+            return;
+          }
+
+          const controllerEl = formEl.querySelector(`[name="process_field__${sourceFieldKey}"]`);
+          if (!controllerEl) {
+            return;
+          }
+
+          const refresh = () => {
+            selectEl.dataset.adminSubprocessResolvedKey = resolveDependentOptionsKey(controllerEl, optionsMap);
+            rebuildDependentOptions(selectEl, optionsMap, selectEl.value);
+          };
+
+          controllerEl.addEventListener("change", refresh);
+          selectEl.dataset.adminSubprocessDependentBound = "1";
+          refresh();
+        }
+
+        window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__ = function () {
+          document
+            .querySelectorAll("[data-admin-subprocess-dependent-select='1']")
+            .forEach(bindDependentSelect);
+        };
+
+        window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
+      })();
+    </script>
   </section>
 {% endmacro %}
 
@@ -252,15 +373,6 @@
       aria-label="Editar"
       href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
     >✎</a>
-
-    {% if state.config.toggle_url_extra_params and status_value == state.config.active_value %}
-      <a
-        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
-        title="Ocultar menu"
-        aria-label="Ocultar menu"
-        href="/users/new?menu={{ state.menu_key or 'administrativo' }}&amp;{{ state.config.toggle_url_extra_params }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
-      >&#128065;</a>
-    {% endif %}
 
     {% if state.config.delete_endpoint %}
       {% set _delete_ns = namespace(visible_when=(), condition_field="", requires_confirmation=false, confirmation_message="") %}

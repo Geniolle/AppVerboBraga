@@ -274,16 +274,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 )
 
 
-AUTHORIZATION_PROFILE_FIELDS = (
-    AdminFieldConfig(
-        key="label",
-        label="Perfil",
-        input_name="auth_profile_label",
-        field_type="text",
-        required=True,
-        max_length=120,
-        placeholder="Informe o perfil",
-    ),
+AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
     AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
@@ -310,6 +301,17 @@ AUTHORIZATION_PROFILE_FIELDS = (
 )
 
 
+AUTH_PROFILE_DELETE_ACTION = AdminActionConfig(
+    key="delete",
+    label="Eliminar",
+    icon="X",
+    action_type="post_delete",
+    visible_when=("inativo",),
+    requires_confirmation=True,
+    confirmation_message="Tem a certeza que pretende eliminar este perfil?",
+)
+
+
 AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     key="perfil_de_autorizacao",
     label="Perfil de autorização",
@@ -325,6 +327,7 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     save_endpoint="/users/profile/auth-profile-save",
     create_endpoint="/users/profile/auth-profile-save",
     update_endpoint="/users/profile/auth-profile-save",
+    delete_endpoint="/users/profile/auth-profile-delete",
     repository_name="auth_profile",
     repository_class="appverbo.admin_subprocesses.repositories.auth_profile_repository.AuthorizationProfileAdminRepository",
     status_field="status",
@@ -339,7 +342,10 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     edit_mode_value="edit",
     enabled=True,
     migration_status="native",
-    fields=AUTHORIZATION_PROFILE_FIELDS,
+    uses_dynamic_fields=True,
+    dynamic_fields_menu_key="perfil_de_autorizacao",
+    dynamic_fields_section_header_key="custom_perfil",
+    fields=AUTHORIZATION_PROFILE_TECHNICAL_FIELDS,
     columns=(
         AdminColumnConfig(
             key="label",
@@ -379,10 +385,12 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
             action_type="link",
             visible_when=("ativo", "inativo"),
         ),
+        AUTH_PROFILE_DELETE_ACTION,
     ),
     menu_scope="perfil_de_autorizacao",
     empty_active_message="Sem perfis ativos.",
     empty_inactive_message="Sem perfis inativos.",
+    action_form_key_field="auth_profile_key",
     active_card_id="auth-profile-active-card",
     inactive_card_id="auth-profile-inactive-card",
     active_table_id="auth-profile-active-table",

@@ -1684,8 +1684,49 @@ def _restore_menu_header_assignments_after_additional_fields_v1(
             }
         )
 
+    # Keep the legacy mirrors aligned with the restored modern mapping so older
+    # consumers do not resurrect stale header assignments on the next load.
+    legacy_visible_fields: list[str] = []
+    emitted_legacy_keys: set[str] = set()
+    active_header_key = ""
+
+    for restored_row in restored_rows:
+        field_key = _normalize_menu_key_local_v1(restored_row.get("field_key"))
+        header_key = _normalize_menu_key_local_v1(restored_row.get("header_key"))
+
+        if header_key and header_key != active_header_key:
+            if header_key not in emitted_legacy_keys:
+                legacy_visible_fields.append(header_key)
+                emitted_legacy_keys.add(header_key)
+            active_header_key = header_key
+
+        if not header_key:
+            active_header_key = ""
+
+        if not field_key or field_key in emitted_legacy_keys:
+            continue
+
+        legacy_visible_fields.append(field_key)
+        emitted_legacy_keys.add(field_key)
+
+    current_config["process_visible_fields"] = [
+        str(row.get("field_key") or "").strip().lower()
+        for row in restored_rows
+        if str(row.get("field_key") or "").strip()
+    ]
+    current_config["process_visible_headers"] = list(
+        dict.fromkeys(
+            [
+                str(row.get("header_key") or "").strip().lower()
+                for row in restored_rows
+                if str(row.get("header_key") or "").strip()
+            ]
+        )
+    )
     current_config["process_visible_field_header_map"] = restored_header_map
     current_config["process_visible_field_rows"] = restored_rows
+    current_config["visible_fields"] = legacy_visible_fields
+    current_config["visible_field_headers"] = restored_header_map
 
     _write_sidebar_menu_config_v1(session, menu_key, current_config)
     session.commit()
@@ -1730,6 +1771,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
     additional_field_list_key: list[str] = Form(default=[]),
     additional_field_list_source_type: list[str] = Form(default=[]),
     additional_field_manual_list_key: list[str] = Form(default=[]),
+    additional_field_manual_list_items: list[str] = Form(default=[]),
     additional_field_automatic_source_process_key: list[str] = Form(default=[]),
     additional_field_automatic_source_section_key: list[str] = Form(default=[]),
     additional_field_automatic_source_field_key: list[str] = Form(default=[]),
@@ -1791,6 +1833,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
             len(additional_field_list_key),
             len(additional_field_list_source_type),
             len(additional_field_manual_list_key),
+            len(additional_field_manual_list_items),
             len(additional_field_automatic_source_process_key),
             len(additional_field_automatic_source_section_key),
             len(additional_field_automatic_source_field_key),
@@ -1810,6 +1853,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
                     "list_key": additional_field_list_key[row_index] if row_index < len(additional_field_list_key) else "",
                     "list_source_type": additional_field_list_source_type[row_index] if row_index < len(additional_field_list_source_type) else "",
                     "manual_list_key": additional_field_manual_list_key[row_index] if row_index < len(additional_field_manual_list_key) else "",
+                    "manual_list_items": additional_field_manual_list_items[row_index] if row_index < len(additional_field_manual_list_items) else "",
                     "automatic_source_process_key": additional_field_automatic_source_process_key[row_index] if row_index < len(additional_field_automatic_source_process_key) else "",
                     "automatic_source_section_key": additional_field_automatic_source_section_key[row_index] if row_index < len(additional_field_automatic_source_section_key) else "",
                     "automatic_source_field_key": additional_field_automatic_source_field_key[row_index] if row_index < len(additional_field_automatic_source_field_key) else "",

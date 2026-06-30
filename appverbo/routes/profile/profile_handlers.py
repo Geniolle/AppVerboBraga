@@ -590,7 +590,20 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     requested_edit_key = str(
         submitted_form.get("original_auth_profile_key") or ""
     ).strip().lower()
+    dynamic_field_values: dict[str, str] = {}
+    for _field_name, _field_value in submitted_form.multi_items():
+        _clean_fname = str(_field_name or "").strip()
+        if _clean_fname.startswith("process_field__"):
+            _fkey = _clean_fname[len("process_field__"):]
+            if _fkey:
+                dynamic_field_values[_fkey] = str(_field_value or "").strip()
+
     clean_label = str(submitted_form.get("auth_profile_label") or "").strip()
+    if not clean_label and dynamic_field_values:
+        clean_label = next(
+            (v for v in dynamic_field_values.values() if v),
+            "",
+        )
     clean_scope_mode = str(
         submitted_form.get("auth_profile_visibility_scope_mode") or ""
     ).strip().lower()
@@ -732,6 +745,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "label": clean_label,
                 "visibility_scope_mode": clean_scope_mode,
                 "status": clean_status,
+                "dynamic_values": dynamic_field_values,
             },
             context={
                 "user_id": current_user["id"],
@@ -778,6 +792,134 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             extra_params={"profile_success": success_message},
         ),
         status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/users/profile/auth-profile-delete")
+async def delete_authorization_profile_subprocess(request: Request) -> RedirectResponse:
+    submitted_form = await request.form()
+    requested_delete_key = str(submitted_form.get("auth_profile_key") or "").strip().lower()
+    raw_return_url = str(submitted_form.get("auth_profile_return_url") or "").strip()
+
+    def _read_auth_profile_return_param(param_name: str) -> str:
+        clean_param_name = str(param_name or "").strip()
+        if not clean_param_name:
+            return ""
+        try:
+            parsed_return_url = urlsplit(raw_return_url)
+        except Exception:
+            return ""
+        if parsed_return_url.scheme or parsed_return_url.netloc:
+            return ""
+        path = parsed_return_url.path or "/users/new"
+        if path != "/users/new":
+            return ""
+        return str(
+            dict(parse_qsl(parsed_return_url.query, keep_blank_values=True)).get(clean_param_name) or ""
+        ).strip()
+
+    def _build_auth_profile_delete_fallback_url(
+        *,
+        extra_params: dict[str, Any] | None = None,
+    ) -> str:
+        params = {
+            "menu": AUTH_PROFILE_MENU_KEY,
+            "target": "#auth-profile-active-card",
+        }
+        resolved_dynamic_section = _read_auth_profile_return_param("dynamic_process_section")
+        if resolved_dynamic_section:
+            params["dynamic_process_section"] = resolved_dynamic_section
+        for raw_key, raw_value in (extra_params or {}).items():
+            clean_key = str(raw_key or "").strip()
+            clean_value = str(raw_value or "").strip()
+            if clean_key and clean_value:
+                params[clean_key] = clean_value
+        return _append_after_save_marker_to_users_new_url_v6(build_users_new_url(**params))
+
+    def _redirect_with_profile_delete_feedback(message: str, *, is_error: bool) -> RedirectResponse:
+        extra_params = {
+            ("profile_error" if is_error else "profile_success"): message,
+        }
+        safe_url = _sanitize_users_new_return_url_post_save_v6(raw_return_url, extra_params)
+        return RedirectResponse(
+            url=safe_url or _build_auth_profile_delete_fallback_url(extra_params=extra_params),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        page_data = get_page_data(
+            session,
+            actor_user_id=current_user["id"],
+            actor_login_email=current_user["login_email"],
+            selected_entity_id=selected_entity_id,
+        )
+        visible_menu_keys = {
+            str(raw_key or "").strip().lower()
+            for raw_key in page_data.get("visible_sidebar_menu_keys", [])
+            if str(raw_key or "").strip()
+        }
+        if AUTH_PROFILE_MENU_KEY not in visible_menu_keys:
+            return RedirectResponse(
+                url=build_users_new_url(
+                    menu="home",
+                    error="Sem permissão para aceder ao Perfil de autorização.",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if not requested_delete_key:
+            return _redirect_with_profile_delete_feedback(
+                "Perfil inválido para eliminar.",
+                is_error=True,
+            )
+
+        auth_profile_config = get_admin_subprocess_config(AUTH_PROFILE_MENU_KEY)
+        if auth_profile_config is None:
+            return _redirect_with_profile_delete_feedback(
+                "Configuração do Perfil de autorização não encontrada.",
+                is_error=True,
+            )
+
+        auth_profile_repo = AuthorizationProfileAdminRepository(auth_profile_config)
+        delete_ok, delete_reason = auth_profile_repo.delete_row(
+            session,
+            requested_delete_key,
+            context={
+                "user_id": current_user["id"],
+            },
+        )
+
+        if not delete_ok:
+            error_message = "Falha ao eliminar o perfil."
+            if delete_reason == "delete_key_not_found":
+                error_message = "Perfil não encontrado para eliminar."
+            elif delete_reason == "member_not_found":
+                error_message = "Membro associado ao utilizador não encontrado."
+            return _redirect_with_profile_delete_feedback(
+                error_message,
+                is_error=True,
+            )
+
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            return _redirect_with_profile_delete_feedback(
+                "Falha ao eliminar o perfil.",
+                is_error=True,
+            )
+
+    return _redirect_with_profile_delete_feedback(
+        "Perfil eliminado com sucesso.",
+        is_error=False,
     )
 
 @router.post("/users/profile/auth-objeto-save")

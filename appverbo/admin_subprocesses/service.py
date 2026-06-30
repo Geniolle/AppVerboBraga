@@ -100,6 +100,12 @@ def build_admin_subprocess_state(
     active_rows, inactive_rows = split_admin_subprocess_rows(row_list, config)
     edit_data = find_admin_subprocess_row(row_list, config, edit_key)
     effective_menu_scope = menu_scope or config.menu_scope or "administrativo"
+    edit_values: dict[str, Any] = {}
+
+    if edit_data:
+        raw_values = edit_data.get("values")
+        if isinstance(raw_values, dict):
+            edit_values = dict(raw_values)
 
     resolved_dynamic_fields: list[dict[str, Any]] = []
     if config.uses_dynamic_fields and sidebar_menu_settings is not None:
@@ -111,13 +117,8 @@ def build_admin_subprocess_state(
             visible_sidebar_menu_keys=visible_sidebar_menu_keys,
             menu_process_history_map=menu_process_history_map,
             active_entity_id=active_entity_id,
+            current_field_values=edit_values,
         )
-
-    edit_values: dict[str, Any] = {}
-    if edit_data and resolved_dynamic_fields:
-        raw_values = edit_data.get("values")
-        if isinstance(raw_values, dict):
-            edit_values = dict(raw_values)
 
     return AdminSubprocessState(
         config=config,

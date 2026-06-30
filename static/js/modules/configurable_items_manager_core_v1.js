@@ -160,7 +160,8 @@
         pagination: selectors.pagination || "[data-configurable-pagination]",
         pageSize: selectors.pageSize || "[data-configurable-page-size]",
         hiddenContainer: selectors.hiddenContainer || "[data-configurable-hidden-container]",
-        totalLabel: selectors.totalLabel || "[data-configurable-total-label]"
+        totalLabel: selectors.totalLabel || "[data-configurable-total-label]",
+        searchInput: selectors.searchInput || "[data-configurable-search]"
       },
       getItemId: typeof config.getItemId === "function" ? config.getItemId : defaultGetItemId_v1,
       readEditorItem: typeof config.readEditorItem === "function" ? config.readEditorItem : null,
@@ -203,6 +204,7 @@
       page: 1,
       pageSize: config.pageSizeDefault,
       editingId: "",
+      searchQuery: "",
       initialized: false
     };
   }
@@ -232,7 +234,8 @@
       pagination: resolveElement_v1(root, config.selectors.pagination),
       pageSize: resolveElement_v1(root, config.selectors.pageSize),
       hiddenContainer: resolveElement_v1(root, config.selectors.hiddenContainer),
-      totalLabel: resolveElement_v1(root, config.selectors.totalLabel)
+      totalLabel: resolveElement_v1(root, config.selectors.totalLabel),
+      searchEl: resolveElement_v1(root, config.selectors.searchInput)
     };
   }
 
@@ -289,6 +292,88 @@
   //###################################################################################
   // (7) TABELA
   //###################################################################################
+
+  function getVisibleItems_v1(manager) {
+    const query = normalizeLookup_v1(toSafeString_v1(manager.state.searchQuery || ""));
+
+    if (!query) {
+      return manager.state.items.slice();
+    }
+
+    return manager.state.items.filter((item) => {
+      return manager.config.columns.some((column) => {
+        const cellValue = column.render
+          ? toSafeString_v1(column.render(item, 0, manager))
+          : toSafeString_v1(item[column.key] == null ? "" : item[column.key]);
+        return normalizeLookup_v1(cellValue).indexOf(query) !== -1;
+      });
+    });
+  }
+
+  function createActionsDropdown_v1(manager, itemId, fullItemIndex, totalAllItems) {
+    const wrap = document.createElement("div");
+    wrap.className = "configurable-item-actions-menu-v1";
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "configurable-item-actions-toggle-v1";
+    toggle.setAttribute("aria-label", "Ações");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.textContent = "⋯";
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "configurable-item-actions-dropdown-v1";
+    dropdown.hidden = true;
+
+    const actions = [];
+
+    if (manager.config.actions.edit) {
+      actions.push({ action: "edit", label: "Editar informações", danger: false, disabled: false });
+    }
+
+    if (manager.config.actions.move) {
+      actions.push({ action: "up", label: "Subir", danger: false, disabled: fullItemIndex === 0 });
+      actions.push({ action: "down", label: "Descer", danger: false, disabled: fullItemIndex === totalAllItems - 1 });
+    }
+
+    if (manager.config.actions.remove) {
+      actions.push({ action: "remove", label: "Eliminar", danger: true, disabled: false });
+    }
+
+    actions.forEach(({ action, label, danger, disabled }) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      let btnClass = "configurable-item-actions-item-v1";
+      if (danger) btnClass += " configurable-item-actions-item-danger-v1";
+      if (disabled) btnClass += " configurable-item-actions-item-disabled-v1";
+      btn.className = btnClass;
+      btn.dataset.configurableAction = action;
+      btn.dataset.configurableItemId = itemId;
+      btn.textContent = label;
+      if (disabled) btn.disabled = true;
+      dropdown.appendChild(btn);
+    });
+
+    toggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const isOpen = !dropdown.hidden;
+
+      document.querySelectorAll(".configurable-item-actions-dropdown-v1").forEach((d) => {
+        if (d !== dropdown) {
+          d.hidden = true;
+          const t = d.previousElementSibling;
+          if (t) t.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      dropdown.hidden = isOpen;
+      toggle.setAttribute("aria-expanded", String(!isOpen));
+    });
+
+    wrap.appendChild(toggle);
+    wrap.appendChild(dropdown);
+    return wrap;
+  }
 
   function renderTableHeader_v1(manager) {
     if (!manager.elements.table || manager.elements.table.dataset.headerReadyV1 === "1") {
@@ -348,8 +433,9 @@
       return;
     }
 
-    const items = manager.getItems();
-    const totalItems = items.length;
+    const filteredItems = getVisibleItems_v1(manager);
+    const totalAllItems = manager.state.items.length;
+    const totalItems = filteredItems.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
 
     if (manager.state.page > totalPages) {
@@ -357,13 +443,14 @@
     }
 
     const startIndex = (manager.state.page - 1) * manager.state.pageSize;
-    const visibleItems = items.slice(startIndex, startIndex + manager.state.pageSize);
+    const visibleItems = filteredItems.slice(startIndex, startIndex + manager.state.pageSize);
 
     tableBody.innerHTML = "";
 
     visibleItems.forEach((item, visibleIndex) => {
       const absoluteIndex = startIndex + visibleIndex;
       const itemId = item.__managerId;
+      const fullItemIndex = manager.state.items.findIndex((it) => it.__managerId === itemId);
       const row = document.createElement("tr");
       row.dataset.configurableItemId = itemId;
 
@@ -391,19 +478,7 @@
 
       actionsTd.className = "configurable-items-actions-cell-v1";
       actionsWrap.className = "configurable-items-actions-v1";
-
-      if (manager.config.actions.edit) {
-        actionsWrap.appendChild(createActionButton_v1("edit", "Editar", itemId, false));
-      }
-
-      if (manager.config.actions.move) {
-        actionsWrap.appendChild(createActionButton_v1("up", "Subir", itemId, absoluteIndex === 0));
-        actionsWrap.appendChild(createActionButton_v1("down", "Descer", itemId, absoluteIndex === totalItems - 1));
-      }
-
-      if (manager.config.actions.remove) {
-        actionsWrap.appendChild(createActionButton_v1("remove", "Remover", itemId, false));
-      }
+      actionsWrap.appendChild(createActionsDropdown_v1(manager, itemId, fullItemIndex, totalAllItems));
 
       actionsTd.appendChild(actionsWrap);
       row.appendChild(actionsTd);
@@ -420,7 +495,13 @@
     }
 
     if (manager.elements.totalLabel) {
-      manager.elements.totalLabel.textContent = `${totalItems} ${totalItems === 1 ? manager.config.itemName : manager.config.itemNamePlural}`;
+      const pluralName = totalAllItems === 1 ? manager.config.itemName : manager.config.itemNamePlural;
+      const hasSearch = manager.state.searchQuery && manager.state.searchQuery.trim();
+      if (hasSearch && totalItems !== totalAllItems) {
+        manager.elements.totalLabel.textContent = `${totalItems} de ${totalAllItems} ${pluralName}`;
+      } else {
+        manager.elements.totalLabel.textContent = `${totalAllItems} ${pluralName}`;
+      }
     }
   }
 
@@ -469,7 +550,7 @@
       return;
     }
 
-    const totalItems = manager.state.items.length;
+    const totalItems = getVisibleItems_v1(manager).length;
     const totalPages = Math.max(1, Math.ceil(totalItems / manager.state.pageSize));
 
     if (manager.state.page > totalPages) {
@@ -654,12 +735,22 @@
         return;
       }
 
+      document.querySelectorAll(".configurable-item-actions-dropdown-v1").forEach((d) => {
+        d.hidden = true;
+        const t = d.previousElementSibling;
+        if (t) t.setAttribute("aria-expanded", "false");
+      });
+
       if (action === "edit") {
         editItem_v1(manager, itemId);
         return;
       }
 
       if (action === "remove") {
+        const itemName = manager.config.itemName || "item";
+        if (!window.confirm(`Tem a certeza que pretende eliminar este ${itemName}?`)) {
+          return;
+        }
         removeItem_v1(manager, itemId);
         return;
       }
@@ -741,6 +832,22 @@
       }
 
       addOrUpdateItem_v1(manager, item);
+    });
+  }
+
+  function bindSearchInput_v1(manager) {
+    const searchEl = manager.elements.searchEl;
+
+    if (!searchEl || searchEl.dataset.boundSearchV1 === "1") {
+      return;
+    }
+
+    searchEl.dataset.boundSearchV1 = "1";
+
+    searchEl.addEventListener("input", () => {
+      manager.state.searchQuery = searchEl.value || "";
+      manager.state.page = 1;
+      manager.render();
     });
   }
 
@@ -850,7 +957,19 @@
     bindTableActions_v1(manager);
     bindPaginationActions_v1(manager);
     bindEditorForm_v1(manager);
+    bindSearchInput_v1(manager);
     bindParentFormSubmit_v1(manager);
+
+    if (!document.documentElement.dataset.configurableDropdownBoundV1) {
+      document.documentElement.dataset.configurableDropdownBoundV1 = "1";
+      document.addEventListener("click", () => {
+        document.querySelectorAll(".configurable-item-actions-dropdown-v1").forEach((d) => {
+          d.hidden = true;
+          const t = d.previousElementSibling;
+          if (t) t.setAttribute("aria-expanded", "false");
+        });
+      });
+    }
 
     manager.render();
     notifyChange_v1(manager);

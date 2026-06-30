@@ -45,7 +45,7 @@ def _normalize_process_tab_size_v1(raw_size: Any, field_type: str) -> int | None
 
 def _normalize_process_tab_list_source_type_v1(raw_value: Any, field_definition: dict[str, Any]) -> str:
     clean_source_type = _normalize_process_tab_lookup_v1(raw_value)
-    if clean_source_type in {"manual", "automatic", "field_list"}:
+    if clean_source_type in {"manual", "automatic", "field_list", "active_menus", "profile_menu_tabs"}:
         return clean_source_type
     if (
         field_definition.get("automatic_source_process_key")
@@ -55,6 +55,23 @@ def _normalize_process_tab_list_source_type_v1(raw_value: Any, field_definition:
     ):
         return "automatic"
     return "manual"
+
+
+def _is_legacy_profile_menu_tabs_render_config_v1(
+    *,
+    menu_key: str,
+    field_key: str,
+    list_source_type: str,
+    automatic_source_process_key: str,
+    automatic_source_field_key: str,
+) -> bool:
+    return (
+        list_source_type == "automatic"
+        and menu_key == "perfil_de_autorizacao"
+        and field_key == "custom_processo"
+        and automatic_source_process_key == "perfil_de_autorizacao"
+        and automatic_source_field_key in {"custom_perfil", "custom_perfil_2", "custom_nome_do_perfil"}
+    )
 
 
 def _build_render_input_type_v1(field_type: str) -> str:
@@ -123,6 +140,7 @@ def _build_render_field_meta_map_v1(
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
     active_entity_id: int | None = None,
+    current_field_values: dict[str, Any] | None = None,
 ) -> dict[str, dict[str, Any]]:
     normalized_fields_by_key: dict[str, dict[str, Any]] = {}
 
@@ -204,8 +222,29 @@ def _build_render_field_meta_map_v1(
                     or raw_field.get("automaticOnlyActive")
                     or existing_field.get("automatic_only_active")
                 ),
+                "manual_list_items": (
+                    raw_field.get("manual_list_items")
+                    or raw_field.get("manualListItems")
+                    or existing_field.get("manual_list_items")
+                    or []
+                ),
+                "manual_list_items_csv": str(
+                    raw_field.get("manual_list_items_csv")
+                    or raw_field.get("manualListItemsCsv")
+                    or existing_field.get("manual_list_items_csv")
+                    or ""
+                ).strip(),
                 "options": [],
             }
+
+            if _is_legacy_profile_menu_tabs_render_config_v1(
+                menu_key=menu_key,
+                field_key=field_key,
+                list_source_type=normalized_field["list_source_type"],
+                automatic_source_process_key=normalized_field["automatic_source_process_key"],
+                automatic_source_field_key=normalized_field["automatic_source_field_key"],
+            ):
+                normalized_field["list_source_type"] = "profile_menu_tabs"
 
             if field_type == "list":
                 pre_resolved_options = _normalize_render_options_v1(
@@ -228,6 +267,7 @@ def _build_render_field_meta_map_v1(
                             sidebar_menu_settings=sidebar_menu_settings,
                             visible_sidebar_menu_keys=visible_sidebar_menu_keys,
                             menu_process_history_map=menu_process_history_map,
+                            current_field_values=current_field_values,
                         )
                     )
                     normalized_field["options"] = resolved_options
@@ -254,6 +294,7 @@ def resolve_subprocess_section_fields_v1(
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
     active_entity_id: int | None = None,
+    current_field_values: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Resolver reutilizável: retorna os campos configurados para uma secção de um subprocesso dinâmico.
@@ -281,6 +322,7 @@ def resolve_subprocess_section_fields_v1(
             visible_sidebar_menu_keys=visible_sidebar_menu_keys,
             menu_process_history_map=menu_process_history_map,
             active_entity_id=active_entity_id,
+            current_field_values=current_field_values,
         )
 
         result: list[dict[str, Any]] = []
@@ -328,6 +370,51 @@ def resolve_subprocess_section_fields_v1(
                     "header_label": str(header_meta.get("label") or clean_header_key).strip() or clean_header_key,
                 }
             )
+
+        if result:
+            from appverbo.services.profile import build_profile_menu_tabs_dependency_map_v1
+
+            section_field_keys = {str(item.get("key") or "").strip().lower() for item in result}
+            section_field_labels = {
+                str(item.get("key") or "").strip().lower(): str(item.get("label") or "").strip()
+                for item in result
+                if str(item.get("key") or "").strip()
+            }
+            dependency_map = build_profile_menu_tabs_dependency_map_v1(
+                sidebar_menu_settings=sidebar_menu_settings,
+                visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+                menu_process_history_map=menu_process_history_map,
+            )
+
+            for field in result:
+                if str(field.get("list_source_type") or "").strip().lower() != "profile_menu_tabs":
+                    continue
+
+                candidate_keys = [
+                    field.get("profile_source_field_key"),
+                    field.get("profileSourceFieldKey"),
+                    field.get("automatic_source_field_key"),
+                    field.get("automaticSourceFieldKey"),
+                    "custom_nome_do_perfil",
+                    "custom_perfil",
+                ]
+                dependent_field_key = ""
+
+                for raw_candidate in candidate_keys:
+                    clean_candidate = _normalize_process_tab_lookup_v1(raw_candidate)
+                    if clean_candidate and clean_candidate in section_field_keys:
+                        dependent_field_key = clean_candidate
+                        break
+
+                if not dependent_field_key:
+                    for field_key, field_label in section_field_labels.items():
+                        if _normalize_process_tab_lookup_v1(field_label) == "nome_do_perfil":
+                            dependent_field_key = field_key
+                            break
+
+                field["dependent_field_key"] = dependent_field_key
+                field["dependent_options_map"] = dependency_map
+                field["options"] = _normalize_render_options_v1(field.get("options"))
 
         return result
 
@@ -428,3 +515,33 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
             break
 
     return []
+
+
+def resolve_process_tab_options_v1(
+    menu_key: str,
+    sidebar_menu_settings: list[dict[str, Any]],
+    *,
+    visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+) -> list[dict[str, str]]:
+    clean_menu_key = _normalize_process_tab_lookup_v1(menu_key)
+    visible_keys = {
+        _normalize_process_tab_lookup_v1(raw_key)
+        for raw_key in (visible_sidebar_menu_keys or [])
+        if _normalize_process_tab_lookup_v1(raw_key)
+    }
+
+    if not clean_menu_key:
+        return []
+
+    if visible_keys and clean_menu_key not in visible_keys:
+        return []
+
+    return [
+        {
+            "value": str(tab.key or "").strip(),
+            "label": str(tab.label or tab.key or "").strip() or str(tab.key or "").strip(),
+            "status": "active",
+        }
+        for tab in resolve_process_tabs_v1(clean_menu_key, sidebar_menu_settings)
+        if str(tab.key or "").strip()
+    ]

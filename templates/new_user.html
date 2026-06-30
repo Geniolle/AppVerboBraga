@@ -2050,6 +2050,7 @@
                       <input type="hidden" name="additional_field_list_key" value="{{ field.list_key|default('') }}" disabled>
                       <input type="hidden" name="additional_field_list_source_type" value="{{ field.list_source_type|default('manual') }}" disabled>
                       <input type="hidden" name="additional_field_manual_list_key" value="{{ field.manual_list_key|default(field.list_key|default('')) }}" disabled>
+                      <input type="hidden" name="additional_field_manual_list_items" value="{{ field.manual_list_items_csv|default('') }}" disabled>
                       <input type="hidden" name="additional_field_automatic_source_process_key" value="{{ field.automatic_source_process_key|default('') }}" disabled>
                       <input type="hidden" name="additional_field_automatic_source_section_key" value="{{ field.automatic_source_section_key|default('') }}" disabled>
                       <input type="hidden" name="additional_field_automatic_source_field_key" value="{{ field.automatic_source_field_key|default('') }}" disabled>
@@ -2111,6 +2112,8 @@
                           data-additional-field-editor-list-source-type
                         >
                           <option value="manual">Manual</option>
+                          <option value="active_menus">Menus ativos</option>
+                          <option value="profile_menu_tabs">Abas do perfil selecionado</option>
                           <option value="automatic">Automática por registos</option>
                           <option value="field_list">Lista de outro campo</option>
                         </select>
@@ -2122,16 +2125,13 @@
                         data-additional-field-list-wrap
                         style="display: none;"
                       >
-                        <label for="process-additional-field-editor-list-key">Lista manual</label>
-                        <select
-                          id="process-additional-field-editor-list-key"
-                          data-additional-field-editor-list-key
+                        <label for="process-additional-field-editor-manual-items">Lista manual</label>
+                        <input
+                          id="process-additional-field-editor-manual-items"
+                          type="text"
+                          data-additional-field-editor-manual-items
+                          placeholder="Ex.: Criar, Editar, Eliminar, Visualizar"
                         >
-                          <option value="">Selecione a lista</option>
-                          {% for process_list in settings_edit_data.process_lists|default([]) %}
-                          <option value="{{ process_list.key }}">{{ process_list.label }}</option>
-                          {% endfor %}
-                        </select>
                       </div>
 
                       <div
@@ -2229,6 +2229,15 @@
                   <div class="configurable-items-list-v1">
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Campos criados</h4>
+                      <div class="configurable-items-search-wrap-v1">
+                        <input
+                          type="search"
+                          class="configurable-items-search-v1"
+                          data-configurable-search
+                          placeholder="Pesquisar campos..."
+                          aria-label="Pesquisar campos criados"
+                        >
+                      </div>
                       <span class="configurable-items-total-v1" data-configurable-total-label>0 campos</span>
                     </div>
 
@@ -2577,7 +2586,7 @@
   <script src="/static/js/modules/appverbo_dialog_v1.js?v=20260628-dialog-v1"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260628-dialog-hook-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260629-additional-list-source-v2"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260630-active-menus-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260628-dialog-hook-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260628-field-options-refresh-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260628-field-options-refresh-v1"></script>

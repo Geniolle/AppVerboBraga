@@ -1031,13 +1031,34 @@ def get_menu_process_visible_field_header_map(
     if not selectable_field_keys:
         return {}
 
+    # Prefer the modern structured storage first; keep the legacy map only as a
+    # compatibility fallback for older rows that have not been rewritten yet.
     mapped: dict[str, str] = {}
+
+    raw_rows = menu_config.get("process_visible_field_rows")
+    if isinstance(raw_rows, list):
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            header_key = str(raw_row.get("header_key") or "").strip().lower()
+            if field_key in selectable_field_keys and header_key in header_keys:
+                mapped[field_key] = header_key
+
+    raw_process_map = menu_config.get("process_visible_field_header_map")
+    if isinstance(raw_process_map, dict):
+        for raw_field_key, raw_header_key in raw_process_map.items():
+            field_key = str(raw_field_key or "").strip().lower()
+            header_key = str(raw_header_key or "").strip().lower()
+            if field_key in selectable_field_keys and header_key in header_keys and field_key not in mapped:
+                mapped[field_key] = header_key
+
     raw_map = menu_config.get("visible_field_headers")
     if isinstance(raw_map, dict):
         for raw_field_key, raw_header_key in raw_map.items():
             field_key = str(raw_field_key or "").strip().lower()
             header_key = str(raw_header_key or "").strip().lower()
-            if field_key in selectable_field_keys and header_key in header_keys:
+            if field_key in selectable_field_keys and header_key in header_keys and field_key not in mapped:
                 mapped[field_key] = header_key
 
     visible_fields = normalize_menu_process_visible_fields(
@@ -1063,13 +1084,46 @@ def get_menu_process_visible_field_rows(
 ) -> list[dict[str, str]]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     selectable_options = get_menu_process_selectable_field_options(clean_menu_key, menu_config)
+    header_options = get_menu_process_header_options(clean_menu_key, menu_config)
     selectable_keys = {
         str(item.get("key") or "").strip().lower()
         for item in selectable_options
         if str(item.get("key") or "").strip()
     }
+    header_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in header_options
+        if str(item.get("key") or "").strip()
+    }
     if not selectable_keys:
         return []
+
+    normalized_rows: list[dict[str, str]] = []
+    seen_raw_row_fields: set[str] = set()
+    raw_rows = menu_config.get("process_visible_field_rows") if isinstance(menu_config, dict) else None
+    if isinstance(raw_rows, list):
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                continue
+
+            clean_field = str(raw_row.get("field_key") or "").strip().lower()
+            if clean_field not in selectable_keys or clean_field in seen_raw_row_fields:
+                continue
+
+            clean_header = str(raw_row.get("header_key") or "").strip().lower()
+            if clean_header not in header_keys:
+                clean_header = ""
+
+            seen_raw_row_fields.add(clean_field)
+            normalized_rows.append(
+                {
+                    "field_key": clean_field,
+                    "header_key": clean_header,
+                }
+            )
+
+    if normalized_rows:
+        return normalized_rows
 
     visible_fields = normalize_menu_process_visible_fields(
         clean_menu_key,
@@ -4325,7 +4379,7 @@ def _normalize_process_list_key_v8(raw_key: Any) -> str:
 
 def _normalize_additional_field_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 
@@ -4369,6 +4423,8 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         item_list_key = ""
         item_list_source_type = "manual"
         item_manual_list_key = ""
+        item_manual_list_items: list[str] = []
+        item_manual_list_items_csv = ""
         item_automatic_source_process_key = ""
         item_automatic_source_section_key = ""
         item_automatic_source_field_key = ""
@@ -4423,6 +4479,24 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
                     or item_automatic_source_field_key
                 ) else "manual")
             )
+            raw_manual_items = (
+                raw_item.get("manual_list_items")
+                or raw_item.get("manualListItems")
+                or raw_item.get("manual_list_items_csv")
+                or raw_item.get("manualListItemsCsv")
+            )
+            if isinstance(raw_manual_items, str):
+                raw_values = [v.strip() for v in raw_manual_items.split(",")]
+            elif isinstance(raw_manual_items, (list, tuple)):
+                raw_values = [str(v).strip() for v in raw_manual_items]
+            else:
+                raw_values = []
+            _seen_items: set[str] = set()
+            for _v in raw_values:
+                if _v and _v.lower() not in _seen_items:
+                    _seen_items.add(_v.lower())
+                    item_manual_list_items.append(_v)
+            item_manual_list_items_csv = ", ".join(item_manual_list_items)
         else:
             item_label = _normalize_additional_field_label(raw_item)
             item_type = ADDITIONAL_FIELD_DEFAULT_TYPE
@@ -4478,7 +4552,10 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
             normalized_item["list_source_type"] = item_list_source_type
             normalized_item["manual_list_key"] = item_manual_list_key
             normalized_item["list_key"] = item_list_key
-            if item_list_source_type in {"automatic", "field_list"}:
+            if item_manual_list_items:
+                normalized_item["manual_list_items"] = item_manual_list_items
+                normalized_item["manual_list_items_csv"] = item_manual_list_items_csv
+            if item_list_source_type in {"automatic", "field_list", "profile_menu_tabs"}:
                 normalized_item["automatic_source_process_key"] = item_automatic_source_process_key
                 normalized_item["automatic_source_section_key"] = item_automatic_source_section_key
                 normalized_item["automatic_source_field_key"] = item_automatic_source_field_key

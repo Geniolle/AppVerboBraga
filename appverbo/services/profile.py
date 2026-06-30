@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import unicodedata
 from datetime import date, datetime, timezone
 from typing import Any
@@ -442,7 +443,7 @@ def serialize_menu_process_records(values: list[dict[str, Any]] | tuple[dict[str
 
 def normalize_process_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 
@@ -473,6 +474,428 @@ def _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
     }
 
 
+def _resolve_active_sidebar_menu_list_options_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+) -> list[dict[str, str]]:
+    resolved_options: list[dict[str, str]] = []
+    seen_keys: set[str] = set()
+
+    for raw_setting in sidebar_menu_settings:
+        if not isinstance(raw_setting, dict):
+            continue
+
+        menu_key = _normalize_process_list_source_key_v1(raw_setting.get("key"))
+        if not menu_key or menu_key in seen_keys:
+            continue
+
+        if visible_sidebar_menu_keys and menu_key not in visible_sidebar_menu_keys:
+            continue
+
+        if not bool(raw_setting.get("is_active")) or bool(raw_setting.get("is_deleted")):
+            continue
+
+        menu_label = str(raw_setting.get("label") or menu_key).strip() or menu_key
+        seen_keys.add(menu_key)
+        resolved_options.append(
+            {
+                "value": menu_key,
+                "label": menu_label,
+                "status": "active",
+            }
+        )
+
+    return resolved_options
+
+
+def _build_automatic_source_section_candidates_v1(source_section_key: str) -> list[str]:
+    candidates: list[str] = []
+
+    for candidate in (
+        source_section_key,
+        f"{source_section_key}_header" if source_section_key and not source_section_key.endswith("_header") else "",
+        source_section_key[: -len("_header")] if source_section_key.endswith("_header") else "",
+    ):
+        clean_candidate = _normalize_process_list_source_key_v1(candidate)
+        if clean_candidate and clean_candidate not in candidates:
+            candidates.append(clean_candidate)
+
+    return candidates
+
+
+def _build_source_field_meta_by_key_v1(
+    source_setting: dict[str, Any],
+) -> dict[str, dict[str, str]]:
+    field_meta_by_key: dict[str, dict[str, str]] = {}
+
+    for collection_key in ("process_field_options", "process_additional_fields"):
+        raw_fields = source_setting.get(collection_key)
+        if not isinstance(raw_fields, list):
+            continue
+
+        for raw_field in raw_fields:
+            if not isinstance(raw_field, dict):
+                continue
+
+            field_key = _normalize_process_list_source_key_v1(raw_field.get("key"))
+            if not field_key or field_key in field_meta_by_key:
+                continue
+
+            field_meta_by_key[field_key] = {
+                "key": field_key,
+                "label": str(raw_field.get("label") or "").strip(),
+                "field_type": _normalize_process_list_source_key_v1(
+                    raw_field.get("field_type") or raw_field.get("type")
+                ),
+            }
+
+    return field_meta_by_key
+
+
+def _build_automatic_source_field_candidates_v1(
+    *,
+    source_setting: dict[str, Any],
+    source_section_key: str,
+    source_field_key: str,
+) -> list[str]:
+    field_meta_by_key = _build_source_field_meta_by_key_v1(source_setting)
+    non_header_field_keys = {
+        key
+        for key, meta in field_meta_by_key.items()
+        if meta.get("field_type") != "header"
+    }
+    configured_field_meta = field_meta_by_key.get(source_field_key)
+    section_field_keys = {
+        _normalize_process_list_source_key_v1(raw_row.get("field_key"))
+        for raw_row in (source_setting.get("process_visible_field_rows") or [])
+        if isinstance(raw_row, dict)
+        and _normalize_process_list_source_key_v1(raw_row.get("header_key")) == source_section_key
+        and _normalize_process_list_source_key_v1(raw_row.get("field_key"))
+    }
+    candidates: list[str] = []
+
+    def append_candidate(raw_key: Any) -> None:
+        clean_key = _normalize_process_list_source_key_v1(raw_key)
+        if clean_key and clean_key not in candidates:
+            candidates.append(clean_key)
+
+    if source_field_key in non_header_field_keys:
+        append_candidate(source_field_key)
+    elif configured_field_meta and configured_field_meta.get("field_type") == "header":
+        configured_label_lookup = _normalize_process_rule_lookup_text(
+            configured_field_meta.get("label")
+        )
+        for key, meta in field_meta_by_key.items():
+            if key not in non_header_field_keys:
+                continue
+            if section_field_keys and key not in section_field_keys:
+                continue
+            if _normalize_process_rule_lookup_text(meta.get("label")) != configured_label_lookup:
+                continue
+            append_candidate(key)
+    else:
+        append_candidate(source_field_key)
+
+    for base_candidate in list(candidates):
+        legacy_alias = re.sub(r"_\d+$", "", base_candidate)
+        if legacy_alias != base_candidate:
+            append_candidate(legacy_alias)
+
+    return candidates
+
+
+def _is_legacy_profile_menu_tabs_config_v1(
+    *,
+    current_menu_key: str,
+    field_definition: dict[str, Any],
+    list_source_type: str,
+) -> bool:
+    if list_source_type != "automatic":
+        return False
+
+    if _normalize_process_list_source_key_v1(current_menu_key) != "perfil_de_autorizacao":
+        return False
+
+    field_key = _normalize_process_list_source_key_v1(field_definition.get("key"))
+    source_process_key = _normalize_process_list_source_key_v1(
+        field_definition.get("automatic_source_process_key")
+        or field_definition.get("automaticSourceProcessKey")
+    )
+    source_field_key = _normalize_process_list_source_key_v1(
+        field_definition.get("automatic_source_field_key")
+        or field_definition.get("automaticSourceFieldKey")
+    )
+
+    return (
+        field_key == "custom_processo"
+        and source_process_key == "perfil_de_autorizacao"
+        and source_field_key in {"custom_perfil", "custom_perfil_2", "custom_nome_do_perfil"}
+    )
+
+
+def _build_visible_sidebar_menu_meta_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+) -> tuple[dict[str, dict[str, str]], dict[str, str]]:
+    menu_meta_by_key: dict[str, dict[str, str]] = {}
+    menu_key_by_label_lookup: dict[str, str] = {}
+
+    for raw_setting in sidebar_menu_settings:
+        if not isinstance(raw_setting, dict):
+            continue
+
+        menu_key = _normalize_process_list_source_key_v1(raw_setting.get("key"))
+        if not menu_key:
+            continue
+
+        if visible_sidebar_menu_keys and menu_key not in visible_sidebar_menu_keys:
+            continue
+
+        if not bool(raw_setting.get("is_active")) or bool(raw_setting.get("is_deleted")):
+            continue
+
+        menu_label = str(raw_setting.get("label") or menu_key).strip() or menu_key
+        menu_meta_by_key[menu_key] = {
+            "key": menu_key,
+            "label": menu_label,
+        }
+        menu_label_lookup = _normalize_process_rule_lookup_text(menu_label)
+        if menu_label_lookup and menu_label_lookup not in menu_key_by_label_lookup:
+            menu_key_by_label_lookup[menu_label_lookup] = menu_key
+
+    return menu_meta_by_key, menu_key_by_label_lookup
+
+
+def _resolve_auth_profile_menu_key_v1(
+    *,
+    values: dict[str, Any],
+    menu_meta_by_key: dict[str, dict[str, str]],
+    menu_key_by_label_lookup: dict[str, str],
+) -> str:
+    explicit_candidates = (
+        values.get("__menu_key"),
+        values.get("custom_perfil"),
+        values.get("custom_nome_do_perfil"),
+    )
+
+    for raw_candidate in explicit_candidates:
+        clean_menu_key = _normalize_process_list_source_key_v1(raw_candidate)
+        if clean_menu_key and clean_menu_key in menu_meta_by_key:
+            return clean_menu_key
+
+    for label_key in ("custom_nome_do_perfil", "custom_perfil"):
+        clean_label = str(values.get(label_key) or "").strip()
+        if not clean_label:
+            continue
+
+        resolved_menu_key = menu_key_by_label_lookup.get(
+            _normalize_process_rule_lookup_text(clean_label)
+        )
+        if resolved_menu_key:
+            return resolved_menu_key
+
+    return ""
+
+
+def _build_auth_profile_menu_entries_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+    menu_process_history_map: dict[str, list[dict[str, Any]]] | None,
+) -> list[dict[str, str]]:
+    history_rows = (
+        menu_process_history_map.get("perfil_de_autorizacao")
+        if isinstance(menu_process_history_map, dict)
+        else []
+    )
+    if not isinstance(history_rows, list) or not history_rows:
+        return []
+
+    menu_meta_by_key, menu_key_by_label_lookup = _build_visible_sidebar_menu_meta_v1(
+        sidebar_menu_settings=sidebar_menu_settings,
+        visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+    )
+    if not menu_meta_by_key and visible_sidebar_menu_keys:
+        return []
+
+    resolved_entries: list[dict[str, str]] = []
+    seen_labels: set[str] = set()
+    section_candidates = _build_automatic_source_section_candidates_v1("custom_perfil")
+
+    for raw_row in history_rows:
+        if not isinstance(raw_row, dict):
+            continue
+
+        row_section_key = _normalize_process_list_source_key_v1(raw_row.get("section_key"))
+        if section_candidates and row_section_key not in section_candidates:
+            continue
+
+        values = raw_row.get("values")
+        if not isinstance(values, dict):
+            continue
+
+        profile_label = (
+            str(values.get("custom_nome_do_perfil") or "").strip()
+            or str(values.get("custom_perfil") or "").strip()
+        )
+        if not profile_label:
+            continue
+
+        profile_lookup = _normalize_process_rule_lookup_text(profile_label)
+        if not profile_lookup or profile_lookup in seen_labels:
+            continue
+
+        seen_labels.add(profile_lookup)
+        resolved_entries.append(
+            {
+                "profile_label": profile_label,
+                "menu_key": _resolve_auth_profile_menu_key_v1(
+                    values=values,
+                    menu_meta_by_key=menu_meta_by_key,
+                    menu_key_by_label_lookup=menu_key_by_label_lookup,
+                ),
+            }
+        )
+
+    return resolved_entries
+
+
+def _resolve_profile_menu_tabs_controller_value_v1(
+    *,
+    field_definition: dict[str, Any],
+    current_field_values: dict[str, Any] | None,
+) -> str:
+    if not isinstance(current_field_values, dict):
+        return ""
+
+    normalized_values = {
+        _normalize_process_list_source_key_v1(raw_key): str(raw_value or "").strip()
+        for raw_key, raw_value in current_field_values.items()
+        if _normalize_process_list_source_key_v1(raw_key)
+    }
+    controller_key_candidates = [
+        field_definition.get("profile_source_field_key"),
+        field_definition.get("profileSourceFieldKey"),
+        field_definition.get("automatic_source_field_key"),
+        field_definition.get("automaticSourceFieldKey"),
+        "custom_nome_do_perfil",
+        "custom_perfil",
+    ]
+
+    for raw_candidate in controller_key_candidates:
+        clean_candidate = _normalize_process_list_source_key_v1(raw_candidate)
+        if not clean_candidate:
+            continue
+
+        resolved_value = normalized_values.get(clean_candidate, "")
+        if resolved_value:
+            return resolved_value
+
+    return ""
+
+
+def build_profile_menu_tabs_dependency_map_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+    visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+    menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
+) -> dict[str, list[dict[str, str]]]:
+    settings = [
+        dict(item)
+        for item in (sidebar_menu_settings or [])
+        if isinstance(item, dict)
+    ]
+    visible_keys = _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
+        visible_sidebar_menu_keys
+    )
+    dependency_map: dict[str, list[dict[str, str]]] = {}
+
+    if not settings:
+        return dependency_map
+
+    profile_entries = _build_auth_profile_menu_entries_v1(
+        sidebar_menu_settings=settings,
+        visible_sidebar_menu_keys=visible_keys,
+        menu_process_history_map=menu_process_history_map,
+    )
+    if not profile_entries:
+        return dependency_map
+
+    from appverbo.services.process_tabs import resolve_process_tab_options_v1
+
+    for entry in profile_entries:
+        profile_label = str(entry.get("profile_label") or "").strip()
+        menu_key = _normalize_process_list_source_key_v1(entry.get("menu_key"))
+        if not profile_label:
+            continue
+
+        dependency_map[profile_label] = resolve_process_tab_options_v1(
+            menu_key,
+            settings,
+            visible_sidebar_menu_keys=visible_keys,
+        ) if menu_key else []
+
+    return dependency_map
+
+
+def _resolve_profile_menu_tabs_list_options_v1(
+    *,
+    field_definition: dict[str, Any],
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+    menu_process_history_map: dict[str, list[dict[str, Any]]] | None,
+    current_field_values: dict[str, Any] | None,
+) -> list[dict[str, str]]:
+    controller_value = _resolve_profile_menu_tabs_controller_value_v1(
+        field_definition=field_definition,
+        current_field_values=current_field_values,
+    )
+    if not controller_value:
+        return []
+
+    controller_lookup = _normalize_process_rule_lookup_text(controller_value)
+    if not controller_lookup:
+        return []
+
+    profile_entries = _build_auth_profile_menu_entries_v1(
+        sidebar_menu_settings=sidebar_menu_settings,
+        visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+        menu_process_history_map=menu_process_history_map,
+    )
+    menu_key = next(
+        (
+            _normalize_process_list_source_key_v1(entry.get("menu_key"))
+            for entry in profile_entries
+            if _normalize_process_rule_lookup_text(entry.get("profile_label")) == controller_lookup
+        ),
+        "",
+    )
+
+    if not menu_key:
+        menu_meta_by_key, menu_key_by_label_lookup = _build_visible_sidebar_menu_meta_v1(
+            sidebar_menu_settings=sidebar_menu_settings,
+            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+        )
+        direct_menu_key = _normalize_process_list_source_key_v1(controller_value)
+        if direct_menu_key in menu_meta_by_key:
+            menu_key = direct_menu_key
+        else:
+            menu_key = menu_key_by_label_lookup.get(controller_lookup, "")
+
+    if not menu_key:
+        return []
+
+    from appverbo.services.process_tabs import resolve_process_tab_options_v1
+
+    return resolve_process_tab_options_v1(
+        menu_key,
+        sidebar_menu_settings,
+        visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+    )
+
+
 def resolve_field_list_options_v1(
     *,
     active_entity_id: int | None = None,
@@ -481,6 +904,7 @@ def resolve_field_list_options_v1(
     sidebar_menu_settings: list[dict[str, Any]] | None,
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
+    current_field_values: dict[str, Any] | None = None,
     _visited: frozenset[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     del active_entity_id
@@ -523,11 +947,52 @@ def resolve_field_list_options_v1(
             or field_definition.get("automaticSourceFieldKey")
         ) else "manual")
     )
+    if _is_legacy_profile_menu_tabs_config_v1(
+        current_menu_key=clean_current_menu_key,
+        field_definition=field_definition,
+        list_source_type=list_source_type,
+    ):
+        list_source_type = "profile_menu_tabs"
     visible_keys = _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
         visible_sidebar_menu_keys
     )
 
+    if list_source_type == "active_menus":
+        return _resolve_active_sidebar_menu_list_options_v1(
+            sidebar_menu_settings=settings,
+            visible_sidebar_menu_keys=visible_keys,
+        )
+
+    if list_source_type == "profile_menu_tabs":
+        return _resolve_profile_menu_tabs_list_options_v1(
+            field_definition=field_definition,
+            sidebar_menu_settings=settings,
+            visible_sidebar_menu_keys=visible_keys,
+            menu_process_history_map=menu_process_history_map,
+            current_field_values=current_field_values,
+        )
+
     if list_source_type == "manual":
+        inline_items_raw = (
+            field_definition.get("manual_list_items")
+            or field_definition.get("manualListItems")
+        )
+        if inline_items_raw is None:
+            inline_csv = str(
+                field_definition.get("manual_list_items_csv")
+                or field_definition.get("manualListItemsCsv")
+                or ""
+            ).strip()
+            if inline_csv:
+                inline_items_raw = [v.strip() for v in inline_csv.split(",") if v.strip()]
+        if isinstance(inline_items_raw, (list, tuple)) and inline_items_raw:
+            clean_inline = [str(v).strip() for v in inline_items_raw if str(v).strip()]
+            if clean_inline:
+                return [
+                    {"value": v, "label": v, "status": "active"}
+                    for v in clean_inline
+                ]
+
         manual_list_key = _normalize_process_list_source_key_v1(
             field_definition.get("manual_list_key")
             or field_definition.get("manualListKey")
@@ -599,6 +1064,7 @@ def resolve_field_list_options_v1(
             sidebar_menu_settings=sidebar_menu_settings,
             visible_sidebar_menu_keys=visible_sidebar_menu_keys,
             menu_process_history_map=menu_process_history_map,
+            current_field_values=current_field_values,
             _visited=_safe_visited | {_visit_key},
         )
 
@@ -629,14 +1095,15 @@ def resolve_field_list_options_v1(
     if not isinstance(source_setting, dict):
         return []
 
-    available_field_keys = {
-        clean_key
-        for option in (source_setting.get("process_field_options") or [])
-        if isinstance(option, dict)
-        for clean_key in [_normalize_process_list_source_key_v1(option.get("key"))]
-        if clean_key
-    }
-    if available_field_keys and source_field_key not in available_field_keys:
+    source_section_candidates = _build_automatic_source_section_candidates_v1(
+        source_section_key
+    )
+    source_field_candidates = _build_automatic_source_field_candidates_v1(
+        source_setting=source_setting,
+        source_section_key=source_section_key,
+        source_field_key=source_field_key,
+    )
+    if not source_field_candidates:
         return []
 
     history_rows = (
@@ -660,14 +1127,18 @@ def resolve_field_list_options_v1(
         row_section_key = _normalize_process_list_source_key_v1(
             raw_row.get("section_key")
         )
-        if source_section_key and row_section_key != source_section_key:
+        if source_section_candidates and row_section_key not in source_section_candidates:
             continue
 
         values = raw_row.get("values")
         if not isinstance(values, dict):
             continue
 
-        raw_option_value = str(values.get(source_field_key) or "").strip()
+        raw_option_value = ""
+        for candidate_field_key in source_field_candidates:
+            raw_option_value = str(values.get(candidate_field_key) or "").strip()
+            if raw_option_value:
+                break
         if not raw_option_value:
             continue
 
@@ -938,6 +1409,7 @@ __all__ = [
     "parse_menu_process_records",
     "serialize_menu_process_records",
     "normalize_process_list_source_type_v1",
+    "build_profile_menu_tabs_dependency_map_v1",
     "resolve_field_list_options_v1",
     "parse_profile_custom_fields",
     "serialize_profile_custom_fields",
