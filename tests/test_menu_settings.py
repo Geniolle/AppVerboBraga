@@ -160,6 +160,116 @@ def test_normalize_additional_fields_list_automatic_keeps_source_metadata() -> N
     ]
 
 
+def test_normalize_additional_fields_list_field_list_keeps_source_metadata() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {
+                "label": "Processo",
+                "field_type": "list",
+                "list_source_type": "field_list",
+                "automatic_source_process_key": "perfil_de_autorizacao",
+                "automatic_source_section_key": "custom_perfil",
+                "automatic_source_field_key": "custom_perfil",
+            },
+        ]
+    )
+    r = normalized[0]
+    assert r["list_source_type"] == "field_list"
+    assert r["automatic_source_process_key"] == "perfil_de_autorizacao"
+    assert r["automatic_source_section_key"] == "custom_perfil"
+    assert r["automatic_source_field_key"] == "custom_perfil"
+    assert "automatic_only_active" not in r
+
+
+def test_resolve_field_list_options_field_list_inherits_source_field_options() -> None:
+    sidebar_menu_settings = [
+        {
+            "key": "perfil_de_autorizacao",
+            "label": "Perfil de autorização",
+            "process_field_options": [
+                {
+                    "key": "custom_perfil",
+                    "label": "Perfil",
+                    "field_type": "list",
+                    "list_source_type": "manual",
+                    "manual_list_key": "list_perfil",
+                },
+            ],
+            "process_lists": [
+                {"key": "list_perfil", "label": "Perfil", "items": ["Perfil A", "Perfil B"]},
+            ],
+        },
+        {
+            "key": "objeto_de_autorizacao",
+            "label": "Objeto",
+            "process_field_options": [
+                {
+                    "key": "custom_processo",
+                    "label": "Processo",
+                    "field_type": "list",
+                    "list_source_type": "field_list",
+                    "automatic_source_process_key": "perfil_de_autorizacao",
+                    "automatic_source_section_key": "custom_perfil",
+                    "automatic_source_field_key": "custom_perfil",
+                },
+            ],
+        },
+    ]
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="objeto_de_autorizacao",
+        field_definition={
+            "key": "custom_processo",
+            "field_type": "list",
+            "list_source_type": "field_list",
+            "automatic_source_process_key": "perfil_de_autorizacao",
+            "automatic_source_section_key": "custom_perfil",
+            "automatic_source_field_key": "custom_perfil",
+        },
+        sidebar_menu_settings=sidebar_menu_settings,
+    )
+    assert [opt["value"] for opt in resolved] == ["Perfil A", "Perfil B"]
+
+
+def test_resolve_field_list_options_field_list_cycle_returns_empty() -> None:
+    sidebar_menu_settings = [
+        {
+            "key": "processo_x",
+            "process_field_options": [
+                {
+                    "key": "campo_a",
+                    "field_type": "list",
+                    "list_source_type": "field_list",
+                    "automatic_source_process_key": "processo_x",
+                    "automatic_source_section_key": "",
+                    "automatic_source_field_key": "campo_b",
+                },
+                {
+                    "key": "campo_b",
+                    "field_type": "list",
+                    "list_source_type": "field_list",
+                    "automatic_source_process_key": "processo_x",
+                    "automatic_source_section_key": "",
+                    "automatic_source_field_key": "campo_a",
+                },
+            ],
+            "process_lists": [],
+        },
+    ]
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="processo_x",
+        field_definition={
+            "key": "campo_a",
+            "field_type": "list",
+            "list_source_type": "field_list",
+            "automatic_source_process_key": "processo_x",
+            "automatic_source_section_key": "",
+            "automatic_source_field_key": "campo_b",
+        },
+        sidebar_menu_settings=sidebar_menu_settings,
+    )
+    assert resolved == []
+
+
 def test_resolve_field_list_options_manual_uses_current_process_list() -> None:
     resolved = resolve_field_list_options_v1(
         current_menu_key="empresa",

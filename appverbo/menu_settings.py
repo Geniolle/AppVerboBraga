@@ -2723,7 +2723,7 @@ def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[st
         raw_source_type = str(
             raw_item.get("list_source_type") or raw_item.get("listSourceType") or ""
         ).strip().lower()
-        if raw_source_type not in {"manual", "automatic"}:
+        if raw_source_type not in {"manual", "automatic", "field_list"}:
             has_auto_source = bool(
                 raw_item.get("automatic_source_process_key")
                 or raw_item.get("automaticSourceProcessKey")
@@ -4325,7 +4325,9 @@ def _normalize_process_list_key_v8(raw_key: Any) -> str:
 
 def _normalize_additional_field_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    return "automatic" if clean_value == "automatic" else "manual"
+    if clean_value in {"automatic", "field_list"}:
+        return clean_value
+    return "manual"
 
 
 def _normalize_additional_field_source_key_v1(raw_value: Any) -> str:
@@ -4476,11 +4478,12 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
             normalized_item["list_source_type"] = item_list_source_type
             normalized_item["manual_list_key"] = item_manual_list_key
             normalized_item["list_key"] = item_list_key
-            if item_list_source_type == "automatic":
+            if item_list_source_type in {"automatic", "field_list"}:
                 normalized_item["automatic_source_process_key"] = item_automatic_source_process_key
                 normalized_item["automatic_source_section_key"] = item_automatic_source_section_key
                 normalized_item["automatic_source_field_key"] = item_automatic_source_field_key
-                normalized_item["automatic_only_active"] = bool(item_automatic_only_active)
+                if item_list_source_type == "automatic":
+                    normalized_item["automatic_only_active"] = bool(item_automatic_only_active)
 
         normalized.append(normalized_item)
 

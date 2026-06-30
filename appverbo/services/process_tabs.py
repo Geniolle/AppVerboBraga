@@ -45,7 +45,7 @@ def _normalize_process_tab_size_v1(raw_size: Any, field_type: str) -> int | None
 
 def _normalize_process_tab_list_source_type_v1(raw_value: Any, field_definition: dict[str, Any]) -> str:
     clean_source_type = _normalize_process_tab_lookup_v1(raw_value)
-    if clean_source_type in {"manual", "automatic"}:
+    if clean_source_type in {"manual", "automatic", "field_list"}:
         return clean_source_type
     if (
         field_definition.get("automatic_source_process_key")

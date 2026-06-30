@@ -442,7 +442,9 @@ def serialize_menu_process_records(values: list[dict[str, Any]] | tuple[dict[str
 
 def normalize_process_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    return "automatic" if clean_value == "automatic" else "manual"
+    if clean_value in {"automatic", "field_list"}:
+        return clean_value
+    return "manual"
 
 
 def _normalize_process_list_source_key_v1(raw_value: Any) -> str:
@@ -479,6 +481,7 @@ def resolve_field_list_options_v1(
     sidebar_menu_settings: list[dict[str, Any]] | None,
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
+    _visited: frozenset[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     del active_entity_id
 
@@ -503,6 +506,12 @@ def resolve_field_list_options_v1(
         if clean_key
     }
     clean_current_menu_key = _normalize_process_list_source_key_v1(current_menu_key)
+    current_field_key = _normalize_process_list_source_key_v1(field_definition.get("key"))
+    _safe_visited = _visited or frozenset()
+    _visit_key = (clean_current_menu_key, current_field_key)
+    if current_field_key and _visit_key in _safe_visited:
+        return []
+
     current_setting = settings_by_key.get(clean_current_menu_key, {})
     list_source_type = normalize_process_list_source_type_v1(
         field_definition.get("list_source_type")
@@ -549,6 +558,49 @@ def resolve_field_list_options_v1(
                 if clean_value
             ]
         return []
+
+    if list_source_type == "field_list":
+        fl_process_key = _normalize_process_list_source_key_v1(
+            field_definition.get("automatic_source_process_key")
+            or field_definition.get("automaticSourceProcessKey")
+        )
+        fl_field_key = _normalize_process_list_source_key_v1(
+            field_definition.get("automatic_source_field_key")
+            or field_definition.get("automaticSourceFieldKey")
+        )
+        if not fl_process_key or not fl_field_key:
+            return []
+        if visible_keys and fl_process_key not in visible_keys:
+            return []
+        fl_source_setting = settings_by_key.get(fl_process_key)
+        if not isinstance(fl_source_setting, dict):
+            return []
+        fl_source_field_def: dict[str, Any] | None = None
+        for _coll in ("process_field_options", "process_additional_fields"):
+            for _raw in (fl_source_setting.get(_coll) or []):
+                if not isinstance(_raw, dict):
+                    continue
+                if _normalize_process_list_source_key_v1(_raw.get("key")) != fl_field_key:
+                    continue
+                _ft = _normalize_process_list_source_key_v1(
+                    _raw.get("field_type") or _raw.get("type")
+                )
+                if _ft != "list":
+                    return []
+                fl_source_field_def = dict(_raw)
+                break
+            if fl_source_field_def is not None:
+                break
+        if fl_source_field_def is None:
+            return []
+        return resolve_field_list_options_v1(
+            current_menu_key=fl_process_key,
+            field_definition=fl_source_field_def,
+            sidebar_menu_settings=sidebar_menu_settings,
+            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+            menu_process_history_map=menu_process_history_map,
+            _visited=_safe_visited | {_visit_key},
+        )
 
     source_process_key = _normalize_process_list_source_key_v1(
         field_definition.get("automatic_source_process_key")

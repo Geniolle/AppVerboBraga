@@ -604,21 +604,39 @@ Quando um campo de subprocesso dinâmico (`uses_dynamic_fields=True`) tem `field
 
 7. **Nenhum processo ou campo pode ser hardcoded nos resolvers.** `resolve_field_list_options_v1` e `_build_render_field_meta_map_v1` devem funcionar para qualquer combinação de `menu_key`, `manual_list_key` e `automatic_source_*` — sem `if menu_key == "perfil_de_autorizacao"` ou similar.
 
+### Três fontes válidas de lista
+
+| `list_source_type` | Descrição | Campos obrigatórios |
+|---|---|---|
+| `manual` | Itens de uma lista criada na aba **Listas** | `manual_list_key` |
+| `automatic` | Valores reais de registos de outro processo | `automatic_source_process_key`, `automatic_source_section_key`, `automatic_source_field_key` |
+| `field_list` | Opções herdadas de outro campo do tipo Lista | `automatic_source_process_key`, `automatic_source_field_key` (usa os mesmos campos de armazenamento que `automatic`) |
+
+Regras adicionais para `field_list`:
+- O campo de origem identificado por `automatic_source_field_key` **deve** ter `field_type = list`; caso contrário, o resolver retorna `[]`.
+- O resolver usa detecção de ciclo via `_visited: frozenset[tuple[str, str]]`; se campo A aponta para B e B aponta para A, ambos retornam `[]`.
+- `automatic_only_active` não se aplica a `field_list` e não é armazenado nem emitido.
+- É proibido criar hardcode de processo/campo na detecção de ciclo ou no resolver.
+
 ### Cadeia de normalização obrigatória para metadados de campos lista
 
 Sempre que `normalize_menu_process_additional_fields` processar um campo com `field_type = list`, deve propagar **todos** os campos abaixo para o item normalizado:
 
 | Campo | Fonte canónica |
 |---|---|
-| `list_source_type` | `"manual"` \| `"automatic"` (inferido se ausente) |
+| `list_source_type` | `"manual"` \| `"automatic"` \| `"field_list"` (inferido se ausente) |
 | `manual_list_key` | `manual_list_key` → `list_key` → vazio |
 | `list_key` | Mesmo valor que `manual_list_key` |
-| `automatic_source_process_key` | campo homónimo na definição raw |
-| `automatic_source_section_key` | campo homónimo |
-| `automatic_source_field_key` | campo homónimo |
-| `automatic_only_active` | booleano (aceita `"1"`, `"true"`, `"sim"`, `"yes"`, `"on"`) |
+| `automatic_source_process_key` | campo homónimo na definição raw (usado por `automatic` e `field_list`) |
+| `automatic_source_section_key` | campo homónimo (usado por `automatic` e `field_list`) |
+| `automatic_source_field_key` | campo homónimo (usado por `automatic` e `field_list`) |
+| `automatic_only_active` | booleano — **apenas** para `list_source_type = "automatic"` |
 
-A versão actual desta normalização é `normalize_menu_process_additional_fields_v3` em `appverbo/menu_settings.py`. Não reverter para v2.
+A versão atual desta normalização é `normalize_menu_process_additional_fields_v3` em `appverbo/menu_settings.py`. Não reverter para v2.
+
+### Como o resolver diferencia cabeçalho e campo de valor
+
+`buildProcessSourceSections_v1` (em `process_field_options_resolver_v1.js`) exclui explicitamente campos do tipo `"header"` ao construir as secções disponíveis. Quando `list_source_type = "field_list"`, `refreshAutomaticSourceOptions_v3` filtra ainda mais para exibir **apenas** campos com `fieldType === "list"` no seletor "Campo de origem". Um cabeçalho com o mesmo rótulo que um campo de valor (ex: "Perfil") nunca aparece nessa lista filtrada, eliminando a colisão.
 <!-- APPVERBO_LIST_FIELD_RESOLUTION_RULE_V1_END -->
 
 <!-- APPVERBO_SESSOES_DB_FIELDS_CREATE_RULE_V4_START -->

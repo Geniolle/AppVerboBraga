@@ -89,7 +89,9 @@
   }
 
   function normalizeListSourceType_v3(value) {
-    return normalizeLookup_v3(value) === "automatic" ? "automatic" : "manual";
+    const clean = normalizeLookup_v3(value);
+    if (clean === "automatic" || clean === "field_list") return clean;
+    return "manual";
   }
 
   function normalizeRequired_v3(value) {
@@ -304,7 +306,9 @@
       return "-";
     }
 
-    if (normalizeListSourceType_v3(item.listSourceType) === "automatic") {
+    const listSourceType = normalizeListSourceType_v3(item.listSourceType);
+
+    if (listSourceType === "automatic" || listSourceType === "field_list") {
       const parts = getAutomaticSourceLabelParts_v3(
         item.automaticSourceProcessKey,
         item.automaticSourceSectionKey,
@@ -316,9 +320,10 @@
         toSafeString_v3(parts.fieldLabel).trim()
       ].filter(Boolean);
 
+      const prefix = listSourceType === "field_list" ? "Lista de campo" : "Automática";
       return summaryParts.length
-        ? `Automática: ${summaryParts.join(" > ")}`
-        : "Automática: configuração incompleta";
+        ? `${prefix}: ${summaryParts.join(" > ")}`
+        : `${prefix}: configuração incompleta`;
     }
 
     return `Manual: ${getManualListLabelByKey_v3(root, item.manualListKey || item.listKey)}`;
@@ -379,11 +384,14 @@
     }
 
     if (fieldSelect && typeof resolver.getProcessSourceFieldOptions_v1 === "function") {
-      replaceSelectOptions_v3(
-        fieldSelect,
-        resolver.getProcessSourceFieldOptions_v1(selectedProcessKey, selectedSectionKey),
-        "Selecione o campo"
+      const currentListSourceType = normalizeListSourceType_v3(
+        getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
       );
+      let rawFieldOptions = resolver.getProcessSourceFieldOptions_v1(selectedProcessKey, selectedSectionKey);
+      if (currentListSourceType === "field_list") {
+        rawFieldOptions = rawFieldOptions.filter((opt) => opt && opt.fieldType === "list");
+      }
+      replaceSelectOptions_v3(fieldSelect, rawFieldOptions, "Selecione o campo");
       ensureSelectOption_v3(
         fieldSelect,
         selectedFieldKey,
@@ -768,6 +776,15 @@
       }
     }
 
+    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "field_list") {
+      if (!item.automaticSourceProcessKey) {
+        return { valid: false, message: "Selecione o processo de origem do campo de lista." };
+      }
+      if (!item.automaticSourceFieldKey) {
+        return { valid: false, message: "Selecione o campo de lista de origem." };
+      }
+    }
+
     const duplicated = findGroupDuplicate_v3(item, context);
 
     if (duplicated) {
@@ -830,16 +847,18 @@
       manualListWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
     }
 
+    const isSourceGroupVisible = isListField && (listSourceType === "automatic" || listSourceType === "field_list");
+
     if (automaticProcessWrap) {
-      automaticProcessWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+      automaticProcessWrap.style.display = isSourceGroupVisible ? "" : "none";
     }
 
     if (automaticSectionWrap) {
-      automaticSectionWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+      automaticSectionWrap.style.display = isSourceGroupVisible ? "" : "none";
     }
 
     if (automaticFieldWrap) {
-      automaticFieldWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+      automaticFieldWrap.style.display = isSourceGroupVisible ? "" : "none";
     }
 
     if (automaticOnlyActiveWrap) {
@@ -1003,7 +1022,7 @@
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_process_key", fieldType === "list" ? item.automaticSourceProcessKey || "" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_section_key", fieldType === "list" ? item.automaticSourceSectionKey || "" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_source_field_key", fieldType === "list" ? item.automaticSourceFieldKey || "" : ""));
-      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_only_active", fieldType === "list" && item.automaticOnlyActive ? "1" : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_automatic_only_active", fieldType === "list" && listSourceType === "automatic" && item.automaticOnlyActive ? "1" : ""));
     });
   }
 
