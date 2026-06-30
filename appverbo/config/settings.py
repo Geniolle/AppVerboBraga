@@ -36,6 +36,11 @@ class Settings:
     LOGO_CONTENT_TYPE_EXTENSION: dict[str, str]
 
     DATABASE_URL: str
+    DB_POOL_SIZE: int
+    DB_MAX_OVERFLOW: int
+    DB_POOL_TIMEOUT_SECONDS: int
+    DB_POOL_RECYCLE_SECONDS: int
+    DB_POOL_PRE_PING: bool
     APP_SECRET_KEY: str
 
     GOOGLE_CLIENT_ID: str | None
@@ -93,6 +98,11 @@ def _build_settings() -> Settings:
             "image/svg+xml": ".svg",
         },
         DATABASE_URL=os.getenv("DATABASE_URL", "sqlite:///app.db"),
+        DB_POOL_SIZE=_env_int("DB_POOL_SIZE", 20),
+        DB_MAX_OVERFLOW=_env_int("DB_MAX_OVERFLOW", 20),
+        DB_POOL_TIMEOUT_SECONDS=_env_int("DB_POOL_TIMEOUT_SECONDS", 30),
+        DB_POOL_RECYCLE_SECONDS=_env_int("DB_POOL_RECYCLE_SECONDS", 1800),
+        DB_POOL_PRE_PING=_env_bool("DB_POOL_PRE_PING", True),
         APP_SECRET_KEY=os.getenv("APP_SECRET_KEY") or secrets.token_urlsafe(32),
         GOOGLE_CLIENT_ID=os.getenv("GOOGLE_CLIENT_ID"),
         GOOGLE_CLIENT_SECRET=os.getenv("GOOGLE_CLIENT_SECRET"),

@@ -471,6 +471,20 @@ OBJETO_AUTORIZACAO_CONFIG = AdminSubprocessConfig(
             default_sort="asc",
         ),
         AdminColumnConfig(
+            key="process",
+            label="PROCESSO",
+            source="process_label",
+            css_class="admin-col-text-v1",
+            responsive_priority=3,
+        ),
+        AdminColumnConfig(
+            key="authorization",
+            label="AUTORIZAÇÃO",
+            source="authorization_label",
+            css_class="admin-col-text-v1",
+            responsive_priority=4,
+        ),
+        AdminColumnConfig(
             key="system",
             label="SISTEMA",
             source="visibility_scope_label",

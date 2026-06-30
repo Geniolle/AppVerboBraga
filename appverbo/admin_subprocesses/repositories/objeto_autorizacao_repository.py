@@ -27,6 +27,25 @@ from appverbo.services.profile import (
 OBJETO_AUTORIZACAO_STORAGE_KEY = "objeto_de_autorizacao"
 OBJETO_AUTORIZACAO_SECTION_KEY = "custom_objeto_de_autorizacao"
 OBJETO_AUTORIZACAO_LABEL_VALUE_KEYS = ("objeto_de_autorizacao", "custom_objeto_label")
+OBJETO_AUTORIZACAO_PROCESS_DISPLAY_KEYS = (
+    "process_label",
+    "processo_label",
+    "custom_processo_label",
+    "custom_nome_do_processo",
+    "custom_processo",
+    "processo",
+)
+OBJETO_AUTORIZACAO_AUTHORIZATION_DISPLAY_KEYS = (
+    "authorization_label",
+    "autorizacao_label",
+    "custom_autorizacao_label",
+    "custom_subprocesso_label",
+    "custom_autorizacao",
+    "custom_subprocesso",
+    "authorization",
+    "autorizacao",
+    "subprocesso",
+)
 OBJETO_AUTORIZACAO_SCOPE_MODE_KEY = "__scope_mode"
 OBJETO_AUTORIZACAO_SCOPE_LABEL_KEY = "__scope_label"
 OBJETO_AUTORIZACAO_STATUS_KEY = "__estado"
@@ -81,6 +100,46 @@ def build_objeto_autorizacao_key(label: Any, *, fallback: str = "") -> str:
         return clean_slug
     clean_fallback = _normalize_lookup_slug(fallback)
     return clean_fallback or "objeto"
+
+
+def _resolve_display_value_from_values(
+    values: dict[str, Any],
+    *,
+    key_candidates: tuple[str, ...],
+    fallback: str = "-",
+) -> str:
+    for raw_key in key_candidates:
+        candidate = str(values.get(raw_key) or "").strip()
+        if candidate:
+            return candidate
+
+    normalized_candidates = {
+        _normalize_lookup_slug(raw_key)
+        for raw_key in key_candidates
+        if str(raw_key or "").strip()
+    }
+    if not normalized_candidates:
+        return fallback
+
+    for raw_key, raw_value in values.items():
+        candidate = str(raw_value or "").strip()
+        if not candidate:
+            continue
+
+        normalized_key = _normalize_lookup_slug(raw_key)
+        if not normalized_key:
+            continue
+
+        if normalized_key in normalized_candidates:
+            return candidate
+
+        for normalized_candidate in normalized_candidates:
+            if "_" not in normalized_candidate:
+                continue
+            if normalized_key.endswith(f"_{normalized_candidate}"):
+                return candidate
+
+    return fallback
 
 
 class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
@@ -199,6 +258,14 @@ class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
                     "key": row_key,
                     "record_id": record_id,
                     "label": label,
+                    "process_label": _resolve_display_value_from_values(
+                        values,
+                        key_candidates=OBJETO_AUTORIZACAO_PROCESS_DISPLAY_KEYS,
+                    ),
+                    "authorization_label": _resolve_display_value_from_values(
+                        values,
+                        key_candidates=OBJETO_AUTORIZACAO_AUTHORIZATION_DISPLAY_KEYS,
+                    ),
                     "visibility_scope_mode": scope_mode,
                     "visibility_scope_label": scope_label or _scope_label(scope_mode),
                     "status": status_value,
