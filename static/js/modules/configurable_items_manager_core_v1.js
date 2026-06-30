@@ -310,69 +310,119 @@
     });
   }
 
-  function createActionsDropdown_v1(manager, itemId, fullItemIndex, totalAllItems) {
-    const wrap = document.createElement("div");
-    wrap.className = "configurable-item-actions-menu-v1";
+  const _configurableManagerRegistry = new Map();
+  let _configurableManagerNextId = 1;
 
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "configurable-item-actions-toggle-v1";
-    toggle.setAttribute("aria-label", "Ações");
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.textContent = "⋯";
+  function handleConfigurableAction_v1(manager, action, itemId) {
+    if (action === "edit") {
+      editItem_v1(manager, itemId);
+      return;
+    }
 
-    const dropdown = document.createElement("div");
-    dropdown.className = "configurable-item-actions-dropdown-v1";
-    dropdown.hidden = true;
+    if (action === "up" || action === "down") {
+      moveItem_v1(manager, itemId, action);
+      return;
+    }
 
-    const actions = [];
+    if (action === "remove") {
+      const itemName = manager.config.itemName || "item";
+      const shell = window.AppVerboProcessShell;
+
+      if (shell && typeof shell.createConfirmDialogController === "function") {
+        shell.createConfirmDialogController({
+          title: "Eliminar",
+          message: `Tem a certeza que pretende eliminar este ${itemName}?`,
+          confirmLabel: "Eliminar",
+          cancelLabel: "Cancelar",
+          danger: true
+        }).then((confirmed) => {
+          if (confirmed) removeItem_v1(manager, itemId);
+        });
+      } else {
+        if (window.confirm(`Tem a certeza que pretende eliminar este ${itemName}?`)) {
+          removeItem_v1(manager, itemId);
+        }
+      }
+    }
+  }
+
+  function ensureConfigurableManagerActionDelegation() {
+    if (ensureConfigurableManagerActionDelegation._ready) return;
+    ensureConfigurableManagerActionDelegation._ready = true;
+
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-configurable-action][data-configurable-manager-id]");
+      if (!button) return;
+      const manager = _configurableManagerRegistry.get(button.dataset.configurableManagerId);
+      if (!manager) return;
+      const action = String(button.dataset.configurableAction || "").trim();
+      const itemId = String(button.dataset.configurableItemId || "").trim();
+      if (!action || !itemId) return;
+      handleConfigurableAction_v1(manager, action, itemId);
+    });
+  }
+
+  function createRawActionsContainer_v1(manager, itemId, fullItemIndex, totalAllItems) {
+    if (!manager._configurableManagerId) {
+      manager._configurableManagerId = String(_configurableManagerNextId++);
+      _configurableManagerRegistry.set(manager._configurableManagerId, manager);
+    }
+
+    const container = document.createElement("div");
+    container.className = "table-actions";
+    const managerId = manager._configurableManagerId;
 
     if (manager.config.actions.edit) {
-      actions.push({ action: "edit", label: "Editar informações", danger: false, disabled: false });
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.title = "Editar";
+      btn.setAttribute("aria-label", "Editar");
+      btn.dataset.configurableAction = "edit";
+      btn.dataset.configurableItemId = itemId;
+      btn.dataset.configurableManagerId = managerId;
+      btn.textContent = "Editar";
+      container.appendChild(btn);
     }
 
     if (manager.config.actions.move) {
-      actions.push({ action: "up", label: "Subir", danger: false, disabled: fullItemIndex === 0 });
-      actions.push({ action: "down", label: "Descer", danger: false, disabled: fullItemIndex === totalAllItems - 1 });
+      if (fullItemIndex > 0) {
+        const upBtn = document.createElement("button");
+        upBtn.type = "button";
+        upBtn.title = "Subir";
+        upBtn.setAttribute("aria-label", "Subir");
+        upBtn.dataset.configurableAction = "up";
+        upBtn.dataset.configurableItemId = itemId;
+        upBtn.dataset.configurableManagerId = managerId;
+        upBtn.textContent = "Subir";
+        container.appendChild(upBtn);
+      }
+
+      if (fullItemIndex < totalAllItems - 1) {
+        const downBtn = document.createElement("button");
+        downBtn.type = "button";
+        downBtn.title = "Descer";
+        downBtn.setAttribute("aria-label", "Descer");
+        downBtn.dataset.configurableAction = "down";
+        downBtn.dataset.configurableItemId = itemId;
+        downBtn.dataset.configurableManagerId = managerId;
+        downBtn.textContent = "Descer";
+        container.appendChild(downBtn);
+      }
     }
 
     if (manager.config.actions.remove) {
-      actions.push({ action: "remove", label: "Eliminar", danger: true, disabled: false });
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.title = "Eliminar";
+      delBtn.setAttribute("aria-label", "Eliminar");
+      delBtn.dataset.configurableAction = "remove";
+      delBtn.dataset.configurableItemId = itemId;
+      delBtn.dataset.configurableManagerId = managerId;
+      delBtn.textContent = "Eliminar";
+      container.appendChild(delBtn);
     }
 
-    actions.forEach(({ action, label, danger, disabled }) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      let btnClass = "configurable-item-actions-item-v1";
-      if (danger) btnClass += " configurable-item-actions-item-danger-v1";
-      if (disabled) btnClass += " configurable-item-actions-item-disabled-v1";
-      btn.className = btnClass;
-      btn.dataset.configurableAction = action;
-      btn.dataset.configurableItemId = itemId;
-      btn.textContent = label;
-      if (disabled) btn.disabled = true;
-      dropdown.appendChild(btn);
-    });
-
-    toggle.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const isOpen = !dropdown.hidden;
-
-      document.querySelectorAll(".configurable-item-actions-dropdown-v1").forEach((d) => {
-        if (d !== dropdown) {
-          d.hidden = true;
-          const t = d.previousElementSibling;
-          if (t) t.setAttribute("aria-expanded", "false");
-        }
-      });
-
-      dropdown.hidden = isOpen;
-      toggle.setAttribute("aria-expanded", String(!isOpen));
-    });
-
-    wrap.appendChild(toggle);
-    wrap.appendChild(dropdown);
-    return wrap;
+    return container;
   }
 
   function renderTableHeader_v1(manager) {
@@ -400,30 +450,6 @@
     thead.innerHTML = "";
     thead.appendChild(row);
     manager.elements.table.dataset.headerReadyV1 = "1";
-  }
-
-  function createActionButton_v1(action, label, itemId, disabled) {
-    const button = document.createElement("button");
-    const icons = {
-      edit: "&#9998;",
-      up: "&#8593;",
-      down: "&#8595;",
-      remove: "&#128465;"
-    };
-
-    button.type = "button";
-    button.className = "configurable-items-action-btn-v1";
-    button.dataset.configurableAction = action;
-    button.dataset.configurableItemId = itemId;
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.innerHTML = icons[action] || label;
-
-    if (disabled) {
-      button.disabled = true;
-    }
-
-    return button;
   }
 
   function renderTableBody_v1(manager) {
@@ -474,16 +500,16 @@
       });
 
       const actionsTd = document.createElement("td");
-      const actionsWrap = document.createElement("div");
-
       actionsTd.className = "configurable-items-actions-cell-v1";
-      actionsWrap.className = "configurable-items-actions-v1";
-      actionsWrap.appendChild(createActionsDropdown_v1(manager, itemId, fullItemIndex, totalAllItems));
-
-      actionsTd.appendChild(actionsWrap);
+      actionsTd.appendChild(createRawActionsContainer_v1(manager, itemId, fullItemIndex, totalAllItems));
       row.appendChild(actionsTd);
       tableBody.appendChild(row);
     });
+
+    const _shell = window.AppVerboProcessShell;
+    if (_shell && typeof _shell.enhanceTableActionMenus === "function") {
+      _shell.enhanceTableActionMenus({ root: manager.root });
+    }
 
     if (manager.elements.table) {
       manager.elements.table.style.display = totalItems ? "" : "none";
@@ -718,47 +744,7 @@
     if (!manager.elements.tableBody || manager.elements.tableBody.dataset.boundActionsV1 === "1") {
       return;
     }
-
     manager.elements.tableBody.dataset.boundActionsV1 = "1";
-
-    manager.elements.tableBody.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-configurable-action]");
-
-      if (!button) {
-        return;
-      }
-
-      const action = String(button.dataset.configurableAction || "").trim();
-      const itemId = String(button.dataset.configurableItemId || "").trim();
-
-      if (!action || !itemId) {
-        return;
-      }
-
-      document.querySelectorAll(".configurable-item-actions-dropdown-v1").forEach((d) => {
-        d.hidden = true;
-        const t = d.previousElementSibling;
-        if (t) t.setAttribute("aria-expanded", "false");
-      });
-
-      if (action === "edit") {
-        editItem_v1(manager, itemId);
-        return;
-      }
-
-      if (action === "remove") {
-        const itemName = manager.config.itemName || "item";
-        if (!window.confirm(`Tem a certeza que pretende eliminar este ${itemName}?`)) {
-          return;
-        }
-        removeItem_v1(manager, itemId);
-        return;
-      }
-
-      if (action === "up" || action === "down") {
-        moveItem_v1(manager, itemId, action);
-      }
-    });
   }
 
   function bindPaginationActions_v1(manager) {
@@ -960,16 +946,7 @@
     bindSearchInput_v1(manager);
     bindParentFormSubmit_v1(manager);
 
-    if (!document.documentElement.dataset.configurableDropdownBoundV1) {
-      document.documentElement.dataset.configurableDropdownBoundV1 = "1";
-      document.addEventListener("click", () => {
-        document.querySelectorAll(".configurable-item-actions-dropdown-v1").forEach((d) => {
-          d.hidden = true;
-          const t = d.previousElementSibling;
-          if (t) t.setAttribute("aria-expanded", "false");
-        });
-      });
-    }
+    ensureConfigurableManagerActionDelegation();
 
     manager.render();
     notifyChange_v1(manager);
