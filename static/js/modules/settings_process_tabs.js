@@ -61,6 +61,61 @@
     return aliases[cleanValue] || "";
   }
 
+  function getRequestedSettingsTab() {
+    const bootstrapTab = normalizeSettingsTab(
+      window.__APPVERBO_BOOTSTRAP__ && window.__APPVERBO_BOOTSTRAP__.settingsTab
+    );
+
+    if (bootstrapTab) {
+      return bootstrapTab;
+    }
+
+    try {
+      return normalizeSettingsTab(new URLSearchParams(window.location.search).get("settings_tab"));
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function activateProcessEditTab(requestedTab) {
+    const activeTab = normalizeSettingsTab(requestedTab);
+
+    if (!activeTab) {
+      return;
+    }
+
+    const card = document.querySelector("#settings-menu-edit-card");
+
+    if (!card) {
+      return;
+    }
+
+    const tabLinks = Array.from(card.querySelectorAll("[data-process-edit-tab]"));
+    const tabPanes = Array.from(card.querySelectorAll("[data-process-edit-pane]"));
+
+    const targetLink = tabLinks.find(function (element) {
+      return normalizeSettingsTab(element.getAttribute("data-process-edit-tab")) === activeTab;
+    });
+    const targetPane = tabPanes.find(function (element) {
+      return normalizeSettingsTab(element.getAttribute("data-process-edit-pane")) === activeTab;
+    });
+
+    if (!targetLink || !targetPane) {
+      return;
+    }
+
+    tabLinks.forEach(function (element) {
+      const isActive = normalizeSettingsTab(element.getAttribute("data-process-edit-tab")) === activeTab;
+      element.classList.toggle("active", isActive);
+      element.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+
+    tabPanes.forEach(function (element) {
+      const isActive = normalizeSettingsTab(element.getAttribute("data-process-edit-pane")) === activeTab;
+      element.classList.toggle("active", isActive);
+    });
+  }
+
   //###################################################################################
   // (3) CORRIGIR TEXTOS VISIVEIS
   //###################################################################################
@@ -164,6 +219,7 @@
     repairTextNodes(document.body);
     normalizeTabLinks();
     normalizeVisibleTabLabels();
+    activateProcessEditTab(getRequestedSettingsTab());
   }
 
   if (document.readyState === "loading") {
