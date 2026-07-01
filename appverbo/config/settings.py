@@ -50,6 +50,7 @@ class Settings:
     GITHUB_CLIENT_ID: str | None
     GITHUB_CLIENT_SECRET: str | None
     ADMIN_LOGIN_EMAIL: str
+    ADMIN_LOGIN_PASSWORD: str
 
     WHATSAPP_GRAPH_API_VERSION: str
     WHATSAPP_ACCESS_TOKEN: str
@@ -111,6 +112,7 @@ def _build_settings() -> Settings:
         GITHUB_CLIENT_ID=os.getenv("GITHUB_CLIENT_ID"),
         GITHUB_CLIENT_SECRET=os.getenv("GITHUB_CLIENT_SECRET"),
         ADMIN_LOGIN_EMAIL=(os.getenv("ADMIN_LOGIN_EMAIL", "") or "").strip().lower(),
+        ADMIN_LOGIN_PASSWORD=(os.getenv("ADMIN_LOGIN_PASSWORD", "") or "").strip(),
         WHATSAPP_GRAPH_API_VERSION=(os.getenv("WHATSAPP_GRAPH_API_VERSION", "v22.0") or "v22.0").strip(),
         WHATSAPP_ACCESS_TOKEN=(os.getenv("WHATSAPP_ACCESS_TOKEN", "") or "").strip(),
         WHATSAPP_PHONE_NUMBER_ID=(os.getenv("WHATSAPP_PHONE_NUMBER_ID", "") or "").strip(),

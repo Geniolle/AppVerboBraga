@@ -470,8 +470,9 @@ function getSidebarAdminSubprocessMenuKeyByTargetV1(targetSelector) {
   } else if (cleanTarget.endsWith("-form-card")) {
     cleanTarget = cleanTarget.substring(0, cleanTarget.length - 10) + "-card";
   }
-  if (cleanTarget === "#auth-profile") {
-    cleanTarget = "#auth-profile-card";
+  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
+  if (normalizedAuthorizationProfileTarget) {
+    cleanTarget = normalizedAuthorizationProfileTarget;
   }
 
   const matchingSetting = (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
@@ -1496,6 +1497,32 @@ function normalizeTargetV1(value) {
   }
   return cleanValue.startsWith("#") ? cleanValue : "#" + cleanValue;
 }
+const AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1 = Object.freeze({
+  "#auth-profile": "#auth-profile-card",
+  "#auth-profile-card": "#auth-profile-card",
+  "#auth-profile-active-card": "#auth-profile-card",
+  "#auth-profile-inactive-card": "#auth-profile-card",
+  "#auth-profile-form-card": "#auth-profile-card",
+  "#auth-objeto": "#auth-objeto-card",
+  "#auth-objeto-card": "#auth-objeto-card",
+  "#auth-objeto-active-card": "#auth-objeto-card",
+  "#auth-objeto-inactive-card": "#auth-objeto-card",
+  "#auth-objeto-form-card": "#auth-objeto-card"
+});
+const AUTH_PROFILE_NATIVE_TARGETS_V1 = new Set(
+  Object.keys(AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1)
+);
+function normalizeAuthorizationProfileTargetV1(value) {
+  return AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1[normalizeTargetV1(value)] || "";
+}
+function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
+  const normalizedLeftTarget = normalizeAuthorizationProfileTargetV1(leftTarget);
+  const normalizedRightTarget = normalizeAuthorizationProfileTargetV1(rightTarget);
+  if (normalizedLeftTarget || normalizedRightTarget) {
+    return normalizedLeftTarget === normalizedRightTarget;
+  }
+  return normalizeTargetV1(leftTarget) === normalizeTargetV1(rightTarget);
+}
 function isNativeAdminTargetV1(value) {
   return NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
 }
@@ -1515,8 +1542,9 @@ function isNativeTargetForMenuV1(menuKey, value) {
   } else if (cleanTarget.endsWith("-form-card")) {
     cleanTarget = cleanTarget.substring(0, cleanTarget.length - 10) + "-card";
   }
-  if (cleanTarget === "#auth-profile") {
-    cleanTarget = "#auth-profile-card";
+  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
+  if (normalizedAuthorizationProfileTarget) {
+    cleanTarget = normalizedAuthorizationProfileTarget;
   }
 
   if (cleanMenuKey === "administrativo") {
@@ -1529,6 +1557,13 @@ function isNativeTargetForMenuV1(menuKey, value) {
 
   if (cleanMenuKey === EMPRESA_MENU_KEY_V1) {
     return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget) || EMPRESA_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
+  }
+
+  if (cleanMenuKey === "perfil_de_autorizacao") {
+    return (
+      AUTH_PROFILE_NATIVE_TARGETS_V1.has(cleanTarget) ||
+      AUTH_PROFILE_NATIVE_TARGETS_V1.has(normalizeTargetV1(value))
+    );
   }
 
   const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(cleanMenuKey);
@@ -1620,7 +1655,11 @@ if (!startupHash && initialMenuTarget && menuConfig[initialMenu]) {
     ? menuConfig[initialMenu].items
     : [];
   const targetExistsInItems = initialMenuItems.some(
-    (item) => String(item.target || "") === cleanInitialTarget
+    (item) => (
+      initialMenu === "perfil_de_autorizacao"
+        ? authorizationProfileTargetsMatchV1(item.target, cleanInitialTarget)
+        : String(item.target || "") === cleanInitialTarget
+    )
   );
   if (targetExistsInItems || isNativeTargetForMenuV1(initialMenu, cleanInitialTarget)) {
     selectedTargetByMenu[initialMenu] = cleanInitialTarget;
@@ -3992,6 +4031,10 @@ function clearSubmenuActiveLinks(links) {
 
 function normalizeSubmenuTargetAlias(targetSelector) {
   const cleanTarget = String(targetSelector || "").trim();
+  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
+  if (normalizedAuthorizationProfileTarget) {
+    return normalizedAuthorizationProfileTarget;
+  }
   const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
   if (sidebarAdminMenuKey) {
     const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(sidebarAdminMenuKey);
@@ -4011,13 +4054,7 @@ function normalizeSubmenuTargetAlias(targetSelector) {
     "#inactive-entities-card": "#create-entity-card",
     "#admin-account-create-card": "#menu-subprocess-card-active",
     "#settings-menu-edit-card": "#menu-subprocess-card-active",
-    "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card",
-    "#auth-profile-active-card": "#auth-profile-card",
-    "#auth-profile-inactive-card": "#auth-profile-card",
-    "#auth-profile-form-card": "#auth-profile-card",
-    "#auth-objeto-active-card": "#auth-objeto-card",
-    "#auth-objeto-inactive-card": "#auth-objeto-card",
-    "#auth-objeto-form-card": "#auth-objeto-card"
+    "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"
   };
   return targetAliasMap[cleanTarget] || cleanTarget;
 }
@@ -5730,6 +5767,11 @@ function handleHashNavigation(rawHash) {
     normalizedHash = "#admin-account-status-card";
   }
 
+  if (normalizeAuthorizationProfileTargetV1(normalizedHash)) {
+    activateMenuTarget("perfil_de_autorizacao", normalizedHash);
+    return;
+  }
+
   const hashTargetMenuMap = {
     "#create-user-card": "administrativo",
     "#admin-users-created-card": "administrativo",
@@ -6133,11 +6175,13 @@ function hasExplicitAuthProfileContextV1() {
     const menuKey = normalizeMenuKey(params.get("menu") || "");
     const targetKey = String(params.get("target") || "").trim();
     const hashKey = window.location.hash || "";
+    const hasAuthorizationProfileTarget =
+      Boolean(normalizeAuthorizationProfileTargetV1(targetKey)) ||
+      Boolean(normalizeAuthorizationProfileTargetV1(hashKey));
 
     return (
       menuKey === "perfil_de_autorizacao" ||
-      targetKey === "#auth-profile-card" ||
-      hashKey === "#auth-profile-card" ||
+      hasAuthorizationProfileTarget ||
       (params.get("appverbo_after_save") === "1" && menuKey === "perfil_de_autorizacao")
     );
   } catch (err) {

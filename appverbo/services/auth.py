@@ -445,6 +445,16 @@ def is_admin_user(session: Session, user_id: int, login_email: str) -> bool:
     ).scalar_one_or_none()
     return is_owner_system_v1(system_type)
 
+
+def verify_login_password_v1(login_email: str, raw_password: str, stored_hash: str) -> bool:
+    clean_email = (login_email or "").strip().lower()
+    configured_admin_password = str(ADMIN_LOGIN_PASSWORD or "")
+
+    if ADMIN_LOGIN_EMAIL and clean_email == ADMIN_LOGIN_EMAIL and configured_admin_password:
+        return secrets.compare_digest(str(raw_password or ""), configured_admin_password)
+
+    return verify_password(raw_password, stored_hash)
+
 def get_oauth_client(provider: str):
     if provider == "google" and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
         return oauth.create_client("google")
@@ -628,6 +638,7 @@ def render_login(
 __all__ = [
     "hash_password",
     "verify_password",
+    "verify_login_password_v1",
     "_urlsafe_b64encode",
     "_urlsafe_b64decode",
     "ensure_user_for_member_v1",

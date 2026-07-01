@@ -93,6 +93,80 @@ def _normalize_card_target_v1(raw_target: str) -> str:
     return clean_target if clean_target.startswith("#") else f"#{clean_target.lstrip('#')}"
 
 
+def _normalize_authorization_profile_target_v1(raw_target: str) -> str:
+    clean_target = _normalize_card_target_v1(raw_target).lower()
+    if not clean_target:
+        return ""
+
+    target_alias_map = {
+        "#auth-profile": "#auth-profile-card",
+        "#auth-profile-card": "#auth-profile-card",
+        "#auth-profile-active-card": "#auth-profile-card",
+        "#auth-profile-inactive-card": "#auth-profile-card",
+        "#auth-profile-form-card": "#auth-profile-card",
+        "#auth-objeto": "#auth-objeto-card",
+        "#auth-objeto-card": "#auth-objeto-card",
+        "#auth-objeto-active-card": "#auth-objeto-card",
+        "#auth-objeto-inactive-card": "#auth-objeto-card",
+        "#auth-objeto-form-card": "#auth-objeto-card",
+    }
+    return target_alias_map.get(clean_target, "")
+
+
+def _normalize_tab_target_for_match_v1(raw_target: str, *, menu_key: str = "") -> str:
+    clean_target = _normalize_card_target_v1(raw_target).lower()
+    if not clean_target:
+        return ""
+
+    if resolve_menu_key_alias(menu_key) == "perfil_de_autorizacao":
+        normalized_auth_target = _normalize_authorization_profile_target_v1(clean_target)
+        if normalized_auth_target:
+            return normalized_auth_target
+
+    if clean_target.endswith("-active"):
+        return clean_target[:-7]
+    if clean_target.endswith("-inactive"):
+        return clean_target[:-9]
+    if clean_target.endswith("-form-card"):
+        return f"{clean_target[:-10]}-card"
+    return clean_target
+
+
+def _targets_match_for_menu_v1(menu_key: str, left_target: str, right_target: str) -> bool:
+    return _normalize_tab_target_for_match_v1(
+        left_target,
+        menu_key=menu_key,
+    ) == _normalize_tab_target_for_match_v1(
+        right_target,
+        menu_key=menu_key,
+    )
+
+
+def _resolve_active_tab_index_v1(
+    *,
+    menu_key: str,
+    initial_menu_tabs: list[dict[str, Any]],
+    initial_menu_target: str,
+    initial_dynamic_process_section: str = "",
+) -> int:
+    if not initial_menu_tabs:
+        return 0
+
+    for idx, tab in enumerate(initial_menu_tabs):
+        tab_section = str(tab.get("dynamic_process_section", "") or "")
+        if _targets_match_for_menu_v1(menu_key, tab.get("target", ""), initial_menu_target):
+            if not tab_section or tab_section == initial_dynamic_process_section:
+                return idx
+
+    if initial_dynamic_process_section:
+        for idx, tab in enumerate(initial_menu_tabs):
+            tab_section = str(tab.get("dynamic_process_section", "") or "")
+            if tab_section == initial_dynamic_process_section:
+                return idx
+
+    return 0
+
+
 def _resolve_estruturas_navigation_context_v1(
     *,
     resolved_menu: str,
@@ -169,6 +243,7 @@ def _resolve_initial_menu_target(
     query_edit_params: dict[str, str] | None = None,
 ) -> tuple[str, str]:
     clean_menu_key = resolve_menu_key_alias(resolved_menu)
+    clean_query_edit_params = query_edit_params or {}
     settings_by_key = {
         str(raw_row.get("key") or "").strip().lower(): raw_row
         for raw_row in sidebar_menu_settings
@@ -205,6 +280,18 @@ def _resolve_initial_menu_target(
         return "#admin-account-status-card", ""
     if clean_menu_key == MENU_MEU_PERFIL_KEY:
         return "#perfil-pessoal-card", ""
+    if clean_menu_key == "perfil_de_autorizacao":
+        clean_auth_objeto_edit_key = str(
+            clean_query_edit_params.get("auth_objeto_edit_key") or ""
+        ).strip()
+        if clean_auth_objeto_edit_key:
+            return "#auth-objeto-form-card", ""
+
+        clean_auth_profile_edit_key = str(
+            clean_query_edit_params.get("auth_profile_edit_key") or ""
+        ).strip()
+        if clean_auth_profile_edit_key:
+            return "#auth-profile-form-card", ""
 
     matched_menu_row = settings_by_key.get(clean_menu_key)
     if matched_menu_row is not None:
@@ -217,7 +304,7 @@ def _resolve_initial_menu_target(
         native_edit_param = str(
             matched_menu_row.get("admin_subprocess_edit_param") or ""
         ).strip()
-        active_edit_value = str((query_edit_params or {}).get(native_edit_param) or "").strip()
+        active_edit_value = str(clean_query_edit_params.get(native_edit_param) or "").strip()
 
         if native_default_target:
             if native_edit_target and active_edit_value:
@@ -640,6 +727,12 @@ def new_user_page(
                 settings_edit_data = dict(row)
                 break
 
+    initial_target_query_edit_params_v1 = {
+        "sidebar_section_edit_key": sidebar_section_edit_key,
+        "auth_profile_edit_key": auth_profile_edit_key,
+        "auth_objeto_edit_key": auth_objeto_edit_key,
+    }
+
     initial_menu_target, initial_dynamic_process_section = _resolve_initial_menu_target(
         resolved_menu=resolved_menu,
         resolved_profile_tab=resolved_profile_tab,
@@ -647,10 +740,7 @@ def new_user_page(
         settings_edit_key=clean_settings_edit_key,
         can_manage_tenant_structure=bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
-        query_edit_params={
-            "sidebar_section_edit_key": sidebar_section_edit_key,
-            "auth_profile_edit_key": auth_profile_edit_key,
-        },
+        query_edit_params=initial_target_query_edit_params_v1,
     )
 
     # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
@@ -896,46 +986,19 @@ def new_user_page(
     initial_menu_tabs = [t.to_dict() for t in resolved_tabs_config]
     
     if initial_menu_tabs:
-        found = False
-        for idx, tab in enumerate(initial_menu_tabs):
-            tab_target = tab.get("target")
-            tab_section = tab.get("dynamic_process_section", "")
-            
-            def _targets_match(t1: str, t2: str) -> bool:
-                clean1 = t1.strip().lstrip("#").lower()
-                clean2 = t2.strip().lstrip("#").lower()
-                for suffix in ["-active", "-inactive", "-form-card"]:
-                    if clean1.endswith(suffix):
-                        clean1 = clean1[:-len(suffix)]
-                    if clean2.endswith(suffix):
-                        clean2 = clean2[:-len(suffix)]
-                if clean1 == "auth-profile":
-                    clean1 = "auth-profile-card"
-                if clean2 == "auth-profile":
-                    clean2 = "auth-profile-card"
-                if clean1 == "auth-objeto":
-                    clean1 = "auth-objeto-card"
-                if clean2 == "auth-objeto":
-                    clean2 = "auth-objeto-card"
-                return clean1 == clean2
-
-            if _targets_match(tab_target, initial_menu_target):
-                if not tab_section or tab_section == initial_dynamic_process_section:
-                    active_tab_index = idx
-                    found = True
-                    break
-                    
-        if not found:
-            for idx, tab in enumerate(initial_menu_tabs):
-                tab_section = tab.get("dynamic_process_section", "")
-                if tab_section and tab_section == initial_dynamic_process_section:
-                    active_tab_index = idx
-                    found = True
-                    break
-                    
+        active_tab_index = _resolve_active_tab_index_v1(
+            menu_key=clean_menu_key,
+            initial_menu_tabs=initial_menu_tabs,
+            initial_menu_target=initial_menu_target,
+            initial_dynamic_process_section=initial_dynamic_process_section,
+        )
         active_tab = initial_menu_tabs[active_tab_index]
-        initial_menu_target = active_tab.get("target")
         initial_dynamic_process_section = active_tab.get("dynamic_process_section", "")
+        if not (
+            clean_menu_key == "perfil_de_autorizacao"
+            and _normalize_authorization_profile_target_v1(initial_menu_target)
+        ):
+            initial_menu_target = active_tab.get("target")
 
     active_menu_label = ""
     active_menu_is_list_process = False

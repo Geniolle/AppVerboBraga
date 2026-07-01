@@ -93,7 +93,11 @@ def login_v1(
            .where(func.lower(User.login_email) == clean_email)
         ).one_or_none()
 
-        if row is None or not verify_password(clean_password, row.password_hash):
+        if row is None or not verify_login_password_v1(
+            row.login_email,
+            clean_password,
+            row.password_hash,
+        ):
             return render_login(
                 request,
                 error="Credenciais inválidas.",

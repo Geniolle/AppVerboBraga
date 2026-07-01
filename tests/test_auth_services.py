@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+import appverbo.services.auth as auth_service
 from appverbo.models import (
     Base,
     Entity,
@@ -19,6 +20,7 @@ from appverbo.services.auth import (
     parse_user_invite_token,
     upsert_user_by_email,
     validate_signup_phone_country,
+    verify_login_password_v1,
 )
 from appverbo.services.phone_country import (
     normalize_country_code,
@@ -57,6 +59,60 @@ def test_hash_password_and_verify() -> None:
     assert stored_hash.startswith("pbkdf2_sha256$")
     assert verify_password(raw_password, stored_hash)
     assert not verify_password("SenhaErrada", stored_hash)
+
+
+def test_verify_login_password_uses_env_password_for_admin_email(monkeypatch) -> None:
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appverbo.local")
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
+
+    stored_hash = hash_password("OutraSenha123!")
+
+    assert verify_login_password_v1(
+        "admin@appverbo.local",
+        "P@1internet",
+        stored_hash,
+    )
+    assert not verify_login_password_v1(
+        "admin@appverbo.local",
+        "OutraSenha123!",
+        stored_hash,
+    )
+
+
+def test_verify_login_password_falls_back_to_hash_for_other_users(monkeypatch) -> None:
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appverbo.local")
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
+
+    stored_hash = hash_password("SenhaUtilizador123!")
+
+    assert verify_login_password_v1(
+        "membro@appverbo.local",
+        "SenhaUtilizador123!",
+        stored_hash,
+    )
+    assert not verify_login_password_v1(
+        "membro@appverbo.local",
+        "P@1internet",
+        stored_hash,
+    )
+
+
+def test_verify_login_password_falls_back_to_hash_when_admin_env_password_is_empty(monkeypatch) -> None:
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appverbo.local")
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "")
+
+    stored_hash = hash_password("SenhaBD123!")
+
+    assert verify_login_password_v1(
+        "admin@appverbo.local",
+        "SenhaBD123!",
+        stored_hash,
+    )
+    assert not verify_login_password_v1(
+        "admin@appverbo.local",
+        "SenhaErrada",
+        stored_hash,
+    )
 
 
 def test_user_invite_token_roundtrip() -> None:
