@@ -5,7 +5,7 @@
 
 
 {% macro render_admin_subprocess_field(field, value="") %}
-  <div class="field admin-subprocess-field-v1 {{ field.css_class }}">
+  <div class="field admin-subprocess-field-v1 {{ field.css_class }}" data-admin-subprocess-field-key="{{ field.key }}">
     <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
     {% if field.field_type == "select" %}
@@ -37,7 +37,7 @@
   {% set _field_type = field.field_type|default("text") %}
   {% set _input_type = field.input_type|default("text") %}
   {% if _field_type != "header" %}
-    <div class="field admin-subprocess-field-v1">
+    <div class="field admin-subprocess-field-v1" data-admin-subprocess-field-key="{{ field.key }}">
       <label for="{{ id_prefix }}_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
       {% if _input_type == "select" %}
@@ -132,7 +132,7 @@
         <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ state.edit_key }}">
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
-        <div class="admin-subprocess-grid-v1">
+        <div class="admin-subprocess-grid-v1{% if state.config.key == 'objeto_de_autorizacao' %} admin-subprocess-grid-objeto-autorizacao-v1{% endif %}">
           {% if state.resolved_dynamic_fields %}
             {% for dyn_field in state.resolved_dynamic_fields %}
               {% set _dyn_value = state.edit_values.get(dyn_field.key, "") if state.edit_values else "" %}

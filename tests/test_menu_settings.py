@@ -17,7 +17,10 @@ from appverbo.menu_settings import (
     update_sidebar_menu_process_quantity_fields_v1,
 )
 from appverbo.models import Base, SidebarMenuSetting
-from appverbo.services.profile import resolve_field_list_options_v1
+from appverbo.services.profile import (
+    build_profile_menu_tabs_dependency_map_v1,
+    resolve_field_list_options_v1,
+)
 from appverbo.services.process_tabs import resolve_subprocess_section_fields_v1
 
 
@@ -596,6 +599,135 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
     ]
 
 
+def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_prioritizes_custom_processo() -> None:
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_subprocesso",
+            "field_type": "list",
+            "header_key": "custom_objeto_de_autorizacao",
+            "list_source_type": "profile_menu_tabs",
+            "automatic_source_field_key": "custom_nome_do_perfil",
+        },
+        sidebar_menu_settings=[
+            {
+                "key": "perfil_de_autorizacao",
+                "label": "Perfil de autorização",
+                "is_active": True,
+                "is_deleted": False,
+            },
+            {
+                "key": "extrato",
+                "label": "Extrato",
+                "is_active": True,
+                "is_deleted": False,
+                "is_list_process": True,
+                "process_field_options": [
+                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
+                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                ],
+            },
+            {
+                "key": "tesouraria",
+                "label": "Tesouraria",
+                "is_active": True,
+                "is_deleted": False,
+                "is_list_process": True,
+                "process_field_options": [
+                    {"key": "custom_tes_header", "label": "Movimentos", "field_type": "header"},
+                    {"key": "custom_referencia", "label": "Referência", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_referencia", "header_key": "custom_tes_header"},
+                ],
+            },
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao", "extrato", "tesouraria"},
+        menu_process_history_map={
+            "perfil_de_autorizacao": [
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "__menu_key": "extrato",
+                        "custom_perfil": "Extrato",
+                        "custom_nome_do_perfil": "Extrato",
+                        "__estado": "ativo",
+                    },
+                },
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "__menu_key": "tesouraria",
+                        "custom_perfil": "Tesouraria",
+                        "custom_nome_do_perfil": "Tesouraria",
+                        "__estado": "ativo",
+                    },
+                },
+            ]
+        },
+        current_field_values={
+            "custom_processo": "extrato",
+            "custom_nome_do_perfil": "Tesouraria",
+        },
+    )
+
+    assert resolved == [
+        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+    ]
+
+
+def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_aliases() -> None:
+    dependency_map = build_profile_menu_tabs_dependency_map_v1(
+        sidebar_menu_settings=[
+            {
+                "key": "perfil_de_autorizacao",
+                "label": "Perfil de autorização",
+                "is_active": True,
+                "is_deleted": False,
+            },
+            {
+                "key": "extrato",
+                "label": "Extratos bancários",
+                "is_active": True,
+                "is_deleted": False,
+                "is_list_process": True,
+                "process_field_options": [
+                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
+                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                ],
+            },
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao", "extrato"},
+        menu_process_history_map={
+            "perfil_de_autorizacao": [
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "__menu_key": "extrato",
+                        "custom_perfil": "Extrato",
+                        "custom_nome_do_perfil": "Extrato",
+                        "__estado": "ativo",
+                    },
+                }
+            ]
+        },
+    )
+
+    expected_options = [
+        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+    ]
+
+    assert dependency_map["extrato"] == expected_options
+    assert dependency_map["Extrato"] == expected_options
+    assert dependency_map["Extratos bancários"] == expected_options
+
+
 def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_without_menu_key() -> None:
     resolved = resolve_field_list_options_v1(
         current_menu_key="perfil_de_autorizacao",
@@ -1004,6 +1136,113 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
             "header_label": "Objeto de autorização",
         }
     ]
+
+
+def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_processo_dependency_in_objeto_autorizacao() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "perfil_de_autorizacao",
+        "custom_objeto_de_autorizacao",
+        [
+            {
+                "key": "perfil_de_autorizacao",
+                "process_additional_fields": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {"key": "custom_processo", "label": "Processo", "field_type": "list", "list_source_type": "manual"},
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "list",
+                        "list_source_type": "profile_menu_tabs",
+                        "automatic_source_field_key": "custom_nome_do_perfil",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
+                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_processo", "header_key": "custom_objeto_de_autorizacao"},
+                    {"field_key": "custom_subprocesso", "header_key": "custom_objeto_de_autorizacao"},
+                ],
+            }
+        ],
+    )
+
+    dependent_field = next(item for item in resolved_fields if item["key"] == "custom_subprocesso")
+
+    assert dependent_field["dependent_field_key"] == "custom_processo"
+
+
+def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depend_on_itself() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "perfil_de_autorizacao",
+        "custom_objeto_de_autorizacao",
+        [
+            {
+                "key": "perfil_de_autorizacao",
+                "process_additional_fields": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                        "list_source_type": "active_menus",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_processo", "header_key": "custom_objeto_de_autorizacao"},
+                ],
+            },
+            {"key": "extrato", "label": "Extrato", "is_active": True, "is_deleted": False},
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao", "extrato"},
+    )
+
+    controller_field = next(item for item in resolved_fields if item["key"] == "custom_processo")
+
+    assert controller_field["list_source_type"] == "active_menus"
+    assert "dependent_field_key" not in controller_field
+
+
+def test_resolve_subprocess_section_fields_profile_menu_tabs_keeps_legacy_profile_dependency_outside_objeto_autorizacao() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "perfil_de_autorizacao",
+        "custom_perfil",
+        [
+            {
+                "key": "perfil_de_autorizacao",
+                "process_additional_fields": [
+                    {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
+                    {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "list",
+                        "list_source_type": "profile_menu_tabs",
+                        "automatic_source_field_key": "custom_nome_do_perfil",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
+                    {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
+                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_nome_do_perfil", "header_key": "custom_perfil"},
+                    {"field_key": "custom_subprocesso", "header_key": "custom_perfil"},
+                ],
+            }
+        ],
+    )
+
+    dependent_field = next(item for item in resolved_fields if item["key"] == "custom_subprocesso")
+
+    assert dependent_field["dependent_field_key"] == "custom_nome_do_perfil"
 
 
 def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -> None:

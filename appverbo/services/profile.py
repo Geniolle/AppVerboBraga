@@ -762,8 +762,41 @@ def _build_auth_profile_menu_entries_v1(
     return resolved_entries
 
 
+def _build_profile_menu_tabs_controller_key_candidates_v1(
+    *,
+    current_menu_key: str,
+    field_definition: dict[str, Any],
+) -> list[str]:
+    candidates: list[str] = []
+
+    def append_candidate(raw_candidate: Any) -> None:
+        clean_candidate = _normalize_process_list_source_key_v1(raw_candidate)
+        if clean_candidate and clean_candidate not in candidates:
+            candidates.append(clean_candidate)
+
+    if (
+        _normalize_process_list_source_key_v1(current_menu_key) == "perfil_de_autorizacao"
+        and _normalize_process_list_source_key_v1(field_definition.get("header_key"))
+        == "custom_objeto_de_autorizacao"
+    ):
+        append_candidate("custom_processo")
+
+    for raw_candidate in (
+        field_definition.get("profile_source_field_key"),
+        field_definition.get("profileSourceFieldKey"),
+        field_definition.get("automatic_source_field_key"),
+        field_definition.get("automaticSourceFieldKey"),
+        "custom_nome_do_perfil",
+        "custom_perfil",
+    ):
+        append_candidate(raw_candidate)
+
+    return candidates
+
+
 def _resolve_profile_menu_tabs_controller_value_v1(
     *,
+    current_menu_key: str,
     field_definition: dict[str, Any],
     current_field_values: dict[str, Any] | None,
 ) -> str:
@@ -775,20 +808,12 @@ def _resolve_profile_menu_tabs_controller_value_v1(
         for raw_key, raw_value in current_field_values.items()
         if _normalize_process_list_source_key_v1(raw_key)
     }
-    controller_key_candidates = [
-        field_definition.get("profile_source_field_key"),
-        field_definition.get("profileSourceFieldKey"),
-        field_definition.get("automatic_source_field_key"),
-        field_definition.get("automaticSourceFieldKey"),
-        "custom_nome_do_perfil",
-        "custom_perfil",
-    ]
+    controller_key_candidates = _build_profile_menu_tabs_controller_key_candidates_v1(
+        current_menu_key=current_menu_key,
+        field_definition=field_definition,
+    )
 
-    for raw_candidate in controller_key_candidates:
-        clean_candidate = _normalize_process_list_source_key_v1(raw_candidate)
-        if not clean_candidate:
-            continue
-
+    for clean_candidate in controller_key_candidates:
         resolved_value = normalized_values.get(clean_candidate, "")
         if resolved_value:
             return resolved_value
@@ -802,6 +827,16 @@ def build_profile_menu_tabs_dependency_map_v1(
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, list[dict[str, str]]]:
+    def register_dependency_aliases(
+        options_map: dict[str, list[dict[str, str]]],
+        aliases: list[str] | tuple[str, ...],
+        options: list[dict[str, str]],
+    ) -> None:
+        for raw_alias in aliases:
+            clean_alias = str(raw_alias or "").strip()
+            if clean_alias and clean_alias not in options_map:
+                options_map[clean_alias] = options
+
     settings = [
         dict(item)
         for item in (sidebar_menu_settings or [])
@@ -821,9 +856,15 @@ def build_profile_menu_tabs_dependency_map_v1(
         menu_process_history_map=menu_process_history_map,
     )
     if not profile_entries:
-        return dependency_map
+        profile_entries = []
 
     from appverbo.services.process_tabs import resolve_process_tab_options_v1
+
+    menu_meta_by_key, _menu_key_by_label_lookup = _build_visible_sidebar_menu_meta_v1(
+        sidebar_menu_settings=settings,
+        visible_sidebar_menu_keys=visible_keys,
+    )
+    resolved_options_by_menu_key: dict[str, list[dict[str, str]]] = {}
 
     for entry in profile_entries:
         profile_label = str(entry.get("profile_label") or "").strip()
@@ -831,17 +872,42 @@ def build_profile_menu_tabs_dependency_map_v1(
         if not profile_label:
             continue
 
-        dependency_map[profile_label] = resolve_process_tab_options_v1(
-            menu_key,
-            settings,
-            visible_sidebar_menu_keys=visible_keys,
-        ) if menu_key else []
+        if menu_key not in resolved_options_by_menu_key:
+            resolved_options_by_menu_key[menu_key] = (
+                resolve_process_tab_options_v1(
+                    menu_key,
+                    settings,
+                    visible_sidebar_menu_keys=visible_keys,
+                )
+                if menu_key
+                else []
+            )
+        menu_label = str((menu_meta_by_key.get(menu_key) or {}).get("label") or "").strip()
+        register_dependency_aliases(
+            dependency_map,
+            [profile_label, menu_key, menu_label],
+            resolved_options_by_menu_key.get(menu_key, []),
+        )
+
+    for menu_key, menu_meta in menu_meta_by_key.items():
+        if menu_key not in resolved_options_by_menu_key:
+            resolved_options_by_menu_key[menu_key] = resolve_process_tab_options_v1(
+                menu_key,
+                settings,
+                visible_sidebar_menu_keys=visible_keys,
+            )
+        register_dependency_aliases(
+            dependency_map,
+            [menu_key, menu_meta.get("label")],
+            resolved_options_by_menu_key.get(menu_key, []),
+        )
 
     return dependency_map
 
 
 def _resolve_profile_menu_tabs_list_options_v1(
     *,
+    current_menu_key: str,
     field_definition: dict[str, Any],
     sidebar_menu_settings: list[dict[str, Any]],
     visible_sidebar_menu_keys: set[str],
@@ -849,6 +915,7 @@ def _resolve_profile_menu_tabs_list_options_v1(
     current_field_values: dict[str, Any] | None,
 ) -> list[dict[str, str]]:
     controller_value = _resolve_profile_menu_tabs_controller_value_v1(
+        current_menu_key=current_menu_key,
         field_definition=field_definition,
         current_field_values=current_field_values,
     )
@@ -965,6 +1032,7 @@ def resolve_field_list_options_v1(
 
     if list_source_type == "profile_menu_tabs":
         return _resolve_profile_menu_tabs_list_options_v1(
+            current_menu_key=clean_current_menu_key,
             field_definition=field_definition,
             sidebar_menu_settings=settings,
             visible_sidebar_menu_keys=visible_keys,

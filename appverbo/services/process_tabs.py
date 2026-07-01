@@ -143,6 +143,15 @@ def _build_render_field_meta_map_v1(
     current_field_values: dict[str, Any] | None = None,
 ) -> dict[str, dict[str, Any]]:
     normalized_fields_by_key: dict[str, dict[str, Any]] = {}
+    visible_field_header_map: dict[str, str] = {}
+
+    for raw_row in (setting.get("process_visible_field_rows") or []):
+        if not isinstance(raw_row, dict):
+            continue
+        field_key = _normalize_process_tab_lookup_v1(raw_row.get("field_key"))
+        header_key = _normalize_process_tab_lookup_v1(raw_row.get("header_key"))
+        if field_key and header_key and field_key not in visible_field_header_map:
+            visible_field_header_map[field_key] = header_key
 
     for collection_key in ("process_additional_fields", "process_field_options"):
         raw_fields = setting.get(collection_key)
@@ -171,6 +180,11 @@ def _build_render_field_meta_map_v1(
                     or field_key
                 ).strip()
                 or field_key,
+                "header_key": _normalize_process_tab_lookup_v1(
+                    raw_field.get("header_key")
+                    or existing_field.get("header_key")
+                    or visible_field_header_map.get(field_key)
+                ),
                 "field_type": field_type,
                 "input_type": _build_render_input_type_v1(field_type),
                 "required": _normalize_process_tab_bool_v1(
@@ -372,7 +386,10 @@ def resolve_subprocess_section_fields_v1(
             )
 
         if result:
-            from appverbo.services.profile import build_profile_menu_tabs_dependency_map_v1
+            from appverbo.services.profile import (
+                _build_profile_menu_tabs_controller_key_candidates_v1,
+                build_profile_menu_tabs_dependency_map_v1,
+            )
 
             section_field_keys = {str(item.get("key") or "").strip().lower() for item in result}
             section_field_labels = {
@@ -390,25 +407,32 @@ def resolve_subprocess_section_fields_v1(
                 if str(field.get("list_source_type") or "").strip().lower() != "profile_menu_tabs":
                     continue
 
-                candidate_keys = [
-                    field.get("profile_source_field_key"),
-                    field.get("profileSourceFieldKey"),
-                    field.get("automatic_source_field_key"),
-                    field.get("automaticSourceFieldKey"),
-                    "custom_nome_do_perfil",
-                    "custom_perfil",
-                ]
+                candidate_keys = _build_profile_menu_tabs_controller_key_candidates_v1(
+                    current_menu_key=clean_menu_key,
+                    field_definition=field,
+                )
                 dependent_field_key = ""
 
-                for raw_candidate in candidate_keys:
-                    clean_candidate = _normalize_process_tab_lookup_v1(raw_candidate)
-                    if clean_candidate and clean_candidate in section_field_keys:
-                        dependent_field_key = clean_candidate
+                for candidate_key in candidate_keys:
+                    if candidate_key in section_field_keys:
+                        dependent_field_key = candidate_key
                         break
 
                 if not dependent_field_key:
                     for field_key, field_label in section_field_labels.items():
+                        if _normalize_process_tab_lookup_v1(field_label) == "processo":
+                            dependent_field_key = field_key
+                            break
+
+                if not dependent_field_key:
+                    for field_key, field_label in section_field_labels.items():
                         if _normalize_process_tab_lookup_v1(field_label) == "nome_do_perfil":
+                            dependent_field_key = field_key
+                            break
+
+                if not dependent_field_key:
+                    for field_key, field_label in section_field_labels.items():
+                        if _normalize_process_tab_lookup_v1(field_label) == "perfil":
                             dependent_field_key = field_key
                             break
 

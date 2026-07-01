@@ -67,6 +67,38 @@
   width: 100%;
 }
 
+.admin-subprocess-grid-objeto-autorizacao-v1 {
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > .admin-subprocess-field-v1 {
+  order: 20;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_nome_do_perfil"] {
+  order: 1;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_processo"] {
+  order: 2;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_subprocesso"] {
+  order: 3;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_autorizacao"] {
+  order: 4;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
+  order: 5;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="status"] {
+  order: 6;
+}
+
 .admin-subprocess-field-v1 label {
   display: block;
   margin-bottom: 6px;
@@ -315,6 +347,12 @@ table[data-appverbo-sortable-table="1"] td:last-child {
 @media (max-width: 1100px) {
   .admin-subprocess-grid-v1 {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1280px) {
+  .admin-subprocess-grid-objeto-autorizacao-v1 {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
 }
 
