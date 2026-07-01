@@ -1,0 +1,70 @@
+/* APPVERBO_FIELD_INFO_TOOLTIP_V1_START */
+/* Tooltip/popover generico e reutilizavel para explicar o significado de opcoes de um campo. */
+
+.field-info-tooltip-v1 {
+  display: inline-flex;
+  margin-left: 6px;
+  position: relative;
+  vertical-align: middle;
+}
+
+.field-info-trigger-v1 {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: #64748b;
+  cursor: pointer;
+  display: inline-flex;
+  height: 18px;
+  justify-content: center;
+  padding: 0;
+  width: 18px;
+}
+
+.field-info-trigger-v1:hover,
+.field-info-trigger-v1:focus-visible {
+  color: #0a6ed1;
+  outline: none;
+}
+
+.field-info-icon-v1 {
+  height: 16px;
+  width: 16px;
+}
+
+.field-info-panel-v1 {
+  background: #fff;
+  border: 1px solid #d8e0ec;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  color: #1d2b3a;
+  display: none;
+  font-size: 12.5px;
+  font-weight: 400;
+  left: 0;
+  line-height: 1.5;
+  max-width: min(300px, calc(100vw - 32px));
+  padding: 10px 12px;
+  position: absolute;
+  text-transform: none;
+  top: calc(100% + 8px);
+  width: max-content;
+  z-index: 1200;
+}
+
+.field-info-panel-v1 ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.field-info-panel-v1 li + li {
+  margin-top: 6px;
+}
+
+.field-info-tooltip-v1:hover .field-info-panel-v1,
+.field-info-tooltip-v1:focus-within .field-info-panel-v1,
+.field-info-tooltip-v1.field-info-tooltip-open-v1 .field-info-panel-v1 {
+  display: block;
+}
+/* APPVERBO_FIELD_INFO_TOOLTIP_V1_END */

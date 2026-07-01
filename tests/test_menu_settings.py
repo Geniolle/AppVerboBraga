@@ -861,6 +861,131 @@ def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_pro
     ]
 
 
+def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_autorizacao_menu() -> None:
+    """A fonte 'profile_menu_tabs' (label visivel: Abas do processo selecionado) deve
+    funcionar para qualquer processo/menu que hospede os campos, nao apenas perfil_de_autorizacao,
+    e sem depender de historico do menu perfil_de_autorizacao."""
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="empresa",
+        field_definition={
+            "key": "custom_subprocesso",
+            "field_type": "list",
+            "list_source_type": "profile_menu_tabs",
+            "automatic_source_field_key": "custom_processo",
+        },
+        sidebar_menu_settings=[
+            {"key": "empresa", "label": "Empresa", "is_active": True, "is_deleted": False},
+            {
+                "key": "extrato",
+                "label": "Extrato",
+                "is_active": True,
+                "is_deleted": False,
+                "process_field_options": [
+                    {"key": "custom_saldo", "label": "Saldo", "field_type": "header"},
+                    {"key": "custom_movimentos", "label": "Movimentos", "field_type": "header"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_valor", "header_key": "custom_saldo"},
+                    {"field_key": "custom_data", "header_key": "custom_movimentos"},
+                ],
+            },
+        ],
+        visible_sidebar_menu_keys={"empresa", "extrato"},
+        menu_process_history_map=None,
+        current_field_values={"custom_processo": "extrato"},
+    )
+
+    assert resolved == [
+        {"value": "custom_saldo", "label": "Saldo", "status": "active"},
+        {"value": "custom_movimentos", "label": "Movimentos", "status": "active"},
+    ]
+
+
+def test_resolve_field_list_options_profile_menu_tabs_empresa_target_without_tabs_is_empty() -> None:
+    """Se o processo escolhido em 'Processo' nao tiver abas/subprocessos resolviveis,
+    o campo dependente deve ficar vazio, sem erro."""
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="empresa",
+        field_definition={
+            "key": "custom_subprocesso",
+            "field_type": "list",
+            "list_source_type": "profile_menu_tabs",
+            "automatic_source_field_key": "custom_processo",
+        },
+        sidebar_menu_settings=[
+            {"key": "empresa", "label": "Empresa", "is_active": True, "is_deleted": False},
+        ],
+        visible_sidebar_menu_keys={"empresa"},
+        current_field_values={"custom_processo": "empresa"},
+    )
+
+    assert resolved == []
+
+
+def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_infers_processo_sibling_by_label() -> None:
+    """Sem automatic_source_field_key configurado explicitamente, o resolver deve encontrar
+    genericamente o campo irmao rotulado 'Processo' em qualquer processo/menu (nao apenas
+    perfil_de_autorizacao) e usar o processo escolhido para montar as opcoes iniciais."""
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "empresa",
+        "custom_dados_gerais",
+        [
+            {
+                "key": "empresa",
+                "process_additional_fields": [
+                    {"key": "custom_dados_gerais", "label": "Dados gerais", "field_type": "header"},
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                        "list_source_type": "active_menus",
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "list",
+                        "list_source_type": "profile_menu_tabs",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_dados_gerais", "label": "Dados gerais", "field_type": "header"},
+                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
+                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_processo", "header_key": "custom_dados_gerais"},
+                    {"field_key": "custom_subprocesso", "header_key": "custom_dados_gerais"},
+                ],
+            },
+            {
+                "key": "extrato",
+                "label": "Extrato",
+                "is_active": True,
+                "is_deleted": False,
+                "process_field_options": [
+                    {"key": "custom_saldo", "label": "Saldo", "field_type": "header"},
+                    {"key": "custom_movimentos", "label": "Movimentos", "field_type": "header"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "custom_valor", "header_key": "custom_saldo"},
+                    {"field_key": "custom_data", "header_key": "custom_movimentos"},
+                ],
+            },
+        ],
+        visible_sidebar_menu_keys={"empresa", "extrato"},
+        current_field_values={"custom_processo": "extrato"},
+    )
+
+    dependent_field = next(item for item in resolved_fields if item["key"] == "custom_subprocesso")
+
+    assert dependent_field["dependent_field_key"] == "custom_processo"
+    assert dependent_field["automatic_source_field_key"] == "custom_processo"
+    assert dependent_field["options"] == [
+        {"value": "custom_saldo", "label": "Saldo", "status": "active"},
+        {"value": "custom_movimentos", "label": "Movimentos", "status": "active"},
+    ]
+
+
 def test_resolve_field_list_options_automatic_filters_active_records() -> None:
     resolved = resolve_field_list_options_v1(
         current_menu_key="empresa",

@@ -15,4 +15,4 @@ def test_process_additional_fields_manager_v3_filters_headers_from_source_field_
     assert '.filter((opt) => opt && opt.fieldType !== "header")' in script_text
     assert 'clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "profile_menu_tabs"' in script_text
     assert 'return "Menus ativos";' in script_text
-    assert 'return "Abas do perfil selecionado";' in script_text
+    assert 'return "Abas do processo selecionado";' in script_text

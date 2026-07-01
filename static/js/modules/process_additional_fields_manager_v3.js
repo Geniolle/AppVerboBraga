@@ -313,7 +313,7 @@
     }
 
     if (listSourceType === "profile_menu_tabs") {
-      return "Abas do perfil selecionado";
+      return "Abas do processo selecionado";
     }
 
     if (listSourceType === "automatic" || listSourceType === "field_list") {

@@ -74,6 +74,22 @@ def _is_legacy_profile_menu_tabs_render_config_v1(
     )
 
 
+def _find_field_key_by_label_v1(setting: dict[str, Any], target_label_lookup: str) -> str:
+    """Procura, entre os campos configurados do processo, um campo cujo label normalizado
+    corresponda a target_label_lookup. Generico para qualquer processo/menu (ex: "processo")."""
+    for collection_key in ("process_additional_fields", "process_field_options"):
+        raw_fields = setting.get(collection_key)
+        if not isinstance(raw_fields, list):
+            continue
+        for raw_field in raw_fields:
+            if not isinstance(raw_field, dict):
+                continue
+            field_key = _normalize_process_tab_lookup_v1(raw_field.get("key"))
+            if field_key and _normalize_process_tab_lookup_v1(raw_field.get("label")) == target_label_lookup:
+                return field_key
+    return ""
+
+
 def _build_render_input_type_v1(field_type: str) -> str:
     if field_type == "list":
         return "select"
@@ -259,6 +275,16 @@ def _build_render_field_meta_map_v1(
                 automatic_source_field_key=normalized_field["automatic_source_field_key"],
             ):
                 normalized_field["list_source_type"] = "profile_menu_tabs"
+
+            if (
+                normalized_field["list_source_type"] == "profile_menu_tabs"
+                and not normalized_field["automatic_source_field_key"]
+            ):
+                # Generico para qualquer processo: se nenhum campo de origem foi configurado
+                # explicitamente, usa o campo irmao rotulado "Processo" no mesmo processo/menu.
+                sibling_field_key = _find_field_key_by_label_v1(setting, "processo")
+                if sibling_field_key and sibling_field_key != field_key:
+                    normalized_field["automatic_source_field_key"] = sibling_field_key
 
             if field_type == "list":
                 pre_resolved_options = _normalize_render_options_v1(
