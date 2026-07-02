@@ -724,7 +724,7 @@ def get_page_data(
                 profile_personal_duplicate_custom_keys.add(clean_key)
                 continue
             field_type = str(custom_field.get("field_type") or "text").strip().lower()
-            if field_type not in {"text", "number", "email", "phone", "date", "flag", "header", "list"}:
+            if field_type not in {"text", "number", "email", "phone", "date", "time", "flag", "header", "list"}:
                 field_type = "text"
             try:
                 parsed_size = int(str(custom_field.get("size") or "").strip())

@@ -4,7 +4,7 @@ from typing import Any
 _SYSTEM_HARDCODED_PROCESS_KEYS: frozenset[str] = frozenset({"administrativo", "sessoes"})
 
 _SUPPORTED_RENDER_FIELD_TYPES_V1: frozenset[str] = frozenset(
-    {"text", "number", "email", "phone", "date", "flag", "header", "list"}
+    {"text", "number", "email", "phone", "date", "time", "flag", "header", "list"}
 )
 _TEXTUAL_RENDER_FIELD_TYPES_V1: frozenset[str] = frozenset(
     {"text", "number", "email", "phone"}
@@ -97,7 +97,7 @@ def _build_render_input_type_v1(field_type: str) -> str:
         return "tel"
     if field_type == "flag":
         return "checkbox"
-    if field_type in {"number", "email", "date"}:
+    if field_type in {"number", "email", "date", "time"}:
         return field_type
     return "text"
 
