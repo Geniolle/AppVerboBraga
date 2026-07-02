@@ -288,11 +288,7 @@ function redirectToStoredPostSaveContextV3(storedContext) {
   return true;
 }
 
-const appverboStoredPostSaveContextV3 = readAndClearAppVerboPostSaveContextV3();
-
-if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
-  // A navegacao continua no mesmo processo/aba onde o POST foi executado.
-} else {
+function isBrowserReloadNavigationV1() {
   const navigationEntries = (
     typeof window !== "undefined" &&
     window.performance &&
@@ -305,13 +301,27 @@ if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
     ? String(navigationEntries[0].type || "")
     : "";
 
+  return navigationType === "reload";
+}
+
+function normalizeReloadToHomeV1() {
+  // Regra global: um F5/reload normal do browser deve sempre devolver o utilizador para Home,
+  // independentemente de qual menu/aba/target estava ativo por navegacao client-side (que nao
+  // atualiza a URL) ou de a URL ainda trazer marcadores de sucesso/erro de um save anterior
+  // (ex.: "settings_success"). A unica excecao e um contexto de edicao em curso genuinamente
+  // fragil (ver hasProtectedReloadNavigationContextV1), onde perder o estado ao dar F5
+  // significaria perder trabalho nao guardado, nao apenas "esquecer" onde o utilizador estava.
+  if (!isBrowserReloadNavigationV1() || window.location.pathname !== "/users/new") {
+    return false;
+  }
+
   const currentUrlForRefreshGuard = getAppVerboCurrentUrlPostSaveV3();
   const isPostSaveFeedbackUrl = isAppVerboPostSaveFeedbackUrlV3(currentUrlForRefreshGuard);
   const hasProtectedReloadContext = hasProtectedReloadNavigationContextV1(currentUrlForRefreshGuard);
 
   logAppVerboNavigationBootDebugV1("reload_guard:evaluate", {
     href: window.location.href,
-    navigationType,
+    navigationType: "reload",
     isPostSaveFeedbackUrl,
     hasProtectedReloadContext,
     resolvedMenuFromUrl: currentUrlForRefreshGuard
@@ -322,25 +332,34 @@ if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
       : ""
   });
 
-  if (
-    navigationType === "reload" &&
-    window.location.pathname === "/users/new" &&
-    !isPostSaveFeedbackUrl &&
-    !hasProtectedReloadContext
-  ) {
-    const homeUrl = "/users/new?menu=home";
-    const currentPathAndQuery = `${window.location.pathname}${window.location.search}`;
-
-    if (currentPathAndQuery !== homeUrl || window.location.hash) {
-      logAppVerboNavigationBootDebugV1("reload_guard:location_replace_home", {
-        from: window.location.href,
-        to: homeUrl
-      });
-      window.location.replace(homeUrl);
-    }
+  if (hasProtectedReloadContext) {
+    return false;
   }
 
-  if (isPostSaveFeedbackUrl) {
+  const homeUrl = "/users/new?menu=home";
+  const currentPathAndQuery = `${window.location.pathname}${window.location.search}`;
+
+  if (currentPathAndQuery === homeUrl && !window.location.hash) {
+    return false;
+  }
+
+  logAppVerboNavigationBootDebugV1("reload_guard:location_replace_home", {
+    from: window.location.href,
+    to: homeUrl,
+    hadPostSaveFeedbackMarkers: isPostSaveFeedbackUrl
+  });
+  window.location.replace(homeUrl);
+  return true;
+}
+
+const appverboStoredPostSaveContextV3 = readAndClearAppVerboPostSaveContextV3();
+
+if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
+  // A navegacao continua no mesmo processo/aba onde o POST foi executado.
+} else if (!normalizeReloadToHomeV1()) {
+  const currentUrlForFeedbackCleanup = getAppVerboCurrentUrlPostSaveV3();
+
+  if (isAppVerboPostSaveFeedbackUrlV3(currentUrlForFeedbackCleanup)) {
     window.setTimeout(clearPostSaveFeedbackMarkersFromUrlV3, 600);
   }
 }
