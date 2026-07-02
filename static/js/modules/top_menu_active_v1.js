@@ -35,6 +35,20 @@
   }
 
   function estaNoAdministrativo_v4() {
+    // O URL só é atualizado (pushState) quando o menu ativo é "administrativo" — navegar por
+    // clique para outros menus (ex.: Estruturas, Calendário) não muda o URL, por isso preferimos
+    // o sinal autoritativo da SPA (sempre atualizado em cada activateMenu) e só caímos para o URL
+    // como fallback quando esse sinal ainda não está disponível.
+    if (typeof window.__appverboGetActiveMenuKeyV1 === "function") {
+      try {
+        const activeMenuKeyAtual = String(window.__appverboGetActiveMenuKeyV1() || "").trim().toLowerCase();
+        if (activeMenuKeyAtual) {
+          return activeMenuKeyAtual === "administrativo";
+        }
+      } catch (erro) {
+        // Ignorar falha e cair no fallback pelo URL.
+      }
+    }
     return obterMenuAtual_v4() === "administrativo";
   }
 
@@ -367,6 +381,16 @@
 
   function reagirMudancaAbas_v4() {
     if (applyingActiveV4) {
+      return;
+    }
+
+    if (!estaNoAdministrativo_v4()) {
+      // O rótulo memorizado só é válido para a navegação de URL limpo do Administrativo. Fora
+      // desse contexto (ex.: reentrar em Estruturas > Menu depois de visitar outro menu), reagir
+      // à mutação do DOM reaplicando esse rótulo forçava de volta uma aba de outro menu (ex.:
+      // "Menu") sobre o conteúdo realmente ativo (ex.: "Sessões"), deixando a aba dessincronizada
+      // do conteúdo até um refresh recarregar o estado correto a partir do backend.
+      activeTabLabelV4 = "";
       return;
     }
 

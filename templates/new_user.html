@@ -5,6 +5,7 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
+<script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260702-reload-guard-head-v1"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260626-link-slot-compact-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260630-actions-col-global-v1">
@@ -96,17 +97,22 @@
 
 
 
-<section id="dynamic-process-card" class="card appverbo-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
-          <div class="profile-card-header">
-            <h2 id="dynamic-process-title">Processo</h2>
+<section id="dynamic-process-action-card" class="card appverbo-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
+          <div class="appverbo-process-action-toolbar-v1">
             <button
               id="dynamic-process-edit-toggle"
               type="button"
-              class="profile-edit-toggle"
+              class="profile-edit-toggle appverbo-process-action-toggle-v1"
               data-edit-target="dynamic-process-card"
             >
               Editar
             </button>
+          </div>
+        </section>
+
+        <section id="dynamic-process-card" class="card appverbo-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
+          <div class="profile-card-header">
+            <h2 id="dynamic-process-title">Processo</h2>
           </div>
           {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert ok">{{ profile_success }}</div>
@@ -1327,7 +1333,7 @@
         {% endif %}
 
         {% if settings_edit_data %}
-        {% set settings_edit_origin_menu = "sessoes" %}
+        {% set settings_edit_origin_menu = settings_edit_request_origin_menu|default("sessoes") %}
         {% set settings_edit_cancel_target = "#menu-subprocess-card-active" %}
         {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
         {% if settings_edit_data.key == "administrativo" and not settings_process_field_options %}
@@ -1342,22 +1348,23 @@
         {% set settings_process_visible_field_rows = settings_edit_data.process_visible_field_rows or [] %}
         {% set settings_has_process_fields = true %}
         {% set settings_owner_fields_enabled = current_user_can_manage_tenant_structure %}
+        {% set settings_edit_active_tab = settings_tab|default('geral') %}
         <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes" {% if initial_menu not in ['administrativo', 'sessoes'] or initial_menu_target != '#settings-menu-edit-card' %}style="display: none;"{% endif %}>
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
           {% if settings_has_process_fields %}
           <div class="process-edit-tabs" id="process-edit-tabs" role="tablist" aria-label="Abas de edição do processo">
-            <a href="#settings-tab-geral" role="tab" aria-selected="true" class="process-edit-tab-link active" data-process-edit-tab="geral">Geral</a>
-            <a href="#settings-tab-campos-config" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-config">Configuração dos campos</a>
+            <a href="#settings-tab-geral" role="tab" aria-selected="{% if settings_edit_active_tab == 'geral' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'geral' %}active{% endif %}" data-process-edit-tab="geral">Geral</a>
+            <a href="#settings-tab-campos-config" role="tab" aria-selected="{% if settings_edit_active_tab == 'campos-config' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'campos-config' %}active{% endif %}" data-process-edit-tab="campos-config">Configuração dos campos</a>
             {% if settings_owner_fields_enabled %}
-            <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
-              <a href="#settings-tab-campos-quantidade" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-quantidade">Campos Quantidade</a>
-              <a href="#settings-tab-lista" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="lista">Listas</a>
-              <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="false" class="process-edit-tab-link" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
+            <a href="#settings-tab-campos-adicionais" role="tab" aria-selected="{% if settings_edit_active_tab == 'campos-adicionais' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'campos-adicionais' %}active{% endif %}" data-process-edit-tab="campos-adicionais">Campos Adicionais</a>
+              <a href="#settings-tab-campos-quantidade" role="tab" aria-selected="{% if settings_edit_active_tab == 'campos-quantidade' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'campos-quantidade' %}active{% endif %}" data-process-edit-tab="campos-quantidade">Campos Quantidade</a>
+              <a href="#settings-tab-lista" role="tab" aria-selected="{% if settings_edit_active_tab == 'lista' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'lista' %}active{% endif %}" data-process-edit-tab="lista">Listas</a>
+              <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="{% if settings_edit_active_tab == 'campos-subsequentes' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'campos-subsequentes' %}active{% endif %}" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
             {% endif %}
           </div>
           {% endif %}
-          <div id="settings-tab-geral" class="process-edit-pane active" data-process-edit-pane="geral">
+          <div id="settings-tab-geral" class="process-edit-pane {% if settings_edit_active_tab == 'geral' %}active{% endif %}" data-process-edit-pane="geral">
             <div class="admin-subsection">
                             <p class="muted process-tab-description-v1">Atualize os dados principais do processo no menu lateral.</p>
 {% if current_user_can_manage_tenant_structure %}
@@ -1527,7 +1534,7 @@
           </div>
           {% if settings_has_process_fields %}
 
-          <div id="settings-tab-campos-config" class="process-edit-pane" data-process-edit-pane="campos-config">
+          <div id="settings-tab-campos-config" class="process-edit-pane {% if settings_edit_active_tab == 'campos-config' %}active{% endif %}" data-process-edit-pane="campos-config">
             <div class="admin-subsection process-fields-config-panel-v1" id="settings-process-fields-config-card">
               <h3>Configuração dos campos</h3>
 
@@ -1601,7 +1608,15 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="submit" class="action-btn" data-process-fields-config-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-appverbo-cancel="1" data-process-fields-config-cancel>Cancelar</button>
+                          <button
+                            type="button"
+                            class="action-btn-cancel"
+                            data-appverbo-cancel="1"
+                            data-process-fields-config-cancel
+                            data-appverbo-cancel-target="settings-menu-edit-card"
+                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -1655,7 +1670,7 @@
             </div>
           </div>
           {% if settings_owner_fields_enabled %}
-          <div id="settings-tab-campos-quantidade" class="process-edit-pane" data-process-edit-pane="campos-quantidade">
+          <div id="settings-tab-campos-quantidade" class="process-edit-pane {% if settings_edit_active_tab == 'campos-quantidade' %}active{% endif %}" data-process-edit-pane="campos-quantidade">
             <div class="admin-subsection process-quantity-fields-panel-v1" id="settings-process-quantity-fields-card">
               <h3>Campos Quantidade</h3>
               <p class="muted process-tab-description-v1">Configure regras onde um campo numérico controla quantos blocos de outros campos serão exibidos no processo.</p>
@@ -1734,7 +1749,15 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="button" class="action-btn" data-process-quantity-editor-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-appverbo-cancel="1" data-process-quantity-editor-cancel>Cancelar</button>
+                          <button
+                            type="button"
+                            class="action-btn-cancel"
+                            data-appverbo-cancel="1"
+                            data-process-quantity-editor-cancel
+                            data-appverbo-cancel-target="settings-menu-edit-card"
+                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -1798,7 +1821,7 @@
             </div>
           </div>
 
-          <div id="settings-tab-lista" class="process-edit-pane" data-process-edit-pane="lista">
+          <div id="settings-tab-lista" class="process-edit-pane {% if settings_edit_active_tab == 'lista' %}active{% endif %}" data-process-edit-pane="lista">
             <div class="admin-subsection process-lists-panel-v8" id="settings-process-lists-card">
               <h3>Listas</h3>
                             <p class="muted process-tab-description-v1">Crie listas reutilizáveis para usar no tipo de campo Lista.</p>
@@ -1856,6 +1879,9 @@
                             class="action-btn-cancel"
                             data-appverbo-cancel="1"
                             data-process-list-editor-cancel
+                            data-appverbo-cancel-target="settings-menu-edit-card"
+                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1916,7 +1942,7 @@
             </div>
           </div>
 
-          <div id="settings-tab-campos-subsequentes" class="process-edit-pane" data-process-edit-pane="campos-subsequentes">
+          <div id="settings-tab-campos-subsequentes" class="process-edit-pane {% if settings_edit_active_tab == 'campos-subsequentes' %}active{% endif %}" data-process-edit-pane="campos-subsequentes">
             <div class="admin-subsection process-subsequent-fields-panel-v1" id="settings-process-subsequent-fields-card">
               <h3>Campos Subsequentes</h3>
                             <p class="muted process-tab-description-v1">Configure campos que aparecem conforme a resposta de outro campo.</p>
@@ -1984,7 +2010,15 @@
                       <div class="field full">
                         <div class="form-action-row">
                           <button type="button" class="action-btn" data-process-subsequent-field-submit>Guardar</button>
-                          <button type="button" class="action-btn-cancel" data-appverbo-cancel="1" data-process-subsequent-field-cancel>Cancelar</button>
+                          <button
+                            type="button"
+                            class="action-btn-cancel"
+                            data-appverbo-cancel="1"
+                            data-process-subsequent-field-cancel
+                            data-appverbo-cancel-target="settings-menu-edit-card"
+                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                          >Cancelar</button>
                         </div>
                       </div>
                     </div>
@@ -2045,7 +2079,7 @@
               </form>
             </div>
           </div>
-<div id="settings-tab-campos-adicionais" class="process-edit-pane" data-process-edit-pane="campos-adicionais">
+<div id="settings-tab-campos-adicionais" class="process-edit-pane {% if settings_edit_active_tab == 'campos-adicionais' %}active{% endif %}" data-process-edit-pane="campos-adicionais">
             <div class="admin-subsection">
 <h3>Campos Adicionais</h3>
                                           <p class="muted process-tab-description-v1">Crie, edite, ordene e remova campos adicionais exibidos neste processo.</p>
@@ -2285,6 +2319,9 @@
                             class="action-btn-cancel"
                             data-appverbo-cancel="1"
                             data-additional-field-editor-cancel
+                            data-appverbo-cancel-target="settings-menu-edit-card"
+                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2362,7 +2399,7 @@
         {# Blocos manuais de Menu (admin-account-create-card, admin-account-status-card, inactive-menu-settings-card) removidos — substituídos pelo macro render_admin_subprocess_state(admin_subprocess_menu_state) #}
 
         <!-- APPVERBO_MENU_SUBPROCESS_TABLES_V1_START -->
-        {% if admin_subprocess_menu_state %}
+        {% if admin_subprocess_menu_state and initial_menu_target != '#settings-menu-edit-card' %}
           {{ render_admin_subprocess_tables(admin_subprocess_menu_state) }}
         {% endif %}
         <!-- APPVERBO_MENU_SUBPROCESS_TABLES_V1_END -->
@@ -2650,7 +2687,7 @@
   <script src="/static/js/modules/debug_flicker_v1.js?v=20260627-flicker-debug-v1"></script>
   <script src="/static/js/modules/appverbo_dialog_v1.js?v=20260628-dialog-v1"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260630-load-more-v2"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260702-debug-log-v1"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260701-time-type-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260630-core-migration-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260630-core-migration-v1"></script>
@@ -2658,8 +2695,8 @@
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
   <script src="/static/js/modules/appverbo_cancel_controller_v1.js?v=20260628-global-cancel-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
-  <script src="/static/js/new_user.js?v=20260701-generic-create-process-button-v1"></script>
-  <script src="/static/js/modules/top_menu_active_v1.js?v=20260625-client-nav-v1"></script>
+  <script src="/static/js/new_user.js?v=20260702-subprocess-cards-debug-v1"></script>
+  <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>

@@ -118,10 +118,15 @@ def _normalize_tab_target_for_match_v1(raw_target: str, *, menu_key: str = "") -
     if not clean_target:
         return ""
 
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+
     if resolve_menu_key_alias(menu_key) == "perfil_de_autorizacao":
         normalized_auth_target = _normalize_authorization_profile_target_v1(clean_target)
         if normalized_auth_target:
             return normalized_auth_target
+
+    if clean_menu_key == ESTRUTURAS_MENU_KEY_V1 and clean_target == "#settings-menu-edit-card":
+        return "#menu-subprocess-card"
 
     if clean_target.endswith("-active"):
         return clean_target[:-7]
@@ -165,6 +170,20 @@ def _resolve_active_tab_index_v1(
                 return idx
 
     return 0
+
+
+def _resolve_settings_edit_origin_menu_v1(raw_resolved_menu: str) -> str:
+    """Devolve o menu/contexto real com que o pedido chegou, para o editor de processo usar como
+    redirect_menu. Deve ser chamado com o menu ANTES de _resolve_estruturas_navigation_context_v1
+    o reescrever para ESTRUTURAS_MENU_KEY_V1 (que serve apenas para escolher o titulo/breadcrumb
+    renderizado, nao para identificar o contexto onde o utilizador realmente estava). O card do
+    editor (#settings-menu-edit-card) so aceita "administrativo" ou ESTRUTURAS_MENU_KEY_V1
+    (data-menu-scope="administrativo,sessoes"); qualquer outro valor de origem cai no padrao
+    historico ESTRUTURAS_MENU_KEY_V1.
+    """
+    if raw_resolved_menu in {"administrativo", ESTRUTURAS_MENU_KEY_V1}:
+        return raw_resolved_menu
+    return ESTRUTURAS_MENU_KEY_V1
 
 
 def _resolve_estruturas_navigation_context_v1(
@@ -530,6 +549,8 @@ def new_user_page(
     resolved_menu = resolve_menu_key_alias(menu)
     if not resolved_menu:
         resolved_menu = "home"
+    # Capturado antes de _resolve_estruturas_navigation_context_v1 reescrever resolved_menu.
+    settings_edit_request_origin_menu_v1 = _resolve_settings_edit_origin_menu_v1(resolved_menu)
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_target_from_query = _normalize_card_target_v1(target)
 
@@ -994,7 +1015,12 @@ def new_user_page(
         )
         active_tab = initial_menu_tabs[active_tab_index]
         initial_dynamic_process_section = active_tab.get("dynamic_process_section", "")
-        if not (
+        preserve_explicit_editor_target_v1 = bool(
+            clean_settings_edit_key
+            and clean_menu_key in {"administrativo", ESTRUTURAS_MENU_KEY_V1}
+            and _normalize_card_target_v1(initial_menu_target) == "#settings-menu-edit-card"
+        )
+        if not preserve_explicit_editor_target_v1 and not (
             clean_menu_key == "perfil_de_autorizacao"
             and _normalize_authorization_profile_target_v1(initial_menu_target)
         ):
@@ -1047,6 +1073,7 @@ def new_user_page(
         "settings_edit_key": clean_settings_edit_key,
         "settings_action": clean_settings_action,
         "settings_tab": clean_settings_tab,
+        "settings_edit_request_origin_menu": settings_edit_request_origin_menu_v1,
         "profile_tab": resolved_profile_tab,
         "initial_menu": resolved_menu,
         "initial_menu_target": initial_menu_target,

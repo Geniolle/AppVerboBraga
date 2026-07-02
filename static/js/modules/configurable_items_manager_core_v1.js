@@ -372,18 +372,9 @@
     container.className = "table-actions";
     const managerId = manager._configurableManagerId;
 
-    if (manager.config.actions.edit) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.title = "Editar";
-      btn.setAttribute("aria-label", "Editar");
-      btn.dataset.configurableAction = "edit";
-      btn.dataset.configurableItemId = itemId;
-      btn.dataset.configurableManagerId = managerId;
-      btn.textContent = "Editar";
-      container.appendChild(btn);
-    }
-
+    // Ordem padrao global dos menus de Acoes: Subir/Descer sempre primeiro (topo do menu),
+    // depois Editar, e Eliminar por ultimo (acao destrutiva). Ver templates/macros/admin_subprocess.html
+    // (render_admin_subprocess_row_actions), que ja segue a mesma ordem para as tabelas Jinja.
     if (manager.config.actions.move) {
       if (fullItemIndex > 0) {
         const upBtn = document.createElement("button");
@@ -408,6 +399,18 @@
         downBtn.textContent = "Descer";
         container.appendChild(downBtn);
       }
+    }
+
+    if (manager.config.actions.edit) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.title = "Editar";
+      btn.setAttribute("aria-label", "Editar");
+      btn.dataset.configurableAction = "edit";
+      btn.dataset.configurableItemId = itemId;
+      btn.dataset.configurableManagerId = managerId;
+      btn.textContent = "Editar";
+      container.appendChild(btn);
     }
 
     if (manager.config.actions.remove) {
@@ -646,6 +649,19 @@
 
     const item = manager.state.items[itemIndex];
     manager.state.editingId = item.__managerId;
+
+    if (typeof window.logAppVerboProcessEditorDebugV1 === "function") {
+      window.logAppVerboProcessEditorDebugV1("configurableItemsManager:editItem", {
+        itemId,
+        itemLabel: item && item.label,
+        itemKey: item && item.key,
+        managerRootId: manager.root && manager.root.id,
+        activeTabPane: (function () {
+          const activePane = document.querySelector(".process-edit-pane.active");
+          return activePane ? activePane.getAttribute("data-process-edit-pane") : null;
+        })()
+      });
+    }
 
     if (typeof manager.config.loadEditorItem === "function") {
       manager.config.loadEditorItem(item, {
