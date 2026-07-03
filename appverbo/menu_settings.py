@@ -81,6 +81,7 @@ SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
     str(item["key"]).strip().lower(): str(item["label"])
     for item in SIDEBAR_SECTION_DEFAULTS
 }
+SIDEBAR_SECTION_DELETE_PROTECTED_KEYS = frozenset(SIDEBAR_SECTION_DEFAULTS_BY_KEY.keys())
 ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "email", "phone", "number"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "text", "label": "Texto"},
@@ -206,6 +207,11 @@ def _is_menu_delete_protected(menu_key: Any, menu_label: Any = "") -> bool:
     if clean_menu_label in {"Configuração", "Configuracao"}:
         return True
     return False
+
+
+def _is_sidebar_section_delete_protected(section_key: Any) -> bool:
+    clean_section_key = _normalize_sidebar_section_key(section_key)
+    return clean_section_key in SIDEBAR_SECTION_DELETE_PROTECTED_KEYS
 
 def _normalize_menu_display_order(raw_order: Any) -> int | None:
     try:
@@ -494,6 +500,7 @@ def _build_sidebar_section_payload(
         "status": normalized_status,
         "is_active": normalized_status == "ativo",
         "status_label": _sidebar_section_status_label_v5(normalized_status),
+        "can_delete": not _is_sidebar_section_delete_protected(section_key),
     }
 
 
@@ -2365,6 +2372,64 @@ def delete_sidebar_menu_setting(session: Session, menu_key: str) -> tuple[bool, 
     )
     session.commit()
     return True, ""
+
+
+def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, str]:
+    clean_section_key = _normalize_sidebar_section_key(section_key)
+
+    if not clean_section_key:
+        return False, "Sessão inválida."
+
+    administrativo_row = session.execute(
+        text(
+            """
+            SELECT menu_config
+            FROM sidebar_menu_settings
+            WHERE lower(trim(menu_key)) = :menu_key
+            LIMIT 1
+            """
+        ),
+        {"menu_key": "administrativo"},
+    ).scalar_one_or_none()
+
+    if administrativo_row is None:
+        return False, "Sessão inválida."
+
+    current_menu_config = _parse_sidebar_menu_config_v2(administrativo_row)
+    current_sections = normalize_sidebar_sections(
+        current_menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+
+    target_section = next(
+        (
+            dict(section)
+            for section in current_sections
+            if _normalize_sidebar_section_key(section.get("key")) == clean_section_key
+        ),
+        None,
+    )
+
+    if target_section is None:
+        return False, "Sessão inválida."
+
+    if _is_sidebar_section_delete_protected(clean_section_key):
+        return False, "Não é permitido eliminar esta sessão."
+
+    if _normalize_sidebar_section_status_v5(target_section.get("status")) != "inativo":
+        return False, "A sessão deve estar inativa antes de ser eliminada."
+
+    remaining_sections = [
+        {
+            "key": section.get("key"),
+            "label": section.get("label"),
+            "visibility_scope_mode": section.get("visibility_scope_mode"),
+            "status": section.get("status"),
+        }
+        for section in current_sections
+        if _normalize_sidebar_section_key(section.get("key")) != clean_section_key
+    ]
+
+    return update_sidebar_sections_v2(session, remaining_sections)
 
 
 ####################################################################################
@@ -4685,6 +4750,7 @@ def update_sidebar_sections_v2(
                 clean_key,
                 clean_label,
                 _visibility_scope_mode_to_scopes(scope_mode),
+                raw_section.get("status"),
             )
         )
 

@@ -107,6 +107,18 @@ DEFAULT_ACTIVE_ACTIONS = (
 )
 
 
+SIDEBAR_SECTION_DELETE_ACTION = AdminActionConfig(
+    key="delete",
+    label="Eliminar",
+    icon="🗑",
+    action_type="post_delete",
+    visible_when=("inativo",),
+    condition_field="can_delete",
+    requires_confirmation=True,
+    confirmation_message="Tem a certeza que pretende eliminar esta sessão?",
+)
+
+
 ENTITY_DELETE_ACTION = AdminActionConfig(
     key="delete",
     label="Eliminar",
@@ -250,6 +262,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     update_endpoint="/settings/menu/sidebar-section-save",
     save_endpoint="/settings/menu/sidebar-section-save",
     move_endpoint="/settings/menu/sidebar-section-move-one",
+    delete_endpoint="/settings/menu/sidebar-section-delete",
     repository_name="sidebar_section",
     repository_class="appverbo.admin_subprocesses.repositories.sidebar_section_repository.SidebarSectionAdminRepository",
     status_field="status",
@@ -266,7 +279,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     migration_status="native_next",
     fields=SIDEBAR_SECTION_FIELDS,
     columns=DEFAULT_COLUMNS,
-    actions=DEFAULT_ACTIVE_ACTIONS,
+    actions=DEFAULT_ACTIVE_ACTIONS + (SIDEBAR_SECTION_DELETE_ACTION,),
     menu_scope="administrativo,sessoes",
     empty_active_message="Sem sessões ativas.",
     empty_inactive_message="Sem sessões inativas.",

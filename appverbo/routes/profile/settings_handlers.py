@@ -18,6 +18,7 @@ from appverbo.routes.profile.router import router
 
 from appverbo.menu_settings import (
     create_sidebar_menu_setting,
+    delete_sidebar_section,
     delete_sidebar_menu_setting,
     move_sidebar_menu_setting,
     move_sidebar_menu_additional_field,
@@ -1129,6 +1130,70 @@ def move_one_sidebar_section_v25(
         )
 
 # APPVERBO_SESSOES_SERVER_MOVE_ONE_V25_END
+
+
+# APPVERBO_SESSOES_SERVER_DELETE_ONE_V1_START
+
+# ###################################################################################
+# (SIDEBAR_SECTION_DELETE_ONE_V1) ELIMINAR SESSAO INATIVA COM VALIDACAO DE OWNER
+# ###################################################################################
+
+@router.post("/settings/menu/sidebar-section-delete", response_class=HTMLResponse)
+def delete_one_sidebar_section_v1(
+    request: Request,
+    section_key: str = Form(""),
+    sidebar_section_return_url: str = Form(""),
+) -> RedirectResponse:
+    safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=status.HTTP_302_FOUND,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                "Apenas administradores podem alterar sessões do sidebar.",
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                "Apenas Owner pode alterar sessões do sidebar.",
+            )
+
+        clean_section_key = _slugify_sidebar_section_key_v19(section_key)
+        ok, error_message = delete_sidebar_section(session, clean_section_key)
+
+        if not ok:
+            return _redirect_sidebar_section_message_v19(
+                safe_return_url,
+                "error",
+                error_message or "Não foi possível eliminar a sessão.",
+            )
+
+        return _redirect_sidebar_section_message_v19(
+            safe_return_url,
+            "success",
+            "Sessão eliminada com sucesso.",
+        )
+
+# APPVERBO_SESSOES_SERVER_DELETE_ONE_V1_END
 
 
 # APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_START
