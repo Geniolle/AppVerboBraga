@@ -1,8 +1,17 @@
 (function () {
+  //###################################################################################
+  //(1) FIELD REFERENCES
+  //###################################################################################
+
   const emailInput = document.getElementById("email");
   const entitySelect = document.getElementById("entity_id");
   const countrySelect = document.getElementById("country");
   const phoneInput = document.getElementById("primary_phone");
+  const languageSelect = document.querySelector("[data-language-select='1']");
+
+  //###################################################################################
+  //(2) ENTITY AUTO-SELECTION
+  //###################################################################################
 
   function extractDomain(value) {
     const email = String(value || "").trim().toLowerCase();
@@ -67,6 +76,10 @@
     autoSelectEntity();
   }
 
+  //###################################################################################
+  //(3) PHONE HINTS
+  //###################################################################################
+
   function syncPhoneCountryHint() {
     if (!countrySelect || !phoneInput) {
       return;
@@ -85,5 +98,15 @@
   if (countrySelect && phoneInput) {
     countrySelect.addEventListener("change", syncPhoneCountryHint);
     syncPhoneCountryHint();
+  }
+
+  //###################################################################################
+  //(4) LANGUAGE SWITCHER
+  //###################################################################################
+
+  if (languageSelect && languageSelect.form) {
+    languageSelect.addEventListener("change", function () {
+      languageSelect.form.submit();
+    });
   }
 })();

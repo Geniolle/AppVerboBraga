@@ -17,6 +17,11 @@ from appverbo.services.phone_country import (
     get_supported_phone_countries,
     validate_phone_prefix_for_country,
 )
+from appverbo.services.i18n import (
+    get_template_language_context,
+    persist_request_language,
+    translate_auth_runtime_message,
+)
 from appverbo.services.passwords import hash_password, verify_password
 from appverbo.services.user_member import (
     ensure_user_for_member,
@@ -364,14 +369,22 @@ def get_oauth_buttons() -> list[dict[str, Any]]:
     flags = get_oauth_flags()
     return [
         {
+            "key": "google",
             "label": "Google (Gmail)",
             "url": "/oauth/login/google",
             "enabled": flags["oauth_google_enabled"],
         },
         {
+            "key": "microsoft",
             "label": "Microsoft (Hotmail/Outlook)",
             "url": "/oauth/login/microsoft",
             "enabled": flags["oauth_microsoft_enabled"],
+        },
+        {
+            "key": "github",
+            "label": "GitHub",
+            "url": "/oauth/login/github",
+            "enabled": flags["oauth_github_enabled"],
         },
     ]
 
@@ -620,10 +633,13 @@ def render_login(
     if mode not in {"login", "signup"}:
         mode = "login"
 
+    language_context = get_template_language_context(request)
+    translator = language_context["t"]
+
     context = {
         "request": request,
-        "error": error,
-        "success": success,
+        "error": translate_auth_runtime_message(error, translator),
+        "success": translate_auth_runtime_message(success, translator),
         "email": email,
         "mode": mode,
         "login_data": login_data or get_login_defaults(),
@@ -631,9 +647,12 @@ def render_login(
         "signup_country_options": get_signup_country_options(),
         "entities": entities,
         "oauth_providers": get_oauth_buttons(),
+        **language_context,
         **get_oauth_flags(),
     }
-    return templates.TemplateResponse(request, "login.html", context, status_code=status_code)
+    response = templates.TemplateResponse(request, "login.html", context, status_code=status_code)
+    persist_request_language(response, request, language_context["current_lang"])
+    return response
 
 __all__ = [
     "hash_password",
