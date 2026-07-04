@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Estruturar uma refatoração melhor para o `AppVerboBraga` sem reiniciar a reorganização já em curso.
+Estruturar uma refatoração melhor para o `AppGenesis` sem reiniciar a reorganização já em curso.
 O projeto já saiu do formato monolítico original, mas ainda mantém acoplamentos fortes entre rotas, serviços, queries SQL, templates e JavaScript do ecrã principal.
 
 Esta proposta prioriza:

@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: appverbobraga-db
+    container_name: appgenesis-db
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -19,7 +19,7 @@ services:
 
   web:
     build: .
-    container_name: appverbobraga-web
+    container_name: appgenesis-web
     depends_on:
       db:
         condition: service_healthy
