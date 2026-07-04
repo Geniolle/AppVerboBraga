@@ -40,7 +40,7 @@ docker compose logs web --tail=100
 Criar admin inicial:
 
 ```bash
-docker compose exec web python bootstrap_admin.py --name "Admin Sistema" --phone "+351910000099" --email "admin@appverbo.local" --password "NovaSenhaForte123" --entity "Igreja Braga"
+docker compose exec web python bootstrap_admin.py --name "Admin Sistema" --phone "+351910000099" --email "admin@appgenesis.local" --password "NovaSenhaForte123" --entity "Igreja Braga"
 ```
 
 Abrir no browser:
@@ -76,7 +76,7 @@ A tela de login suporta autenticacao externa por:
 Configure no `.env` (ou variaveis de ambiente no deploy):
 
 ```bash
-ADMIN_LOGIN_EMAIL=admin@appverbo.local
+ADMIN_LOGIN_EMAIL=admin@appgenesis.local
 ADMIN_PROFILE_NAMES=admin,administrador
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=

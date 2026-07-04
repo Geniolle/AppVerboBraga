@@ -198,8 +198,8 @@
 
     <script>
       (function () {
-        if (window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__) {
-          window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
+        if (window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__) {
+          window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
           return;
         }
 
@@ -301,13 +301,13 @@
           refresh();
         }
 
-        window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__ = function () {
+        window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__ = function () {
           document
             .querySelectorAll("[data-admin-subprocess-dependent-select='1']")
             .forEach(bindDependentSelect);
         };
 
-        window.__APPVERBO_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
+        window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
       })();
     </script>
   </section>

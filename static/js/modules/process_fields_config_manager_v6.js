@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - PROCESS FIELDS CONFIG MANAGER V6
+// APPGENESIS - PROCESS FIELDS CONFIG MANAGER V6
 //###################################################################################
 
 (function () {
@@ -118,7 +118,7 @@
     };
   }
 
-  // APPVERBO_PROCESS_FIELDS_V6_ACTION_BUTTONS_V2_START
+  // APPGENESIS_PROCESS_FIELDS_V6_ACTION_BUTTONS_V2_START
 
   function criarBotaoFormulario_v6(kind, label) {
     const button = document.createElement("button");
@@ -241,7 +241,7 @@
     form.insertBefore(actionRow, form.firstChild);
   }
 
-  // APPVERBO_PROCESS_FIELDS_V6_ACTION_BUTTONS_V2_END
+  // APPGENESIS_PROCESS_FIELDS_V6_ACTION_BUTTONS_V2_END
 
 
   function elementosValidos_v6(elements) {
@@ -424,7 +424,7 @@
   }
 
   function reconstruirSelectCampo_v7(elements, state) {
-    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_SELECT_EDIT_START
+    // APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_SELECT_EDIT_START
     const configuredKeys = new Set(
       state.items.map(function (item) {
         return normalizarChave_v6(item.key);
@@ -452,7 +452,7 @@
       option.dataset.processConfigLabel = item.label;
       elements.editorKey.appendChild(option);
     });
-    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_SELECT_EDIT_END
+    // APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_SELECT_EDIT_END
   }
 
   function reconstruirSelectCampo_v6(elements, state) {
@@ -571,13 +571,13 @@
   //###################################################################################
 
   function limparEditor_v7(elements, state) {
-    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_CLEAR_START
+    // APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_CLEAR_START
     state.editingId = "";
     elements.editorKey.value = "";
     delete elements.editorKey.dataset.processFieldsConfigEditingKeyV7;
     elements.headerKey.value = "";
     reconstruirSelectCampo_v6(elements, state);
-    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_CLEAR_END
+    // APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_CLEAR_END
   }
 
   function limparEditor_v6(elements, state) {
@@ -585,7 +585,7 @@
   }
 
   function carregarEditor_v7(elements, state, item) {
-    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_LOAD_START
+    // APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_LOAD_START
     state.editingId = item.managerId;
     elements.editorKey.dataset.processFieldsConfigEditingKeyV7 = item.key || "";
     elements.editorKey.value = item.key || "";
@@ -596,7 +596,7 @@
     if (typeof elements.editorKey.focus === "function") {
       elements.editorKey.focus();
     }
-    // APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_LOAD_END
+    // APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_EDITOR_LOAD_END
   }
 
   function carregarEditor_v6(elements, state, item) {
@@ -604,7 +604,7 @@
   }
 
 
-  // APPVERBO_PROCESS_FIELDS_HEADER_RESOLVE_V3_START
+  // APPGENESIS_PROCESS_FIELDS_HEADER_RESOLVE_V3_START
 
   function resolverHeaderKeyAtual_v9(elements) {
     if (!elements) {
@@ -657,9 +657,9 @@
     return "";
   }
 
-  // APPVERBO_PROCESS_FIELDS_HEADER_RESOLVE_V3_END
+  // APPGENESIS_PROCESS_FIELDS_HEADER_RESOLVE_V3_END
 
-  // APPVERBO_PROCESS_FIELDS_HEADER_SAVE_FIX_V1_START
+  // APPGENESIS_PROCESS_FIELDS_HEADER_SAVE_FIX_V1_START
 
   function obterHeaderLabelSelecionado_v8(elements, headerKey) {
     if (!elements || !elements.headerKey || !headerKey) {
@@ -704,7 +704,7 @@
     return lerDraft_v8(elements, state);
   }
 
-  // APPVERBO_PROCESS_FIELDS_HEADER_SAVE_FIX_V1_END
+  // APPGENESIS_PROCESS_FIELDS_HEADER_SAVE_FIX_V1_END
 
 
 
@@ -758,7 +758,7 @@
   // (6) HIDDEN INPUTS
   //###################################################################################
 
-  // APPVERBO_PROCESS_FIELDS_HIDDEN_HEADERS_FIX_V1_START
+  // APPGENESIS_PROCESS_FIELDS_HIDDEN_HEADERS_FIX_V1_START
 
   function criarHiddenProcessField_v8(container, name, value) {
     const input = document.createElement("input");
@@ -810,7 +810,7 @@
 
     container.innerHTML = "";
 
-    // APPVERBO_PROCESS_FIELDS_ROWS_JSON_V3_START
+    // APPGENESIS_PROCESS_FIELDS_ROWS_JSON_V3_START
     const visibleRowsJson_v9 = [];
 
     (state.items || []).forEach(function (item) {
@@ -835,28 +835,28 @@
       "visible_rows_json",
       JSON.stringify(visibleRowsJson_v9)
     );
-    // APPVERBO_PROCESS_FIELDS_ROWS_JSON_V3_END
+    // APPGENESIS_PROCESS_FIELDS_ROWS_JSON_V3_END
   }
 
   function reconstruirHiddenInputs_v6(elements, state) {
     return reconstruirHiddenInputs_v8(elements, state);
   }
 
-  // APPVERBO_PROCESS_FIELDS_HIDDEN_HEADERS_FIX_V1_END
+  // APPGENESIS_PROCESS_FIELDS_HIDDEN_HEADERS_FIX_V1_END
 
 
 
 
-  // APPVERBO_PROCESS_FIELDS_SYNC_ALIAS_V2_START
+  // APPGENESIS_PROCESS_FIELDS_SYNC_ALIAS_V2_START
 
   function sincronizarHiddenInputs_v6(elements, state) {
     return reconstruirHiddenInputs_v8(elements, state);
   }
 
-  // APPVERBO_PROCESS_FIELDS_SYNC_ALIAS_V2_END
+  // APPGENESIS_PROCESS_FIELDS_SYNC_ALIAS_V2_END
 
 
-  // APPVERBO_PROCESS_FIELDS_HEADER_PERSIST_V4_START
+  // APPGENESIS_PROCESS_FIELDS_HEADER_PERSIST_V4_START
 
   function resolverHeaderKeyAtual_v10(elements) {
     if (!elements) {
@@ -1065,9 +1065,9 @@
     return sincronizarHiddenInputs_v10(elements, state);
   }
 
-  // APPVERBO_PROCESS_FIELDS_HEADER_PERSIST_V4_END
+  // APPGENESIS_PROCESS_FIELDS_HEADER_PERSIST_V4_END
 
-  // APPVERBO_PROCESS_FIELDS_NATIVE_SUBMIT_V12_START
+  // APPGENESIS_PROCESS_FIELDS_NATIVE_SUBMIT_V12_START
 
   function garantirAcaoFormularioProcessFields_v12(form) {
     if (!form) {
@@ -1103,11 +1103,11 @@
     HTMLFormElement.prototype.submit.call(form);
   }
 
-  // APPVERBO_PROCESS_FIELDS_NATIVE_SUBMIT_V12_END
+  // APPGENESIS_PROCESS_FIELDS_NATIVE_SUBMIT_V12_END
 
 
 
-  // APPVERBO_PROCESS_FIELDS_NO_NATIVE_DOUBLE_POST_V12_START
+  // APPGENESIS_PROCESS_FIELDS_NO_NATIVE_DOUBLE_POST_V12_START
 
   function formularioConfiguracaoCampos_v12(form) {
     if (!form || typeof form.querySelector !== "function") {
@@ -1179,10 +1179,10 @@
     true
   );
 
-  // APPVERBO_PROCESS_FIELDS_NO_NATIVE_DOUBLE_POST_V12_END
+  // APPGENESIS_PROCESS_FIELDS_NO_NATIVE_DOUBLE_POST_V12_END
 
 
-  // APPVERBO_PROCESS_FIELDS_KEY_BASED_HEADER_SAVE_V14_START
+  // APPGENESIS_PROCESS_FIELDS_KEY_BASED_HEADER_SAVE_V14_START
 
   function obterItemExistentePorCampo_v14(state, fieldKey) {
     const cleanFieldKey = normalizarChave_v6(fieldKey);
@@ -1418,7 +1418,7 @@
     return sincronizarHiddenInputs_v14(elements, state);
   }
 
-  // APPVERBO_PROCESS_FIELDS_KEY_BASED_HEADER_SAVE_V14_END
+  // APPGENESIS_PROCESS_FIELDS_KEY_BASED_HEADER_SAVE_V14_END
 
   //###################################################################################
   // (7) TABELA

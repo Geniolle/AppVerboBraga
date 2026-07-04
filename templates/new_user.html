@@ -24,7 +24,7 @@
 {% block body %}
   {% if debug_flicker %}
   <!--
-  [APPVERBO FLICKER DEBUG BACKEND]
+  [APPGENESIS FLICKER DEBUG BACKEND]
   - menu resolvido: {{ initial_menu }}
   - admin_tab resolvido: {{ admin_tab }}
   - target resolvido: {{ initial_menu_target }}
@@ -65,11 +65,11 @@
           </div>
         </section>
 
-<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
+<!-- APPGENESIS_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
         {% if admin_subprocess_state %}
           {{ render_admin_subprocess_state(admin_subprocess_state) }}
         {% endif %}
-        <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
+        <!-- APPGENESIS_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
 
         {% if auth_profile_subprocess_state %}
           {{ render_admin_subprocess_state(auth_profile_subprocess_state) }}
@@ -79,18 +79,18 @@
           {{ render_admin_subprocess_state(auth_objeto_subprocess_state) }}
         {% endif %}
 
-        <!-- APPVERBO_MENU_SUBPROCESS_V1_START -->
+        <!-- APPGENESIS_MENU_SUBPROCESS_V1_START -->
         {% if admin_subprocess_menu_state %}
           {{ render_admin_subprocess_form(admin_subprocess_menu_state) }}
         {% endif %}
-        <!-- APPVERBO_MENU_SUBPROCESS_V1_END -->
+        <!-- APPGENESIS_MENU_SUBPROCESS_V1_END -->
 
 
 
 
 
-        <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_START -->
-        <!-- APPVERBO_SIDEBAR_SECTIONS_JSON_V2_END -->
+        <!-- APPGENESIS_SIDEBAR_SECTIONS_JSON_V2_START -->
+        <!-- APPGENESIS_SIDEBAR_SECTIONS_JSON_V2_END -->
 
 
 
@@ -2398,11 +2398,11 @@
 
         {# Blocos manuais de Menu (admin-account-create-card, admin-account-status-card, inactive-menu-settings-card) removidos — substituídos pelo macro render_admin_subprocess_state(admin_subprocess_menu_state) #}
 
-        <!-- APPVERBO_MENU_SUBPROCESS_TABLES_V1_START -->
+        <!-- APPGENESIS_MENU_SUBPROCESS_TABLES_V1_START -->
         {% if admin_subprocess_menu_state and initial_menu_target != '#settings-menu-edit-card' %}
           {{ render_admin_subprocess_tables(admin_subprocess_menu_state) }}
         {% endif %}
-        <!-- APPVERBO_MENU_SUBPROCESS_TABLES_V1_END -->
+        <!-- APPGENESIS_MENU_SUBPROCESS_TABLES_V1_END -->
 
 
         <section id="configuracao-account-status-card" class="card" data-menu-scope="configuracao" {% if initial_menu != 'configuracao' or (initial_menu_target and initial_menu_target != '#configuracao-account-status-card') %}style="display: none;"{% endif %}>
@@ -2651,7 +2651,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
   <script>
-    window.__APPVERBO_BOOTSTRAP__ = {
+    window.__APPGENESIS_BOOTSTRAP__ = {
       currentUserName: {{ current_user.full_name|tojson }},
       currentUserEmail: {{ current_user.login_email|tojson }},
       currentUserIsAdmin: {{ current_user_is_admin|tojson }},

@@ -47,9 +47,9 @@ Thumbs.db
 
 # Node / Expo
 node_modules/
-appverbo-mobile/node_modules/
+appgenesis-mobile/node_modules/
 .expo/
-appverbo-mobile/.expo/
+appgenesis-mobile/.expo/
 dist/
 build/
 coverage/

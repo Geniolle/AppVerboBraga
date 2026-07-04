@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - ABA LISTA + TIPO DE CAMPO LISTA
+// APPGENESIS - ABA LISTA + TIPO DE CAMPO LISTA
 //###################################################################################
 
 (function () {
@@ -19,7 +19,7 @@
   }
 
   function getBootstrap() {
-    return window.__APPVERBO_BOOTSTRAP__ || {};
+    return window.__APPGENESIS_BOOTSTRAP__ || {};
   }
 
   function getUrlParam(name) {

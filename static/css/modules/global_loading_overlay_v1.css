@@ -1,6 +1,6 @@
 /* Indicador global de carregamento/navegacao (ampulheta/spinner), reutilizavel em toda a app. */
 
-#appverbo-global-loading-overlay {
+#appgenesis-global-loading-overlay {
   position: fixed;
   right: 20px;
   bottom: 20px;
@@ -23,24 +23,24 @@
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0.15s;
 }
 
-#appverbo-global-loading-overlay.appverbo-global-loading-overlay--visible {
+#appgenesis-global-loading-overlay.appgenesis-global-loading-overlay--visible {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s linear 0s;
 }
 
-#appverbo-global-loading-overlay .appverbo-global-loading-overlay__spinner {
+#appgenesis-global-loading-overlay .appgenesis-global-loading-overlay__spinner {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.35);
   border-top-color: #fff;
-  animation: appverbo-global-loading-overlay-spin 0.8s linear infinite;
+  animation: appgenesis-global-loading-overlay-spin 0.8s linear infinite;
 }
 
-@keyframes appverbo-global-loading-overlay-spin {
+@keyframes appgenesis-global-loading-overlay-spin {
   to {
     transform: rotate(360deg);
   }

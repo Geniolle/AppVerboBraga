@@ -20,7 +20,7 @@
 
   function isSidebarRefreshDebugEnabledV1() {
     try {
-      return localStorage.getItem("appverboDebugSidebarRefresh") === "1";
+      return localStorage.getItem("appgenesisDebugSidebarRefresh") === "1";
     } catch (error) {
       return false;
     }
@@ -209,7 +209,7 @@
   // (5) API GLOBAL
   //###################################################################################
 
-  window.AppVerboSidebarGlobalRefreshV1 = {
+  window.AppGenesisSidebarGlobalRefreshV1 = {
     refreshBaseline: function () {
       return refreshBaselineV1(arguments[0] || "manual");
     },

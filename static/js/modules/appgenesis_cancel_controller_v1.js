@@ -267,14 +267,14 @@
     if (
       card &&
       card.id === "create-user-card" &&
-      typeof window.AppVerboSyncUserCreateActionModeV1 === "function"
+      typeof window.AppGenesisSyncUserCreateActionModeV1 === "function"
     ) {
-      window.AppVerboSyncUserCreateActionModeV1(document);
+      window.AppGenesisSyncUserCreateActionModeV1(document);
     }
   }
 
   function dispatchCancelledEventV1(detail) {
-    const cancelEvent = new CustomEvent("appverbo:cancelled", {
+    const cancelEvent = new CustomEvent("appgenesis:cancelled", {
       bubbles: true,
       detail
     });

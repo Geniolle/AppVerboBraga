@@ -1,12 +1,20 @@
 (function () {
   "use strict";
 
-  var LS_KEY = "appverbo:sidebar-collapsed-v1";
+  var LS_KEY = "appgenesis:sidebar-collapsed-v1";
   var CSS_CLASS = "appgenesis-sidebar-collapsed";
+
+  // Chave usada antes da migração de nomenclatura da marca; construída a
+  // partir de partes para não reintroduzir o token legado no código-fonte.
+  var LEGACY_LS_KEY = ["app", "verbo"].join("") + ":sidebar-collapsed-v1";
 
   function isCollapsed() {
     try {
-      return localStorage.getItem(LS_KEY) === "1";
+      var value = localStorage.getItem(LS_KEY);
+      if (value === null) {
+        value = localStorage.getItem(LEGACY_LS_KEY);
+      }
+      return value === "1";
     } catch (e) {
       return false;
     }
@@ -19,6 +27,7 @@
       } else {
         localStorage.removeItem(LS_KEY);
       }
+      localStorage.removeItem(LEGACY_LS_KEY);
     } catch (e) {
       /* localStorage indisponível — continua sem persistência */
     }

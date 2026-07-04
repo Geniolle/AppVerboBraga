@@ -208,7 +208,7 @@ def update_user(
                 clean_email,
                 entity_permissions,
             )
-        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_START
+        # APPGENESIS_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_START
         # Ao editar um utilizador existente, não devemos bloquear a atualização só porque
         # o domínio do email do utilizador não corresponde ao domínio/email da entidade.
         #
@@ -243,7 +243,7 @@ def update_user(
 
             if selected_entity is not None:
                 entity_resolution_error = ""
-        # APPVERBO_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_END
+        # APPGENESIS_USER_UPDATE_KEEP_CURRENT_ENTITY_ON_EMAIL_RESOLUTION_FAIL_V10_END
 
 
         if selected_entity is None and entity_resolution_error:

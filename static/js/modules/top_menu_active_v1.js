@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - ACTIVE UNICO E NAVEGACAO LIMPA NAS ABAS SUPERIORES - V4
+// APPGENESIS - ACTIVE UNICO E NAVEGACAO LIMPA NAS ABAS SUPERIORES - V4
 //###################################################################################
 
 (function () {
@@ -39,9 +39,9 @@
     // clique para outros menus (ex.: Estruturas, Calendário) não muda o URL, por isso preferimos
     // o sinal autoritativo da SPA (sempre atualizado em cada activateMenu) e só caímos para o URL
     // como fallback quando esse sinal ainda não está disponível.
-    if (typeof window.__appverboGetActiveMenuKeyV1 === "function") {
+    if (typeof window.__appgenesisGetActiveMenuKeyV1 === "function") {
       try {
-        const activeMenuKeyAtual = String(window.__appverboGetActiveMenuKeyV1() || "").trim().toLowerCase();
+        const activeMenuKeyAtual = String(window.__appgenesisGetActiveMenuKeyV1() || "").trim().toLowerCase();
         if (activeMenuKeyAtual) {
           return activeMenuKeyAtual === "administrativo";
         }
@@ -441,7 +441,7 @@
     }
 
     try {
-      window.__appverboTopMenuManualOverrideV2 = false;
+      window.__appgenesisTopMenuManualOverrideV2 = false;
     } catch (erro) {
     }
   }

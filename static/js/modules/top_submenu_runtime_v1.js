@@ -1,4 +1,4 @@
-(function initAppVerboTopSubmenuRuntimeV1(global) {
+(function initAppGenesisTopSubmenuRuntimeV1(global) {
   "use strict";
 
   if (!global) {
@@ -6,8 +6,8 @@
   }
 
   if (
-    global.AppVerboTopSubmenu &&
-    typeof global.AppVerboTopSubmenu.createTopSubmenuController === "function"
+    global.AppGenesisTopSubmenu &&
+    typeof global.AppGenesisTopSubmenu.createTopSubmenuController === "function"
   ) {
     return;
   }
@@ -125,7 +125,7 @@
       if (doc.querySelector(".appgenesis-confirm-overlay-v1")) {
         return true;
       }
-      if (doc.querySelector(".appverbo-row-actions-popup-floating-v1")) {
+      if (doc.querySelector(".appgenesis-row-actions-popup-floating-v1")) {
         return true;
       }
       return false;
@@ -531,8 +531,8 @@
   // (4) EXPOR API GLOBAL SEGURA
   //###################################################################################
 
-  global.AppVerboTopSubmenu = {
-    ...(global.AppVerboTopSubmenu || {}),
+  global.AppGenesisTopSubmenu = {
+    ...(global.AppGenesisTopSubmenu || {}),
     createTopSubmenuController
   };
 })(window);

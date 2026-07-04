@@ -1,23 +1,23 @@
-(function initAppVerboProcessShellRuntimeV1(global) {
+(function initAppGenesisProcessShellRuntimeV1(global) {
   "use strict";
 
   if (
     global &&
-    global.AppVerboProcessShell &&
-    typeof global.AppVerboProcessShell.createProcessHeaderController === "function" &&
-    typeof global.AppVerboProcessShell.createLoadMoreTableController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceLoadMoreTables === "function" &&
-    typeof global.AppVerboProcessShell.createSearchableTableController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceSearchableTableCards === "function" &&
-    typeof global.AppVerboProcessShell.createTableActionsMenuController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceTableActionMenus === "function" &&
-    typeof global.AppVerboProcessShell.createConfirmDialogController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceConfirmableActions === "function" &&
-    typeof global.AppVerboProcessShell.createToastController === "function" &&
-    typeof global.AppVerboProcessShell.showToast === "function" &&
-    typeof global.AppVerboProcessShell.enhanceFeedbackToasts === "function" &&
-    typeof global.AppVerboProcessShell.createResponsiveTableColumnsController === "function" &&
-    typeof global.AppVerboProcessShell.enhanceResponsiveTableColumns === "function"
+    global.AppGenesisProcessShell &&
+    typeof global.AppGenesisProcessShell.createProcessHeaderController === "function" &&
+    typeof global.AppGenesisProcessShell.createLoadMoreTableController === "function" &&
+    typeof global.AppGenesisProcessShell.enhanceLoadMoreTables === "function" &&
+    typeof global.AppGenesisProcessShell.createSearchableTableController === "function" &&
+    typeof global.AppGenesisProcessShell.enhanceSearchableTableCards === "function" &&
+    typeof global.AppGenesisProcessShell.createTableActionsMenuController === "function" &&
+    typeof global.AppGenesisProcessShell.enhanceTableActionMenus === "function" &&
+    typeof global.AppGenesisProcessShell.createConfirmDialogController === "function" &&
+    typeof global.AppGenesisProcessShell.enhanceConfirmableActions === "function" &&
+    typeof global.AppGenesisProcessShell.createToastController === "function" &&
+    typeof global.AppGenesisProcessShell.showToast === "function" &&
+    typeof global.AppGenesisProcessShell.enhanceFeedbackToasts === "function" &&
+    typeof global.AppGenesisProcessShell.createResponsiveTableColumnsController === "function" &&
+    typeof global.AppGenesisProcessShell.enhanceResponsiveTableColumns === "function"
   ) {
     return;
   }
@@ -383,7 +383,7 @@
       popupEl.style.top = "";
       popupEl.style.left = "";
       popupEl.style.visibility = "";
-      popupEl.classList.remove("appverbo-row-actions-popup-floating-v1");
+      popupEl.classList.remove("appgenesis-row-actions-popup-floating-v1");
 
       const placeholder = instance._portalPlaceholder;
       const originalParent = instance._portalOriginalParent;
@@ -423,7 +423,7 @@
     const ownerDocument = triggerEl.ownerDocument || global.document;
 
     const originalParent = popupEl.parentNode;
-    const placeholder = ownerDocument.createComment("appverbo-popup-placeholder");
+    const placeholder = ownerDocument.createComment("appgenesis-popup-placeholder");
     if (originalParent) {
       originalParent.insertBefore(placeholder, popupEl);
     }
@@ -432,7 +432,7 @@
     instance._portalOriginalParent = originalParent;
 
     ownerDocument.body.appendChild(popupEl);
-    popupEl.classList.add("appverbo-row-actions-popup-floating-v1");
+    popupEl.classList.add("appgenesis-row-actions-popup-floating-v1");
 
     popupEl.style.visibility = "hidden";
     popupEl.hidden = false;
@@ -471,9 +471,9 @@
         return;
       }
 
-      const triggerEl = targetEl.closest(".appverbo-row-actions-trigger-v1");
+      const triggerEl = targetEl.closest(".appgenesis-row-actions-trigger-v1");
       if (triggerEl) {
-        const containerEl = triggerEl.closest(`${DEFAULT_ACTIONS_SELECTOR}.appverbo-row-actions-ready-v1`);
+        const containerEl = triggerEl.closest(`${DEFAULT_ACTIONS_SELECTOR}.appgenesis-row-actions-ready-v1`);
         const instance = containerEl ? actionMenuInstancesByContainer.get(containerEl) : null;
         if (instance) {
           event.preventDefault();
@@ -483,7 +483,7 @@
         return;
       }
 
-      const activePopupEl = targetEl.closest(".appverbo-row-actions-popup-v1");
+      const activePopupEl = targetEl.closest(".appgenesis-row-actions-popup-v1");
       if (activePopupEl) {
         const actionableEl = targetEl.closest("a, button");
         if (actionableEl) {
@@ -1628,18 +1628,18 @@
     if (!actionEl) {
       return;
     }
-    let className = "appverbo-row-actions-item-v1 appverbo-row-actions-item-" + actionType + "-v1";
+    let className = "appgenesis-row-actions-item-v1 appgenesis-row-actions-item-" + actionType + "-v1";
     if (actionType === "delete") {
-      className += " appverbo-row-actions-danger-v1";
+      className += " appgenesis-row-actions-danger-v1";
     }
     actionEl.className = className;
     actionEl.setAttribute("role", "menuitem");
     actionEl.removeAttribute("aria-label");
     actionEl.innerHTML =
-      '<span class="appverbo-row-actions-icon-v1" aria-hidden="true">' +
+      '<span class="appgenesis-row-actions-icon-v1" aria-hidden="true">' +
       getRowActionIconSvgV1(actionType) +
       "</span>" +
-      '<span class="appverbo-row-actions-text-v1">' +
+      '<span class="appgenesis-row-actions-text-v1">' +
       label +
       "</span>";
   }
@@ -1655,9 +1655,9 @@
     }
 
     if (elementEl.tagName === "INPUT") {
-      let className = "appverbo-row-actions-item-v1 appverbo-row-actions-item-" + actionType + "-v1";
+      let className = "appgenesis-row-actions-item-v1 appgenesis-row-actions-item-" + actionType + "-v1";
       if (actionType === "delete") {
-        className += " appverbo-row-actions-danger-v1";
+        className += " appgenesis-row-actions-danger-v1";
       }
       elementEl.className = className;
       elementEl.value = label;
@@ -1688,11 +1688,11 @@
     }
 
     const wrapperEl = ownerDocument.createElement("div");
-    wrapperEl.className = "appverbo-row-actions-menu-v1";
+    wrapperEl.className = "appgenesis-row-actions-menu-v1";
 
     const triggerEl = ownerDocument.createElement("button");
     triggerEl.type = "button";
-    triggerEl.className = "appverbo-row-actions-trigger-v1";
+    triggerEl.className = "appgenesis-row-actions-trigger-v1";
     triggerEl.setAttribute("aria-haspopup", "menu");
     triggerEl.setAttribute("aria-expanded", "false");
     triggerEl.setAttribute("aria-label", labels.openMenu);
@@ -1700,7 +1700,7 @@
     triggerEl.textContent = "⋮";
 
     const popupEl = ownerDocument.createElement("div");
-    popupEl.className = "appverbo-row-actions-popup-v1";
+    popupEl.className = "appgenesis-row-actions-popup-v1";
     popupEl.setAttribute("role", "menu");
     popupEl.hidden = true;
 
@@ -1723,7 +1723,7 @@
           return;
         }
 
-        sourceEl.classList.add("appverbo-row-actions-form-v1");
+        sourceEl.classList.add("appgenesis-row-actions-form-v1");
         popupEl.appendChild(sourceEl);
         return;
       }
@@ -1747,7 +1747,7 @@
     wrapperEl.appendChild(popupEl);
 
     actionsEl.textContent = "";
-    actionsEl.classList.add("appverbo-row-actions-ready-v1");
+    actionsEl.classList.add("appgenesis-row-actions-ready-v1");
     actionsEl.dataset.appgenesisActionsMenuReady = "1";
     actionsEl.appendChild(wrapperEl);
 
@@ -2385,8 +2385,8 @@
     }
   }
 
-  global.AppVerboProcessShell = {
-    ...(global.AppVerboProcessShell || {}),
+  global.AppGenesisProcessShell = {
+    ...(global.AppGenesisProcessShell || {}),
     createProcessHeaderController,
     createLoadMoreTableController,
     enhanceLoadMoreTables,

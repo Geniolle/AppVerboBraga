@@ -52,11 +52,11 @@
   line-height: var(--ui-button-line-height);
 }
 
-/* APPVERBO_SAVE_CANCEL_BUTTON_STANDARD_V1_START */
+/* APPGENESIS_SAVE_CANCEL_BUTTON_STANDARD_V1_START */
 
 :root {
-  --appverbo-save-cancel-button-width-v1: 112px;
-  --appverbo-save-cancel-button-height-v1: 38px;
+  --appgenesis-save-cancel-button-width-v1: 112px;
+  --appgenesis-save-cancel-button-height-v1: 38px;
 }
 
 .action-btn,
@@ -72,10 +72,10 @@ input.action-btn-cancel,
 .form-action-row > .action-btn-cancel,
 .appgenesis-sidebar-sections-footer-v2 > .action-btn,
 .appgenesis-sidebar-sections-footer-v2 > .action-btn-cancel {
-  min-width: var(--appverbo-save-cancel-button-width-v1) !important;
-  width: var(--appverbo-save-cancel-button-width-v1) !important;
-  height: var(--appverbo-save-cancel-button-height-v1) !important;
-  min-height: var(--appverbo-save-cancel-button-height-v1) !important;
+  min-width: var(--appgenesis-save-cancel-button-width-v1) !important;
+  width: var(--appgenesis-save-cancel-button-width-v1) !important;
+  height: var(--appgenesis-save-cancel-button-height-v1) !important;
+  min-height: var(--appgenesis-save-cancel-button-height-v1) !important;
   padding: 0 14px !important;
   box-sizing: border-box !important;
   display: inline-flex !important;
@@ -110,17 +110,17 @@ input.action-btn-cancel,
   order: 2 !important;
 }
 
-/* APPVERBO_SAVE_CANCEL_BUTTON_STANDARD_V1_END */
+/* APPGENESIS_SAVE_CANCEL_BUTTON_STANDARD_V1_END */
 
-/* APPVERBO_CREATE_CARD_STANDARD_V4_START */
+/* APPGENESIS_CREATE_CARD_STANDARD_V4_START */
 
 :root {
-  --appverbo-create-card-background-v4: #f3f6fb;
-  --appverbo-create-card-border-v4: #d5dceb;
-  --appverbo-create-card-radius-v4: 12px;
-  --appverbo-create-card-min-height-v4: 64px;
-  --appverbo-create-card-padding-v4: 16px;
-  --appverbo-create-card-margin-bottom-v4: 12px;
+  --appgenesis-create-card-background-v4: #f3f6fb;
+  --appgenesis-create-card-border-v4: #d5dceb;
+  --appgenesis-create-card-radius-v4: 12px;
+  --appgenesis-create-card-min-height-v4: 64px;
+  --appgenesis-create-card-padding-v4: 16px;
+  --appgenesis-create-card-margin-bottom-v4: 12px;
 }
 
 .appgenesis-standard-create-card-v4,
@@ -128,12 +128,12 @@ input.action-btn-cancel,
 .appgenesis-sessoes-create-card-v3,
 #admin-sidebar-sections-create-card {
   width: 100% !important;
-  min-height: var(--appverbo-create-card-min-height-v4) !important;
-  padding: var(--appverbo-create-card-padding-v4) !important;
-  margin: 0 0 var(--appverbo-create-card-margin-bottom-v4) !important;
-  border: 1px solid var(--appverbo-create-card-border-v4) !important;
-  border-radius: var(--appverbo-create-card-radius-v4) !important;
-  background: var(--appverbo-create-card-background-v4) !important;
+  min-height: var(--appgenesis-create-card-min-height-v4) !important;
+  padding: var(--appgenesis-create-card-padding-v4) !important;
+  margin: 0 0 var(--appgenesis-create-card-margin-bottom-v4) !important;
+  border: 1px solid var(--appgenesis-create-card-border-v4) !important;
+  border-radius: var(--appgenesis-create-card-radius-v4) !important;
+  background: var(--appgenesis-create-card-background-v4) !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -179,7 +179,7 @@ input.action-btn-cancel,
   width: 100% !important;
   margin-top: 14px !important;
   padding-top: 14px !important;
-  border-top: 1px solid var(--appverbo-create-card-border-v4) !important;
+  border-top: 1px solid var(--appgenesis-create-card-border-v4) !important;
 }
 
-/* APPVERBO_CREATE_CARD_STANDARD_V4_END */
+/* APPGENESIS_CREATE_CARD_STANDARD_V4_END */

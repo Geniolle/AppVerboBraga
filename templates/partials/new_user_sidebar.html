@@ -1,6 +1,6 @@
     {% from "macros/sidebar_icons.html" import sidebar_icon %}
 
-    {# APPVERBO_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_START #}
+    {# APPGENESIS_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_START #}
     {% set fallback_sidebar_sections = [
       ("sistema", "Sistema"),
       ("geral", "Geral"),
@@ -26,7 +26,7 @@
     {% endif %}
 
     {% set sidebar_sections = dynamic_sidebar_sections.items if dynamic_sidebar_sections.items else fallback_sidebar_sections %}
-    {# APPVERBO_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_END #}
+    {# APPGENESIS_SIDEBAR_DYNAMIC_SECTIONS_ORDER_V1_END #}
 
     <aside id="app-sidebar" class="sidebar">
       {% for section_key, section_label in sidebar_sections %}

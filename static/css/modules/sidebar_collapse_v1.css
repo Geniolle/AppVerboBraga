@@ -1,6 +1,6 @@
 :root {
-  --appverbo-sidebar-expanded-width: 234px;
-  --appverbo-sidebar-collapsed-width: 64px;
+  --appgenesis-sidebar-expanded-width: 234px;
+  --appgenesis-sidebar-collapsed-width: 64px;
 }
 
 /* ── Botão hambúrguer na topbar ── */
@@ -55,12 +55,12 @@
 
 /* ── Estado recolhido ── */
 body.appgenesis-sidebar-collapsed .layout {
-  grid-template-columns: var(--appverbo-sidebar-collapsed-width) minmax(0, 1fr) !important;
+  grid-template-columns: var(--appgenesis-sidebar-collapsed-width) minmax(0, 1fr) !important;
 }
 
 body.appgenesis-sidebar-collapsed .sidebar {
-  width: var(--appverbo-sidebar-collapsed-width) !important;
-  min-width: var(--appverbo-sidebar-collapsed-width) !important;
+  width: var(--appgenesis-sidebar-collapsed-width) !important;
+  min-width: var(--appgenesis-sidebar-collapsed-width) !important;
   overflow: hidden;
 }
 
@@ -95,13 +95,13 @@ body.appgenesis-sidebar-collapsed .sidebar-icon-svg {
 /* ── Ajuste de largura para breakpoints existentes quando expandido ── */
 @media (max-width: 1200px) {
   :root {
-    --appverbo-sidebar-expanded-width: 210px;
+    --appgenesis-sidebar-expanded-width: 210px;
   }
 }
 
 @media (max-width: 900px) {
   :root {
-    --appverbo-sidebar-expanded-width: 190px;
+    --appgenesis-sidebar-expanded-width: 190px;
   }
 }
 

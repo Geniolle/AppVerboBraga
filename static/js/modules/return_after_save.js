@@ -6,11 +6,11 @@
   "use strict";
 
   //###################################################################################
-  // APPVERBO_DEBUG_SESSOES_FLOW_V1_START
+  // APPGENESIS_DEBUG_SESSOES_FLOW_V1_START
   //###################################################################################
 
   function _isDebugSessoesFlowEnabled() {
-    return localStorage.getItem("appverboDebugSessoesFlow") === "1";
+    return localStorage.getItem("appgenesisDebugSessoesFlow") === "1";
   }
 
   function _logSessoesFlowUi(event, data) {
@@ -18,14 +18,14 @@
     console.log("[SESSOES_FLOW_UI]", event, data || {});
   }
 
-  // APPVERBO_DEBUG_SESSOES_FLOW_V1_END
+  // APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
 
   //###################################################################################
-  // APPVERBO_DEBUG_RETURN_AFTER_SAVE_V1_START
+  // APPGENESIS_DEBUG_RETURN_AFTER_SAVE_V1_START
   //###################################################################################
 
   function _isDebugReturnAfterSaveEnabled() {
-    return localStorage.getItem("appverboDebugReturnAfterSave") === "1";
+    return localStorage.getItem("appgenesisDebugReturnAfterSave") === "1";
   }
 
   function _logReturnAfterSave(event, data) {
@@ -37,14 +37,14 @@
     return (form.getAttribute("action") || "").includes("/settings/menu/sidebar-section-save");
   }
 
-  // APPVERBO_DEBUG_RETURN_AFTER_SAVE_V1_END
+  // APPGENESIS_DEBUG_RETURN_AFTER_SAVE_V1_END
 
   //###################################################################################
   // (2) CONFIGURACAO
   //###################################################################################
 
-  const STORAGE_KEY = "appverbo:return_after_save";
-  const STORAGE_TIME_KEY = "appverbo:return_after_save_time";
+  const STORAGE_KEY = "appgenesis:return_after_save";
+  const STORAGE_TIME_KEY = "appgenesis:return_after_save_time";
   const MAX_AGE_MS = 15000;
 
   const MESSAGE_PARAMS = [
@@ -130,7 +130,7 @@
   function isBackendPostSaveReturnUrl(value) {
     try {
       const url = new URL(String(value || ""), window.location.origin);
-      return url.searchParams.get("appverbo_after_save") === "1";
+      return url.searchParams.get("appgenesis_after_save") === "1";
     } catch (error) {
       return false;
     }
@@ -286,7 +286,7 @@
     //###################################################################################
     // (5.1) BACKEND COMO FONTE DE VERDADE POS-SAVE
     //###################################################################################
-    // Quando o backend ja devolveu appverbo_after_save=1, a pagina atual e a correta.
+    // Quando o backend ja devolveu appgenesis_after_save=1, a pagina atual e a correta.
     // Nao devemos restaurar URL antiga do sessionStorage, pois ela pode ter sido capturada
     // antes da navegacao interna do menu lateral e apontar para menu=home.
     if (isBackendPostSaveReturnUrl(currentUrl)) {

@@ -7,9 +7,9 @@
   // Gap between button bottom and dropdown top
   var MENU_OFFSET_Y = 4;
 
-  // Debug: activate with localStorage.setItem("appverboDebugTabsOverflow","1")
+  // Debug: activate with localStorage.setItem("appgenesisDebugTabsOverflow","1")
   var DEBUG = (function () {
-    try { return localStorage.getItem("appverboDebugTabsOverflow") === "1"; }
+    try { return localStorage.getItem("appgenesisDebugTabsOverflow") === "1"; }
     catch (e) { return false; }
   })();
 
@@ -436,7 +436,7 @@
   }, 600);
 
   // Public API
-  window.AppVerboTabsOverflowV1 = {
+  window.AppGenesisTabsOverflowV1 = {
     recalculate: function () {
       _controllers.forEach(function (c) { c.recalculate(); });
     },

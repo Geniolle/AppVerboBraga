@@ -33,7 +33,7 @@
   }
 
   function clearTabWidth_v1(container, tabs) {
-    container.style.removeProperty("--appverbo-process-tab-equal-width");
+    container.style.removeProperty("--appgenesis-process-tab-equal-width");
 
     tabs.forEach(function (tab) {
       tab.style.removeProperty("width");
@@ -64,7 +64,7 @@
         return;
       }
 
-      container.style.setProperty("--appverbo-process-tab-equal-width", `${maxWidth}px`);
+      container.style.setProperty("--appgenesis-process-tab-equal-width", `${maxWidth}px`);
     });
   }
 

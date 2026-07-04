@@ -1,4 +1,4 @@
-/* APPVERBO_SIDEBAR_SECTIONS_LAYOUT_V2_START */
+/* APPGENESIS_SIDEBAR_SECTIONS_LAYOUT_V2_START */
 
 .appgenesis-sidebar-sections-card-v2 {
   overflow: hidden;
@@ -189,9 +189,9 @@
   }
 }
 
-/* APPVERBO_SIDEBAR_SECTIONS_LAYOUT_V2_END */
+/* APPGENESIS_SIDEBAR_SECTIONS_LAYOUT_V2_END */
 
-/* APPVERBO_SESSOES_BOTOES_V3_START */
+/* APPGENESIS_SESSOES_BOTOES_V3_START */
 
 .appgenesis-sidebar-section-cancel-btn-v3 {
   border: 1px solid #c2d4f7;
@@ -207,9 +207,9 @@
   background: #dceaff;
 }
 
-/* APPVERBO_SESSOES_BOTOES_V3_END */
+/* APPGENESIS_SESSOES_BOTOES_V3_END */
 
-/* APPVERBO_CREATE_ENTRY_BLOCK_STANDARD_V1_START */
+/* APPGENESIS_CREATE_ENTRY_BLOCK_STANDARD_V1_START */
 
 .appgenesis-create-entry-block-v1 {
   border: 1px solid #d5dceb;
@@ -303,9 +303,9 @@
   display: none !important;
 }
 
-/* APPVERBO_CREATE_ENTRY_BLOCK_STANDARD_V1_END */
+/* APPGENESIS_CREATE_ENTRY_BLOCK_STANDARD_V1_END */
 
-/* APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_V2_START */
+/* APPGENESIS_CREATE_ENTRY_SEPARATE_BLOCK_V2_START */
 
 .appgenesis-create-entry-slot-v2 {
   margin: 16px 0;
@@ -360,9 +360,9 @@
   display: none !important;
 }
 
-/* APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_V2_END */
+/* APPGENESIS_CREATE_ENTRY_SEPARATE_BLOCK_V2_END */
 
-/* APPVERBO_SESSOES_CREATE_CARD_SEPARADO_V3_START */
+/* APPGENESIS_SESSOES_CREATE_CARD_SEPARADO_V3_START */
 
 .appgenesis-sessoes-create-card-v3 {
   margin-bottom: 12px;
@@ -406,17 +406,17 @@
   display: none !important;
 }
 
-/* APPVERBO_SESSOES_CREATE_CARD_SEPARADO_V3_END */
+/* APPGENESIS_SESSOES_CREATE_CARD_SEPARADO_V3_END */
 
-/* APPVERBO_CREATE_CARD_STANDARD_V4_START */
+/* APPGENESIS_CREATE_CARD_STANDARD_V4_START */
 
 :root {
-  --appverbo-create-card-background-v4: #f3f6fb;
-  --appverbo-create-card-border-v4: #d5dceb;
-  --appverbo-create-card-radius-v4: 12px;
-  --appverbo-create-card-min-height-v4: 64px;
-  --appverbo-create-card-padding-v4: 16px;
-  --appverbo-create-card-margin-bottom-v4: 12px;
+  --appgenesis-create-card-background-v4: #f3f6fb;
+  --appgenesis-create-card-border-v4: #d5dceb;
+  --appgenesis-create-card-radius-v4: 12px;
+  --appgenesis-create-card-min-height-v4: 64px;
+  --appgenesis-create-card-padding-v4: 16px;
+  --appgenesis-create-card-margin-bottom-v4: 12px;
 }
 
 .appgenesis-standard-create-card-v4,
@@ -424,12 +424,12 @@
 .appgenesis-sessoes-create-card-v3,
 #admin-sidebar-sections-create-card {
   width: 100% !important;
-  min-height: var(--appverbo-create-card-min-height-v4) !important;
-  padding: var(--appverbo-create-card-padding-v4) !important;
-  margin: 0 0 var(--appverbo-create-card-margin-bottom-v4) !important;
-  border: 1px solid var(--appverbo-create-card-border-v4) !important;
-  border-radius: var(--appverbo-create-card-radius-v4) !important;
-  background: var(--appverbo-create-card-background-v4) !important;
+  min-height: var(--appgenesis-create-card-min-height-v4) !important;
+  padding: var(--appgenesis-create-card-padding-v4) !important;
+  margin: 0 0 var(--appgenesis-create-card-margin-bottom-v4) !important;
+  border: 1px solid var(--appgenesis-create-card-border-v4) !important;
+  border-radius: var(--appgenesis-create-card-radius-v4) !important;
+  background: var(--appgenesis-create-card-background-v4) !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -475,12 +475,12 @@
   width: 100% !important;
   margin-top: 14px !important;
   padding-top: 14px !important;
-  border-top: 1px solid var(--appverbo-create-card-border-v4) !important;
+  border-top: 1px solid var(--appgenesis-create-card-border-v4) !important;
 }
 
-/* APPVERBO_CREATE_CARD_STANDARD_V4_END */
+/* APPGENESIS_CREATE_CARD_STANDARD_V4_END */
 
-/* APPVERBO_SESSOES_CREATE_FIELDS_BD_V4_START */
+/* APPGENESIS_SESSOES_CREATE_FIELDS_BD_V4_START */
 
 .appgenesis-sidebar-sections-card-v2 .appgenesis-sidebar-sections-footer-v2 {
   display: none !important;
@@ -554,9 +554,9 @@
   }
 }
 
-/* APPVERBO_SESSOES_CREATE_FIELDS_BD_V4_END */
+/* APPGENESIS_SESSOES_CREATE_FIELDS_BD_V4_END */
 
-/* APPVERBO_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_START */
+/* APPGENESIS_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_START */
 
 .appgenesis-sidebar-sections-card-v2 .appgenesis-sidebar-sections-footer-v2 {
   display: none !important;
@@ -636,9 +636,9 @@
   }
 }
 
-/* APPVERBO_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_END */
+/* APPGENESIS_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_END */
 
-/* APPVERBO_SESSOES_REIDRATAR_LISTA_BD_V6_START */
+/* APPGENESIS_SESSOES_REIDRATAR_LISTA_BD_V6_START */
 
 .appgenesis-sidebar-sections-list-description-v6 {
   margin: 0 0 12px;
@@ -682,9 +682,9 @@
   }
 }
 
-/* APPVERBO_SESSOES_REIDRATAR_LISTA_BD_V6_END */
+/* APPGENESIS_SESSOES_REIDRATAR_LISTA_BD_V6_END */
 
-/* APPVERBO_SESSOES_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_START */
+/* APPGENESIS_SESSOES_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_START */
 
 #admin-sidebar-sections-create-card .appgenesis-create-entry-open-btn-v1[hidden],
 #admin-sidebar-sections-create-card .appgenesis-create-entry-toolbar-v1:has(.appgenesis-create-entry-open-btn-v1[hidden]) {
@@ -716,9 +716,9 @@
   align-items: flex-start !important;
 }
 
-/* APPVERBO_SESSOES_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_END */
+/* APPGENESIS_SESSOES_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_END */
 
-/* APPVERBO_SESSOES_EDIT_INLINE_V8_START */
+/* APPGENESIS_SESSOES_EDIT_INLINE_V8_START */
 
 .appgenesis-sidebar-section-edit-input-v8,
 .appgenesis-sidebar-section-edit-select-v8 {
@@ -763,9 +763,9 @@
   font-size: 11px !important;
 }
 
-/* APPVERBO_SESSOES_EDIT_INLINE_V8_END */
+/* APPGENESIS_SESSOES_EDIT_INLINE_V8_END */
 
-/* APPVERBO_SESSOES_ESTADO_BLOCOS_V9_START */
+/* APPGENESIS_SESSOES_ESTADO_BLOCOS_V9_START */
 
 .appgenesis-sidebar-section-list-block-v9 {
   margin-top: 10px;
@@ -848,18 +848,18 @@
   display: none !important;
 }
 
-/* APPVERBO_SESSOES_ESTADO_BLOCOS_V9_END */
+/* APPGENESIS_SESSOES_ESTADO_BLOCOS_V9_END */
 
-/* APPVERBO_SESSOES_SCOPE_GUARD_V11_START */
+/* APPGENESIS_SESSOES_SCOPE_GUARD_V11_START */
 
 body:not(.appgenesis-admin-sessoes-active-v11) .appgenesis-sessoes-create-card-v10.appgenesis-force-hide-v11,
 body:not(.appgenesis-admin-sessoes-active-v11) .appgenesis-sidebar-sections-inactive-card-v10.appgenesis-force-hide-v11 {
   display: none !important;
 }
 
-/* APPVERBO_SESSOES_SCOPE_GUARD_V11_END */
+/* APPGENESIS_SESSOES_SCOPE_GUARD_V11_END */
 
-/* APPVERBO_SESSOES_SCOPE_CORRETO_V12_START */
+/* APPGENESIS_SESSOES_SCOPE_CORRETO_V12_START */
 
 body.appgenesis-admin-sessoes-inactive-v12 #admin-sidebar-sections-create-card,
 body.appgenesis-admin-sessoes-inactive-v12 #admin-sidebar-sections-inactive-card {
@@ -871,9 +871,9 @@ body.appgenesis-admin-sessoes-active-v12 #admin-sidebar-sections-inactive-card {
   display: block;
 }
 
-/* APPVERBO_SESSOES_SCOPE_CORRETO_V12_END */
+/* APPGENESIS_SESSOES_SCOPE_CORRETO_V12_END */
 
-/* APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_START */
+/* APPGENESIS_SESSOES_RECREATE_CREATE_CARD_V14_START */
 
 body.appgenesis-admin-sessoes-active-v14 #admin-sidebar-sections-create-card {
   display: block !important;
@@ -933,9 +933,9 @@ body.appgenesis-admin-sessoes-inactive-v14 #admin-sidebar-sections-create-card {
   }
 }
 
-/* APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END */
+/* APPGENESIS_SESSOES_RECREATE_CREATE_CARD_V14_END */
 
-/* APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START */
+/* APPGENESIS_SESSOES_INATIVAS_CARD_FORA_V15_START */
 
 #admin-sidebar-sections-inactive-card.appgenesis-sidebar-sections-inactive-card-v15 {
   display: block !important;
@@ -976,9 +976,9 @@ body.appgenesis-admin-sessoes-inactive-v14 #admin-sidebar-sections-create-card {
   width: 100% !important;
 }
 
-/* APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END */
+/* APPGENESIS_SESSOES_INATIVAS_CARD_FORA_V15_END */
 
-/* APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START */
+/* APPGENESIS_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START */
 
 .appgenesis-sessoes-create-card-v16 {
   display: block !important;
@@ -1075,18 +1075,18 @@ body.appgenesis-admin-sessoes-inactive-v14 #admin-sidebar-sections-create-card {
   }
 }
 
-/* APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END */
+/* APPGENESIS_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END */
 
-/* APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START */
+/* APPGENESIS_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START */
 
 #admin-sidebar-sections-create-card.appgenesis-sessoes-create-card-v16 {
   display: block !important;
   visibility: visible !important;
 }
 
-/* APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END */
+/* APPGENESIS_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END */
 
-/* APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_START */
+/* APPGENESIS_SESSOES_PADRAO_ENTIDADE_V18_START */
 
 .appgenesis-sessoes-create-card-v18 {
   display: block !important;
@@ -1192,17 +1192,17 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   }
 }
 
-/* APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_END */
+/* APPGENESIS_SESSOES_PADRAO_ENTIDADE_V18_END */
 
-/* APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_START */
+/* APPGENESIS_SESSOES_PERSISTIR_ESTADO_V19_START */
 
 .appgenesis-sessoes-create-card-v18 select[name="section_status"] {
   font-weight: 600;
 }
 
-/* APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_END */
+/* APPGENESIS_SESSOES_PERSISTIR_ESTADO_V19_END */
 
-/* APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_START */
+/* APPGENESIS_SESSOES_INATIVAS_RENDER_BD_V20_START */
 
 #admin-sidebar-sections-inactive-card.appgenesis-sidebar-sections-inactive-card-v20 {
   display: block !important;
@@ -1251,9 +1251,9 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   display: none !important;
 }
 
-/* APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_END */
+/* APPGENESIS_SESSOES_INATIVAS_RENDER_BD_V20_END */
 
-/* APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START */
+/* APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START */
 
 #admin-sidebar-sections-inactive-card.appgenesis-sidebar-sections-inactive-card-v21 {
   display: block !important;
@@ -1294,9 +1294,9 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   color: #8a5a00 !important;
 }
 
-/* APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END */
+/* APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END */
 
-/* APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START */
+/* APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START */
 
 #admin-sidebar-sections-card.appgenesis-sidebar-sections-active-card-v22,
 #admin-sidebar-sections-inactive-card.appgenesis-sidebar-sections-inactive-card-v22 {
@@ -1353,9 +1353,9 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   color: #0f5132 !important;
 }
 
-/* APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END */
+/* APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END */
 
-/* APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_START */
+/* APPGENESIS_SESSOES_CONTROLADOR_UNICO_V23_START */
 
 .appgenesis-sessoes-create-card-v23,
 .appgenesis-sidebar-sections-active-card-v23,
@@ -1515,9 +1515,9 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   }
 }
 
-/* APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_END */
+/* APPGENESIS_SESSOES_CONTROLADOR_UNICO_V23_END */
 
-/* APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START */
+/* APPGENESIS_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START */
 
 #admin-sidebar-sections-inactive-card .appgenesis-sidebar-section-actions-v23,
 #admin-sidebar-sections-inactive-card .appgenesis-sidebar-section-actions-v24 {
@@ -1585,13 +1585,13 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   content: "✎" !important;
 }
 
-/* APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END */
+/* APPGENESIS_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END */
 
 
 
 
 
-/* APPVERBO_SESSOES_ATIVAS_CARD_V23_START */
+/* APPGENESIS_SESSOES_ATIVAS_CARD_V23_START */
 #admin-sidebar-sections-active-card-v23 {
   margin-top: 10px;
 }
@@ -1661,10 +1661,10 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   background: #dfeeff;
   border-color: #9fc0ee;
 }
-/* APPVERBO_SESSOES_ATIVAS_CARD_V23_END */
+/* APPGENESIS_SESSOES_ATIVAS_CARD_V23_END */
 
 
-/* APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START */
+/* APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START */
 
 .appgenesis-sessoes-card-v30 {
   display: block !important;
@@ -1848,9 +1848,9 @@ body.appgenesis-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.app
   }
 }
 
-/* APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END */
+/* APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END */
 
-/* APPVERBO_SESSOES_ANTI_FLICKER_V26_START */
+/* APPGENESIS_SESSOES_ANTI_FLICKER_V26_START */
 html.appgenesis-subprocesso-nao-sessoes-v26 #admin-sidebar-sections-active-card-v23,
 html.appgenesis-subprocesso-nao-sessoes-v26 #admin-sidebar-sections-inactive-card,
 html.appgenesis-subprocesso-nao-sessoes-v26 .appgenesis-sidebar-sections-active-card-v23,
@@ -1873,4 +1873,4 @@ html.appgenesis-subprocesso-sessoes-v26 .appgenesis-sidebar-sections-active-card
 html.appgenesis-subprocesso-sessoes-v26 [data-appgenesis-sessoes-card-v26="1"] {
   visibility: visible !important;
 }
-/* APPVERBO_SESSOES_ANTI_FLICKER_V26_END */
+/* APPGENESIS_SESSOES_ANTI_FLICKER_V26_END */

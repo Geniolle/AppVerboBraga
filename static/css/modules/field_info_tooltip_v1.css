@@ -1,4 +1,4 @@
-/* APPVERBO_FIELD_INFO_TOOLTIP_V1_START */
+/* APPGENESIS_FIELD_INFO_TOOLTIP_V1_START */
 /* Tooltip/popover generico e reutilizavel para explicar o significado de opcoes de um campo. */
 
 .field-info-tooltip-v1 {
@@ -67,4 +67,4 @@
 .field-info-tooltip-v1.field-info-tooltip-open-v1 .field-info-panel-v1 {
   display: block;
 }
-/* APPVERBO_FIELD_INFO_TOOLTIP_V1_END */
+/* APPGENESIS_FIELD_INFO_TOOLTIP_V1_END */

@@ -1,13 +1,13 @@
-(function initAppVerboFeedbackToastsFromUrl() {
+(function initAppGenesisFeedbackToastsFromUrl() {
   if (
-    window.AppVerboProcessShell &&
-    typeof window.AppVerboProcessShell.enhanceFeedbackToasts === "function"
+    window.AppGenesisProcessShell &&
+    typeof window.AppGenesisProcessShell.enhanceFeedbackToasts === "function"
   ) {
-    window.AppVerboProcessShell.enhanceFeedbackToasts({ source: "url" });
+    window.AppGenesisProcessShell.enhanceFeedbackToasts({ source: "url" });
   }
 })();
 
-const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
 const MEU_PERFIL_MENU_KEY = "meu_perfil";
 const LEGACY_DOCUMENTOS_MENU_KEY = "documentos";
 const currentUserName = bootstrap.currentUserName || "";
@@ -16,13 +16,13 @@ const currentUserIsAdmin = Boolean(bootstrap.currentUserIsAdmin);
 const currentUserCanManageTenantStructure = Boolean(bootstrap.currentUserCanManageTenantStructure);
 const currentUserCanManageAllEntities = currentUserCanManageTenantStructure;
 
-const APPVERBO_DEBUG_TABS_V1 =
+const APPGENESIS_DEBUG_TABS_V1 =
   new URLSearchParams(window.location.search).get("debug_tabs") === "1" ||
-  window.localStorage.getItem("appverboDebugTabs") === "1";
+  window.localStorage.getItem("appgenesisDebugTabs") === "1";
 
 function debugTabsLogV1(label, payload = {}) {
-  if (!APPVERBO_DEBUG_TABS_V1) return;
-  console.log("[AppVerbo Tabs Debug]", label, payload);
+  if (!APPGENESIS_DEBUG_TABS_V1) return;
+  console.log("[AppGenesis Tabs Debug]", label, payload);
 }
 const dashboardData = bootstrap.dashboardData || {};
 const currentUserPhone = bootstrap.currentUserPhone || "";
@@ -51,7 +51,7 @@ const settingsAction = bootstrap.settingsAction || "";
 const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
 const settingsEditKey = normalizeMenuKey(bootstrap.settingsEditKey || "");
 
-logAppVerboProcessEditorDebugV1("page_load:editor_bootstrap", {
+logAppGenesisProcessEditorDebugV1("page_load:editor_bootstrap", {
   href: window.location.href,
   urlMenu: new URLSearchParams(window.location.search).get("menu"),
   urlSettingsEditKey: new URLSearchParams(window.location.search).get("settings_edit_key"),
@@ -62,7 +62,7 @@ logAppVerboProcessEditorDebugV1("page_load:editor_bootstrap", {
   bootstrapSettingsEditKey: bootstrap.settingsEditKey,
   sessionStoragePostSaveContext: (function () {
     try {
-      return window.sessionStorage.getItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3);
+      return window.sessionStorage.getItem(APPGENESIS_POST_SAVE_CONTEXT_KEY_V3);
     } catch (error) {
       return null;
     }
@@ -1180,7 +1180,7 @@ function mergeDynamicProcessMenus() {
 
 mergeDynamicProcessMenus();
 
-// APPVERBO_AUTH_PROFILE_MENUCONFIG_INIT_V1_START
+// APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1_START
 // perfil_de_autorizacao é um subprocesso nativo que pode não estar em sidebarMenuSettings.
 // Garante que menuConfig tem sempre a entrada quando o menu é visível no DOM.
 if (
@@ -1202,7 +1202,7 @@ if (
     ]
   };
 }
-// APPVERBO_AUTH_PROFILE_MENUCONFIG_INIT_V1_END
+// APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1_END
 
 const itemsEl = document.getElementById("submenu-items");
 const processShellHeaderEl = document.getElementById("process-shell-header");
@@ -1263,7 +1263,7 @@ if (initialProfileTab === "morada") {
 } else if (initialProfileTab === "treinamento") {
   profileSelectedTarget = "#dados-treinamento-card";
 }
-// APPVERBO_ADMIN_TARGET_RESOLVER_V1_START
+// APPGENESIS_ADMIN_TARGET_RESOLVER_V1_START
 const NATIVE_ADMIN_TARGETS_V1 = new Set([
   "#create-entity-card",
   "#edit-entity-card",
@@ -1418,7 +1418,7 @@ function resolveAdminSelectedTargetV1({
   }
   return "#dynamic-process-card";
 }
-// APPVERBO_ADMIN_TARGET_RESOLVER_V1_END
+// APPGENESIS_ADMIN_TARGET_RESOLVER_V1_END
 let meuPerfilSelectedTarget = "#perfil-pessoal-card";
 const requestedMeuPerfilProfileSection = normalizeMenuKey(
   (typeof window !== "undefined" && window.location && window.location.search)
@@ -1479,16 +1479,16 @@ let activeMenuKey = "";
 // Sinal autoritativo do menu de topo realmente ativo na SPA, para módulos externos (ex.:
 // top_menu_active_v1.js) que não podem confiar apenas no URL: a navegação por clique entre
 // menus que não sejam "administrativo" não faz pushState, por isso o URL fica desatualizado.
-window.__appverboGetActiveMenuKeyV1 = function () {
+window.__appgenesisGetActiveMenuKeyV1 = function () {
   return activeMenuKey;
 };
 const processShellHeaderController = (
   processShellHeaderEl &&
   processShellTitleEl &&
-  window.AppVerboProcessShell &&
-  typeof window.AppVerboProcessShell.createProcessHeaderController === "function"
+  window.AppGenesisProcessShell &&
+  typeof window.AppGenesisProcessShell.createProcessHeaderController === "function"
 )
-  ? window.AppVerboProcessShell.createProcessHeaderController({
+  ? window.AppGenesisProcessShell.createProcessHeaderController({
       root: processShellHeaderEl,
       titleEl: processShellTitleEl,
       actionsEl: processShellActionsEl,
@@ -1545,10 +1545,10 @@ function normalizeTopSubmenuSelectionData_v1(selectedReference) {
 
 const topSubmenuController = (
   itemsEl &&
-  window.AppVerboTopSubmenu &&
-  typeof window.AppVerboTopSubmenu.createTopSubmenuController === "function"
+  window.AppGenesisTopSubmenu &&
+  typeof window.AppGenesisTopSubmenu.createTopSubmenuController === "function"
 )
-  ? window.AppVerboTopSubmenu.createTopSubmenuController({
+  ? window.AppGenesisTopSubmenu.createTopSubmenuController({
       container: itemsEl,
       formatLabel: toSentenceCaseText,
       enableTrackpadSwipe: true,
@@ -1561,7 +1561,7 @@ const topSubmenuController = (
         closeAllProfileEdits();
         selectedTargetByMenu[menuKey] = item.target;
         debugTabsLogV1("onSelect:before-apply", { menuKey, target: item.target });
-        logAppVerboNavigationBootDebugV1("submenu_tab_click:before", {
+        logAppGenesisNavigationBootDebugV1("submenu_tab_click:before", {
           menuKey,
           target: item.target,
           hrefBefore: window.location.href
@@ -1602,7 +1602,7 @@ const topSubmenuController = (
         }
 
         debugTabsLogV1("onSelect:after-apply", { menuKey, target: item.target });
-        logAppVerboNavigationBootDebugV1("submenu_tab_click:after", {
+        logAppGenesisNavigationBootDebugV1("submenu_tab_click:after", {
           menuKey,
           target: item.target,
           hrefAfter: window.location.href
@@ -3714,7 +3714,7 @@ function applyContentForMenu(menuKey) {
   }
 }
 
-// APPVERBO_ADMIN_SUBPROCESS_GROUP_V1_START
+// APPGENESIS_ADMIN_SUBPROCESS_GROUP_V1_START
 function getAdminSubprocessKeyByTargetV1(target) {
   const cleanTarget = normalizeTargetV1(target);
   const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
@@ -3753,7 +3753,7 @@ function getAdminSubprocessKeyByTargetV1(target) {
   };
   return targetMap[cleanTarget] || "";
 }
-// APPVERBO_ADMIN_SUBPROCESS_GROUP_V1_END
+// APPGENESIS_ADMIN_SUBPROCESS_GROUP_V1_END
 
 // activateSubprocessCardsV1: rotina única de ativação de card principal + cards relacionados
 // (lista de ativos / lista de inativos) de um subprocesso administrativo (ex.: Menu, Sessões,
@@ -3788,7 +3788,7 @@ function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecifie
   const adminSubprocessKey = supportsStructuredAdminGroups
     ? getAdminSubprocessKeyByTargetV1(targetSelector)
     : "";
-  logAppVerboNavigationBootDebugV1("activateSubprocessCardsV1:resolve", {
+  logAppGenesisNavigationBootDebugV1("activateSubprocessCardsV1:resolve", {
     source,
     menuKey,
     targetSelector,
@@ -3872,7 +3872,7 @@ function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecifie
       ? Array.from(scopedCards).filter((c) => c.style.display !== "none").map((c) => c.id || c.className)
       : []
   });
-  logAppVerboNavigationBootDebugV1("activateSubprocessCardsV1:applied", {
+  logAppGenesisNavigationBootDebugV1("activateSubprocessCardsV1:applied", {
     source,
     menuKey,
     targetSelector,
@@ -4422,7 +4422,7 @@ function syncTrainingOutrosState() {
   }
 }
 
-document.addEventListener("appverbo:cancelled", function (event) {
+document.addEventListener("appgenesis:cancelled", function (event) {
   const detail = event && event.detail ? event.detail : {};
   const card = detail.card;
   const cardId = card && card.id ? card.id : "";
@@ -4443,28 +4443,28 @@ document.addEventListener("appverbo:cancelled", function (event) {
 
 function enhanceProcessShellTables(root) {
   const scopeRoot = root || document;
-  if (!window.AppVerboProcessShell) {
+  if (!window.AppGenesisProcessShell) {
     return;
   }
 
-  if (typeof window.AppVerboProcessShell.enhanceSearchableTableCards === "function") {
-    window.AppVerboProcessShell.enhanceSearchableTableCards({ root: scopeRoot });
+  if (typeof window.AppGenesisProcessShell.enhanceSearchableTableCards === "function") {
+    window.AppGenesisProcessShell.enhanceSearchableTableCards({ root: scopeRoot });
   }
 
-  if (typeof window.AppVerboProcessShell.enhanceLoadMoreTables === "function") {
-    window.AppVerboProcessShell.enhanceLoadMoreTables({ root: scopeRoot });
+  if (typeof window.AppGenesisProcessShell.enhanceLoadMoreTables === "function") {
+    window.AppGenesisProcessShell.enhanceLoadMoreTables({ root: scopeRoot });
   }
 
-  if (typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
-    window.AppVerboProcessShell.enhanceTableActionMenus({ root: scopeRoot });
+  if (typeof window.AppGenesisProcessShell.enhanceTableActionMenus === "function") {
+    window.AppGenesisProcessShell.enhanceTableActionMenus({ root: scopeRoot });
   }
 
-  if (typeof window.AppVerboProcessShell.enhanceConfirmableActions === "function") {
-    window.AppVerboProcessShell.enhanceConfirmableActions({ root: document });
+  if (typeof window.AppGenesisProcessShell.enhanceConfirmableActions === "function") {
+    window.AppGenesisProcessShell.enhanceConfirmableActions({ root: document });
   }
 
-  if (typeof window.AppVerboProcessShell.enhanceResponsiveTableColumns === "function") {
-    window.AppVerboProcessShell.enhanceResponsiveTableColumns({ root: scopeRoot });
+  if (typeof window.AppGenesisProcessShell.enhanceResponsiveTableColumns === "function") {
+    window.AppGenesisProcessShell.enhanceResponsiveTableColumns({ root: scopeRoot });
   }
 }
 
@@ -4472,11 +4472,11 @@ function setupTableLimiter(prefix) {
   const tableEl = document.getElementById(`${prefix}-table`);
   if (
     !tableEl ||
-    !window.AppVerboProcessShell ||
+    !window.AppGenesisProcessShell ||
     (
-      typeof window.AppVerboProcessShell.enhanceTableActionMenus !== "function" &&
-      typeof window.AppVerboProcessShell.enhanceSearchableTableCards !== "function" &&
-      typeof window.AppVerboProcessShell.enhanceLoadMoreTables !== "function"
+      typeof window.AppGenesisProcessShell.enhanceTableActionMenus !== "function" &&
+      typeof window.AppGenesisProcessShell.enhanceSearchableTableCards !== "function" &&
+      typeof window.AppGenesisProcessShell.enhanceLoadMoreTables !== "function"
     )
   ) {
     return;
@@ -5335,8 +5335,8 @@ function setupProcessAdditionalFieldsManagerV2() {
 
   addButtonEl.addEventListener("click", handleAddAdditionalFieldV2);
   clearButtonEl.addEventListener("click", handleClearAdditionalFieldV2);
-  window.__appverboAddAdditionalFieldV2 = handleAddAdditionalFieldV2;
-  window.__appverboClearAdditionalFieldV2 = handleClearAdditionalFieldV2;
+  window.__appgenesisAddAdditionalFieldV2 = handleAddAdditionalFieldV2;
+  window.__appgenesisClearAdditionalFieldV2 = handleClearAdditionalFieldV2;
 
   editorTypeEl.addEventListener("change", () => {
     syncEditorState();
@@ -5437,7 +5437,7 @@ function syncProcessEditTabToUrl_v1(tabKey) {
     }
     url.searchParams.set("settings_tab", tabKey);
     const newHref = url.pathname + url.search + url.hash;
-    logAppVerboProcessEditorDebugV1("syncProcessEditTabToUrl_v1:history.replaceState", {
+    logAppGenesisProcessEditorDebugV1("syncProcessEditTabToUrl_v1:history.replaceState", {
       previousHref: window.location.href,
       newHref,
       tabKey,
@@ -5471,7 +5471,7 @@ function setupProcessEditTabs() {
       const isActive = pane.getAttribute("data-process-edit-pane") === resolvedTabKey;
       pane.classList.toggle("active", isActive);
     });
-    logAppVerboProcessEditorDebugV1("setupProcessEditTabs:activateProcessTab", {
+    logAppGenesisProcessEditorDebugV1("setupProcessEditTabs:activateProcessTab", {
       requestedTabKey: tabKey,
       resolvedTabKey,
       href: window.location.href
@@ -5760,19 +5760,19 @@ if (dropdownAvatarImageEl) {
 menuButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     const clickedMenuKey = normalizeMenuKey(btn.dataset.menu);
-    logAppVerboNavigationBootDebugV1("sidebar_click:before", {
+    logAppGenesisNavigationBootDebugV1("sidebar_click:before", {
       clickedMenuKey,
       hrefBefore: window.location.href,
-      activeMenuKeyBefore: (typeof window.__appverboGetActiveMenuKeyV1 === "function")
-        ? window.__appverboGetActiveMenuKeyV1()
+      activeMenuKeyBefore: (typeof window.__appgenesisGetActiveMenuKeyV1 === "function")
+        ? window.__appgenesisGetActiveMenuKeyV1()
         : null
     });
     activateMenu(clickedMenuKey, { resetDynamicToFirst: true, source: "click:sidebar" });
-    logAppVerboNavigationBootDebugV1("sidebar_click:after", {
+    logAppGenesisNavigationBootDebugV1("sidebar_click:after", {
       clickedMenuKey,
       hrefAfter: window.location.href,
-      activeMenuKeyAfter: (typeof window.__appverboGetActiveMenuKeyV1 === "function")
-        ? window.__appverboGetActiveMenuKeyV1()
+      activeMenuKeyAfter: (typeof window.__appgenesisGetActiveMenuKeyV1 === "function")
+        ? window.__appgenesisGetActiveMenuKeyV1()
         : null
     });
   });
@@ -5917,7 +5917,7 @@ function setupGeneratedInviteLinkCopy() {
   });
 }
 
-// APPVERBO_USER_CREATE_ACTION_MODE_V1_START
+// APPGENESIS_USER_CREATE_ACTION_MODE_V1_START
 (function setupUserCreateActionModeV1() {
   "use strict";
 
@@ -5957,9 +5957,9 @@ function setupGeneratedInviteLinkCopy() {
     syncUserCreateActionModeV1(document);
   }
 
-  window.AppVerboSyncUserCreateActionModeV1 = syncUserCreateActionModeV1;
+  window.AppGenesisSyncUserCreateActionModeV1 = syncUserCreateActionModeV1;
 })();
-// APPVERBO_USER_CREATE_ACTION_MODE_V1_END
+// APPGENESIS_USER_CREATE_ACTION_MODE_V1_END
 
 function setupCreateUserGenerateLinkShortcut() {
   const shortcutButtonEl = document.getElementById("create-user-generate-link-shortcut-btn");
@@ -6104,7 +6104,7 @@ setupProfileProcessTabs();
 setupMeuPerfilQuantityRules();
 setupConditionalProcessVisibility();
 setupProcessEditTabs();
-logAppVerboProcessEditorDebugV1("page_load:after_setup_snapshot", {
+logAppGenesisProcessEditorDebugV1("page_load:after_setup_snapshot", {
   href: window.location.href,
   activeTabKey: (function () {
     const activeLink = document.querySelector(".process-edit-tab-link.active");
@@ -6137,12 +6137,12 @@ setupGeneratedInviteLinkCopy();
 setupCreateUserGenerateLinkShortcut();
 setupSidebarSectionsEditor();
 if (
-  window.AppVerboProcessShell &&
+  window.AppGenesisProcessShell &&
   (
-    typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function" ||
-    typeof window.AppVerboProcessShell.enhanceLoadMoreTables === "function" ||
-    typeof window.AppVerboProcessShell.enhanceSearchableTableCards === "function" ||
-    typeof window.AppVerboProcessShell.enhanceResponsiveTableColumns === "function"
+    typeof window.AppGenesisProcessShell.enhanceTableActionMenus === "function" ||
+    typeof window.AppGenesisProcessShell.enhanceLoadMoreTables === "function" ||
+    typeof window.AppGenesisProcessShell.enhanceSearchableTableCards === "function" ||
+    typeof window.AppGenesisProcessShell.enhanceResponsiveTableColumns === "function"
   )
 ) {
   enhanceProcessShellTables(document);
@@ -6154,7 +6154,7 @@ setupTableLimiter("menu-ativo");
 setupTableLimiter("menu-inativo");
 setupTableLimiter("sessoes-ativo");
 setupTableLimiter("sessoes-inativo");
-// APPVERBO_PREVENT_AUTH_PROFILE_FALLBACK_V1_START
+// APPGENESIS_PREVENT_AUTH_PROFILE_FALLBACK_V1_START
 // Função para validar se o perfil de autorização foi explicitamente solicitado.
 function hasExplicitAuthProfileContextV1() {
   try {
@@ -6169,24 +6169,24 @@ function hasExplicitAuthProfileContextV1() {
     return (
       menuKey === "perfil_de_autorizacao" ||
       hasAuthorizationProfileTarget ||
-      (params.get("appverbo_after_save") === "1" && menuKey === "perfil_de_autorizacao")
+      (params.get("appgenesis_after_save") === "1" && menuKey === "perfil_de_autorizacao")
     );
   } catch (err) {
     return false;
   }
 }
-// APPVERBO_PREVENT_AUTH_PROFILE_FALLBACK_V1_END
+// APPGENESIS_PREVENT_AUTH_PROFILE_FALLBACK_V1_END
 
 const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => normalizeMenuKey(btn.dataset.menu)));
 let startupMenu = menuConfig[initialMenu] ? initialMenu : "home";
 
-// APPVERBO_FALLBACK_TO_HOME_RULE_V1_START
+// APPGENESIS_FALLBACK_TO_HOME_RULE_V1_START
 // Se o menu inicial pretendido for perfil_de_autorizacao mas não foi solicitado explicitamente,
 // forçamos o fallback para "home".
 if (startupMenu === "perfil_de_autorizacao" && !hasExplicitAuthProfileContextV1()) {
   startupMenu = "home";
 }
-// APPVERBO_FALLBACK_TO_HOME_RULE_V1_END
+// APPGENESIS_FALLBACK_TO_HOME_RULE_V1_END
 
 if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
   if (sidebarMenuKeys.has("home")) {
@@ -6199,7 +6199,7 @@ if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
     startupMenu = fallbackMenu || "home";
   }
 }
-(function logAppVerboBootNavigationDebugV1() {
+(function logAppGenesisBootNavigationDebugV1() {
   const navigationEntries = (
     window.performance && typeof window.performance.getEntriesByType === "function"
   )
@@ -6208,7 +6208,7 @@ if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
   const navigationType = navigationEntries.length ? String(navigationEntries[0].type || "") : "";
   const urlParams = new URLSearchParams(window.location.search);
 
-  logAppVerboNavigationBootDebugV1("boot:resolve", {
+  logAppGenesisNavigationBootDebugV1("boot:resolve", {
     href: window.location.href,
     navigationType,
     urlMenu: urlParams.get("menu"),
@@ -6230,10 +6230,10 @@ if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
 activateMenu(startupMenu, { resetDynamicToFirst: false, source: "boot" });
 handleHashNavigation(window.location.hash || "");
 
-logAppVerboNavigationBootDebugV1("boot:activated", {
+logAppGenesisNavigationBootDebugV1("boot:activated", {
   href: window.location.href,
-  activeMenuKey: (typeof window.__appverboGetActiveMenuKeyV1 === "function")
-    ? window.__appverboGetActiveMenuKeyV1()
+  activeMenuKey: (typeof window.__appgenesisGetActiveMenuKeyV1 === "function")
+    ? window.__appgenesisGetActiveMenuKeyV1()
     : null
 });
 
@@ -6266,7 +6266,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 }
 
-// APPVERBO_MEU_PERFIL_QUANTITY_RENDERER_V1_START
+// APPGENESIS_MEU_PERFIL_QUANTITY_RENDERER_V1_START
 //###################################################################################
 // (MEU_PERFIL_QUANTITY_RENDERER_V1) CAMPOS QUANTIDADE NO FORMULARIO MEU PERFIL
 //###################################################################################
@@ -6694,9 +6694,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(setupMeuPerfilQuantityRulesV1, 600);
 })();
 
-// APPVERBO_MEU_PERFIL_QUANTITY_RENDERER_V1_END
+// APPGENESIS_MEU_PERFIL_QUANTITY_RENDERER_V1_END
 
-// APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_START
+// APPGENESIS_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_START
 //###################################################################################
 // (MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1) VISUALIZACAO DOS CAMPOS QUANTIDADE
 //###################################################################################
@@ -6947,9 +6947,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(renderMeuPerfilQuantityReadonlyV1, 600);
 })();
 
-// APPVERBO_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
+// APPGENESIS_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
 
-// APPVERBO_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_START
+// APPGENESIS_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_START
 //###################################################################################
 // (MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1) EVITAR DUPLICACAO DO CAMPO ORIGEM
 //###################################################################################
@@ -7192,9 +7192,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 600);
 })();
 
-// APPVERBO_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_END
+// APPGENESIS_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_END
 
-// APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_START
+// APPGENESIS_MEU_PERFIL_EDIT_SECTION_FILTER_V1_START
 //###################################################################################
 // (MEU_PERFIL_EDIT_SECTION_FILTER_V1) FILTRAR CAMPOS DO EDITAR POR ABA/CABECALHO
 //###################################################################################
@@ -7509,9 +7509,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 1200);
 })();
 
-// APPVERBO_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
+// APPGENESIS_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
 
-// APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
+// APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
 //###################################################################################
 // (KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1) MANTER PROCESSO/ABA APOS GRAVAR
 //###################################################################################
@@ -7699,7 +7699,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       ensureHiddenInputKeepProcessV1(form, "profile_section").value = currentSection;
     }
 
-    ensureHiddenInputKeepProcessV1(form, "appverbo_after_save").value = "1";
+    ensureHiddenInputKeepProcessV1(form, "appgenesis_after_save").value = "1";
   }
 
   function bindProfileSaveContextKeepProcessV1() {
@@ -7735,7 +7735,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   if (
     window.HTMLFormElement &&
     window.HTMLFormElement.prototype &&
-    !window.HTMLFormElement.prototype.__appverboKeepProcessSubmitPatchedV1
+    !window.HTMLFormElement.prototype.__appgenesisKeepProcessSubmitPatchedV1
   ) {
     const nativeSubmit = window.HTMLFormElement.prototype.submit;
 
@@ -7744,7 +7744,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return nativeSubmit.call(this);
     };
 
-    window.HTMLFormElement.prototype.__appverboKeepProcessSubmitPatchedV1 = true;
+    window.HTMLFormElement.prototype.__appgenesisKeepProcessSubmitPatchedV1 = true;
   }
 
   if (document.readyState === "loading") {
@@ -7757,14 +7757,14 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(bindProfileSaveContextKeepProcessV1, 600);
 })();
 
-// APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
+// APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
 
-// APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_START
+// APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_START
 //###################################################################################
 // (POST_SAVE_CONTEXT_CAPTURE_V3) GUARDAR PROCESSO/ABA ANTES DE QUALQUER POST
 //###################################################################################
 
-(function setupAppVerboPostSaveContextCaptureV3() {
+(function setupAppGenesisPostSaveContextCaptureV3() {
   "use strict";
 
   //###################################################################################
@@ -8005,18 +8005,18 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
   function resolveAuthoritativeActiveMenuKeyForPostSaveV1() {
     // Sinal autoritativo do menu de topo realmente ativo na SPA (exposto por new_user.js em
-    // window.__appverboGetActiveMenuKeyV1, ver ativacao de menu). Navegacao por clique para
+    // window.__appgenesisGetActiveMenuKeyV1, ver ativacao de menu). Navegacao por clique para
     // qualquer menu que nao seja "administrativo" nao atualiza a URL (nao faz pushState), entao
     // window.location.href/bootstrap ficam desatualizados assim que o utilizador navega por
     // clique -- usar esse sinal evita que um submit feito depois de navegar por clique (ex.:
     // Estruturas > Menu) seja guardado com o menu errado (ex.: "home") e redirecionado para o
     // lugar errado apos o backend processar o POST.
-    if (typeof window.__appverboGetActiveMenuKeyV1 !== "function") {
+    if (typeof window.__appgenesisGetActiveMenuKeyV1 !== "function") {
       return "";
     }
 
     try {
-      return normalizePostSaveKeyV3(window.__appverboGetActiveMenuKeyV1());
+      return normalizePostSaveKeyV3(window.__appgenesisGetActiveMenuKeyV1());
     } catch (error) {
       return "";
     }
@@ -8032,7 +8032,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     );
 
     if (explicitFormMenu) {
-      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
         source: "explicit_form_menu_field",
         value: explicitFormMenu
       });
@@ -8042,7 +8042,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const authoritativeActiveMenu = resolveAuthoritativeActiveMenuKeyForPostSaveV1();
 
     if (authoritativeActiveMenu) {
-      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
         source: "authoritative_active_menu_key",
         value: authoritativeActiveMenu
       });
@@ -8058,7 +8058,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const urlMenu = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
 
     if (urlMenu) {
-      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
         source: "current_url_menu",
         value: urlMenu
       });
@@ -8076,7 +8076,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     );
 
     if (fallbackFormMenu) {
-      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
         source: "fallback_form_menu_field",
         value: fallbackFormMenu
       });
@@ -8087,7 +8087,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       const bootstrapMenu = normalizePostSaveKeyV3(initialMenu);
 
       if (bootstrapMenu) {
-        logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+        logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
           source: "bootstrap_initial_menu",
           value: bootstrapMenu
         });
@@ -8095,7 +8095,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       }
     }
 
-    logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+    logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
       source: "none",
       value: ""
     });
@@ -8110,7 +8110,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     // Subprocessos administrativos (menu, sessoes, perfil de autorizacao, objeto de autorizacao)
     // injetam a sua propria URL de retorno, calculada e validada pelo backend, num campo hidden
     // cujo nome termina em "_return_url" (ex.: "subprocess_return_url", "sidebar_section_return_url",
-    // "auth_profile_return_url" -- ver return_url_field em appverbo/admin_subprocesses/registry.py).
+    // "auth_profile_return_url" -- ver return_url_field em appgenesis/admin_subprocesses/registry.py).
     // Essa e a fonte mais confiavel de "para onde voltar apos o POST": ao contrario da
     // reconstrucao generica abaixo (baseada em URL/bootstrap, que fica desatualizada em
     // navegacao client-side sem pushState), o backend ja sabe exatamente o menu/aba/target
@@ -8149,9 +8149,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       }
 
       if (configReturnUrlObj && configReturnUrlObj.pathname === "/users/new") {
-        configReturnUrlObj.searchParams.set("appverbo_after_save", "1");
+        configReturnUrlObj.searchParams.set("appgenesis_after_save", "1");
 
-        logAppVerboProcessEditorDebugV1("buildPostSaveReturnUrlV3:resolved", {
+        logAppGenesisProcessEditorDebugV1("buildPostSaveReturnUrlV3:resolved", {
           source: "config_provided_return_url_field",
           value: configReturnUrlObj.pathname + configReturnUrlObj.search + configReturnUrlObj.hash
         });
@@ -8292,7 +8292,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       }
     }
 
-    currentUrl.searchParams.set("appverbo_after_save", "1");
+    currentUrl.searchParams.set("appgenesis_after_save", "1");
 
     return currentUrl.pathname + currentUrl.search + currentUrl.hash;
   }
@@ -8333,7 +8333,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return;
     }
 
-    logAppVerboProcessEditorDebugV1("storePostSaveContextV3:submit", {
+    logAppGenesisProcessEditorDebugV1("storePostSaveContextV3:submit", {
       formAction: form.getAttribute("action") || form.action,
       formMethod: method,
       locationHrefBeforeSubmit: window.location.href,
@@ -8342,13 +8342,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
     const returnUrl = buildPostSaveReturnUrlV3(form);
 
-    logAppVerboProcessEditorDebugV1("storePostSaveContextV3:computed_return_url", {
+    logAppGenesisProcessEditorDebugV1("storePostSaveContextV3:computed_return_url", {
       returnUrl
     });
 
     try {
       window.sessionStorage.setItem(
-        APPVERBO_POST_SAVE_CONTEXT_KEY_V3,
+        APPGENESIS_POST_SAVE_CONTEXT_KEY_V3,
         JSON.stringify({
           url: returnUrl,
           createdAt: Date.now()
@@ -8358,7 +8358,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       // Ignora falhas de sessionStorage.
     }
 
-    ensureHiddenPostSaveInputV3(form, "appverbo_after_save").value = "1";
+    ensureHiddenPostSaveInputV3(form, "appgenesis_after_save").value = "1";
     ensureHiddenPostSaveInputV3(form, "return_url").value = returnUrl;
   }
 
@@ -8382,7 +8382,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     if (
       window.HTMLFormElement &&
       window.HTMLFormElement.prototype &&
-      !window.HTMLFormElement.prototype.__appverboPostSaveContextPatchedV3
+      !window.HTMLFormElement.prototype.__appgenesisPostSaveContextPatchedV3
     ) {
       const nativeSubmit = window.HTMLFormElement.prototype.submit;
 
@@ -8391,16 +8391,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
         return nativeSubmit.call(this);
       };
 
-      window.HTMLFormElement.prototype.__appverboPostSaveContextPatchedV3 = true;
+      window.HTMLFormElement.prototype.__appgenesisPostSaveContextPatchedV3 = true;
     }
   }
 
   bindPostSaveContextCaptureV3();
 })();
 
-// APPVERBO_POST_SAVE_CONTEXT_CAPTURE_V3_END
+// APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_END
 
-// APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_START
+// APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_START
 //###################################################################################
 // (RETURN_URL_POST_SAVE_CAPTURE_V4) ENVIAR CONTEXTO ATUAL ANTES DO POST
 //###################################################################################
@@ -8625,9 +8625,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     // resolveAuthoritativeActiveMenuKeyForPostSaveV1, noutro escopo de IIFE deste ficheiro):
     // navegacao por clique para menus que nao sejam "administrativo" nao atualiza a URL, entao
     // "urlMenu" abaixo fica desatualizado assim que o utilizador navega por clique.
-    if (typeof window.__appverboGetActiveMenuKeyV1 === "function") {
+    if (typeof window.__appgenesisGetActiveMenuKeyV1 === "function") {
       try {
-        const authoritativeActiveMenu = normalizeReturnUrlKeyV4(window.__appverboGetActiveMenuKeyV1());
+        const authoritativeActiveMenu = normalizeReturnUrlKeyV4(window.__appgenesisGetActiveMenuKeyV1());
         if (authoritativeActiveMenu) {
           return authoritativeActiveMenu;
         }
@@ -8751,7 +8751,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       }
     }
 
-    url.searchParams.set("appverbo_after_save", "1");
+    url.searchParams.set("appgenesis_after_save", "1");
 
     return url.pathname + url.search + url.hash;
   }
@@ -8774,11 +8774,11 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const returnUrl = buildReturnUrlPostSaveV4(form);
 
     ensureHiddenReturnUrlInputV4(form, "return_url").value = returnUrl;
-    ensureHiddenReturnUrlInputV4(form, "appverbo_after_save").value = "1";
+    ensureHiddenReturnUrlInputV4(form, "appgenesis_after_save").value = "1";
 
     try {
       window.sessionStorage.setItem(
-        "appverbo:return-url-post-save-v4",
+        "appgenesis:return-url-post-save-v4",
         JSON.stringify({
           url: returnUrl,
           createdAt: Date.now()
@@ -8813,21 +8813,21 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     syncReturnUrlPostSaveV4(event.target);
 
     const returnUrlInput = event.target.querySelector("input[name='return_url']");
-    const afterSaveInput = event.target.querySelector("input[name='appverbo_after_save']");
+    const afterSaveInput = event.target.querySelector("input[name='appgenesis_after_save']");
 
     if (returnUrlInput) {
       event.formData.set("return_url", returnUrlInput.value);
     }
 
     if (afterSaveInput) {
-      event.formData.set("appverbo_after_save", afterSaveInput.value);
+      event.formData.set("appgenesis_after_save", afterSaveInput.value);
     }
   }, true);
 
   if (
     window.HTMLFormElement &&
     window.HTMLFormElement.prototype &&
-    !window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV4
+    !window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV4
   ) {
     const nativeSubmit = window.HTMLFormElement.prototype.submit;
 
@@ -8836,13 +8836,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return nativeSubmit.call(this);
     };
 
-    window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV4 = true;
+    window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV4 = true;
   }
 })();
 
-// APPVERBO_RETURN_URL_POST_SAVE_CAPTURE_V4_END
+// APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_END
 
-// APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_START
+// APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_START
 //###################################################################################
 // (FRONTEND_RETURN_URL_POST_SAVE_V6) ENVIAR RETURN_URL SEGURO ANTES DO POST
 //###################################################################################
@@ -9070,7 +9070,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const isEntityUpdateAction = actionLookup.includes("/entities/update");
 
     url.pathname = "/users/new";
-    url.searchParams.set("appverbo_after_save", "1");
+    url.searchParams.set("appgenesis_after_save", "1");
 
     if (actionLookup.includes("/users/profile/personal")) {
       const profileSection = getCurrentProfileSectionReturnUrlV6();
@@ -9151,7 +9151,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const returnUrl = buildReturnUrlPostSaveV6(form);
 
     ensureHiddenReturnUrlInputV6(form, "return_url").value = returnUrl;
-    ensureHiddenReturnUrlInputV6(form, "appverbo_after_save").value = "1";
+    ensureHiddenReturnUrlInputV6(form, "appgenesis_after_save").value = "1";
   }
 
   document.addEventListener("submit", function (event) {
@@ -9178,21 +9178,21 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     syncReturnUrlPostSaveV6(event.target);
 
     const returnUrlInput = event.target.querySelector("input[name='return_url']");
-    const afterSaveInput = event.target.querySelector("input[name='appverbo_after_save']");
+    const afterSaveInput = event.target.querySelector("input[name='appgenesis_after_save']");
 
     if (returnUrlInput) {
       event.formData.set("return_url", returnUrlInput.value);
     }
 
     if (afterSaveInput) {
-      event.formData.set("appverbo_after_save", afterSaveInput.value);
+      event.formData.set("appgenesis_after_save", afterSaveInput.value);
     }
   }, true);
 
   if (
     window.HTMLFormElement &&
     window.HTMLFormElement.prototype &&
-    !window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV6
+    !window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV6
   ) {
     const nativeSubmit = window.HTMLFormElement.prototype.submit;
 
@@ -9201,13 +9201,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return nativeSubmit.call(this);
     };
 
-    window.HTMLFormElement.prototype.__appverboReturnUrlPostSavePatchedV6 = true;
+    window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV6 = true;
   }
 })();
 
-// APPVERBO_FRONTEND_RETURN_URL_POST_SAVE_V6_END
+// APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_END
 
-// APPVERBO_INITIAL_PROFILE_SECTION_FROM_URL_V1_START
+// APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_START
 //###################################################################################
 // (INITIAL_PROFILE_SECTION_FROM_URL_V1) ATIVAR ABA DO MEU PERFIL APOS POS-SAVE
 //###################################################################################
@@ -9354,7 +9354,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     setProfileSectionInputsV1(sectionKey);
 
     document.dispatchEvent(
-      new CustomEvent("appverbo:profile-section-restored", {
+      new CustomEvent("appgenesis:profile-section-restored", {
         detail: {
           sectionKey
         }
@@ -9373,9 +9373,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(activateProfileSectionFromUrlV1, 900);
 })();
 
-// APPVERBO_INITIAL_PROFILE_SECTION_FROM_URL_V1_END
+// APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_END
 
-// APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_START
+// APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_START
 //###################################################################################
 // (MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1) APLICAR CAMPOS SUBSEQUENTES NO MEU PERFIL
 //###################################################################################
@@ -9871,7 +9871,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   document.addEventListener("input", scheduleMeuPerfilSubsequentVisibilityV1, true);
   document.addEventListener("change", scheduleMeuPerfilSubsequentVisibilityV1, true);
   document.addEventListener("click", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("appverbo:profile-section-restored", scheduleMeuPerfilSubsequentVisibilityV1, true);
+  document.addEventListener("appgenesis:profile-section-restored", scheduleMeuPerfilSubsequentVisibilityV1, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", scheduleMeuPerfilSubsequentVisibilityV1);
@@ -9884,9 +9884,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   window.setTimeout(scheduleMeuPerfilSubsequentVisibilityV1, 1200);
 })();
 
-// APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
-/* APPVERBO_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
-function appverboAutoDismissFlashMessages_v1() {
+// APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
+/* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
+function appgenesisAutoDismissFlashMessages_v1() {
   const successAlerts = Array.from(document.querySelectorAll(".alert.ok"));
 
   successAlerts.forEach((alertElement) => {
@@ -9934,10 +9934,10 @@ function appverboAutoDismissFlashMessages_v1() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", appverboAutoDismissFlashMessages_v1);
-/* APPVERBO_AUTO_DISMISS_FLASH_MESSAGES_V1_END */
+document.addEventListener("DOMContentLoaded", appgenesisAutoDismissFlashMessages_v1);
+/* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_END */
 
-// APPVERBO_ADMIN_POPSTATE_NAV_V1_START
+// APPGENESIS_ADMIN_POPSTATE_NAV_V1_START
 window.addEventListener("popstate", function () {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -9971,4 +9971,4 @@ window.addEventListener("popstate", function () {
     debugTabsLogV1("popstate:admin-restored", { adminTab, resolvedTarget });
   } catch (_) {}
 });
-// APPVERBO_ADMIN_POPSTATE_NAV_V1_END
+// APPGENESIS_ADMIN_POPSTATE_NAV_V1_END

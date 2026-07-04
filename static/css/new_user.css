@@ -2643,7 +2643,7 @@ button[data-admin-tab].active * {
   cursor: not-allowed;
 }
 
-/* APPVERBO_GLOBAL_PAGE_RESPONSIVE_V1_START */
+/* APPGENESIS_GLOBAL_PAGE_RESPONSIVE_V1_START */
 
 /* ###################################################################################
    PAGINA GLOBAL - RESPONSIVIDADE DO LAYOUT, CARDS E TABELAS
@@ -2906,9 +2906,9 @@ textarea {
   }
 }
 
-/* APPVERBO_GLOBAL_PAGE_RESPONSIVE_V1_END */
+/* APPGENESIS_GLOBAL_PAGE_RESPONSIVE_V1_END */
 
-/* APPVERBO_PROCESS_FIELDS_CONFIG_LAYOUT_V1_START */
+/* APPGENESIS_PROCESS_FIELDS_CONFIG_LAYOUT_V1_START */
 
 /* ###################################################################################
    ADMINISTRATIVO > MENU > CONFIGURAÇÃO DOS CAMPOS
@@ -3080,12 +3080,12 @@ textarea {
   }
 }
 
-/* APPVERBO_PROCESS_FIELDS_CONFIG_LAYOUT_V1_END */
+/* APPGENESIS_PROCESS_FIELDS_CONFIG_LAYOUT_V1_END */
 
-/* APPVERBO: PROCESS TABS EQUAL WIDTH V1 */
+/* APPGENESIS: PROCESS TABS EQUAL WIDTH V1 */
 #menu-tabs-card #submenu-items.menu-tabs,
 .profile-process-tabs {
-  --appverbo-process-tab-equal-width: auto;
+  --appgenesis-process-tab-equal-width: auto;
 }
 
 #menu-tabs-card #submenu-items.menu-tabs {
@@ -3094,8 +3094,8 @@ textarea {
 
 #menu-tabs-card #submenu-items.menu-tabs .submenu-item,
 .profile-process-tabs .profile-process-tab-btn {
-  width: var(--appverbo-process-tab-equal-width, auto);
-  min-width: var(--appverbo-process-tab-equal-width, auto);
+  width: var(--appgenesis-process-tab-equal-width, auto);
+  min-width: var(--appgenesis-process-tab-equal-width, auto);
   text-align: center;
   justify-content: center;
 }
@@ -3111,7 +3111,7 @@ textarea {
   justify-content: center;
 }
 
-/* APPVERBO_ENTITY_LAYOUT_4_FIELDS_V1_START */
+/* APPGENESIS_ENTITY_LAYOUT_4_FIELDS_V1_START */
 .entity-panel-card .entity-first-row,
 .entity-panel-card .entity-second-row,
 .entity-panel-card .entity-third-row,
@@ -3203,19 +3203,19 @@ textarea {
     grid-column: auto;
   }
 }
-/* APPVERBO_ENTITY_LAYOUT_4_FIELDS_V1_END */
+/* APPGENESIS_ENTITY_LAYOUT_4_FIELDS_V1_END */
 
 
 
-/* APPVERBO_ADMIN_USERS_TABLE_FOOTER_LAYOUT_V10_START */
+/* APPGENESIS_ADMIN_USERS_TABLE_FOOTER_LAYOUT_V10_START */
 #admin-users-created-card table,
 #inactive-users-card table {
   margin-bottom: 0;
 }
 
-/* APPVERBO_ADMIN_USERS_TABLE_FOOTER_LAYOUT_V10_END */
+/* APPGENESIS_ADMIN_USERS_TABLE_FOOTER_LAYOUT_V10_END */
 
-/* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_START */
+/* APPGENESIS_TABLE_PAGINATION_SECOND_IMAGE_V2_START */
 /* Paginação dos cards administrativos no mesmo padrão visual da segunda imagem. */
 
 #inactive-users-card {
@@ -5343,8 +5343,8 @@ textarea {
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
-/* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_END */
-/* APPVERBO_ADMIN_USER_FORM_3_COLUMNS_V1_START */
+/* APPGENESIS_TABLE_PAGINATION_SECOND_IMAGE_V2_END */
+/* APPGENESIS_ADMIN_USER_FORM_3_COLUMNS_V1_START */
 /* Subprocesso Utilizador: usa 3 campos por linha para ganhar espaço visual. */
 
 #create-user-card .grid,
@@ -5384,13 +5384,13 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
-/* APPVERBO_ADMIN_USER_FORM_3_COLUMNS_V1_END */
+/* APPGENESIS_ADMIN_USER_FORM_3_COLUMNS_V1_END */
 
-/* APPVERBO_SAVE_CANCEL_BUTTON_STANDARD_V1_START */
+/* APPGENESIS_SAVE_CANCEL_BUTTON_STANDARD_V1_START */
 
 :root {
-  --appverbo-save-cancel-button-width-v1: 112px;
-  --appverbo-save-cancel-button-height-v1: 38px;
+  --appgenesis-save-cancel-button-width-v1: 112px;
+  --appgenesis-save-cancel-button-height-v1: 38px;
 }
 
 .action-btn,
@@ -5406,10 +5406,10 @@ input.action-btn-cancel,
 .form-action-row > .action-btn-cancel,
 .appgenesis-sidebar-sections-footer-v2 > .action-btn,
 .appgenesis-sidebar-sections-footer-v2 > .action-btn-cancel {
-  min-width: var(--appverbo-save-cancel-button-width-v1) !important;
-  width: var(--appverbo-save-cancel-button-width-v1) !important;
-  height: var(--appverbo-save-cancel-button-height-v1) !important;
-  min-height: var(--appverbo-save-cancel-button-height-v1) !important;
+  min-width: var(--appgenesis-save-cancel-button-width-v1) !important;
+  width: var(--appgenesis-save-cancel-button-width-v1) !important;
+  height: var(--appgenesis-save-cancel-button-height-v1) !important;
+  min-height: var(--appgenesis-save-cancel-button-height-v1) !important;
   padding: 0 14px !important;
   box-sizing: border-box !important;
   display: inline-flex !important;
@@ -5444,9 +5444,9 @@ input.action-btn-cancel,
   order: 2 !important;
 }
 
-/* APPVERBO_SAVE_CANCEL_BUTTON_STANDARD_V1_END */
+/* APPGENESIS_SAVE_CANCEL_BUTTON_STANDARD_V1_END */
 
-/* APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_V2_START */
+/* APPGENESIS_CREATE_ENTRY_SEPARATE_BLOCK_V2_START */
 
 .entity-create-toolbar,
 .appgenesis-create-entry-block-v1 {
@@ -5471,17 +5471,17 @@ input.action-btn-cancel,
   align-self: flex-start;
 }
 
-/* APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_V2_END */
+/* APPGENESIS_CREATE_ENTRY_SEPARATE_BLOCK_V2_END */
 
-/* APPVERBO_CREATE_CARD_STANDARD_V4_START */
+/* APPGENESIS_CREATE_CARD_STANDARD_V4_START */
 
 :root {
-  --appverbo-create-card-background-v4: #f3f6fb;
-  --appverbo-create-card-border-v4: #d5dceb;
-  --appverbo-create-card-radius-v4: 12px;
-  --appverbo-create-card-min-height-v4: 64px;
-  --appverbo-create-card-padding-v4: 16px;
-  --appverbo-create-card-margin-bottom-v4: 12px;
+  --appgenesis-create-card-background-v4: #f3f6fb;
+  --appgenesis-create-card-border-v4: #d5dceb;
+  --appgenesis-create-card-radius-v4: 12px;
+  --appgenesis-create-card-min-height-v4: 64px;
+  --appgenesis-create-card-padding-v4: 16px;
+  --appgenesis-create-card-margin-bottom-v4: 12px;
 }
 
 .appgenesis-standard-create-card-v4,
@@ -5489,12 +5489,12 @@ input.action-btn-cancel,
 .appgenesis-sessoes-create-card-v3,
 #admin-sidebar-sections-create-card {
   width: 100% !important;
-  min-height: var(--appverbo-create-card-min-height-v4) !important;
-  padding: var(--appverbo-create-card-padding-v4) !important;
-  margin: 0 0 var(--appverbo-create-card-margin-bottom-v4) !important;
-  border: 1px solid var(--appverbo-create-card-border-v4) !important;
-  border-radius: var(--appverbo-create-card-radius-v4) !important;
-  background: var(--appverbo-create-card-background-v4) !important;
+  min-height: var(--appgenesis-create-card-min-height-v4) !important;
+  padding: var(--appgenesis-create-card-padding-v4) !important;
+  margin: 0 0 var(--appgenesis-create-card-margin-bottom-v4) !important;
+  border: 1px solid var(--appgenesis-create-card-border-v4) !important;
+  border-radius: var(--appgenesis-create-card-radius-v4) !important;
+  background: var(--appgenesis-create-card-background-v4) !important;
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
@@ -5540,13 +5540,13 @@ input.action-btn-cancel,
   width: 100% !important;
   margin-top: 14px !important;
   padding-top: 14px !important;
-  border-top: 1px solid var(--appverbo-create-card-border-v4) !important;
+  border-top: 1px solid var(--appgenesis-create-card-border-v4) !important;
 }
 
-/* APPVERBO_CREATE_CARD_STANDARD_V4_END */
+/* APPGENESIS_CREATE_CARD_STANDARD_V4_END */
 
 /* ###################################################################################
-   APPVERBO_TOP_SUBMENU_SAP_STYLE_V2_START
+   APPGENESIS_TOP_SUBMENU_SAP_STYLE_V2_START
 ################################################################################### */
 
 #menu-tabs-card {
@@ -5659,9 +5659,9 @@ input.action-btn-cancel,
   border-radius: 4px !important;
 }
 
-/* APPVERBO_TOP_SUBMENU_SAP_STYLE_V2_END */
+/* APPGENESIS_TOP_SUBMENU_SAP_STYLE_V2_END */
 
-/* APPVERBO_USER_CREATE_SUMMARY_HIDE_V1_START */
+/* APPGENESIS_USER_CREATE_SUMMARY_HIDE_V1_START */
 #create-user-collapse[open] > summary.appgenesis-process-action-toggle-v1 {
   display: none !important;
 }
@@ -5669,4 +5669,4 @@ input.action-btn-cancel,
 #create-user-collapse[open] > .entity-create-body {
   margin-top: 0 !important;
 }
-/* APPVERBO_USER_CREATE_SUMMARY_HIDE_V1_END */
+/* APPGENESIS_USER_CREATE_SUMMARY_HIDE_V1_END */

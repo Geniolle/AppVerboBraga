@@ -1,56 +1,56 @@
-// APPVERBO_PROCESS_EDITOR_DEBUG_V1_START
+// APPGENESIS_PROCESS_EDITOR_DEBUG_V1_START
 //###################################################################################
 // (PROCESS_EDITOR_DEBUG_V1) LOGS DE DIAGNOSTICO DO EDITOR DE PROCESSO, ATRAS DE FLAG
 //###################################################################################
 
-function isAppVerboProcessEditorDebugEnabledV1() {
+function isAppGenesisProcessEditorDebugEnabledV1() {
   try {
-    return window.localStorage.getItem("appverbo_debug_process_editor") === "1";
+    return window.localStorage.getItem("appgenesis_debug_process_editor") === "1";
   } catch (error) {
     return false;
   }
 }
 
-function logAppVerboProcessEditorDebugV1(event, payload) {
-  if (!isAppVerboProcessEditorDebugEnabledV1()) {
+function logAppGenesisProcessEditorDebugV1(event, payload) {
+  if (!isAppGenesisProcessEditorDebugEnabledV1()) {
     return;
   }
   try {
     // eslint-disable-next-line no-console
-    console.log("[AppVerbo][ProcessEditorDebug]", event, payload || {});
+    console.log("[AppGenesis][ProcessEditorDebug]", event, payload || {});
   } catch (error) {
     // Ignorar falhas de logging (ex.: console indisponivel).
   }
 }
-// APPVERBO_PROCESS_EDITOR_DEBUG_V1_END
+// APPGENESIS_PROCESS_EDITOR_DEBUG_V1_END
 
-// APPVERBO_NAVIGATION_BOOT_DEBUG_V1_START
+// APPGENESIS_NAVIGATION_BOOT_DEBUG_V1_START
 //###################################################################################
 // (NAVIGATION_BOOT_DEBUG_V1) LOGS DE DIAGNOSTICO DO BOOT DE NAVEGACAO, ATRAS DE FLAG
 //###################################################################################
 
-function isAppVerboNavigationBootDebugEnabledV1() {
+function isAppGenesisNavigationBootDebugEnabledV1() {
   try {
-    return window.localStorage.getItem("appverbo_debug_navigation_boot") === "1";
+    return window.localStorage.getItem("appgenesis_debug_navigation_boot") === "1";
   } catch (error) {
     return false;
   }
 }
 
-function logAppVerboNavigationBootDebugV1(event, payload) {
-  if (!isAppVerboNavigationBootDebugEnabledV1()) {
+function logAppGenesisNavigationBootDebugV1(event, payload) {
+  if (!isAppGenesisNavigationBootDebugEnabledV1()) {
     return;
   }
   try {
     // eslint-disable-next-line no-console
-    console.log("[AppVerbo][NavigationBootDebug]", event, payload || {});
+    console.log("[AppGenesis][NavigationBootDebug]", event, payload || {});
   } catch (error) {
     // Ignorar falhas de logging (ex.: console indisponivel).
   }
 }
-// APPVERBO_NAVIGATION_BOOT_DEBUG_V1_END
+// APPGENESIS_NAVIGATION_BOOT_DEBUG_V1_END
 
-// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_START
+// APPGENESIS_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_START
 //###################################################################################
 // (POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3) RETORNO POS-SAVE VS REFRESH MANUAL
 //
@@ -60,10 +60,10 @@ function logAppVerboNavigationBootDebugV1(event, payload) {
 // de mostrar Home.
 //###################################################################################
 
-const APPVERBO_POST_SAVE_CONTEXT_KEY_V3 = "appverbo:post-save-context-v3";
-const APPVERBO_POST_SAVE_CONTEXT_MAX_AGE_MS_V3 = 120000;
+const APPGENESIS_POST_SAVE_CONTEXT_KEY_V3 = "appgenesis:post-save-context-v3";
+const APPGENESIS_POST_SAVE_CONTEXT_MAX_AGE_MS_V3 = 120000;
 
-function getAppVerboCurrentUrlPostSaveV3() {
+function getAppGenesisCurrentUrlPostSaveV3() {
   try {
     return new URL(window.location.href);
   } catch (error) {
@@ -71,12 +71,12 @@ function getAppVerboCurrentUrlPostSaveV3() {
   }
 }
 
-function isAppVerboPostSaveFeedbackUrlV3(url) {
+function isAppGenesisPostSaveFeedbackUrlV3(url) {
   if (!url) {
     return false;
   }
 
-  if (url.searchParams.get("appverbo_after_save") === "1") {
+  if (url.searchParams.get("appgenesis_after_save") === "1") {
     return true;
   }
 
@@ -96,11 +96,11 @@ function isAppVerboPostSaveFeedbackUrlV3(url) {
   return false;
 }
 
-function readAndClearAppVerboPostSaveContextV3() {
+function readAndClearAppGenesisPostSaveContextV3() {
   try {
-    const rawValue = window.sessionStorage.getItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3) || "";
+    const rawValue = window.sessionStorage.getItem(APPGENESIS_POST_SAVE_CONTEXT_KEY_V3) || "";
 
-    logAppVerboProcessEditorDebugV1("readAndClearAppVerboPostSaveContextV3:raw_session_storage", {
+    logAppGenesisProcessEditorDebugV1("readAndClearAppGenesisPostSaveContextV3:raw_session_storage", {
       href: window.location.href,
       rawValue: rawValue || null
     });
@@ -109,12 +109,12 @@ function readAndClearAppVerboPostSaveContextV3() {
       return null;
     }
 
-    window.sessionStorage.removeItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3);
+    window.sessionStorage.removeItem(APPGENESIS_POST_SAVE_CONTEXT_KEY_V3);
 
     const parsedValue = JSON.parse(rawValue);
     const createdAt = Number(parsedValue && parsedValue.createdAt || 0);
 
-    if (!createdAt || Date.now() - createdAt > APPVERBO_POST_SAVE_CONTEXT_MAX_AGE_MS_V3) {
+    if (!createdAt || Date.now() - createdAt > APPGENESIS_POST_SAVE_CONTEXT_MAX_AGE_MS_V3) {
       return null;
     }
 
@@ -148,7 +148,7 @@ function copyPostSaveFeedbackParamsV3(sourceUrl, targetUrl) {
 }
 
 function clearPostSaveFeedbackMarkersFromUrlV3() {
-  const url = getAppVerboCurrentUrlPostSaveV3();
+  const url = getAppGenesisCurrentUrlPostSaveV3();
 
   if (!url) {
     return;
@@ -159,7 +159,7 @@ function clearPostSaveFeedbackMarkersFromUrlV3() {
   Array.from(url.searchParams.keys()).forEach((rawKey) => {
     const key = String(rawKey || "").trim().toLowerCase();
 
-    if (key === "appverbo_after_save") {
+    if (key === "appgenesis_after_save") {
       url.searchParams.delete(rawKey);
       changed = true;
     }
@@ -210,9 +210,9 @@ function hasProtectedReloadNavigationContextV1(url) {
 }
 
 function redirectToStoredPostSaveContextV3(storedContext) {
-  const currentUrl = getAppVerboCurrentUrlPostSaveV3();
+  const currentUrl = getAppGenesisCurrentUrlPostSaveV3();
 
-  logAppVerboProcessEditorDebugV1("redirectToStoredPostSaveContextV3:entry", {
+  logAppGenesisProcessEditorDebugV1("redirectToStoredPostSaveContextV3:entry", {
     currentHref: window.location.href,
     storedContextUrl: storedContext ? storedContext.url : null,
     storedContextCreatedAt: storedContext ? storedContext.createdAt : null
@@ -245,7 +245,7 @@ function redirectToStoredPostSaveContextV3(storedContext) {
   }
 
   const currentAdminTab = String(currentUrl.searchParams.get("admin_tab") || "").trim();
-  const currentHasFeedback = isAppVerboPostSaveFeedbackUrlV3(currentUrl);
+  const currentHasFeedback = isAppGenesisPostSaveFeedbackUrlV3(currentUrl);
   const currentMenu = String(currentUrl.searchParams.get("menu") || "").trim();
   const storedAdminTab = String(targetUrl.searchParams.get("admin_tab") || "").trim();
   const storedMenu = String(targetUrl.searchParams.get("menu") || "").trim();
@@ -264,21 +264,21 @@ function redirectToStoredPostSaveContextV3(storedContext) {
     return false;
   }
 
-  targetUrl.searchParams.set("appverbo_after_save", "1");
+  targetUrl.searchParams.set("appgenesis_after_save", "1");
   copyPostSaveFeedbackParamsV3(currentUrl, targetUrl);
 
   const targetPath = targetUrl.pathname + targetUrl.search + targetUrl.hash;
   const currentPath = currentUrl.pathname + currentUrl.search + currentUrl.hash;
 
   if (targetPath === currentPath) {
-    logAppVerboProcessEditorDebugV1("redirectToStoredPostSaveContextV3:skip_same_path", {
+    logAppGenesisProcessEditorDebugV1("redirectToStoredPostSaveContextV3:skip_same_path", {
       currentPath,
       targetPath
     });
     return false;
   }
 
-  logAppVerboProcessEditorDebugV1("redirectToStoredPostSaveContextV3:location.replace", {
+  logAppGenesisProcessEditorDebugV1("redirectToStoredPostSaveContextV3:location.replace", {
     currentPath,
     targetPath,
     storedContextUrl: storedContext.url,
@@ -315,11 +315,11 @@ function normalizeReloadToHomeV1() {
     return false;
   }
 
-  const currentUrlForRefreshGuard = getAppVerboCurrentUrlPostSaveV3();
-  const isPostSaveFeedbackUrl = isAppVerboPostSaveFeedbackUrlV3(currentUrlForRefreshGuard);
+  const currentUrlForRefreshGuard = getAppGenesisCurrentUrlPostSaveV3();
+  const isPostSaveFeedbackUrl = isAppGenesisPostSaveFeedbackUrlV3(currentUrlForRefreshGuard);
   const hasProtectedReloadContext = hasProtectedReloadNavigationContextV1(currentUrlForRefreshGuard);
 
-  logAppVerboNavigationBootDebugV1("reload_guard:evaluate", {
+  logAppGenesisNavigationBootDebugV1("reload_guard:evaluate", {
     href: window.location.href,
     navigationType: "reload",
     isPostSaveFeedbackUrl,
@@ -343,7 +343,7 @@ function normalizeReloadToHomeV1() {
     return false;
   }
 
-  logAppVerboNavigationBootDebugV1("reload_guard:location_replace_home", {
+  logAppGenesisNavigationBootDebugV1("reload_guard:location_replace_home", {
     from: window.location.href,
     to: homeUrl,
     hadPostSaveFeedbackMarkers: isPostSaveFeedbackUrl
@@ -352,15 +352,15 @@ function normalizeReloadToHomeV1() {
   return true;
 }
 
-const appverboStoredPostSaveContextV3 = readAndClearAppVerboPostSaveContextV3();
+const appgenesisStoredPostSaveContextV3 = readAndClearAppGenesisPostSaveContextV3();
 
-if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
+if (redirectToStoredPostSaveContextV3(appgenesisStoredPostSaveContextV3)) {
   // A navegacao continua no mesmo processo/aba onde o POST foi executado.
 } else if (!normalizeReloadToHomeV1()) {
-  const currentUrlForFeedbackCleanup = getAppVerboCurrentUrlPostSaveV3();
+  const currentUrlForFeedbackCleanup = getAppGenesisCurrentUrlPostSaveV3();
 
-  if (isAppVerboPostSaveFeedbackUrlV3(currentUrlForFeedbackCleanup)) {
+  if (isAppGenesisPostSaveFeedbackUrlV3(currentUrlForFeedbackCleanup)) {
     window.setTimeout(clearPostSaveFeedbackMarkersFromUrlV3, 600);
   }
 }
-// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_END
+// APPGENESIS_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_END

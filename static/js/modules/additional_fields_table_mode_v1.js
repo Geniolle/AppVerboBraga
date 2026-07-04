@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - CAMPOS ADICIONAIS EM TABELA FECHADA / SIMPLIFICADA - V1
+// APPGENESIS - CAMPOS ADICIONAIS EM TABELA FECHADA / SIMPLIFICADA - V1
 //###################################################################################
 
 (function () {

@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - PROCESS LISTS MANAGER V1
+// APPGENESIS - PROCESS LISTS MANAGER V1
 //###################################################################################
 
 (function (window, document) {
@@ -12,7 +12,7 @@
   //###################################################################################
 
   function getCore_v1() {
-    return window.AppVerboConfigurableItems || {};
+    return window.AppGenesisConfigurableItems || {};
   }
 
   function toSafeString_v1(value) {
@@ -253,7 +253,7 @@
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
 
-    form.addEventListener("appverbo:cancelled", (event) => {
+    form.addEventListener("appgenesis:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
 
       if (detail.trigger !== elements.cancelButton) {

@@ -16,7 +16,7 @@ docker compose exec db psql -U postgres -d app_igreja -c "select column_name, da
 docker compose exec db psql -U postgres -d app_igreja -c "select id, entity_id, profile_name, process_key, process_label, subprocess_key, subprocess_label, department_name, status, visibility_scope_mode, legacy_record_id, created_by_user_id, updated_by_user_id, created_at, updated_at from process_view_authorization_rules order by id;"
 docker compose exec db psql -U postgres -d app_igreja -c "select count(*) as matching_users from users u join members m on m.id = u.member_id where coalesce(m.profile_custom_fields,'') ilike '%Gestor de Tesouraria%' or coalesce(m.profile_custom_fields,'') ilike '%Extrato%' or coalesce(m.profile_custom_fields,'') ilike '%Importar extrato%' or coalesce(m.profile_custom_fields,'') ilike '%Dados de extrato%';"
 docker compose exec db psql -U postgres -d app_igreja -c "select id, menu_label, is_active, is_deleted from sidebar_menu_settings where lower(menu_label) in ('extrato','tesouraria','perfil de autorização') or lower(menu_key) in ('extrato','tesouraria','perfil_de_autorizacao') order by id;"
-docker compose exec web python -c "from appgenesis.db import SessionLocal; from appgenesis.services.page import get_page_data; s=SessionLocal(); data=get_page_data(s, actor_user_id=1, actor_login_email='admin@appverbo.local', selected_entity_id=8); item=next(row for row in data['sidebar_menu_settings'] if str(row.get('key') or '').strip().lower()=='perfil_de_autorizacao'); print(item.get('process_additional_fields')); s.close()"
+docker compose exec web python -c "from appgenesis.db import SessionLocal; from appgenesis.services.page import get_page_data; s=SessionLocal(); data=get_page_data(s, actor_user_id=1, actor_login_email='admin@appgenesis.local', selected_entity_id=8); item=next(row for row in data['sidebar_menu_settings'] if str(row.get('key') or '').strip().lower()=='perfil_de_autorizacao'); print(item.get('process_additional_fields')); s.close()"
 docker compose exec web python -c "from appgenesis.db import SessionLocal; from appgenesis.models import Member, User; from sqlalchemy import select; from appgenesis.services.profile import parse_member_profile_fields, parse_menu_process_records, build_menu_process_records_storage_key; s=SessionLocal(); row=s.execute(select(User.login_email, Member.profile_custom_fields).join(Member, Member.id==User.member_id).where(User.id==1)).one(); fields=parse_member_profile_fields(row.profile_custom_fields); print(parse_menu_process_records(fields.get(build_menu_process_records_storage_key('perfil_de_autorizacao')))); print(parse_menu_process_records(fields.get(build_menu_process_records_storage_key('objeto_de_autorizacao')))); s.close()"
 docker compose exec web python -c "from fastapi.testclient import TestClient; from appgenesis.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print(resp.status_code)"
 ```
@@ -138,7 +138,7 @@ Current `Extrato` menu configuration for entity `8` still exposes header/tab key
 
 ### Current active storage found
 
-For `admin@appverbo.local`, current profile storage already contains:
+For `admin@appgenesis.local`, current profile storage already contains:
 
 - `process_records__perfil_de_autorizacao`
   - examples:

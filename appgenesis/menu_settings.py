@@ -865,7 +865,7 @@ def get_menu_process_default_visible_fields_v4(
     menu_key: str,
     menu_config: dict[str, Any] | None = None,
 ) -> list[str]:
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_DEFAULTS_START
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_DEFAULTS_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     clean_menu_config = menu_config if isinstance(menu_config, dict) else {}
 
@@ -911,7 +911,7 @@ def get_menu_process_default_visible_fields_v4(
         return normalized_defaults
 
     return [selectable_keys[0]]
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_DEFAULTS_END
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_DEFAULTS_END
 
 
 def get_menu_process_default_visible_fields(
@@ -929,7 +929,7 @@ def normalize_menu_process_visible_fields_v4(
     raw_fields: Any = None,
     menu_config: dict[str, Any] | None = None,
 ) -> list[str]:
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_NORMALIZE_START
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_NORMALIZE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
     if isinstance(raw_fields, dict) and menu_config is None:
@@ -1003,7 +1003,7 @@ def normalize_menu_process_visible_fields_v4(
         clean_menu_key,
         clean_menu_config,
     )
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_NORMALIZE_END
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_NORMALIZE_END
 
 
 def normalize_menu_process_visible_fields(
@@ -1926,7 +1926,7 @@ def update_sidebar_menu_process_fields_v4(
     visible_fields: list[str] | tuple[str, ...] | set[str],
     visible_headers: list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> tuple[bool, str]:
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_START
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
     if not clean_menu_key:
@@ -1974,7 +1974,7 @@ def update_sidebar_menu_process_fields_v4(
         else []
     )
 
-    # APPVERBO_PROCESS_FIELDS_PRESERVE_HEADERS_V13_START
+    # APPGENESIS_PROCESS_FIELDS_PRESERVE_HEADERS_V13_START
     existing_header_map: dict[str, str] = {}
 
     existing_rows = menu_config.get("process_visible_field_rows")
@@ -2016,7 +2016,7 @@ def update_sidebar_menu_process_fields_v4(
         not incoming_has_any_header
         and bool(existing_header_map)
     )
-    # APPVERBO_PROCESS_FIELDS_PRESERVE_HEADERS_V13_END
+    # APPGENESIS_PROCESS_FIELDS_PRESERVE_HEADERS_V13_END
 
     normalized_rows: list[dict[str, str]] = []
     seen_fields: set[str] = set()
@@ -2042,13 +2042,13 @@ def update_sidebar_menu_process_fields_v4(
         if header_key not in header_keys:
             header_key = ""
 
-        # APPVERBO_PROCESS_FIELDS_RESTORE_HEADER_ON_BLANK_SUBMIT_V13_START
+        # APPGENESIS_PROCESS_FIELDS_RESTORE_HEADER_ON_BLANK_SUBMIT_V13_START
         if not header_key and should_preserve_existing_headers:
             header_key = existing_header_map.get(field_key, "")
 
             if header_key not in header_keys:
                 header_key = ""
-        # APPVERBO_PROCESS_FIELDS_RESTORE_HEADER_ON_BLANK_SUBMIT_V13_END
+        # APPGENESIS_PROCESS_FIELDS_RESTORE_HEADER_ON_BLANK_SUBMIT_V13_END
 
         seen_fields.add(field_key)
         normalized_rows.append(
@@ -2122,7 +2122,7 @@ def update_sidebar_menu_process_fields_v4(
     session.commit()
 
     return True, ""
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_END
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_END
 
 
 def update_sidebar_menu_process_fields(
@@ -3778,13 +3778,13 @@ def update_sidebar_menu_additional_fields_v4(
     menu_key: str,
     fields: list[dict[str, Any]],
 ) -> tuple[bool, str]:
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_START
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_START
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
     if not clean_menu_key:
         return False, "Menu inválido."
 
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V6_PROTECTED_GUARD
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V6_PROTECTED_GUARD
     if clean_menu_key in SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS:
         return False, "Este processo nao permite campos adicionais."
 
@@ -3821,7 +3821,7 @@ def update_sidebar_menu_additional_fields_v4(
     session.commit()
 
     return True, ""
-    # APPVERBO_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_END
+    # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_ADDITIONAL_FIELDS_SAVE_END
 
 
 def update_sidebar_menu_additional_fields_v1(
@@ -4653,9 +4653,9 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 # ###################################################################################
 
 def build_sidebar_global_refresh_version_v1() -> str:
-    from time import time as _appverbo_time
+    from time import time as _appgenesis_time
 
-    return str(int(_appverbo_time() * 1000))
+    return str(int(_appgenesis_time() * 1000))
 
 
 def get_sidebar_global_refresh_version_v1(session: Session) -> str:
@@ -4684,7 +4684,7 @@ def get_sidebar_global_refresh_version_v1(session: Session) -> str:
 
     return str(menu_config.get(MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY) or "")
 
-# APPVERBO_SIDEBAR_SECTIONS_UPDATE_V2_START
+# APPGENESIS_SIDEBAR_SECTIONS_UPDATE_V2_START
 
 # ###################################################################################
 # (SIDEBAR_SECTIONS_UPDATE_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
@@ -4845,4 +4845,4 @@ def update_sidebar_sections_v2(
 
     return True, ""
 
-# APPVERBO_SIDEBAR_SECTIONS_UPDATE_V2_END
+# APPGENESIS_SIDEBAR_SECTIONS_UPDATE_V2_END

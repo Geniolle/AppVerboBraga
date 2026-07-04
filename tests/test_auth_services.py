@@ -143,7 +143,7 @@ def test_resolve_request_language_prefers_query_for_anonymous_user() -> None:
     request = _build_request(
         query_string="lang=en",
         session={},
-        cookie_header="appverbo_lang=fr",
+        cookie_header="appgenesis_lang=fr",
     )
 
     resolved_language = i18n_service.resolve_request_language(request)
@@ -179,7 +179,7 @@ def test_resolve_request_language_prefers_user_profile_for_authenticated_user(mo
                 "user_id": user.id,
                 i18n_service.LANGUAGE_SESSION_KEY: "fr",
             },
-            cookie_header="appverbo_lang=en",
+            cookie_header="appgenesis_lang=en",
         )
 
         resolved_language = i18n_service.resolve_request_language(request)
@@ -200,7 +200,7 @@ def test_resolve_request_language_invalid_profile_falls_back_to_pt(monkeypatch) 
             "user_id": 99,
             i18n_service.LANGUAGE_SESSION_KEY: "fr",
         },
-        cookie_header="appverbo_lang=en",
+        cookie_header="appgenesis_lang=en",
     )
 
     resolved_language = i18n_service.resolve_request_language(request)
@@ -212,7 +212,7 @@ def test_resolve_request_language_invalid_profile_falls_back_to_pt(monkeypatch) 
 def test_resolve_user_language_after_auth_persists_prelogin_selection_when_missing() -> None:
     request = _build_request(
         session={i18n_service.LANGUAGE_SESSION_KEY: "en"},
-        cookie_header="appverbo_lang=fr",
+        cookie_header="appgenesis_lang=fr",
     )
     user = User(
         member_id=1,

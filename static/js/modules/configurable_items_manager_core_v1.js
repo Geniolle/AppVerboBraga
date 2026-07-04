@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - CONFIGURABLE ITEMS MANAGER CORE V1
+// APPGENESIS - CONFIGURABLE ITEMS MANAGER CORE V1
 //###################################################################################
 
 (function (window, document) {
@@ -9,11 +9,11 @@
   // (1) NAMESPACE
   //###################################################################################
 
-  if (!window.AppVerboConfigurableItems) {
-    window.AppVerboConfigurableItems = {};
+  if (!window.AppGenesisConfigurableItems) {
+    window.AppGenesisConfigurableItems = {};
   }
 
-  const namespace = window.AppVerboConfigurableItems;
+  const namespace = window.AppGenesisConfigurableItems;
 
   //###################################################################################
   // (2) HELPERS GERAIS
@@ -55,7 +55,7 @@
     }
 
     if (window.console && typeof window.console.warn === "function") {
-      window.console.warn("[AppVerboConfigurableItems]", message);
+      window.console.warn("[AppGenesisConfigurableItems]", message);
     }
     return null;
   }
@@ -283,7 +283,7 @@
       });
     }
 
-    emitManagerEvent_v1(manager, "appverbo:configurable-items-change", {
+    emitManagerEvent_v1(manager, "appgenesis:configurable-items-change", {
       items: manager.getItems(),
       state: manager.state
     });
@@ -326,7 +326,7 @@
 
     if (action === "remove") {
       const itemName = manager.config.itemName || "item";
-      const shell = window.AppVerboProcessShell;
+      const shell = window.AppGenesisProcessShell;
 
       if (shell && typeof shell.createConfirmDialogController === "function") {
         shell.createConfirmDialogController({
@@ -502,7 +502,7 @@
       tableBody.appendChild(row);
     });
 
-    const _shell = window.AppVerboProcessShell;
+    const _shell = window.AppGenesisProcessShell;
     if (_shell && typeof _shell.enhanceTableActionMenus === "function") {
       _shell.enhanceTableActionMenus({ root: manager.root });
     }
@@ -650,8 +650,8 @@
     const item = manager.state.items[itemIndex];
     manager.state.editingId = item.__managerId;
 
-    if (typeof window.logAppVerboProcessEditorDebugV1 === "function") {
-      window.logAppVerboProcessEditorDebugV1("configurableItemsManager:editItem", {
+    if (typeof window.logAppGenesisProcessEditorDebugV1 === "function") {
+      window.logAppGenesisProcessEditorDebugV1("configurableItemsManager:editItem", {
         itemId,
         itemLabel: item && item.label,
         itemKey: item && item.key,
@@ -673,7 +673,7 @@
     }
 
     manager.root.classList.add("configurable-items-editing-v1");
-    emitManagerEvent_v1(manager, "appverbo:configurable-items-edit", { item, index: itemIndex });
+    emitManagerEvent_v1(manager, "appgenesis:configurable-items-edit", { item, index: itemIndex });
   }
 
   function removeItem_v1(manager, itemId) {

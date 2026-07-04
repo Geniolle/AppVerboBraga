@@ -75,7 +75,7 @@ Current runtime resolution lives in:
 
 Current rows found:
 
-- `admin@appverbo.local`
+- `admin@appgenesis.local`
   - `Gestor de Tesouraria`
   - `Calendario Geral`
 - `verbodavidabraga@gmail.com`
@@ -91,7 +91,7 @@ Important observations:
 
 Current rows found:
 
-- `admin@appverbo.local`
+- `admin@appgenesis.local`
   - object key: `gestor_de_tesouraria`
   - object label: `Gestor de Tesouraria`
   - linked profile label: `Gestor de Tesouraria`

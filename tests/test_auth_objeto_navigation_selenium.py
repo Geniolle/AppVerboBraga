@@ -82,9 +82,9 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         action_triggers = driver.find_elements(
             By.CSS_SELECTOR,
             (
-                "#auth-objeto-card .appverbo-row-actions-trigger-v1, "
-                "#auth-objeto-active-card .appverbo-row-actions-trigger-v1, "
-                "#auth-objeto-inactive-card .appverbo-row-actions-trigger-v1"
+                "#auth-objeto-card .appgenesis-row-actions-trigger-v1, "
+                "#auth-objeto-active-card .appgenesis-row-actions-trigger-v1, "
+                "#auth-objeto-inactive-card .appgenesis-row-actions-trigger-v1"
             ),
         )
         visible_action_trigger = next(
@@ -103,14 +103,14 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
             lambda drv: len(
                 drv.find_elements(
                     By.CSS_SELECTOR,
-                    ".appverbo-row-actions-popup-v1:not([hidden]) a.appverbo-row-actions-item-edit-v1",
+                    ".appgenesis-row-actions-popup-v1:not([hidden]) a.appgenesis-row-actions-item-edit-v1",
                 )
             )
             >= 1
         )
         edit_links = driver.find_elements(
             By.CSS_SELECTOR,
-            ".appverbo-row-actions-popup-v1:not([hidden]) a.appverbo-row-actions-item-edit-v1",
+            ".appgenesis-row-actions-popup-v1:not([hidden]) a.appgenesis-row-actions-item-edit-v1",
         )
         assert edit_links, {
             "current_url": driver.current_url,

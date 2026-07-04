@@ -130,7 +130,7 @@
   //###################################################################################
 
   function getBootstrap_v6() {
-    return window.__APPVERBO_BOOTSTRAP__ || {};
+    return window.__APPGENESIS_BOOTSTRAP__ || {};
   }
 
   function getCurrentMenuKey_v6(form) {

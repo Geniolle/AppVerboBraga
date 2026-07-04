@@ -77,7 +77,7 @@ This folder gives Codex and future contributors a stable planning baseline for A
 ## Web And Mobile Direction
 
 - The current production-facing web application remains the main delivery surface
-- A directory named `appverbo-mobile/` exists in the repository, but it is not the primary application runtime in this phase
+- A directory named `appgenesis-mobile/` exists in the repository, but it is not the primary application runtime in this phase
 - The long-term direction is to support both web and mobile, but the current source of truth remains the existing web stack
 
 ## Why GSD Core Is Being Added

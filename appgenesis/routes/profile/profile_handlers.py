@@ -219,7 +219,7 @@ def _resolve_process_section_fields(
 
 
 
-# APPVERBO_MEU_PERFIL_SUBSEQUENT_RULES_RESOLVER_V1_START
+# APPGENESIS_MEU_PERFIL_SUBSEQUENT_RULES_RESOLVER_V1_START
 def _resolve_process_subsequent_rules_from_setting_v1(
     process_setting: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -243,7 +243,7 @@ def _resolve_process_subsequent_rules_from_setting_v1(
                 resolved_rules.append(raw_rule)
 
     return resolved_rules
-# APPVERBO_MEU_PERFIL_SUBSEQUENT_RULES_RESOLVER_V1_END
+# APPGENESIS_MEU_PERFIL_SUBSEQUENT_RULES_RESOLVER_V1_END
 
 
 def _normalize_process_quantity_rules(raw_rules: Any) -> list[dict[str, Any]]:
@@ -349,7 +349,7 @@ def _resolve_submitted_process_quantity_items(
         )
         raw_payload_values = [str(raw_payload_value or "").strip()]
 
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_START
+    # APPGENESIS_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_START
     # Pode existir mais de um input process_quantity_payload__<rule_key>.
     # Starlette FormData.get() pode apanhar o primeiro, que por vezes e "[]".
     # Por isso lemos todos os valores e usamos o ultimo payload preenchido valido.
@@ -361,7 +361,7 @@ def _resolve_submitted_process_quantity_items(
 
         if parsed_quantity_items:
             return parsed_quantity_items
-    # APPVERBO_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_END
+    # APPGENESIS_MEU_PERFIL_QUANTITY_PAYLOAD_READER_V2_END
 
     collected_quantity_items = _collect_process_quantity_items_from_form(
         submitted_form,
@@ -380,7 +380,7 @@ def _resolve_submitted_process_quantity_items(
 
 
 
-# APPVERBO_RETURN_URL_POST_SAVE_V4_START
+# APPGENESIS_RETURN_URL_POST_SAVE_V4_START
 def _sanitize_users_new_return_url_post_save_v4(
     raw_return_url: Any,
     extra_params: dict[str, Any] | None = None,
@@ -404,7 +404,7 @@ def _sanitize_users_new_return_url_post_save_v4(
         return ""
 
     query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
-    query_params["appverbo_after_save"] = "1"
+    query_params["appgenesis_after_save"] = "1"
 
     for raw_key, raw_value in (extra_params or {}).items():
         clean_key = str(raw_key or "").strip()
@@ -439,7 +439,7 @@ def _append_after_save_marker_to_users_new_url_v4(raw_url: str) -> str:
         return clean_url
 
     query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
-    query_params["appverbo_after_save"] = "1"
+    query_params["appgenesis_after_save"] = "1"
 
     query_string = urlencode(query_params)
     fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
@@ -467,10 +467,10 @@ def _build_users_new_url_with_return_context_v4(
     return _append_after_save_marker_to_users_new_url_v4(
         build_users_new_url(**params)
     )
-# APPVERBO_RETURN_URL_POST_SAVE_V4_END
+# APPGENESIS_RETURN_URL_POST_SAVE_V4_END
 
 
-# APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_START
+# APPGENESIS_BACKEND_RETURN_URL_POST_SAVE_V6_START
 def _sanitize_users_new_return_url_post_save_v6(
     raw_return_url: Any,
     extra_params: dict[str, Any] | None = None,
@@ -502,7 +502,7 @@ def _sanitize_users_new_return_url_post_save_v6(
         if clean_key and clean_value:
             query_params[clean_key] = clean_value
 
-    query_params["appverbo_after_save"] = "1"
+    query_params["appgenesis_after_save"] = "1"
 
     query_string = urlencode(query_params)
     fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
@@ -530,7 +530,7 @@ def _append_after_save_marker_to_users_new_url_v6(raw_url: str) -> str:
         return clean_url
 
     query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
-    query_params["appverbo_after_save"] = "1"
+    query_params["appgenesis_after_save"] = "1"
 
     query_string = urlencode(query_params)
     fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
@@ -580,7 +580,7 @@ def _build_post_save_redirect_url_v6(
     return _append_after_save_marker_to_users_new_url_v6(
         build_users_new_url(**normalized_params)
     )
-# APPVERBO_BACKEND_RETURN_URL_POST_SAVE_V6_END
+# APPGENESIS_BACKEND_RETURN_URL_POST_SAVE_V6_END
 
 
 @router.post("/users/profile/auth-profile-save")
@@ -1150,13 +1150,13 @@ async def save_objeto_autorizacao_subprocess(request: Request) -> RedirectRespon
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
-    # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
+    # APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
     # Este endpoint grava sempre dados do Meu perfil. Depois de gravar,
     # o utilizador deve continuar no Meu perfil e na aba onde estava.
     redirect_menu = MENU_MEU_PERFIL_KEY
     redirect_target = str(submitted_form.get("target") or "#perfil-pessoal-card").strip() or "#perfil-pessoal-card"
     redirect_profile_section = str(submitted_form.get("profile_section") or "").strip().lower()
-    # APPVERBO_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
+    # APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
     clean_full_name = str(submitted_form.get("full_name") or "").strip()
     clean_primary_phone = str(submitted_form.get("primary_phone") or "").strip()
     clean_login_email = str(submitted_form.get("login_email") or submitted_form.get("email") or "").strip().lower()
@@ -1432,7 +1432,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if clean_custom_value:
                 updated_custom_fields[custom_key] = clean_custom_value
 
-        # APPVERBO_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_START
+        # APPGENESIS_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_START
         # Quando um campo fica oculto por regra de Campos Subsequentes,
         # o valor antigo deve ser removido para não apresentar informação incorreta.
         for hidden_custom_key in visible_custom_keys:
@@ -1440,7 +1440,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 continue
 
             updated_custom_fields.pop(hidden_custom_key, None)
-        # APPVERBO_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_END
+        # APPGENESIS_MEU_PERFIL_CLEAR_HIDDEN_SUBSEQUENT_VALUES_V1_END
 
         active_quantity_rule_keys: set[str] = set()
         for quantity_rule in quantity_rules:
@@ -1485,7 +1485,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             )
 
 
-        # APPVERBO_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_START
+        # APPGENESIS_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_START
         # Reforco de persistencia dos Campos Quantidade do Meu perfil.
         #
         # O frontend envia:
@@ -1561,7 +1561,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 updated_quantity_values[storage_key] = serialized_quantity_items
             elif payload_was_submitted:
                 updated_quantity_values.pop(storage_key, None)
-        # APPVERBO_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_END
+        # APPGENESIS_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_END
 
         previous_phone = (member.primary_phone or "").strip()
         member.full_name = clean_full_name

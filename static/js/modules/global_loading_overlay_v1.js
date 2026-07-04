@@ -1,4 +1,4 @@
-// APPVERBO_GLOBAL_LOADING_OVERLAY_V1_START
+// APPGENESIS_GLOBAL_LOADING_OVERLAY_V1_START
 //###################################################################################
 // (GLOBAL_LOADING_OVERLAY_V1) Indicador global de carregamento/navegacao, reutilizavel
 // em toda a app. Ativado em: refresh/navegacao real do browser (via beforeunload,
@@ -13,8 +13,8 @@
 (function () {
   "use strict";
 
-  var OVERLAY_ID = "appverbo-global-loading-overlay";
-  var VISIBLE_CLASS = "appverbo-global-loading-overlay--visible";
+  var OVERLAY_ID = "appgenesis-global-loading-overlay";
+  var VISIBLE_CLASS = "appgenesis-global-loading-overlay--visible";
   var SAFETY_TIMEOUT_MS = 10000;
   var activeCount = 0;
   var safetyTimeoutHandle = null;
@@ -24,8 +24,8 @@
   }
 
   function logDebug(event, payload) {
-    if (typeof window.logAppVerboNavigationBootDebugV1 === "function") {
-      window.logAppVerboNavigationBootDebugV1(event, payload);
+    if (typeof window.logAppGenesisNavigationBootDebugV1 === "function") {
+      window.logAppGenesisNavigationBootDebugV1(event, payload);
     }
   }
 
@@ -96,4 +96,4 @@
     forceHide("pageshow");
   });
 })();
-// APPVERBO_GLOBAL_LOADING_OVERLAY_V1_END
+// APPGENESIS_GLOBAL_LOADING_OVERLAY_V1_END
