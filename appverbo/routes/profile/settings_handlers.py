@@ -3,6 +3,7 @@
 # ###################################################################################
 
 import json
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -65,6 +66,68 @@ def _log_sessoes_flow_v1(event: str, **payload) -> None:
 
 # APPVERBO_DEBUG_SESSOES_FLOW_V1_END
 
+# APPVERBO_DEBUG_PROCESS_EDITOR_FLOW_V1_START
+_PROCESS_EDITOR_FLOW_LOGGER = _logging_sessoes.getLogger(__name__ + ".process_editor")
+
+
+def _debug_process_editor_flow_enabled_v1(request: Request | None = None) -> bool:
+    if _os_sessoes.environ.get("APPVERBO_DEBUG_PROCESS_EDITOR") == "1":
+        return True
+    if request is not None:
+        try:
+            qs = dict(request.query_params)
+            if qs.get("debug_process_editor") == "1":
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def _log_process_editor_flow_v1(request: Request | None, event: str, **payload) -> None:
+    if not _debug_process_editor_flow_enabled_v1(request):
+        return
+    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
+    _PROCESS_EDITOR_FLOW_LOGGER.info("[PROCESS_EDITOR_FLOW] %s | %s", event, parts)
+
+# APPVERBO_DEBUG_PROCESS_EDITOR_FLOW_V1_END
+
+
+def _sanitize_users_new_settings_return_url_v1(
+    raw_return_url: object,
+    extra_params: dict[str, object] | None = None,
+) -> str:
+    clean_return_url = str(raw_return_url or "").strip()
+
+    if not clean_return_url:
+        return ""
+
+    try:
+        parsed_url = urlsplit(clean_return_url)
+    except Exception:
+        return ""
+
+    if parsed_url.scheme or parsed_url.netloc:
+        return ""
+
+    path = parsed_url.path or "/users/new"
+
+    if path != "/users/new":
+        return ""
+
+    query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
+
+    for raw_key, raw_value in (extra_params or {}).items():
+        clean_key = str(raw_key or "").strip()
+        clean_value = str(raw_value or "").strip()
+
+        if clean_key and clean_value:
+            query_params[clean_key] = clean_value
+
+    query_string = urlencode(query_params)
+    fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+
+    return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
+
 
 def _build_settings_redirect_url(
     error_message: str = "",
@@ -74,7 +137,24 @@ def _build_settings_redirect_url(
     settings_edit_key: str = "",
     settings_action: str = "",
     settings_tab: str = "",
+    return_url: str = "",
 ) -> str:
+    safe_return_url = _sanitize_users_new_settings_return_url_v1(
+        return_url,
+        {
+            "error": error_message,
+            "success": success_message,
+            "menu": redirect_menu,
+            "target": str(redirect_target or "").lstrip("#"),
+            "settings_edit_key": settings_edit_key,
+            "settings_action": settings_action,
+            "settings_tab": settings_tab,
+        },
+    )
+
+    if safe_return_url:
+        return safe_return_url
+
     params = []
     if error_message:
         params.append(f"error={error_message}")
@@ -101,6 +181,7 @@ def _require_menu_settings_owner_v1(
     settings_edit_key: str = "",
     settings_action: str = "edit",
     settings_tab: str = "geral",
+    return_url: str = "",
 ) -> RedirectResponse | None:
     current_user = get_current_user(request, session)
 
@@ -119,6 +200,7 @@ def _require_menu_settings_owner_v1(
                 settings_edit_key=settings_edit_key,
                 settings_action=settings_action,
                 settings_tab=settings_tab,
+                return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
@@ -140,6 +222,7 @@ def _require_menu_settings_owner_v1(
                 settings_edit_key=settings_edit_key,
                 settings_action=settings_action,
                 settings_tab=settings_tab,
+                return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
@@ -1181,6 +1264,7 @@ def edit_sidebar_menu_setting_handler_v1(
     menu_sidebar_section: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
     clean_status = str(menu_status or "").strip().lower()
@@ -1195,6 +1279,7 @@ def edit_sidebar_menu_setting_handler_v1(
             settings_edit_key=clean_menu_key,
             settings_action="edit",
             settings_tab="geral",
+            return_url=return_url,
         )
         if blocked_response is not None:
             return blocked_response
@@ -1214,6 +1299,7 @@ def edit_sidebar_menu_setting_handler_v1(
                         settings_edit_key=clean_menu_key,
                         settings_action="edit",
                         settings_tab="geral",
+                        return_url=return_url,
                     ),
                     status_code=HTTP_303_SEE_OTHER,
                 )
@@ -1233,15 +1319,16 @@ def edit_sidebar_menu_setting_handler_v1(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar o menu.",
-                    redirect_menu=redirect_menu,
-                    redirect_target=redirect_target,
-                    settings_edit_key=clean_menu_key,
-                    settings_action="edit",
-                    settings_tab="geral",
-                ),
-                status_code=HTTP_303_SEE_OTHER,
-            )
+                        error_message=error_message or "Não foi possível atualizar o menu.",
+                        redirect_menu=redirect_menu,
+                        redirect_target=redirect_target,
+                        settings_edit_key=clean_menu_key,
+                        settings_action="edit",
+                        settings_tab="geral",
+                        return_url=return_url,
+                    ),
+                    status_code=HTTP_303_SEE_OTHER,
+                )
 
         if make_visible:
             ok, error_message = set_sidebar_menu_visibility(
@@ -1258,6 +1345,7 @@ def edit_sidebar_menu_setting_handler_v1(
                         settings_edit_key=clean_menu_key,
                         settings_action="edit",
                         settings_tab="geral",
+                        return_url=return_url,
                     ),
                     status_code=HTTP_303_SEE_OTHER,
                 )
@@ -1268,6 +1356,7 @@ def edit_sidebar_menu_setting_handler_v1(
                 success_message="Menu atualizado com sucesso.",
                 redirect_menu=redirect_menu,
                 redirect_target=_success_target,
+                return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
@@ -1280,6 +1369,7 @@ def create_sidebar_menu_setting_handler_v1(
     menu_visibility_scope: str = Form("all"),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-account-status-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     with SessionLocal() as session:
         blocked_response = _require_menu_settings_owner_v1(
@@ -1288,6 +1378,7 @@ def create_sidebar_menu_setting_handler_v1(
             redirect_menu,
             redirect_target,
             settings_action="create",
+            return_url=return_url,
         )
         if blocked_response is not None:
             return blocked_response
@@ -1339,6 +1430,7 @@ def move_sidebar_menu_setting_handler_v1(
     direction: str = Form(...),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#admin-account-status-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
@@ -1348,6 +1440,7 @@ def move_sidebar_menu_setting_handler_v1(
             request,
             redirect_menu,
             redirect_target,
+            return_url=return_url,
         )
         if blocked_response is not None:
             return blocked_response
@@ -1425,6 +1518,7 @@ def move_sidebar_menu_additional_field_handler(
     direction: str = Form(...),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
@@ -1446,6 +1540,7 @@ def move_sidebar_menu_additional_field_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-adicionais",
+                    return_url=return_url,
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -1467,6 +1562,7 @@ def move_sidebar_menu_additional_field_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-adicionais",
+                    return_url=return_url,
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -1487,6 +1583,7 @@ def move_sidebar_menu_additional_field_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-adicionais",
+                    return_url=return_url,
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -1499,6 +1596,7 @@ def move_sidebar_menu_additional_field_handler(
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
                 settings_tab="campos-adicionais",
+                return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
@@ -1778,6 +1876,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
     additional_field_automatic_only_active: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
@@ -1799,6 +1898,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-adicionais",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -1820,6 +1920,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-adicionais",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -1876,6 +1977,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-adicionais",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -1888,6 +1990,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
                 settings_tab="campos-adicionais",
+                return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
@@ -1902,8 +2005,19 @@ def edit_sidebar_menu_process_fields_handler(
     visible_rows_json: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
+
+    _log_process_editor_flow_v1(
+        request,
+        "process_fields:received",
+        menu_key=menu_key,
+        clean_menu_key=clean_menu_key,
+        redirect_menu=redirect_menu,
+        redirect_target=redirect_target,
+        return_url=return_url,
+    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -1923,6 +2037,7 @@ def edit_sidebar_menu_process_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-config",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -1944,6 +2059,7 @@ def edit_sidebar_menu_process_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-config",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2037,19 +2153,33 @@ def edit_sidebar_menu_process_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-config",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        success_redirect_url = _build_settings_redirect_url(
+            success_message="Configuração dos campos atualizada com sucesso.",
+            redirect_menu=redirect_menu,
+            redirect_target=redirect_target,
+            settings_edit_key=clean_menu_key,
+            settings_action="edit",
+            settings_tab="campos-config",
+            return_url=return_url,
+        )
+        _log_process_editor_flow_v1(
+            request,
+            "process_fields:success_redirect",
+            redirect_menu=redirect_menu,
+            redirect_target=redirect_target,
+            settings_edit_key=clean_menu_key,
+            settings_tab="campos-config",
+            final_url=success_redirect_url,
+            return_url=return_url,
+        )
+
         return RedirectResponse(
-            url=_build_settings_redirect_url(
-                success_message="Configuração dos campos atualizada com sucesso.",
-                redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="campos-config",
-            ),
+            url=success_redirect_url,
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
@@ -2067,6 +2197,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
     quantity_item_label: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
@@ -2079,6 +2210,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             settings_edit_key=clean_menu_key,
             settings_action="edit",
             settings_tab="campos-quantidade",
+            return_url=return_url,
         )
         if blocked_response is not None:
             return blocked_response
@@ -2126,6 +2258,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos-quantidade",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2138,6 +2271,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
                 settings_tab="campos-quantidade",
+                return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
@@ -2152,6 +2286,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_items_csv: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
@@ -2173,6 +2308,7 @@ def edit_sidebar_menu_process_lists_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="lista",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2194,6 +2330,7 @@ def edit_sidebar_menu_process_lists_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="lista",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2240,6 +2377,7 @@ def edit_sidebar_menu_process_lists_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="lista",
+                    return_url=return_url,
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
@@ -2252,6 +2390,7 @@ def edit_sidebar_menu_process_lists_handler(
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
                 settings_tab="lista",
+                return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
@@ -2272,6 +2411,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
     subsequent_trigger_value: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
+    return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
@@ -2293,6 +2433,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos_subsequentes",
+                    return_url=return_url,
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -2314,6 +2455,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos_subsequentes",
+                    return_url=return_url,
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -2355,6 +2497,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                     settings_edit_key=clean_menu_key,
                     settings_action="edit",
                     settings_tab="campos_subsequentes",
+                    return_url=return_url,
                 ),
                 status_code=HTTP_303_SEE_OTHER,
             )
@@ -2367,6 +2510,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                 settings_edit_key=clean_menu_key,
                 settings_action="edit",
                 settings_tab="campos_subsequentes",
+                return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,
         )

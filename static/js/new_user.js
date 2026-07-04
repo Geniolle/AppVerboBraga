@@ -1,231 +1,3 @@
-// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_START
-//###################################################################################
-// (POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3) RETORNO POS-SAVE VS REFRESH MANUAL
-//###################################################################################
-
-const APPVERBO_POST_SAVE_CONTEXT_KEY_V3 = "appverbo:post-save-context-v3";
-const APPVERBO_POST_SAVE_CONTEXT_MAX_AGE_MS_V3 = 120000;
-
-function getAppVerboCurrentUrlPostSaveV3() {
-  try {
-    return new URL(window.location.href);
-  } catch (error) {
-    return null;
-  }
-}
-
-function isAppVerboPostSaveFeedbackUrlV3(url) {
-  if (!url) {
-    return false;
-  }
-
-  if (url.searchParams.get("appverbo_after_save") === "1") {
-    return true;
-  }
-
-  for (const rawKey of url.searchParams.keys()) {
-    const key = String(rawKey || "").trim().toLowerCase();
-
-    if (
-      key === "success" ||
-      key === "error" ||
-      key.endsWith("_success") ||
-      key.endsWith("_error")
-    ) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function readAndClearAppVerboPostSaveContextV3() {
-  try {
-    const rawValue = window.sessionStorage.getItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3) || "";
-
-    if (!rawValue) {
-      return null;
-    }
-
-    window.sessionStorage.removeItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3);
-
-    const parsedValue = JSON.parse(rawValue);
-    const createdAt = Number(parsedValue && parsedValue.createdAt || 0);
-
-    if (!createdAt || Date.now() - createdAt > APPVERBO_POST_SAVE_CONTEXT_MAX_AGE_MS_V3) {
-      return null;
-    }
-
-    if (!parsedValue || typeof parsedValue.url !== "string" || !parsedValue.url.trim()) {
-      return null;
-    }
-
-    return parsedValue;
-  } catch (error) {
-    return null;
-  }
-}
-
-function copyPostSaveFeedbackParamsV3(sourceUrl, targetUrl) {
-  if (!sourceUrl || !targetUrl) {
-    return;
-  }
-
-  Array.from(sourceUrl.searchParams.keys()).forEach((rawKey) => {
-    const key = String(rawKey || "").trim().toLowerCase();
-
-    if (
-      key === "success" ||
-      key === "error" ||
-      key.endsWith("_success") ||
-      key.endsWith("_error")
-    ) {
-      targetUrl.searchParams.set(rawKey, sourceUrl.searchParams.get(rawKey) || "");
-    }
-  });
-}
-
-function clearPostSaveFeedbackMarkersFromUrlV3() {
-  const url = getAppVerboCurrentUrlPostSaveV3();
-
-  if (!url) {
-    return;
-  }
-
-  let changed = false;
-
-  Array.from(url.searchParams.keys()).forEach((rawKey) => {
-    const key = String(rawKey || "").trim().toLowerCase();
-
-    if (key === "appverbo_after_save") {
-      url.searchParams.delete(rawKey);
-      changed = true;
-    }
-  });
-
-  if (!changed || !window.history || typeof window.history.replaceState !== "function") {
-    return;
-  }
-
-  const cleanQuery = url.searchParams.toString();
-  const cleanUrl = url.pathname + (cleanQuery ? "?" + cleanQuery : "") + url.hash;
-
-  window.history.replaceState(window.history.state, document.title, cleanUrl);
-}
-
-function redirectToStoredPostSaveContextV3(storedContext) {
-  const currentUrl = getAppVerboCurrentUrlPostSaveV3();
-
-  if (!storedContext || !storedContext.url || !currentUrl || currentUrl.pathname !== "/users/new") {
-    return false;
-  }
-
-  const currentTarget = String(currentUrl.searchParams.get("target") || "").trim();
-  const hasEntitySuccessListTarget = Boolean(
-    String(currentUrl.searchParams.get("entity_success") || "").trim() &&
-    currentTarget === "#recent-entities-card"
-  );
-
-  if (hasEntitySuccessListTarget) {
-    return false;
-  }
-
-  let targetUrl = null;
-
-  try {
-    targetUrl = new URL(storedContext.url, window.location.origin);
-  } catch (error) {
-    return false;
-  }
-
-  if (targetUrl.pathname !== "/users/new") {
-    return false;
-  }
-
-  const currentAdminTab = String(currentUrl.searchParams.get("admin_tab") || "").trim();
-  const currentHasFeedback = isAppVerboPostSaveFeedbackUrlV3(currentUrl);
-  const currentMenu = String(currentUrl.searchParams.get("menu") || "").trim();
-  const storedAdminTab = String(targetUrl.searchParams.get("admin_tab") || "").trim();
-  const storedMenu = String(targetUrl.searchParams.get("menu") || "").trim();
-
-  if (currentHasFeedback && currentAdminTab) {
-    if (!storedAdminTab || storedAdminTab !== currentAdminTab || storedMenu === "home") {
-      return false;
-    }
-  }
-
-  if (
-    currentHasFeedback &&
-    currentMenu === "perfil_de_autorizacao" &&
-    storedMenu === "perfil_de_autorizacao"
-  ) {
-    return false;
-  }
-
-  targetUrl.searchParams.set("appverbo_after_save", "1");
-  copyPostSaveFeedbackParamsV3(currentUrl, targetUrl);
-
-  const targetPath = targetUrl.pathname + targetUrl.search + targetUrl.hash;
-  const currentPath = currentUrl.pathname + currentUrl.search + currentUrl.hash;
-
-  if (targetPath === currentPath) {
-    return false;
-  }
-
-  window.location.replace(targetPath);
-  return true;
-}
-
-const appverboStoredPostSaveContextV3 = readAndClearAppVerboPostSaveContextV3();
-
-if (redirectToStoredPostSaveContextV3(appverboStoredPostSaveContextV3)) {
-  // A navegacao continua no mesmo processo/aba onde o POST foi executado.
-} else {
-  const navigationEntries = (
-    typeof window !== "undefined" &&
-    window.performance &&
-    typeof window.performance.getEntriesByType === "function"
-  )
-    ? window.performance.getEntriesByType("navigation")
-    : [];
-
-  const navigationType = navigationEntries.length
-    ? String(navigationEntries[0].type || "")
-    : "";
-
-  const currentUrlForRefreshGuard = getAppVerboCurrentUrlPostSaveV3();
-  const isPostSaveFeedbackUrl = isAppVerboPostSaveFeedbackUrlV3(currentUrlForRefreshGuard);
-  const hasExplicitMenuContext = Boolean(
-    currentUrlForRefreshGuard &&
-    (
-      String(currentUrlForRefreshGuard.searchParams.get("menu") || "").trim() ||
-      String(currentUrlForRefreshGuard.searchParams.get("admin_tab") || "").trim() ||
-      String(currentUrlForRefreshGuard.searchParams.get("target") || "").trim() ||
-      String(currentUrlForRefreshGuard.searchParams.get("dynamic_process_section") || "").trim() ||
-      String(currentUrlForRefreshGuard.searchParams.get("profile_section") || "").trim()
-    )
-  );
-
-  if (
-    navigationType === "reload" &&
-    window.location.pathname === "/users/new" &&
-    !isPostSaveFeedbackUrl &&
-    !hasExplicitMenuContext
-  ) {
-    const homeUrl = "/users/new?menu=home";
-    const currentPathAndQuery = `${window.location.pathname}${window.location.search}`;
-
-    if (currentPathAndQuery !== homeUrl || window.location.hash) {
-      window.location.replace(homeUrl);
-    }
-  }
-
-  if (isPostSaveFeedbackUrl) {
-    window.setTimeout(clearPostSaveFeedbackMarkersFromUrlV3, 600);
-  }
-}
-// APPVERBO_POST_SAVE_CONTEXT_NAVIGATION_GUARD_V3_END
-
 (function initAppVerboFeedbackToastsFromUrl() {
   if (
     window.AppVerboProcessShell &&
@@ -278,6 +50,24 @@ const currentEntityId = Number.parseInt(String(bootstrap.currentEntityId || "").
 const settingsAction = bootstrap.settingsAction || "";
 const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
 const settingsEditKey = normalizeMenuKey(bootstrap.settingsEditKey || "");
+
+logAppVerboProcessEditorDebugV1("page_load:editor_bootstrap", {
+  href: window.location.href,
+  urlMenu: new URLSearchParams(window.location.search).get("menu"),
+  urlSettingsEditKey: new URLSearchParams(window.location.search).get("settings_edit_key"),
+  urlSettingsTab: new URLSearchParams(window.location.search).get("settings_tab"),
+  urlSettingsAction: new URLSearchParams(window.location.search).get("settings_action"),
+  bootstrapSettingsAction: bootstrap.settingsAction,
+  bootstrapSettingsTab: bootstrap.settingsTab,
+  bootstrapSettingsEditKey: bootstrap.settingsEditKey,
+  sessionStoragePostSaveContext: (function () {
+    try {
+      return window.sessionStorage.getItem(APPVERBO_POST_SAVE_CONTEXT_KEY_V3);
+    } catch (error) {
+      return null;
+    }
+  })()
+});
 const sidebarMenuSettings = Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
 const sidebarMenuSettingsByKey = new Map();
 const visibleSidebarMenuKeys = new Set(
@@ -1241,6 +1031,18 @@ function mergeDynamicProcessMenus() {
     if (!menuKey || menuKey === "perfil") {
       return;
     }
+    if (menuKey === "home") {
+      const sidebarLabel = normalizeMenuLabelPreserveCase(setting.label);
+      delete dynamicProcessDataByMenu.home;
+      delete selectedDynamicSectionByMenu.home;
+      if (sidebarLabel) {
+        menuConfig.home = {
+          ...menuConfig.home,
+          title: sidebarLabel
+        };
+      }
+      return;
+    }
     if (menuKey === MEU_PERFIL_MENU_KEY) {
       const sidebarLabel = normalizeMenuLabelPreserveCase(setting.label);
       if (sidebarLabel) {
@@ -1419,6 +1221,7 @@ const trainingOutrosEnabledEl = document.getElementById("edit_training_outros_en
 const trainingOutrosInputEl = document.getElementById("edit_training_outros");
 const processFieldsBuilderEl = document.getElementById("process-fields-builder");
 const dynamicProcessCardEl = document.getElementById("dynamic-process-card");
+const dynamicProcessActionCardEl = document.getElementById("dynamic-process-action-card");
 const dynamicProcessTitleEl = document.getElementById("dynamic-process-title");
 const dynamicProcessDescriptionEl = document.getElementById("dynamic-process-description");
 const dynamicProcessSectionLabelEl = document.getElementById("dynamic-process-section-label");
@@ -1673,6 +1476,12 @@ if (
   selectedDynamicSectionByMenu[initialMenu] = String(initialDynamicProcessSection);
 }
 let activeMenuKey = "";
+// Sinal autoritativo do menu de topo realmente ativo na SPA, para módulos externos (ex.:
+// top_menu_active_v1.js) que não podem confiar apenas no URL: a navegação por clique entre
+// menus que não sejam "administrativo" não faz pushState, por isso o URL fica desatualizado.
+window.__appverboGetActiveMenuKeyV1 = function () {
+  return activeMenuKey;
+};
 const processShellHeaderController = (
   processShellHeaderEl &&
   processShellTitleEl &&
@@ -1753,7 +1562,7 @@ const topSubmenuController = (
         selectedTargetByMenu[menuKey] = item.target;
         debugTabsLogV1("onSelect:before-apply", { menuKey, target: item.target });
         setActiveSubmenu(item.target, linkEl);
-        applyContentForMenuTarget(menuKey, item.target);
+        applyContentForMenuTarget(menuKey, item.target, "click:submenu-tab");
 
         if (
           menuKey === "administrativo" &&
@@ -3498,9 +3307,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       dynamicProcessSectionKeyInputEl.value = "";
       dynamicProcessSectionKeyInputEl.defaultValue = "";
     }
-    if (dynamicProcessEditToggleEl) {
-      dynamicProcessEditToggleEl.style.display = "none";
-    }
+    setDynamicProcessEditToggleVisible(false);
     if (dynamicProcessHistoryActionInputEl) {
       dynamicProcessHistoryActionInputEl.value = "create";
     }
@@ -3612,9 +3419,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       : sectionFields.some((field) => normalizeMenuKey(field && field.key) === rule.quantityFieldKey)
   ));
   if (!sectionFields.length && !hasQuantityRulesForSection) {
-    if (dynamicProcessEditToggleEl) {
-      dynamicProcessEditToggleEl.style.display = "none";
-    }
+    setDynamicProcessEditToggleVisible(false);
     if (dynamicProcessEmptyEl) {
       dynamicProcessEmptyEl.style.display = "";
       dynamicProcessEmptyEl.textContent = "Sem campos configurados para esta aba.";
@@ -3627,9 +3432,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   }
 
   if (dynamicProcessEditToggleEl) {
-    dynamicProcessEditToggleEl.style.display = "none";
+    setDynamicProcessEditToggleVisible(false);
     if (!absenceProcessMode && (sectionFields.length || hasQuantityRulesForSection)) {
-      dynamicProcessEditToggleEl.style.display = "";
+      setDynamicProcessEditToggleVisible(true);
       dynamicProcessEditToggleEl.textContent = listProcessLayoutMode
         ? layoutConfig.createTitle
         : (historyProcessMode ? `Criar ${historyRecordLabels.singular}` : "Editar");
@@ -3888,6 +3693,9 @@ function applyContentForMenu(menuKey) {
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = "none";
   }
+  if (dynamicProcessActionCardEl) {
+    dynamicProcessActionCardEl.style.display = "none";
+  }
   if (dynamicProcessActiveCardEl) {
     dynamicProcessActiveCardEl.style.display = "none";
   }
@@ -3937,7 +3745,15 @@ function getAdminSubprocessKeyByTargetV1(target) {
 }
 // APPVERBO_ADMIN_SUBPROCESS_GROUP_V1_END
 
-function applyContentForMenuTarget(menuKey, targetSelector) {
+// activateSubprocessCardsV1: rotina única de ativação de card principal + cards relacionados
+// (lista de ativos / lista de inativos) de um subprocesso administrativo (ex.: Menu, Sessões,
+// Perfil de autorização). É a MESMA função usada tanto no boot inicial (bootstrap -> activateMenu
+// -> aqui) quanto em qualquer navegação por clique (sidebar, submenu, hash, dropdown) -- não há
+// rotina duplicada: todos os pontos de entrada de navegação client-side convergem para aqui.
+// Agrupamento: cards com o mesmo "data-admin-subprocess" que o target resolvido (ex.: "menu") são
+// mostrados/escondidos em conjunto, então card de ação + Menus ativos + Menus inativos entram e
+// saem juntos sem precisar de hardcode por processo.
+function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecified") {
   debugTabsLogV1("applyContent:start", {
     menuKey,
     targetSelector,
@@ -3955,6 +3771,17 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
   const adminSubprocessKey = supportsStructuredAdminGroups
     ? getAdminSubprocessKeyByTargetV1(targetSelector)
     : "";
+  logAppVerboNavigationBootDebugV1("activateSubprocessCardsV1:resolve", {
+    source,
+    menuKey,
+    targetSelector,
+    adminSubprocessKey,
+    supportsStructuredAdminGroups,
+    menuSubprocessCardActiveExists: !!document.getElementById("menu-subprocess-card-active"),
+    menuSubprocessCardInactiveExists: !!document.getElementById("menu-subprocess-card-inactive")
+  });
+  const shownCardIds = [];
+  const hiddenCardIds = [];
   scopedCards.forEach((card) => {
     const rawScope = card.getAttribute("data-menu-scope") || "";
     const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
@@ -3962,7 +3789,10 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
       card.style.display = "none";
       return;
     }
+    const allowAdminSubprocessGroupForTarget =
+      targetSelector !== "#settings-menu-edit-card";
     const isAdminSubprocessGroupedBlock =
+      allowAdminSubprocessGroupForTarget &&
       !!adminSubprocessKey &&
       card.getAttribute("data-admin-subprocess") === adminSubprocessKey;
     const isEntityGroupedBlock =
@@ -3995,17 +3825,22 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
         card.id === "settings-menu-edit-card" ||
         card.id === "admin-account-status-card"
       );
-    card.style.display =
+    const shouldShowCard =
       targetSelector === ("#" + card.id) ||
       isAdminSubprocessGroupedBlock ||
       isEntityGroupedBlock ||
       isUserGroupedBlock ||
-      isSettingsGroupedBlock
-        ? ""
-        : "none";
+      isSettingsGroupedBlock;
+    card.style.display = shouldShowCard ? "" : "none";
+    if (card.id) {
+      (shouldShowCard ? shownCardIds : hiddenCardIds).push(card.id);
+    }
   });
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
+  }
+  if (dynamicProcessActionCardEl) {
+    dynamicProcessActionCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
   }
   if (dynamicProcessActiveCardEl) {
     dynamicProcessActiveCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
@@ -4020,7 +3855,21 @@ function applyContentForMenuTarget(menuKey, targetSelector) {
       ? Array.from(scopedCards).filter((c) => c.style.display !== "none").map((c) => c.id || c.className)
       : []
   });
+  logAppVerboNavigationBootDebugV1("activateSubprocessCardsV1:applied", {
+    source,
+    menuKey,
+    targetSelector,
+    adminSubprocessKey,
+    shownCardIds,
+    hiddenCardIds: hiddenCardIds.filter((id) => id.indexOf("menu-subprocess") !== -1 || id.indexOf("admin-sidebar-sections") !== -1),
+    menuSubprocessCardActiveShown: shownCardIds.includes("menu-subprocess-card-active"),
+    menuSubprocessCardInactiveShown: shownCardIds.includes("menu-subprocess-card-inactive")
+  });
 }
+
+// Alias explícito pedido para o mecanismo de ativação de grupo de cards de subprocesso -- é a
+// mesma função, exposta com o nome documentado para depuração/testes a partir do console.
+window.activateSubprocessCardsV1 = applyContentForMenuTarget;
 
 function clearSubmenuActiveLinks(links) {
   links.forEach((link) => {
@@ -4085,6 +3934,37 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
   }
 }
 
+// .appverbo-process-action-toggle-v1 define "display: inline-flex !important" no CSS, por isso um
+// simples "el.style.display = 'none'" nao consegue escondê-lo; e preciso usar setProperty com
+// prioridade "important" para vencer a regra do stylesheet.
+function setDynamicProcessEditToggleVisible(isVisible) {
+  if (dynamicProcessActionCardEl) {
+    dynamicProcessActionCardEl.style.display = isVisible ? "" : "none";
+  }
+  if (!dynamicProcessEditToggleEl) {
+    return;
+  }
+  if (isVisible) {
+    dynamicProcessEditToggleEl.style.removeProperty("display");
+  } else {
+    dynamicProcessEditToggleEl.style.setProperty("display", "none", "important");
+  }
+}
+
+// O botao "Criar/Editar" do processo dinamico vive num card de acao separado
+// (#dynamic-process-action-card), fora de #dynamic-process-card, por isso nao e alcancado pela
+// regra CSS ".card.editing .profile-edit-toggle". Repoe a visibilidade aqui sempre que o card deixa
+// de estar em edicao (Cancelar/Guardar via JS, sem recarregar a pagina).
+function restoreDynamicProcessEditToggleVisibility() {
+  if (
+    dynamicProcessEditToggleEl &&
+    dynamicProcessCardEl &&
+    !dynamicProcessCardEl.classList.contains("editing")
+  ) {
+    setDynamicProcessEditToggleVisible(true);
+  }
+}
+
 function closeAllProfileEdits() {
   if (
     window.AppVerboCancelControllerV1 &&
@@ -4092,6 +3972,7 @@ function closeAllProfileEdits() {
   ) {
     window.AppVerboCancelControllerV1.closeAllOpenEditors(document);
     syncTrainingOutrosState();
+    restoreDynamicProcessEditToggleVisibility();
     return;
   }
 
@@ -4104,9 +3985,11 @@ function closeAllProfileEdits() {
     }
   });
   syncTrainingOutrosState();
+  restoreDynamicProcessEditToggleVisibility();
 }
 
 function resetDynamicProcessCancelStateV1() {
+  setDynamicProcessEditToggleVisible(true);
   if (dynamicProcessHistoryActionInputEl) {
     dynamicProcessHistoryActionInputEl.value = "create";
   }
@@ -5531,7 +5414,14 @@ function syncProcessEditTabToUrl_v1(tabKey) {
       return;
     }
     url.searchParams.set("settings_tab", tabKey);
-    window.history.replaceState(window.history.state, document.title, url.pathname + url.search + url.hash);
+    const newHref = url.pathname + url.search + url.hash;
+    logAppVerboProcessEditorDebugV1("syncProcessEditTabToUrl_v1:history.replaceState", {
+      previousHref: window.location.href,
+      newHref,
+      tabKey,
+      caller: "syncProcessEditTabToUrl_v1"
+    });
+    window.history.replaceState(window.history.state, document.title, newHref);
   } catch (error) {
     // Ignorar falha ao sincronizar o URL da aba ativa; a navegacao normal continua a funcionar.
   }
@@ -5558,6 +5448,11 @@ function setupProcessEditTabs() {
     panes.forEach((pane) => {
       const isActive = pane.getAttribute("data-process-edit-pane") === resolvedTabKey;
       pane.classList.toggle("active", isActive);
+    });
+    logAppVerboProcessEditorDebugV1("setupProcessEditTabs:activateProcessTab", {
+      requestedTabKey: tabKey,
+      resolvedTabKey,
+      href: window.location.href
     });
     return resolvedTabKey;
   }
@@ -5617,7 +5512,7 @@ function renderSubmenu(menuKey) {
       closeAllProfileEdits();
       selectedTargetByMenu[menuKey] = item.target;
       setActiveSubmenu(item.target, link);
-      applyContentForMenuTarget(menuKey, item.target);
+      applyContentForMenuTarget(menuKey, item.target, "click:submenu-tab-fallback");
       if (item.dynamicProcessSectionKey) {
         selectedDynamicSectionByMenu[menuKey] = String(item.dynamicProcessSectionKey);
         renderDynamicProcessCard(menuKey, item.dynamicProcessSectionKey);
@@ -5688,7 +5583,7 @@ function activateMenu(menuKey, options = {}) {
   if (!config) {
     return;
   }
-  const { resetDynamicToFirst = false } = options;
+  const { resetDynamicToFirst = false, source = "unspecified" } = options;
   const targetButton = Array.from(menuButtons).find((btn) => normalizeMenuKey(btn.dataset.menu) === menuKey);
   const menuItems = Array.isArray(config.items) ? config.items : [];
   if (resetDynamicToFirst) {
@@ -5741,7 +5636,7 @@ function activateMenu(menuKey, options = {}) {
       setActiveSubmenu(defaultTarget);
     }
     debugTabsLogV1("activateMenu:before-apply", { menuKey, defaultTarget });
-    applyContentForMenuTarget(menuKey, defaultTarget);
+    applyContentForMenuTarget(menuKey, defaultTarget, source);
     if (menuKey === MEU_PERFIL_MENU_KEY) {
       let selectedSectionItem = menuItems.find(
         (item) => String(item.profileSection || "") === meuPerfilSelectedProfileSection
@@ -5768,18 +5663,18 @@ function activateMenu(menuKey, options = {}) {
   setActiveSubmenu("");
 }
 
-function activateMenuTarget(menuKey, targetSelector) {
+function activateMenuTarget(menuKey, targetSelector, source = "unspecified") {
   const config = menuConfig[menuKey];
   if (!config) {
     return;
   }
-  activateMenu(menuKey, { resetDynamicToFirst: false });
+  activateMenu(menuKey, { resetDynamicToFirst: false, source });
   if (!targetSelector) {
     return;
   }
   selectedTargetByMenu[menuKey] = targetSelector;
   setActiveSubmenu(targetSelector);
-  applyContentForMenuTarget(menuKey, targetSelector);
+  applyContentForMenuTarget(menuKey, targetSelector, source);
   if (targetSelector === "#dynamic-process-card") {
     renderDynamicProcessCard(menuKey, selectedDynamicSectionByMenu[menuKey] || "");
   }
@@ -5842,7 +5737,7 @@ if (dropdownAvatarImageEl) {
 
 menuButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    activateMenu(normalizeMenuKey(btn.dataset.menu), { resetDynamicToFirst: true });
+    activateMenu(normalizeMenuKey(btn.dataset.menu), { resetDynamicToFirst: true, source: "click:sidebar" });
   });
 });
 
@@ -5863,6 +5758,10 @@ profileEditButtons.forEach((button) => {
 
 if (dynamicProcessEditToggleEl) {
   dynamicProcessEditToggleEl.addEventListener("click", () => {
+    // O botao vive num card separado (#dynamic-process-action-card), fora de #dynamic-process-card,
+    // por isso a regra CSS ".card.editing .profile-edit-toggle" nao o alcanca mais. Escondemos aqui
+    // explicitamente; restoreDynamicProcessEditToggleVisibility() reverte ao cancelar/fechar.
+    setDynamicProcessEditToggleVisible(false);
     if (dynamicProcessHistoryActionInputEl) {
       dynamicProcessHistoryActionInputEl.value = "create";
     }
@@ -6168,6 +6067,21 @@ setupProfileProcessTabs();
 setupMeuPerfilQuantityRules();
 setupConditionalProcessVisibility();
 setupProcessEditTabs();
+logAppVerboProcessEditorDebugV1("page_load:after_setup_snapshot", {
+  href: window.location.href,
+  activeTabKey: (function () {
+    const activeLink = document.querySelector(".process-edit-tab-link.active");
+    return activeLink ? activeLink.getAttribute("data-process-edit-tab") : null;
+  })(),
+  activePaneKey: (function () {
+    const activePane = document.querySelector(".process-edit-pane.active");
+    return activePane ? activePane.getAttribute("data-process-edit-pane") : null;
+  })(),
+  activeSidebarMenuKey: (function () {
+    const activeMenuBtn = document.querySelector(".menu-item.active");
+    return activeMenuBtn ? activeMenuBtn.getAttribute("data-menu") : null;
+  })()
+});
 setupProcessFieldsBuilder();
 setupProcessAdditionalFieldsManagerV2_guard_v1();
 window.setTimeout(() => {
@@ -6248,7 +6162,7 @@ if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
     startupMenu = fallbackMenu || "home";
   }
 }
-activateMenu(startupMenu, { resetDynamicToFirst: false });
+activateMenu(startupMenu, { resetDynamicToFirst: false, source: "boot" });
 handleHashNavigation(window.location.hash || "");
 
 
@@ -8027,6 +7941,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     );
 
     if (explicitFormMenu) {
+      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+        source: "explicit_form_menu_field",
+        value: explicitFormMenu
+      });
       return explicitFormMenu;
     }
 
@@ -8039,6 +7957,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const urlMenu = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
 
     if (urlMenu) {
+      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+        source: "current_url_menu",
+        value: urlMenu
+      });
       return urlMenu;
     }
 
@@ -8053,6 +7975,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     );
 
     if (fallbackFormMenu) {
+      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+        source: "fallback_form_menu_field",
+        value: fallbackFormMenu
+      });
       return fallbackFormMenu;
     }
 
@@ -8060,10 +7986,18 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       const bootstrapMenu = normalizePostSaveKeyV3(initialMenu);
 
       if (bootstrapMenu) {
+        logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+          source: "bootstrap_initial_menu",
+          value: bootstrapMenu
+        });
         return bootstrapMenu;
       }
     }
 
+    logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+      source: "none",
+      value: ""
+    });
     return "";
   }
 
@@ -8188,10 +8122,18 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
           }
         }
 
-        const dynamicSection = getDynamicSectionPostSaveV3(menuKey);
+        if (
+          settingsEditKey &&
+          (currentMenuKey === "administrativo" || currentMenuKey === ESTRUTURAS_MENU_KEY_V1)
+        ) {
+          currentUrl.searchParams.delete("dynamic_process_section");
+          currentUrl.searchParams.delete("section_key");
+        } else {
+          const dynamicSection = getDynamicSectionPostSaveV3(menuKey);
 
-        if (dynamicSection) {
-          currentUrl.searchParams.set("dynamic_process_section", dynamicSection);
+          if (dynamicSection) {
+            currentUrl.searchParams.set("dynamic_process_section", dynamicSection);
+          }
         }
       }
     }
@@ -8205,6 +8147,27 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   // (3) GUARDAR CONTEXTO
   //###################################################################################
 
+  function debugRelevantFormFieldsV1(form) {
+    const fieldNames = [
+      "menu_key",
+      "redirect_menu",
+      "redirect_target",
+      "settings_edit_key",
+      "settings_action",
+      "settings_tab",
+      "target",
+      "dynamic_process_section"
+    ];
+    const values = {};
+    fieldNames.forEach((name) => {
+      const control = form && typeof form.querySelector === "function"
+        ? form.querySelector("[name='" + name + "']")
+        : null;
+      values[name] = control ? control.value : undefined;
+    });
+    return values;
+  }
+
   function storePostSaveContextV3(form) {
     if (!form) {
       return;
@@ -8216,7 +8179,18 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return;
     }
 
+    logAppVerboProcessEditorDebugV1("storePostSaveContextV3:submit", {
+      formAction: form.getAttribute("action") || form.action,
+      formMethod: method,
+      locationHrefBeforeSubmit: window.location.href,
+      hiddenInputs: debugRelevantFormFieldsV1(form)
+    });
+
     const returnUrl = buildPostSaveReturnUrlV3(form);
+
+    logAppVerboProcessEditorDebugV1("storePostSaveContextV3:computed_return_url", {
+      returnUrl
+    });
 
     try {
       window.sessionStorage.setItem(

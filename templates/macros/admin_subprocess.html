@@ -87,6 +87,7 @@
   {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
   {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
   {% set _is_active_subprocess = False %}
+  {% set _is_same_edit_target = (_initial_menu_target_resolved == '#' ~ state.config.edit_target) %}
   {% if _initial_menu_resolved == state.menu_key %}
     {% if _initial_menu_resolved == 'perfil_de_autorizacao' %}
       {% set _sub_targets = ['#' ~ state.config.default_target, '#' ~ state.config.edit_target] %}
@@ -468,7 +469,7 @@
     data-admin-subprocess-role="{{ 'active-table' if _is_active else 'inactive-table' }}"
     data-admin-subprocess-status="{{ status_value }}"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
-    {% if not _is_active_subprocess %}style="display: none;"{% endif %}
+    {% if not _is_active_subprocess or _is_same_edit_target %}style="display: none;"{% endif %}
   >
     <h2>{{ title }}</h2>
 
