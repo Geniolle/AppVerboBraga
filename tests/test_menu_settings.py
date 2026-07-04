@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from appverbo.menu_settings import (
     ADDITIONAL_FIELD_TYPES,
+    delete_sidebar_section,
     get_menu_process_default_visible_fields,
     get_menu_process_field_options,
     get_menu_process_visible_field_header_map,
@@ -17,6 +18,7 @@ from appverbo.menu_settings import (
     normalize_sidebar_sections,
     update_sidebar_menu_process_quantity_fields_v1,
 )
+from appverbo.admin_subprocesses.registry import SESSOES_CONFIG
 from appverbo.models import Base, SidebarMenuSetting
 from appverbo.services.profile import (
     build_profile_menu_tabs_dependency_map_v1,
@@ -1564,6 +1566,107 @@ def test_normalize_sidebar_sections_preserves_scope_mode() -> None:
     treino_item = next(item for item in normalized if item["key"] == "treino")
     assert treino_item["visibility_scope_mode"] == "owner"
     assert treino_item["visibility_scopes"] == ["owner"]
+
+
+def test_normalize_sidebar_sections_exposes_can_delete_only_for_non_default_sections() -> None:
+    normalized = normalize_sidebar_sections(
+        [
+            {
+                "key": "arquivo",
+                "label": "Arquivo",
+                "visibility_scope_mode": "owner",
+                "status": "inativo",
+            }
+        ]
+    )
+
+    sistema_item = next(item for item in normalized if item["key"] == "sistema")
+    arquivo_item = next(item for item in normalized if item["key"] == "arquivo")
+
+    assert sistema_item["can_delete"] is False
+    assert arquivo_item["can_delete"] is True
+
+
+def test_sessoes_config_exposes_delete_action_for_inactive_rows() -> None:
+    assert SESSOES_CONFIG.delete_endpoint == "/settings/menu/sidebar-section-delete"
+
+    delete_action = next(action for action in SESSOES_CONFIG.actions if action.key == "delete")
+
+    assert delete_action.visible_when == ("inativo",)
+    assert delete_action.condition_field == "can_delete"
+
+
+def test_delete_sidebar_section_removes_only_target_inactive_custom_section() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        admin_config = {
+            "sidebar_sections": [
+                {"key": "sistema", "label": "Sistema", "visibility_scope_mode": "all", "status": "ativo"},
+                {"key": "arquivo", "label": "Arquivo", "visibility_scope_mode": "owner", "status": "inativo"},
+                {"key": "agenda", "label": "Agenda", "visibility_scope_mode": "owner", "status": "ativo"},
+            ]
+        }
+        session.add(
+            SidebarMenuSetting(
+                menu_key="administrativo",
+                menu_label="Administrativo",
+                is_active=True,
+                is_deleted=False,
+                menu_config=json.dumps(admin_config, ensure_ascii=False),
+            )
+        )
+        session.commit()
+
+        ok, error_message = delete_sidebar_section(session, "arquivo")
+
+        assert ok is True
+        assert error_message == ""
+
+        stored_admin = session.scalar(
+            select(SidebarMenuSetting).where(SidebarMenuSetting.menu_key == "administrativo")
+        )
+        assert stored_admin is not None
+
+        stored_config = json.loads(stored_admin.menu_config or "{}")
+        stored_sections = stored_config.get("sidebar_sections") or []
+        stored_keys = [item["key"] for item in stored_sections]
+
+        assert "arquivo" not in stored_keys
+        assert "agenda" in stored_keys
+        assert next(item for item in stored_sections if item["key"] == "agenda")["status"] == "ativo"
+
+
+def test_delete_sidebar_section_rejects_active_or_protected_rows() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        admin_config = {
+            "sidebar_sections": [
+                {"key": "sistema", "label": "Sistema", "visibility_scope_mode": "all", "status": "inativo"},
+                {"key": "agenda", "label": "Agenda", "visibility_scope_mode": "owner", "status": "ativo"},
+            ]
+        }
+        session.add(
+            SidebarMenuSetting(
+                menu_key="administrativo",
+                menu_label="Administrativo",
+                is_active=True,
+                is_deleted=False,
+                menu_config=json.dumps(admin_config, ensure_ascii=False),
+            )
+        )
+        session.commit()
+
+        ok_active, error_active = delete_sidebar_section(session, "agenda")
+        ok_protected, error_protected = delete_sidebar_section(session, "sistema")
+
+        assert ok_active is False
+        assert error_active == "A sessão deve estar inativa antes de ser eliminada."
+        assert ok_protected is False
+        assert error_protected == "Não é permitido eliminar esta sessão."
 
 
 def test_normalize_menu_process_quantity_fields() -> None:
