@@ -3989,10 +3989,10 @@ function restoreDynamicProcessEditToggleVisibility() {
 
 function closeAllProfileEdits() {
   if (
-    window.AppVerboCancelControllerV1 &&
-    typeof window.AppVerboCancelControllerV1.closeAllOpenEditors === "function"
+    window.AppGenesisCancelControllerV1 &&
+    typeof window.AppGenesisCancelControllerV1.closeAllOpenEditors === "function"
   ) {
-    window.AppVerboCancelControllerV1.closeAllOpenEditors(document);
+    window.AppGenesisCancelControllerV1.closeAllOpenEditors(document);
     syncTrainingOutrosState();
     restoreDynamicProcessEditToggleVisibility();
     return;

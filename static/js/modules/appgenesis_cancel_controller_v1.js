@@ -1,11 +1,11 @@
 //###################################################################################
-// APPVERBO - GLOBAL CANCEL CONTROLLER V1
+// APPGENESIS - GLOBAL CANCEL CONTROLLER V1
 //###################################################################################
 
 (function (window, document) {
   "use strict";
 
-  if (window.AppVerboCancelControllerV1) {
+  if (window.AppGenesisCancelControllerV1) {
     return;
   }
 
@@ -421,7 +421,7 @@
     cancelFromElementV1(trigger);
   });
 
-  window.AppVerboCancelControllerV1 = {
+  window.AppGenesisCancelControllerV1 = {
     cancelFromElement: cancelFromElementV1,
     closeCard: closeCardV1,
     resetForm: resetFormV1,

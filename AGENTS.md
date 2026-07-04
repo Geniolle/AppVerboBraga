@@ -458,7 +458,7 @@ Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppGe
 <!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_START -->
 ## Regra global para o botão Cancelar
 
-Todo botão **Cancelar** do AppGenesis deve usar obrigatoriamente o controller global `static/js/modules/appverbo_cancel_controller_v1.js`.
+Todo botão **Cancelar** do AppGenesis deve usar obrigatoriamente o controller global `static/js/modules/appgenesis_cancel_controller_v1.js`.
 
 Regras:
 

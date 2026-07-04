@@ -45,10 +45,10 @@
     }
 
     if (
-      window.AppVerboDialogV1 &&
-      typeof window.AppVerboDialogV1.alert === "function"
+      window.AppGenesisDialogV1 &&
+      typeof window.AppGenesisDialogV1.alert === "function"
     ) {
-      return window.AppVerboDialogV1.alert({
+      return window.AppGenesisDialogV1.alert({
         title,
         message
       });
