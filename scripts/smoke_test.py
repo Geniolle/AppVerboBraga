@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
-from appverbo.models import (
+from appgenesis.models import (
     Department,
     DepartmentMembership,
     DepartmentMembershipOperation,

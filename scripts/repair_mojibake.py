@@ -5,7 +5,7 @@ from pathlib import Path
 
 from sqlalchemy import inspect, text
 
-from appverbo.db.session import SessionLocal, engine
+from appgenesis.db.session import SessionLocal, engine
 
 
 # ###################################################################################
@@ -16,7 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 FILE_ROOTS = [
     PROJECT_ROOT / "templates",
-    PROJECT_ROOT / "appverbo",
+    PROJECT_ROOT / "appgenesis",
     PROJECT_ROOT / "static",
 ]
 

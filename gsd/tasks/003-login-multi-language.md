@@ -10,7 +10,7 @@ Add initial multi-language support to the current login experience for `pt`, `en
 ## Scope
 
 - Create the task record for login multi-language
-- Add a small translation structure under `appverbo/i18n/`
+- Add a small translation structure under `appgenesis/i18n/`
 - Add a reusable helper to resolve and persist the active language
 - Use `pt` as the default fallback language
 - Expose a simple translation function to the login template

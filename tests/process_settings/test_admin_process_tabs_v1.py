@@ -1,4 +1,4 @@
-from appverbo.process_settings import (
+from appgenesis.process_settings import (
     ADMIN_MENU_ORIGIN,
     build_admin_process_settings_context_v1,
     get_admin_process_settings_tabs_v1,

@@ -1,4 +1,4 @@
-from appverbo.services.profile import (
+from appgenesis.services.profile import (
     build_menu_process_quantity_storage_key,
     get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,

@@ -11,9 +11,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from sqlalchemy import select
 
-from appverbo.db.session import SessionLocal
-from appverbo.models import Entity
-from appverbo.models.modules import (
+from appgenesis.db.session import SessionLocal
+from appgenesis.models import Entity
+from appgenesis.models.modules import (
     AppModule,
     EntityModuleEntitlement,
     SidebarMenuItem,

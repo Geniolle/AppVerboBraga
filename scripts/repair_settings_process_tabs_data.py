@@ -2,7 +2,7 @@
 
 from sqlalchemy import inspect, text
 
-from appverbo.db.session import SessionLocal, engine
+from appgenesis.db.session import SessionLocal, engine
 
 replacements = {
     "ConfiguraÃ§Ã£o dos campos": "Configuração dos campos",

@@ -5,7 +5,7 @@ import sys
 
 ROOT = Path.cwd()
 
-SESSION_PATH = ROOT / "appverbo" / "routes" / "auth" / "session_handlers.py"
+SESSION_PATH = ROOT / "appgenesis" / "routes" / "auth" / "session_handlers.py"
 LOGIN_TEMPLATE_PATH = ROOT / "templates" / "login.html"
 
 

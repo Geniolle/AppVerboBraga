@@ -11,7 +11,7 @@ It does not introduce destructive schema cleanup.
 ## Configuration Notes
 
 - `alembic.ini` points Alembic to `migrations/`
-- `migrations/env.py` uses `appverbo.models.Base.metadata` as `target_metadata`
+- `migrations/env.py` uses `appgenesis.models.Base.metadata` as `target_metadata`
 - `scripts/init_db.py` upgrades the database to Alembic `head`
 - The runtime is Docker-first, so validation was executed through `docker compose exec web`
 
@@ -25,7 +25,7 @@ docker compose exec web python -m alembic history
 docker compose exec db psql -U postgres -d app_igreja -c "select column_name, data_type, is_nullable, column_default from information_schema.columns where table_name in ('process_view_authorization_rules','admin_definitions','songs','users') order by table_name, ordinal_position;"
 docker compose exec db psql -U postgres -d app_igreja -c "select tablename, indexname, indexdef from pg_indexes where schemaname = 'public' and tablename in ('process_view_authorization_rules','admin_definitions','songs') order by tablename, indexname;"
 docker compose exec db psql -U postgres -d app_igreja -c "select 'process_view_authorization_rules' as table_name, count(*) from process_view_authorization_rules union all select 'admin_definitions', count(*) from admin_definitions union all select 'songs', count(*) from songs;"
-docker compose exec web python -c "from fastapi.testclient import TestClient; from appverbo.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print('GET /login', resp.status_code)"
+docker compose exec web python -c "from fastapi.testclient import TestClient; from appgenesis.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print('GET /login', resp.status_code)"
 ```
 
 ## Alembic Baseline
@@ -64,7 +64,7 @@ FAILED: New upgrade operations detected:
 - remove_index / remove_table for `process_view_authorization_rules`
 ```
 
-The previous `users.system_type` default drift is no longer present after metadata alignment in `appverbo/models/user.py`.
+The previous `users.system_type` default drift is no longer present after metadata alignment in `appgenesis/models/user.py`.
 
 ## Differences Found
 
@@ -80,7 +80,7 @@ The previous `users.system_type` default drift is no longer present after metada
   - `authview01_create_process_view_authorization_rules.py`
   - `authview03_add_visibility_scope_to_authorization_rules.py`
 - Metadata state:
-  - no active model under `appverbo/models/`
+  - no active model under `appgenesis/models/`
   - repo search found references only in migrations, not in current runtime code
 - Probable origin:
   - feature/schema was introduced historically, then removed from metadata/runtime without a cleanup migration
@@ -104,7 +104,7 @@ The previous `users.system_type` default drift is no longer present after metada
   - `admindefs01_add_admin_definitions_table.py`
   - `admindefscope01_add_entity_scope_to_admin_definitions.py`
 - Metadata state:
-  - no active model under `appverbo/models/`
+  - no active model under `appgenesis/models/`
   - repo search found references only in migrations, not in current runtime code
 - Probable origin:
   - historical admin/config storage persisted in schema after metadata/runtime stopped declaring it
@@ -126,7 +126,7 @@ The previous `users.system_type` default drift is no longer present after metada
 - Migration origin:
   - `songs01_create_songs_table.py`
 - Metadata state:
-  - no active model under `appverbo/models/`
+  - no active model under `appgenesis/models/`
   - repo search found references only in migrations, not in current runtime code
 - Probable origin:
   - abandoned or not-yet-finished feature removed from active metadata without schema retirement
@@ -156,7 +156,7 @@ The previous `users.system_type` default drift is no longer present after metada
 
 One small non-destructive metadata alignment was applied:
 
-- `appverbo/models/user.py`
+- `appgenesis/models/user.py`
   - `system_type` now declares `server_default="default"` to match:
     - migration `systemtype01`
     - live PostgreSQL schema

@@ -2,8 +2,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from appverbo.models import Base, Entity
-from appverbo.services.user_entity_scope import get_entities_for_user_edit_form_v1
+from appgenesis.models import Base, Entity
+from appgenesis.services.user_entity_scope import get_entities_for_user_edit_form_v1
 
 
 def _build_session_factory():

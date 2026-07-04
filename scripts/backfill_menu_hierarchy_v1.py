@@ -4,8 +4,8 @@ import json
 
 from sqlalchemy import text
 
-from appverbo.core import SessionLocal
-from appverbo.menu_settings import (
+from appgenesis.core import SessionLocal
+from appgenesis.menu_settings import (
     _rebuild_menu_process_hierarchy_from_additional_fields_v1,
     normalize_menu_process_additional_fields_v1,
 )

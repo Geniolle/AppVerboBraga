@@ -1,13 +1,13 @@
 from types import SimpleNamespace
 
-from appverbo.admin_subprocesses.registry import AUTHORIZATION_PROFILE_CONFIG
-from appverbo.admin_subprocesses.repositories import auth_profile_repository as auth_profile_module
-from appverbo.admin_subprocesses.repositories.auth_profile_repository import (
+from appgenesis.admin_subprocesses.registry import AUTHORIZATION_PROFILE_CONFIG
+from appgenesis.admin_subprocesses.repositories import auth_profile_repository as auth_profile_module
+from appgenesis.admin_subprocesses.repositories.auth_profile_repository import (
     AUTH_PROFILE_MENU_KEY,
     AUTH_PROFILE_SECTION_KEY,
     AuthorizationProfileAdminRepository,
 )
-from appverbo.services.profile import (
+from appgenesis.services.profile import (
     build_menu_process_records_storage_key,
     parse_member_profile_fields,
     parse_menu_process_records,

@@ -1,4 +1,4 @@
-﻿from appverbo.core import SessionLocal
+﻿from appgenesis.core import SessionLocal
 from sqlalchemy import text
 import json
 

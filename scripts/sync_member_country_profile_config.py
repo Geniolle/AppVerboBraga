@@ -4,7 +4,7 @@ import json
 
 from sqlalchemy import inspect, text
 
-from appverbo.db.session import SessionLocal, engine
+from appgenesis.db.session import SessionLocal, engine
 
 
 # ###################################################################################

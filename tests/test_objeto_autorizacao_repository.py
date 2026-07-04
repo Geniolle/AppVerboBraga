@@ -1,11 +1,11 @@
 from types import SimpleNamespace
 
-from appverbo.admin_subprocesses.registry import OBJETO_AUTORIZACAO_CONFIG
-from appverbo.admin_subprocesses.repositories.objeto_autorizacao_repository import (
+from appgenesis.admin_subprocesses.registry import OBJETO_AUTORIZACAO_CONFIG
+from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository import (
     OBJETO_AUTORIZACAO_STORAGE_KEY,
     ObjetoAutorizacaoAdminRepository,
 )
-from appverbo.services.profile import (
+from appgenesis.services.profile import (
     build_menu_process_records_storage_key,
     parse_member_profile_fields,
     parse_menu_process_records,

@@ -19,9 +19,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from sqlalchemy import text
 
-from appverbo.core import SessionLocal
-from appverbo.services.page import get_page_data
-from appverbo.services.profile import parse_member_profile_fields
+from appgenesis.core import SessionLocal
+from appgenesis.services.page import get_page_data
+from appgenesis.services.profile import parse_member_profile_fields
 
 
 ####################################################################################

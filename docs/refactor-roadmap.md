@@ -18,24 +18,24 @@ Esta proposta prioriza:
 ### O que já está melhor
 
 - Já existe separação inicial por `config`, `db`, `models`, `routes`, `services`, `repositories`, `schemas`.
-- Os routers novos por domínio já estão publicados em `appverbo/app.py`.
+- Os routers novos por domínio já estão publicados em `appgenesis/app.py`.
 - Há testes básicos para auth, profile, menu settings e WhatsApp.
 - Há migrações, scripts operacionais e uma divisão inicial entre backend e assets.
 
 ### Principais problemas que ainda travam a refatoração
 
-1. `appverbo/core.py` continua a ser um agregador global de framework, settings, DB, modelos e utilitários.
-   Hoje 24 módulos ainda dependem de `from appverbo.core import *`.
+1. `appgenesis/core.py` continua a ser um agregador global de framework, settings, DB, modelos e utilitários.
+   Hoje 24 módulos ainda dependem de `from appgenesis.core import *`.
 
 2. As rotas continuam com lógica de aplicação e acesso a dados embutidos.
-   Há pelo menos 59 ocorrências de `session.execute/select/update/delete` dentro de `appverbo/routes`.
+   Há pelo menos 59 ocorrências de `session.execute/select/update/delete` dentro de `appgenesis/routes`.
 
 3. Os serviços estão grandes e misturam responsabilidades.
    Exemplos:
-   - `appverbo/menu_settings.py`
-   - `appverbo/services/page.py`
-   - `appverbo/routes/profile/profile_handlers.py`
-   - `appverbo/routes/profile/settings_handlers.py`
+   - `appgenesis/menu_settings.py`
+   - `appgenesis/services/page.py`
+   - `appgenesis/routes/profile/profile_handlers.py`
+   - `appgenesis/routes/profile/settings_handlers.py`
 
 4. O ecrã principal continua monolítico no frontend.
    Exemplos:
@@ -68,7 +68,7 @@ Responsável por:
 Estrutura sugerida:
 
 ```text
-appverbo/http/
+appgenesis/http/
   deps/
   presenters/
   responses/
@@ -77,7 +77,7 @@ appverbo/http/
 Se não quiser renomear tudo agora, manter `routes/` e introduzir subpastas claras:
 
 ```text
-appverbo/routes/<dominio>/
+appgenesis/routes/<dominio>/
   router.py
   handlers/
   presenters/
@@ -95,7 +95,7 @@ Responsável por:
 Estrutura sugerida:
 
 ```text
-appverbo/use_cases/
+appgenesis/use_cases/
   auth/
   users/
   entities/
@@ -117,7 +117,7 @@ Responsável por:
 Estrutura sugerida:
 
 ```text
-appverbo/domain/
+appgenesis/domain/
   auth/
   users/
   entities/
@@ -140,7 +140,7 @@ Responsável por:
 Estrutura sugerida:
 
 ```text
-appverbo/infrastructure/
+appgenesis/infrastructure/
   db/
   email/
   oauth/
@@ -165,7 +165,7 @@ Separar:
 Sugestão:
 
 ```text
-appverbo/use_cases/auth/
+appgenesis/use_cases/auth/
   login.py
   oauth_login.py
   invite_user.py
@@ -208,12 +208,12 @@ Separar:
 
 ### Menu Settings
 
-`appverbo/menu_settings.py` deve virar um package próprio.
+`appgenesis/menu_settings.py` deve virar um package próprio.
 
 Sugestão:
 
 ```text
-appverbo/menu_settings/
+appgenesis/menu_settings/
   __init__.py
   constants.py
   normalizers.py
@@ -242,7 +242,7 @@ Objetivo: parar de aumentar a dívida durante a refatoração.
 
 Entregas:
 
-- remover novos usos de `from appverbo.core import *`;
+- remover novos usos de `from appgenesis.core import *`;
 - adotar imports explícitos nos ficheiros novos/alterados;
 - criar guideline curta para handlers, use cases e repositories;
 - ampliar testes antes de mexer nos módulos mais instáveis.
@@ -261,12 +261,12 @@ Objetivo: eliminar o hub global de dependências.
 
 Extrair para módulos específicos:
 
-- `appverbo/http/templates.py`
-- `appverbo/http/session_middleware.py`
-- `appverbo/db/session.py`
-- `appverbo/config/settings.py`
-- `appverbo/integrations/oauth.py`
-- `appverbo/domain/constants.py` ou módulos equivalentes por domínio
+- `appgenesis/http/templates.py`
+- `appgenesis/http/session_middleware.py`
+- `appgenesis/db/session.py`
+- `appgenesis/config/settings.py`
+- `appgenesis/integrations/oauth.py`
+- `appgenesis/domain/constants.py` ou módulos equivalentes por domínio
 
 Regra:
 
@@ -288,7 +288,7 @@ Prioridade:
 Criar repositórios por agregado:
 
 ```text
-appverbo/repositories/
+appgenesis/repositories/
   user_repository.py
   member_repository.py
   entity_repository.py
@@ -311,10 +311,10 @@ Objetivo: substituir serviços genéricos por casos de uso menores.
 Dividir em:
 
 ```text
-appverbo/use_cases/dashboard/get_home_dashboard.py
-appverbo/use_cases/page/build_new_user_page_context.py
-appverbo/use_cases/entities/get_entity_edit_data.py
-appverbo/use_cases/users/get_user_edit_data.py
+appgenesis/use_cases/dashboard/get_home_dashboard.py
+appgenesis/use_cases/page/build_new_user_page_context.py
+appgenesis/use_cases/entities/get_entity_edit_data.py
+appgenesis/use_cases/users/get_user_edit_data.py
 ```
 
 ### `services/auth.py`
@@ -322,11 +322,11 @@ appverbo/use_cases/users/get_user_edit_data.py
 Dividir em:
 
 ```text
-appverbo/use_cases/auth/passwords.py
-appverbo/use_cases/auth/invites.py
-appverbo/use_cases/auth/oauth.py
-appverbo/use_cases/auth/login_page.py
-appverbo/use_cases/auth/upsert_user_by_email.py
+appgenesis/use_cases/auth/passwords.py
+appgenesis/use_cases/auth/invites.py
+appgenesis/use_cases/auth/oauth.py
+appgenesis/use_cases/auth/login_page.py
+appgenesis/use_cases/auth/upsert_user_by_email.py
 ```
 
 ### `routes/profile/profile_handlers.py`
@@ -334,11 +334,11 @@ appverbo/use_cases/auth/upsert_user_by_email.py
 Dividir em handlers menores:
 
 ```text
-appverbo/routes/profile/handlers/personal.py
-appverbo/routes/profile/handlers/address.py
-appverbo/routes/profile/handlers/training.py
-appverbo/routes/profile/handlers/whatsapp.py
-appverbo/routes/profile/handlers/process_data.py
+appgenesis/routes/profile/handlers/personal.py
+appgenesis/routes/profile/handlers/address.py
+appgenesis/routes/profile/handlers/training.py
+appgenesis/routes/profile/handlers/whatsapp.py
+appgenesis/routes/profile/handlers/process_data.py
 ```
 
 ## Fase 4: Quebrar o ecrã `new_user`

@@ -5,7 +5,7 @@ Updated: 2026-07-03
 
 ## Objective
 
-Analyze and classify the legacy PostgreSQL tables that still exist in the Alembic history and live database, but no longer have an active contract in `appverbo/models/`.
+Analyze and classify the legacy PostgreSQL tables that still exist in the Alembic history and live database, but no longer have an active contract in `appgenesis/models/`.
 
 ## Scope
 

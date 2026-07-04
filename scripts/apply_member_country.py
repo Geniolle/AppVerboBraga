@@ -9,11 +9,11 @@ import re
 
 ROOT = Path.cwd()
 
-MEMBER_MODEL_PATH = ROOT / "appverbo" / "models" / "member.py"
-PROFILE_SERVICE_PATH = ROOT / "appverbo" / "services" / "profile.py"
-PAGE_SERVICE_PATH = ROOT / "appverbo" / "services" / "page.py"
-PROFILE_HANDLERS_PATH = ROOT / "appverbo" / "routes" / "profile" / "profile_handlers.py"
-MENU_SETTINGS_PATH = ROOT / "appverbo" / "menu_settings.py"
+MEMBER_MODEL_PATH = ROOT / "appgenesis" / "models" / "member.py"
+PROFILE_SERVICE_PATH = ROOT / "appgenesis" / "services" / "profile.py"
+PAGE_SERVICE_PATH = ROOT / "appgenesis" / "services" / "page.py"
+PROFILE_HANDLERS_PATH = ROOT / "appgenesis" / "routes" / "profile" / "profile_handlers.py"
+MENU_SETTINGS_PATH = ROOT / "appgenesis" / "menu_settings.py"
 NEW_USER_TEMPLATE_PATH = ROOT / "templates" / "new_user.html"
 MIGRATIONS_DIR = ROOT / "migrations" / "versions"
 SCRIPTS_DIR = ROOT / "scripts"
@@ -80,7 +80,7 @@ if "country: Mapped[Optional[str]]" not in member_model:
     member_model, ok = replace_once(member_model, old, new)
 
     if not ok:
-        raise SystemExit("ERRO: nao foi possivel inserir country em appverbo/models/member.py")
+        raise SystemExit("ERRO: nao foi possivel inserir country em appgenesis/models/member.py")
 
     write_file(MEMBER_MODEL_PATH, member_model)
     print("OK: Member.country adicionado ao model.")
@@ -175,7 +175,7 @@ if '"country": row.country or "-",' not in profile_service:
         raise SystemExit("ERRO: nao foi possivel adicionar country no retorno principal de get_user_personal_data.")
 
 write_file(PROFILE_SERVICE_PATH, profile_service)
-print("OK: appverbo/services/profile.py atualizado.")
+print("OK: appgenesis/services/profile.py atualizado.")
 
 
 # ###################################################################################
@@ -207,7 +207,7 @@ if "        member.country = clean_country or None\n" not in profile_handlers:
         raise SystemExit("ERRO: nao foi possivel gravar member.country em update_personal_profile.")
 
 write_file(PROFILE_HANDLERS_PATH, profile_handlers)
-print("OK: appverbo/routes/profile/profile_handlers.py atualizado.")
+print("OK: appgenesis/routes/profile/profile_handlers.py atualizado.")
 
 
 # ###################################################################################
@@ -278,7 +278,7 @@ if options_block_match and '"pais"' not in options_block_match.group(2) and "'pa
         menu_settings = menu_settings.replace(block, new_block, 1)
 
 write_file(MENU_SETTINGS_PATH, menu_settings)
-print("OK: appverbo/menu_settings.py atualizado.")
+print("OK: appgenesis/menu_settings.py atualizado.")
 
 
 # ###################################################################################
@@ -337,7 +337,7 @@ print("OK: templates/new_user.html atualizado.")
 
 patched_account_files: list[str] = []
 
-for path in (ROOT / "appverbo").rglob("*.py"):
+for path in (ROOT / "appgenesis").rglob("*.py"):
     if path in {MEMBER_MODEL_PATH, PROFILE_SERVICE_PATH, PAGE_SERVICE_PATH, PROFILE_HANDLERS_PATH, MENU_SETTINGS_PATH}:
         continue
 
@@ -406,7 +406,7 @@ import json
 
 from sqlalchemy import inspect, text
 
-from appverbo.db.session import SessionLocal, engine
+from appgenesis.db.session import SessionLocal, engine
 
 
 # ###################################################################################

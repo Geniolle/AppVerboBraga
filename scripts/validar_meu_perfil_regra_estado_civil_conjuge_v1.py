@@ -22,7 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from sqlalchemy import text
 
-from appverbo.core import SessionLocal
+from appgenesis.core import SessionLocal
 
 
 ####################################################################################
