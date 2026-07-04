@@ -1,10 +1,10 @@
-# AGENTS.md - Regras Locais do Projeto AppVerboBraga
+# AGENTS.md - Regras Locais do Projeto AppGenesis
 
-Estas regras são obrigatórias para qualquer alteração no projeto AppVerboBraga.
+Estas regras são obrigatórias para qualquer alteração no projeto AppGenesis.
 
 ## 1) Objetivo do projeto
 
-O AppVerboBraga é uma aplicação SaaS modular para igrejas.
+O AppGenesis é uma aplicação SaaS modular para igrejas.
 
 A aplicação deve crescer por módulos ativáveis por entidade, por exemplo:
 
@@ -191,7 +191,7 @@ No new upgrade operations detected.
 
 ## 11) Regras para datas
 
-Quando houver lógica JavaScript/Google Apps Script relacionada ao projeto AppVerboBraga, formatar datas com:
+Quando houver lógica JavaScript/Google Apps Script relacionada ao projeto AppGenesis, formatar datas com:
 
 ```javascript
 const dataFormatada = Utilities.formatDate(new Date(dataTexto), "GMT+1", "dd/MM/yyyy");
@@ -395,7 +395,7 @@ Motivo: tentativas de criar o campo Cabecalho do campo por JavaScript causaram d
 <!-- APPVERBO_RULE_LAYOUT_ATIVOS_INATIVOS_V1_START -->
 ## Regra padrão: blocos separados para registos ativos/criados e inativos
 
-Sempre que existir uma listagem administrativa com estado ativo/inativo, o layout padrão do AppVerboBraga deve manter os registos em blocos/cards separados:
+Sempre que existir uma listagem administrativa com estado ativo/inativo, o layout padrão do AppGenesis deve manter os registos em blocos/cards separados:
 
 1. O bloco principal deve listar apenas registos ativos/criados.
 2. O bloco de inativos deve ser um card separado, abaixo do bloco principal.
@@ -443,7 +443,7 @@ Sempre que houver listagens administrativas com status de utilizador:
 <!-- APPVERBO_SAVE_CANCEL_BUTTON_RULE_V1_START -->
 ## Regra geral para botões Guardar e Cancelar
 
-Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppVerboBraga:
+Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppGenesis:
 
 1. Os botões devem ficar sempre no lado esquerdo da tela ou do bloco/formulário.
 2. Os dois botões devem ter a mesma largura, altura, padding e alinhamento vertical.
@@ -458,7 +458,7 @@ Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppVe
 <!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_START -->
 ## Regra global para o botão Cancelar
 
-Todo botão **Cancelar** do AppVerboBraga deve usar obrigatoriamente o controller global `static/js/modules/appverbo_cancel_controller_v1.js`.
+Todo botão **Cancelar** do AppGenesis deve usar obrigatoriamente o controller global `static/js/modules/appverbo_cancel_controller_v1.js`.
 
 Regras:
 
@@ -547,7 +547,7 @@ Sempre que uma aba, subprocesso ou lista administrativa tiver a opção de criar
 <!-- APPVERBO_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_START -->
 ## Regra global para processos dinâmicos listáveis
 
-Sempre que for criado ou configurado um novo processo dinâmico/listável no AppVerboBraga:
+Sempre que for criado ou configurado um novo processo dinâmico/listável no AppGenesis:
 
 1. O processo deve usar o layout standard de gestão/listagem, sem HTML específico duplicado por processo.
 2. O layout standard deve conter:
@@ -1171,7 +1171,7 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 <!-- APPVERBO_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_START -->
 ## Regra global: validações UI e fonte única de campos configuráveis
 
-Sempre que uma validação ou mensagem de erro precisar ser mostrada na UI do AppVerboBraga:
+Sempre que uma validação ou mensagem de erro precisar ser mostrada na UI do AppGenesis:
 
 1. Não usar `alert()` nem `window.alert()` no fluxo final entregue ao utilizador.
 2. Usar um dialog/modal reutilizável do sistema, preferencialmente via módulo partilhado.

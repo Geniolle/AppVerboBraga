@@ -77,7 +77,7 @@ ENTITY_NUMBER_MIN = settings.ENTITY_NUMBER_MIN
 ENTITY_NUMBER_MAX = settings.ENTITY_NUMBER_MAX
 
 templates = Jinja2Templates(directory=str(Path(BASE_DIR) / "templates"))
-app = FastAPI(title="AppVerboBraga User Admin")
+app = FastAPI(title="AppGenesis User Admin")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.add_middleware(
     SessionMiddleware,

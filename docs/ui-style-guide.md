@@ -1,6 +1,6 @@
 # UI Style Guide
 
-Este guia define o padrao visual minimo para campos e botoes no AppVerboBraga.
+Este guia define o padrao visual minimo para campos e botoes no AppGenesis.
 
 ## Fonte da verdade
 

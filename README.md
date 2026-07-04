@@ -1,4 +1,4 @@
-# AppVerboBraga
+# AppGenesis
 
 ## Estrutura do Projeto
 
@@ -91,7 +91,7 @@ SMTP_PORT=587
 SMTP_USERNAME=
 SMTP_PASSWORD=
 SMTP_FROM_EMAIL=
-SMTP_FROM_NAME=AppVerboBraga
+SMTP_FROM_NAME=AppGenesis
 SMTP_USE_TLS=true
 ```
 

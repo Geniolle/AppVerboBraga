@@ -14,7 +14,7 @@ from appverbo.routes.webhooks import router as webhook_router
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="AppVerboBraga User Admin")
+    app = FastAPI(title="AppGenesis User Admin")
     app.mount("/static", StaticFiles(directory=str(settings.STATIC_DIR)), name="static")
     app.add_middleware(
         SessionMiddleware,

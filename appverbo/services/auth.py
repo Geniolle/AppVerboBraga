@@ -134,19 +134,19 @@ def send_user_invite_email(
     display_name = (recipient_name or "").strip() or recipient
     entity_display_name = (entity_name or "").strip() or "-"
     inviter_display_name = (invited_by_name or "").strip() or "Administrador"
-    subject = "Convite para ativar conta no AppVerboBraga"
+    subject = "Convite para ativar conta no AppGenesis"
 
     html_body = (
         "<p>Olá,</p>"
         f"<p>Foi convidado por <strong>{inviter_display_name}</strong> para aceder à entidade "
-        f"<strong>{entity_display_name}</strong> no AppVerboBraga.</p>"
+        f"<strong>{entity_display_name}</strong> no AppGenesis.</p>"
         "<p>Para concluir o registo e definir a sua palavra-passe, use o link abaixo:</p>"
         f"<p><a href=\"{invite_link}\">{invite_link}</a></p>"
         "<p>Se não reconhece este convite, ignore este email.</p>"
     )
     text_body = (
         f"Olá {display_name},\n\n"
-        f"Foi convidado por {inviter_display_name} para aceder à entidade {entity_display_name} no AppVerboBraga.\n"
+        f"Foi convidado por {inviter_display_name} para aceder à entidade {entity_display_name} no AppGenesis.\n"
         "Para concluir o registo e definir a sua palavra-passe, use o link abaixo:\n"
         f"{invite_link}\n\n"
         "Se não reconhece este convite, ignore este email.\n"
@@ -289,11 +289,11 @@ def send_password_reset_email(
         return False, "Email do destinatario invalido."
 
     display_name = (recipient_name or "").strip() or recipient
-    subject = "Redefinicao de palavra-passe no AppVerboBraga"
+    subject = "Redefinicao de palavra-passe no AppGenesis"
 
     html_body = (
         f"<p>Ola, <strong>{display_name}</strong>.</p>"
-        "<p>Recebemos um pedido para redefinir a palavra-passe da sua conta no AppVerboBraga.</p>"
+        "<p>Recebemos um pedido para redefinir a palavra-passe da sua conta no AppGenesis.</p>"
         "<p>Use o link abaixo para criar uma nova palavra-passe:</p>"
         f"<p><a href=\"{reset_link}\">{reset_link}</a></p>"
         "<p>Este link expira em 2 horas.</p>"
@@ -302,7 +302,7 @@ def send_password_reset_email(
 
     text_body = (
         f"Ola, {display_name}.\n\n"
-        "Recebemos um pedido para redefinir a palavra-passe da sua conta no AppVerboBraga.\n"
+        "Recebemos um pedido para redefinir a palavra-passe da sua conta no AppGenesis.\n"
         "Use o link abaixo para criar uma nova palavra-passe:\n"
         f"{reset_link}\n\n"
         "Este link expira em 2 horas.\n"

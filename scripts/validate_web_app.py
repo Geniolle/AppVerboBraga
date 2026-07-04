@@ -19,7 +19,7 @@ class CheckResult:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Valida fluxos principais da AppVerboBraga via HTTP."
+        description="Valida fluxos principais da AppGenesis via HTTP."
     )
     parser.add_argument(
         "--base-url",

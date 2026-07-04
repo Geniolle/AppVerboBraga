@@ -126,7 +126,7 @@ def _build_settings() -> Settings:
         SMTP_USERNAME=(os.getenv("SMTP_USERNAME", "") or "").strip(),
         SMTP_PASSWORD=(os.getenv("SMTP_PASSWORD", "") or "").strip(),
         SMTP_FROM_EMAIL=(os.getenv("SMTP_FROM_EMAIL", "") or "").strip(),
-        SMTP_FROM_NAME=(os.getenv("SMTP_FROM_NAME", "AppVerboBraga") or "AppVerboBraga").strip(),
+        SMTP_FROM_NAME=(os.getenv("SMTP_FROM_NAME", "AppGenesis") or "AppGenesis").strip(),
         SMTP_USE_TLS=_env_bool("SMTP_USE_TLS", True),
         ALLOWED_ACCOUNT_STATUS={"active", "pending", "inactive", "blocked"},
         ENTITY_PROFILE_SCOPE_OWNER="owner",
