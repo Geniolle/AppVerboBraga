@@ -84,3 +84,57 @@ Reason:
 - This adds low-risk language persistence without requiring a database migration
 - It keeps the current authentication model stable in this phase
 - It remains compatible with future web and mobile language-preference evolution
+
+## Decision 010
+
+The canonical personal language preference now lives on `users.preferred_language`, while session/cookie remain synchronization and pre-auth bootstrap layers.
+
+Reason:
+- Language is a personal user preference, not an entity-level setting
+- The login flow already has access to the authenticated user record safely
+- This keeps future web and mobile clients aligned on one durable source of truth
+
+## Decision 011
+
+Legacy tables that still exist in PostgreSQL but are no longer present in active metadata must not be silently dropped or silently reintroduced just to satisfy `alembic check`.
+
+Reason:
+- These tables may still contain real data
+- A green `alembic check` is not worth accidental data loss or accidental feature resurrection
+- Each such table needs an explicit keep-or-retire decision before corrective schema work
+
+## Decision 012
+
+Authorization-related legacy tables should default to `indefinida` unless the codebase proves an explicit replacement or explicit retirement path.
+
+Reason:
+- Authorization data has higher semantic risk than generic legacy persistence
+- Missing code references alone are not enough evidence that authorization records are safe to remove
+- This avoids treating sensitive permission data as disposable schema noise
+
+## Decision 013
+
+The current runtime contract for authorization-profile/process visibility flows is `sidebar_menu_settings` plus `members.profile_custom_fields`, not `process_view_authorization_rules`.
+
+Reason:
+- Current code reads and writes auth-profile and auth-object records through admin subprocess repositories backed by `profile_custom_fields`
+- Current process and subprocess visibility options are resolved dynamically from `sidebar_menu_settings`
+- The remaining rows in `process_view_authorization_rules` still have audit value, but the table is no longer the active source of truth
+
+## Decision 014
+
+Legacy authorization rows must not be dropped until their missing semantics are either migrated into the current contract or explicitly archived as accepted loss.
+
+Reason:
+- The remaining legacy rows are only partially represented in current auth storage
+- Current storage does not yet prove preservation of legacy subprocess granularity, department information, or `entity` scope semantics
+- Removing the table before that decision would create avoidable authorization-data loss
+
+## Decision 015
+
+No complementary migration of legacy authorization semantics should be implemented until a human validates whether subprocess, department, and `entity`-scope granularity are still required.
+
+Reason:
+- The current codebase proves semantic mismatch, but not the intended business outcome
+- A migration designed without that validation would guess at profile equivalence and scope behavior
+- Deferring implementation is safer than encoding the wrong authorization model
