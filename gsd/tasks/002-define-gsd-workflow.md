@@ -5,7 +5,7 @@ Updated: 2026-07-03
 
 ## Objective
 
-Define a clear workflow for how GSD Core should be used in future AppVerboBraga sessions with Codex, Claude, or another agent.
+Define a clear workflow for how GSD Core should be used in future AppGenesis sessions with Codex, Claude, or another agent.
 
 ## Scope
 

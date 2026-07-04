@@ -4,7 +4,7 @@ Updated: 2026-07-03
 
 ## Scope
 
-This report determines whether `process_view_authorization_rules` is still part of the active AppVerboBraga runtime or whether it has already been replaced by another authorization/profile configuration path.
+This report determines whether `process_view_authorization_rules` is still part of the active AppGenesis runtime or whether it has already been replaced by another authorization/profile configuration path.
 
 ## Commands Executed
 

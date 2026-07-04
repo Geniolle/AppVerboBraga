@@ -4,7 +4,7 @@ Updated: 2026-07-03
 
 ## Purpose
 
-This folder gives Codex and future contributors a stable planning baseline for AppVerboBraga without changing runtime behavior.
+This folder gives Codex and future contributors a stable planning baseline for AppGenesis without changing runtime behavior.
 
 ## Current Stack
 

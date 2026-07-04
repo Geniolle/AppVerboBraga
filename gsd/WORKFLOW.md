@@ -4,7 +4,7 @@ Updated: 2026-07-03
 
 ## Purpose
 
-This document defines how GSD Core should be used in future AppVerboBraga sessions with Codex, Claude, or another agent.
+This document defines how GSD Core should be used in future AppGenesis sessions with Codex, Claude, or another agent.
 
 ## Reading Order
 

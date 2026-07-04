@@ -5,7 +5,7 @@ Updated: 2026-07-03
 
 ## Objective
 
-Introduce GSD Core as the first planning and context tool for AppVerboBraga so future implementation work with AI/Codex starts from a shared documentation baseline.
+Introduce GSD Core as the first planning and context tool for AppGenesis so future implementation work with AI/Codex starts from a shared documentation baseline.
 
 ## Scope
 
@@ -45,6 +45,6 @@ Introduce GSD Core as the first planning and context tool for AppVerboBraga so f
 This task is complete when:
 
 - the GSD structure exists in the repository
-- the initial documents are readable and specific to AppVerboBraga
+- the initial documents are readable and specific to AppGenesis
 - future Codex sessions can use these files as a planning baseline
 - the running application behavior remains unchanged

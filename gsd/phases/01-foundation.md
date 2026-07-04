@@ -5,7 +5,7 @@ Updated: 2026-07-03
 
 ## Goal
 
-Create a stable planning foundation for AppVerboBraga before deeper architectural changes.
+Create a stable planning foundation for AppGenesis before deeper architectural changes.
 
 ## Scope
 
