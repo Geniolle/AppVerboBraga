@@ -138,3 +138,12 @@ Reason:
 - The current codebase proves semantic mismatch, but not the intended business outcome
 - A migration designed without that validation would guess at profile equivalence and scope behavior
 - Deferring implementation is safer than encoding the wrong authorization model
+
+## Decision 016
+
+Authorization profiles now use the active entity context as their default personal scope, and only an active owner entity may create profiles for the whole system.
+
+Reason:
+- The project already treats active entity and owner/legacy scope as core tenancy constraints
+- Allowing legacy entities to submit global authorization profiles would break tenant boundaries
+- Reusing the active entity context keeps the current web flow compatible while preparing cleaner future multi-tenant contracts

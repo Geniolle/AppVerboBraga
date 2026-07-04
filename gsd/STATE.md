@@ -1,10 +1,10 @@
 # GSD State
 
-Updated: 2026-07-03
+Updated: 2026-07-04
 
 ## Current Known State
 
-- AppVerboBraga is currently a FastAPI web application with Jinja templates and shared frontend JavaScript
+- AppGenesis is currently a FastAPI web application with Jinja templates and shared frontend JavaScript
 - PostgreSQL is the main database in the Docker-first runtime
 - SQLAlchemy and Alembic are already part of the stack
 - The repository already has a meaningful `docs/` area, but did not yet have a dedicated GSD Core planning area
@@ -17,6 +17,7 @@ Updated: 2026-07-03
 - Focused review of `process_view_authorization_rules` is now documented; the table is treated as `legada`, with the current runtime contract living in `sidebar_menu_settings` plus `members.profile_custom_fields`
 - Reconciliation of legacy authorization rows is now documented; the 2 remaining `process_view_authorization_rules` rows are only `Parcial` in relation to current auth storage
 - Migration-versus-archive planning for legacy authorization semantics is now documented; the final path remains pending human validation
+- Authorization-profile creation/editing now includes `Entidade`, with owner-only global scope and active-entity filtering for profile rows
 
 ## Existing Functional Areas Observed In The Repository
 
@@ -56,6 +57,7 @@ Updated: 2026-07-03
 - Defining whether missing legacy authorization granularity should be migrated forward or only archived before cleanup
 - Preparing a human validation step for whether subprocess, department, and entity-scope semantics still matter
 - Reviewing how current entity, owner, legacy, and permission rules should evolve into a cleaner multi-tenant model
+- Validating whether the same entity-scope contract should also be extended from authorization profiles to adjacent authorization objects
 - Preparing the project for future web and mobile delivery paths without forcing that migration now
 
 ## Known Risks
@@ -78,6 +80,7 @@ Updated: 2026-07-03
 - Decide whether legacy authorization details such as subprocess granularity, department, and scope must survive in the current contract
 - Validate with a human owner whether the project accepts archive-only cleanup or requires complementary migration of legacy authorization semantics
 - Revisit multi-tenant boundaries with explicit entity, owner, permission, and data-separation rules
+- Decide whether `objeto_de_autorizacao` should inherit the same active-entity filtering and explicit `Entidade` contract
 - Prepare for later evaluation of:
   - Supabase as managed Postgres
   - a more explicit API layer
