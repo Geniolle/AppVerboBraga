@@ -100,6 +100,7 @@ async def oauth_callback(request: Request, provider: str) -> RedirectResponse:
                 entity_id=None,
             )
             user.account_status = UserAccountStatus.ACTIVE.value
+            resolved_language, _ = resolve_user_language_after_auth(user, request)
             session.commit()
         except IntegrityError:
             session.rollback()
@@ -107,6 +108,9 @@ async def oauth_callback(request: Request, provider: str) -> RedirectResponse:
                 url="/login?error=Falha ao concluir login externo.&mode=login",
                 status_code=status.HTTP_302_FOUND,
             )
+
+        response = RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
+        persist_user_language_selection(request, response, resolved_language)
 
         request.session["user_id"] = user.id
         request.session["user_name"] = full_name
@@ -116,4 +120,4 @@ async def oauth_callback(request: Request, provider: str) -> RedirectResponse:
             get_entity_context_for_user(session, user.id, user.login_email, None),
         )
 
-    return RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
+    return response
