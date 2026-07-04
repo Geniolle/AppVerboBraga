@@ -289,6 +289,17 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 
 AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
     AdminFieldConfig(
+        key="entity_scope",
+        label="Entidade",
+        input_name="auth_profile_entity_scope",
+        field_type="select",
+        required=True,
+        options=(
+            ("entity", "Entidade atual"),
+            ("system", "Todo o sistema"),
+        ),
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",

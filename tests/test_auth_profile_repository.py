@@ -71,6 +71,7 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
         object(),
         {
             "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "entity_scope": "entity",
             "visibility_scope_mode": "owner",
             "status": "ativo",
         },
@@ -87,6 +88,9 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
 
     stored_values = stored_records[0]["values"]
     assert stored_values["__menu_key"] == "sessoes"
+    assert stored_values["__entity_scope_mode"] == "entity"
+    assert stored_values["__entity_scope_label"] == "Entidade atual"
+    assert stored_values["__numero_entidade"] == "1001"
     assert stored_values["custom_perfil_2"] == "sessoes"
     assert stored_values["custom_perfil"] == "Estruturas"
     assert stored_values["custom_nome_do_perfil"] == "Estruturas"
@@ -96,6 +100,7 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
     assert rows[0]["key"] == "sessoes"
     assert rows[0]["menu_key"] == "sessoes"
     assert rows[0]["label"] == "Estruturas"
+    assert rows[0]["entity_scope"] == "entity"
     assert rows[0]["values"]["custom_perfil_2"] == "sessoes"
 
 
@@ -143,6 +148,7 @@ def test_auth_profile_repository_blocks_duplicate_menu_key_from_legacy_label(mon
         object(),
         {
             "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "entity_scope": "entity",
             "visibility_scope_mode": "owner",
             "status": "ativo",
         },
@@ -351,6 +357,184 @@ def test_auth_profile_repository_delete_row_returns_safe_error_for_unknown_key(m
     stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
     assert len(stored_records) == 1
     assert stored_records[0]["values"]["__menu_key"] == "sessoes"
+
+
+def test_auth_profile_repository_blocks_global_scope_for_legacy_entity(monkeypatch) -> None:
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(profile_custom_fields=None)
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(
+        AuthorizationProfileAdminRepository,
+        "_load_record_bundle",
+        fake_load_record_bundle,
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "build_auth_profile_entity_context_v1",
+        lambda session, selected_entity_id=None, permissions=None: {
+            "selected_entity_number": "1001",
+            "allowed_modes": {"entity"},
+        },
+    )
+
+    save_ok, save_reason, saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "entity_scope": "system",
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+        },
+        context={"entity_number": "1001"},
+    )
+
+    assert save_ok is False
+    assert save_reason == "invalid_entity_scope"
+    assert saved_key == ""
+
+
+def test_auth_profile_repository_allows_global_scope_for_owner_entity(monkeypatch) -> None:
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(profile_custom_fields=None)
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(
+        AuthorizationProfileAdminRepository,
+        "_load_record_bundle",
+        fake_load_record_bundle,
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "build_auth_profile_entity_context_v1",
+        lambda session, selected_entity_id=None, permissions=None: {
+            "selected_entity_number": "1001",
+            "allowed_modes": {"entity", "system"},
+        },
+    )
+
+    save_ok, save_reason, saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "entity_scope": "system",
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+        },
+        context={"entity_number": "1001"},
+    )
+
+    assert save_ok is True
+    assert save_reason == "saved"
+    assert saved_key == "sessoes"
+
+    stored_fields = parse_member_profile_fields(member.profile_custom_fields)
+    stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
+    stored_values = stored_records[0]["values"]
+    assert stored_values["__entity_scope_mode"] == "system"
+    assert stored_values["__entity_scope_label"] == "Todo o sistema"
+    assert "__numero_entidade" not in stored_values
+
+
+def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypatch) -> None:
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(
+        profile_custom_fields=serialize_member_profile_fields(
+            {
+                records_storage_key: serialize_menu_process_records(
+                    [
+                        {
+                            "record_id": "rec-entity-1001",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "__menu_key": "sessoes",
+                                "__key": "sessoes",
+                                "__entity_scope_mode": "entity",
+                                "__numero_entidade": "1001",
+                                "custom_perfil_2": "sessoes",
+                                "custom_perfil": "Estruturas",
+                                "custom_nome_do_perfil": "Estruturas",
+                                "__estado": "ativo",
+                            },
+                        },
+                        {
+                            "record_id": "rec-entity-2002",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "__menu_key": "musicas",
+                                "__key": "musicas",
+                                "__entity_scope_mode": "entity",
+                                "__numero_entidade": "2002",
+                                "custom_perfil_2": "musicas",
+                                "custom_perfil": "Musicas",
+                                "custom_nome_do_perfil": "Musicas",
+                                "__estado": "ativo",
+                            },
+                        },
+                        {
+                            "record_id": "rec-system",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "__menu_key": "global",
+                                "__key": "global",
+                                "__entity_scope_mode": "system",
+                                "custom_perfil": "Global",
+                                "custom_nome_do_perfil": "Global",
+                                "__estado": "ativo",
+                            },
+                        },
+                    ]
+                ),
+            }
+        )
+    )
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(
+        AuthorizationProfileAdminRepository,
+        "_load_record_bundle",
+        fake_load_record_bundle,
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+
+    rows = repo.list_rows(
+        object(),
+        context={"entity_number": "1001"},
+    )
+
+    assert [row["key"] for row in rows] == ["sessoes", "global"]
 
 
 def test_auth_profile_config_exposes_delete_action() -> None:
