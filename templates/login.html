@@ -1,19 +1,42 @@
 {% extends "base.html" %}
 
-{% block title %}Acesso{% endblock %}
+{% block title %}{{ t('auth.page_title') }}{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="/static/css/login.css?v=20260425a">
+  <link rel="stylesheet" href="/static/css/login.css?v=20260703-login-i18n-v1">
 {% endblock %}
 
 {% block body_class %}{% if mode == 'admin' %}is-admin{% endif %}{% endblock %}
 
 {% block body %}
   <main class="card {% if mode == 'admin' %}admin-card{% endif %}">
+    {% if mode != "admin" %}
+      <form class="language-form" method="get" action="/login">
+        <input type="hidden" name="mode" value="{{ mode }}">
+        {% if signup_data and signup_data.entity_id %}
+          <input type="hidden" name="entity_id" value="{{ signup_data.entity_id }}">
+        {% endif %}
+        <label class="language-form__label" for="language-selector">{{ t('auth.language.label') }}</label>
+        <select
+          id="language-selector"
+          name="lang"
+          class="language-form__select"
+          data-language-select="1"
+          aria-label="{{ t('auth.language.label') }}"
+        >
+          {% for language in available_languages %}
+            <option value="{{ language.code }}" {% if current_lang == language.code %}selected{% endif %}>
+              {{ language.label }}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
+
     {% if mode == "admin" %}
-      <span class="admin-badge">AREA ADMINISTRATIVA</span>
-      <h1>Acesso do administrador</h1>
-      <p class="subtitle">Monitorize indicadores principais e autentique-se com credenciais administrativas.</p>
+      <span class="admin-badge">{{ t('auth.admin.badge') }}</span>
+      <h1>{{ t('auth.admin.title') }}</h1>
+      <p class="subtitle">{{ t('auth.admin.subtitle') }}</p>
 
       {% if success %}
         <div class="alert ok">{{ success }}</div>
@@ -24,27 +47,27 @@
 
       <section class="metrics-grid">
         <article class="metric-card">
-          <span class="metric-label">Utilizadores totais</span>
+          <span class="metric-label">{{ t('auth.admin.metrics.total_users') }}</span>
           <strong class="metric-value">{{ admin_metrics.total_users }}</strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Utilizadores ativos</span>
+          <span class="metric-label">{{ t('auth.admin.metrics.active_users') }}</span>
           <strong class="metric-value">{{ admin_metrics.active_users }}</strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Pendentes</span>
+          <span class="metric-label">{{ t('auth.admin.metrics.pending_users') }}</span>
           <strong class="metric-value">{{ admin_metrics.pending_users }}</strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Membros totais</span>
+          <span class="metric-label">{{ t('auth.admin.metrics.total_members') }}</span>
           <strong class="metric-value">{{ admin_metrics.total_members }}</strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Entidades ativas</span>
+          <span class="metric-label">{{ t('auth.admin.metrics.active_entities') }}</span>
           <strong class="metric-value">{{ admin_metrics.active_entities }}</strong>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Novos users (7 dias)</span>
+          <span class="metric-label">{{ t('auth.admin.metrics.users_last_7_days') }}</span>
           <strong class="metric-value">{{ admin_metrics.users_last_7_days }}</strong>
         </article>
       </section>
@@ -52,14 +75,14 @@
       <form method="post" action="/login">
         <input type="hidden" name="login_mode" value="admin">
         <div class="field">
-          <label for="email">Email administrativo</label>
-          <input id="email" name="email" type="email" required value="{{ email }}" placeholder="admin@dominio.com">
+          <label for="email">{{ t('auth.admin.email') }}</label>
+          <input id="email" name="email" type="email" required value="{{ email }}" placeholder="{{ t('auth.admin.email_placeholder') }}">
         </div>
 
         <div class="field">
-          <label for="entity_id">Entidade</label>
+          <label for="entity_id">{{ t('auth.admin.entity') }}</label>
           <select id="entity_id" name="entity_id" required>
-            <option value="" disabled {% if not login_data.entity_id %}selected{% endif %}>Selecione</option>
+            <option value="" disabled {% if not login_data.entity_id %}selected{% endif %}>{{ t('auth.admin.entity_placeholder') }}</option>
             {% for entity in entities %}
               <option value="{{ entity.id }}" data-entity-email="{{ entity.email }}" {% if login_data.entity_id == entity.id|string %}selected{% endif %}>
                 {{ entity.name }}
@@ -69,19 +92,19 @@
         </div>
 
         <div class="field">
-          <label for="password">Palavra-passe</label>
-          <input id="password" name="password" type="password" required placeholder="Digite a palavra-passe">
+          <label for="password">{{ t('auth.admin.password') }}</label>
+          <input id="password" name="password" type="password" required placeholder="{{ t('auth.admin.password_placeholder') }}">
         </div>
 
-        <button class="primary-btn" type="submit">Entrar como ADMIN</button>
+        <button class="primary-btn" type="submit">{{ t('auth.admin.submit') }}</button>
       </form>
 
       <p class="switch-mode">
-        Aceder como utilizador comum
-        <a href="/login?mode=login">Entrar aqui</a>
+        {{ t('auth.admin.switch_text') }}
+        <a href="/login?mode=login&lang={{ current_lang }}">{{ t('auth.admin.switch_link') }}</a>
       </p>
     {% elif mode == "signup" %}
-      <h1>Criar conta</h1>
+      <h1>{{ t('auth.signup.title') }}</h1>
 
       {% if success %}
         <div class="alert ok">{{ success }}</div>
@@ -92,14 +115,14 @@
 
       <form method="post" action="/signup">
         <div class="field">
-          <label for="full_name">Nome completo</label>
-          <input id="full_name" name="full_name" required value="{{ signup_data.full_name }}" placeholder="Seu nome completo">
+          <label for="full_name">{{ t('auth.signup.full_name') }}</label>
+          <input id="full_name" name="full_name" required value="{{ signup_data.full_name }}" placeholder="{{ t('auth.signup.full_name_placeholder') }}">
         </div>
 
         <div class="field">
-          <label for="country">País</label>
+          <label for="country">{{ t('auth.signup.country') }}</label>
           <select id="country" name="country" required>
-            <option value="" disabled {% if not signup_data.country %}selected{% endif %}>Selecione o país</option>
+            <option value="" disabled {% if not signup_data.country %}selected{% endif %}>{{ t('auth.signup.country_placeholder') }}</option>
             {% for option in signup_country_options %}
               <option
                 value="{{ option.value }}"
@@ -114,18 +137,18 @@
         </div>
 
         <div class="field">
-          <label for="primary_phone">Telefone</label>
-          <input id="primary_phone" name="primary_phone" required value="{{ signup_data.primary_phone }}" placeholder="+351 910 000 000">
-          <small class="field-help">O número deve começar com o indicativo do país selecionado.</small>
+          <label for="primary_phone">{{ t('auth.signup.phone') }}</label>
+          <input id="primary_phone" name="primary_phone" required value="{{ signup_data.primary_phone }}" placeholder="{{ t('auth.signup.phone_placeholder') }}">
+          <small class="field-help">{{ t('auth.signup.phone_help') }}</small>
         </div>
 
         <div class="field">
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" required value="{{ signup_data.email }}" placeholder="exemplo: joao@dominio.com">
+          <label for="email">{{ t('auth.signup.email') }}</label>
+          <input id="email" name="email" type="email" required value="{{ signup_data.email }}" placeholder="{{ t('auth.signup.email_placeholder') }}">
         </div>
 
         <div class="field">
-          <label for="entity_id">Entidade</label>
+          <label for="entity_id">{{ t('auth.signup.entity') }}</label>
           {% if signup_data.entity_locked %}
           <input type="hidden" name="entity_id" value="{{ signup_data.entity_id }}">
           <input
@@ -137,7 +160,7 @@
           >
           {% else %}
           <select id="entity_id" name="entity_id">
-            <option value="">Selecionar automaticamente</option>
+            <option value="">{{ t('auth.signup.entity_placeholder') }}</option>
             {% for entity in entities %}
               <option value="{{ entity.id }}" data-entity-email="{{ entity.email }}" {% if signup_data.entity_id == entity.id|string %}selected{% endif %}>
                 {{ entity.name }}
@@ -148,24 +171,24 @@
         </div>
 
         <div class="field">
-          <label for="password">Palavra-passe</label>
-          <input id="password" name="password" type="password" minlength="8" required placeholder="Minimo 8 caracteres">
+          <label for="password">{{ t('auth.signup.password') }}</label>
+          <input id="password" name="password" type="password" minlength="8" required placeholder="{{ t('auth.signup.password_placeholder') }}">
         </div>
 
         <div class="field">
-          <label for="confirm_password">Confirmar palavra-passe</label>
-          <input id="confirm_password" name="confirm_password" type="password" minlength="8" required placeholder="Repita a palavra-passe">
+          <label for="confirm_password">{{ t('auth.signup.confirm_password') }}</label>
+          <input id="confirm_password" name="confirm_password" type="password" minlength="8" required placeholder="{{ t('auth.signup.confirm_password_placeholder') }}">
         </div>
 
-        <button class="primary-btn" type="submit">Criar conta</button>
+        <button class="primary-btn" type="submit">{{ t('auth.signup.submit') }}</button>
       </form>
 
       <p class="switch-mode">
-        Já tem conta
-        <a href="/login?mode=login">Entrar</a>
+        {{ t('auth.signup.already_have_account') }}
+        <a href="/login?mode=login&lang={{ current_lang }}">{{ t('auth.signup.login_link') }}</a>
       </p>
     {% else %}
-      <h1>Entrar na sua conta</h1>
+      <h1>{{ t('auth.login.title') }}</h1>
 
       {% if success %}
         <div class="alert ok">{{ success }}</div>
@@ -177,49 +200,44 @@
       <form method="post" action="/login">
         <input type="hidden" name="login_mode" value="login">
         <div class="field">
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" required value="{{ email }}" placeholder="exemplo: joao@dominio.com">
+          <label for="email">{{ t('auth.login.email') }}</label>
+          <input id="email" name="email" type="email" required value="{{ email }}" placeholder="{{ t('auth.login.email_placeholder') }}">
         </div>
 
         {# Entidade definida automaticamente no backend pelo email do utilizador. #}
 
         <div class="field-row">
-          <label for="password">Palavra-passe</label>
-          <a class="inline-link" href="/password/forgot">Esqueceu a palavra-passe</a>
+          <label for="password">{{ t('auth.login.password') }}</label>
+          <a class="inline-link" href="/password/forgot?lang={{ current_lang }}">{{ t('auth.login.forgot_password') }}</a>
         </div>
         <div class="field">
-          <input id="password" name="password" type="password" required placeholder="Digite sua palavra-passe">
+          <input id="password" name="password" type="password" required placeholder="{{ t('auth.login.password_placeholder') }}">
         </div>
 
-        <button class="primary-btn" type="submit">Continuar</button>
+        <button class="primary-btn" type="submit">{{ t('auth.login.submit') }}</button>
       </form>
 
       <div class="providers">
         {% for provider in oauth_providers %}
-          {% set provider_name = provider.label
-            |replace(" (Gmail)", "")
-            |replace(" (Hotmail/Outlook)", "")
-            |replace("(Gmail)", "")
-            |replace("(Hotmail/Outlook)", "") %}
+          {% set provider_name = t('auth.providers.' ~ provider.key, fallback=provider.label) %}
           <a class="provider-btn {% if not provider.enabled %}disabled{% endif %}" href="{% if provider.enabled %}{{ provider.url }}{% else %}#{% endif %}">
             <span class="provider-icon">{{ provider_name[0]|upper }}</span>
-            Entrar com {{ provider_name }}
+            {{ t('auth.actions.login_with_provider', provider=provider_name) }}
           </a>
         {% endfor %}
       </div>
 
       <p class="switch-mode">
-        Não tem conta
-        <a href="/login?mode=signup">Criar conta</a>
+        {{ t('auth.login.no_account') }}
+        <a href="/login?mode=signup&lang={{ current_lang }}">{{ t('auth.login.create_account') }}</a>
       </p>
       <p class="hint">
-        Se os botoes de provedor estiverem desativados, configure `GOOGLE_CLIENT_ID/SECRET`,
-        `MICROSOFT_CLIENT_ID/SECRET`.
+        {{ t('auth.login.provider_hint') }}
       </p>
     {% endif %}
   </main>
 {% endblock %}
 
 {% block scripts %}
-  <script src="/static/js/login.js"></script>
+  <script src="/static/js/login.js?v=20260703-login-i18n-v1"></script>
 {% endblock %}

@@ -50,6 +50,32 @@ body.is-admin {
   width: min(760px, 100%);
 }
 
+   .language-form {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+   .language-form__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #41506b;
+}
+
+   .language-form__select {
+  width: auto;
+  min-width: 140px;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--text);
+  font-size: 14px;
+}
+
 h1 {
   margin: 0 0 28px;
   font-size: clamp(32px, 5vw, 50px);
@@ -296,6 +322,16 @@ h1 {
 @media (max-width: 560px) {
   body {
     padding: 14px;
+  }
+
+ .language-form {
+    justify-content: stretch;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+ .language-form__select {
+    width: 100%;
   }
 
  .card {
