@@ -28,4 +28,4 @@ def test_process_subsequent_fields_manager_v1_uses_configurable_core_and_search_
 
     assert 'aria-label="Pesquisar campos subsequentes criados"' in template_text
     assert 'data-process-subsequent-fields-total-label' in template_text
-    assert 'class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text
+    assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text

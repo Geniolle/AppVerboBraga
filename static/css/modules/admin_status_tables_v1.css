@@ -57,7 +57,7 @@
 /* APPVERBO_STATUS_BADGE_PENDING_V1_START */
 .entity-status-pending,
 .user-status-pending,
-.appverbo-status-pending-v1 {
+.appgenesis-status-pending-v1 {
   background: transparent;
   border-color: transparent;
   color: #d97706;

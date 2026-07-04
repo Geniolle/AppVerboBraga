@@ -99,8 +99,8 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   //###################################################################################
 
   function lerSessoesDoTemplate_v2() {
-    const script = document.getElementById("appverbo-sidebar-section-options-v2") ||
-      document.getElementById("appverbo-sidebar-section-options-v1");
+    const script = document.getElementById("appgenesis-sidebar-section-options-v2") ||
+      document.getElementById("appgenesis-sidebar-section-options-v1");
 
     if (!script) {
       return [];
@@ -245,7 +245,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   function criarBotaoAcaoSessoesLayout_v2(tipo, titulo) {
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = "appverbo-sidebar-section-action-btn-v2";
+    botao.className = "appgenesis-sidebar-section-action-btn-v2";
     botao.dataset.sidebarSectionActionV2 = tipo;
     botao.title = titulo;
     botao.setAttribute("aria-label", titulo);
@@ -254,7 +254,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   }
 
   function atualizarEstadoBotoesSessoesLayout_v2(tbody) {
-    const linhas = Array.from(tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v2"));
+    const linhas = Array.from(tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v2"));
 
     linhas.forEach(function (linha, indice) {
       const botaoSubir = linha.querySelector('[data-sidebar-section-action-v2="up"]');
@@ -271,7 +271,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   }
 
   function marcarAlteradoSessoesLayout_v2(formulario) {
-    const aviso = formulario.querySelector(".appverbo-sidebar-section-change-note-v2");
+    const aviso = formulario.querySelector(".appgenesis-sidebar-section-change-note-v2");
 
     formulario.dataset.sidebarSectionsChangedV2 = "1";
 
@@ -283,7 +283,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   function sincronizarLinhaSessoesLayout_v2(linha) {
     const labelInput = linha.querySelector('[name="section_label"]');
     const keyInput = linha.querySelector('[name="section_key"]');
-    const sistemaCell = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
+    const sistemaCell = linha.querySelector(".appgenesis-sidebar-section-system-cell-v2");
 
     if (!labelInput || !keyInput) {
       return;
@@ -305,14 +305,14 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   function atualizarDetalheSessoesLayout_v2(linha) {
     const detalhe = linha.nextElementSibling;
 
-    if (!detalhe || !detalhe.classList.contains("appverbo-sidebar-section-detail-row-v2")) {
+    if (!detalhe || !detalhe.classList.contains("appgenesis-sidebar-section-detail-row-v2")) {
       return;
     }
 
     const keyInput = linha.querySelector('[name="section_key"]');
     const labelInput = linha.querySelector('[name="section_label"]');
     const scopeInput = linha.querySelector('[name="section_visibility_scope_mode"]');
-    const texto = detalhe.querySelector(".appverbo-sidebar-section-detail-text-v2");
+    const texto = detalhe.querySelector(".appgenesis-sidebar-section-detail-text-v2");
 
     if (!texto) {
       return;
@@ -333,17 +333,17 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     }
 
     const detalhe = linha.nextElementSibling &&
-      linha.nextElementSibling.classList.contains("appverbo-sidebar-section-detail-row-v2")
+      linha.nextElementSibling.classList.contains("appgenesis-sidebar-section-detail-row-v2")
       ? linha.nextElementSibling
       : null;
 
     if (direcao === "up") {
       const detalheAnterior = linha.previousElementSibling;
-      const linhaAnterior = detalheAnterior && detalheAnterior.classList.contains("appverbo-sidebar-section-detail-row-v2")
+      const linhaAnterior = detalheAnterior && detalheAnterior.classList.contains("appgenesis-sidebar-section-detail-row-v2")
         ? detalheAnterior.previousElementSibling
         : detalheAnterior;
 
-      if (linhaAnterior && linhaAnterior.classList.contains("appverbo-sidebar-section-row-v2")) {
+      if (linhaAnterior && linhaAnterior.classList.contains("appgenesis-sidebar-section-row-v2")) {
         tbody.insertBefore(linha, linhaAnterior);
         if (detalhe) {
           tbody.insertBefore(detalhe, linha.nextElementSibling);
@@ -354,9 +354,9 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     if (direcao === "down") {
       const proximaLinha = detalhe ? detalhe.nextElementSibling : linha.nextElementSibling;
 
-      if (proximaLinha && proximaLinha.classList.contains("appverbo-sidebar-section-row-v2")) {
+      if (proximaLinha && proximaLinha.classList.contains("appgenesis-sidebar-section-row-v2")) {
         const proximoDetalhe = proximaLinha.nextElementSibling &&
-          proximaLinha.nextElementSibling.classList.contains("appverbo-sidebar-section-detail-row-v2")
+          proximaLinha.nextElementSibling.classList.contains("appgenesis-sidebar-section-detail-row-v2")
           ? proximaLinha.nextElementSibling
           : null;
 
@@ -374,7 +374,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   function alternarDetalheSessoesLayout_v2(linha) {
     const detalhe = linha.nextElementSibling;
 
-    if (!detalhe || !detalhe.classList.contains("appverbo-sidebar-section-detail-row-v2")) {
+    if (!detalhe || !detalhe.classList.contains("appgenesis-sidebar-section-detail-row-v2")) {
       return;
     }
 
@@ -390,7 +390,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     }
 
     labelInput.readOnly = false;
-    labelInput.classList.add("appverbo-sidebar-section-label-input-editing-v2");
+    labelInput.classList.add("appgenesis-sidebar-section-label-input-editing-v2");
     labelInput.focus();
     labelInput.select();
   }
@@ -401,7 +401,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
 
   function criarLinhaTabelaSessoesLayout_v2(sessao) {
     const tr = document.createElement("tr");
-    tr.className = "appverbo-sidebar-section-row-v2";
+    tr.className = "appgenesis-sidebar-section-row-v2";
     tr.dataset.visibilityScopeModeV2 = sessao.visibility_scope_mode || "all";
     tr.dataset.visibilityScopeLabelV2 = sessao.visibility_scope_label || "";
 
@@ -414,33 +414,33 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     labelInput.name = "section_label";
     labelInput.value = sessao.label;
     labelInput.readOnly = true;
-    labelInput.className = "appverbo-sidebar-section-label-input-v2";
+    labelInput.className = "appgenesis-sidebar-section-label-input-v2";
 
     const tdMenu = document.createElement("td");
-    tdMenu.className = "appverbo-sidebar-section-menu-cell-v2";
+    tdMenu.className = "appgenesis-sidebar-section-menu-cell-v2";
     tdMenu.appendChild(labelInput);
     tdMenu.appendChild(keyInput);
     tdMenu.appendChild(scopeInput);
     tdMenu.appendChild(statusInput);
 
     const tdSistema = document.createElement("td");
-    tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
+    tdSistema.className = "appgenesis-sidebar-section-system-cell-v2";
     tdSistema.textContent = obterSistemaSessoesLayout_v2(sessao);
 
     const tdEstado = document.createElement("td");
-    tdEstado.className = "appverbo-sidebar-section-state-cell-v2";
+    tdEstado.className = "appgenesis-sidebar-section-state-cell-v2";
 
     const badge = document.createElement("span");
     const estadoSessao = normalizarEstadoSessoesCreate_v5(statusInput.value);
-    badge.className = "appverbo-sidebar-section-state-badge-v2 appverbo-sidebar-section-state-badge-" + estadoSessao + "-v5";
+    badge.className = "appgenesis-sidebar-section-state-badge-v2 appgenesis-sidebar-section-state-badge-" + estadoSessao + "-v5";
     badge.textContent = obterLabelEstadoSessoesCreate_v5(estadoSessao);
     tdEstado.appendChild(badge);
 
     const tdAcoes = document.createElement("td");
-    tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
+    tdAcoes.className = "appgenesis-sidebar-section-actions-cell-v2";
 
     const actions = document.createElement("div");
-    actions.className = "table-actions appverbo-sidebar-section-actions-v2";
+    actions.className = "table-actions appgenesis-sidebar-section-actions-v2";
     actions.appendChild(criarBotaoAcaoSessoesLayout_v2("up", "Subir sessão"));
     actions.appendChild(criarBotaoAcaoSessoesLayout_v2("down", "Descer sessão"));
     actions.appendChild(criarBotaoAcaoSessoesLayout_v2("view", "Exibir detalhes"));
@@ -454,14 +454,14 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     tr.appendChild(tdAcoes);
 
     const detalhe = document.createElement("tr");
-    detalhe.className = "appverbo-sidebar-section-detail-row-v2";
+    detalhe.className = "appgenesis-sidebar-section-detail-row-v2";
     detalhe.hidden = true;
 
     const detalheCelula = document.createElement("td");
     detalheCelula.colSpan = 4;
 
     const detalheTexto = document.createElement("div");
-    detalheTexto.className = "appverbo-sidebar-section-detail-text-v2";
+    detalheTexto.className = "appgenesis-sidebar-section-detail-text-v2";
     detalheCelula.appendChild(detalheTexto);
     detalhe.appendChild(detalheCelula);
 
@@ -473,7 +473,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
 
     labelInput.addEventListener("blur", function () {
       labelInput.readOnly = true;
-      labelInput.classList.remove("appverbo-sidebar-section-label-input-editing-v2");
+      labelInput.classList.remove("appgenesis-sidebar-section-label-input-editing-v2");
       sincronizarLinhaSessoesLayout_v2(tr);
       atualizarDetalheSessoesLayout_v2(tr);
     });
@@ -488,36 +488,36 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
 
   function criarTabelaSessoesLayout_v2(formulario, sessoes) {
     const wrapper = document.createElement("div");
-    wrapper.className = "appverbo-sidebar-sections-layout-v2";
+    wrapper.className = "appgenesis-sidebar-sections-layout-v2";
 
     const cabecalho = document.createElement("div");
-    cabecalho.className = "appverbo-sidebar-sections-header-v2";
+    cabecalho.className = "appgenesis-sidebar-sections-header-v2";
 
     const tituloBloco = document.createElement("div");
-    tituloBloco.className = "appverbo-sidebar-sections-title-block-v2";
+    tituloBloco.className = "appgenesis-sidebar-sections-title-block-v2";
 const descricao = document.createElement("p");
     descricao.textContent = "Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.";
 tituloBloco.appendChild(descricao);
 
     const criarBtn = document.createElement("button");
     criarBtn.type = "button";
-    criarBtn.className = "appverbo-sidebar-section-create-btn-v2";
+    criarBtn.className = "appgenesis-sidebar-section-create-btn-v2";
     criarBtn.textContent = "Criar sessão";
 
     cabecalho.appendChild(tituloBloco);
     cabecalho.appendChild(criarBtn);
 
     const tableWrap = document.createElement("div");
-    tableWrap.className = "appverbo-sidebar-sections-table-wrap-v2";
+    tableWrap.className = "appgenesis-sidebar-sections-table-wrap-v2";
 
     const table = document.createElement("table");
-    table.className = "appverbo-sidebar-sections-table-v2";
+    table.className = "appgenesis-sidebar-sections-table-v2";
 
     const thead = document.createElement("thead");
     thead.innerHTML = "<tr><th>MENU LATERAL</th><th>SISTEMA</th><th>ESTADO</th><th>AÇÕES</th></tr>";
 
     const tbody = document.createElement("tbody");
-    tbody.className = "appverbo-sidebar-sections-body-v2";
+    tbody.className = "appgenesis-sidebar-sections-body-v2";
 
     sessoes.forEach(function (sessao) {
       const linha = criarLinhaTabelaSessoesLayout_v2(sessao);
@@ -530,10 +530,10 @@ tituloBloco.appendChild(descricao);
     tableWrap.appendChild(table);
 
     const footer = document.createElement("div");
-    footer.className = "appverbo-sidebar-sections-footer-v2";
+    footer.className = "appgenesis-sidebar-sections-footer-v2";
 
     const nota = document.createElement("p");
-    nota.className = "appverbo-sidebar-section-change-note-v2";
+    nota.className = "appgenesis-sidebar-section-change-note-v2";
     nota.hidden = true;
     nota.textContent = "Existem alterações por gravar.";
 
@@ -544,7 +544,7 @@ tituloBloco.appendChild(descricao);
 
     const cancelar = document.createElement("button");
     cancelar.type = "button";
-    cancelar.className = "action-btn-cancel appverbo-sidebar-section-cancel-btn-v3";
+    cancelar.className = "action-btn-cancel appgenesis-sidebar-section-cancel-btn-v3";
     cancelar.textContent = "Cancelar";
 
     footer.appendChild(gravar);
@@ -558,17 +558,17 @@ tituloBloco.appendChild(descricao);
     wrapper.appendChild(cabecalho);
 
     const createEntrySlot = document.createElement("div");
-    createEntrySlot.className = "appverbo-create-entry-slot-v2";
+    createEntrySlot.className = "appgenesis-create-entry-slot-v2";
     wrapper.appendChild(createEntrySlot);
 
     const listBlock = document.createElement("div");
-    listBlock.className = "appverbo-list-block-v2";
+    listBlock.className = "appgenesis-list-block-v2";
     listBlock.appendChild(tableWrap);
     listBlock.appendChild(footer);
     wrapper.appendChild(listBlock);
 
     criarBtn.addEventListener("click", function () {
-      const contador = tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v2").length + 1;
+      const contador = tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v2").length + 1;
       const novaSessao = {
         key: "nova_pasta_" + contador,
         label: "Nova pasta",
@@ -598,7 +598,7 @@ tituloBloco.appendChild(descricao);
       }
 
       const acao = botao.dataset.sidebarSectionActionV2;
-      const linha = botao.closest("tr.appverbo-sidebar-section-row-v2");
+      const linha = botao.closest("tr.appgenesis-sidebar-section-row-v2");
 
       if (!linha) {
         return;
@@ -656,7 +656,7 @@ tituloBloco.appendChild(descricao);
     const baseKey = criarChaveSessoesLayout_v2(nomeSessao) || "nova_sessao";
     const keysExistentes = new Set();
 
-    Array.from(tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v2")).forEach(function (linha) {
+    Array.from(tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v2")).forEach(function (linha) {
       if (linha === linhaAtual) {
         return;
       }
@@ -689,9 +689,9 @@ tituloBloco.appendChild(descricao);
       return;
     }
 
-    const originalCreateBtn = wrapper.querySelector(".appverbo-sidebar-section-create-btn-v2");
-    const tableWrap = wrapper.querySelector(".appverbo-sidebar-sections-table-wrap-v2");
-    const tbody = wrapper.querySelector(".appverbo-sidebar-sections-body-v2");
+    const originalCreateBtn = wrapper.querySelector(".appgenesis-sidebar-section-create-btn-v2");
+    const tableWrap = wrapper.querySelector(".appgenesis-sidebar-sections-table-wrap-v2");
+    const tbody = wrapper.querySelector(".appgenesis-sidebar-sections-body-v2");
 
     if (!originalCreateBtn || !tableWrap || !tbody) {
       return;
@@ -701,44 +701,44 @@ tituloBloco.appendChild(descricao);
 
     originalCreateBtn.hidden = true;
     originalCreateBtn.setAttribute("aria-hidden", "true");
-    originalCreateBtn.classList.add("appverbo-create-entry-original-hidden-v1");
+    originalCreateBtn.classList.add("appgenesis-create-entry-original-hidden-v1");
 
     const createBlock = document.createElement("div");
-    createBlock.className = "appverbo-create-entry-block-v1";
+    createBlock.className = "appgenesis-create-entry-block-v1";
     createBlock.dataset.createEntryBlock = "sessoes";
 
     const createToolbar = document.createElement("div");
-    createToolbar.className = "appverbo-create-entry-toolbar-v1";
+    createToolbar.className = "appgenesis-create-entry-toolbar-v1";
 
     const abrirBtn = document.createElement("button");
     abrirBtn.type = "button";
-    abrirBtn.className = "action-btn appverbo-create-entry-open-btn-v1";
+    abrirBtn.className = "action-btn appgenesis-create-entry-open-btn-v1";
     abrirBtn.textContent = "Criar sessão";
 
     createToolbar.appendChild(abrirBtn);
 
     const formPanel = document.createElement("div");
-    formPanel.className = "appverbo-create-entry-panel-v1";
+    formPanel.className = "appgenesis-create-entry-panel-v1";
     formPanel.hidden = true;
 
     const grid = document.createElement("div");
-    grid.className = "appverbo-create-entry-grid-v1";
+    grid.className = "appgenesis-create-entry-grid-v1";
 
     const field = document.createElement("div");
-    field.className = "field appverbo-create-entry-field-v1";
+    field.className = "field appgenesis-create-entry-field-v1";
 
     const label = document.createElement("label");
-    label.setAttribute("for", "appverbo-create-entry-session-name-v1");
+    label.setAttribute("for", "appgenesis-create-entry-session-name-v1");
     label.textContent = "Nome da sessão *";
 
     const input = document.createElement("input");
-    input.id = "appverbo-create-entry-session-name-v1";
+    input.id = "appgenesis-create-entry-session-name-v1";
     input.type = "text";
     input.maxLength = 80;
     input.placeholder = "Informe o nome da sessão";
 
     const error = document.createElement("p");
-    error.className = "appverbo-create-entry-error-v1";
+    error.className = "appgenesis-create-entry-error-v1";
     error.hidden = true;
     error.textContent = "Informe o nome da sessão.";
 
@@ -748,16 +748,16 @@ tituloBloco.appendChild(descricao);
     grid.appendChild(field);
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-create-entry-actions-v1";
+    actions.className = "appgenesis-create-entry-actions-v1";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "button";
-    guardarBtn.className = "action-btn appverbo-create-entry-save-btn-v1";
+    guardarBtn.className = "action-btn appgenesis-create-entry-save-btn-v1";
     guardarBtn.textContent = "Guardar";
 
     const cancelarBtn = document.createElement("button");
     cancelarBtn.type = "button";
-    cancelarBtn.className = "action-btn-cancel appverbo-create-entry-cancel-btn-v1";
+    cancelarBtn.className = "action-btn-cancel appgenesis-create-entry-cancel-btn-v1";
     cancelarBtn.textContent = "Cancelar";
 
     actions.appendChild(guardarBtn);
@@ -769,12 +769,12 @@ tituloBloco.appendChild(descricao);
     createBlock.appendChild(createToolbar);
     createBlock.appendChild(formPanel);
 
-    const createEntrySlot = wrapper.querySelector(".appverbo-create-entry-slot-v2");
+    const createEntrySlot = wrapper.querySelector(".appgenesis-create-entry-slot-v2");
 
     if (createEntrySlot) {
       createEntrySlot.appendChild(createBlock);
     } else {
-      const createEntrySlot = wrapper.querySelector(".appverbo-create-entry-slot-v2");
+      const createEntrySlot = wrapper.querySelector(".appgenesis-create-entry-slot-v2");
 
     if (createEntrySlot) {
       createEntrySlot.appendChild(createBlock);
@@ -787,14 +787,14 @@ tituloBloco.appendChild(descricao);
       formPanel.hidden = false;
       abrirBtn.hidden = true;
       error.hidden = true;
-      input.classList.remove("appverbo-create-entry-input-error-v1");
+      input.classList.remove("appgenesis-create-entry-input-error-v1");
       input.focus();
     }
 
     function fecharFormularioCriacao() {
       input.value = "";
       error.hidden = true;
-      input.classList.remove("appverbo-create-entry-input-error-v1");
+      input.classList.remove("appgenesis-create-entry-input-error-v1");
       formPanel.hidden = true;
       abrirBtn.hidden = false;
     }
@@ -821,14 +821,14 @@ tituloBloco.appendChild(descricao);
 
       if (!nomeSessao) {
         error.hidden = false;
-        input.classList.add("appverbo-create-entry-input-error-v1");
+        input.classList.add("appgenesis-create-entry-input-error-v1");
         input.focus();
         return;
       }
 
       originalCreateBtn.click();
 
-      const linhas = Array.from(tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v2"));
+      const linhas = Array.from(tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v2"));
       const novaLinha = linhas[linhas.length - 1];
 
       if (!novaLinha) {
@@ -842,7 +842,7 @@ tituloBloco.appendChild(descricao);
       if (labelInput) {
         labelInput.value = nomeSessao;
         labelInput.readOnly = true;
-        labelInput.classList.remove("appverbo-sidebar-section-label-input-editing-v2");
+        labelInput.classList.remove("appgenesis-sidebar-section-label-input-editing-v2");
         labelInput.dispatchEvent(new Event("input", {
           bubbles: true,
           cancelable: true
@@ -891,7 +891,7 @@ if (!cardLista || !cardLista.parentElement) {
     if (!createCard) {
       createCard = document.createElement("section");
       createCard.id = "admin-sidebar-sections-create-card";
-      createCard.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v3";
+      createCard.className = "card appgenesis-standard-create-card-v4 appgenesis-sessoes-create-card-v3";
       createCard.dataset.menuScope = "administrativo,sessoes";
       cardLista.parentElement.insertBefore(createCard, cardLista);
     }
@@ -906,7 +906,7 @@ if (!cardLista || !cardLista.parentElement) {
     }
 
 
-const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-block-v1");
+const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-block-v1");
 
     if (!cardLista || !wrapper || !createBlock) {
       return;
@@ -925,7 +925,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     createCard.hidden = false;
     createCard.style.display = "";
 
-    const slotsVazios = Array.from(wrapper.querySelectorAll(".appverbo-create-entry-slot-v2"));
+    const slotsVazios = Array.from(wrapper.querySelectorAll(".appgenesis-create-entry-slot-v2"));
 
     slotsVazios.forEach(function (slot) {
       if (!slot.children.length) {
@@ -966,7 +966,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarFieldCriacaoSessoes_v5(id, labelTexto, inputElement) {
     const field = document.createElement("div");
-    field.className = "field appverbo-create-entry-field-v5";
+    field.className = "field appgenesis-create-entry-field-v5";
 
     const label = document.createElement("label");
     label.setAttribute("for", id);
@@ -985,7 +985,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return;
     }
 
-    Array.from(wrapper.querySelectorAll(".appverbo-sidebar-sections-footer-v2")).forEach(function (footer) {
+    Array.from(wrapper.querySelectorAll(".appgenesis-sidebar-sections-footer-v2")).forEach(function (footer) {
       footer.remove();
     });
   }
@@ -994,7 +994,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const baseKey = criarChaveSessoesLayout_v2(nomeSessao) || "nova_sessao";
     const keysExistentes = new Set();
 
-    Array.from(tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v2")).forEach(function (linha) {
+    Array.from(tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v2")).forEach(function (linha) {
       if (linha === linhaAtual) {
         return;
       }
@@ -1028,9 +1028,9 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return;
     }
 
-    const tbody = wrapper.querySelector(".appverbo-sidebar-sections-body-v2");
-    const createBlock = document.querySelector("#admin-sidebar-sections-create-card .appverbo-create-entry-block-v1") ||
-      wrapper.querySelector(".appverbo-create-entry-block-v1");
+    const tbody = wrapper.querySelector(".appgenesis-sidebar-sections-body-v2");
+    const createBlock = document.querySelector("#admin-sidebar-sections-create-card .appgenesis-create-entry-block-v1") ||
+      wrapper.querySelector(".appgenesis-create-entry-block-v1");
 
     if (!tbody || !createBlock) {
       removerFooterListaSessoes_v5(wrapper);
@@ -1040,10 +1040,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     wrapper.dataset.createFieldsNomeSistemaEstadoV5 = "1";
     removerFooterListaSessoes_v5(wrapper);
 
-    const toolbar = createBlock.querySelector(".appverbo-create-entry-toolbar-v1") || document.createElement("div");
-    toolbar.className = "appverbo-create-entry-toolbar-v1";
+    const toolbar = createBlock.querySelector(".appgenesis-create-entry-toolbar-v1") || document.createElement("div");
+    toolbar.className = "appgenesis-create-entry-toolbar-v1";
 
-    let abrirBtnAtual = toolbar.querySelector(".appverbo-create-entry-open-btn-v1, .action-btn");
+    let abrirBtnAtual = toolbar.querySelector(".appgenesis-create-entry-open-btn-v1, .action-btn");
 
     if (!abrirBtnAtual) {
       abrirBtnAtual = document.createElement("button");
@@ -1053,15 +1053,15 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     const abrirBtn = abrirBtnAtual.cloneNode(true);
     abrirBtn.type = "button";
-    abrirBtn.className = "action-btn appverbo-create-entry-open-btn-v1";
+    abrirBtn.className = "action-btn appgenesis-create-entry-open-btn-v1";
     abrirBtn.textContent = "Criar sessão";
     abrirBtnAtual.replaceWith(abrirBtn);
 
-    let formPanel = createBlock.querySelector(".appverbo-create-entry-panel-v1");
+    let formPanel = createBlock.querySelector(".appgenesis-create-entry-panel-v1");
 
     if (!formPanel) {
       formPanel = document.createElement("div");
-      formPanel.className = "appverbo-create-entry-panel-v1";
+      formPanel.className = "appgenesis-create-entry-panel-v1";
       createBlock.appendChild(formPanel);
     }
 
@@ -1073,7 +1073,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     }
 
     const grid = document.createElement("div");
-    grid.className = "appverbo-create-entry-grid-v5";
+    grid.className = "appgenesis-create-entry-grid-v5";
 
     const nomeInput = document.createElement("input");
     nomeInput.type = "text";
@@ -1109,38 +1109,38 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     });
 
     grid.appendChild(criarFieldCriacaoSessoes_v5(
-      "appverbo-create-entry-session-name-v5",
+      "appgenesis-create-entry-session-name-v5",
       "Nome da sessão *",
       nomeInput
     ));
 
     grid.appendChild(criarFieldCriacaoSessoes_v5(
-      "appverbo-create-entry-session-system-v5",
+      "appgenesis-create-entry-session-system-v5",
       "Sistema *",
       sistemaSelect
     ));
 
     grid.appendChild(criarFieldCriacaoSessoes_v5(
-      "appverbo-create-entry-session-status-v5",
+      "appgenesis-create-entry-session-status-v5",
       "Estado *",
       estadoSelect
     ));
 
     const error = document.createElement("p");
-    error.className = "appverbo-create-entry-error-v5";
+    error.className = "appgenesis-create-entry-error-v5";
     error.hidden = true;
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-create-entry-actions-v5";
+    actions.className = "appgenesis-create-entry-actions-v5";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "button";
-    guardarBtn.className = "action-btn appverbo-create-entry-save-btn-v5";
+    guardarBtn.className = "action-btn appgenesis-create-entry-save-btn-v5";
     guardarBtn.textContent = "Guardar";
 
     const cancelarBtn = document.createElement("button");
     cancelarBtn.type = "button";
-    cancelarBtn.className = "action-btn-cancel appverbo-create-entry-cancel-btn-v5";
+    cancelarBtn.className = "action-btn-cancel appgenesis-create-entry-cancel-btn-v5";
     cancelarBtn.textContent = "Cancelar";
 
     actions.appendChild(guardarBtn);
@@ -1153,9 +1153,9 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     function limparErros() {
       error.hidden = true;
       error.textContent = "";
-      nomeInput.classList.remove("appverbo-create-entry-input-error-v5");
-      sistemaSelect.classList.remove("appverbo-create-entry-input-error-v5");
-      estadoSelect.classList.remove("appverbo-create-entry-input-error-v5");
+      nomeInput.classList.remove("appgenesis-create-entry-input-error-v5");
+      sistemaSelect.classList.remove("appgenesis-create-entry-input-error-v5");
+      estadoSelect.classList.remove("appgenesis-create-entry-input-error-v5");
     }
 
     function abrirFormulario() {
@@ -1184,7 +1184,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       if (!nomeSessao) {
         error.textContent = "Informe o nome da sessão.";
         error.hidden = false;
-        nomeInput.classList.add("appverbo-create-entry-input-error-v5");
+        nomeInput.classList.add("appgenesis-create-entry-input-error-v5");
         nomeInput.focus();
         return null;
       }
@@ -1192,7 +1192,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       if (!sistema) {
         error.textContent = "Informe o sistema da sessão.";
         error.hidden = false;
-        sistemaSelect.classList.add("appverbo-create-entry-input-error-v5");
+        sistemaSelect.classList.add("appgenesis-create-entry-input-error-v5");
         sistemaSelect.focus();
         return null;
       }
@@ -1200,7 +1200,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       if (!estado) {
         error.textContent = "Informe o estado da sessão.";
         error.hidden = false;
-        estadoSelect.classList.add("appverbo-create-entry-input-error-v5");
+        estadoSelect.classList.add("appgenesis-create-entry-input-error-v5");
         estadoSelect.focus();
         return null;
       }
@@ -1284,9 +1284,9 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     }
 
     card.dataset.sidebarSectionsLayoutV2 = "1";
-    card.classList.add("appverbo-sidebar-sections-card-v2");
+    card.classList.add("appgenesis-sidebar-sections-card-v2");
 
-    Array.from(card.querySelectorAll(".appverbo-sidebar-sections-layout-v1, .appverbo-sidebar-sections-layout-v2"))
+    Array.from(card.querySelectorAll(".appgenesis-sidebar-sections-layout-v1, .appgenesis-sidebar-sections-layout-v2"))
       .forEach(function (elemento) {
         elemento.remove();
       });
@@ -1385,8 +1385,8 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   //###################################################################################
 
   function lerSessoesDoTemplateSessoesV6() {
-    const script = document.getElementById("appverbo-sidebar-section-options-v2") ||
-      document.getElementById("appverbo-sidebar-section-options-v1");
+    const script = document.getElementById("appgenesis-sidebar-section-options-v2") ||
+      document.getElementById("appgenesis-sidebar-section-options-v1");
 
     if (!script) {
       return [];
@@ -1468,7 +1468,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   function criarBotaoAcaoSessoesV6(tipo, titulo) {
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = "appverbo-sidebar-section-action-btn-v2 appverbo-sidebar-section-action-btn-v6";
+    botao.className = "appgenesis-sidebar-section-action-btn-v2 appgenesis-sidebar-section-action-btn-v6";
     botao.dataset.sidebarSectionActionV6 = tipo;
     botao.title = titulo;
     botao.setAttribute("aria-label", titulo);
@@ -1479,7 +1479,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   // APPVERBO_SESSOES_EDIT_INLINE_V8_START
   function criarSelectSistemaSessoesV8(valorAtual) {
     const select = document.createElement("select");
-    select.className = "appverbo-sidebar-section-edit-select-v8";
+    select.className = "appgenesis-sidebar-section-edit-select-v8";
 
     [
       ["all", "Default"],
@@ -1503,7 +1503,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   function criarSelectEstadoSessoesV8(valorAtual) {
     const estadoAtual = normalizarEstadoSessoesV6(valorAtual);
     const select = document.createElement("select");
-    select.className = "appverbo-sidebar-section-edit-select-v8";
+    select.className = "appgenesis-sidebar-section-edit-select-v8";
 
     [
       ["ativo", "Ativo"],
@@ -1535,13 +1535,13 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   function criarBadgeEstadoSessoesV8(estado) {
     const estadoNormalizado = normalizarEstadoSessoesV6(estado);
     const badge = document.createElement("span");
-    badge.className = "appverbo-sidebar-section-state-badge-v2 appverbo-sidebar-section-state-badge-" + estadoNormalizado + "-v6";
+    badge.className = "appgenesis-sidebar-section-state-badge-v2 appgenesis-sidebar-section-state-badge-" + estadoNormalizado + "-v6";
     badge.textContent = obterLabelEstadoSessoesV6(estadoNormalizado);
     return badge;
   }
 
   function restaurarAcoesLinhaSessoesV8(linha, tbody) {
-    const tdAcoes = linha.querySelector(".appverbo-sidebar-section-actions-cell-v2");
+    const tdAcoes = linha.querySelector(".appgenesis-sidebar-section-actions-cell-v2");
 
     if (!tdAcoes) {
       return;
@@ -1550,7 +1550,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdAcoes.innerHTML = "";
 
     const actions = document.createElement("div");
-    actions.className = "table-actions appverbo-sidebar-section-actions-v2";
+    actions.className = "table-actions appgenesis-sidebar-section-actions-v2";
     actions.appendChild(criarBotaoAcaoSessoesV6("up", "Subir sessão"));
     actions.appendChild(criarBotaoAcaoSessoesV6("down", "Descer sessão"));
     actions.appendChild(criarBotaoAcaoSessoesV6("view", "Exibir detalhes"));
@@ -1567,9 +1567,9 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function restaurarLinhaSessoesV8(linha, valores, tbody) {
     const campos = obterCamposLinhaSessoesV8(linha);
-    const tdMenu = linha.querySelector(".appverbo-sidebar-section-menu-cell-v2");
-    const tdSistema = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
-    const tdEstado = linha.querySelector(".appverbo-sidebar-section-state-cell-v2");
+    const tdMenu = linha.querySelector(".appgenesis-sidebar-section-menu-cell-v2");
+    const tdSistema = linha.querySelector(".appgenesis-sidebar-section-system-cell-v2");
+    const tdEstado = linha.querySelector(".appgenesis-sidebar-section-state-cell-v2");
 
     if (!campos.keyInput || !campos.labelInput || !campos.scopeInput || !campos.statusInput || !tdMenu || !tdSistema || !tdEstado) {
       return;
@@ -1603,10 +1603,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     }
 
     const campos = obterCamposLinhaSessoesV8(linha);
-    const tdMenu = linha.querySelector(".appverbo-sidebar-section-menu-cell-v2");
-    const tdSistema = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
-    const tdEstado = linha.querySelector(".appverbo-sidebar-section-state-cell-v2");
-    const tdAcoes = linha.querySelector(".appverbo-sidebar-section-actions-cell-v2");
+    const tdMenu = linha.querySelector(".appgenesis-sidebar-section-menu-cell-v2");
+    const tdSistema = linha.querySelector(".appgenesis-sidebar-section-system-cell-v2");
+    const tdEstado = linha.querySelector(".appgenesis-sidebar-section-state-cell-v2");
+    const tdAcoes = linha.querySelector(".appgenesis-sidebar-section-actions-cell-v2");
 
     if (!campos.keyInput || !campos.labelInput || !campos.scopeInput || !campos.statusInput || !tdMenu || !tdSistema || !tdEstado || !tdAcoes) {
       return;
@@ -1624,7 +1624,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     const nomeInput = document.createElement("input");
     nomeInput.type = "text";
-    nomeInput.className = "appverbo-sidebar-section-edit-input-v8";
+    nomeInput.className = "appgenesis-sidebar-section-edit-input-v8";
     nomeInput.value = valoresOriginais.label;
     nomeInput.maxLength = 80;
 
@@ -1647,16 +1647,16 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdAcoes.innerHTML = "";
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sidebar-section-edit-actions-v8";
+    actions.className = "appgenesis-sidebar-section-edit-actions-v8";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "button";
-    guardarBtn.className = "action-btn appverbo-sidebar-section-edit-save-v8";
+    guardarBtn.className = "action-btn appgenesis-sidebar-section-edit-save-v8";
     guardarBtn.textContent = "Guardar";
 
     const cancelarBtn = document.createElement("button");
     cancelarBtn.type = "button";
-    cancelarBtn.className = "action-btn-cancel appverbo-sidebar-section-edit-cancel-v8";
+    cancelarBtn.className = "action-btn-cancel appgenesis-sidebar-section-edit-cancel-v8";
     cancelarBtn.textContent = "Cancelar";
 
     actions.appendChild(guardarBtn);
@@ -1667,12 +1667,12 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       const nome = String(nomeInput.value || "").trim();
 
       if (!nome) {
-        nomeInput.classList.add("appverbo-sidebar-section-edit-input-error-v8");
+        nomeInput.classList.add("appgenesis-sidebar-section-edit-input-error-v8");
         nomeInput.focus();
         return "";
       }
 
-      nomeInput.classList.remove("appverbo-sidebar-section-edit-input-error-v8");
+      nomeInput.classList.remove("appgenesis-sidebar-section-edit-input-error-v8");
       return nome;
     }
 
@@ -1733,7 +1733,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarLinhaSessoesV6(sessao) {
     const tr = document.createElement("tr");
-    tr.className = "appverbo-sidebar-section-row-v2 appverbo-sidebar-section-row-v6";
+    tr.className = "appgenesis-sidebar-section-row-v2 appgenesis-sidebar-section-row-v6";
 
     const keyInput = criarCampoOcultoSessoesV6("section_key", sessao.key);
     const labelInput = document.createElement("input");
@@ -1745,7 +1745,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const statusInput = criarCampoOcultoSessoesV6("section_status", sessao.status || "ativo");
 
     const tdMenu = document.createElement("td");
-    tdMenu.className = "appverbo-sidebar-section-menu-cell-v2";
+    tdMenu.className = "appgenesis-sidebar-section-menu-cell-v2";
     tdMenu.textContent = sessao.label;
     tdMenu.appendChild(keyInput);
     tdMenu.appendChild(labelInput);
@@ -1753,26 +1753,26 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdMenu.appendChild(statusInput);
 
     const tdSistema = document.createElement("td");
-    tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
+    tdSistema.className = "appgenesis-sidebar-section-system-cell-v2";
     tdSistema.textContent = obterLabelSistemaSessoesV6(
       sessao.visibility_scope_mode,
       sessao.visibility_scope_label || "Default"
     );
 
     const tdEstado = document.createElement("td");
-    tdEstado.className = "appverbo-sidebar-section-state-cell-v2";
+    tdEstado.className = "appgenesis-sidebar-section-state-cell-v2";
 
     const estado = normalizarEstadoSessoesV6(sessao.status);
     const badge = document.createElement("span");
-    badge.className = "appverbo-sidebar-section-state-badge-v2 appverbo-sidebar-section-state-badge-" + estado + "-v6";
+    badge.className = "appgenesis-sidebar-section-state-badge-v2 appgenesis-sidebar-section-state-badge-" + estado + "-v6";
     badge.textContent = obterLabelEstadoSessoesV6(estado);
     tdEstado.appendChild(badge);
 
     const tdAcoes = document.createElement("td");
-    tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
+    tdAcoes.className = "appgenesis-sidebar-section-actions-cell-v2";
 
     const actions = document.createElement("div");
-    actions.className = "table-actions appverbo-sidebar-section-actions-v2";
+    actions.className = "table-actions appgenesis-sidebar-section-actions-v2";
     actions.appendChild(criarBotaoAcaoSessoesV6("up", "Subir sessão"));
     actions.appendChild(criarBotaoAcaoSessoesV6("down", "Descer sessão"));
     actions.appendChild(criarBotaoAcaoSessoesV6("view", "Exibir detalhes"));
@@ -1789,7 +1789,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function atualizarEstadoBotoesSessoesV6(tbody) {
-    const linhas = Array.from(tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v6"));
+    const linhas = Array.from(tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v6"));
 
     linhas.forEach(function (linha, indice) {
       const subir = linha.querySelector('[data-sidebar-section-action-v6="up"]');
@@ -1827,7 +1827,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     if (direcao === "up") {
       const anterior = linha.previousElementSibling;
 
-      if (anterior && anterior.classList.contains("appverbo-sidebar-section-row-v6")) {
+      if (anterior && anterior.classList.contains("appgenesis-sidebar-section-row-v6")) {
         tbody.insertBefore(linha, anterior);
       }
     }
@@ -1835,7 +1835,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     if (direcao === "down") {
       const proxima = linha.nextElementSibling;
 
-      if (proxima && proxima.classList.contains("appverbo-sidebar-section-row-v6")) {
+      if (proxima && proxima.classList.contains("appgenesis-sidebar-section-row-v6")) {
         tbody.insertBefore(proxima, linha);
       }
     }
@@ -1853,20 +1853,20 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     formulario.appendChild(criarCampoOcultoSessoesV6("redirect_target", "#admin-sidebar-sections-card"));
 
     const descricao = document.createElement("p");
-    descricao.className = "appverbo-sidebar-sections-list-description-v6";
+    descricao.className = "appgenesis-sidebar-sections-list-description-v6";
     descricao.textContent = "Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.";
 
     const tableWrap = document.createElement("div");
-    tableWrap.className = "appverbo-sidebar-sections-table-wrap-v2 appverbo-sidebar-sections-table-wrap-v6";
+    tableWrap.className = "appgenesis-sidebar-sections-table-wrap-v2 appgenesis-sidebar-sections-table-wrap-v6";
 
     const table = document.createElement("table");
-    table.className = "appverbo-sidebar-sections-table-v2 appverbo-sidebar-sections-table-v6";
+    table.className = "appgenesis-sidebar-sections-table-v2 appgenesis-sidebar-sections-table-v6";
 
     const thead = document.createElement("thead");
     thead.innerHTML = "<tr><th>MENU LATERAL</th><th>SISTEMA</th><th>ESTADO</th><th>AÇÕES</th></tr>";
 
     const tbody = document.createElement("tbody");
-    tbody.className = "appverbo-sidebar-sections-body-v2 appverbo-sidebar-sections-body-v6";
+    tbody.className = "appgenesis-sidebar-sections-body-v2 appgenesis-sidebar-sections-body-v6";
 
     sessoes.forEach(function (sessao) {
       tbody.appendChild(criarLinhaSessoesV6(sessao));
@@ -1879,7 +1879,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
         return;
       }
 
-      const linha = botao.closest("tr.appverbo-sidebar-section-row-v6");
+      const linha = botao.closest("tr.appgenesis-sidebar-section-row-v6");
       const acao = botao.dataset.sidebarSectionActionV6;
 
       if (!linha) {
@@ -1930,7 +1930,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
         if (!botao) {
           return;
         }
-        const linha = botao.closest("tr.appverbo-sidebar-section-row-v6");
+        const linha = botao.closest("tr.appgenesis-sidebar-section-row-v6");
         const acao = botao.dataset.sidebarSectionActionV6;
         if (!linha) {
           return;
@@ -1975,7 +1975,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     if (!createCard) {
       createCard = document.createElement("section");
       createCard.id = "admin-sidebar-sections-create-card";
-      createCard.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v3";
+      createCard.className = "card appgenesis-standard-create-card-v4 appgenesis-sessoes-create-card-v3";
       cardLista.parentElement.insertBefore(createCard, cardLista);
     }
 
@@ -2000,27 +2000,27 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     createCard.innerHTML = "";
 
     const block = document.createElement("div");
-    block.className = "appverbo-create-entry-block-v1 appverbo-create-entry-block-v6";
+    block.className = "appgenesis-create-entry-block-v1 appgenesis-create-entry-block-v6";
 
     const toolbar = document.createElement("div");
-    toolbar.className = "appverbo-create-entry-toolbar-v1";
+    toolbar.className = "appgenesis-create-entry-toolbar-v1";
 
     const abrirBtn = document.createElement("button");
     abrirBtn.type = "button";
-    abrirBtn.className = "action-btn appverbo-create-entry-open-btn-v1";
+    abrirBtn.className = "action-btn appgenesis-create-entry-open-btn-v1";
     abrirBtn.textContent = "Criar sessão";
 
     toolbar.appendChild(abrirBtn);
 
     const panel = document.createElement("div");
-    panel.className = "appverbo-create-entry-panel-v1 appverbo-create-entry-panel-v6";
+    panel.className = "appgenesis-create-entry-panel-v1 appgenesis-create-entry-panel-v6";
     panel.hidden = true;
 
     const grid = document.createElement("div");
-    grid.className = "appverbo-create-entry-grid-v5 appverbo-create-entry-grid-v6";
+    grid.className = "appgenesis-create-entry-grid-v5 appgenesis-create-entry-grid-v6";
 
     const nomeField = document.createElement("div");
-    nomeField.className = "field appverbo-create-entry-field-v5";
+    nomeField.className = "field appgenesis-create-entry-field-v5";
 
     const nomeLabel = document.createElement("label");
     nomeLabel.textContent = "Nome da sessão *";
@@ -2034,7 +2034,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     nomeField.appendChild(nomeInput);
 
     const sistemaField = document.createElement("div");
-    sistemaField.className = "field appverbo-create-entry-field-v5";
+    sistemaField.className = "field appgenesis-create-entry-field-v5";
 
     const sistemaLabel = document.createElement("label");
     sistemaLabel.textContent = "Sistema *";
@@ -2048,7 +2048,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     sistemaField.appendChild(sistemaSelect);
 
     const estadoField = document.createElement("div");
-    estadoField.className = "field appverbo-create-entry-field-v5";
+    estadoField.className = "field appgenesis-create-entry-field-v5";
 
     const estadoLabel = document.createElement("label");
     estadoLabel.textContent = "Estado *";
@@ -2065,11 +2065,11 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     grid.appendChild(estadoField);
 
     const erro = document.createElement("p");
-    erro.className = "appverbo-create-entry-error-v5";
+    erro.className = "appgenesis-create-entry-error-v5";
     erro.hidden = true;
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-create-entry-actions-v5";
+    actions.className = "appgenesis-create-entry-actions-v5";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "button";
@@ -2148,7 +2148,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       return;
     }
 
-    const linhasAtuais = card.querySelectorAll("tr.appverbo-sidebar-section-row-v2, tr.appverbo-sidebar-section-row-v6");
+    const linhasAtuais = card.querySelectorAll("tr.appgenesis-sidebar-section-row-v2, tr.appgenesis-sidebar-section-row-v6");
 
     if (!force && linhasAtuais.length > 0 && card.dataset.rehydratedFromBdV6 === "1") {
       return;
@@ -2194,7 +2194,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     window.setTimeout(function () {
       const card = document.getElementById("admin-sidebar-sections-card");
-      const linhas = card ? card.querySelectorAll("tr.appverbo-sidebar-section-row-v2, tr.appverbo-sidebar-section-row-v6") : [];
+      const linhas = card ? card.querySelectorAll("tr.appgenesis-sidebar-section-row-v2, tr.appgenesis-sidebar-section-row-v6") : [];
 
       if (!linhas || linhas.length === 0) {
         reidratarSessoesBdV6(true);
@@ -2203,7 +2203,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     window.setTimeout(function () {
       const card = document.getElementById("admin-sidebar-sections-card");
-      const linhas = card ? card.querySelectorAll("tr.appverbo-sidebar-section-row-v2, tr.appverbo-sidebar-section-row-v6") : [];
+      const linhas = card ? card.querySelectorAll("tr.appgenesis-sidebar-section-row-v2, tr.appgenesis-sidebar-section-row-v6") : [];
 
       if (!linhas || linhas.length === 0) {
         reidratarSessoesBdV6(true);
@@ -2213,7 +2213,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     document.addEventListener("click", function () {
       window.setTimeout(function () {
         const card = document.getElementById("admin-sidebar-sections-card");
-        const linhas = card ? card.querySelectorAll("tr.appverbo-sidebar-section-row-v2, tr.appverbo-sidebar-section-row-v6") : [];
+        const linhas = card ? card.querySelectorAll("tr.appgenesis-sidebar-section-row-v2, tr.appgenesis-sidebar-section-row-v6") : [];
 
         if (!linhas || linhas.length === 0) {
           reidratarSessoesBdV6(true);
@@ -2297,8 +2297,8 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   let instaladoEstadoV9 = false;
 
   function lerSessoesTemplateEstadoV9() {
-    const script = document.getElementById("appverbo-sidebar-section-options-v2") ||
-      document.getElementById("appverbo-sidebar-section-options-v1");
+    const script = document.getElementById("appgenesis-sidebar-section-options-v2") ||
+      document.getElementById("appgenesis-sidebar-section-options-v1");
 
     if (!script) {
       return [];
@@ -2431,7 +2431,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     if (!createCard) {
       createCard = document.createElement("section");
       createCard.id = "admin-sidebar-sections-create-card";
-      createCard.className = "card appverbo-standard-create-card-v4 appverbo-sessoes-create-card-v3 appverbo-sessoes-create-card-v9";
+      createCard.className = "card appgenesis-standard-create-card-v4 appgenesis-sessoes-create-card-v3 appgenesis-sessoes-create-card-v9";
       cardLista.parentElement.insertBefore(createCard, cardLista);
     }
 
@@ -2461,7 +2461,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   function criarBotaoAcaoEstadoV9(tipo, titulo, texto) {
     const botao = document.createElement("button");
     botao.type = "button";
-    botao.className = "appverbo-sidebar-section-action-btn-v2 appverbo-sidebar-section-action-btn-v9";
+    botao.className = "appgenesis-sidebar-section-action-btn-v2 appgenesis-sidebar-section-action-btn-v9";
     botao.dataset.sidebarSectionActionV9 = tipo;
     botao.title = titulo;
     botao.setAttribute("aria-label", titulo);
@@ -2471,7 +2471,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarSelectSistemaEstadoV9(valorAtual) {
     const select = document.createElement("select");
-    select.className = "appverbo-sidebar-section-edit-select-v9";
+    select.className = "appgenesis-sidebar-section-edit-select-v9";
 
     [
       ["all", "Default"],
@@ -2494,7 +2494,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarSelectEstadoEstadoV9(valorAtual) {
     const select = document.createElement("select");
-    select.className = "appverbo-sidebar-section-edit-select-v9";
+    select.className = "appgenesis-sidebar-section-edit-select-v9";
     const estadoAtual = normalizarEstadoSessoesEstadoV9(valorAtual);
 
     [
@@ -2518,7 +2518,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   function criarBadgeEstadoV9(estado) {
     const estadoNormalizado = normalizarEstadoSessoesEstadoV9(estado);
     const badge = document.createElement("span");
-    badge.className = "appverbo-sidebar-section-state-badge-v2 appverbo-sidebar-section-state-badge-" + estadoNormalizado + "-v9";
+    badge.className = "appgenesis-sidebar-section-state-badge-v2 appgenesis-sidebar-section-state-badge-" + estadoNormalizado + "-v9";
     badge.textContent = obterLabelEstadoSessoesEstadoV9(estadoNormalizado);
     return badge;
   }
@@ -2529,7 +2529,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarLinhaEstadoV9(sessao) {
     const tr = document.createElement("tr");
-    tr.className = "appverbo-sidebar-section-row-v2 appverbo-sidebar-section-row-v9";
+    tr.className = "appgenesis-sidebar-section-row-v2 appgenesis-sidebar-section-row-v9";
     tr.dataset.sectionKeyV9 = sessao.key;
     tr.dataset.sectionStatusV9 = normalizarEstadoSessoesEstadoV9(sessao.status);
 
@@ -2539,7 +2539,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const statusInput = criarCampoOcultoSessoesEstadoV9("section_status", normalizarEstadoSessoesEstadoV9(sessao.status));
 
     const tdMenu = document.createElement("td");
-    tdMenu.className = "appverbo-sidebar-section-menu-cell-v2";
+    tdMenu.className = "appgenesis-sidebar-section-menu-cell-v2";
     tdMenu.textContent = sessao.label;
     tdMenu.appendChild(keyInput);
     tdMenu.appendChild(labelInput);
@@ -2547,18 +2547,18 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdMenu.appendChild(statusInput);
 
     const tdSistema = document.createElement("td");
-    tdSistema.className = "appverbo-sidebar-section-system-cell-v2";
+    tdSistema.className = "appgenesis-sidebar-section-system-cell-v2";
     tdSistema.textContent = obterLabelSistemaSessoesEstadoV9(sessao.visibility_scope_mode, sessao.visibility_scope_label || "");
 
     const tdEstado = document.createElement("td");
-    tdEstado.className = "appverbo-sidebar-section-state-cell-v2";
+    tdEstado.className = "appgenesis-sidebar-section-state-cell-v2";
     tdEstado.appendChild(criarBadgeEstadoV9(sessao.status));
 
     const tdAcoes = document.createElement("td");
-    tdAcoes.className = "appverbo-sidebar-section-actions-cell-v2";
+    tdAcoes.className = "appgenesis-sidebar-section-actions-cell-v2";
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sidebar-section-actions-v2";
+    actions.className = "appgenesis-sidebar-section-actions-v2";
     actions.appendChild(criarBotaoAcaoEstadoV9("up", "Subir sessão", "↑"));
     actions.appendChild(criarBotaoAcaoEstadoV9("down", "Descer sessão", "↓"));
     actions.appendChild(criarBotaoAcaoEstadoV9("view", "Visualizar detalhes", "👁"));
@@ -2576,26 +2576,26 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarTabelaEstadoV9(titulo, sessoes, tipo) {
     const bloco = document.createElement("div");
-    bloco.className = "appverbo-sidebar-section-list-block-v9 appverbo-sidebar-section-list-block-" + tipo + "-v9";
+    bloco.className = "appgenesis-sidebar-section-list-block-v9 appgenesis-sidebar-section-list-block-" + tipo + "-v9";
 
     if (titulo) {
       const h3 = document.createElement("h3");
-      h3.className = "appverbo-sidebar-section-list-title-v9";
+      h3.className = "appgenesis-sidebar-section-list-title-v9";
       h3.textContent = titulo;
       bloco.appendChild(h3);
     }
 
     const tableWrap = document.createElement("div");
-    tableWrap.className = "appverbo-sidebar-sections-table-wrap-v2 appverbo-sidebar-sections-table-wrap-v9";
+    tableWrap.className = "appgenesis-sidebar-sections-table-wrap-v2 appgenesis-sidebar-sections-table-wrap-v9";
 
     const table = document.createElement("table");
-    table.className = "appverbo-sidebar-sections-table-v2 appverbo-sidebar-sections-table-v9";
+    table.className = "appgenesis-sidebar-sections-table-v2 appgenesis-sidebar-sections-table-v9";
 
     const thead = document.createElement("thead");
     thead.innerHTML = "<tr><th>MENU LATERAL</th><th>SISTEMA</th><th>ESTADO</th><th>AÇÕES</th></tr>";
 
     const tbody = document.createElement("tbody");
-    tbody.className = "appverbo-sidebar-sections-body-v2 appverbo-sidebar-sections-body-v9";
+    tbody.className = "appgenesis-sidebar-sections-body-v2 appgenesis-sidebar-sections-body-v9";
     tbody.dataset.statusGroupV9 = tipo;
 
     sessoes.forEach(function (sessao) {
@@ -2604,7 +2604,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     if (!sessoes.length) {
       const emptyRow = document.createElement("tr");
-      emptyRow.className = "appverbo-sidebar-section-empty-row-v9";
+      emptyRow.className = "appgenesis-sidebar-section-empty-row-v9";
 
       const emptyCell = document.createElement("td");
       emptyCell.colSpan = 4;
@@ -2623,10 +2623,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function atualizarEstadoBotoesEstadoV9(container) {
-    const grupos = Array.from(container.querySelectorAll("tbody.appverbo-sidebar-sections-body-v9"));
+    const grupos = Array.from(container.querySelectorAll("tbody.appgenesis-sidebar-sections-body-v9"));
 
     grupos.forEach(function (tbody) {
-      const linhas = Array.from(tbody.querySelectorAll("tr.appverbo-sidebar-section-row-v9"));
+      const linhas = Array.from(tbody.querySelectorAll("tr.appgenesis-sidebar-section-row-v9"));
 
       linhas.forEach(function (linha, indice) {
         const subir = linha.querySelector('[data-sidebar-section-action-v9="up"]');
@@ -2656,16 +2656,16 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     formulario.appendChild(criarCampoOcultoSessoesEstadoV9("redirect_menu", "sessoes"));
     formulario.appendChild(criarCampoOcultoSessoesEstadoV9("redirect_target", "#admin-sidebar-sections-card"));
 
-    let titulo = cardLista.querySelector(".appverbo-sidebar-section-list-main-title-v9");
+    let titulo = cardLista.querySelector(".appgenesis-sidebar-section-list-main-title-v9");
 
     cardLista.innerHTML = "";
 
     titulo = document.createElement("h2");
-    titulo.className = "appverbo-sidebar-section-list-main-title-v9";
+    titulo.className = "appgenesis-sidebar-section-list-main-title-v9";
     titulo.textContent = "Sessoes do sidebar";
 
     const descricao = document.createElement("p");
-    descricao.className = "appverbo-sidebar-sections-list-description-v9";
+    descricao.className = "appgenesis-sidebar-sections-list-description-v9";
     descricao.textContent = "Ative os processos do menu lateral. Um menu só aparece quando estiver ativo aqui.";
 
     const ativas = sessoesEstadoV9.filter(function (sessao) {
@@ -2701,27 +2701,27 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     createCard.innerHTML = "";
 
     const block = document.createElement("div");
-    block.className = "appverbo-create-entry-block-v1 appverbo-create-entry-block-v9";
+    block.className = "appgenesis-create-entry-block-v1 appgenesis-create-entry-block-v9";
 
     const toolbar = document.createElement("div");
-    toolbar.className = "appverbo-create-entry-toolbar-v1 appverbo-create-entry-toolbar-v9";
+    toolbar.className = "appgenesis-create-entry-toolbar-v1 appgenesis-create-entry-toolbar-v9";
 
     const abrirBtn = document.createElement("button");
     abrirBtn.type = "button";
-    abrirBtn.className = "action-btn appverbo-create-entry-open-btn-v1";
+    abrirBtn.className = "action-btn appgenesis-create-entry-open-btn-v1";
     abrirBtn.textContent = "Criar sessão";
 
     toolbar.appendChild(abrirBtn);
 
     const panel = document.createElement("div");
-    panel.className = "appverbo-create-entry-panel-v1 appverbo-create-entry-panel-v9";
+    panel.className = "appgenesis-create-entry-panel-v1 appgenesis-create-entry-panel-v9";
     panel.hidden = true;
 
     const grid = document.createElement("div");
-    grid.className = "appverbo-create-entry-grid-v5 appverbo-create-entry-grid-v9";
+    grid.className = "appgenesis-create-entry-grid-v5 appgenesis-create-entry-grid-v9";
 
     const nomeField = document.createElement("div");
-    nomeField.className = "field appverbo-create-entry-field-v5";
+    nomeField.className = "field appgenesis-create-entry-field-v5";
 
     const nomeLabel = document.createElement("label");
     nomeLabel.textContent = "Nome da sessão *";
@@ -2735,7 +2735,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     nomeField.appendChild(nomeInput);
 
     const sistemaField = document.createElement("div");
-    sistemaField.className = "field appverbo-create-entry-field-v5";
+    sistemaField.className = "field appgenesis-create-entry-field-v5";
 
     const sistemaLabel = document.createElement("label");
     sistemaLabel.textContent = "Sistema *";
@@ -2746,7 +2746,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     sistemaField.appendChild(sistemaSelect);
 
     const estadoField = document.createElement("div");
-    estadoField.className = "field appverbo-create-entry-field-v5";
+    estadoField.className = "field appgenesis-create-entry-field-v5";
 
     const estadoLabel = document.createElement("label");
     estadoLabel.textContent = "Estado *";
@@ -2761,11 +2761,11 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     grid.appendChild(estadoField);
 
     const erro = document.createElement("p");
-    erro.className = "appverbo-create-entry-error-v5 appverbo-create-entry-error-v9";
+    erro.className = "appgenesis-create-entry-error-v5 appgenesis-create-entry-error-v9";
     erro.hidden = true;
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-create-entry-actions-v5 appverbo-create-entry-actions-v9";
+    actions.className = "appgenesis-create-entry-actions-v5 appgenesis-create-entry-actions-v9";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "button";
@@ -2893,10 +2893,10 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     const sessao = Object.assign({}, sessoesEstadoV9[indice]);
 
-    const tdMenu = linha.querySelector(".appverbo-sidebar-section-menu-cell-v2");
-    const tdSistema = linha.querySelector(".appverbo-sidebar-section-system-cell-v2");
-    const tdEstado = linha.querySelector(".appverbo-sidebar-section-state-cell-v2");
-    const tdAcoes = linha.querySelector(".appverbo-sidebar-section-actions-cell-v2");
+    const tdMenu = linha.querySelector(".appgenesis-sidebar-section-menu-cell-v2");
+    const tdSistema = linha.querySelector(".appgenesis-sidebar-section-system-cell-v2");
+    const tdEstado = linha.querySelector(".appgenesis-sidebar-section-state-cell-v2");
+    const tdAcoes = linha.querySelector(".appgenesis-sidebar-section-actions-cell-v2");
 
     if (!tdMenu || !tdSistema || !tdEstado || !tdAcoes) {
       return;
@@ -2904,7 +2904,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     const nomeInput = document.createElement("input");
     nomeInput.type = "text";
-    nomeInput.className = "appverbo-sidebar-section-edit-input-v9";
+    nomeInput.className = "appgenesis-sidebar-section-edit-input-v9";
     nomeInput.value = sessao.label;
     nomeInput.maxLength = 80;
 
@@ -2923,16 +2923,16 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     tdAcoes.innerHTML = "";
 
     const actions = document.createElement("div");
-    actions.className = "appverbo-sidebar-section-edit-actions-v9";
+    actions.className = "appgenesis-sidebar-section-edit-actions-v9";
 
     const guardarBtn = document.createElement("button");
     guardarBtn.type = "button";
-    guardarBtn.className = "action-btn appverbo-sidebar-section-edit-save-v9";
+    guardarBtn.className = "action-btn appgenesis-sidebar-section-edit-save-v9";
     guardarBtn.textContent = "Guardar";
 
     const cancelarBtn = document.createElement("button");
     cancelarBtn.type = "button";
-    cancelarBtn.className = "action-btn-cancel appverbo-sidebar-section-edit-cancel-v9";
+    cancelarBtn.className = "action-btn-cancel appgenesis-sidebar-section-edit-cancel-v9";
     cancelarBtn.textContent = "Cancelar";
 
     actions.appendChild(guardarBtn);
@@ -2943,7 +2943,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       const nome = String(nomeInput.value || "").trim();
 
       if (!nome) {
-        nomeInput.classList.add("appverbo-sidebar-section-edit-input-error-v9");
+        nomeInput.classList.add("appgenesis-sidebar-section-edit-input-error-v9");
         nomeInput.focus();
         return;
       }
@@ -3000,7 +3000,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
         return;
       }
 
-      const linha = botao.closest("tr.appverbo-sidebar-section-row-v9");
+      const linha = botao.closest("tr.appgenesis-sidebar-section-row-v9");
 
       if (!linha) {
         return;
@@ -3210,7 +3210,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     return texto.includes("sessoes do sidebar") ||
       texto.includes("criar sessao") ||
       texto.includes("menu lateral") ||
-      Boolean(card.querySelector(".appverbo-sidebar-section-row-v10, .appverbo-sidebar-section-row-v9, .appverbo-sidebar-section-row-v6, .appverbo-sidebar-section-row-v2"));
+      Boolean(card.querySelector(".appgenesis-sidebar-section-row-v10, .appgenesis-sidebar-section-row-v9, .appgenesis-sidebar-section-row-v6, .appgenesis-sidebar-section-row-v2"));
   }
 
   function urlApontaParaSessoesV12() {
@@ -3288,12 +3288,12 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function marcarEstadoBodySessoesV12() {
     if (abaSessoesEstaAtivaV12()) {
-      document.body.classList.add("appverbo-admin-sessoes-active-v12");
-      document.body.classList.remove("appverbo-admin-sessoes-inactive-v12");
+      document.body.classList.add("appgenesis-admin-sessoes-active-v12");
+      document.body.classList.remove("appgenesis-admin-sessoes-inactive-v12");
     }
     else {
-      document.body.classList.remove("appverbo-admin-sessoes-active-v12");
-      document.body.classList.add("appverbo-admin-sessoes-inactive-v12");
+      document.body.classList.remove("appgenesis-admin-sessoes-active-v12");
+      document.body.classList.add("appgenesis-admin-sessoes-inactive-v12");
     }
   }
 
@@ -3644,7 +3644,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   //###################################################################################
 
   function lerSplitBackendSessoesAtivasV23() {
-    const script = document.getElementById("appverbo-sidebar-section-split-v22");
+    const script = document.getElementById("appgenesis-sidebar-section-split-v22");
 
     if (!script) {
       return {
@@ -3671,7 +3671,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   }
 
   function lerOptionsBackendSessoesAtivasV23() {
-    const script = document.getElementById("appverbo-sidebar-section-options-v2");
+    const script = document.getElementById("appgenesis-sidebar-section-options-v2");
 
     if (!script) {
       return [];
@@ -3802,13 +3802,13 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     return document.getElementById("admin-sidebar-sections-card") ||
       document.querySelector("[data-sidebar-sections-card]") ||
-      document.querySelector(".appverbo-sidebar-sections-card") ||
+      document.querySelector(".appgenesis-sidebar-sections-card") ||
       document.querySelector(".content .container");
   }
 
   function criarBotaoEditarSessaoAtivaV23(sessao) {
     const link = document.createElement("a");
-    link.className = "appverbo-sidebar-section-action-btn-v23";
+    link.className = "appgenesis-sidebar-section-action-btn-v23";
     link.href = urlEditarSessaoAtivaV23(sessao.key);
     link.title = "Editar sessão";
     link.setAttribute("aria-label", "Editar sessão");
@@ -3818,7 +3818,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
   function criarBadgeSessaoAtivaV23() {
     const badge = document.createElement("span");
-    badge.className = "appverbo-sidebar-section-state-badge-v23 appverbo-sidebar-section-state-badge-ativo-v23";
+    badge.className = "appgenesis-sidebar-section-state-badge-v23 appgenesis-sidebar-section-state-badge-ativo-v23";
     badge.textContent = "Ativo";
     return badge;
   }
@@ -3840,7 +3840,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     const card = document.createElement("section");
     card.id = "admin-sidebar-sections-active-card-v23";
-    card.className = "card appverbo-sidebar-sections-active-card-v23";
+    card.className = "card appgenesis-sidebar-sections-active-card-v23";
     card.dataset.menuScope = "administrativo,sessoes";
 
     const title = document.createElement("h2");
@@ -3849,13 +3849,13 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
 
     if (!Array.isArray(sessoesAtivas) || sessoesAtivas.length === 0) {
       const empty = document.createElement("p");
-      empty.className = "empty appverbo-sidebar-section-empty-v23";
+      empty.className = "empty appgenesis-sidebar-section-empty-v23";
       empty.textContent = "Sem sessões ativas.";
       card.appendChild(empty);
     }
     else {
       const table = document.createElement("table");
-      table.className = "appverbo-sidebar-sections-table-v23";
+      table.className = "appgenesis-sidebar-sections-table-v23";
 
       const thead = document.createElement("thead");
       thead.innerHTML = "<tr><th>Menu lateral</th><th>Sistema</th><th>Estado</th><th>Ações</th></tr>";
@@ -3876,7 +3876,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
         tdStatus.appendChild(criarBadgeSessaoAtivaV23());
 
         const tdActions = document.createElement("td");
-        tdActions.className = "appverbo-sidebar-section-actions-cell-v23";
+        tdActions.className = "appgenesis-sidebar-section-actions-cell-v23";
         tdActions.appendChild(criarBotaoEditarSessaoAtivaV23(sessao));
 
         row.appendChild(tdName);
@@ -4207,7 +4207,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     if (
       card.id === "admin-sidebar-sections-active-card-v23" ||
       card.id === "admin-sidebar-sections-inactive-card" ||
-      card.classList.contains("appverbo-sidebar-sections-active-card-v23") ||
+      card.classList.contains("appgenesis-sidebar-sections-active-card-v23") ||
       card.getAttribute("data-appgenesis-sessoes-card-v26") === "1"
     ) {
       return true;
@@ -4234,8 +4234,8 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
   function aplicarClassesHtmlSessoesSemPiscarV26() {
     const deveMostrar = estaNoSubprocessoSessoesSemPiscarV26();
 
-    document.documentElement.classList.toggle("appverbo-subprocesso-sessoes-v26", deveMostrar);
-    document.documentElement.classList.toggle("appverbo-subprocesso-nao-sessoes-v26", !deveMostrar);
+    document.documentElement.classList.toggle("appgenesis-subprocesso-sessoes-v26", deveMostrar);
+    document.documentElement.classList.toggle("appgenesis-subprocesso-nao-sessoes-v26", !deveMostrar);
 
     return deveMostrar;
   }

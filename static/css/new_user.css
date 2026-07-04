@@ -5404,8 +5404,8 @@ input.action-btn-cancel,
 .form-action-row > button[type="submit"],
 .form-action-row > .action-btn,
 .form-action-row > .action-btn-cancel,
-.appverbo-sidebar-sections-footer-v2 > .action-btn,
-.appverbo-sidebar-sections-footer-v2 > .action-btn-cancel {
+.appgenesis-sidebar-sections-footer-v2 > .action-btn,
+.appgenesis-sidebar-sections-footer-v2 > .action-btn-cancel {
   min-width: var(--appverbo-save-cancel-button-width-v1) !important;
   width: var(--appverbo-save-cancel-button-width-v1) !important;
   height: var(--appverbo-save-cancel-button-height-v1) !important;
@@ -5424,23 +5424,23 @@ input.action-btn-cancel,
 .profile-edit-actions,
 .form-action-row,
 .entity-form-actions,
-.appverbo-sidebar-sections-footer-v2 {
+.appgenesis-sidebar-sections-footer-v2 {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-start !important;
   gap: 8px !important;
 }
 
-.appverbo-sidebar-sections-footer-v2 .appverbo-sidebar-section-change-note-v2 {
+.appgenesis-sidebar-sections-footer-v2 .appgenesis-sidebar-section-change-note-v2 {
   order: 3 !important;
   margin-left: 10px !important;
 }
 
-.appverbo-sidebar-sections-footer-v2 > .action-btn {
+.appgenesis-sidebar-sections-footer-v2 > .action-btn {
   order: 1 !important;
 }
 
-.appverbo-sidebar-sections-footer-v2 > .action-btn-cancel {
+.appgenesis-sidebar-sections-footer-v2 > .action-btn-cancel {
   order: 2 !important;
 }
 
@@ -5449,7 +5449,7 @@ input.action-btn-cancel,
 /* APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_V2_START */
 
 .entity-create-toolbar,
-.appverbo-create-entry-block-v1 {
+.appgenesis-create-entry-block-v1 {
   border: 1px solid #d5dceb;
   background: #f7faff;
   border-radius: 12px;
@@ -5467,7 +5467,7 @@ input.action-btn-cancel,
 
 .entity-create-toolbar .action-btn,
 .entity-create-toolbar .action-btn-secondary,
-.appverbo-create-entry-toolbar-v1 .action-btn {
+.appgenesis-create-entry-toolbar-v1 .action-btn {
   align-self: flex-start;
 }
 
@@ -5484,9 +5484,9 @@ input.action-btn-cancel,
   --appverbo-create-card-margin-bottom-v4: 12px;
 }
 
-.appverbo-standard-create-card-v4,
+.appgenesis-standard-create-card-v4,
 .entity-create-toolbar,
-.appverbo-sessoes-create-card-v3,
+.appgenesis-sessoes-create-card-v3,
 #admin-sidebar-sections-create-card {
   width: 100% !important;
   min-height: var(--appverbo-create-card-min-height-v4) !important;
@@ -5501,22 +5501,22 @@ input.action-btn-cancel,
   justify-content: flex-start !important;
 }
 
-.appverbo-standard-create-card-v4 > *,
+.appgenesis-standard-create-card-v4 > *,
 .entity-create-toolbar > *,
-.appverbo-sessoes-create-card-v3 > *,
+.appgenesis-sessoes-create-card-v3 > *,
 #admin-sidebar-sections-create-card > * {
   flex: 0 0 auto;
 }
 
-.appverbo-standard-create-card-v4 .action-btn,
+.appgenesis-standard-create-card-v4 .action-btn,
 .entity-create-toolbar .action-btn,
-.appverbo-sessoes-create-card-v3 .action-btn,
+.appgenesis-sessoes-create-card-v3 .action-btn,
 #admin-sidebar-sections-create-card .action-btn {
   align-self: center !important;
 }
 
-.appverbo-sessoes-create-card-v3 .appverbo-create-entry-block-v1,
-#admin-sidebar-sections-create-card .appverbo-create-entry-block-v1 {
+.appgenesis-sessoes-create-card-v3 .appgenesis-create-entry-block-v1,
+#admin-sidebar-sections-create-card .appgenesis-create-entry-block-v1 {
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -5526,8 +5526,8 @@ input.action-btn-cancel,
   box-sizing: border-box !important;
 }
 
-.appverbo-sessoes-create-card-v3 .appverbo-create-entry-toolbar-v1,
-#admin-sidebar-sections-create-card .appverbo-create-entry-toolbar-v1 {
+.appgenesis-sessoes-create-card-v3 .appgenesis-create-entry-toolbar-v1,
+#admin-sidebar-sections-create-card .appgenesis-create-entry-toolbar-v1 {
   min-height: 32px !important;
   display: flex !important;
   align-items: center !important;
@@ -5535,8 +5535,8 @@ input.action-btn-cancel,
   gap: 8px !important;
 }
 
-.appverbo-sessoes-create-card-v3 .appverbo-create-entry-panel-v1,
-#admin-sidebar-sections-create-card .appverbo-create-entry-panel-v1 {
+.appgenesis-sessoes-create-card-v3 .appgenesis-create-entry-panel-v1,
+#admin-sidebar-sections-create-card .appgenesis-create-entry-panel-v1 {
   width: 100% !important;
   margin-top: 14px !important;
   padding-top: 14px !important;
@@ -5662,7 +5662,7 @@ input.action-btn-cancel,
 /* APPVERBO_TOP_SUBMENU_SAP_STYLE_V2_END */
 
 /* APPVERBO_USER_CREATE_SUMMARY_HIDE_V1_START */
-#create-user-collapse[open] > summary.appverbo-process-action-toggle-v1 {
+#create-user-collapse[open] > summary.appgenesis-process-action-toggle-v1 {
   display: none !important;
 }
 

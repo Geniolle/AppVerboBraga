@@ -54,40 +54,40 @@
 }
 
 /* ── Estado recolhido ── */
-body.appverbo-sidebar-collapsed .layout {
+body.appgenesis-sidebar-collapsed .layout {
   grid-template-columns: var(--appverbo-sidebar-collapsed-width) minmax(0, 1fr) !important;
 }
 
-body.appverbo-sidebar-collapsed .sidebar {
+body.appgenesis-sidebar-collapsed .sidebar {
   width: var(--appverbo-sidebar-collapsed-width) !important;
   min-width: var(--appverbo-sidebar-collapsed-width) !important;
   overflow: hidden;
 }
 
-body.appverbo-sidebar-collapsed .menu-section {
+body.appgenesis-sidebar-collapsed .menu-section {
   display: none;
 }
 
-body.appverbo-sidebar-collapsed .sidebar-brand-footer {
+body.appgenesis-sidebar-collapsed .sidebar-brand-footer {
   display: none;
 }
 
-body.appverbo-sidebar-collapsed .menu-label {
+body.appgenesis-sidebar-collapsed .menu-label {
   display: none;
 }
 
-body.appverbo-sidebar-collapsed .menu-item {
+body.appgenesis-sidebar-collapsed .menu-item {
   justify-content: center;
   padding: 11px 0;
   gap: 0;
 }
 
-body.appverbo-sidebar-collapsed .menu-icon {
+body.appgenesis-sidebar-collapsed .menu-icon {
   width: 100%;
   justify-content: center;
 }
 
-body.appverbo-sidebar-collapsed .sidebar-icon-svg {
+body.appgenesis-sidebar-collapsed .sidebar-icon-svg {
   width: 22px;
   height: 22px;
 }
@@ -107,11 +107,11 @@ body.appverbo-sidebar-collapsed .sidebar-icon-svg {
 
 /* ── Mobile: ocultar sidebar no colapso também ── */
 @media (max-width: 640px) {
-  body.appverbo-sidebar-collapsed .sidebar {
+  body.appgenesis-sidebar-collapsed .sidebar {
     display: none;
   }
 
-  body.appverbo-sidebar-collapsed .layout {
+  body.appgenesis-sidebar-collapsed .layout {
     grid-template-columns: 1fr !important;
   }
 }

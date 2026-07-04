@@ -29,17 +29,17 @@
     "[data-process-quantity-editor-cancel]",
     "[data-process-subsequent-field-cancel]",
     ".process-fields-config-cancel-v6",
-    ".appverbo-sidebar-section-cancel-btn-v3",
-    ".appverbo-create-entry-cancel-btn-v1",
-    ".appverbo-create-entry-cancel-btn-v5",
-    ".appverbo-sidebar-section-edit-cancel-v8",
-    ".appverbo-sidebar-section-edit-cancel-v9"
+    ".appgenesis-sidebar-section-cancel-btn-v3",
+    ".appgenesis-create-entry-cancel-btn-v1",
+    ".appgenesis-create-entry-cancel-btn-v5",
+    ".appgenesis-sidebar-section-edit-cancel-v8",
+    ".appgenesis-sidebar-section-edit-cancel-v9"
   ].join(", ");
 
   const DETAILS_SELECTOR_V1 = [
     "details.entity-create-collapse",
     "details.admin-subprocess-create-collapse-v1",
-    "details.appverbo-process-action-details-v1",
+    "details.appgenesis-process-action-details-v1",
     "details"
   ].join(", ");
 
@@ -171,12 +171,12 @@
           "form[data-process-lists-manager-v1='1']",
           "form[data-process-quantity-fields-manager-v1='1']",
           "form[data-process-subsequent-fields-manager-v1='1']",
-          ".appverbo-create-entry-block-v1",
-          ".appverbo-create-entry-card-v5",
-          ".appverbo-create-entry-panel-v1",
-          ".appverbo-create-entry-panel-v5",
-          ".appverbo-sidebar-section-edit-actions-v8",
-          ".appverbo-sidebar-section-edit-actions-v9",
+          ".appgenesis-create-entry-block-v1",
+          ".appgenesis-create-entry-card-v5",
+          ".appgenesis-create-entry-panel-v1",
+          ".appgenesis-create-entry-panel-v5",
+          ".appgenesis-sidebar-section-edit-actions-v8",
+          ".appgenesis-sidebar-section-edit-actions-v9",
           ".profile-edit-form",
           "[data-admin-subprocess-role='form']",
           DETAILS_SELECTOR_V1,

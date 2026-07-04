@@ -580,7 +580,7 @@
 
     if (!lessEl && footerEl) {
       lessEl = document.createElement("div");
-      lessEl.className = "appverbo-load-more-less-v1 configurable-items-less-v1";
+      lessEl.className = "appgenesis-load-more-less-v1 configurable-items-less-v1";
       footerEl.appendChild(lessEl);
     }
 
@@ -609,7 +609,7 @@
     }
 
     if (showMais) {
-      const moreBtn = createElement_v1("button", "appverbo-load-more-btn-v1", "Mais");
+      const moreBtn = createElement_v1("button", "appgenesis-load-more-btn-v1", "Mais");
       moreBtn.type = "button";
       moreBtn.addEventListener("click", () => {
         manager.state.visibleCount += manager.state.pageSize;
@@ -618,11 +618,11 @@
       paginationEl.appendChild(moreBtn);
     }
 
-    const counter = createElement_v1("span", "appverbo-load-more-counter-v1", `[ ${currentCount} / ${totalItems} ]`);
+    const counter = createElement_v1("span", "appgenesis-load-more-counter-v1", `[ ${currentCount} / ${totalItems} ]`);
     paginationEl.appendChild(counter);
 
     if (showMenos && lessEl) {
-      const lessBtn = createElement_v1("button", "appverbo-load-more-btn-v1", "Menos");
+      const lessBtn = createElement_v1("button", "appgenesis-load-more-btn-v1", "Menos");
       lessBtn.type = "button";
       lessBtn.addEventListener("click", () => {
         manager.state.visibleCount = manager.state.pageSize;

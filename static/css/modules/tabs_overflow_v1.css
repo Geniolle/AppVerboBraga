@@ -3,7 +3,7 @@
    ================================================================ */
 
 /* Container: managed overflow (added via JS) */
-.appverbo-tabs-overflow-v1 {
+.appgenesis-tabs-overflow-v1 {
   flex-wrap: nowrap !important;
   overflow: hidden !important;
   overflow-x: hidden !important;
@@ -14,12 +14,12 @@
    Without this, flex-shrink:1 (default) makes all tabs shrink to fit the
    container, so getBoundingClientRect().right never exceeds containerRight
    and the "Mais" button never appears. */
-.appverbo-tabs-overflow-v1 > * {
+.appgenesis-tabs-overflow-v1 > * {
   flex-shrink: 0;
 }
 
 /* Override scroll on settings context */
-#settings-menu-edit-card .process-edit-tabs.appverbo-tabs-overflow-v1 {
+#settings-menu-edit-card .process-edit-tabs.appgenesis-tabs-overflow-v1 {
   overflow-x: hidden !important;
   overflow-y: hidden !important;
 }
@@ -27,7 +27,7 @@
 /* ---------------------------------------------------------------
    "Mais" button — base style (process-edit-tabs context)
    --------------------------------------------------------------- */
-.appverbo-tabs-more-btn-v1 {
+.appgenesis-tabs-more-btn-v1 {
   appearance: none;
   -webkit-appearance: none;
   display: inline-flex;
@@ -49,13 +49,13 @@
   color: #39527f;
 }
 
-.appverbo-tabs-more-btn-v1:hover {
+.appgenesis-tabs-more-btn-v1:hover {
   background: #eef3ff;
   color: #25385e;
 }
 
 /* Active indicator (process-edit base) */
-.appverbo-tabs-more-btn-active-v1 {
+.appgenesis-tabs-more-btn-active-v1 {
   background: #ffffff;
   color: #1f3660;
   border-color: #cdd8ee;
@@ -63,7 +63,7 @@
 }
 
 /* "Mais" button in settings-menu-edit-card (process-edit-tabs) */
-#settings-menu-edit-card .appverbo-tabs-more-btn-v1 {
+#settings-menu-edit-card .appgenesis-tabs-more-btn-v1 {
   min-height: 36px;
   padding: 0 18px;
   border: 1px solid transparent;
@@ -73,12 +73,12 @@
   color: #0f2647;
 }
 
-#settings-menu-edit-card .appverbo-tabs-more-btn-v1:hover {
+#settings-menu-edit-card .appgenesis-tabs-more-btn-v1:hover {
   background: #f8fafc;
   border-color: #d7e0ee;
 }
 
-#settings-menu-edit-card .appverbo-tabs-more-btn-active-v1 {
+#settings-menu-edit-card .appgenesis-tabs-more-btn-active-v1 {
   background: #ffffff;
   border-color: #b8c9e6;
   color: #0f2647;
@@ -89,7 +89,7 @@
 /* ---------------------------------------------------------------
    "Mais" button — top submenu (menu-tabs) context
    --------------------------------------------------------------- */
-#submenu-items.menu-tabs .appverbo-tabs-more-btn-v1 {
+#submenu-items.menu-tabs .appgenesis-tabs-more-btn-v1 {
   margin-left: auto;
   color: #2f3850;
   background: #f9fbff;
@@ -102,12 +102,12 @@
   border-bottom: 1px solid #dce3f2;
 }
 
-#submenu-items.menu-tabs .appverbo-tabs-more-btn-v1:hover {
+#submenu-items.menu-tabs .appgenesis-tabs-more-btn-v1:hover {
   background: #f2f6ff;
   border-color: #becdf0;
 }
 
-#submenu-items.menu-tabs .appverbo-tabs-more-btn-active-v1 {
+#submenu-items.menu-tabs .appgenesis-tabs-more-btn-active-v1 {
   background: #1f4fa3 !important;
   border: 1px solid #1f4fa3 !important;
   color: #ffffff !important;
@@ -115,7 +115,7 @@
   box-shadow: 0 2px 7px rgba(31, 79, 163, 0.28);
 }
 
-#submenu-items.menu-tabs .appverbo-tabs-more-btn-active-v1:hover {
+#submenu-items.menu-tabs .appgenesis-tabs-more-btn-active-v1:hover {
   background: #183f82 !important;
   border-color: #183f82 !important;
 }
@@ -123,7 +123,7 @@
 /* Neutralize equal-width tab constraint and prevent shrinking in overflow mode.
    flex-shrink:0 is mandatory: without it tabs shrink to fit and overflow
    is never detected, so the "Mais" button never appears. */
-#submenu-items.menu-tabs.appverbo-tabs-overflow-v1 .submenu-item {
+#submenu-items.menu-tabs.appgenesis-tabs-overflow-v1 .submenu-item {
   width: auto !important;
   min-width: auto !important;
   flex-shrink: 0 !important;
@@ -131,7 +131,7 @@
 }
 
 /* Arrow glyph */
-.appverbo-tabs-more-arrow-v1 {
+.appgenesis-tabs-more-arrow-v1 {
   display: inline-block;
   margin-left: 5px;
   font-size: 9px;
@@ -144,7 +144,7 @@
    position: fixed + coordinates set by JS at open time
    so it escapes any parent overflow clipping
    --------------------------------------------------------------- */
-.appverbo-tabs-more-menu-v1 {
+.appgenesis-tabs-more-menu-v1 {
   position: fixed;
   top: 0;    /* overridden by JS on open */
   right: 0;  /* overridden by JS on open */
@@ -158,7 +158,7 @@
 }
 
 /* Dropdown items */
-.appverbo-tabs-more-item-v1 {
+.appgenesis-tabs-more-item-v1 {
   display: block;
   width: 100%;
   padding: 9px 16px;
@@ -173,17 +173,17 @@
   white-space: nowrap;
 }
 
-.appverbo-tabs-more-item-v1:hover {
+.appgenesis-tabs-more-item-v1:hover {
   background: #eef3ff;
   color: #25385e;
 }
 
-.appverbo-tabs-more-item-v1.active {
+.appgenesis-tabs-more-item-v1.active {
   color: #0f2647;
   background: #e8eeff;
 }
 
-.appverbo-tabs-more-item-v1.active::before {
+.appgenesis-tabs-more-item-v1.active::before {
   content: "▸ ";
   color: #3f51b5;
 }

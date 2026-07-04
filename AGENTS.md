@@ -1101,7 +1101,7 @@ Na aba **Sessões**, a ordem visual correta é:
    - `admin-sidebar-sections-form-card`;
    - `admin-sidebar-sections-card`;
    - `admin-sidebar-sections-inactive-card`;
-   - classes `appverbo-sessoes-*`;
+   - classes `appgenesis-sessoes-*`;
 5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
 <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_END -->
 
@@ -1117,7 +1117,7 @@ Na aba **Sessões**, a ordem visual correta é:
    - `admin-sidebar-sections-form-card`;
    - `admin-sidebar-sections-card`;
    - `admin-sidebar-sections-inactive-card`;
-   - classes `appverbo-sessoes-*`;
+   - classes `appgenesis-sessoes-*`;
 5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
 <!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
 

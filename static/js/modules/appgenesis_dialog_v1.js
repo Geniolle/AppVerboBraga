@@ -14,7 +14,7 @@
   }
 
   function removeExistingDialog_v1() {
-    const existingOverlay = document.querySelector(".appverbo-alert-overlay-v1");
+    const existingOverlay = document.querySelector(".appgenesis-alert-overlay-v1");
 
     if (existingOverlay && existingOverlay.parentNode) {
       existingOverlay.parentNode.removeChild(existingOverlay);
@@ -37,29 +37,29 @@
 
     return new Promise((resolve) => {
       const overlay = document.createElement("div");
-      overlay.className = "appverbo-confirm-overlay-v1 appverbo-alert-overlay-v1";
+      overlay.className = "appgenesis-confirm-overlay-v1 appgenesis-alert-overlay-v1";
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
-      overlay.setAttribute("aria-labelledby", "appverbo-alert-title-v1");
+      overlay.setAttribute("aria-labelledby", "appgenesis-alert-title-v1");
 
       const dialog = document.createElement("div");
-      dialog.className = "appverbo-confirm-dialog-v1 appverbo-alert-dialog-v1";
+      dialog.className = "appgenesis-confirm-dialog-v1 appgenesis-alert-dialog-v1";
 
       const titleEl = document.createElement("h3");
-      titleEl.className = "appverbo-confirm-title-v1 appverbo-alert-title-v1";
-      titleEl.id = "appverbo-alert-title-v1";
+      titleEl.className = "appgenesis-confirm-title-v1 appgenesis-alert-title-v1";
+      titleEl.id = "appgenesis-alert-title-v1";
       titleEl.textContent = title;
 
       const messageEl = document.createElement("p");
-      messageEl.className = "appverbo-confirm-message-v1 appverbo-alert-message-v1";
+      messageEl.className = "appgenesis-confirm-message-v1 appgenesis-alert-message-v1";
       messageEl.textContent = message;
 
       const actionsEl = document.createElement("div");
-      actionsEl.className = "appverbo-confirm-actions-v1 appverbo-alert-actions-v1";
+      actionsEl.className = "appgenesis-confirm-actions-v1 appgenesis-alert-actions-v1";
 
       const confirmBtn = document.createElement("button");
       confirmBtn.type = "button";
-      confirmBtn.className = "appverbo-confirm-action-v1";
+      confirmBtn.className = "appgenesis-confirm-action-v1";
       confirmBtn.textContent = confirmLabel;
 
       actionsEl.appendChild(confirmBtn);

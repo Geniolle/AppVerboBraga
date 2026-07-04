@@ -41,7 +41,7 @@
 
     <main class="content">
       <div class="container">
-        <section id="menu-tabs-card" class="card menu-tabs-card appverbo-process-shell">
+        <section id="menu-tabs-card" class="card menu-tabs-card appgenesis-process-shell">
           <div id="process-shell-header" class="process-shell-header">
             <h1 id="process-shell-title" class="process-shell-title">{{ initial_menu_label }}</h1>
             <div id="process-shell-actions" class="process-shell-actions"></div>
@@ -97,12 +97,12 @@
 
 
 
-<section id="dynamic-process-action-card" class="card appverbo-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
-          <div class="appverbo-process-action-toolbar-v1">
+<section id="dynamic-process-action-card" class="card appgenesis-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
+          <div class="appgenesis-process-action-toolbar-v1">
             <button
               id="dynamic-process-edit-toggle"
               type="button"
-              class="profile-edit-toggle appverbo-process-action-toggle-v1"
+              class="profile-edit-toggle appgenesis-process-action-toggle-v1"
               data-edit-target="dynamic-process-card"
             >
               Editar
@@ -110,7 +110,7 @@
           </div>
         </section>
 
-        <section id="dynamic-process-card" class="card appverbo-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
+        <section id="dynamic-process-card" class="card appgenesis-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
           </div>
@@ -767,13 +767,13 @@
 
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
-            <div class="entity-create-toolbar appverbo-process-action-toolbar-v1">
-            <details id="create-user-collapse" class="entity-create-collapse appverbo-process-action-details-v1" data-appgenesis-user-create-details="1"{% if errors %} open{% endif %}>
-              <summary class="appverbo-process-action-toggle-v1">
+        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
+            <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
+            <details id="create-user-collapse" class="entity-create-collapse appgenesis-process-action-details-v1" data-appgenesis-user-create-details="1"{% if errors %} open{% endif %}>
+              <summary class="appgenesis-process-action-toggle-v1">
                 <span>Criar utilizador</span>
               </summary>
-              <div class="entity-create-body appverbo-process-action-panel-v1">
+              <div class="entity-create-body appgenesis-process-action-panel-v1">
                 <div class="admin-subsection">
                   <form id="create-user-form" method="post" action="/users/new">
                     <input type="hidden" name="return_menu" value="administrativo">
@@ -1013,13 +1013,13 @@
         {% endif %}
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_tenant_structure %}
-        <section id="create-entity-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#create-entity-card' %}style="display: none;"{% endif %}>
-          <div class="appverbo-process-action-toolbar-v1">
-          <details class="entity-create-collapse appverbo-process-action-details-v1">
-            <summary class="appverbo-process-action-toggle-v1">
+        <section id="create-entity-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#create-entity-card' %}style="display: none;"{% endif %}>
+          <div class="appgenesis-process-action-toolbar-v1">
+          <details class="entity-create-collapse appgenesis-process-action-details-v1">
+            <summary class="appgenesis-process-action-toggle-v1">
               <span>Criar entidade</span>
             </summary>
-            <div class="entity-create-body appverbo-process-action-panel-v1">
+            <div class="entity-create-body appgenesis-process-action-panel-v1">
               <form method="post" action="/entities/new" enctype="multipart/form-data">
                 <input type="hidden" name="return_menu" value="administrativo">
                 <input type="hidden" name="return_admin_tab" value="entidade">
@@ -1647,8 +1647,8 @@
                       style="display: none;"
                     >Sem campos configurados.</p>
 
-                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appverbo-load-more-page-size-v1">
+                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appgenesis-load-more-page-size-v1">
                         <select data-process-fields-config-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
@@ -1656,7 +1656,7 @@
                         </select>
                         <span>entradas por página</span>
                       </div>
-                      <div class="appverbo-load-more-status-v1" data-process-fields-config-pagination></div>
+                      <div class="appgenesis-load-more-status-v1" data-process-fields-config-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -1767,8 +1767,8 @@
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Regras criadas</h4>
                       <div class="configurable-items-list-head-actions-v1">
-                        <label class="appverbo-card-search-v1">
-                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                        <label class="appgenesis-card-search-v1">
+                          <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
                           <input
                             type="search"
                             data-configurable-search
@@ -1803,8 +1803,8 @@
                       style="display: none;"
                     >Sem regras criadas.</p>
 
-                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appverbo-load-more-page-size-v1">
+                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appgenesis-load-more-page-size-v1">
                         <select data-process-quantity-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
@@ -1813,7 +1813,7 @@
                         <span>entradas por página</span>
                       </div>
 
-                      <div class="appverbo-load-more-status-v1" data-process-quantity-pagination></div>
+                      <div class="appgenesis-load-more-status-v1" data-process-quantity-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -1892,8 +1892,8 @@
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Listas criadas</h4>
                       <div class="configurable-items-list-head-actions-v1">
-                        <label class="appverbo-card-search-v1">
-                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                        <label class="appgenesis-card-search-v1">
+                          <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
                           <input
                             type="search"
                             data-configurable-search
@@ -1924,8 +1924,8 @@
                       style="display: none;"
                     >Sem listas criadas.</p>
 
-                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appverbo-load-more-page-size-v1">
+                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appgenesis-load-more-page-size-v1">
                         <select data-process-lists-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
@@ -1934,7 +1934,7 @@
                         <span>entradas por página</span>
                       </div>
 
-                      <div class="appverbo-load-more-status-v1" data-process-lists-pagination></div>
+                      <div class="appgenesis-load-more-status-v1" data-process-lists-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -2028,8 +2028,8 @@
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Campos subsequentes criados</h4>
                       <div class="configurable-items-list-head-actions-v1">
-                        <label class="appverbo-card-search-v1">
-                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                        <label class="appgenesis-card-search-v1">
+                          <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
                           <input
                             type="search"
                             placeholder="Pesquisar..."
@@ -2062,8 +2062,8 @@
                       style="display: none;"
                     >Sem campos subsequentes criados.</p>
 
-                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appverbo-load-more-page-size-v1">
+                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appgenesis-load-more-page-size-v1">
                         <select data-process-subsequent-fields-page-size>
                           <option value="5" selected>5</option>
                           <option value="10">10</option>
@@ -2072,7 +2072,7 @@
                         <span>entradas por página</span>
                       </div>
 
-                      <div class="appverbo-load-more-status-v1" data-process-subsequent-fields-pagination></div>
+                      <div class="appgenesis-load-more-status-v1" data-process-subsequent-fields-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -2332,8 +2332,8 @@
                     <div class="configurable-items-list-head-v1">
                       <h4 class="configurable-items-list-title-v1">Campos criados</h4>
                       <div class="configurable-items-list-head-actions-v1">
-                        <label class="appverbo-card-search-v1">
-                          <span class="appverbo-card-search-icon-v1" aria-hidden="true">⌕</span>
+                        <label class="appgenesis-card-search-v1">
+                          <span class="appgenesis-card-search-icon-v1" aria-hidden="true">⌕</span>
                           <input
                             type="search"
                             data-configurable-search
@@ -2361,8 +2361,8 @@
                       style="display: none;"
                     >Sem campos criados.</p>
 
-                    <div class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appverbo-load-more-page-size-v1">
+                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appgenesis-load-more-page-size-v1">
                         <select
                           id="process-additional-fields-page-size"
                           data-configurable-page-size
@@ -2370,7 +2370,7 @@
                         <span>entradas por página</span>
                       </div>
                       <div
-                        class="appverbo-load-more-status-v1"
+                        class="appgenesis-load-more-status-v1"
                         data-configurable-pagination
                       ></div>
                     </div>
