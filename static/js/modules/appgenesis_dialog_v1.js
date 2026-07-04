@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - APPVERBO DIALOG V1
+// APPGENESIS - DIALOG V1
 //###################################################################################
 
 (function (window, document) {
@@ -97,7 +97,7 @@
     });
   }
 
-  window.AppVerboDialogV1 = {
+  window.AppGenesisDialogV1 = {
     alert: alert_v1
   };
 })(window, document);

@@ -47,10 +47,10 @@
     }
 
     if (
-      window.AppVerboDialogV1 &&
-      typeof window.AppVerboDialogV1.alert === "function"
+      window.AppGenesisDialogV1 &&
+      typeof window.AppGenesisDialogV1.alert === "function"
     ) {
-      window.AppVerboDialogV1.alert({
+      window.AppGenesisDialogV1.alert({
         title: "Validacao",
         message
       });
