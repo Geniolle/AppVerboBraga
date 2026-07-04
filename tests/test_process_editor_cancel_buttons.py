@@ -31,11 +31,11 @@ def test_all_process_editor_tab_cancel_buttons_exit_the_whole_editor() -> None:
         # Janela ampla o suficiente para cobrir o bloco <button ...> inteiro em qualquer formatacao.
         window = html_text[max(0, marker_index - 400):marker_index + 400]
 
-        assert 'data-appverbo-cancel-target="settings-menu-edit-card"' in window, (
+        assert 'data-appgenesis-cancel-target="settings-menu-edit-card"' in window, (
             f"Botao Cancelar de {marker} nao sai do editor de processo inteiro."
         )
-        assert "data-appverbo-cancel-return-target=" in window
-        assert "data-appverbo-cancel-return-url=" in window
+        assert "data-appgenesis-cancel-return-target=" in window
+        assert "data-appgenesis-cancel-return-url=" in window
 
 
 def test_process_editor_cancel_buttons_use_generic_origin_menu_not_hardcoded() -> None:
@@ -44,7 +44,7 @@ def test_process_editor_cancel_buttons_use_generic_origin_menu_not_hardcoded() -
     # O padrao generico usado em toda a app: settings_edit_origin_menu (variavel Jinja calculada uma
     # vez para o processo em edicao), nunca um menu_key literal como "calendario" ou "administrativo".
     return_url_pattern = re.compile(
-        r'data-appverbo-cancel-return-url="/users/new\?menu=\{\{\s*settings_edit_origin_menu\s*\}\}'
+        r'data-appgenesis-cancel-return-url="/users/new\?menu=\{\{\s*settings_edit_origin_menu\s*\}\}'
     )
     matches = return_url_pattern.findall(html_text)
 
@@ -59,7 +59,7 @@ def test_process_editor_cancel_return_target_reuses_settings_edit_cancel_target_
     html_text = _read_new_user_html()
 
     assert html_text.count(
-        'data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"'
+        'data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"'
     ) == 7
 
 
@@ -72,8 +72,8 @@ def test_unrelated_cancel_buttons_outside_process_editor_are_untouched() -> None
 
     # Botoes de cancelar de outros fluxos (perfil pessoal, dados de treino, entidade, utilizador,
     # processo dinamico) continuam a apontar para os proprios cards, nao para settings-menu-edit-card.
-    assert 'data-appverbo-cancel-target="dynamic-process-card"' in html_text
-    assert 'data-appverbo-cancel-target="perfil-pessoal-card"' in html_text
-    assert 'data-appverbo-cancel-target="dados-treinamento-card"' in html_text
-    assert 'data-appverbo-cancel-target="edit-entity-card"' in html_text
-    assert 'data-appverbo-cancel-target="edit-user-card"' in html_text
+    assert 'data-appgenesis-cancel-target="dynamic-process-card"' in html_text
+    assert 'data-appgenesis-cancel-target="perfil-pessoal-card"' in html_text
+    assert 'data-appgenesis-cancel-target="dados-treinamento-card"' in html_text
+    assert 'data-appgenesis-cancel-target="edit-entity-card"' in html_text
+    assert 'data-appgenesis-cancel-target="edit-user-card"' in html_text

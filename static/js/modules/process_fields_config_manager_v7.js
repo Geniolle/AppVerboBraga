@@ -722,8 +722,8 @@
     }
 
     form.dataset.processFieldsConfigCancelBoundV7 = "1";
-    elements.cancelButton.dataset.appverboCancel = "1";
-    elements.cancelButton.dataset.appverboCancelLocal = "1";
+    elements.cancelButton.dataset.appgenesisCancel = "1";
+    elements.cancelButton.dataset.appgenesisCancelLocal = "1";
 
     form.addEventListener("appverbo:cancelled", function (event) {
       const detail = event && event.detail ? event.detail : {};

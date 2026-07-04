@@ -1854,7 +1854,7 @@ body.appverbo-admin-sessoes-active-v18 #admin-sidebar-sections-create-card.appve
 html.appverbo-subprocesso-nao-sessoes-v26 #admin-sidebar-sections-active-card-v23,
 html.appverbo-subprocesso-nao-sessoes-v26 #admin-sidebar-sections-inactive-card,
 html.appverbo-subprocesso-nao-sessoes-v26 .appverbo-sidebar-sections-active-card-v23,
-html.appverbo-subprocesso-nao-sessoes-v26 [data-appverbo-sessoes-card-v26="1"] {
+html.appverbo-subprocesso-nao-sessoes-v26 [data-appgenesis-sessoes-card-v26="1"] {
   display: none !important;
   visibility: hidden !important;
 }
@@ -1862,7 +1862,7 @@ html.appverbo-subprocesso-nao-sessoes-v26 [data-appverbo-sessoes-card-v26="1"] {
 html:not(.appverbo-subprocesso-sessoes-v26) #admin-sidebar-sections-active-card-v23,
 html:not(.appverbo-subprocesso-sessoes-v26) #admin-sidebar-sections-inactive-card,
 html:not(.appverbo-subprocesso-sessoes-v26) .appverbo-sidebar-sections-active-card-v23,
-html:not(.appverbo-subprocesso-sessoes-v26) [data-appverbo-sessoes-card-v26="1"] {
+html:not(.appverbo-subprocesso-sessoes-v26) [data-appgenesis-sessoes-card-v26="1"] {
   display: none !important;
   visibility: hidden !important;
 }
@@ -1870,7 +1870,7 @@ html:not(.appverbo-subprocesso-sessoes-v26) [data-appverbo-sessoes-card-v26="1"]
 html.appverbo-subprocesso-sessoes-v26 #admin-sidebar-sections-active-card-v23,
 html.appverbo-subprocesso-sessoes-v26 #admin-sidebar-sections-inactive-card,
 html.appverbo-subprocesso-sessoes-v26 .appverbo-sidebar-sections-active-card-v23,
-html.appverbo-subprocesso-sessoes-v26 [data-appverbo-sessoes-card-v26="1"] {
+html.appverbo-subprocesso-sessoes-v26 [data-appgenesis-sessoes-card-v26="1"] {
   visibility: visible !important;
 }
 /* APPVERBO_SESSOES_ANTI_FLICKER_V26_END */

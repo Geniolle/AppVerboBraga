@@ -5,12 +5,12 @@
   const ADMIN_SUBPROCESS_SORT_INDICATOR_V1 = "⇅";
   const ADMIN_SUBPROCESS_SORTABLE_TABLE_SELECTOR_V1 = [
     "[data-admin-sortable-table='1']",
-    "[data-appverbo-sortable-table='1']",
+    "[data-appgenesis-sortable-table='1']",
     "table.admin-subprocess-table-v1"
   ].join(", ");
   const ADMIN_SUBPROCESS_SORT_BUTTON_SELECTOR_V1 = [
     "[data-admin-sort-button]",
-    "[data-appverbo-sort-button]"
+    "[data-appgenesis-sort-button]"
   ].join(", ");
   const adminSubprocessSortableControllersV1 = new WeakMap();
   const adminSubprocessTextCollatorV1 = (
@@ -159,10 +159,10 @@
     const sortKey = normalizeAdminSubprocessSortTextV1(
       readAdminSubprocessSortAttributeV1(buttonEl, [
         "data-admin-sort-key",
-        "data-appverbo-sort-key"
+        "data-appgenesis-sort-key"
       ]) || readAdminSubprocessSortAttributeV1(headerCellEl, [
         "data-admin-column-key",
-        "data-appverbo-column-key"
+        "data-appgenesis-column-key"
       ])
     );
 
@@ -174,19 +174,19 @@
       sortType: normalizeAdminSubprocessSortTypeV1(
         readAdminSubprocessSortAttributeV1(buttonEl, [
           "data-admin-sort-type",
-          "data-appverbo-sort-type"
+          "data-appgenesis-sort-type"
         ]) || readAdminSubprocessSortAttributeV1(headerCellEl, [
           "data-admin-sort-type",
-          "data-appverbo-sort-type"
+          "data-appgenesis-sort-type"
         ])
       ),
       defaultSortDirection: normalizeAdminSubprocessSortDirectionV1(
         readAdminSubprocessSortAttributeV1(buttonEl, [
           "data-admin-default-sort",
-          "data-appverbo-default-sort"
+          "data-appgenesis-default-sort"
         ]) || readAdminSubprocessSortAttributeV1(headerCellEl, [
           "data-admin-default-sort",
-          "data-appverbo-default-sort"
+          "data-appgenesis-default-sort"
         ])
       ),
       columnIndex: headerCellEl ? headerCellEl.cellIndex : -1

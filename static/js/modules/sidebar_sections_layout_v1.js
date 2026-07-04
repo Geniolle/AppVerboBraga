@@ -6,9 +6,9 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
   return Boolean(
     document.querySelector('[data-admin-subprocess="sessoes"]') ||
     document.querySelector("[data-admin-subprocess-key='sessoes']") ||
-    document.querySelector("[data-appverbo-native-admin-subprocess='sessoes']") ||
+    document.querySelector("[data-appgenesis-native-admin-subprocess='sessoes']") ||
     document.querySelector("[data-admin-tab-pane='sessoes']") ||
-    document.querySelector("#admin-sidebar-sections-card[data-appverbo-native-render='1']")
+    document.querySelector("#admin-sidebar-sections-card[data-appgenesis-native-render='1']")
   );
 }
 // APPVERBO_LEGACY_SESSOES_GUARD_V31_END
@@ -45,19 +45,19 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
       return;
     }
 
-    botao.dataset.appverboCancel = "1";
-    botao.dataset.appverboCancelLocal = "1";
+    botao.dataset.appgenesisCancel = "1";
+    botao.dataset.appgenesisCancelLocal = "1";
   }
 
   function vincularReacaoCancelarGlobalSessoesV1(botao, listenerRoot, callback) {
-    if (!botao || botao.dataset.appverboCancelReactionBoundV1 === "1") {
+    if (!botao || botao.dataset.appgenesisCancelReactionBoundV1 === "1") {
       return;
     }
 
     const root = listenerRoot || botao.parentElement || document;
 
     marcarBotaoCancelarGlobalSessoesV1(botao);
-    botao.dataset.appverboCancelReactionBoundV1 = "1";
+    botao.dataset.appgenesisCancelReactionBoundV1 = "1";
 
     root.addEventListener("appverbo:cancelled", function (event) {
       const detail = event && event.detail ? event.detail : {};
@@ -4208,7 +4208,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
       card.id === "admin-sidebar-sections-active-card-v23" ||
       card.id === "admin-sidebar-sections-inactive-card" ||
       card.classList.contains("appverbo-sidebar-sections-active-card-v23") ||
-      card.getAttribute("data-appverbo-sessoes-card-v26") === "1"
+      card.getAttribute("data-appgenesis-sessoes-card-v26") === "1"
     ) {
       return true;
     }
@@ -4249,7 +4249,7 @@ const createBlock = wrapper && wrapper.querySelector(".appverbo-create-entry-blo
     const cards = obterCardsSessoesSemPiscarV26(root);
 
     cards.forEach((card) => {
-      card.setAttribute("data-appverbo-sessoes-card-v26", "1");
+      card.setAttribute("data-appgenesis-sessoes-card-v26", "1");
 
       if (deveMostrar) {
         card.removeAttribute("hidden");

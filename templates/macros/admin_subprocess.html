@@ -151,10 +151,10 @@
           <button
             type="button"
             class="action-btn-cancel"
-            data-appverbo-cancel="1"
-            data-appverbo-cancel-target="{{ state.config.edit_target }}"
-            data-appverbo-cancel-return-target="{{ _cancel_return_target }}"
-            data-appverbo-cancel-return-url="{{ state.return_url }}"
+            data-appgenesis-cancel="1"
+            data-appgenesis-cancel-target="{{ state.config.edit_target }}"
+            data-appgenesis-cancel-return-target="{{ _cancel_return_target }}"
+            data-appgenesis-cancel-return-url="{{ state.return_url }}"
           >Cancelar</button>
         </div>
       </form>
@@ -187,7 +187,7 @@
                 <button
                   type="button"
                   class="action-btn-cancel"
-                  data-appverbo-cancel="1"
+                  data-appgenesis-cancel="1"
                 >Cancelar</button>
               </div>
             </form>
@@ -402,11 +402,11 @@
           action="{{ state.config.delete_endpoint }}"
           class="admin-subprocess-inline-form-v1"
           {% if _delete_ns.requires_confirmation %}
-            data-appverbo-confirm="1"
-            data-appverbo-confirm-title="Eliminar"
-            data-appverbo-confirm-message="{{ _delete_ns.confirmation_message or 'Tem a certeza que pretende eliminar?' }}"
-            data-appverbo-confirm-action-label="Eliminar"
-            data-appverbo-confirm-danger="1"
+            data-appgenesis-confirm="1"
+            data-appgenesis-confirm-title="Eliminar"
+            data-appgenesis-confirm-message="{{ _delete_ns.confirmation_message or 'Tem a certeza que pretende eliminar?' }}"
+            data-appgenesis-confirm-action-label="Eliminar"
+            data-appgenesis-confirm-danger="1"
           {% endif %}
         >
           <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">

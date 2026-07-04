@@ -477,7 +477,7 @@
 /* APPVERBO_PROCESS_CARD_HEADER_TUNE_V1_START */
 .card.appverbo-searchable-card-v1 > .appverbo-card-header-v1 h2,
 .card.appverbo-searchable-card-v1 > h2,
-.card[data-appverbo-searchable-table="1"] > h2 {
+.card[data-appgenesis-searchable-table="1"] > h2 {
   font-size: 17px !important;
   font-weight: 650 !important;
   line-height: 1.25 !important;
