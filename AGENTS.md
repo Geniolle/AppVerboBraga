@@ -464,9 +464,9 @@ Regras:
 
 1. É proibido criar `onclick` inline para **Cancelar**.
 2. É proibido criar lógica de cancelamento específica por processo quando o controller global já resolver o caso.
-3. Novos processos, cards, editores e formulários devem usar `data-appverbo-cancel="1"`.
-4. Quando existir um alvo explícito, usar `data-appverbo-cancel-target` e, se necessário, `data-appverbo-cancel-return-target`.
-5. Botões **Cancelar** criados dinamicamente por JavaScript também devem receber `data-appverbo-cancel="1"`.
+3. Novos processos, cards, editores e formulários devem usar `data-appgenesis-cancel="1"`.
+4. Quando existir um alvo explícito, usar `data-appgenesis-cancel-target` e, se necessário, `data-appgenesis-cancel-return-target`.
+5. Botões **Cancelar** criados dinamicamente por JavaScript também devem receber `data-appgenesis-cancel="1"`.
 6. Managers específicos não devem controlar o clique diretamente; quando precisarem limpar estado interno, devem reagir ao evento `appverbo:cancelled`.
 7. O cancelamento deve fechar ou resetar apenas o contexto visual local.
 8. É proibido usar `window.location.assign`, `window.location.href`, `window.location.replace`, `href` de ação, `onclick` inline ou `POST` para implementar **Cancelar**.

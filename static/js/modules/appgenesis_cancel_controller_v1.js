@@ -14,15 +14,15 @@
   //###################################################################################
 
   const CANCEL_TRIGGER_SELECTOR_V1 = [
-    "[data-appverbo-cancel]",
-    "[data-appverbo-cancel-target]",
+    "[data-appgenesis-cancel]",
+    "[data-appgenesis-cancel-target]",
     "[data-edit-cancel]",
     ".profile-cancel-btn",
     ".action-btn-cancel"
   ].join(", ");
 
   const LOCAL_EDITOR_CANCEL_SELECTOR_V1 = [
-    "[data-appverbo-cancel-local]",
+    "[data-appgenesis-cancel-local]",
     "[data-additional-field-editor-cancel]",
     "[data-process-fields-config-cancel]",
     "[data-process-list-editor-cancel]",
@@ -109,7 +109,7 @@
     }
 
     if (
-      matchesV1(trigger, "[data-appverbo-cancel], [data-appverbo-cancel-target], [data-edit-cancel], .profile-cancel-btn")
+      matchesV1(trigger, "[data-appgenesis-cancel], [data-appgenesis-cancel-target], [data-edit-cancel], .profile-cancel-btn")
     ) {
       return true;
     }
@@ -138,7 +138,7 @@
     }
 
     return getElementBySelectorV1(
-      trigger.getAttribute("data-appverbo-cancel-target") ||
+      trigger.getAttribute("data-appgenesis-cancel-target") ||
       trigger.getAttribute("data-edit-cancel"),
       trigger.ownerDocument || document
     );
@@ -150,7 +150,7 @@
     }
 
     return getElementBySelectorV1(
-      trigger.getAttribute("data-appverbo-cancel-return-target"),
+      trigger.getAttribute("data-appgenesis-cancel-return-target"),
       trigger.ownerDocument || document
     );
   }
@@ -256,7 +256,7 @@
 
   function shouldExitEditingModeV1(trigger, card) {
     return Boolean(
-      matchesV1(trigger, "[data-appverbo-cancel], [data-edit-cancel], .profile-cancel-btn") ||
+      matchesV1(trigger, "[data-appgenesis-cancel], [data-edit-cancel], .profile-cancel-btn") ||
       (card && card.classList && card.classList.contains("editing"))
     );
   }
@@ -388,7 +388,7 @@
       showCardV1(resolveCardV1(returnTarget) || returnTarget);
     }
 
-    replaceHistoryUrlV1(trigger.getAttribute("data-appverbo-cancel-return-url"));
+    replaceHistoryUrlV1(trigger.getAttribute("data-appgenesis-cancel-return-url"));
 
     const detail = {
       trigger,

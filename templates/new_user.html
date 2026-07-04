@@ -132,7 +132,7 @@
             <div id="dynamic-process-edit-grid" class="personal-grid"></div>
             <div class="profile-edit-actions">
               <button id="dynamic-process-submit-btn" type="submit">Guardar</button>
-              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="dynamic-process-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="dynamic-process-card">Cancelar</button>
             </div>
           </form>
           <div id="dynamic-process-history-block" class="admin-subsection" style="display: none;">
@@ -585,7 +585,7 @@
             </div>
             <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
-              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="perfil-pessoal-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="perfil-pessoal-card">Cancelar</button>
             </div>
           </form>
         </section>
@@ -658,7 +658,7 @@
             </div>
             <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
-              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="perfil-morada-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="perfil-morada-card">Cancelar</button>
             </div>
           </form>
         </section>
@@ -756,7 +756,7 @@
             </div>
             <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
-              <button type="button" class="profile-cancel-btn" data-appverbo-cancel="1" data-appverbo-cancel-target="dados-treinamento-card">Cancelar</button>
+              <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="dados-treinamento-card">Cancelar</button>
             </div>
           </form>
         </section>
@@ -769,7 +769,7 @@
         {% if not (user_edit_data is defined and user_edit_data.id) %}
         <section id="create-user-card" class="card entity-panel-card appverbo-process-action-card-v1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
             <div class="entity-create-toolbar appverbo-process-action-toolbar-v1">
-            <details id="create-user-collapse" class="entity-create-collapse appverbo-process-action-details-v1" data-appverbo-user-create-details="1"{% if errors %} open{% endif %}>
+            <details id="create-user-collapse" class="entity-create-collapse appverbo-process-action-details-v1" data-appgenesis-user-create-details="1"{% if errors %} open{% endif %}>
               <summary class="appverbo-process-action-toggle-v1">
                 <span>Criar utilizador</span>
               </summary>
@@ -864,7 +864,7 @@
                       <button
                         type="button"
                         class="action-btn-cancel"
-                        data-appverbo-cancel="1"
+                        data-appgenesis-cancel="1"
                       >Cancelar</button>
                     </div>
                   </form>
@@ -875,9 +875,9 @@
               id="create-user-generate-link-shortcut-btn"
               type="button"
               class="action-btn-secondary entity-create-link-shortcut"
-              data-appverbo-hide-when-user-create-open="1"
+              data-appgenesis-hide-when-user-create-open="1"
             >Gerar link</button>
-            <div class="entity-create-link-slot" aria-live="polite" data-appverbo-hide-when-user-create-open="1">
+            <div class="entity-create-link-slot" aria-live="polite" data-appgenesis-hide-when-user-create-open="1">
               {% if generated_invite_link %}
               <div class="entity-create-link-output">
                 <input
@@ -998,10 +998,10 @@
                 <button
                   type="button"
                   class="action-btn-cancel"
-                  data-appverbo-cancel="1"
-                  data-appverbo-cancel-target="edit-user-card"
-                  data-appverbo-cancel-return-target="admin-users-created-card"
-                  data-appverbo-cancel-return-url="/users/new?menu=administrativo&admin_tab=utilizador#admin-users-created-card"
+                  data-appgenesis-cancel="1"
+                  data-appgenesis-cancel-target="edit-user-card"
+                  data-appgenesis-cancel-return-target="admin-users-created-card"
+                  data-appgenesis-cancel-return-url="/users/new?menu=administrativo&admin_tab=utilizador#admin-users-created-card"
                 >{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</button>
               </div>
             </form>
@@ -1111,7 +1111,7 @@
                   <button
                     type="button"
                     class="action-btn-cancel"
-                    data-appverbo-cancel="1"
+                    data-appgenesis-cancel="1"
                   >Cancelar</button>
                 </div>
               </form>
@@ -1272,10 +1272,10 @@
               <button
                 type="button"
                 class="action-btn-cancel"
-                data-appverbo-cancel="1"
-                data-appverbo-cancel-target="edit-entity-card"
-                data-appverbo-cancel-return-target="recent-entities-card"
-                data-appverbo-cancel-return-url="/users/new?menu=administrativo&admin_tab=entidade#recent-entities-card"
+                data-appgenesis-cancel="1"
+                data-appgenesis-cancel-target="edit-entity-card"
+                data-appgenesis-cancel-return-target="recent-entities-card"
+                data-appgenesis-cancel-return-url="/users/new?menu=administrativo&admin_tab=entidade#recent-entities-card"
               >{% if entity_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</button>
             </div>
           </form>
@@ -1422,10 +1422,10 @@
                   <button
                     type="button"
                     class="action-btn-cancel"
-                    data-appverbo-cancel="1"
-                    data-appverbo-cancel-target="settings-menu-edit-card"
-                    data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                    data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                    data-appgenesis-cancel="1"
+                    data-appgenesis-cancel-target="settings-menu-edit-card"
+                    data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                    data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                   >Cancelar</button>
                 </div>
               </form>
@@ -1486,10 +1486,10 @@
                 <button
                   type="button"
                   class="action-btn-cancel"
-                  data-appverbo-cancel="1"
-                  data-appverbo-cancel-target="settings-menu-edit-card"
-                  data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                  data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  data-appgenesis-cancel="1"
+                  data-appgenesis-cancel-target="settings-menu-edit-card"
+                  data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                  data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                 >Cancelar</button>
               </div>
               {% endif %}
@@ -1611,11 +1611,11 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
-                            data-appverbo-cancel="1"
+                            data-appgenesis-cancel="1"
                             data-process-fields-config-cancel
-                            data-appverbo-cancel-target="settings-menu-edit-card"
-                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-target="settings-menu-edit-card"
+                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1752,11 +1752,11 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
-                            data-appverbo-cancel="1"
+                            data-appgenesis-cancel="1"
                             data-process-quantity-editor-cancel
-                            data-appverbo-cancel-target="settings-menu-edit-card"
-                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-target="settings-menu-edit-card"
+                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1877,11 +1877,11 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
-                            data-appverbo-cancel="1"
+                            data-appgenesis-cancel="1"
                             data-process-list-editor-cancel
-                            data-appverbo-cancel-target="settings-menu-edit-card"
-                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-target="settings-menu-edit-card"
+                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2013,11 +2013,11 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
-                            data-appverbo-cancel="1"
+                            data-appgenesis-cancel="1"
                             data-process-subsequent-field-cancel
-                            data-appverbo-cancel-target="settings-menu-edit-card"
-                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-target="settings-menu-edit-card"
+                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2317,11 +2317,11 @@
                           <button
                             type="button"
                             class="action-btn-cancel"
-                            data-appverbo-cancel="1"
+                            data-appgenesis-cancel="1"
                             data-additional-field-editor-cancel
-                            data-appverbo-cancel-target="settings-menu-edit-card"
-                            data-appverbo-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appverbo-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-target="settings-menu-edit-card"
+                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2523,11 +2523,11 @@
                       <form
                         method="post"
                         action="/settings/menu/delete"
-                        data-appverbo-confirm="1"
-                        data-appverbo-confirm-title="Eliminar menu"
-                        data-appverbo-confirm-message="Tem a certeza que pretende eliminar este menu?"
-                        data-appverbo-confirm-action-label="Eliminar"
-                        data-appverbo-confirm-danger="1"
+                        data-appgenesis-confirm="1"
+                        data-appgenesis-confirm-title="Eliminar menu"
+                        data-appgenesis-confirm-message="Tem a certeza que pretende eliminar este menu?"
+                        data-appgenesis-confirm-action-label="Eliminar"
+                        data-appgenesis-confirm-danger="1"
                       >
                         <input type="hidden" name="menu_key" value="{{ row.key }}">
                         <input type="hidden" name="redirect_menu" value="administrativo">

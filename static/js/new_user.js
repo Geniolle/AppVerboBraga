@@ -5932,7 +5932,7 @@ function setupGeneratedInviteLinkCopy() {
     var details = card.querySelector("#create-user-collapse");
     var isCreateOpen = Boolean(details && details.open);
     card
-      .querySelectorAll("[data-appverbo-hide-when-user-create-open='1']")
+      .querySelectorAll("[data-appgenesis-hide-when-user-create-open='1']")
       .forEach(function (el) {
         el.hidden = isCreateOpen;
         el.setAttribute("aria-hidden", isCreateOpen ? "true" : "false");
@@ -9890,11 +9890,11 @@ function appverboAutoDismissFlashMessages_v1() {
   const successAlerts = Array.from(document.querySelectorAll(".alert.ok"));
 
   successAlerts.forEach((alertElement) => {
-    if (!alertElement || alertElement.dataset.appverboAutoDismiss === "1") {
+    if (!alertElement || alertElement.dataset.appgenesisAutoDismiss === "1") {
       return;
     }
 
-    alertElement.dataset.appverboAutoDismiss = "1";
+    alertElement.dataset.appgenesisAutoDismiss = "1";
 
     window.setTimeout(() => {
       alertElement.style.transition = "opacity 250ms ease, max-height 250ms ease, margin 250ms ease, padding 250ms ease";

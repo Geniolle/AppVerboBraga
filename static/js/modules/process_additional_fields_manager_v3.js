@@ -219,7 +219,7 @@
     const option = document.createElement("option");
     option.value = cleanValue;
     option.textContent = toSafeString_v3(label).trim() || cleanValue;
-    option.dataset.appverboInjectedOption = "1";
+    option.dataset.appgenesisInjectedOption = "1";
     select.appendChild(option);
   }
 
@@ -946,8 +946,8 @@
     }
 
     root.dataset[boundKey] = "1";
-    cancelButton.dataset.appverboCancel = "1";
-    cancelButton.dataset.appverboCancelLocal = "1";
+    cancelButton.dataset.appgenesisCancel = "1";
+    cancelButton.dataset.appgenesisCancelLocal = "1";
 
     root.addEventListener("appverbo:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};

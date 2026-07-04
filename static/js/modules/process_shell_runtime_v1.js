@@ -173,8 +173,8 @@
     const selector = normalizeText(tableSelector, DEFAULT_TABLE_SELECTOR);
     const ownerDocument = footerEl.ownerDocument || global.document;
 
-    if (footerEl.dataset && footerEl.dataset.appverboTableId && ownerDocument) {
-      const explicitTable = ownerDocument.getElementById(footerEl.dataset.appverboTableId);
+    if (footerEl.dataset && footerEl.dataset.appgenesisTableId && ownerDocument) {
+      const explicitTable = ownerDocument.getElementById(footerEl.dataset.appgenesisTableId);
       if (explicitTable) {
         return explicitTable;
       }
@@ -821,7 +821,7 @@
 
       footerEl.textContent = "";
       footerEl.classList.add("appverbo-load-more-footer-v1");
-      footerEl.dataset.appverboLoadMoreReady = "1";
+      footerEl.dataset.appgenesisLoadMoreReady = "1";
 
       pageSizeWrapperEl.appendChild(pageSizeSelectEl);
       pageSizeWrapperEl.appendChild(pageSizeLabelEl);
@@ -1047,7 +1047,7 @@
 
       destroyed = true;
       initialized = false;
-      footerEl.dataset.appverboLoadMoreReady = "0";
+      footerEl.dataset.appgenesisLoadMoreReady = "0";
       tableControllersByFooter.delete(footerEl);
       tableControllersByTable.delete(tableEl);
     }
@@ -1492,7 +1492,7 @@
       }
 
       cardEl.classList.add("appverbo-searchable-card-v1");
-      cardEl.dataset.appverboSearchableTable = tableEl ? "1" : "0";
+      cardEl.dataset.appgenesisSearchableTable = tableEl ? "1" : "0";
 
       if (!tableEl) {
         headerParts.actionsEl.hidden = true;
@@ -1748,7 +1748,7 @@
 
     actionsEl.textContent = "";
     actionsEl.classList.add("appverbo-row-actions-ready-v1");
-    actionsEl.dataset.appverboActionsMenuReady = "1";
+    actionsEl.dataset.appgenesisActionsMenuReady = "1";
     actionsEl.appendChild(wrapperEl);
 
     const instance = {
@@ -1796,7 +1796,7 @@
       return actionContainers.reduce((instances, actionsEl) => {
         if (
           actionsEl.dataset &&
-          actionsEl.dataset.appverboActionsMenuReady === "1" &&
+          actionsEl.dataset.appgenesisActionsMenuReady === "1" &&
           actionMenuInstancesByContainer.has(actionsEl)
         ) {
           instances.push(actionMenuInstancesByContainer.get(actionsEl));
@@ -1973,21 +1973,21 @@
     global.document.addEventListener("submit", function (e) {
       var form = e.target;
       if (!form || typeof form.getAttribute !== "function") return;
-      if (!form.getAttribute("data-appverbo-confirm")) return;
-      if (form.getAttribute("data-appverbo-confirming")) return;
+      if (!form.getAttribute("data-appgenesis-confirm")) return;
+      if (form.getAttribute("data-appgenesis-confirming")) return;
 
       e.preventDefault();
       e.stopImmediatePropagation();
 
       createConfirmDialogController({
-        title: form.getAttribute("data-appverbo-confirm-title") || "Confirmar",
-        message: form.getAttribute("data-appverbo-confirm-message") || "Tem a certeza?",
-        confirmLabel: form.getAttribute("data-appverbo-confirm-action-label") || "Confirmar",
-        cancelLabel: form.getAttribute("data-appverbo-confirm-cancel-label") || "Cancelar",
-        danger: !!form.getAttribute("data-appverbo-confirm-danger"),
+        title: form.getAttribute("data-appgenesis-confirm-title") || "Confirmar",
+        message: form.getAttribute("data-appgenesis-confirm-message") || "Tem a certeza?",
+        confirmLabel: form.getAttribute("data-appgenesis-confirm-action-label") || "Confirmar",
+        cancelLabel: form.getAttribute("data-appgenesis-confirm-cancel-label") || "Cancelar",
+        danger: !!form.getAttribute("data-appgenesis-confirm-danger"),
       }).then(function (confirmed) {
         if (!confirmed) return;
-        form.setAttribute("data-appverbo-confirming", "1");
+        form.setAttribute("data-appgenesis-confirming", "1");
         form.submit();
       });
     }, true);
@@ -2245,11 +2245,11 @@
     }
 
     const columns = ths.map(function (th, i) {
-      const keyAttr = _normalizeColKey(th.dataset.appverboColumnKey || "");
+      const keyAttr = _normalizeColKey(th.dataset.appgenesisColumnKey || "");
       const textKey = _normalizeColKey(th.textContent);
       const key = keyAttr || textKey;
-      const hideOrder = parseInt(th.dataset.appverboHideOrder || "0", 10);
-      const mandatoryAttr = th.dataset.appverboColumnMandatory === "1";
+      const hideOrder = parseInt(th.dataset.appgenesisHideOrder || "0", 10);
+      const mandatoryAttr = th.dataset.appgenesisColumnMandatory === "1";
       const mandatory = mandatoryAttr || mandatoryKeys.some(function (mk) {
         return mk === key || mk === keyAttr || mk === textKey;
       });
