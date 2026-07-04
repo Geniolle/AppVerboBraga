@@ -1561,6 +1561,11 @@ const topSubmenuController = (
         closeAllProfileEdits();
         selectedTargetByMenu[menuKey] = item.target;
         debugTabsLogV1("onSelect:before-apply", { menuKey, target: item.target });
+        logAppVerboNavigationBootDebugV1("submenu_tab_click:before", {
+          menuKey,
+          target: item.target,
+          hrefBefore: window.location.href
+        });
         setActiveSubmenu(item.target, linkEl);
         applyContentForMenuTarget(menuKey, item.target, "click:submenu-tab");
 
@@ -1597,6 +1602,11 @@ const topSubmenuController = (
         }
 
         debugTabsLogV1("onSelect:after-apply", { menuKey, target: item.target });
+        logAppVerboNavigationBootDebugV1("submenu_tab_click:after", {
+          menuKey,
+          target: item.target,
+          hrefAfter: window.location.href
+        });
 
         if (item.dynamicProcessSectionKey) {
           selectedDynamicSectionByMenu[menuKey] = String(item.dynamicProcessSectionKey);
@@ -3754,6 +3764,13 @@ function getAdminSubprocessKeyByTargetV1(target) {
 // mostrados/escondidos em conjunto, então card de ação + Menus ativos + Menus inativos entram e
 // saem juntos sem precisar de hardcode por processo.
 function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecified") {
+  // Loader global (ver global_loading_overlay_v1.js) so para navegacao iniciada por clique
+  // do utilizador (sidebar/aba) -- boot inicial e chamadas programaticas nao mostram o loader
+  // para nao introduzir flicker em fluxos ja validados (ex.: pos-save do editor de campos).
+  const shouldShowGlobalLoaderV1 = source === "click:sidebar" || source === "click:submenu-tab";
+  if (shouldShowGlobalLoaderV1 && typeof window.showGlobalLoadingOverlayV1 === "function") {
+    window.showGlobalLoadingOverlayV1("navigation:" + source);
+  }
   debugTabsLogV1("applyContent:start", {
     menuKey,
     targetSelector,
@@ -3865,6 +3882,11 @@ function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecifie
     menuSubprocessCardActiveShown: shownCardIds.includes("menu-subprocess-card-active"),
     menuSubprocessCardInactiveShown: shownCardIds.includes("menu-subprocess-card-inactive")
   });
+  if (shouldShowGlobalLoaderV1 && typeof window.hideGlobalLoadingOverlayV1 === "function") {
+    // Pequeno atraso para garantir pelo menos um frame visivel (a troca de cards em si e
+    // sincrona/instantanea) -- ver mesma logica em global_loading_overlay_v1.js.
+    window.setTimeout(() => window.hideGlobalLoadingOverlayV1("navigation:" + source), 200);
+  }
 }
 
 // Alias explícito pedido para o mecanismo de ativação de grupo de cards de subprocesso -- é a
@@ -5737,7 +5759,22 @@ if (dropdownAvatarImageEl) {
 
 menuButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    activateMenu(normalizeMenuKey(btn.dataset.menu), { resetDynamicToFirst: true, source: "click:sidebar" });
+    const clickedMenuKey = normalizeMenuKey(btn.dataset.menu);
+    logAppVerboNavigationBootDebugV1("sidebar_click:before", {
+      clickedMenuKey,
+      hrefBefore: window.location.href,
+      activeMenuKeyBefore: (typeof window.__appverboGetActiveMenuKeyV1 === "function")
+        ? window.__appverboGetActiveMenuKeyV1()
+        : null
+    });
+    activateMenu(clickedMenuKey, { resetDynamicToFirst: true, source: "click:sidebar" });
+    logAppVerboNavigationBootDebugV1("sidebar_click:after", {
+      clickedMenuKey,
+      hrefAfter: window.location.href,
+      activeMenuKeyAfter: (typeof window.__appverboGetActiveMenuKeyV1 === "function")
+        ? window.__appverboGetActiveMenuKeyV1()
+        : null
+    });
   });
 });
 
@@ -6162,8 +6199,43 @@ if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
     startupMenu = fallbackMenu || "home";
   }
 }
+(function logAppVerboBootNavigationDebugV1() {
+  const navigationEntries = (
+    window.performance && typeof window.performance.getEntriesByType === "function"
+  )
+    ? window.performance.getEntriesByType("navigation")
+    : [];
+  const navigationType = navigationEntries.length ? String(navigationEntries[0].type || "") : "";
+  const urlParams = new URLSearchParams(window.location.search);
+
+  logAppVerboNavigationBootDebugV1("boot:resolve", {
+    href: window.location.href,
+    navigationType,
+    urlMenu: urlParams.get("menu"),
+    urlAdminTab: urlParams.get("admin_tab"),
+    urlTarget: urlParams.get("target"),
+    urlHash: window.location.hash || "",
+    bootstrapInitialMenu: bootstrap.initialMenu || null,
+    bootstrapInitialAdminTab: bootstrap.initialAdminTab || null,
+    bootstrapInitialMenuTarget: bootstrap.initialMenuTarget || null,
+    bootstrapInitialDynamicProcessSection: bootstrap.initialDynamicProcessSection || null,
+    bootstrapSettingsAction: bootstrap.settingsAction || null,
+    bootstrapSettingsEditKey: bootstrap.settingsEditKey || null,
+    bootstrapSettingsTab: bootstrap.settingsTab || null,
+    resolvedStartupMenu: startupMenu,
+    stateSource: urlParams.get("menu") ? "querystring" : (bootstrap.initialMenu ? "bootstrap" : "fallback_home")
+  });
+})();
+
 activateMenu(startupMenu, { resetDynamicToFirst: false, source: "boot" });
 handleHashNavigation(window.location.hash || "");
+
+logAppVerboNavigationBootDebugV1("boot:activated", {
+  href: window.location.href,
+  activeMenuKey: (typeof window.__appverboGetActiveMenuKeyV1 === "function")
+    ? window.__appverboGetActiveMenuKeyV1()
+    : null
+});
 
 
 
@@ -7931,6 +8003,25 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     return "";
   }
 
+  function resolveAuthoritativeActiveMenuKeyForPostSaveV1() {
+    // Sinal autoritativo do menu de topo realmente ativo na SPA (exposto por new_user.js em
+    // window.__appverboGetActiveMenuKeyV1, ver ativacao de menu). Navegacao por clique para
+    // qualquer menu que nao seja "administrativo" nao atualiza a URL (nao faz pushState), entao
+    // window.location.href/bootstrap ficam desatualizados assim que o utilizador navega por
+    // clique -- usar esse sinal evita que um submit feito depois de navegar por clique (ex.:
+    // Estruturas > Menu) seja guardado com o menu errado (ex.: "home") e redirecionado para o
+    // lugar errado apos o backend processar o POST.
+    if (typeof window.__appverboGetActiveMenuKeyV1 !== "function") {
+      return "";
+    }
+
+    try {
+      return normalizePostSaveKeyV3(window.__appverboGetActiveMenuKeyV1());
+    } catch (error) {
+      return "";
+    }
+  }
+
   function currentMenuFromUrlOrBootstrapPostSaveV3(form) {
     const currentUrl = getCurrentUrlPostSaveV3();
 
@@ -7946,6 +8037,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
         value: explicitFormMenu
       });
       return explicitFormMenu;
+    }
+
+    const authoritativeActiveMenu = resolveAuthoritativeActiveMenuKeyForPostSaveV1();
+
+    if (authoritativeActiveMenu) {
+      logAppVerboProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
+        source: "authoritative_active_menu_key",
+        value: authoritativeActiveMenu
+      });
+      return authoritativeActiveMenu;
     }
 
     // O "menu" ja presente na URL atual reflete o contexto de navegacao onde o formulario foi
@@ -8005,7 +8106,60 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   // (2) CONSTRUIR URL DE RETORNO
   //###################################################################################
 
+  function findConfigProvidedReturnUrlV1(form) {
+    // Subprocessos administrativos (menu, sessoes, perfil de autorizacao, objeto de autorizacao)
+    // injetam a sua propria URL de retorno, calculada e validada pelo backend, num campo hidden
+    // cujo nome termina em "_return_url" (ex.: "subprocess_return_url", "sidebar_section_return_url",
+    // "auth_profile_return_url" -- ver return_url_field em appverbo/admin_subprocesses/registry.py).
+    // Essa e a fonte mais confiavel de "para onde voltar apos o POST": ao contrario da
+    // reconstrucao generica abaixo (baseada em URL/bootstrap, que fica desatualizada em
+    // navegacao client-side sem pushState), o backend ja sabe exatamente o menu/aba/target
+    // corretos porque foi ele quem renderizou o card. Usar essa URL evita redirecionar o
+    // utilizador para o lugar errado apos guardar/mover/apagar um item nesses subprocessos.
+    if (!form || typeof form.querySelectorAll !== "function") {
+      return "";
+    }
+
+    const candidates = Array.from(form.querySelectorAll("input[type='hidden']")).filter((input) => {
+      const name = String(input.name || "");
+      return name.length > "_return_url".length && name.endsWith("_return_url");
+    });
+
+    for (let i = 0; i < candidates.length; i += 1) {
+      const value = String(candidates[i].value || "").trim();
+
+      if (value) {
+        return value;
+      }
+    }
+
+    return "";
+  }
+
   function buildPostSaveReturnUrlV3(form) {
+    const configProvidedReturnUrl = findConfigProvidedReturnUrlV1(form);
+
+    if (configProvidedReturnUrl) {
+      let configReturnUrlObj = null;
+
+      try {
+        configReturnUrlObj = new URL(configProvidedReturnUrl, window.location.origin);
+      } catch (error) {
+        configReturnUrlObj = null;
+      }
+
+      if (configReturnUrlObj && configReturnUrlObj.pathname === "/users/new") {
+        configReturnUrlObj.searchParams.set("appverbo_after_save", "1");
+
+        logAppVerboProcessEditorDebugV1("buildPostSaveReturnUrlV3:resolved", {
+          source: "config_provided_return_url_field",
+          value: configReturnUrlObj.pathname + configReturnUrlObj.search + configReturnUrlObj.hash
+        });
+
+        return configReturnUrlObj.pathname + configReturnUrlObj.search + configReturnUrlObj.hash;
+      }
+    }
+
     const currentUrl = getCurrentUrlPostSaveV3();
 
     currentUrl.pathname = "/users/new";
@@ -8465,6 +8619,21 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
     if (formMenu) {
       return formMenu;
+    }
+
+    // Sinal autoritativo do menu de topo realmente ativo na SPA (ver mesmo padrao em
+    // resolveAuthoritativeActiveMenuKeyForPostSaveV1, noutro escopo de IIFE deste ficheiro):
+    // navegacao por clique para menus que nao sejam "administrativo" nao atualiza a URL, entao
+    // "urlMenu" abaixo fica desatualizado assim que o utilizador navega por clique.
+    if (typeof window.__appverboGetActiveMenuKeyV1 === "function") {
+      try {
+        const authoritativeActiveMenu = normalizeReturnUrlKeyV4(window.__appverboGetActiveMenuKeyV1());
+        if (authoritativeActiveMenu) {
+          return authoritativeActiveMenu;
+        }
+      } catch (error) {
+        // Ignora falha e cai no fallback pelo URL/bootstrap.
+      }
     }
 
     const urlMenu = normalizeReturnUrlKeyV4(url.searchParams.get("menu"));
