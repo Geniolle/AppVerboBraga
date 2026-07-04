@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - PROCESS ADDITIONAL FIELDS MANAGER V3
+// APPGENESIS - PROCESS ADDITIONAL FIELDS MANAGER V3
 //###################################################################################
 
 (function (window, document) {
@@ -34,7 +34,7 @@
   }
 
   function normalizeLookup_v3(value) {
-    const core = window.AppVerboConfigurableItems || {};
+    const core = window.AppGenesisConfigurableItems || {};
 
     if (typeof core.normalizeLookup_v1 === "function") {
       return core.normalizeLookup_v1(value);
@@ -104,7 +104,7 @@
   }
 
   function showValidationMessage_v3(message) {
-    const core = window.AppVerboConfigurableItems || {};
+    const core = window.AppGenesisConfigurableItems || {};
 
     if (typeof core.showAlertDialog_v1 === "function") {
       core.showAlertDialog_v1({
@@ -195,7 +195,7 @@
   }
 
   function getProcessFieldResolver_v3() {
-    return window.AppVerboProcessFieldOptionsResolverV1 || {};
+    return window.AppGenesisProcessFieldOptionsResolverV1 || {};
   }
 
   function ensureSelectOption_v3(select, value, label) {
@@ -949,7 +949,7 @@
     cancelButton.dataset.appgenesisCancel = "1";
     cancelButton.dataset.appgenesisCancelLocal = "1";
 
-    root.addEventListener("appverbo:cancelled", (event) => {
+    root.addEventListener("appgenesis:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
 
       if (detail.trigger !== cancelButton) {
@@ -1062,7 +1062,7 @@
   }
 
 
-// APPVERBO_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_START
+// APPGENESIS_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_START
 
   //###################################################################################
   // (8) EDITOR SUPERIOR - GUARDAR E SUBMIT PELO BLOCO DE CIMA
@@ -1267,7 +1267,7 @@
     updateEditorVisibility_v3(root);
   }
 
-// APPVERBO_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_END
+// APPGENESIS_ADDITIONAL_FIELDS_SAVE_FROM_TOP_V4_END
 
   //###################################################################################
   // (6) CRIAR MANAGER
@@ -1278,7 +1278,7 @@
       return null;
     }
 
-    const core = window.AppVerboConfigurableItems || {};
+    const core = window.AppGenesisConfigurableItems || {};
 
     if (typeof core.createConfigurableItemsManager_v1 !== "function") {
       return null;

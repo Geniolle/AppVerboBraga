@@ -31,7 +31,7 @@ services:
       DB_POOL_RECYCLE_SECONDS: ${DB_POOL_RECYCLE_SECONDS:-1800}
       DB_POOL_PRE_PING: ${DB_POOL_PRE_PING:-1}
       APP_SECRET_KEY: ${APP_SECRET_KEY:-change-this-in-production}
-      ADMIN_LOGIN_EMAIL: ${ADMIN_LOGIN_EMAIL:-admin@appverbo.local}
+      ADMIN_LOGIN_EMAIL: ${ADMIN_LOGIN_EMAIL:-admin@appgenesis.local}
       ADMIN_PROFILE_NAMES: ${ADMIN_PROFILE_NAMES:-admin,administrador}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

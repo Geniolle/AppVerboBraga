@@ -41,7 +41,7 @@ def save_entity_logo_upload(entity_logo_file: UploadFile | None) -> tuple[str, s
 
     return f"/static/entities/{stored_name}", ""
 
-# APPVERBO_ENTITY_FORM_REFACTOR_V1_START
+# APPGENESIS_ENTITY_FORM_REFACTOR_V1_START
 ENTITY_FORM_FIELDS_V1: tuple[dict[str, Any], ...] = (
     {"key": "name", "label": "Nome da entidade", "required": True},
     {"key": "acronym", "label": "Acrónimo", "required": False},
@@ -199,7 +199,7 @@ def get_existing_owner_entity_id_v1(
     raw_entity_id = session.scalar(stmt.limit(1))
 
     return int(raw_entity_id) if raw_entity_id is not None else None
-# APPVERBO_ENTITY_FORM_REFACTOR_V1_END
+# APPGENESIS_ENTITY_FORM_REFACTOR_V1_END
 
 __all__ = [
     "save_entity_logo_upload",

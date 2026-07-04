@@ -83,7 +83,7 @@ def test_reload_from_any_menu_normalizes_to_home(data_menu: str) -> None:
 ####################################################################################
 # (3) UM MARCADOR DE SUCESSO/ERRO PERSISTENTE NA URL NAO DEVE BLOQUEAR A NORMALIZACAO
 # PARA HOME NUM REFRESH NORMAL (gap identificado: clearPostSaveFeedbackMarkersFromUrlV3
-# so limpava "appverbo_after_save", nao outros marcadores "*_success"/"*_error").
+# so limpava "appgenesis_after_save", nao outros marcadores "*_success"/"*_error").
 ####################################################################################
 
 
@@ -148,7 +148,7 @@ def test_global_loading_overlay_exists_and_toggles_on_sidebar_click() -> None:
     try:
         _login_admin_v1(driver, wait)
 
-        overlay = wait.until(EC.presence_of_element_located((By.ID, "appverbo-global-loading-overlay")))
+        overlay = wait.until(EC.presence_of_element_located((By.ID, "appgenesis-global-loading-overlay")))
         assert overlay.get_attribute("role") == "status"
         assert overlay.get_attribute("aria-live") == "polite"
         assert overlay.get_attribute("aria-hidden") == "true"
@@ -156,21 +156,21 @@ def test_global_loading_overlay_exists_and_toggles_on_sidebar_click() -> None:
         driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='sessoes']").click()
 
         wait.until(lambda drv: "true" == drv.execute_script(
-            "return document.getElementById('appverbo-global-loading-overlay')"
-            ".classList.contains('appverbo-global-loading-overlay--visible') ? 'true' : 'false'"
+            "return document.getElementById('appgenesis-global-loading-overlay')"
+            ".classList.contains('appgenesis-global-loading-overlay--visible') ? 'true' : 'false'"
         ) or "false" == drv.execute_script(
-            "return document.getElementById('appverbo-global-loading-overlay')"
+            "return document.getElementById('appgenesis-global-loading-overlay')"
             ".getAttribute('aria-hidden')"
         ))
 
         wait.until(lambda drv: drv.execute_script(
-            "return document.getElementById('appverbo-global-loading-overlay')"
+            "return document.getElementById('appgenesis-global-loading-overlay')"
             ".getAttribute('aria-hidden')"
         ) == "true")
 
         final_state = driver.execute_script(
-            "return document.getElementById('appverbo-global-loading-overlay')"
-            ".classList.contains('appverbo-global-loading-overlay--visible')"
+            "return document.getElementById('appgenesis-global-loading-overlay')"
+            ".classList.contains('appgenesis-global-loading-overlay--visible')"
         )
         assert final_state is False, "Loader global ficou preso visivel apos a navegacao terminar"
     finally:
@@ -199,7 +199,7 @@ def test_global_loading_overlay_module_exposes_expected_api() -> None:
 def test_base_template_wires_global_loading_overlay_markup() -> None:
     html_text = (PROJECT_ROOT / "templates" / "base.html").read_text(encoding="utf-8")
 
-    assert 'id="appverbo-global-loading-overlay"' in html_text
+    assert 'id="appgenesis-global-loading-overlay"' in html_text
     assert 'role="status"' in html_text
     assert 'aria-live="polite"' in html_text
     assert "global_loading_overlay_v1.js" in html_text
@@ -235,4 +235,4 @@ def test_post_save_uses_authoritative_menu_and_config_return_url() -> None:
 
     assert "function resolveAuthoritativeActiveMenuKeyForPostSaveV1()" in js_text
     assert "function findConfigProvidedReturnUrlV1(form)" in js_text
-    assert "window.__appverboGetActiveMenuKeyV1()" in js_text
+    assert "window.__appgenesisGetActiveMenuKeyV1()" in js_text

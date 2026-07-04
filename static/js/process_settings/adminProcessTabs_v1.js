@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - ADMINISTRATIVO -> MENU - ABAS INTERNAS DO PROCESSO
+// APPGENESIS - ADMINISTRATIVO -> MENU - ABAS INTERNAS DO PROCESSO
 //###################################################################################
 
 (function (window) {
@@ -95,7 +95,7 @@
   // (6) EXPOR FUNCOES NO WINDOW
   //###################################################################################
 
-  window.AppVerboAdminProcessTabs_v1 = {
+  window.AppGenesisAdminProcessTabs_v1 = {
     DEFAULT_ADMIN_PROCESS_SETTINGS_TABS: DEFAULT_ADMIN_PROCESS_SETTINGS_TABS,
     normalizeSettingsTabKey_v1: normalizeSettingsTabKey_v1,
     getAdminProcessSettingsTabs_v1: getAdminProcessSettingsTabs_v1,

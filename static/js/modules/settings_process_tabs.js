@@ -63,7 +63,7 @@
 
   function getRequestedSettingsTab() {
     const bootstrapTab = normalizeSettingsTab(
-      window.__APPVERBO_BOOTSTRAP__ && window.__APPVERBO_BOOTSTRAP__.settingsTab
+      window.__APPGENESIS_BOOTSTRAP__ && window.__APPGENESIS_BOOTSTRAP__.settingsTab
     );
 
     if (bootstrapTab) {

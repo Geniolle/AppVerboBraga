@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - LISTA V3
+// APPGENESIS - LISTA V3
 //###################################################################################
 
 (function () {
@@ -19,7 +19,7 @@
   }
 
   function obterBootstrap_v3() {
-    return window.__APPVERBO_BOOTSTRAP__ || {};
+    return window.__APPGENESIS_BOOTSTRAP__ || {};
   }
 
   function obterUrlParam_v3(nome) {

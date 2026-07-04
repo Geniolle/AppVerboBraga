@@ -1,4 +1,4 @@
-// APPVERBO_ADMIN_SUBPROCESSES_V1_START
+// APPGENESIS_ADMIN_SUBPROCESSES_V1_START
 (function () {
   "use strict";
 
@@ -219,14 +219,14 @@
 
   function refreshAdminSubprocessTableStateV1(tableEl) {
     if (
-      !window.AppVerboProcessShell ||
-      typeof window.AppVerboProcessShell.enhanceLoadMoreTables !== "function"
+      !window.AppGenesisProcessShell ||
+      typeof window.AppGenesisProcessShell.enhanceLoadMoreTables !== "function"
     ) {
       return;
     }
 
     const rootEl = tableEl.closest(".card") || tableEl.parentElement || document;
-    window.AppVerboProcessShell.enhanceLoadMoreTables({
+    window.AppGenesisProcessShell.enhanceLoadMoreTables({
       root: rootEl,
       rowsSelector: "tbody tr"
     });
@@ -237,11 +237,11 @@
   //###################################################################################
 
   function instalarVisualizarAdminSubprocessV1() {
-    if (window.__appverboAdminSubprocessViewV1 === true) {
+    if (window.__appgenesisAdminSubprocessViewV1 === true) {
       return;
     }
 
-    window.__appverboAdminSubprocessViewV1 = true;
+    window.__appgenesisAdminSubprocessViewV1 = true;
 
     document.addEventListener("click", function (event) {
       const button = event.target.closest("[data-admin-subprocess-view]");
@@ -427,7 +427,7 @@
       updateSortUi();
       refreshAdminSubprocessTableStateV1(tableEl);
 
-      tableEl.dispatchEvent(new CustomEvent("appverbo:table-sorted", {
+      tableEl.dispatchEvent(new CustomEvent("appgenesis:table-sorted", {
         bubbles: true,
         detail: {
           sortKey,
@@ -654,7 +654,7 @@
 
   function _isDebugReturnAfterSaveEnabledAjaxV1() {
     try {
-      return localStorage.getItem("appverboDebugReturnAfterSave") === "1";
+      return localStorage.getItem("appgenesisDebugReturnAfterSave") === "1";
     } catch (e) {
       return false;
     }
@@ -717,10 +717,10 @@
     var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Sessão atualizada com sucesso.");
 
     if (
-      window.AppVerboProcessShell &&
-      typeof window.AppVerboProcessShell.showToast === "function"
+      window.AppGenesisProcessShell &&
+      typeof window.AppGenesisProcessShell.showToast === "function"
     ) {
-      window.AppVerboProcessShell.showToast({
+      window.AppGenesisProcessShell.showToast({
         type: "success",
         message: safeMessage
       });
@@ -757,7 +757,7 @@
     [
       "sidebar_section_edit_key",
       "dynamic_process_section",
-      "appverbo_after_save",
+      "appgenesis_after_save",
       "success",
       "error",
       "sidebar_section_return_url"
@@ -783,7 +783,7 @@
   }
 
   function _syncSidebarGlobalRefreshBaselineAfterLocalAjaxSaveV1() {
-    var refreshApi = window.AppVerboSidebarGlobalRefreshV1;
+    var refreshApi = window.AppGenesisSidebarGlobalRefreshV1;
 
     if (
       !refreshApi ||
@@ -873,36 +873,36 @@
       instalarOrdenacaoAdminSubprocessV1(card);
     });
 
-    if (window.AppVerboProcessShell) {
+    if (window.AppGenesisProcessShell) {
       uniqueRoots.forEach(function (root) {
-        if (typeof window.AppVerboProcessShell.enhanceSearchableTableCards === "function") {
-          window.AppVerboProcessShell.enhanceSearchableTableCards({ root: root });
+        if (typeof window.AppGenesisProcessShell.enhanceSearchableTableCards === "function") {
+          window.AppGenesisProcessShell.enhanceSearchableTableCards({ root: root });
         }
 
-        if (typeof window.AppVerboProcessShell.enhanceLoadMoreTables === "function") {
-          window.AppVerboProcessShell.enhanceLoadMoreTables({ root: root });
+        if (typeof window.AppGenesisProcessShell.enhanceLoadMoreTables === "function") {
+          window.AppGenesisProcessShell.enhanceLoadMoreTables({ root: root });
         }
 
-        if (typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
-          window.AppVerboProcessShell.enhanceTableActionMenus({ root: root });
+        if (typeof window.AppGenesisProcessShell.enhanceTableActionMenus === "function") {
+          window.AppGenesisProcessShell.enhanceTableActionMenus({ root: root });
         }
 
-        if (typeof window.AppVerboProcessShell.enhanceResponsiveTableColumns === "function") {
-          window.AppVerboProcessShell.enhanceResponsiveTableColumns({ root: root });
+        if (typeof window.AppGenesisProcessShell.enhanceResponsiveTableColumns === "function") {
+          window.AppGenesisProcessShell.enhanceResponsiveTableColumns({ root: root });
         }
       });
 
-      if (typeof window.AppVerboProcessShell.enhanceConfirmableActions === "function") {
-        window.AppVerboProcessShell.enhanceConfirmableActions({ root: document });
+      if (typeof window.AppGenesisProcessShell.enhanceConfirmableActions === "function") {
+        window.AppGenesisProcessShell.enhanceConfirmableActions({ root: document });
       }
     }
 
-    if (typeof window.AppVerboAplicarVisibilidadeCardsSessoesV25 === "function") {
-      window.AppVerboAplicarVisibilidadeCardsSessoesV25();
+    if (typeof window.AppGenesisAplicarVisibilidadeCardsSessoesV25 === "function") {
+      window.AppGenesisAplicarVisibilidadeCardsSessoesV25();
     }
 
-    if (typeof window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 === "function") {
-      window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26(document);
+    if (typeof window.AppGenesisAplicarVisibilidadeSessoesSemPiscarV26 === "function") {
+      window.AppGenesisAplicarVisibilidadeSessoesSemPiscarV26(document);
     }
   }
 
@@ -962,16 +962,16 @@
 
   function _markSessoesFallbackSubmitErrorV1(error) {
     var safeError = error instanceof Error ? error : new Error(String(error || "fallback_submit"));
-    safeError._appverboShouldFallbackSubmit = true;
+    safeError._appgenesisShouldFallbackSubmit = true;
     return safeError;
   }
 
   function instalarSessoesSaveAjaxV1() {
-    if (window.__appverboSessoesSaveAjaxV1 === true) {
+    if (window.__appgenesisSessoesSaveAjaxV1 === true) {
       return;
     }
 
-    window.__appverboSessoesSaveAjaxV1 = true;
+    window.__appgenesisSessoesSaveAjaxV1 = true;
 
     document.addEventListener("submit", function (event) {
       var form = event.target;
@@ -1073,7 +1073,7 @@
           delete form.dataset.sessoesAjaxSubmittingV1;
           _setSessoesSaveButtonStateV1(submitBtn, false, originalBtnText);
 
-          if (error && error._appverboShouldFallbackSubmit === true) {
+          if (error && error._appgenesisShouldFallbackSubmit === true) {
             _submitSessoesSaveFallbackV1(form);
             return;
           }
@@ -1101,4 +1101,4 @@
     instalarAdminSubprocessesV1();
   }
 })();
-// APPVERBO_ADMIN_SUBPROCESSES_V1_END
+// APPGENESIS_ADMIN_SUBPROCESSES_V1_END

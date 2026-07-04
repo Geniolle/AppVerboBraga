@@ -1,4 +1,4 @@
-/* APPVERBO_ADMIN_STATUS_TABLES_V1_START */
+/* APPGENESIS_ADMIN_STATUS_TABLES_V1_START */
 
 .admin-status-table-footer-v1 {
   align-items: center;
@@ -54,7 +54,7 @@
   color: #b42318;
 }
 
-/* APPVERBO_STATUS_BADGE_PENDING_V1_START */
+/* APPGENESIS_STATUS_BADGE_PENDING_V1_START */
 .entity-status-pending,
 .user-status-pending,
 .appgenesis-status-pending-v1 {
@@ -62,11 +62,11 @@
   border-color: transparent;
   color: #d97706;
 }
-/* APPVERBO_STATUS_BADGE_PENDING_V1_END */
+/* APPGENESIS_STATUS_BADGE_PENDING_V1_END */
 
-/* APPVERBO_ADMIN_STATUS_TABLES_V1_END */
+/* APPGENESIS_ADMIN_STATUS_TABLES_V1_END */
 
-/* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_START */
+/* APPGENESIS_TABLE_PAGINATION_SECOND_IMAGE_V2_START */
 /* Paginação dos cards administrativos no mesmo padrão visual da segunda imagem. */
 
 #inactive-users-card {
@@ -2262,4 +2262,4 @@
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
-/* APPVERBO_TABLE_PAGINATION_SECOND_IMAGE_V2_END */
+/* APPGENESIS_TABLE_PAGINATION_SECOND_IMAGE_V2_END */

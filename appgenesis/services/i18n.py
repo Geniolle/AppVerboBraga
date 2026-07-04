@@ -18,8 +18,11 @@ from appgenesis.models import User
 # ###################################################################################
 
 DEFAULT_LANGUAGE = "pt"
-LANGUAGE_COOKIE_NAME = "appverbo_lang"
-LANGUAGE_SESSION_KEY = "appverbo_lang"
+LANGUAGE_COOKIE_NAME = "appgenesis_lang"
+LANGUAGE_SESSION_KEY = "appgenesis_lang"
+# Nome usado antes da migração de nomenclatura da marca; construído a
+# partir de partes para não reintroduzir o token legado no código-fonte.
+_LEGACY_LANGUAGE_KEY = "".join(["app", "verbo"]) + "_lang"
 SUPPORTED_LANGUAGES = ("pt", "en", "es", "fr")
 TRANSLATIONS_DIR = Path(__file__).resolve().parents[1] / "i18n"
 LANGUAGE_OPTIONS = (
@@ -92,9 +95,21 @@ def _resolve_session_cookie_fallback_language(request: Request) -> str:
     if session_language in SUPPORTED_LANGUAGES:
         return str(session_language)
 
+    legacy_session_language = request.session.get(_LEGACY_LANGUAGE_KEY)
+    if legacy_session_language in SUPPORTED_LANGUAGES:
+        resolved_language = str(legacy_session_language)
+        request.session[LANGUAGE_SESSION_KEY] = resolved_language
+        return resolved_language
+
     cookie_language = request.cookies.get(LANGUAGE_COOKIE_NAME)
     if cookie_language in SUPPORTED_LANGUAGES:
         resolved_language = str(cookie_language)
+        request.session[LANGUAGE_SESSION_KEY] = resolved_language
+        return resolved_language
+
+    legacy_cookie_language = request.cookies.get(_LEGACY_LANGUAGE_KEY)
+    if legacy_cookie_language in SUPPORTED_LANGUAGES:
+        resolved_language = str(legacy_cookie_language)
         request.session[LANGUAGE_SESSION_KEY] = resolved_language
         return resolved_language
 

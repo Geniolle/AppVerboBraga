@@ -15,11 +15,11 @@ htmlcov/
 .codex/
 .claude/
 .agents/
-appverbo_runtime_logs/
+appgenesis_runtime_logs/
 backups/
 scratch/
 node_modules/
-appverbo-mobile/.expo/
-appverbo-mobile/node_modules/
+appgenesis-mobile/.expo/
+appgenesis-mobile/node_modules/
 migrations/__pycache__/
 migrations/versions/__pycache__/

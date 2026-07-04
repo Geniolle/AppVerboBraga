@@ -103,7 +103,7 @@ def delete_entity(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_START
+        # APPGENESIS_DELETE_ONLY_INACTIVE_ENTITY_V1_START
         if entity.is_active:
             return RedirectResponse(
                 url=build_return_url_v1(
@@ -117,7 +117,7 @@ def delete_entity(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
-        # APPVERBO_DELETE_ONLY_INACTIVE_ENTITY_V1_END
+        # APPGENESIS_DELETE_ONLY_INACTIVE_ENTITY_V1_END
 
         linked_users_count = session.scalar(
             select(func.count(User.id))

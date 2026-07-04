@@ -10,7 +10,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-# APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
+# APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
 from appgenesis.admin_subprocesses.repositories.auth_profile_repository import AuthorizationProfileAdminRepository
 from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository import ObjetoAutorizacaoAdminRepository
@@ -22,7 +22,7 @@ from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_entity_context_v1,
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
-# APPVERBO_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
+# APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appgenesis.core import *  # noqa: F403,F401
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
@@ -49,7 +49,7 @@ from appgenesis.models import (
 
 from appgenesis.routes.profile.router import router
 
-# APPVERBO_DEBUG_SESSOES_FLOW_V1_START
+# APPGENESIS_DEBUG_SESSOES_FLOW_V1_START
 import logging as _logging_page
 import os as _os_page
 
@@ -57,7 +57,7 @@ _SESSOES_PAGE_LOGGER = _logging_page.getLogger(__name__)
 
 
 def _debug_sessoes_page_enabled_v1(request=None) -> bool:
-    if _os_page.environ.get("APPVERBO_DEBUG_SESSOES_FLOW") == "1":
+    if _os_page.environ.get("APPGENESIS_DEBUG_SESSOES_FLOW") == "1":
         return True
     if request is not None:
         try:
@@ -72,7 +72,7 @@ def _log_sessoes_page_v1(event: str, **payload) -> None:
     parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
     _SESSOES_PAGE_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
 
-# APPVERBO_DEBUG_SESSOES_FLOW_V1_END
+# APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
 
 
 ESTRUTURAS_MENU_KEY_V1 = "sessoes"
@@ -417,7 +417,7 @@ def _build_auth_objeto_return_url_v1(
     return f"/users/new?{urlencode(query_params)}{clean_target}"
 
 
-# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
+# APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
 
 def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_active: object = None) -> str:
     if raw_is_active is False:
@@ -509,7 +509,7 @@ def _split_sidebar_sections_for_page_v22(
 
     return active_sections, inactive_sections, edit_data
 
-# APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
+# APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
 
 
@@ -542,7 +542,7 @@ def new_user_page(
     sidebar_section_edit_key: str = "",
     auth_profile_edit_key: str = "",
     auth_objeto_edit_key: str = "",
-    appverbo_after_save: str = "",
+    appgenesis_after_save: str = "",
     debug_flicker: str | None = None,
 ) -> HTMLResponse:
     is_debug_flicker = (debug_flicker == "1") or (request.query_params.get("debug_flicker") == "1")
@@ -569,7 +569,7 @@ def new_user_page(
             sidebar_section_edit_key=sidebar_section_edit_key,
             success=settings_success,
             error=settings_error,
-            appverbo_after_save=appverbo_after_save,
+            appgenesis_after_save=appgenesis_after_save,
         )
 
     resolved_menu, resolved_admin_tab = _resolve_estruturas_navigation_context_v1(
@@ -656,22 +656,22 @@ def new_user_page(
             for raw_key in page_data.get("visible_sidebar_menu_keys", [])
             if str(raw_key or "").strip()
         }
-        # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_START
+        # APPGENESIS_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_START
         # O menu "meu_perfil" e um processo especial que pode nao aparecer em
         # visible_sidebar_menu_keys, mas deve ser aceite quando vem no redirect
         # pos-save. Caso contrario, /users/new?menu=meu_perfil cai em Home.
         # Tambem permite menus nao visiveis se for retorno pos-save, para manter
         # o contexto de edicao.
-        is_post_save_return = str(appverbo_after_save or "").strip() == "1"
+        is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
         if (
             resolved_menu not in {"perfil", MENU_MEU_PERFIL_KEY}
             and resolved_menu not in visible_menu_keys
             and not is_post_save_return
         ):
             resolved_menu = "home"
-        # APPVERBO_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
+        # APPGENESIS_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
 
-        # APPVERBO_SESSOES_POST_SAVE_GUARD_V1_START
+        # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_START
         # Se é um retorno pós-save de Sessões, limpar sidebar_section_edit_key antes de
         # qualquer uso. Garante que o card de edição não reabre mesmo que a URL ainda
         # contenha o parâmetro por algum motivo.
@@ -687,7 +687,7 @@ def new_user_page(
                     acao="limpar_edit_key",
                 )
             sidebar_section_edit_key = ""
-        # APPVERBO_SESSOES_POST_SAVE_GUARD_V1_END
+        # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_END
 
         user_personal_data = get_user_personal_data(session, current_user["id"], selected_entity_id)
         next_entity_number = get_next_entity_number(session)
@@ -716,7 +716,7 @@ def new_user_page(
             sidebar_section_edit_key,
         )
 
-        # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START
+        # APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START
         # Recalcula a separação diretamente da configuração normalizada.
         # Isto evita que o template receba a lista de ativos vazia quando houver fallback antigo.
         all_sidebar_sections_v26 = _resolve_sidebar_sections_from_page_data_v22(page_data)
@@ -744,7 +744,7 @@ def new_user_page(
                     ),
                     sidebar_section_edit_data_v22,
                 )
-        # APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
+        # APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
             settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
@@ -769,7 +769,7 @@ def new_user_page(
         query_edit_params=initial_target_query_edit_params_v1,
     )
 
-    # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
+    # APPGENESIS_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_START
     clean_profile_section_from_query = str(profile_section or "").strip().lower()
     clean_dynamic_section_from_query = str(
         dynamic_process_section or section_key or ""
@@ -789,7 +789,7 @@ def new_user_page(
             "page:initial_target_before",
             initial_menu_target=initial_menu_target,
             sidebar_section_edit_key=sidebar_section_edit_key,
-            appverbo_after_save=appverbo_after_save,
+            appgenesis_after_save=appgenesis_after_save,
         )
 
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
@@ -814,11 +814,11 @@ def new_user_page(
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
-    is_post_save_return = str(appverbo_after_save or "").strip() == "1"
-    # APPVERBO_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
+    is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
+    # APPGENESIS_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
 
 
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
 
     if current_user_is_admin:
@@ -837,7 +837,7 @@ def new_user_page(
                 menu_key=ESTRUTURAS_MENU_KEY_V1,
                 return_url="/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
 
     if _dbg_page and admin_subprocess_state_v2 is not None and resolved_admin_tab == "sessoes":
         _log_sessoes_page_v1(
@@ -927,7 +927,7 @@ def new_user_page(
             except Exception:
                 auth_profile_subprocess_state_v1 = None
 
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_OBJETO_V1_START
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_OBJETO_V1_START
     auth_objeto_subprocess_state_v1 = None
 
     if auth_profile_menu_visible:
@@ -970,9 +970,9 @@ def new_user_page(
                 )
             except Exception:
                 auth_objeto_subprocess_state_v1 = None
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_OBJETO_V1_END
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_OBJETO_V1_END
 
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_START
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None
 
     if current_user_is_admin:
@@ -999,9 +999,9 @@ def new_user_page(
                 )
             except Exception:
                 admin_subprocess_menu_state_v1 = None
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_MENU_V1_END
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_MENU_V1_END
 
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V1_START
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_ENTIDADE_V1_START
     def _normalize_user_rows_v1(rows: list[dict]) -> list[dict]:
         result = []
         for row in rows:
@@ -1027,9 +1027,9 @@ def new_user_page(
             inactive_rows=list(page_data.get("inactive_entities", [])),
             return_url="/users/new?menu=administrativo&admin_tab=entidade#recent-entities-card",
         )
-    # APPVERBO_ADMIN_SUBPROCESS_STATE_ENTIDADE_V1_END
+    # APPGENESIS_ADMIN_SUBPROCESS_STATE_ENTIDADE_V1_END
 
-    # APPVERBO_RESOLVE_SUBMENU_TABS_V1_START
+    # APPGENESIS_RESOLVE_SUBMENU_TABS_V1_START
     initial_menu_tabs = []
     active_tab_index = 0
     
@@ -1074,7 +1074,7 @@ def new_user_page(
             active_menu_label = "Meu perfil"
         else:
             active_menu_label = clean_menu_key.replace("_", " ").title()
-    # APPVERBO_RESOLVE_SUBMENU_TABS_V1_END
+    # APPGENESIS_RESOLVE_SUBMENU_TABS_V1_END
 
     context = {
         "request": request,
@@ -1114,7 +1114,7 @@ def new_user_page(
         "initial_profile_section": clean_profile_section_from_query,
         "requested_profile_section": clean_profile_section_from_query,
         "requested_dynamic_process_section": clean_dynamic_section_from_query,
-        "appverbo_after_save": is_post_save_return,
+        "appgenesis_after_save": is_post_save_return,
         "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
         "auth_profile_edit_key": str(auth_profile_edit_key or "").strip().lower(),
         "auth_objeto_edit_key": str(auth_objeto_edit_key or "").strip().lower(),
@@ -1139,7 +1139,7 @@ def new_user_page(
     # ###################################################################################
     if is_debug_flicker:
         print(
-            f"[APPVERBO FLICKER DEBUG BACKEND]\n"
+            f"[APPGENESIS FLICKER DEBUG BACKEND]\n"
             f"- menu resolvido: {resolved_menu}\n"
             f"- admin_tab resolvido: {resolved_admin_tab}\n"
             f"- target resolvido: {initial_menu_target}\n"

@@ -6,7 +6,7 @@
   //###################################################################################
 
   function sidebarSectionsAutosaveDesativado_v2() {
-    window.APPVERBO_SIDEBAR_SECTIONS_AUTOSAVE_DISABLED_V2 = true;
+    window.APPGENESIS_SIDEBAR_SECTIONS_AUTOSAVE_DISABLED_V2 = true;
   }
 
   if (document.readyState === "loading") {

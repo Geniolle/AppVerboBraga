@@ -1,6 +1,6 @@
 //###################################################################################
-// APPVERBOBRAGA - PROCESS FIELDS CONFIG MANAGER V7
-// Usa o core generico AppVerboConfigurableItems, igual ao processo Campos adicionais.
+// APPGENESIS - PROCESS FIELDS CONFIG MANAGER V7
+// Usa o core generico AppGenesisConfigurableItems, igual ao processo Campos adicionais.
 //###################################################################################
 
 (function (window, document) {
@@ -11,8 +11,8 @@
   //###################################################################################
 
   const FORM_SELECTOR = "form[data-process-fields-config-manager-v1='1']";
-  const CORE_NAMESPACE = "AppVerboConfigurableItems";
-  const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppVerboProcessFieldOptionsResolverV1";
+  const CORE_NAMESPACE = "AppGenesisConfigurableItems";
+  const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppGenesisProcessFieldOptionsResolverV1";
 
   //###################################################################################
   // (2) HELPERS GERAIS
@@ -725,7 +725,7 @@
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
 
-    form.addEventListener("appverbo:cancelled", function (event) {
+    form.addEventListener("appgenesis:cancelled", function (event) {
       const detail = event && event.detail ? event.detail : {};
 
       if (detail.trigger !== elements.cancelButton) {
@@ -795,7 +795,7 @@
 
     form.dataset.processFieldsConfigOptionsBoundV7 = "1";
 
-    document.addEventListener("appverbo:configurable-items-change", function (event) {
+    document.addEventListener("appgenesis:configurable-items-change", function (event) {
       const additionalRoot = event && event.target && typeof event.target.closest === "function"
         ? event.target.closest("[data-process-additional-fields-manager-v3='1']")
         : null;

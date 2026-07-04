@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - PROCESS FIELD OPTIONS RESOLVER V1
+// APPGENESIS - PROCESS FIELD OPTIONS RESOLVER V1
 //###################################################################################
 
 (function (window, document) {
@@ -217,12 +217,12 @@
   //###################################################################################
 
   function getBootstrapSidebarMenuSettings_v1() {
-    const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
     return Array.isArray(bootstrap.sidebarMenuSettings) ? bootstrap.sidebarMenuSettings : [];
   }
 
   function getBootstrapVisibleSidebarMenuKeys_v1() {
-    const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
     const rawKeys = Array.isArray(bootstrap.visibleSidebarMenuKeys) ? bootstrap.visibleSidebarMenuKeys : [];
 
     return new Set(
@@ -442,7 +442,7 @@
     return matchedOption ? matchedOption.label : toSafeString_v1(key).trim();
   }
 
-  window.AppVerboProcessFieldOptionsResolverV1 = {
+  window.AppGenesisProcessFieldOptionsResolverV1 = {
     createOptionSnapshot_v1,
     readAdditionalFields_v1,
     resolveScopeOptions_v1,

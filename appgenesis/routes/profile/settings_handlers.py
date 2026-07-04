@@ -41,7 +41,7 @@ from appgenesis.services.session import get_session_entity_id
 from appgenesis.repositories.entity_repository import get_entity_by_id
 from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
 
-# APPVERBO_DEBUG_SESSOES_FLOW_V1_START
+# APPGENESIS_DEBUG_SESSOES_FLOW_V1_START
 import logging as _logging_sessoes
 import os as _os_sessoes
 
@@ -49,7 +49,7 @@ _SESSOES_FLOW_LOGGER = _logging_sessoes.getLogger(__name__)
 
 
 def _debug_sessoes_flow_enabled_v1(request=None) -> bool:
-    if _os_sessoes.environ.get("APPVERBO_DEBUG_SESSOES_FLOW") == "1":
+    if _os_sessoes.environ.get("APPGENESIS_DEBUG_SESSOES_FLOW") == "1":
         return True
     if request is not None:
         try:
@@ -65,14 +65,14 @@ def _log_sessoes_flow_v1(event: str, **payload) -> None:
     parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
     _SESSOES_FLOW_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
 
-# APPVERBO_DEBUG_SESSOES_FLOW_V1_END
+# APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
 
-# APPVERBO_DEBUG_PROCESS_EDITOR_FLOW_V1_START
+# APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_START
 _PROCESS_EDITOR_FLOW_LOGGER = _logging_sessoes.getLogger(__name__ + ".process_editor")
 
 
 def _debug_process_editor_flow_enabled_v1(request: Request | None = None) -> bool:
-    if _os_sessoes.environ.get("APPVERBO_DEBUG_PROCESS_EDITOR") == "1":
+    if _os_sessoes.environ.get("APPGENESIS_DEBUG_PROCESS_EDITOR") == "1":
         return True
     if request is not None:
         try:
@@ -90,7 +90,7 @@ def _log_process_editor_flow_v1(request: Request | None, event: str, **payload) 
     parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
     _PROCESS_EDITOR_FLOW_LOGGER.info("[PROCESS_EDITOR_FLOW] %s | %s", event, parts)
 
-# APPVERBO_DEBUG_PROCESS_EDITOR_FLOW_V1_END
+# APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_END
 
 
 def _sanitize_users_new_settings_return_url_v1(
@@ -231,7 +231,7 @@ def _require_menu_settings_owner_v1(
     return None
 
 
-# APPVERBO_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_START
+# APPGENESIS_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_START
 
 # ###################################################################################
 # (SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1) CONSULTAR VERSAO GLOBAL DO SIDEBAR
@@ -257,9 +257,9 @@ def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
             }
         )
 
-# APPVERBO_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_END
+# APPGENESIS_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_END
 
-# APPVERBO_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_START
+# APPGENESIS_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_START
 
 # ###################################################################################
 # (SIDEBAR_SECTIONS_DATA_ENDPOINT_V6) LER SESSOES DO SIDEBAR DIRETO DO BD
@@ -322,10 +322,10 @@ def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-# APPVERBO_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_END
+# APPGENESIS_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_END
 
 
-# APPVERBO_SESSOES_RETURN_URL_V17_START
+# APPGENESIS_SESSOES_RETURN_URL_V17_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_RETURN_URL_V17) URL SEGURA DE RETORNO PARA A ABA SESSOES
@@ -345,14 +345,14 @@ def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
 
     return raw_url
 
-# APPVERBO_SESSOES_RETURN_URL_V17_END
+# APPGENESIS_SESSOES_RETURN_URL_V17_END
 
 
 
 
 
 
-# APPVERBO_SESSOES_SAVE_ONE_V19_START
+# APPGENESIS_SESSOES_SAVE_ONE_V19_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_SAVE_ONE_V19) CRIAR/EDITAR SESSAO COM ESTADO PERSISTENTE
@@ -446,7 +446,7 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
         "sidebar_section_edit_key",
         "sidebar_section_return_url",
         "dynamic_process_section",
-        "appverbo_after_save",
+        "appgenesis_after_save",
         "success",
         "error",
     }
@@ -547,7 +547,7 @@ def _redirect_sidebar_section_message_v19(
     if after_save:
         parts = urlsplit(url)
         params = list(parse_qsl(parts.query, keep_blank_values=True))
-        params.append(("appverbo_after_save", "1"))
+        params.append(("appgenesis_after_save", "1"))
         url = urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
 
     return RedirectResponse(
@@ -580,7 +580,7 @@ def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
         ("admin_tab", "sessoes"),
         ("sidebar_sections_tab", "sessoes"),
         ("target", "admin-sidebar-sections-card"),
-        ("appverbo_after_save", "1"),
+        ("appgenesis_after_save", "1"),
     ]
     if message:
         params.append(("success", message))
@@ -991,7 +991,7 @@ def save_one_sidebar_section_v19(
                 success_url=_success_url,
                 tem_edit_key="sidebar_section_edit_key" in _success_url,
                 tem_form_card="admin-sidebar-sections-form-card" in _success_url,
-                tem_appverbo_after_save="appverbo_after_save=1" in _success_url,
+                tem_appgenesis_after_save="appgenesis_after_save=1" in _success_url,
             )
 
         if _is_ajax:
@@ -999,10 +999,10 @@ def save_one_sidebar_section_v19(
 
         return RedirectResponse(url=_success_url, status_code=status.HTTP_303_SEE_OTHER)
 
-# APPVERBO_SESSOES_SAVE_ONE_V19_END
+# APPGENESIS_SESSOES_SAVE_ONE_V19_END
 
 
-# APPVERBO_SESSOES_SERVER_MOVE_ONE_V25_START
+# APPGENESIS_SESSOES_SERVER_MOVE_ONE_V25_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_MOVE_ONE_V25) MOVER SESSAO COM FLUXO SERVER-SIDE
@@ -1129,10 +1129,10 @@ def move_one_sidebar_section_v25(
             "Hierarquia da sessão atualizada com sucesso.",
         )
 
-# APPVERBO_SESSOES_SERVER_MOVE_ONE_V25_END
+# APPGENESIS_SESSOES_SERVER_MOVE_ONE_V25_END
 
 
-# APPVERBO_SESSOES_SERVER_DELETE_ONE_V1_START
+# APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_DELETE_ONE_V1) ELIMINAR SESSAO INATIVA COM VALIDACAO DE OWNER
@@ -1193,10 +1193,10 @@ def delete_one_sidebar_section_v1(
             "Sessão eliminada com sucesso.",
         )
 
-# APPVERBO_SESSOES_SERVER_DELETE_ONE_V1_END
+# APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_END
 
 
-# APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_START
+# APPGENESIS_SIDEBAR_SECTIONS_HANDLER_V2_START
 
 # ###################################################################################
 # (SIDEBAR_SECTIONS_HANDLER_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
@@ -1312,7 +1312,7 @@ def edit_sidebar_sections_v2(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-# APPVERBO_SIDEBAR_SECTIONS_HANDLER_V2_END
+# APPGENESIS_SIDEBAR_SECTIONS_HANDLER_V2_END
 
 
 # ###################################################################################
@@ -1669,7 +1669,7 @@ def move_sidebar_menu_additional_field_handler(
 
 
 
-# APPVERBO_PRESERVE_HEADER_ASSIGNMENTS_V1_START
+# APPGENESIS_PRESERVE_HEADER_ASSIGNMENTS_V1_START
 
 # ###################################################################################
 # (PRESERVE_HEADER_ASSIGNMENTS_V1) PRESERVAR ATRIBUICAO CAMPO -> CABECALHO
@@ -1919,7 +1919,7 @@ def _update_sidebar_menu_additional_fields_preserve_headers_v1(
 
     return ok, error_message
 
-# APPVERBO_PRESERVE_HEADER_ASSIGNMENTS_V1_END
+# APPGENESIS_PRESERVE_HEADER_ASSIGNMENTS_V1_END
 
 
 @router.post("/settings/menu/process-additional-fields", response_class=HTMLResponse)
@@ -2133,7 +2133,7 @@ def edit_sidebar_menu_process_fields_handler(
 
 
 
-        # APPVERBO_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_START
+        # APPGENESIS_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_START
         clean_visible_fields: list[str] = []
         clean_visible_headers: list[str] = []
         seen_visible_fields: set[str] = set()
@@ -2200,7 +2200,7 @@ def edit_sidebar_menu_process_fields_handler(
                 seen_visible_fields.add(field_key)
                 clean_visible_fields.append(field_key)
                 clean_visible_headers.append(header_key)
-        # APPVERBO_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_END
+        # APPGENESIS_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_END
 
         ok, error_message = update_sidebar_menu_process_fields(
             session=session,

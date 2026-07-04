@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  const bootstrap = window.__APPVERBO_BOOTSTRAP__ || {};
+  const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
   const profilePersonalVisibleFields = Array.isArray(bootstrap.profilePersonalVisibleFields)
     ? bootstrap.profilePersonalVisibleFields
       .map((fieldKey) => String(fieldKey || "").trim().toLowerCase())

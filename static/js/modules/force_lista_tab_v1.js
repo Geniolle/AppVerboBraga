@@ -1,5 +1,5 @@
 //###################################################################################
-// APPVERBOBRAGA - FORÇAR ABA LISTA NO EDITAR PROCESSO
+// APPGENESIS - FORÇAR ABA LISTA NO EDITAR PROCESSO
 //###################################################################################
 
 (function () {
@@ -114,7 +114,7 @@
   //###################################################################################
 
   function getBootstrap() {
-    return window.__APPVERBO_BOOTSTRAP__ || {};
+    return window.__APPGENESIS_BOOTSTRAP__ || {};
   }
 
   function getCurrentSetting() {

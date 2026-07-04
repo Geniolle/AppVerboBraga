@@ -208,7 +208,7 @@ Antes de concluir qualquer alteração, validar:
 - menu não quebrou;
 - módulos pagos continuam protegidos.
 
-<!-- APPVERBO_CONFIGURABLE_ITEMS_LAYOUT_V1_START -->
+<!-- APPGENESIS_CONFIGURABLE_ITEMS_LAYOUT_V1_START -->
 
 ## 13) Layout obrigatório para listas configuráveis
 
@@ -247,7 +247,7 @@ Exemplos de funcionalidades que devem seguir este padrão:
 - Permissões configuráveis
 - Regras administrativas
 
-<!-- APPVERBO_CONFIGURABLE_ITEMS_LAYOUT_V1_END -->
+<!-- APPGENESIS_CONFIGURABLE_ITEMS_LAYOUT_V1_END -->
 ## 14) Padrão obrigatório para abas configuráveis do processo
 
 Toda nova aba configurável dentro do editor de processo deve seguir o padrão visual e técnico abaixo:
@@ -313,7 +313,7 @@ Regras:
 7. Se a origem automática ficar incompleta ou apontar para processo/aba/campo removido, a UI não pode quebrar; deve apresentar estado controlado e lista vazia quando necessário.
 8. É proibido criar listas automáticas hardcoded para processos específicos como **Perfil de autorização** ou **Objeto de autorização**.
 
-<!-- APPVERBO_STATIC_GRID_RULE_V1_START -->
+<!-- APPGENESIS_STATIC_GRID_RULE_V1_START -->
 
 ## Regra obrigatoria para campos lado a lado em abas configuraveis
 
@@ -390,9 +390,9 @@ Na aba Configuracao dos campos, os campos Nome do campo e Cabecalho do campo dev
 
 Motivo: tentativas de criar o campo Cabecalho do campo por JavaScript causaram duplicacao de campo, conflito entre grid externo e grid interno, campos empilhados, desaparecimento dos botoes Guardar/Cancelar e dificuldade de manutencao.
 
-<!-- APPVERBO_STATIC_GRID_RULE_V1_END -->
+<!-- APPGENESIS_STATIC_GRID_RULE_V1_END -->
 
-<!-- APPVERBO_RULE_LAYOUT_ATIVOS_INATIVOS_V1_START -->
+<!-- APPGENESIS_RULE_LAYOUT_ATIVOS_INATIVOS_V1_START -->
 ## Regra padrão: blocos separados para registos ativos/criados e inativos
 
 Sempre que existir uma listagem administrativa com estado ativo/inativo, o layout padrão do AppGenesis deve manter os registos em blocos/cards separados:
@@ -415,14 +415,14 @@ Sempre que existir uma listagem administrativa com estado ativo/inativo, o layou
    - o template possui sections/cards separados;
    - o CSS mantém o layout padrão;
    - não existe bloco legado misturando ativos e inativos.
-<!-- APPVERBO_RULE_LAYOUT_ATIVOS_INATIVOS_V1_END -->
+<!-- APPGENESIS_RULE_LAYOUT_ATIVOS_INATIVOS_V1_END -->
 
-<!-- APPVERBO_RULE_USER_STATUS_REFACTOR_V1_START -->
+<!-- APPGENESIS_RULE_USER_STATUS_REFACTOR_V1_START -->
 ## Regra padrão: reutilização de status e tabelas administrativas
 
 Sempre que houver listagens administrativas com status de utilizador:
 
-1. A normalização e tradução visual do status do utilizador devem ficar em `appverbo/services/user_status.py`.
+1. A normalização e tradução visual do status do utilizador devem ficar em `appgenesis/services/user_status.py`.
 2. Não duplicar lógica de status diretamente em `page.py`, handlers ou templates.
 3. O banco deve guardar valores canónicos em inglês:
    - `active`
@@ -438,9 +438,9 @@ Sempre que houver listagens administrativas com status de utilizador:
 6. CSS de rodapé, paginação e badges de status deve ficar em módulo reutilizável dentro de `static/css/modules`.
 7. Não criar guard JavaScript para reexibir card oculto se a causa puder ser corrigida na lista principal de cards da aba.
 8. Se uma nova listagem tiver ativos/inativos, usar cards separados e reutilizar a estrutura existente antes de criar novo HTML duplicado.
-<!-- APPVERBO_RULE_USER_STATUS_REFACTOR_V1_END -->
+<!-- APPGENESIS_RULE_USER_STATUS_REFACTOR_V1_END -->
 
-<!-- APPVERBO_SAVE_CANCEL_BUTTON_RULE_V1_START -->
+<!-- APPGENESIS_SAVE_CANCEL_BUTTON_RULE_V1_START -->
 ## Regra geral para botões Guardar e Cancelar
 
 Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppGenesis:
@@ -453,9 +453,9 @@ Sempre que existir um par de botões **Guardar** e **Cancelar** no projeto AppGe
 6. Não usar textos alternativos como "Gravar alterações", "Salvar", "Voltar" ou "Fechar" para esse par padrão, exceto quando existir regra funcional específica documentada.
 7. Em formulários administrativos, rodapés de tabelas, subprocessos e telas dinâmicas, usar as classes globais existentes `action-btn` e `action-btn-cancel` sempre que possível.
 8. Não posicionar Guardar/Cancelar no lado direito da tela, salvo exceção explícita aprovada.
-<!-- APPVERBO_SAVE_CANCEL_BUTTON_RULE_V1_END -->
+<!-- APPGENESIS_SAVE_CANCEL_BUTTON_RULE_V1_END -->
 
-<!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_START -->
+<!-- APPGENESIS_GLOBAL_CANCEL_CONTROLLER_RULE_V1_START -->
 ## Regra global para o botão Cancelar
 
 Todo botão **Cancelar** do AppGenesis deve usar obrigatoriamente o controller global `static/js/modules/appgenesis_cancel_controller_v1.js`.
@@ -467,13 +467,13 @@ Regras:
 3. Novos processos, cards, editores e formulários devem usar `data-appgenesis-cancel="1"`.
 4. Quando existir um alvo explícito, usar `data-appgenesis-cancel-target` e, se necessário, `data-appgenesis-cancel-return-target`.
 5. Botões **Cancelar** criados dinamicamente por JavaScript também devem receber `data-appgenesis-cancel="1"`.
-6. Managers específicos não devem controlar o clique diretamente; quando precisarem limpar estado interno, devem reagir ao evento `appverbo:cancelled`.
+6. Managers específicos não devem controlar o clique diretamente; quando precisarem limpar estado interno, devem reagir ao evento `appgenesis:cancelled`.
 7. O cancelamento deve fechar ou resetar apenas o contexto visual local.
 8. É proibido usar `window.location.assign`, `window.location.href`, `window.location.replace`, `href` de ação, `onclick` inline ou `POST` para implementar **Cancelar**.
 9. A regra aplica-se a processos atuais e futuros.
-<!-- APPVERBO_GLOBAL_CANCEL_CONTROLLER_RULE_V1_END -->
+<!-- APPGENESIS_GLOBAL_CANCEL_CONTROLLER_RULE_V1_END -->
 
-<!-- APPVERBO_CREATE_ENTRY_BLOCK_RULE_V1_START -->
+<!-- APPGENESIS_CREATE_ENTRY_BLOCK_RULE_V1_START -->
 ## Regra global para criação de entradas em abas/subprocessos
 
 Sempre que uma aba, subprocesso ou lista administrativa tiver a opção de criar uma nova entrada relacionada ao processo atual:
@@ -489,9 +489,9 @@ Sempre que uma aba, subprocesso ou lista administrativa tiver a opção de criar
 8. A tabela/lista inferior deve permanecer separada, exibindo apenas os registos já criados e as ações de cada registo.
 9. Quando a entrada for cancelada, limpar os campos do bloco e fechar/ocultar a área de preenchimento.
 10. Quando a entrada for guardada, validar os campos obrigatórios antes de inserir/gravar.
-<!-- APPVERBO_CREATE_ENTRY_BLOCK_RULE_V1_END -->
+<!-- APPGENESIS_CREATE_ENTRY_BLOCK_RULE_V1_END -->
 
-<!-- APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_RULE_V2_START -->
+<!-- APPGENESIS_CREATE_ENTRY_SEPARATE_BLOCK_RULE_V2_START -->
 ## Regra global para bloco separado de criação
 
 Sempre que uma aba, subprocesso ou lista administrativa tiver ação para criar uma nova entrada do processo atual:
@@ -504,9 +504,9 @@ Sempre que uma aba, subprocesso ou lista administrativa tiver ação para criar 
 6. A tabela/lista inferior deve exibir somente os registos já criados e as ações da listagem.
 7. Não colocar botão de criação no lado direito do cabeçalho da tabela/lista.
 8. Não misturar o formulário de criação dentro da área visual da tabela/lista, exceto quando tecnicamente necessário, mantendo sempre separação visual clara.
-<!-- APPVERBO_CREATE_ENTRY_SEPARATE_BLOCK_RULE_V2_END -->
+<!-- APPGENESIS_CREATE_ENTRY_SEPARATE_BLOCK_RULE_V2_END -->
 
-<!-- APPVERBO_CREATE_ENTRY_SEPARATE_CARD_RULE_V3_START -->
+<!-- APPGENESIS_CREATE_ENTRY_SEPARATE_CARD_RULE_V3_START -->
 ## Regra global para card separado de criação
 
 Sempre que uma aba/subprocesso tiver uma opção de criar nova entrada:
@@ -518,9 +518,9 @@ Sempre que uma aba/subprocesso tiver uma opção de criar nova entrada:
 5. Os botões **Guardar** e **Cancelar** do formulário de criação devem ficar dentro do card de criação, sempre à esquerda e com o mesmo tamanho.
 6. A tabela/lista deve ficar em outro card separado, exibindo apenas os registos já criados e as ações da listagem.
 7. Não colocar o bloco de criação dentro do mesmo card da lista quando o layout de referência separar criação e listagem.
-<!-- APPVERBO_CREATE_ENTRY_SEPARATE_CARD_RULE_V3_END -->
+<!-- APPGENESIS_CREATE_ENTRY_SEPARATE_CARD_RULE_V3_END -->
 
-<!-- APPVERBO_CREATE_CARD_STANDARD_RULE_V4_START -->
+<!-- APPGENESIS_CREATE_CARD_STANDARD_RULE_V4_START -->
 ## Regra global para card/bloco de criação
 
 Sempre que uma aba, subprocesso ou lista administrativa tiver a opção de criar uma nova entrada:
@@ -542,9 +542,9 @@ Sempre que uma aba, subprocesso ou lista administrativa tiver a opção de criar
 6. Os botões **Guardar** e **Cancelar** devem ficar dentro do mesmo card/bloco, sempre à esquerda e com o mesmo tamanho.
 7. A tabela/lista inferior deve ficar em outro card separado, exibindo apenas os registos já criados.
 8. Este padrão é global e deve ser reaproveitado em todas as abas que tenham ação de criação.
-<!-- APPVERBO_CREATE_CARD_STANDARD_RULE_V4_END -->
+<!-- APPGENESIS_CREATE_CARD_STANDARD_RULE_V4_END -->
 
-<!-- APPVERBO_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_START -->
+<!-- APPGENESIS_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_START -->
 ## Regra global para processos dinâmicos listáveis
 
 Sempre que for criado ou configurado um novo processo dinâmico/listável no AppGenesis:
@@ -564,9 +564,9 @@ Sempre que for criado ou configurado um novo processo dinâmico/listável no App
 4. Os labels singular/plural devem nascer da configuração central do processo, com fallback genérico apenas quando não existir label específico.
 5. É proibido criar hacks visuais, `MutationObserver`, scripts externos ou branches soltas só para um processo quando o comportamento esperado for standard.
 6. O backend e o frontend devem reutilizar a mesma definição central do processo listável.
-<!-- APPVERBO_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_END -->
+<!-- APPGENESIS_DYNAMIC_LIST_PROCESS_STANDARD_RULE_V1_END -->
 
-<!-- APPVERBO_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_START -->
+<!-- APPGENESIS_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_START -->
 ## Regra de campos em subprocessos admin (AdminSubprocessConfig)
 
 Apenas os processos **Administrativo** e **Estruturas** (sessoes) podem ter campos hardcoded em `AdminSubprocessConfig.fields`.
@@ -576,16 +576,16 @@ Todos os outros subprocessos dinâmicos (ex: Objeto de autorização) **devem** 
 1. Definir `uses_dynamic_fields=True` em `AdminSubprocessConfig`.
 2. Definir `dynamic_fields_menu_key` com a chave do processo pai (ex: `"perfil_de_autorizacao"`).
 3. Definir `dynamic_fields_section_header_key` com a chave do header configurado (ex: `"custom_objeto_de_autorizacao"`).
-4. O resolver reutilizável é `resolve_subprocess_section_fields_v1` em `appverbo/services/process_tabs.py` — filtra `process_visible_field_rows` por `header_key` e retorna os campos configurados.
-5. A função centralizadora de exceção é `is_system_hardcoded_process(menu_key)` em `appverbo/services/process_tabs.py` — retorna `True` apenas para `{"administrativo", "sessoes"}`.
+4. O resolver reutilizável é `resolve_subprocess_section_fields_v1` em `appgenesis/services/process_tabs.py` — filtra `process_visible_field_rows` por `header_key` e retorna os campos configurados.
+5. A função centralizadora de exceção é `is_system_hardcoded_process(menu_key)` em `appgenesis/services/process_tabs.py` — retorna `True` apenas para `{"administrativo", "sessoes"}`.
 6. Os campos técnicos (Sistema, Estado) ficam em `fields=` do config. Os campos de conteúdo vêm de `resolved_dynamic_fields` no estado.
 7. O formulário Jinja2 renderiza `state.resolved_dynamic_fields` (com `name="process_field__<key>"`) antes dos campos técnicos de `state.config.fields`.
 8. O save handler lê `process_field__*` do formulário e passa `dynamic_values` ao repositório.
 9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico em `objeto_de_autorizacao`/`custom_objeto_label` para compatibilidade.
 10. É proibido adicionar campos de conteúdo hardcoded num subprocesso dinâmico — os campos devem vir sempre de `Configuração dos campos`.
-<!-- APPVERBO_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
+<!-- APPGENESIS_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
 
-<!-- APPVERBO_LIST_FIELD_RESOLUTION_RULE_V1_START -->
+<!-- APPGENESIS_LIST_FIELD_RESOLUTION_RULE_V1_START -->
 ## Regra de resolução de opções para campos dinâmicos do tipo Lista
 
 Quando um campo de subprocesso dinâmico (`uses_dynamic_fields=True`) tem `field_type = list`, as opções do select devem ser resolvidas pela cadeia abaixo. Estas regras são obrigatórias para qualquer novo campo, processo ou funcionalidade.
@@ -632,14 +632,14 @@ Sempre que `normalize_menu_process_additional_fields` processar um campo com `fi
 | `automatic_source_field_key` | campo homónimo (usado por `automatic` e `field_list`) |
 | `automatic_only_active` | booleano — **apenas** para `list_source_type = "automatic"` |
 
-A versão atual desta normalização é `normalize_menu_process_additional_fields_v3` em `appverbo/menu_settings.py`. Não reverter para v2.
+A versão atual desta normalização é `normalize_menu_process_additional_fields_v3` em `appgenesis/menu_settings.py`. Não reverter para v2.
 
 ### Como o resolver diferencia cabeçalho e campo de valor
 
 `buildProcessSourceSections_v1` (em `process_field_options_resolver_v1.js`) exclui explicitamente campos do tipo `"header"` ao construir as secções disponíveis. Quando `list_source_type = "field_list"`, `refreshAutomaticSourceOptions_v3` filtra ainda mais para exibir **apenas** campos com `fieldType === "list"` no seletor "Campo de origem". Um cabeçalho com o mesmo rótulo que um campo de valor (ex: "Perfil") nunca aparece nessa lista filtrada, eliminando a colisão.
-<!-- APPVERBO_LIST_FIELD_RESOLUTION_RULE_V1_END -->
+<!-- APPGENESIS_LIST_FIELD_RESOLUTION_RULE_V1_END -->
 
-<!-- APPVERBO_SESSOES_DB_FIELDS_CREATE_RULE_V4_START -->
+<!-- APPGENESIS_SESSOES_DB_FIELDS_CREATE_RULE_V4_START -->
 ## Regra para campos de criação baseados na edição/BD
 
 Sempre que existir um botão **Criar + nome da aba/processo**:
@@ -653,9 +653,9 @@ Sempre que existir um botão **Criar + nome da aba/processo**:
    - Visibilidade/Sistema.
 5. Campos derivados podem ser gravados como hidden, mas os campos editáveis principais devem estar visíveis no bloco de criação.
 6. A tabela/lista inferior deve ficar apenas com a listagem e ações por linha.
-<!-- APPVERBO_SESSOES_DB_FIELDS_CREATE_RULE_V4_END -->
+<!-- APPGENESIS_SESSOES_DB_FIELDS_CREATE_RULE_V4_END -->
 
-<!-- APPVERBO_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_START -->
+<!-- APPGENESIS_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_START -->
 ## Regra para criação de sessões do sidebar
 
 Na aba **Sessões**, ao clicar em **Criar sessão**, os campos visíveis disponíveis para preenchimento devem ser exatamente:
@@ -671,9 +671,9 @@ O campo **Sistema** deve gravar a visibilidade/sistema da sessão.
 O campo **Estado** deve gravar se a sessão está ativa ou inativa.
 
 Os botões **Guardar** e **Cancelar** devem existir apenas no bloco de criação, nunca no rodapé da listagem.
-<!-- APPVERBO_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_END -->
+<!-- APPGENESIS_SESSOES_CREATE_FIELDS_NOME_SISTEMA_ESTADO_V5_END -->
 
-<!-- APPVERBO_SESSOES_REIDRATAR_BD_V6_START -->
+<!-- APPGENESIS_SESSOES_REIDRATAR_BD_V6_START -->
 ## Regra para reidratação das Sessões pelo BD
 
 Na aba **Sessões**, a lista inferior deve sempre ser reidratada a partir do BD/configuração persistida.
@@ -688,9 +688,9 @@ Na aba **Sessões**, a lista inferior deve sempre ser reidratada a partir do BD/
 5. A chave técnica continua oculta e gerada automaticamente.
 6. Os botões Guardar/Cancelar devem ficar apenas no bloco de criação.
 7. A hierarquia da tabela deve ser gravada conforme a ordem das linhas renderizadas.
-<!-- APPVERBO_SESSOES_REIDRATAR_BD_V6_END -->
+<!-- APPGENESIS_SESSOES_REIDRATAR_BD_V6_END -->
 
-<!-- APPVERBO_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_START -->
+<!-- APPGENESIS_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_START -->
 ## Regra para evitar espaço vazio no bloco/card de criação
 
 Quando o botão **Criar + nome** abre o formulário dentro do bloco/card de criação:
@@ -701,9 +701,9 @@ Quando o botão **Criar + nome** abre o formulário dentro do bloco/card de cria
 4. Não deve existir borda/linha horizontal separando uma toolbar vazia dos campos.
 5. Quando o formulário estiver fechado, o botão **Criar + nome** deve continuar alinhado à esquerda e centralizado verticalmente.
 6. Quando o formulário estiver aberto, apenas os campos e os botões **Guardar** e **Cancelar** devem ocupar o bloco/card.
-<!-- APPVERBO_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_END -->
+<!-- APPGENESIS_CREATE_CARD_NO_EMPTY_TOP_SPACE_V7_END -->
 
-<!-- APPVERBO_SESSOES_EDIT_INLINE_V8_START -->
+<!-- APPGENESIS_SESSOES_EDIT_INLINE_V8_START -->
 ## Regra para edição de Sessões
 
 Na aba **Sessões**, o botão de editar da coluna **Ações** deve abrir edição diretamente na linha, sem usar `alert`.
@@ -722,9 +722,9 @@ Durante a edição da linha:
 2. **Guardar** atualiza os campos ocultos, grava a ordem atual e submete o formulário.
 3. **Cancelar** restaura os valores anteriores sem gravar.
 4. Não mostrar mensagens temporárias do tipo "edição será ajustada no próximo passo".
-<!-- APPVERBO_SESSOES_EDIT_INLINE_V8_END -->
+<!-- APPGENESIS_SESSOES_EDIT_INLINE_V8_END -->
 
-<!-- APPVERBO_SESSOES_ESTADO_BLOCOS_V9_START -->
+<!-- APPGENESIS_SESSOES_ESTADO_BLOCOS_V9_START -->
 ## Regra para Estado das Sessões e blocos Ativo/Inativo
 
 Na aba **Sessões**:
@@ -736,9 +736,9 @@ Na aba **Sessões**:
 5. A alteração de estado durante a edição deve mover automaticamente a linha para o bloco correto.
 6. O botão de edição não deve usar `alert`; deve editar Nome da sessão, Sistema e Estado diretamente na linha.
 7. A chave técnica da sessão deve continuar oculta e preservada.
-<!-- APPVERBO_SESSOES_ESTADO_BLOCOS_V9_END -->
+<!-- APPGENESIS_SESSOES_ESTADO_BLOCOS_V9_END -->
 
-<!-- APPVERBO_SESSOES_SCOPE_GUARD_V11_START -->
+<!-- APPGENESIS_SESSOES_SCOPE_GUARD_V11_START -->
 ## Regra de escopo para subprocessos dinâmicos
 
 Scripts de um subprocesso/aba não podem criar, mover ou exibir blocos fora da própria aba ativa.
@@ -750,9 +750,9 @@ Para a aba **Sessões**:
 3. Se a aba ativa for **Entidade**, **Utilizador**, **Menu** ou qualquer outra, o JavaScript de Sessões deve remover qualquer bloco órfão de Sessões.
 4. A validação de escopo deve verificar aba ativa, visibilidade do card e contexto da URL/hash.
 5. Nenhum bloco de Sessões pode aparecer no fim da aba Entidade ou fora do card correto do subprocesso.
-<!-- APPVERBO_SESSOES_SCOPE_GUARD_V11_END -->
+<!-- APPGENESIS_SESSOES_SCOPE_GUARD_V11_END -->
 
-<!-- APPVERBO_SESSOES_SCOPE_CORRETO_V12_START -->
+<!-- APPGENESIS_SESSOES_SCOPE_CORRETO_V12_START -->
 ## Regra correta de escopo da aba Sessões
 
 O botão **Criar sessão** pertence ao subprocesso/aba **Sessões** e deve aparecer sempre dentro dessa aba.
@@ -765,9 +765,9 @@ Regras:
 4. O card **Sessões inativas** também pertence somente ao subprocesso **Sessões**.
 5. A validação deve considerar o botão/tab ativo pelo texto **Sessões**, classes de estado ativo e visibilidade real do card de sessões.
 6. Não usar apenas URL/hash como critério, porque a URL pode manter hash de outro card mesmo com a aba Sessões ativa.
-<!-- APPVERBO_SESSOES_SCOPE_CORRETO_V12_END -->
+<!-- APPGENESIS_SESSOES_SCOPE_CORRETO_V12_END -->
 
-<!-- APPVERBO_SESSOES_RELOAD_ON_RETURN_V13_START -->
+<!-- APPGENESIS_SESSOES_RELOAD_ON_RETURN_V13_START -->
 ## Regra para retorno à aba Sessões
 
 Na área administrativa, ao navegar entre as abas do subprocesso e voltar para **Sessões**:
@@ -778,9 +778,9 @@ Na área administrativa, ao navegar entre as abas do subprocesso e voltar para *
 4. Blocos de Sessões continuam proibidos fora da aba **Sessões**.
 5. Ao sair para **Entidade**, **Utilizador** ou **Menu**, qualquer bloco órfão de Sessões deve ser removido.
 6. Ao retornar para **Sessões**, a montagem da aba deve ser executada novamente mesmo sem reload da página.
-<!-- APPVERBO_SESSOES_RELOAD_ON_RETURN_V13_END -->
+<!-- APPGENESIS_SESSOES_RELOAD_ON_RETURN_V13_END -->
 
-<!-- APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_START -->
+<!-- APPGENESIS_SESSOES_RECREATE_CREATE_CARD_V14_START -->
 ## Regra de recriação do card Criar sessão
 
 Na aba **Sessões**, o card **Criar sessão** deve ser resiliente à navegação entre abas.
@@ -792,9 +792,9 @@ Na aba **Sessões**, o card **Criar sessão** deve ser resiliente à navegação
 5. A detecção de aba ativa deve usar o botão/tab ativo pelo texto **Sessões** e a visibilidade real do card de sessões.
 6. A URL/hash não deve ser usada como único critério, pois pode continuar apontando para outro card.
 7. O card deve continuar permitindo criar com os campos: Nome da sessão, Sistema e Estado.
-<!-- APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END -->
+<!-- APPGENESIS_SESSOES_RECREATE_CREATE_CARD_V14_END -->
 
-<!-- APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START -->
+<!-- APPGENESIS_SESSOES_INATIVAS_CARD_FORA_V15_START -->
 ## Regra visual para Sessões inativas
 
 Na aba **Sessões**, a área **Sessões inativas** deve ficar sempre em card/bloco próprio, separado abaixo do card **Sessões do sidebar**.
@@ -806,9 +806,9 @@ Regras:
 3. Quando não houver sessões inativas, o card deve permanecer visível com a mensagem **Sem sessões inativas.**
 4. O bloco de inativas não pode ficar dentro do mesmo card visual das sessões ativas.
 5. Ao retornar para a aba **Sessões**, a separação em cards deve ser reaplicada automaticamente.
-<!-- APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END -->
+<!-- APPGENESIS_SESSOES_INATIVAS_CARD_FORA_V15_END -->
 
-<!-- APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START -->
+<!-- APPGENESIS_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START -->
 ## Regra do subprocesso Sessões igual ao fluxo da Entidade
 
 Na aba **Sessões**, a ação **Editar** deve seguir o mesmo padrão funcional da aba **Entidade**.
@@ -827,9 +827,9 @@ Regras:
 7. O botão **Criar sessão** continua pertencendo ao bloco superior da aba **Sessões**.
 8. O bloco **Sessões inativas** deve permanecer separado abaixo, como card próprio.
 9. A chave técnica da sessão deve ser preservada na edição.
-<!-- APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END -->
+<!-- APPGENESIS_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END -->
 
-<!-- APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START -->
+<!-- APPGENESIS_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START -->
 ## Regra para editar Sessões sem saltar para Menu
 
 Na aba **Sessões**, a ação **Editar** deve permanecer sempre no subprocesso **Sessões**.
@@ -842,9 +842,9 @@ Regras:
 4. O botão **Cancelar** deve remover apenas `sidebar_section_edit_key` e retornar para a própria aba Sessões.
 5. Após **Guardar**, o backend deve redirecionar para a URL de retorno enviada pelo formulário, preservando a aba Sessões.
 6. A edição deve abrir o bloco superior como **Editar sessão**, com Nome da sessão, Sistema e Estado preenchidos.
-<!-- APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END -->
+<!-- APPGENESIS_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END -->
 
-<!-- APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_START -->
+<!-- APPGENESIS_SESSOES_PADRAO_ENTIDADE_V18_START -->
 ## Regra definitiva do subprocesso Sessões no padrão Entidade
 
 O subprocesso **Sessões** deve seguir o mesmo padrão funcional do subprocesso **Entidade**.
@@ -864,9 +864,9 @@ Regras:
 8. O endpoint dedicado deve gravar somente a sessão criada/editada, preservando as demais sessões existentes.
 9. Não usar `settings_edit_key`, `settings_action` ou `settings_tab` para editar Sessões, pois esses parâmetros pertencem ao fluxo do subprocesso Menu.
 10. A listagem de ativos e o card de **Sessões inativas** continuam separados.
-<!-- APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_END -->
+<!-- APPGENESIS_SESSOES_PADRAO_ENTIDADE_V18_END -->
 
-<!-- APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_START -->
+<!-- APPGENESIS_SESSOES_PERSISTIR_ESTADO_V19_START -->
 ## Regra para persistência do Estado em Sessões
 
 Na aba **Sessões**, quando o campo **Estado** for alterado em modo criação ou edição:
@@ -878,9 +878,9 @@ Na aba **Sessões**, quando o campo **Estado** for alterado em modo criação ou
 5. O endpoint dedicado de Sessões deve ser único para `/settings/menu/sidebar-section-save`.
 6. A gravação não pode cair no fluxo antigo em lote nem no fluxo do subprocesso Menu.
 7. A sessão editada deve preservar a chave técnica original.
-<!-- APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_END -->
+<!-- APPGENESIS_SESSOES_PERSISTIR_ESTADO_V19_END -->
 
-<!-- APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_START -->
+<!-- APPGENESIS_SESSOES_INATIVAS_RENDER_BD_V20_START -->
 ## Regra para renderização das Sessões inativas a partir do BD
 
 Na aba **Sessões**:
@@ -892,9 +892,9 @@ Na aba **Sessões**:
 5. O card deve permanecer visível mesmo quando não houver inativas, mostrando **Sem sessões inativas.**
 6. O botão **Editar** dentro do card de inativas deve continuar usando o fluxo padrão Entidade da aba Sessões.
 7. O card **Sessões inativas** não pode aparecer fora da aba **Sessões**.
-<!-- APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_END -->
+<!-- APPGENESIS_SESSOES_INATIVAS_RENDER_BD_V20_END -->
 
-<!-- APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START -->
+<!-- APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START -->
 ## Regra para não contaminar Sessões com contexto da Entidade
 
 Na aba **Sessões**:
@@ -906,13 +906,13 @@ Na aba **Sessões**:
    - `settings_action`;
    - `settings_tab`;
    - `sidebar_section_return_url`;
-   - `appverbo_after_save`.
+   - `appgenesis_after_save`.
 3. O backend de `/settings/menu/sidebar-section-save` também não pode preservar `dynamic_process_section` no redirect.
 4. O card **Sessões inativas** deve ser renderizado pelo BD sempre que `admin_tab=sessoes` ou `sidebar_sections_tab=sessoes`.
 5. Uma sessão com `status=inativo` ou `is_active=false` deve aparecer no card **Sessões inativas**.
-<!-- APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END -->
+<!-- APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END -->
 
-<!-- APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START -->
+<!-- APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START -->
 ## Regra definitiva para Sessões no padrão Entidade
 
 A aba **Sessões** deve tratar itens **Ativos** e **Inativos** no mesmo padrão do subprocesso **Entidade**.
@@ -933,9 +933,9 @@ Regras:
 8. O card **Sessões inativas** deve existir mesmo vazio, mostrando **Sem sessões inativas.**
 9. A ação **Editar** deve permanecer no fluxo dedicado de Sessões, com `sidebar_section_edit_key`, sem usar parâmetros do subprocesso Menu.
 10. O backend de gravação não deve preservar `dynamic_process_section`, `settings_edit_key`, `settings_action` ou `settings_tab`.
-<!-- APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END -->
+<!-- APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END -->
 
-<!-- APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_START -->
+<!-- APPGENESIS_SESSOES_CONTROLADOR_UNICO_V23_START -->
 ## Regra definitiva para Sessões sem piscar
 
 A aba **Sessões** deve ter apenas um controlador visual ativo.
@@ -952,9 +952,9 @@ Regras:
 8. O card **Sessões inativas** deve permanecer visível mesmo vazio.
 9. Os blocos antigos V15, V18, V20, V21 e V22 não podem continuar a observar/mexer no DOM.
 10. A ação **Editar** deve usar `sidebar_section_edit_key`, sem `dynamic_process_section`.
-<!-- APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_END -->
+<!-- APPGENESIS_SESSOES_CONTROLADOR_UNICO_V23_END -->
 
-<!-- APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START -->
+<!-- APPGENESIS_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START -->
 ## Regra para ações visíveis nas Sessões inativas
 
 Na aba **Sessões**:
@@ -967,9 +967,9 @@ Na aba **Sessões**:
 4. As ações de inativas devem usar o mesmo padrão visual das ações de ativas.
 5. O botão **Editar** de uma sessão inativa deve continuar usando `sidebar_section_edit_key`.
 6. Não usar `dynamic_process_section` nas ações da aba Sessões.
-<!-- APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END -->
+<!-- APPGENESIS_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END -->
 
-<!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START -->
+<!-- APPGENESIS_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START -->
 ## Regra definitiva: Sessões igual ao subprocesso Entidade
 
 A aba **Sessões** deve seguir o mesmo procedimento do subprocesso **Entidade**.
@@ -995,9 +995,9 @@ Fluxo obrigatório:
    - card **Sessões inativas**.
 9. JavaScript não pode reconstruir listas nem formulários de Sessões.
 10. JavaScript só pode atuar em comportamento auxiliar, como visualizar detalhes ou controlar visibilidade da aba.
-<!-- APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END -->
+<!-- APPGENESIS_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END -->
 
-<!-- APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START -->
+<!-- APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_START -->
 ## Correção do split backend das Sessões
 
 Na aba **Sessões**, as listas devem ser separadas no backend antes do template.
@@ -1015,9 +1015,9 @@ Regras:
 4. O template não deve depender de JavaScript para reconstruir as linhas.
 5. O card **Sessões do sidebar** deve mostrar todas as sessões ativas.
 6. O card **Sessões inativas** deve mostrar apenas as sessões inativas.
-<!-- APPVERBO_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END -->
+<!-- APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END -->
 
-<!-- APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_START -->
+<!-- APPGENESIS_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_START -->
 ## Regra de persistência visual do card Criar sessão
 
 Na aba **Sessões**:
@@ -1031,9 +1031,9 @@ Na aba **Sessões**:
 4. O card de criação não deve depender de reconstrução por JavaScript.
 5. O JavaScript só pode controlar visibilidade, sem recriar listas, formulários ou linhas.
 6. Não usar `MutationObserver` para este comportamento.
-<!-- APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_END -->
+<!-- APPGENESIS_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_END -->
 
-<!-- APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START -->
+<!-- APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START -->
 ## Regra definitiva: Sessões no fluxo nativo igual ao subprocesso Entidade
 
 A aba **Sessões** deve seguir o mesmo padrão de renderização da aba **Entidade**.
@@ -1053,19 +1053,19 @@ Regras obrigatórias:
 8. As listas de sessões ativas e inativas devem ser renderizadas pelo template com dados do backend.
 9. A ação **Editar** deve navegar com `sidebar_section_edit_key`, igual ao fluxo da Entidade com `entity_edit_id`.
 10. Não usar `MutationObserver` no subprocesso Sessões.
-<!-- APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END -->
+<!-- APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END -->
 
-<!-- APPVERBO_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->
+<!-- APPGENESIS_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->
 ## Motor reutilizável de subprocessos administrativos
 
 A partir desta configuração, todo subprocesso administrativo deve seguir o contrato comum `AdminSubprocess`.
 
 Arquivos principais:
 
-- `appverbo/admin_subprocesses/models.py`
-- `appverbo/admin_subprocesses/registry.py`
-- `appverbo/admin_subprocesses/service.py`
-- `appverbo/admin_subprocesses/repositories/base.py`
+- `appgenesis/admin_subprocesses/models.py`
+- `appgenesis/admin_subprocesses/registry.py`
+- `appgenesis/admin_subprocesses/service.py`
+- `appgenesis/admin_subprocesses/repositories/base.py`
 - `templates/macros/admin_subprocess.html`
 - `static/css/modules/admin_subprocesses_v1.css`
 - `static/js/modules/admin_subprocesses_v1.js`
@@ -1087,9 +1087,9 @@ Regras obrigatórias:
 7. JavaScript não renderiza listas, formulários ou cards.
 8. JavaScript só pode executar ações auxiliares.
 9. Novos subprocessos devem ser criados adicionando uma configuração no registry e, quando necessário, um repository.
-<!-- APPVERBO_ADMIN_SUBPROCESS_CONFIG_BASE_V1_END -->
+<!-- APPGENESIS_ADMIN_SUBPROCESS_CONFIG_BASE_V1_END -->
 
-<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_START -->
+<!-- APPGENESIS_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_START -->
 ## Ordem definitiva da aba Sessões
 
 Na aba **Sessões**, a ordem visual correta é:
@@ -1103,9 +1103,9 @@ Na aba **Sessões**, a ordem visual correta é:
    - `admin-sidebar-sections-inactive-card`;
    - classes `appgenesis-sessoes-*`;
 5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
-<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_END -->
+<!-- APPGENESIS_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V4_END -->
 
-<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
+<!-- APPGENESIS_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_START -->
 ## Ordem definitiva da aba Sessões
 
 Na aba **Sessões**, a ordem visual correta é:
@@ -1119,9 +1119,9 @@ Na aba **Sessões**, a ordem visual correta é:
    - `admin-sidebar-sections-inactive-card`;
    - classes `appgenesis-sessoes-*`;
 5. A renderização de Sessões deve depender de `admin_tab == "sessoes"` e `admin_subprocess_state`.
-<!-- APPVERBO_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
+<!-- APPGENESIS_CORRIGIR_ORDEM_ABAS_SESSOES_ADMIN_SUBPROCESS_V5_END -->
 
-<!-- APPVERBO_UNIFIED_SUBMENU_TABS_V1_START -->
+<!-- APPGENESIS_UNIFIED_SUBMENU_TABS_V1_START -->
 ## Regra definitiva: Abas e Cards Orientados pelo Backend
 
 Todo processo ou menu que possui abas superiores deve seguir obrigatoriamente a arquitetura unificada orientada pelo backend:
@@ -1131,9 +1131,9 @@ Todo processo ou menu que possui abas superiores deve seguir obrigatoriamente a 
 3. A visibilidade inicial dos cards e tabelas na primeira pintura (first paint) deve ser definida pelo backend usando o atributo `style="display: none;"` baseado no parâmetro `initial_menu_target`.
 4. Os cards dinâmicos do processo (`#dynamic-process-card`, `#dynamic-process-active-card`, `#dynamic-process-inactive-card`) e os cards nativos do subprocesso só devem ser exibidos se fizerem parte da aba atualmente ativa.
 5. Após ações de guardar ou eliminar dados de processos dinâmicos ou nativos, o redirecionamento pós-save deve conter os parâmetros corretos (`menu`, `target`, `dynamic_process_section`) para retornar o utilizador à aba exata em que se encontrava, preservando a coerência visual e evitando dupla navegação.
-<!-- APPVERBO_UNIFIED_SUBMENU_TABS_V1_END -->
+<!-- APPGENESIS_UNIFIED_SUBMENU_TABS_V1_END -->
 
-<!-- APPVERBO_SUBPROCESS_GROUP_VISIBILITY_V1_START -->
+<!-- APPGENESIS_SUBPROCESS_GROUP_VISIBILITY_V1_START -->
 ## Regra definitiva: Agrupamento de Cards de Subprocesso Nativo
 
 Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter os seus cards (formulário, tabela ativa, tabela inativa) tratados como **grupo** pelo JavaScript:
@@ -1155,7 +1155,7 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 | Subprocesso (config key) | `default_target` | `menu_scope` | `menuConfig` key |
 |---|---|---|---|
 | `sessoes` | `admin-sidebar-sections-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
-| `perfil_de_autorizacao` | `auth-profile-card` | `perfil_de_autorizacao` | inicializado por APPVERBO_AUTH_PROFILE_MENUCONFIG_INIT_V1 |
+| `perfil_de_autorizacao` | `auth-profile-card` | `perfil_de_autorizacao` | inicializado por APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1 |
 | `objeto_de_autorizacao` | `auth-objeto-card` | `perfil_de_autorizacao` | partilhado com `perfil_de_autorizacao` (mesma entrada no menuConfig, aba diferente) |
 | `menu` | `menu-subprocess-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
 | `entidade` | `create-entity-card` | `administrativo` | `administrativo` (via sidebarMenuSettings) |
@@ -1166,9 +1166,9 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 - Apontar a aba principal para `*-active-card` ou `*-inactive-card` (reservados para as tabelas).
 - Usar `_build_*_return_url` para forçar o redirect para `*-active-card` quando o `default_target` é suficiente.
 - Criar patches visuais específicos por processo quando a regra de agrupamento padrão resolve.
-<!-- APPVERBO_SUBPROCESS_GROUP_VISIBILITY_V1_END -->
+<!-- APPGENESIS_SUBPROCESS_GROUP_VISIBILITY_V1_END -->
 
-<!-- APPVERBO_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_START -->
+<!-- APPGENESIS_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_START -->
 ## Regra global: validações UI e fonte única de campos configuráveis
 
 Sempre que uma validação ou mensagem de erro precisar ser mostrada na UI do AppGenesis:
@@ -1189,9 +1189,9 @@ Sempre que uma área depender de “campos disponíveis” derivados de “Campo
    - renderização final do processo.
 3. Depois de criar, editar, remover ou reordenar um campo adicional, os consumidores dependentes devem reconstruir as opções a partir do resolver partilhado.
 4. A correção deve ser reutilizável para processos atuais e futuros, sem branch específica por menu.
-<!-- APPVERBO_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_END -->
+<!-- APPGENESIS_UI_DIALOG_AND_FIELD_SOURCE_RULE_V1_END -->
 
-<!-- APPVERBO_DYNAMIC_RENDER_FIELDS_RULE_V1_START -->
+<!-- APPGENESIS_DYNAMIC_RENDER_FIELDS_RULE_V1_START -->
 ## Regra para renderização de campos dinâmicos configurados
 
 Nos processos dinâmicos e subprocessos admin que renderizam campos vindos de configuração:
@@ -1213,4 +1213,4 @@ Nos processos dinâmicos e subprocessos admin que renderizam campos vindos de co
 5. É proibido fazer fallback para `input text` quando o campo está configurado como lista.
 6. Listas manuais e automáticas devem usar resolver reutilizável central, sem hardcode por processo ou por campo.
 7. Se a definição completa do campo existir em `Campos adicionais`, o renderer deve respeitá-la antes de qualquer fallback legado.
-<!-- APPVERBO_DYNAMIC_RENDER_FIELDS_RULE_V1_END -->
+<!-- APPGENESIS_DYNAMIC_RENDER_FIELDS_RULE_V1_END -->

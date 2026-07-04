@@ -1,11 +1,11 @@
-(function initAppVerboFlickerDebugV1() {
+(function initAppGenesisFlickerDebugV1() {
   "use strict";
 
   //###################################################################################
   // (1) GUARDAS E ESTADO
   //###################################################################################
 
-  if (window.__appverboFlickerDebugV1 === true) {
+  if (window.__appgenesisFlickerDebugV1 === true) {
     return;
   }
 
@@ -21,9 +21,9 @@
     return;
   }
 
-  window.__appverboFlickerDebugV1 = true;
+  window.__appgenesisFlickerDebugV1 = true;
 
-  const DEBUG_PREFIX_V1 = "[APPVERBO FLICKER DEBUG]";
+  const DEBUG_PREFIX_V1 = "[APPGENESIS FLICKER DEBUG]";
   const debugStartedAtV1 = (
     typeof window.performance !== "undefined" &&
     typeof window.performance.now === "function"

@@ -318,7 +318,7 @@ def _build_error_context(
         "initial_profile_section": "",
         "requested_profile_section": "",
         "requested_dynamic_process_section": "",
-        "appverbo_after_save": False,
+        "appgenesis_after_save": False,
         "admin_tab": "utilizador",
         **page_data,
     }
@@ -369,7 +369,7 @@ def execute_create_user(
     form_data = dict(payload.form_data)
     selected_entity = None
 
-    # APPVERBO_ENTITY_SCOPE_RESOLUTION_V1_START
+    # APPGENESIS_ENTITY_SCOPE_RESOLUTION_V1_START
     # A entidade do novo utilizador depende das permissões ativas do utilizador logado:
     # - can_manage_all_entities → escolhe qualquer entidade ativa no dropdown
     # - restantes → ficam restritos à entidade ativa do próprio ator
@@ -428,7 +428,7 @@ def execute_create_user(
             if selected_entity.entity_number is not None
             else ""
         )
-    # APPVERBO_ENTITY_SCOPE_RESOLUTION_V1_END
+    # APPGENESIS_ENTITY_SCOPE_RESOLUTION_V1_END
 
     existing_member: Member | None = None
     existing_user_row: Any | None = None

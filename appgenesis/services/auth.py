@@ -177,7 +177,7 @@ def send_user_invite_email(
     return True, ""
 
 
-# APPVERBO_PASSWORD_RESET_FLOW_V1_START
+# APPGENESIS_PASSWORD_RESET_FLOW_V1_START
 PASSWORD_RESET_TTL_SECONDS = 2 * 60 * 60
 
 
@@ -332,7 +332,7 @@ def send_password_reset_email(
         return False, f"Falha ao enviar email de redefinicao: {exc!s}"
 
     return True, ""
-# APPVERBO_PASSWORD_RESET_FLOW_V1_END
+# APPGENESIS_PASSWORD_RESET_FLOW_V1_END
 
 def get_signup_defaults() -> dict[str, str]:
     return {

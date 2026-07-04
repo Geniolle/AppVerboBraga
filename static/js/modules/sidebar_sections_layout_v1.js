@@ -1,4 +1,4 @@
-// APPVERBO_LEGACY_SESSOES_GUARD_V31_START
+// APPGENESIS_LEGACY_SESSOES_GUARD_V31_START
 // Guard único que detecta renderização nativa de Sessões (admin_subprocess "sessoes").
 // Todos os blocos legados que injetam/criam conteúdo devem verificar esta função antes de correr.
 // Seletores: [data-admin-subprocess="sessoes"] é o atributo definido pelo macro render_admin_subprocess_state.
@@ -11,7 +11,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     document.querySelector("#admin-sidebar-sections-card[data-appgenesis-native-render='1']")
   );
 }
-// APPVERBO_LEGACY_SESSOES_GUARD_V31_END
+// APPGENESIS_LEGACY_SESSOES_GUARD_V31_END
 
 (function () {
   "use strict";
@@ -59,7 +59,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
     marcarBotaoCancelarGlobalSessoesV1(botao);
     botao.dataset.appgenesisCancelReactionBoundV1 = "1";
 
-    root.addEventListener("appverbo:cancelled", function (event) {
+    root.addEventListener("appgenesis:cancelled", function (event) {
       const detail = event && event.detail ? event.detail : {};
 
       if (detail.trigger !== botao) {
@@ -166,7 +166,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
 
 
   //###################################################################################
-  // APPVERBO_SESSOES_SERVER_RENDER_GUARD_V32
+  // APPGENESIS_SESSOES_SERVER_RENDER_GUARD_V32
   //###################################################################################
 
   function existeServerRenderSessoes_v32() {
@@ -633,7 +633,7 @@ tituloBloco.appendChild(descricao);
     return wrapper;
   }
 
-  // APPVERBO_SESSOES_BOTOES_V3_START
+  // APPGENESIS_SESSOES_BOTOES_V3_START
   function removerBotaoVoltarListaSessoes_v3(card) {
     if (!card) {
       return;
@@ -649,9 +649,9 @@ tituloBloco.appendChild(descricao);
       }
     });
   }
-  // APPVERBO_SESSOES_BOTOES_V3_END
+  // APPGENESIS_SESSOES_BOTOES_V3_END
 
-  // APPVERBO_CREATE_ENTRY_BLOCK_SESSOES_V1_START
+  // APPGENESIS_CREATE_ENTRY_BLOCK_SESSOES_V1_START
   function criarChaveUnicaSessoesCreateBlock_v1(tbody, nomeSessao, linhaAtual) {
     const baseKey = criarChaveSessoesLayout_v2(nomeSessao) || "nova_sessao";
     const keysExistentes = new Set();
@@ -872,11 +872,11 @@ tituloBloco.appendChild(descricao);
       }
     });
   }
-  // APPVERBO_CREATE_ENTRY_BLOCK_SESSOES_V1_END
+  // APPGENESIS_CREATE_ENTRY_BLOCK_SESSOES_V1_END
 
-  // APPVERBO_SESSOES_CREATE_CARD_SEPARADO_V3_START
+  // APPGENESIS_SESSOES_CREATE_CARD_SEPARADO_V3_START
   function obterOuCriarCardCriacaoSessoes_v3(cardLista) {
-    // APPVERBO_GUARD_OBTER_CARD_CRIACAO_SESSOES_V32
+    // APPGENESIS_GUARD_OBTER_CARD_CRIACAO_SESSOES_V32
     if (typeof existeServerRenderSessoes_v32 === "function" && existeServerRenderSessoes_v32()) {
       return null;
     }
@@ -900,7 +900,7 @@ if (!cardLista || !cardLista.parentElement) {
   }
 
   function moverBlocoCriacaoParaCardSeparadoSessoes_v3(cardLista, wrapper) {
-    // APPVERBO_GUARD_MOVER_CARD_CRIACAO_SESSOES_V32
+    // APPGENESIS_GUARD_MOVER_CARD_CRIACAO_SESSOES_V32
     if (typeof existeServerRenderSessoes_v32 === "function" && existeServerRenderSessoes_v32()) {
       return;
     }
@@ -933,9 +933,9 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       }
     });
   }
-  // APPVERBO_SESSOES_CREATE_CARD_SEPARADO_V3_END
+  // APPGENESIS_SESSOES_CREATE_CARD_SEPARADO_V3_END
 
-  // APPVERBO_SESSOES_CREATE_FIELDS_BD_V4_START
+  // APPGENESIS_SESSOES_CREATE_FIELDS_BD_V4_START
   function obterLabelVisibilidadeSessoesCreate_v5(valor) {
     const cleanValor = normalizarTextoSessoesLayout_v2(valor);
 
@@ -1257,7 +1257,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       }
     });
   }
-  // APPVERBO_SESSOES_CREATE_FIELDS_BD_V4_END
+  // APPGENESIS_SESSOES_CREATE_FIELDS_BD_V4_END
 
   //###################################################################################
   // (6) INSTALAR LAYOUT
@@ -1321,7 +1321,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
   }
 })();
 
-// APPVERBO_SESSOES_REIDRATAR_LISTA_BD_V6_START
+// APPGENESIS_SESSOES_REIDRATAR_LISTA_BD_V6_START
 (function () {
   "use strict";
 
@@ -1396,7 +1396,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       const parsed = JSON.parse(script.textContent || "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      console.warn("APPVERBO V6: não foi possível ler sessões do template.", error);
+      console.warn("APPGENESIS V6: não foi possível ler sessões do template.", error);
       return [];
     }
   }
@@ -1417,7 +1417,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       });
 
       if (!response.ok) {
-        console.warn("APPVERBO V6: endpoint de sessões respondeu com erro.", response.status);
+        console.warn("APPGENESIS V6: endpoint de sessões respondeu com erro.", response.status);
         return [];
       }
 
@@ -1427,7 +1427,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
         return payload.sections;
       }
     } catch (error) {
-      console.warn("APPVERBO V6: falha ao consultar sessões do BD.", error);
+      console.warn("APPGENESIS V6: falha ao consultar sessões do BD.", error);
     }
 
     return [];
@@ -1476,7 +1476,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     return botao;
   }
 
-  // APPVERBO_SESSOES_EDIT_INLINE_V8_START
+  // APPGENESIS_SESSOES_EDIT_INLINE_V8_START
   function criarSelectSistemaSessoesV8(valorAtual) {
     const select = document.createElement("select");
     select.className = "appgenesis-sidebar-section-edit-select-v8";
@@ -1560,8 +1560,8 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     atualizarEstadoBotoesSessoesV6(tbody);
 
     const tabela = linha.closest("table");
-    if (tabela && window.AppVerboProcessShell && typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
-      window.AppVerboProcessShell.enhanceTableActionMenus({ root: tabela, actionsSelector: ".table-actions" });
+    if (tabela && window.AppGenesisProcessShell && typeof window.AppGenesisProcessShell.enhanceTableActionMenus === "function") {
+      window.AppGenesisProcessShell.enhanceTableActionMenus({ root: tabela, actionsSelector: ".table-actions" });
     }
   }
 
@@ -1729,7 +1729,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     nomeInput.select();
   }
 
-  // APPVERBO_SESSOES_EDIT_INLINE_V8_END
+  // APPGENESIS_SESSOES_EDIT_INLINE_V8_END
 
   function criarLinhaSessoesV6(sessao) {
     const tr = document.createElement("tr");
@@ -1918,13 +1918,13 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
 
     atualizarEstadoBotoesSessoesV6(tbody);
 
-    if (window.AppVerboProcessShell && typeof window.AppVerboProcessShell.enhanceTableActionMenus === "function") {
-      window.AppVerboProcessShell.enhanceTableActionMenus({ root: table, actionsSelector: ".table-actions" });
+    if (window.AppGenesisProcessShell && typeof window.AppGenesisProcessShell.enhanceTableActionMenus === "function") {
+      window.AppGenesisProcessShell.enhanceTableActionMenus({ root: table, actionsSelector: ".table-actions" });
     }
 
     // Delegação document-level para clicks dentro do popup (após Process Shell fechar e devolver o popup à linha)
-    if (!window.__appverboSessoesV6DocClickInstalled) {
-      window.__appverboSessoesV6DocClickInstalled = true;
+    if (!window.__appgenesisSessoesV6DocClickInstalled) {
+      window.__appgenesisSessoesV6DocClickInstalled = true;
       document.addEventListener("click", function (event) {
         const botao = event.target.closest("[data-sidebar-section-action-v6]");
         if (!botao) {
@@ -2158,7 +2158,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     const sessoes = sessoesRaw.map(normalizarSessaoSessoesV6).filter(Boolean);
 
     if (!sessoes.length) {
-      console.warn("APPVERBO V6: nenhuma sessão retornada do BD/template.");
+      console.warn("APPGENESIS V6: nenhuma sessão retornada do BD/template.");
       return;
     }
 
@@ -2228,9 +2228,9 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     iniciarReidratacaoSessoesV6();
   }
 })();
-// APPVERBO_SESSOES_REIDRATAR_LISTA_BD_V6_END
+// APPGENESIS_SESSOES_REIDRATAR_LISTA_BD_V6_END
 
-// APPVERBO_SESSOES_ESTADO_BLOCOS_V9_START
+// APPGENESIS_SESSOES_ESTADO_BLOCOS_V9_START
 (function () {
   "use strict";
 
@@ -2308,7 +2308,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       const parsed = JSON.parse(script.textContent || "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      console.warn("APPVERBO V9: não foi possível ler sessões do template.", error);
+      console.warn("APPGENESIS V9: não foi possível ler sessões do template.", error);
       return [];
     }
   }
@@ -2338,7 +2338,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
         return payload.sections;
       }
     } catch (error) {
-      console.warn("APPVERBO V9: falha ao carregar sessões do BD.", error);
+      console.warn("APPGENESIS V9: falha ao carregar sessões do BD.", error);
     }
 
     return [];
@@ -3083,10 +3083,10 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     iniciarSessoesEstadoV9();
   }
 })();
-// APPVERBO_SESSOES_ESTADO_BLOCOS_V9_END
+// APPGENESIS_SESSOES_ESTADO_BLOCOS_V9_END
 
 
-// APPVERBO_SESSOES_SCOPE_CORRETO_V12_START
+// APPGENESIS_SESSOES_SCOPE_CORRETO_V12_START
 (function () {
   "use strict";
 
@@ -3334,34 +3334,34 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     instalarScopeCorretoSessoesV12();
   }
 })();
-// APPVERBO_SESSOES_SCOPE_CORRETO_V12_END
+// APPGENESIS_SESSOES_SCOPE_CORRETO_V12_END
 
-// APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_START
+// APPGENESIS_SESSOES_RECREATE_CREATE_CARD_V14_START
 // Desativado pela refatoração V18.
 // Motivo: V18 controla o card Criar/Editar sessão no padrão Entidade.
-// APPVERBO_SESSOES_RECREATE_CREATE_CARD_V14_END
+// APPGENESIS_SESSOES_RECREATE_CREATE_CARD_V14_END
 
-// APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_START
+// APPGENESIS_SESSOES_INATIVAS_CARD_FORA_V15_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: renderizava card antigo por JS.
-// APPVERBO_SESSOES_INATIVAS_CARD_FORA_V15_END
+// APPGENESIS_SESSOES_INATIVAS_CARD_FORA_V15_END
 
-// APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START
+// APPGENESIS_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_START
 // Desativado pela refatoração V18.
 // Motivo: V16 criava conflito de URL com o subprocesso Menu.
-// APPVERBO_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END
+// APPGENESIS_SESSOES_FLUXO_IGUAL_ENTIDADE_V16_END
 
-// APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START
+// APPGENESIS_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_START
 // Desativado pela refatoração V18.
 // Motivo: V17 era apenas interceptador; V18 passa a ser o controlador único do fluxo.
-// APPVERBO_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END
+// APPGENESIS_SESSOES_EDITAR_NAO_SALTAR_MENU_V17_END
 
-// APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_START
+// APPGENESIS_SESSOES_PADRAO_ENTIDADE_V18_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: controlava fluxo visual antigo.
-// APPVERBO_SESSOES_PADRAO_ENTIDADE_V18_END
+// APPGENESIS_SESSOES_PADRAO_ENTIDADE_V18_END
 
-// APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_START
+// APPGENESIS_SESSOES_PERSISTIR_ESTADO_V19_START
 (function () {
   "use strict";
 
@@ -3458,11 +3458,11 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       return;
     }
 
-    if (window.__appverboSessoesPersistirEstadoV19 === true) {
+    if (window.__appgenesisSessoesPersistirEstadoV19 === true) {
       return;
     }
 
-    window.__appverboSessoesPersistirEstadoV19 = true;
+    window.__appgenesisSessoesPersistirEstadoV19 = true;
 
     document.addEventListener("submit", function (event) {
       prepararFormularioSessaoPersistirEstadoV19(event.target);
@@ -3488,39 +3488,39 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     instalarSubmitPersistirEstadoV19();
   }
 })();
-// APPVERBO_SESSOES_PERSISTIR_ESTADO_V19_END
+// APPGENESIS_SESSOES_PERSISTIR_ESTADO_V19_END
 
-// APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_START
+// APPGENESIS_SESSOES_INATIVAS_RENDER_BD_V20_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: recriava lista por fetch.
-// APPVERBO_SESSOES_INATIVAS_RENDER_BD_V20_END
+// APPGENESIS_SESSOES_INATIVAS_RENDER_BD_V20_END
 
-// APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START
+// APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: forçava URL/aba de Sessões.
-// APPVERBO_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END
+// APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END
 
-// APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
+// APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: reconstruía cards por JS.
-// APPVERBO_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
+// APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
-// APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_START
+// APPGENESIS_SESSOES_CONTROLADOR_UNICO_V23_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: reconstruía formulários/listas por JS.
-// APPVERBO_SESSOES_CONTROLADOR_UNICO_V23_END
+// APPGENESIS_SESSOES_CONTROLADOR_UNICO_V23_END
 
-// APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START
+// APPGENESIS_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: hidratava ações antigas.
-// APPVERBO_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END
+// APPGENESIS_SESSOES_INATIVAS_ACOES_VISIVEIS_V24_END
 
-// APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START
+// APPGENESIS_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: controlava visibilidade paralela.
-// APPVERBO_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END
+// APPGENESIS_SESSOES_SERVER_RENDER_IGUAL_ENTIDADE_V25_END
 
-// APPVERBO_SESSOES_ATIVAS_CARD_V23_START
+// APPGENESIS_SESSOES_ATIVAS_CARD_V23_START
 (function () {
   "use strict";
 
@@ -3662,7 +3662,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       };
     }
     catch (error) {
-      console.warn("APPVERBO V23: falha ao ler split backend de Sessões.", error);
+      console.warn("APPGENESIS V23: falha ao ler split backend de Sessões.", error);
       return {
         active: [],
         inactive: []
@@ -3682,7 +3682,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       return Array.isArray(parsed) ? parsed : [];
     }
     catch (error) {
-      console.warn("APPVERBO V23: falha ao ler opções de Sessões.", error);
+      console.warn("APPGENESIS V23: falha ao ler opções de Sessões.", error);
       return [];
     }
   }
@@ -3761,7 +3761,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       "settings_action",
       "settings_tab",
       "sidebar_section_return_url",
-      "appverbo_after_save",
+      "appgenesis_after_save",
       "success",
       "error"
     ].forEach((parametro) => {
@@ -3934,7 +3934,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
         }
       })
       .catch((error) => {
-        console.warn("APPVERBO V23: fallback usado para sessões ativas.", error);
+        console.warn("APPGENESIS V23: fallback usado para sessões ativas.", error);
       });
   }
 
@@ -3962,9 +3962,9 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     }
   });
 }());
-// APPVERBO_SESSOES_ATIVAS_CARD_V23_END
+// APPGENESIS_SESSOES_ATIVAS_CARD_V23_END
 
-// APPVERBO_SESSOES_APENAS_SUBPROCESSO_V25_START
+// APPGENESIS_SESSOES_APENAS_SUBPROCESSO_V25_START
 (function () {
   "use strict";
 
@@ -4086,22 +4086,22 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     window.setTimeout(aplicarVisibilidadeCardsSessoesV25, 100);
   });
 
-  window.AppVerboAplicarVisibilidadeCardsSessoesV25 = aplicarVisibilidadeCardsSessoesV25;
+  window.AppGenesisAplicarVisibilidadeCardsSessoesV25 = aplicarVisibilidadeCardsSessoesV25;
 }());
-// APPVERBO_SESSOES_APENAS_SUBPROCESSO_V25_END
+// APPGENESIS_SESSOES_APENAS_SUBPROCESSO_V25_END
 
 
-// APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_START
+// APPGENESIS_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: forçava reaparecimento por JS.
-// APPVERBO_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_END
+// APPGENESIS_SESSOES_REEXIBIR_CRIAR_AO_RETORNAR_V27_END
 
-// APPVERBO_SESSOES_CORRIGIR_V28_REMOVER_DUPLICADOS_V29_START
+// APPGENESIS_SESSOES_CORRIGIR_V28_REMOVER_DUPLICADOS_V29_START
 // Desativado pelo fluxo nativo V30.
 // Motivo: controlava visibilidade paralela.
-// APPVERBO_SESSOES_CORRIGIR_V28_REMOVER_DUPLICADOS_V29_END
+// APPGENESIS_SESSOES_CORRIGIR_V28_REMOVER_DUPLICADOS_V29_END
 
-// APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START
+// APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_START
 (function () {
   "use strict";
 
@@ -4114,11 +4114,11 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       return;
     }
 
-    if (window.__appverboSessoesVisualizarV30 === true) {
+    if (window.__appgenesisSessoesVisualizarV30 === true) {
       return;
     }
 
-    window.__appverboSessoesVisualizarV30 = true;
+    window.__appgenesisSessoesVisualizarV30 = true;
 
     document.addEventListener("click", function (event) {
       const botao = event.target.closest("[data-sessao-view-v30]");
@@ -4148,9 +4148,9 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     instalarVisualizarSessaoV30();
   }
 })();
-// APPVERBO_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END
+// APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END
 
-// APPVERBO_SESSOES_SEM_PISCAR_V26_START
+// APPGENESIS_SESSOES_SEM_PISCAR_V26_START
 (function () {
   "use strict";
 
@@ -4313,12 +4313,12 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
 
     aplicarVisibilidadeSessoesSemPiscarV26(document);
 
-    if (!observer.__appverboStartedV26) {
+    if (!observer.__appgenesisStartedV26) {
       observer.observe(document.documentElement, {
         childList: true,
         subtree: true
       });
-      observer.__appverboStartedV26 = true;
+      observer.__appgenesisStartedV26 = true;
     }
   }
 
@@ -4359,6 +4359,6 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
   });
 
   iniciarSessoesSemPiscarV26();
-  window.AppVerboAplicarVisibilidadeSessoesSemPiscarV26 = aplicarVisibilidadeSessoesSemPiscarV26;
+  window.AppGenesisAplicarVisibilidadeSessoesSemPiscarV26 = aplicarVisibilidadeSessoesSemPiscarV26;
 }());
-// APPVERBO_SESSOES_SEM_PISCAR_V26_END
+// APPGENESIS_SESSOES_SEM_PISCAR_V26_END

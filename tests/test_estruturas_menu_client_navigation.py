@@ -197,13 +197,13 @@ def test_top_menu_active_scopes_sticky_label_to_administrativo() -> None:
     estar_body_end = js_text.index("function temContextoDeEdicaoMenu_v4")
     estar_body = js_text[estar_index:estar_body_end]
 
-    assert "window.__appverboGetActiveMenuKeyV1" in estar_body
+    assert "window.__appgenesisGetActiveMenuKeyV1" in estar_body
 
 
 def test_new_user_js_exposes_active_menu_key_signal() -> None:
     js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
 
-    assert "window.__appverboGetActiveMenuKeyV1 = function () {" in js_text
+    assert "window.__appgenesisGetActiveMenuKeyV1 = function () {" in js_text
     assert "return activeMenuKey;" in js_text
 
 

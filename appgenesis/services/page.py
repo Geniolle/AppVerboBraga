@@ -47,7 +47,7 @@ from appgenesis.services.profile import (
 )
 
 
-# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_START
+# APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_START
 def _format_profile_visibility_date_v1(raw_value: Any) -> str:
     if raw_value is None:
         return ""
@@ -152,7 +152,7 @@ def _apply_meu_perfil_subsequent_visibility_v2(
         hidden_targets,
         field_header_map,
     )
-# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_END
+# APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V1_END
 
 
 def _serialize_resolved_list_option_labels_v1(
@@ -228,7 +228,7 @@ def _decorate_sidebar_list_field_options_v1(
 
 
 
-# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_START
+# APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_START
 def _normalize_subsequent_key_v2(raw_value: Any) -> str:
     return str(raw_value or "").strip().lower()
 
@@ -473,7 +473,7 @@ def _apply_meu_perfil_subsequent_visibility_v2(
         rules=rules,
         values_by_field=values_by_field,
     )
-# APPVERBO_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_END
+# APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_END
 
 
 def get_page_data(
@@ -506,7 +506,7 @@ def get_page_data(
         selected_entity_id = permissions["selected_entity_id"]
     current_user_is_admin = bool(permissions["is_admin"])
 
-    # APPVERBO_ACTOR_ENTITY_CONTEXT_V1_START
+    # APPGENESIS_ACTOR_ENTITY_CONTEXT_V1_START
     _actor_entity_id: int | None = None
     _actor_entity_name = ""
     _actor_entity_number = None
@@ -522,7 +522,7 @@ def get_page_data(
         if _can_select_user_entity:
             _entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
         _entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
-    # APPVERBO_ACTOR_ENTITY_CONTEXT_V1_END
+    # APPGENESIS_ACTOR_ENTITY_CONTEXT_V1_END
 
     current_entity_scope = ""
     if selected_entity_id is not None:
@@ -816,7 +816,7 @@ def get_page_data(
                 profile_personal_visible_fields = [next(iter(profile_personal_field_labels.keys()))]
         break
 
-    # APPVERBO_MEU_PERFIL_HEADER_TABS_ONLY_V1_START
+    # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_START
     profile_personal_sections: list[dict[str, str]] = []
     profile_personal_field_section_map: dict[str, str] = {}
     header_section_order: list[str] = []
@@ -881,7 +881,7 @@ def get_page_data(
             continue
 
         profile_personal_field_section_map[clean_field_key] = first_profile_header_key
-    # APPVERBO_MEU_PERFIL_HEADER_TABS_ONLY_V1_END
+    # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_END
 
 
     required_profile_fields = ["nome", "telefone", "email", "pais"]
@@ -914,7 +914,7 @@ def get_page_data(
             else:
                 profile_personal_visible_fields.append(required_field)
 
-    # APPVERBO_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_START
+    # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_START
     default_profile_header_section_v1 = header_section_order[0] if header_section_order else ""
 
     if "pais" not in profile_personal_field_section_map:
@@ -937,7 +937,7 @@ def get_page_data(
             "telefone",
             default_profile_header_section_v1,
         )
-    # APPVERBO_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
+    # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
 
 
     scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
@@ -1087,7 +1087,7 @@ def get_page_data(
     active_created_users = [
         row for row in created_users if is_user_account_status_active_v1(row["account_status"])
     ]
-    # APPVERBO_NON_ACTIVE_USERS_LIST_V1_START
+    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_START
     # Mostra no bloco inferior todos os utilizadores cujo estado seja diferente de Ativo.
     # Assim entram Pendente, Inativo, Bloqueado e outros estados futuros n?o ativos.
     inactive_users = [
@@ -1095,7 +1095,7 @@ def get_page_data(
         for row in all_users
         if row["account_status"] != UserAccountStatus.ACTIVE.value
     ]
-    # APPVERBO_NON_ACTIVE_USERS_LIST_V1_END
+    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_END
     recent_users = all_users[:10]
 
     account_status_map = {

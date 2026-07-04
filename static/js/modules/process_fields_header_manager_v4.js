@@ -62,7 +62,7 @@
   //###################################################################################
 
   function getBootstrap_v4() {
-    return window.__APPVERBO_BOOTSTRAP__ || {};
+    return window.__APPGENESIS_BOOTSTRAP__ || {};
   }
 
   function getCurrentSettingsMenuKey_v4(form) {

@@ -64,7 +64,7 @@ def test_build_settings_redirect_url_uses_return_url_when_available() -> None:
         return_url=(
             "/users/new?menu=sessoes&admin_tab=contas&settings_action=edit"
             "&target=settings-menu-edit-card&settings_edit_key=calendario"
-            "&settings_tab=campos-config&appverbo_after_save=1#settings-menu-edit-card"
+            "&settings_tab=campos-config&appgenesis_after_save=1#settings-menu-edit-card"
         ),
     )
 

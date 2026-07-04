@@ -100,7 +100,7 @@
     const cards = collectCards();
     const rows = cards.map(getCardSnapshotData);
     
-    console.groupCollapsed(`[APPVERBO FLICKER DEBUG] ${momento}`);
+    console.groupCollapsed(`[APPGENESIS FLICKER DEBUG] ${momento}`);
     if (rows.length > 0) {
       console.table(rows);
     } else {
@@ -132,7 +132,7 @@
       displayAfter = element.hasAttribute("hidden") ? "hidden" : "visible";
     }
     
-    console.log(`[APPVERBO FLICKER DEBUG] Sessões card changed`, {
+    console.log(`[APPGENESIS FLICKER DEBUG] Sessões card changed`, {
       timestamp,
       id,
       displayBefore,
