@@ -33,6 +33,9 @@ from appverbo.menu_settings import (
     update_sidebar_menu_process_fields,
 )
 from appverbo.services import *  # noqa: F403,F401
+from appverbo.services.auth_profile_entity_scope import (
+    build_auth_profile_entity_context_v1,
+)
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     build_menu_process_quantity_storage_key,
@@ -607,6 +610,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_scope_mode = str(
         submitted_form.get("auth_profile_visibility_scope_mode") or ""
     ).strip().lower()
+    clean_entity_scope = str(
+        submitted_form.get("auth_profile_entity_scope") or ""
+    ).strip().lower()
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -695,11 +701,18 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             )
 
         selected_entity_id = get_session_entity_id(request)
+        entity_permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+        resolved_selected_entity_id = entity_permissions.get("selected_entity_id")
         page_data = get_page_data(
             session,
             actor_user_id=current_user["id"],
             actor_login_email=current_user["login_email"],
-            selected_entity_id=selected_entity_id,
+            selected_entity_id=resolved_selected_entity_id,
         )
         visible_menu_keys = {
             str(raw_key or "").strip().lower()
@@ -729,20 +742,26 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             )
 
         entity_number = ""
-        if selected_entity_id is not None:
+        if resolved_selected_entity_id is not None:
             resolved_entity_number = session.execute(
                 select(Entity.entity_number)
-                .where(Entity.id == selected_entity_id)
+                .where(Entity.id == resolved_selected_entity_id)
                 .limit(1)
             ).scalar_one_or_none()
             if resolved_entity_number is not None:
                 entity_number = str(resolved_entity_number)
 
+        auth_profile_entity_context = build_auth_profile_entity_context_v1(
+            session,
+            selected_entity_id=resolved_selected_entity_id,
+            permissions=entity_permissions,
+        )
         auth_profile_repo = AuthorizationProfileAdminRepository(auth_profile_config)
         save_ok, save_reason, saved_key = auth_profile_repo.save_row(
             session,
             {
                 "label": clean_label,
+                "entity_scope": clean_entity_scope,
                 "visibility_scope_mode": clean_scope_mode,
                 "status": clean_status,
                 "dynamic_values": dynamic_field_values,
@@ -750,6 +769,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             context={
                 "user_id": current_user["id"],
                 "entity_number": entity_number,
+                "selected_entity_id": resolved_selected_entity_id,
+                "entity_permissions": entity_permissions,
+                "auth_profile_entity_context": auth_profile_entity_context,
             },
             edit_key=requested_edit_key if requested_mode == "edit" else "",
         )
@@ -764,6 +786,10 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 error_message = "Perfil não encontrado para edição."
             elif save_reason == "member_not_found":
                 error_message = "Membro associado ao utilizador não encontrado."
+            elif save_reason == "invalid_entity_scope":
+                error_message = (
+                    "A entidade selecionada não permite criar ou editar este perfil como global."
+                )
             return _redirect_with_profile_feedback(
                 error_message,
                 is_error=True,
@@ -881,6 +907,19 @@ async def delete_authorization_profile_subprocess(request: Request) -> RedirectR
                 is_error=True,
             )
 
+        selected_entity_id = get_session_entity_id(request)
+        entity_permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+        resolved_selected_entity_id = entity_permissions.get("selected_entity_id")
+        auth_profile_entity_context = build_auth_profile_entity_context_v1(
+            session,
+            selected_entity_id=resolved_selected_entity_id,
+            permissions=entity_permissions,
+        )
         auth_profile_config = get_admin_subprocess_config(AUTH_PROFILE_MENU_KEY)
         if auth_profile_config is None:
             return _redirect_with_profile_delete_feedback(
@@ -894,6 +933,7 @@ async def delete_authorization_profile_subprocess(request: Request) -> RedirectR
             requested_delete_key,
             context={
                 "user_id": current_user["id"],
+                "entity_number": auth_profile_entity_context.get("selected_entity_number", ""),
             },
         )
 

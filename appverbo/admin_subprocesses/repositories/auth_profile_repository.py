@@ -15,6 +15,15 @@ from appverbo.menu_settings import (
     get_sidebar_menu_settings,
 )
 from appverbo.models import Member, User
+from appverbo.services.auth_profile_entity_scope import (
+    AUTH_PROFILE_ENTITY_SCOPE_LABEL_STORAGE_KEY,
+    AUTH_PROFILE_ENTITY_SCOPE_STORAGE_KEY,
+    AUTH_PROFILE_ENTITY_SCOPE_SYSTEM,
+    build_auth_profile_entity_context_v1,
+    normalize_auth_profile_entity_scope_v1,
+    resolve_auth_profile_entity_scope_from_values_v1,
+    resolve_auth_profile_entity_scope_label_v1,
+)
 from appverbo.services.profile import (
     build_menu_process_records_storage_key,
     parse_member_profile_fields,
@@ -153,6 +162,33 @@ def _resolve_auth_profile_field_keys(session: Any) -> list[str]:
         return ordered_field_keys
 
     return []
+
+
+# ###################################################################################
+# (1) HELPERS DE FILTRO POR ENTIDADE
+# ###################################################################################
+def _row_matches_entity_context_v1(
+    row: dict[str, Any],
+    *,
+    context: dict[str, Any] | None = None,
+) -> bool:
+    safe_context = context or {}
+    current_entity_number = str(safe_context.get("entity_number") or "").strip()
+    if not current_entity_number:
+        return True
+
+    row_values = row.get("values") if isinstance(row.get("values"), dict) else {}
+    row_scope_mode = resolve_auth_profile_entity_scope_from_values_v1(row_values)
+    if row_scope_mode == AUTH_PROFILE_ENTITY_SCOPE_SYSTEM:
+        return True
+
+    stored_entity_number = str(row.get("entity_number") or "").strip()
+    if not stored_entity_number:
+        stored_entity_number = str(row_values.get(AUTH_PROFILE_ENTITY_NUMBER_KEY) or "").strip()
+    if not stored_entity_number:
+        return True
+
+    return stored_entity_number == current_entity_number
 
 
 def _resolve_menu_selection_value(
@@ -375,12 +411,14 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 row_key = f"{row_key}_{suffix}"
             seen_keys.add(row_key)
 
+            entity_scope_mode = resolve_auth_profile_entity_scope_from_values_v1(values)
             scope_mode = _normalize_scope_mode(
                 values.get(AUTH_PROFILE_SCOPE_MODE_KEY),
                 fallback=default_scope_mode,
             )
             scope_label = str(values.get(AUTH_PROFILE_SCOPE_LABEL_KEY) or "").strip() or default_scope_label
             status_value = _normalize_status(values.get(AUTH_PROFILE_STATUS_KEY))
+            entity_number = str(values.get(AUTH_PROFILE_ENTITY_NUMBER_KEY) or "").strip()
             row_values = dict(values)
             if stored_menu_key:
                 row_values[AUTH_PROFILE_MENU_VALUE_KEY] = stored_menu_key
@@ -395,6 +433,11 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                     "record_id": record_id,
                     "label": label,
                     "menu_key": stored_menu_key,
+                    "entity_scope": entity_scope_mode,
+                    "entity_scope_label": str(
+                        values.get(AUTH_PROFILE_ENTITY_SCOPE_LABEL_STORAGE_KEY) or ""
+                    ).strip() or resolve_auth_profile_entity_scope_label_v1(entity_scope_mode),
+                    "entity_number": entity_number,
                     "visibility_scope_mode": scope_mode,
                     "visibility_scope_label": scope_label or _scope_label(scope_mode),
                     "status": status_value,
@@ -417,7 +460,7 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         ) = self._load_record_bundle(session, context)
         menu_meta_by_key, menu_key_by_label_lookup = _build_sidebar_menu_lookup(session)
         profile_field_keys = _resolve_auth_profile_field_keys(session)
-        return self._build_rows(
+        rows = self._build_rows(
             existing_records,
             default_scope_mode=default_scope_mode,
             default_scope_label=default_scope_label,
@@ -425,6 +468,11 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
             menu_key_by_label_lookup=menu_key_by_label_lookup,
             profile_field_keys=profile_field_keys,
         )
+        return [
+            row
+            for row in rows
+            if _row_matches_entity_context_v1(row, context=context)
+        ]
 
     def get_for_edit(
         self,
@@ -481,13 +529,30 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         if not label:
             return False, "empty_label", ""
 
+        entity_context = dict((context or {}).get("auth_profile_entity_context") or {})
+        if not entity_context:
+            entity_context = build_auth_profile_entity_context_v1(
+                session,
+                selected_entity_id=(context or {}).get("selected_entity_id"),
+                permissions=(context or {}).get("entity_permissions"),
+            )
+        entity_scope_mode = normalize_auth_profile_entity_scope_v1(
+            payload.get("entity_scope"),
+        )
+        if entity_scope_mode not in set(entity_context.get("allowed_modes") or set()):
+            return False, "invalid_entity_scope", ""
+
         scope_mode = _normalize_scope_mode(
             payload.get("visibility_scope_mode"),
             fallback=default_scope_mode,
         )
         scope_label = _scope_label(scope_mode)
         status_value = _normalize_status(payload.get("status"))
-        entity_number = str((context or {}).get("entity_number") or "").strip()
+        entity_number = str(
+            entity_context.get("selected_entity_number")
+            or (context or {}).get("entity_number")
+            or ""
+        ).strip()
         requested_edit_key = str(edit_key or "").strip().lower()
 
         existing_rows = self._build_rows(
@@ -547,14 +612,16 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 target_values[primary_field_key] = selected_menu_key
         target_values["custom_perfil"] = label
         target_values["custom_nome_do_perfil"] = label
+        target_values[AUTH_PROFILE_ENTITY_SCOPE_STORAGE_KEY] = entity_scope_mode
+        target_values[AUTH_PROFILE_ENTITY_SCOPE_LABEL_STORAGE_KEY] = (
+            resolve_auth_profile_entity_scope_label_v1(entity_scope_mode)
+        )
         target_values[AUTH_PROFILE_SCOPE_MODE_KEY] = scope_mode
         target_values[AUTH_PROFILE_SCOPE_LABEL_KEY] = scope_label
         target_values[AUTH_PROFILE_STATUS_KEY] = status_value
-        if entity_number:
+        if entity_scope_mode != AUTH_PROFILE_ENTITY_SCOPE_SYSTEM and entity_number:
             target_values[AUTH_PROFILE_ENTITY_NUMBER_KEY] = entity_number
-        elif AUTH_PROFILE_ENTITY_NUMBER_KEY in target_values and not str(
-            target_values.get(AUTH_PROFILE_ENTITY_NUMBER_KEY) or ""
-        ).strip():
+        elif AUTH_PROFILE_ENTITY_NUMBER_KEY in target_values:
             target_values.pop(AUTH_PROFILE_ENTITY_NUMBER_KEY, None)
 
         target_record["section_key"] = str(
@@ -605,6 +672,11 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
             menu_key_by_label_lookup=menu_key_by_label_lookup,
             profile_field_keys=profile_field_keys,
         )
+        existing_rows = [
+            row
+            for row in existing_rows
+            if _row_matches_entity_context_v1(row, context=context)
+        ]
         target_row = next(
             (
                 row
