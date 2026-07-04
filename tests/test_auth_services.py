@@ -2,8 +2,10 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from starlette.requests import Request
 
 import appverbo.services.auth as auth_service
+import appverbo.services.i18n as i18n_service
 from appverbo.models import (
     Base,
     Entity,
@@ -51,6 +53,28 @@ def _build_session_factory():
         ],
     )
     return sessionmaker(bind=engine, future=True)
+
+
+def _build_request(
+    path: str = "/login",
+    query_string: str = "",
+    session: dict[str, object] | None = None,
+    cookie_header: str = "",
+) -> Request:
+    headers: list[tuple[bytes, bytes]] = []
+    if cookie_header:
+        headers.append((b"cookie", cookie_header.encode("utf-8")))
+
+    return Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": path,
+            "query_string": query_string.encode("utf-8"),
+            "headers": headers,
+            "session": session or {},
+        }
+    )
 
 
 def test_hash_password_and_verify() -> None:
@@ -113,6 +137,113 @@ def test_verify_login_password_falls_back_to_hash_when_admin_env_password_is_emp
         "SenhaErrada",
         stored_hash,
     )
+
+
+def test_resolve_request_language_prefers_query_for_anonymous_user() -> None:
+    request = _build_request(
+        query_string="lang=en",
+        session={},
+        cookie_header="appverbo_lang=fr",
+    )
+
+    resolved_language = i18n_service.resolve_request_language(request)
+
+    assert resolved_language == "en"
+    assert request.session[i18n_service.LANGUAGE_SESSION_KEY] == "en"
+
+
+def test_resolve_request_language_prefers_user_profile_for_authenticated_user(monkeypatch) -> None:
+    SessionLocal = _build_session_factory()
+    monkeypatch.setattr(i18n_service, "SessionLocal", SessionLocal)
+
+    with SessionLocal() as session:
+        member = Member(
+            full_name="Idioma Perfil",
+            primary_phone="912000000",
+            email="idioma.perfil@example.com",
+        )
+        session.add(member)
+        session.flush()
+        user = User(
+            member_id=member.id,
+            login_email="idioma.perfil@example.com",
+            password_hash=hash_password("SenhaSegura123!"),
+            account_status=UserAccountStatus.ACTIVE.value,
+            preferred_language="es",
+        )
+        session.add(user)
+        session.commit()
+
+        request = _build_request(
+            session={
+                "user_id": user.id,
+                i18n_service.LANGUAGE_SESSION_KEY: "fr",
+            },
+            cookie_header="appverbo_lang=en",
+        )
+
+        resolved_language = i18n_service.resolve_request_language(request)
+
+        assert resolved_language == "es"
+        assert request.session[i18n_service.LANGUAGE_SESSION_KEY] == "es"
+
+
+def test_resolve_request_language_invalid_profile_falls_back_to_pt(monkeypatch) -> None:
+    monkeypatch.setattr(
+        i18n_service,
+        "get_user_preferred_language_state",
+        lambda user_id: ("invalid", "pt"),
+    )
+
+    request = _build_request(
+        session={
+            "user_id": 99,
+            i18n_service.LANGUAGE_SESSION_KEY: "fr",
+        },
+        cookie_header="appverbo_lang=en",
+    )
+
+    resolved_language = i18n_service.resolve_request_language(request)
+
+    assert resolved_language == "pt"
+    assert request.session[i18n_service.LANGUAGE_SESSION_KEY] == "pt"
+
+
+def test_resolve_user_language_after_auth_persists_prelogin_selection_when_missing() -> None:
+    request = _build_request(
+        session={i18n_service.LANGUAGE_SESSION_KEY: "en"},
+        cookie_header="appverbo_lang=fr",
+    )
+    user = User(
+        member_id=1,
+        login_email="novo.idioma@example.com",
+        password_hash=hash_password("SenhaSegura123!"),
+        account_status=UserAccountStatus.ACTIVE.value,
+        preferred_language="",
+    )
+
+    resolved_language, should_persist = i18n_service.resolve_user_language_after_auth(user, request)
+
+    assert resolved_language == "en"
+    assert should_persist is True
+    assert user.preferred_language == "en"
+
+
+def test_resolve_user_language_after_auth_normalizes_invalid_value_to_pt() -> None:
+    request = _build_request(session={})
+    user = User(
+        member_id=1,
+        login_email="idioma.normalizado@example.com",
+        password_hash=hash_password("SenhaSegura123!"),
+        account_status=UserAccountStatus.ACTIVE.value,
+        preferred_language="de",
+    )
+
+    resolved_language, should_persist = i18n_service.resolve_user_language_after_auth(user, request)
+
+    assert resolved_language == "pt"
+    assert should_persist is True
+    assert user.preferred_language == "pt"
 
 
 def test_user_invite_token_roundtrip() -> None:

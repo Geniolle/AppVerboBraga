@@ -82,21 +82,20 @@ def login_v1(
 
         row = session.execute(
             select(
-                User.id,
-                User.login_email,
-                User.password_hash,
-                User.account_status,
-                User.member_id,
+                User,
                 Member.full_name,
             )
            .join(Member, Member.id == User.member_id)
            .where(func.lower(User.login_email) == clean_email)
         ).one_or_none()
 
-        if row is None or not verify_login_password_v1(
-            row.login_email,
+        user = row[0] if row is not None else None
+        user_full_name = str(row.full_name or "") if row is not None else ""
+
+        if user is None or not verify_login_password_v1(
+            user.login_email,
             clean_password,
-            row.password_hash,
+            user.password_hash,
         ):
             return render_login(
                 request,
@@ -107,17 +106,17 @@ def login_v1(
                 status_code=status.HTTP_401_UNAUTHORIZED,
             )
 
-        if row.account_status != UserAccountStatus.ACTIVE.value:
+        if user.account_status != UserAccountStatus.ACTIVE.value:
             return render_login(
                 request,
-                error=f"Conta com estado '{row.account_status}'. Contacte o administrador.",
+                error=f"Conta com estado '{user.account_status}'. Contacte o administrador.",
                 email=clean_email,
                 mode=requested_mode,
                 login_data=login_data,
                 status_code=status.HTTP_403_FORBIDDEN,
             )
 
-        current_user_is_admin = is_admin_user(session, row.id, row.login_email)
+        current_user_is_admin = is_admin_user(session, user.id, user.login_email)
         if requested_mode == "admin" and not current_user_is_admin:
             return render_login(
                 request,
@@ -132,7 +131,7 @@ def login_v1(
             linked_entity_ids_rows = session.scalars(
                 select(MemberEntity.entity_id)
                .where(
-                    MemberEntity.member_id == int(row.member_id),
+                    MemberEntity.member_id == int(user.member_id),
                     MemberEntity.status == MemberEntityStatus.ACTIVE.value,
                 )
                .order_by(MemberEntity.id.asc())
@@ -166,8 +165,8 @@ def login_v1(
 
             selected_entity_context = get_entity_context_for_user(
                 session,
-                row.id,
-                row.login_email,
+                user.id,
+                user.login_email,
                 parsed_entity_id,
             )
 
@@ -183,8 +182,8 @@ def login_v1(
         else:
             selected_entity_context = get_entity_context_for_user(
                 session,
-                row.id,
-                row.login_email,
+                user.id,
+                user.login_email,
                 None,
             )
 
@@ -198,12 +197,21 @@ def login_v1(
                     status_code=status.HTTP_403_FORBIDDEN,
                 )
 
-    request.session["user_id"] = row.id
-    request.session["user_name"] = row.full_name
-    request.session["user_email"] = row.login_email
+        response = RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
+        resolved_language, should_commit_language = persist_user_language_after_auth(
+            request,
+            response,
+            user,
+        )
+        if should_commit_language:
+            session.commit()
+
+    request.session["user_id"] = user.id
+    request.session["user_name"] = user_full_name
+    request.session["user_email"] = user.login_email
     set_session_entity_context(request, selected_entity_context)
 
-    return RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
+    return response
 
 @router.post("/signup", response_class=HTMLResponse)
 def signup(
@@ -289,6 +297,7 @@ def signup(
         )
         user.password_hash = hash_password(password)
         user.account_status = UserAccountStatus.ACTIVE.value
+        resolved_language, _ = resolve_user_language_after_auth(user, request)
 
         try:
             session.commit()
@@ -302,6 +311,9 @@ def signup(
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
+        response = RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
+        persist_user_language_selection(request, response, resolved_language)
+
         request.session["user_id"] = user.id
         request.session["user_name"] = clean_full_name
         request.session["user_email"] = clean_email
@@ -310,7 +322,7 @@ def signup(
             get_entity_context_for_user(session, user.id, user.login_email, parsed_entity_id),
         )
 
-    return RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
+    return response
 
 @router.post("/logout")
 def logout(request: Request) -> RedirectResponse:

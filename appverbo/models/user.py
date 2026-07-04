@@ -22,7 +22,12 @@ class User(Base, TimestampMixin):
     account_status: Mapped[str] = mapped_column(
         String(20), nullable=False, default=UserAccountStatus.PENDING.value
     )
-    system_type: Mapped[str] = mapped_column(String(20), nullable=False, default="default")
+    system_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="default", server_default="default"
+    )
+    preferred_language: Mapped[str] = mapped_column(
+        String(5), nullable=False, default="pt", server_default="pt"
+    )
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     created_by_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
 
@@ -33,5 +38,8 @@ class User(Base, TimestampMixin):
             "account_status IN ('pending', 'active', 'inactive', 'blocked')",
             name="ck_users_account_status",
         ),
+        CheckConstraint(
+            "preferred_language IN ('pt', 'en', 'es', 'fr')",
+            name="ck_users_preferred_language",
+        ),
     )
-
