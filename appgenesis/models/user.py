@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from appgenesis.models.base import Base, TimestampMixin
 from appgenesis.models.enums import UserAccountStatus
+
+
+def _resolve_user_profile_model_v1():
+    from appgenesis.models.profile import UserProfile
+
+    return UserProfile
 
 
 class User(Base, TimestampMixin):
@@ -32,6 +38,10 @@ class User(Base, TimestampMixin):
     created_by_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
 
     member: Mapped["Member"] = relationship(back_populates="user_account")
+    profiles: Mapped[List["UserProfile"]] = relationship(
+        _resolve_user_profile_model_v1,
+        back_populates="user",
+    )
 
     __table_args__ = (
         CheckConstraint(

@@ -44,7 +44,7 @@ def test_template_uses_dynamic_origin_menu_not_hardcoded_literal() -> None:
 
 
 def test_page_handler_exposes_origin_menu_in_template_context() -> None:
-    handler_text = (PROJECT_ROOT / "appverbo" / "routes" / "profile" / "page_handler.py").read_text(
+    handler_text = (PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "page_handler.py").read_text(
         encoding="utf-8"
     )
 

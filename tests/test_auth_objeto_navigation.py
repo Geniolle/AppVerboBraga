@@ -124,7 +124,7 @@ def test_new_user_js_exposes_authorization_profile_target_normalization() -> Non
 
 def test_page_handler_removes_temporary_auth_objeto_debug_hooks() -> None:
     handler_text = (
-        PROJECT_ROOT / "appverbo" / "routes" / "profile" / "page_handler.py"
+        PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "page_handler.py"
     ).read_text(encoding="utf-8")
 
     assert "def _normalize_authorization_profile_target_v1" in handler_text

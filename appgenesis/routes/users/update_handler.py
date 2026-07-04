@@ -35,6 +35,12 @@ from appgenesis.services.permissions import is_entity_within_permissions
 # ###################################################################################
 # (1) VALIDACAO EXPLICITA DA ENTIDADE SELECIONADA
 # ###################################################################################
+def _clean_optional_form_value_v1(value: Any) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
 def _resolve_explicit_user_entity_v1(
     session: Session,
     raw_entity_id: str,
@@ -80,7 +86,7 @@ def update_user(
     clean_email = email.strip().lower()
     clean_account_status = account_status.strip().lower()
     clean_entity_id = entity_id.strip()
-    raw_system_profile = system_profile.strip()
+    raw_system_profile = _clean_optional_form_value_v1(system_profile)
 
     if not clean_user_id.isdigit():
         return RedirectResponse(
