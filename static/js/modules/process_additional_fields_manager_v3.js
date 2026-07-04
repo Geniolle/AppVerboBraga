@@ -10,7 +10,7 @@
   //###################################################################################
 
   const ROOT_SELECTOR = "[data-process-additional-fields-manager-v3]";
-  const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "flag", "header", "list"]);
+  const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "time", "flag", "header", "list"]);
   const TEXTUAL_TYPES = new Set(["text", "number", "email", "phone"]);
 
   const TYPE_LABELS = {
@@ -19,6 +19,7 @@
     email: "Email",
     phone: "Telefone",
     date: "Data",
+    time: "Horário",
     flag: "Sim/Nao",
     header: "Cabecalho",
     list: "Lista"

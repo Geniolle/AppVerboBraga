@@ -310,7 +310,7 @@ const startupHash = window.location.hash || "";
 const dynamicProcessDataByMenu = {};
 const selectedDynamicSectionByMenu = {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
-const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "flag", "list"]);
+const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "time", "flag", "list"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 
 
@@ -1940,6 +1940,9 @@ function getDynamicProcessInputType(fieldType) {
   if (fieldType === "date") {
     return "date";
   }
+  if (fieldType === "time") {
+    return "time";
+  }
   return "text";
 }
 
@@ -3135,15 +3138,7 @@ function renderMeuPerfilQuantityGroups() {
             fieldContainerEl.appendChild(controlEl);
           } else {
             controlEl = document.createElement("input");
-            controlEl.type = fieldType === "email"
-              ? "email"
-              : fieldType === "phone"
-                ? "tel"
-                : fieldType === "number"
-                  ? "number"
-                  : fieldType === "date"
-                    ? "date"
-                    : "text";
+            controlEl.type = getDynamicProcessInputType(fieldType);
             controlEl.value = currentValue;
             if (fieldType === "date" && !currentValue) {
               controlEl.placeholder = "dd/mm/aaaa";
@@ -3558,9 +3553,13 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   const layoutConfig = getDynamicProcessLayoutConfig(processSetting, menuLabel, sectionLabel);
   const listProcessLayoutMode = Boolean(layoutConfig.isListProcess);
   const absenceProcessMode = isAbsenceProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
-  const historyProcessMode = isHistoryProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
+  // "uses_record_history" (calculado no backend a partir de process_record_uses_history/process_layout
+  // no menu_config) permite ativar o modo "Criar <processo>" com lista de registos para qualquer
+  // processo via configuracao, sem depender apenas dos padroes legados hardcoded abaixo.
+  const historyProcessMode = Boolean(processSetting && processSetting.uses_record_history) ||
+    isHistoryProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   const recordProcessMode = historyProcessMode || listProcessLayoutMode;
-  const historyRecordLabels = getHistoryRecordLabels(cleanMenuKey, menuLabel, sectionLabel);
+  const historyRecordLabels = { singular: layoutConfig.singularLabel, plural: layoutConfig.pluralLabel };
   const showStateField = listProcessLayoutMode
     ? Boolean(layoutConfig.stateEnabled)
     : (historyProcessMode && !absenceProcessMode && historyRecordLabels.singular === "departamento");
@@ -5507,6 +5506,37 @@ function setupProcessAdditionalFieldsManagerV2() {
   builderEl.dataset.additionalFieldsManagerV2Bound = "1";
 }
 
+function normalizeProcessEditTabKey_v1(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+// A URL nao e atualizada quando o utilizador clica numa aba interna (ver abaixo), por isso
+// window.location fica parado na aba de entrada (ex.: "geral"). O mecanismo global de
+// post-save-context (linha ~8194) captura essa URL parada no momento do submit e usa-a para
+// reconstruir o destino apos o redirect do servidor, sobrepondo-se ao settings_tab correto
+// que o backend ja devolve. Sincronizar aqui evita que essa aba fique presa em "geral".
+function syncProcessEditTabToUrl_v1(tabKey) {
+  if (settingsAction !== "edit" || !settingsEditKey) {
+    return;
+  }
+  try {
+    const url = new URL(window.location.href);
+    if (normalizeProcessEditTabKey_v1(url.searchParams.get("settings_tab")) === tabKey) {
+      return;
+    }
+    url.searchParams.set("settings_tab", tabKey);
+    window.history.replaceState(window.history.state, document.title, url.pathname + url.search + url.hash);
+  } catch (error) {
+    // Ignorar falha ao sincronizar o URL da aba ativa; a navegacao normal continua a funcionar.
+  }
+}
+
 function setupProcessEditTabs() {
   const tabLinks = document.querySelectorAll("[data-process-edit-tab]");
   const panes = document.querySelectorAll("[data-process-edit-pane]");
@@ -5515,10 +5545,11 @@ function setupProcessEditTabs() {
   }
 
   function activateProcessTab(tabKey) {
+    const normalizedTabKey = normalizeProcessEditTabKey_v1(tabKey);
     const hasTargetTab = Array.from(tabLinks).some(
-      (tabLink) => (tabLink.getAttribute("data-process-edit-tab") || "") === tabKey
+      (tabLink) => (tabLink.getAttribute("data-process-edit-tab") || "") === normalizedTabKey
     );
-    const resolvedTabKey = hasTargetTab ? tabKey : "geral";
+    const resolvedTabKey = hasTargetTab ? normalizedTabKey : "geral";
     tabLinks.forEach((tabLink) => {
       const isActive = tabLink.getAttribute("data-process-edit-tab") === resolvedTabKey;
       tabLink.classList.toggle("active", isActive);
@@ -5528,18 +5559,23 @@ function setupProcessEditTabs() {
       const isActive = pane.getAttribute("data-process-edit-pane") === resolvedTabKey;
       pane.classList.toggle("active", isActive);
     });
+    return resolvedTabKey;
   }
 
   tabLinks.forEach((tabLink) => {
     tabLink.addEventListener("click", (event) => {
       event.preventDefault();
       const tabKey = tabLink.getAttribute("data-process-edit-tab") || "geral";
-      activateProcessTab(tabKey);
+      const resolvedTabKey = activateProcessTab(tabKey);
+      syncProcessEditTabToUrl_v1(resolvedTabKey);
     });
   });
 
   if (settingsAction === "edit") {
-    const cleanSettingsTab = String(settingsTab || "").trim();
+    const urlSettingsTab = normalizeProcessEditTabKey_v1(
+      new URLSearchParams(window.location.search).get("settings_tab")
+    );
+    const cleanSettingsTab = String(settingsTab || "").trim() || urlSettingsTab;
     if (cleanSettingsTab) {
       activateProcessTab(cleanSettingsTab);
     } else {
@@ -6431,22 +6467,14 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       });
     } else {
       control = document.createElement("input");
-      if (fieldType === "email") {
-        control.type = "email";
-      } else if (fieldType === "phone") {
-        control.type = "tel";
-      } else if (fieldType === "number") {
-        control.type = "number";
-      } else if (fieldType === "date") {
-        control.type = "date";
-      } else if (fieldType === "flag") {
+      if (fieldType === "flag") {
         control.type = "checkbox";
         control.value = "1";
         control.checked = ["1", "true", "sim", "yes", "on"].includes(
           toSafeStringMeuPerfilQuantityV1(existingValue).trim().toLowerCase()
         );
       } else {
-        control.type = "text";
+        control.type = getDynamicProcessInputType(fieldType);
       }
 
       if (fieldType !== "flag") {
@@ -7992,9 +8020,31 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   function currentMenuFromUrlOrBootstrapPostSaveV3(form) {
     const currentUrl = getCurrentUrlPostSaveV3();
 
-    const formMenu = normalizePostSaveKeyV3(
+    // Um campo "menu" explicito no formulario e uma sobreposicao deliberada e tem prioridade
+    // sobre tudo o resto.
+    const explicitFormMenu = normalizePostSaveKeyV3(
+      readFirstFormValuePostSaveV3(form, ["menu"])
+    );
+
+    if (explicitFormMenu) {
+      return explicitFormMenu;
+    }
+
+    // O "menu" ja presente na URL atual reflete o contexto de navegacao onde o formulario foi
+    // aberto (ex.: o editor de processo dentro de "administrativo"/"sessoes") e tem prioridade
+    // sobre "redirect_menu"/"menu_key" do formulario. "redirect_menu" costuma ser um valor fixo
+    // definido no template e "menu_key" identifica o item a editar (ex.: "calendario"), nao o
+    // menu de navegacao em si — usa-los antes da URL fazia o guardar "saltar" para um contexto
+    // diferente daquele onde o utilizador estava.
+    const urlMenu = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
+
+    if (urlMenu) {
+      return urlMenu;
+    }
+
+    const fallbackFormMenu = normalizePostSaveKeyV3(
       readFirstFormValuePostSaveV3(form, [
-        "menu",
+        "redirect_menu",
         "menu_key",
         "process_menu_key",
         "dynamic_menu_key",
@@ -8002,14 +8052,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       ])
     );
 
-    if (formMenu) {
-      return formMenu;
-    }
-
-    const urlMenu = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
-
-    if (urlMenu) {
-      return urlMenu;
+    if (fallbackFormMenu) {
+      return fallbackFormMenu;
     }
 
     if (typeof initialMenu !== "undefined") {

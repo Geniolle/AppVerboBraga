@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from appverbo.menu_settings import (
+    ADDITIONAL_FIELD_TYPES,
     get_menu_process_default_visible_fields,
     get_menu_process_field_options,
     get_menu_process_visible_field_header_map,
@@ -56,6 +57,61 @@ def test_normalize_additional_fields_places_headers_first() -> None:
     assert normalized[0]["label"] == "Departamento"
     assert normalized[1]["label"].lower().startswith("data")
     assert normalized[2]["label"] == "Motivo"
+
+
+def test_additional_field_types_include_time_with_correct_label() -> None:
+    types_by_key = {item["key"]: item["label"] for item in ADDITIONAL_FIELD_TYPES}
+
+    assert types_by_key["time"] == "Horário"
+    # Tipos existentes continuam disponiveis e inalterados.
+    assert types_by_key["text"] == "Texto"
+    assert types_by_key["number"] == "Número"
+    assert types_by_key["email"] == "Email"
+    assert types_by_key["phone"] == "Telefone"
+    assert types_by_key["date"] == "Data"
+    assert types_by_key["flag"] == "Flag"
+    assert types_by_key["header"] == "Cabeçalho (aba)"
+    assert types_by_key["list"] == "Lista"
+
+
+def test_normalize_additional_fields_accepts_time_type_and_ignores_size() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {"label": "Hora de início", "field_type": "time", "size": "255", "is_required": True},
+        ]
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["field_type"] == "time"
+    assert normalized[0]["is_required"] is True
+    # "time" nao e um tipo textual: o tamanho maximo nao e persistido/exigido.
+    assert "size" not in normalized[0]
+
+
+def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
+    raw_fields = [
+        {"label": "Campo texto", "field_type": "text"},
+        {"label": "Campo numero", "field_type": "number"},
+        {"label": "Campo email", "field_type": "email"},
+        {"label": "Campo telefone", "field_type": "phone"},
+        {"label": "Campo data", "field_type": "date"},
+        {"label": "Campo flag", "field_type": "flag"},
+        {"label": "Campo lista", "field_type": "list", "manual_list_key": "lista_teste"},
+        {"label": "Campo cabecalho", "field_type": "header"},
+    ]
+
+    normalized = normalize_menu_process_additional_fields(raw_fields)
+
+    assert [item["field_type"] for item in normalized] == [
+        "header",
+        "text",
+        "number",
+        "email",
+        "phone",
+        "date",
+        "flag",
+        "list",
+    ]
 
 
 def test_normalize_additional_fields_allows_same_label_across_groups() -> None:
@@ -1202,6 +1258,46 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
             "header_label": "Objeto de autorização",
         }
     ]
+
+
+def test_resolve_subprocess_section_fields_renders_time_field_as_time_input() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "calendario",
+        "custom_horario",
+        [
+            {
+                "key": "calendario",
+                "process_additional_fields": [
+                    {
+                        "key": "custom_hora_de_inicio",
+                        "label": "Hora de início",
+                        "field_type": "time",
+                        "is_required": True,
+                        "size": "255",
+                        "header_key": "custom_horario",
+                    },
+                ],
+                "process_field_options": [
+                    {"key": "custom_horario", "label": "Horário", "field_type": "header"},
+                    {"key": "custom_hora_de_inicio", "label": "Hora de início", "field_type": "time"},
+                ],
+                "process_visible_field_rows": [
+                    {
+                        "field_key": "custom_hora_de_inicio",
+                        "header_key": "custom_horario",
+                    }
+                ],
+            }
+        ],
+    )
+
+    assert len(resolved_fields) == 1
+    resolved_field = resolved_fields[0]
+    assert resolved_field["field_type"] == "time"
+    assert resolved_field["input_type"] == "time"
+    assert resolved_field["required"] is True
+    # "time" nao e textual: o tamanho maximo enviado e ignorado na renderizacao.
+    assert resolved_field["size"] is None
 
 
 def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None:

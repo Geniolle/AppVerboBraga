@@ -314,12 +314,25 @@ def resolve_dynamic_process_layout_config(
         or clean_menu_config.get("process_layout")
     )
     inferred_layout = PROCESS_LAYOUT_SINGLE
-    uses_record_history = explicit_layout == PROCESS_LAYOUT_LIST
-    singular_label = _normalize_label(
+    # Flag generica e independente do layout "list": permite que qualquer processo passe a criar
+    # registos com historico (botao "Criar <processo>" + lista de registos criados) apenas com uma
+    # configuracao de dados no seu menu_config, sem precisar do layout de tabela completo.
+    explicit_uses_record_history = _normalize_bool(
+        list_config.get("uses_record_history")
+        if "uses_record_history" in list_config
+        else clean_menu_config.get("process_record_uses_history"),
+        default=False,
+    )
+    uses_record_history = explicit_layout == PROCESS_LAYOUT_LIST or explicit_uses_record_history
+    # _normalize_title_label preserva a capitalizacao configurada (ex.: "Agenda" -> "Criar Agenda"),
+    # ao contrario de _normalize_label (usada apenas pelos padroes legados abaixo, que ja sao
+    # literais em minusculas). Nenhum processo existente configura estes campos hoje, por isso nao
+    # ha regressao de capitalizacao para processos ja configurados.
+    singular_label = _normalize_title_label(
         list_config.get("singular_label")
         or clean_menu_config.get("process_record_singular_label")
     )
-    plural_label = _normalize_label(
+    plural_label = _normalize_title_label(
         list_config.get("plural_label")
         or clean_menu_config.get("process_record_plural_label")
     )
@@ -347,6 +360,20 @@ def resolve_dynamic_process_layout_config(
         state_enabled_default = True
 
     layout = explicit_layout if explicit_layout == PROCESS_LAYOUT_LIST else inferred_layout
+
+    # Fallback generico: quando o processo usa historico de registos mas nao configurou um
+    # singular_label explicito nem corresponde a um dos padroes legados acima, usa o proprio nome
+    # visivel do menu (ex.: "Calendario" -> "Criar Calendario"), em vez do rotulo generico
+    # "registo". Funciona para qualquer processo futuro que ative process_record_uses_history.
+    if not singular_label and uses_record_history:
+        menu_label_fallback = _normalize_title_label(menu_label)
+        if menu_label_fallback:
+            singular_label = menu_label_fallback
+            plural_label = plural_label or (
+                menu_label_fallback if menu_label_fallback.lower().endswith("s")
+                else f"{menu_label_fallback}s"
+            )
+
     singular_label = singular_label or "registo"
     plural_label = plural_label or "registos"
     state_enabled = _normalize_bool(
