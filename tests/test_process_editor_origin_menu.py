@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from appverbo.routes.profile.page_handler import (
+from appgenesis.routes.profile.page_handler import (
     ESTRUTURAS_MENU_KEY_V1,
     _resolve_settings_edit_origin_menu_v1,
 )

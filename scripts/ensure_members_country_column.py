@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import inspect, text
 
-from appverbo.db.session import engine
+from appgenesis.db.session import engine
 
 
 # ###################################################################################

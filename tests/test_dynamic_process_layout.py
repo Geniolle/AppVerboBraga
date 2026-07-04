@@ -1,4 +1,4 @@
-from appverbo.dynamic_process_layout import resolve_dynamic_process_layout_config
+from appgenesis.dynamic_process_layout import resolve_dynamic_process_layout_config
 
 
 ####################################################################################

@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from appverbo.admin_subprocesses.registry import require_admin_subprocess_config
-from appverbo.admin_subprocesses.repositories.entity_repository import EntityAdminRepository
-from appverbo.models import Base, Entity
+from appgenesis.admin_subprocesses.registry import require_admin_subprocess_config
+from appgenesis.admin_subprocesses.repositories.entity_repository import EntityAdminRepository
+from appgenesis.models import Base, Entity
 
 
 def _build_session_factory():

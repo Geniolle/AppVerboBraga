@@ -23,8 +23,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from sqlalchemy import text
 
-from appverbo.core import SessionLocal
-from appverbo.services.profile import (
+from appgenesis.core import SessionLocal
+from appgenesis.services.profile import (
     get_hidden_process_targets_from_rules,
     parse_member_profile_fields,
     serialize_member_profile_fields,

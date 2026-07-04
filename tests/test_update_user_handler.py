@@ -6,8 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
-import appverbo.routes.users.update_handler as update_user_module
-from appverbo.models import Base, Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
+import appgenesis.routes.users.update_handler as update_user_module
+from appgenesis.models import Base, Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
 
 
 def _build_session_factory():

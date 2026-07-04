@@ -20,13 +20,13 @@ This folder gives Codex and future contributors a stable planning baseline for A
 
 ## Current Application Shape
 
-- Main application package: `appverbo/`
-- App factory: `appverbo/app.py`
-- Legacy/shared runtime entrypoints still exist through `web_app.py` and `appverbo/core.py`
-- Route groups are organized by domain under `appverbo/routes/`
-- Shared business logic lives mainly in `appverbo/services/`
-- Reusable data access helpers live in `appverbo/repositories/`
-- SQLAlchemy models live in `appverbo/models/`
+- Main application package: `appgenesis/`
+- App factory: `appgenesis/app.py`
+- Legacy/shared runtime entrypoints still exist through `web_app.py` and `appgenesis/core.py`
+- Route groups are organized by domain under `appgenesis/routes/`
+- Shared business logic lives mainly in `appgenesis/services/`
+- Reusable data access helpers live in `appgenesis/repositories/`
+- SQLAlchemy models live in `appgenesis/models/`
 - Server-rendered templates live in `templates/`
 - Static assets live in `static/`
 - Tests live in `tests/`

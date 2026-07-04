@@ -8,7 +8,7 @@ Updated: 2026-07-04
 - PostgreSQL is the main database in the Docker-first runtime
 - SQLAlchemy and Alembic are already part of the stack
 - The repository already has a meaningful `docs/` area, but did not yet have a dedicated GSD Core planning area
-- The main application code is centered in `appverbo/`
+- The main application code is centered in `appgenesis/`
 - The repository also contains `tests/`, Docker files, bootstrap/init scripts, and a mobile-related directory
 - Initial login multi-language support now exists for `pt`, `en`, `es`, and `fr` using JSON translations plus cookie/session persistence
 - Authenticated users can now persist `preferred_language` on `users`, while pre-login language selection still uses session/cookie as bootstrap

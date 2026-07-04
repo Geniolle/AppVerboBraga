@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from appverbo.routes.profile.page_handler import (
+from appgenesis.routes.profile.page_handler import (
     _normalize_authorization_profile_target_v1,
     _resolve_active_tab_index_v1,
     _resolve_initial_menu_target,

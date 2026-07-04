@@ -3,7 +3,7 @@ import json
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from appverbo.menu_settings import (
+from appgenesis.menu_settings import (
     ADDITIONAL_FIELD_TYPES,
     delete_sidebar_section,
     get_menu_process_default_visible_fields,
@@ -18,13 +18,13 @@ from appverbo.menu_settings import (
     normalize_sidebar_sections,
     update_sidebar_menu_process_quantity_fields_v1,
 )
-from appverbo.admin_subprocesses.registry import SESSOES_CONFIG
-from appverbo.models import Base, SidebarMenuSetting
-from appverbo.services.profile import (
+from appgenesis.admin_subprocesses.registry import SESSOES_CONFIG
+from appgenesis.models import Base, SidebarMenuSetting
+from appgenesis.services.profile import (
     build_profile_menu_tabs_dependency_map_v1,
     resolve_field_list_options_v1,
 )
-from appverbo.services.process_tabs import resolve_subprocess_section_fields_v1
+from appgenesis.services.process_tabs import resolve_subprocess_section_fields_v1
 
 
 def test_administrativo_process_field_options_defaults() -> None:

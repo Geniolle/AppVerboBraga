@@ -8,7 +8,7 @@ This report classifies the legacy tables that:
 
 - still exist in PostgreSQL
 - still exist in historical Alembic revisions
-- do not currently have active metadata in `appverbo/models/`
+- do not currently have active metadata in `appgenesis/models/`
 
 Tables analyzed:
 
@@ -30,7 +30,7 @@ docker compose exec db psql -U postgres -d app_igreja -c "select e.id, e.name, e
 docker compose exec db psql -U postgres -d app_igreja -c "select id, entity_id, name, version, lyrics_source, lyrics_status, is_active, created_at, updated_at from songs order by id limit 10;"
 docker compose exec db psql -U postgres -d app_igreja -c "select id, entity_id, parameter_name, parameter_type, process_name, subprocess_name, status, created_at, updated_at from admin_definitions order by id limit 20;"
 docker compose exec db psql -U postgres -d app_igreja -c "select id, entity_id, profile_name, process_key, process_label, subprocess_key, subprocess_label, department_name, status, visibility_scope_mode, created_at, updated_at from process_view_authorization_rules order by id limit 20;"
-docker compose exec web python -c "from fastapi.testclient import TestClient; from appverbo.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print('GET /login', resp.status_code)"
+docker compose exec web python -c "from fastapi.testclient import TestClient; from appgenesis.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print('GET /login', resp.status_code)"
 ```
 
 ## Repository Search Summary

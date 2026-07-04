@@ -1,4 +1,4 @@
-from appverbo.services.whatsapp import map_whatsapp_delivery_status, normalize_whatsapp_recipient
+from appgenesis.services.whatsapp import map_whatsapp_delivery_status, normalize_whatsapp_recipient
 
 
 def test_normalize_whatsapp_recipient() -> None:

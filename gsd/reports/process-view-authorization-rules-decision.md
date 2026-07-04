@@ -16,9 +16,9 @@ docker compose exec db psql -U postgres -d app_igreja -c "select column_name, da
 docker compose exec db psql -U postgres -d app_igreja -c "select id, entity_id, profile_name, process_key, process_label, subprocess_key, subprocess_label, department_name, status, visibility_scope_mode, legacy_record_id, created_by_user_id, updated_by_user_id, created_at, updated_at from process_view_authorization_rules order by id;"
 docker compose exec db psql -U postgres -d app_igreja -c "select count(*) as matching_users from users u join members m on m.id = u.member_id where coalesce(m.profile_custom_fields,'') ilike '%Gestor de Tesouraria%' or coalesce(m.profile_custom_fields,'') ilike '%Extrato%' or coalesce(m.profile_custom_fields,'') ilike '%Importar extrato%' or coalesce(m.profile_custom_fields,'') ilike '%Dados de extrato%';"
 docker compose exec db psql -U postgres -d app_igreja -c "select id, menu_label, is_active, is_deleted from sidebar_menu_settings where lower(menu_label) in ('extrato','tesouraria','perfil de autorização') or lower(menu_key) in ('extrato','tesouraria','perfil_de_autorizacao') order by id;"
-docker compose exec web python -c "from appverbo.db import SessionLocal; from appverbo.services.page import get_page_data; s=SessionLocal(); data=get_page_data(s, actor_user_id=1, actor_login_email='admin@appverbo.local', selected_entity_id=8); item=next(row for row in data['sidebar_menu_settings'] if str(row.get('key') or '').strip().lower()=='perfil_de_autorizacao'); print(item.get('process_additional_fields')); s.close()"
-docker compose exec web python -c "from appverbo.db import SessionLocal; from appverbo.models import Member, User; from sqlalchemy import select; from appverbo.services.profile import parse_member_profile_fields, parse_menu_process_records, build_menu_process_records_storage_key; s=SessionLocal(); row=s.execute(select(User.login_email, Member.profile_custom_fields).join(Member, Member.id==User.member_id).where(User.id==1)).one(); fields=parse_member_profile_fields(row.profile_custom_fields); print(parse_menu_process_records(fields.get(build_menu_process_records_storage_key('perfil_de_autorizacao')))); print(parse_menu_process_records(fields.get(build_menu_process_records_storage_key('objeto_de_autorizacao')))); s.close()"
-docker compose exec web python -c "from fastapi.testclient import TestClient; from appverbo.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print(resp.status_code)"
+docker compose exec web python -c "from appgenesis.db import SessionLocal; from appgenesis.services.page import get_page_data; s=SessionLocal(); data=get_page_data(s, actor_user_id=1, actor_login_email='admin@appverbo.local', selected_entity_id=8); item=next(row for row in data['sidebar_menu_settings'] if str(row.get('key') or '').strip().lower()=='perfil_de_autorizacao'); print(item.get('process_additional_fields')); s.close()"
+docker compose exec web python -c "from appgenesis.db import SessionLocal; from appgenesis.models import Member, User; from sqlalchemy import select; from appgenesis.services.profile import parse_member_profile_fields, parse_menu_process_records, build_menu_process_records_storage_key; s=SessionLocal(); row=s.execute(select(User.login_email, Member.profile_custom_fields).join(Member, Member.id==User.member_id).where(User.id==1)).one(); fields=parse_member_profile_fields(row.profile_custom_fields); print(parse_menu_process_records(fields.get(build_menu_process_records_storage_key('perfil_de_autorizacao')))); print(parse_menu_process_records(fields.get(build_menu_process_records_storage_key('objeto_de_autorizacao')))); s.close()"
+docker compose exec web python -c "from fastapi.testclient import TestClient; from appgenesis.app import create_app; client=TestClient(create_app()); resp=client.get('/login'); print(resp.status_code)"
 ```
 
 ## Static Repository Findings
@@ -41,12 +41,12 @@ The active authorization/profile configuration flow now lives in:
     - `process_records__perfil_de_autorizacao`
     - `process_records__objeto_de_autorizacao`
 - admin subprocess repositories
-  - `appverbo/admin_subprocesses/repositories/auth_profile_repository.py`
-  - `appverbo/admin_subprocesses/repositories/objeto_autorizacao_repository.py`
+  - `appgenesis/admin_subprocesses/repositories/auth_profile_repository.py`
+  - `appgenesis/admin_subprocesses/repositories/objeto_autorizacao_repository.py`
 - list and tab resolvers
-  - `appverbo/services/profile.py`
-  - `appverbo/services/page.py`
-  - `appverbo/services/process_tabs.py`
+  - `appgenesis/services/profile.py`
+  - `appgenesis/services/page.py`
+  - `appgenesis/services/process_tabs.py`
 
 ### 3. Evidence of substitution in code
 
@@ -186,7 +186,7 @@ The current replacement contract is:
 
 - menu/process/tab definitions from `sidebar_menu_settings`
 - authorization/profile records stored in `members.profile_custom_fields`
-- runtime list resolution in `appverbo/services/profile.py`
+- runtime list resolution in `appgenesis/services/profile.py`
 - admin subprocess repositories for `perfil_de_autorizacao` and `objeto_de_autorizacao`
 
 ### Do the existing rows still make sense?
@@ -247,9 +247,9 @@ Instead:
 
 The likely files would be:
 
-- `appverbo/models/process_view_authorization_rule.py`
-- `appverbo/repositories/process_view_authorization_rule_repository.py`
-- `appverbo/services/process_view_authorization_rules.py`
+- `appgenesis/models/process_view_authorization_rule.py`
+- `appgenesis/repositories/process_view_authorization_rule_repository.py`
+- `appgenesis/services/process_view_authorization_rules.py`
 - integration points in admin/profile routes or services
 
 This is not recommended in the current task because it would revive a table that the current runtime has already replaced.

@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
-from appverbo.models import (
+from appgenesis.models import (
     Base,
     Entity,
     Member,
@@ -14,8 +14,8 @@ from appverbo.models import (
     User,
     UserAccountStatus,
 )
-import appverbo.use_cases.users.create_user as create_user_module
-from appverbo.use_cases.users.create_user import (
+import appgenesis.use_cases.users.create_user as create_user_module
+from appgenesis.use_cases.users.create_user import (
     execute_create_user,
     normalize_create_user_input,
 )

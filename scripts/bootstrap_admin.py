@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
-from appverbo.models import (
+from appgenesis.models import (
     Entity,
     Member,
     MemberEntity,
@@ -18,7 +18,7 @@ from appverbo.models import (
     User,
     UserAccountStatus,
 )
-from appverbo.services.auth import hash_password
+from appgenesis.services.auth import hash_password
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BASE_DIR / ".env")

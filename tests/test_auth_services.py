@@ -4,9 +4,9 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
-import appverbo.services.auth as auth_service
-import appverbo.services.i18n as i18n_service
-from appverbo.models import (
+import appgenesis.services.auth as auth_service
+import appgenesis.services.i18n as i18n_service
+from appgenesis.models import (
     Base,
     Entity,
     Member,
@@ -16,7 +16,7 @@ from appverbo.models import (
     User,
     UserAccountStatus,
 )
-from appverbo.services.auth import (
+from appgenesis.services.auth import (
     build_user_invite_token,
     get_signup_country_options,
     parse_user_invite_token,
@@ -24,13 +24,13 @@ from appverbo.services.auth import (
     validate_signup_phone_country,
     verify_login_password_v1,
 )
-from appverbo.services.phone_country import (
+from appgenesis.services.phone_country import (
     normalize_country_code,
     normalize_phone_value,
 )
-from appverbo.services.passwords import hash_password, verify_password
-from appverbo.services.permissions import get_user_entity_permissions
-from appverbo.services.user_member import (
+from appgenesis.services.passwords import hash_password, verify_password
+from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.user_member import (
     ensure_user_for_member,
     member_status_for_user_account_status,
 )
@@ -86,54 +86,54 @@ def test_hash_password_and_verify() -> None:
 
 
 def test_verify_login_password_uses_env_password_for_admin_email(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appverbo.local")
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
     monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
 
     stored_hash = hash_password("OutraSenha123!")
 
     assert verify_login_password_v1(
-        "admin@appverbo.local",
+        "admin@appgenesis.local",
         "P@1internet",
         stored_hash,
     )
     assert not verify_login_password_v1(
-        "admin@appverbo.local",
+        "admin@appgenesis.local",
         "OutraSenha123!",
         stored_hash,
     )
 
 
 def test_verify_login_password_falls_back_to_hash_for_other_users(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appverbo.local")
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
     monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "P@1internet")
 
     stored_hash = hash_password("SenhaUtilizador123!")
 
     assert verify_login_password_v1(
-        "membro@appverbo.local",
+        "membro@appgenesis.local",
         "SenhaUtilizador123!",
         stored_hash,
     )
     assert not verify_login_password_v1(
-        "membro@appverbo.local",
+        "membro@appgenesis.local",
         "P@1internet",
         stored_hash,
     )
 
 
 def test_verify_login_password_falls_back_to_hash_when_admin_env_password_is_empty(monkeypatch) -> None:
-    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appverbo.local")
+    monkeypatch.setattr(auth_service, "ADMIN_LOGIN_EMAIL", "admin@appgenesis.local")
     monkeypatch.setattr(auth_service, "ADMIN_LOGIN_PASSWORD", "")
 
     stored_hash = hash_password("SenhaBD123!")
 
     assert verify_login_password_v1(
-        "admin@appverbo.local",
+        "admin@appgenesis.local",
         "SenhaBD123!",
         stored_hash,
     )
     assert not verify_login_password_v1(
-        "admin@appverbo.local",
+        "admin@appgenesis.local",
         "SenhaErrada",
         stored_hash,
     )

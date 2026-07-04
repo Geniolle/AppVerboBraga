@@ -4,13 +4,13 @@
 
 Organizacao principal apos refatoracao:
 
-- `appverbo/config/`: configuracoes e leitura de ambiente.
-- `appverbo/db/`: engine/session e bootstrap de base de dados.
-- `appverbo/models/`: modelos SQLAlchemy separados por dominio.
-- `appverbo/routes/`: rotas por dominio (`auth/`, `users/`, `entities/`, `profile/`, `webhooks/`).
-- `appverbo/services/`: servicos por responsabilidade (auth, perfil, permissoes, paginas, whatsapp).
-- `appverbo/repositories/`: camada de acesso a dados reutilizavel.
-- `appverbo/schemas/`: schemas de validacao para formularios e payloads.
+- `appgenesis/config/`: configuracoes e leitura de ambiente.
+- `appgenesis/db/`: engine/session e bootstrap de base de dados.
+- `appgenesis/models/`: modelos SQLAlchemy separados por dominio.
+- `appgenesis/routes/`: rotas por dominio (`auth/`, `users/`, `entities/`, `profile/`, `webhooks/`).
+- `appgenesis/services/`: servicos por responsabilidade (auth, perfil, permissoes, paginas, whatsapp).
+- `appgenesis/repositories/`: camada de acesso a dados reutilizavel.
+- `appgenesis/schemas/`: schemas de validacao para formularios e payloads.
 - `templates/`: templates Jinja com `base.html` e `partials/`.
 - `static/css` e `static/js`: assets movidos para ficheiros externos.
 - `scripts/`: comandos operacionais (`bootstrap_admin`, `init_db`, `smoke_test`, `validate_web_app`).

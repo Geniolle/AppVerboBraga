@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from appverbo.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
 
 
 ####################################################################################

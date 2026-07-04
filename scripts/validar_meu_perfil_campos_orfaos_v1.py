@@ -16,7 +16,7 @@ from typing import Any
 
 from sqlalchemy import text
 
-from appverbo.core import SessionLocal
+from appgenesis.core import SessionLocal
 
 
 ####################################################################################
