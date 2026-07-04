@@ -3956,7 +3956,7 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
   }
 }
 
-// .appverbo-process-action-toggle-v1 define "display: inline-flex !important" no CSS, por isso um
+// .appgenesis-process-action-toggle-v1 define "display: inline-flex !important" no CSS, por isso um
 // simples "el.style.display = 'none'" nao consegue escondê-lo; e preciso usar setProperty com
 // prioridade "important" para vencer a regra do stylesheet.
 function setDynamicProcessEditToggleVisible(isVisible) {

@@ -23,4 +23,4 @@ def test_process_quantity_fields_manager_v1_uses_configurable_core_and_search_fo
 
     assert 'aria-label="Pesquisar regras criadas"' in template_text
     assert 'data-process-quantity-total-label' in template_text
-    assert 'class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text
+    assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text

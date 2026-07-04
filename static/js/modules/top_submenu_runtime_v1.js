@@ -122,7 +122,7 @@
     var doc = container.ownerDocument || document;
 
     function isBlockedByOverlay() {
-      if (doc.querySelector(".appverbo-confirm-overlay-v1")) {
+      if (doc.querySelector(".appgenesis-confirm-overlay-v1")) {
         return true;
       }
       if (doc.querySelector(".appverbo-row-actions-popup-floating-v1")) {

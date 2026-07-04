@@ -22,5 +22,5 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     assert 'submitNative_v1(form);' in script_text
 
     assert 'aria-label="Pesquisar listas criadas"' in template_text
-    assert 'class="appverbo-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text
+    assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text
     assert 'data-process-lists-total-label' in template_text

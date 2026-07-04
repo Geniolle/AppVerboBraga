@@ -50,7 +50,7 @@
     // Returns all tab items (excludes the "Mais" button itself)
     function getAllTabs() {
       return Array.from(container.querySelectorAll(itemSelector)).filter(function (el) {
-        return !el.classList.contains("appverbo-tabs-more-btn-v1");
+        return !el.classList.contains("appgenesis-tabs-more-btn-v1");
       });
     }
 
@@ -108,14 +108,14 @@
       var hiddenTabs = getAllTabs().filter(function (t) {
         return t.dataset.tabsOverflowHidden === "1";
       });
-      var items = Array.from(moreMenu.querySelectorAll(".appverbo-tabs-more-item-v1"));
+      var items = Array.from(moreMenu.querySelectorAll(".appgenesis-tabs-more-item-v1"));
       var hasActive = false;
       hiddenTabs.forEach(function (tab, i) {
         var isActive = tab.classList.contains(activeClass);
         if (isActive) hasActive = true;
         if (items[i]) items[i].classList.toggle(activeClass, isActive);
       });
-      moreBtn.classList.toggle("appverbo-tabs-more-btn-active-v1", hasActive);
+      moreBtn.classList.toggle("appgenesis-tabs-more-btn-active-v1", hasActive);
     }
 
     function buildDropdown(hiddenTabs) {
@@ -124,7 +124,7 @@
       hiddenTabs.forEach(function (tab) {
         var btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "appverbo-tabs-more-item-v1";
+        btn.className = "appgenesis-tabs-more-item-v1";
         btn.setAttribute("role", "menuitem");
         btn.textContent = tab.textContent.trim();
         if (tab.classList.contains(activeClass)) btn.classList.add(activeClass);
@@ -263,7 +263,7 @@
       var hasActive = hiddenTabs.some(function (t) {
         return t.classList.contains(activeClass);
       });
-      moreBtn.classList.toggle("appverbo-tabs-more-btn-active-v1", hasActive);
+      moreBtn.classList.toggle("appgenesis-tabs-more-btn-active-v1", hasActive);
       dbg("DECISION: Mais shown — visible:", cutIndex, "hidden:", hiddenTabs.length, "activeInDropdown:", hasActive);
     }
 
@@ -285,24 +285,24 @@
 
     function init() {
       container.dataset.tabsOverflowBound = "1";
-      container.classList.add("appverbo-tabs-overflow-v1");
+      container.classList.add("appgenesis-tabs-overflow-v1");
 
       // "Mais" button lives inside the container.
       // For #submenu-items, render() may remove it via replaceChildren() —
       // the MutationObserver below detects this and re-appends it.
       moreBtn = document.createElement("button");
       moreBtn.type = "button";
-      moreBtn.className = "appverbo-tabs-more-btn-v1";
+      moreBtn.className = "appgenesis-tabs-more-btn-v1";
       moreBtn.setAttribute("aria-haspopup", "menu");
       moreBtn.setAttribute("aria-expanded", "false");
-      moreBtn.innerHTML = 'Mais <span class="appverbo-tabs-more-arrow-v1" aria-hidden="true">&#9660;</span>';
+      moreBtn.innerHTML = 'Mais <span class="appgenesis-tabs-more-arrow-v1" aria-hidden="true">&#9660;</span>';
       moreBtn.style.display = "none";
       container.appendChild(moreBtn);
 
       // Dropdown is appended to document.body with position:fixed so it is
       // never clipped by parent overflow:hidden/auto containers.
       moreMenu = document.createElement("div");
-      moreMenu.className = "appverbo-tabs-more-menu-v1";
+      moreMenu.className = "appgenesis-tabs-more-menu-v1";
       moreMenu.setAttribute("role", "menu");
       moreMenu.style.display = "none";
       document.body.appendChild(moreMenu);
@@ -380,7 +380,7 @@
         t.style.removeProperty("display");
         delete t.dataset.tabsOverflowHidden;
       });
-      container.classList.remove("appverbo-tabs-overflow-v1");
+      container.classList.remove("appgenesis-tabs-overflow-v1");
       delete container.dataset.tabsOverflowBound;
       if (moreBtn) { moreBtn.remove(); moreBtn = null; }
       if (moreMenu) { moreMenu.remove(); moreMenu = null; } // body-appended

@@ -110,7 +110,7 @@
 
   <section
     id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
-    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appverbo-process-action-card-v1"
+    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appgenesis-process-action-card-v1"
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-role="form"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
@@ -159,13 +159,13 @@
         </div>
       </form>
     {% else %}
-      <div class="appverbo-process-action-toolbar-v1">
-        <details class="entity-create-collapse admin-subprocess-create-collapse-v1 appverbo-process-action-details-v1">
-          <summary class="appverbo-process-action-toggle-v1">
+      <div class="appgenesis-process-action-toolbar-v1">
+        <details class="entity-create-collapse admin-subprocess-create-collapse-v1 appgenesis-process-action-details-v1">
+          <summary class="appgenesis-process-action-toggle-v1">
             <span>{{ state.config.create_title }}</span>
           </summary>
 
-          <div class="entity-create-body appverbo-process-action-panel-v1">
+          <div class="entity-create-body appgenesis-process-action-panel-v1">
             <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
               <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
               <input type="hidden" name="{{ state.config.edit_key_field }}" value="">

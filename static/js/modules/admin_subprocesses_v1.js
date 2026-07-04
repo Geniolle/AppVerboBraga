@@ -149,7 +149,7 @@
       return (
         rowEl &&
         rowEl.tagName === "TR" &&
-        !rowEl.classList.contains("appverbo-table-empty-search-row-v1")
+        !rowEl.classList.contains("appgenesis-table-empty-search-row-v1")
       );
     });
   }

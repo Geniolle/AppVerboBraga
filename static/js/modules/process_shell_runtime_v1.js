@@ -239,7 +239,7 @@
 
   function resolveDirectCardHeader(cardEl) {
     return findDirectChildElement(cardEl, (childEl) => {
-      return childEl.classList && childEl.classList.contains("appverbo-card-header-v1");
+      return childEl.classList && childEl.classList.contains("appgenesis-card-header-v1");
     });
   }
 
@@ -732,9 +732,9 @@
     let filteredRows = [];
     let activeFilter = null;
     let pageSizeSelectEl = safeConfig.pageSizeSelect || footerEl.querySelector("select") || null;
-    let loadMoreButtonEl = safeConfig.loadMoreButton || footerEl.querySelector(".appverbo-load-more-btn-v1") || null;
+    let loadMoreButtonEl = safeConfig.loadMoreButton || footerEl.querySelector(".appgenesis-load-more-btn-v1") || null;
     let loadLessButtonEl = safeConfig.loadLessButton || null;
-    let counterEl = safeConfig.counterEl || footerEl.querySelector(".appverbo-load-more-counter-v1") || null;
+    let counterEl = safeConfig.counterEl || footerEl.querySelector(".appgenesis-load-more-counter-v1") || null;
     let pageSize = parsePositiveInteger(
       (pageSizeSelectEl && pageSizeSelectEl.value) || safeConfig.initialPageSize,
       DEFAULT_PAGE_SIZE
@@ -743,7 +743,7 @@
 
     function recacheRows() {
       allRows = Array.from(tableEl.querySelectorAll(rowsSelector)).filter((rowEl) => {
-        return !rowEl.classList.contains("appverbo-table-empty-search-row-v1");
+        return !rowEl.classList.contains("appgenesis-table-empty-search-row-v1");
       });
     }
 
@@ -786,23 +786,23 @@
 
       const labelText = resolveEntriesPerPageLabel(footerEl, labels.entriesPerPage);
       const pageSizeWrapperEl = ownerDocument.createElement("div");
-      pageSizeWrapperEl.className = "appverbo-load-more-page-size-v1";
+      pageSizeWrapperEl.className = "appgenesis-load-more-page-size-v1";
 
       const pageSizeLabelEl = ownerDocument.createElement("span");
       pageSizeLabelEl.textContent = labelText;
 
       const statusWrapperEl = ownerDocument.createElement("div");
-      statusWrapperEl.className = "appverbo-load-more-status-v1";
+      statusWrapperEl.className = "appgenesis-load-more-status-v1";
 
       const loadLessWrapperEl = ownerDocument.createElement("div");
-      loadLessWrapperEl.className = "appverbo-load-more-less-v1";
+      loadLessWrapperEl.className = "appgenesis-load-more-less-v1";
 
       if (!loadLessButtonEl) {
         loadLessButtonEl = ownerDocument.createElement("button");
       }
 
       loadLessButtonEl.type = "button";
-      loadLessButtonEl.className = "appverbo-load-more-btn-v1";
+      loadLessButtonEl.className = "appgenesis-load-more-btn-v1";
       loadLessButtonEl.textContent = labels.loadLess;
 
       if (!loadMoreButtonEl) {
@@ -810,17 +810,17 @@
       }
 
       loadMoreButtonEl.type = "button";
-      loadMoreButtonEl.className = "appverbo-load-more-btn-v1";
+      loadMoreButtonEl.className = "appgenesis-load-more-btn-v1";
       loadMoreButtonEl.textContent = labels.loadMore;
 
       if (!counterEl) {
         counterEl = ownerDocument.createElement("span");
       }
 
-      counterEl.className = "appverbo-load-more-counter-v1";
+      counterEl.className = "appgenesis-load-more-counter-v1";
 
       footerEl.textContent = "";
-      footerEl.classList.add("appverbo-load-more-footer-v1");
+      footerEl.classList.add("appgenesis-load-more-footer-v1");
       footerEl.dataset.appgenesisLoadMoreReady = "1";
 
       pageSizeWrapperEl.appendChild(pageSizeSelectEl);
@@ -1124,7 +1124,7 @@
 
     function buildRowIndex() {
       rowIndex = Array.from(tableEl.querySelectorAll(rowsSelector))
-        .filter((rowEl) => !rowEl.classList.contains("appverbo-table-empty-search-row-v1"))
+        .filter((rowEl) => !rowEl.classList.contains("appgenesis-table-empty-search-row-v1"))
         .map((rowEl) => {
           return {
             rowEl,
@@ -1147,7 +1147,7 @@
 
       if (!emptyRowEl) {
         emptyRowEl = tbodyEl.ownerDocument.createElement("tr");
-        emptyRowEl.className = "appverbo-table-empty-search-row-v1";
+        emptyRowEl.className = "appgenesis-table-empty-search-row-v1";
 
         const cellEl = tbodyEl.ownerDocument.createElement("td");
         emptyRowEl.appendChild(cellEl);
@@ -1322,7 +1322,7 @@
     let headerEl = resolveDirectCardHeader(cardEl);
     if (!headerEl) {
       headerEl = ownerDocument.createElement("div");
-      headerEl.className = "appverbo-card-header-v1";
+      headerEl.className = "appgenesis-card-header-v1";
       cardEl.insertBefore(headerEl, titleEl);
     }
 
@@ -1331,12 +1331,12 @@
     }
 
     let actionsEl = findDirectChildElement(headerEl, (childEl) => {
-      return childEl.classList && childEl.classList.contains("appverbo-card-header-actions-v1");
+      return childEl.classList && childEl.classList.contains("appgenesis-card-header-actions-v1");
     });
 
     if (!actionsEl) {
       actionsEl = ownerDocument.createElement("div");
-      actionsEl.className = "appverbo-card-header-actions-v1";
+      actionsEl.className = "appgenesis-card-header-actions-v1";
       headerEl.appendChild(actionsEl);
     }
 
@@ -1356,15 +1356,15 @@
       return null;
     }
 
-    let searchWrapperEl = actionsEl.querySelector(".appverbo-card-search-v1");
+    let searchWrapperEl = actionsEl.querySelector(".appgenesis-card-search-v1");
     let inputEl = searchWrapperEl ? searchWrapperEl.querySelector("input[type='search'], input") : null;
 
     if (!searchWrapperEl) {
       searchWrapperEl = ownerDocument.createElement("label");
-      searchWrapperEl.className = "appverbo-card-search-v1";
+      searchWrapperEl.className = "appgenesis-card-search-v1";
 
       const iconEl = ownerDocument.createElement("span");
-      iconEl.className = "appverbo-card-search-icon-v1";
+      iconEl.className = "appgenesis-card-search-icon-v1";
       iconEl.setAttribute("aria-hidden", "true");
       iconEl.textContent = "⌕";
 
@@ -1491,7 +1491,7 @@
         return controllers;
       }
 
-      cardEl.classList.add("appverbo-searchable-card-v1");
+      cardEl.classList.add("appgenesis-searchable-card-v1");
       cardEl.dataset.appgenesisSearchableTable = tableEl ? "1" : "0";
 
       if (!tableEl) {
@@ -1891,7 +1891,7 @@
   //###################################################################################
 
   function createConfirmDialogController(config) {
-    var existing = global.document && global.document.querySelector(".appverbo-confirm-overlay-v1");
+    var existing = global.document && global.document.querySelector(".appgenesis-confirm-overlay-v1");
     if (existing && existing.parentNode) {
       existing.parentNode.removeChild(existing);
     }
@@ -1905,34 +1905,34 @@
 
     return new Promise(function (resolve) {
       var overlay = global.document.createElement("div");
-      overlay.className = "appverbo-confirm-overlay-v1";
+      overlay.className = "appgenesis-confirm-overlay-v1";
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
-      overlay.setAttribute("aria-labelledby", "appverbo-confirm-title-v1");
+      overlay.setAttribute("aria-labelledby", "appgenesis-confirm-title-v1");
 
       var dialog = global.document.createElement("div");
-      dialog.className = "appverbo-confirm-dialog-v1";
+      dialog.className = "appgenesis-confirm-dialog-v1";
 
       var titleEl = global.document.createElement("h3");
-      titleEl.className = "appverbo-confirm-title-v1";
-      titleEl.id = "appverbo-confirm-title-v1";
+      titleEl.className = "appgenesis-confirm-title-v1";
+      titleEl.id = "appgenesis-confirm-title-v1";
       titleEl.textContent = title;
 
       var messageEl = global.document.createElement("p");
-      messageEl.className = "appverbo-confirm-message-v1";
+      messageEl.className = "appgenesis-confirm-message-v1";
       messageEl.textContent = message;
 
       var actionsEl = global.document.createElement("div");
-      actionsEl.className = "appverbo-confirm-actions-v1";
+      actionsEl.className = "appgenesis-confirm-actions-v1";
 
       var cancelBtn = global.document.createElement("button");
       cancelBtn.type = "button";
-      cancelBtn.className = "appverbo-confirm-cancel-v1";
+      cancelBtn.className = "appgenesis-confirm-cancel-v1";
       cancelBtn.textContent = cancelLabel;
 
       var confirmBtn = global.document.createElement("button");
       confirmBtn.type = "button";
-      confirmBtn.className = "appverbo-confirm-action-v1" + (isDanger ? " appverbo-confirm-action-danger-v1" : "");
+      confirmBtn.className = "appgenesis-confirm-action-v1" + (isDanger ? " appgenesis-confirm-action-danger-v1" : "");
       confirmBtn.textContent = confirmLabel;
 
       actionsEl.appendChild(cancelBtn);
@@ -2014,10 +2014,10 @@
       return null;
     }
 
-    let viewportEl = ownerDocument.querySelector(".appverbo-toast-viewport-v1");
+    let viewportEl = ownerDocument.querySelector(".appgenesis-toast-viewport-v1");
     if (!viewportEl) {
       viewportEl = ownerDocument.createElement("div");
-      viewportEl.className = "appverbo-toast-viewport-v1 appverbo-toast-" + position + "-v1";
+      viewportEl.className = "appgenesis-toast-viewport-v1 appgenesis-toast-" + position + "-v1";
       viewportEl.setAttribute("aria-live", "polite");
       viewportEl.setAttribute("aria-atomic", "false");
       root.appendChild(viewportEl);
@@ -2028,15 +2028,15 @@
     function resolveTypeConfig(type) {
       const safeType = normalizeText(type, "info");
       if (safeType === "success") {
-        return { title: "Sucesso", icon: "✓", className: "appverbo-toast-success-v1" };
+        return { title: "Sucesso", icon: "✓", className: "appgenesis-toast-success-v1" };
       }
       if (safeType === "error") {
-        return { title: "Erro", icon: "✕", className: "appverbo-toast-error-v1" };
+        return { title: "Erro", icon: "✕", className: "appgenesis-toast-error-v1" };
       }
       if (safeType === "warning") {
-        return { title: "Aviso", icon: "⚠", className: "appverbo-toast-warning-v1" };
+        return { title: "Aviso", icon: "⚠", className: "appgenesis-toast-warning-v1" };
       }
-      return { title: "Informação", icon: "ℹ", className: "appverbo-toast-info-v1" };
+      return { title: "Informação", icon: "ℹ", className: "appgenesis-toast-info-v1" };
     }
 
     function showToast(options) {
@@ -2057,32 +2057,32 @@
       const customTitle = typeof safeOptions.title === "string" ? safeOptions.title : typeConfig.title;
 
       const toastEl = ownerDocument.createElement("div");
-      toastEl.className = "appverbo-toast-v1 " + typeConfig.className;
+      toastEl.className = "appgenesis-toast-v1 " + typeConfig.className;
       toastEl.setAttribute("role", "status");
 
       const iconEl = ownerDocument.createElement("div");
-      iconEl.className = "appverbo-toast-icon-v1";
+      iconEl.className = "appgenesis-toast-icon-v1";
       iconEl.setAttribute("aria-hidden", "true");
       iconEl.textContent = typeConfig.icon;
 
       const contentEl = ownerDocument.createElement("div");
-      contentEl.className = "appverbo-toast-content-v1";
+      contentEl.className = "appgenesis-toast-content-v1";
 
       if (customTitle) {
         const titleEl = ownerDocument.createElement("div");
-        titleEl.className = "appverbo-toast-title-v1";
+        titleEl.className = "appgenesis-toast-title-v1";
         titleEl.textContent = customTitle;
         contentEl.appendChild(titleEl);
       }
 
       const messageEl = ownerDocument.createElement("div");
-      messageEl.className = "appverbo-toast-message-v1";
+      messageEl.className = "appgenesis-toast-message-v1";
       messageEl.textContent = message;
       contentEl.appendChild(messageEl);
 
       const closeBtnEl = ownerDocument.createElement("button");
       closeBtnEl.type = "button";
-      closeBtnEl.className = "appverbo-toast-close-v1";
+      closeBtnEl.className = "appgenesis-toast-close-v1";
       closeBtnEl.setAttribute("aria-label", "Fechar mensagem");
       closeBtnEl.textContent = "×";
 
@@ -2199,7 +2199,7 @@
 
     const docRoot = global.document;
     if (docRoot && docRoot.body) {
-      docRoot.body.classList.add("appverbo-url-feedback-active-v1");
+      docRoot.body.classList.add("appgenesis-url-feedback-active-v1");
     }
   }
 
@@ -2269,9 +2269,9 @@
         const hide = newHidden.has(col.index);
         const was = currentHidden.has(col.index);
         if (hide && !was) {
-          table.classList.add("appverbo-hide-col-" + col.index);
+          table.classList.add("appgenesis-hide-col-" + col.index);
         } else if (!hide && was) {
-          table.classList.remove("appverbo-hide-col-" + col.index);
+          table.classList.remove("appgenesis-hide-col-" + col.index);
         }
       });
       currentHidden = new Set(newHidden);

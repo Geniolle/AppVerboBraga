@@ -2,7 +2,7 @@
   "use strict";
 
   var LS_KEY = "appverbo:sidebar-collapsed-v1";
-  var CSS_CLASS = "appverbo-sidebar-collapsed";
+  var CSS_CLASS = "appgenesis-sidebar-collapsed";
 
   function isCollapsed() {
     try {
