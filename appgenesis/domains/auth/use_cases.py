@@ -24,9 +24,13 @@ from appgenesis.models import (
     UserAccountStatus,
 )
 from appgenesis.services.auth import (
+    build_password_reset_link,
+    build_password_reset_token,
     get_signup_defaults,
     hash_password,
     is_admin_user,
+    is_password_reset_token_valid_for_user,
+    send_password_reset_email,
     upsert_user_by_email,
     validate_signup_phone_country,
     verify_login_password_v1,
@@ -601,3 +605,136 @@ def execute_invite_accept(
         )
 
     return InviteAcceptSuccess(user=user, member=member, invite_entity_id=invite_entity_id)
+
+
+@dataclass(frozen=True)
+class PasswordResetRequestResult:
+    error: str = ""
+
+
+def execute_password_reset_request(
+    session: Session, request: Request, clean_email: str
+) -> PasswordResetRequestResult:
+    row = session.execute(
+        select(
+            User.id,
+            User.login_email,
+            User.password_hash,
+            User.account_status,
+            Member.full_name,
+        )
+        .join(Member, Member.id == User.member_id)
+        .where(func.lower(User.login_email) == clean_email)
+        .limit(1)
+    ).one_or_none()
+
+    if row is not None and row.account_status == UserAccountStatus.ACTIVE.value:
+        token = build_password_reset_token(
+            int(row.id),
+            str(row.login_email),
+            str(row.password_hash),
+        )
+        reset_link = build_password_reset_link(request, token)
+        email_ok, email_error = send_password_reset_email(
+            recipient_email=str(row.login_email),
+            recipient_name=str(row.full_name or ""),
+            reset_link=reset_link,
+        )
+
+        if not email_ok:
+            return PasswordResetRequestResult(error=email_error)
+
+    return PasswordResetRequestResult()
+
+
+@dataclass(frozen=True)
+class PasswordResetTokenInvalid:
+    error: str
+    status_code: int
+
+
+@dataclass(frozen=True)
+class PasswordResetTokenValid:
+    user: User
+
+
+PasswordResetTokenResult = PasswordResetTokenInvalid | PasswordResetTokenValid
+
+
+def resolve_password_reset_token(
+    session: Session, token_payload: dict[str, Any]
+) -> PasswordResetTokenResult:
+    user = session.get(User, int(token_payload["uid"]))
+    if (
+        user is None
+        or (user.login_email or "").strip().lower() != token_payload["email"]
+        or not is_password_reset_token_valid_for_user(token_payload, user.password_hash)
+    ):
+        return PasswordResetTokenInvalid(
+            error="Link invalido ou expirado. Solicite uma nova redefinicao.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if user.account_status != UserAccountStatus.ACTIVE.value:
+        return PasswordResetTokenInvalid(
+            error="A conta nao esta ativa. Contacte o administrador.",
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    return PasswordResetTokenValid(user=user)
+
+
+@dataclass(frozen=True)
+class PasswordResetConfirmInvalid:
+    error: str
+    status_code: int
+    keep_token: bool = False
+
+
+@dataclass(frozen=True)
+class PasswordResetConfirmSuccess:
+    pass
+
+
+PasswordResetConfirmResult = PasswordResetConfirmInvalid | PasswordResetConfirmSuccess
+
+
+def execute_password_reset_confirm(
+    session: Session,
+    token_payload: dict[str, Any],
+    password: str,
+    confirm_password: str,
+) -> PasswordResetConfirmResult:
+    errors: list[str] = []
+    if len(password or "") < 8:
+        errors.append("A palavra-passe deve ter no minimo 8 caracteres.")
+    if password != confirm_password:
+        errors.append("A confirmacao da palavra-passe nao confere.")
+    if errors:
+        return PasswordResetConfirmInvalid(
+            error=" ".join(errors),
+            status_code=status.HTTP_400_BAD_REQUEST,
+            keep_token=True,
+        )
+
+    token_result = resolve_password_reset_token(session, token_payload)
+    if isinstance(token_result, PasswordResetTokenInvalid):
+        return PasswordResetConfirmInvalid(
+            error=token_result.error,
+            status_code=token_result.status_code,
+            keep_token=False,
+        )
+
+    token_result.user.password_hash = hash_password(password)
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        return PasswordResetConfirmInvalid(
+            error="Nao foi possivel redefinir a palavra-passe. Tente novamente.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            keep_token=True,
+        )
+
+    return PasswordResetConfirmSuccess()

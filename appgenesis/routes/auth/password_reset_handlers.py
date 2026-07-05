@@ -2,21 +2,19 @@ from __future__ import annotations
 
 from fastapi import Form, Query, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError
 
-from appgenesis.core import SessionLocal, templates
-from appgenesis.models import Member, User, UserAccountStatus
-from appgenesis.routes.auth.router import router
-from appgenesis.services.passwords import hash_password
-from appgenesis.services.auth import (
-    build_password_reset_link,
-    build_password_reset_token,
-    is_password_reset_token_valid_for_user,
-    parse_password_reset_token,
-    render_login,
-    send_password_reset_email,
+from appgenesis.db.session import SessionLocal
+from appgenesis.domains.auth.use_cases import (
+    PasswordResetConfirmInvalid,
+    PasswordResetConfirmSuccess,
+    PasswordResetTokenInvalid,
+    execute_password_reset_confirm,
+    execute_password_reset_request,
+    resolve_password_reset_token,
 )
+from appgenesis.routes.auth.router import router
+from appgenesis.services.auth import parse_password_reset_token
+from appgenesis.web.templates import templates
 
 
 def render_password_reset_request_v1(
@@ -86,39 +84,15 @@ def password_reset_request_submit_v1(
         )
 
     with SessionLocal() as session:
-        row = session.execute(
-            select(
-                User.id,
-                User.login_email,
-                User.password_hash,
-                User.account_status,
-                Member.full_name,
-            )
-            .join(Member, Member.id == User.member_id)
-            .where(func.lower(User.login_email) == clean_email)
-            .limit(1)
-        ).one_or_none()
+        result = execute_password_reset_request(session, request, clean_email)
 
-        if row is not None and row.account_status == UserAccountStatus.ACTIVE.value:
-            token = build_password_reset_token(
-                int(row.id),
-                str(row.login_email),
-                str(row.password_hash),
-            )
-            reset_link = build_password_reset_link(request, token)
-            email_ok, email_error = send_password_reset_email(
-                recipient_email=str(row.login_email),
-                recipient_name=str(row.full_name or ""),
-                reset_link=reset_link,
-            )
-
-            if not email_ok:
-                return render_password_reset_request_v1(
-                    request,
-                    email=clean_email,
-                    error=email_error,
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
+    if result.error:
+        return render_password_reset_request_v1(
+            request,
+            email=clean_email,
+            error=result.error,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
     return render_password_reset_request_v1(
         request,
@@ -147,26 +121,15 @@ def password_reset_confirm_page_v1(
         )
 
     with SessionLocal() as session:
-        user = session.get(User, int(token_payload["uid"]))
-        if (
-            user is None
-            or (user.login_email or "").strip().lower() != token_payload["email"]
-            or not is_password_reset_token_valid_for_user(token_payload, user.password_hash)
-        ):
-            return render_password_reset_confirm_v1(
-                request,
-                token="",
-                error="Link invalido ou expirado. Solicite uma nova redefinicao.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        token_result = resolve_password_reset_token(session, token_payload)
 
-        if user.account_status != UserAccountStatus.ACTIVE.value:
-            return render_password_reset_confirm_v1(
-                request,
-                token="",
-                error="A conta nao esta ativa. Contacte o administrador.",
-                status_code=status.HTTP_403_FORBIDDEN,
-            )
+    if isinstance(token_result, PasswordResetTokenInvalid):
+        return render_password_reset_confirm_v1(
+            request,
+            token="",
+            error=token_result.error,
+            status_code=token_result.status_code,
+        )
 
     return render_password_reset_confirm_v1(request, token=clean_token)
 
@@ -189,57 +152,20 @@ def password_reset_confirm_submit_v1(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    errors: list[str] = []
-
-    if len(password or "") < 8:
-        errors.append("A palavra-passe deve ter no minimo 8 caracteres.")
-
-    if password != confirm_password:
-        errors.append("A confirmacao da palavra-passe nao confere.")
-
-    if errors:
-        return render_password_reset_confirm_v1(
-            request,
-            token=clean_token,
-            error=" ".join(errors),
-            status_code=status.HTTP_400_BAD_REQUEST,
+    with SessionLocal() as session:
+        result = execute_password_reset_confirm(
+            session, token_payload, password, confirm_password
         )
 
-    with SessionLocal() as session:
-        user = session.get(User, int(token_payload["uid"]))
-        if (
-            user is None
-            or (user.login_email or "").strip().lower() != token_payload["email"]
-            or not is_password_reset_token_valid_for_user(token_payload, user.password_hash)
-        ):
-            return render_password_reset_confirm_v1(
-                request,
-                token="",
-                error="Link invalido ou expirado. Solicite uma nova redefinicao.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+    if isinstance(result, PasswordResetConfirmInvalid):
+        return render_password_reset_confirm_v1(
+            request,
+            token=clean_token if result.keep_token else "",
+            error=result.error,
+            status_code=result.status_code,
+        )
 
-        if user.account_status != UserAccountStatus.ACTIVE.value:
-            return render_password_reset_confirm_v1(
-                request,
-                token="",
-                error="A conta nao esta ativa. Contacte o administrador.",
-                status_code=status.HTTP_403_FORBIDDEN,
-            )
-
-        user.password_hash = hash_password(password)
-
-        try:
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return render_password_reset_confirm_v1(
-                request,
-                token=clean_token,
-                error="Nao foi possivel redefinir a palavra-passe. Tente novamente.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
+    assert isinstance(result, PasswordResetConfirmSuccess)
     request.session.clear()
 
     return RedirectResponse(
