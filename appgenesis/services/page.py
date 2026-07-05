@@ -378,11 +378,11 @@ def _apply_meu_perfil_subsequent_visibility_v2(
 # APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_PAGE_V2_END
 
 
-def get_page_data(
+def _resolve_actor_page_context(
     session: Session,
-    actor_user_id: int | None = None,
-    actor_login_email: str = "",
-    selected_entity_id: int | None = None,
+    actor_user_id: int | None,
+    actor_login_email: str,
+    selected_entity_id: int | None,
 ) -> dict[str, Any]:
     permissions = {
         "is_admin": False,
@@ -408,23 +408,21 @@ def get_page_data(
         selected_entity_id = permissions["selected_entity_id"]
     current_user_is_admin = bool(permissions["is_admin"])
 
-    # APPGENESIS_ACTOR_ENTITY_CONTEXT_V1_START
-    _actor_entity_id: int | None = None
-    _actor_entity_name = ""
-    _actor_entity_number = None
-    _entities_for_user_form: list[dict[str, Any]] = []
-    _entities_for_user_edit_form: list[dict[str, Any]] = []
-    _can_select_user_entity = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
+    actor_entity_id: int | None = None
+    actor_entity_name = ""
+    actor_entity_number = None
+    entities_for_user_form: list[dict[str, Any]] = []
+    entities_for_user_edit_form: list[dict[str, Any]] = []
+    can_select_user_entity = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
     if actor_user_id is not None:
-        _actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
-        if _actor_primary_entity is not None:
-            _actor_entity_id = _actor_primary_entity["id"]
-            _actor_entity_name = _actor_primary_entity["name"]
-            _actor_entity_number = _actor_primary_entity["entity_number"]
-        if _can_select_user_entity:
-            _entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
-        _entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
-    # APPGENESIS_ACTOR_ENTITY_CONTEXT_V1_END
+        actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
+        if actor_primary_entity is not None:
+            actor_entity_id = actor_primary_entity["id"]
+            actor_entity_name = actor_primary_entity["name"]
+            actor_entity_number = actor_primary_entity["entity_number"]
+        if can_select_user_entity:
+            entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
+        entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
 
     current_entity_scope = ""
     if selected_entity_id is not None:
@@ -435,6 +433,26 @@ def get_page_data(
         ).scalar_one_or_none()
         current_entity_scope = str(raw_entity_scope or "").strip().lower()
 
+    return {
+        "permissions": permissions,
+        "allowed_entity_ids": allowed_entity_ids,
+        "selected_entity_id": selected_entity_id,
+        "current_user_is_admin": current_user_is_admin,
+        "current_entity_scope": current_entity_scope,
+        "actor_entity_id": actor_entity_id,
+        "actor_entity_name": actor_entity_name,
+        "actor_entity_number": actor_entity_number,
+        "can_select_user_entity": can_select_user_entity,
+        "entities_for_user_form": entities_for_user_form,
+        "entities_for_user_edit_form": entities_for_user_edit_form,
+    }
+
+
+def _resolve_sidebar_menu_context(
+    session: Session,
+    current_user_is_admin: bool,
+    current_entity_scope: str,
+) -> dict[str, Any]:
     sidebar_menu_settings = get_sidebar_menu_settings(session)
     active_menu_rows = [
         row for row in sidebar_menu_settings
@@ -460,6 +478,22 @@ def get_page_data(
     sidebar_section_options = normalize_sidebar_sections(
         (administrativo_menu or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
     )
+    return {
+        "sidebar_menu_settings": sidebar_menu_settings,
+        "active_menu_rows": active_menu_rows,
+        "inactive_menu_rows": inactive_menu_rows,
+        "visible_sidebar_menu_keys": visible_sidebar_menu_keys,
+        "sidebar_section_options": sidebar_section_options,
+    }
+
+
+def _resolve_actor_menu_process_maps(
+    session: Session,
+    actor_user_id: int | None,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: list[str],
+    selected_entity_id: int | None,
+) -> dict[str, Any]:
     actor_profile_fields: dict[str, str] = {}
     if actor_user_id is not None:
         raw_profile_fields = session.execute(
@@ -525,6 +559,299 @@ def get_page_data(
         menu_process_history_map=menu_process_history_map,
         selected_entity_id=selected_entity_id,
     )
+    return {
+        "actor_profile_fields": actor_profile_fields,
+        "menu_process_values_map": menu_process_values_map,
+        "menu_process_history_map": menu_process_history_map,
+        "menu_process_quantity_values_map": menu_process_quantity_values_map,
+    }
+
+
+def _serialize_entity_row_v1(row: Any) -> dict[str, Any]:
+    return {
+        "id": row.id,
+        "entity_number": row.entity_number if row.entity_number is not None else "-",
+        "entity_number_sort_value": row.entity_number if row.entity_number is not None else "",
+        "name": row.name,
+        "acronym": row.acronym or "",
+        "tax_id": row.tax_id or "",
+        "email": row.email or "",
+        "responsible_name": row.responsible_name or "",
+        "door_number": row.door_number or "",
+        "phone": row.phone or "",
+        "address": row.address or "",
+        "city": row.city or "",
+        "freguesia": row.freguesia or "",
+        "postal_code": row.postal_code or "",
+        "country": row.country or "",
+        "description": row.description or "",
+        "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
+        "profile_scope_label": (
+            "Gestora do tenant"
+            if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
+            else "Entidade operacional"
+        ),
+        "logo_url": row.logo_url or "",
+        "is_active": bool(row.is_active),
+        "status_label": "Ativa" if row.is_active else "Inativa",
+        "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
+    }
+
+
+def _resolve_scoped_entities(
+    session: Session,
+    allowed_entity_ids: set[int] | None,
+) -> dict[str, Any]:
+    scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
+    apply_scope_filter = allowed_entity_ids is not None
+
+    entities_stmt = (
+        select(Entity.id, Entity.name, Entity.entity_number)
+       .where(Entity.is_active.is_(True))
+       .order_by(Entity.name)
+    )
+    if apply_scope_filter:
+        if scoped_entity_ids:
+            entities_stmt = entities_stmt.where(Entity.id.in_(scoped_entity_ids))
+        else:
+            entities_stmt = entities_stmt.where(Entity.id == -1)
+    entities = session.execute(entities_stmt).all()
+
+    entity_rows_stmt = (
+        select(
+            Entity.id,
+            Entity.entity_number,
+            Entity.name,
+            Entity.acronym,
+            Entity.tax_id,
+            Entity.email,
+            Entity.responsible_name,
+            Entity.door_number,
+            Entity.phone,
+            Entity.address,
+            Entity.city,
+            Entity.freguesia,
+            Entity.postal_code,
+            Entity.country,
+            Entity.description,
+            Entity.profile_scope,
+            Entity.logo_url,
+            Entity.is_active,
+            Entity.created_at,
+        )
+       .order_by(
+            Entity.entity_number.is_(None),
+            Entity.entity_number.asc(),
+            Entity.id.asc(),
+        )
+    )
+    if apply_scope_filter:
+        if scoped_entity_ids:
+            entity_rows_stmt = entity_rows_stmt.where(Entity.id.in_(scoped_entity_ids))
+        else:
+            entity_rows_stmt = entity_rows_stmt.where(Entity.id == -1)
+
+    recent_entities = session.execute(
+        entity_rows_stmt.where(Entity.is_active.is_(True)).limit(10)
+    ).all()
+    inactive_entities_rows = session.execute(
+        entity_rows_stmt.where(Entity.is_active.is_not(True))
+    ).all()
+
+    return {
+        "scoped_entity_ids": scoped_entity_ids,
+        "apply_scope_filter": apply_scope_filter,
+        "entities": entities,
+        "recent_entities": recent_entities,
+        "inactive_entities_rows": inactive_entities_rows,
+    }
+
+
+def _resolve_scoped_users(
+    session: Session,
+    permissions: dict[str, Any],
+    apply_scope_filter: bool,
+    scoped_entity_ids: list[int],
+) -> dict[str, Any]:
+    user_rows = session.execute(
+        select(
+            User.id,
+            User.member_id,
+            Member.full_name,
+            Member.primary_phone,
+            User.login_email,
+            User.account_status,
+            User.system_type,
+            User.created_at,
+        )
+       .join(Member, Member.id == User.member_id)
+       .order_by(User.id.asc())
+    ).all()
+
+    # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
+    # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
+    _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
+    if apply_scope_filter:
+        if _data_entity_ids:
+            scoped_member_ids = {
+                int(raw_id)
+                for raw_id in session.execute(
+                    select(MemberEntity.member_id)
+                   .where(
+                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                        MemberEntity.entity_id.in_(_data_entity_ids),
+                    )
+                   .distinct()
+                ).scalars().all()
+            }
+            user_rows = [
+                row for row in user_rows if int(row.member_id) in scoped_member_ids
+            ]
+        else:
+            user_rows = []
+
+    member_ids = [int(row.member_id) for row in user_rows]
+
+    entity_name_by_member_id: dict[int, str] = {}
+    entity_id_by_member_id: dict[int, int] = {}
+    entity_number_by_member_id: dict[int, int | None] = {}
+    if member_ids:
+        entity_name_stmt = (
+            select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name, Entity.entity_number)
+           .join(Entity, Entity.id == MemberEntity.entity_id)
+           .where(MemberEntity.member_id.in_(member_ids))
+           .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
+        )
+        if apply_scope_filter and scoped_entity_ids:
+            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
+        elif apply_scope_filter:
+            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id == -1)
+
+        for row in session.execute(entity_name_stmt).all():
+            member_id_value = int(row.member_id)
+            if member_id_value not in entity_name_by_member_id:
+                entity_id_by_member_id[member_id_value] = int(row.entity_id)
+                entity_name_by_member_id[member_id_value] = row.name
+                entity_number_by_member_id[member_id_value] = row.entity_number
+
+    all_users = [
+        {
+            "id": row.id,
+            "member_id": row.member_id,
+            "full_name": row.full_name,
+            "primary_phone": row.primary_phone or "-",
+            "login_email": row.login_email,
+            "account_status": normalize_user_account_status_v1(row.account_status),
+            "account_status_label": user_account_status_label_pt_v1(row.account_status),
+            "account_status_is_active": is_user_account_status_active_v1(row.account_status),
+            "account_status_is_inactive": is_user_account_status_inactive_v1(row.account_status),
+            "entity_id": entity_id_by_member_id.get(int(row.member_id)),
+            "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
+            "entity_number": entity_number_by_member_id.get(int(row.member_id)),
+            "system_type": normalize_user_system_type_v1(row.system_type),
+            "system_type_label": get_user_system_type_label_v1(row.system_type),
+            "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
+        }
+        for row in user_rows
+    ]
+    pending_users = [
+        row for row in all_users if row["account_status"] == UserAccountStatus.PENDING.value
+    ]
+    created_users = [
+        row for row in all_users if row["account_status"] != UserAccountStatus.PENDING.value
+    ]
+    active_created_users = [
+        row for row in created_users if is_user_account_status_active_v1(row["account_status"])
+    ]
+    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_START
+    # Mostra no bloco inferior todos os utilizadores cujo estado seja diferente de Ativo.
+    # Assim entram Pendente, Inativo, Bloqueado e outros estados futuros n?o ativos.
+    inactive_users = [
+        row
+        for row in all_users
+        if row["account_status"] != UserAccountStatus.ACTIVE.value
+    ]
+    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_END
+    recent_users = all_users[:10]
+
+    account_status_map = {
+        UserAccountStatus.ACTIVE.value: 0,
+        UserAccountStatus.PENDING.value: 0,
+        UserAccountStatus.INACTIVE.value: 0,
+        UserAccountStatus.BLOCKED.value: 0,
+    }
+    for row in all_users:
+        normalized_status = str(row.get("account_status") or "").strip().lower()
+        if normalized_status not in account_status_map:
+            account_status_map[normalized_status] = 0
+        account_status_map[normalized_status] += 1
+    account_status_summary = [
+        {"status": UserAccountStatus.ACTIVE.value, "count": account_status_map.get(UserAccountStatus.ACTIVE.value, 0)},
+        {"status": UserAccountStatus.PENDING.value, "count": account_status_map.get(UserAccountStatus.PENDING.value, 0)},
+        {"status": UserAccountStatus.INACTIVE.value, "count": account_status_map.get(UserAccountStatus.INACTIVE.value, 0)},
+        {"status": UserAccountStatus.BLOCKED.value, "count": account_status_map.get(UserAccountStatus.BLOCKED.value, 0)},
+    ]
+
+    return {
+        "all_users": all_users,
+        "pending_users": pending_users,
+        "created_users": created_users,
+        "active_created_users": active_created_users,
+        "inactive_users": inactive_users,
+        "recent_users": recent_users,
+        "account_status_summary": account_status_summary,
+    }
+
+
+def _resolve_company_profile_data(
+    session: Session,
+    selected_entity_id: int | None,
+    permissions: dict[str, Any],
+) -> dict[str, Any] | None:
+    if selected_entity_id is None:
+        return None
+    data_ids = permissions.get("allowed_data_entity_ids") or set()
+    if selected_entity_id not in data_ids:
+        return None
+    company_entity = session.get(Entity, selected_entity_id)
+    if company_entity is None:
+        return None
+    return _serialize_entity_row_v1(company_entity)
+
+
+def get_page_data(
+    session: Session,
+    actor_user_id: int | None = None,
+    actor_login_email: str = "",
+    selected_entity_id: int | None = None,
+) -> dict[str, Any]:
+    actor_context = _resolve_actor_page_context(
+        session, actor_user_id, actor_login_email, selected_entity_id
+    )
+    permissions = actor_context["permissions"]
+    allowed_entity_ids = actor_context["allowed_entity_ids"]
+    selected_entity_id = actor_context["selected_entity_id"]
+    current_user_is_admin = actor_context["current_user_is_admin"]
+    current_entity_scope = actor_context["current_entity_scope"]
+
+    menu_context = _resolve_sidebar_menu_context(
+        session, current_user_is_admin, current_entity_scope
+    )
+    sidebar_menu_settings = menu_context["sidebar_menu_settings"]
+    visible_sidebar_menu_keys = menu_context["visible_sidebar_menu_keys"]
+
+    process_maps = _resolve_actor_menu_process_maps(
+        session,
+        actor_user_id,
+        sidebar_menu_settings,
+        visible_sidebar_menu_keys,
+        selected_entity_id,
+    )
+    actor_profile_fields = process_maps["actor_profile_fields"]
+    menu_process_values_map = process_maps["menu_process_values_map"]
+    menu_process_history_map = process_maps["menu_process_history_map"]
+    menu_process_quantity_values_map = process_maps["menu_process_quantity_values_map"]
+
     profile_personal_visible_fields = list(MENU_MEU_PERFIL_FIELDS_DEFAULT)
     profile_personal_field_labels = dict(MENU_MEU_PERFIL_FIELD_LABELS)
     profile_personal_field_types: dict[str, str] = {}
@@ -842,221 +1169,27 @@ def get_page_data(
     # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
 
 
-    scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
-    apply_scope_filter = allowed_entity_ids is not None
+    scoped_entities = _resolve_scoped_entities(session, allowed_entity_ids)
+    scoped_entity_ids = scoped_entities["scoped_entity_ids"]
+    apply_scope_filter = scoped_entities["apply_scope_filter"]
+    entities = scoped_entities["entities"]
+    recent_entities = scoped_entities["recent_entities"]
+    inactive_entities_rows = scoped_entities["inactive_entities_rows"]
 
-    entities_stmt = (
-        select(Entity.id, Entity.name, Entity.entity_number)
-       .where(Entity.is_active.is_(True))
-       .order_by(Entity.name)
+    scoped_users = _resolve_scoped_users(
+        session, permissions, apply_scope_filter, scoped_entity_ids
     )
-    if apply_scope_filter:
-        if scoped_entity_ids:
-            entities_stmt = entities_stmt.where(Entity.id.in_(scoped_entity_ids))
-        else:
-            entities_stmt = entities_stmt.where(Entity.id == -1)
-    entities = session.execute(entities_stmt).all()
+    all_users = scoped_users["all_users"]
+    pending_users = scoped_users["pending_users"]
+    created_users = scoped_users["created_users"]
+    active_created_users = scoped_users["active_created_users"]
+    inactive_users = scoped_users["inactive_users"]
+    recent_users = scoped_users["recent_users"]
+    account_status_summary = scoped_users["account_status_summary"]
 
-    entity_rows_stmt = (
-        select(
-            Entity.id,
-            Entity.entity_number,
-            Entity.name,
-            Entity.acronym,
-            Entity.tax_id,
-            Entity.email,
-            Entity.responsible_name,
-            Entity.door_number,
-            Entity.phone,
-            Entity.address,
-            Entity.city,
-            Entity.freguesia,
-            Entity.postal_code,
-            Entity.country,
-            Entity.description,
-            Entity.profile_scope,
-            Entity.logo_url,
-            Entity.is_active,
-            Entity.created_at,
-        )
-       .order_by(
-            Entity.entity_number.is_(None),
-            Entity.entity_number.asc(),
-            Entity.id.asc(),
-        )
+    company_profile_data = _resolve_company_profile_data(
+        session, selected_entity_id, permissions
     )
-    if apply_scope_filter:
-        if scoped_entity_ids:
-            entity_rows_stmt = entity_rows_stmt.where(Entity.id.in_(scoped_entity_ids))
-        else:
-            entity_rows_stmt = entity_rows_stmt.where(Entity.id == -1)
-
-    recent_entities = session.execute(
-        entity_rows_stmt.where(Entity.is_active.is_(True)).limit(10)
-    ).all()
-    inactive_entities_rows = session.execute(
-        entity_rows_stmt.where(Entity.is_active.is_not(True))
-    ).all()
-
-    user_rows = session.execute(
-        select(
-            User.id,
-            User.member_id,
-            Member.full_name,
-            Member.primary_phone,
-            User.login_email,
-            User.account_status,
-            User.system_type,
-            User.created_at,
-        )
-       .join(Member, Member.id == User.member_id)
-       .order_by(User.id.asc())
-    ).all()
-
-    # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
-    # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
-    _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
-    if apply_scope_filter:
-        if _data_entity_ids:
-            scoped_member_ids = {
-                int(raw_id)
-                for raw_id in session.execute(
-                    select(MemberEntity.member_id)
-                   .where(
-                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-                        MemberEntity.entity_id.in_(_data_entity_ids),
-                    )
-                   .distinct()
-                ).scalars().all()
-            }
-            user_rows = [
-                row for row in user_rows if int(row.member_id) in scoped_member_ids
-            ]
-        else:
-            user_rows = []
-
-    member_ids = [int(row.member_id) for row in user_rows]
-    user_ids = [int(row.id) for row in user_rows]
-
-    entity_name_by_member_id: dict[int, str] = {}
-    entity_id_by_member_id: dict[int, int] = {}
-    entity_number_by_member_id: dict[int, int | None] = {}
-    if member_ids:
-        entity_name_stmt = (
-            select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name, Entity.entity_number)
-           .join(Entity, Entity.id == MemberEntity.entity_id)
-           .where(MemberEntity.member_id.in_(member_ids))
-           .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
-        )
-        if apply_scope_filter and scoped_entity_ids:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
-        elif apply_scope_filter:
-            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id == -1)
-
-        for row in session.execute(entity_name_stmt).all():
-            member_id_value = int(row.member_id)
-            if member_id_value not in entity_name_by_member_id:
-                entity_id_by_member_id[member_id_value] = int(row.entity_id)
-                entity_name_by_member_id[member_id_value] = row.name
-                entity_number_by_member_id[member_id_value] = row.entity_number
-
-    all_users = [
-        {
-            "id": row.id,
-            "member_id": row.member_id,
-            "full_name": row.full_name,
-            "primary_phone": row.primary_phone or "-",
-            "login_email": row.login_email,
-            "account_status": normalize_user_account_status_v1(row.account_status),
-            "account_status_label": user_account_status_label_pt_v1(row.account_status),
-            "account_status_is_active": is_user_account_status_active_v1(row.account_status),
-            "account_status_is_inactive": is_user_account_status_inactive_v1(row.account_status),
-            "entity_id": entity_id_by_member_id.get(int(row.member_id)),
-            "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
-            "entity_number": entity_number_by_member_id.get(int(row.member_id)),
-            "system_type": normalize_user_system_type_v1(row.system_type),
-            "system_type_label": get_user_system_type_label_v1(row.system_type),
-            "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
-        }
-        for row in user_rows
-    ]
-    pending_users = [
-        row for row in all_users if row["account_status"] == UserAccountStatus.PENDING.value
-    ]
-    created_users = [
-        row for row in all_users if row["account_status"] != UserAccountStatus.PENDING.value
-    ]
-    active_created_users = [
-        row for row in created_users if is_user_account_status_active_v1(row["account_status"])
-    ]
-    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_START
-    # Mostra no bloco inferior todos os utilizadores cujo estado seja diferente de Ativo.
-    # Assim entram Pendente, Inativo, Bloqueado e outros estados futuros n?o ativos.
-    inactive_users = [
-        row
-        for row in all_users
-        if row["account_status"] != UserAccountStatus.ACTIVE.value
-    ]
-    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_END
-    recent_users = all_users[:10]
-
-    account_status_map = {
-        UserAccountStatus.ACTIVE.value: 0,
-        UserAccountStatus.PENDING.value: 0,
-        UserAccountStatus.INACTIVE.value: 0,
-        UserAccountStatus.BLOCKED.value: 0,
-    }
-    for row in all_users:
-        normalized_status = str(row.get("account_status") or "").strip().lower()
-        if normalized_status not in account_status_map:
-            account_status_map[normalized_status] = 0
-        account_status_map[normalized_status] += 1
-    account_status_summary = [
-        {"status": UserAccountStatus.ACTIVE.value, "count": account_status_map.get(UserAccountStatus.ACTIVE.value, 0)},
-        {"status": UserAccountStatus.PENDING.value, "count": account_status_map.get(UserAccountStatus.PENDING.value, 0)},
-        {"status": UserAccountStatus.INACTIVE.value, "count": account_status_map.get(UserAccountStatus.INACTIVE.value, 0)},
-        {"status": UserAccountStatus.BLOCKED.value, "count": account_status_map.get(UserAccountStatus.BLOCKED.value, 0)},
-    ]
-
-    def serialize_entity_row(row: Any) -> dict[str, Any]:
-        return {
-            "id": row.id,
-            "entity_number": row.entity_number if row.entity_number is not None else "-",
-            "entity_number_sort_value": row.entity_number if row.entity_number is not None else "",
-            "name": row.name,
-            "acronym": row.acronym or "",
-            "tax_id": row.tax_id or "",
-            "email": row.email or "",
-            "responsible_name": row.responsible_name or "",
-            "door_number": row.door_number or "",
-            "phone": row.phone or "",
-            "address": row.address or "",
-            "city": row.city or "",
-            "freguesia": row.freguesia or "",
-            "postal_code": row.postal_code or "",
-            "country": row.country or "",
-            "description": row.description or "",
-            "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
-            "profile_scope_label": (
-                "Gestora do tenant"
-                if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
-                else "Entidade operacional"
-            ),
-            "logo_url": row.logo_url or "",
-            "is_active": bool(row.is_active),
-            "status_label": "Ativa" if row.is_active else "Inativa",
-            "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
-        }
-
-    # Perfil institucional da entidade ativa (processo Empresa).
-    # Restrito a allowed_data_entity_ids — não usa escopo estrutural.
-    company_profile_data: dict[str, Any] | None = None
-    if selected_entity_id is not None:
-        _data_ids = permissions.get("allowed_data_entity_ids") or set()
-        if selected_entity_id in _data_ids:
-            _company_entity = session.get(Entity, selected_entity_id)
-            if _company_entity is not None:
-                company_profile_data = serialize_entity_row(_company_entity)
 
     return {
         "entities": [
@@ -1068,8 +1201,8 @@ def get_page_data(
             for row in entities
         ],
         "account_status_summary": account_status_summary,
-        "recent_entities": [serialize_entity_row(row) for row in recent_entities],
-        "inactive_entities": [serialize_entity_row(row) for row in inactive_entities_rows],
+        "recent_entities": [_serialize_entity_row_v1(row) for row in recent_entities],
+        "inactive_entities": [_serialize_entity_row_v1(row) for row in inactive_entities_rows],
         "recent_users": [
             {
                 "id": row["id"],
@@ -1091,16 +1224,16 @@ def get_page_data(
         "current_user_can_manage_tenant_structure": bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False))),
         "current_user_can_manage_all_entities": bool(permissions.get("can_manage_all_entities", False)),
         "current_entity_scope": current_entity_scope,
-        "current_user_entity_id": _actor_entity_id,
-        "current_user_entity_name": _actor_entity_name,
-        "current_user_entity_number": _actor_entity_number,
-        "can_select_user_entity": _can_select_user_entity,
-        "entities_for_user_form": _entities_for_user_form,
-        "entities_for_user_edit_form": _entities_for_user_edit_form,
+        "current_user_entity_id": actor_context["actor_entity_id"],
+        "current_user_entity_name": actor_context["actor_entity_name"],
+        "current_user_entity_number": actor_context["actor_entity_number"],
+        "can_select_user_entity": actor_context["can_select_user_entity"],
+        "entities_for_user_form": actor_context["entities_for_user_form"],
+        "entities_for_user_edit_form": actor_context["entities_for_user_edit_form"],
         "sidebar_menu_settings": sidebar_menu_settings,
-        "active_menu_rows": active_menu_rows,
-        "inactive_menu_rows": inactive_menu_rows,
-        "sidebar_section_options": sidebar_section_options,
+        "active_menu_rows": menu_context["active_menu_rows"],
+        "inactive_menu_rows": menu_context["inactive_menu_rows"],
+        "sidebar_section_options": menu_context["sidebar_section_options"],
         "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
         "menu_process_values_map": menu_process_values_map,
         "menu_process_history_map": menu_process_history_map,
