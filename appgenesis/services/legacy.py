@@ -1,3 +1,7 @@
+# NOTA (Fase 2 - refactor/appgenesis-process-architecture): hub de wildcard imports.
+# Validado em 2026-07-05: nenhum ficheiro do repositorio (incluindo testes) importa
+# de appgenesis.services.legacy. Mantido temporariamente por compatibilidade;
+# candidato a remocao numa fase futura apos nova validacao de uso.
 from appgenesis.services.auth import *  # noqa: F403,F401
 from appgenesis.services.entities import *  # noqa: F403,F401
 from appgenesis.services.page import *  # noqa: F403,F401
