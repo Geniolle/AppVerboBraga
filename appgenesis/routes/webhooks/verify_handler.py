@@ -9,8 +9,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import *  # noqa: F403,F401
-from appgenesis.services import *  # noqa: F403,F401
+from appgenesis.core import WHATSAPP_WEBHOOK_VERIFY_TOKEN
 from appgenesis.models import (
     Entity,
     Member,
