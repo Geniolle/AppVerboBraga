@@ -4,7 +4,16 @@ from datetime import date
 from typing import Any
 from urllib.parse import urlencode
 
-from appgenesis.core import *  # noqa: F403,F401
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from appgenesis.core import (
+    ENTITY_NUMBER_MAX,
+    ENTITY_NUMBER_MIN,
+    ENTITY_PROFILE_SCOPE_LEGADO,
+    ENTITY_PROFILE_SCOPE_OWNER,
+)
+from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_FIELD_LABELS,
