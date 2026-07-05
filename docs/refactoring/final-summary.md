@@ -134,6 +134,8 @@ e pendentes por um processo de governação separado (Fase 9):
 - CI (Fase 10) confirma automaticamente, a partir de agora, em cada
   push/PR: `pytest` (180 testes não-Selenium, sem depender de Postgres) e
   relatório de `pyflakes`.
+- **Validação Manual**: As evidências da validação funcional manual de ponta a ponta, executada em ambiente com browser real interativo, encontram-se documentadas em:
+  `docs/refactoring/walkthrough.md`
 
 ## O que fica deliberadamente pendente após esta refatoração
 
