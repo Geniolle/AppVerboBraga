@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any
 
 from fastapi import Request, status
@@ -8,7 +9,12 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.domains.auth.schemas import LoginFormInput, SignupFormInput
+from appgenesis.domains.auth.repositories import resolve_invite_entity_for_member
+from appgenesis.domains.auth.schemas import (
+    InviteAcceptSubmitFormInput,
+    LoginFormInput,
+    SignupFormInput,
+)
 from appgenesis.models import (
     Entity,
     Member,
@@ -26,6 +32,12 @@ from appgenesis.services.auth import (
     verify_login_password_v1,
 )
 from appgenesis.services.i18n import resolve_user_language_after_auth
+from appgenesis.services.phone_country import (
+    normalize_country_code,
+    normalize_phone_value,
+    validate_phone_prefix_for_country,
+)
+from appgenesis.services.profile import format_optional_date_pt, parse_optional_date_pt
 from appgenesis.services.session import get_current_user, get_entity_context_for_user
 from appgenesis.shared.results import RedirectOutcome
 
@@ -396,3 +408,196 @@ def execute_oauth_callback(
         clean_email=email,
         resolved_language=resolved_language,
     )
+
+
+@dataclass(frozen=True)
+class InvitePageInvalid:
+    error: str
+    status_code: int
+
+
+@dataclass(frozen=True)
+class InvitePageAlreadyActive:
+    pass
+
+
+@dataclass(frozen=True)
+class InvitePageReady:
+    form_data: dict[str, str]
+
+
+InvitePageResult = InvitePageInvalid | InvitePageAlreadyActive | InvitePageReady
+
+
+def resolve_invite_accept_page(
+    session: Session, invite_payload: dict[str, Any]
+) -> InvitePageResult:
+    user = session.get(User, int(invite_payload["uid"]))
+    if user is None or (user.login_email or "").strip().lower() != invite_payload["email"]:
+        return InvitePageInvalid(
+            error="Convite inválido. Utilizador não encontrado.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if user.account_status != UserAccountStatus.PENDING.value:
+        return InvitePageAlreadyActive()
+
+    member = session.get(Member, user.member_id)
+    if member is None:
+        return InvitePageInvalid(
+            error="Membro associado ao convite não foi encontrado.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    _, entity_name = resolve_invite_entity_for_member(
+        session,
+        int(member.id),
+        invite_payload.get("entity_id"),
+    )
+
+    return InvitePageReady(
+        form_data={
+            "full_name": member.full_name or "",
+            "country": normalize_country_code(member.country or ""),
+            "primary_phone": member.primary_phone or "",
+            "address": member.address or "",
+            "city": member.city or "",
+            "freguesia": member.freguesia or "",
+            "postal_code": member.postal_code or "",
+            "birth_date": format_optional_date_pt(member.birth_date),
+            "entity_name": entity_name,
+            "email": user.login_email or "",
+        }
+    )
+
+
+@dataclass(frozen=True)
+class InviteAcceptInvalid:
+    error: str
+    form_data: dict[str, str]
+    status_code: int
+
+
+@dataclass(frozen=True)
+class InviteAcceptAlreadyActive:
+    pass
+
+
+@dataclass(frozen=True)
+class InviteAcceptSuccess:
+    user: User
+    member: Member
+    invite_entity_id: int | None
+
+
+InviteAcceptResult = InviteAcceptInvalid | InviteAcceptAlreadyActive | InviteAcceptSuccess
+
+
+def execute_invite_accept(
+    session: Session,
+    form: InviteAcceptSubmitFormInput,
+    invite_payload: dict[str, Any],
+) -> InviteAcceptResult:
+    clean_full_name = form.full_name.strip()
+    clean_primary_phone = normalize_phone_value(form.primary_phone)
+    clean_country = normalize_country_code(form.country)
+    clean_address = form.address.strip()
+    clean_city = form.city.strip()
+    clean_freguesia = form.freguesia.strip()
+    clean_postal_code = form.postal_code.strip()
+    clean_birth_date = form.birth_date.strip()
+
+    form_data: dict[str, str] = {
+        "full_name": clean_full_name,
+        "country": clean_country,
+        "primary_phone": clean_primary_phone,
+        "address": clean_address,
+        "city": clean_city,
+        "freguesia": clean_freguesia,
+        "postal_code": clean_postal_code,
+        "birth_date": clean_birth_date,
+        "entity_name": "",
+        "email": invite_payload["email"],
+    }
+
+    errors: list[str] = []
+    if not clean_full_name:
+        errors.append("Nome completo é obrigatório.")
+    phone_country_error = validate_phone_prefix_for_country(clean_country, clean_primary_phone)
+    if phone_country_error:
+        errors.append(phone_country_error)
+    if not clean_address:
+        errors.append("Morada é obrigatória.")
+    if not clean_city:
+        errors.append("Cidade é obrigatória.")
+    if not clean_freguesia:
+        errors.append("Freguesia é obrigatória.")
+    if not clean_postal_code:
+        errors.append("Código postal é obrigatório.")
+    if len(form.password) < 8:
+        errors.append("A palavra-passe deve ter no mínimo 8 caracteres.")
+    if form.password != form.confirm_password:
+        errors.append("A confirmação da palavra-passe não confere.")
+
+    parsed_birth_date: date | None = None
+    if clean_birth_date:
+        try:
+            parsed_birth_date = parse_optional_date_pt(clean_birth_date)
+        except ValueError:
+            errors.append("Data de nascimento inválida. Use o formato dd/mm/aaaa.")
+
+    user = session.get(User, int(invite_payload["uid"]))
+    if user is None or (user.login_email or "").strip().lower() != invite_payload["email"]:
+        return InviteAcceptInvalid(
+            error="Convite inválido. Utilizador não encontrado.",
+            form_data=form_data,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if user.account_status != UserAccountStatus.PENDING.value:
+        return InviteAcceptAlreadyActive()
+
+    member = session.get(Member, user.member_id)
+    if member is None:
+        return InviteAcceptInvalid(
+            error="Membro associado ao convite não foi encontrado.",
+            form_data=form_data,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    invite_entity_id, invite_entity_name = resolve_invite_entity_for_member(
+        session,
+        int(member.id),
+        invite_payload.get("entity_id"),
+    )
+    form_data["entity_name"] = invite_entity_name
+    form_data["email"] = user.login_email or ""
+
+    if errors:
+        return InviteAcceptInvalid(
+            error=" ".join(errors),
+            form_data=form_data,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    member.full_name = clean_full_name
+    member.primary_phone = clean_primary_phone
+    member.country = clean_country or None
+    member.address = clean_address
+    member.city = clean_city
+    member.freguesia = clean_freguesia
+    member.postal_code = clean_postal_code
+    member.birth_date = parsed_birth_date
+    user.password_hash = hash_password(form.password)
+    user.account_status = UserAccountStatus.ACTIVE.value
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        return InviteAcceptInvalid(
+            error="Não foi possível concluir a ativação da conta. Tente novamente.",
+            form_data=form_data,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return InviteAcceptSuccess(user=user, member=member, invite_entity_id=invite_entity_id)
