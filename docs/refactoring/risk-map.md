@@ -21,14 +21,12 @@ objetivo geral do pedido quer eliminar. Isto é uma "ambiguidade de regra de neg
 quebrar produção" nos termos da regra 18 do pedido original: requer decisão explícita antes de
 prosseguir com as Fases 3, 5, 6 e 7, não uma escolha unilateral da IA.
 
-Opções concretas a decidir com o utilizador:
-- (a) Tratar `admin_subprocesses/` como a arquitetura definitiva e usar `domains/` apenas para os
-  fluxos que ainda não têm equivalente lá (ex.: Auth, Empresa, Webhooks) — evitando duplicar
-  Entidade/Sessões/Menu/Perfil de autorização.
-- (b) Migrar gradualmente `admin_subprocesses/` para dentro de `domains/` como uma camada, mantendo
-  os nomes de config/registry atuais para não invalidar as 30 regras do AGENTS.md.
-- (c) Manter os dois em paralelo apenas durante a transição, com documento explícito de qual
-  "vence" para cada subprocesso, e prazo de convergência definido.
+**Decisão (2026-07-05):** opção (a). `appgenesis/admin_subprocesses/` é a arquitetura definitiva
+para Entidade, Sessões, Menu, Perfil de autorização e Objeto de autorização — continuam a evoluir
+lá, preservando o registry/service/repositories atuais e as 30 regras de incidente do AGENTS.md.
+`appgenesis/domains/` só é criado para fluxos que ainda não têm equivalente nativo hoje: Auth,
+Empresa, Webhooks e Meu Perfil (que hoje vive em `services/page.py`/`profile_handlers.py`, fora do
+motor de subprocessos). A Fase 3 em diante deve seguir esta regra sem reabrir a decisão por fase.
 
 ## Risco #2 (ALTO) — cascata de wildcard imports
 
