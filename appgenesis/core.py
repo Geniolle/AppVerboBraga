@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+# NOTA (Fase 2 - refactor/appgenesis-process-architecture): este modulo e um hub de
+# compatibilidade temporario. Ate a Fase 2, dezenas de ficheiros consumiam este modulo
+# via "from appgenesis.core import *"; essas ocorrencias ja foram substituidas por
+# imports explicitos. Constantes derivadas de settings ainda residem aqui (migracao
+# para a sua origem real fica para uma fase futura). Novos ficheiros criados a partir
+# desta fase NAO devem importar de appgenesis.core — importar diretamente da origem
+# real do simbolo (appgenesis.models, appgenesis.config.settings, appgenesis.services.*, etc.).
+
 from pathlib import Path
 
 from authlib.integrations.starlette_client import OAuth, OAuthError

@@ -5,7 +5,20 @@ import secrets
 from pathlib import Path
 from typing import Any
 
-from appgenesis.core import *  # noqa: F403,F401
+from fastapi import UploadFile
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from appgenesis.core import (
+    ALLOWED_ENTITY_LOGO_EXTENSIONS,
+    ALLOWED_ENTITY_PROFILE_SCOPE,
+    ENTITY_LOGOS_DIR,
+    ENTITY_PROFILE_SCOPE_LEGADO,
+    ENTITY_PROFILE_SCOPE_OWNER,
+    LOGO_CONTENT_TYPE_EXTENSION,
+    MAX_ENTITY_LOGO_SIZE_BYTES,
+)
+from appgenesis.models import Entity
 
 def save_entity_logo_upload(entity_logo_file: UploadFile | None) -> tuple[str, str]:
     if entity_logo_file is None or not entity_logo_file.filename:

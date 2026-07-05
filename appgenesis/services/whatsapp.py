@@ -6,7 +6,14 @@ from typing import Any
 
 import httpx
 
-from appgenesis.core import *  # noqa: F403,F401
+from appgenesis.core import (
+    WHATSAPP_ACCESS_TOKEN,
+    WHATSAPP_GRAPH_API_VERSION,
+    WHATSAPP_PHONE_NUMBER_ID,
+    WHATSAPP_TEMPLATE_LANGUAGE,
+    WHATSAPP_TEMPLATE_NAME,
+    WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+)
 
 def has_whatsapp_verification_config() -> bool:
     return bool(

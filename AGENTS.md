@@ -276,7 +276,7 @@ Exemplos de nomes esperados:
 ```text
 process_lists_manager_v1.js
 process_subsequent_fields_manager_v1.js
-process_fields_config_manager_v1.js
+process_fields_config_manager_v7.js
 process_additional_fields_manager_v3.js
 
 

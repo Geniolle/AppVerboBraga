@@ -3,14 +3,39 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Form, Query, Request, status
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import *  # noqa: F403,F401
-from appgenesis.services import *  # noqa: F403,F401
+from appgenesis.core import (
+    BASE_DIR,
+    ENTITY_PROFILE_SCOPE_LEGADO,
+    ENTITY_PROFILE_SCOPE_OWNER,
+)
+from appgenesis.db.session import SessionLocal
+from appgenesis.services.auth import is_admin_user
+from appgenesis.services.entities import (
+    apply_entity_form_data_v1,
+    clean_entity_form_data_v1,
+    get_duplicate_entity_name_id_v1,
+    get_existing_owner_entity_id_v1,
+    save_entity_logo_upload,
+    validate_entity_required_fields_v1,
+)
+from appgenesis.services.navigation_context import build_return_url_v1
+from appgenesis.services.page import (
+    build_users_new_url,
+    get_entity_edit_defaults,
+    get_form_defaults,
+    get_next_entity_number,
+    get_page_data,
+)
+from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.profile import get_user_personal_data
+from appgenesis.services.session import get_current_user, get_session_entity_id
+from appgenesis.web.templates import templates
 from appgenesis.models import (
     Entity,
     Member,

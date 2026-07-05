@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [master, refactor/appgenesis-process-architecture]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest==9.1.1 pyflakes==3.4.0
+
+      - name: Lint with pyflakes (informational)
+        # Non-blocking: appgenesis/models/*.py uses SQLAlchemy string-based
+        # relationship() forward refs that pyflakes reports as false-positive
+        # "undefined name", plus pre-existing "imported but unused" noise.
+        # Kept as a visible report, not a merge gate, until that baseline is
+        # cleaned up separately.
+        continue-on-error: true
+        run: python -m pyflakes appgenesis/ web_app.py
+
+      - name: Run tests (excluding Selenium browser tests)
+        run: |
+          pytest -q \
+            --ignore=tests/test_auth_objeto_navigation_selenium.py \
+            --ignore=tests/test_estruturas_menu_client_navigation.py \
+            --ignore=tests/test_navigation_refresh_home.py \
+            --ignore=tests/test_navigation_reload_and_loading_overlay.py

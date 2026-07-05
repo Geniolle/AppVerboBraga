@@ -1,54 +1,31 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
+from fastapi import Form, Query, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-
-from appgenesis.core import *  # noqa: F403,F401
-from appgenesis.services import *  # noqa: F403,F401
-from appgenesis.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    User,
-    UserAccountStatus,
+from appgenesis.db.session import SessionLocal
+from appgenesis.domains.auth.schemas import InviteAcceptSubmitFormInput
+from appgenesis.domains.auth.use_cases import (
+    InviteAcceptAlreadyActive,
+    InviteAcceptInvalid,
+    InviteAcceptSuccess,
+    InvitePageAlreadyActive,
+    InvitePageInvalid,
+    InvitePageReady,
+    execute_invite_accept,
+    resolve_invite_accept_page,
 )
+from appgenesis.services.auth import parse_user_invite_token
+from appgenesis.services.page import build_users_new_url
+from appgenesis.services.phone_country import (
+    get_supported_phone_countries,
+    get_supported_phone_country_option,
+    normalize_country_code,
+)
+from appgenesis.services.session import get_entity_context_for_user, set_session_entity_context
+from appgenesis.web.templates import templates
 
 from appgenesis.routes.auth.router import router
-
-def _resolve_invite_entity_for_member(
-    session: Session,
-    member_id: int,
-    requested_entity_id: int | None,
-) -> tuple[int | None, str]:
-    entity_rows = session.execute(
-        select(Entity.id, Entity.name)
-       .join(MemberEntity, MemberEntity.entity_id == Entity.id)
-       .where(
-            MemberEntity.member_id == member_id,
-            MemberEntity.status == MemberEntityStatus.ACTIVE.value,
-            Entity.is_active.is_(True),
-        )
-       .order_by(MemberEntity.id.asc())
-    ).all()
-    if not entity_rows:
-        return None, "-"
-
-    if isinstance(requested_entity_id, int) and requested_entity_id > 0:
-        for row in entity_rows:
-            if int(row.id) == requested_entity_id:
-                return int(row.id), str(row.name or "-")
-
-    first_row = entity_rows[0]
-    return int(first_row.id), str(first_row.name or "-")
-
 
 def render_invite_accept(
     request: Request,
@@ -124,54 +101,30 @@ def invite_accept_page(
         )
 
     with SessionLocal() as session:
-        user = session.get(User, int(invite_payload["uid"]))
-        if user is None or (user.login_email or "").strip().lower() != invite_payload["email"]:
-            return render_invite_accept(
-                request,
-                token=clean_token,
-                error="Convite inválido. Utilizador não encontrado.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
+        result = resolve_invite_accept_page(session, invite_payload)
 
-        if user.account_status != UserAccountStatus.PENDING.value:
-            return render_invite_accept(
-                request,
-                token=clean_token,
-                success="Esta conta já foi ativada. Pode entrar no sistema.",
-                account_already_active=True,
-            )
-
-        member = session.get(Member, user.member_id)
-        if member is None:
-            return render_invite_accept(
-                request,
-                token=clean_token,
-                error="Membro associado ao convite não foi encontrado.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        _, entity_name = _resolve_invite_entity_for_member(
-            session,
-            int(member.id),
-            invite_payload.get("entity_id"),
-        )
-
+    if isinstance(result, InvitePageInvalid):
         return render_invite_accept(
             request,
             token=clean_token,
-            form_data={
-                "full_name": member.full_name or "",
-                "country": normalize_country_code(member.country or ""),
-                "primary_phone": member.primary_phone or "",
-                "address": member.address or "",
-                "city": member.city or "",
-                "freguesia": member.freguesia or "",
-                "postal_code": member.postal_code or "",
-                "birth_date": format_optional_date_pt(member.birth_date),
-                "entity_name": entity_name,
-                "email": user.login_email or "",
-            },
+            error=result.error,
+            status_code=result.status_code,
         )
+
+    if isinstance(result, InvitePageAlreadyActive):
+        return render_invite_accept(
+            request,
+            token=clean_token,
+            success="Esta conta já foi ativada. Pode entrar no sistema.",
+            account_already_active=True,
+        )
+
+    assert isinstance(result, InvitePageReady)
+    return render_invite_accept(
+        request,
+        token=clean_token,
+        form_data=result.form_data,
+    )
 
 @router.post("/users/invite/accept", response_class=HTMLResponse)
 def invite_accept_submit(
@@ -188,16 +141,21 @@ def invite_accept_submit(
     password: str = Form(...),
     confirm_password: str = Form(...),
 ) -> HTMLResponse:
-    clean_token = token.strip()
-    clean_full_name = full_name.strip()
-    clean_primary_phone = normalize_phone_value(primary_phone)
-    clean_country = normalize_country_code(country)
-    clean_address = address.strip()
-    clean_city = city.strip()
-    clean_freguesia = freguesia.strip()
-    clean_postal_code = postal_code.strip()
-    clean_birth_date = birth_date.strip()
+    form = InviteAcceptSubmitFormInput(
+        token=token,
+        full_name=full_name,
+        primary_phone=primary_phone,
+        country=country,
+        address=address,
+        city=city,
+        freguesia=freguesia,
+        postal_code=postal_code,
+        birth_date=birth_date,
+        password=password,
+        confirm_password=confirm_password,
+    )
 
+    clean_token = form.token.strip()
     invite_payload = parse_user_invite_token(clean_token)
     if invite_payload is None:
         return render_invite_accept(
@@ -207,55 +165,19 @@ def invite_accept_submit(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    form_data: dict[str, str] = {
-        "full_name": clean_full_name,
-        "country": clean_country,
-        "primary_phone": clean_primary_phone,
-        "address": clean_address,
-        "city": clean_city,
-        "freguesia": clean_freguesia,
-        "postal_code": clean_postal_code,
-        "birth_date": clean_birth_date,
-        "entity_name": "",
-        "email": invite_payload["email"],
-    }
-
-    errors: list[str] = []
-    if not clean_full_name:
-        errors.append("Nome completo é obrigatório.")
-    phone_country_error = validate_phone_prefix_for_country(clean_country, clean_primary_phone)
-    if phone_country_error:
-        errors.append(phone_country_error)
-    if not clean_address:
-        errors.append("Morada é obrigatória.")
-    if not clean_city:
-        errors.append("Cidade é obrigatória.")
-    if not clean_freguesia:
-        errors.append("Freguesia é obrigatória.")
-    if not clean_postal_code:
-        errors.append("Código postal é obrigatório.")
-    if len(password) < 8:
-        errors.append("A palavra-passe deve ter no mínimo 8 caracteres.")
-    if password != confirm_password:
-        errors.append("A confirmação da palavra-passe não confere.")
-
-    parsed_birth_date: date | None = None
-    if clean_birth_date:
-        try:
-            parsed_birth_date = parse_optional_date_pt(clean_birth_date)
-        except ValueError:
-            errors.append("Data de nascimento inválida. Use o formato dd/mm/aaaa.")
-
     with SessionLocal() as session:
-        user = session.get(User, int(invite_payload["uid"]))
-        if user is None or (user.login_email or "").strip().lower() != invite_payload["email"]:
+        result = execute_invite_accept(session, form, invite_payload)
+
+        if isinstance(result, InviteAcceptInvalid):
             return render_invite_accept(
                 request,
                 token=clean_token,
-                error="Convite inválido. Utilizador não encontrado.",
-                status_code=status.HTTP_400_BAD_REQUEST,
+                error=result.error,
+                form_data=result.form_data,
+                status_code=result.status_code,
             )
-        if user.account_status != UserAccountStatus.PENDING.value:
+
+        if isinstance(result, InviteAcceptAlreadyActive):
             return render_invite_accept(
                 request,
                 token=clean_token,
@@ -263,61 +185,15 @@ def invite_accept_submit(
                 account_already_active=True,
             )
 
-        member = session.get(Member, user.member_id)
-        if member is None:
-            return render_invite_accept(
-                request,
-                token=clean_token,
-                error="Membro associado ao convite não foi encontrado.",
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        invite_entity_id, invite_entity_name = _resolve_invite_entity_for_member(
-            session,
-            int(member.id),
-            invite_payload.get("entity_id"),
-        )
-        form_data["entity_name"] = invite_entity_name
-        form_data["email"] = user.login_email or ""
-
-        if errors:
-            return render_invite_accept(
-                request,
-                token=clean_token,
-                error=" ".join(errors),
-                form_data=form_data,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        member.full_name = clean_full_name
-        member.primary_phone = clean_primary_phone
-        member.country = clean_country or None
-        member.address = clean_address
-        member.city = clean_city
-        member.freguesia = clean_freguesia
-        member.postal_code = clean_postal_code
-        member.birth_date = parsed_birth_date
-        user.password_hash = hash_password(password)
-        user.account_status = UserAccountStatus.ACTIVE.value
-
-        try:
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return render_invite_accept(
-                request,
-                token=clean_token,
-                error="Não foi possível concluir a ativação da conta. Tente novamente.",
-                form_data=form_data,
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-
-        request.session["user_id"] = user.id
-        request.session["user_name"] = member.full_name
-        request.session["user_email"] = user.login_email
+        assert isinstance(result, InviteAcceptSuccess)
+        request.session["user_id"] = result.user.id
+        request.session["user_name"] = result.member.full_name
+        request.session["user_email"] = result.user.login_email
         set_session_entity_context(
             request,
-            get_entity_context_for_user(session, user.id, user.login_email, invite_entity_id),
+            get_entity_context_for_user(
+                session, result.user.id, result.user.login_email, result.invite_entity_id
+            ),
         )
 
     return RedirectResponse(
