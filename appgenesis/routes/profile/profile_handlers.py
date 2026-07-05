@@ -21,6 +21,18 @@ from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository im
     ObjetoAutorizacaoAdminRepository,
 )
 from appgenesis.db.session import SessionLocal
+from appgenesis.domains.meu_perfil.schemas import (
+    AddressProfileFormInput,
+    TrainingProfileFormInput,
+)
+from appgenesis.domains.meu_perfil.use_cases import (
+    UpdateAddressFailure,
+    UpdateTrainingFailure,
+    UpdateWhatsappVerificationFailure,
+    execute_update_address_profile,
+    execute_update_training_profile,
+    execute_verify_whatsapp_profile,
+)
 from appgenesis.menu_settings import (
     MENU_MEU_PERFIL_FIELD_LABELS,
     MENU_MEU_PERFIL_KEY,
@@ -38,10 +50,6 @@ from appgenesis.services.auth_profile_entity_scope import (
 from appgenesis.services.page import build_users_new_url, get_page_data
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import get_current_user, get_session_entity_id
-from appgenesis.services.whatsapp import (
-    normalize_whatsapp_recipient,
-    send_whatsapp_verification_template,
-)
 from appgenesis.services.profile import (
     build_menu_process_field_storage_key,
     build_menu_process_records_storage_key,
@@ -2183,10 +2191,9 @@ def update_address_profile(
     freguesia: str = Form(""),
     postal_code: str = Form(""),
 ) -> RedirectResponse:
-    clean_address = address.strip()
-    clean_city = city.strip()
-    clean_freguesia = freguesia.strip()
-    clean_postal_code = postal_code.strip()
+    form = AddressProfileFormInput(
+        address=address, city=city, freguesia=freguesia, postal_code=postal_code
+    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -2196,39 +2203,21 @@ def update_address_profile(
                 status_code=status.HTTP_302_FOUND,
             )
 
-        member = session.execute(
-            select(Member).join(User, User.member_id == Member.id).where(User.id == current_user["id"])
-        ).scalar_one_or_none()
-        if member is None:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Membro associado ao utilizador não encontrado.",
-                    profile_tab="morada",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+        result = execute_update_address_profile(session, current_user["id"], form)
 
-        member.address = clean_address or None
-        member.city = clean_city or None
-        member.freguesia = clean_freguesia or None
-        member.postal_code = clean_postal_code or None
-
-        try:
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Falha ao gravar dados de morada.",
-                    profile_tab="morada",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+    if isinstance(result, UpdateAddressFailure):
+        return RedirectResponse(
+            url=build_users_new_url(
+                profile_error=result.error,
+                profile_tab=result.profile_tab,
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
     return RedirectResponse(
         url=build_users_new_url(
-            profile_success="Dados de morada atualizados com sucesso.",
-            profile_tab="morada",
+            profile_success=result.success,
+            profile_tab=result.profile_tab,
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
@@ -2244,10 +2233,17 @@ def update_training_profile(
     training_outros_enabled: str | None = Form(default=None),
     training_outros: str = Form(""),
 ) -> RedirectResponse:
-    clean_training_outros = training_outros.strip()
-    is_outros_enabled = training_outros_enabled == "1"
+    form = TrainingProfileFormInput(
+        training_discipulado_verbo_vida=training_discipulado_verbo_vida,
+        training_ebvv=training_ebvv,
+        training_rhema=training_rhema,
+        training_escola_ministerial=training_escola_ministerial,
+        training_escola_missoes=training_escola_missoes,
+        training_outros_enabled=training_outros_enabled,
+        training_outros=training_outros,
+    )
 
-    if is_outros_enabled and not clean_training_outros:
+    if form.training_outros_enabled == "1" and not form.training_outros.strip():
         return RedirectResponse(
             url=build_users_new_url(
                 profile_error="Preencha o campo Outros para gravar o treinamento.",
@@ -2264,41 +2260,21 @@ def update_training_profile(
                 status_code=status.HTTP_302_FOUND,
             )
 
-        member = session.execute(
-            select(Member).join(User, User.member_id == Member.id).where(User.id == current_user["id"])
-        ).scalar_one_or_none()
-        if member is None:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Membro associado ao utilizador não encontrado.",
-                    profile_tab="treinamento",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+        result = execute_update_training_profile(session, current_user["id"], form)
 
-        member.training_discipulado_verbo_vida = training_discipulado_verbo_vida == "1"
-        member.training_ebvv = training_ebvv == "1"
-        member.training_rhema = training_rhema == "1"
-        member.training_escola_ministerial = training_escola_ministerial == "1"
-        member.training_escola_missoes = training_escola_missoes == "1"
-        member.training_outros = clean_training_outros if is_outros_enabled else None
-
-        try:
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Falha ao gravar dados de treinamento.",
-                    profile_tab="treinamento",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+    if isinstance(result, UpdateTrainingFailure):
+        return RedirectResponse(
+            url=build_users_new_url(
+                profile_error=result.error,
+                profile_tab=result.profile_tab,
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
     return RedirectResponse(
         url=build_users_new_url(
-            profile_success="Dados de treinamento atualizados com sucesso.",
-            profile_tab="treinamento",
+            profile_success=result.success,
+            profile_tab=result.profile_tab,
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
@@ -2313,55 +2289,21 @@ def verify_whatsapp_profile(request: Request) -> RedirectResponse:
                 status_code=status.HTTP_302_FOUND,
             )
 
-        member = session.execute(
-            select(Member).join(User, User.member_id == Member.id).where(User.id == current_user["id"])
-        ).scalar_one_or_none()
-        if member is None:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error="Membro associado ao utilizador não encontrado.",
-                    profile_tab="pessoal",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
+        result = execute_verify_whatsapp_profile(session, current_user["id"])
 
-        normalized_phone = normalize_whatsapp_recipient(member.primary_phone or "")
-        if not normalized_phone:
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error=(
-                        "Telefone inválido para WhatsApp. Use formato internacional "
-                        "(ex.: +351912345678)."
-                    ),
-                    profile_tab="pessoal",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-        is_sent, message_id, error_message = send_whatsapp_verification_template(normalized_phone)
-        member.whatsapp_last_check_at = datetime.now(timezone.utc)
-        member.whatsapp_last_message_id = message_id or None
-        member.whatsapp_last_error = error_message or None
-        member.whatsapp_verification_status = "pending" if is_sent else "failed"
-
-        if not is_sent:
-            session.commit()
-            return RedirectResponse(
-                url=build_users_new_url(
-                    profile_error=f"Não foi possível iniciar verificação WhatsApp: {error_message}",
-                    profile_tab="pessoal",
-                ),
-                status_code=status.HTTP_303_SEE_OTHER,
-            )
-
-        session.commit()
+    if isinstance(result, UpdateWhatsappVerificationFailure):
         return RedirectResponse(
             url=build_users_new_url(
-                profile_success=(
-                    "Verificação WhatsApp iniciada. O estado será atualizado automaticamente "
-                    "quando o webhook receber a confirmação."
-                ),
+                profile_error=result.error,
                 profile_tab="pessoal",
             ),
             status_code=status.HTTP_303_SEE_OTHER,
         )
+
+    return RedirectResponse(
+        url=build_users_new_url(
+            profile_success=result.success,
+            profile_tab="pessoal",
+        ),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
