@@ -1,38 +1,21 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
-
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import Request, status
+from fastapi.responses import RedirectResponse
 
 from appgenesis.core import OAuthError
 from appgenesis.db.session import SessionLocal
-from appgenesis.services.auth import (
-    fetch_oauth_userinfo,
-    get_oauth_client,
-    upsert_user_by_email,
+from appgenesis.domains.auth.use_cases import (
+    OAuthCallbackFailure,
+    OAuthCallbackSuccess,
+    execute_oauth_callback,
 )
-from appgenesis.services.i18n import (
-    persist_user_language_selection,
-    resolve_user_language_after_auth,
-)
+from appgenesis.services.auth import fetch_oauth_userinfo, get_oauth_client
+from appgenesis.services.i18n import persist_user_language_selection
 from appgenesis.services.session import (
     get_current_user,
     get_entity_context_for_user,
     set_session_entity_context,
-)
-from appgenesis.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    User,
-    UserAccountStatus,
 )
 
 from appgenesis.routes.auth.router import router
@@ -77,61 +60,25 @@ async def oauth_callback(request: Request, provider: str) -> RedirectResponse:
 
     userinfo = await fetch_oauth_userinfo(request, provider, client, token)
 
-    email = (
-        userinfo.get("email")
-        or userinfo.get("preferred_username")
-        or userinfo.get("upn")
-        or ""
-    ).strip().lower()
-    if not email:
-        return RedirectResponse(
-            url="/login?error=O provedor não devolveu email.&mode=login",
-            status_code=status.HTTP_302_FOUND,
-        )
-
-    full_name = (
-        userinfo.get("name")
-        or userinfo.get("given_name")
-        or email.split("@")[0]
-    )
-
     with SessionLocal() as session:
-        existing_user = session.execute(
-            select(User.id, User.account_status).where(func.lower(User.login_email) == email)
-        ).one_or_none()
-        if existing_user is not None and existing_user.account_status != UserAccountStatus.ACTIVE.value:
+        result = execute_oauth_callback(session, request, userinfo)
+
+        if isinstance(result, OAuthCallbackFailure):
             return RedirectResponse(
-                url=f"/login?error=Conta com estado '{existing_user.account_status}'. Contacte o administrador.&mode=login",
+                url=f"/login?error={result.error}&mode=login",
                 status_code=status.HTTP_302_FOUND,
             )
 
-        try:
-            user = upsert_user_by_email(
-                session=session,
-                email=email,
-                full_name=full_name,
-                primary_phone="N/D",
-                entity_id=None,
-            )
-            user.account_status = UserAccountStatus.ACTIVE.value
-            resolved_language, _ = resolve_user_language_after_auth(user, request)
-            session.commit()
-        except IntegrityError:
-            session.rollback()
-            return RedirectResponse(
-                url="/login?error=Falha ao concluir login externo.&mode=login",
-                status_code=status.HTTP_302_FOUND,
-            )
-
+        assert isinstance(result, OAuthCallbackSuccess)
         response = RedirectResponse(url="/users/new", status_code=status.HTTP_303_SEE_OTHER)
-        persist_user_language_selection(request, response, resolved_language)
+        persist_user_language_selection(request, response, result.resolved_language)
 
-        request.session["user_id"] = user.id
-        request.session["user_name"] = full_name
-        request.session["user_email"] = email
+        request.session["user_id"] = result.user.id
+        request.session["user_name"] = result.full_name
+        request.session["user_email"] = result.clean_email
         set_session_entity_context(
             request,
-            get_entity_context_for_user(session, user.id, user.login_email, None),
+            get_entity_context_for_user(session, result.user.id, result.user.login_email, None),
         )
 
     return response

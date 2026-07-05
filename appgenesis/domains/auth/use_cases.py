@@ -331,3 +331,68 @@ def resolve_signup_entity_lock(session: Session, clean_entity_id: str) -> dict[s
         signup_data["entity_name"] = linked_entity.name or ""
         signup_data["entity_locked"] = "1"
     return signup_data
+
+
+@dataclass(frozen=True)
+class OAuthCallbackFailure:
+    error: str
+
+
+@dataclass(frozen=True)
+class OAuthCallbackSuccess:
+    user: User
+    full_name: str
+    clean_email: str
+    resolved_language: str = field(default="")
+
+
+OAuthCallbackResult = OAuthCallbackSuccess | OAuthCallbackFailure
+
+
+def execute_oauth_callback(
+    session: Session, request: Request, userinfo: dict[str, Any]
+) -> OAuthCallbackResult:
+    email = (
+        userinfo.get("email")
+        or userinfo.get("preferred_username")
+        or userinfo.get("upn")
+        or ""
+    ).strip().lower()
+    if not email:
+        return OAuthCallbackFailure(error="O provedor não devolveu email.")
+
+    full_name = (
+        userinfo.get("name")
+        or userinfo.get("given_name")
+        or email.split("@")[0]
+    )
+
+    existing_user = session.execute(
+        select(User.id, User.account_status).where(func.lower(User.login_email) == email)
+    ).one_or_none()
+    if existing_user is not None and existing_user.account_status != UserAccountStatus.ACTIVE.value:
+        return OAuthCallbackFailure(
+            error=f"Conta com estado '{existing_user.account_status}'. Contacte o administrador."
+        )
+
+    try:
+        user = upsert_user_by_email(
+            session=session,
+            email=email,
+            full_name=full_name,
+            primary_phone="N/D",
+            entity_id=None,
+        )
+        user.account_status = UserAccountStatus.ACTIVE.value
+        resolved_language, _ = resolve_user_language_after_auth(user, request)
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        return OAuthCallbackFailure(error="Falha ao concluir login externo.")
+
+    return OAuthCallbackSuccess(
+        user=user,
+        full_name=full_name,
+        clean_email=email,
+        resolved_language=resolved_language,
+    )
