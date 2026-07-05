@@ -1,24 +1,9 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
+from fastapi import Query, status
+from fastapi.responses import PlainTextResponse
 
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
-
-from appgenesis.core import WHATSAPP_WEBHOOK_VERIFY_TOKEN
-from appgenesis.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    User,
-    UserAccountStatus,
-)
+from appgenesis.domains.webhooks.use_cases import verify_whatsapp_subscription_challenge
 
 from appgenesis.routes.webhooks.router import router
 
@@ -28,11 +13,7 @@ def verify_whatsapp_webhook(
     hub_challenge: str | None = Query(default=None, alias="hub.challenge"),
     hub_verify_token: str | None = Query(default=None, alias="hub.verify_token"),
 ) -> PlainTextResponse:
-    if (
-        hub_mode == "subscribe"
-        and hub_challenge is not None
-        and WHATSAPP_WEBHOOK_VERIFY_TOKEN
-        and hub_verify_token == WHATSAPP_WEBHOOK_VERIFY_TOKEN
-    ):
-        return PlainTextResponse(hub_challenge, status_code=status.HTTP_200_OK)
+    challenge = verify_whatsapp_subscription_challenge(hub_mode, hub_challenge, hub_verify_token)
+    if challenge is not None:
+        return PlainTextResponse(challenge, status_code=status.HTTP_200_OK)
     return PlainTextResponse("forbidden", status_code=status.HTTP_403_FORBIDDEN)
