@@ -9,8 +9,8 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import *  # noqa: F403,F401
-from appgenesis.services import *  # noqa: F403,F401
+from appgenesis.db.session import SessionLocal
+from appgenesis.services.whatsapp import map_whatsapp_delivery_status
 from appgenesis.models import (
     Entity,
     Member,
