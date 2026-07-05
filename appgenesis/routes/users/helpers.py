@@ -10,8 +10,7 @@ from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from appgenesis.core import *  # noqa: F403,F401
-from appgenesis.services import *  # noqa: F403,F401
+from appgenesis.services.auth import is_admin_user
 from appgenesis.models import (
     Entity,
     Member,
