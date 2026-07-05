@@ -23,7 +23,7 @@ from appgenesis.services.auth_profile_entity_scope import (
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
-from appgenesis.core import *  # noqa: F403,F401
+from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_KEY,
@@ -36,7 +36,19 @@ from appgenesis.menu_settings import (
     update_sidebar_menu_label,
     update_sidebar_menu_process_fields,
 )
-from appgenesis.services import *  # noqa: F403,F401
+from appgenesis.services.auth import is_admin_user
+from appgenesis.services.page import (
+    get_entity_edit_data,
+    get_entity_form_defaults,
+    get_form_defaults,
+    get_next_entity_number,
+    get_page_data,
+    get_user_edit_data,
+)
+from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.profile import get_user_personal_data
+from appgenesis.services.session import get_current_user, get_session_entity_id
+from appgenesis.web.templates import templates
 from appgenesis.models import (
     Entity,
     Member,
