@@ -1,26 +1,12 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
-from typing import Any
-
-from fastapi import APIRouter, Form, Query, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from sqlalchemy import delete, func, select, update
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from fastapi import Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from appgenesis.db.session import SessionLocal
-from appgenesis.services.auth import get_signup_defaults, render_login
+from appgenesis.domains.auth.use_cases import resolve_signup_entity_lock
+from appgenesis.services.auth import render_login
 from appgenesis.services.session import get_current_user, get_session_user_id
-from appgenesis.models import (
-    Entity,
-    Member,
-    MemberEntity,
-    MemberEntityStatus,
-    MemberStatus,
-    User,
-    UserAccountStatus,
-)
 
 from appgenesis.routes.auth.router import router
 
@@ -48,22 +34,18 @@ def login_page(
         current_user = get_current_user(request, session)
     if current_user is not None:
         return RedirectResponse(url="/users/new", status_code=status.HTTP_302_FOUND)
+
+    resolved_mode = "login" if mode.strip().lower() == "admin" else mode
     signup_data = None
     clean_entity_id = entity_id.strip()
-    if mode.strip().lower() == "admin":
-        mode = "login"
-    if mode.strip().lower() == "signup" and clean_entity_id.isdigit():
-        signup_data = get_signup_defaults()
+    if resolved_mode.strip().lower() == "signup" and clean_entity_id.isdigit():
         with SessionLocal() as session:
-            linked_entity = session.get(Entity, int(clean_entity_id))
-        if linked_entity is not None and linked_entity.is_active:
-            signup_data["entity_id"] = clean_entity_id
-            signup_data["entity_name"] = linked_entity.name or ""
-            signup_data["entity_locked"] = "1"
+            signup_data = resolve_signup_entity_lock(session, clean_entity_id)
+
     return render_login(
         request,
         error=error or "",
         success=success or "",
-        mode=mode,
+        mode=resolved_mode,
         signup_data=signup_data,
     )

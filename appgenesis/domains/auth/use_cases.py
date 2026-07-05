@@ -18,6 +18,7 @@ from appgenesis.models import (
     UserAccountStatus,
 )
 from appgenesis.services.auth import (
+    get_signup_defaults,
     hash_password,
     is_admin_user,
     upsert_user_by_email,
@@ -320,3 +321,13 @@ def execute_signup(session: Session, request: Request, form: SignupFormInput) ->
         parsed_entity_id=parsed_entity_id,
         resolved_language=resolved_language,
     )
+
+
+def resolve_signup_entity_lock(session: Session, clean_entity_id: str) -> dict[str, Any]:
+    signup_data = get_signup_defaults()
+    linked_entity = session.get(Entity, int(clean_entity_id))
+    if linked_entity is not None and linked_entity.is_active:
+        signup_data["entity_id"] = clean_entity_id
+        signup_data["entity_name"] = linked_entity.name or ""
+        signup_data["entity_locked"] = "1"
+    return signup_data
