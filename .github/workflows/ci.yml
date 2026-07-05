@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, refactor/appgenesis-process-architecture]
+    branches: [master, refactor/appgenesis-process-architecture]
   pull_request:
-    branches: [main, refactor/appgenesis-process-architecture]
+    branches: [master]
 
 jobs:
   test:
