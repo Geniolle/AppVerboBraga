@@ -112,8 +112,25 @@ conta própria.
 
 ## Técnica de validação usada
 
-Não aplicável (nenhum código alterado). Confirmado via `git status` que
-nenhum ficheiro de aplicação foi tocado nesta fase.
+Não aplicável a alterações de código (nenhum ficheiro de aplicação foi
+tocado nesta fase — confirmado via `git status`).
+
+Adicionalmente, seguindo o item da Fase 9 no `validation-plan.md`
+("`alembic current`/`heads`/`check`/`upgrade head` via `docker compose
+exec web`"), corri via Docker:
+
+```
+docker compose exec web python -m alembic current   # userlang01 (head)
+docker compose exec web python -m alembic heads      # userlang01 (head)
+docker compose exec web python -m alembic check      # FAILED: remove_index/remove_table para songs, admin_definitions, process_view_authorization_rules
+```
+
+Resultado idêntico ao já documentado em `gsd/reports/alembic-baseline-drift.md`:
+a mesma baseline (`userlang01`), o mesmo conjunto de 3 tabelas legadas
+sinalizadas, sem nenhum drift novo introduzido pelas Fases 1–9 desta
+refatoração. Não corri `alembic upgrade head` (nenhuma migration nova
+foi criada nesta fase, e o `validation-plan.md` só pede isso quando uma
+fase cria migration nova).
 
 ## Ficheiros alterados/criados
 
