@@ -20,7 +20,7 @@ from appgenesis.admin_subprocesses.repositories.auth_profile_repository import (
 from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository import (
     ObjetoAutorizacaoAdminRepository,
 )
-from appgenesis.core import *  # noqa: F403,F401
+from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import (
     MENU_MEU_PERFIL_FIELD_LABELS,
     MENU_MEU_PERFIL_KEY,
@@ -32,16 +32,27 @@ from appgenesis.menu_settings import (
     update_sidebar_menu_label,
     update_sidebar_menu_process_fields,
 )
-from appgenesis.services import *  # noqa: F403,F401
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_entity_context_v1,
 )
+from appgenesis.services.page import build_users_new_url, get_page_data
+from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.session import get_current_user, get_session_entity_id
+from appgenesis.services.whatsapp import (
+    normalize_whatsapp_recipient,
+    send_whatsapp_verification_template,
+)
 from appgenesis.services.profile import (
+    build_menu_process_field_storage_key,
     build_menu_process_records_storage_key,
     build_menu_process_quantity_storage_key,
+    filter_process_fields_by_hidden_targets,
+    get_hidden_process_targets_from_rules,
     get_menu_process_quantity_repeated_field_keys,
+    is_meu_perfil_builtin_duplicate_field,
     parse_member_profile_fields,
     parse_menu_process_records,
+    parse_optional_date_pt,
     serialize_member_profile_fields,
     serialize_menu_process_records,
     parse_menu_process_quantity_values,
