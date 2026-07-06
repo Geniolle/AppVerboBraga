@@ -24,7 +24,7 @@ from typing import Any
 
 from sqlalchemy import inspect, text
 
-from appgenesis.core import SessionLocal, engine
+from appgenesis.db.session import SessionLocal, engine
 
 
 ####################################################################################
