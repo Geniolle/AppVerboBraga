@@ -1,6 +1,6 @@
 # Runbook de scripts operacionais (`scripts/`)
 
-Updated: 2026-07-05 — Issue #25 (pós-refatoração, issue-mãe #30).
+Updated: 2026-07-06 — remoção do `smoke_test.py` hardcoded.
 
 ## Contexto
 
@@ -21,7 +21,6 @@ Estes já estavam documentados em `README.md` e continuam sem alteração:
 
 - `bootstrap_admin.py`
 - `init_db.py`
-- `smoke_test.py`
 - `validate_web_app.py`
 
 ## Scripts pontuais mantidos
@@ -42,7 +41,7 @@ operador precisa diagnosticar ou corrigir um caso específico.
 | `repair_mojibake.py` | runbook manual | Sim (sem dry-run, sempre aplica; sem backup automático) | Ferramenta genérica de reparação de mojibake (UTF-8/CP1252) em templates/código/estático e nas colunas `sidebar_menu_settings`, `app_modules`, `sidebar_menu_items`. Fazer backup da base de dados antes de correr. |
 | `sync_member_country_profile_config.py` | runbook manual | Sim (idempotente — só insere o campo "País" onde ainda não existe) | Backfill de configuração para instalações onde a funcionalidade de país ainda não foi sincronizada no `menu_config` do Meu Perfil. |
 | `backfill_estado_civil_list_key_v1.py` | legado (mantido) | Sim (sem backup) | Corrige `list_key` desalinhado num campo do tipo lista ("Estado civil"). Não há evidência de que precise voltar a correr, mas mantido para referência caso o mesmo desalinhamento reapareça noutra instalação. |
-| `backfill_menu_hierarchy_v1.py` | legado (mantido) | Sim (sem backup) | Recalcula a hierarquia de processos do menu a partir de `additional_fields`, após uma mudança de modelo de hierarquia já mergeada. |
+| `backfill_menu_hierarchy_v1.py` | legado (mantido) | Sim (idempotente) | Recalcula a hierarquia de processos do menu a partir de `additional_fields`, após uma mudança de modelo de hierarquia já mergeada. |
 | `diagnose_meu_perfil_header_tabs_v1.py` | legado (mantido) | Não (só leitura) | Diagnóstico pontual de uma investigação já resolvida sobre abas de cabeçalho no Meu Perfil. Inofensivo de manter. |
 | `diagnostico_estado_civil_lista_v1.py` | legado (mantido) | Não (só leitura) | Diagnóstico pontual da mesma família de `backfill_estado_civil_list_key_v1.py`. |
 | `apply_member_country.py` | legado (mantido) | Sim (idempotente — mas já aplicado) | Script gerador que introduziu a funcionalidade "País" (modelo, migration `membercountry01_add_country_to_members`, serviços, template, e o próprio `sync_member_country_profile_config.py`). Confirmado que todos os alvos já estão aplicados no código atual. Mantido como registo histórico de como a funcionalidade foi introduzida — não se espera que volte a correr. |
@@ -54,6 +53,7 @@ por uma decisão de negócio, apenas por factos técnicos verificáveis:
 
 | Script removido | Motivo |
 |---|---|
+| `scripts/smoke_test.py` e wrapper raiz `smoke_test.py` | Criavam dados de demonstração diretamente na base, incluindo a entidade hardcoded `"Igreja Braga"`. Não eram usados no arranque normal, produção, CI ou testes automatizados e podiam sujar bases reais quando executados manualmente. |
 | `validate_login_auto_entity_v1b.py` | **Quebrado**: `ast.parse` falha com `IndentationError` na linha 99 (bloco de verificação do modo "admin" incompleto). Não podia ser executado. Nenhuma referência fora de `scripts/`. |
 | `validar_existencia_campos_subsequentes_meu_perfil_v1.py` | Subconjunto estrito de `validar_existencia_campos_subsequentes_meu_perfil_v2.py` (mesma lógica, v2 cobre mais formatos de regra). |
 | `validar_meu_perfil_regra_estado_civil_conjuge_v1.py` | Subconjunto estrito de `validar_meu_perfil_regra_estado_civil_conjuge_v2.py` (v1 exigia match exato de uma regra; v2 generaliza). |
