@@ -7,19 +7,24 @@ from __future__ import annotations
 # para a sua origem real fica para uma fase futura). Novos ficheiros criados a partir
 # desta fase NAO devem importar de appgenesis.core — importar diretamente da origem
 # real do simbolo (appgenesis.models, appgenesis.config.settings, appgenesis.services.*, etc.).
+#
+# NOTA (Issue #28, 2026-07-06): mapeados 21 consumidores reais deste modulo em
+# appgenesis/, scripts/ e tests/ (todos com imports nomeados explicitos, nenhum
+# wildcard) — nao ha "zero consumidores" para justificar remocao deste ficheiro.
+# A instancia FastAPI morta que existia aqui (app = FastAPI(...), com mount/
+# middleware duplicados) foi removida: a aplicacao real e criada em
+# appgenesis/app.py::create_app(), usada por web_app.py; nada importava "app"
+# a partir daqui. Detalhe completo em docs/refactoring/issue-28-legacy-hubs-report.md.
 
 from pathlib import Path
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import FastAPI
 from fastapi import File, Form, Query, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import create_engine, delete, func, inspect, select, text, update
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
 from sqlalchemy.orm import Session, sessionmaker
-from starlette.middleware.sessions import SessionMiddleware
 
 from appgenesis.config.settings import settings
 from appgenesis.db.bootstrap import (
@@ -85,14 +90,6 @@ ENTITY_NUMBER_MIN = settings.ENTITY_NUMBER_MIN
 ENTITY_NUMBER_MAX = settings.ENTITY_NUMBER_MAX
 
 templates = Jinja2Templates(directory=str(Path(BASE_DIR) / "templates"))
-app = FastAPI(title="AppGenesis User Admin")
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=APP_SECRET_KEY,
-    same_site="lax",
-    https_only=False,
-)
 
 __all__ = [
     "OAuth",
@@ -158,7 +155,6 @@ __all__ = [
     "engine",
     "SessionLocal",
     "templates",
-    "app",
     "oauth",
     "ensure_entities_optional_columns",
     "ensure_members_optional_columns",

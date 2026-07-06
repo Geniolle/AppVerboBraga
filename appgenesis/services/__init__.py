@@ -1,17 +1,8 @@
-# NOTA (Fase 2 - refactor/appgenesis-process-architecture): hub de wildcard imports.
-# Validado em 2026-07-05: nenhum ficheiro do repositorio (incluindo testes) importa
-# de "appgenesis.services" ao nivel do pacote (nem wildcard nem nomeado); todos os
-# consumidores usam agora imports explicitos dos submodulos individuais.
-# Mantido temporariamente por compatibilidade; candidato a remocao numa fase futura
-# apos nova validacao de uso.
-from appgenesis.services.user_system import *  # noqa: F403,F401
-from appgenesis.services.auth import *  # noqa: F403,F401
-from appgenesis.services.phone_country import *  # noqa: F403,F401
-from appgenesis.services.entities import *  # noqa: F403,F401
-from appgenesis.services.navigation_context import *  # noqa: F403,F401
-from appgenesis.services.page import *  # noqa: F403,F401
-from appgenesis.services.permissions import *  # noqa: F403,F401
-from appgenesis.services.profile import *  # noqa: F403,F401
-from appgenesis.services.session import *  # noqa: F403,F401
-from appgenesis.services.i18n import *  # noqa: F403,F401
-from appgenesis.services.whatsapp import *  # noqa: F403,F401
+# NOTA (Issue #28, 2026-07-06): este pacote continha um hub de wildcard imports,
+# mantido desde a Fase 2 como compatibilidade "por seguranca". Reconfirmado nesta
+# issue (segunda validacao independente, apos a de 2026-07-05): nenhum ficheiro do
+# repositorio, incluindo testes e scripts, importa de "appgenesis.services" ao
+# nivel do pacote (nem wildcard nem nomeado) — todos os consumidores usam imports
+# explicitos dos submodulos individuais (ex.: appgenesis.services.auth). Com prova
+# de zero uso, os wildcard imports foram removidos. Detalhe em
+# docs/refactoring/issue-28-legacy-hubs-report.md.
