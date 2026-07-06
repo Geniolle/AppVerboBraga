@@ -13,7 +13,7 @@ Organizacao principal apos refatoracao:
 - `appgenesis/schemas/`: schemas de validacao para formularios e payloads.
 - `templates/`: templates Jinja com `base.html` e `partials/`.
 - `static/css` e `static/js`: assets movidos para ficheiros externos.
-- `scripts/`: comandos operacionais (`bootstrap_admin`, `init_db`, `smoke_test`, `validate_web_app`).
+- `scripts/`: comandos operacionais (`bootstrap_admin`, `init_db`, `smoke_test`, `validate_web_app`) e scripts pontuais de diagnostico/reparacao — ver `docs/operations/scripts-runbook.md`.
 
 ## Padrao de UI
 
