@@ -965,7 +965,14 @@ def new_user_page(
                 )
                 auth_objeto_rows_v1 = auth_objeto_repo_v1.list_rows(
                     session,
-                    context={"user_id": current_user["id"]},
+                    context={
+                        "user_id": current_user["id"],
+                        "entity_number": (
+                            str(selected_entity_number)
+                            if selected_entity_number is not None
+                            else ""
+                        ),
+                    },
                 )
                 auth_objeto_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_objeto_subprocess_config_v1,

@@ -55,6 +55,28 @@ OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY = "__numero_entidade"
 _AUTH_MENU_KEY = "perfil_de_autorizacao"
 
 
+def _row_matches_entity_context_v1(
+    row: dict[str, Any],
+    *,
+    context: dict[str, Any] | None = None,
+) -> bool:
+    """Mirrors the entity filter already shipped for perfis de autorização
+    (see auth_profile_repository._row_matches_entity_context_v1). Rows
+    without a stored entity number are legacy/global and stay visible to
+    every entity until explicitly re-scoped."""
+    safe_context = context or {}
+    current_entity_number = str(safe_context.get("entity_number") or "").strip()
+    if not current_entity_number:
+        return True
+
+    row_values = row.get("values") if isinstance(row.get("values"), dict) else {}
+    stored_entity_number = str(row_values.get(OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY) or "").strip()
+    if not stored_entity_number:
+        return True
+
+    return stored_entity_number == current_entity_number
+
+
 def _normalize_status(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
     if clean_value in {"inativo", "inactive", "0", "false", "off", "no", "nao"}:
@@ -286,11 +308,16 @@ class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
             default_scope_mode,
             default_scope_label,
         ) = self._load_record_bundle(session, context)
-        return self._build_rows(
+        rows = self._build_rows(
             existing_records,
             default_scope_mode=default_scope_mode,
             default_scope_label=default_scope_label,
         )
+        return [
+            row
+            for row in rows
+            if _row_matches_entity_context_v1(row, context=context)
+        ]
 
     def get_for_edit(
         self,
@@ -351,10 +378,12 @@ class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
             default_scope_mode=default_scope_mode,
             default_scope_label=default_scope_label,
         )
+        entity_scoped_context = {**(context or {}), "entity_number": entity_number}
         record_index_by_key = {
             str(row.get("key") or "").strip().lower(): index
             for index, row in enumerate(existing_rows)
             if str(row.get("key") or "").strip()
+            and _row_matches_entity_context_v1(row, context=entity_scoped_context)
         }
         generated_key = build_objeto_autorizacao_key(label, fallback=requested_edit_key)
 

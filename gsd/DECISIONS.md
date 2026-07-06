@@ -147,3 +147,21 @@ Reason:
 - The project already treats active entity and owner/legacy scope as core tenancy constraints
 - Allowing legacy entities to submit global authorization profiles would break tenant boundaries
 - Reusing the active entity context keeps the current web flow compatible while preparing cleaner future multi-tenant contracts
+
+## Decision 017
+
+Objeto de Autorização rows are now filtered by entity on read (mirroring the filter already shipped for authorization profiles in Decision 016), and both Objeto and Perfil `save_row` key-collision checks are scoped per entity instead of globally. See Task 011.
+
+Reason:
+- The read path wrote a `__numero_entidade` tag on save but never filtered by it, confirmed as a real cross-entity data leak
+- The same unscoped `record_index_by_key` lookup could let one entity's "duplicate key" check block or collide with another entity's row
+- Rows without a stored entity number stay visible to every entity (legacy/global default), matching the existing Perfis behavior — no hardcoded entity fallback was introduced
+
+## Decision 018
+
+`sidebar_menu_settings` entity separation ("duplicate configuration per entity now") is confirmed as the target architecture, but implementation is deferred to a dedicated follow-up (Task 012) rather than bundled into the same pass as Decision 017.
+
+Reason:
+- The table is global with no entity column at all — this is a schema migration plus a ~44-site raw-SQL rewrite across `menu_settings.py`, not a filter fix like Decision 017
+- A partially migrated state (some queries entity-scoped, others not) would itself be a silent cross-tenant leak, so the migration and full read/write rewiring must land as one atomic, reviewable unit
+- Matches the project's own practice of splitting large-blast-radius work into dedicated branches rather than one mixed-scope pass

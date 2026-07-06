@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from appgenesis.admin_subprocesses.registry import AUTHORIZATION_PROFILE_CONFIG
 from appgenesis.admin_subprocesses.repositories import auth_profile_repository as auth_profile_module
 from appgenesis.admin_subprocesses.repositories.auth_profile_repository import (
+    AUTH_PROFILE_ENTITY_NUMBER_KEY,
     AUTH_PROFILE_MENU_KEY,
     AUTH_PROFILE_SECTION_KEY,
     AuthorizationProfileAdminRepository,
@@ -162,6 +163,71 @@ def test_auth_profile_repository_blocks_duplicate_menu_key_from_legacy_label(mon
     rows = repo.list_rows(object())
     assert rows[0]["key"] == "sessoes"
     assert rows[0]["label"] == "Estruturas"
+
+
+def test_auth_profile_repository_save_row_allows_same_generated_key_across_different_entities(monkeypatch) -> None:
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(
+        profile_custom_fields=serialize_member_profile_fields(
+            {
+                records_storage_key: serialize_menu_process_records(
+                    [
+                        {
+                            "record_id": "entity-1001-profile",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "custom_perfil": "sessoes",
+                                "custom_nome_do_perfil": "Sessões (Entidade 1001)",
+                                "__estado": "ativo",
+                                AUTH_PROFILE_ENTITY_NUMBER_KEY: "1001",
+                            },
+                        }
+                    ]
+                )
+            }
+        )
+    )
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(
+        AuthorizationProfileAdminRepository,
+        "_load_record_bundle",
+        fake_load_record_bundle,
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+
+    save_ok, save_reason, saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "entity_scope": "entity",
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+        },
+        context={"entity_number": "2002"},
+    )
+
+    assert save_ok is True
+    assert save_reason == "saved"
+    assert saved_key == "sessoes"
+
+    stored_fields = parse_member_profile_fields(member.profile_custom_fields)
+    stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
+    assert len(stored_records) == 2
+    stored_entity_numbers = {
+        record["values"].get(AUTH_PROFILE_ENTITY_NUMBER_KEY) for record in stored_records
+    }
+    assert stored_entity_numbers == {"1001", "2002"}
 
 
 def test_auth_profile_repository_delete_row_removes_only_selected_profile(monkeypatch) -> None:

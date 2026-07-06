@@ -563,10 +563,12 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
             menu_key_by_label_lookup=menu_key_by_label_lookup,
             profile_field_keys=profile_field_keys,
         )
+        entity_scoped_context = {**(context or {}), "entity_number": entity_number}
         record_index_by_key = {
             str(row.get("key") or "").strip().lower(): index
             for index, row in enumerate(existing_rows)
             if str(row.get("key") or "").strip()
+            and _row_matches_entity_context_v1(row, context=entity_scoped_context)
         }
         generated_key = selected_menu_key or build_auth_profile_key(label, fallback=requested_edit_key)
 

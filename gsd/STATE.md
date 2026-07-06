@@ -1,6 +1,6 @@
 # GSD State
 
-Updated: 2026-07-04
+Updated: 2026-07-06
 
 ## Current Known State
 
@@ -18,6 +18,8 @@ Updated: 2026-07-04
 - Reconciliation of legacy authorization rows is now documented; the 2 remaining `process_view_authorization_rules` rows are only `Parcial` in relation to current auth storage
 - Migration-versus-archive planning for legacy authorization semantics is now documented; the final path remains pending human validation
 - Authorization-profile creation/editing now includes `Entidade`, with owner-only global scope and active-entity filtering for profile rows
+- Objeto de Autorização rows are now filtered by active entity on read, and save-time key-collision checks are scoped per entity for both Objetos and Perfis (Decision 017, Task 011); confirmed as a real cross-entity leak fix, not a hardening measure
+- `sidebar_menu_settings` is confirmed as the next multi-tenant gap: it is a fully global table (no entity column) shared by every entity today; the target architecture is per-entity duplication, and a ready-to-execute plan is written up in Task 012, but implementation is deliberately deferred as its own atomic unit (Decision 018)
 
 ## Existing Functional Areas Observed In The Repository
 
@@ -57,8 +59,8 @@ Updated: 2026-07-04
 - Defining whether missing legacy authorization granularity should be migrated forward or only archived before cleanup
 - Preparing a human validation step for whether subprocess, department, and entity-scope semantics still matter
 - Reviewing how current entity, owner, legacy, and permission rules should evolve into a cleaner multi-tenant model
-- Validating whether the same entity-scope contract should also be extended from authorization profiles to adjacent authorization objects
 - Preparing the project for future web and mobile delivery paths without forcing that migration now
+- Executing Task 012 (sidebar_menu_settings entity scope): schema migration, ~44-site raw-SQL rewrite, and rewiring of 6 caller files, as one atomic reviewable unit
 
 ## Known Risks
 
@@ -80,7 +82,7 @@ Updated: 2026-07-04
 - Decide whether legacy authorization details such as subprocess granularity, department, and scope must survive in the current contract
 - Validate with a human owner whether the project accepts archive-only cleanup or requires complementary migration of legacy authorization semantics
 - Revisit multi-tenant boundaries with explicit entity, owner, permission, and data-separation rules
-- Decide whether `objeto_de_autorizacao` should inherit the same active-entity filtering and explicit `Entidade` contract
+- Implement Task 012 (`sidebar_menu_settings` entity scope) as a dedicated, atomic migration + rewrite
 - Prepare for later evaluation of:
   - Supabase as managed Postgres
   - a more explicit API layer
