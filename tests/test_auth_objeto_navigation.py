@@ -111,13 +111,18 @@ def test_new_user_js_exposes_authorization_profile_target_normalization() -> Non
     script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(
         encoding="utf-8"
     )
+    registry_text = (
+        PROJECT_ROOT / "static" / "js" / "modules" / "admin_target_registry_v1.js"
+    ).read_text(encoding="utf-8")
 
     assert "function normalizeAuthorizationProfileTargetV1(value)" in script_text
-    assert '"#auth-profile-form-card": "#auth-profile-card"' in script_text
-    assert '"#auth-profile-active-card": "#auth-profile-card"' in script_text
-    assert '"#auth-objeto-form-card": "#auth-objeto-card"' in script_text
-    assert '"#auth-objeto-inactive-card": "#auth-objeto-card"' in script_text
     assert "function authorizationProfileTargetsMatchV1(leftTarget, rightTarget)" in script_text
+    assert "return appGenesisAdminTargetRegistryV1.normalizeAuthorizationProfileTarget(value);" in script_text
+    assert "return appGenesisAdminTargetRegistryV1.authorizationProfileTargetsMatch(leftTarget, rightTarget);" in script_text
+    assert '"#auth-profile-form-card": "#auth-profile-card"' in registry_text
+    assert '"#auth-profile-active-card": "#auth-profile-card"' in registry_text
+    assert '"#auth-objeto-form-card": "#auth-objeto-card"' in registry_text
+    assert '"#auth-objeto-inactive-card": "#auth-objeto-card"' in registry_text
     assert "function appendAuthObjetoDebugParamV1(rawUrl)" not in script_text
     assert "debug_auth_objeto_nav" not in script_text
 

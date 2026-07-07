@@ -49,8 +49,11 @@ def test_admin_subprocess_create_toggle_uses_same_css_classes() -> None:
 def test_new_user_js_manages_action_card_visibility_and_toggle_display() -> None:
     script_path = PROJECT_ROOT / "static" / "js" / "new_user.js"
     script_text = script_path.read_text(encoding="utf-8")
+    module_text = (
+        PROJECT_ROOT / "static" / "js" / "modules" / "process_cards_visibility_v1.js"
+    ).read_text(encoding="utf-8")
 
     assert 'const dynamicProcessActionCardEl = document.getElementById("dynamic-process-action-card");' in script_text
     assert "function setDynamicProcessEditToggleVisible(isVisible)" in script_text
-    # Sincroniza a visibilidade do card de acao junto com a do botao em applyContentForMenuTarget.
-    assert 'dynamicProcessActionCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";' in script_text
+    assert "setDynamicProcessCardsVisibility" in module_text
+    assert 'state.dynamicProcessActionCardEl.style.display = displayValue;' in module_text

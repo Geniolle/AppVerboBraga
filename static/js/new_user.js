@@ -8,8 +8,76 @@
 })();
 
 const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
-const MEU_PERFIL_MENU_KEY = "meu_perfil";
-const LEGACY_DOCUMENTOS_MENU_KEY = "documentos";
+const appGenesisProcessKeysRegistryV1 =
+  window.AppGenesisProcessKeysRegistryV1 &&
+  typeof window.AppGenesisProcessKeysRegistryV1 === "object"
+    ? window.AppGenesisProcessKeysRegistryV1
+    : null;
+const appGenesisProcessReferenceRegistryV1 =
+  window.AppGenesisProcessReferenceRegistryV1 &&
+  typeof window.AppGenesisProcessReferenceRegistryV1 === "object"
+    ? window.AppGenesisProcessReferenceRegistryV1
+    : null;
+const appGenesisAdminTargetRegistryV1 =
+  window.AppGenesisAdminTargetRegistryV1 &&
+  typeof window.AppGenesisAdminTargetRegistryV1 === "object"
+    ? window.AppGenesisAdminTargetRegistryV1
+    : null;
+const appGenesisProcessMenuConfigBuilderV1 =
+  window.AppGenesisProcessMenuConfigBuilderV1 &&
+  typeof window.AppGenesisProcessMenuConfigBuilderV1 === "object"
+    ? window.AppGenesisProcessMenuConfigBuilderV1
+    : null;
+const appGenesisProcessNavigationStateV1 =
+  window.AppGenesisProcessNavigationStateV1 &&
+  typeof window.AppGenesisProcessNavigationStateV1 === "object"
+    ? window.AppGenesisProcessNavigationStateV1
+    : null;
+const appGenesisProcessCardsVisibilityV1 =
+  window.AppGenesisProcessCardsVisibilityV1 &&
+  typeof window.AppGenesisProcessCardsVisibilityV1 === "object"
+    ? window.AppGenesisProcessCardsVisibilityV1
+    : null;
+const appGenesisProcessSubmenuRuntimeV1 =
+  window.AppGenesisProcessSubmenuRuntimeV1 &&
+  typeof window.AppGenesisProcessSubmenuRuntimeV1 === "object"
+    ? window.AppGenesisProcessSubmenuRuntimeV1
+    : null;
+const appGenesisProcessMenuRuntimeV1 =
+  window.AppGenesisProcessMenuRuntimeV1 &&
+  typeof window.AppGenesisProcessMenuRuntimeV1 === "object"
+    ? window.AppGenesisProcessMenuRuntimeV1
+    : null;
+const MEU_PERFIL_MENU_KEY = appGenesisProcessKeysRegistryV1
+  ? appGenesisProcessKeysRegistryV1.MEU_PERFIL_MENU_KEY
+  : "meu_perfil";
+const HOME_MENU_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.HOME_MENU_KEY_V1
+  : "home";
+const PERFIL_MENU_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.PERFIL_MENU_KEY_V1
+  : "perfil";
+const ADMINISTRATIVO_MENU_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.ADMINISTRATIVO_MENU_KEY_V1
+  : "administrativo";
+const PERFIL_AUTORIZACAO_MENU_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.PERFIL_AUTORIZACAO_MENU_KEY_V1
+  : "perfil_de_autorizacao";
+const ENTIDADE_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.ENTIDADE_SUBPROCESS_KEY_V1
+  : "entidade";
+const UTILIZADOR_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.UTILIZADOR_SUBPROCESS_KEY_V1
+  : "utilizador";
+const MENU_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.MENU_SUBPROCESS_KEY_V1
+  : "menu";
+const OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
+  ? appGenesisProcessReferenceRegistryV1.OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
+  : "objeto_de_autorizacao";
+const LEGACY_DOCUMENTOS_MENU_KEY = appGenesisProcessKeysRegistryV1
+  ? appGenesisProcessKeysRegistryV1.LEGACY_DOCUMENTOS_MENU_KEY
+  : "documentos";
 const currentUserName = bootstrap.currentUserName || "";
 const currentUserEmail = bootstrap.currentUserEmail || "";
 const currentUserIsAdmin = Boolean(bootstrap.currentUserIsAdmin);
@@ -42,10 +110,10 @@ const profilePersonalFieldLabels = (
   ? bootstrap.profilePersonalFieldLabels
   : {};
 const initialProfileTab = bootstrap.initialProfileTab || "pessoal";
-const initialMenu = normalizeMenuKey(bootstrap.initialMenu || "home") || "home";
+const initialMenu = normalizeMenuKey(bootstrap.initialMenu || HOME_MENU_KEY_V1) || HOME_MENU_KEY_V1;
 const initialMenuTarget = bootstrap.initialMenuTarget || "";
 const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "";
-const initialAdminTab = bootstrap.initialAdminTab || "entidade";
+const initialAdminTab = bootstrap.initialAdminTab || ENTIDADE_SUBPROCESS_KEY_V1;
 const currentEntityId = Number.parseInt(String(bootstrap.currentEntityId || "").trim(), 10);
 const settingsAction = bootstrap.settingsAction || "";
 const settingsTab = normalizeSettingsTabKey(bootstrap.settingsTab || "");
@@ -97,14 +165,25 @@ const menuProcessQuantityValuesMap = (
   ? bootstrap.menuProcessQuantityValuesMap
   : {};
 const startupHash = window.location.hash || "";
-const dynamicProcessDataByMenu = {};
-const selectedDynamicSectionByMenu = {};
+const dynamicProcessDataByMenu = appGenesisProcessMenuConfigBuilderV1
+  ? appGenesisProcessMenuConfigBuilderV1.dynamicProcessDataByMenu
+  : {};
+const selectedDynamicSectionByMenu = appGenesisProcessMenuConfigBuilderV1
+  ? appGenesisProcessMenuConfigBuilderV1.selectedDynamicSectionByMenu
+  : {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
 const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "time", "flag", "list"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 
 
 function normalizeSettingsTabKey(value) {
+  if (
+    appGenesisProcessKeysRegistryV1 &&
+    typeof appGenesisProcessKeysRegistryV1.normalizeSettingsTabKey === "function"
+  ) {
+    return appGenesisProcessKeysRegistryV1.normalizeSettingsTabKey(value);
+  }
+
   const cleanTab = String(value || "")
     .trim()
     .toLowerCase()
@@ -139,12 +218,19 @@ function normalizeSettingsTabKey(value) {
 }
 
 function normalizeMenuKey(value) {
+  if (
+    appGenesisProcessKeysRegistryV1 &&
+    typeof appGenesisProcessKeysRegistryV1.normalizeMenuKey === "function"
+  ) {
+    return appGenesisProcessKeysRegistryV1.normalizeMenuKey(value);
+  }
+
   const cleanKey = String(value || "").trim().toLowerCase();
   if (cleanKey === LEGACY_DOCUMENTOS_MENU_KEY) {
     return MEU_PERFIL_MENU_KEY;
   }
   if (cleanKey === "configuracao") {
-    return "administrativo";
+    return ADMINISTRATIVO_MENU_KEY_V1;
   }
   return cleanKey;
 }
@@ -827,147 +913,29 @@ function buildProcessSections(setting, processValuesByField = {}) {
   return groupedSections;
 }
 
-const menuConfig = {
-  home: {
-    title: "Home",
-    description: "Resumo geral do sistema.",
-    singleView: true,
-    toggleOnMenuClick: true,
-    items: [{ label: "Resumo Geral", target: "#home-summary-card" }],
-    details: [
-      { label: "Entidades", value: String((dashboardData.totals || {}).entities || 0) },
-      { label: "Utilizadores", value: String((dashboardData.totals || {}).users || 0) }
-    ]
-  },
-  perfil: {
-    title: "Perfil",
-    description: "Opcoes do perfil do utilizador.",
-    singleView: true,
-    toggleOnMenuClick: true,
-    items: [
-      { label: "Dados pessoais", target: "#perfil-pessoal-card" },
-      { label: "Dados de morada", target: "#perfil-morada-card" },
-      { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
-    ],
-    details: [
-      { label: "Nome", value: currentUserName },
-      { label: "Email", value: currentUserEmail },
-      { label: "Telefone", value: currentUserPhone },
-      { label: "Conta", value: currentUserAccountStatus },
-      { label: "Membro", value: currentUserMemberStatus },
-      { label: "Entidades", value: currentUserEntities },
-      { label: "Tipo de acesso", value: "Utilizador" }
-    ]
-  },
-  links: {
-    title: "Links",
-    description: "Atalhos internos do painel.",
-    items: [{ label: "Sessão atual", target: "#sessao-card" }],
-    details: [
-      { label: "Modulo", value: "Links" },
-      { label: "Status", value: "Ativo" }
-    ]
-  },
-  contato: {
-    title: "Contacto",
-    description: "Informações e opções de contacto.",
-    items: [
-      { label: "Dados do utilizador ligado", target: "#sessao-card" }
-    ],
-    details: [
-      { label: "Email", value: currentUserEmail },
-      { label: "Canal", value: "Interno" }
-    ]
-  },
-  tutorial: {
-    title: "Tutorial",
-    description: "Guia rapido de uso desta tela.",
-    items: [{ label: "Passo 1: atualizar perfil", target: "#perfil-pessoal-card" }],
-    details: [
-      { label: "Modo", value: "Guiado" },
-      { label: "Dificuldade", value: "Basico" }
-    ]
-  }
-};
+const menuConfig = appGenesisProcessMenuConfigBuilderV1
+  ? appGenesisProcessMenuConfigBuilderV1.menuConfig
+  : {};
 
-if (currentUserIsAdmin) {
-  Object.assign(menuConfig, {
-    administrativo: {
-      title: "Administrativo",
-      description: "Ferramentas administrativas do utilizador.",
-      singleView: true,
-      items: [],
-      details: [
-        { label: "Modulo", value: "Administrativo" },
-        { label: "Acesso", value: "Permitido" }
-      ]
-    },
-    [MEU_PERFIL_MENU_KEY]: {
-      title: "Meus dados",
-      description: "Dados do meu perfil.",
-      singleView: true,
-      toggleOnMenuClick: true,
-      items: (
-        Array.isArray(profilePersonalSections) && profilePersonalSections.length
-          ? profilePersonalSections.map((section) => ({
-              label: String(section.label || "Dados pessoais"),
-              target: "#perfil-pessoal-card",
-              profileSection: String(section.key || "")
-            }))
-          : []
-      ),
-      details: [
-        { label: "Modulo", value: "Meu perfil" },
-        { label: "Status", value: "Ativo" }
-      ]
-    },
-    funcionarios: {
-      title: "Funcionarios",
-      description: "Gestao de funcionarios e acessos.",
-      items: [
-        { label: "Criar registo de funcionario", target: "#create-user-card" },
-        { label: "Ver registos recentes", target: "#recent-users-card" }
-      ],
-      details: [
-        { label: "Modulo", value: "Funcionarios" },
-        { label: "Status", value: "Ativo" }
-      ]
-    },
-    financeiro: {
-      title: "Financeiro",
-      description: "Acesso a opções de conta e estado.",
-      items: [
-        { label: "Estado da conta", target: "#create-user-card" },
-        { label: "Histórico de criação", target: "#recent-users-card" }
-      ],
-      details: [
-        { label: "Modulo", value: "Financeiro" },
-        { label: "Status", value: "Ativo" }
-      ]
-    },
-    relatorios: {
-      title: "Relatorios",
-      description: "Relatorios e historico de utilizadores.",
-      items: [
-        { label: "Últimos criados", target: "#recent-users-card" },
-        { label: "Voltar ao formulario", target: "#create-user-card" }
-      ],
-      details: [
-        { label: "Modulo", value: "Relatorios" },
-        { label: "Status", value: "Ativo" }
-      ]
-    }
+const ESTRUTURAS_MENU_KEY_V1 = appGenesisProcessKeysRegistryV1
+  ? appGenesisProcessKeysRegistryV1.ESTRUTURAS_MENU_KEY_V1
+  : "sessoes";
+const EMPRESA_MENU_KEY_V1 = appGenesisProcessKeysRegistryV1
+  ? appGenesisProcessKeysRegistryV1.EMPRESA_MENU_KEY_V1
+  : "empresa";
+if (
+  appGenesisAdminTargetRegistryV1 &&
+  typeof appGenesisAdminTargetRegistryV1.configure === "function"
+) {
+  appGenesisAdminTargetRegistryV1.configure({
+    normalizeMenuKey,
+    normalizeTarget: normalizeTargetV1,
+    getSidebarAdminSubprocessSetting: getSidebarAdminSubprocessSettingV1,
+    getSidebarAdminMenuKeyByTarget: getSidebarAdminSubprocessMenuKeyByTargetV1,
+    ESTRUTURAS_MENU_KEY_V1,
+    EMPRESA_MENU_KEY_V1
   });
-
-  menuConfig.links.items.push({ label: "Criar utilizador", target: "#create-user-card" });
-  menuConfig.tutorial.items = [
-    { label: "Passo 1: criar utilizador", target: "#create-user-card" },
-    { label: "Passo 2: validar em historico", target: "#recent-users-card" }
-  ];
 }
-
-const ESTRUTURAS_MENU_KEY_V1 = "sessoes";
-const EMPRESA_MENU_KEY_V1 = "empresa";
 const EMPRESA_NATIVE_TARGETS_V1 = new Set(["#empresa-card"]);
 
 function filterProcessExtraMenuItemsV1(dynamicItems) {
@@ -983,226 +951,68 @@ function filterProcessExtraMenuItemsV1(dynamicItems) {
 }
 
 function buildStructuredProcessMenuItemsV1(menuKey, dynamicItems = []) {
-  const cleanMenuKey = normalizeMenuKey(menuKey);
-  let baseItems = null;
-
-  if (cleanMenuKey === "administrativo") {
-    baseItems = [
-      { label: "Entidade", target: "#create-entity-card" },
-      { label: "Utilizador", target: "#create-user-card" }
-    ];
-  } else if (cleanMenuKey === ESTRUTURAS_MENU_KEY_V1) {
-    baseItems = [
-      { label: "Sessões", target: "#admin-sidebar-sections-card" },
-      { label: "Menu", target: "#menu-subprocess-card-active" }
-    ];
-  } else if (cleanMenuKey === "perfil_de_autorizacao") {
-    baseItems = [
-      { label: "Perfis", target: "#auth-profile-card" },
-      { label: "Objeto de autorização", target: "#auth-objeto-card" }
-    ];
+  if (
+    appGenesisProcessMenuConfigBuilderV1 &&
+    typeof appGenesisProcessMenuConfigBuilderV1.buildStructuredProcessMenuItemsV1 === "function"
+  ) {
+    return appGenesisProcessMenuConfigBuilderV1.buildStructuredProcessMenuItemsV1(
+      menuKey,
+      dynamicItems
+    );
   }
-
-  if (!Array.isArray(baseItems)) {
-    return null;
-  }
-
-  if (cleanMenuKey === "perfil_de_autorizacao") {
-    return baseItems;
-  }
-
-  const mergedItems = filterProcessExtraMenuItemsV1(dynamicItems);
-  const seenTargets = new Set(baseItems.map((item) => buildMenuItemUniqueKey_v1(item)));
-  const dynamicExtraItems = mergedItems.filter((item) => {
-    const targetKey = buildMenuItemUniqueKey_v1(item);
-    if (!targetKey || seenTargets.has(targetKey)) {
-      return false;
-    }
-    seenTargets.add(targetKey);
-    return true;
-  });
-
-  return [...baseItems, ...dynamicExtraItems];
+  return null;
 }
 
 function mergeDynamicProcessMenus() {
-  sidebarMenuSettings.forEach((setting) => {
-    const menuKey = normalizeMenuKey(setting.key);
-    if (!menuKey || menuKey === "perfil") {
-      return;
-    }
-    if (menuKey === "home") {
-      const sidebarLabel = normalizeMenuLabelPreserveCase(setting.label);
-      delete dynamicProcessDataByMenu.home;
-      delete selectedDynamicSectionByMenu.home;
-      if (sidebarLabel) {
-        menuConfig.home = {
-          ...menuConfig.home,
-          title: sidebarLabel
-        };
-      }
-      return;
-    }
-    if (menuKey === MEU_PERFIL_MENU_KEY) {
-      const sidebarLabel = normalizeMenuLabelPreserveCase(setting.label);
-      if (sidebarLabel) {
-        menuConfig[MEU_PERFIL_MENU_KEY] = {
-          ...menuConfig[MEU_PERFIL_MENU_KEY],
-          title: sidebarLabel
-        };
-      }
-      return;
-    }
-    if (visibleSidebarMenuKeys.size && !visibleSidebarMenuKeys.has(menuKey)) {
-      return;
-    }
+  if (
+    appGenesisProcessMenuConfigBuilderV1 &&
+    typeof appGenesisProcessMenuConfigBuilderV1.mergeDynamicProcessMenus === "function"
+  ) {
+    return appGenesisProcessMenuConfigBuilderV1.mergeDynamicProcessMenus();
+  }
+  return menuConfig;
+}
 
-    const cleanMenuLabel = normalizeMenuLabelPreserveCase(setting.label) || "Processo";
-    const existingConfig = menuConfig[menuKey];
-    const nativeSubprocessSetting = getSidebarAdminSubprocessSettingV1(menuKey);
-
-    if (menuKey === EMPRESA_MENU_KEY_V1) {
-      menuConfig[EMPRESA_MENU_KEY_V1] = {
-        ...(existingConfig || {}),
-        title: cleanMenuLabel,
-        singleView: true,
-        toggleOnMenuClick: true,
-        items: [{ label: "Dados institucionais", target: "#empresa-card" }]
-      };
-      return;
-    }
-
-    if (nativeSubprocessSetting && menuKey !== ESTRUTURAS_MENU_KEY_V1 && menuKey !== "perfil_de_autorizacao") {
-      delete dynamicProcessDataByMenu[menuKey];
-      delete selectedDynamicSectionByMenu[menuKey];
-
-      menuConfig[menuKey] = {
-        ...(existingConfig || {}),
-        title: cleanMenuLabel,
-        description: "Registos configurados para este processo.",
-        singleView: true,
-        toggleOnMenuClick: true,
-        items: [
-          {
-            label: nativeSubprocessSetting.pluralLabel,
-            target: nativeSubprocessSetting.defaultTarget
-          }
-        ],
-        details: [
-          { label: "Modulo", value: cleanMenuLabel },
-          { label: "Status", value: "Ativo" }
-        ]
-      };
-      return;
-    }
-
-    const menuValuesByField = (
-      menuProcessValuesMap &&
-      typeof menuProcessValuesMap[menuKey] === "object" &&
-      menuProcessValuesMap[menuKey] !== null
-    )
-      ? menuProcessValuesMap[menuKey]
-      : {};
-    let sections = buildProcessSections(setting, menuValuesByField);
-    if (!sections.length) {
-      const structuredItems = buildStructuredProcessMenuItemsV1(menuKey, []);
-      delete dynamicProcessDataByMenu[menuKey];
-      delete selectedDynamicSectionByMenu[menuKey];
-      if (existingConfig) {
-        menuConfig[menuKey] = {
-          ...existingConfig,
-          items: structuredItems || []
-        };
-      } else {
-        menuConfig[menuKey] = {
-          title: cleanMenuLabel,
-          description: "Campos configurados para este processo.",
-          singleView: true,
-          toggleOnMenuClick: true,
-          items: structuredItems || [],
-          details: [
-            { label: "Modulo", value: cleanMenuLabel },
-            { label: "Status", value: "Ativo" }
-          ]
-        };
-      }
-      return;
-    }
-    dynamicProcessDataByMenu[menuKey] = {
-      menuLabel: cleanMenuLabel,
-      sections,
-      layoutConfig: getDynamicProcessLayoutConfig(setting, cleanMenuLabel, "")
-    };
-    if (
-      menuKey === normalizeMenuKey(initialMenu) &&
-      initialDynamicProcessSection &&
-      sections.some((section) => String(section.key || "") === String(initialDynamicProcessSection))
-    ) {
-      selectedDynamicSectionByMenu[menuKey] = String(initialDynamicProcessSection);
-    } else {
-      selectedDynamicSectionByMenu[menuKey] = sections[0].key;
-    }
-
-    const dynamicItems = sections.map((section) => ({
-      label: toSentenceCaseText(section.label || "Campos"),
-      target: "#dynamic-process-card",
-      dynamicProcessSectionKey: String(section.key || "__empty__")
-    }));
-    if (existingConfig) {
-      const resolvedStructuredItems = buildStructuredProcessMenuItemsV1(menuKey, dynamicItems);
-      if (resolvedStructuredItems) {
-        menuConfig[menuKey] = {
-          ...existingConfig,
-          items: resolvedStructuredItems
-        };
-        return;
-      }
-      menuConfig[menuKey] = {
-        ...existingConfig,
-        items: dynamicItems
-      };
-      return;
-    }
-    const defaultStructuredItems = buildStructuredProcessMenuItemsV1(menuKey, dynamicItems);
-    menuConfig[menuKey] = {
-      title: cleanMenuLabel,
-      description: "Campos configurados para este processo.",
-      singleView: true,
-      toggleOnMenuClick: true,
-      items: defaultStructuredItems || dynamicItems,
-      details: [
-        { label: "Modulo", value: cleanMenuLabel },
-        { label: "Status", value: "Ativo" }
-      ]
-    };
+if (
+  appGenesisProcessMenuConfigBuilderV1 &&
+  typeof appGenesisProcessMenuConfigBuilderV1.configure === "function"
+) {
+  appGenesisProcessMenuConfigBuilderV1.configure({
+    normalizeMenuKey,
+    normalizeMenuLabelPreserveCase,
+    toSentenceCaseText,
+    buildProcessSections,
+    getDynamicProcessLayoutConfig,
+    getSidebarAdminSubprocessSetting: getSidebarAdminSubprocessSettingV1,
+    filterProcessExtraMenuItems: filterProcessExtraMenuItemsV1,
+    buildMenuItemUniqueKey: buildMenuItemUniqueKey_v1,
+    dashboardData,
+    profilePersonalSections,
+    sidebarMenuSettings,
+    visibleSidebarMenuKeys,
+    menuProcessValuesMap,
+    currentUserName,
+    currentUserEmail,
+    currentUserPhone,
+    currentUserAccountStatus,
+    currentUserMemberStatus,
+    currentUserEntities,
+    currentUserIsAdmin,
+    initialMenu,
+    initialDynamicProcessSection,
+    MEU_PERFIL_MENU_KEY,
+    ESTRUTURAS_MENU_KEY_V1,
+    EMPRESA_MENU_KEY_V1,
+    documentRef: document
   });
 }
 
-mergeDynamicProcessMenus();
-
-// APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1_START
-// perfil_de_autorizacao é um subprocesso nativo que pode não estar em sidebarMenuSettings.
-// Garante que menuConfig tem sempre a entrada quando o menu é visível no DOM.
 if (
-  !menuConfig["perfil_de_autorizacao"] &&
-  (
-    visibleSidebarMenuKeys.has("perfil_de_autorizacao") ||
-    document.getElementById("auth-profile-card") ||
-    document.getElementById("auth-profile-active-card") ||
-    document.getElementById("auth-objeto-card") ||
-    document.getElementById("auth-objeto-active-card")
-  )
+  appGenesisProcessMenuConfigBuilderV1 &&
+  typeof appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig === "function"
 ) {
-  menuConfig["perfil_de_autorizacao"] = {
-    title: "Perfil de autorização",
-    singleView: true,
-    items: [
-      { label: "Perfis", target: "#auth-profile-card" },
-      { label: "Objeto de autorização", target: "#auth-objeto-card" }
-    ]
-  };
+  appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig();
 }
-// APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1_END
 
 const itemsEl = document.getElementById("submenu-items");
 const processShellHeaderEl = document.getElementById("process-shell-header");
@@ -1264,61 +1074,86 @@ if (initialProfileTab === "morada") {
   profileSelectedTarget = "#dados-treinamento-card";
 }
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_START
-const NATIVE_ADMIN_TARGETS_V1 = new Set([
-  "#create-entity-card",
-  "#edit-entity-card",
-  "#recent-entities-card",
-  "#inactive-entities-card",
-  "#create-user-card",
-  "#edit-user-card",
-  "#admin-users-created-card",
-  "#inactive-users-card",
-  "#admin-account-create-card",
-  "#admin-account-status-card",
-  "#admin-sidebar-sections-card",
-  "#admin-sidebar-sections-form-card",
-  "#settings-card",
-  "#settings-menu-edit-card"
-]);
-const ESTRUTURAS_NATIVE_TARGETS_V1 = new Set([
-  "#admin-account-create-card",
-  "#admin-account-status-card",
-  "#menu-subprocess-card",
-  "#menu-subprocess-card-active",
-  "#menu-subprocess-card-inactive",
-  "#admin-sidebar-sections-card",
-  "#admin-sidebar-sections-card-active",
-  "#admin-sidebar-sections-card-inactive",
-  "#admin-sidebar-sections-form-card",
-  "#settings-card",
-  "#settings-menu-edit-card"
-]);
+const NATIVE_ADMIN_TARGETS_V1 = appGenesisAdminTargetRegistryV1
+  ? appGenesisAdminTargetRegistryV1.NATIVE_ADMIN_TARGETS_V1
+  : new Set([
+      "#create-entity-card",
+      "#edit-entity-card",
+      "#recent-entities-card",
+      "#inactive-entities-card",
+      "#create-user-card",
+      "#edit-user-card",
+      "#admin-users-created-card",
+      "#inactive-users-card",
+      "#admin-account-create-card",
+      "#admin-account-status-card",
+      "#admin-sidebar-sections-card",
+      "#admin-sidebar-sections-form-card",
+      "#settings-card",
+      "#settings-menu-edit-card"
+    ]);
+const ESTRUTURAS_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
+  ? appGenesisAdminTargetRegistryV1.ESTRUTURAS_NATIVE_TARGETS_V1
+  : new Set([
+      "#admin-account-create-card",
+      "#admin-account-status-card",
+      "#menu-subprocess-card",
+      "#menu-subprocess-card-active",
+      "#menu-subprocess-card-inactive",
+      "#admin-sidebar-sections-card",
+      "#admin-sidebar-sections-card-active",
+      "#admin-sidebar-sections-card-inactive",
+      "#admin-sidebar-sections-form-card",
+      "#settings-card",
+      "#settings-menu-edit-card"
+    ]);
 function normalizeTargetV1(value) {
+  if (
+    appGenesisProcessKeysRegistryV1 &&
+    typeof appGenesisProcessKeysRegistryV1.normalizeTarget === "function"
+  ) {
+    return appGenesisProcessKeysRegistryV1.normalizeTarget(value);
+  }
+
   const cleanValue = String(value || "").trim();
   if (!cleanValue) {
     return "";
   }
   return cleanValue.startsWith("#") ? cleanValue : "#" + cleanValue;
 }
-const AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1 = Object.freeze({
-  "#auth-profile": "#auth-profile-card",
-  "#auth-profile-card": "#auth-profile-card",
-  "#auth-profile-active-card": "#auth-profile-card",
-  "#auth-profile-inactive-card": "#auth-profile-card",
-  "#auth-profile-form-card": "#auth-profile-card",
-  "#auth-objeto": "#auth-objeto-card",
-  "#auth-objeto-card": "#auth-objeto-card",
-  "#auth-objeto-active-card": "#auth-objeto-card",
-  "#auth-objeto-inactive-card": "#auth-objeto-card",
-  "#auth-objeto-form-card": "#auth-objeto-card"
-});
-const AUTH_PROFILE_NATIVE_TARGETS_V1 = new Set(
-  Object.keys(AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1)
-);
+const AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1 = appGenesisAdminTargetRegistryV1
+  ? appGenesisAdminTargetRegistryV1.AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1
+  : Object.freeze({
+      "#auth-profile": "#auth-profile-card",
+      "#auth-profile-card": "#auth-profile-card",
+      "#auth-profile-active-card": "#auth-profile-card",
+      "#auth-profile-inactive-card": "#auth-profile-card",
+      "#auth-profile-form-card": "#auth-profile-card",
+      "#auth-objeto": "#auth-objeto-card",
+      "#auth-objeto-card": "#auth-objeto-card",
+      "#auth-objeto-active-card": "#auth-objeto-card",
+      "#auth-objeto-inactive-card": "#auth-objeto-card",
+      "#auth-objeto-form-card": "#auth-objeto-card"
+    });
+const AUTH_PROFILE_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
+  ? appGenesisAdminTargetRegistryV1.AUTH_PROFILE_NATIVE_TARGETS_V1
+  : new Set(Object.keys(AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1));
 function normalizeAuthorizationProfileTargetV1(value) {
+  if (
+    appGenesisAdminTargetRegistryV1 &&
+    typeof appGenesisAdminTargetRegistryV1.normalizeAuthorizationProfileTarget === "function"
+  ) {
+    return appGenesisAdminTargetRegistryV1.normalizeAuthorizationProfileTarget(value);
+  }
   return AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1[normalizeTargetV1(value)] || "";
 }
 function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
+  if (
+    appGenesisAdminTargetRegistryV1 &&
+    typeof appGenesisAdminTargetRegistryV1.authorizationProfileTargetsMatch === "function"
+  ) {
+    return appGenesisAdminTargetRegistryV1.authorizationProfileTargetsMatch(leftTarget, rightTarget);
+  }
   const normalizedLeftTarget = normalizeAuthorizationProfileTargetV1(leftTarget);
   const normalizedRightTarget = normalizeAuthorizationProfileTargetV1(rightTarget);
   if (normalizedLeftTarget || normalizedRightTarget) {
@@ -1327,9 +1162,21 @@ function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
   return normalizeTargetV1(leftTarget) === normalizeTargetV1(rightTarget);
 }
 function isNativeAdminTargetV1(value) {
+  if (
+    appGenesisAdminTargetRegistryV1 &&
+    typeof appGenesisAdminTargetRegistryV1.isNativeAdminTarget === "function"
+  ) {
+    return appGenesisAdminTargetRegistryV1.isNativeAdminTarget(value);
+  }
   return NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
 }
 function isNativeTargetForMenuV1(menuKey, value) {
+  if (
+    appGenesisAdminTargetRegistryV1 &&
+    typeof appGenesisAdminTargetRegistryV1.isNativeTargetForMenu === "function"
+  ) {
+    return appGenesisAdminTargetRegistryV1.isNativeTargetForMenu(menuKey, value);
+  }
   const cleanMenuKey = normalizeMenuKey(menuKey);
   let cleanTarget = normalizeTargetV1(value);
 
@@ -1350,7 +1197,7 @@ function isNativeTargetForMenuV1(menuKey, value) {
     cleanTarget = normalizedAuthorizationProfileTarget;
   }
 
-  if (cleanMenuKey === "administrativo") {
+  if (cleanMenuKey === ADMINISTRATIVO_MENU_KEY_V1) {
     return NATIVE_ADMIN_TARGETS_V1.has(cleanTarget) || NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
   }
 
@@ -1362,7 +1209,7 @@ function isNativeTargetForMenuV1(menuKey, value) {
     return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget) || EMPRESA_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
   }
 
-  if (cleanMenuKey === "perfil_de_autorizacao") {
+  if (cleanMenuKey === PERFIL_AUTORIZACAO_MENU_KEY_V1) {
     return (
       AUTH_PROFILE_NATIVE_TARGETS_V1.has(cleanTarget) ||
       AUTH_PROFILE_NATIVE_TARGETS_V1.has(normalizeTargetV1(value))
@@ -1381,40 +1228,35 @@ function isNativeTargetForMenuV1(menuKey, value) {
 
   return false;
 }
+if (
+  appGenesisProcessNavigationStateV1 &&
+  typeof appGenesisProcessNavigationStateV1.configure === "function"
+) {
+  appGenesisProcessNavigationStateV1.configure({
+    normalizeMenuKey,
+    normalizeTarget: normalizeTargetV1,
+    normalizeAuthorizationProfileTarget: normalizeAuthorizationProfileTargetV1,
+    isNativeAdminTarget: isNativeAdminTargetV1,
+    isNativeTargetForMenu: isNativeTargetForMenuV1,
+    windowRef: window
+  });
+}
 function resolveAdminSelectedTargetV1({
   initialAdminTab,
   startupHash: rawHash,
   initialMenuTarget: rawTarget,
   settingsEditKey: rawSettingsKey
 }) {
-  let cleanHash = normalizeTargetV1(rawHash);
-  if (cleanHash === "#edit-user-card") {
-    cleanHash = "#create-user-card";
-  } else if (cleanHash === "#edit-entity-card") {
-    cleanHash = "#create-entity-card";
-  }
-  const cleanTarget = normalizeTargetV1(rawTarget);
-  const cleanTab = String(initialAdminTab || "").trim().toLowerCase();
-  if (isNativeAdminTargetV1(cleanHash)) {
-    return cleanHash;
-  }
-  if (isNativeAdminTargetV1(cleanTarget)) {
-    return cleanTarget;
-  }
-  if (rawSettingsKey) {
-    return "#settings-menu-edit-card";
-  }
-  if (cleanTab === "sessoes") {
-    return "#admin-sidebar-sections-card";
-  }
-  if (cleanTab === "entidade") {
-    return "#create-entity-card";
-  }
-  if (cleanTab === "utilizador") {
-    return "#create-user-card";
-  }
-  if (cleanTab === "contas") {
-    return "#menu-subprocess-card-active";
+  if (
+    appGenesisProcessNavigationStateV1 &&
+    typeof appGenesisProcessNavigationStateV1.resolveAdminSelectedTargetV1 === "function"
+  ) {
+    return appGenesisProcessNavigationStateV1.resolveAdminSelectedTargetV1({
+      initialAdminTab,
+      startupHash: rawHash,
+      initialMenuTarget: rawTarget,
+      settingsEditKey: rawSettingsKey
+    });
   }
   return "#dynamic-process-card";
 }
@@ -1441,11 +1283,136 @@ const adminSelectedTarget = resolveAdminSelectedTargetV1({
   settingsEditKey
 });
 const selectedTargetByMenu = {
-  home: homeSelectedTarget,
-  perfil: profileSelectedTarget,
-  administrativo: adminSelectedTarget,
+  [HOME_MENU_KEY_V1]: homeSelectedTarget,
+  [PERFIL_MENU_KEY_V1]: profileSelectedTarget,
+  [ADMINISTRATIVO_MENU_KEY_V1]: adminSelectedTarget,
+  // Estruturas (ESTRUTURAS_MENU_KEY_V1) partilha o mesmo conjunto nativo de cards por
+  // admin_tab/target/hash que "administrativo" (ex.: menu-subprocess-card-active, usado pelo
+  // editor de processo) -- getDefaultTargetForMenu/isNativeTargetForMenuV1 ja validam o alvo
+  // contra ESTRUTURAS_NATIVE_TARGETS_V1 antes de aceita-lo, entao reaproveitar a mesma
+  // resolucao aqui e' seguro e evita logica duplicada por menu.
+  [ESTRUTURAS_MENU_KEY_V1]: adminSelectedTarget,
   [MEU_PERFIL_MENU_KEY]: meuPerfilSelectedTarget
 };
+if (
+  appGenesisProcessNavigationStateV1 &&
+  typeof appGenesisProcessNavigationStateV1.configure === "function"
+) {
+  appGenesisProcessNavigationStateV1.configure({
+    selectedTargetByMenu
+  });
+}
+let topSubmenuController = null;
+if (
+  appGenesisProcessSubmenuRuntimeV1 &&
+  typeof appGenesisProcessSubmenuRuntimeV1.createTopSubmenuController === "function"
+) {
+  topSubmenuController = appGenesisProcessSubmenuRuntimeV1.createTopSubmenuController({
+    container: itemsEl,
+    windowRef: window,
+    formatLabel: toSentenceCaseText,
+    normalizeMenuKey,
+    getActiveMenuKey: () => activeMenuKey,
+    closeAllProfileEdits,
+    selectedTargetByMenu,
+    selectedDynamicSectionByMenu,
+    debugTabsLog: debugTabsLogV1,
+    logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
+    setActiveSubmenu,
+    applyContentForMenuTarget,
+    getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
+    renderDynamicProcessCard,
+    MEU_PERFIL_MENU_KEY,
+    setMeuPerfilSelectedProfileSection: (sectionKey) => {
+      meuPerfilSelectedProfileSection = sectionKey;
+    },
+    activateProfilePersonalSection: (sectionKey) => {
+      if (typeof window.activateProfilePersonalSection === "function") {
+        window.activateProfilePersonalSection(sectionKey);
+      }
+    },
+    applyMeuPerfilProcessSubsequentVisibility,
+    syncActiveTabTitle,
+    documentRef: document
+  });
+}
+if (
+  appGenesisProcessSubmenuRuntimeV1 &&
+  typeof appGenesisProcessSubmenuRuntimeV1.configure === "function"
+) {
+  appGenesisProcessSubmenuRuntimeV1.configure({
+    itemsEl,
+    topSubmenuController,
+    menuConfig,
+    selectedTargetByMenu,
+    selectedDynamicSectionByMenu,
+    normalizeMenuKey,
+    normalizeSubmenuTargetAlias,
+    formatLabel: toSentenceCaseText,
+    closeAllProfileEdits,
+    applyContentForMenuTarget,
+    renderDynamicProcessCard,
+    getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
+    debugTabsLog: debugTabsLogV1,
+    logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
+    getActiveMenuKey: () => activeMenuKey,
+    setMeuPerfilSelectedProfileSection: (sectionKey) => {
+      meuPerfilSelectedProfileSection = sectionKey;
+    },
+    activateProfilePersonalSection: (sectionKey) => {
+      if (typeof window.activateProfilePersonalSection === "function") {
+        window.activateProfilePersonalSection(sectionKey);
+      }
+    },
+    applyMeuPerfilProcessSubsequentVisibility,
+    syncActiveTabTitle,
+    MEU_PERFIL_MENU_KEY,
+    windowRef: window,
+    documentRef: document
+  });
+}
+if (
+  appGenesisProcessMenuRuntimeV1 &&
+  typeof appGenesisProcessMenuRuntimeV1.configure === "function"
+) {
+  appGenesisProcessMenuRuntimeV1.configure({
+    menuConfig,
+    menuButtons,
+    selectedTargetByMenu,
+    selectedDynamicSectionByMenu,
+    normalizeMenuKey,
+    renderSubmenu,
+    getDefaultTargetForMenu,
+    setActiveSubmenu,
+    applyContentForMenuTarget,
+    renderDynamicProcessCard,
+    closeAllProfileEdits,
+    syncActiveTabTitle,
+    applyMeuPerfilProcessSubsequentVisibility,
+    applyContentForMenu,
+    getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
+    getSidebarAdminSubprocessMenuKeyByTarget: getSidebarAdminSubprocessMenuKeyByTargetV1,
+    normalizeAuthorizationProfileTarget: normalizeAuthorizationProfileTargetV1,
+    debugTabsLog: debugTabsLogV1,
+    logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
+    setMeuPerfilSelectedProfileSection: (sectionKey) => {
+      meuPerfilSelectedProfileSection = sectionKey;
+    },
+    activateProfilePersonalSection: (sectionKey) => {
+      if (typeof window.activateProfilePersonalSection === "function") {
+        window.activateProfilePersonalSection(sectionKey);
+      }
+    },
+    setActiveMenuKey: (menuKey) => {
+      activeMenuKey = menuKey;
+    },
+    getActiveMenuKey: () => activeMenuKey,
+    MEU_PERFIL_MENU_KEY,
+    ESTRUTURAS_MENU_KEY_V1,
+    windowRef: window
+  });
+}
 Object.keys(dynamicProcessDataByMenu).forEach((menuKey) => {
   if (isNativeTargetForMenuV1(menuKey, selectedTargetByMenu[menuKey])) {
     return;
@@ -1459,7 +1426,7 @@ if (!startupHash && initialMenuTarget && menuConfig[initialMenu]) {
     : [];
   const targetExistsInItems = initialMenuItems.some(
     (item) => (
-      initialMenu === "perfil_de_autorizacao"
+      initialMenu === PERFIL_AUTORIZACAO_MENU_KEY_V1
         ? authorizationProfileTargetsMatchV1(item.target, cleanInitialTarget)
         : String(item.target || "") === cleanInitialTarget
     )
@@ -1499,132 +1466,19 @@ const processShellHeaderController = (
       getActions: () => []
     })
   : null;
+if (
+  appGenesisProcessMenuRuntimeV1 &&
+  typeof appGenesisProcessMenuRuntimeV1.configure === "function"
+) {
+  appGenesisProcessMenuRuntimeV1.configure({
+    processShellHeaderController
+  });
+}
 
 
 //###################################################################################
 // (SUBMENU SUPERIOR REUTILIZAVEL) WRAPPER FINO DO CONTROLLER GENERICO
 //###################################################################################
-
-function normalizeTopSubmenuSelectionData_v1(selectedReference) {
-  if (!selectedReference) {
-    return null;
-  }
-
-  if (selectedReference.nodeType === 1 && selectedReference.dataset) {
-    const selectedDataset = {};
-
-    if (selectedReference.dataset.profileSection) {
-      selectedDataset.profileSection = String(selectedReference.dataset.profileSection || "");
-    }
-
-    if (selectedReference.dataset.dynamicProcessSection) {
-      selectedDataset.dynamicProcessSectionKey = String(selectedReference.dataset.dynamicProcessSection || "");
-    }
-
-    return selectedDataset;
-  }
-
-  if (typeof selectedReference !== "object" || Array.isArray(selectedReference)) {
-    return null;
-  }
-
-  const selectedDataset = {};
-
-  if (selectedReference.profileSection) {
-    selectedDataset.profileSection = String(selectedReference.profileSection || "");
-  }
-
-  if (selectedReference.dynamicProcessSectionKey || selectedReference.dynamicProcessSection) {
-    selectedDataset.dynamicProcessSectionKey = String(
-      selectedReference.dynamicProcessSectionKey || selectedReference.dynamicProcessSection || ""
-    );
-  }
-
-  return Object.keys(selectedDataset).length ? selectedDataset : null;
-}
-
-const topSubmenuController = (
-  itemsEl &&
-  window.AppGenesisTopSubmenu &&
-  typeof window.AppGenesisTopSubmenu.createTopSubmenuController === "function"
-)
-  ? window.AppGenesisTopSubmenu.createTopSubmenuController({
-      container: itemsEl,
-      formatLabel: toSentenceCaseText,
-      enableTrackpadSwipe: true,
-      onSelect: ({ item, linkEl }) => {
-        const menuKey = normalizeMenuKey(activeMenuKey);
-        if (!menuKey || !item) {
-          return;
-        }
-
-        closeAllProfileEdits();
-        selectedTargetByMenu[menuKey] = item.target;
-        debugTabsLogV1("onSelect:before-apply", { menuKey, target: item.target });
-        logAppGenesisNavigationBootDebugV1("submenu_tab_click:before", {
-          menuKey,
-          target: item.target,
-          hrefBefore: window.location.href
-        });
-        setActiveSubmenu(item.target, linkEl);
-        applyContentForMenuTarget(menuKey, item.target, "click:submenu-tab");
-
-        if (
-          menuKey === "administrativo" &&
-          window.history &&
-          typeof window.history.pushState === "function"
-        ) {
-          let adminTabParam = getAdminSubprocessKeyByTargetV1(item.target);
-          if (!adminTabParam && item.target === "#dynamic-process-card" && item.dynamicProcessSectionKey) {
-            adminTabParam = String(item.dynamicProcessSectionKey).trim().toLowerCase();
-          }
-          if (adminTabParam) {
-            try {
-              const nextUrl = new URL(window.location.href);
-              nextUrl.searchParams.set("menu", "administrativo");
-              nextUrl.searchParams.set("admin_tab", adminTabParam);
-              nextUrl.searchParams.delete("entity_edit_id");
-              nextUrl.searchParams.delete("entity_view");
-              nextUrl.searchParams.delete("user_edit_id");
-              nextUrl.searchParams.delete("user_view");
-              nextUrl.searchParams.delete("target");
-              nextUrl.hash = "";
-              const newPath = nextUrl.pathname + nextUrl.search;
-              if (newPath !== window.location.pathname + window.location.search) {
-                history.pushState(
-                  { menu: "administrativo", adminTab: adminTabParam, target: item.target },
-                  document.title,
-                  newPath
-                );
-              }
-            } catch (_) {}
-          }
-        }
-
-        debugTabsLogV1("onSelect:after-apply", { menuKey, target: item.target });
-        logAppGenesisNavigationBootDebugV1("submenu_tab_click:after", {
-          menuKey,
-          target: item.target,
-          hrefAfter: window.location.href
-        });
-
-        if (item.dynamicProcessSectionKey) {
-          selectedDynamicSectionByMenu[menuKey] = String(item.dynamicProcessSectionKey);
-          renderDynamicProcessCard(menuKey, item.dynamicProcessSectionKey);
-        }
-
-        if (menuKey === MEU_PERFIL_MENU_KEY) {
-          const sectionKey = String(item.profileSection || "");
-          meuPerfilSelectedProfileSection = sectionKey;
-          if (typeof window.activateProfilePersonalSection === "function") {
-            window.activateProfilePersonalSection(sectionKey);
-          }
-          applyMeuPerfilProcessSubsequentVisibility();
-          syncActiveTabTitle("#submenu-items", "#perfil-pessoal-card .profile-card-header h2", ["Mais"]);
-        }
-      }
-    })
-  : null;
 
 function renderHomeCharts() {
   if (!window.Chart) {
@@ -3695,27 +3549,22 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
 }
 
 function applyContentForMenu(menuKey) {
-  scopedCards.forEach((card) => {
-    const rawScope = card.getAttribute("data-menu-scope") || "";
-    const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
-    card.style.display = scopes.includes(menuKey) ? "" : "none";
-  });
-  if (dynamicProcessCardEl) {
-    dynamicProcessCardEl.style.display = "none";
-  }
-  if (dynamicProcessActionCardEl) {
-    dynamicProcessActionCardEl.style.display = "none";
-  }
-  if (dynamicProcessActiveCardEl) {
-    dynamicProcessActiveCardEl.style.display = "none";
-  }
-  if (dynamicProcessInactiveCardEl) {
-    dynamicProcessInactiveCardEl.style.display = "none";
+  if (
+    appGenesisProcessCardsVisibilityV1 &&
+    typeof appGenesisProcessCardsVisibilityV1.applyContentForMenu === "function"
+  ) {
+    return appGenesisProcessCardsVisibilityV1.applyContentForMenu(menuKey);
   }
 }
 
 // APPGENESIS_ADMIN_SUBPROCESS_GROUP_V1_START
 function getAdminSubprocessKeyByTargetV1(target) {
+  if (
+    appGenesisAdminTargetRegistryV1 &&
+    typeof appGenesisAdminTargetRegistryV1.getAdminSubprocessKeyByTarget === "function"
+  ) {
+    return appGenesisAdminTargetRegistryV1.getAdminSubprocessKeyByTarget(target);
+  }
   const cleanTarget = normalizeTargetV1(target);
   const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
   if (sidebarAdminMenuKey) {
@@ -3723,37 +3572,58 @@ function getAdminSubprocessKeyByTargetV1(target) {
     return sidebarAdminSubprocessSetting ? sidebarAdminSubprocessSetting.subprocessKey : "";
   }
   const targetMap = {
-    "#create-entity-card": "entidade",
-    "#edit-entity-card": "entidade",
-    "#recent-entities-card": "entidade",
-    "#inactive-entities-card": "entidade",
-    "#create-user-card": "utilizador",
-    "#edit-user-card": "utilizador",
-    "#admin-users-created-card": "utilizador",
-    "#inactive-users-card": "utilizador",
-    "#admin-sidebar-sections-card": "sessoes",
-    "#admin-sidebar-sections-form-card": "sessoes",
-    "#admin-sidebar-sections-card-active": "sessoes",
-    "#admin-sidebar-sections-card-inactive": "sessoes",
-    "#settings-card": "menu",
-    "#settings-menu-edit-card": "menu",
-    "#admin-account-status-card": "menu",
-    "#admin-account-create-card": "menu",
-    "#menu-subprocess-card": "menu",
-    "#menu-subprocess-card-active": "menu",
-    "#menu-subprocess-card-inactive": "menu",
-    "#auth-profile-card": "perfil_de_autorizacao",
-    "#auth-profile-form-card": "perfil_de_autorizacao",
-    "#auth-profile-active-card": "perfil_de_autorizacao",
-    "#auth-profile-inactive-card": "perfil_de_autorizacao",
-    "#auth-objeto-card": "objeto_de_autorizacao",
-    "#auth-objeto-form-card": "objeto_de_autorizacao",
-    "#auth-objeto-active-card": "objeto_de_autorizacao",
-    "#auth-objeto-inactive-card": "objeto_de_autorizacao"
+    "#create-entity-card": ENTIDADE_SUBPROCESS_KEY_V1,
+    "#edit-entity-card": ENTIDADE_SUBPROCESS_KEY_V1,
+    "#recent-entities-card": ENTIDADE_SUBPROCESS_KEY_V1,
+    "#inactive-entities-card": ENTIDADE_SUBPROCESS_KEY_V1,
+    "#create-user-card": UTILIZADOR_SUBPROCESS_KEY_V1,
+    "#edit-user-card": UTILIZADOR_SUBPROCESS_KEY_V1,
+    "#admin-users-created-card": UTILIZADOR_SUBPROCESS_KEY_V1,
+    "#inactive-users-card": UTILIZADOR_SUBPROCESS_KEY_V1,
+    "#admin-sidebar-sections-card": ESTRUTURAS_MENU_KEY_V1,
+    "#admin-sidebar-sections-form-card": ESTRUTURAS_MENU_KEY_V1,
+    "#admin-sidebar-sections-card-active": ESTRUTURAS_MENU_KEY_V1,
+    "#admin-sidebar-sections-card-inactive": ESTRUTURAS_MENU_KEY_V1,
+    "#settings-card": MENU_SUBPROCESS_KEY_V1,
+    "#settings-menu-edit-card": MENU_SUBPROCESS_KEY_V1,
+    "#admin-account-status-card": MENU_SUBPROCESS_KEY_V1,
+    "#admin-account-create-card": MENU_SUBPROCESS_KEY_V1,
+    "#menu-subprocess-card": MENU_SUBPROCESS_KEY_V1,
+    "#menu-subprocess-card-active": MENU_SUBPROCESS_KEY_V1,
+    "#menu-subprocess-card-inactive": MENU_SUBPROCESS_KEY_V1,
+    "#auth-profile-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
+    "#auth-profile-form-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
+    "#auth-profile-active-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
+    "#auth-profile-inactive-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
+    "#auth-objeto-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
+    "#auth-objeto-form-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
+    "#auth-objeto-active-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
+    "#auth-objeto-inactive-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
   };
   return targetMap[cleanTarget] || "";
 }
 // APPGENESIS_ADMIN_SUBPROCESS_GROUP_V1_END
+
+if (
+  appGenesisProcessCardsVisibilityV1 &&
+  typeof appGenesisProcessCardsVisibilityV1.configure === "function"
+) {
+  appGenesisProcessCardsVisibilityV1.configure({
+    normalizeMenuKey,
+    getSidebarAdminSubprocessSetting: getSidebarAdminSubprocessSettingV1,
+    getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
+    ESTRUTURAS_MENU_KEY_V1,
+    scopedCards,
+    dynamicProcessCardEl,
+    dynamicProcessActionCardEl,
+    dynamicProcessActiveCardEl,
+    dynamicProcessInactiveCardEl,
+    debugTabsLog: debugTabsLogV1,
+    logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
+    documentRef: document,
+    windowRef: window
+  });
+}
 
 // activateSubprocessCardsV1: rotina única de ativação de card principal + cards relacionados
 // (lista de ativos / lista de inativos) de um subprocesso administrativo (ex.: Menu, Sessões,
@@ -3764,142 +3634,40 @@ function getAdminSubprocessKeyByTargetV1(target) {
 // mostrados/escondidos em conjunto, então card de ação + Menus ativos + Menus inativos entram e
 // saem juntos sem precisar de hardcode por processo.
 function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecified") {
-  // Loader global (ver global_loading_overlay_v1.js) so para navegacao iniciada por clique
-  // do utilizador (sidebar/aba) -- boot inicial e chamadas programaticas nao mostram o loader
-  // para nao introduzir flicker em fluxos ja validados (ex.: pos-save do editor de campos).
-  const shouldShowGlobalLoaderV1 = source === "click:sidebar" || source === "click:submenu-tab";
-  if (shouldShowGlobalLoaderV1 && typeof window.showGlobalLoadingOverlayV1 === "function") {
-    window.showGlobalLoadingOverlayV1("navigation:" + source);
-  }
-  debugTabsLogV1("applyContent:start", {
-    menuKey,
-    targetSelector,
-    visibleCards: scopedCards
-      ? Array.from(scopedCards).filter((c) => c.style.display !== "none").map((c) => c.id || c.className)
-      : []
-  });
-  const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(menuKey);
-  const supportsStructuredAdminGroups = (
-    menuKey === "administrativo" ||
-    menuKey === ESTRUTURAS_MENU_KEY_V1 ||
-    menuKey === "perfil_de_autorizacao" ||
-    !!sidebarAdminSubprocessSetting
-  );
-  const adminSubprocessKey = supportsStructuredAdminGroups
-    ? getAdminSubprocessKeyByTargetV1(targetSelector)
-    : "";
-  logAppGenesisNavigationBootDebugV1("activateSubprocessCardsV1:resolve", {
-    source,
-    menuKey,
-    targetSelector,
-    adminSubprocessKey,
-    supportsStructuredAdminGroups,
-    menuSubprocessCardActiveExists: !!document.getElementById("menu-subprocess-card-active"),
-    menuSubprocessCardInactiveExists: !!document.getElementById("menu-subprocess-card-inactive")
-  });
-  const shownCardIds = [];
-  const hiddenCardIds = [];
-  scopedCards.forEach((card) => {
-    const rawScope = card.getAttribute("data-menu-scope") || "";
-    const scopes = rawScope.split(",").map((value) => normalizeMenuKey(value)).filter(Boolean);
-    if (!scopes.includes(menuKey)) {
-      card.style.display = "none";
-      return;
-    }
-    const allowAdminSubprocessGroupForTarget =
-      targetSelector !== "#settings-menu-edit-card";
-    const isAdminSubprocessGroupedBlock =
-      allowAdminSubprocessGroupForTarget &&
-      !!adminSubprocessKey &&
-      card.getAttribute("data-admin-subprocess") === adminSubprocessKey;
-    const isEntityGroupedBlock =
-      menuKey === "administrativo" &&
-      targetSelector === "#create-entity-card" &&
-      (
-        card.id === "create-entity-card" ||
-        card.id === "edit-entity-card" ||
-        card.id === "recent-entities-card" ||
-        card.id === "inactive-entities-card"
-      );
-    const isUserGroupedBlock =
-      menuKey === "administrativo" &&
-      targetSelector === "#create-user-card" &&
-      (
-        card.id === "create-user-card" ||
-        card.id === "edit-user-card" ||
-        card.id === "admin-users-created-card" ||
-        card.id === "inactive-users-card"
-      );
-    const isSettingsGroupedBlock =
-      supportsStructuredAdminGroups &&
-      (
-        targetSelector === "#admin-account-create-card" ||
-        targetSelector === "#admin-account-status-card" ||
-        targetSelector === "#settings-menu-edit-card"
-      ) &&
-      (
-        card.id === "admin-account-create-card" ||
-        card.id === "settings-menu-edit-card" ||
-        card.id === "admin-account-status-card"
-      );
-    const shouldShowCard =
-      targetSelector === ("#" + card.id) ||
-      isAdminSubprocessGroupedBlock ||
-      isEntityGroupedBlock ||
-      isUserGroupedBlock ||
-      isSettingsGroupedBlock;
-    card.style.display = shouldShowCard ? "" : "none";
-    if (card.id) {
-      (shouldShowCard ? shownCardIds : hiddenCardIds).push(card.id);
-    }
-  });
-  if (dynamicProcessCardEl) {
-    dynamicProcessCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
-  }
-  if (dynamicProcessActionCardEl) {
-    dynamicProcessActionCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
-  }
-  if (dynamicProcessActiveCardEl) {
-    dynamicProcessActiveCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
-  }
-  if (dynamicProcessInactiveCardEl) {
-    dynamicProcessInactiveCardEl.style.display = targetSelector === "#dynamic-process-card" ? "" : "none";
-  }
-  debugTabsLogV1("applyContent:end", {
-    menuKey,
-    targetSelector,
-    visibleCards: scopedCards
-      ? Array.from(scopedCards).filter((c) => c.style.display !== "none").map((c) => c.id || c.className)
-      : []
-  });
-  logAppGenesisNavigationBootDebugV1("activateSubprocessCardsV1:applied", {
-    source,
-    menuKey,
-    targetSelector,
-    adminSubprocessKey,
-    shownCardIds,
-    hiddenCardIds: hiddenCardIds.filter((id) => id.indexOf("menu-subprocess") !== -1 || id.indexOf("admin-sidebar-sections") !== -1),
-    menuSubprocessCardActiveShown: shownCardIds.includes("menu-subprocess-card-active"),
-    menuSubprocessCardInactiveShown: shownCardIds.includes("menu-subprocess-card-inactive")
-  });
-  if (shouldShowGlobalLoaderV1 && typeof window.hideGlobalLoadingOverlayV1 === "function") {
-    // Pequeno atraso para garantir pelo menos um frame visivel (a troca de cards em si e
-    // sincrona/instantanea) -- ver mesma logica em global_loading_overlay_v1.js.
-    window.setTimeout(() => window.hideGlobalLoadingOverlayV1("navigation:" + source), 200);
+  if (
+    appGenesisProcessCardsVisibilityV1 &&
+    typeof appGenesisProcessCardsVisibilityV1.applyContentForMenuTarget === "function"
+  ) {
+    return appGenesisProcessCardsVisibilityV1.applyContentForMenuTarget(
+      menuKey,
+      targetSelector,
+      source
+    );
   }
 }
 
 // Alias explícito pedido para o mecanismo de ativação de grupo de cards de subprocesso -- é a
 // mesma função, exposta com o nome documentado para depuração/testes a partir do console.
-window.activateSubprocessCardsV1 = applyContentForMenuTarget;
+window.activateSubprocessCardsV1 = function (menuKey, targetSelector, source) {
+  return applyContentForMenuTarget(menuKey, targetSelector, source);
+};
 
 function clearSubmenuActiveLinks(links) {
-  links.forEach((link) => {
-    link.classList.remove("active");
-  });
+  if (
+    appGenesisProcessSubmenuRuntimeV1 &&
+    typeof appGenesisProcessSubmenuRuntimeV1.clearSubmenuActiveLinks === "function"
+  ) {
+    return appGenesisProcessSubmenuRuntimeV1.clearSubmenuActiveLinks(links);
+  }
 }
 
 function normalizeSubmenuTargetAlias(targetSelector) {
+  if (
+    appGenesisAdminTargetRegistryV1 &&
+    typeof appGenesisAdminTargetRegistryV1.normalizeSubmenuTargetAlias === "function"
+  ) {
+    return appGenesisAdminTargetRegistryV1.normalizeSubmenuTargetAlias(targetSelector);
+  }
   const cleanTarget = String(targetSelector || "").trim();
   const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
   if (normalizedAuthorizationProfileTarget) {
@@ -3930,29 +3698,14 @@ function normalizeSubmenuTargetAlias(targetSelector) {
 }
 
 function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
-  debugTabsLogV1("setActiveSubmenu", { targetSelector });
-  if (!itemsEl) {
-    return;
-  }
-  const normalizedTargetSelector = normalizeSubmenuTargetAlias(targetSelector);
-  if (topSubmenuController) {
-    topSubmenuController.setActive(
-      normalizedTargetSelector,
-      normalizeTopSubmenuSelectionData_v1(selectedLinkEl) || selectedLinkEl || null
+  if (
+    appGenesisProcessSubmenuRuntimeV1 &&
+    typeof appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu === "function"
+  ) {
+    return appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu(
+      targetSelector,
+      selectedLinkEl
     );
-    return;
-  }
-  const links = itemsEl.querySelectorAll(".submenu-item");
-  clearSubmenuActiveLinks(links);
-  if (selectedLinkEl) {
-    selectedLinkEl.classList.add("active");
-    return;
-  }
-  const firstMatch = Array.from(links).find(
-    (link) => link.getAttribute("href") === normalizedTargetSelector
-  );
-  if (firstMatch) {
-    firstMatch.classList.add("active");
   }
 }
 
@@ -5504,78 +5257,26 @@ function setupProcessEditTabs() {
 }
 
 function renderSubmenu(menuKey) {
-  const config = menuConfig[menuKey];
-  if (!config || !itemsEl) {
-    return;
+  if (
+    appGenesisProcessSubmenuRuntimeV1 &&
+    typeof appGenesisProcessSubmenuRuntimeV1.renderSubmenu === "function"
+  ) {
+    return appGenesisProcessSubmenuRuntimeV1.renderSubmenu(menuKey);
   }
-
-  itemsEl.style.display = "flex";
-
-  if (topSubmenuController) {
-    topSubmenuController.render(Array.isArray(config.items) ? config.items : []);
-    return;
-  }
-
-  itemsEl.innerHTML = "";
-
-  config.items.forEach((item) => {
-    const link = document.createElement("a");
-    link.className = "submenu-item";
-    link.href = item.target;
-    link.textContent = toSentenceCaseText(item.label);
-    if (item.profileSection) {
-      link.dataset.profileSection = String(item.profileSection);
-    }
-    if (item.dynamicProcessSectionKey) {
-      link.dataset.dynamicProcessSection = String(item.dynamicProcessSectionKey);
-    }
-    link.addEventListener("click", (event) => {
-      event.preventDefault();
-      closeAllProfileEdits();
-      selectedTargetByMenu[menuKey] = item.target;
-      setActiveSubmenu(item.target, link);
-      applyContentForMenuTarget(menuKey, item.target, "click:submenu-tab-fallback");
-      if (item.dynamicProcessSectionKey) {
-        selectedDynamicSectionByMenu[menuKey] = String(item.dynamicProcessSectionKey);
-        renderDynamicProcessCard(menuKey, item.dynamicProcessSectionKey);
-      }
-      if (
-        menuKey === MEU_PERFIL_MENU_KEY &&
-        typeof window.activateProfilePersonalSection === "function"
-      ) {
-        const sectionKey = String(item.profileSection || "");
-        meuPerfilSelectedProfileSection = sectionKey;
-        window.activateProfilePersonalSection(sectionKey);
-        applyMeuPerfilProcessSubsequentVisibility();
-      }
-    });
-    itemsEl.appendChild(link);
-  });
-
 }
 
 function getDefaultTargetForMenu(menuKey, config, options = {}) {
-  const { forceFirstItem = false } = options;
-  if (!Array.isArray(config.items) || !config.items.length) {
-    const savedTarget = selectedTargetByMenu[menuKey];
-    if (isNativeTargetForMenuV1(menuKey, savedTarget)) {
-      return savedTarget;
-    }
-    return "";
+  if (
+    appGenesisProcessNavigationStateV1 &&
+    typeof appGenesisProcessNavigationStateV1.getDefaultTargetForMenu === "function"
+  ) {
+    return appGenesisProcessNavigationStateV1.getDefaultTargetForMenu(
+      menuKey,
+      config,
+      options
+    );
   }
-  if (forceFirstItem) {
-    return config.items[0].target;
-  }
-  const savedTarget = selectedTargetByMenu[menuKey];
-  if (savedTarget) {
-    if (isNativeTargetForMenuV1(menuKey, savedTarget)) {
-      return savedTarget;
-    }
-    if (config.items.some((item) => item.target === savedTarget)) {
-      return savedTarget;
-    }
-  }
-  return config.items[0].target;
+  return "";
 }
 
 function syncActiveTabTitle(tabsContainerSelector, titleSelector, ignoredLabels) {
@@ -5600,152 +5301,33 @@ function syncActiveTabTitle(tabsContainerSelector, titleSelector, ignoredLabels)
 }
 
 function activateMenu(menuKey, options = {}) {
-  debugTabsLogV1("activateMenu:start", { menuKey, options });
-  const config = menuConfig[menuKey];
-  if (!config) {
-    return;
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.activateMenu === "function"
+  ) {
+    return appGenesisProcessMenuRuntimeV1.activateMenu(menuKey, options);
   }
-  const { resetDynamicToFirst = false, source = "unspecified" } = options;
-  const targetButton = Array.from(menuButtons).find((btn) => normalizeMenuKey(btn.dataset.menu) === menuKey);
-  const menuItems = Array.isArray(config.items) ? config.items : [];
-  if (resetDynamicToFirst) {
-    const firstDynamicItem = menuItems.find((item) => item.dynamicProcessSectionKey);
-    if (firstDynamicItem) {
-      selectedDynamicSectionByMenu[menuKey] = String(
-        firstDynamicItem.dynamicProcessSectionKey || ""
-      );
-    }
-  }
-
-  closeAllProfileEdits();
-  activeMenuKey = menuKey;
-  if (processShellHeaderController) {
-    processShellHeaderController.setActions([]);
-    processShellHeaderController.setTitle(config.title || "Processo");
-  }
-  menuButtons.forEach((item) => item.classList.remove("active"));
-  if (targetButton) {
-    targetButton.classList.add("active");
-  }
-  renderSubmenu(menuKey);
-
-  const defaultTarget = getDefaultTargetForMenu(
-    menuKey,
-    config,
-    { forceFirstItem: resetDynamicToFirst }
-  );
-  if (defaultTarget) {
-    const savedDynamicSectionKey = String(selectedDynamicSectionByMenu[menuKey] || "");
-    let selectedDynamicItem = null;
-    if (defaultTarget === "#dynamic-process-card") {
-      selectedDynamicItem = menuItems.find(
-        (item) => String(item.dynamicProcessSectionKey || "") === savedDynamicSectionKey
-      );
-      if (!selectedDynamicItem) {
-        selectedDynamicItem = menuItems.find((item) => item.target === "#dynamic-process-card") || null;
-      }
-    }
-
-    selectedTargetByMenu[menuKey] = defaultTarget;
-    if (selectedDynamicItem && itemsEl) {
-      const selectedSectionKey = String(selectedDynamicItem.dynamicProcessSectionKey || "");
-      setActiveSubmenu(defaultTarget, {
-        dynamicProcessSectionKey: selectedSectionKey
-      });
-      selectedDynamicSectionByMenu[menuKey] = selectedSectionKey;
-      renderDynamicProcessCard(menuKey, selectedSectionKey);
-    } else {
-      setActiveSubmenu(defaultTarget);
-    }
-    debugTabsLogV1("activateMenu:before-apply", { menuKey, defaultTarget });
-    applyContentForMenuTarget(menuKey, defaultTarget, source);
-    if (menuKey === MEU_PERFIL_MENU_KEY) {
-      let selectedSectionItem = menuItems.find(
-        (item) => String(item.profileSection || "") === meuPerfilSelectedProfileSection
-      );
-      if (!selectedSectionItem) {
-        selectedSectionItem = menuItems.find((item) => item.target === defaultTarget) || menuItems[0];
-      }
-      if (selectedSectionItem) {
-        const selectedSectionKey = String(selectedSectionItem.profileSection || "");
-        meuPerfilSelectedProfileSection = selectedSectionKey;
-        if (typeof window.activateProfilePersonalSection === "function") {
-          window.activateProfilePersonalSection(selectedSectionKey);
-        }
-        applyMeuPerfilProcessSubsequentVisibility();
-        setActiveSubmenu(defaultTarget, {
-          profileSection: selectedSectionKey
-        });
-        syncActiveTabTitle("#submenu-items", "#perfil-pessoal-card .profile-card-header h2", ["Mais"]);
-      }
-    }
-    return;
-  }
-  applyContentForMenu(menuKey);
-  setActiveSubmenu("");
 }
 
 function activateMenuTarget(menuKey, targetSelector, source = "unspecified") {
-  const config = menuConfig[menuKey];
-  if (!config) {
-    return;
-  }
-  activateMenu(menuKey, { resetDynamicToFirst: false, source });
-  if (!targetSelector) {
-    return;
-  }
-  selectedTargetByMenu[menuKey] = targetSelector;
-  setActiveSubmenu(targetSelector);
-  applyContentForMenuTarget(menuKey, targetSelector, source);
-  if (targetSelector === "#dynamic-process-card") {
-    renderDynamicProcessCard(menuKey, selectedDynamicSectionByMenu[menuKey] || "");
-  }
-  const targetCard = document.querySelector(targetSelector);
-  if (targetCard) {
-    targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.activateMenuTarget === "function"
+  ) {
+    return appGenesisProcessMenuRuntimeV1.activateMenuTarget(
+      menuKey,
+      targetSelector,
+      source
+    );
   }
 }
 
 function handleHashNavigation(rawHash) {
-  const cleanHash = String(rawHash || "").trim();
-  if (!cleanHash) {
-    return;
-  }
-  let normalizedHash = cleanHash;
-  if (normalizedHash === "#edit-user-card") {
-    normalizedHash = "#create-user-card";
-  } else if (normalizedHash === "#edit-entity-card") {
-    normalizedHash = "#create-entity-card";
-  } else if (normalizedHash === "#configuracao-account-status-card") {
-    normalizedHash = "#admin-account-status-card";
-  }
-
-  if (normalizeAuthorizationProfileTargetV1(normalizedHash)) {
-    activateMenuTarget("perfil_de_autorizacao", normalizedHash);
-    return;
-  }
-
-  const hashTargetMenuMap = {
-    "#create-user-card": "administrativo",
-    "#admin-users-created-card": "administrativo",
-    "#inactive-users-card": "administrativo",
-    "#create-entity-card": "administrativo",
-    "#recent-entities-card": "administrativo",
-    "#inactive-entities-card": "administrativo",
-    "#admin-account-status-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-form-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-account-create-card": ESTRUTURAS_MENU_KEY_V1,
-    "#settings-menu-edit-card": ESTRUTURAS_MENU_KEY_V1
-  };
-  const targetMenu = hashTargetMenuMap[normalizedHash];
-  if (targetMenu) {
-    activateMenuTarget(targetMenu, normalizedHash);
-    return;
-  }
-  const sidebarAdminTargetMenu = getSidebarAdminSubprocessMenuKeyByTargetV1(normalizedHash);
-  if (sidebarAdminTargetMenu) {
-    activateMenuTarget(sidebarAdminTargetMenu, normalizedHash);
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.handleHashNavigation === "function"
+  ) {
+    return appGenesisProcessMenuRuntimeV1.handleHashNavigation(rawHash);
   }
 }
 
@@ -5757,26 +5339,12 @@ if (dropdownAvatarImageEl) {
   dropdownAvatarImageEl.src = avatarDataUri;
 }
 
-menuButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const clickedMenuKey = normalizeMenuKey(btn.dataset.menu);
-    logAppGenesisNavigationBootDebugV1("sidebar_click:before", {
-      clickedMenuKey,
-      hrefBefore: window.location.href,
-      activeMenuKeyBefore: (typeof window.__appgenesisGetActiveMenuKeyV1 === "function")
-        ? window.__appgenesisGetActiveMenuKeyV1()
-        : null
-    });
-    activateMenu(clickedMenuKey, { resetDynamicToFirst: true, source: "click:sidebar" });
-    logAppGenesisNavigationBootDebugV1("sidebar_click:after", {
-      clickedMenuKey,
-      hrefAfter: window.location.href,
-      activeMenuKeyAfter: (typeof window.__appgenesisGetActiveMenuKeyV1 === "function")
-        ? window.__appgenesisGetActiveMenuKeyV1()
-        : null
-    });
-  });
-});
+if (
+  appGenesisProcessMenuRuntimeV1 &&
+  typeof appGenesisProcessMenuRuntimeV1.bindMenuButtonListeners === "function"
+) {
+  appGenesisProcessMenuRuntimeV1.bindMenuButtonListeners();
+}
 
 profileEditButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -6093,9 +5661,12 @@ function setupSidebarSectionsEditor() {
   refreshActionStates();
 }
 
-window.addEventListener("hashchange", () => {
-  handleHashNavigation(window.location.hash || "");
-});
+if (
+  appGenesisProcessMenuRuntimeV1 &&
+  typeof appGenesisProcessMenuRuntimeV1.bindHashChangeListener === "function"
+) {
+  appGenesisProcessMenuRuntimeV1.bindHashChangeListener();
+}
 
 syncTrainingOutrosState();
 renderHomeCharts();
@@ -6157,48 +5728,27 @@ setupTableLimiter("sessoes-inativo");
 // APPGENESIS_PREVENT_AUTH_PROFILE_FALLBACK_V1_START
 // Função para validar se o perfil de autorização foi explicitamente solicitado.
 function hasExplicitAuthProfileContextV1() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    const menuKey = normalizeMenuKey(params.get("menu") || "");
-    const targetKey = String(params.get("target") || "").trim();
-    const hashKey = window.location.hash || "";
-    const hasAuthorizationProfileTarget =
-      Boolean(normalizeAuthorizationProfileTargetV1(targetKey)) ||
-      Boolean(normalizeAuthorizationProfileTargetV1(hashKey));
-
-    return (
-      menuKey === "perfil_de_autorizacao" ||
-      hasAuthorizationProfileTarget ||
-      (params.get("appgenesis_after_save") === "1" && menuKey === "perfil_de_autorizacao")
-    );
-  } catch (err) {
-    return false;
+  if (
+    appGenesisProcessNavigationStateV1 &&
+    typeof appGenesisProcessNavigationStateV1.hasExplicitAuthProfileContextV1 === "function"
+  ) {
+    return appGenesisProcessNavigationStateV1.hasExplicitAuthProfileContextV1();
   }
+  return false;
 }
 // APPGENESIS_PREVENT_AUTH_PROFILE_FALLBACK_V1_END
 
 const sidebarMenuKeys = new Set(Array.from(menuButtons).map((btn) => normalizeMenuKey(btn.dataset.menu)));
-let startupMenu = menuConfig[initialMenu] ? initialMenu : "home";
-
-// APPGENESIS_FALLBACK_TO_HOME_RULE_V1_START
-// Se o menu inicial pretendido for perfil_de_autorizacao mas não foi solicitado explicitamente,
-// forçamos o fallback para "home".
-if (startupMenu === "perfil_de_autorizacao" && !hasExplicitAuthProfileContextV1()) {
-  startupMenu = "home";
-}
-// APPGENESIS_FALLBACK_TO_HOME_RULE_V1_END
-
-if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
-  if (sidebarMenuKeys.has("home")) {
-    startupMenu = "home";
-  } else {
-    // Garantimos que perfil_de_autorizacao nunca é selecionado como fallback implícito
-    const fallbackMenu = Array.from(sidebarMenuKeys.values()).find(
-      (key) => key !== "perfil_de_autorizacao"
-    );
-    startupMenu = fallbackMenu || "home";
-  }
-}
+let startupMenu = (
+  appGenesisProcessNavigationStateV1 &&
+  typeof appGenesisProcessNavigationStateV1.resolveStartupMenu === "function"
+)
+  ? appGenesisProcessNavigationStateV1.resolveStartupMenu({
+      initialMenu,
+      menuConfig,
+      sidebarMenuKeys
+    })
+  : "home";
 (function logAppGenesisBootNavigationDebugV1() {
   const navigationEntries = (
     window.performance && typeof window.performance.getEntriesByType === "function"
