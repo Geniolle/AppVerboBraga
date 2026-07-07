@@ -157,6 +157,26 @@
   }
 
   //###################################################################################
+  // (3.1) PARAR AO SAIR DA PAGINA (EVITA RELOAD PARA URL ANTIGA APOS SUBMIT)
+  //###################################################################################
+  // Regra global: qualquer verificacao de versao ja em curso (fetch pendente) que so resolva
+  // depois do utilizador ja ter iniciado a navegacao para fora desta pagina (ex.: submeter
+  // qualquer formulario, nao especifico de nenhum processo/aba/menu) nao pode chamar
+  // window.location.reload(), senao recarrega a URL antiga e cancela/sobrepoe o redirect
+  // legitimo do backend pos-submit. "pagehide" sozinho e tarde demais: so dispara quando a
+  // resposta do destino ja esta a substituir o documento, mas a corrida acontece durante o
+  // round-trip POST -> 303 -> GET, muito antes disso. Por isso paramos ja no instante do
+  // "submit" (fase de captura, cobre qualquer form da pagina) e mantemos "pagehide" como
+  // rede de seguranca para navegacoes que nao passam por um form (ex.: location.href direto).
+  document.addEventListener("submit", function () {
+    stopped = true;
+  }, true);
+
+  window.addEventListener("pagehide", function () {
+    stopped = true;
+  });
+
+  //###################################################################################
   // (4) VERIFICAR VERSAO GLOBAL
   //###################################################################################
 

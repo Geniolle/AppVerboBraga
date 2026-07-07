@@ -64,6 +64,13 @@ def _card_state(driver: webdriver.Chrome, card_id: str) -> dict:
     )
 
 
+def _current_href_v1(driver: webdriver.Chrome) -> str:
+    # driver.current_url pode devolver um valor desatualizado logo apos uma navegacao
+    # completa na mesma aba (observado com esta combinacao chromedriver/chrome); ler
+    # window.location.href via JS reflete o estado real do documento carregado.
+    return driver.execute_script("return window.location.href;")
+
+
 ####################################################################################
 # (2) NAVEGACAO POR CLIQUE PARA ESTRUTURAS > MENU MOSTRA OS DADOS SEM REFRESH
 ####################################################################################
@@ -253,14 +260,143 @@ def test_client_navigation_to_estruturas_menu_shows_inactive_card_without_refres
 ####################################################################################
 
 
+####################################################################################
+# (8) BUG GLOBAL DO EDITOR DE PROCESSO: Cancelar/Guardar tem de SEMPRE devolver o
+# utilizador a lista de origem (nunca deixar #settings-menu-edit-card preso), em
+# QUALQUER aba -- fluxo generico, reutilizado por todas as abas do editor.
+####################################################################################
+
+
+def _open_estruturas_menu_list_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
+    driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='sessoes']").click()
+    wait.until(lambda drv: "Sessões" in [
+        e.text.strip() for e in drv.find_elements(By.CSS_SELECTOR, ".submenu-item.active")
+    ])
+
+    menu_tab = None
+    for el in driver.find_elements(By.CSS_SELECTOR, ".submenu-item"):
+        if el.text.strip() == "Menu":
+            menu_tab = el
+            break
+    assert menu_tab is not None, "Aba 'Menu' nao encontrada"
+    menu_tab.click()
+
+    wait.until(lambda drv: _card_state(drv, "menu-subprocess-card-active").get("computedDisplay") == "block")
+    wait.until(lambda drv: _card_state(drv, "menu-subprocess-card-active").get("rowCount", 0) > 0)
+
+
+def _open_process_editor_from_list_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
+    # As acoes de linha ficam atras de um menu "kebab" (botao com aria-haspopup): o link de
+    # "Editar" so existe dentro do popup, que e' reposicionado para document.body ao abrir
+    # (portal), por isso capturamos as referencias ANTES de clicar no gatilho.
+    active_card = driver.find_element(By.ID, "menu-subprocess-card-active")
+    actions_menu = active_card.find_element(
+        By.CSS_SELECTOR, "tbody tr:not([style*='display: none']) .appgenesis-row-actions-menu-v1"
+    )
+    trigger = actions_menu.find_element(By.CSS_SELECTOR, ".appgenesis-row-actions-trigger-v1")
+    edit_link = actions_menu.find_element(By.CSS_SELECTOR, ".appgenesis-row-actions-item-edit-v1")
+
+    trigger.click()
+    wait.until(EC.visibility_of(edit_link))
+    edit_link.click()
+
+    wait.until(EC.visibility_of_element_located((By.ID, "settings-menu-edit-card")))
+    wait.until(lambda drv: "settings_edit_key" in _current_href_v1(drv))
+
+
+def _editor_card_closed_v1(driver: webdriver.Chrome) -> bool:
+    # O editor pode fechar de duas formas legitimas: escondido via JS (Cancelar, sem reload)
+    # ou ausente do DOM porque o backend so renderiza a section quando settings_edit_data
+    # existe (Guardar, com reload completo apos o redirect). Ambas contam como "fechado".
+    state = _card_state(driver, "settings-menu-edit-card")
+    return not state.get("exists") or state.get("computedDisplay") == "none"
+
+
+def _assert_editor_closed_and_list_visible_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
+    wait.until(_editor_card_closed_v1)
+    wait.until(lambda drv: _card_state(drv, "menu-subprocess-card-active").get("computedDisplay") == "block")
+    current_href = _current_href_v1(driver)
+    assert "settings_edit_key" not in current_href, current_href
+
+
+def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+
+    try:
+        _login_admin_v1(driver, wait)
+        _open_estruturas_menu_list_v1(driver, wait)
+
+        # (a) Cancelar na aba "Geral" (aba ativa por omissao).
+        _open_process_editor_from_list_v1(driver, wait)
+        driver.find_element(
+            By.CSS_SELECTOR, ".process-edit-pane.active .action-btn-cancel"
+        ).click()
+        _assert_editor_closed_and_list_visible_v1(driver, wait)
+
+        # (b) Reabrir e cancelar numa segunda aba ("Configuração dos campos"), provando que
+        # a saida do editor e generica e nao depende da aba especifica.
+        _open_process_editor_from_list_v1(driver, wait)
+        driver.find_element(By.CSS_SELECTOR, "[data-process-edit-tab='campos-config']").click()
+        wait.until(lambda drv: "campos-config" in (
+            drv.find_element(By.CSS_SELECTOR, ".process-edit-pane.active").get_attribute(
+                "data-process-edit-pane"
+            )
+        ))
+        driver.find_element(
+            By.CSS_SELECTOR, ".process-edit-pane.active .action-btn-cancel"
+        ).click()
+        _assert_editor_closed_and_list_visible_v1(driver, wait)
+    finally:
+        driver.quit()
+
+
+def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+
+    try:
+        _login_admin_v1(driver, wait)
+        _open_estruturas_menu_list_v1(driver, wait)
+
+        _open_process_editor_from_list_v1(driver, wait)
+
+        # Guarda na aba "Geral" sem tocar em nenhum campo -- reenvia os mesmos valores ja
+        # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos.
+        driver.find_element(
+            By.CSS_SELECTOR, ".process-edit-pane.active .action-btn[type='submit']"
+        ).click()
+
+        wait.until(lambda drv: "settings_edit_key" not in _current_href_v1(drv))
+        _assert_editor_closed_and_list_visible_v1(driver, wait)
+        # O parametro "success" e' removido do URL logo no DOMContentLoaded por
+        # appgenesisAutoDismissFlashMessages_v1 (comportamento existente e intencional, para nao
+        # reexibir a mensagem num refresh) -- por isso a confirmacao de feedback verifica o
+        # alerta ".alert.ok" renderizado pelo backend, nao o URL.
+        success_alerts = driver.find_elements(By.CSS_SELECTOR, ".alert.ok")
+        assert success_alerts, "Mensagem de sucesso do Guardar nao foi exibida apos o redirect"
+        assert "sucesso" in success_alerts[0].text.strip().lower(), success_alerts[0].text
+    finally:
+        driver.quit()
+
+
 def test_new_user_js_exposes_activate_subprocess_cards_alias_and_source_tracking() -> None:
     js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+    module_text = (
+        PROJECT_ROOT / "static" / "js" / "modules" / "process_cards_visibility_v1.js"
+    ).read_text(encoding="utf-8")
+    menu_runtime_text = (
+        PROJECT_ROOT / "static" / "js" / "modules" / "process_menu_runtime_v1.js"
+    ).read_text(encoding="utf-8")
 
-    assert "window.activateSubprocessCardsV1 = applyContentForMenuTarget;" in js_text
+    assert "window.activateSubprocessCardsV1 = function (menuKey, targetSelector, source) {" in js_text
     assert 'function applyContentForMenuTarget(menuKey, targetSelector, source = "unspecified") {' in js_text
-    assert '"activateSubprocessCardsV1:resolve"' in js_text
-    assert '"activateSubprocessCardsV1:applied"' in js_text
+    assert "return applyContentForMenuTarget(menuKey, targetSelector, source);" in js_text
+    assert '"activateSubprocessCardsV1:resolve"' in module_text
+    assert '"activateSubprocessCardsV1:applied"' in module_text
 
     assert 'source: "boot"' in js_text
-    assert 'source: "click:sidebar"' in js_text
-    assert '"click:submenu-tab"' in js_text
+    assert '"click:sidebar"' in menu_runtime_text
+    assert '"click:submenu-tab"' in (
+        PROJECT_ROOT / "static" / "js" / "modules" / "process_submenu_runtime_v1.js"
+    ).read_text(encoding="utf-8")

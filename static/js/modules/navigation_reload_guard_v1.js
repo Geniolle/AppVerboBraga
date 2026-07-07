@@ -244,23 +244,15 @@ function redirectToStoredPostSaveContextV3(storedContext) {
     return false;
   }
 
-  const currentAdminTab = String(currentUrl.searchParams.get("admin_tab") || "").trim();
   const currentHasFeedback = isAppGenesisPostSaveFeedbackUrlV3(currentUrl);
-  const currentMenu = String(currentUrl.searchParams.get("menu") || "").trim();
-  const storedAdminTab = String(targetUrl.searchParams.get("admin_tab") || "").trim();
-  const storedMenu = String(targetUrl.searchParams.get("menu") || "").trim();
 
-  if (currentHasFeedback && currentAdminTab) {
-    if (!storedAdminTab || storedAdminTab !== currentAdminTab || storedMenu === "home") {
-      return false;
-    }
-  }
-
-  if (
-    currentHasFeedback &&
-    currentMenu === "perfil_de_autorizacao" &&
-    storedMenu === "perfil_de_autorizacao"
-  ) {
+  // Regra global: se a URL atual ja e o destino pos-save calculado pelo backend (marcador
+  // appgenesis_after_save=1 ou parametros de sucesso/erro), ela e sempre a fonte da verdade e
+  // nunca deve ser substituida pela URL pre-submit guardada em sessionStorage -- vale para
+  // qualquer processo configuravel, sem excecoes por menu/aba especifico (antes so cobria
+  // "administrativo" e "perfil_de_autorizacao", deixando "sessoes"/Menu vulneravel a este
+  // mesmo bug de reversao de navegacao apos Guardar).
+  if (currentHasFeedback) {
     return false;
   }
 

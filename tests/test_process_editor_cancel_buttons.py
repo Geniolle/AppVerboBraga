@@ -64,6 +64,41 @@ def test_process_editor_cancel_return_target_reuses_settings_edit_cancel_target_
 
 
 ####################################################################################
+# (1.1) TODAS AS ABAS DO EDITOR ENVIAM return_url NO GUARDAR, REUSANDO A MESMA VARIAVEL
+# GLOBAL (settings_edit_return_url), PARA O BACKEND PRESERVAR CONTEXTO (ex.: admin_tab)
+# SEM DEPENDER DE NAVEGACAO CORRETIVA NO CLIENTE.
+####################################################################################
+
+PROCESS_EDITOR_FORM_ACTIONS = [
+    "/settings/menu/edit",
+    "/settings/menu/process-fields",
+    "/settings/menu/process-quantity-fields",
+    "/settings/menu/process-lists",
+    "/settings/menu/process-subsequent-fields",
+    "/settings/menu/process-additional-fields",
+]
+
+
+def test_all_process_editor_tab_forms_send_generic_return_url() -> None:
+    html_text = _read_new_user_html()
+
+    assert html_text.count(
+        '<input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">'
+    ) == len(PROCESS_EDITOR_FORM_ACTIONS)
+
+    for action in PROCESS_EDITOR_FORM_ACTIONS:
+        action_index = html_text.index(f'action="{action}"')
+        # A proxima ocorrencia de return_url apos a abertura do form tem de pertencer a ele.
+        return_url_index = html_text.index('name="return_url"', action_index)
+        next_action_index = html_text.find('action="/settings/menu/', action_index + 1)
+
+        if next_action_index != -1:
+            assert return_url_index < next_action_index, (
+                f"Form {action} nao envia return_url dentro do proprio bloco."
+            )
+
+
+####################################################################################
 # (2) OUTROS BOTOES CANCELAR (fora do editor de processo) NAO FORAM ALTERADOS
 ####################################################################################
 
