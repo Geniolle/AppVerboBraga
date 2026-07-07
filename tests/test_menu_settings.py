@@ -15,6 +15,7 @@ from appgenesis.menu_settings import (
     get_sidebar_menu_settings,
     normalize_menu_process_additional_fields,
     normalize_menu_process_quantity_fields,
+    resolve_menu_sidebar_section_key,
     normalize_sidebar_sections,
     update_sidebar_menu_process_quantity_fields_v1,
 )
@@ -1585,6 +1586,17 @@ def test_normalize_sidebar_sections_exposes_can_delete_only_for_non_default_sect
 
     assert sistema_item["can_delete"] is False
     assert arquivo_item["can_delete"] is True
+
+
+def test_resolve_menu_sidebar_section_key_keeps_perfil_de_autorizacao_em_sistema() -> None:
+    resolved_key = resolve_menu_sidebar_section_key(
+        "perfil_de_autorizacao",
+        {},
+        {"sistema", "igreja"},
+        ["sistema", "igreja"],
+    )
+
+    assert resolved_key == "sistema"
 
 
 def test_sessoes_config_exposes_delete_action_for_inactive_rows() -> None:

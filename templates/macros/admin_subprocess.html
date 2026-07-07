@@ -108,6 +108,17 @@
   {% endif %}
   {% set _show_form = _is_active_subprocess and (state.is_editing or _initial_menu_target_resolved == '#' ~ (state.config.edit_target if state.is_editing else state.config.default_target)) %}
 
+  {# Alerta fica fora da section (que alterna display:none entre form/lista) para continuar
+     visivel independentemente de o redirect ter devolvido o utilizador ao formulario ou a
+     lista -- unico ponto de feedback, reutilizavel por qualquer subprocesso administrativo
+     que chame este macro, sem logica separada por processo. #}
+  {% if state.success %}
+    <div class="alert ok">{{ state.success }}</div>
+  {% endif %}
+  {% if state.error %}
+    <div class="alert error">{{ state.error }}</div>
+  {% endif %}
+
   <section
     id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
     class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appgenesis-process-action-card-v1"
@@ -116,14 +127,6 @@
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
     {% if not _show_form %}style="display: none;"{% endif %}
   >
-    {% if state.success %}
-      <div class="alert ok">{{ state.success }}</div>
-    {% endif %}
-
-    {% if state.error %}
-      <div class="alert error">{{ state.error }}</div>
-    {% endif %}
-
     {% if state.is_editing %}
       <h2>{{ state.config.edit_title }}</h2>
       {% set _cancel_return_target = state.config.active_card_id or state.config.default_target %}
@@ -443,6 +446,10 @@
   {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
   {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
   {% set _is_active_subprocess = False %}
+  {# Mesmo calculo usado em render_admin_subprocess_form: quando o alvo inicial da pagina e' #}
+  {# o proprio editor deste subprocesso, a lista fica presente no DOM (para o Cancelar/Guardar #}
+  {# genericos conseguirem reexibi-la sem reload) mas comeca oculta via display:none. #}
+  {% set _is_same_edit_target = (_initial_menu_target_resolved == '#' ~ state.config.edit_target) %}
   {% if _initial_menu_resolved == state.menu_key %}
     {% if _initial_menu_resolved == 'perfil_de_autorizacao' %}
       {% set _sub_targets = ['#' ~ state.config.default_target, '#' ~ state.config.edit_target] %}
@@ -483,6 +490,12 @@
           {% if sort_state.has_sortable_columns %}data-admin-sortable-table="1"{% endif %}
           {% if sort_state.has_responsive_columns %}data-admin-responsive-table="1"{% endif %}
         >
+          <colgroup>
+            {% for column in state.config.columns %}
+              <col class="{{ column.css_class }}">
+            {% endfor %}
+            <col class="admin-col-actions-v1">
+          </colgroup>
           <thead>
             <tr>
               {% for column in state.config.columns %}

@@ -356,7 +356,17 @@ table[data-appgenesis-sortable-table="1"] td:last-child {
   }
 }
 
-/* === Semantic column type classes for admin tables === */
+/* === Semantic column type classes for admin tables ===
+ *
+ * Each column class pins an exact width (min-width == max-width, or a fixed
+ * `width` reinforced by both) so that two separately-rendered <table>
+ * instances sharing the same column classes (e.g. an Ativos/Inativos pair)
+ * always compute identical column widths regardless of each table's own
+ * content — auto table layout otherwise sizes every column independently
+ * per table. admin-col-main-v1 is the deliberate exception: it stays a
+ * flexible column so it can absorb leftover width and compress under the
+ * responsive JS algorithm (see the Entity process table section below).
+ */
 
 th.admin-col-main-v1,
 td.admin-col-main-v1 {
@@ -368,6 +378,10 @@ th.admin-col-text-v1,
 td.admin-col-text-v1 {
   text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 180px;
+  max-width: 180px;
 }
 
 th.admin-col-number-v1,
@@ -375,12 +389,18 @@ td.admin-col-number-v1 {
   text-align: center;
   white-space: nowrap;
   width: 110px;
+  min-width: 110px;
+  max-width: 110px;
 }
 
 th.admin-col-section-v1,
 td.admin-col-section-v1 {
   text-align: left;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 160px;
+  max-width: 160px;
 }
 
 th.admin-col-system-v1,
@@ -388,6 +408,8 @@ td.admin-col-system-v1 {
   text-align: center;
   white-space: nowrap;
   width: 90px;
+  min-width: 90px;
+  max-width: 90px;
 }
 
 th.admin-col-phone-v1,
@@ -395,6 +417,8 @@ td.admin-col-phone-v1 {
   text-align: center;
   white-space: nowrap;
   width: 100px;
+  min-width: 100px;
+  max-width: 100px;
 }
 
 th.admin-col-status-v1,
@@ -402,6 +426,8 @@ td.admin-col-status-v1 {
   text-align: center;
   white-space: nowrap;
   width: 110px;
+  min-width: 110px;
+  max-width: 110px;
 }
 
 th.admin-col-date-v1,
@@ -409,6 +435,8 @@ td.admin-col-date-v1 {
   text-align: center;
   white-space: nowrap;
   width: 120px;
+  min-width: 120px;
+  max-width: 120px;
 }
 
 th.admin-col-actions-v1,
@@ -424,10 +452,11 @@ td.admin-col-actions-v1 {
 th.admin-col-address-v1,
 td.admin-col-address-v1 {
   text-align: left;
-  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 220px;
+  max-width: 220px;
 }
 
 th.admin-col-email-v1,
@@ -436,6 +465,8 @@ td.admin-col-email-v1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 220px;
+  max-width: 220px;
 }
 
 th.admin-col-country-v1,
@@ -443,6 +474,8 @@ td.admin-col-country-v1 {
   text-align: center;
   white-space: nowrap;
   width: 90px;
+  min-width: 90px;
+  max-width: 90px;
 }
 
 .admin-col-hidden-v1 {
@@ -483,6 +516,8 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 .admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-status-v1,
 .admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-status-v1 {
   width: 90px;
+  min-width: unset;
+  max-width: none;
 }
 
 .admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-actions-v1,
@@ -506,6 +541,8 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 .admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-status-v1,
 .admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-status-v1 {
   width: 76px;
+  min-width: unset;
+  max-width: none;
 }
 
 .admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-actions-v1,
@@ -552,6 +589,8 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 .admin-subprocess-table-menu-v1 th.admin-col-number-v1,
 .admin-subprocess-table-menu-v1 td.admin-col-number-v1 {
   width: 11%;
+  min-width: unset;
+  max-width: none;
   white-space: normal;
 }
 
@@ -565,18 +604,24 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 .admin-subprocess-table-menu-v1 th.admin-col-section-v1,
 .admin-subprocess-table-menu-v1 td.admin-col-section-v1 {
   width: 19%;
+  min-width: unset;
+  max-width: none;
   white-space: normal;
 }
 
 .admin-subprocess-table-menu-v1 th.admin-col-system-v1,
 .admin-subprocess-table-menu-v1 td.admin-col-system-v1 {
   width: 10%;
+  min-width: unset;
+  max-width: none;
   white-space: normal;
 }
 
 .admin-subprocess-table-menu-v1 th.admin-col-status-v1,
 .admin-subprocess-table-menu-v1 td.admin-col-status-v1 {
   width: 12%;
+  min-width: unset;
+  max-width: none;
   white-space: normal;
 }
 
@@ -590,11 +635,15 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 /* === Entity process table ===
  *
  * Auto layout (inherits from admin-subprocess-table-v1).
- * Each column class owns its white-space: nowrap rule.
- * The main column (admin-col-main-v1) intentionally has no nowrap so it
+ * Each column class owns its width pin (see the semantic column type
+ * classes above) and its white-space: nowrap rule.
+ * The main column (admin-col-main-v1) intentionally stays flexible so it
  * compresses naturally — this is what allows the JS responsive algorithm
  * to eliminate horizontal overflow after hiding optional columns.
  * JS recalcAdminResponsiveTableV1() hides lower-priority columns via scrollWidth.
+ * Column max-width is NOT overridden here (beyond overflow/ellipsis) so the
+ * per-class pins stay identical between this table and every other admin
+ * subprocess table sharing the same column classes.
  */
 
 .admin-entity-table-v1 {
@@ -605,7 +654,6 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 .admin-entity-table-v1 td:not(.admin-col-actions-v1) {
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 240px;
 }
 
 .admin-entity-table-v1 th.admin-col-main-v1,

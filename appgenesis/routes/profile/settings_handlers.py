@@ -117,17 +117,40 @@ def _sanitize_users_new_settings_return_url_v1(
 
     query_params = dict(parse_qsl(parsed_url.query, keep_blank_values=True))
 
+    # Campos de identidade do editor (menu, target, settings_edit_key, etc.) sao sempre
+    # autoritativos a partir do chamador: se o chamador passa "" e' porque quer limpar o
+    # contexto de edicao (ex.: ao sair do editor apos gravar), nao herdar o valor antigo
+    # que veio no return_url capturado no momento do submit.
     for raw_key, raw_value in (extra_params or {}).items():
         clean_key = str(raw_key or "").strip()
+
+        if not clean_key:
+            continue
+
         clean_value = str(raw_value or "").strip()
 
-        if clean_key and clean_value:
+        if clean_value:
             query_params[clean_key] = clean_value
+        else:
+            query_params.pop(clean_key, None)
 
     query_string = urlencode(query_params)
-    fragment = f"#{parsed_url.fragment}" if parsed_url.fragment else ""
+
+    # O fragment final acompanha o "target" resolvido (mesma fonte de verdade usada pelo
+    # servidor para decidir qual card mostrar), nunca o fragment estatico do return_url --
+    # caso contrario o card do editor pode permanecer "ativo" mesmo depois do target mudar.
+    resolved_target = query_params.get("target", "")
+    fragment = f"#{resolved_target}" if resolved_target else (f"#{parsed_url.fragment}" if parsed_url.fragment else "")
 
     return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
+
+
+# Alvo generico de saida do editor de processo apos "Guardar" com sucesso, reaproveitado
+# por TODAS as abas (Geral, Configuracao dos campos, Campos adicionais, Campos Quantidade,
+# Listas, Campos subsequentes) -- o mesmo alvo que o Cancelar global ja usa
+# (settings_edit_cancel_target no template), para que Guardar e Cancelar sempre devolvam
+# o utilizador ao mesmo card/lista de origem.
+_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1 = "menu-subprocess-card-active"
 
 
 def _build_settings_redirect_url(
@@ -150,6 +173,10 @@ def _build_settings_redirect_url(
             "settings_edit_key": settings_edit_key,
             "settings_action": settings_action,
             "settings_tab": settings_tab,
+            # Marca este redirect como a URL final autoritativa do backend, para que
+            # return_after_save.js (isBackendPostSaveReturnUrl) nao aplique a heuristica
+            # de navegacao corretiva e reabra o editor com o contexto antigo do submit.
+            "appgenesis_after_save": "1",
         },
     )
 
@@ -171,6 +198,7 @@ def _build_settings_redirect_url(
         params.append(f"settings_action={settings_action}")
     if settings_tab:
         params.append(f"settings_tab={settings_tab}")
+    params.append("appgenesis_after_save=1")
     return f"/users/new?{chr(38).join(params)}"
 
 
@@ -2051,10 +2079,7 @@ def edit_sidebar_menu_process_additional_fields_v1(
             url=_build_settings_redirect_url(
                 success_message="Campos adicionais e hierarquia do processo atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="campos-adicionais",
+                redirect_target=_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1,
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -2226,19 +2251,14 @@ def edit_sidebar_menu_process_fields_handler(
         success_redirect_url = _build_settings_redirect_url(
             success_message="Configuração dos campos atualizada com sucesso.",
             redirect_menu=redirect_menu,
-            redirect_target=redirect_target,
-            settings_edit_key=clean_menu_key,
-            settings_action="edit",
-            settings_tab="campos-config",
+            redirect_target=_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1,
             return_url=return_url,
         )
         _log_process_editor_flow_v1(
             request,
             "process_fields:success_redirect",
             redirect_menu=redirect_menu,
-            redirect_target=redirect_target,
-            settings_edit_key=clean_menu_key,
-            settings_tab="campos-config",
+            redirect_target=_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1,
             final_url=success_redirect_url,
             return_url=return_url,
         )
@@ -2332,10 +2352,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             url=_build_settings_redirect_url(
                 success_message="Campos Quantidade atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="campos-quantidade",
+                redirect_target=_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1,
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -2451,10 +2468,7 @@ def edit_sidebar_menu_process_lists_handler(
             url=_build_settings_redirect_url(
                 success_message="Listas do processo atualizadas com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="lista",
+                redirect_target=_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1,
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -2571,10 +2585,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             url=_build_settings_redirect_url(
                 success_message="Campos subsequentes atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
-                settings_edit_key=clean_menu_key,
-                settings_action="edit",
-                settings_tab="campos_subsequentes",
+                redirect_target=_SETTINGS_MENU_EDITOR_EXIT_TARGET_V1,
                 return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,

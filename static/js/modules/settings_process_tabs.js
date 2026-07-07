@@ -61,7 +61,27 @@
     return aliases[cleanValue] || "";
   }
 
+  function getCurrentlyActiveTab() {
+    const card = document.querySelector("#settings-menu-edit-card");
+
+    if (!card) {
+      return "";
+    }
+
+    const activePane = card.querySelector("[data-process-edit-pane].active");
+    return activePane ? normalizeSettingsTab(activePane.getAttribute("data-process-edit-pane")) : "";
+  }
+
   function getRequestedSettingsTab() {
+    // Uma aba ja ativada (por clique do utilizador ou pelo boot de setupProcessEditTabs)
+    // e a fonte da verdade: os reruns por timer nao podem reverter para o snapshot
+    // congelado do bootstrap/URL de carregamento inicial, senao anulam a troca de aba.
+    const activeTab = getCurrentlyActiveTab();
+
+    if (activeTab) {
+      return activeTab;
+    }
+
     const bootstrapTab = normalizeSettingsTab(
       window.__APPGENESIS_BOOTSTRAP__ && window.__APPGENESIS_BOOTSTRAP__.settingsTab
     );

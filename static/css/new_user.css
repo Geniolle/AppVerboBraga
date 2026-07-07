@@ -81,17 +81,6 @@ body {
   letter-spacing: 0.01em;
 }
 
-   .topbar-action {
-  background: transparent;
-  border: 0;
-  color: #fff;
-  font-size: 22px;
-  cursor: pointer;
-  padding: 0;
-  margin-top: 0;
-  line-height: 1;
-}
-
    .topbar-right {
   display: flex;
   align-items: center;
@@ -109,45 +98,47 @@ body {
 }
 
    .user-menu-trigger {
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  background: transparent;
   color: #fff;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   cursor: pointer;
-  padding: 5px 8px;
-  margin-top: 0;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
   border-radius: 999px;
-  min-height: 38px;
+  box-shadow: none;
 }
 
-   .user-menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-   .user-name {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
+   .user-menu-trigger:hover,
+   .user-menu-trigger:focus,
+   .user-menu-trigger:focus-visible,
+   .user-menu-trigger:active {
+  border: 0;
+  background: transparent;
+  outline: none;
+  box-shadow: none;
 }
 
    .avatar-img {
   width: 30px;
   height: 30px;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.75);
-  background: #dbeafe;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
   object-fit: cover;
   flex: 0 0 auto;
 }
 
-   .user-caret {
-  font-size: 11px;
-  opacity: 0.9;
+   .user-menu-trigger:hover .avatar-img,
+   .user-menu-trigger:focus-visible .avatar-img {
+  border: 0;
+  outline: 0;
+  box-shadow: none;
 }
 
    .user-dropdown {
@@ -1865,10 +1856,6 @@ th {
     gap: 8px;
   }
 
- .user-name {
-    display: none;
-  }
-
  .user-dropdown {
     right: 0;
     width: min(430px, calc(100vw - 16px));
@@ -2885,10 +2872,6 @@ textarea {
   .brand-name {
     max-width: 160px;
     font-size: 17px;
-  }
-
-  .user-name {
-    max-width: 100px;
   }
 
   .card table,

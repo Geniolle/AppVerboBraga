@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from sqlalchemy import Boolean, String, Text, UniqueConstraint, text
+from sqlalchemy import Boolean, ForeignKey, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from appgenesis.models.base import Base
@@ -12,6 +12,8 @@ class SidebarMenuSetting(Base):
     __tablename__ = "sidebar_menu_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), nullable=False)
 
     menu_key: Mapped[str] = mapped_column(String(80), nullable=False)
     menu_label: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -32,5 +34,7 @@ class SidebarMenuSetting(Base):
     menu_config: Mapped[Optional[str]] = mapped_column(Text)
 
     __table_args__ = (
-        UniqueConstraint("menu_key", name="uq_sidebar_menu_settings_menu_key"),
+        UniqueConstraint(
+            "entity_id", "menu_key", name="uq_sidebar_menu_settings_entity_menu_key"
+        ),
     )

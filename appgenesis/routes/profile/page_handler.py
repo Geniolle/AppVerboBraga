@@ -579,8 +579,8 @@ def new_user_page(
             raw_admin_tab=admin_tab,
             target=target,
             sidebar_section_edit_key=sidebar_section_edit_key,
-            success=settings_success,
-            error=settings_error,
+            success=success,
+            error=error,
             appgenesis_after_save=appgenesis_after_save,
         )
 
@@ -757,7 +757,7 @@ def new_user_page(
                     sidebar_section_edit_data_v22,
                 )
         # APPGENESIS_SESSOES_CORRIGIR_ATIVOS_SPLIT_BACKEND_V26_END
-            settings_edit_data: dict[str, Any] | None = None
+    settings_edit_data: dict[str, Any] | None = None
     if clean_settings_edit_key:
         for row in page_data.get("sidebar_menu_settings", []):
             row_key = str(row.get("key", "")).strip().lower()
@@ -844,8 +844,8 @@ def new_user_page(
                 config=sessoes_subprocess_config_v2,
                 rows=all_sidebar_sections_for_subprocess_v2,
                 edit_key=clean_sidebar_section_edit_key_v2,
-                success=settings_success if resolved_admin_tab == "sessoes" else "",
-                error=settings_error if resolved_admin_tab == "sessoes" else "",
+                success=success if resolved_admin_tab == "sessoes" else "",
+                error=error if resolved_admin_tab == "sessoes" else "",
                 menu_key=ESTRUTURAS_MENU_KEY_V1,
                 return_url="/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
@@ -1013,8 +1013,8 @@ def new_user_page(
                     edit_key="",
                     menu_key=ESTRUTURAS_MENU_KEY_V1,
                     return_url=_menu_return_url_v1,
-                    success=settings_success if resolved_admin_tab == "contas" else "",
-                    error=settings_error if resolved_admin_tab == "contas" else "",
+                    success=success if resolved_admin_tab == "contas" else "",
+                    error=error if resolved_admin_tab == "contas" else "",
                 )
             except Exception:
                 admin_subprocess_menu_state_v1 = None

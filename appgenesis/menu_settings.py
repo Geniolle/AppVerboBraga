@@ -51,6 +51,7 @@ MENU_SECTION_LABELS = {
 }
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
+    "perfil_de_autorizacao": "sistema",
     "empresa": "dados_gerais",
     "home": "geral",
     MENU_MEU_PERFIL_KEY: "igreja",
