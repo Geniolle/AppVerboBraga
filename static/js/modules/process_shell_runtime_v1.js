@@ -1463,6 +1463,27 @@
       headerEl.insertBefore(inlineCreateEl, titleEl.nextSibling);
     }
 
+    // Acoes inline adicionais (genericas, subprocess-agnostic): qualquer filho
+    // direto do card marcado com data-admin-subprocess-inline-action e
+    // reposicionado no cabecalho, logo apos o botao de criacao inline (ou
+    // apos o titulo, se nao houver), antes da area de acoes/pesquisa. Nao
+    // define comportamento de clique -- so estrutura visual; a logica de
+    // clique de cada acao continua onde ja estava definida.
+    const inlineActionEls = Array.from(cardEl.children).filter((childEl) => {
+      return typeof childEl.hasAttribute === "function" && childEl.hasAttribute("data-admin-subprocess-inline-action");
+    });
+
+    let inlineActionInsertAfterEl = inlineCreateEl && inlineCreateEl.parentElement === headerEl
+      ? inlineCreateEl
+      : titleEl;
+
+    inlineActionEls.forEach((actionEl) => {
+      if (actionEl.parentElement !== headerEl || actionEl.previousElementSibling !== inlineActionInsertAfterEl) {
+        headerEl.insertBefore(actionEl, inlineActionInsertAfterEl.nextSibling);
+      }
+      inlineActionInsertAfterEl = actionEl;
+    });
+
     let actionsEl = findDirectChildElement(headerEl, (childEl) => {
       return childEl.classList && childEl.classList.contains("appgenesis-card-header-actions-v1");
     });

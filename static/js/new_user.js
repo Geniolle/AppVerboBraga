@@ -5609,6 +5609,46 @@ function setupCreateUserGenerateLinkShortcut() {
   });
 }
 
+// APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1_START
+// Reposiciona (nao clona) o botao "Gerar link de convite" e o seu slot de
+// saida -- originalmente dentro de #create-user-card -- para dentro do
+// cartao ativo de Utilizador (#admin-users-created-card). Necessario porque
+// #create-user-card passou a ter data-admin-subprocess-inline-create-enabled
+// e por isso fica display:none quando o formulario de criacao esta fechado
+// (ver admin_subprocess_inline_create_v1.css), o que esconderia o botao e o
+// link gerado independentemente do estado do formulario de criacao. O botao
+// e marcado no template com data-admin-subprocess-inline-action="1" para ser
+// recolocado no cabecalho pelo mecanismo generico ensureCardHeaderStructure
+// (process_shell_runtime_v1.js) -- o mesmo que ja reposiciona o botao
+// "+ Criar utilizador". Endpoint/logica de clique inalterados: apenas a
+// posicao no DOM muda. Idempotente: seguro chamar mais de uma vez.
+function relocateUtilizadorInviteLinkButtonV1() {
+  const activeCard = document.getElementById("admin-users-created-card");
+  const shortcutBtn = document.getElementById("create-user-generate-link-shortcut-btn");
+  if (!activeCard || !shortcutBtn) {
+    return;
+  }
+  if (shortcutBtn.parentElement !== activeCard) {
+    activeCard.appendChild(shortcutBtn);
+  }
+  shortcutBtn.hidden = false;
+}
+
+function relocateUtilizadorInviteLinkSlotV1() {
+  const activeCard = document.getElementById("admin-users-created-card");
+  const linkSlotEl = document.querySelector(".entity-create-link-slot");
+  if (!activeCard || !linkSlotEl) {
+    return;
+  }
+  const headerEl = activeCard.querySelector(":scope > .appgenesis-card-header-v1");
+  const desiredNextSibling = headerEl ? headerEl.nextSibling : activeCard.firstChild;
+  if (linkSlotEl.parentElement !== activeCard || linkSlotEl.previousSibling !== headerEl) {
+    activeCard.insertBefore(linkSlotEl, desiredNextSibling);
+  }
+  linkSlotEl.hidden = false;
+}
+// APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1_END
+
 function setupSidebarSectionsEditor() {
   const sectionsBodyEl = document.getElementById("sidebar-sections-created-body");
   if (!sectionsBodyEl) {
@@ -5722,6 +5762,7 @@ window.setTimeout(() => {
 }, 600);
 setupGeneratedInviteLinkCopy();
 setupCreateUserGenerateLinkShortcut();
+relocateUtilizadorInviteLinkButtonV1();
 setupSidebarSectionsEditor();
 if (
   window.AppGenesisProcessShell &&
@@ -5734,6 +5775,7 @@ if (
 ) {
   enhanceProcessShellTables(document);
 }
+relocateUtilizadorInviteLinkSlotV1();
 setupTableLimiter("recent-entities");
 setupTableLimiter("inactive-entities");
 setupTableLimiter("admin-users");

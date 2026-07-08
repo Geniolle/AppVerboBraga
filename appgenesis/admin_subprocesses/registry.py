@@ -665,6 +665,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     inactive_table_id="inactive-users-table",
     active_limiter_id="admin-users-table-limiter",
     inactive_limiter_id="inactive-users-table-limiter",
+    create_toggle_in_active_header=True,
 )
 
 

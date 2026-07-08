@@ -77,12 +77,47 @@
 }
 
 /* ===================================================================
+   (3B) BOTAO SECUNDARIO DE ACAO INLINE ADICIONAL (generico, opt-in)
+   Estilo reutilizavel para qualquer subprocesso que precise de uma acao
+   inline adicional no cabecalho do card ativo, ao lado do botao "+ Criar",
+   via data-admin-subprocess-inline-action (ensureCardHeaderStructure em
+   process_shell_runtime_v1.js). Primeiro consumidor: botao "Gerar link de
+   convite" do subprocesso Utilizador (ver AGENTS.md). Altura/padding/borda
+   ja vem de .entity-create-link-shortcut (new_user.css); aqui so' se ajusta
+   forma (pill), tipografia e feedback visual, para ficar visualmente
+   alinhado ao botao "+ Criar" sem duplicar as suas regras de fundo azul.
+=================================================================== */
+
+.admin-subprocess-inline-action-btn-v1 {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #fff;
+  color: #445068;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-subprocess-inline-action-btn-v1:hover {
+  background: #eef1f6;
+}
+
+.admin-subprocess-inline-action-btn-v1:focus-visible {
+  outline: 2px solid var(--app-shell-primary-v1);
+  outline-offset: 2px;
+}
+
+/* ===================================================================
    (4) RESPONSIVO
 =================================================================== */
 
 @media (max-width: 480px) {
   .admin-subprocess-inline-create-btn-v1 {
     padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .admin-subprocess-inline-action-btn-v1 {
     font-size: 12px;
   }
 }

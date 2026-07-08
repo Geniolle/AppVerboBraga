@@ -1115,14 +1115,22 @@ Regras obrigatórias:
    `create_toggle_in_active_header=True` em `AdminSubprocessConfig`
    (`appgenesis/admin_subprocesses/registry.py`), por subprocesso. Configs
    atuais com o campo ativo: `sessoes`, `menu`, `perfil_de_autorizacao`,
-   `objeto_de_autorizacao`. Não ativos (e porquê):
-   - `entidade` e `utilizador`: o card de criação ainda é HTML legado
-     (`create-entity-card`/`create-user-card` em `templates/new_user.html`),
-     sem `data-admin-subprocess`/`admin-subprocess-create-collapse-v1` — o
-     botão inline não encontraria o `<summary>` original. Requer migrar o
-     card de criação para o macro genérico antes de ativar o campo.
+   `objeto_de_autorizacao`, `utilizador`. Não ativos (e porquê):
+   - `entidade`: o card de criação ainda é HTML legado (`create-entity-card`
+     em `templates/new_user.html`), sem `data-admin-subprocess`/
+     `admin-subprocess-create-collapse-v1` — o botão inline não encontraria o
+     `<summary>` original. Requer migrar o card de criação para o macro
+     genérico antes de ativar o campo.
    - `contas`: `enabled=False`, `migration_status="legacy_pending"`, sem
      `save_endpoint` — subprocesso desativado.
+   - `utilizador`: card de criação (`create-user-card`) continua HTML legado
+     (não usa `render_admin_subprocess_form`), mas recebeu manualmente
+     `data-admin-subprocess="utilizador"`, `data-admin-subprocess-role="form"`
+     e a classe `admin-subprocess-create-collapse-v1` no `<details
+     id="create-user-collapse">`, o suficiente para o botão inline e o gatilho
+     `summary.click()` funcionarem sem migrar o card inteiro para o macro
+     genérico. Ver regra `APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1` abaixo
+     para a ação inline adicional específica deste subprocesso.
 6. Não criar novo endpoint, nova rota ou nova lógica de submissão — o
    `<form>`/`save_endpoint` original permanece inalterado.
 7. Continua proibido `MutationObserver` para este comportamento.
@@ -1180,6 +1188,76 @@ subprocesso Sessões e foi generalizado nesta regra.
    dentro de `.appgenesis-card-header-v1` em runtime, nem conflita com o
    botão inline de criação (que fica ao lado do título, nunca antes dele).
 <!-- APPGENESIS_ADMIN_SUBPROCESS_STATUS_DOT_V1_END -->
+
+<!-- APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1_START -->
+## Regra definitiva: ações inline adicionais no cabeçalho do card ativo (genérico) + botão "Gerar link de convite" do Utilizador
+
+Subprocessos administrativos podem ter, além do botão "+ Criar X", outras
+ações inline adicionais no cabeçalho do card ativo, reaproveitando um
+mecanismo genérico — sem duplicar endpoint/regra de negócio da ação movida.
+
+1. Marcador genérico e reutilizável: qualquer filho direto do `<section>`
+   do card marcado com `data-admin-subprocess-inline-action="1"` é
+   reposicionado por `ensureCardHeaderStructure`
+   (`static/js/modules/process_shell_runtime_v1.js`) para dentro de
+   `.appgenesis-card-header-v1`, logo após o botão de criação inline (ou
+   após o `<h2>`, se não houver botão de criação) e antes da área de
+   pesquisa. Não define comportamento de clique — só reposiciona
+   visualmente; a lógica de clique de cada ação continua onde já estava.
+2. Este marcador é **genérico e opt-in por elemento**, não por
+   `AdminSubprocessConfig` — não foi adicionado nenhum novo campo ao
+   dataclass. Um subprocesso só o usa se, e apenas se, tiver de fato uma
+   ação inline adicional própria; não é um contrato que todo subprocesso
+   precisa preencher.
+3. Primeiro (e até agora único) consumidor: botão "Gerar link de convite"
+   do subprocesso Utilizador. Este botão já existia (endpoint/lógica 100%
+   client-side, sem fetch — ver `setupCreateUserGenerateLinkShortcut` em
+   `static/js/new_user.js`) dentro de `#create-user-card`. Não foi criado
+   nenhum endpoint nem regra de negócio nova; apenas reposicionado.
+4. Por quê a relocação física (e não apenas um botão-proxy que dispara
+   `.click()` no original, ao contrário do padrão usado para "+ Criar"):
+   `#create-user-card` recebeu `data-admin-subprocess-inline-create-enabled="1"`
+   (necessário para esconder a faixa isolada de criação, mesmo padrão de
+   Sessões/Menu) e por isso fica `display:none !important` sempre que o
+   `<details id="create-user-collapse">` estiver fechado (regra genérica em
+   `admin_subprocess_inline_create_v1.css`). Um proxy que apenas clicasse no
+   botão original não resolveria isso: o botão real (e o slot de saída do
+   link gerado) continuariam fisicamente dentro de um ancestral escondido
+   por padrão. Por isso o botão e o slot foram *movidos* (não clonados) para
+   fora de `#create-user-card`.
+5. Mecanismo: o botão e o slot de saída (`.entity-create-link-slot`) nascem
+   no HTML (`templates/new_user.html`) logo após
+   `{{ render_admin_subprocess_tables(admin_subprocess_user_state) }}`,
+   ocultos (`hidden`) para evitar flash de posição errada. Duas funções
+   idempotentes em `static/js/new_user.js`
+   (`relocateUtilizadorInviteLinkButtonV1`/`relocateUtilizadorInviteLinkSlotV1`)
+   os movem como filhos diretos de `#admin-users-created-card` (o card ativo
+   de Utilizador) e removem o `hidden`: o botão antes de
+   `enhanceProcessShellTables(document)` rodar (para `ensureCardHeaderStructure`
+   já o encontrar com `data-admin-subprocess-inline-action="1"`), o slot
+   depois (para ser inserido logo após o `.appgenesis-card-header-v1` já
+   construído). `setupCreateUserGenerateLinkShortcut()` continua sendo a
+   única função dona do clique/lógica — nada foi duplicado.
+6. Estilo: a classe `.admin-subprocess-inline-action-btn-v1`
+   (`static/css/modules/app_shell/admin_subprocess_inline_create_v1.css`)
+   é genérica/reutilizável (forma pill, hover, `focus-visible`) e se soma —
+   não substitui — à classe já existente `.entity-create-link-shortcut`
+   (`static/css/new_user.css`, dona de altura/padding/borda). A classe
+   `.action-btn-secondary` (preenchimento cinza sólido) foi removida deste
+   botão especificamente para obter o visual "outline" pedido; o botão
+   "Copiar" dentro do slot mantém `.action-btn-secondary` normalmente.
+7. Regras antigas que dependiam da posição anterior do botão dentro de
+   `#create-user-card`/`.appgenesis-process-action-toolbar-v1` foram
+   removidas (não deixadas como código morto): seletor
+   `#create-user-card .entity-create-link-shortcut`/`.action-btn-secondary`
+   e o bloco `APPGENESIS_USER_CREATE_HIDE_LINK_BUTTON_V1` em
+   `process_shell_runtime_v1.css`, e o seletor de sibling
+   `.entity-create-toolbar .entity-create-collapse[open] + .entity-create-link-shortcut`
+   em `new_user.css`. Consequência aceita e intencional: o botão "Gerar link
+   de convite" deixa de se esconder quando o formulário de criação está
+   aberto — no cabeçalho ele é uma ação permanente, igual ao "+ Criar
+   utilizador", que também nunca se esconde nesse estado.
+<!-- APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1_END -->
 
 <!-- APPGENESIS_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->
 ## Motor reutilizável de subprocessos administrativos

@@ -520,10 +520,6 @@ body {
   flex: 1 1 100%;
 }
 
-   .entity-create-toolbar .entity-create-collapse[open] + .entity-create-link-shortcut {
-  display: none;
-}
-
    .entity-create-collapse summary {
   list-style: none;
   cursor: pointer;

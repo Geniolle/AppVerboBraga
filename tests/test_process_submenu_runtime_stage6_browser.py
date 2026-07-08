@@ -120,7 +120,7 @@ def test_stage6_process_submenu_runtime_clicks_keep_runtime_behavior() -> None:
 
         _click_submenu_v1(driver, "Utilizador")
         wait.until(lambda drv: "Utilizador" in _active_submenu_labels_v1(drv))
-        wait.until(lambda drv: _card_is_visible_v1(drv, "create-user-card"))
+        wait.until(lambda drv: _card_is_visible_v1(drv, "admin-users-created-card"))
 
         driver.get("http://127.0.0.1:8000/users/new?menu=meu_perfil")
         wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")

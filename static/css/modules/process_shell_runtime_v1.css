@@ -452,8 +452,6 @@
   min-height: var(--ui-control-height, 38px) !important;
 }
 
-#create-user-card .entity-create-link-shortcut,
-#create-user-card .action-btn-secondary,
 #create-entity-card .action-btn-secondary,
 .appgenesis-process-action-toolbar-v1 .action-btn,
 .appgenesis-process-action-toolbar-v1 .action-btn-secondary {
@@ -465,12 +463,11 @@
   margin-top: 0 !important;
   min-height: var(--ui-control-height, 38px) !important;
 }
-/* APPGENESIS_USER_CREATE_HIDE_LINK_BUTTON_V1_START */
-#create-user-card #create-user-collapse[open] ~ #create-user-generate-link-shortcut-btn,
-#create-user-card #create-user-collapse[open] ~ .entity-create-link-slot {
-  display: none !important;
-}
-/* APPGENESIS_USER_CREATE_HIDE_LINK_BUTTON_V1_END */
+/* Nota: o botao "Gerar link de convite" (#create-user-generate-link-shortcut-btn)
+   e o seu slot de saida (.entity-create-link-slot) deixaram de viver dentro
+   de #create-user-card -- ver APPGENESIS_UTILIZADOR_INVITE_LINK_HEADER_V1 em
+   templates/new_user.html e static/js/new_user.js. O estilo do botao agora
+   vive em admin_subprocess_inline_create_v1.css (.admin-subprocess-inline-action-btn-v1). */
 
 /* APPGENESIS_PROCESS_ACTION_TOOLBAR_ALIGN_V1_END */
 
