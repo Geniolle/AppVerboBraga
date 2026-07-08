@@ -1356,6 +1356,7 @@ if (
     debugTabsLog: debugTabsLogV1,
     logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
     getActiveMenuKey: () => activeMenuKey,
+    refreshProcessShellBreadcrumb: refreshProcessShellBreadcrumbV1,
     setMeuPerfilSelectedProfileSection: (sectionKey) => {
       meuPerfilSelectedProfileSection = sectionKey;
     },
@@ -1471,7 +1472,8 @@ if (
   typeof appGenesisProcessMenuRuntimeV1.configure === "function"
 ) {
   appGenesisProcessMenuRuntimeV1.configure({
-    processShellHeaderController
+    processShellHeaderController,
+    refreshProcessShellBreadcrumb: refreshProcessShellBreadcrumbV1
   });
 }
 
@@ -3702,11 +3704,14 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
     appGenesisProcessSubmenuRuntimeV1 &&
     typeof appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu === "function"
   ) {
-    return appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu(
+    const result = appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu(
       targetSelector,
       selectedLinkEl
     );
+    refreshProcessShellBreadcrumbV1();
+    return result;
   }
+  refreshProcessShellBreadcrumbV1();
 }
 
 // .appgenesis-process-action-toggle-v1 define "display: inline-flex !important" no CSS, por isso um
@@ -5279,6 +5284,15 @@ function getDefaultTargetForMenu(menuKey, config, options = {}) {
   return "";
 }
 
+function refreshProcessShellBreadcrumbV1() {
+  if (
+    processShellHeaderController &&
+    typeof processShellHeaderController.refresh === "function"
+  ) {
+    processShellHeaderController.refresh();
+  }
+}
+
 function syncActiveTabTitle(tabsContainerSelector, titleSelector, ignoredLabels) {
   var ignored = new Set(
     (Array.isArray(ignoredLabels) ? ignoredLabels : ["Mais"])
@@ -5295,9 +5309,11 @@ function syncActiveTabTitle(tabsContainerSelector, titleSelector, ignoredLabels)
   }
   var label = String(activeTab.textContent || "").trim();
   if (!label || ignored.has(label.toLowerCase())) {
+    refreshProcessShellBreadcrumbV1();
     return;
   }
   titleEl.textContent = label;
+  refreshProcessShellBreadcrumbV1();
 }
 
 function activateMenu(menuKey, options = {}) {

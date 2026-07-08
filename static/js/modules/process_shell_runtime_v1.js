@@ -582,6 +582,31 @@
   // (3) CONTROLLER DO CABEÇALHO DO PROCESSO
   //###################################################################################
 
+  // Resolve o botao .menu-item[data-menu] ativo na sidebar ja renderizada,
+  // para ler o rotulo da sua secao (data-sidebar-section-label, ver
+  // app_sidebar_modern_v1.html). Procura primeiro pelo menuKey explicito
+  // (evita corrida com a troca da classe "active", que so' acontece depois
+  // do setTitle dentro de activateMenu) e cai para .menu-item.active como
+  // fallback -- cobre a carga inicial, quando nenhum menuKey foi passado.
+  function findActiveSidebarMenuItemV1(menuKey) {
+    const buttons = document.querySelectorAll(".menu-item[data-menu]");
+    let fallbackActive = null;
+
+    for (let i = 0; i < buttons.length; i += 1) {
+      const button = buttons[i];
+
+      if (menuKey && button.getAttribute("data-menu") === menuKey) {
+        return button;
+      }
+
+      if (!fallbackActive && button.classList.contains("active")) {
+        fallbackActive = button;
+      }
+    }
+
+    return fallbackActive;
+  }
+
   function createProcessHeaderController(config) {
     const safeConfig = config && typeof config === "object" ? config : {};
     const rootEl = safeConfig.root || null;
@@ -590,13 +615,92 @@
     const getTitle = typeof safeConfig.getTitle === "function" ? safeConfig.getTitle : null;
     const getActions = typeof safeConfig.getActions === "function" ? safeConfig.getActions : null;
 
+    // Breadcrumb ("<secao> > <titulo>") acompanha o mesmo titulo resolvido
+    // para o <h1> (segmento atual) e a secao lateral ativa lida diretamente
+    // do DOM da sidebar ja renderizada (segmento raiz) -- nenhum dos dois e'
+    // fixo/hardcoded no HTML.
+    const breadcrumbSectionGroupEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-section-group-v1") : null;
+    const breadcrumbSectionEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-section-v1") : null;
+    const breadcrumbCurrentEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-current-v1") : null;
+    const breadcrumbTabGroupEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-tab-group-v1") : null;
+    const breadcrumbTabEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-tab-v1") : null;
+
     if (rootEl && headerControllersByRoot.has(rootEl)) {
       return headerControllersByRoot.get(rootEl);
     }
 
     let destroyed = false;
     let currentTitle = normalizeText(getTitle ? getTitle() : "", "Processo");
+    let currentMenuKey = typeof safeConfig.menuKey === "string" ? safeConfig.menuKey : null;
     let currentActions = normalizeActions(getActions ? getActions() : []);
+
+    function normalizeBreadcrumbLabel(value) {
+      return normalizeText(String(value || "").replace(/\s+/g, " "), "");
+    }
+
+    function resolveActiveTabLabelFromDomV1() {
+      const ownerDocument = rootEl && rootEl.ownerDocument ? rootEl.ownerDocument : global.document;
+      if (!ownerDocument) {
+        return "";
+      }
+
+      const menuTabsCardEl = rootEl ? rootEl.closest("#menu-tabs-card") : null;
+      const submenuContainerEl = menuTabsCardEl ? menuTabsCardEl.querySelector("#submenu-items") : null;
+      const activeSubmenuEl = submenuContainerEl
+        ? submenuContainerEl.querySelector(".submenu-item.active")
+        : null;
+      const activeSubmenuLabel = normalizeBreadcrumbLabel(
+        activeSubmenuEl ? activeSubmenuEl.textContent : ""
+      );
+
+      if (activeSubmenuLabel) {
+        return activeSubmenuLabel;
+      }
+
+      return "";
+    }
+
+    function renderBreadcrumb() {
+      const activeMenuItem = findActiveSidebarMenuItemV1(currentMenuKey);
+      const sectionLabel = activeMenuItem
+        ? normalizeBreadcrumbLabel(activeMenuItem.getAttribute("data-sidebar-section-label") || "")
+        : "";
+      const menuLabel = activeMenuItem
+        ? normalizeBreadcrumbLabel(
+            activeMenuItem.querySelector(".menu-label")?.textContent
+            || activeMenuItem.getAttribute("title")
+            || activeMenuItem.getAttribute("aria-label")
+            || ""
+          )
+        : normalizeBreadcrumbLabel(currentTitle);
+      const tabLabel = normalizeBreadcrumbLabel(resolveActiveTabLabelFromDomV1());
+      const shouldShowTabLabel = Boolean(
+        tabLabel && tabLabel !== menuLabel && tabLabel !== sectionLabel && !/^(mais)$/i.test(tabLabel)
+      );
+
+      if (breadcrumbCurrentEl) {
+        breadcrumbCurrentEl.textContent = menuLabel || normalizeText(currentTitle, "Processo");
+      }
+
+      if (breadcrumbSectionEl && breadcrumbSectionGroupEl) {
+        if (sectionLabel) {
+          breadcrumbSectionEl.textContent = sectionLabel;
+          breadcrumbSectionGroupEl.hidden = false;
+        } else {
+          breadcrumbSectionGroupEl.hidden = true;
+        }
+      }
+
+      if (breadcrumbTabEl && breadcrumbTabGroupEl) {
+        if (shouldShowTabLabel) {
+          breadcrumbTabEl.textContent = tabLabel;
+          breadcrumbTabGroupEl.hidden = false;
+        } else {
+          breadcrumbTabEl.textContent = "";
+          breadcrumbTabGroupEl.hidden = true;
+        }
+      }
+    }
 
     function renderTitle() {
       if (!titleEl) {
@@ -604,6 +708,7 @@
       }
 
       titleEl.textContent = normalizeText(currentTitle, "Processo");
+      renderBreadcrumb();
     }
 
     function renderActions() {
@@ -630,12 +735,15 @@
       actionsEl.hidden = !actionsEl.childNodes.length;
     }
 
-    function setTitle(nextTitle) {
+    function setTitle(nextTitle, menuKey) {
       if (destroyed) {
         return;
       }
 
       currentTitle = normalizeText(nextTitle, "Processo");
+      if (typeof menuKey === "string" && menuKey) {
+        currentMenuKey = menuKey;
+      }
       renderTitle();
     }
 
@@ -646,6 +754,15 @@
 
       currentActions = normalizeActions(nextActions);
       renderActions();
+    }
+
+    function refresh() {
+      if (destroyed) {
+        return;
+      }
+
+      renderTitle();
+      renderBreadcrumb();
     }
 
     function clear() {
@@ -683,6 +800,7 @@
     const controller = {
       setTitle,
       setActions,
+      refresh,
       clear,
       destroy
     };

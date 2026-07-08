@@ -1,0 +1,105 @@
+    {% from "macros/sidebar_icons.html" import sidebar_icon %}
+
+    {# APPGENESIS_APP_SIDEBAR_MODERN_V1_DYNAMIC_SECTIONS_V1_START #}
+    {% set fallback_sidebar_sections = [
+      ("sistema", "Sistema"),
+      ("geral", "Geral"),
+      ("dados_gerais", "Dados gerais"),
+      ("igreja", "Igreja"),
+      ("tesouraria", "Tesouraria")
+    ] %}
+
+    {% set dynamic_sidebar_sections = namespace(items=[]) %}
+
+    {% if sidebar_section_options is defined and sidebar_section_options %}
+      {% for section in sidebar_section_options %}
+        {% set section_key = section.key|default("", true)|lower %}
+        {% set section_label = section.label|default(section_key, true) %}
+        {% set section_is_active = section.is_active|default(false) %}
+
+        {% if section_key and section_is_active %}
+          {% if not current_entity_scope or current_entity_scope in section.visibility_scopes %}
+            {% set dynamic_sidebar_sections.items = dynamic_sidebar_sections.items + [(section_key, section_label)] %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% set sidebar_sections = dynamic_sidebar_sections.items if dynamic_sidebar_sections.items else fallback_sidebar_sections %}
+    {# APPGENESIS_APP_SIDEBAR_MODERN_V1_DYNAMIC_SECTIONS_V1_END #}
+
+    <aside id="app-sidebar" class="sidebar app-sidebar-modern-v1">
+      <div class="app-sidebar-modern-header-v1">
+        <div class="sidebar-product-header-v1">
+          <span class="sidebar-product-mark-v1">
+            {% if user_personal_data.primary_entity_logo_url %}
+              <img src="{{ user_personal_data.primary_entity_logo_url }}" alt="Imagem da entidade">
+            {% else %}
+              <span>[+]</span>
+            {% endif %}
+          </span>
+          <span class="sidebar-product-name-v1">
+            {{ user_personal_data.primary_entity_name if user_personal_data.primary_entity_name != '-' else (user_personal_data.entities if user_personal_data.entities != '-' else 'SOMA') }}
+          </span>
+        </div>
+        <button
+          id="sidebar-collapse-toggle"
+          class="sidebar-collapse-toggle app-sidebar-collapse-toggle-v1"
+          type="button"
+          aria-controls="app-sidebar"
+          aria-expanded="true"
+          aria-label="Fechar barra lateral"
+          title="Fechar barra lateral"
+          data-sidebar-tooltip="Fechar barra lateral"
+        >
+          <svg class="sidebar-collapse-toggle-icon-v1" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm5 2H4v12h5V6zm2 0v12h9V6h-9z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="app-sidebar-nav-v1">
+        {% for section_key, section_label in sidebar_sections %}
+          {% set section_state = namespace(has_items=false) %}
+
+          {% for setting in sidebar_menu_settings %}
+            {% set current_section = setting.sidebar_section_key|default(setting.menu_section|default("", true), true) %}
+
+            {% if setting.key in visible_sidebar_menu_keys and current_section == section_key %}
+              {% set section_state.has_items = true %}
+            {% endif %}
+          {% endfor %}
+
+          <div class="menu-section">{{ section_label }}</div>
+          {% if section_state.has_items %}
+            <nav class="menu-list" aria-label="Menu {{ section_label|lower }}">
+              {% for setting in sidebar_menu_settings %}
+                {% set current_section = setting.sidebar_section_key|default(setting.menu_section|default("", true), true) %}
+
+                {% if setting.key in visible_sidebar_menu_keys and current_section == section_key %}
+                  <button
+                    type="button"
+                    class="menu-item{% if setting.key|lower == initial_menu %} active{% endif %}"
+                    data-menu="{{ setting.key|lower }}"
+                    data-sidebar-section-key="{{ section_key }}"
+                    data-sidebar-section-label="{{ section_label }}"
+                    title="{{ setting.label }}"
+                    aria-label="{{ setting.label }}"
+                  >
+                    <span class="menu-icon">{{ sidebar_icon(setting.key) }}</span>
+                    <span class="menu-label">{{ setting.label }}</span>
+                  </button>
+                {% endif %}
+              {% endfor %}
+            </nav>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="sidebar-brand-footer">
+        <a href="/" class="brand-link">
+          <span class="logo">𝓖ênesis</span>
+          <span class="version">Chapter v1.01</span>
+        </a>
+      </div>
+    </aside>

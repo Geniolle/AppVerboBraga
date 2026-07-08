@@ -43,6 +43,7 @@
     debugTabsLog: function () {},
     logNavigationBootDebug: function () {},
     processShellHeaderController: null,
+    refreshProcessShellBreadcrumb: function () {},
     getMeuPerfilSelectedProfileSection: function () {
       return "";
     },
@@ -126,6 +127,9 @@
     if ("processShellHeaderController" in safeOptions) {
       state.processShellHeaderController = safeOptions.processShellHeaderController;
     }
+    if (typeof safeOptions.refreshProcessShellBreadcrumb === "function") {
+      state.refreshProcessShellBreadcrumb = safeOptions.refreshProcessShellBreadcrumb;
+    }
     if (typeof safeOptions.getMeuPerfilSelectedProfileSection === "function") {
       state.getMeuPerfilSelectedProfileSection = safeOptions.getMeuPerfilSelectedProfileSection;
     }
@@ -181,7 +185,7 @@
     state.setActiveMenuKey(menuKey);
     if (state.processShellHeaderController) {
       state.processShellHeaderController.setActions([]);
-      state.processShellHeaderController.setTitle(config.title || "Processo");
+      state.processShellHeaderController.setTitle(config.title || "Processo", menuKey);
     }
     Array.from(state.menuButtons || []).forEach((item) => item.classList.remove("active"));
     if (targetButton) {
@@ -219,6 +223,7 @@
       }
       state.debugTabsLog("activateMenu:before-apply", { menuKey, defaultTarget });
       state.applyContentForMenuTarget(menuKey, defaultTarget, source);
+      state.refreshProcessShellBreadcrumb({ menuKey, target: defaultTarget, source });
       if (menuKey === state.MEU_PERFIL_MENU_KEY) {
         let selectedSectionItem = menuItems.find(
           (item) => String(item.profileSection || "") === state.getMeuPerfilSelectedProfileSection()
@@ -245,6 +250,7 @@
     }
     state.applyContentForMenu(menuKey);
     state.setActiveSubmenu("");
+    state.refreshProcessShellBreadcrumb({ menuKey, target: "", source });
   }
 
   function activateMenuTarget(menuKey, targetSelector, source) {
@@ -260,6 +266,7 @@
     state.selectedTargetByMenu[menuKey] = targetSelector;
     state.setActiveSubmenu(targetSelector);
     state.applyContentForMenuTarget(menuKey, targetSelector, cleanSource);
+    state.refreshProcessShellBreadcrumb({ menuKey, target: targetSelector, source: cleanSource });
     if (targetSelector === "#dynamic-process-card") {
       state.renderDynamicProcessCard(menuKey, state.selectedDynamicSectionByMenu[menuKey] || "");
     }

@@ -19,6 +19,8 @@
   <script src="/static/js/modules/tabs_overflow_v1.js?v=20260626-tabs-overflow-v7" defer></script>
   <link rel="stylesheet" href="/static/css/modules/field_info_tooltip_v1.css?v=20260701-field-info-tooltip-v1">
   <script src="/static/js/modules/field_info_tooltip_v1.js?v=20260701-field-info-tooltip-v1" defer></script>
+  <link rel="stylesheet" href="/static/css/modules/app_shell_modern_v1.css?v=20260708-shell-breadcrumb-tab-v1">
+  <link rel="stylesheet" href="/static/css/modules/app_sidebar_modern_v1.css?v=20260708-collapse-toggle-overlay-v1">
 {% endblock %}
 
 {% block body %}
@@ -34,17 +36,64 @@
   - template renderizando Perfil de autorização: {{ 'Sim' if auth_profile_subprocess_state is not none else 'Não' }}
   -->
   {% endif %}
-  {% include "partials/new_user_topbar.html" %}
-
   <div class="layout">
-    {% include "partials/new_user_sidebar.html" %}
+    {% include "partials/app_sidebar_modern_v1.html" %}
 
-    <main class="content">
-      <div class="container">
+    <div class="app-main-column-v1">
+      {% include "partials/new_user_topbar.html" %}
+
+      <main class="content">
+        <div class="container">
         <section id="menu-tabs-card" class="card menu-tabs-card appgenesis-process-shell">
+          {# Breadcrumb: 1o segmento = secao lateral do menu ativo (nunca "Home"
+             fixo), lida a partir do proprio setting.sidebar_section_key/menu_section
+             ja resolvido no backend (ver _resolve_sidebar_menu_context em
+             appgenesis/services/page.py); rotulo mapeado via sidebar_section_options
+             (secoes customizadas) com fallback nos rotulos padrao do sistema. Serve
+             apenas para o primeiro paint -- na troca de menu via sidebar, quem manda
+             e' process_shell_runtime_v1.js, lendo data-sidebar-section-label do
+             botao .menu-item ativo (fonte unica de verdade, ver app_sidebar_modern_v1.html). #}
+          {% set breadcrumb_ns = namespace(section_key="", section_label="") %}
+          {% for setting in sidebar_menu_settings %}
+            {% if setting.key|lower == initial_menu %}
+              {% set breadcrumb_ns.section_key = (setting.sidebar_section_key|default(setting.menu_section|default("", true), true))|lower %}
+            {% endif %}
+          {% endfor %}
+          {% set breadcrumb_section_fallback_labels = {
+            "sistema": "Sistema",
+            "geral": "Geral",
+            "dados_gerais": "Dados gerais",
+            "igreja": "Igreja",
+            "tesouraria": "Tesouraria"
+          } %}
+          {% set breadcrumb_ns.section_label = breadcrumb_section_fallback_labels[breadcrumb_ns.section_key] if breadcrumb_ns.section_key in breadcrumb_section_fallback_labels else breadcrumb_ns.section_key|replace("_", " ")|title %}
+          {% if sidebar_section_options is defined and sidebar_section_options %}
+            {% for section_option in sidebar_section_options %}
+              {% if section_option.key|lower == breadcrumb_ns.section_key and section_option.label %}
+                {% set breadcrumb_ns.section_label = section_option.label %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
           <div id="process-shell-header" class="process-shell-header">
-            <h1 id="process-shell-title" class="process-shell-title">{{ initial_menu_label }}</h1>
+            <div class="process-shell-title-group-v1">
+              <nav id="process-shell-breadcrumb-v1" class="process-shell-breadcrumb-v1" aria-label="Caminho">
+                <span id="process-shell-breadcrumb-section-group-v1" class="process-shell-breadcrumb-section-group-v1"{% if not breadcrumb_ns.section_label %} hidden{% endif %}>
+                  <span id="process-shell-breadcrumb-section-v1" class="process-shell-breadcrumb-section-v1">{{ breadcrumb_ns.section_label }}</span>
+                  <span class="process-shell-breadcrumb-sep-v1" aria-hidden="true">&rsaquo;</span>
+                </span>
+                <span id="process-shell-breadcrumb-current-v1" class="process-shell-breadcrumb-current-v1">{{ initial_menu_label }}</span>
+                <span id="process-shell-breadcrumb-tab-group-v1" class="process-shell-breadcrumb-tab-group-v1" hidden>
+                  <span class="process-shell-breadcrumb-sep-v1" aria-hidden="true">&rsaquo;</span>
+                  <span id="process-shell-breadcrumb-tab-v1" class="process-shell-breadcrumb-tab-v1"></span>
+                </span>
+              </nav>
+              <h1 id="process-shell-title" class="process-shell-title">{{ initial_menu_label }}</h1>
+              {% if initial_menu == 'sessoes' %}
+              <p id="process-shell-subtitle" class="process-shell-subtitle-v1">Gerencie as sessões e a estrutura do sistema.</p>
+              {% endif %}
+            </div>
             <div id="process-shell-actions" class="process-shell-actions"></div>
+            {% include "partials/new_user_avatar.html" %}
           </div>
           <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu" {% if not initial_menu_tabs %}style="display: none;"{% endif %}>
             {% if initial_menu_tabs %}
@@ -145,7 +194,7 @@
           </div>
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
         </section>
- 
+
         <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-active-title">Registos ativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
@@ -161,7 +210,7 @@
           <p id="dynamic-process-active-empty" class="empty" style="display: none;">Sem registos ativos.</p>
           <div id="dynamic-process-active-limiter" class="table-limiter"></div>
         </section>
- 
+
         <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-inactive-title">Registos inativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
@@ -2652,6 +2701,7 @@
         {% endif %}
       </div>
     </main>
+    </div>
   </div>
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
@@ -2703,7 +2753,7 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260630-core-migration-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260630-core-migration-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260630-configurable-core-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260625-menu-toggle-labels-v1"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-shell-breadcrumb-section-v1"></script>
   <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260704-global-cancel-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
   <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
@@ -2713,8 +2763,8 @@
   <script src="/static/js/modules/process_navigation_state_v1.js?v=20260707-process-navigation-stage4-v1"></script>
   <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260707-process-cards-stage5-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
-  <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260707-process-menu-runtime-stage7-v1"></script>
-  <script src="/static/js/new_user.js?v=20260707-process-reference-stage8-v1"></script>
+  <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260708-breadcrumb-section-v1"></script>
+  <script src="/static/js/new_user.js?v=20260708-breadcrumb-tab-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

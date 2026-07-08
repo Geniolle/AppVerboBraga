@@ -42,6 +42,7 @@
     activateProfilePersonalSection: function () {},
     applyMeuPerfilProcessSubsequentVisibility: function () {},
     syncActiveTabTitle: function () {},
+    refreshProcessShellBreadcrumb: function () {},
     MEU_PERFIL_MENU_KEY: "meu_perfil",
     windowRef: global,
     documentRef: global.document || null
@@ -112,6 +113,9 @@
     }
     if (typeof safeOptions.syncActiveTabTitle === "function") {
       state.syncActiveTabTitle = safeOptions.syncActiveTabTitle;
+    }
+    if (typeof safeOptions.refreshProcessShellBreadcrumb === "function") {
+      state.refreshProcessShellBreadcrumb = safeOptions.refreshProcessShellBreadcrumb;
     }
     if (typeof safeOptions.MEU_PERFIL_MENU_KEY === "string" && safeOptions.MEU_PERFIL_MENU_KEY.trim()) {
       state.MEU_PERFIL_MENU_KEY = safeOptions.MEU_PERFIL_MENU_KEY.trim();
@@ -189,6 +193,11 @@
     clearSubmenuActiveLinks(links);
     if (selectedLinkEl) {
       selectedLinkEl.classList.add("active");
+      state.refreshProcessShellBreadcrumb({
+        menuKey: state.getActiveMenuKey(),
+        target: normalizedTargetSelector,
+        source: "submenu"
+      });
       return;
     }
     const firstMatch = Array.from(links).find(
@@ -197,6 +206,11 @@
     if (firstMatch) {
       firstMatch.classList.add("active");
     }
+    state.refreshProcessShellBreadcrumb({
+      menuKey: state.getActiveMenuKey(),
+      target: normalizedTargetSelector,
+      source: "submenu"
+    });
   }
 
   function createTopSubmenuController(options) {

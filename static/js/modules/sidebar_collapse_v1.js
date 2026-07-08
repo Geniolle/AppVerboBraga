@@ -35,15 +35,11 @@
 
   function updateButton(button, collapsed) {
     if (!button) return;
-    if (collapsed) {
-      button.setAttribute("aria-expanded", "false");
-      button.setAttribute("aria-label", "Expandir menu lateral");
-      button.setAttribute("title", "Expandir menu lateral");
-    } else {
-      button.setAttribute("aria-expanded", "true");
-      button.setAttribute("aria-label", "Ocultar menu lateral");
-      button.setAttribute("title", "Ocultar menu lateral");
-    }
+    var label = collapsed ? "Abrir barra lateral" : "Fechar barra lateral";
+    button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+    button.setAttribute("data-sidebar-tooltip", label);
   }
 
   function applyState(button, collapsed) {

@@ -1,0 +1,304 @@
+/* ###################################################################################
+   APPGENESIS_APP_SIDEBAR_MODERN_V1_START
+   Sidebar isolada, independente do CSS global. Assume toda a responsabilidade
+   visual do <aside id="app-sidebar"> (aspeto, grupos, footer, responsivo).
+   app_shell_modern_v1.css mantem apenas a grade de 2 colunas do .layout e a
+   coluna principal (topbar + conteudo); sidebar_collapse_v1.css continua a
+   dona exclusiva do estado recolhido (nao duplicado aqui).
+################################################################################### */
+
+/* ===================================================================
+   (1) CONTAINER PRINCIPAL DA SIDEBAR
+   Full-height: a sidebar ocupa a altura total da grade (.layout com
+   height:100vh, definido em app_shell_modern_v1.css), em vez de comecar
+   abaixo de uma topbar separada.
+=================================================================== */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--app-shell-surface-v1);
+  border-right: 1px solid var(--app-shell-border-v1);
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* ===================================================================
+   (2) CABECALHO DA MARCA/ENTIDADE
+=================================================================== */
+
+.app-sidebar-modern-header-v1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 18px 16px;
+  border-bottom: 1px solid var(--app-shell-border-v1);
+}
+
+.sidebar-product-header-v1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.sidebar-product-mark-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+  background: var(--app-shell-primary-v1);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  overflow: hidden;
+}
+
+.sidebar-product-mark-v1 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sidebar-product-name-v1 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--app-shell-text-v1);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ===================================================================
+   (2.1) BOTAO DE COLAPSO INTEGRADO AO CABECALHO DA SIDEBAR
+   Movido de partials/new_user_topbar.html: a acao de colapsar pertence
+   a sidebar, nao a topbar. sidebar_collapse_v1.js localiza o botao por
+   id ("sidebar-collapse-toggle"), 100% agnostico de onde ele vive no
+   DOM -- a mudanca de local nao exige alteracoes no JS. Em estado
+   recolhido (64px, ver sidebar_collapse_v1.css), o nome da entidade e'
+   escondido (mesmo padrao usado em .menu-label) e o botao vira um
+   overlay posicionado sobre a marca/logo (estilo Gemini), em vez de
+   empilhar abaixo dela.
+=================================================================== */
+
+.app-sidebar-modern-header-v1 .sidebar-collapse-toggle {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar-collapse-toggle:focus-visible {
+  outline: 2px solid var(--app-shell-primary-v1);
+  outline-offset: 2px;
+}
+
+/* Tooltip escuro (estilo Gemini): usa o texto de data-sidebar-tooltip,
+   mantido em sincronia com aria-label/title por sidebar_collapse_v1.js.
+   Aparece abaixo do botao, alinhado a direita, para nao cobrir a coluna
+   principal de conteudo. */
+.sidebar-collapse-toggle[data-sidebar-tooltip]::after {
+  content: attr(data-sidebar-tooltip);
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #111111;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 40;
+}
+
+.sidebar-collapse-toggle[data-sidebar-tooltip]:hover::after,
+.sidebar-collapse-toggle[data-sidebar-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+body.appgenesis-sidebar-collapsed .app-sidebar-modern-header-v1 {
+  position: relative;
+  padding: 14px 8px;
+}
+
+body.appgenesis-sidebar-collapsed .sidebar-product-header-v1 {
+  justify-content: center;
+}
+
+body.appgenesis-sidebar-collapsed .sidebar-product-name-v1 {
+  display: none;
+}
+
+/* Botao overlay (estilo Gemini): sobrepoe a logo em vez de empilhar
+   abaixo dela, para nao aumentar a altura do cabecalho nem empurrar os
+   icones do menu. Fica invisivel ate' hover/focus, deixando so' a logo
+   visivel por padrao; o clique continua a funcionar normalmente pois o
+   elemento permanece no DOM/fluxo de eventos mesmo com opacity:0. */
+body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin-top: 0;
+  opacity: 0;
+}
+
+body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle:hover,
+body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle:focus-visible {
+  opacity: 1;
+}
+
+body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]::after {
+  top: 50%;
+  left: calc(100% + 10px);
+  right: auto;
+  transform: translate(-4px, -50%);
+}
+
+body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]:hover::after,
+body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]:focus-visible::after {
+  transform: translate(0, -50%);
+}
+
+/* ===================================================================
+   (3) AREA DE NAVEGACAO / GRUPOS
+=================================================================== */
+
+.app-sidebar-nav-v1 {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-top: 8px;
+}
+
+.menu-section {
+  margin: 14px 0 4px;
+  padding: 0 18px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.menu-list {
+  display: grid;
+  gap: 3px;
+  margin: 6px 0 4px;
+  padding: 0 12px;
+}
+
+.menu-item {
+  border: 0;
+  border-radius: var(--app-shell-radius-control-v1);
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.menu-item:hover {
+  background: #eef3fc;
+  color: var(--app-shell-text-v1);
+}
+
+.menu-item.active {
+  background: #e8f0ff;
+  color: var(--app-shell-primary-v1);
+  font-weight: 700;
+}
+
+.menu-icon {
+  width: 20px;
+  text-align: center;
+  color: inherit;
+  font-size: 12px;
+}
+
+/* ===================================================================
+   (4) FOOTER
+=================================================================== */
+
+.sidebar-brand-footer {
+  margin-top: auto;
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--app-shell-border-v1);
+  text-align: center;
+}
+
+.brand-link {
+  color: #94a3b8;
+}
+
+.brand-link:hover {
+  color: var(--app-shell-text-v1);
+}
+
+.logo {
+  color: var(--app-shell-primary-v1);
+}
+
+/* ===================================================================
+   (5) RESPONSIVO
+   Larguras dedicadas da sidebar por breakpoint. Este ficheiro carrega
+   depois de static/css/new_user.css e de app_shell_modern_v1.css, pelo
+   que estas regras sobrepoem com seguranca os valores legados. O estado
+   recolhido manual (sidebar_collapse_v1.css, com !important) continua a
+   ter prioridade sobre estes valores base.
+=================================================================== */
+
+@media (max-width: 1024px) {
+  :root {
+    --app-shell-sidebar-width-v1: 220px;
+  }
+
+  .menu-section {
+    padding: 0 14px;
+    font-size: 10px;
+  }
+
+  .menu-item {
+    padding: 10px 10px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 820px) {
+  :root {
+    --app-shell-sidebar-width-v1: 196px;
+  }
+
+  .app-sidebar-modern-header-v1 {
+    padding: 14px 12px 12px;
+  }
+
+  .sidebar-product-name-v1 {
+    font-size: 13px;
+  }
+}
+
+/* APPGENESIS_APP_SIDEBAR_MODERN_V1_END */
