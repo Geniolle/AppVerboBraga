@@ -213,70 +213,12 @@
 }
 
 /* ===================================================================
-   (4) BOTAO "NOVA SESSAO" NO CABECALHO DO CARTAO "SESSOES ATIVAS"
-   Fix (mockup aprovado): para o subprocesso Sessoes, o CTA de criacao deixa
-   de ficar sozinho numa faixa acima das tabelas (secao (2)/(3) acima) e
-   passa a viver dentro do cabecalho do cartao "Sessoes ativas", ao lado do
-   titulo -- reaproveitando o MESMO <details>/<summary>
-   (admin-subprocess-create-collapse-v1) e o MESMO formulario ja renderizados
-   pelo macro em admin_subprocess.html; nenhuma logica de criacao foi
-   duplicada. O botao novo (render_admin_subprocess_table, controlado por
-   AdminSubprocessConfig.create_toggle_in_active_header) apenas despoleta um
-   clique sintetico no <summary> original (ver
-   static/js/modules/admin_subprocesses_v1.js) para abrir/fechar o mesmo
-   <details>. Como o <summary> original passa a ficar sempre invisivel
-   (a faixa antiga tem display:none via a regra scoped a
-   [data-admin-subprocess="sessoes"] abaixo, mais especifica que a regra
-   generica da seccao (2) e por isso vencedora independente da ordem no
-   ficheiro), so' este botao novo e visivel como gatilho.
+   (4) BOTAO INLINE DE CRIACAO NO CABECALHO DO CARTAO ATIVO
+   Extraido para static/css/modules/app_shell/admin_subprocess_inline_create_v1.css
+   -- componente reutilizavel para qualquer subprocesso com
+   AdminSubprocessConfig.create_toggle_in_active_header=True (ver
+   AGENTS.md, regra do botao inline de criacao).
 =================================================================== */
-
-[data-admin-subprocess="sessoes"].appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open])) {
-  display: none !important;
-}
-
-/* O <h2> e o botao inline sao filhos diretos irmaos do mesmo <section data-admin-subprocess="sessoes">
-   (ver ensureCardHeaderStructure em process_shell_runtime_v1.js, que os move para dentro do
-   .appgenesis-card-header-v1 construido em runtime, logo depois do titulo). A regra generica
-   .appgenesis-card-header-v1 h2 { flex: 1 1 auto } (process_shell_runtime_v1.css) faria o titulo
-   esticar e afastar o botao da pesquisa -- por isso, so' para Sessoes, o titulo deixa de crescer e o
-   botao herda o espaco flexivel via margin-right:auto, empurrando a pesquisa para a extremidade
-   direita. */
-[data-admin-subprocess="sessoes"] > .appgenesis-card-header-v1 h2 {
-  flex: 0 1 auto !important;
-}
-
-.admin-subprocess-inline-create-btn-v1 {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  margin-right: auto;
-  gap: 6px;
-  border: 1px solid var(--app-shell-primary-v1);
-  border-radius: 999px;
-  background: #eef5ff;
-  color: var(--app-shell-primary-v1);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 6px 14px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.admin-subprocess-inline-create-btn-v1:hover {
-  background: #dceaff;
-}
-
-.admin-subprocess-inline-create-btn-v1:focus-visible {
-  outline: 2px solid var(--app-shell-primary-v1);
-  outline-offset: 2px;
-}
-
-.admin-subprocess-inline-create-icon-v1 {
-  font-weight: 800;
-  font-size: 14px;
-  line-height: 1;
-}
 
 /* ===================================================================
    (5) RESPONSIVO

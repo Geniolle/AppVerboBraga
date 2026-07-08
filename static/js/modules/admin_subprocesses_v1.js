@@ -260,41 +260,6 @@
   }
 
   //###################################################################################
-  // (2B) BOTAO "NOVA SESSAO" NO CABECALHO DO CARTAO "SESSOES ATIVAS"
-  // Nao duplica logica de criacao: apenas localiza o <summary> original (ja
-  // renderizado pelo macro admin_subprocess.html dentro do <details>
-  // admin-subprocess-create-collapse-v1) e sintetiza um clique nele, que e' o
-  // MESMO gatilho nativo que a faixa antiga usava. Delegado em document (nao
-  // vinculado por elemento) porque os cartoes de Sessoes sao substituidos via
-  // replaceWith() apos cada guardar por AJAX (ver bloco 4B abaixo).
-  //###################################################################################
-
-  function instalarInlineCreateToggleAdminSubprocessV1() {
-    if (window.__appgenesisAdminSubprocessInlineCreateToggleV1 === true) {
-      return;
-    }
-
-    window.__appgenesisAdminSubprocessInlineCreateToggleV1 = true;
-
-    document.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-admin-subprocess-inline-create]");
-
-      if (!button) {
-        return;
-      }
-
-      const subprocessKey = button.getAttribute("data-admin-subprocess-inline-create") || "";
-      const summaryEl = document.querySelector(
-        '[data-admin-subprocess="' + subprocessKey + '"][data-admin-subprocess-role="form"] .admin-subprocess-create-collapse-v1 > summary'
-      );
-
-      if (summaryEl) {
-        summaryEl.click();
-      }
-    });
-  }
-
-  //###################################################################################
   // (3) CONTROLLER DE TABELA ORDENAVEL
   //###################################################################################
 
@@ -1124,7 +1089,6 @@
 
   function instalarAdminSubprocessesV1() {
     instalarVisualizarAdminSubprocessV1();
-    instalarInlineCreateToggleAdminSubprocessV1();
     instalarOrdenacaoAdminSubprocessV1(document);
     initAdminResponsiveColumnsV1();
     instalarSessoesSaveAjaxV1();

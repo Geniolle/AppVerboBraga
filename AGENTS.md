@@ -1056,32 +1056,54 @@ Regras obrigatórias:
 <!-- APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END -->
 
 <!-- APPGENESIS_SESSOES_NOVA_SESSAO_HEADER_TOGGLE_V31_START -->
-## Regra definitiva: botão "Nova sessão" no cabeçalho do cartão "Sessões ativas"
+## Regra definitiva: componente reutilizável do botão inline de criação no cabeçalho do cartão ativo
 
-Mockup aprovado pelo utilizador. Esta regra **substitui, apenas para o
-subprocesso Sessões**, qualquer regra anterior que exija o botão de criação
-numa faixa/card isolado acima das tabelas (inclui, entre outras,
-`APPGENESIS_CREATE_ENTRY_BLOCK_RULE_V1`, `APPGENESIS_CREATE_CARD_STANDARD_V4`
-e o item 3 de `APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30`, que
-proíbe JavaScript para mostrar/esconder o card Criar sessão). Todas essas
-regras **continuam válidas para os demais subprocessos** (Entidade, Menu,
-Contas, Perfil de autorização, Objeto de autorização) que reutilizam o mesmo
-macro sem ativar o novo campo de configuração descrito abaixo.
+Mockup aprovado pelo utilizador para o subprocesso Sessões (botão
+`+ Nova sessão`) e generalizado como componente `app_shell` reutilizável por
+qualquer subprocesso administrativo. Esta regra **substitui, apenas para os
+subprocessos que ativam `create_toggle_in_active_header=True`**, qualquer
+regra anterior que exija o botão de criação numa faixa/card isolado acima das
+tabelas (inclui, entre outras, `APPGENESIS_CREATE_ENTRY_BLOCK_RULE_V1`,
+`APPGENESIS_CREATE_CARD_STANDARD_V4` e o item 3 de
+`APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30`, que proíbe JavaScript
+para mostrar/esconder o card Criar). Todas essas regras **continuam válidas
+para os subprocessos que não ativam o campo** — hoje: Entidade, Utilizador e
+Contas (ver mapeamento de compatibilidade abaixo).
+
+Arquivos do componente (pasta dedicada, sem lógica de negócio):
+
+- `templates/macros/app_shell/admin_subprocess_inline_create_v1.html` —
+  macro `render_admin_subprocess_inline_create_button(config)`, sem hardcode
+  de subprocesso; lê `key` e `create_title` do próprio `AdminSubprocessConfig`.
+- `static/css/modules/app_shell/admin_subprocess_inline_create_v1.css` —
+  estilos do botão e das regras de layout do cabeçalho, com seletor opt-in
+  `[data-admin-subprocess-inline-create-enabled="1"]` (nunca
+  `[data-admin-subprocess="<key>"]` fixo).
+- `static/js/modules/app_shell/admin_subprocess_inline_create_v1.js` —
+  `instalarAdminSubprocessInlineCreateV1()`, delegado em `document`,
+  idempotente, lê a `key` do próprio botão clicado; se o `<summary>` original
+  não existir, regista um `console.warn` controlado e não quebra a página.
 
 Regras obrigatórias:
 
 1. O card isolado de criação (`render_admin_subprocess_form`, `<section
-   data-admin-subprocess="sessoes" data-admin-subprocess-role="form">`)
+   data-admin-subprocess="{{ key }}" data-admin-subprocess-role="form">`)
    continua a existir no DOM e a conter o `<details
    class="admin-subprocess-create-collapse-v1">`/`<summary>`/`<form>`
    originais, sem nenhuma lógica duplicada.
 2. Quando esse `<details>` está fechado, o card isolado fica com
    `display: none !important`, sem ocupar espaço vazio no topo — regra CSS
-   com seletor `[data-admin-subprocess="sessoes"].appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open]))`.
-3. O gatilho visível passa a ser um botão `+ Nova sessão`
-   (`admin-subprocess-inline-create-btn-v1`) renderizado dentro do cabeçalho
-   do cartão "Sessões ativas" (`render_admin_subprocess_table`), ao lado do
+   com seletor
+   `[data-admin-subprocess-inline-create-enabled="1"].appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open]))`.
+   O atributo `data-admin-subprocess-inline-create-enabled="1"` só é
+   renderizado (em ambos os cards, form e active-table) quando
+   `state.config.create_toggle_in_active_header` é `True`.
+3. O gatilho visível é um botão `admin-subprocess-inline-create-btn-v1`
+   (macro `render_admin_subprocess_inline_create_button`) renderizado dentro
+   do cabeçalho do cartão ativo (`render_admin_subprocess_table`), ao lado do
    título, controlado por `AdminSubprocessConfig.create_toggle_in_active_header`.
+   O texto do botão vem sempre de `config.create_title` — nunca hardcoded no
+   template ou no JS.
 4. Esse botão **não implementa um mecanismo de visibilidade paralelo**: ele
    apenas sintetiza um clique (`summary.click()`) no `<summary>` nativo já
    existente, delegando ao mesmo `<details>`/`<summary>` a decisão de abrir
@@ -1090,28 +1112,40 @@ Regras obrigatórias:
    impedir mecanismos paralelos (classes no `<body>`, `MutationObserver`,
    reconstrução de DOM), não a delegação de clique ao próprio elemento nativo.
 5. Este comportamento é ativado exclusivamente por
-   `create_toggle_in_active_header=True` em `SESSOES_CONFIG`
-   (`appgenesis/admin_subprocesses/registry.py`); nenhum outro
-   `AdminSubprocessConfig` define este campo, logo nenhum outro subprocesso
-   é afetado.
+   `create_toggle_in_active_header=True` em `AdminSubprocessConfig`
+   (`appgenesis/admin_subprocesses/registry.py`), por subprocesso. Configs
+   atuais com o campo ativo: `sessoes`, `menu`, `perfil_de_autorizacao`,
+   `objeto_de_autorizacao`. Não ativos (e porquê):
+   - `entidade` e `utilizador`: o card de criação ainda é HTML legado
+     (`create-entity-card`/`create-user-card` em `templates/new_user.html`),
+     sem `data-admin-subprocess`/`admin-subprocess-create-collapse-v1` — o
+     botão inline não encontraria o `<summary>` original. Requer migrar o
+     card de criação para o macro genérico antes de ativar o campo.
+   - `contas`: `enabled=False`, `migration_status="legacy_pending"`, sem
+     `save_endpoint` — subprocesso desativado.
 6. Não criar novo endpoint, nova rota ou nova lógica de submissão — o
    `<form>`/`save_endpoint` original permanece inalterado.
 7. Continua proibido `MutationObserver` para este comportamento.
 8. **Crítico:** no macro (`render_admin_subprocess_table`), o `<h2>` e o
    `<button data-admin-subprocess-inline-create>` devem ser renderizados como
-   filhos diretos irmãos do `<section data-admin-subprocess="sessoes">` —
+   filhos diretos irmãos do `<section data-admin-subprocess="{{ key }}">` —
    **nunca envolvidos juntos num `<div>` wrapper**. A função genérica
    `resolveDirectCardTitle` (`static/js/modules/process_shell_runtime_v1.js`)
    só reconhece o título quando o `<h2>` é filho direto do card; envolvê-lo
    num wrapper quebra a deteção, o que por sua vez impede
    `enhanceSearchableTableCards` de construir o cabeçalho/pesquisa para esse
-   card. `ensureCardHeaderStructure` foi ajustada para localizar o botão
+   card. `ensureCardHeaderStructure` (subprocess-agnostic) localiza o botão
    inline (via `data-admin-subprocess-inline-create`) como filho direto do
-   card e reposicioná-lo dentro do `.appgenesis-card-header-v1` construído em
+   card e reposiciona-o dentro do `.appgenesis-card-header-v1` construído em
    runtime, logo depois do título — mantendo o título sem `flex-grow`
-   (regra CSS `[data-admin-subprocess="sessoes"] > .appgenesis-card-header-v1
-   h2`) e usando `margin-right: auto` no botão para empurrar a pesquisa para a
-   direita.
+   (regra CSS `[data-admin-subprocess-inline-create-enabled="1"] >
+   .appgenesis-card-header-v1 h2`) e usando `margin-right: auto` no botão
+   para empurrar a pesquisa para a direita.
+9. Novos subprocessos compatíveis (card de criação já no macro genérico, com
+   `data-admin-subprocess`/`admin-subprocess-create-collapse-v1`) podem
+   ativar o padrão apenas definindo `create_toggle_in_active_header=True` no
+   respetivo `AdminSubprocessConfig` — nenhuma alteração de template, CSS ou
+   JS é necessária por subprocesso.
 <!-- APPGENESIS_SESSOES_NOVA_SESSAO_HEADER_TOGGLE_V31_END -->
 
 <!-- APPGENESIS_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->

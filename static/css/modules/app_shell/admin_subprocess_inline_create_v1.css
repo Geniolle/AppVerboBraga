@@ -1,0 +1,90 @@
+/* ###################################################################################
+   APPGENESIS_ADMIN_SUBPROCESS_INLINE_CREATE_V1_START
+   Componente reutilizavel: botao "+ Criar/Novo ..." no cabecalho do cartao
+   ativo de qualquer subprocesso administrativo com
+   AdminSubprocessConfig.create_toggle_in_active_header=True. Nasceu da
+   extracao do bloco (4) de process_header_v1.css (que so cobria o
+   subprocesso Sessoes) para deixar de depender de
+   [data-admin-subprocess="sessoes"] e passar a usar o atributo opt-in
+   data-admin-subprocess-inline-create-enabled="1", renderizado apenas pelos
+   subprocessos que ativam o campo de configuracao. Subprocessos que nao
+   ativam o campo continuam exatamente como antes.
+################################################################################### */
+
+/* ===================================================================
+   (1) ESCONDER O CARD ISOLADO DE CRIACAO QUANDO RECOLHIDO (SO OPT-IN)
+   O card isolado (render_admin_subprocess_form) continua a existir no DOM
+   com o <details>/<summary>/<form> originais, sem logica duplicada -- so
+   fica com display:none (sem ocupar espaco vazio) quando o subprocesso
+   ativou o botao inline e o <details> esta fechado. Subprocessos sem o
+   atributo nao sao afetados por esta regra.
+=================================================================== */
+
+[data-admin-subprocess-inline-create-enabled="1"].appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open])) {
+  display: none !important;
+}
+
+/* ===================================================================
+   (2) TITULO DO CARTAO ATIVO NAO DEVE CRESCER (SO OPT-IN)
+   O h2 e o botao inline sao filhos diretos irmaos do mesmo <section> (ver
+   ensureCardHeaderStructure em process_shell_runtime_v1.js, que os move para
+   dentro do .appgenesis-card-header-v1 construido em runtime, logo depois
+   do titulo). A regra generica .appgenesis-card-header-v1 h2 { flex: 1 1
+   auto } (process_shell_runtime_v1.css) faria o titulo esticar e afastar o
+   botao da pesquisa -- por isso, so' para cartoes com o atributo opt-in, o
+   titulo deixa de crescer e o botao herda o espaco flexivel via
+   margin-right:auto, empurrando a pesquisa para a extremidade direita.
+=================================================================== */
+
+[data-admin-subprocess-inline-create-enabled="1"] > .appgenesis-card-header-v1 h2 {
+  flex: 0 1 auto !important;
+}
+
+/* ===================================================================
+   (3) BOTAO INLINE REUTILIZAVEL
+=================================================================== */
+
+.admin-subprocess-inline-create-btn-v1 {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-right: auto;
+  gap: 6px;
+  border: 1px solid var(--app-shell-primary-v1);
+  border-radius: 999px;
+  background: #eef5ff;
+  color: var(--app-shell-primary-v1);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-subprocess-inline-create-btn-v1:hover {
+  background: #dceaff;
+}
+
+.admin-subprocess-inline-create-btn-v1:focus-visible {
+  outline: 2px solid var(--app-shell-primary-v1);
+  outline-offset: 2px;
+}
+
+.admin-subprocess-inline-create-icon-v1 {
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ===================================================================
+   (4) RESPONSIVO
+=================================================================== */
+
+@media (max-width: 480px) {
+  .admin-subprocess-inline-create-btn-v1 {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* APPGENESIS_ADMIN_SUBPROCESS_INLINE_CREATE_V1_END */

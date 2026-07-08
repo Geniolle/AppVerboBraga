@@ -1,3 +1,4 @@
+{% from "macros/app_shell/admin_subprocess_inline_create_v1.html" import render_admin_subprocess_inline_create_button %}
 
 {% macro admin_subprocess_get_value(row, key, default="") %}
   {{ row.get(key, default) if row else default }}
@@ -125,6 +126,7 @@
     data-admin-subprocess="{{ state.config.key }}"
     data-admin-subprocess-role="form"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
+    {% if state.config.create_toggle_in_active_header %}data-admin-subprocess-inline-create-enabled="1"{% endif %}
     {% if not _show_form %}style="display: none;"{% endif %}
   >
     {% if state.is_editing %}
@@ -476,17 +478,12 @@
     data-admin-subprocess-role="{{ 'active-table' if _is_active else 'inactive-table' }}"
     data-admin-subprocess-status="{{ status_value }}"
     data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
+    {% if _is_active and state.config.create_toggle_in_active_header %}data-admin-subprocess-inline-create-enabled="1"{% endif %}
     {% if not _is_active_subprocess or _is_same_edit_target %}style="display: none;"{% endif %}
   >
     <h2>{{ title }}</h2>
     {% if _is_active and state.config.create_toggle_in_active_header %}
-      <button
-        type="button"
-        class="admin-subprocess-inline-create-btn-v1"
-        data-admin-subprocess-inline-create="{{ state.config.key }}"
-        aria-label="{{ state.config.create_title }}"
-        title="{{ state.config.create_title }}"
-      ><span class="admin-subprocess-inline-create-icon-v1" aria-hidden="true">+</span><span>{{ state.config.create_title }}</span></button>
+      {{ render_admin_subprocess_inline_create_button(state.config) }}
     {% endif %}
 
     {% set _empty_msg = (state.config.empty_active_message if _is_active else state.config.empty_inactive_message) %}

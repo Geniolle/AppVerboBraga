@@ -254,7 +254,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     edit_param="sidebar_section_edit_key",
     default_target="admin-sidebar-sections-card",
     edit_target="admin-sidebar-sections-form-card",
-    create_title="Criar sessão",
+    create_title="Nova sessão",
     edit_title="Editar sessão",
     active_title="Sessões ativas",
     inactive_title="Sessões inativas",
@@ -416,6 +416,7 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     empty_active_message="Sem perfis ativos.",
     empty_inactive_message="Sem perfis inativos.",
     action_form_key_field="auth_profile_key",
+    create_toggle_in_active_header=True,
     active_card_id="auth-profile-active-card",
     inactive_card_id="auth-profile-inactive-card",
     active_table_id="auth-profile-active-table",
@@ -542,6 +543,7 @@ OBJETO_AUTORIZACAO_CONFIG = AdminSubprocessConfig(
     menu_scope="perfil_de_autorizacao",
     empty_active_message="Sem objetos de autorização ativos.",
     empty_inactive_message="Sem objetos de autorização inativos.",
+    create_toggle_in_active_header=True,
     active_card_id="auth-objeto-active-card",
     inactive_card_id="auth-objeto-inactive-card",
     active_table_id="auth-objeto-active-table",
@@ -785,6 +787,7 @@ MENU_CONFIG = AdminSubprocessConfig(
     toggle_url_extra_params="admin_tab=contas&settings_action=toggle",
     move_up_condition_field="can_move_up",
     move_down_condition_field="can_move_down",
+    create_toggle_in_active_header=True,
 )
 
 
