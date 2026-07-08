@@ -94,7 +94,7 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
         ("/users/new", "home", "home-summary-card", None),
         ("/users/new?menu=administrativo&admin_tab=entidade", "administrativo", "create-entity-card", "Entidade"),
         ("/users/new?menu=administrativo&admin_tab=utilizador", "administrativo", "admin-users-created-card", "Utilizador"),
-        ("/users/new?menu=sessoes&admin_tab=sessoes", "sessoes", "admin-sidebar-sections-card", "Sessões"),
+        ("/users/new?menu=sessoes&admin_tab=sessoes", "sessoes", "admin-sidebar-sections-card-active", "Sessões"),
         (
             "/users/new?menu=sessoes&admin_tab=contas&target=menu-subprocess-card-active#menu-subprocess-card-active",
             "sessoes",
@@ -102,15 +102,15 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "Menu",
         ),
         (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
+            "/users/new?menu=perfil_de_autorizacao&target=auth-profile-active-card#auth-profile-active-card",
             "perfil_de_autorizacao",
-            "auth-profile-card",
+            "auth-profile-active-card",
             "Perfis",
         ),
         (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-card#auth-objeto-card",
+            "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-active-card#auth-objeto-active-card",
             "perfil_de_autorizacao",
-            "auth-objeto-card",
+            "auth-objeto-active-card",
             "Objeto de autorização",
         ),
     ],

@@ -2,6 +2,13 @@ from __future__ import annotations
 
 from appgenesis.services.page import build_users_new_url
 
+# Marca um redirect como URL final autoritativa do backend pós-save, para que
+# return_after_save.js (isBackendPostSaveReturnUrl) nao aplique a heuristica de
+# navegacao corretiva via sessionStorage e reabra o card/editor com o contexto
+# antigo do submit. Mesmo parametro ja usado em
+# appgenesis/routes/profile/settings_handlers.py (_build_settings_redirect_url).
+POST_SAVE_MARKER_PARAM_V1 = "appgenesis_after_save"
+
 _ALLOWED_ADMIN_TABS: frozenset[str] = frozenset({
     "utilizador",
     "entidade",
@@ -60,7 +67,41 @@ def build_return_url_v1(
     return build_users_new_url(**params) + hash_part
 
 
+def build_post_save_return_url_v1(
+    *,
+    return_menu: str = "",
+    return_admin_tab: str = "",
+    return_target: str = "",
+    success: str = "",
+    error: str = "",
+    default_menu: str = "administrativo",
+    default_admin_tab: str = "",
+    default_hash: str = "",
+    **extra_params: str,
+) -> str:
+    """
+    Igual a build_return_url_v1, mas marca a URL resultante com
+    POST_SAVE_MARKER_PARAM_V1=1 -- usar exclusivamente no redirect final de
+    sucesso apos um save, nunca em redirects de erro/validacao que devem
+    manter um card/editor aberto.
+    """
+    extra_params[POST_SAVE_MARKER_PARAM_V1] = "1"
+    return build_return_url_v1(
+        return_menu=return_menu,
+        return_admin_tab=return_admin_tab,
+        return_target=return_target,
+        success=success,
+        error=error,
+        default_menu=default_menu,
+        default_admin_tab=default_admin_tab,
+        default_hash=default_hash,
+        **extra_params,
+    )
+
+
 __all__ = [
     "sanitize_admin_tab_v1",
     "build_return_url_v1",
+    "build_post_save_return_url_v1",
+    "POST_SAVE_MARKER_PARAM_V1",
 ]

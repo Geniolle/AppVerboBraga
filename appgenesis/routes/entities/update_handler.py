@@ -24,7 +24,7 @@ from appgenesis.services.entities import (
     save_entity_logo_upload,
     validate_entity_required_fields_v1,
 )
-from appgenesis.services.navigation_context import build_return_url_v1
+from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
 from appgenesis.services.page import build_users_new_url
 from appgenesis.services.permissions import (
     get_user_entity_permissions,
@@ -327,7 +327,7 @@ def update_entity(
         (BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
-        url=build_return_url_v1(
+        url=build_post_save_return_url_v1(
             return_menu=return_menu,
             return_admin_tab=return_admin_tab,
             default_menu="administrativo",

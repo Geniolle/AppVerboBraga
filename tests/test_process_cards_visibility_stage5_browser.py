@@ -128,7 +128,7 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
         _click_menu_v1(driver, "sessoes")
         wait.until(lambda drv: "sessoes" in _active_sidebar_menu_keys_v1(drv))
         _click_submenu_v1(driver, "Sessões")
-        wait.until(lambda drv: _card_is_visible_v1(drv, "admin-sidebar-sections-card"))
+        wait.until(lambda drv: _card_is_visible_v1(drv, "admin-sidebar-sections-card-active"))
 
         _click_submenu_v1(driver, "Menu")
         wait.until(lambda drv: _card_is_visible_v1(drv, "menu-subprocess-card-active"))
@@ -136,10 +136,10 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
         _click_menu_v1(driver, "perfil_de_autorizacao")
         wait.until(lambda drv: "perfil_de_autorizacao" in _active_sidebar_menu_keys_v1(drv))
         _click_submenu_v1(driver, "Perfis")
-        wait.until(lambda drv: _card_is_visible_v1(drv, "auth-profile-card"))
+        wait.until(lambda drv: _card_is_visible_v1(drv, "auth-profile-active-card"))
 
         _click_submenu_v1(driver, "Objeto de autorização")
-        wait.until(lambda drv: _card_is_visible_v1(drv, "auth-objeto-card"))
+        wait.until(lambda drv: _card_is_visible_v1(drv, "auth-objeto-active-card"))
 
         candidate_menu_keys = driver.execute_script(
             """

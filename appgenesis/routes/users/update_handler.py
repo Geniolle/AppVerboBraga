@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from appgenesis.core import ADMIN_LOGIN_EMAIL, ALLOWED_ACCOUNT_STATUS
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
-from appgenesis.services.navigation_context import build_return_url_v1
+from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.user_member import member_status_for_user_account_status
@@ -374,7 +374,7 @@ def update_user(
             )
 
     return RedirectResponse(
-        url=build_return_url_v1(
+        url=build_post_save_return_url_v1(
             return_menu=return_menu,
             return_admin_tab=return_admin_tab,
             success="Utilizador atualizado com sucesso.",

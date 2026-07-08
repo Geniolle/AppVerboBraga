@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from appgenesis.core import BASE_DIR
 from appgenesis.db.session import SessionLocal
 from appgenesis.services.auth import is_admin_user
-from appgenesis.services.navigation_context import build_return_url_v1
+from appgenesis.services.navigation_context import build_post_save_return_url_v1, build_return_url_v1
 from appgenesis.services.permissions import (
     get_user_entity_permissions,
     is_entity_within_permissions,
@@ -170,7 +170,7 @@ def delete_entity(
         (BASE_DIR / logo_url_to_remove.lstrip("/")).unlink(missing_ok=True)
 
     return RedirectResponse(
-        url=build_return_url_v1(
+        url=build_post_save_return_url_v1(
             return_menu=return_menu,
             return_admin_tab=return_admin_tab,
             default_menu="administrativo",
