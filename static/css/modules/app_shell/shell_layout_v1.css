@@ -105,8 +105,18 @@ body {
   font-weight: 700;
 }
 
-[data-admin-subprocess="sessoes"][data-admin-subprocess-status="ativo"] h2::before,
-[data-admin-subprocess="sessoes"][data-admin-subprocess-status="inativo"] h2::before {
+/* Indicador ativo/inativo GLOBAL para qualquer cartao de tabela de
+   subprocesso administrativo (render_admin_subprocess_table sempre define
+   data-admin-subprocess-status, para todos os subprocessos, nao apenas
+   Sessoes). Duas variantes de valor coexistem em AdminSubprocessConfig:
+   "ativo"/"inativo" (maioria dos subprocessos) e "active"/"inactive"
+   (Entidade, Utilizador) -- por isso o seletor cobre ambas, sem depender de
+   data-admin-subprocess="<key>". Novos subprocessos que reutilizem este
+   macro recebem o ponto automaticamente, sem alteracao de CSS. */
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="ativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="active"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inactive"] h2::before {
   content: "";
   display: inline-block;
   width: 8px;
@@ -116,11 +126,13 @@ body {
   vertical-align: middle;
 }
 
-[data-admin-subprocess="sessoes"][data-admin-subprocess-status="ativo"] h2::before {
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="ativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="active"] h2::before {
   background: var(--app-shell-success-v1);
 }
 
-[data-admin-subprocess="sessoes"][data-admin-subprocess-status="inativo"] h2::before {
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inactive"] h2::before {
   background: var(--app-shell-danger-v1);
 }
 

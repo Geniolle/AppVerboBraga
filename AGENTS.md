@@ -1148,6 +1148,39 @@ Regras obrigatórias:
    JS é necessária por subprocesso.
 <!-- APPGENESIS_SESSOES_NOVA_SESSAO_HEADER_TOGGLE_V31_END -->
 
+<!-- APPGENESIS_ADMIN_SUBPROCESS_STATUS_DOT_V1_START -->
+## Regra definitiva: indicador global (ponto verde/vermelho) nos cartões ativos/inativos
+
+Padrão visual global e automático para todo cartão de tabela de subprocesso
+administrativo, **não específico de nenhum subprocesso**. Nasceu no
+subprocesso Sessões e foi generalizado nesta regra.
+
+1. `render_admin_subprocess_table` (`templates/macros/admin_subprocess.html`)
+   já renderiza, incondicionalmente, `data-admin-subprocess-status="{{
+   status_value }}"` no `<section>` de qualquer cartão de tabela — não é um
+   campo opt-in, logo o indicador visual se aplica automaticamente a
+   qualquer subprocesso que reutilize esse macro, inclusive futuros.
+2. O indicador é implementado em CSS puro (`h2::before`) em
+   `static/css/modules/app_shell/shell_layout_v1.css`, com seletor **global**
+   `.admin-subprocess-table-card-v1[data-admin-subprocess-status="..."]
+   h2::before` — nunca `[data-admin-subprocess="<key>"]`. Não recriar regras
+   específicas por subprocesso para este ponto; qualquer novo subprocesso
+   deve ser coberto apenas por já reutilizar o macro/classe existentes.
+3. `AdminSubprocessConfig.active_value`/`inactive_value`
+   (`appgenesis/admin_subprocesses/models.py`) tem dois vocabulários em uso:
+   `"ativo"`/`"inativo"` (maioria dos subprocessos) e `"active"`/`"inactive"`
+   (Entidade, Utilizador). O seletor CSS cobre ambos os valores — ao criar
+   um novo subprocesso, reutilizar um destes dois vocabulários já cobertos
+   em vez de introduzir um terceiro valor sem atualizar o CSS.
+4. Cores vêm dos tokens já existentes `--app-shell-success-v1` (ativo) e
+   `--app-shell-danger-v1` (inativo) — não hardcodar valores de cor novos.
+5. O `<h2>` continua filho direto do `<section>` do cartão (ver regra do
+   botão inline acima); o `::before` vive dentro do próprio `<h2>`, portanto
+   não é afetado por `ensureCardHeaderStructure` reposicionar o `<h2>`
+   dentro de `.appgenesis-card-header-v1` em runtime, nem conflita com o
+   botão inline de criação (que fica ao lado do título, nunca antes dele).
+<!-- APPGENESIS_ADMIN_SUBPROCESS_STATUS_DOT_V1_END -->
+
 <!-- APPGENESIS_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->
 ## Motor reutilizável de subprocessos administrativos
 
