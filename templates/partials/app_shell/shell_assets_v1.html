@@ -1,0 +1,10 @@
+{# APPGENESIS_APP_SHELL_ASSETS_V1: concentra os links CSS especificos do
+   app shell moderno (layout geral, sidebar e cabecalho do processo) que
+   antes viviam soltos em templates/new_user.html. O bundle de pre-paint do
+   colapso da sidebar (CSS + script + JS) permanece em
+   templates/partials/new_user_topbar.html, pois precisa continuar a
+   carregar exatamente na mesma posicao do corpo da pagina para evitar
+   flash da sidebar expandida. #}
+<link rel="stylesheet" href="/static/css/modules/app_shell/shell_layout_v1.css?v=20260708-app-shell-css-split-v1">
+<link rel="stylesheet" href="/static/css/modules/app_shell/process_header_v1.css?v=20260708-sessoes-nova-sessao-header-fix-v2">
+<link rel="stylesheet" href="/static/css/modules/app_shell/sidebar_modern_v1.css?v=20260708-app-shell-css-split-v1">

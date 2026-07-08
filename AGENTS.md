@@ -1055,6 +1055,65 @@ Regras obrigatórias:
 10. Não usar `MutationObserver` no subprocesso Sessões.
 <!-- APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30_END -->
 
+<!-- APPGENESIS_SESSOES_NOVA_SESSAO_HEADER_TOGGLE_V31_START -->
+## Regra definitiva: botão "Nova sessão" no cabeçalho do cartão "Sessões ativas"
+
+Mockup aprovado pelo utilizador. Esta regra **substitui, apenas para o
+subprocesso Sessões**, qualquer regra anterior que exija o botão de criação
+numa faixa/card isolado acima das tabelas (inclui, entre outras,
+`APPGENESIS_CREATE_ENTRY_BLOCK_RULE_V1`, `APPGENESIS_CREATE_CARD_STANDARD_V4`
+e o item 3 de `APPGENESIS_SESSOES_FLUXO_NATIVO_IGUAL_ENTIDADE_V30`, que
+proíbe JavaScript para mostrar/esconder o card Criar sessão). Todas essas
+regras **continuam válidas para os demais subprocessos** (Entidade, Menu,
+Contas, Perfil de autorização, Objeto de autorização) que reutilizam o mesmo
+macro sem ativar o novo campo de configuração descrito abaixo.
+
+Regras obrigatórias:
+
+1. O card isolado de criação (`render_admin_subprocess_form`, `<section
+   data-admin-subprocess="sessoes" data-admin-subprocess-role="form">`)
+   continua a existir no DOM e a conter o `<details
+   class="admin-subprocess-create-collapse-v1">`/`<summary>`/`<form>`
+   originais, sem nenhuma lógica duplicada.
+2. Quando esse `<details>` está fechado, o card isolado fica com
+   `display: none !important`, sem ocupar espaço vazio no topo — regra CSS
+   com seletor `[data-admin-subprocess="sessoes"].appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open]))`.
+3. O gatilho visível passa a ser um botão `+ Nova sessão`
+   (`admin-subprocess-inline-create-btn-v1`) renderizado dentro do cabeçalho
+   do cartão "Sessões ativas" (`render_admin_subprocess_table`), ao lado do
+   título, controlado por `AdminSubprocessConfig.create_toggle_in_active_header`.
+4. Esse botão **não implementa um mecanismo de visibilidade paralelo**: ele
+   apenas sintetiza um clique (`summary.click()`) no `<summary>` nativo já
+   existente, delegando ao mesmo `<details>`/`<summary>` a decisão de abrir
+   ou fechar — por isso não conflita com a proibição de "forçar
+   aparecer/desaparecer via JavaScript" de regras anteriores, que visava
+   impedir mecanismos paralelos (classes no `<body>`, `MutationObserver`,
+   reconstrução de DOM), não a delegação de clique ao próprio elemento nativo.
+5. Este comportamento é ativado exclusivamente por
+   `create_toggle_in_active_header=True` em `SESSOES_CONFIG`
+   (`appgenesis/admin_subprocesses/registry.py`); nenhum outro
+   `AdminSubprocessConfig` define este campo, logo nenhum outro subprocesso
+   é afetado.
+6. Não criar novo endpoint, nova rota ou nova lógica de submissão — o
+   `<form>`/`save_endpoint` original permanece inalterado.
+7. Continua proibido `MutationObserver` para este comportamento.
+8. **Crítico:** no macro (`render_admin_subprocess_table`), o `<h2>` e o
+   `<button data-admin-subprocess-inline-create>` devem ser renderizados como
+   filhos diretos irmãos do `<section data-admin-subprocess="sessoes">` —
+   **nunca envolvidos juntos num `<div>` wrapper**. A função genérica
+   `resolveDirectCardTitle` (`static/js/modules/process_shell_runtime_v1.js`)
+   só reconhece o título quando o `<h2>` é filho direto do card; envolvê-lo
+   num wrapper quebra a deteção, o que por sua vez impede
+   `enhanceSearchableTableCards` de construir o cabeçalho/pesquisa para esse
+   card. `ensureCardHeaderStructure` foi ajustada para localizar o botão
+   inline (via `data-admin-subprocess-inline-create`) como filho direto do
+   card e reposicioná-lo dentro do `.appgenesis-card-header-v1` construído em
+   runtime, logo depois do título — mantendo o título sem `flex-grow`
+   (regra CSS `[data-admin-subprocess="sessoes"] > .appgenesis-card-header-v1
+   h2`) e usando `margin-right: auto` no botão para empurrar a pesquisa para a
+   direita.
+<!-- APPGENESIS_SESSOES_NOVA_SESSAO_HEADER_TOGGLE_V31_END -->
+
 <!-- APPGENESIS_ADMIN_SUBPROCESS_CONFIG_BASE_V1_START -->
 ## Motor reutilizável de subprocessos administrativos
 

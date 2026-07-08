@@ -2,15 +2,16 @@
    APPGENESIS_APP_SIDEBAR_MODERN_V1_START
    Sidebar isolada, independente do CSS global. Assume toda a responsabilidade
    visual do <aside id="app-sidebar"> (aspeto, grupos, footer, responsivo).
-   app_shell_modern_v1.css mantem apenas a grade de 2 colunas do .layout e a
+   shell_layout_v1.css mantem apenas a grade de 2 colunas do .layout e a
    coluna principal (topbar + conteudo); sidebar_collapse_v1.css continua a
-   dona exclusiva do estado recolhido (nao duplicado aqui).
+   dona exclusiva do estado recolhido (nao duplicado aqui). Estes tres
+   ficheiros vivem juntos em static/css/modules/app_shell/.
 ################################################################################### */
 
 /* ===================================================================
    (1) CONTAINER PRINCIPAL DA SIDEBAR
    Full-height: a sidebar ocupa a altura total da grade (.layout com
-   height:100vh, definido em app_shell_modern_v1.css), em vez de comecar
+   height:100vh, definido em shell_layout_v1.css), em vez de comecar
    abaixo de uma topbar separada.
 =================================================================== */
 
@@ -265,7 +266,7 @@ body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]
 /* ===================================================================
    (5) RESPONSIVO
    Larguras dedicadas da sidebar por breakpoint. Este ficheiro carrega
-   depois de static/css/new_user.css e de app_shell_modern_v1.css, pelo
+   depois de static/css/new_user.css e de shell_layout_v1.css, pelo
    que estas regras sobrepoem com seguranca os valores legados. O estado
    recolhido manual (sidebar_collapse_v1.css, com !important) continua a
    ter prioridade sobre estes valores base.

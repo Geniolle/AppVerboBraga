@@ -5,6 +5,19 @@ Projeto: AppGenesis / AppVerboBraga
 Repositório: `Geniolle/AppVerboBraga`  
 Escopo principal: `Estruturas > Sessões`
 
+> **Nota (2026-07-08 — reorganização de ficheiros):** os ficheiros citados
+> neste documento (`app_shell_modern_v1.css`, `app_sidebar_modern_v1.css`,
+> `app_sidebar_modern_v1.html`, `new_user_avatar.html`,
+> `static/css/modules/sidebar_collapse_v1.css`,
+> `static/js/modules/sidebar_collapse_v1.js`) foram reorganizados numa
+> refatoração puramente organizacional, sem mudança de comportamento, para:
+> `templates/partials/app_shell/` (`sidebar_modern_v1.html`,
+> `process_header_v1.html`, `user_avatar_v1.html`, `shell_assets_v1.html`),
+> `static/css/modules/app_shell/` (`shell_layout_v1.css`,
+> `process_header_v1.css`, `sidebar_modern_v1.css`, `sidebar_collapse_v1.css`)
+> e `static/js/modules/app_shell/` (`sidebar_collapse_v1.js`). O conteúdo
+> técnico abaixo permanece como registo histórico da especificação original.
+
 ---
 
 ## 1. Objetivo

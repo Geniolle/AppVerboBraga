@@ -1,5 +1,12 @@
 /* ###################################################################################
-   APPGENESIS_APP_SHELL_MODERN_V1_START
+   APPGENESIS_APP_SHELL_LAYOUT_V1_START
+   Fundacao do App Shell moderno: tokens de design, grade principal (.layout/
+   .app-main-column-v1/.content/.container) e aspeto generico dos cartoes
+   (.card, tabelas, badges, menu de acoes por linha, footer/load-more). Nasceu
+   da divisao de static/css/modules/app_shell_modern_v1.css nesta reorganizacao;
+   especificos de sidebar vivem em sidebar_modern_v1.css/sidebar_collapse_v1.css
+   e especificos do cabecalho do processo (breadcrumb/titulo/CTA/abas) vivem em
+   process_header_v1.css -- todos na mesma pasta static/css/modules/app_shell/.
 ################################################################################### */
 
 /* ===================================================================
@@ -68,207 +75,7 @@ body {
 }
 
 /* ===================================================================
-   (3) AVATAR DO UTILIZADOR NO CABECALHO DO PROCESSO
-   Fix critico (iteracao 3.1): a antiga .topbar (faixa branca inteira com
-   border-bottom acima de .content) foi REMOVIDA do DOM desta pagina --
-   partials/new_user_topbar.html deixou de renderizar qualquer <header>
-   visual (so' mantem a fiacao do colapso da sidebar). O avatar/#user-menu
-   que vivia ali foi movido para partials/new_user_avatar.html, incluido
-   dentro de #process-shell-header (templates/new_user.html), ao lado do
-   titulo do processo -- por isso ja nao existe nenhuma faixa vazia no
-   topo da coluna principal, e o cabecalho do processo (#menu-tabs-card)
-   comeca praticamente no topo (ver .content mais acima, com padding-top
-   reduzido). As regras abaixo mantem o contraste de texto/hover do avatar
-   e do botao de colapso, que antes assumiam um fundo de topbar branca e
-   agora vivem em superficies diferentes (cartao branco / sidebar branca).
-=================================================================== */
-
-.process-shell-user-v1 {
-  align-self: center;
-  flex-shrink: 0;
-}
-
-.sidebar-collapse-toggle {
-  color: var(--app-shell-text-v1) !important;
-}
-
-.sidebar-collapse-toggle:hover {
-  background: rgba(15, 23, 42, 0.06) !important;
-}
-
-.user-menu-trigger {
-  color: var(--app-shell-text-v1);
-}
-
-.user-dropdown {
-  border-radius: var(--app-shell-radius-card-v1);
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
-}
-
-/* ===================================================================
-   (4) SIDEBAR
-   Migrado para static/css/modules/app_sidebar_modern_v1.css (iteracao 3):
-   toda a aparencia de .sidebar, .sidebar-product-header-v1, .menu-section,
-   .menu-list, .menu-item, .sidebar-brand-footer, .brand-link e .logo e'
-   agora responsabilidade exclusiva desse ficheiro isolado, para evitar
-   duplicacao/confusao de manutencao entre dois CSS.
-=================================================================== */
-
-/* ===================================================================
-   (5) CABECALHO DO PROCESSO (#menu-tabs-card) + INTEGRACAO DO CTA
-   Fix critico: o botao "Criar sessao/entidade" e renderizado no macro
-   admin_subprocess.html como uma <section> irma logo a seguir a
-   #menu-tabs-card (nao pode ser movido de DOM). process_shell_runtime_v1.css
-   aplica !important nessa section (fundo/borda/padding) para lhe dar
-   aspeto de cartao proprio -- e essa caixa "solta" que o mockup nao mostra.
-   Aqui usamos :has() para distinguir o estado recolhido (so o botao) do
-   estado aberto (formulario completo) e so remover a caixa/realinhar a
-   direita quando recolhido; aberto mantem aspeto de cartao normal.
-=================================================================== */
-
-#menu-tabs-card.appgenesis-process-shell {
-  background: var(--app-shell-surface-v1);
-  border: 1px solid var(--app-shell-border-v1);
-  border-radius: var(--app-shell-radius-card-v1);
-  box-shadow: var(--app-shell-shadow-card-v1);
-  margin-bottom: 12px;
-}
-
-#menu-tabs-card.appgenesis-process-shell .process-shell-header {
-  padding: 24px 24px 12px;
-}
-
-#menu-tabs-card.appgenesis-process-shell .process-shell-title {
-  color: var(--app-shell-text-v1);
-  font-weight: 800 !important;
-}
-
-.process-shell-title-group-v1 {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-/* Breadcrumb discreto acima do titulo do processo (ex.: "Sistema > Administrativo").
-   O 1o segmento e' a secao lateral do menu ativo (nunca "Home" fixo) e o 2o e'
-   o mesmo titulo resolvido para o <h1> -- ambos preenchidos a partir dos
-   data-sidebar-section-* do botao .menu-item ativo (ver process_shell_runtime_v1.js
-   e app_sidebar_modern_v1.html), nunca fixos no HTML. */
-.process-shell-breadcrumb-v1 {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--app-shell-muted-v1);
-}
-
-.process-shell-breadcrumb-section-group-v1,
-.process-shell-breadcrumb-tab-group-v1 {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.process-shell-breadcrumb-section-group-v1[hidden],
-.process-shell-breadcrumb-tab-group-v1[hidden] {
-  display: none;
-}
-
-.process-shell-breadcrumb-sep-v1 {
-  color: var(--app-shell-muted-v1);
-  opacity: 0.6;
-}
-
-.process-shell-breadcrumb-current-v1,
-.process-shell-breadcrumb-tab-v1 {
-  color: var(--app-shell-text-v1);
-  font-weight: 700;
-}
-
-.process-shell-subtitle-v1 {
-  margin: 4px 0 0;
-  color: var(--app-shell-muted-v1);
-  font-size: 13px;
-}
-
-.menu-tabs {
-  border-bottom: 1px solid var(--app-shell-border-v1);
-  padding: 0 24px;
-}
-
-.menu-tabs.submenu-item {
-  color: var(--app-shell-muted-v1);
-  font-weight: 600;
-  border-bottom-width: 2px;
-}
-
-.menu-tabs.submenu-item:hover {
-  background: transparent;
-  color: var(--app-shell-text-v1);
-}
-
-.menu-tabs.submenu-item.active {
-  color: var(--app-shell-primary-v1);
-  border-color: var(--app-shell-primary-v1);
-}
-
-/* Estado recolhido (apenas o botao "+ Criar ..."): remove a caixa propria
-   e alinha o botao a direita, encostado ao cabecalho de cima. */
-.appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open])) {
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  padding: 0 2px 20px !important;
-  margin-top: -6px !important;
-  margin-bottom: 20px !important;
-}
-
-.appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1:not([open])) .appgenesis-process-action-toolbar-v1 {
-  justify-content: flex-end !important;
-}
-
-/* Estado aberto (formulario completo): mantem aspeto de cartao moderno. */
-.appgenesis-process-action-card-v1:has(.admin-subprocess-create-collapse-v1[open]) {
-  background: var(--app-shell-surface-v1) !important;
-  border: 1px solid var(--app-shell-border-v1) !important;
-  border-radius: var(--app-shell-radius-card-v1) !important;
-  box-shadow: var(--app-shell-shadow-card-v1) !important;
-  padding: 22px !important;
-  margin-bottom: 20px !important;
-}
-
-/* ===================================================================
-   (6) BOTAO CRIAR SESSAO (CTA principal)
-=================================================================== */
-
-.admin-subprocess-create-collapse-v1 > summary,
-.appgenesis-process-action-toggle-v1 {
-  background: var(--app-shell-primary-v1) !important;
-  border-color: var(--app-shell-primary-v1) !important;
-  border-radius: var(--app-shell-radius-control-v1) !important;
-  box-shadow: 0 6px 16px rgba(15, 95, 215, 0.28) !important;
-  min-height: 40px !important;
-  padding: 0 20px !important;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.admin-subprocess-create-collapse-v1 > summary:hover,
-.appgenesis-process-action-toggle-v1:hover {
-  background: var(--app-shell-primary-hover-v1) !important;
-  border-color: var(--app-shell-primary-hover-v1) !important;
-}
-
-.appgenesis-process-action-toggle-v1 span::before {
-  content: "+ ";
-  font-weight: 700;
-}
-
-/* ===================================================================
-   (7) CARDS (escopo alargado ao .card generico, conforme combinado --
+   (3) CARDS (escopo alargado ao .card generico, conforme combinado --
    torna consistente o aspeto de todos os cartoes do painel, incluindo
    Sessoes ativas/inativas e o formulario de criacao/edicao)
 =================================================================== */
@@ -318,7 +125,7 @@ body {
 }
 
 /* ===================================================================
-   (8) CABECALHO / PESQUISA
+   (4) CABECALHO / PESQUISA
    Nota: a largura do campo de pesquisa NAO e alterada aqui de proposito --
    process_shell_runtime_v1.css ja define width:min(300px,32vw) no desktop
    (dentro dos 260-320px pedidos) e reduz para 100% em ecras estreitos via
@@ -345,7 +152,7 @@ body {
 }
 
 /* ===================================================================
-   (9) TABELAS
+   (5) TABELAS
    Aumenta apenas padding/altura de linha e legibilidade -- as classes
    admin-col-*-v1 (largura fixa por coluna) nao sao tocadas, pois o JS de
    compressao responsiva (recalcAdminResponsiveTableV1) depende de medir
@@ -377,7 +184,7 @@ body {
 }
 
 /* ===================================================================
-   (10) BADGES
+   (6) BADGES
 =================================================================== */
 
 .admin-subprocess-badge-v1 {
@@ -398,7 +205,7 @@ body {
 }
 
 /* ===================================================================
-   (11) MENU DE ACOES POR LINHA
+   (7) MENU DE ACOES POR LINHA
 =================================================================== */
 
 .appgenesis-row-actions-trigger-v1 {
@@ -421,7 +228,7 @@ body {
 }
 
 /* ===================================================================
-   (12) FOOTER / LOAD-MORE
+   (8) FOOTER / LOAD-MORE
 =================================================================== */
 
 .appgenesis-load-more-footer-v1 {
@@ -437,22 +244,12 @@ body {
 }
 
 /* ===================================================================
-   (13) RESPONSIVO
+   (9) RESPONSIVO
 =================================================================== */
 
 @media (max-width: 1024px) {
   .content {
     padding: 20px;
-  }
-
-  #menu-tabs-card.appgenesis-process-shell .process-shell-header {
-    padding: 18px 18px 8px;
-  }
-}
-
-@media (max-width: 820px) {
-  .menu-tabs {
-    padding: 0 12px;
   }
 }
 
@@ -476,10 +273,6 @@ body {
   .content {
     padding: 14px;
   }
-
-  #menu-tabs-card.appgenesis-process-shell .process-shell-header {
-    padding: 16px 16px 6px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -494,4 +287,4 @@ body {
   }
 }
 
-/* APPGENESIS_APP_SHELL_MODERN_V1_END */
+/* APPGENESIS_APP_SHELL_LAYOUT_V1_END */

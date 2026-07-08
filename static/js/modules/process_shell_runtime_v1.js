@@ -584,7 +584,7 @@
 
   // Resolve o botao .menu-item[data-menu] ativo na sidebar ja renderizada,
   // para ler o rotulo da sua secao (data-sidebar-section-label, ver
-  // app_sidebar_modern_v1.html). Procura primeiro pelo menuKey explicito
+  // partials/app_shell/sidebar_modern_v1.html). Procura primeiro pelo menuKey explicito
   // (evita corrida com a troca da classe "active", que so' acontece depois
   // do setTitle dentro de activateMenu) e cai para .menu-item.active como
   // fallback -- cobre a carga inicial, quando nenhum menuKey foi passado.
@@ -624,6 +624,7 @@
     const breadcrumbCurrentEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-current-v1") : null;
     const breadcrumbTabGroupEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-tab-group-v1") : null;
     const breadcrumbTabEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-tab-v1") : null;
+    const breadcrumbContainerEl = rootEl ? rootEl.querySelector("#process-shell-breadcrumb-v1") : null;
 
     if (rootEl && headerControllersByRoot.has(rootEl)) {
       return headerControllersByRoot.get(rootEl);
@@ -695,9 +696,15 @@
         if (shouldShowTabLabel) {
           breadcrumbTabEl.textContent = tabLabel;
           breadcrumbTabGroupEl.hidden = false;
+          if (breadcrumbContainerEl) {
+            breadcrumbContainerEl.classList.add("with-active-tab");
+          }
         } else {
           breadcrumbTabEl.textContent = "";
           breadcrumbTabGroupEl.hidden = true;
+          if (breadcrumbContainerEl) {
+            breadcrumbContainerEl.classList.remove("with-active-tab");
+          }
         }
       }
     }
@@ -1446,6 +1453,14 @@
 
     if (titleEl.parentElement !== headerEl) {
       headerEl.insertBefore(titleEl, headerEl.firstChild || null);
+    }
+
+    const inlineCreateEl = findDirectChildElement(cardEl, (childEl) => {
+      return typeof childEl.hasAttribute === "function" && childEl.hasAttribute("data-admin-subprocess-inline-create");
+    });
+
+    if (inlineCreateEl && inlineCreateEl.parentElement !== headerEl) {
+      headerEl.insertBefore(inlineCreateEl, titleEl.nextSibling);
     }
 
     let actionsEl = findDirectChildElement(headerEl, (childEl) => {

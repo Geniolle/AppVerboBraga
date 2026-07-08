@@ -260,9 +260,13 @@ def test_new_user_js_exposes_active_menu_key_signal() -> None:
 
 
 def test_breadcrumb_markup_has_active_tab_slot() -> None:
-    template_text = (PROJECT_ROOT / "templates" / "new_user.html").read_text(
-        encoding="utf-8"
-    )
+    template_text = (
+        PROJECT_ROOT
+        / "templates"
+        / "partials"
+        / "app_shell"
+        / "process_header_v1.html"
+    ).read_text(encoding="utf-8")
 
     assert 'id="process-shell-breadcrumb-tab-group-v1"' in template_text
     assert 'id="process-shell-breadcrumb-tab-v1"' in template_text

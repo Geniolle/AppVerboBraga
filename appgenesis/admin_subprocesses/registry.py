@@ -284,6 +284,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     empty_active_message="Sem sessões ativas.",
     empty_inactive_message="Sem sessões inativas.",
     edit_url_extra_params="admin_tab=sessoes&sidebar_sections_tab=sessoes",
+    create_toggle_in_active_header=True,
 )
 
 

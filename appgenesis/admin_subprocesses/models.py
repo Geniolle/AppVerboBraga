@@ -115,6 +115,7 @@ class AdminSubprocessConfig:
     uses_dynamic_fields: bool = False
     dynamic_fields_menu_key: str = ""
     dynamic_fields_section_header_key: str = ""
+    create_toggle_in_active_header: bool = False
 
 
 @dataclass

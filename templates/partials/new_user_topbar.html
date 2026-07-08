@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/static/css/modules/sidebar_collapse_v1.css?v=20260708-collapse-toggle-overlay-v1">
+<link rel="stylesheet" href="/static/css/modules/app_shell/sidebar_collapse_v1.css?v=20260708-app-shell-css-split-v1">
 <script>
 (function(){try{if(localStorage.getItem("appgenesis:sidebar-collapsed-v1")==="1"){document.body.classList.add("appgenesis-sidebar-collapsed");}}catch(e){}})();
 </script>
@@ -6,10 +6,12 @@
 {# APPGENESIS_TOPBAR_REMOVED_V1: esta partial deixou de renderizar uma
    faixa/<header> visual (iteracao 3.1) -- a antiga .topbar criava uma area
    vazia no topo da coluna principal. O que restava de visivel (#user-menu +
-   #user-dropdown) foi movido para partials/new_user_avatar.html, incluido
-   dentro de #process-shell-header (templates/new_user.html), para que o
-   avatar/iniciais fique integrado ao cabecalho do processo em vez de uma
-   topbar global. Este ficheiro so' cuida da fiacao do colapso da sidebar
-   (CSS + script de pre-paint + JS), que precisa continuar a carregar cedo,
-   antes do conteudo principal, para evitar flash da sidebar expandida. #}
-<script src="/static/js/modules/sidebar_collapse_v1.js?v=20260708-collapse-toggle-overlay-v1" defer></script>
+   #user-dropdown) foi movido para partials/app_shell/user_avatar_v1.html,
+   incluido dentro de #process-shell-header
+   (partials/app_shell/process_header_v1.html, por sua vez incluido em
+   templates/new_user.html), para que o avatar/iniciais fique integrado ao
+   cabecalho do processo em vez de uma topbar global. Este ficheiro so'
+   cuida da fiacao do colapso da sidebar (CSS + script de pre-paint + JS),
+   que precisa continuar a carregar cedo, antes do conteudo principal, para
+   evitar flash da sidebar expandida. #}
+<script src="/static/js/modules/app_shell/sidebar_collapse_v1.js?v=20260708-app-shell-css-split-v1" defer></script>
