@@ -120,7 +120,7 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
 
         _click_menu_v1(driver, "administrativo")
         wait.until(lambda drv: "administrativo" in _active_sidebar_menu_keys_v1(drv))
-        wait.until(lambda drv: _card_is_visible_v1(drv, "create-entity-card"))
+        wait.until(lambda drv: _card_is_visible_v1(drv, "recent-entities-card"))
 
         _click_submenu_v1(driver, "Utilizador")
         wait.until(lambda drv: _card_is_visible_v1(drv, "admin-users-created-card"))

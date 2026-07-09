@@ -93,7 +93,7 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
     [
         ("/users/new", "home", "home-summary-card", None),
         ("/users/new?menu=documentos", "meu_perfil", "perfil-pessoal-card", None),
-        ("/users/new?menu=administrativo&admin_tab=entidade", "administrativo", "create-entity-card", "Entidade"),
+        ("/users/new?menu=administrativo&admin_tab=entidade", "administrativo", "recent-entities-card", "Entidade"),
         (
             "/users/new?menu=sessoes&admin_tab=contas&target=menu-subprocess-card-active#menu-subprocess-card-active",
             "sessoes",

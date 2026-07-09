@@ -135,7 +135,7 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
     singular_label="Entidade",
     plural_label="Entidades",
     edit_param="entity_edit_id",
-    default_target="create-entity-card",
+    default_target="recent-entities-card",
     edit_target="edit-entity-card",
     create_title="Criar entidade",
     edit_title="Editar entidade",
@@ -243,6 +243,7 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
     inactive_table_id="inactive-entities-table",
     active_limiter_id="recent-entities-limiter",
     inactive_limiter_id="inactive-entities-limiter",
+    create_toggle_in_active_header=True,
 )
 
 

@@ -285,7 +285,7 @@
     if (normalizedHash === "#edit-user-card") {
       normalizedHash = "#create-user-card";
     } else if (normalizedHash === "#edit-entity-card") {
-      normalizedHash = "#create-entity-card";
+      normalizedHash = "#recent-entities-card";
     } else if (normalizedHash === "#configuracao-account-status-card") {
       normalizedHash = "#admin-account-status-card";
     }

@@ -1010,11 +1010,11 @@
         </div>
 
         {% if not (entity_edit_data is defined and entity_edit_data.id) and current_user_can_manage_tenant_structure %}
-        <section id="create-entity-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#create-entity-card' %}style="display: none;"{% endif %}>
+        <section id="create-entity-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="entidade" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#create-entity-card' %}style="display: none;"{% endif %}>
           <div class="appgenesis-process-action-toolbar-v1">
-          <details class="entity-create-collapse appgenesis-process-action-details-v1">
+          <details class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1">
             <summary class="appgenesis-process-action-toggle-v1">
-              <span>Criar entidade</span>
+              <span>{{ admin_subprocess_entity_state.config.create_title }}</span>
             </summary>
             <div class="entity-create-body appgenesis-process-action-panel-v1">
               <form method="post" action="/entities/new" enctype="multipart/form-data">

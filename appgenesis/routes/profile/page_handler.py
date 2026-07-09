@@ -303,7 +303,7 @@ def _resolve_initial_menu_target(
             return "#menu-subprocess-card-active", ""
         if resolved_admin_tab == "utilizador":
             return "#create-user-card", ""
-        return "#create-entity-card", ""
+        return "#recent-entities-card", ""
     if clean_menu_key == ESTRUTURAS_MENU_KEY_V1:
         if settings_edit_key:
             return "#settings-menu-edit-card", ""

@@ -316,7 +316,7 @@
 
     if (cleanMenuKey === "administrativo") {
       baseItems = [
-        { label: "Entidade", target: "#create-entity-card" },
+        { label: "Entidade", target: "#recent-entities-card" },
         { label: "Utilizador", target: "#create-user-card" }
       ];
     } else if (cleanMenuKey === state.ESTRUTURAS_MENU_KEY_V1) {

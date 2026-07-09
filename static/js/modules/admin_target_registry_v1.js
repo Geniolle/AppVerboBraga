@@ -242,9 +242,9 @@
       "#edit-user-card": "#create-user-card",
       "#admin-users-created-card": "#create-user-card",
       "#inactive-users-card": "#create-user-card",
-      "#edit-entity-card": "#create-entity-card",
-      "#recent-entities-card": "#create-entity-card",
-      "#inactive-entities-card": "#create-entity-card",
+      "#create-entity-card": "#recent-entities-card",
+      "#edit-entity-card": "#recent-entities-card",
+      "#inactive-entities-card": "#recent-entities-card",
       "#admin-account-create-card": "#menu-subprocess-card-active",
       "#settings-menu-edit-card": "#menu-subprocess-card-active",
       "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"

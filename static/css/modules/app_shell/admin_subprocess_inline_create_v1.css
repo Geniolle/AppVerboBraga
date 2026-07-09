@@ -108,6 +108,25 @@
 }
 
 /* ===================================================================
+   (3C) QUANDO HA ACAO INLINE ADICIONAL, O margin-right:auto (regra 3)
+   MIGRA DO BOTAO "+ CRIAR" PARA O ULTIMO BOTAO DE ACAO (SO OPT-IN)
+   Sem esta regra, o margin-right:auto de (3) fica no botao "+ Criar" e
+   empurra o botao de acao adicional (ex.: "Gerar link de convite") para
+   junto da pesquisa, na extremidade direita. Aqui o botao "+ Criar" deixa
+   de empurrar (margin-right:0) e quem passa a empurrar a pesquisa para a
+   direita e' o ultimo .admin-subprocess-inline-action-btn-v1, mantendo os
+   dois botoes juntos a' esquerda.
+=================================================================== */
+
+[data-admin-subprocess-inline-create-enabled="1"] > .appgenesis-card-header-v1:has(.admin-subprocess-inline-action-btn-v1) .admin-subprocess-inline-create-btn-v1 {
+  margin-right: 0;
+}
+
+[data-admin-subprocess-inline-create-enabled="1"] > .appgenesis-card-header-v1 .admin-subprocess-inline-action-btn-v1:last-of-type {
+  margin-right: auto;
+}
+
+/* ===================================================================
    (4) RESPONSIVO
 =================================================================== */
 

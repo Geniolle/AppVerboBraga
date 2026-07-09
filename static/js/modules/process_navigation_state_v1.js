@@ -75,7 +75,7 @@
     if (cleanHash === "#edit-user-card") {
       cleanHash = "#create-user-card";
     } else if (cleanHash === "#edit-entity-card") {
-      cleanHash = "#create-entity-card";
+      cleanHash = "#recent-entities-card";
     }
     const cleanTarget = state.normalizeTarget(rawTarget);
     const cleanTab = String(initialAdminTab || "").trim().toLowerCase();
@@ -92,7 +92,7 @@
       return "#admin-sidebar-sections-card";
     }
     if (cleanTab === "entidade") {
-      return "#create-entity-card";
+      return "#recent-entities-card";
     }
     if (cleanTab === "utilizador") {
       return "#create-user-card";
