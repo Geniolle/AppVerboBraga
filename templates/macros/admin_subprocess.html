@@ -19,6 +19,14 @@
           <option value="{{ option_value }}" {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
         {% endfor %}
       </select>
+    {% elif field.field_type == "readonly" %}
+      <input
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        type="text"
+        value="{{ field.default_value }}"
+        readonly
+      >
     {% else %}
       <input
         id="admin_subprocess_{{ field.key }}"
@@ -138,7 +146,7 @@
         <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ state.edit_key }}">
         <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
-        <div class="admin-subprocess-grid-v1{% if state.config.key == 'objeto_de_autorizacao' %} admin-subprocess-grid-objeto-autorizacao-v1{% endif %}">
+        <div class="admin-subprocess-grid-v1{% if state.config.form_grid_css_class %} {{ state.config.form_grid_css_class }}{% endif %}">
           {% if state.resolved_dynamic_fields %}
             {% for dyn_field in state.resolved_dynamic_fields %}
               {% set _dyn_value = state.edit_values.get(dyn_field.key, "") if state.edit_values else "" %}
@@ -176,14 +184,14 @@
               <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
               <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
 
-              <div class="admin-subprocess-grid-v1">
+              <div class="admin-subprocess-grid-v1{% if state.config.form_grid_css_class %} {{ state.config.form_grid_css_class }}{% endif %}">
                 {% if state.resolved_dynamic_fields %}
                   {% for dyn_field in state.resolved_dynamic_fields %}
                     {{ render_admin_subprocess_dynamic_field(dyn_field, "", "admin_subprocess_dyn_create") }}
                   {% endfor %}
                 {% endif %}
                 {% for field in state.config.fields %}
-                  {{ render_admin_subprocess_field(field, "") }}
+                  {{ render_admin_subprocess_field(field, field.default_value) }}
                 {% endfor %}
               </div>
 

@@ -99,6 +99,22 @@
   order: 6;
 }
 
+.admin-subprocess-grid-auth-profile-v1 {
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+}
+
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
+  order: 1;
+}
+
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] {
+  order: 2;
+}
+
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] {
+  order: 3;
+}
+
 .admin-subprocess-field-v1 label {
   display: block;
   margin-bottom: 6px;
@@ -119,6 +135,12 @@
   padding: 8px 10px;
   box-sizing: border-box;
   font-size: 13px;
+}
+
+.admin-subprocess-field-v1 input[readonly] {
+  background: #eef1f6;
+  color: #445068;
+  cursor: default;
 }
 
 .admin-subprocess-actions-v1 {

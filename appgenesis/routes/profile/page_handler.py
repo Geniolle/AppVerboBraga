@@ -17,7 +17,6 @@ from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository im
 from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.services.auth_profile_entity_scope import (
-    AUTH_PROFILE_ENTITY_SCOPE_ENTITY,
     build_auth_profile_config_for_context_v1,
     build_auth_profile_entity_context_v1,
 )
@@ -906,22 +905,9 @@ def new_user_page(
                         ),
                     },
                 )
-                auth_profile_edit_row_v1 = next(
-                    (
-                        dict(row)
-                        for row in auth_profile_rows_v1
-                        if str(row.get("key") or "").strip().lower()
-                        == clean_auth_profile_edit_key_v1
-                    ),
-                    None,
-                )
                 auth_profile_subprocess_config_v1 = build_auth_profile_config_for_context_v1(
                     auth_profile_subprocess_config_v1,
                     auth_profile_entity_context_v1,
-                    current_scope_mode=str(
-                        (auth_profile_edit_row_v1 or {}).get("entity_scope")
-                        or AUTH_PROFILE_ENTITY_SCOPE_ENTITY
-                    ),
                 )
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,

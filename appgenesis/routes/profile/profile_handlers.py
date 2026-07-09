@@ -629,9 +629,6 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_scope_mode = str(
         submitted_form.get("auth_profile_visibility_scope_mode") or ""
     ).strip().lower()
-    clean_entity_scope = str(
-        submitted_form.get("auth_profile_entity_scope") or ""
-    ).strip().lower()
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -780,7 +777,6 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             session,
             {
                 "label": clean_label,
-                "entity_scope": clean_entity_scope,
                 "visibility_scope_mode": clean_scope_mode,
                 "status": clean_status,
                 "dynamic_values": dynamic_field_values,
@@ -805,10 +801,6 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 error_message = "Perfil não encontrado para edição."
             elif save_reason == "member_not_found":
                 error_message = "Membro associado ao utilizador não encontrado."
-            elif save_reason == "invalid_entity_scope":
-                error_message = (
-                    "A entidade selecionada não permite criar ou editar este perfil como global."
-                )
             return _redirect_with_profile_feedback(
                 error_message,
                 is_error=True,

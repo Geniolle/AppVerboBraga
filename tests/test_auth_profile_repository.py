@@ -72,7 +72,6 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
         object(),
         {
             "dynamic_values": {"custom_perfil_2": "sessoes"},
-            "entity_scope": "entity",
             "visibility_scope_mode": "owner",
             "status": "ativo",
         },
@@ -89,9 +88,9 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
 
     stored_values = stored_records[0]["values"]
     assert stored_values["__menu_key"] == "sessoes"
-    assert stored_values["__entity_scope_mode"] == "entity"
-    assert stored_values["__entity_scope_label"] == "Entidade atual"
     assert stored_values["__numero_entidade"] == "1001"
+    assert "__entity_scope_mode" not in stored_values
+    assert "__entity_scope_label" not in stored_values
     assert stored_values["custom_perfil_2"] == "sessoes"
     assert stored_values["custom_perfil"] == "Estruturas"
     assert stored_values["custom_nome_do_perfil"] == "Estruturas"
@@ -101,11 +100,10 @@ def test_auth_profile_repository_saves_menu_key_and_current_label(monkeypatch) -
     assert rows[0]["key"] == "sessoes"
     assert rows[0]["menu_key"] == "sessoes"
     assert rows[0]["label"] == "Estruturas"
-    assert rows[0]["entity_scope"] == "entity"
     assert rows[0]["values"]["custom_perfil_2"] == "sessoes"
 
 
-def test_auth_profile_repository_blocks_duplicate_menu_key_from_legacy_label(monkeypatch) -> None:
+def test_auth_profile_repository_ignores_legacy_row_without_entity_number_for_duplicate_check(monkeypatch) -> None:
     records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
     member = SimpleNamespace(
         profile_custom_fields=serialize_member_profile_fields(
@@ -145,24 +143,28 @@ def test_auth_profile_repository_blocks_duplicate_menu_key_from_legacy_label(mon
         lambda session: _build_auth_profile_sidebar_settings(),
     )
 
+    # O registo legado "Estruturas" nao tem __numero_entidade, logo fica
+    # invisivel para qualquer entidade ativa especifica (nao mistura dados
+    # entre entidades) ate ser corrigido manualmente; por isso nao bloqueia
+    # a criacao de um novo perfil "Estruturas" na entidade 1001.
     save_ok, save_reason, saved_key = repo.save_row(
         object(),
         {
             "dynamic_values": {"custom_perfil_2": "sessoes"},
-            "entity_scope": "entity",
             "visibility_scope_mode": "owner",
             "status": "ativo",
         },
         context={"entity_number": "1001"},
     )
 
-    assert save_ok is False
-    assert save_reason == "duplicate_key"
-    assert saved_key == ""
+    assert save_ok is True
+    assert save_reason == "saved"
 
-    rows = repo.list_rows(object())
-    assert rows[0]["key"] == "sessoes"
-    assert rows[0]["label"] == "Estruturas"
+    stored_fields = parse_member_profile_fields(member.profile_custom_fields)
+    stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
+    assert len(stored_records) == 2
+    assert stored_records[0]["values"]["__numero_entidade"] == "1001"
+    assert saved_key == "sessoes"
 
 
 def test_auth_profile_repository_save_row_allows_same_generated_key_across_different_entities(monkeypatch) -> None:
@@ -210,7 +212,6 @@ def test_auth_profile_repository_save_row_allows_same_generated_key_across_diffe
         object(),
         {
             "dynamic_values": {"custom_perfil_2": "sessoes"},
-            "entity_scope": "entity",
             "visibility_scope_mode": "owner",
             "status": "ativo",
         },
@@ -425,7 +426,7 @@ def test_auth_profile_repository_delete_row_returns_safe_error_for_unknown_key(m
     assert stored_records[0]["values"]["__menu_key"] == "sessoes"
 
 
-def test_auth_profile_repository_blocks_global_scope_for_legacy_entity(monkeypatch) -> None:
+def test_auth_profile_repository_save_row_ignores_forged_entity_scope_payload(monkeypatch) -> None:
     records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
     member = SimpleNamespace(profile_custom_fields=None)
     repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
@@ -450,55 +451,12 @@ def test_auth_profile_repository_blocks_global_scope_for_legacy_entity(monkeypat
         "build_auth_profile_entity_context_v1",
         lambda session, selected_entity_id=None, permissions=None: {
             "selected_entity_number": "1001",
-            "allowed_modes": {"entity"},
         },
     )
 
-    save_ok, save_reason, saved_key = repo.save_row(
-        object(),
-        {
-            "dynamic_values": {"custom_perfil_2": "sessoes"},
-            "entity_scope": "system",
-            "visibility_scope_mode": "owner",
-            "status": "ativo",
-        },
-        context={"entity_number": "1001"},
-    )
-
-    assert save_ok is False
-    assert save_reason == "invalid_entity_scope"
-    assert saved_key == ""
-
-
-def test_auth_profile_repository_allows_global_scope_for_owner_entity(monkeypatch) -> None:
-    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
-    member = SimpleNamespace(profile_custom_fields=None)
-    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
-
-    def fake_load_record_bundle(self, session, context=None):
-        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
-        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
-        return member, existing_profile_fields, existing_records, "owner", "Owner"
-
-    monkeypatch.setattr(
-        AuthorizationProfileAdminRepository,
-        "_load_record_bundle",
-        fake_load_record_bundle,
-    )
-    monkeypatch.setattr(
-        auth_profile_module,
-        "get_sidebar_menu_settings",
-        lambda session: _build_auth_profile_sidebar_settings(),
-    )
-    monkeypatch.setattr(
-        auth_profile_module,
-        "build_auth_profile_entity_context_v1",
-        lambda session, selected_entity_id=None, permissions=None: {
-            "selected_entity_number": "1001",
-            "allowed_modes": {"entity", "system"},
-        },
-    )
-
+    # O campo "Escopo do perfil" foi removido: mesmo que um payload forjado
+    # envie entity_scope="system", o perfil deve ser gravado normalmente e
+    # sempre associado a entidade ativa do contexto do servidor.
     save_ok, save_reason, saved_key = repo.save_row(
         object(),
         {
@@ -517,9 +475,9 @@ def test_auth_profile_repository_allows_global_scope_for_owner_entity(monkeypatc
     stored_fields = parse_member_profile_fields(member.profile_custom_fields)
     stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
     stored_values = stored_records[0]["values"]
-    assert stored_values["__entity_scope_mode"] == "system"
-    assert stored_values["__entity_scope_label"] == "Todo o sistema"
-    assert "__numero_entidade" not in stored_values
+    assert stored_values["__numero_entidade"] == "1001"
+    assert "__entity_scope_mode" not in stored_values
+    assert "__entity_scope_label" not in stored_values
 
 
 def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypatch) -> None:
@@ -536,7 +494,6 @@ def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypat
                             "values": {
                                 "__menu_key": "sessoes",
                                 "__key": "sessoes",
-                                "__entity_scope_mode": "entity",
                                 "__numero_entidade": "1001",
                                 "custom_perfil_2": "sessoes",
                                 "custom_perfil": "Estruturas",
@@ -551,7 +508,6 @@ def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypat
                             "values": {
                                 "__menu_key": "musicas",
                                 "__key": "musicas",
-                                "__entity_scope_mode": "entity",
                                 "__numero_entidade": "2002",
                                 "custom_perfil_2": "musicas",
                                 "custom_perfil": "Musicas",
@@ -560,15 +516,14 @@ def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypat
                             },
                         },
                         {
-                            "record_id": "rec-system",
+                            "record_id": "rec-legacy-no-entity-number",
                             "created_at": "",
                             "section_key": AUTH_PROFILE_SECTION_KEY,
                             "values": {
-                                "__menu_key": "global",
-                                "__key": "global",
-                                "__entity_scope_mode": "system",
-                                "custom_perfil": "Global",
-                                "custom_nome_do_perfil": "Global",
+                                "__menu_key": "legado",
+                                "__key": "legado",
+                                "custom_perfil": "Legado",
+                                "custom_nome_do_perfil": "Legado",
                                 "__estado": "ativo",
                             },
                         },
@@ -600,7 +555,126 @@ def test_auth_profile_repository_filters_rows_by_active_entity_context(monkeypat
         context={"entity_number": "1001"},
     )
 
-    assert [row["key"] for row in rows] == ["sessoes", "global"]
+    # Perfis de outras entidades nao aparecem, e um perfil legado sem
+    # __numero_entidade tambem fica invisivel (evita misturar dados entre
+    # entidades) ate ser corrigido manualmente.
+    assert [row["key"] for row in rows] == ["sessoes"]
+
+
+def test_auth_profile_repository_save_row_ignores_client_supplied_entity_number(monkeypatch) -> None:
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(profile_custom_fields=None)
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(
+        AuthorizationProfileAdminRepository,
+        "_load_record_bundle",
+        fake_load_record_bundle,
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+
+    # O campo "Entidade" no formulario e' somente leitura (espelha o contexto do
+    # servidor), mas mesmo que um payload malicioso tente forjar um numero de
+    # entidade diferente, o valor guardado deve continuar a vir exclusivamente
+    # do contexto de sessao/servidor, nunca do payload submetido.
+    save_ok, save_reason, saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+            "entity_number": "9999",
+            "auth_profile_entity_number_display": "9999",
+        },
+        context={"entity_number": "1001"},
+    )
+
+    assert save_ok is True
+    assert save_reason == "saved"
+    assert saved_key == "sessoes"
+
+    stored_fields = parse_member_profile_fields(member.profile_custom_fields)
+    stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
+    stored_values = stored_records[0]["values"]
+    assert stored_values["__numero_entidade"] == "1001"
+
+
+def test_auth_profile_repository_save_row_strips_legacy_entity_scope_keys_on_edit(monkeypatch) -> None:
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(
+        profile_custom_fields=serialize_member_profile_fields(
+            {
+                records_storage_key: serialize_menu_process_records(
+                    [
+                        {
+                            "record_id": "rec-legacy",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "__menu_key": "sessoes",
+                                "__key": "sessoes",
+                                "__entity_scope_mode": "entity",
+                                "__entity_scope_label": "Entidade atual",
+                                "__numero_entidade": "1001",
+                                "custom_perfil_2": "sessoes",
+                                "custom_perfil": "Estruturas",
+                                "custom_nome_do_perfil": "Estruturas",
+                                "__estado": "ativo",
+                            },
+                        },
+                    ]
+                ),
+            }
+        )
+    )
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(
+        AuthorizationProfileAdminRepository,
+        "_load_record_bundle",
+        fake_load_record_bundle,
+    )
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+
+    save_ok, save_reason, saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "sessoes"},
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+        },
+        edit_key="sessoes",
+        context={"entity_number": "1001"},
+    )
+
+    assert save_ok is True
+    assert save_reason == "saved"
+    assert saved_key == "sessoes"
+
+    stored_fields = parse_member_profile_fields(member.profile_custom_fields)
+    stored_records = parse_menu_process_records(stored_fields.get(records_storage_key))
+    stored_values = stored_records[0]["values"]
+    assert stored_values["__numero_entidade"] == "1001"
+    assert "__entity_scope_mode" not in stored_values
+    assert "__entity_scope_label" not in stored_values
 
 
 def test_auth_profile_config_exposes_delete_action() -> None:

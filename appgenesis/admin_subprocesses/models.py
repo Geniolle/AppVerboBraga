@@ -24,6 +24,7 @@ class AdminFieldConfig:
     readonly_on_create: bool = False
     readonly_on_edit: bool = False
     css_class: str = ""
+    default_value: str = ""
 
 
 @dataclass(frozen=True)
@@ -116,6 +117,7 @@ class AdminSubprocessConfig:
     dynamic_fields_menu_key: str = ""
     dynamic_fields_section_header_key: str = ""
     create_toggle_in_active_header: bool = False
+    form_grid_css_class: str = ""
 
 
 @dataclass

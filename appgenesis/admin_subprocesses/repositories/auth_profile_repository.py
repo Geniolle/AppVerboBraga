@@ -16,13 +16,7 @@ from appgenesis.menu_settings import (
 )
 from appgenesis.models import Member, User
 from appgenesis.services.auth_profile_entity_scope import (
-    AUTH_PROFILE_ENTITY_SCOPE_LABEL_STORAGE_KEY,
-    AUTH_PROFILE_ENTITY_SCOPE_STORAGE_KEY,
-    AUTH_PROFILE_ENTITY_SCOPE_SYSTEM,
     build_auth_profile_entity_context_v1,
-    normalize_auth_profile_entity_scope_v1,
-    resolve_auth_profile_entity_scope_from_values_v1,
-    resolve_auth_profile_entity_scope_label_v1,
 )
 from appgenesis.services.profile import (
     build_menu_process_records_storage_key,
@@ -43,6 +37,10 @@ AUTH_PROFILE_STATUS_KEY = "__estado"
 AUTH_PROFILE_TECHNICAL_KEY = "__key"
 AUTH_PROFILE_MENU_VALUE_KEY = "__menu_key"
 AUTH_PROFILE_ENTITY_NUMBER_KEY = "__numero_entidade"
+# Chaves legadas de um campo "Escopo do perfil" removido; qualquer registo antigo
+# que ainda as tenha deve ser limpo ao ser regravado (ver save_row).
+AUTH_PROFILE_LEGACY_ENTITY_SCOPE_MODE_KEY = "__entity_scope_mode"
+AUTH_PROFILE_LEGACY_ENTITY_SCOPE_LABEL_KEY = "__entity_scope_label"
 
 
 def _normalize_status(raw_value: Any) -> str:
@@ -178,15 +176,13 @@ def _row_matches_entity_context_v1(
         return True
 
     row_values = row.get("values") if isinstance(row.get("values"), dict) else {}
-    row_scope_mode = resolve_auth_profile_entity_scope_from_values_v1(row_values)
-    if row_scope_mode == AUTH_PROFILE_ENTITY_SCOPE_SYSTEM:
-        return True
-
     stored_entity_number = str(row.get("entity_number") or "").strip()
     if not stored_entity_number:
         stored_entity_number = str(row_values.get(AUTH_PROFILE_ENTITY_NUMBER_KEY) or "").strip()
+    # Perfis antigos sem numero de entidade guardado nao devem aparecer para
+    # nenhuma entidade ativa, para evitar misturar dados entre entidades.
     if not stored_entity_number:
-        return True
+        return False
 
     return stored_entity_number == current_entity_number
 
@@ -411,7 +407,6 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 row_key = f"{row_key}_{suffix}"
             seen_keys.add(row_key)
 
-            entity_scope_mode = resolve_auth_profile_entity_scope_from_values_v1(values)
             scope_mode = _normalize_scope_mode(
                 values.get(AUTH_PROFILE_SCOPE_MODE_KEY),
                 fallback=default_scope_mode,
@@ -433,10 +428,6 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                     "record_id": record_id,
                     "label": label,
                     "menu_key": stored_menu_key,
-                    "entity_scope": entity_scope_mode,
-                    "entity_scope_label": str(
-                        values.get(AUTH_PROFILE_ENTITY_SCOPE_LABEL_STORAGE_KEY) or ""
-                    ).strip() or resolve_auth_profile_entity_scope_label_v1(entity_scope_mode),
                     "entity_number": entity_number,
                     "visibility_scope_mode": scope_mode,
                     "visibility_scope_label": scope_label or _scope_label(scope_mode),
@@ -536,12 +527,6 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 selected_entity_id=(context or {}).get("selected_entity_id"),
                 permissions=(context or {}).get("entity_permissions"),
             )
-        entity_scope_mode = normalize_auth_profile_entity_scope_v1(
-            payload.get("entity_scope"),
-        )
-        if entity_scope_mode not in set(entity_context.get("allowed_modes") or set()):
-            return False, "invalid_entity_scope", ""
-
         scope_mode = _normalize_scope_mode(
             payload.get("visibility_scope_mode"),
             fallback=default_scope_mode,
@@ -614,16 +599,17 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 target_values[primary_field_key] = selected_menu_key
         target_values["custom_perfil"] = label
         target_values["custom_nome_do_perfil"] = label
-        target_values[AUTH_PROFILE_ENTITY_SCOPE_STORAGE_KEY] = entity_scope_mode
-        target_values[AUTH_PROFILE_ENTITY_SCOPE_LABEL_STORAGE_KEY] = (
-            resolve_auth_profile_entity_scope_label_v1(entity_scope_mode)
-        )
+        target_values.pop(AUTH_PROFILE_LEGACY_ENTITY_SCOPE_MODE_KEY, None)
+        target_values.pop(AUTH_PROFILE_LEGACY_ENTITY_SCOPE_LABEL_KEY, None)
         target_values[AUTH_PROFILE_SCOPE_MODE_KEY] = scope_mode
         target_values[AUTH_PROFILE_SCOPE_LABEL_KEY] = scope_label
         target_values[AUTH_PROFILE_STATUS_KEY] = status_value
-        if entity_scope_mode != AUTH_PROFILE_ENTITY_SCOPE_SYSTEM and entity_number:
+        # O numero da entidade vem sempre do contexto do servidor (nunca do payload
+        # do browser) e e' gravado incondicionalmente: todo perfil pertence a
+        # entidade ativa de quem o cria ou edita.
+        if entity_number:
             target_values[AUTH_PROFILE_ENTITY_NUMBER_KEY] = entity_number
-        elif AUTH_PROFILE_ENTITY_NUMBER_KEY in target_values:
+        else:
             target_values.pop(AUTH_PROFILE_ENTITY_NUMBER_KEY, None)
 
         target_record["section_key"] = str(

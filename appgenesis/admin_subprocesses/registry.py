@@ -291,17 +291,6 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 
 AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
     AdminFieldConfig(
-        key="entity_scope",
-        label="Entidade",
-        input_name="auth_profile_entity_scope",
-        field_type="select",
-        required=True,
-        options=(
-            ("entity", "Entidade atual"),
-            ("system", "Todo o sistema"),
-        ),
-    ),
-    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",
@@ -323,6 +312,12 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
             ("ativo", "Ativo"),
             ("inativo", "Inativo"),
         ),
+    ),
+    AdminFieldConfig(
+        key="entity_number",
+        label="Entidade",
+        input_name="auth_profile_entity_number_display",
+        field_type="readonly",
     ),
 )
 
@@ -371,6 +366,7 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     uses_dynamic_fields=True,
     dynamic_fields_menu_key="perfil_de_autorizacao",
     dynamic_fields_section_header_key="custom_perfil",
+    form_grid_css_class="admin-subprocess-grid-auth-profile-v1",
     fields=AUTHORIZATION_PROFILE_TECHNICAL_FIELDS,
     columns=(
         AdminColumnConfig(
@@ -486,6 +482,7 @@ OBJETO_AUTORIZACAO_CONFIG = AdminSubprocessConfig(
     uses_dynamic_fields=True,
     dynamic_fields_menu_key="perfil_de_autorizacao",
     dynamic_fields_section_header_key="custom_objeto_de_autorizacao",
+    form_grid_css_class="admin-subprocess-grid-objeto-autorizacao-v1",
     fields=OBJETO_AUTORIZACAO_TECHNICAL_FIELDS,
     columns=(
         AdminColumnConfig(
