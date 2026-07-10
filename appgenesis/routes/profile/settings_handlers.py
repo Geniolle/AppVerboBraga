@@ -1656,8 +1656,20 @@ def create_sidebar_menu_setting_handler_v1(
         if blocked_response is not None:
             return blocked_response
 
+        selected_entity_id = get_session_entity_id(request)
+        if selected_entity_id is None:
+            return RedirectResponse(
+                url=_build_settings_redirect_url(
+                    error_message="Não foi possível identificar a entidade ativa.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                ),
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
         ok, error_message, new_menu_key = create_sidebar_menu_setting(
             session,
+            selected_entity_id,
             menu_label,
             menu_visibility_scope,
         )
@@ -2964,8 +2976,16 @@ def menu_subprocess_save_handler_v1(
                 status_code=HTTP_303_SEE_OTHER,
             )
 
+        selected_entity_id = get_session_entity_id(request)
+        if selected_entity_id is None:
+            return RedirectResponse(
+                url=f"{clean_return_url}&error=Não foi possível identificar a entidade ativa.",
+                status_code=HTTP_303_SEE_OTHER,
+            )
+
         ok, error_message, _new_key = create_sidebar_menu_setting(
             session,
+            selected_entity_id,
             menu_label,
             menu_visibility_scope,
         )

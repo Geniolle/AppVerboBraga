@@ -2567,87 +2567,6 @@ def update_sidebar_menu_additional_fields(
     return True, ""
 
 
-def create_sidebar_menu_setting(
-    session: Session,
-    menu_label: str,
-    visibility_scope_mode: str | None = None,
-) -> tuple[bool, str, str]:
-    clean_menu_label = _normalize_menu_label_preserve_case(menu_label)
-    if not clean_menu_label:
-        return False, "Nome da pasta é obrigatório.", ""
-
-    clean_menu_key = _resolve_legacy_menu_alias(
-        _build_menu_key_from_label(clean_menu_label)
-    )
-    if not clean_menu_key:
-        return False, "Nome da pasta inválido.", ""
-    clean_menu_label = _normalize_system_menu_label(clean_menu_key, clean_menu_label)
-
-    ensure_sidebar_menu_settings_defaults(session)
-
-    existing_key = session.execute(
-        text(
-            """
-            SELECT 1
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_key)) = :menu_key
-            LIMIT 1
-            """
-        ),
-        {"menu_key": clean_menu_key},
-    ).scalar_one_or_none()
-    if existing_key is not None:
-        return False, "Já existe uma pasta com este nome.", ""
-
-    existing_label = session.execute(
-        text(
-            """
-            SELECT 1
-            FROM sidebar_menu_settings
-            WHERE lower(trim(menu_label)) = :menu_label
-            LIMIT 1
-            """
-        ),
-        {"menu_label": clean_menu_label.lower()},
-    ).scalar_one_or_none()
-    if existing_label is not None:
-        return False, "Já existe uma pasta com este nome.", ""
-
-    clean_scope_mode = str(visibility_scope_mode or "").strip().lower()
-    if clean_scope_mode == MENU_VISIBILITY_SCOPE_ALL or not clean_scope_mode:
-        visibility_scopes = list(MENU_VISIBILITY_SCOPES)
-    elif clean_scope_mode in MENU_VISIBILITY_SCOPES:
-        visibility_scopes = [clean_scope_mode]
-    else:
-        return False, "Escopo de exibição inválido.", ""
-
-    next_display_order = len(get_sidebar_menu_settings(session))
-    menu_config = {
-        "requires_admin": True,
-        "visibility_scopes": visibility_scopes,
-        "additional_fields": [],
-        "visible_fields": [],
-        "visible_field_headers": {},
-        MENU_CONFIG_DISPLAY_ORDER_KEY: next_display_order,
-    }
-
-    session.execute(
-        text(
-            """
-            INSERT INTO sidebar_menu_settings (menu_key, menu_label, is_active, is_deleted, menu_config)
-            VALUES (:menu_key, :menu_label, TRUE, FALSE, :menu_config)
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_label": clean_menu_label,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
-    )
-    session.commit()
-    return True, "", clean_menu_key
-
-
 def delete_sidebar_menu_setting(session: Session, menu_key: str) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
@@ -2747,8 +2666,9 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
 ####################################################################################
 
 
-def create_sidebar_menu_setting_v2(
+def create_sidebar_menu_setting(
     session: Session,
+    entity_id: int,
     menu_label: str,
     visibility_scope_mode: str = "all",
 ) -> tuple[bool, str, str]:
@@ -2911,6 +2831,25 @@ def create_sidebar_menu_setting_v2(
                 "menu_config": json.dumps(menu_config, ensure_ascii=False),
             },
         )
+
+        if existing_menu_key != "administrativo":
+            administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+                build_sidebar_global_refresh_version_v1()
+            )
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "menu_key": "administrativo",
+                    "menu_config": json.dumps(administrative_config, ensure_ascii=False),
+                },
+            )
+
         session.commit()
         return True, "", existing_menu_key
 
@@ -2924,12 +2863,13 @@ def create_sidebar_menu_setting_v2(
         text(
             """
             INSERT INTO sidebar_menu_settings
-                (menu_key, menu_label, is_active, is_deleted, menu_config)
+                (entity_id, menu_key, menu_label, is_active, is_deleted, menu_config)
             VALUES
-                (:menu_key, :menu_label, :is_active, :is_deleted, :menu_config)
+                (:entity_id, :menu_key, :menu_label, :is_active, :is_deleted, :menu_config)
             """
         ),
         {
+            "entity_id": entity_id,
             "menu_key": clean_menu_key,
             "menu_label": clean_menu_label,
             "is_active": True,
@@ -2937,13 +2877,29 @@ def create_sidebar_menu_setting_v2(
             "menu_config": json.dumps(menu_config, ensure_ascii=False),
         },
     )
+
+    if clean_menu_key != "administrativo":
+        administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+            build_sidebar_global_refresh_version_v1()
+        )
+        session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": "administrativo",
+                "menu_config": json.dumps(administrative_config, ensure_ascii=False),
+            },
+        )
+
     session.commit()
 
     return True, "", clean_menu_key
 
-
-# Mantem compatibilidade com os imports existentes.
-create_sidebar_menu_setting = create_sidebar_menu_setting_v2
 
 ####################################################################################
 # LISTA V1 - LISTAS REUTILIZÁVEIS DO PROCESSO

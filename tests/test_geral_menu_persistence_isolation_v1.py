@@ -2,7 +2,6 @@ import json
 
 import pytest
 from sqlalchemy import create_engine, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -67,56 +66,49 @@ def _load_row(SessionLocal, menu_key):
 
 
 ####################################################################################
-# (1) MULTIPLAS GERACOES: menu_settings.py define create_sidebar_menu_setting
-# (linha ~2570, geracao morta, nunca chamada em runtime) e
-# create_sidebar_menu_setting_v2 (linha ~2750). Um alias de modulo
-# "create_sidebar_menu_setting = create_sidebar_menu_setting_v2" (linha ~2946)
-# rebina o nome importavel para apontar para a v2. Ou seja, qualquer import de
-# "create_sidebar_menu_setting" (inclusive o usado por settings_handlers.py e por
-# este ficheiro de testes) resolve, em runtime, para o corpo da v2 -- confirmado
-# empiricamente pelas mensagens de erro abaixo, que sao literalmente as da v2
-# ("Informe o nome da pasta.", "Ja existe uma pasta com este nome.") e nao as da
-# v1 ("Nome da pasta é obrigatório.", "Já existe uma pasta com este nome."). Nao
-# consolidar nem remover a v1 nesta fase -- apenas documentar e testar o
-# comportamento ativo (v2).
+# (1) GERACAO UNICA: apos a consolidacao estrutural desta fase, menu_settings.py
+# define uma unica funcao "create_sidebar_menu_setting" (antigo corpo da v2). A
+# v1 morta e o alias de modulo "create_sidebar_menu_setting = create_sidebar_menu_setting_v2"
+# foram removidos. entity_id passou a ser o segundo parametro posicional,
+# obrigatorio, resolvido pelo caller a partir da entidade ativa da sessao.
 ####################################################################################
 
 ####################################################################################
-# (2) COMPORTAMENTO ESTRANHO CONFIRMADO EMPIRICAMENTE: tanto o INSERT de
-# create_sidebar_menu_setting_v2 (para pastas genuinamente novas) quanto o da v1
-# morta nunca fornecem entity_id. A coluna entity_id e' nullable=False sem
-# server_default (confirmado em appgenesis/models/sidebar_menu_setting.py e na
-# migracao sidemenuentity01_...). Isto faz com que a criacao de uma pasta
-# genuinamente nova (sem nenhuma linha existente com a mesma chave/rotulo, ativa
-# ou eliminada) levante IntegrityError contra o esquema real. Documentado e
-# protegido por teste, NAO corrigido nesta fase (regra: nao corrigir codigo de
-# producao).
+# (1B) CORRECAO CONFIRMADA: o INSERT de criacao genuina agora inclui entity_id,
+# eliminando o IntegrityError anteriormente documentado. A unicidade de menu_key
+# e menu_label permanece GLOBAL (nao filtrada por entity_id) nesta fase -- uma
+# segunda entidade NAO pode criar/reativar uma pasta com a mesma chave/rotulo ja'
+# usada por outra entidade. Migrar para isolamento por entity_id + menu_key em
+# todas as leituras/escritas e' uma fase estrutural separada, ainda nao iniciada
+# (ver secao (2)/ISOLAMENTO abaixo, que continua valida para
+# update/move/delete/set_visibility).
 ####################################################################################
 
-def test_create_sidebar_menu_setting_raises_integrity_error_due_to_missing_entity_id():
+def test_create_sidebar_menu_setting_persists_entity_id_on_genuine_creation():
     SessionLocal = _build_session_factory()
     session = SessionLocal()
     session.add(Entity(id=1, name="Entidade Teste"))
     session.commit()
 
-    with pytest.raises(IntegrityError, match="entity_id"):
-        create_sidebar_menu_setting(session, "Processo Novo")
+    ok, error, menu_key = create_sidebar_menu_setting(session, 1, "Processo Novo")
     session.close()
 
+    assert ok is True
+    assert error == ""
+    assert menu_key == "processo_novo"
+    row = _load_row(SessionLocal, "processo_novo")
+    assert row["entity_id"] == 1
+    assert row["is_active"] is True
+    assert row["is_deleted"] is False
 
-def test_create_sidebar_menu_setting_v2_validates_label_before_hitting_the_entity_id_bug():
-    """
-    Comportamento documentado (nao corrigido): a validacao de rotulo vazio ocorre
-    antes do INSERT, portanto nao dispara o IntegrityError -- apenas rotulos
-    validos chegam ate' o bug de entity_id. Mensagem confirmada como sendo a da
-    v2 (ativa via alias), nao a da v1 (morta).
-    """
+
+def test_create_sidebar_menu_setting_validates_label_before_insert():
     SessionLocal = _build_session_factory()
     session = SessionLocal()
     session.add(Entity(id=1, name="Entidade Teste"))
     session.commit()
 
-    ok, error, menu_key = create_sidebar_menu_setting(session, "   ")
+    ok, error, menu_key = create_sidebar_menu_setting(session, 1, "   ")
     session.close()
 
     assert ok is False
@@ -124,35 +116,78 @@ def test_create_sidebar_menu_setting_v2_validates_label_before_hitting_the_entit
     assert menu_key == ""
 
 
-def test_create_sidebar_menu_setting_v2_rejects_duplicate_active_key_before_entity_id_bug():
+def test_create_sidebar_menu_setting_rejects_duplicate_active_key_globally():
     """
-    Comportamento documentado (nao corrigido): a checagem de duplicado ativo
-    (existing_row nao eliminado) tambem ocorre antes do INSERT que falha, portanto
-    duplicados ativos retornam o erro de negocio normal em vez do IntegrityError.
-    Mensagem confirmada como sendo a da v2, sem acento em "Ja".
+    A unicidade permanece global: uma segunda entidade nao pode criar uma pasta
+    com a mesma menu_key/label ja' ativa em outra entidade. Duas entidades com a
+    mesma menu_key NAO sao permitidas nesta fase -- isso exigiria migrar todas as
+    leituras/escritas para filtrar por entity_id, fora de escopo aqui.
     """
     SessionLocal = _build_session_factory()
-    _seed_menu(SessionLocal, menu_key="processo_existente", menu_label="Processo Existente")
+    _seed_menu(SessionLocal, menu_key="processo_existente", entity_id=1, menu_label="Processo Existente")
 
     session = SessionLocal()
-    ok, error, menu_key = create_sidebar_menu_setting(session, "Processo Existente")
+    session.add(Entity(id=2, name="Entidade B"))
+    session.commit()
+
+    ok, error, menu_key = create_sidebar_menu_setting(session, 2, "Processo Existente")
     session.close()
 
     assert ok is False
     assert error == "Ja existe uma pasta com este nome."
     assert menu_key == "processo_existente"
 
+    row = _load_row(SessionLocal, "processo_existente")
+    assert row["entity_id"] == 1
+
+
+def test_create_sidebar_menu_setting_does_not_create_ambiguous_rows_across_entities():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_key="processo_existente", entity_id=1, menu_label="Processo Existente")
+
+    session = SessionLocal()
+    session.add(Entity(id=2, name="Entidade B"))
+    session.commit()
+    create_sidebar_menu_setting(session, 2, "Processo Existente")
+    session.close()
+
+    session = SessionLocal()
+    matching_rows = (
+        session.execute(
+            select(SidebarMenuSetting).where(SidebarMenuSetting.menu_key == "processo_existente")
+        )
+        .scalars()
+        .all()
+    )
+    session.close()
+
+    assert len(matching_rows) == 1
+
+
+def test_create_sidebar_menu_setting_bumps_administrativo_refresh_version_on_success():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_key="administrativo", menu_label="Administrativo")
+
+    session = SessionLocal()
+    session.add(Entity(id=1, name="Entidade Teste"))
+    session.commit()
+    create_sidebar_menu_setting(session, 1, "Processo Novo")
+    session.close()
+
+    administrativo_row = _load_row(SessionLocal, "administrativo")
+    assert "sidebar_global_refresh_version" in administrativo_row["config"]
+
 
 ####################################################################################
-# (3) COMPORTAMENTO ESTRANHO CONFIRMADO: ao contrario do que a v1 morta faria
-# (bloquear sempre que a chave/rotulo ja' existir, mesmo eliminada), a v2 ativa
-# REATIVA uma pasta soft-deleted quando a chave OU o rotulo coincidem --
-# reconstruindo o menu_config via _build_menu_config_v2 (preservando campos
-# existentes como additional_fields) e marcando is_active=True/is_deleted=False.
-# Nao ha, portanto, bloqueio de recriacao sobre pastas eliminadas nesta aba.
+# (3) COMPORTAMENTO PRESERVADO: create_sidebar_menu_setting REATIVA uma pasta
+# soft-deleted quando a chave OU o rotulo coincidem -- reconstruindo o
+# menu_config via _build_menu_config_v2 (preservando campos existentes como
+# additional_fields) e marcando is_active=True/is_deleted=False. A busca de
+# reativacao permanece GLOBAL (nao filtrada por entity_id), coerente com a
+# unicidade global mantida nesta fase.
 ####################################################################################
 
-def test_create_sidebar_menu_setting_v2_reactivates_soft_deleted_menu_matching_key():
+def test_create_sidebar_menu_setting_reactivates_soft_deleted_menu_matching_key():
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
@@ -164,7 +199,7 @@ def test_create_sidebar_menu_setting_v2_reactivates_soft_deleted_menu_matching_k
     )
 
     session = SessionLocal()
-    ok, error, menu_key = create_sidebar_menu_setting(session, "Processo A")
+    ok, error, menu_key = create_sidebar_menu_setting(session, 1, "Processo A")
     session.close()
 
     assert ok is True
@@ -176,9 +211,9 @@ def test_create_sidebar_menu_setting_v2_reactivates_soft_deleted_menu_matching_k
     assert row["config"]["additional_fields"] == [{"key": "custom_x", "label": "X"}]
 
 
-def test_create_sidebar_menu_setting_v2_reactivates_soft_deleted_menu_matching_label_only():
+def test_create_sidebar_menu_setting_reactivates_soft_deleted_menu_matching_label_only():
     """
-    Comportamento documentado (nao corrigido): a busca por registo existente usa
+    Comportamento preservado: a busca por registo existente usa
     "menu_key = :menu_key OR menu_label = :menu_label", portanto um rotulo
     identico com uma chave historica diferente da que seria gerada agora tambem
     aciona a reativacao (com a chave historica preservada), em vez de criar uma
@@ -194,7 +229,7 @@ def test_create_sidebar_menu_setting_v2_reactivates_soft_deleted_menu_matching_l
     )
 
     session = SessionLocal()
-    ok, error, menu_key = create_sidebar_menu_setting(session, "Processo A")
+    ok, error, menu_key = create_sidebar_menu_setting(session, 1, "Processo A")
     session.close()
 
     assert ok is True
@@ -205,7 +240,7 @@ def test_create_sidebar_menu_setting_v2_reactivates_soft_deleted_menu_matching_l
     assert row["is_deleted"] is False
 
 
-def test_create_sidebar_menu_setting_v2_purges_legacy_menu_section_on_reactivation():
+def test_create_sidebar_menu_setting_purges_legacy_menu_section_on_reactivation():
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
@@ -217,12 +252,31 @@ def test_create_sidebar_menu_setting_v2_purges_legacy_menu_section_on_reactivati
     )
 
     session = SessionLocal()
-    create_sidebar_menu_setting(session, "Processo A")
+    create_sidebar_menu_setting(session, 1, "Processo A")
     session.close()
 
     row = _load_row(SessionLocal, "processo_a")
     assert "menu_section" not in row["config"]
     assert "sidebar_section" in row["config"]
+
+
+def test_create_sidebar_menu_setting_bumps_administrativo_refresh_version_on_reactivation():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_key="administrativo", menu_label="Administrativo")
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_a",
+        menu_label="Processo A",
+        is_active=False,
+        is_deleted=True,
+    )
+
+    session = SessionLocal()
+    create_sidebar_menu_setting(session, 1, "Processo A")
+    session.close()
+
+    administrativo_row = _load_row(SessionLocal, "administrativo")
+    assert "sidebar_global_refresh_version" in administrativo_row["config"]
 
 
 ####################################################################################

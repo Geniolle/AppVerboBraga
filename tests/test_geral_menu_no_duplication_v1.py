@@ -6,14 +6,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 ####################################################################################
-# (1) MULTIPLAS GERACOES CONFIRMADAS: create_sidebar_menu_setting tem 2 geracoes no
-# ficheiro fonte (v1 morta na linha ~2570, v2 ativa na linha ~2750), religadas por
-# um alias a nivel de modulo ("create_sidebar_menu_setting = create_sidebar_menu_setting_v2")
-# que faz com que TODOS os importadores do nome sem sufixo (menu_settings.py e
-# settings_handlers.py) resolvam para o comportamento de v2, nao de v1.
+# (1) GERACAO UNICA CONFIRMADA: apos a consolidacao estrutural desta fase,
+# create_sidebar_menu_setting tem exatamente UMA definicao em menu_settings.py --
+# a v1 morta e o alias de modulo "create_sidebar_menu_setting = create_sidebar_menu_setting_v2"
+# foram removidos. entity_id passou a ser o segundo parametro posicional,
+# obrigatorio.
 ####################################################################################
 
-def test_menu_settings_has_exactly_two_create_sidebar_menu_setting_definitions() -> None:
+def test_menu_settings_has_exactly_one_create_sidebar_menu_setting_definition() -> None:
     menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
     lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
 
@@ -21,34 +21,37 @@ def test_menu_settings_has_exactly_two_create_sidebar_menu_setting_definitions()
         line_number
         for line_number, line_text in enumerate(lines, start=1)
         if line_text.startswith("def create_sidebar_menu_setting(")
-        or line_text.startswith("def create_sidebar_menu_setting_v2(")
     ]
 
-    assert len(definition_line_numbers) == 2
+    assert len(definition_line_numbers) == 1
 
 
-def test_create_sidebar_menu_setting_is_rebound_to_v2_via_module_level_alias() -> None:
+def test_menu_settings_has_no_create_sidebar_menu_setting_v2_definition() -> None:
     menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
     menu_settings_text = menu_settings_path.read_text(encoding="utf-8")
 
-    assert "create_sidebar_menu_setting = create_sidebar_menu_setting_v2" in menu_settings_text
+    assert "def create_sidebar_menu_setting_v2(" not in menu_settings_text
 
 
-def test_create_sidebar_menu_setting_name_is_identical_object_to_v2_at_runtime() -> None:
-    from appgenesis.menu_settings import (
-        create_sidebar_menu_setting,
-        create_sidebar_menu_setting_v2,
-    )
+def test_menu_settings_has_no_module_level_alias_for_create_sidebar_menu_setting() -> None:
+    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
+    menu_settings_text = menu_settings_path.read_text(encoding="utf-8")
 
-    assert create_sidebar_menu_setting is create_sidebar_menu_setting_v2
+    assert "create_sidebar_menu_setting = create_sidebar_menu_setting_v2" not in menu_settings_text
+
+
+def test_create_sidebar_menu_setting_requires_entity_id_as_second_parameter() -> None:
+    from appgenesis.menu_settings import create_sidebar_menu_setting
+
+    parameter_names = list(inspect.signature(create_sidebar_menu_setting).parameters)
+    assert parameter_names[:2] == ["session", "entity_id"]
 
 
 def test_settings_handlers_imports_and_calls_the_unsuffixed_create_name() -> None:
     """
-    settings_handlers.py nunca referencia create_sidebar_menu_setting_v2
-    explicitamente -- importa e chama o nome sem sufixo, que resolve para v2
-    apenas por causa do alias de modulo. Se o alias fosse removido/alterado,
-    este ficheiro voltaria a chamar a v1 morta sem qualquer aviso.
+    settings_handlers.py importa e chama create_sidebar_menu_setting diretamente
+    -- ja nao ha alias de modulo nem versao morta para a qual possa
+    acidentalmente voltar a apontar.
     """
     handlers_path = PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "settings_handlers.py"
     handlers_text = handlers_path.read_text(encoding="utf-8")
@@ -117,7 +120,21 @@ def test_no_js_file_references_the_edit_move_or_delete_menu_routes() -> None:
     assert offending_files == []
 
 
-def test_menu_section_form_js_is_the_sole_js_reference_to_the_create_route() -> None:
+####################################################################################
+# (4) REMOCAO DO FRONTEND ORFAO: menu_section_form.js foi removido nesta fase --
+# nao existia nenhum formulario real em new_user.html apontando para
+# /settings/menu/create, tornando o script inerte na pratica. A rota backend
+# permanece funcional (exercida diretamente pelos testes de handler); apenas o
+# JS morto e a sua referencia no template foram eliminados. Migrar para uma UI de
+# criacao funcional continua fora do escopo desta fase.
+####################################################################################
+
+def test_menu_section_form_js_file_no_longer_exists() -> None:
+    script_path = PROJECT_ROOT / "static" / "js" / "modules" / "menu_section_form.js"
+    assert not script_path.exists()
+
+
+def test_no_js_file_references_the_create_menu_route() -> None:
     modules_dir = PROJECT_ROOT / "static" / "js"
     matching_files = []
 
@@ -126,24 +143,20 @@ def test_menu_section_form_js_is_the_sole_js_reference_to_the_create_route() -> 
         if "/settings/menu/create" in script_text:
             matching_files.append(script_path.name)
 
-    assert matching_files == ["menu_section_form.js"]
+    assert matching_files == []
 
 
-def test_menu_section_form_js_never_intercepts_form_submission() -> None:
-    script_path = PROJECT_ROOT / "static" / "js" / "modules" / "menu_section_form.js"
-    script_text = script_path.read_text(encoding="utf-8")
+def test_new_user_html_has_no_script_reference_to_menu_section_form() -> None:
+    template_path = PROJECT_ROOT / "templates" / "new_user.html"
+    template_text = template_path.read_text(encoding="utf-8")
 
-    assert "preventDefault" not in script_text
-    assert "fetch(" not in script_text
-    assert "XMLHttpRequest" not in script_text
+    assert "menu_section_form.js" not in template_text
 
 
 ####################################################################################
-# (4) COMPORTAMENTO ESTRANHO: a rota /settings/menu/create (e a logica de
-# persistencia v2 que ela invoca, incluindo o bug de entity_id documentado em
-# test_geral_menu_persistence_isolation_v1.py) nao tem NENHUM formulario
-# correspondente em nenhum template renderizado. menu_section_form.js procura um
-# seletor DOM que nunca existe em new_user.html, tornando-o inerte na pratica.
+# (5) COMPORTAMENTO ESTRANHO: a rota /settings/menu/create (e a logica de
+# persistencia que ela invoca) nao tem NENHUM formulario correspondente em nenhum
+# template renderizado.
 ####################################################################################
 
 def test_new_user_html_has_no_form_targeting_the_create_route() -> None:
@@ -153,20 +166,8 @@ def test_new_user_html_has_no_form_targeting_the_create_route() -> None:
     assert 'action="/settings/menu/create"' not in template_text
 
 
-def test_menu_section_form_js_selector_targets_a_form_action_absent_from_the_template() -> None:
-    script_path = PROJECT_ROOT / "static" / "js" / "modules" / "menu_section_form.js"
-    script_text = script_path.read_text(encoding="utf-8")
-
-    assert 'form[action="/settings/menu/create"]' in script_text
-
-    template_path = PROJECT_ROOT / "templates" / "new_user.html"
-    template_text = template_path.read_text(encoding="utf-8")
-
-    assert 'action="/settings/menu/create"' not in template_text
-
-
 ####################################################################################
-# (5) CONTAGEM DE MARCADORES NO TEMPLATE: cada rota de Geral com formulario visivel
+# (6) CONTAGEM DE MARCADORES NO TEMPLATE: cada rota de Geral com formulario visivel
 # tem exatamente as ocorrencias esperadas -- edit=1, move=2 (subir/descer),
 # delete=1, create=0 (documentado como ausente, nao "deveria ser 1").
 ####################################################################################
@@ -182,11 +183,10 @@ def test_new_user_html_form_action_occurrence_counts_for_geral_routes() -> None:
 
 
 ####################################################################################
-# (6) COMPORTAMENTO ESTRANHO: menu_section_form.js injeta dinamicamente um campo
-# <select name="menu_section"> no (inexistente) formulario de criacao, mas o
-# handler de criacao nao declara esse nome como parametro Form(...) -- mesmo que o
-# form existisse e o campo fosse submetido, o FastAPI ignoraria o valor
-# silenciosamente (nao gera erro 422, o campo e' simplesmente descartado).
+# (7) COMPORTAMENTO ESTRANHO: o handler de criacao nunca declarou "menu_section"
+# como parametro Form(...) -- mesmo com o antigo menu_section_form.js injetando
+# esse campo, o FastAPI ignorava o valor silenciosamente (nao gera erro 422, o
+# campo e' simplesmente descartado).
 ####################################################################################
 
 def test_create_handler_signature_has_no_menu_section_form_parameter() -> None:
@@ -196,10 +196,3 @@ def test_create_handler_signature_has_no_menu_section_form_parameter() -> None:
         settings_handlers_module.create_sidebar_menu_setting_handler_v1
     )
     assert "menu_section" not in signature.parameters
-
-
-def test_menu_section_form_js_injects_a_field_named_menu_section() -> None:
-    script_path = PROJECT_ROOT / "static" / "js" / "modules" / "menu_section_form.js"
-    script_text = script_path.read_text(encoding="utf-8")
-
-    assert 'name="menu_section"' in script_text

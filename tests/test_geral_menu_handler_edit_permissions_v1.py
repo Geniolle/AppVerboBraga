@@ -4,8 +4,6 @@ from unittest.mock import patch
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
-from sqlalchemy.exc import IntegrityError
-import pytest
 from starlette.requests import Request
 
 import appgenesis.routes.profile.settings_handlers as settings_handlers_module
@@ -366,9 +364,7 @@ def test_create_validation_error_redirect_has_no_settings_action_or_tab():
 
 def test_create_success_with_default_redirect_target_has_no_settings_action_or_tab():
     """
-    Usa reativacao de uma pasta soft-deleted (em vez de criacao genuina) para
-    alcancar o caminho de sucesso sem disparar o bug de entity_id documentado em
-    (5) -- apenas pastas genuinamente novas atingem o INSERT que falha.
+    Usa reativacao de uma pasta soft-deleted para alcancar o caminho de sucesso.
     """
     SessionLocal = _build_session_factory()
     _seed_menu(
@@ -395,7 +391,7 @@ def test_create_success_with_default_redirect_target_has_no_settings_action_or_t
 
 def test_create_success_with_editor_stay_target_includes_settings_action_and_tab():
     """
-    Usa reativacao de uma pasta soft-deleted pelo mesmo motivo do teste anterior.
+    Usa reativacao de uma pasta soft-deleted, pelo mesmo padrao do teste anterior.
     """
     SessionLocal = _build_session_factory()
     _seed_menu(
@@ -420,32 +416,35 @@ def test_create_success_with_editor_stay_target_includes_settings_action_and_tab
 
 
 ####################################################################################
-# (5) CREATE: comportamento estranho confirmado empiricamente -- o handler NAO
-# captura IntegrityError. Criar uma pasta genuinamente nova (sem nenhuma linha
-# existente com a mesma chave/rotulo) propaga a excecao ate' ao chamador em vez
-# de devolver um redirect de erro, porque create_sidebar_menu_setting (resolvido
-# para a v2 via alias de modulo) executa um INSERT que nunca fornece entity_id
-# (coluna nullable=False sem default). Em producao isto significa que criar um
-# novo processo atraves desta rota deveria falhar com erro 500, nao com uma
-# mensagem de validacao amigavel.
+# (5) CREATE: correcao confirmada -- o handler resolve a entidade ativa via
+# get_session_entity_id(request) e passa-a explicitamente a
+# create_sidebar_menu_setting, que agora inclui entity_id no INSERT. Criar uma
+# pasta genuinamente nova ja NAO propaga IntegrityError. Se a entidade ativa nao
+# puder ser identificada (sessao sem entity_id), o handler devolve um redirect de
+# erro antes de chamar a camada de persistencia.
 ####################################################################################
 
-def test_create_owner_raises_integrity_error_for_a_genuinely_new_process():
+def test_create_owner_succeeds_for_a_genuinely_new_process():
     SessionLocal = _build_session_factory()
     session = SessionLocal()
     session.add(Entity(id=1, name="Entidade Teste"))
     session.commit()
     session.close()
 
-    with pytest.raises(IntegrityError, match="entity_id"):
-        _call(
-            "create_sidebar_menu_setting_handler_v1",
-            SessionLocal, current_user=OWNER, is_admin=True, permissions=OWNER_PERMISSIONS,
-            **_create_form(),
-        )
+    response = _call(
+        "create_sidebar_menu_setting_handler_v1",
+        SessionLocal, current_user=OWNER, is_admin=True, permissions=OWNER_PERMISSIONS,
+        **_create_form(),
+    )
+
+    assert response.status_code == 303
+    assert "Pasta%20criada%20com%20sucesso." in response.headers["location"]
+    row = _load_row(SessionLocal, "processo_novo")
+    assert row["is_active"] is True
+    assert row["is_deleted"] is False
 
 
-def test_create_owner_reactivates_soft_deleted_menu_without_hitting_entity_id_bug():
+def test_create_owner_reactivates_soft_deleted_menu():
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
@@ -466,6 +465,28 @@ def test_create_owner_reactivates_soft_deleted_menu_without_hitting_entity_id_bu
     row = _load_row(SessionLocal, "processo_novo")
     assert row["is_active"] is True
     assert row["is_deleted"] is False
+
+
+def test_create_blocks_when_active_entity_cannot_be_resolved():
+    SessionLocal = _build_session_factory()
+
+    with patch.object(settings_handlers_module, "SessionLocal", SessionLocal), patch.object(
+        settings_handlers_module, "get_current_user", return_value=OWNER
+    ), patch.object(
+        settings_handlers_module, "is_admin_user", return_value=True
+    ), patch.object(
+        settings_handlers_module, "get_session_entity_id", return_value=None
+    ), patch.object(
+        settings_handlers_module, "get_user_entity_permissions", return_value=OWNER_PERMISSIONS
+    ):
+        response = settings_handlers_module.create_sidebar_menu_setting_handler_v1(
+            request=_build_request(), **_create_form()
+        )
+
+    assert response.status_code == 303
+    location = response.headers["location"]
+    assert "N%C3%A3o%20foi%20poss%C3%ADvel%20identificar%20a%20entidade%20ativa." in location
+    assert _load_row(SessionLocal, "processo_novo") is None
 
 
 ####################################################################################
