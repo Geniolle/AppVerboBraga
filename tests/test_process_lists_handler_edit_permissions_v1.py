@@ -1,0 +1,216 @@
+import json
+from unittest.mock import patch
+
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+from starlette.requests import Request
+
+import appgenesis.routes.profile.settings_handlers as settings_handlers_module
+from appgenesis.models import Base, Entity, SidebarMenuSetting
+
+
+MENU_KEY = "processo_teste_permissoes"
+
+
+def _build_session_factory():
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        future=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(
+        engine,
+        tables=[Entity.__table__, SidebarMenuSetting.__table__],
+    )
+    return sessionmaker(bind=engine, future=True)
+
+
+def _seed_menu(SessionLocal, *, menu_config):
+    session = SessionLocal()
+    row = SidebarMenuSetting(
+        entity_id=1,
+        menu_key=MENU_KEY,
+        menu_label=MENU_KEY,
+        menu_config=json.dumps(menu_config),
+    )
+    session.add(row)
+    session.commit()
+    session.close()
+
+
+def _load_config(SessionLocal):
+    session = SessionLocal()
+    row = session.execute(
+        select(SidebarMenuSetting).where(SidebarMenuSetting.menu_key == MENU_KEY)
+    ).scalar_one()
+    config = json.loads(row.menu_config)
+    session.close()
+    return config
+
+
+def _build_request() -> Request:
+    return Request({"type": "http", "method": "POST", "path": "/users/new", "headers": []})
+
+
+def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_overrides):
+    form = dict(
+        menu_key=MENU_KEY,
+        process_list_key=[],
+        process_list_label=[],
+        process_list_items_csv=[],
+        process_list_field_type=[],
+        process_list_column_key=[],
+        process_list_column_label=[],
+        process_list_column_field_key=[],
+        process_list_column_source_kind=[],
+        process_list_column_always_visible=[],
+        process_list_column_responsive_priority=[],
+        process_list_columns_configured="",
+        redirect_menu="administrativo",
+        redirect_target="#settings-menu-edit-card",
+        return_url="",
+    )
+    form.update(form_overrides)
+
+    with patch.object(settings_handlers_module, "SessionLocal", SessionLocal), patch.object(
+        settings_handlers_module, "get_current_user", return_value=current_user
+    ), patch.object(
+        settings_handlers_module, "is_admin_user", return_value=is_admin
+    ), patch.object(
+        settings_handlers_module, "get_session_entity_id", return_value=1
+    ), patch.object(
+        settings_handlers_module, "get_user_entity_permissions", return_value=permissions
+    ):
+        return settings_handlers_module.edit_sidebar_menu_process_lists_handler(
+            request=_build_request(), **form
+        )
+
+
+def test_edit_process_lists_requires_login():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_config={"process_lists": []})
+
+    response = _call_handler(SessionLocal, current_user=None, is_admin=False, permissions={})
+
+    assert response.status_code == 302
+    assert response.headers["location"] == "/login?error=Efetue%20login%20para%20continuar."
+    assert _load_config(SessionLocal)["process_lists"] == []
+
+
+def test_edit_process_lists_blocks_non_admin():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_config={"process_lists": []})
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "user@example.com"},
+        is_admin=False,
+        permissions={},
+    )
+
+    assert response.status_code == 303
+    location = response.headers["location"]
+    assert "Apenas%20administradores%20podem%20alterar%20listas%20do%20processo." in location
+    assert "settings_tab=lista" in location
+    assert _load_config(SessionLocal)["process_lists"] == []
+
+
+def test_edit_process_lists_blocks_admin_non_owner():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_config={"process_lists": []})
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "admin@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": False, "can_manage_all_entities": False},
+    )
+
+    assert response.status_code == 303
+    location = response.headers["location"]
+    assert "Apenas%20Owner%20pode%20configurar%20listas%20do%20processo." in location
+    assert "settings_tab=lista" in location
+    assert _load_config(SessionLocal)["process_lists"] == []
+
+
+def test_edit_process_lists_owner_success_creates_and_edits_lists():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_config={"process_lists": []})
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        process_list_key=["a", "b"],
+        process_list_label=["Lista A", "Lista B"],
+        process_list_items_csv=["1,2", ""],
+        process_list_field_type=["manual", "automatic"],
+    )
+
+    assert response.status_code == 303
+    location = response.headers["location"]
+    assert "target=settings-menu-edit-card" in location
+    assert "settings_tab=lista" in location
+    assert f"settings_edit_key={MENU_KEY}" in location
+    assert "Listas%20do%20processo%20atualizadas%20com%20sucesso." in location
+
+    process_lists = _load_config(SessionLocal)["process_lists"]
+    assert [item["label"] for item in process_lists] == ["Lista a", "Lista b"]
+    assert [item["field_type"] for item in process_lists] == ["manual", "automatic"]
+    assert process_lists[0]["items"] == ["1", "2"]
+    assert process_lists[1]["items"] == []
+
+
+def test_edit_process_lists_removal_via_blank_rows():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "list_existente",
+                    "label": "Existente",
+                    "field_type": "manual",
+                    "items": ["X"],
+                }
+            ]
+        },
+    )
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        process_list_key=[""],
+        process_list_label=[""],
+        process_list_items_csv=[""],
+        process_list_field_type=["manual"],
+    )
+
+    assert response.status_code == 303
+    assert _load_config(SessionLocal)["process_lists"] == []
+
+
+def test_edit_process_lists_invalid_field_type_normalized_to_manual():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_config={"process_lists": []})
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        process_list_key=["x"],
+        process_list_label=["X"],
+        process_list_items_csv=["A"],
+        process_list_field_type=["bogus"],
+    )
+
+    assert response.status_code == 303
+    process_lists = _load_config(SessionLocal)["process_lists"]
+    assert process_lists[0]["field_type"] == "manual"
+    assert process_lists[0]["items"] == ["A"]

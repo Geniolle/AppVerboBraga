@@ -369,13 +369,24 @@ teste manual/E2E antes da Fase 1.
 | Isolamento entre entidades | ⬜ — `SidebarMenuSetting` é **global, não por entidade** (Risco #6 do `risk-map.md` anterior); o escopo de entidade vive dentro do próprio `menu_config` (`visibility_scope`), não como filtro de tabela | idem | idem | idem | idem | idem |
 
 **Achado que deve ser tratado como crítico de design, não de bug**: `SidebarMenuSetting` (e portanto
-todas as 6 abas) não tem `entity_id` a nível de tabela. "Isolamento entre entidades" para estas
-abas não significa "cada entidade tem a sua cópia da configuração" — significa "a mesma
-configuração de processo é global, e o campo `visibility_scope`/`profile_scope` dentro do JSON
-decide que entidades a veem". Qualquer fase futura de refatoração que assuma erradamente
-particionamento por entidade ao nível do repositório (como o `risk-map.md` da refatoração anterior já
-avisou para `domains/modules/menu_provider.py`) introduziria uma regressão de segregação que não
-existe hoje por design. Isto tem de ser preservado exatamente como está, não "corrigido".
+todas as 6 abas) **tem** uma coluna `entity_id` (FK obrigatória para `entities.id`, com
+`UniqueConstraint("entity_id", "menu_key")`) — correção face a uma leitura anterior desta secção,
+que afirmava a ausência da coluna. Na prática, porém, essa coluna não é usada para particionar
+configuração por entidade: `ensure_sidebar_menu_settings_defaults` cria uma única linha por
+`menu_key`, preenchendo `entity_id` com um valor arbitrário resolvido por
+`_resolve_sidebar_menu_settings_entity_id` (a primeira entidade por `id` ascendente, apenas para
+satisfazer a FK `NOT NULL`); e todas as funções de leitura/escrita confirmadas nesta fase
+(`_menu_exists`, `_load_menu_config`, `update_sidebar_menu_process_lists`) filtram exclusivamente
+por `lower(trim(menu_key))`, nunca por `entity_id`. Ou seja, o comportamento funcional já descrito
+permanece correto: "Isolamento entre entidades" para estas abas não significa "cada entidade tem a
+sua cópia da configuração" — significa "a mesma configuração de processo é global, e o campo
+`visibility_scope`/`profile_scope` dentro do JSON decide que entidades a veem". Qualquer fase futura
+de refatoração que assuma erradamente particionamento por entidade ao nível do repositório (como o
+`risk-map.md` da refatoração anterior já avisou para `domains/modules/menu_provider.py`), incluindo
+uma tentativa de "aproveitar" a coluna `entity_id` já existente para filtrar consultas, introduziria
+uma regressão de segregação que não existe hoje por design. Isto tem de ser preservado exatamente
+como está, não "corrigido". Protegido por
+`tests/test_process_lists_persistence_isolation_v1.py::test_update_process_lists_ignores_entity_id_column_by_design`.
 
 Todas as linhas ⬜ requerem validação manual em browser (ou um novo teste Selenium/E2E) antes da
 Fase 1 poder declarar "testes de proteção completos" para essa aba — não é seguro assumir o
