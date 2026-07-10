@@ -1331,7 +1331,6 @@
 
         {% if settings_edit_data %}
         {% set settings_edit_origin_menu = settings_edit_request_origin_menu|default("sessoes") %}
-        {% set settings_edit_cancel_target = "#menu-subprocess-card-active" %}
         {% set settings_process_field_options = settings_edit_data.process_field_options or [] %}
         {% if settings_edit_data.key == "administrativo" and not settings_process_field_options %}
           {% set settings_process_field_options = [
@@ -1427,8 +1426,8 @@
                     class="action-btn-cancel"
                     data-appgenesis-cancel="1"
                     data-appgenesis-cancel-target="settings-menu-edit-card"
-                    data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                    data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                    data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                    data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                   >Cancelar</button>
                 </div>
               </form>
@@ -1491,8 +1490,8 @@
                   class="action-btn-cancel"
                   data-appgenesis-cancel="1"
                   data-appgenesis-cancel-target="settings-menu-edit-card"
-                  data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                  data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                  data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                  data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                 >Cancelar</button>
               </div>
               {% endif %}
@@ -1618,8 +1617,8 @@
                             data-appgenesis-cancel="1"
                             data-process-fields-config-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1760,8 +1759,8 @@
                             data-appgenesis-cancel="1"
                             data-process-quantity-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1888,8 +1887,8 @@
                             data-appgenesis-cancel="1"
                             data-process-list-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2006,8 +2005,8 @@
                             data-appgenesis-cancel="1"
                             data-process-list-column-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2126,8 +2125,8 @@
                             data-appgenesis-cancel="1"
                             data-process-subsequent-field-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2431,8 +2430,8 @@
                             data-appgenesis-cancel="1"
                             data-additional-field-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
-                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -2805,7 +2804,7 @@
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260630-core-migration-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260630-configurable-core-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-invite-link-header-v1"></script>
-  <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260704-global-cancel-v1"></script>
+  <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
   <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
   <script src="/static/js/modules/process_reference_registry_v1.js?v=20260707-process-reference-stage8-v1"></script>

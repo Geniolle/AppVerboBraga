@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 
@@ -6,8 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 ####################################################################################
-# (1) TODOS OS BOTOES CANCELAR DO EDITOR DE PROCESSO SAEM DO EDITOR INTEIRO, USANDO O
-# MESMO PADRAO GENERICO JA USADO NA ABA GERAL (settings_edit_origin_menu / cancel_target).
+# (1) TODOS OS BOTOES CANCELAR DO EDITOR PERMANECEM NO PROCESSO E NA ABA ATUAL.
 ####################################################################################
 
 CANCEL_BUTTON_MARKERS = [
@@ -23,7 +21,7 @@ def _read_new_user_html() -> str:
     return (PROJECT_ROOT / "templates" / "new_user.html").read_text(encoding="utf-8")
 
 
-def test_all_process_editor_tab_cancel_buttons_exit_the_whole_editor() -> None:
+def test_all_process_editor_tab_cancel_buttons_stay_in_process_editor() -> None:
     html_text = _read_new_user_html()
 
     for marker in CANCEL_BUTTON_MARKERS:
@@ -32,35 +30,34 @@ def test_all_process_editor_tab_cancel_buttons_exit_the_whole_editor() -> None:
         window = html_text[max(0, marker_index - 400):marker_index + 400]
 
         assert 'data-appgenesis-cancel-target="settings-menu-edit-card"' in window, (
-            f"Botao Cancelar de {marker} nao sai do editor de processo inteiro."
+            f"Botao Cancelar de {marker} nao pertence ao editor de processo."
         )
-        assert "data-appgenesis-cancel-return-target=" in window
-        assert "data-appgenesis-cancel-return-url=" in window
+        assert 'data-appgenesis-cancel-return-target="#settings-menu-edit-card"' in window
+        assert 'data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"' in window
 
 
-def test_process_editor_cancel_buttons_use_generic_origin_menu_not_hardcoded() -> None:
+def test_process_editor_cancel_buttons_reuse_editor_return_url() -> None:
     html_text = _read_new_user_html()
 
     # O padrao generico usado em toda a app: settings_edit_origin_menu (variavel Jinja calculada uma
     # vez para o processo em edicao), nunca um menu_key literal como "calendario" ou "administrativo".
-    return_url_pattern = re.compile(
-        r'data-appgenesis-cancel-return-url="/users/new\?menu=\{\{\s*settings_edit_origin_menu\s*\}\}'
+    matches = html_text.count(
+        'data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"'
     )
-    matches = return_url_pattern.findall(html_text)
 
     # Aba Geral (2 variantes: owner editavel + somente leitura) + os managers do editor,
     # incluindo a area independente de colunas da listagem dentro da aba Listas.
-    assert len(matches) == 8
+    assert matches == 8
 
     for hardcoded_menu in ("menu=calendario", "menu=administrativo\"", "menu=sessoes\""):
         assert hardcoded_menu not in html_text
 
 
-def test_process_editor_cancel_return_target_reuses_settings_edit_cancel_target_variable() -> None:
+def test_process_editor_cancel_return_target_is_the_process_editor_card() -> None:
     html_text = _read_new_user_html()
 
     assert html_text.count(
-        'data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"'
+        'data-appgenesis-cancel-return-target="#settings-menu-edit-card"'
     ) == 8
 
 

@@ -26,6 +26,7 @@
     "[data-additional-field-editor-cancel]",
     "[data-process-fields-config-cancel]",
     "[data-process-list-editor-cancel]",
+    "[data-process-list-column-editor-cancel]",
     "[data-process-quantity-editor-cancel]",
     "[data-process-subsequent-field-cancel]",
     ".process-fields-config-cancel-v6",
