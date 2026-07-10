@@ -117,11 +117,11 @@
   {% endif %}
   {% set _show_form = _is_active_subprocess and (state.is_editing or _initial_menu_target_resolved == '#' ~ (state.config.edit_target if state.is_editing else state.config.default_target)) %}
 
-  {# Alerta fica fora da section (que alterna display:none entre form/lista) para continuar
-     visivel independentemente de o redirect ter devolvido o utilizador ao formulario ou a
-     lista -- unico ponto de feedback, reutilizavel por qualquer subprocesso administrativo
-     que chame este macro, sem logica separada por processo. #}
-  {% if state.success %}
+  {# No fluxo moderno de Estruturas > Menu, o feedback de sucesso ja e promovido a toast
+     global pelo runtime a partir dos query params da URL. Suprimimos apenas o alerta inline
+     de sucesso nesse subprocesso para evitar duplicacao visual, mantendo os erros inline. #}
+  {% set _suppress_inline_success_feedback = state.config.key == 'menu' and state.menu_key == 'sessoes' %}
+  {% if state.success and not _suppress_inline_success_feedback %}
     <div class="alert ok">{{ state.success }}</div>
   {% endif %}
   {% if state.error %}

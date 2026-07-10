@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from appgenesis.menu_settings import (
     ADDITIONAL_FIELD_TYPES,
+    SIDEBAR_MENU_DEFAULTS,
     delete_sidebar_section,
     get_menu_process_default_visible_fields,
     get_menu_process_field_options,
@@ -13,6 +14,7 @@ from appgenesis.menu_settings import (
     get_menu_process_header_options,
     get_menu_process_selectable_field_options,
     get_sidebar_menu_settings,
+    move_sidebar_menu_setting,
     normalize_menu_process_additional_fields,
     normalize_menu_process_quantity_fields,
     resolve_menu_sidebar_section_key,
@@ -20,7 +22,7 @@ from appgenesis.menu_settings import (
     update_sidebar_menu_process_quantity_fields_v1,
 )
 from appgenesis.admin_subprocesses.registry import SESSOES_CONFIG
-from appgenesis.models import Base, SidebarMenuSetting
+from appgenesis.models import Base, Entity, SidebarMenuSetting
 from appgenesis.services.profile import (
     build_profile_menu_tabs_dependency_map_v1,
     resolve_field_list_options_v1,
@@ -80,7 +82,12 @@ def test_additional_field_types_include_time_with_correct_label() -> None:
 def test_normalize_additional_fields_accepts_time_type_and_ignores_size() -> None:
     normalized = normalize_menu_process_additional_fields(
         [
-            {"label": "Hora de início", "field_type": "time", "size": "255", "is_required": True},
+            {
+                "label": "Hora de início",
+                "field_type": "time",
+                "size": "255",
+                "is_required": True,
+            },
         ]
     )
 
@@ -99,7 +106,11 @@ def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
         {"label": "Campo telefone", "field_type": "phone"},
         {"label": "Campo data", "field_type": "date"},
         {"label": "Campo flag", "field_type": "flag"},
-        {"label": "Campo lista", "field_type": "list", "manual_list_key": "lista_teste"},
+        {
+            "label": "Campo lista",
+            "field_type": "list",
+            "manual_list_key": "lista_teste",
+        },
         {"label": "Campo cabecalho", "field_type": "header"},
     ]
 
@@ -126,7 +137,10 @@ def test_normalize_additional_fields_allows_same_label_across_groups() -> None:
     )
 
     assert [item["field_type"] for item in normalized] == ["header", "text"]
-    assert [item["key"] for item in normalized] == ["custom_header_perfil", "custom_field_perfil"]
+    assert [item["key"] for item in normalized] == [
+        "custom_header_perfil",
+        "custom_field_perfil",
+    ]
 
 
 def test_normalize_additional_fields_blocks_duplicate_inside_same_group() -> None:
@@ -164,15 +178,24 @@ def test_menu_process_field_options_keep_header_and_field_with_same_label() -> N
     }
 
     options = get_menu_process_field_options("perfil_de_autorizacao", menu_config)
-    selectable_options = get_menu_process_selectable_field_options("perfil_de_autorizacao", menu_config)
-    header_options = get_menu_process_header_options("perfil_de_autorizacao", menu_config)
+    selectable_options = get_menu_process_selectable_field_options(
+        "perfil_de_autorizacao", menu_config
+    )
+    header_options = get_menu_process_header_options(
+        "perfil_de_autorizacao", menu_config
+    )
 
-    assert [item["key"] for item in options] == ["custom_header_perfil", "custom_field_perfil"]
+    assert [item["key"] for item in options] == [
+        "custom_header_perfil",
+        "custom_field_perfil",
+    ]
     assert [item["key"] for item in selectable_options] == ["custom_field_perfil"]
     assert [item["key"] for item in header_options] == ["custom_header_perfil"]
 
 
-def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_legacy_map() -> None:
+def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_legacy_map() -> (
+    None
+):
     menu_config = {
         "additional_fields": [
             {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
@@ -181,7 +204,11 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
                 "label": "Objeto de autorização",
                 "field_type": "header",
             },
-            {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
+            {
+                "key": "custom_nome_do_perfil",
+                "label": "Nome do perfil",
+                "field_type": "text",
+            },
             {"key": "custom_processo", "label": "Processo", "field_type": "text"},
             {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
             {"key": "custom_perfil_2", "label": "Perfil", "field_type": "text"},
@@ -225,7 +252,9 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
         },
     }
 
-    assert get_menu_process_visible_field_header_map("perfil_de_autorizacao", menu_config) == {
+    assert get_menu_process_visible_field_header_map(
+        "perfil_de_autorizacao", menu_config
+    ) == {
         "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
         "custom_processo": "custom_objeto_de_autorizacao",
         "custom_subprocesso": "custom_objeto_de_autorizacao",
@@ -233,7 +262,9 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
     }
 
 
-def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_header_map() -> None:
+def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_header_map() -> (
+    None
+):
     menu_config = {
         "additional_fields": [
             {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
@@ -242,7 +273,11 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
                 "label": "Objeto de autorização",
                 "field_type": "header",
             },
-            {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
+            {
+                "key": "custom_nome_do_perfil",
+                "label": "Nome do perfil",
+                "field_type": "text",
+            },
             {"key": "custom_processo", "label": "Processo", "field_type": "text"},
             {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
             {"key": "custom_perfil_2", "label": "Perfil", "field_type": "text"},
@@ -286,7 +321,9 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
         },
     }
 
-    assert get_menu_process_visible_field_rows("perfil_de_autorizacao", menu_config) == [
+    assert get_menu_process_visible_field_rows(
+        "perfil_de_autorizacao", menu_config
+    ) == [
         {
             "field_key": "custom_nome_do_perfil",
             "header_key": "custom_objeto_de_autorizacao",
@@ -446,7 +483,11 @@ def test_resolve_field_list_options_field_list_inherits_source_field_options() -
                 },
             ],
             "process_lists": [
-                {"key": "list_perfil", "label": "Perfil", "items": ["Perfil A", "Perfil B"]},
+                {
+                    "key": "list_perfil",
+                    "label": "Perfil",
+                    "items": ["Perfil A", "Perfil B"],
+                },
             ],
         },
         {
@@ -532,7 +573,10 @@ def test_resolve_field_list_options_manual_uses_current_process_list() -> None:
             {
                 "key": "empresa",
                 "process_lists": [
-                    {"key": "perfil_manual", "items": ["Pastor", "Líder", "Colaborador"]},
+                    {
+                        "key": "perfil_manual",
+                        "items": ["Pastor", "Líder", "Colaborador"],
+                    },
                 ],
             }
         ],
@@ -556,10 +600,30 @@ def test_resolve_field_list_options_active_menus_filters_visibility_and_state() 
         },
         sidebar_menu_settings=[
             {"key": "home", "label": "Home", "is_active": True, "is_deleted": False},
-            {"key": "sessoes", "label": "Estruturas", "is_active": True, "is_deleted": False},
-            {"key": "departamentos", "label": "Departamentos", "is_active": False, "is_deleted": False},
-            {"key": "musicas", "label": "MÃºsicas", "is_active": True, "is_deleted": True},
-            {"key": "perfil_de_autorizacao", "label": "Perfil de autorizaÃ§Ã£o", "is_active": True, "is_deleted": False},
+            {
+                "key": "sessoes",
+                "label": "Estruturas",
+                "is_active": True,
+                "is_deleted": False,
+            },
+            {
+                "key": "departamentos",
+                "label": "Departamentos",
+                "is_active": False,
+                "is_deleted": False,
+            },
+            {
+                "key": "musicas",
+                "label": "MÃºsicas",
+                "is_active": True,
+                "is_deleted": True,
+            },
+            {
+                "key": "perfil_de_autorizacao",
+                "label": "Perfil de autorizaÃ§Ã£o",
+                "is_active": True,
+                "is_deleted": False,
+            },
         ],
         visible_sidebar_menu_keys={"home", "sessoes", "perfil_de_autorizacao"},
         menu_process_history_map={},
@@ -568,11 +632,17 @@ def test_resolve_field_list_options_active_menus_filters_visibility_and_state() 
     assert resolved == [
         {"value": "home", "label": "Home", "status": "active"},
         {"value": "sessoes", "label": "Estruturas", "status": "active"},
-        {"value": "perfil_de_autorizacao", "label": "Perfil de autorizaÃ§Ã£o", "status": "active"},
+        {
+            "value": "perfil_de_autorizacao",
+            "label": "Perfil de autorizaÃ§Ã£o",
+            "status": "active",
+        },
     ]
 
 
-def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected_profile_menu() -> None:
+def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected_profile_menu() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="perfil_de_autorizacao",
         field_definition={
@@ -589,13 +659,31 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
                 "is_deleted": False,
                 "process_field_options": [
                     {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
-                    {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "list"},
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "text",
+                    },
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_nome_do_perfil", "header_key": "custom_perfil"},
-                    {"field_key": "custom_processo", "header_key": "custom_objeto_de_autorizacao"},
+                    {
+                        "field_key": "custom_nome_do_perfil",
+                        "header_key": "custom_perfil",
+                    },
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
                 ],
             },
             {
@@ -605,11 +693,22 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
-                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                    {
+                        "key": "custom_extrato_header",
+                        "label": "Extratos bancários",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_descricao",
+                        "label": "Descrição",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                    {
+                        "field_key": "custom_descricao",
+                        "header_key": "custom_extrato_header",
+                    },
                 ],
             },
             {
@@ -619,11 +718,22 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_tes_header", "label": "Movimentos", "field_type": "header"},
-                    {"key": "custom_referencia", "label": "Referência", "field_type": "text"},
+                    {
+                        "key": "custom_tes_header",
+                        "label": "Movimentos",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_referencia",
+                        "label": "Referência",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_referencia", "header_key": "custom_tes_header"},
+                    {
+                        "field_key": "custom_referencia",
+                        "header_key": "custom_tes_header",
+                    },
                 ],
             },
         ],
@@ -654,11 +764,17 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
     )
 
     assert resolved == [
-        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+        {
+            "value": "custom_extrato_header",
+            "label": "Extratos bancários",
+            "status": "active",
+        },
     ]
 
 
-def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_prioritizes_custom_processo() -> None:
+def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_prioritizes_custom_processo() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="perfil_de_autorizacao",
         field_definition={
@@ -682,11 +798,22 @@ def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_priorit
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
-                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                    {
+                        "key": "custom_extrato_header",
+                        "label": "Extratos bancários",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_descricao",
+                        "label": "Descrição",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                    {
+                        "field_key": "custom_descricao",
+                        "header_key": "custom_extrato_header",
+                    },
                 ],
             },
             {
@@ -696,11 +823,22 @@ def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_priorit
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_tes_header", "label": "Movimentos", "field_type": "header"},
-                    {"key": "custom_referencia", "label": "Referência", "field_type": "text"},
+                    {
+                        "key": "custom_tes_header",
+                        "label": "Movimentos",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_referencia",
+                        "label": "Referência",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_referencia", "header_key": "custom_tes_header"},
+                    {
+                        "field_key": "custom_referencia",
+                        "header_key": "custom_tes_header",
+                    },
                 ],
             },
         ],
@@ -734,11 +872,17 @@ def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_priorit
     )
 
     assert resolved == [
-        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+        {
+            "value": "custom_extrato_header",
+            "label": "Extratos bancários",
+            "status": "active",
+        },
     ]
 
 
-def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_aliases() -> None:
+def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_aliases() -> (
+    None
+):
     dependency_map = build_profile_menu_tabs_dependency_map_v1(
         sidebar_menu_settings=[
             {
@@ -754,11 +898,22 @@ def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_alia
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
-                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                    {
+                        "key": "custom_extrato_header",
+                        "label": "Extratos bancários",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_descricao",
+                        "label": "Descrição",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                    {
+                        "field_key": "custom_descricao",
+                        "header_key": "custom_extrato_header",
+                    },
                 ],
             },
         ],
@@ -779,7 +934,11 @@ def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_alia
     )
 
     expected_options = [
-        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+        {
+            "value": "custom_extrato_header",
+            "label": "Extratos bancários",
+            "status": "active",
+        },
     ]
 
     assert dependency_map["extrato"] == expected_options
@@ -787,7 +946,9 @@ def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_alia
     assert dependency_map["Extratos bancários"] == expected_options
 
 
-def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_without_menu_key() -> None:
+def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_without_menu_key() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="perfil_de_autorizacao",
         field_definition={
@@ -810,11 +971,22 @@ def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_wit
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
-                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                    {
+                        "key": "custom_extrato_header",
+                        "label": "Extratos bancários",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_descricao",
+                        "label": "Descrição",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                    {
+                        "field_key": "custom_descricao",
+                        "header_key": "custom_extrato_header",
+                    },
                 ],
             },
         ],
@@ -835,11 +1007,17 @@ def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_wit
     )
 
     assert resolved == [
-        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+        {
+            "value": "custom_extrato_header",
+            "label": "Extratos bancários",
+            "status": "active",
+        },
     ]
 
 
-def test_resolve_field_list_options_profile_menu_tabs_returns_empty_when_menu_has_no_tabs() -> None:
+def test_resolve_field_list_options_profile_menu_tabs_returns_empty_when_menu_has_no_tabs() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="perfil_de_autorizacao",
         field_definition={
@@ -849,8 +1027,18 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_empty_when_menu_ha
             "automatic_source_field_key": "custom_nome_do_perfil",
         },
         sidebar_menu_settings=[
-            {"key": "perfil_de_autorizacao", "label": "Perfil de autorização", "is_active": True, "is_deleted": False},
-            {"key": "menu_sem_abas", "label": "Sem abas", "is_active": True, "is_deleted": False},
+            {
+                "key": "perfil_de_autorizacao",
+                "label": "Perfil de autorização",
+                "is_active": True,
+                "is_deleted": False,
+            },
+            {
+                "key": "menu_sem_abas",
+                "label": "Sem abas",
+                "is_active": True,
+                "is_deleted": False,
+            },
         ],
         visible_sidebar_menu_keys={"perfil_de_autorizacao", "menu_sem_abas"},
         menu_process_history_map={
@@ -871,7 +1059,9 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_empty_when_menu_ha
     assert resolved == []
 
 
-def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_profile_menu_tabs() -> None:
+def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_profile_menu_tabs() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="perfil_de_autorizacao",
         field_definition={
@@ -883,7 +1073,12 @@ def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_pro
             "automatic_source_field_key": "custom_perfil",
         },
         sidebar_menu_settings=[
-            {"key": "perfil_de_autorizacao", "label": "Perfil de autorização", "is_active": True, "is_deleted": False},
+            {
+                "key": "perfil_de_autorizacao",
+                "label": "Perfil de autorização",
+                "is_active": True,
+                "is_deleted": False,
+            },
             {
                 "key": "extrato",
                 "label": "Extrato",
@@ -891,11 +1086,22 @@ def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_pro
                 "is_deleted": False,
                 "is_list_process": True,
                 "process_field_options": [
-                    {"key": "custom_extrato_header", "label": "Extratos bancários", "field_type": "header"},
-                    {"key": "custom_descricao", "label": "Descrição", "field_type": "text"},
+                    {
+                        "key": "custom_extrato_header",
+                        "label": "Extratos bancários",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_descricao",
+                        "label": "Descrição",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_descricao", "header_key": "custom_extrato_header"},
+                    {
+                        "field_key": "custom_descricao",
+                        "header_key": "custom_extrato_header",
+                    },
                 ],
             },
         ],
@@ -916,11 +1122,17 @@ def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_pro
     )
 
     assert resolved == [
-        {"value": "custom_extrato_header", "label": "Extratos bancários", "status": "active"},
+        {
+            "value": "custom_extrato_header",
+            "label": "Extratos bancários",
+            "status": "active",
+        },
     ]
 
 
-def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_autorizacao_menu() -> None:
+def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_autorizacao_menu() -> (
+    None
+):
     """A fonte 'profile_menu_tabs' (label visivel: Abas do processo selecionado) deve
     funcionar para qualquer processo/menu que hospede os campos, nao apenas perfil_de_autorizacao,
     e sem depender de historico do menu perfil_de_autorizacao."""
@@ -933,7 +1145,12 @@ def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_au
             "automatic_source_field_key": "custom_processo",
         },
         sidebar_menu_settings=[
-            {"key": "empresa", "label": "Empresa", "is_active": True, "is_deleted": False},
+            {
+                "key": "empresa",
+                "label": "Empresa",
+                "is_active": True,
+                "is_deleted": False,
+            },
             {
                 "key": "extrato",
                 "label": "Extrato",
@@ -941,7 +1158,11 @@ def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_au
                 "is_deleted": False,
                 "process_field_options": [
                     {"key": "custom_saldo", "label": "Saldo", "field_type": "header"},
-                    {"key": "custom_movimentos", "label": "Movimentos", "field_type": "header"},
+                    {
+                        "key": "custom_movimentos",
+                        "label": "Movimentos",
+                        "field_type": "header",
+                    },
                 ],
                 "process_visible_field_rows": [
                     {"field_key": "custom_valor", "header_key": "custom_saldo"},
@@ -960,7 +1181,9 @@ def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_au
     ]
 
 
-def test_resolve_field_list_options_profile_menu_tabs_empresa_target_without_tabs_is_empty() -> None:
+def test_resolve_field_list_options_profile_menu_tabs_empresa_target_without_tabs_is_empty() -> (
+    None
+):
     """Se o processo escolhido em 'Processo' nao tiver abas/subprocessos resolviveis,
     o campo dependente deve ficar vazio, sem erro."""
     resolved = resolve_field_list_options_v1(
@@ -972,7 +1195,12 @@ def test_resolve_field_list_options_profile_menu_tabs_empresa_target_without_tab
             "automatic_source_field_key": "custom_processo",
         },
         sidebar_menu_settings=[
-            {"key": "empresa", "label": "Empresa", "is_active": True, "is_deleted": False},
+            {
+                "key": "empresa",
+                "label": "Empresa",
+                "is_active": True,
+                "is_deleted": False,
+            },
         ],
         visible_sidebar_menu_keys={"empresa"},
         current_field_values={"custom_processo": "empresa"},
@@ -981,7 +1209,9 @@ def test_resolve_field_list_options_profile_menu_tabs_empresa_target_without_tab
     assert resolved == []
 
 
-def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_infers_processo_sibling_by_label() -> None:
+def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_infers_processo_sibling_by_label() -> (
+    None
+):
     """Sem automatic_source_field_key configurado explicitamente, o resolver deve encontrar
     genericamente o campo irmao rotulado 'Processo' em qualquer processo/menu (nao apenas
     perfil_de_autorizacao) e usar o processo escolhido para montar as opcoes iniciais."""
@@ -992,7 +1222,11 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_inf
             {
                 "key": "empresa",
                 "process_additional_fields": [
-                    {"key": "custom_dados_gerais", "label": "Dados gerais", "field_type": "header"},
+                    {
+                        "key": "custom_dados_gerais",
+                        "label": "Dados gerais",
+                        "field_type": "header",
+                    },
                     {
                         "key": "custom_processo",
                         "label": "Processo",
@@ -1007,13 +1241,31 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_inf
                     },
                 ],
                 "process_field_options": [
-                    {"key": "custom_dados_gerais", "label": "Dados gerais", "field_type": "header"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
-                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                    {
+                        "key": "custom_dados_gerais",
+                        "label": "Dados gerais",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "text",
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_processo", "header_key": "custom_dados_gerais"},
-                    {"field_key": "custom_subprocesso", "header_key": "custom_dados_gerais"},
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_dados_gerais",
+                    },
+                    {
+                        "field_key": "custom_subprocesso",
+                        "header_key": "custom_dados_gerais",
+                    },
                 ],
             },
             {
@@ -1023,7 +1275,11 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_inf
                 "is_deleted": False,
                 "process_field_options": [
                     {"key": "custom_saldo", "label": "Saldo", "field_type": "header"},
-                    {"key": "custom_movimentos", "label": "Movimentos", "field_type": "header"},
+                    {
+                        "key": "custom_movimentos",
+                        "label": "Movimentos",
+                        "field_type": "header",
+                    },
                 ],
                 "process_visible_field_rows": [
                     {"field_key": "custom_valor", "header_key": "custom_saldo"},
@@ -1035,7 +1291,9 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_inf
         current_field_values={"custom_processo": "extrato"},
     )
 
-    dependent_field = next(item for item in resolved_fields if item["key"] == "custom_subprocesso")
+    dependent_field = next(
+        item for item in resolved_fields if item["key"] == "custom_subprocesso"
+    )
 
     assert dependent_field["dependent_field_key"] == "custom_processo"
     assert dependent_field["automatic_source_field_key"] == "custom_processo"
@@ -1099,7 +1357,9 @@ def test_resolve_field_list_options_automatic_filters_active_records() -> None:
     ]
 
 
-def test_resolve_field_list_options_automatic_accepts_legacy_auth_profile_aliases() -> None:
+def test_resolve_field_list_options_automatic_accepts_legacy_auth_profile_aliases() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="objeto_de_autorizacao",
         field_definition={
@@ -1116,17 +1376,42 @@ def test_resolve_field_list_options_automatic_accepts_legacy_auth_profile_aliase
                 "key": "perfil_de_autorizacao",
                 "process_record_status_field_key": "__estado",
                 "process_field_options": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
                     {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
-                    {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "list"},
-                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "text",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "text",
+                    },
                     {"key": "custom_perfil_2", "label": "Perfil", "field_type": "text"},
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_nome_do_perfil", "header_key": "custom_objeto_de_autorizacao"},
-                    {"field_key": "custom_processo", "header_key": "custom_objeto_de_autorizacao"},
-                    {"field_key": "custom_subprocesso", "header_key": "custom_objeto_de_autorizacao"},
+                    {
+                        "field_key": "custom_nome_do_perfil",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
+                    {
+                        "field_key": "custom_subprocesso",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
                     {"field_key": "custom_perfil_2", "header_key": "custom_perfil"},
                 ],
             },
@@ -1201,7 +1486,9 @@ def test_resolve_field_list_options_automatic_honours_visible_source_process() -
     assert resolved == []
 
 
-def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type() -> None:
+def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type() -> (
+    None
+):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
         "custom_objeto_de_autorizacao",
@@ -1209,7 +1496,11 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
                     {
                         "key": "custom_processo",
                         "label": "Processo",
@@ -1220,8 +1511,16 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
                     },
                 ],
                 "process_field_options": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
                     {
@@ -1281,8 +1580,16 @@ def test_resolve_subprocess_section_fields_renders_time_field_as_time_input() ->
                     },
                 ],
                 "process_field_options": [
-                    {"key": "custom_horario", "label": "Horário", "field_type": "header"},
-                    {"key": "custom_hora_de_inicio", "label": "Hora de início", "field_type": "time"},
+                    {
+                        "key": "custom_horario",
+                        "label": "Horário",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_hora_de_inicio",
+                        "label": "Hora de início",
+                        "field_type": "time",
+                    },
                 ],
                 "process_visible_field_rows": [
                     {
@@ -1311,7 +1618,11 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
                     {
                         "key": "custom_subprocesso",
                         "label": "Subprocesso",
@@ -1323,8 +1634,16 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
                     },
                 ],
                 "process_field_options": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
-                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
                     {
@@ -1362,7 +1681,9 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
     ]
 
 
-def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_processo_dependency_in_objeto_autorizacao() -> None:
+def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_processo_dependency_in_objeto_autorizacao() -> (
+    None
+):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
         "custom_objeto_de_autorizacao",
@@ -1370,8 +1691,17 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_process
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "list", "list_source_type": "manual"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                        "list_source_type": "manual",
+                    },
                     {
                         "key": "custom_subprocesso",
                         "label": "Subprocesso",
@@ -1381,24 +1711,46 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_uses_custom_process
                     },
                 ],
                 "process_field_options": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
-                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "text",
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_processo", "header_key": "custom_objeto_de_autorizacao"},
-                    {"field_key": "custom_subprocesso", "header_key": "custom_objeto_de_autorizacao"},
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
+                    {
+                        "field_key": "custom_subprocesso",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
                 ],
             }
         ],
     )
 
-    dependent_field = next(item for item in resolved_fields if item["key"] == "custom_subprocesso")
+    dependent_field = next(
+        item for item in resolved_fields if item["key"] == "custom_subprocesso"
+    )
 
     assert dependent_field["dependent_field_key"] == "custom_processo"
 
 
-def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depend_on_itself() -> None:
+def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depend_on_itself() -> (
+    None
+):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
         "custom_objeto_de_autorizacao",
@@ -1406,7 +1758,11 @@ def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depe
             {
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
                     {
                         "key": "custom_processo",
                         "label": "Processo",
@@ -1415,25 +1771,45 @@ def test_resolve_subprocess_section_fields_active_menus_controller_does_not_depe
                     },
                 ],
                 "process_field_options": [
-                    {"key": "custom_objeto_de_autorizacao", "label": "Objeto de autorização", "field_type": "header"},
-                    {"key": "custom_processo", "label": "Processo", "field_type": "text"},
+                    {
+                        "key": "custom_objeto_de_autorizacao",
+                        "label": "Objeto de autorização",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_processo", "header_key": "custom_objeto_de_autorizacao"},
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
                 ],
             },
-            {"key": "extrato", "label": "Extrato", "is_active": True, "is_deleted": False},
+            {
+                "key": "extrato",
+                "label": "Extrato",
+                "is_active": True,
+                "is_deleted": False,
+            },
         ],
         visible_sidebar_menu_keys={"perfil_de_autorizacao", "extrato"},
     )
 
-    controller_field = next(item for item in resolved_fields if item["key"] == "custom_processo")
+    controller_field = next(
+        item for item in resolved_fields if item["key"] == "custom_processo"
+    )
 
     assert controller_field["list_source_type"] == "active_menus"
     assert "dependent_field_key" not in controller_field
 
 
-def test_resolve_subprocess_section_fields_profile_menu_tabs_keeps_legacy_profile_dependency_outside_objeto_autorizacao() -> None:
+def test_resolve_subprocess_section_fields_profile_menu_tabs_keeps_legacy_profile_dependency_outside_objeto_autorizacao() -> (
+    None
+):
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
         "custom_perfil",
@@ -1442,7 +1818,11 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_keeps_legacy_profil
                 "key": "perfil_de_autorizacao",
                 "process_additional_fields": [
                     {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
-                    {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "text",
+                    },
                     {
                         "key": "custom_subprocesso",
                         "label": "Subprocesso",
@@ -1453,18 +1833,31 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_keeps_legacy_profil
                 ],
                 "process_field_options": [
                     {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
-                    {"key": "custom_nome_do_perfil", "label": "Nome do perfil", "field_type": "text"},
-                    {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "text",
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Subprocesso",
+                        "field_type": "text",
+                    },
                 ],
                 "process_visible_field_rows": [
-                    {"field_key": "custom_nome_do_perfil", "header_key": "custom_perfil"},
+                    {
+                        "field_key": "custom_nome_do_perfil",
+                        "header_key": "custom_perfil",
+                    },
                     {"field_key": "custom_subprocesso", "header_key": "custom_perfil"},
                 ],
             }
         ],
     )
 
-    dependent_field = next(item for item in resolved_fields if item["key"] == "custom_subprocesso")
+    dependent_field = next(
+        item for item in resolved_fields if item["key"] == "custom_subprocesso"
+    )
 
     assert dependent_field["dependent_field_key"] == "custom_nome_do_perfil"
 
@@ -1525,7 +1918,11 @@ def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -
             "manual_list_items": [],
             "manual_list_items_csv": "",
             "options": [
-                {"value": "perfil_de_autorizacao", "label": "Perfil de autorizaÃ§Ã£o", "status": "active"},
+                {
+                    "value": "perfil_de_autorizacao",
+                    "label": "Perfil de autorizaÃ§Ã£o",
+                    "status": "active",
+                },
                 {"value": "sessoes", "label": "Estruturas", "status": "active"},
             ],
             "header_key": "custom_perfil",
@@ -1569,7 +1966,9 @@ def test_normalize_sidebar_sections_preserves_scope_mode() -> None:
     assert treino_item["visibility_scopes"] == ["owner"]
 
 
-def test_normalize_sidebar_sections_exposes_can_delete_only_for_non_default_sections() -> None:
+def test_normalize_sidebar_sections_exposes_can_delete_only_for_non_default_sections() -> (
+    None
+):
     normalized = normalize_sidebar_sections(
         [
             {
@@ -1588,7 +1987,9 @@ def test_normalize_sidebar_sections_exposes_can_delete_only_for_non_default_sect
     assert arquivo_item["can_delete"] is True
 
 
-def test_resolve_menu_sidebar_section_key_keeps_perfil_de_autorizacao_em_sistema() -> None:
+def test_resolve_menu_sidebar_section_key_keeps_perfil_de_autorizacao_em_sistema() -> (
+    None
+):
     resolved_key = resolve_menu_sidebar_section_key(
         "perfil_de_autorizacao",
         {},
@@ -1602,10 +2003,180 @@ def test_resolve_menu_sidebar_section_key_keeps_perfil_de_autorizacao_em_sistema
 def test_sessoes_config_exposes_delete_action_for_inactive_rows() -> None:
     assert SESSOES_CONFIG.delete_endpoint == "/settings/menu/sidebar-section-delete"
 
-    delete_action = next(action for action in SESSOES_CONFIG.actions if action.key == "delete")
+    delete_action = next(
+        action for action in SESSOES_CONFIG.actions if action.key == "delete"
+    )
 
     assert delete_action.visible_when == ("inativo",)
     assert delete_action.condition_field == "can_delete"
+
+
+def test_move_sidebar_menu_setting_respects_active_menu_ordering() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        default_rows = [
+            SidebarMenuSetting(
+                entity_id=1,
+                menu_key=item["key"],
+                menu_label=str(item["label"]),
+                is_active=(item["key"] == "home"),
+                is_deleted=False,
+                menu_config=json.dumps(
+                    {"display_order": index},
+                    ensure_ascii=False,
+                ),
+            )
+            for index, item in enumerate(SIDEBAR_MENU_DEFAULTS)
+        ]
+        session.add_all(
+            [
+                *default_rows,
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="sistema",
+                    menu_label="Sistema",
+                    is_active=False,
+                    is_deleted=False,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS)},
+                        ensure_ascii=False,
+                    ),
+                ),
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="agenda",
+                    menu_label="Agenda",
+                    is_active=True,
+                    is_deleted=False,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS) + 1},
+                        ensure_ascii=False,
+                    ),
+                ),
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="contatos",
+                    menu_label="Contatos",
+                    is_active=True,
+                    is_deleted=False,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS) + 2},
+                        ensure_ascii=False,
+                    ),
+                ),
+            ]
+        )
+        session.commit()
+
+        ok, error_message = move_sidebar_menu_setting(session, "contatos", "up")
+
+        assert ok is True
+        assert error_message == ""
+
+        settings = get_sidebar_menu_settings(session)
+        active_keys = [
+            item["key"]
+            for item in settings
+            if item.get("is_active") and not item.get("is_deleted")
+        ]
+
+        assert active_keys == ["home", "contatos", "agenda"]
+
+
+def test_get_sidebar_menu_settings_limits_moves_to_visible_active_menus() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        default_rows = [
+            SidebarMenuSetting(
+                entity_id=1,
+                menu_key=item["key"],
+                menu_label=str(item["label"]),
+                is_active=(item["key"] == "home"),
+                is_deleted=False,
+                menu_config=json.dumps(
+                    {"display_order": index},
+                    ensure_ascii=False,
+                ),
+            )
+            for index, item in enumerate(SIDEBAR_MENU_DEFAULTS)
+        ]
+        session.add_all(
+            [
+                *default_rows,
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="sistema",
+                    menu_label="Sistema",
+                    is_active=False,
+                    is_deleted=False,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS)},
+                        ensure_ascii=False,
+                    ),
+                ),
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="agenda",
+                    menu_label="Agenda",
+                    is_active=True,
+                    is_deleted=False,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS) + 1},
+                        ensure_ascii=False,
+                    ),
+                ),
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="contatos",
+                    menu_label="Contatos",
+                    is_active=True,
+                    is_deleted=False,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS) + 2},
+                        ensure_ascii=False,
+                    ),
+                ),
+                SidebarMenuSetting(
+                    entity_id=1,
+                    menu_key="arquivo",
+                    menu_label="Arquivo",
+                    is_active=False,
+                    is_deleted=True,
+                    menu_config=json.dumps(
+                        {"display_order": len(SIDEBAR_MENU_DEFAULTS) + 3},
+                        ensure_ascii=False,
+                    ),
+                ),
+            ]
+        )
+        session.commit()
+
+        settings = get_sidebar_menu_settings(session)
+        active_rows = [
+            item
+            for item in settings
+            if item.get("is_active") and not item.get("is_deleted")
+        ]
+
+        assert [item["key"] for item in active_rows] == ["home", "agenda", "contatos"]
+        assert active_rows[0]["can_move_up"] is False
+        assert active_rows[0]["can_move_down"] is True
+        assert active_rows[1]["can_move_up"] is True
+        assert active_rows[1]["can_move_down"] is True
+        assert active_rows[2]["can_move_up"] is True
+        assert active_rows[2]["can_move_down"] is False
+
+        ok, error_message = move_sidebar_menu_setting(session, "home", "up")
+        assert ok is False
+        assert error_message == "Esta pasta já está no topo."
+
+        ok, error_message = move_sidebar_menu_setting(session, "contatos", "down")
+        assert ok is False
+        assert error_message == "Esta pasta já está no fim."
 
 
 def test_delete_sidebar_section_removes_only_target_inactive_custom_section() -> None:
@@ -1615,13 +2186,29 @@ def test_delete_sidebar_section_removes_only_target_inactive_custom_section() ->
     with Session(engine) as session:
         admin_config = {
             "sidebar_sections": [
-                {"key": "sistema", "label": "Sistema", "visibility_scope_mode": "all", "status": "ativo"},
-                {"key": "arquivo", "label": "Arquivo", "visibility_scope_mode": "owner", "status": "inativo"},
-                {"key": "agenda", "label": "Agenda", "visibility_scope_mode": "owner", "status": "ativo"},
+                {
+                    "key": "sistema",
+                    "label": "Sistema",
+                    "visibility_scope_mode": "all",
+                    "status": "ativo",
+                },
+                {
+                    "key": "arquivo",
+                    "label": "Arquivo",
+                    "visibility_scope_mode": "owner",
+                    "status": "inativo",
+                },
+                {
+                    "key": "agenda",
+                    "label": "Agenda",
+                    "visibility_scope_mode": "owner",
+                    "status": "ativo",
+                },
             ]
         }
         session.add(
             SidebarMenuSetting(
+                entity_id=1,
                 menu_key="administrativo",
                 menu_label="Administrativo",
                 is_active=True,
@@ -1637,7 +2224,9 @@ def test_delete_sidebar_section_removes_only_target_inactive_custom_section() ->
         assert error_message == ""
 
         stored_admin = session.scalar(
-            select(SidebarMenuSetting).where(SidebarMenuSetting.menu_key == "administrativo")
+            select(SidebarMenuSetting).where(
+                SidebarMenuSetting.menu_key == "administrativo"
+            )
         )
         assert stored_admin is not None
 
@@ -1647,7 +2236,10 @@ def test_delete_sidebar_section_removes_only_target_inactive_custom_section() ->
 
         assert "arquivo" not in stored_keys
         assert "agenda" in stored_keys
-        assert next(item for item in stored_sections if item["key"] == "agenda")["status"] == "ativo"
+        assert (
+            next(item for item in stored_sections if item["key"] == "agenda")["status"]
+            == "ativo"
+        )
 
 
 def test_delete_sidebar_section_rejects_active_or_protected_rows() -> None:
@@ -1657,12 +2249,23 @@ def test_delete_sidebar_section_rejects_active_or_protected_rows() -> None:
     with Session(engine) as session:
         admin_config = {
             "sidebar_sections": [
-                {"key": "sistema", "label": "Sistema", "visibility_scope_mode": "all", "status": "inativo"},
-                {"key": "agenda", "label": "Agenda", "visibility_scope_mode": "owner", "status": "ativo"},
+                {
+                    "key": "sistema",
+                    "label": "Sistema",
+                    "visibility_scope_mode": "all",
+                    "status": "inativo",
+                },
+                {
+                    "key": "agenda",
+                    "label": "Agenda",
+                    "visibility_scope_mode": "owner",
+                    "status": "ativo",
+                },
             ]
         }
         session.add(
             SidebarMenuSetting(
+                entity_id=1,
                 menu_key="administrativo",
                 menu_label="Administrativo",
                 is_active=True,
@@ -1721,7 +2324,15 @@ def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None
 
     with Session(engine) as session:
         session.add(
+            Entity(
+                entity_number=1,
+                name="Igreja Teste",
+                is_active=True,
+            )
+        )
+        session.add(
             SidebarMenuSetting(
+                entity_id=1,
                 menu_key="empresa",
                 menu_label="Empresa",
                 is_active=True,
@@ -1731,10 +2342,27 @@ def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None
                         "created_from": "administrativo_menu",
                         "settings_tabs_enabled": True,
                         "additional_fields": [
-                            {"key": "custom_dados_agregados", "label": "Dados agregados", "field_type": "header"},
-                            {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
-                            {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text", "size": 80},
-                            {"key": "custom_data_nascimento_do_agregado", "label": "Data de nascimento do agregado", "field_type": "date"},
+                            {
+                                "key": "custom_dados_agregados",
+                                "label": "Dados agregados",
+                                "field_type": "header",
+                            },
+                            {
+                                "key": "custom_quantos_filhos_tens",
+                                "label": "Quantos filhos tens?",
+                                "field_type": "number",
+                            },
+                            {
+                                "key": "custom_nome_do_agregado",
+                                "label": "Nome do agregado",
+                                "field_type": "text",
+                                "size": 80,
+                            },
+                            {
+                                "key": "custom_data_nascimento_do_agregado",
+                                "label": "Data de nascimento do agregado",
+                                "field_type": "date",
+                            },
                         ],
                     },
                     ensure_ascii=False,
@@ -1751,7 +2379,10 @@ def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None
                     "label": "Agregados",
                     "quantity_field_key": "custom_quantos_filhos_tens",
                     "repeated_field_keys": json.dumps(
-                        ["custom_nome_do_agregado", "custom_data_nascimento_do_agregado"]
+                        [
+                            "custom_nome_do_agregado",
+                            "custom_data_nascimento_do_agregado",
+                        ]
                     ),
                     "header_key": "custom_dados_agregados",
                     "max_items": "10",
@@ -1785,8 +2416,13 @@ def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None
         ]
 
         sidebar_settings = get_sidebar_menu_settings(session)
-        empresa_setting = next(item for item in sidebar_settings if item["key"] == "empresa")
-        assert empresa_setting["process_quantity_fields"] == saved_config["process_quantity_fields"]
+        empresa_setting = next(
+            item for item in sidebar_settings if item["key"] == "empresa"
+        )
+        assert (
+            empresa_setting["process_quantity_fields"]
+            == saved_config["process_quantity_fields"]
+        )
 
 
 def test_normalize_additional_fields_manual_list_inline_csv() -> None:
@@ -1885,7 +2521,9 @@ def test_resolve_field_list_options_manual_inline_csv_string() -> None:
     ]
 
 
-def test_resolve_field_list_options_manual_inline_takes_precedence_over_list_key() -> None:
+def test_resolve_field_list_options_manual_inline_takes_precedence_over_list_key() -> (
+    None
+):
     resolved = resolve_field_list_options_v1(
         current_menu_key="empresa",
         field_definition={

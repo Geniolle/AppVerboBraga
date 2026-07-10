@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260708-invite-link-header-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260708-invite-link-header-v1">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260630-load-more-footer-v1">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260710-list-columns-v2">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
@@ -1835,8 +1835,10 @@
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
                 <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="process_list_columns_configured" value="1">
 
-                <div class="configurable-items-manager-v1 process-lists-manager-v1">
+                <div class="configurable-items-manager-v1 process-lists-manager-v1" data-process-list-reusable-manager>
+                  <h4>Listas reutilizáveis</h4>
                   <div class="configurable-items-hidden-v1" data-process-lists-legacy-container>
                     {% set process_lists = settings_edit_data.process_lists|default([]) %}
                     {% for process_list in process_lists %}
@@ -1851,7 +1853,7 @@
                   <div data-process-lists-hidden-container></div>
 
                   <div class="configurable-items-editor-v1 process-lists-editor-v1">
-                    <div data-process-list-editor-block class="configurable-items-editor-grid-v1 process-lists-editor-grid-v1">
+                    <div data-process-list-reusable-editor-block class="configurable-items-editor-grid-v1 process-lists-editor-grid-v1">
                       <input type="hidden" data-process-list-editor-key>
 
                       <div class="field">
@@ -1941,6 +1943,107 @@
                       </div>
 
                       <div class="appgenesis-load-more-status-v1" data-process-lists-pagination></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="configurable-items-manager-v1 process-list-columns-manager-v1" data-process-list-columns-manager>
+                  <h4>Colunas da listagem do processo</h4>
+
+                  <div class="configurable-items-hidden-v1" data-process-list-columns-legacy-container>
+                    {% for column in settings_edit_data.process_list_columns|default([]) %}
+                    <div data-process-list-column-row>
+                      <input type="hidden" name="process_list_column_key" value="{{ column.key }}" disabled>
+                      <input type="hidden" name="process_list_column_label" value="{{ column.label }}" disabled>
+                      <input type="hidden" name="process_list_column_field_key" value="{{ column.field_key }}" disabled>
+                      <input type="hidden" name="process_list_column_source_kind" value="{{ column.source_kind }}" disabled>
+                      <input type="hidden" name="process_list_column_always_visible" value="{{ '1' if column.always_visible else '0' }}" disabled>
+                      <input type="hidden" name="process_list_column_responsive_priority" value="{{ column.responsive_priority|default(0) }}" disabled>
+                    </div>
+                    {% endfor %}
+                  </div>
+
+                  <div data-process-list-columns-hidden-container></div>
+
+                  <div class="configurable-items-editor-v1 process-list-columns-editor-v1">
+                    <div data-process-list-column-editor-block class="configurable-items-editor-grid-v1 process-list-columns-editor-grid-v1">
+                      <input type="hidden" data-process-list-column-editor-key>
+                      <input type="hidden" value="field" data-process-list-column-editor-source-kind>
+
+                      <div class="field">
+                        <label for="process-list-column-field">Campo da coluna</label>
+                        <select id="process-list-column-field" data-process-list-column-editor-field>
+                          <option value="">Selecione</option>
+                          {% for field in settings_process_select_options %}
+                          <option value="{{ field.key }}">{{ field.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-list-column-label">Nome da coluna</label>
+                        <input id="process-list-column-label" type="text" maxlength="80" data-process-list-column-editor-label>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-list-column-priority">Prioridade responsiva</label>
+                        <input id="process-list-column-priority" type="number" min="0" max="99" value="0" data-process-list-column-editor-priority>
+                      </div>
+
+                      <div class="field process-list-column-checkbox-v1">
+                        <label>
+                          <input type="checkbox" data-process-list-column-editor-always-visible>
+                          Sempre visível
+                        </label>
+                      </div>
+
+                      <div class="field full">
+                        <div class="form-action-row">
+                          <button type="button" class="action-btn" data-process-list-column-editor-submit>Guardar</button>
+                          <button
+                            type="button"
+                            class="action-btn-cancel"
+                            data-appgenesis-cancel="1"
+                            data-process-list-column-editor-cancel
+                            data-appgenesis-cancel-target="settings-menu-edit-card"
+                            data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"
+                            data-appgenesis-cancel-return-url="/users/new?menu={{ settings_edit_origin_menu }}{{ settings_edit_cancel_target }}"
+                          >Cancelar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="configurable-items-list-v1 process-list-columns-created-v1">
+                    <div class="configurable-items-list-head-v1">
+                      <h4 class="configurable-items-list-title-v1">Colunas criadas</h4>
+                      <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-list-columns-total-label>0 colunas</span>
+                    </div>
+                    <div class="configurable-items-table-wrap-v1">
+                      <table class="configurable-items-table-v1" data-process-list-columns-table>
+                        <thead>
+                          <tr>
+                            <th>Campo da coluna</th>
+                            <th>Nome da coluna</th>
+                            <th>Sempre visível</th>
+                            <th>Prioridade</th>
+                            <th class="configurable-items-actions-col-v1">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody data-process-list-columns-table-body></tbody>
+                      </table>
+                    </div>
+                    <p class="configurable-items-empty-v1" data-process-list-columns-empty style="display: none;">Sem colunas criadas.</p>
+                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
+                      <div class="appgenesis-load-more-page-size-v1">
+                        <select data-process-list-columns-page-size>
+                          <option value="5" selected>5</option>
+                          <option value="10">10</option>
+                          <option value="20">20</option>
+                        </select>
+                        <span>entradas por página</span>
+                      </div>
+                      <div class="appgenesis-load-more-status-v1" data-process-list-columns-pagination></div>
                     </div>
                   </div>
                 </div>
@@ -2698,7 +2801,7 @@
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260702-debug-log-v1"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260701-time-type-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260630-core-migration-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260710-list-editor-scope-v3"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260630-core-migration-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260630-configurable-core-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-invite-link-header-v1"></script>

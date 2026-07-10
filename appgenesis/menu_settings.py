@@ -46,9 +46,7 @@ MENU_SECTION_OPTIONS: tuple[dict[str, str], ...] = (
     {"key": "igreja", "label": "Igreja"},
     {"key": "tesouraria", "label": "Tesouraria"},
 )
-MENU_SECTION_LABELS = {
-    item["key"]: item["label"] for item in MENU_SECTION_OPTIONS
-}
+MENU_SECTION_LABELS = {item["key"]: item["label"] for item in MENU_SECTION_OPTIONS}
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
     "perfil_de_autorizacao": "sistema",
@@ -74,15 +72,25 @@ MENU_LEGACY_KEY_ALIAS = {
 SIDEBAR_SECTION_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "sistema", "label": "Sistema", "visibility_scopes": ["owner", "legado"]},
     {"key": "geral", "label": "Geral", "visibility_scopes": ["owner", "legado"]},
-    {"key": "dados_gerais", "label": "Dados gerais", "visibility_scopes": ["owner", "legado"]},
+    {
+        "key": "dados_gerais",
+        "label": "Dados gerais",
+        "visibility_scopes": ["owner", "legado"],
+    },
     {"key": "igreja", "label": "Igreja", "visibility_scopes": ["owner", "legado"]},
-    {"key": "tesouraria", "label": "Tesouraria", "visibility_scopes": ["owner", "legado"]},
+    {
+        "key": "tesouraria",
+        "label": "Tesouraria",
+        "visibility_scopes": ["owner", "legado"],
+    },
 )
 SIDEBAR_SECTION_DEFAULTS_BY_KEY = {
     str(item["key"]).strip().lower(): str(item["label"])
     for item in SIDEBAR_SECTION_DEFAULTS
 }
-SIDEBAR_SECTION_DELETE_PROTECTED_KEYS = frozenset(SIDEBAR_SECTION_DEFAULTS_BY_KEY.keys())
+SIDEBAR_SECTION_DELETE_PROTECTED_KEYS = frozenset(
+    SIDEBAR_SECTION_DEFAULTS_BY_KEY.keys()
+)
 ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "email", "phone", "number"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "text", "label": "Texto"},
@@ -121,7 +129,10 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "email", "label": "Email"},
         {"key": "data_nascimento", "label": "Data de nascimento"},
         {"key": "whatsapp", "label": "WhatsApp"},
-        {"key": "autorizacao_whatsapp", "label": "Autorização para avisos por WhatsApp"},
+        {
+            "key": "autorizacao_whatsapp",
+            "label": "Autorização para avisos por WhatsApp",
+        },
         {"key": "conta", "label": "Conta"},
         {"key": "estado_membro", "label": "Estado de membro"},
         {"key": "colaborador", "label": "Colaborador"},
@@ -175,12 +186,13 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
 MENU_MEU_PERFIL_FIELD_OPTIONS: tuple[dict[str, str], ...] = tuple(
     MENU_PROCESS_FIELD_OPTIONS_BY_KEY[MENU_MEU_PERFIL_KEY]
 )
-MENU_MEU_PERFIL_FIELD_KEYS = tuple(item["key"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS)
+MENU_MEU_PERFIL_FIELD_KEYS = tuple(
+    item["key"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS
+)
 MENU_MEU_PERFIL_FIELD_LABELS = {
     item["key"]: item["label"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS
 }
-MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "telefone",
-    "pais", "email"]
+MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "telefone", "pais", "email"]
 
 
 def _sidebar_menu_defaults_by_key() -> dict[str, dict[str, Any]]:
@@ -214,6 +226,7 @@ def _is_sidebar_section_delete_protected(section_key: Any) -> bool:
     clean_section_key = _normalize_sidebar_section_key(section_key)
     return clean_section_key in SIDEBAR_SECTION_DELETE_PROTECTED_KEYS
 
+
 def _normalize_menu_display_order(raw_order: Any) -> int | None:
     try:
         parsed_order = int(str(raw_order).strip())
@@ -222,6 +235,7 @@ def _normalize_menu_display_order(raw_order: Any) -> int | None:
     if parsed_order < 0:
         return None
     return parsed_order
+
 
 def _normalize_menu_visibility_scope_value(raw_scope: Any) -> str:
     clean_scope = str(raw_scope or "").strip().lower()
@@ -260,6 +274,7 @@ def _resolve_visibility_scope_label_from_mode(scope_mode: Any) -> str:
         return "Legado"
     return "Default"
 
+
 def normalize_menu_visibility_scopes(raw_scopes: Any) -> list[str]:
     if isinstance(raw_scopes, str):
         clean_scope = _normalize_menu_visibility_scope_value(raw_scopes)
@@ -277,18 +292,22 @@ def normalize_menu_visibility_scopes(raw_scopes: Any) -> list[str]:
             return normalized
     return list(MENU_VISIBILITY_SCOPES)
 
+
 def get_menu_visibility_scopes(menu_config: dict[str, Any] | None) -> list[str]:
     if not isinstance(menu_config, dict):
         return list(MENU_VISIBILITY_SCOPES)
     return normalize_menu_visibility_scopes(menu_config.get("visibility_scopes"))
 
+
 def get_menu_visibility_scope_mode(menu_config: dict[str, Any] | None) -> str:
     scopes = get_menu_visibility_scopes(menu_config)
     return _resolve_visibility_scope_mode_from_scopes(scopes)
 
-def get_menu_visibility_scope_label(menu_config: dict[str, Any] | None) -> str:
-    return _resolve_visibility_scope_label_from_mode(get_menu_visibility_scope_mode(menu_config))
 
+def get_menu_visibility_scope_label(menu_config: dict[str, Any] | None) -> str:
+    return _resolve_visibility_scope_label_from_mode(
+        get_menu_visibility_scope_mode(menu_config)
+    )
 
 
 def normalize_menu_section_key(raw_section: Any, menu_key: Any = "") -> str:
@@ -310,7 +329,9 @@ def normalize_menu_section_key(raw_section: Any, menu_key: Any = "") -> str:
 
 def get_menu_section_label(section_key: Any) -> str:
     clean_section = normalize_menu_section_key(section_key)
-    return MENU_SECTION_LABELS.get(clean_section, MENU_SECTION_LABELS[MENU_SECTION_DEFAULT_KEY])
+    return MENU_SECTION_LABELS.get(
+        clean_section, MENU_SECTION_LABELS[MENU_SECTION_DEFAULT_KEY]
+    )
 
 
 def _menu_exists(session: Session, menu_key: str) -> bool:
@@ -331,6 +352,41 @@ def _menu_exists(session: Session, menu_key: str) -> bool:
         ).scalar_one_or_none()
         is not None
     )
+
+
+def _resolve_sidebar_menu_settings_entity_id(session: Session) -> int | None:
+    entity_id = session.execute(
+        text(
+            """
+            SELECT entity_id
+            FROM sidebar_menu_settings
+            WHERE entity_id IS NOT NULL
+            ORDER BY entity_id
+            LIMIT 1
+            """
+        )
+    ).scalar_one_or_none()
+
+    if entity_id is not None:
+        return int(entity_id)
+
+    first_active_entity_id = session.execute(
+        text(
+            """
+            SELECT id
+            FROM entities
+            WHERE is_active = true
+            ORDER BY id
+            LIMIT 1
+            """
+        )
+    ).scalar_one_or_none()
+
+    if first_active_entity_id is not None:
+        return int(first_active_entity_id)
+
+    # Fallback for test databases or early bootstrap environments.
+    return 1
 
 
 def _normalize_custom_field_key(raw_key: str) -> str:
@@ -377,11 +433,17 @@ def _build_custom_field_key_from_label(label: str) -> str:
 
 
 def _get_additional_field_group_key(field_type: Any) -> str:
-    return "header" if _normalize_additional_field_type(field_type) == "header" else "field"
+    return (
+        "header"
+        if _normalize_additional_field_type(field_type) == "header"
+        else "field"
+    )
 
 
 def _build_group_scoped_custom_field_key(label: str, field_type: Any) -> str:
-    return _build_custom_field_key_from_label(f"{_get_additional_field_group_key(field_type)} {label}")
+    return _build_custom_field_key_from_label(
+        f"{_get_additional_field_group_key(field_type)} {label}"
+    )
 
 
 def _build_menu_key_from_label(label: str) -> str:
@@ -436,15 +498,20 @@ def _normalize_sidebar_section_label(raw_label: Any) -> str:
         return ""
     return _normalize_sentence_case_text(clean_label)
 
+
 def _normalize_sidebar_section_visibility_scopes(raw_scopes: Any) -> list[str]:
     return normalize_menu_visibility_scopes(raw_scopes)
 
 
-def get_sidebar_section_visibility_scopes(section_config: dict[str, Any] | None) -> list[str]:
+def get_sidebar_section_visibility_scopes(
+    section_config: dict[str, Any] | None,
+) -> list[str]:
     if not isinstance(section_config, dict):
         return list(MENU_VISIBILITY_SCOPES)
     if "visibility_scopes" in section_config:
-        return _normalize_sidebar_section_visibility_scopes(section_config.get("visibility_scopes"))
+        return _normalize_sidebar_section_visibility_scopes(
+            section_config.get("visibility_scopes")
+        )
     raw_scope_mode = (
         section_config.get("visibility_scope_mode")
         or section_config.get("scope_mode")
@@ -455,12 +522,16 @@ def get_sidebar_section_visibility_scopes(section_config: dict[str, Any] | None)
     return list(MENU_VISIBILITY_SCOPES)
 
 
-def get_sidebar_section_visibility_scope_mode(section_config: dict[str, Any] | None) -> str:
+def get_sidebar_section_visibility_scope_mode(
+    section_config: dict[str, Any] | None,
+) -> str:
     scopes = get_sidebar_section_visibility_scopes(section_config)
     return _resolve_visibility_scope_mode_from_scopes(scopes)
 
 
-def get_sidebar_section_visibility_scope_label(section_config: dict[str, Any] | None) -> str:
+def get_sidebar_section_visibility_scope_label(
+    section_config: dict[str, Any] | None,
+) -> str:
     return _resolve_visibility_scope_label_from_mode(
         get_sidebar_section_visibility_scope_mode(section_config)
     )
@@ -479,7 +550,11 @@ def _normalize_sidebar_section_status_v5(raw_status: Any) -> str:
 
 
 def _sidebar_section_status_label_v5(raw_status: Any) -> str:
-    return "Inativo" if _normalize_sidebar_section_status_v5(raw_status) == "inativo" else "Ativo"
+    return (
+        "Inativo"
+        if _normalize_sidebar_section_status_v5(raw_status) == "inativo"
+        else "Ativo"
+    )
 
 
 def _build_sidebar_section_payload(
@@ -489,7 +564,9 @@ def _build_sidebar_section_payload(
     status: Any = "ativo",
 ) -> dict[str, Any]:
     normalized_scopes = _normalize_sidebar_section_visibility_scopes(visibility_scopes)
-    visibility_scope_mode = _resolve_visibility_scope_mode_from_scopes(normalized_scopes)
+    visibility_scope_mode = _resolve_visibility_scope_mode_from_scopes(
+        normalized_scopes
+    )
     normalized_status = _normalize_sidebar_section_status_v5(status)
 
     return {
@@ -497,7 +574,9 @@ def _build_sidebar_section_payload(
         "label": section_label,
         "visibility_scopes": normalized_scopes,
         "visibility_scope_mode": visibility_scope_mode,
-        "visibility_scope_label": _resolve_visibility_scope_label_from_mode(visibility_scope_mode),
+        "visibility_scope_label": _resolve_visibility_scope_label_from_mode(
+            visibility_scope_mode
+        ),
         "status": normalized_status,
         "is_active": normalized_status == "ativo",
         "status_label": _sidebar_section_status_label_v5(normalized_status),
@@ -508,7 +587,11 @@ def _build_sidebar_section_payload(
 def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
     if isinstance(raw_sections, str):
         normalized = normalize_sidebar_sections(
-            [chunk for chunk in re.split(r"[,;\n\r]+", raw_sections) if str(chunk or "").strip()]
+            [
+                chunk
+                for chunk in re.split(r"[,;\n\r]+", raw_sections)
+                if str(chunk or "").strip()
+            ]
         )
         return normalized
 
@@ -536,7 +619,9 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
             continue
         seen_keys.add(clean_key)
         normalized_sections.append(
-            _build_sidebar_section_payload(clean_key, clean_label, clean_visibility_scopes, clean_status)
+            _build_sidebar_section_payload(
+                clean_key, clean_label, clean_visibility_scopes, clean_status
+            )
         )
 
     for default_item in SIDEBAR_SECTION_DEFAULTS:
@@ -544,7 +629,9 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
         if not default_key or default_key in seen_keys:
             continue
         seen_keys.add(default_key)
-        default_label = _normalize_sidebar_section_label(default_item.get("label") or default_key)
+        default_label = _normalize_sidebar_section_label(
+            default_item.get("label") or default_key
+        )
         normalized_sections.append(
             _build_sidebar_section_payload(
                 default_key,
@@ -566,7 +653,9 @@ def normalize_sidebar_sections(raw_sections: Any) -> list[dict[str, Any]]:
     ]
 
 
-def _resolve_default_sidebar_section_key(menu_key: str, section_keys: set[str], ordered_section_keys: list[str]) -> str:
+def _resolve_default_sidebar_section_key(
+    menu_key: str, section_keys: set[str], ordered_section_keys: list[str]
+) -> str:
     if not ordered_section_keys:
         return ""
 
@@ -607,7 +696,9 @@ def resolve_menu_sidebar_section_key(
     if clean_legacy_section_key in valid_section_keys:
         return clean_legacy_section_key
 
-    normalized_legacy_section_key = normalize_menu_section_key(legacy_section_key, menu_key)
+    normalized_legacy_section_key = normalize_menu_section_key(
+        legacy_section_key, menu_key
+    )
     if normalized_legacy_section_key in valid_section_keys:
         return normalized_legacy_section_key
 
@@ -659,6 +750,7 @@ def _fix_common_mojibake(raw_text: str) -> str:
         fixed_text = re.sub(pattern, replacement, fixed_text, flags=re.IGNORECASE)
     return fixed_text
 
+
 def _normalize_system_menu_label(menu_key: Any, menu_label: Any) -> str:
     clean_menu_label = _normalize_menu_label_preserve_case(menu_label)
     return clean_menu_label
@@ -691,6 +783,7 @@ def _normalize_additional_field_size(raw_size: Any, field_type: str) -> int | No
         parsed_size = ADDITIONAL_FIELD_DEFAULT_SIZE
     parsed_size = max(1, min(parsed_size, ADDITIONAL_FIELD_MAX_SIZE))
     return parsed_size
+
 
 def _normalize_additional_field_required(raw_required: Any) -> bool:
     if isinstance(raw_required, bool):
@@ -802,10 +895,14 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
     return header_items + non_header_items
 
 
-def get_menu_process_additional_fields(menu_config: dict[str, Any] | None) -> list[dict[str, Any]]:
+def get_menu_process_additional_fields(
+    menu_config: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
     if not isinstance(menu_config, dict):
         return []
-    return normalize_menu_process_additional_fields(menu_config.get("additional_fields"))
+    return normalize_menu_process_additional_fields(
+        menu_config.get("additional_fields")
+    )
 
 
 def get_menu_process_field_options(
@@ -815,7 +912,10 @@ def get_menu_process_field_options(
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     raw_options = MENU_PROCESS_FIELD_OPTIONS_BY_KEY.get(clean_menu_key, tuple())
     additional_options = get_menu_process_additional_fields(menu_config)
-    if clean_menu_key not in MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS and additional_options:
+    if (
+        clean_menu_key not in MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS
+        and additional_options
+    ):
         return [dict(item) for item in additional_options]
     options = [dict(item) for item in raw_options]
     if additional_options:
@@ -845,7 +945,10 @@ def get_menu_process_header_options(
     return [
         dict(item)
         for item in get_menu_process_field_options(menu_key, menu_config)
-        if str(types_map.get(str(item.get("key") or "").strip().lower()) or "").strip().lower() == "header"
+        if str(types_map.get(str(item.get("key") or "").strip().lower()) or "")
+        .strip()
+        .lower()
+        == "header"
     ]
 
 
@@ -857,9 +960,11 @@ def get_menu_process_selectable_field_options(
     return [
         dict(item)
         for item in get_menu_process_field_options(menu_key, menu_config)
-        if str(types_map.get(str(item.get("key") or "").strip().lower()) or "").strip().lower() != "header"
+        if str(types_map.get(str(item.get("key") or "").strip().lower()) or "")
+        .strip()
+        .lower()
+        != "header"
     ]
-
 
 
 def get_menu_process_default_visible_fields_v4(
@@ -957,12 +1062,9 @@ def normalize_menu_process_visible_fields_v4(
     if not allowed_field_keys:
         return []
 
-    has_explicit_config = (
-        isinstance(clean_menu_config, dict)
-        and (
-            "process_visible_fields" in clean_menu_config
-            or bool(clean_menu_config.get("process_visible_fields_configured"))
-        )
+    has_explicit_config = isinstance(clean_menu_config, dict) and (
+        "process_visible_fields" in clean_menu_config
+        or bool(clean_menu_config.get("process_visible_fields_configured"))
     )
 
     if isinstance(raw_visible_fields, str):
@@ -1018,6 +1120,7 @@ def normalize_menu_process_visible_fields(
         menu_config,
     )
 
+
 def normalize_meu_perfil_visible_fields(raw_fields: Any) -> list[str]:
     return normalize_menu_process_visible_fields(MENU_MEU_PERFIL_KEY, raw_fields)
 
@@ -1059,7 +1162,11 @@ def get_menu_process_visible_field_header_map(
         for raw_field_key, raw_header_key in raw_process_map.items():
             field_key = str(raw_field_key or "").strip().lower()
             header_key = str(raw_header_key or "").strip().lower()
-            if field_key in selectable_field_keys and header_key in header_keys and field_key not in mapped:
+            if (
+                field_key in selectable_field_keys
+                and header_key in header_keys
+                and field_key not in mapped
+            ):
                 mapped[field_key] = header_key
 
     raw_map = menu_config.get("visible_field_headers")
@@ -1067,7 +1174,11 @@ def get_menu_process_visible_field_header_map(
         for raw_field_key, raw_header_key in raw_map.items():
             field_key = str(raw_field_key or "").strip().lower()
             header_key = str(raw_header_key or "").strip().lower()
-            if field_key in selectable_field_keys and header_key in header_keys and field_key not in mapped:
+            if (
+                field_key in selectable_field_keys
+                and header_key in header_keys
+                and field_key not in mapped
+            ):
                 mapped[field_key] = header_key
 
     visible_fields = normalize_menu_process_visible_fields(
@@ -1081,7 +1192,11 @@ def get_menu_process_visible_field_header_map(
         if clean_field in header_keys:
             active_header = clean_field
             continue
-        if clean_field in selectable_field_keys and clean_field not in mapped and active_header:
+        if (
+            clean_field in selectable_field_keys
+            and clean_field not in mapped
+            and active_header
+        ):
             mapped[clean_field] = active_header
 
     return mapped
@@ -1092,7 +1207,9 @@ def get_menu_process_visible_field_rows(
     menu_config: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
-    selectable_options = get_menu_process_selectable_field_options(clean_menu_key, menu_config)
+    selectable_options = get_menu_process_selectable_field_options(
+        clean_menu_key, menu_config
+    )
     header_options = get_menu_process_header_options(clean_menu_key, menu_config)
     selectable_keys = {
         str(item.get("key") or "").strip().lower()
@@ -1109,7 +1226,11 @@ def get_menu_process_visible_field_rows(
 
     normalized_rows: list[dict[str, str]] = []
     seen_raw_row_fields: set[str] = set()
-    raw_rows = menu_config.get("process_visible_field_rows") if isinstance(menu_config, dict) else None
+    raw_rows = (
+        menu_config.get("process_visible_field_rows")
+        if isinstance(menu_config, dict)
+        else None
+    )
     if isinstance(raw_rows, list):
         for raw_row in raw_rows:
             if not isinstance(raw_row, dict):
@@ -1136,7 +1257,9 @@ def get_menu_process_visible_field_rows(
 
     visible_fields = normalize_menu_process_visible_fields(
         clean_menu_key,
-        None if not isinstance(menu_config, dict) else menu_config.get("visible_fields"),
+        None
+        if not isinstance(menu_config, dict)
+        else menu_config.get("visible_fields"),
         menu_config,
     )
     header_map = get_menu_process_visible_field_header_map(clean_menu_key, menu_config)
@@ -1170,7 +1293,12 @@ def get_menu_process_visible_field_rows(
         return default_rows
 
     first_option = selectable_options[0]
-    return [{"field_key": str(first_option.get("key") or "").strip().lower(), "header_key": ""}]
+    return [
+        {
+            "field_key": str(first_option.get("key") or "").strip().lower(),
+            "header_key": "",
+        }
+    ]
 
 
 def _parse_menu_config(raw_menu_config: Any) -> dict[str, Any]:
@@ -1198,14 +1326,18 @@ def _build_admin_subprocess_sidebar_metadata(menu_key: str) -> dict[str, Any]:
         "admin_subprocess_label": config.label,
         "admin_subprocess_singular_label": config.singular_label,
         "admin_subprocess_plural_label": config.plural_label,
-        "admin_subprocess_default_target": f"#{config.default_target}".replace("##", "#"),
+        "admin_subprocess_default_target": f"#{config.default_target}".replace(
+            "##", "#"
+        ),
         "admin_subprocess_edit_target": f"#{config.edit_target}".replace("##", "#"),
         "admin_subprocess_edit_param": config.edit_param,
     }
 
 
 def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
-    existing_rows = session.execute(text("SELECT menu_key FROM sidebar_menu_settings")).all()
+    existing_rows = session.execute(
+        text("SELECT menu_key FROM sidebar_menu_settings")
+    ).all()
     existing_keys = {_normalize_menu_key(row.menu_key) for row in existing_rows}
     changed = False
 
@@ -1267,6 +1399,8 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
             existing_keys.discard(MENU_MEU_PERFIL_LEGACY_KEY)
             changed = True
 
+    default_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+
     for item in SIDEBAR_MENU_DEFAULTS:
         menu_key = str(item["key"])
         if menu_key in existing_keys:
@@ -1274,11 +1408,12 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
         session.execute(
             text(
                 """
-                INSERT INTO sidebar_menu_settings (menu_key, menu_label, is_active, is_deleted)
-                VALUES (:menu_key, :menu_label, :is_active, :is_deleted)
+                INSERT INTO sidebar_menu_settings (entity_id, menu_key, menu_label, is_active, is_deleted)
+                VALUES (:entity_id, :menu_key, :menu_label, :is_active, :is_deleted)
                 """
             ),
             {
+                "entity_id": default_entity_id,
                 "menu_key": menu_key,
                 "menu_label": str(item["label"]),
                 "is_active": True,
@@ -1325,8 +1460,13 @@ def ensure_sidebar_menu_settings_defaults(session: Session) -> None:
     normalized_sidebar_sections = normalize_sidebar_sections(
         administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
     )
-    if administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY) != normalized_sidebar_sections:
-        administrativo_config[MENU_CONFIG_SIDEBAR_SECTIONS_KEY] = normalized_sidebar_sections
+    if (
+        administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+        != normalized_sidebar_sections
+    ):
+        administrativo_config[MENU_CONFIG_SIDEBAR_SECTIONS_KEY] = (
+            normalized_sidebar_sections
+        )
         session.execute(
             text(
                 """
@@ -1383,7 +1523,9 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             menu_config.get(MENU_CONFIG_DISPLAY_ORDER_KEY)
         )
         effective_display_order = (
-            explicit_display_order if explicit_display_order is not None else default_index
+            explicit_display_order
+            if explicit_display_order is not None
+            else default_index
         )
         process_visible_fields = normalize_menu_process_visible_fields(
             menu_key,
@@ -1391,10 +1533,16 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             menu_config,
         )
         process_field_options = get_menu_process_field_options(menu_key, menu_config)
-        process_selectable_field_options = get_menu_process_selectable_field_options(menu_key, menu_config)
+        process_selectable_field_options = get_menu_process_selectable_field_options(
+            menu_key, menu_config
+        )
         process_header_options = get_menu_process_header_options(menu_key, menu_config)
-        process_visible_field_header_map = get_menu_process_visible_field_header_map(menu_key, menu_config)
-        process_visible_field_rows = get_menu_process_visible_field_rows(menu_key, menu_config)
+        process_visible_field_header_map = get_menu_process_visible_field_header_map(
+            menu_key, menu_config
+        )
+        process_visible_field_rows = get_menu_process_visible_field_rows(
+            menu_key, menu_config
+        )
         process_layout_config = resolve_dynamic_process_layout_config(
             menu_key,
             menu_label,
@@ -1430,20 +1578,36 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
                 "process_layout": process_layout_config["layout"],
                 "is_list_process": process_layout_config["is_list_process"],
                 "uses_record_history": process_layout_config["uses_record_history"],
-                "process_record_singular_label": process_layout_config["singular_label"],
+                "process_record_singular_label": process_layout_config[
+                    "singular_label"
+                ],
                 "process_record_plural_label": process_layout_config["plural_label"],
                 "process_record_create_title": process_layout_config["create_title"],
                 "process_record_edit_title": process_layout_config["edit_title"],
                 "process_record_active_title": process_layout_config["active_title"],
-                "process_record_inactive_title": process_layout_config["inactive_title"],
-                "process_record_empty_active_message": process_layout_config["empty_active_message"],
-                "process_record_empty_inactive_message": process_layout_config["empty_inactive_message"],
+                "process_record_inactive_title": process_layout_config[
+                    "inactive_title"
+                ],
+                "process_record_empty_active_message": process_layout_config[
+                    "empty_active_message"
+                ],
+                "process_record_empty_inactive_message": process_layout_config[
+                    "empty_inactive_message"
+                ],
                 "process_record_state_enabled": process_layout_config["state_enabled"],
-                "process_record_status_field_key": process_layout_config["status_field_key"],
-                "process_record_show_system_column": process_layout_config["show_system_column"],
-                "process_record_include_remaining_fields": process_layout_config["include_remaining_fields"],
+                "process_record_status_field_key": process_layout_config[
+                    "status_field_key"
+                ],
+                "process_record_show_system_column": process_layout_config[
+                    "show_system_column"
+                ],
+                "process_record_include_remaining_fields": process_layout_config[
+                    "include_remaining_fields"
+                ],
                 "process_list_columns": process_layout_config["list_columns"],
-                "additional_field_type_options": [dict(item) for item in ADDITIONAL_FIELD_TYPES],
+                "additional_field_type_options": [
+                    dict(item) for item in ADDITIONAL_FIELD_TYPES
+                ],
                 **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": default_index,
                 "_has_explicit_order": explicit_display_order is not None,
@@ -1452,16 +1616,17 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         )
 
     extra_db_keys = sorted(
-        key
-        for key in db_by_key.keys()
-        if key not in defaults_by_key
+        key for key in db_by_key.keys() if key not in defaults_by_key
     )
     for extra_index, menu_key in enumerate(extra_db_keys):
         row = db_by_key.get(menu_key)
         if row is None:
             continue
 
-        menu_label = _normalize_system_menu_label(menu_key, row.menu_label or menu_key) or menu_key
+        menu_label = (
+            _normalize_system_menu_label(menu_key, row.menu_label or menu_key)
+            or menu_key
+        )
         is_active = bool(row.is_active)
         is_deleted = bool(row.is_deleted)
         menu_config = _parse_menu_config(row.menu_config)
@@ -1472,7 +1637,9 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             menu_config.get(MENU_CONFIG_DISPLAY_ORDER_KEY)
         )
         effective_display_order = (
-            explicit_display_order if explicit_display_order is not None else fallback_order
+            explicit_display_order
+            if explicit_display_order is not None
+            else fallback_order
         )
         process_visible_fields = normalize_menu_process_visible_fields(
             menu_key,
@@ -1480,10 +1647,16 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             menu_config,
         )
         process_field_options = get_menu_process_field_options(menu_key, menu_config)
-        process_selectable_field_options = get_menu_process_selectable_field_options(menu_key, menu_config)
+        process_selectable_field_options = get_menu_process_selectable_field_options(
+            menu_key, menu_config
+        )
         process_header_options = get_menu_process_header_options(menu_key, menu_config)
-        process_visible_field_header_map = get_menu_process_visible_field_header_map(menu_key, menu_config)
-        process_visible_field_rows = get_menu_process_visible_field_rows(menu_key, menu_config)
+        process_visible_field_header_map = get_menu_process_visible_field_header_map(
+            menu_key, menu_config
+        )
+        process_visible_field_rows = get_menu_process_visible_field_rows(
+            menu_key, menu_config
+        )
         process_layout_config = resolve_dynamic_process_layout_config(
             menu_key,
             menu_label,
@@ -1515,20 +1688,36 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
                 "process_layout": process_layout_config["layout"],
                 "is_list_process": process_layout_config["is_list_process"],
                 "uses_record_history": process_layout_config["uses_record_history"],
-                "process_record_singular_label": process_layout_config["singular_label"],
+                "process_record_singular_label": process_layout_config[
+                    "singular_label"
+                ],
                 "process_record_plural_label": process_layout_config["plural_label"],
                 "process_record_create_title": process_layout_config["create_title"],
                 "process_record_edit_title": process_layout_config["edit_title"],
                 "process_record_active_title": process_layout_config["active_title"],
-                "process_record_inactive_title": process_layout_config["inactive_title"],
-                "process_record_empty_active_message": process_layout_config["empty_active_message"],
-                "process_record_empty_inactive_message": process_layout_config["empty_inactive_message"],
+                "process_record_inactive_title": process_layout_config[
+                    "inactive_title"
+                ],
+                "process_record_empty_active_message": process_layout_config[
+                    "empty_active_message"
+                ],
+                "process_record_empty_inactive_message": process_layout_config[
+                    "empty_inactive_message"
+                ],
                 "process_record_state_enabled": process_layout_config["state_enabled"],
-                "process_record_status_field_key": process_layout_config["status_field_key"],
-                "process_record_show_system_column": process_layout_config["show_system_column"],
-                "process_record_include_remaining_fields": process_layout_config["include_remaining_fields"],
+                "process_record_status_field_key": process_layout_config[
+                    "status_field_key"
+                ],
+                "process_record_show_system_column": process_layout_config[
+                    "show_system_column"
+                ],
+                "process_record_include_remaining_fields": process_layout_config[
+                    "include_remaining_fields"
+                ],
                 "process_list_columns": process_layout_config["list_columns"],
-                "additional_field_type_options": [dict(item) for item in ADDITIONAL_FIELD_TYPES],
+                "additional_field_type_options": [
+                    dict(item) for item in ADDITIONAL_FIELD_TYPES
+                ],
                 **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": fallback_order,
                 "_has_explicit_order": explicit_display_order is not None,
@@ -1544,22 +1733,47 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
             str(item.get("label") or "").lower(),
         )
     )
-    total_settings = len(settings)
+    active_menu_keys = [
+        str(item.get("key") or "").strip().lower()
+        for item in settings
+        if item.get("is_active") and not item.get("is_deleted")
+    ]
+    active_positions = {
+        menu_key: index for index, menu_key in enumerate(active_menu_keys)
+    }
     for order_index, setting_row in enumerate(settings):
         setting_row["order_index"] = order_index
-        setting_row["can_move_up"] = order_index > 0
-        setting_row["can_move_down"] = order_index < (total_settings - 1)
-        setting_row["display_order"] = int(setting_row.get("_effective_order", order_index))
+        clean_menu_key = str(setting_row.get("key") or "").strip().lower()
+        if (
+            setting_row.get("is_active")
+            and not setting_row.get("is_deleted")
+            and clean_menu_key in active_positions
+        ):
+            active_index = active_positions[clean_menu_key]
+            setting_row["can_move_up"] = active_index > 0
+            setting_row["can_move_down"] = active_index < (len(active_menu_keys) - 1)
+        else:
+            setting_row["can_move_up"] = False
+            setting_row["can_move_down"] = False
+        setting_row["display_order"] = int(
+            setting_row.get("_effective_order", order_index)
+        )
         setting_row.pop("_fallback_order", None)
         setting_row.pop("_has_explicit_order", None)
         setting_row.pop("_effective_order", None)
 
     administrativo_row = next(
-        (row for row in settings if str(row.get("key") or "").strip().lower() == "administrativo"),
+        (
+            row
+            for row in settings
+            if str(row.get("key") or "").strip().lower() == "administrativo"
+        ),
         None,
     )
     sidebar_section_options = normalize_sidebar_sections(
-        (administrativo_row or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+        (administrativo_row or {})
+        .get("menu_config", {})
+        .get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
     )
     sidebar_section_keys = [
         str(item.get("key") or "").strip().lower()
@@ -1590,8 +1804,8 @@ def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
         setting_row["menu_section"] = configured_section_key
         setting_row["menu_section_label"] = setting_row["sidebar_section_label"]
 
-
     return settings
+
 
 def _persist_sidebar_menu_display_order(
     session: Session,
@@ -1603,7 +1817,9 @@ def _persist_sidebar_menu_display_order(
         if not clean_menu_key:
             continue
         menu_config = _load_menu_config(session, clean_menu_key)
-        current_order = _normalize_menu_display_order(menu_config.get(MENU_CONFIG_DISPLAY_ORDER_KEY))
+        current_order = _normalize_menu_display_order(
+            menu_config.get(MENU_CONFIG_DISPLAY_ORDER_KEY)
+        )
         if current_order == order_index:
             continue
         menu_config[MENU_CONFIG_DISPLAY_ORDER_KEY] = order_index
@@ -1624,6 +1840,7 @@ def _persist_sidebar_menu_display_order(
     if changed:
         session.commit()
 
+
 def move_sidebar_menu_setting(
     session: Session,
     menu_key: str,
@@ -1639,24 +1856,34 @@ def move_sidebar_menu_setting(
         return False, "Menu inválido."
 
     settings = get_sidebar_menu_settings(session)
-    ordered_menu_keys = [str(item.get("key") or "").strip().lower() for item in settings if str(item.get("key") or "").strip()]
-    try:
-        current_index = ordered_menu_keys.index(clean_menu_key)
-    except ValueError:
+    ordered_menu_keys = [
+        str(item.get("key") or "").strip().lower()
+        for item in settings
+        if str(item.get("key") or "").strip()
+    ]
+    active_ordered_menu_keys = [
+        key
+        for key, item in zip(ordered_menu_keys, settings)
+        if item.get("is_active") and not item.get("is_deleted")
+    ]
+    if clean_menu_key not in active_ordered_menu_keys:
         return False, "Menu inválido."
 
+    current_index = active_ordered_menu_keys.index(clean_menu_key)
     if clean_direction == "up":
         if current_index <= 0:
             return False, "Esta pasta já está no topo."
-        target_index = current_index - 1
+        target_menu_key = active_ordered_menu_keys[current_index - 1]
     else:
-        if current_index >= (len(ordered_menu_keys) - 1):
+        if current_index >= (len(active_ordered_menu_keys) - 1):
             return False, "Esta pasta já está no fim."
-        target_index = current_index + 1
+        target_menu_key = active_ordered_menu_keys[current_index + 1]
 
-    ordered_menu_keys[current_index], ordered_menu_keys[target_index] = (
-        ordered_menu_keys[target_index],
-        ordered_menu_keys[current_index],
+    current_index_full = ordered_menu_keys.index(clean_menu_key)
+    target_index_full = ordered_menu_keys.index(target_menu_key)
+    ordered_menu_keys[current_index_full], ordered_menu_keys[target_index_full] = (
+        ordered_menu_keys[target_index_full],
+        ordered_menu_keys[current_index_full],
     )
     _persist_sidebar_menu_display_order(session, ordered_menu_keys)
     return True, ""
@@ -1674,7 +1901,9 @@ def get_visible_sidebar_menu_keys(
             continue
         if not item.get("is_active") or item.get("is_deleted"):
             continue
-        visibility_scopes = normalize_menu_visibility_scopes(item.get("visibility_scopes"))
+        visibility_scopes = normalize_menu_visibility_scopes(
+            item.get("visibility_scopes")
+        )
         if clean_entity_scope and clean_entity_scope not in visibility_scopes:
             continue
         visible_keys.add(str(item["key"]))
@@ -1699,7 +1928,9 @@ def _load_menu_config(session: Session, menu_key: str) -> dict[str, Any]:
     return _parse_menu_config(raw_menu_config)
 
 
-def set_sidebar_menu_visibility(session: Session, menu_key: str, make_visible: bool) -> tuple[bool, str]:
+def set_sidebar_menu_visibility(
+    session: Session, menu_key: str, make_visible: bool
+) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
     if not _menu_exists(session, clean_menu_key):
@@ -1775,10 +2006,12 @@ def update_sidebar_menu_label(
             menu_config.get(MENU_CONFIG_SIDEBAR_SECTION_KEY)
         )
         if current_section_key not in section_keys_set:
-            menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = _resolve_default_sidebar_section_key(
-                clean_menu_key,
-                section_keys_set,
-                section_keys,
+            menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = (
+                _resolve_default_sidebar_section_key(
+                    clean_menu_key,
+                    section_keys_set,
+                    section_keys,
+                )
             )
         else:
             menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = current_section_key
@@ -1789,7 +2022,9 @@ def update_sidebar_menu_label(
         menu_config["entity_number"] = int(entity_number)
 
     if clean_menu_key == "administrativo":
-        menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = build_sidebar_global_refresh_version_v1()
+        menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+            build_sidebar_global_refresh_version_v1()
+        )
 
     session.execute(
         text(
@@ -1808,7 +2043,9 @@ def update_sidebar_menu_label(
     )
 
     if clean_menu_key != "administrativo":
-        administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = build_sidebar_global_refresh_version_v1()
+        administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+            build_sidebar_global_refresh_version_v1()
+        )
         session.execute(
             text(
                 """
@@ -1856,8 +2093,13 @@ def update_sidebar_menu_sidebar_sections(
     changed = False
 
     administrativo_config = _load_menu_config(session, "administrativo")
-    if administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY) != normalized_sidebar_sections:
-        administrativo_config[MENU_CONFIG_SIDEBAR_SECTIONS_KEY] = normalized_sidebar_sections
+    if (
+        administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+        != normalized_sidebar_sections
+    ):
+        administrativo_config[MENU_CONFIG_SIDEBAR_SECTIONS_KEY] = (
+            normalized_sidebar_sections
+        )
         session.execute(
             text(
                 """
@@ -1919,8 +2161,6 @@ def update_sidebar_menu_sidebar_sections(
     return True, ""
 
 
-
-
 def update_sidebar_menu_process_fields_v4(
     session: Session,
     menu_key: str,
@@ -1932,7 +2172,6 @@ def update_sidebar_menu_process_fields_v4(
 
     if not clean_menu_key:
         return False, "Menu inválido."
-
 
     ensure_sidebar_menu_settings_defaults(session)
 
@@ -1965,14 +2204,10 @@ def update_sidebar_menu_process_fields_v4(
         return False, "Este processo não possui campos configuráveis."
 
     raw_visible_fields = (
-        list(visible_fields)
-        if isinstance(visible_fields, (list, tuple, set))
-        else []
+        list(visible_fields) if isinstance(visible_fields, (list, tuple, set)) else []
     )
     raw_visible_headers = (
-        list(visible_headers)
-        if isinstance(visible_headers, (list, tuple, set))
-        else []
+        list(visible_headers) if isinstance(visible_headers, (list, tuple, set)) else []
     )
 
     # APPGENESIS_PROCESS_FIELDS_PRESERVE_HEADERS_V13_START
@@ -1984,8 +2219,12 @@ def update_sidebar_menu_process_fields_v4(
             if not isinstance(existing_row, dict):
                 continue
 
-            existing_field_key = str(existing_row.get("field_key") or "").strip().lower()
-            existing_header_key = str(existing_row.get("header_key") or "").strip().lower()
+            existing_field_key = (
+                str(existing_row.get("field_key") or "").strip().lower()
+            )
+            existing_header_key = (
+                str(existing_row.get("header_key") or "").strip().lower()
+            )
 
             if existing_field_key and existing_header_key:
                 existing_header_map[existing_field_key] = existing_header_key
@@ -2009,13 +2248,11 @@ def update_sidebar_menu_process_fields_v4(
                 existing_header_map[existing_field_key] = existing_header_key
 
     incoming_has_any_header = any(
-        str(raw_header_key or "").strip()
-        for raw_header_key in raw_visible_headers
+        str(raw_header_key or "").strip() for raw_header_key in raw_visible_headers
     )
 
-    should_preserve_existing_headers = (
-        not incoming_has_any_header
-        and bool(existing_header_map)
+    should_preserve_existing_headers = not incoming_has_any_header and bool(
+        existing_header_map
     )
     # APPGENESIS_PROCESS_FIELDS_PRESERVE_HEADERS_V13_END
 
@@ -2035,7 +2272,11 @@ def update_sidebar_menu_process_fields_v4(
             continue
 
         header_key = (
-            str(raw_visible_headers[row_index] if row_index < len(raw_visible_headers) else "")
+            str(
+                raw_visible_headers[row_index]
+                if row_index < len(raw_visible_headers)
+                else ""
+            )
             .strip()
             .lower()
         )
@@ -2059,10 +2300,7 @@ def update_sidebar_menu_process_fields_v4(
             }
         )
 
-    process_visible_fields = [
-        row["field_key"]
-        for row in normalized_rows
-    ]
+    process_visible_fields = [row["field_key"] for row in normalized_rows]
 
     process_visible_field_header_map = {
         row["field_key"]: row["header_key"]
@@ -2139,10 +2377,12 @@ def update_sidebar_menu_process_fields(
         visible_headers,
     )
 
+
 def update_sidebar_menu_process_lists(
     session: Session,
     menu_key: str,
     raw_lists: Any,
+    raw_columns: Any = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
@@ -2155,6 +2395,57 @@ def update_sidebar_menu_process_lists(
     menu_config = _load_menu_config(session, clean_menu_key)
     normalized_lists = normalize_menu_process_lists_v3(raw_lists)
     menu_config["process_lists"] = normalized_lists
+
+    if raw_columns is not None:
+        selectable_options = get_menu_process_selectable_field_options(
+            clean_menu_key, menu_config
+        )
+        selectable_labels = {
+            str(item.get("key") or "").strip().lower(): str(
+                item.get("label") or ""
+            ).strip()
+            for item in selectable_options
+            if isinstance(item, dict)
+        }
+        normalized_columns: list[dict[str, Any]] = []
+        seen_field_keys: set[str] = set()
+
+        for raw_column in raw_columns if isinstance(raw_columns, list) else []:
+            if not isinstance(raw_column, dict):
+                continue
+            field_key = str(raw_column.get("field_key") or "").strip().lower()
+            if field_key not in selectable_labels or field_key in seen_field_keys:
+                continue
+            seen_field_keys.add(field_key)
+            try:
+                responsive_priority = max(
+                    0,
+                    min(99, int(raw_column.get("responsive_priority") or 0)),
+                )
+            except (TypeError, ValueError):
+                responsive_priority = 0
+            normalized_columns.append(
+                {
+                    "key": str(raw_column.get("key") or field_key).strip().lower(),
+                    "label": str(
+                        raw_column.get("label") or selectable_labels[field_key]
+                    ).strip(),
+                    "source_kind": "field",
+                    "field_key": field_key,
+                    "always_visible": str(
+                        raw_column.get("always_visible") or ""
+                    ).strip().lower()
+                    in {"1", "true", "yes", "on"},
+                    "responsive_priority": responsive_priority,
+                }
+            )
+
+        menu_config["process_list_columns"] = normalized_columns
+        process_list_config = menu_config.get("process_list_config")
+        if isinstance(process_list_config, dict):
+            process_list_config = dict(process_list_config)
+            process_list_config["columns"] = normalized_columns
+            menu_config["process_list_config"] = process_list_config
 
     session.execute(
         text(
@@ -2176,7 +2467,11 @@ def update_sidebar_menu_process_lists(
 def update_sidebar_menu_additional_fields(
     session: Session,
     menu_key: str,
-    additional_fields: list[dict[str, Any]] | tuple[dict[str, Any], ...] | set[Any] | list[str] | tuple[str, ...],
+    additional_fields: list[dict[str, Any]]
+    | tuple[dict[str, Any], ...]
+    | set[Any]
+    | list[str]
+    | tuple[str, ...],
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     ensure_sidebar_menu_settings_defaults(session)
@@ -2212,25 +2507,37 @@ def update_sidebar_menu_additional_fields(
     if additional_header_keys:
         additional_header_key_set = set(additional_header_keys)
         prioritized_header_keys = [
-            header_key for header_key in additional_header_keys if header_key in visible_fields
+            header_key
+            for header_key in additional_header_keys
+            if header_key in visible_fields
         ]
         remaining_visible_fields = [
-            visible_key for visible_key in visible_fields if visible_key not in additional_header_key_set
+            visible_key
+            for visible_key in visible_fields
+            if visible_key not in additional_header_key_set
         ]
         visible_fields = prioritized_header_keys + remaining_visible_fields
     menu_config["visible_fields"] = visible_fields
     visible_field_headers = menu_config.get("visible_field_headers")
     if isinstance(visible_field_headers, dict):
         additional_type_map = {
-            str(item.get("key") or "").strip().lower(): str(item.get("field_type") or "").strip().lower()
+            str(item.get("key") or "").strip().lower(): str(
+                item.get("field_type") or ""
+            )
+            .strip()
+            .lower()
             for item in normalized_additional_fields
             if str(item.get("key") or "").strip()
         }
         allowed_field_keys = {
-            key for key, field_type in additional_type_map.items() if field_type != "header"
+            key
+            for key, field_type in additional_type_map.items()
+            if field_type != "header"
         }
         allowed_header_keys = {
-            key for key, field_type in additional_type_map.items() if field_type == "header"
+            key
+            for key, field_type in additional_type_map.items()
+            if field_type == "header"
         }
         cleaned_map: dict[str, str] = {}
         for raw_field_key, raw_header_key in visible_field_headers.items():
@@ -2269,7 +2576,9 @@ def create_sidebar_menu_setting(
     if not clean_menu_label:
         return False, "Nome da pasta é obrigatório.", ""
 
-    clean_menu_key = _resolve_legacy_menu_alias(_build_menu_key_from_label(clean_menu_label))
+    clean_menu_key = _resolve_legacy_menu_alias(
+        _build_menu_key_from_label(clean_menu_label)
+    )
     if not clean_menu_key:
         return False, "Nome da pasta inválido.", ""
     clean_menu_label = _normalize_system_menu_label(clean_menu_key, clean_menu_label)
@@ -2437,6 +2746,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
 # HOTFIX V2 - CRIACAO DE PASTA COM REATIVACAO DE REGISTO ELIMINADO
 ####################################################################################
 
+
 def create_sidebar_menu_setting_v2(
     session: Session,
     menu_label: str,
@@ -2450,7 +2760,9 @@ def create_sidebar_menu_setting_v2(
     if not clean_menu_label:
         return False, "Informe o nome da pasta.", ""
 
-    clean_menu_key = _resolve_legacy_menu_alias(_build_menu_key_from_label(clean_menu_label))
+    clean_menu_key = _resolve_legacy_menu_alias(
+        _build_menu_key_from_label(clean_menu_label)
+    )
     if not clean_menu_key:
         return False, "Informe um nome valido para a pasta.", ""
 
@@ -2496,7 +2808,9 @@ def create_sidebar_menu_setting_v2(
     # (3) MONTAR OU ATUALIZAR CONFIGURACAO DA PASTA
     ####################################################################################
 
-    def _build_menu_config_v2(existing_config: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _build_menu_config_v2(
+        existing_config: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         menu_config = dict(existing_config or {})
 
         menu_config["requires_admin"] = True
@@ -2533,9 +2847,10 @@ def create_sidebar_menu_setting_v2(
     # (4) PROCURAR REGISTO EXISTENTE, INCLUINDO ELIMINADOS
     ####################################################################################
 
-    existing_row = session.execute(
-        text(
-            """
+    existing_row = (
+        session.execute(
+            text(
+                """
             SELECT menu_key, menu_label, is_active, is_deleted, menu_config
             FROM sidebar_menu_settings
             WHERE lower(trim(menu_key)) = :menu_key
@@ -2545,12 +2860,15 @@ def create_sidebar_menu_setting_v2(
                 CASE WHEN COALESCE(is_deleted, false) THEN 1 ELSE 0 END
             LIMIT 1
             """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_label": clean_menu_label.strip().lower(),
-        },
-    ).mappings().first()
+            ),
+            {
+                "menu_key": clean_menu_key,
+                "menu_label": clean_menu_label.strip().lower(),
+            },
+        )
+        .mappings()
+        .first()
+    )
 
     ####################################################################################
     # (5) SE EXISTE ATIVO, BLOQUEAR
@@ -2568,7 +2886,9 @@ def create_sidebar_menu_setting_v2(
     ####################################################################################
 
     if existing_row is not None and bool(existing_row.get("is_deleted")):
-        existing_menu_key = str(existing_row.get("menu_key") or clean_menu_key).strip().lower()
+        existing_menu_key = (
+            str(existing_row.get("menu_key") or clean_menu_key).strip().lower()
+        )
         existing_config = _parse_menu_config(existing_row.get("menu_config"))
         menu_config = _build_menu_config_v2(existing_config)
 
@@ -2628,6 +2948,7 @@ create_sidebar_menu_setting = create_sidebar_menu_setting_v2
 ####################################################################################
 # LISTA V1 - LISTAS REUTILIZÁVEIS DO PROCESSO
 ####################################################################################
+
 
 def _normalize_process_list_key_v1(raw_key: Any) -> str:
     clean_key = str(raw_key or "").strip().lower()
@@ -2697,7 +3018,9 @@ def normalize_menu_process_lists_v1(raw_lists: Any) -> list[dict[str, Any]]:
         if not isinstance(raw_item, dict):
             continue
 
-        label = _normalize_sentence_case_text(raw_item.get("label", raw_item.get("name")))
+        label = _normalize_sentence_case_text(
+            raw_item.get("label", raw_item.get("name"))
+        )
 
         if not label:
             continue
@@ -2709,10 +3032,9 @@ def normalize_menu_process_lists_v1(raw_lists: Any) -> list[dict[str, Any]]:
 
         seen_labels.add(label_lookup)
 
-        list_key = (
-            _normalize_process_list_key_v1(raw_item.get("key"))
-            or _build_process_list_key_from_label_v1(label)
-        )
+        list_key = _normalize_process_list_key_v1(
+            raw_item.get("key")
+        ) or _build_process_list_key_from_label_v1(label)
 
         base_key = list_key
         suffix = 2
@@ -2739,7 +3061,9 @@ def normalize_menu_process_lists_v1(raw_lists: Any) -> list[dict[str, Any]]:
     return normalized
 
 
-def get_menu_process_lists_v1(menu_config: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+def get_menu_process_lists_v1(
+    menu_config: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     if not isinstance(menu_config, dict):
         return []
 
@@ -2747,11 +3071,17 @@ def get_menu_process_lists_v1(menu_config: dict[str, Any] | None = None) -> list
 
 
 if "_original_normalize_menu_process_additional_fields_for_list_v1" not in globals():
-    _original_normalize_menu_process_additional_fields_for_list_v1 = normalize_menu_process_additional_fields
+    _original_normalize_menu_process_additional_fields_for_list_v1 = (
+        normalize_menu_process_additional_fields
+    )
 
 
-def normalize_menu_process_additional_fields_v2(raw_fields: Any) -> list[dict[str, Any]]:
-    normalized = _original_normalize_menu_process_additional_fields_for_list_v1(raw_fields)
+def normalize_menu_process_additional_fields_v2(
+    raw_fields: Any,
+) -> list[dict[str, Any]]:
+    normalized = _original_normalize_menu_process_additional_fields_for_list_v1(
+        raw_fields
+    )
 
     if not isinstance(raw_fields, (list, tuple, set)):
         return normalized
@@ -2792,7 +3122,9 @@ def normalize_menu_process_additional_fields_v2(raw_fields: Any) -> list[dict[st
         )
 
         item["list_key"] = _normalize_process_list_key_v1(
-            raw_item.get("list_key", raw_item.get("process_list_key", raw_item.get("lista")))
+            raw_item.get(
+                "list_key", raw_item.get("process_list_key", raw_item.get("lista"))
+            )
         )
 
     return normalized
@@ -2802,11 +3134,17 @@ normalize_menu_process_additional_fields = normalize_menu_process_additional_fie
 
 
 if "_original_normalize_menu_process_additional_fields_for_list_v2" not in globals():
-    _original_normalize_menu_process_additional_fields_for_list_v2 = normalize_menu_process_additional_fields
+    _original_normalize_menu_process_additional_fields_for_list_v2 = (
+        normalize_menu_process_additional_fields
+    )
 
 
-def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[str, Any]]:
-    normalized = _original_normalize_menu_process_additional_fields_for_list_v2(raw_fields)
+def normalize_menu_process_additional_fields_v3(
+    raw_fields: Any,
+) -> list[dict[str, Any]]:
+    normalized = _original_normalize_menu_process_additional_fields_for_list_v2(
+        raw_fields
+    )
 
     if not isinstance(raw_fields, (list, tuple, set)):
         return normalized
@@ -2843,9 +3181,13 @@ def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[st
             or {}
         )
 
-        raw_source_type = str(
-            raw_item.get("list_source_type") or raw_item.get("listSourceType") or ""
-        ).strip().lower()
+        raw_source_type = (
+            str(
+                raw_item.get("list_source_type") or raw_item.get("listSourceType") or ""
+            )
+            .strip()
+            .lower()
+        )
         if raw_source_type not in {"manual", "automatic", "field_list"}:
             has_auto_source = bool(
                 raw_item.get("automatic_source_process_key")
@@ -2878,9 +3220,15 @@ def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[st
             or raw_item.get("automaticSourceFieldKey")
         )
 
-        raw_only_active = raw_item.get("automatic_only_active") or raw_item.get("automaticOnlyActive")
+        raw_only_active = raw_item.get("automatic_only_active") or raw_item.get(
+            "automaticOnlyActive"
+        )
         item["automatic_only_active"] = str(raw_only_active or "").strip().lower() in {
-            "1", "true", "sim", "yes", "on"
+            "1",
+            "true",
+            "sim",
+            "yes",
+            "on",
         }
 
     return normalized
@@ -2929,6 +3277,7 @@ get_sidebar_menu_settings = get_sidebar_menu_settings_v2
 ####################################################################################
 # LISTA V2 - LISTAS REUTILIZÁVEIS DO PROCESSO
 ####################################################################################
+
 
 def _normalize_process_list_key_v2(raw_key: Any) -> str:
     clean_key = str(raw_key or "").strip().lower()
@@ -2998,7 +3347,9 @@ def normalize_menu_process_lists_v2(raw_lists: Any) -> list[dict[str, Any]]:
         if not isinstance(raw_item, dict):
             continue
 
-        label = _normalize_sentence_case_text(raw_item.get("label", raw_item.get("name")))
+        label = _normalize_sentence_case_text(
+            raw_item.get("label", raw_item.get("name"))
+        )
 
         if not label:
             continue
@@ -3010,10 +3361,9 @@ def normalize_menu_process_lists_v2(raw_lists: Any) -> list[dict[str, Any]]:
 
         seen_labels.add(label_lookup)
 
-        list_key = (
-            _normalize_process_list_key_v2(raw_item.get("key"))
-            or _build_process_list_key_from_label_v2(label)
-        )
+        list_key = _normalize_process_list_key_v2(
+            raw_item.get("key")
+        ) or _build_process_list_key_from_label_v2(label)
 
         base_key = list_key
         suffix = 2
@@ -3040,7 +3390,9 @@ def normalize_menu_process_lists_v2(raw_lists: Any) -> list[dict[str, Any]]:
     return normalized
 
 
-def get_menu_process_lists_v2(menu_config: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+def get_menu_process_lists_v2(
+    menu_config: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     if not isinstance(menu_config, dict):
         return []
 
@@ -3048,11 +3400,17 @@ def get_menu_process_lists_v2(menu_config: dict[str, Any] | None = None) -> list
 
 
 if "_original_normalize_menu_process_additional_fields_for_list_v2" not in globals():
-    _original_normalize_menu_process_additional_fields_for_list_v2 = normalize_menu_process_additional_fields
+    _original_normalize_menu_process_additional_fields_for_list_v2 = (
+        normalize_menu_process_additional_fields
+    )
 
 
-def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[str, Any]]:
-    normalized = _original_normalize_menu_process_additional_fields_for_list_v2(raw_fields)
+def normalize_menu_process_additional_fields_v3(
+    raw_fields: Any,
+) -> list[dict[str, Any]]:
+    normalized = _original_normalize_menu_process_additional_fields_for_list_v2(
+        raw_fields
+    )
 
     if not isinstance(raw_fields, (list, tuple, set)):
         return normalized
@@ -3093,7 +3451,9 @@ def normalize_menu_process_additional_fields_v3(raw_fields: Any) -> list[dict[st
         )
 
         item["list_key"] = _normalize_process_list_key_v2(
-            raw_item.get("list_key", raw_item.get("process_list_key", raw_item.get("lista")))
+            raw_item.get(
+                "list_key", raw_item.get("process_list_key", raw_item.get("lista"))
+            )
         )
 
     return normalized
@@ -3143,6 +3503,7 @@ get_sidebar_menu_settings = get_sidebar_menu_settings_v3
 # LISTA V3 - LISTAS REUTILIZÁVEIS DO PROCESSO
 ####################################################################################
 
+
 def _normalize_process_list_key_v3(raw_key: Any) -> str:
     clean_key = str(raw_key or "").strip().lower()
     clean_key = re.sub(r"[^a-z0-9_]+", "_", clean_key)
@@ -3168,7 +3529,9 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
         if not isinstance(raw_item, dict):
             continue
 
-        label = _normalize_sentence_case_text(raw_item.get("label", raw_item.get("name")))
+        label = _normalize_sentence_case_text(
+            raw_item.get("label", raw_item.get("name"))
+        )
 
         if not label:
             continue
@@ -3228,11 +3591,17 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
 
 
 if "_original_normalize_menu_process_additional_fields_for_list_v3" not in globals():
-    _original_normalize_menu_process_additional_fields_for_list_v3 = normalize_menu_process_additional_fields
+    _original_normalize_menu_process_additional_fields_for_list_v3 = (
+        normalize_menu_process_additional_fields
+    )
 
 
-def normalize_menu_process_additional_fields_v4(raw_fields: Any) -> list[dict[str, Any]]:
-    normalized = _original_normalize_menu_process_additional_fields_for_list_v3(raw_fields)
+def normalize_menu_process_additional_fields_v4(
+    raw_fields: Any,
+) -> list[dict[str, Any]]:
+    normalized = _original_normalize_menu_process_additional_fields_for_list_v3(
+        raw_fields
+    )
 
     if not isinstance(raw_fields, (list, tuple, set)):
         return normalized
@@ -3250,7 +3619,9 @@ def normalize_menu_process_additional_fields_v4(raw_fields: Any) -> list[dict[st
 
         raw_item = raw_by_index.get(index, {})
         item["list_key"] = _normalize_process_list_key_v3(
-            raw_item.get("list_key", raw_item.get("process_list_key", raw_item.get("lista")))
+            raw_item.get(
+                "list_key", raw_item.get("process_list_key", raw_item.get("lista"))
+            )
         )
 
     return normalized
@@ -3284,8 +3655,12 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
     for item in settings:
         clean_key = _normalize_menu_key(item.get("key"))
         menu_config = config_by_key.get(clean_key, {})
-        process_lists = normalize_menu_process_lists_v3(menu_config.get("process_lists"))
-        process_subsequent_fields = normalize_menu_process_subsequent_fields(menu_config.get("subsequent_fields"))
+        process_lists = normalize_menu_process_lists_v3(
+            menu_config.get("process_lists")
+        )
+        process_subsequent_fields = normalize_menu_process_subsequent_fields(
+            menu_config.get("subsequent_fields")
+        )
         process_quantity_fields = normalize_menu_process_quantity_fields(
             menu_config.get("process_quantity_fields")
         )
@@ -3330,9 +3705,7 @@ def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, An
             continue
 
         rule_label = _normalize_sentence_case_text(
-            raw_item.get("label")
-            or raw_item.get("rule_label")
-            or raw_item.get("name")
+            raw_item.get("label") or raw_item.get("rule_label") or raw_item.get("name")
         )
         quantity_field_key = _normalize_custom_field_key(
             raw_item.get("quantity_field_key")
@@ -3368,26 +3741,25 @@ def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, An
                 repeated_field_keys.append(clean_field_key)
 
         header_key = _normalize_custom_field_key(
-            raw_item.get("header_key")
-            or raw_item.get("headerKey")
+            raw_item.get("header_key") or raw_item.get("headerKey")
         )
         max_items = _normalize_process_quantity_max_items_v1(
-            raw_item.get("max_items")
-            or raw_item.get("maxItems")
+            raw_item.get("max_items") or raw_item.get("maxItems")
         )
-        item_label = _normalize_sentence_case_text(
-            raw_item.get("item_label")
-            or raw_item.get("itemLabel")
+        item_label = (
+            _normalize_sentence_case_text(
+                raw_item.get("item_label") or raw_item.get("itemLabel") or "Item"
+            )
             or "Item"
-        ) or "Item"
+        )
 
         rule_key = _normalize_menu_key(
-            raw_item.get("key")
-            or raw_item.get("rule_key")
-            or raw_item.get("ruleKey")
+            raw_item.get("key") or raw_item.get("rule_key") or raw_item.get("ruleKey")
         )
         if not rule_key:
-            rule_key = _build_process_quantity_rule_key_v1(rule_label or item_label, row_index)
+            rule_key = _build_process_quantity_rule_key_v1(
+                rule_label or item_label, row_index
+            )
 
         if (
             not rule_label
@@ -3432,7 +3804,9 @@ def update_sidebar_menu_process_quantity_fields_v1(
         return False, "Menu não encontrado."
 
     menu_config = _load_menu_config(session, clean_menu_key)
-    additional_fields = normalize_menu_process_additional_fields(menu_config.get("additional_fields"))
+    additional_fields = normalize_menu_process_additional_fields(
+        menu_config.get("additional_fields")
+    )
     additional_fields_by_key = {
         str(field.get("key") or "").strip().lower(): field
         for field in additional_fields
@@ -3473,7 +3847,10 @@ def update_sidebar_menu_process_quantity_fields_v1(
 
         quantity_field_meta = additional_fields_by_key.get(quantity_field_key)
         if quantity_field_meta is None:
-            return False, f"O campo origem da regra '{rule_label}' deve existir em Campos adicionais."
+            return (
+                False,
+                f"O campo origem da regra '{rule_label}' deve existir em Campos adicionais.",
+            )
         if str(quantity_field_meta.get("field_type") or "").strip().lower() != "number":
             return False, f"O campo origem da regra '{rule_label}' deve ser numérico."
 
@@ -3485,19 +3862,30 @@ def update_sidebar_menu_process_quantity_fields_v1(
         for repeated_field_key in repeated_field_keys:
             repeated_field_meta = additional_fields_by_key.get(repeated_field_key)
             if repeated_field_meta is None:
-                return False, f"Os campos repetidos da regra '{rule_label}' devem existir em Campos adicionais."
-            repeated_field_type = str(repeated_field_meta.get("field_type") or "").strip().lower()
+                return (
+                    False,
+                    f"Os campos repetidos da regra '{rule_label}' devem existir em Campos adicionais.",
+                )
+            repeated_field_type = (
+                str(repeated_field_meta.get("field_type") or "").strip().lower()
+            )
             if repeated_field_type == "header":
                 return False, f"A regra '{rule_label}' não pode repetir cabeçalhos."
             if repeated_field_key == quantity_field_key:
-                return False, f"A regra '{rule_label}' não pode repetir o próprio campo de quantidade."
+                return (
+                    False,
+                    f"A regra '{rule_label}' não pode repetir o próprio campo de quantidade.",
+                )
             if repeated_field_key in seen_repeated_field_keys:
                 continue
             seen_repeated_field_keys.add(repeated_field_key)
             validated_repeated_field_keys.append(repeated_field_key)
 
         if header_key and header_key not in header_keys:
-            return False, f"O cabeçalho da regra '{rule_label}' deve existir em Campos adicionais."
+            return (
+                False,
+                f"O cabeçalho da regra '{rule_label}' deve existir em Campos adicionais.",
+            )
 
         validated_fields.append(
             {
@@ -3530,15 +3918,19 @@ def update_sidebar_menu_process_quantity_fields_v1(
 
     return True, ""
 
+
 # //###################################################################################
 # (MENU) HIERARQUIA DOS CAMPOS ADICIONAIS - PATCH SEGURO V2
 # //###################################################################################
+
 
 def _get_additional_field_group_key_v1(field_type: Any) -> str:
     return _get_additional_field_group_key(field_type)
 
 
-def normalize_menu_process_additional_fields_v1(raw_fields: Any) -> list[dict[str, Any]]:
+def normalize_menu_process_additional_fields_v1(
+    raw_fields: Any,
+) -> list[dict[str, Any]]:
     if not isinstance(raw_fields, (list, tuple, set)):
         return []
 
@@ -3659,7 +4051,9 @@ def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
     }
 
     existing_visible_raw = menu_config.get("process_visible_fields")
-    has_existing_visible_config = isinstance(existing_visible_raw, list) and bool(existing_visible_raw)
+    has_existing_visible_config = isinstance(existing_visible_raw, list) and bool(
+        existing_visible_raw
+    )
 
     existing_visible_keys = {
         str(raw_key or "").strip().lower()
@@ -3731,9 +4125,7 @@ def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
     ]
 
     visible_headers = [
-        header_key
-        for header_key in visible_headers
-        if header_key in used_headers
+        header_key for header_key in visible_headers if header_key in used_headers
     ]
 
     menu_config["additional_fields"] = normalized_fields
@@ -3771,7 +4163,6 @@ def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
     menu_config["visible_field_headers"] = field_header_map
 
     return menu_config
-
 
 
 def update_sidebar_menu_additional_fields_v4(
@@ -3836,6 +4227,7 @@ def update_sidebar_menu_additional_fields_v1(
         fields,
     )
 
+
 def update_sidebar_menu_additional_fields(
     session: Session,
     menu_key: str,
@@ -3852,6 +4244,7 @@ def update_sidebar_menu_additional_fields(
 # (3) CAMPOS SUBSEQUENTES - V1
 # //###################################################################################
 
+
 def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, Any]]:
     """Normaliza campos subsequentes que aparecem após outros campos específicos."""
     if not isinstance(raw_fields, (list, tuple, set)):
@@ -3865,8 +4258,16 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
 
         subsequent_key = str(raw_item.get("key") or "").strip().lower()
         trigger_field = str(raw_item.get("trigger_field") or "").strip().lower()
-        field_key = str(raw_item.get("field_key") or raw_item.get("subsequent_field") or "").strip().lower()
-        operator = str(raw_item.get("operator") or raw_item.get("condition") or "equals").strip().lower()
+        field_key = (
+            str(raw_item.get("field_key") or raw_item.get("subsequent_field") or "")
+            .strip()
+            .lower()
+        )
+        operator = (
+            str(raw_item.get("operator") or raw_item.get("condition") or "equals")
+            .strip()
+            .lower()
+        )
         trigger_value = str(raw_item.get("trigger_value") or "").strip()
         allowed_operators = {
             "preenchido",
@@ -3889,13 +4290,15 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
         if not trigger_field or not field_key:
             continue
 
-        normalized.append({
-            "key": subsequent_key or uuid4().hex,
-            "trigger_field": trigger_field,
-            "field_key": field_key,
-            "operator": operator,
-            "trigger_value": trigger_value,
-        })
+        normalized.append(
+            {
+                "key": subsequent_key or uuid4().hex,
+                "trigger_field": trigger_field,
+                "field_key": field_key,
+                "operator": operator,
+                "trigger_value": trigger_value,
+            }
+        )
 
     return normalized
 
@@ -3964,6 +4367,7 @@ def update_sidebar_menu_subsequent_fields(
 # (2) MOVER CAMPO ADICIONAL NO FORMULÁRIO - V1
 # //###################################################################################
 
+
 def move_sidebar_menu_additional_field(
     session: Session,
     menu_key: str,
@@ -4030,7 +4434,9 @@ def move_sidebar_menu_additional_field(
     if field_index is None:
         return False, "Campo não encontrado."
 
-    field_type = str(normalized_fields[field_index].get("field_type") or "").strip().lower()
+    field_type = (
+        str(normalized_fields[field_index].get("field_type") or "").strip().lower()
+    )
 
     # Determinar o bloco a mover
     if field_type == "header":
@@ -4038,7 +4444,9 @@ def move_sidebar_menu_additional_field(
         block_start = field_index
         block_end = field_index
         for idx in range(field_index + 1, len(normalized_fields)):
-            next_field_type = str(normalized_fields[idx].get("field_type") or "").strip().lower()
+            next_field_type = (
+                str(normalized_fields[idx].get("field_type") or "").strip().lower()
+            )
             if next_field_type == "header":
                 break
             block_end = idx
@@ -4060,7 +4468,9 @@ def move_sidebar_menu_additional_field(
         target_index = block_end + 1
 
     # Se o alvo é um header, ajustar
-    target_type = str(normalized_fields[target_index].get("field_type") or "").strip().lower()
+    target_type = (
+        str(normalized_fields[target_index].get("field_type") or "").strip().lower()
+    )
     if target_type == "header":
         if clean_direction == "up":
             # Mover para antes do header
@@ -4068,7 +4478,9 @@ def move_sidebar_menu_additional_field(
         else:
             # Mover para depois do bloco do header
             for idx in range(target_index + 1, len(normalized_fields)):
-                next_field_type = str(normalized_fields[idx].get("field_type") or "").strip().lower()
+                next_field_type = (
+                    str(normalized_fields[idx].get("field_type") or "").strip().lower()
+                )
                 if next_field_type == "header":
                     break
                 target_index = idx
@@ -4077,21 +4489,21 @@ def move_sidebar_menu_additional_field(
     # Executar a troca
     if clean_direction == "up":
         # Remover bloco atual e inserir antes do alvo
-        block = normalized_fields[block_start:block_end + 1]
+        block = normalized_fields[block_start : block_end + 1]
         normalized_fields = (
-            normalized_fields[:target_index] +
-            block +
-            normalized_fields[target_index:block_start] +
-            normalized_fields[block_end + 1:]
+            normalized_fields[:target_index]
+            + block
+            + normalized_fields[target_index:block_start]
+            + normalized_fields[block_end + 1 :]
         )
     else:
         # Remover bloco atual e inserir depois do alvo
-        block = normalized_fields[block_start:block_end + 1]
+        block = normalized_fields[block_start : block_end + 1]
         normalized_fields = (
-            normalized_fields[:block_start] +
-            normalized_fields[block_end + 1:target_index + 1] +
-            block +
-            normalized_fields[target_index + 1:]
+            normalized_fields[:block_start]
+            + normalized_fields[block_end + 1 : target_index + 1]
+            + block
+            + normalized_fields[target_index + 1 :]
         )
 
     # Reconstruir a hierarquia e salvar
@@ -4122,6 +4534,7 @@ def move_sidebar_menu_additional_field(
 # (CAMPOS SUBSEQUENTES V2) NORMALIZAR CONDICAO DE CAMPOS SUBSEQUENTES
 ####################################################################################
 
+
 def _normalize_subsequent_field_operator_v2(raw_operator: Any) -> str:
     clean_operator = str(raw_operator or "").strip().lower()
     clean_operator = clean_operator.replace("-", "_")
@@ -4134,28 +4547,23 @@ def _normalize_subsequent_field_operator_v2(raw_operator: Any) -> str:
         "blank": "vazio",
         "is_empty": "vazio",
         "esta_vazio": "vazio",
-
         "preenchido": "preenchido",
         "not_empty": "preenchido",
         "filled": "preenchido",
         "is_filled": "preenchido",
         "esta_preenchido": "preenchido",
-
         "igual": "igual",
         "igual_a": "igual",
         "equals": "igual",
         "equal": "igual",
         "eq": "igual",
-
         "diferente": "diferente",
         "diferente_de": "diferente",
         "not_equal": "diferente",
         "neq": "diferente",
-
         "contem": "contem",
         "contém": "contem",
         "contains": "contem",
-
         "nao_contem": "nao_contem",
         "não_contém": "nao_contem",
         "not_contains": "nao_contem",
@@ -4167,6 +4575,7 @@ def _normalize_subsequent_field_operator_v2(raw_operator: Any) -> str:
 ####################################################################################
 # (CAMPOS SUBSEQUENTES V2) NORMALIZAR LISTA DE CAMPOS SUBSEQUENTES
 ####################################################################################
+
 
 def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, str]]:
     if not isinstance(raw_fields, (list, tuple)):
@@ -4263,6 +4672,7 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
 # (CAMPOS SUBSEQUENTES V3) NORMALIZAR E GRAVAR CAMPOS SUBSEQUENTES
 ####################################################################################
 
+
 def _normalize_subsequent_field_operator_v3(raw_operator: Any) -> str:
     clean_operator = str(raw_operator or "").strip().lower()
     clean_operator = clean_operator.replace("-", "_")
@@ -4270,26 +4680,22 @@ def _normalize_subsequent_field_operator_v3(raw_operator: Any) -> str:
 
     operator_aliases = {
         "": "is_empty",
-
         "vazio": "is_empty",
         "empty": "is_empty",
         "blank": "is_empty",
         "is_empty": "is_empty",
         "esta_vazio": "is_empty",
-
         "preenchido": "is_not_empty",
         "not_empty": "is_not_empty",
         "filled": "is_not_empty",
         "is_filled": "is_not_empty",
         "is_not_empty": "is_not_empty",
         "esta_preenchido": "is_not_empty",
-
         "igual": "equals",
         "igual_a": "equals",
         "equals": "equals",
         "equal": "equals",
         "eq": "equals",
-
         "diferente": "not_equals",
         "diferente_de": "not_equals",
         "not_equal": "not_equals",
@@ -4438,9 +4844,14 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
 # (LISTAS V8) PRESERVAR LIST_KEY NOS CAMPOS ADICIONAIS
 ####################################################################################
 
+
 def _normalize_process_list_key_v8(raw_key: Any) -> str:
     clean_value = str(raw_key or "").strip().lower()
-    clean_value = unicodedata.normalize("NFKD", clean_value).encode("ascii", "ignore").decode("ascii")
+    clean_value = (
+        unicodedata.normalize("NFKD", clean_value)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+    )
     clean_value = re.sub(r"[^a-z0-9_]+", "_", clean_value)
     clean_value = re.sub(r"_+", "_", clean_value).strip("_")
     return clean_value
@@ -4523,13 +4934,17 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
                 or raw_item.get("manualListKey")
                 or item_list_key
             )
-            item_automatic_source_process_key = _normalize_additional_field_source_key_v1(
-                raw_item.get("automatic_source_process_key")
-                or raw_item.get("automaticSourceProcessKey")
+            item_automatic_source_process_key = (
+                _normalize_additional_field_source_key_v1(
+                    raw_item.get("automatic_source_process_key")
+                    or raw_item.get("automaticSourceProcessKey")
+                )
             )
-            item_automatic_source_section_key = _normalize_additional_field_source_key_v1(
-                raw_item.get("automatic_source_section_key")
-                or raw_item.get("automaticSourceSectionKey")
+            item_automatic_source_section_key = (
+                _normalize_additional_field_source_key_v1(
+                    raw_item.get("automatic_source_section_key")
+                    or raw_item.get("automaticSourceSectionKey")
+                )
             )
             item_automatic_source_field_key = _normalize_additional_field_source_key_v1(
                 raw_item.get("automatic_source_field_key")
@@ -4542,11 +4957,15 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
             item_list_source_type = _normalize_additional_field_list_source_type_v1(
                 raw_item.get("list_source_type")
                 or raw_item.get("listSourceType")
-                or ("automatic" if (
-                    item_automatic_source_process_key
-                    or item_automatic_source_section_key
-                    or item_automatic_source_field_key
-                ) else "manual")
+                or (
+                    "automatic"
+                    if (
+                        item_automatic_source_process_key
+                        or item_automatic_source_section_key
+                        or item_automatic_source_field_key
+                    )
+                    else "manual"
+                )
             )
             raw_manual_items = (
                 raw_item.get("manual_list_items")
@@ -4605,7 +5024,9 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
                 item_manual_list_key = item_list_key
             if item_list_source_type == "manual" and not item_manual_list_key:
                 item_manual_list_key = _normalize_process_list_key_v8(item_label)
-            item_list_key = item_manual_list_key if item_list_source_type == "manual" else ""
+            item_list_key = (
+                item_manual_list_key if item_list_source_type == "manual" else ""
+            )
 
         normalized_item: dict[str, Any] = {
             "key": unique_key,
@@ -4624,12 +5045,24 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
             if item_manual_list_items:
                 normalized_item["manual_list_items"] = item_manual_list_items
                 normalized_item["manual_list_items_csv"] = item_manual_list_items_csv
-            if item_list_source_type in {"automatic", "field_list", "profile_menu_tabs"}:
-                normalized_item["automatic_source_process_key"] = item_automatic_source_process_key
-                normalized_item["automatic_source_section_key"] = item_automatic_source_section_key
-                normalized_item["automatic_source_field_key"] = item_automatic_source_field_key
+            if item_list_source_type in {
+                "automatic",
+                "field_list",
+                "profile_menu_tabs",
+            }:
+                normalized_item["automatic_source_process_key"] = (
+                    item_automatic_source_process_key
+                )
+                normalized_item["automatic_source_section_key"] = (
+                    item_automatic_source_section_key
+                )
+                normalized_item["automatic_source_field_key"] = (
+                    item_automatic_source_field_key
+                )
                 if item_list_source_type == "automatic":
-                    normalized_item["automatic_only_active"] = bool(item_automatic_only_active)
+                    normalized_item["automatic_only_active"] = bool(
+                        item_automatic_only_active
+                    )
 
         normalized.append(normalized_item)
 
@@ -4653,6 +5086,7 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 # (SIDEBAR_GLOBAL_REFRESH_V1) VERSAO GLOBAL PARA REFRESH DOS UTILIZADORES LOGADOS
 # ###################################################################################
 
+
 def build_sidebar_global_refresh_version_v1() -> str:
     from time import time as _appgenesis_time
 
@@ -4660,17 +5094,21 @@ def build_sidebar_global_refresh_version_v1() -> str:
 
 
 def get_sidebar_global_refresh_version_v1(session: Session) -> str:
-    row = session.execute(
-        text(
-            """
+    row = (
+        session.execute(
+            text(
+                """
             SELECT menu_config
             FROM sidebar_menu_settings
             WHERE lower(trim(menu_key)) = :menu_key
             LIMIT 1
             """
-        ),
-        {"menu_key": "administrativo"},
-    ).mappings().one_or_none()
+            ),
+            {"menu_key": "administrativo"},
+        )
+        .mappings()
+        .one_or_none()
+    )
 
     if row is None:
         return ""
@@ -4685,11 +5123,13 @@ def get_sidebar_global_refresh_version_v1(session: Session) -> str:
 
     return str(menu_config.get(MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY) or "")
 
+
 # APPGENESIS_SIDEBAR_SECTIONS_UPDATE_V2_START
 
 # ###################################################################################
 # (SIDEBAR_SECTIONS_UPDATE_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
 # ###################################################################################
+
 
 def _parse_sidebar_menu_config_v2(raw_menu_config: Any) -> dict[str, Any]:
     try:
@@ -4778,14 +5218,18 @@ def update_sidebar_sections_v2(
         if str(section.get("key") or "").strip()
     }
 
-    menu_rows = session.execute(
-        text(
-            """
+    menu_rows = (
+        session.execute(
+            text(
+                """
             SELECT menu_key, menu_config
             FROM sidebar_menu_settings
             """
+            )
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
 
     if not menu_rows:
         return False, "Não existem menus para atualizar."
@@ -4811,18 +5255,22 @@ def update_sidebar_sections_v2(
         inherited_scopes = normalize_menu_visibility_scopes(
             section_scope_map.get(sidebar_section_key)
         )
-        inherited_scope_mode = _resolve_visibility_scope_mode_from_scopes(inherited_scopes)
+        inherited_scope_mode = _resolve_visibility_scope_mode_from_scopes(
+            inherited_scopes
+        )
 
         menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = sidebar_section_key
         menu_config["visibility_scopes"] = inherited_scopes
         menu_config["visibility_scope_mode"] = inherited_scope_mode
-        menu_config["visibility_scope_label"] = _resolve_visibility_scope_label_from_mode(
-            inherited_scope_mode
+        menu_config["visibility_scope_label"] = (
+            _resolve_visibility_scope_label_from_mode(inherited_scope_mode)
         )
 
         if clean_menu_key == "administrativo":
             menu_config[MENU_CONFIG_SIDEBAR_SECTIONS_KEY] = normalized_sections
-            menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = build_sidebar_global_refresh_version_v1()
+            menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+                build_sidebar_global_refresh_version_v1()
+            )
 
         session.execute(
             text(
@@ -4845,5 +5293,6 @@ def update_sidebar_sections_v2(
         return False, "Nenhum menu foi atualizado com a visibilidade das sessões."
 
     return True, ""
+
 
 # APPGENESIS_SIDEBAR_SECTIONS_UPDATE_V2_END

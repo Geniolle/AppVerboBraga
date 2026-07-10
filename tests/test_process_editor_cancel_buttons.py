@@ -48,8 +48,9 @@ def test_process_editor_cancel_buttons_use_generic_origin_menu_not_hardcoded() -
     )
     matches = return_url_pattern.findall(html_text)
 
-    # Aba Geral (2 variantes: owner editavel + somente leitura) + as 5 abas do editor.
-    assert len(matches) == 7
+    # Aba Geral (2 variantes: owner editavel + somente leitura) + os managers do editor,
+    # incluindo a area independente de colunas da listagem dentro da aba Listas.
+    assert len(matches) == 8
 
     for hardcoded_menu in ("menu=calendario", "menu=administrativo\"", "menu=sessoes\""):
         assert hardcoded_menu not in html_text
@@ -60,7 +61,7 @@ def test_process_editor_cancel_return_target_reuses_settings_edit_cancel_target_
 
     assert html_text.count(
         'data-appgenesis-cancel-return-target="{{ settings_edit_cancel_target }}"'
-    ) == 7
+    ) == 8
 
 
 ####################################################################################

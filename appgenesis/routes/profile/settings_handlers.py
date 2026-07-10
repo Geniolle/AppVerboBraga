@@ -65,6 +65,7 @@ def _log_sessoes_flow_v1(event: str, **payload) -> None:
     parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
     _SESSOES_FLOW_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
 
+
 # APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
 
 # APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_START
@@ -89,6 +90,7 @@ def _log_process_editor_flow_v1(request: Request | None, event: str, **payload) 
         return
     parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
     _PROCESS_EDITOR_FLOW_LOGGER.info("[PROCESS_EDITOR_FLOW] %s | %s", event, parts)
+
 
 # APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_END
 
@@ -140,7 +142,11 @@ def _sanitize_users_new_settings_return_url_v1(
     # servidor para decidir qual card mostrar), nunca o fragment estatico do return_url --
     # caso contrario o card do editor pode permanecer "ativo" mesmo depois do target mudar.
     resolved_target = query_params.get("target", "")
-    fragment = f"#{resolved_target}" if resolved_target else (f"#{parsed_url.fragment}" if parsed_url.fragment else "")
+    fragment = (
+        f"#{resolved_target}"
+        if resolved_target
+        else (f"#{parsed_url.fragment}" if parsed_url.fragment else "")
+    )
 
     return f"{path}?{query_string}{fragment}" if query_string else f"{path}{fragment}"
 
@@ -242,7 +248,9 @@ def _require_menu_settings_owner_v1(
         selected_entity_id,
     )
 
-    if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+    if not permissions.get(
+        "can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)
+    ):
         return RedirectResponse(
             url=_build_settings_redirect_url(
                 error_message="Apenas Owner pode alterar definições do menu.",
@@ -265,6 +273,7 @@ def _require_menu_settings_owner_v1(
 # (SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1) CONSULTAR VERSAO GLOBAL DO SIDEBAR
 # ###################################################################################
 
+
 @router.get("/settings/menu/sidebar-refresh-version")
 def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
     with SessionLocal() as session:
@@ -285,6 +294,7 @@ def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
             }
         )
 
+
 # APPGENESIS_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_END
 
 # APPGENESIS_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_START
@@ -292,6 +302,7 @@ def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
 # ###################################################################################
 # (SIDEBAR_SECTIONS_DATA_ENDPOINT_V6) LER SESSOES DO SIDEBAR DIRETO DO BD
 # ###################################################################################
+
 
 @router.get("/settings/menu/sidebar-sections-data")
 def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
@@ -350,6 +361,7 @@ def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 # APPGENESIS_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_END
 
 
@@ -359,13 +371,18 @@ def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
 # (SIDEBAR_SECTION_RETURN_URL_V17) URL SEGURA DE RETORNO PARA A ABA SESSOES
 # ###################################################################################
 
+
 def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
     raw_url = str(return_url or "").strip()
 
     if not raw_url:
         return "/users/new?menu=administrativo#admin-sidebar-sections-card"
 
-    if raw_url.startswith("http://") or raw_url.startswith("https://") or raw_url.startswith("//"):
+    if (
+        raw_url.startswith("http://")
+        or raw_url.startswith("https://")
+        or raw_url.startswith("//")
+    ):
         return "/users/new?menu=administrativo#admin-sidebar-sections-card"
 
     if not raw_url.startswith("/users/new"):
@@ -373,11 +390,8 @@ def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
 
     return raw_url
 
+
 # APPGENESIS_SESSOES_RETURN_URL_V17_END
-
-
-
-
 
 
 # APPGENESIS_SESSOES_SAVE_ONE_V19_START
@@ -385,6 +399,7 @@ def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
 # ###################################################################################
 # (SIDEBAR_SECTION_SAVE_ONE_V19) CRIAR/EDITAR SESSAO COM ESTADO PERSISTENTE
 # ###################################################################################
+
 
 def _normalize_sidebar_section_text_v19(value: object) -> str:
     return str(value or "").strip()
@@ -396,7 +411,9 @@ def _slugify_sidebar_section_key_v19(value: object) -> str:
 
     raw_value = _normalize_sidebar_section_text_v19(value).lower()
     raw_value = unicodedata.normalize("NFD", raw_value)
-    raw_value = "".join(char for char in raw_value if unicodedata.category(char) != "Mn")
+    raw_value = "".join(
+        char for char in raw_value if unicodedata.category(char) != "Mn"
+    )
     raw_value = re.sub(r"[^a-z0-9]+", "_", raw_value)
     raw_value = re.sub(r"_+", "_", raw_value).strip("_")
 
@@ -416,7 +433,11 @@ def _normalize_sidebar_section_status_v19(value: object) -> str:
 
 
 def _sidebar_section_status_label_v19(value: object) -> str:
-    return "Inativo" if _normalize_sidebar_section_status_v19(value) == "inativo" else "Ativo"
+    return (
+        "Inativo"
+        if _normalize_sidebar_section_status_v19(value) == "inativo"
+        else "Ativo"
+    )
 
 
 def _normalize_sidebar_section_scope_v19(value: object) -> str:
@@ -460,7 +481,11 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     if _dbg:
         _log_sessoes_flow_v1("sanitize:start", raw_url=raw_url)
 
-    if raw_url.startswith("http://") or raw_url.startswith("https://") or raw_url.startswith("//"):
+    if (
+        raw_url.startswith("http://")
+        or raw_url.startswith("https://")
+        or raw_url.startswith("//")
+    ):
         raw_url = fallback
 
     if not raw_url.startswith("/users/new"):
@@ -523,10 +548,16 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     if not found_target:
         clean_params.append(("target", "admin-sidebar-sections-card"))
 
-    sanitized = urlunsplit(("", "", "/users/new", urlencode(clean_params), "admin-sidebar-sections-card"))
+    sanitized = urlunsplit(
+        ("", "", "/users/new", urlencode(clean_params), "admin-sidebar-sections-card")
+    )
 
     if _dbg:
-        removed = [k for k, _ in parse_qsl((urlsplit(raw_url)).query, keep_blank_values=True) if k in blocked_params]
+        removed = [
+            k
+            for k, _ in parse_qsl((urlsplit(raw_url)).query, keep_blank_values=True)
+            if k in blocked_params
+        ]
         _log_sessoes_flow_v1(
             "sanitize:done",
             sanitized_url=sanitized,
@@ -537,13 +568,17 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     return sanitized
 
 
-def _append_sidebar_section_message_v19(return_url: str, message_key: str, message: str) -> str:
+def _append_sidebar_section_message_v19(
+    return_url: str, message_key: str, message: str
+) -> str:
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
     _dbg = _debug_sessoes_flow_enabled_v1()
 
     if _dbg:
-        _log_sessoes_flow_v1("append_message:start", message_key=message_key, base_return_url=return_url)
+        _log_sessoes_flow_v1(
+            "append_message:start", message_key=message_key, base_return_url=return_url
+        )
 
     parts = urlsplit(return_url)
     params = [
@@ -553,7 +588,15 @@ def _append_sidebar_section_message_v19(return_url: str, message_key: str, messa
     ]
     params.append((message_key, message))
 
-    final_url = urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
+    final_url = urlunsplit(
+        (
+            "",
+            "",
+            parts.path or "/users/new",
+            urlencode(params),
+            parts.fragment or "admin-sidebar-sections-card",
+        )
+    )
 
     if _dbg:
         _log_sessoes_flow_v1("append_message:done", final_url=final_url)
@@ -576,7 +619,15 @@ def _redirect_sidebar_section_message_v19(
         parts = urlsplit(url)
         params = list(parse_qsl(parts.query, keep_blank_values=True))
         params.append(("appgenesis_after_save", "1"))
-        url = urlunsplit(("", "", parts.path or "/users/new", urlencode(params), parts.fragment or "admin-sidebar-sections-card"))
+        url = urlunsplit(
+            (
+                "",
+                "",
+                parts.path or "/users/new",
+                urlencode(params),
+                parts.fragment or "admin-sidebar-sections-card",
+            )
+        )
 
     return RedirectResponse(
         url=url,
@@ -584,7 +635,9 @@ def _redirect_sidebar_section_message_v19(
     )
 
 
-def _redirect_sidebar_section_edit_error_v19(original_key: str, error: str) -> RedirectResponse:
+def _redirect_sidebar_section_edit_error_v19(
+    original_key: str, error: str
+) -> RedirectResponse:
     from urllib.parse import urlencode, urlunsplit
 
     params = [
@@ -595,7 +648,9 @@ def _redirect_sidebar_section_edit_error_v19(original_key: str, error: str) -> R
         ("sidebar_section_edit_key", original_key),
         ("error", error),
     ]
-    url = urlunsplit(("", "", "/users/new", urlencode(params), "admin-sidebar-sections-form-card"))
+    url = urlunsplit(
+        ("", "", "/users/new", urlencode(params), "admin-sidebar-sections-form-card")
+    )
     return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -612,7 +667,9 @@ def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
     ]
     if message:
         params.append(("success", message))
-    return urlunsplit(("", "", "/users/new", urlencode(params), "admin-sidebar-sections-card"))
+    return urlunsplit(
+        ("", "", "/users/new", urlencode(params), "admin-sidebar-sections-card")
+    )
 
 
 def _is_sidebar_section_ajax_request_v1(request: Request) -> bool:
@@ -695,9 +752,7 @@ def _read_sidebar_sections_for_save_one_v19(session) -> list[dict[str, str]]:
     if not isinstance(menu_config, dict):
         menu_config = {}
 
-    return normalize_sidebar_sections(
-        menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
-    )
+    return normalize_sidebar_sections(menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY))
 
 
 def _persist_sidebar_sections_status_v19(
@@ -741,7 +796,9 @@ def _persist_sidebar_sections_status_v19(
     for section in payload_sections:
         clean_key = _slugify_sidebar_section_key_v19(section.get("key"))
         clean_label = _normalize_sidebar_section_text_v19(section.get("label"))
-        clean_scope = _normalize_sidebar_section_scope_v19(section.get("visibility_scope_mode"))
+        clean_scope = _normalize_sidebar_section_scope_v19(
+            section.get("visibility_scope_mode")
+        )
         clean_status = _normalize_sidebar_section_status_v19(section.get("status"))
 
         if clean_key == clean_target_key:
@@ -807,7 +864,9 @@ def save_one_sidebar_section_v19(
             is_ajax=_is_ajax,
         )
 
-    safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
+    safe_return_url = _sanitize_sidebar_section_return_url_v19(
+        sidebar_section_return_url
+    )
 
     if _dbg_save:
         _log_sessoes_flow_v1("save:safe_return_url", safe_return_url=safe_return_url)
@@ -848,7 +907,10 @@ def save_one_sidebar_section_v19(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
                     "Apenas Owner pode alterar sessões do sidebar.",
@@ -864,7 +926,9 @@ def save_one_sidebar_section_v19(
         clean_mode = _normalize_sidebar_section_text_v19(section_mode).lower()
         clean_original_key = _slugify_sidebar_section_key_v19(original_section_key)
         clean_label = _normalize_sidebar_section_text_v19(section_label)
-        clean_scope = _normalize_sidebar_section_scope_v19(section_visibility_scope_mode)
+        clean_scope = _normalize_sidebar_section_scope_v19(
+            section_visibility_scope_mode
+        )
 
         effective_status = section_status_override_v19 or section_status
         clean_status = _normalize_sidebar_section_status_v19(effective_status)
@@ -872,15 +936,31 @@ def save_one_sidebar_section_v19(
         if not clean_label:
             if clean_mode == "edit" and clean_original_key:
                 if _dbg_save:
-                    _log_sessoes_flow_v1("save:error_redirect", motivo="label_vazio", clean_mode=clean_mode, edit_key=clean_original_key, tem_edit_key=True, tem_form_card=True)
+                    _log_sessoes_flow_v1(
+                        "save:error_redirect",
+                        motivo="label_vazio",
+                        clean_mode=clean_mode,
+                        edit_key=clean_original_key,
+                        tem_edit_key=True,
+                        tem_form_card=True,
+                    )
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
                         "Informe o nome da sessão.",
                         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     )
-                return _redirect_sidebar_section_edit_error_v19(clean_original_key, "Informe o nome da sessão.")
+                return _redirect_sidebar_section_edit_error_v19(
+                    clean_original_key, "Informe o nome da sessão."
+                )
             if _dbg_save:
-                _log_sessoes_flow_v1("save:error_redirect", motivo="label_vazio", clean_mode=clean_mode, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
+                _log_sessoes_flow_v1(
+                    "save:error_redirect",
+                    motivo="label_vazio",
+                    clean_mode=clean_mode,
+                    redirect_url=safe_return_url,
+                    tem_edit_key=False,
+                    tem_form_card=False,
+                )
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
                     "Informe o nome da sessão.",
@@ -916,17 +996,28 @@ def save_one_sidebar_section_v19(
                     payload_sections.append(
                         {
                             "key": section_key,
-                            "label": _normalize_sidebar_section_text_v19(section.get("label")),
+                            "label": _normalize_sidebar_section_text_v19(
+                                section.get("label")
+                            ),
                             "visibility_scope_mode": _normalize_sidebar_section_scope_v19(
                                 section.get("visibility_scope_mode")
                             ),
-                            "status": _normalize_sidebar_section_status_v19(section.get("status")),
+                            "status": _normalize_sidebar_section_status_v19(
+                                section.get("status")
+                            ),
                         }
                     )
 
             if not found_section:
                 if _dbg_save:
-                    _log_sessoes_flow_v1("save:error_redirect", motivo="sessao_nao_encontrada", clean_original_key=clean_original_key, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
+                    _log_sessoes_flow_v1(
+                        "save:error_redirect",
+                        motivo="sessao_nao_encontrada",
+                        clean_original_key=clean_original_key,
+                        redirect_url=safe_return_url,
+                        tem_edit_key=False,
+                        tem_form_card=False,
+                    )
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
                         "Sessão não encontrada para edição.",
@@ -942,17 +1033,23 @@ def save_one_sidebar_section_v19(
                 _slugify_sidebar_section_key_v19(section.get("key"))
                 for section in current_sections
             }
-            target_section_key = _make_unique_sidebar_section_key_v19(clean_label, used_keys)
+            target_section_key = _make_unique_sidebar_section_key_v19(
+                clean_label, used_keys
+            )
 
             for section in current_sections:
                 payload_sections.append(
                     {
                         "key": _slugify_sidebar_section_key_v19(section.get("key")),
-                        "label": _normalize_sidebar_section_text_v19(section.get("label")),
+                        "label": _normalize_sidebar_section_text_v19(
+                            section.get("label")
+                        ),
                         "visibility_scope_mode": _normalize_sidebar_section_scope_v19(
                             section.get("visibility_scope_mode")
                         ),
-                        "status": _normalize_sidebar_section_status_v19(section.get("status")),
+                        "status": _normalize_sidebar_section_status_v19(
+                            section.get("status")
+                        ),
                     }
                 )
 
@@ -973,7 +1070,14 @@ def save_one_sidebar_section_v19(
         if not ok:
             if clean_mode == "edit" and clean_original_key:
                 if _dbg_save:
-                    _log_sessoes_flow_v1("save:error_redirect", motivo="update_falhou", clean_mode=clean_mode, edit_key=clean_original_key, tem_edit_key=True, tem_form_card=True)
+                    _log_sessoes_flow_v1(
+                        "save:error_redirect",
+                        motivo="update_falhou",
+                        clean_mode=clean_mode,
+                        edit_key=clean_original_key,
+                        tem_edit_key=True,
+                        tem_form_card=True,
+                    )
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
                         error_message or "Não foi possível gravar a sessão.",
@@ -984,7 +1088,14 @@ def save_one_sidebar_section_v19(
                     error_message or "Não foi possível gravar a sessão.",
                 )
             if _dbg_save:
-                _log_sessoes_flow_v1("save:error_redirect", motivo="update_falhou", clean_mode=clean_mode, redirect_url=safe_return_url, tem_edit_key=False, tem_form_card=False)
+                _log_sessoes_flow_v1(
+                    "save:error_redirect",
+                    motivo="update_falhou",
+                    clean_mode=clean_mode,
+                    redirect_url=safe_return_url,
+                    tem_edit_key=False,
+                    tem_form_card=False,
+                )
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
                     error_message or "Não foi possível gravar a sessão.",
@@ -1027,6 +1138,7 @@ def save_one_sidebar_section_v19(
 
         return RedirectResponse(url=_success_url, status_code=status.HTTP_303_SEE_OTHER)
 
+
 # APPGENESIS_SESSOES_SAVE_ONE_V19_END
 
 
@@ -1036,6 +1148,7 @@ def save_one_sidebar_section_v19(
 # (SIDEBAR_SECTION_MOVE_ONE_V25) MOVER SESSAO COM FLUXO SERVER-SIDE
 # ###################################################################################
 
+
 @router.post("/settings/menu/sidebar-section-move-one", response_class=HTMLResponse)
 def move_one_sidebar_section_v25(
     request: Request,
@@ -1043,7 +1156,9 @@ def move_one_sidebar_section_v25(
     direction: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
-    safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
+    safe_return_url = _sanitize_sidebar_section_return_url_v19(
+        sidebar_section_return_url
+    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -1069,7 +1184,10 @@ def move_one_sidebar_section_v25(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -1097,7 +1215,9 @@ def move_one_sidebar_section_v25(
                     "visibility_scope_mode": _normalize_sidebar_section_scope_v19(
                         section.get("visibility_scope_mode")
                     ),
-                    "status": _normalize_sidebar_section_status_v19(section.get("status")),
+                    "status": _normalize_sidebar_section_status_v19(
+                        section.get("status")
+                    ),
                 }
             )
 
@@ -1105,7 +1225,8 @@ def move_one_sidebar_section_v25(
             (
                 index
                 for index, section in enumerate(payload_sections)
-                if _slugify_sidebar_section_key_v19(section.get("key")) == clean_section_key
+                if _slugify_sidebar_section_key_v19(section.get("key"))
+                == clean_section_key
             ),
             -1,
         )
@@ -1117,7 +1238,9 @@ def move_one_sidebar_section_v25(
                 "Sessão não encontrada para mover.",
             )
 
-        target_index = current_index - 1 if clean_direction == "up" else current_index + 1
+        target_index = (
+            current_index - 1 if clean_direction == "up" else current_index + 1
+        )
 
         if target_index < 0 or target_index >= len(payload_sections):
             return _redirect_sidebar_section_message_v19(
@@ -1157,6 +1280,7 @@ def move_one_sidebar_section_v25(
             "Hierarquia da sessão atualizada com sucesso.",
         )
 
+
 # APPGENESIS_SESSOES_SERVER_MOVE_ONE_V25_END
 
 
@@ -1166,13 +1290,16 @@ def move_one_sidebar_section_v25(
 # (SIDEBAR_SECTION_DELETE_ONE_V1) ELIMINAR SESSAO INATIVA COM VALIDACAO DE OWNER
 # ###################################################################################
 
+
 @router.post("/settings/menu/sidebar-section-delete", response_class=HTMLResponse)
 def delete_one_sidebar_section_v1(
     request: Request,
     section_key: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
-    safe_return_url = _sanitize_sidebar_section_return_url_v19(sidebar_section_return_url)
+    safe_return_url = _sanitize_sidebar_section_return_url_v19(
+        sidebar_section_return_url
+    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -1198,7 +1325,10 @@ def delete_one_sidebar_section_v1(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
@@ -1221,6 +1351,7 @@ def delete_one_sidebar_section_v1(
             "Sessão eliminada com sucesso.",
         )
 
+
 # APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_END
 
 
@@ -1229,6 +1360,7 @@ def delete_one_sidebar_section_v1(
 # ###################################################################################
 # (SIDEBAR_SECTIONS_HANDLER_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
 # ###################################################################################
+
 
 @router.post("/settings/menu/sidebar-sections", response_class=HTMLResponse)
 def edit_sidebar_sections_v2(
@@ -1270,7 +1402,10 @@ def edit_sidebar_sections_v2(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode alterar sessões do sidebar.",
@@ -1295,8 +1430,12 @@ def edit_sidebar_sections_v2(
         for row_index in range(rows_count):
             payload_sections.append(
                 {
-                    "key": section_key[row_index] if row_index < len(section_key) else "",
-                    "label": section_label[row_index] if row_index < len(section_label) else "",
+                    "key": section_key[row_index]
+                    if row_index < len(section_key)
+                    else "",
+                    "label": section_label[row_index]
+                    if row_index < len(section_label)
+                    else "",
                     "visibility_scope_mode": (
                         section_visibility_scope_mode[row_index]
                         if row_index < len(section_visibility_scope_mode)
@@ -1318,7 +1457,8 @@ def edit_sidebar_sections_v2(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível gravar as sessões do sidebar.",
+                    error_message=error_message
+                    or "Não foi possível gravar as sessões do sidebar.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key="administrativo",
@@ -1340,12 +1480,14 @@ def edit_sidebar_sections_v2(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+
 # APPGENESIS_SIDEBAR_SECTIONS_HANDLER_V2_END
 
 
 # ###################################################################################
 # (MENU_SETTINGS_CRUD_V1) GRAVAR CONFIGURACOES GERAIS DAS PASTAS
 # ###################################################################################
+
 
 @router.post("/settings/menu/edit", response_class=HTMLResponse)
 def edit_sidebar_menu_setting_handler_v1(
@@ -1361,7 +1503,16 @@ def edit_sidebar_menu_setting_handler_v1(
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
     clean_status = str(menu_status or "").strip().lower()
-    make_visible = clean_status not in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}
+    make_visible = clean_status not in {
+        "inativo",
+        "inactive",
+        "0",
+        "false",
+        "no",
+        "nao",
+        "não",
+        "off",
+    }
 
     with SessionLocal() as session:
         blocked_response = _require_menu_settings_owner_v1(
@@ -1386,7 +1537,8 @@ def edit_sidebar_menu_setting_handler_v1(
             if not ok:
                 return RedirectResponse(
                     url=_build_settings_redirect_url(
-                        error_message=error_message or "Não foi possível atualizar o estado do menu.",
+                        error_message=error_message
+                        or "Não foi possível atualizar o estado do menu.",
                         redirect_menu=redirect_menu,
                         redirect_target=redirect_target,
                         settings_edit_key=clean_menu_key,
@@ -1398,8 +1550,14 @@ def edit_sidebar_menu_setting_handler_v1(
                 )
 
         _session_entity_id = get_session_entity_id(request)
-        _session_entity = get_entity_by_id(session, _session_entity_id) if _session_entity_id is not None else None
-        _session_entity_number = _session_entity.entity_number if _session_entity is not None else None
+        _session_entity = (
+            get_entity_by_id(session, _session_entity_id)
+            if _session_entity_id is not None
+            else None
+        )
+        _session_entity_number = (
+            _session_entity.entity_number if _session_entity is not None else None
+        )
 
         ok, error_message = update_sidebar_menu_label(
             session,
@@ -1412,16 +1570,16 @@ def edit_sidebar_menu_setting_handler_v1(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                        error_message=error_message or "Não foi possível atualizar o menu.",
-                        redirect_menu=redirect_menu,
-                        redirect_target=redirect_target,
-                        settings_edit_key=clean_menu_key,
-                        settings_action="edit",
-                        settings_tab="geral",
-                        return_url=return_url,
-                    ),
-                    status_code=HTTP_303_SEE_OTHER,
-                )
+                    error_message=error_message or "Não foi possível atualizar o menu.",
+                    redirect_menu=redirect_menu,
+                    redirect_target=redirect_target,
+                    settings_edit_key=clean_menu_key,
+                    settings_action="edit",
+                    settings_tab="geral",
+                    return_url=return_url,
+                ),
+                status_code=HTTP_303_SEE_OTHER,
+            )
 
         if make_visible:
             ok, error_message = set_sidebar_menu_visibility(
@@ -1432,7 +1590,8 @@ def edit_sidebar_menu_setting_handler_v1(
             if not ok:
                 return RedirectResponse(
                     url=_build_settings_redirect_url(
-                        error_message=error_message or "Não foi possível atualizar o estado do menu.",
+                        error_message=error_message
+                        or "Não foi possível atualizar o estado do menu.",
                         redirect_menu=redirect_menu,
                         redirect_target=redirect_target,
                         settings_edit_key=clean_menu_key,
@@ -1443,7 +1602,11 @@ def edit_sidebar_menu_setting_handler_v1(
                     status_code=HTTP_303_SEE_OTHER,
                 )
 
-        _success_target = "menu-subprocess-card-active" if make_visible else "menu-subprocess-card-inactive"
+        _success_target = (
+            "menu-subprocess-card-active"
+            if make_visible
+            else "menu-subprocess-card-inactive"
+        )
         return RedirectResponse(
             url=_build_settings_redirect_url(
                 success_message="Menu atualizado com sucesso.",
@@ -1498,17 +1661,20 @@ def create_sidebar_menu_setting_handler_v1(
                 redirect_target=redirect_target,
                 settings_edit_key=(
                     new_menu_key
-                    if str(redirect_target or "").lstrip("#") == "settings-menu-edit-card"
+                    if str(redirect_target or "").lstrip("#")
+                    == "settings-menu-edit-card"
                     else ""
                 ),
                 settings_action=(
                     "edit"
-                    if str(redirect_target or "").lstrip("#") == "settings-menu-edit-card"
+                    if str(redirect_target or "").lstrip("#")
+                    == "settings-menu-edit-card"
                     else ""
                 ),
                 settings_tab=(
                     "geral"
-                    if str(redirect_target or "").lstrip("#") == "settings-menu-edit-card"
+                    if str(redirect_target or "").lstrip("#")
+                    == "settings-menu-edit-card"
                     else ""
                 ),
             ),
@@ -1646,7 +1812,10 @@ def move_sidebar_menu_additional_field_handler(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode mover campos.",
@@ -1695,13 +1864,12 @@ def move_sidebar_menu_additional_field_handler(
         )
 
 
-
-
 # APPGENESIS_PRESERVE_HEADER_ASSIGNMENTS_V1_START
 
 # ###################################################################################
 # (PRESERVE_HEADER_ASSIGNMENTS_V1) PRESERVAR ATRIBUICAO CAMPO -> CABECALHO
 # ###################################################################################
+
 
 def _normalize_menu_key_local_v1(value: object) -> str:
     return str(value or "").strip().lower()
@@ -1794,7 +1962,9 @@ def _get_header_keys_from_config_v1(menu_config: dict) -> set[str]:
             continue
 
         field_key = _normalize_menu_key_local_v1(raw_field.get("key"))
-        field_type = _normalize_menu_key_local_v1(raw_field.get("field_type") or raw_field.get("type"))
+        field_type = _normalize_menu_key_local_v1(
+            raw_field.get("field_type") or raw_field.get("type")
+        )
 
         if field_key and field_type == "header":
             header_keys.add(field_key)
@@ -1947,6 +2117,7 @@ def _update_sidebar_menu_additional_fields_preserve_headers_v1(
 
     return ok, error_message
 
+
 # APPGENESIS_PRESERVE_HEADER_ASSIGNMENTS_V1_END
 
 
@@ -2004,7 +2175,10 @@ def edit_sidebar_menu_process_additional_fields_v1(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar campos adicionais por processo.",
@@ -2039,19 +2213,53 @@ def edit_sidebar_menu_process_additional_fields_v1(
         for row_index in range(rows_count):
             payload_fields.append(
                 {
-                    "key": additional_field_key[row_index] if row_index < len(additional_field_key) else "",
-                    "label": additional_field_label[row_index] if row_index < len(additional_field_label) else "",
-                    "field_type": additional_field_type[row_index] if row_index < len(additional_field_type) else "",
-                    "is_required": additional_field_required[row_index] if row_index < len(additional_field_required) else "",
-                    "size": additional_field_size[row_index] if row_index < len(additional_field_size) else "",
-                    "list_key": additional_field_list_key[row_index] if row_index < len(additional_field_list_key) else "",
-                    "list_source_type": additional_field_list_source_type[row_index] if row_index < len(additional_field_list_source_type) else "",
-                    "manual_list_key": additional_field_manual_list_key[row_index] if row_index < len(additional_field_manual_list_key) else "",
-                    "manual_list_items": additional_field_manual_list_items[row_index] if row_index < len(additional_field_manual_list_items) else "",
-                    "automatic_source_process_key": additional_field_automatic_source_process_key[row_index] if row_index < len(additional_field_automatic_source_process_key) else "",
-                    "automatic_source_section_key": additional_field_automatic_source_section_key[row_index] if row_index < len(additional_field_automatic_source_section_key) else "",
-                    "automatic_source_field_key": additional_field_automatic_source_field_key[row_index] if row_index < len(additional_field_automatic_source_field_key) else "",
-                    "automatic_only_active": additional_field_automatic_only_active[row_index] if row_index < len(additional_field_automatic_only_active) else "",
+                    "key": additional_field_key[row_index]
+                    if row_index < len(additional_field_key)
+                    else "",
+                    "label": additional_field_label[row_index]
+                    if row_index < len(additional_field_label)
+                    else "",
+                    "field_type": additional_field_type[row_index]
+                    if row_index < len(additional_field_type)
+                    else "",
+                    "is_required": additional_field_required[row_index]
+                    if row_index < len(additional_field_required)
+                    else "",
+                    "size": additional_field_size[row_index]
+                    if row_index < len(additional_field_size)
+                    else "",
+                    "list_key": additional_field_list_key[row_index]
+                    if row_index < len(additional_field_list_key)
+                    else "",
+                    "list_source_type": additional_field_list_source_type[row_index]
+                    if row_index < len(additional_field_list_source_type)
+                    else "",
+                    "manual_list_key": additional_field_manual_list_key[row_index]
+                    if row_index < len(additional_field_manual_list_key)
+                    else "",
+                    "manual_list_items": additional_field_manual_list_items[row_index]
+                    if row_index < len(additional_field_manual_list_items)
+                    else "",
+                    "automatic_source_process_key": additional_field_automatic_source_process_key[
+                        row_index
+                    ]
+                    if row_index < len(additional_field_automatic_source_process_key)
+                    else "",
+                    "automatic_source_section_key": additional_field_automatic_source_section_key[
+                        row_index
+                    ]
+                    if row_index < len(additional_field_automatic_source_section_key)
+                    else "",
+                    "automatic_source_field_key": additional_field_automatic_source_field_key[
+                        row_index
+                    ]
+                    if row_index < len(additional_field_automatic_source_field_key)
+                    else "",
+                    "automatic_only_active": additional_field_automatic_only_active[
+                        row_index
+                    ]
+                    if row_index < len(additional_field_automatic_only_active)
+                    else "",
                 }
             )
 
@@ -2064,7 +2272,8 @@ def edit_sidebar_menu_process_additional_fields_v1(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar os campos adicionais do processo.",
+                    error_message=error_message
+                    or "Não foi possível atualizar os campos adicionais do processo.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
@@ -2140,7 +2349,10 @@ def edit_sidebar_menu_process_fields_handler(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar campos do processo.",
@@ -2153,10 +2365,6 @@ def edit_sidebar_menu_process_fields_handler(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
-
-
-
-
 
         # APPGENESIS_PROCESS_FIELDS_HEADER_ROWS_JSON_V4_START
         clean_visible_fields: list[str] = []
@@ -2178,19 +2386,27 @@ def edit_sidebar_menu_process_fields_handler(
                 if not isinstance(raw_row, dict):
                     continue
 
-                field_key = str(
-                    raw_row.get("field_key")
-                    or raw_row.get("fieldKey")
-                    or raw_row.get("key")
-                    or ""
-                ).strip().lower()
+                field_key = (
+                    str(
+                        raw_row.get("field_key")
+                        or raw_row.get("fieldKey")
+                        or raw_row.get("key")
+                        or ""
+                    )
+                    .strip()
+                    .lower()
+                )
 
-                header_key = str(
-                    raw_row.get("header_key")
-                    or raw_row.get("headerKey")
-                    or raw_row.get("header")
-                    or ""
-                ).strip().lower()
+                header_key = (
+                    str(
+                        raw_row.get("header_key")
+                        or raw_row.get("headerKey")
+                        or raw_row.get("header")
+                        or ""
+                    )
+                    .strip()
+                    .lower()
+                )
 
                 if not field_key:
                     continue
@@ -2237,7 +2453,8 @@ def edit_sidebar_menu_process_fields_handler(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar a configuração dos campos.",
+                    error_message=error_message
+                    or "Não foi possível atualizar a configuração dos campos.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
@@ -2314,17 +2531,29 @@ def edit_sidebar_menu_process_quantity_fields_handler(
         for row_index in range(rows_count):
             payload_rules.append(
                 {
-                    "key": quantity_rule_key[row_index] if row_index < len(quantity_rule_key) else "",
-                    "label": quantity_rule_label[row_index] if row_index < len(quantity_rule_label) else "",
-                    "quantity_field_key": quantity_field_key[row_index] if row_index < len(quantity_field_key) else "",
+                    "key": quantity_rule_key[row_index]
+                    if row_index < len(quantity_rule_key)
+                    else "",
+                    "label": quantity_rule_label[row_index]
+                    if row_index < len(quantity_rule_label)
+                    else "",
+                    "quantity_field_key": quantity_field_key[row_index]
+                    if row_index < len(quantity_field_key)
+                    else "",
                     "repeated_field_keys": (
                         quantity_repeated_field_keys_json[row_index]
                         if row_index < len(quantity_repeated_field_keys_json)
                         else ""
                     ),
-                    "header_key": quantity_header_key[row_index] if row_index < len(quantity_header_key) else "",
-                    "max_items": quantity_max_items[row_index] if row_index < len(quantity_max_items) else "",
-                    "item_label": quantity_item_label[row_index] if row_index < len(quantity_item_label) else "",
+                    "header_key": quantity_header_key[row_index]
+                    if row_index < len(quantity_header_key)
+                    else "",
+                    "max_items": quantity_max_items[row_index]
+                    if row_index < len(quantity_max_items)
+                    else "",
+                    "item_label": quantity_item_label[row_index]
+                    if row_index < len(quantity_item_label)
+                    else "",
                 }
             )
 
@@ -2337,7 +2566,8 @@ def edit_sidebar_menu_process_quantity_fields_handler(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar os Campos Quantidade.",
+                    error_message=error_message
+                    or "Não foi possível atualizar os Campos Quantidade.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
@@ -2366,6 +2596,13 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_key: list[str] = Form(default=[]),
     process_list_label: list[str] = Form(default=[]),
     process_list_items_csv: list[str] = Form(default=[]),
+    process_list_column_key: list[str] = Form(default=[]),
+    process_list_column_label: list[str] = Form(default=[]),
+    process_list_column_field_key: list[str] = Form(default=[]),
+    process_list_column_source_kind: list[str] = Form(default=[]),
+    process_list_column_always_visible: list[str] = Form(default=[]),
+    process_list_column_responsive_priority: list[str] = Form(default=[]),
+    process_list_columns_configured: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
     return_url: str = Form(""),
@@ -2403,7 +2640,10 @@ def edit_sidebar_menu_process_lists_handler(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar listas do processo.",
@@ -2426,7 +2666,11 @@ def edit_sidebar_menu_process_lists_handler(
         payload_lists: list[dict[str, str]] = []
 
         for row_index in range(rows_count):
-            label = process_list_label[row_index] if row_index < len(process_list_label) else ""
+            label = (
+                process_list_label[row_index]
+                if row_index < len(process_list_label)
+                else ""
+            )
             items_csv = (
                 process_list_items_csv[row_index]
                 if row_index < len(process_list_items_csv)
@@ -2438,9 +2682,47 @@ def edit_sidebar_menu_process_lists_handler(
 
             payload_lists.append(
                 {
-                    "key": process_list_key[row_index] if row_index < len(process_list_key) else "",
+                    "key": process_list_key[row_index]
+                    if row_index < len(process_list_key)
+                    else "",
                     "label": label,
                     "items_csv": items_csv,
+                }
+            )
+
+        column_rows_count = max(
+            len(process_list_column_key),
+            len(process_list_column_label),
+            len(process_list_column_field_key),
+            len(process_list_column_source_kind),
+            len(process_list_column_always_visible),
+            len(process_list_column_responsive_priority),
+        )
+        payload_columns: list[dict[str, str]] = []
+
+        for row_index in range(column_rows_count):
+            payload_columns.append(
+                {
+                    "key": process_list_column_key[row_index]
+                    if row_index < len(process_list_column_key)
+                    else "",
+                    "label": process_list_column_label[row_index]
+                    if row_index < len(process_list_column_label)
+                    else "",
+                    "field_key": process_list_column_field_key[row_index]
+                    if row_index < len(process_list_column_field_key)
+                    else "",
+                    "source_kind": process_list_column_source_kind[row_index]
+                    if row_index < len(process_list_column_source_kind)
+                    else "field",
+                    "always_visible": process_list_column_always_visible[row_index]
+                    if row_index < len(process_list_column_always_visible)
+                    else "0",
+                    "responsive_priority": process_list_column_responsive_priority[
+                        row_index
+                    ]
+                    if row_index < len(process_list_column_responsive_priority)
+                    else "0",
                 }
             )
 
@@ -2448,12 +2730,16 @@ def edit_sidebar_menu_process_lists_handler(
             session=session,
             menu_key=clean_menu_key,
             raw_lists=payload_lists,
+            raw_columns=payload_columns
+            if str(process_list_columns_configured or "").strip() == "1"
+            else None,
         )
 
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar as listas do processo.",
+                    error_message=error_message
+                    or "Não foi possível atualizar as listas do processo.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
@@ -2478,6 +2764,7 @@ def edit_sidebar_menu_process_lists_handler(
 # ###################################################################################
 # (4) CAMPOS SUBSEQUENTES - V1
 # ###################################################################################
+
 
 @router.post("/settings/menu/process-subsequent-fields", response_class=HTMLResponse)
 def edit_sidebar_menu_process_subsequent_fields_handler(
@@ -2525,7 +2812,10 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             selected_entity_id,
         )
 
-        if not permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)):
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message="Apenas Owner pode configurar campos subsequentes.",
@@ -2550,14 +2840,26 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
         payload_fields: list[dict[str, str]] = []
 
         for row_index in range(rows_count):
-            if row_index < len(subsequent_trigger_field) and row_index < len(subsequent_field):
+            if row_index < len(subsequent_trigger_field) and row_index < len(
+                subsequent_field
+            ):
                 payload_fields.append(
                     {
-                        "key": subsequent_field_key[row_index] if row_index < len(subsequent_field_key) else "",
-                        "trigger_field": subsequent_trigger_field[row_index] if row_index < len(subsequent_trigger_field) else "",
-                        "field_key": subsequent_field[row_index] if row_index < len(subsequent_field) else "",
-                        "operator": subsequent_operator[row_index] if row_index < len(subsequent_operator) else "",
-                        "trigger_value": subsequent_trigger_value[row_index] if row_index < len(subsequent_trigger_value) else "",
+                        "key": subsequent_field_key[row_index]
+                        if row_index < len(subsequent_field_key)
+                        else "",
+                        "trigger_field": subsequent_trigger_field[row_index]
+                        if row_index < len(subsequent_trigger_field)
+                        else "",
+                        "field_key": subsequent_field[row_index]
+                        if row_index < len(subsequent_field)
+                        else "",
+                        "operator": subsequent_operator[row_index]
+                        if row_index < len(subsequent_operator)
+                        else "",
+                        "trigger_value": subsequent_trigger_value[row_index]
+                        if row_index < len(subsequent_trigger_value)
+                        else "",
                     }
                 )
 
@@ -2570,7 +2872,8 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
         if not ok:
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message=error_message or "Não foi possível atualizar os campos subsequentes.",
+                    error_message=error_message
+                    or "Não foi possível atualizar os campos subsequentes.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key=clean_menu_key,
@@ -2607,13 +2910,18 @@ def menu_subprocess_save_handler_v1(
     subprocess_edit_key: str = Form(""),
     subprocess_return_url: str = Form(_MENU_SUBPROCESS_DEFAULT_RETURN_URL),
 ) -> RedirectResponse:
-    clean_return_url = str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+    clean_return_url = (
+        str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
 
         if current_user is None:
-            return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=HTTP_302_FOUND)
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=HTTP_302_FOUND,
+            )
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return RedirectResponse(
@@ -2647,30 +2955,43 @@ def menu_subprocess_move_handler_v1(
     subprocess_return_url: str = Form(_MENU_SUBPROCESS_DEFAULT_RETURN_URL),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
-    clean_return_url = str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+    clean_return_url = (
+        str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+    )
 
     with SessionLocal() as session:
-        current_user = get_current_user(request, session)
+        blocked_response = _require_menu_settings_owner_v1(
+            session,
+            request,
+            "sessoes",
+            "#menu-subprocess-card-active",
+            return_url=clean_return_url,
+        )
+        if blocked_response is not None:
+            return blocked_response
 
-        if current_user is None:
-            return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=HTTP_302_FOUND)
-
-        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
-            return RedirectResponse(
-                url=f"{clean_return_url}&error=Apenas administradores podem alterar definições do menu.",
-                status_code=HTTP_303_SEE_OTHER,
-            )
-
-        ok, error_message = move_sidebar_menu_setting(session, clean_menu_key, direction)
+        ok, error_message = move_sidebar_menu_setting(
+            session, clean_menu_key, direction
+        )
 
         if not ok:
             return RedirectResponse(
-                url=f"{clean_return_url}&error={error_message or 'Não foi possível mover o menu.'}",
+                url=_build_settings_redirect_url(
+                    error_message=error_message or "Não foi possível mover o menu.",
+                    redirect_menu="sessoes",
+                    redirect_target="#menu-subprocess-card-active",
+                    return_url=clean_return_url,
+                ),
                 status_code=HTTP_303_SEE_OTHER,
             )
 
         return RedirectResponse(
-            url=f"{clean_return_url}&success=Ordem do menu atualizada com sucesso.",
+            url=_build_settings_redirect_url(
+                success_message="Ordem do menu atualizada com sucesso.",
+                redirect_menu="sessoes",
+                redirect_target="#menu-subprocess-card-active",
+                return_url=clean_return_url,
+            ),
             status_code=HTTP_303_SEE_OTHER,
         )
 
@@ -2682,13 +3003,18 @@ def menu_subprocess_delete_handler_v1(
     subprocess_return_url: str = Form(_MENU_SUBPROCESS_DEFAULT_RETURN_URL),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
-    clean_return_url = str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+    clean_return_url = (
+        str(subprocess_return_url or "").strip() or _MENU_SUBPROCESS_DEFAULT_RETURN_URL
+    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
 
         if current_user is None:
-            return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=HTTP_302_FOUND)
+            return RedirectResponse(
+                url="/login?error=Efetue login para continuar.",
+                status_code=HTTP_302_FOUND,
+            )
 
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return RedirectResponse(

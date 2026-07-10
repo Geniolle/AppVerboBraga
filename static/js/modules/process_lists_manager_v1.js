@@ -66,27 +66,35 @@
   //###################################################################################
 
   function getElements_v1(form) {
+    const root = form.querySelector("[data-process-list-reusable-manager]");
+
+    if (!root) {
+      return null;
+    }
+
     return {
-      legacyContainer: form.querySelector("[data-process-lists-legacy-container]"),
-      hiddenContainer: form.querySelector("[data-process-lists-hidden-container]"),
-      editorKey: form.querySelector("[data-process-list-editor-key]"),
-      editorLabel: form.querySelector("[data-process-list-editor-label]"),
-      editorItems: form.querySelector("[data-process-list-editor-items]"),
-      submitButton: form.querySelector("[data-process-list-editor-submit]"),
-      cancelButton: form.querySelector("[data-process-list-editor-cancel]"),
-      table: form.querySelector("[data-process-lists-table]"),
-      tableBody: form.querySelector("[data-process-lists-table-body]"),
-      emptyState: form.querySelector("[data-process-lists-empty]"),
-      totalLabel: form.querySelector("[data-process-lists-total-label]"),
-      pageSize: form.querySelector("[data-process-lists-page-size]"),
-      pagination: form.querySelector("[data-process-lists-pagination]"),
-      searchInput: form.querySelector("[data-configurable-search]")
+      root,
+      legacyContainer: root.querySelector("[data-process-lists-legacy-container]"),
+      hiddenContainer: root.querySelector("[data-process-lists-hidden-container]"),
+      editorKey: root.querySelector("[data-process-list-editor-key]"),
+      editorLabel: root.querySelector("[data-process-list-editor-label]"),
+      editorItems: root.querySelector("[data-process-list-editor-items]"),
+      submitButton: root.querySelector("[data-process-list-editor-submit]"),
+      cancelButton: root.querySelector("[data-process-list-editor-cancel]"),
+      table: root.querySelector("[data-process-lists-table]"),
+      tableBody: root.querySelector("[data-process-lists-table-body]"),
+      emptyState: root.querySelector("[data-process-lists-empty]"),
+      totalLabel: root.querySelector("[data-process-lists-total-label]"),
+      pageSize: root.querySelector("[data-process-lists-page-size]"),
+      pagination: root.querySelector("[data-process-lists-pagination]"),
+      searchInput: root.querySelector("[data-configurable-search]")
     };
   }
 
   function hasRequiredElements_v1(elements) {
     return Boolean(
       elements &&
+      elements.root &&
       elements.legacyContainer &&
       elements.hiddenContainer &&
       elements.editorKey &&
@@ -129,7 +137,139 @@
   }
 
   //###################################################################################
-  // (3) EDITOR E COMPATIBILIDADE DE SUBMIT
+  // (3) COLUNAS DA LISTAGEM DO PROCESSO
+  //###################################################################################
+
+  function getColumnElements_v2(form) {
+    const root = form.querySelector("[data-process-list-columns-manager]");
+
+    if (!root) {
+      return null;
+    }
+
+    return {
+      root,
+      legacyContainer: root.querySelector("[data-process-list-columns-legacy-container]"),
+      hiddenContainer: root.querySelector("[data-process-list-columns-hidden-container]"),
+      editorKey: root.querySelector("[data-process-list-column-editor-key]"),
+      editorField: root.querySelector("[data-process-list-column-editor-field]"),
+      editorLabel: root.querySelector("[data-process-list-column-editor-label]"),
+      editorSourceKind: root.querySelector("[data-process-list-column-editor-source-kind]"),
+      editorAlwaysVisible: root.querySelector("[data-process-list-column-editor-always-visible]"),
+      editorPriority: root.querySelector("[data-process-list-column-editor-priority]"),
+      submitButton: root.querySelector("[data-process-list-column-editor-submit]"),
+      cancelButton: root.querySelector("[data-process-list-column-editor-cancel]"),
+      pageSize: root.querySelector("[data-process-list-columns-page-size]")
+    };
+  }
+
+  function readInitialColumns_v2(elements) {
+    return Array.from(elements.legacyContainer.querySelectorAll("[data-process-list-column-row]"))
+      .map((row, index) => {
+        const fieldKey = readInput_v1(row, "process_list_column_field_key");
+        const key = readInput_v1(row, "process_list_column_key") || fieldKey;
+
+        return {
+          managerId: `column_${index}_${key}`,
+          key,
+          label: readInput_v1(row, "process_list_column_label"),
+          fieldKey,
+          sourceKind: readInput_v1(row, "process_list_column_source_kind") || "field",
+          alwaysVisible: readInput_v1(row, "process_list_column_always_visible") === "1",
+          responsivePriority: Number.parseInt(readInput_v1(row, "process_list_column_responsive_priority"), 10) || 0
+        };
+      })
+      .filter((item) => item.fieldKey);
+  }
+
+  function clearColumnEditor_v2(context) {
+    const elements = context && context.elements ? context.elements : context;
+
+    if (!elements) {
+      return;
+    }
+
+    elements.editorKey.value = "";
+    elements.editorField.value = "";
+    elements.editorLabel.value = "";
+    elements.editorAlwaysVisible.checked = false;
+    elements.editorPriority.value = "0";
+  }
+
+  function loadColumnEditorItem_v2(item, context) {
+    const elements = context && context.elements ? context.elements : null;
+
+    if (!item || !elements) {
+      return;
+    }
+
+    elements.editorKey.value = item.key || "";
+    elements.editorField.value = item.fieldKey || "";
+    elements.editorLabel.value = item.label || "";
+    elements.editorAlwaysVisible.checked = Boolean(item.alwaysVisible);
+    elements.editorPriority.value = String(item.responsivePriority || 0);
+    elements.editorField.focus();
+  }
+
+  function readColumnEditorItem_v2(context) {
+    const elements = context.elements;
+    const fieldKey = toSafeString_v1(elements.editorField.value).trim();
+    const selectedOption = elements.editorField.options[elements.editorField.selectedIndex];
+    const label = toSafeString_v1(elements.editorLabel.value).trim() ||
+      toSafeString_v1(selectedOption ? selectedOption.textContent : "").trim();
+    const currentKey = toSafeString_v1(elements.editorKey.value).trim();
+
+    return {
+      managerId: toSafeString_v1(context.state.editingId).trim() || `tmp_column_${Date.now()}`,
+      key: currentKey || fieldKey,
+      label,
+      fieldKey,
+      sourceKind: "field",
+      alwaysVisible: Boolean(elements.editorAlwaysVisible.checked),
+      responsivePriority: Number.parseInt(elements.editorPriority.value, 10) || 0
+    };
+  }
+
+  function validateColumnItem_v2(item, context) {
+    if (!item.fieldKey) {
+      return { valid: false, message: "Selecione o campo da coluna." };
+    }
+
+    const editingId = toSafeString_v1(context.state.editingId).trim();
+    const duplicate = context.items.some((existing) => {
+      const existingId = toSafeString_v1(existing.__managerId || existing.managerId).trim();
+      return existingId !== editingId && existing.fieldKey === item.fieldKey;
+    });
+
+    return duplicate
+      ? { valid: false, message: "Este campo já está configurado como coluna." }
+      : { valid: true };
+  }
+
+  function syncColumnHiddenInputs_v2(context) {
+    const elements = context.elements;
+    elements.hiddenContainer.innerHTML = "";
+
+    context.items.forEach((item) => {
+      [
+        ["process_list_column_key", item.key],
+        ["process_list_column_label", item.label],
+        ["process_list_column_field_key", item.fieldKey],
+        ["process_list_column_source_kind", item.sourceKind || "field"],
+        ["process_list_column_always_visible", item.alwaysVisible ? "1" : "0"],
+        ["process_list_column_responsive_priority", String(item.responsivePriority || 0)]
+      ].forEach((field) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = field[0];
+        input.value = field[1] || "";
+        elements.hiddenContainer.appendChild(input);
+      });
+    });
+  }
+
+  //###################################################################################
+  // (4) EDITOR E COMPATIBILIDADE DE SUBMIT
   //###################################################################################
 
   function clearEditor_v1(context) {
@@ -298,6 +438,9 @@
       }
 
       manager.syncHiddenInputs();
+      if (form.processListColumnsManagerV2) {
+        form.processListColumnsManagerV2.syncHiddenInputs();
+      }
       submitNative_v1(form);
     });
 
@@ -308,11 +451,97 @@
     form.dataset.processListsSubmitNativeBoundV1 = "1";
     form.addEventListener("submit", () => {
       manager.syncHiddenInputs();
+      if (form.processListColumnsManagerV2) {
+        form.processListColumnsManagerV2.syncHiddenInputs();
+      }
     });
   }
 
+  function setupProcessListColumnsManager_v2(form) {
+    const core = getCore_v1();
+    const elements = getColumnElements_v2(form);
+
+    if (!elements || !elements.legacyContainer || !elements.hiddenContainer ||
+        !elements.editorField || !elements.editorLabel || !elements.submitButton ||
+        !elements.cancelButton || !elements.pageSize) {
+      return null;
+    }
+
+    const manager = core.createConfigurableItemsManager_v1({
+      root: elements.root,
+      itemName: "coluna",
+      itemNamePlural: "colunas",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
+      pageSizeOptions: [5, 10, 20],
+      initialItems: readInitialColumns_v2(elements),
+      selectors: {
+        editorForm: "[data-process-list-column-editor-block]",
+        table: "[data-process-list-columns-table]",
+        tableBody: "[data-process-list-columns-table-body]",
+        emptyState: "[data-process-list-columns-empty]",
+        pagination: "[data-process-list-columns-pagination]",
+        pageSize: "[data-process-list-columns-page-size]",
+        hiddenContainer: "[data-process-list-columns-hidden-container]",
+        totalLabel: "[data-process-list-columns-total-label]"
+      },
+      columns: [
+        { key: "fieldKey", label: "Campo da coluna", render: (item) => {
+          const option = Array.from(elements.editorField.options).find((entry) => entry.value === item.fieldKey);
+          return option ? option.textContent : item.fieldKey;
+        } },
+        { key: "label", label: "Nome da coluna" },
+        { key: "alwaysVisible", label: "Sempre visível", render: (item) => item.alwaysVisible ? "Sim" : "Não" },
+        { key: "responsivePriority", label: "Prioridade" }
+      ],
+      getItemId: (item, index) => item.managerId || item.__managerId || item.key || `column_${index + 1}`,
+      readEditorItem: readColumnEditorItem_v2,
+      loadEditorItem: loadColumnEditorItem_v2,
+      clearEditor: clearColumnEditor_v2,
+      validateItem: validateColumnItem_v2,
+      syncHiddenInputs: syncColumnHiddenInputs_v2
+    });
+
+    if (!manager) {
+      return null;
+    }
+
+    Object.assign(manager.elements, elements);
+
+    elements.cancelButton.dataset.appgenesisCancel = "1";
+    elements.cancelButton.dataset.appgenesisCancelLocal = "1";
+    form.addEventListener("appgenesis:cancelled", (event) => {
+      if (event.detail && event.detail.trigger === elements.cancelButton) {
+        manager.clearEditing();
+      }
+    });
+    elements.submitButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      const hasDraft = Boolean(manager.state.editingId || elements.editorField.value || elements.editorLabel.value.trim());
+
+      if (hasDraft) {
+        const item = readColumnEditorItem_v2({ elements, state: manager.state });
+        const validation = validateColumnItem_v2(item, { items: manager.getItems(), state: manager.state });
+
+        if (!validation.valid) {
+          showValidationMessage_v1(validation.message);
+          return;
+        }
+        manager.addOrUpdate(item);
+      }
+
+      manager.syncHiddenInputs();
+      if (form.processListsManagerV1) {
+        form.processListsManagerV1.syncHiddenInputs();
+      }
+      submitNative_v1(form);
+    });
+    manager.syncHiddenInputs();
+    form.processListColumnsManagerV2 = manager;
+    return manager;
+  }
+
   //###################################################################################
-  // (4) INICIALIZACAO
+  // (5) INICIALIZACAO
   //###################################################################################
 
   function setupProcessListsManager_v1(form) {
@@ -335,14 +564,14 @@
     form.dataset.processListsManagerBoundV1 = "1";
 
     const manager = core.createConfigurableItemsManager_v1({
-      root: form,
+      root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
       pageSizeOptions: [5, 10, 20],
       initialItems: readInitialItems_v1(elements),
       selectors: {
-        editorForm: "[data-process-list-editor-block]",
+        editorForm: "[data-process-list-reusable-editor-block]",
         table: "[data-process-lists-table]",
         tableBody: "[data-process-lists-table-body]",
         emptyState: "[data-process-lists-empty]",
@@ -376,7 +605,11 @@
       return null;
     }
 
+    Object.assign(manager.elements, elements);
+
     bindCancel_v1(form, elements, manager);
+    form.processListsManagerV1 = manager;
+    setupProcessListColumnsManager_v2(form);
     bindSubmit_v1(form, elements, manager);
     manager.syncHiddenInputs();
 
@@ -388,7 +621,7 @@
   }
 
   //###################################################################################
-  // (5) BOOT
+  // (6) BOOT
   //###################################################################################
 
   window.setupProcessListsManagerV1 = setupAllProcessListsManagers_v1;
