@@ -2432,9 +2432,9 @@ def update_sidebar_menu_process_lists(
                     ).strip(),
                     "source_kind": "field",
                     "field_key": field_key,
-                    "always_visible": str(
-                        raw_column.get("always_visible") or ""
-                    ).strip().lower()
+                    "always_visible": str(raw_column.get("always_visible") or "")
+                    .strip()
+                    .lower()
                     in {"1", "true", "yes", "on"},
                     "responsive_priority": responsive_priority,
                 }
@@ -3553,35 +3553,44 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
 
         seen_keys.add(list_key)
 
+        # determine field type (manual | automatic). Default to manual for
+        # backward compatibility when missing or invalid.
+        raw_field_type = str(raw_item.get("field_type") or "").strip().lower()
+        field_type = "automatic" if raw_field_type == "automatic" else "manual"
+
         raw_items = raw_item.get("items_csv", raw_item.get("items"))
-        if isinstance(raw_items, str):
-            raw_values = raw_items.split(",")
-        elif isinstance(raw_items, (list, tuple, set)):
-            raw_values = raw_items
-        else:
-            raw_values = []
-
         items: list[str] = []
-        seen_items: set[str] = set()
 
-        for raw_value in raw_values:
-            clean_value = " ".join(str(raw_value or "").strip().split())
+        if field_type == "manual":
+            if isinstance(raw_items, str):
+                raw_values = raw_items.split(",")
+            elif isinstance(raw_items, (list, tuple, set)):
+                raw_values = raw_items
+            else:
+                raw_values = []
 
-            if not clean_value:
-                continue
+            seen_items: set[str] = set()
+            for raw_value in raw_values:
+                clean_value = " ".join(str(raw_value or "").strip().split())
 
-            lookup = clean_value.lower()
+                if not clean_value:
+                    continue
 
-            if lookup in seen_items:
-                continue
+                lookup = clean_value.lower()
 
-            seen_items.add(lookup)
-            items.append(clean_value)
+                if lookup in seen_items:
+                    continue
+
+                seen_items.add(lookup)
+                items.append(clean_value)
+
+        # for automatic lists we keep items empty (no invented source)
 
         normalized.append(
             {
                 "key": list_key,
                 "label": label,
+                "field_type": field_type,
                 "items": items,
                 "items_csv": ", ".join(items),
             }

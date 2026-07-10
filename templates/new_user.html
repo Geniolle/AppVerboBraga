@@ -1844,6 +1844,7 @@
                     <div class="process-list-row-v8" data-process-list-row>
                       <input type="hidden" name="process_list_key" value="{{ process_list.key }}" disabled>
                       <input type="hidden" name="process_list_label" value="{{ process_list.label }}" disabled>
+                      <input type="hidden" name="process_list_field_type" value="{{ process_list.field_type|default('manual') }}" disabled>
                       <input type="hidden" name="process_list_items_csv" value="{{ process_list.items_csv }}" disabled>
                     </div>
                     {% endfor %}
@@ -1863,6 +1864,14 @@
                           maxlength="80"
                           data-process-list-editor-label
                         >
+                      </div>
+
+                      <div class="field">
+                        <label for="process-list-editor-field-type">Tipo de campo</label>
+                        <select id="process-list-editor-field-type" data-process-list-editor-field-type>
+                          <option value="manual">Manual</option>
+                          <option value="automatic">Automático</option>
+                        </select>
                       </div>
 
                       <div class="field">
@@ -1917,6 +1926,7 @@
                         <thead>
                           <tr>
                             <th>Nome da lista</th>
+                            <th>Tipo de campo</th>
                             <th>Conteúdo da lista</th>
                             <th class="configurable-items-actions-col-v1">Ações</th>
                           </tr>

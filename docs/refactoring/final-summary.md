@@ -148,6 +148,12 @@ e pendentes por um processo de governação separado (Fase 9):
 - `appgenesis/core.py` e `appgenesis/services/{__init__.py,legacy.py}`
   continuam como hubs de compatibilidade anotados (Fase 2), candidatos a
   remoção numa fase futura já com confirmação de zero consumidores.
+- As 6 abas de configuração de processo (Geral, Configuração dos campos,
+  Campos Adicionais, Campos Quantidade, Listas, Campos Subsequentes) em
+  `settings_handlers.py`/`menu_settings.py` continuam deliberadamente fora
+  do âmbito desta refatoração (mesma decisão da Fase 3/7). Um levantamento
+  isolado (Fase 0 própria, sem alteração de código) está documentado em
+  `docs/refactoring/process-settings-phase-0-assessment.md`.
 
 ## Ficheiros de referência desta refatoração
 
@@ -156,3 +162,6 @@ e pendentes por um processo de governação separado (Fase 9):
 - `docs/refactoring/phase-1-summary.md` a `phase-10-summary.md` — resumo
   detalhado de cada fase.
 - Este ficheiro (`final-summary.md`) — síntese de fecho.
+- `docs/refactoring/process-settings-phase-0-assessment.md` — levantamento
+  isolado das 6 abas de configuração de processo, fora do âmbito das fases
+  acima.

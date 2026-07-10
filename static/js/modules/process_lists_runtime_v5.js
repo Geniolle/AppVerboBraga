@@ -72,6 +72,13 @@
         '  <label>Nome da lista</label>',
         '  <input name="process_list_label" >',
         '</div>',
+        '<div class="field">',
+        '  <label>Tipo de campo</label>',
+        '  <select name="process_list_field_type">',
+        '    <option value="manual" selected>Manual</option>',
+        '    <option value="automatic">Automático</option>',
+        '  </select>',
+        '</div>',
         '<div class="field full">',
         '  <label>Itens da lista separados por vírgula</label>',
         '  <input name="process_list_items_csv" placeholder="Ativo, Inativo, Pendente, Em acompanhamento">',
@@ -193,6 +200,13 @@
       '<div class="field">',
       '  <label>Nome da lista</label>',
       '  <input name="process_list_label">',
+      '</div>',
+      '<div class="field">',
+      '  <label>Tipo de campo</label>',
+      '  <select name="process_list_field_type">',
+      '    <option value="manual" selected>Manual</option>',
+      '    <option value="automatic">Automático</option>',
+      '  </select>',
       '</div>',
       '<div class="field">',
       '  <label>Conteúdo da lista</label>',
@@ -557,4 +571,3 @@
   window.setTimeout(inicializar_v5, 400);
   window.setTimeout(inicializar_v5, 1000);
 })();
-

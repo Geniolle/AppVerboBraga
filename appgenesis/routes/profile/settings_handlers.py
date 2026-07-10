@@ -2616,6 +2616,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_key: list[str] = Form(default=[]),
     process_list_label: list[str] = Form(default=[]),
     process_list_items_csv: list[str] = Form(default=[]),
+    process_list_field_type: list[str] = Form(default=[]),
     process_list_column_key: list[str] = Form(default=[]),
     process_list_column_label: list[str] = Form(default=[]),
     process_list_column_field_key: list[str] = Form(default=[]),
@@ -2681,6 +2682,7 @@ def edit_sidebar_menu_process_lists_handler(
             len(process_list_key),
             len(process_list_label),
             len(process_list_items_csv),
+            len(process_list_field_type),
         )
 
         payload_lists: list[dict[str, str]] = []
@@ -2696,9 +2698,19 @@ def edit_sidebar_menu_process_lists_handler(
                 if row_index < len(process_list_items_csv)
                 else ""
             )
+            field_type = (
+                process_list_field_type[row_index]
+                if row_index < len(process_list_field_type)
+                else ""
+            )
 
             if not str(label or "").strip() and not str(items_csv or "").strip():
                 continue
+
+            # normalize field_type values: only 'manual' or 'automatic' allowed
+            ft = str(field_type or "").strip().lower()
+            if ft not in {"manual", "automatic"}:
+                ft = "manual"
 
             payload_lists.append(
                 {
@@ -2706,7 +2718,8 @@ def edit_sidebar_menu_process_lists_handler(
                     if row_index < len(process_list_key)
                     else "",
                     "label": label,
-                    "items_csv": items_csv,
+                    "field_type": ft,
+                    "items_csv": items_csv if ft == "manual" else "",
                 }
             )
 
