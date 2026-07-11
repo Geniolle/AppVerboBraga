@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
-import appgenesis.routes.profile.settings_handlers as settings_handlers_module
+import appgenesis.routes.profile.process_settings.quantity_field_handlers as settings_handlers_module
+import appgenesis.routes.profile.process_settings.common as common_module
 from appgenesis.models import Base, Entity, SidebarMenuSetting
 
 
@@ -96,13 +97,13 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
     form.update(form_overrides)
 
     with patch.object(settings_handlers_module, "SessionLocal", SessionLocal), patch.object(
-        settings_handlers_module, "get_current_user", return_value=current_user
+        common_module, "get_current_user", return_value=current_user
     ), patch.object(
-        settings_handlers_module, "is_admin_user", return_value=is_admin
+        common_module, "is_admin_user", return_value=is_admin
     ), patch.object(
-        settings_handlers_module, "get_session_entity_id", return_value=1
+        common_module, "get_session_entity_id", return_value=1
     ), patch.object(
-        settings_handlers_module, "get_user_entity_permissions", return_value=permissions
+        common_module, "get_user_entity_permissions", return_value=permissions
     ):
         return settings_handlers_module.edit_sidebar_menu_process_quantity_fields_handler(
             request=_build_request(), **form

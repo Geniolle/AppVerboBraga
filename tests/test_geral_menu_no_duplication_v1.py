@@ -53,12 +53,19 @@ def test_settings_handlers_imports_and_calls_the_unsuffixed_create_name() -> Non
     -- ja nao ha alias de modulo nem versao morta para a qual possa
     acidentalmente voltar a apontar.
     """
-    handlers_path = PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "settings_handlers.py"
+    handlers_path = (
+        PROJECT_ROOT
+        / "appgenesis"
+        / "routes"
+        / "profile"
+        / "process_settings"
+        / "general_handlers.py"
+    )
     handlers_text = handlers_path.read_text(encoding="utf-8")
 
     assert "    create_sidebar_menu_setting,\n" in handlers_text
     assert "create_sidebar_menu_setting_v2" not in handlers_text
-    assert handlers_text.count("create_sidebar_menu_setting(") == 2
+    assert handlers_text.count("create_sidebar_menu_setting(") == 1
 
 
 ####################################################################################
@@ -190,9 +197,9 @@ def test_new_user_html_form_action_occurrence_counts_for_geral_routes() -> None:
 ####################################################################################
 
 def test_create_handler_signature_has_no_menu_section_form_parameter() -> None:
-    import appgenesis.routes.profile.settings_handlers as settings_handlers_module
+    import appgenesis.routes.profile.process_settings.general_handlers as general_handlers_module
 
     signature = inspect.signature(
-        settings_handlers_module.create_sidebar_menu_setting_handler_v1
+        general_handlers_module.create_sidebar_menu_setting_handler_v1
     )
     assert "menu_section" not in signature.parameters

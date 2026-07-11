@@ -175,7 +175,12 @@ def test_return_after_save_js_skips_correction_when_backend_already_returned_fin
 
 def test_settings_menu_editor_backend_marker_matches_return_after_save_escape_hatch() -> None:
     handlers_text = (
-        PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "settings_handlers.py"
+        PROJECT_ROOT
+        / "appgenesis"
+        / "routes"
+        / "profile"
+        / "process_settings"
+        / "common.py"
     ).read_text(encoding="utf-8")
     js_text = (PROJECT_ROOT / "static" / "js" / "modules" / "return_after_save.js").read_text(
         encoding="utf-8"

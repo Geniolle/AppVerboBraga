@@ -136,7 +136,14 @@ def test_menu_settings_has_exactly_two_process_fields_normalizer_generations() -
 
 
 def test_settings_handlers_only_calls_the_unsuffixed_persistence_wrapper() -> None:
-    handlers_path = PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "settings_handlers.py"
+    handlers_path = (
+        PROJECT_ROOT
+        / "appgenesis"
+        / "routes"
+        / "profile"
+        / "process_settings"
+        / "field_handlers.py"
+    )
     handlers_text = handlers_path.read_text(encoding="utf-8")
 
     assert re.search(r'\bupdate_sidebar_menu_process_fields\(', handlers_text) is not None

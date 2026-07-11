@@ -6,7 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
-import appgenesis.routes.profile.settings_handlers as settings_handlers_module
+import appgenesis.routes.profile.process_settings.general_handlers as settings_handlers_module
+import appgenesis.routes.profile.process_settings.common as common_module
 from appgenesis.models import Base, Entity, SidebarMenuSetting
 
 
@@ -63,13 +64,15 @@ def _build_request() -> Request:
 
 def _call(handler_name, SessionLocal, current_user, is_admin, permissions, **form):
     with patch.object(settings_handlers_module, "SessionLocal", SessionLocal), patch.object(
-        settings_handlers_module, "get_current_user", return_value=current_user
-    ), patch.object(
-        settings_handlers_module, "is_admin_user", return_value=is_admin
-    ), patch.object(
         settings_handlers_module, "get_session_entity_id", return_value=1
     ), patch.object(
-        settings_handlers_module, "get_user_entity_permissions", return_value=permissions
+        common_module, "get_current_user", return_value=current_user
+    ), patch.object(
+        common_module, "is_admin_user", return_value=is_admin
+    ), patch.object(
+        common_module, "get_session_entity_id", return_value=1
+    ), patch.object(
+        common_module, "get_user_entity_permissions", return_value=permissions
     ):
         handler = getattr(settings_handlers_module, handler_name)
         return handler(request=_build_request(), **form)
@@ -471,13 +474,15 @@ def test_create_blocks_when_active_entity_cannot_be_resolved():
     SessionLocal = _build_session_factory()
 
     with patch.object(settings_handlers_module, "SessionLocal", SessionLocal), patch.object(
-        settings_handlers_module, "get_current_user", return_value=OWNER
-    ), patch.object(
-        settings_handlers_module, "is_admin_user", return_value=True
-    ), patch.object(
         settings_handlers_module, "get_session_entity_id", return_value=None
     ), patch.object(
-        settings_handlers_module, "get_user_entity_permissions", return_value=OWNER_PERMISSIONS
+        common_module, "get_current_user", return_value=OWNER
+    ), patch.object(
+        common_module, "is_admin_user", return_value=True
+    ), patch.object(
+        common_module, "get_session_entity_id", return_value=None
+    ), patch.object(
+        common_module, "get_user_entity_permissions", return_value=OWNER_PERMISSIONS
     ):
         response = settings_handlers_module.create_sidebar_menu_setting_handler_v1(
             request=_build_request(), **_create_form()

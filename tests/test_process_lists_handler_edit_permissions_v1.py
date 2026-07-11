@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
-import appgenesis.routes.profile.settings_handlers as settings_handlers_module
+import appgenesis.routes.profile.process_settings.list_handlers as settings_handlers_module
 from appgenesis.models import Base, Entity, SidebarMenuSetting
 
 

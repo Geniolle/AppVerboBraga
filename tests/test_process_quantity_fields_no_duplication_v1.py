@@ -125,7 +125,14 @@ def test_menu_settings_has_exactly_one_quantity_fields_persistence_generation() 
 
 
 def test_settings_handlers_only_calls_the_v1_suffixed_quantity_persistence_function() -> None:
-    handlers_path = PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "settings_handlers.py"
+    handlers_path = (
+        PROJECT_ROOT
+        / "appgenesis"
+        / "routes"
+        / "profile"
+        / "process_settings"
+        / "quantity_field_handlers.py"
+    )
     handlers_text = handlers_path.read_text(encoding="utf-8")
 
     assert "update_sidebar_menu_process_quantity_fields_v1(" in handlers_text
