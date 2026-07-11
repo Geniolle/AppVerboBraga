@@ -165,3 +165,9 @@ e pendentes por um processo de governação separado (Fase 9):
 - `docs/refactoring/process-settings-phase-0-assessment.md` — levantamento
   isolado das 6 abas de configuração de processo, fora do âmbito das fases
   acima.
+- `docs/refactoring/process-settings-final-summary.md` — arquitetura final da
+  sequência posterior dedicada às 6 abas, incluindo handlers e serviços por
+  domínio, reexports, compatibilidade, `entity_id`, testes e riscos residuais.
+- `docs/refactoring/process-settings-phase-10-legacy-audit.md` — auditoria de
+  wrappers, aliases, reexports, monkeypatches, chamadas indiretas e candidatos
+  a legado remanescentes após a extração por domínio.

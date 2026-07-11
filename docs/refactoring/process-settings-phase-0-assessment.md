@@ -658,3 +658,18 @@ revisada da secção 10 — ambas de risco baixo/nulo e sem escrita de código f
 recomendo** avançar diretamente para qualquer fase que edite `menu_settings.py` ou
 `settings_handlers.py` (fases C, D, F da secção 10) sem essas duas fases prévias e sem confirmação
 explícita e isolada do utilizador para cada uma, dado o histórico de incidentes desta área.
+
+---
+
+## 14. Estado final da sequência
+
+Esta recomendação representa a decisão tomada na Fase 0 e deve ser lida como registo histórico.
+As fases de proteção, consolidação, extração por domínio e auditoria foram posteriormente
+executadas e validadas até à Fase 10. A arquitetura resultante, as funções canónicas, os reexports
+de compatibilidade, o modelo atual de `entity_id`, os riscos residuais e as instruções para novas
+abas estão documentados em `docs/refactoring/process-settings-final-summary.md`.
+
+O estado final preserva as fronteiras de segurança definidas neste assessment: não houve migração
+para repositórios de escrita, alteração do modelo de `entity_id` ou reescrita dos fluxos de
+Sessões/Menu. A auditoria detalhada do legado remanescente está em
+`docs/refactoring/process-settings-phase-10-legacy-audit.md`.
