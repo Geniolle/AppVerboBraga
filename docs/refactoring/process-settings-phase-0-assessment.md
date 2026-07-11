@@ -107,14 +107,20 @@ secção 9 para o que fica pendente de leitura mais profunda antes da Fase 1.
   cache-bust `20260629-edit-mode-options-v1`).
 - **Backend**: `POST /settings/menu/process-fields` → `edit_sidebar_menu_process_fields_handler`
   (`settings_handlers.py:2317`).
-- **Persistência**: `update_sidebar_menu_process_fields` (`menu_settings.py:2367`) — **atenção**:
-  existe também `update_sidebar_menu_process_fields_v4` (`menu_settings.py:2164`), definida antes,
-  não confirmada como chamada por nenhum handler ativo nesta leitura — candidata a código morto,
-  precisa confirmação por grep de chamadores antes de qualquer remoção futura.
-- **Normalização**: não isolada numa função `normalize_*` dedicada — lida inline dentro do handler
-  e de `update_sidebar_menu_process_fields` (não lida corpo a corpo nesta fase).
+- **Persistência**: `update_sidebar_menu_process_fields` (`menu_settings.py:2367`) — **Fase 4
+  confirmou por grep exaustivo de chamadores**: `update_sidebar_menu_process_fields_v4`
+  (`menu_settings.py:2164`) NÃO é código morto — é a implementação real (escreve no DB via SQL
+  bruto), chamada exclusivamente pelo wrapper sem sufixo, que por sua vez é o único chamado por
+  `settings_handlers.py`. Duas gerações vivas por desenho (wrapper → `_v4`), já no estado mínimo
+  consolidado; sem alteração necessária. Ver `tests/test_process_fields_config_no_duplication_v1.py`.
+- **Normalização**: `normalize_menu_process_visible_fields` (`menu_settings.py:1009`) delega para
+  `normalize_menu_process_visible_fields_v4` (`menu_settings.py:930`) — mesmo padrão wrapper→`_v4`,
+  também confirmado sem chamador direto do `_v4` fora do wrapper (Fase 4).
 - **Bootstrap**: `menuProcessValuesMap`, `menuProcessHistoryMap`, `sidebarMenuSettings`.
-- **Testes**: `tests/test_process_fields_config_manager_v7.py` (2 testes).
+- **Testes**: `tests/test_process_fields_config_manager_v7.py`,
+  `tests/test_process_fields_config_no_duplication_v1.py`,
+  `tests/test_process_fields_config_handler_edit_permissions_v1.py`,
+  `tests/test_process_fields_config_persistence_isolation_v1.py` (45 testes no total, Fase 4).
 - **Redirect/card/aba**: mesmo padrão do 2.1 (`settings_tab="configuracao_campos"`, card
   permanece aberto).
 
@@ -469,10 +475,13 @@ Template (new_user.html, painel + bootstrap)
    convenções de nome diferentes (`test_menu_settings_process_lists_v1.py`,
    `test_process_lists_columns_editor.py`, `test_process_lists_reusable_create.py`,
    `test_process_lists_manager_v1.py`) sem um ficheiro canónico único.
-9. **`update_sidebar_menu_process_fields_v4`** (`menu_settings.py:2164`) e
-   **`update_sidebar_menu_additional_fields_v4`**/**`_v1`** (linhas 4177/4228) não confirmadas como
-   chamadas por nenhum handler ativo — candidatas a código morto, mas não confirmadas com grep
-   exaustivo nesta fase (só verificado para as funções que os handlers de fato chamam).
+9. ~~`update_sidebar_menu_process_fields_v4` (`menu_settings.py:2164`) e
+   `update_sidebar_menu_additional_fields_v4`/`_v1` (linhas 4177/4228) não confirmadas como
+   chamadas por nenhum handler ativo — candidatas a código morto~~ — **resolvido**: grep exaustivo
+   de chamadores confirmou que ambas são vivas (wrapper→`_v4`, sem chamador direto do `_v4` fora do
+   próprio wrapper). `update_sidebar_menu_additional_fields_v4`/`_v1` consolidada na Fase 3
+   (commits `985a78b2`..`c9b8b36c`); `update_sidebar_menu_process_fields_v4` confirmada na Fase 4
+   sem necessidade de alteração de código.
 
 ### Baixo
 
