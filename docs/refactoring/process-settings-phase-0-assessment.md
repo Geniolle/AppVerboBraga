@@ -163,12 +163,18 @@ secção 9 para o que fica pendente de leitura mais profunda antes da Fase 1.
 - **Frontend ativo**: `process_quantity_fields_manager_v1.js` (`new_user.html:2814`).
 - **Backend**: `POST /settings/menu/process-quantity-fields` →
   `edit_sidebar_menu_process_quantity_fields_handler` (`settings_handlers.py:2509`).
-- **Persistência**: `update_sidebar_menu_process_quantity_fields_v1` (`menu_settings.py:3797`) —
-  única versão encontrada, sem duplicação confirmada para esta função.
-- **Normalização**: `normalize_menu_process_quantity_fields` (`menu_settings.py:3705`) — única
-  versão, sem sufixo duplicado detectado.
+- **Persistência**: `update_sidebar_menu_process_quantity_fields_v1` (`menu_settings.py:3277`) —
+  **Fase 5 confirmou**: única versão, sem duplicação, sem chamador direto fora de
+  `settings_handlers.py`.
+- **Normalização**: `normalize_menu_process_quantity_fields` (`menu_settings.py:3185`) — única
+  versão, sem sufixo duplicado. Depende do normalizador de Campos Adicionais via nome sem sufixo
+  (resolve para a geração ativa por last-definition-wins); validação cruzada só ocorre na gravação,
+  não na leitura (comportamento estranho documentado e preservado).
 - **Bootstrap**: `menuProcessValuesMap`, `sidebarMenuSettings`.
-- **Testes**: `tests/test_process_quantity_fields_manager_v1.py` (1 teste).
+- **Testes**: `tests/test_process_quantity_fields_manager_v1.py`,
+  `tests/test_process_quantity_fields_no_duplication_v1.py`,
+  `tests/test_process_quantity_fields_handler_edit_permissions_v1.py`,
+  `tests/test_process_quantity_fields_persistence_isolation_v1.py` (71 testes no total, Fase 5).
 - **Redirect/card/aba**: mesmo padrão (`settings_tab="campos_quantidade"`).
 - **Observação**: esta é, das 6 abas, a que tem menor sinal de duplicação de gerações no backend —
   candidata natural a ser a primeira aba a migrar para uma arquitetura nova, se/quando essa decisão
