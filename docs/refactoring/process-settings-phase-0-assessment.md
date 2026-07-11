@@ -186,6 +186,11 @@ Esta é a aba citada explicitamente no pedido original como tendo concorrência 
 levantamento confirma uma situação **mais específica e menos caótica** do que "5 ficheiros
 concorrentes fazendo a mesma coisa" — ver secções 3 e 4 para o detalhe completo. Resumo:
 
+- **Fase 6 confirmou e removeu** os 3 ficheiros órfãos citados abaixo (2.6.1): a única razão
+  documentada para preservá-los (`scripts/restore_template.py`) já não existe — esse script foi
+  removido em `b15df9b5` ("docs: audit one-off scripts in scripts/, remove dead/duplicate ones"),
+  antes mesmo desta sequência de fases começar. Zero referências remanescentes em templates,
+  JS, Python ou testes, confirmado por grep exaustivo.
 - **Frontend ativo (2 ficheiros, papéis distintos, ambos carregados)**:
   - `process_lists_manager_v1.js` (`new_user.html:2813`, versão
     `20260710-list-editor-scope-v3`) — **editor**: manipula
@@ -206,21 +211,37 @@ concorrentes fazendo a mesma coisa" — ver secções 3 e 4 para o detalhe compl
   drift: uma correção de regra de permissão feita só no helper partilhado não propaga
   automaticamente para este handler.
 - **Persistência**: `update_sidebar_menu_process_lists` (`menu_settings.py:2381`).
-- **Normalização**: `normalize_menu_process_lists_v3` (`menu_settings.py:3521`) — confirmado por
+- **Normalização**: `normalize_menu_process_lists_v3` (`menu_settings.py:3041`) — confirmado por
   grep de chamadores como a versão realmente usada tanto pelo handler de escrita (via
-  `update_sidebar_menu_process_lists`, chamada na linha 2396) como por `get_sidebar_menu_settings_v4`
-  (linha 3667, leitura). `_v1` (3009) e `_v2` (3338) só são chamadas pelas suas próprias
-  `get_sidebar_menu_settings_v1`/`_v2`, que por sua vez (conforme já documentado em
-  `current-architecture.md`) não têm consumidor externo confirmado fora do próprio ficheiro —
-  candidatas a código morto, não removidas nesta fase.
+  `update_sidebar_menu_process_lists`) como por `get_sidebar_menu_settings_v4` (leitura, chamada
+  direta, sem passar por `get_menu_process_lists_v2`).
+- **Fase 6 corrigiu esta especulação**: `normalize_menu_process_lists_v1`/`_v2` e
+  `get_menu_process_lists_v1`/`_v2` NÃO são código morto — são executadas em todas as chamadas a
+  `get_sidebar_menu_settings` (que resolve para `_v4`, que chama `_v3` internamente via
+  `_original_get_sidebar_menu_settings_for_lists_v3`, que por sua vez chama `_v2`, que chama o
+  original). É uma cadeia de decoradores encadeados (last-definition-wins) em que `_v4` sobrescreve
+  o resultado de `process_lists`/`process_list_options` calculado por `_v2`/`_v3` antes de devolver
+  — ou seja, o trabalho de `_v1`/`_v2` (incluindo uma query SQL repetida 3x por chamada) é real mas
+  redundante, não morto. Colapsar esta cadeia teria impacto nas 6 abas (não só Listas) e fica
+  documentado como risco residual para a Fase 9/10, não tratado nesta fase.
 - **Bootstrap**: `sidebarMenuSettings` (contém `process_lists` por processo).
-- **Testes**: `tests/test_menu_settings_process_lists_v1.py` (4), `tests/test_process_lists_columns_editor.py`
-  (3), `tests/test_process_lists_reusable_create.py` (1), `tests/test_process_lists_manager_v1.py`
-  (1) — 9 testes ao todo espalhados por 4 ficheiros com convenções de nome diferentes.
+- **Testes**: `tests/test_menu_settings_process_lists_v1.py`, `tests/test_process_lists_columns_editor.py`,
+  `tests/test_process_lists_reusable_create.py`, `tests/test_process_lists_manager_v1.py`,
+  `tests/test_process_lists_persistence_isolation_v1.py`,
+  `tests/test_process_lists_handler_edit_permissions_v1.py` — 20 testes ao todo (Fase 6),
+  espalhados por 6 ficheiros com convenções de nome diferentes; sem ficheiro canónico único.
 - **Redirect/card/aba**: mesmo padrão (`settings_tab="lista"`).
 - **Suporte a Tipo de campo Manual/Automático**: o formulário submete `process_list_field_type`
   (lista, `Form(default=[])`) por linha — confirma que a distinção manual/automático já existe pelo
   menos ao nível do payload aceite pelo handler.
+
+#### 2.5.1 Ficheiros órfãos removidos na Fase 6
+
+`force_lista_tab_v1.js`, `process_lists_v1.js` e `process_lists_runtime_v3.js` foram removidos:
+zero `<script src>` em qualquer template, zero imports/referências em outro JS, zero uso em
+Python ou testes. A única justificação registada para os preservar (citação por nome em
+`scripts/restore_template.py`, um script dormente) deixou de existir — esse script foi removido em
+`b15df9b5`, antes desta sequência de fases começar.
 
 ### 2.6 Campos Subsequentes
 
@@ -248,9 +269,9 @@ concorrentes fazendo a mesma coisa" — ver secções 3 e 4 para o detalhe compl
 |---|---|---|---|---|---|---|---|---|
 | `static/js/modules/process_lists_manager_v1.js` | 706 | Sim (`new_user.html:2813`) | Consome núcleo `configurable_items_manager_core_v1.js` via `window.AppGenesisConfigurableItems` | **Sim** | Não | Não (é o editor ativo da aba Listas) | Alto se removido sem substituto | Manter; candidato natural a extrair para `tabs/lists_tab.js` numa fase futura, mantendo contrato |
 | `static/js/modules/process_lists_runtime_v5.js` | 573 | Sim (`new_user.html:2830`) | Lê `window.__APPGENESIS_BOOTSTRAP__` diretamente | **Sim** | Não | Sobreposição a confirmar com `process_field_options_resolver_v1.js` | Alto se removido sem substituto | Manter; ler por completo antes de decidir se é runtime genérico ou específico de Listas |
-| `static/js/modules/process_lists_v1.js` | 406 | **Não** (zero `<script src>` em `new_user.html`) | Não confirmado | **Não** (órfão de template) | Provável | Provavelmente sim, face a `process_lists_manager_v1.js` | Baixo (já avaliado na Fase 8 anterior) | Confirmar via grep global (`scripts/restore_template.py`) antes de remover — mesma conclusão da Fase 8 anterior: não remover sem essa confirmação |
-| `static/js/modules/process_lists_runtime_v3.js` | 202 | **Não** | Não confirmado | **Não** (órfão de template) | Provável | Provável predecessor de `_v5` | Baixo | Mesma cautela que acima |
-| `static/js/modules/force_lista_tab_v1.js` | 264 | **Não** — confirmado por grep direto ao ficheiro completo, zero ocorrências de `force_lista_tab` em `new_user.html` (correção face a uma primeira leitura preliminar desta sessão que tinha assumido incorretamente que estava incluído) | Não confirmado | **Não** | Provável | A confirmar | Baixo | Mesma cautela — citado por `scripts/restore_template.py` segundo a Fase 8 anterior, não verificado de novo nesta fase |
+| `static/js/modules/process_lists_v1.js` | 406 | **Removido na Fase 6** | — | — | — | — | — | `scripts/restore_template.py` (única razão de preservação) já não existe desde `b15df9b5` |
+| `static/js/modules/process_lists_runtime_v3.js` | 202 | **Removido na Fase 6** | — | — | — | — | — | idem |
+| `static/js/modules/force_lista_tab_v1.js` | 264 | **Removido na Fase 6** | — | — | — | — | — | idem |
 | `static/js/process_settings/adminProcessTabs_v1.js` | 105 | Não confirmado nesta leitura (fora do bloco de `<script src>` da secção principal analisada) | — | A confirmar | Não (recente, par de `appgenesis/process_settings/`) | Não | — | Investigar propósito exato antes da Fase 1 — pode já ser parte de um controlador de abas embrionário |
 | `static/js/modules/process_additional_fields_manager_v3.js` | não medido | Sim (`new_user.html:2812`) | Usa `configurable_items_manager_core_v1.js` | Sim | Não | Não | — | Manter |
 | `static/js/modules/process_field_options_resolver_v1.js` | não medido | Sim (`new_user.html:2810`) | Alvo `[data-process-additional-fields-manager-v3='1']` | Sim | Não | Sobreposição a confirmar com `process_lists_runtime_v5.js` (ambos resolvem opções de campo tipo lista) | — | Investigar sobreposição antes de qualquer runtime unificado |
@@ -477,10 +498,11 @@ Template (new_user.html, painel + bootstrap)
    (`configuracao_campos`) — ponto de fragilidade silenciosa se um novo código assumir que as duas
    convenções são intercambiáveis sem passar pela normalização existente.
 8. **Cobertura de teste desigual entre abas**: Campos Subsequentes (lógica condicional, a mais
-   complexa das 6) tem apenas 1 teste dedicado; Listas tem 9 testes espalhados por 4 ficheiros com
-   convenções de nome diferentes (`test_menu_settings_process_lists_v1.py`,
+   complexa das 6) tem apenas 1 teste dedicado; Listas tem 20 testes (Fase 6) espalhados por 6
+   ficheiros com convenções de nome diferentes (`test_menu_settings_process_lists_v1.py`,
    `test_process_lists_columns_editor.py`, `test_process_lists_reusable_create.py`,
-   `test_process_lists_manager_v1.py`) sem um ficheiro canónico único.
+   `test_process_lists_manager_v1.py`, `test_process_lists_persistence_isolation_v1.py`,
+   `test_process_lists_handler_edit_permissions_v1.py`) sem um ficheiro canónico único.
 9. ~~`update_sidebar_menu_process_fields_v4` (`menu_settings.py:2164`) e
    `update_sidebar_menu_additional_fields_v4`/`_v1` (linhas 4177/4228) não confirmadas como
    chamadas por nenhum handler ativo — candidatas a código morto~~ — **resolvido**: grep exaustivo
@@ -491,11 +513,21 @@ Template (new_user.html, painel + bootstrap)
 
 ### Baixo
 
-10. **3 ficheiros JS órfãos de Listas** (`process_lists_v1.js`, `process_lists_runtime_v3.js`,
+10. ~~3 ficheiros JS órfãos de Listas (`process_lists_v1.js`, `process_lists_runtime_v3.js`,
     `force_lista_tab_v1.js`) — zero risco de execução (não carregados), risco de confusão para
     quem procura "a" implementação de Listas. Já avaliados e preservados por decisão da Fase 8
-    anterior; este documento não propõe reabrir essa decisão sem primeiro confirmar se
-    `scripts/restore_template.py` continua a ser necessário.
+    anterior~~ — **resolvido na Fase 6**: `scripts/restore_template.py` (a única razão de
+    preservação) foi removido em `b15df9b5`, antes desta sequência de fases começar. Confirmado
+    por grep exaustivo (templates, JS, Python, testes) que os 3 ficheiros não tinham nenhum
+    consumidor; removidos.
+10b. **(Novo, Fase 6) Cadeia de decoradores redundante em `get_sidebar_menu_settings`**:
+    `_v2`→`_v3`→`_v4` encadeiam-se via `_original_get_sidebar_menu_settings_for_lists_vN`, cada
+    uma reexecutando a mesma query SQL (`SELECT menu_key, menu_config FROM
+    sidebar_menu_settings`) e recalculando `process_lists` com um normalizador diferente
+    (`_v1`/`_v2`/`_v3`), sendo os dois primeiros resultados sempre sobrescritos por `_v4`. Não é
+    código morto (todas as camadas executam), mas é trabalho redundante (3x a mesma query por
+    chamada) com potencial de consolidação segura. Afeta as 6 abas (função central de leitura),
+    não só Listas — fora do âmbito da Fase 6; documentado para avaliação na Fase 9/10.
 11. **`static/js/process_settings/adminProcessTabs_v1.js`** não teve o seu propósito confirmado
     nesta fase — baixo risco por ser pequeno (105 linhas) e recente, mas deve ser lido antes de
     criar qualquer controlador de abas novo, para não duplicar algo que já pode existir.
