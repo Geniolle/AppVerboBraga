@@ -82,7 +82,12 @@ secção 9 para o que fica pendente de leitura mais profunda antes da Fase 1.
 
 - **Frontend**: painel `#settings-tab-geral` (`new_user.html:1368-1538`, campos de label, estado,
   âmbito de visibilidade, secção da sidebar). Nenhum manager JS dedicado — navegação de aba tratada
-  por `settings_process_tabs.js`/`settings_default_tab.js`/`menu_section_form.js`.
+  por `settings_process_tabs.js`/`settings_default_tab.js`. `menu_section_form.js` já não existe —
+  foi removido numa fase anterior a esta sequência (confirmado por
+  `tests/test_geral_menu_no_duplication_v1.py`, que documenta a sua ausência: não havia formulário
+  real em `new_user.html` a apontar para `/settings/menu/create`, tornando o script morto na
+  prática). A referência a este ficheiro neste documento e na tabela da secção 3 estava
+  desatualizada e foi corrigida na Fase 7.
 - **Backend**: `POST /settings/menu/edit` → `edit_sidebar_menu_setting_handler_v1`
   (`settings_handlers.py:1514`).
 - **Permissão**: usa o gate partilhado `_require_menu_settings_owner_v1` (login + admin + Owner via
@@ -280,8 +285,8 @@ Python ou testes. A única justificação registada para os preservar (citação
 | `static/js/modules/process_subsequent_fields_manager_v1.js` | não medido | Sim (`new_user.html:2815`) | — | Sim | Não | Não | — | Manter |
 | `static/js/modules/process_fields_config_manager_v7.js` | não medido | Sim (`new_user.html:2841`) | — | Sim | Não (v1-v6 já removidos na Fase 8 anterior) | Não | — | Manter |
 | `static/js/modules/settings_process_tabs.js` | não medido | Sim (`new_user.html:2834`) | — | Sim | Não | A confirmar sobreposição com `settings_default_tab.js` | — | Ambos parecem ter responsabilidades distintas (normalização de aba vs. regra de aba default ao editar) — confirmar antes de fundir num controlador único |
-| `static/js/modules/settings_default_tab.js` | não medido | Sim (`new_user.html:2836`) | — | Sim | Não | Ver acima | — | Ver acima |
-| `static/js/modules/menu_section_form.js` | não medido | Sim (`new_user.html:2835`) | — | Sim | Não | Não | — | Manter |
+| `static/js/modules/settings_default_tab.js` | não medido | Sim (`new_user.html:2835`) | — | Sim | Não | Ver acima | — | Ver acima |
+| `static/js/modules/menu_section_form.js` | — | **Removido antes desta sequência** | — | — | — | — | — | Já não existe no repositório; a linha anterior (que dizia "Sim, `new_user.html:2835`, Manter") estava desatualizada — o número de linha citado corresponde hoje a `settings_default_tab.js`. Corrigido na Fase 7. |
 
 **Nota de correção de registo**: no início desta investigação (turno anterior desta conversa) foi
 afirmado, por leitura apressada de um `grep` agregado, que "só `force_lista_tab_v1.js` está
