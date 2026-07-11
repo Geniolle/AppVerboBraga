@@ -31,7 +31,6 @@ from appgenesis.menu_settings import (
     get_sidebar_menu_settings,
     resolve_menu_key_alias,
     set_sidebar_menu_visibility,
-    update_sidebar_menu_additional_fields,
     update_sidebar_menu_label,
     update_sidebar_menu_process_fields,
 )

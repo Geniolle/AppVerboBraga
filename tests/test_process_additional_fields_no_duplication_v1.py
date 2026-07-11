@@ -79,77 +79,109 @@ def test_template_has_single_additional_field_editor_block() -> None:
 
 
 ####################################################################################
-# (3) NORMALIZE_MENU_PROCESS_ADDITIONAL_FIELDS: existem 3 geracoes desta funcao no
-# ficheiro fonte (linhas 795, 4044 e 4880), todas com o mesmo nome. Dado que Python
-# usa "last-definition-wins", apenas a definicao de maior numero de linha (4880) esta
-# efetivamente em vigor -- e' essa que faz o reordenamento de headers para o inicio da
-# lista. Este teste trava o comportamento atual; nao consolidar nesta fase.
+# (3) NORMALIZE_MENU_PROCESS_ADDITIONAL_FIELDS: consolidado na Fase 3 estrutural.
+# As geracoes mortas (v0 bare, v2, v3 x2, v4, e o wrapper bare que apenas delegava
+# para _v1) foram removidas, junto dos guards _original_..._for_list_vN exclusivos
+# a essa cadeia. Restam exatamente DUAS implementacoes ativas, com responsabilidades
+# distintas (nao devem ser fundidas nesta fase):
+#   - normalize_menu_process_additional_fields (bare): normalizacao final completa,
+#     com suporte a lista automatica/manual e reordenamento de headers; usada na
+#     gravacao (update_sidebar_menu_additional_fields_v4) e por Campos Quantidade.
+#   - normalize_menu_process_additional_fields_v1: normalizacao auxiliar usada por
+#     _rebuild_menu_process_hierarchy_from_additional_fields_v1 (calculo do estado
+#     anterior), por move_sidebar_menu_additional_field e por
+#     scripts/backfill_menu_hierarchy_v1.py.
 ####################################################################################
 
-def test_menu_settings_still_has_three_additional_fields_normalizer_generations() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
-
-    definition_line_numbers = [
-        line_number
-        for line_number, line_text in enumerate(lines, start=1)
-        if line_text.startswith("def normalize_menu_process_additional_fields(")
-    ]
-
-    assert len(definition_line_numbers) == 3
-
-    from appgenesis.menu_settings import normalize_menu_process_additional_fields
-
-    live_source = inspect.getsource(normalize_menu_process_additional_fields)
-    _, live_start_line = inspect.getsourcelines(normalize_menu_process_additional_fields)
-
-    assert live_start_line == definition_line_numbers[-1]
-    # Assinatura distintiva da geracao ativa: reordena headers para o inicio da lista.
-    assert "header" in live_source
-
-
-####################################################################################
-# (4) UPDATE_SIDEBAR_MENU_ADDITIONAL_FIELDS: existem 4 definicoes de persistencia no
-# ficheiro fonte. Apenas update_sidebar_menu_additional_fields_v1 (que delega para
-# _v4) e' importada e chamada a partir de settings_handlers.py. As duas definicoes de
-# nome nao sufixado (linhas 2467 e 4240) nunca sao invocadas pelo handler desta aba;
-# a de linha 4240 (a que efetivamente "ganha" por last-definition-wins) tem, alem
-# disso, um bug latente: chama update_sidebar_menu_additional_fields_v1(...,
-# raw_fields=raw_fields) mas essa funcao espera o parametro "fields", nao
-# "raw_fields" -- pelo que, se alguma vez fosse invocada, falharia com TypeError.
-# Comportamento estranho documentado, nao corrigido nesta fase (regra 10).
-####################################################################################
-
-def test_menu_settings_still_has_four_additional_fields_persistence_generations() -> None:
+def test_menu_settings_has_exactly_two_active_additional_fields_normalizers() -> None:
     menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
     text = menu_settings_path.read_text(encoding="utf-8")
     lines = text.splitlines()
 
-    definition_line_numbers = [
+    bare_definition_line_numbers = [
+        line_number
+        for line_number, line_text in enumerate(lines, start=1)
+        if line_text.startswith("def normalize_menu_process_additional_fields(")
+    ]
+    v1_definition_line_numbers = [
+        line_number
+        for line_number, line_text in enumerate(lines, start=1)
+        if line_text.startswith("def normalize_menu_process_additional_fields_v1(")
+    ]
+
+    # Exatamente uma definicao bare e uma definicao _v1 -- as duas implementacoes
+    # ativas e explicitas desta fase. Nenhuma geracao morta (v2/v3/v4) remanesce.
+    assert len(bare_definition_line_numbers) == 1
+    assert len(v1_definition_line_numbers) == 1
+    assert "normalize_menu_process_additional_fields_v2(" not in text
+    assert "normalize_menu_process_additional_fields_v3(" not in text
+    assert "normalize_menu_process_additional_fields_v4(" not in text
+    assert "_original_normalize_menu_process_additional_fields_for_list_v1" not in text
+    assert "_original_normalize_menu_process_additional_fields_for_list_v2" not in text
+    assert "_original_normalize_menu_process_additional_fields_for_list_v3" not in text
+
+    from appgenesis.menu_settings import (
+        normalize_menu_process_additional_fields,
+        normalize_menu_process_additional_fields_v1,
+    )
+
+    bare_source = inspect.getsource(normalize_menu_process_additional_fields)
+    _, bare_start_line = inspect.getsourcelines(normalize_menu_process_additional_fields)
+    v1_source = inspect.getsource(normalize_menu_process_additional_fields_v1)
+
+    assert bare_start_line == bare_definition_line_numbers[0]
+    # Assinatura distintiva da versao bare: reordena headers para o inicio da lista.
+    assert "header" in bare_source
+    # As duas implementacoes permanecem distintas (nao foram fundidas nesta fase).
+    assert bare_source != v1_source
+
+
+####################################################################################
+# (4) UPDATE_SIDEBAR_MENU_ADDITIONAL_FIELDS: consolidado na Fase 3 estrutural. As
+# duas definicoes de nome nao sufixado (a original e a que continha o bug latente
+# raw_fields=raw_fields) foram removidas, junto dos imports orfaos em
+# profile_handlers.py e page_handler.py. Resta apenas a cadeia de persistencia ativa
+# e explicita: update_sidebar_menu_additional_fields_v1 (chamada pelo handler) delega
+# para update_sidebar_menu_additional_fields_v4 (implementacao real, grava no banco).
+####################################################################################
+
+def test_menu_settings_has_only_the_v1_to_v4_persistence_chain() -> None:
+    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
+    text = menu_settings_path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    bare_definition_line_numbers = [
         line_number
         for line_number, line_text in enumerate(lines, start=1)
         if line_text.startswith("def update_sidebar_menu_additional_fields(")
-        or line_text.startswith("def update_sidebar_menu_additional_fields_v1(")
-        or line_text.startswith("def update_sidebar_menu_additional_fields_v4(")
+    ]
+    v1_definition_line_numbers = [
+        line_number
+        for line_number, line_text in enumerate(lines, start=1)
+        if line_text.startswith("def update_sidebar_menu_additional_fields_v1(")
+    ]
+    v4_definition_line_numbers = [
+        line_number
+        for line_number, line_text in enumerate(lines, start=1)
+        if line_text.startswith("def update_sidebar_menu_additional_fields_v4(")
     ]
 
-    assert len(definition_line_numbers) == 4
+    # Nenhum wrapper bare morto remanesce; a cadeia _v1 -> _v4 e' unica e explicita.
+    assert len(bare_definition_line_numbers) == 0
+    assert len(v1_definition_line_numbers) == 1
+    assert len(v4_definition_line_numbers) == 1
 
-    # A definicao de nome nao sufixado que efetivamente esta em vigor (a ultima,
-    # last-definition-wins) chama _v1 com o parametro errado ("raw_fields").
-    unsuffixed_defs = [
-        i for i, line_text in enumerate(lines, start=1)
-        if line_text.startswith("def update_sidebar_menu_additional_fields(")
-    ]
-    assert len(unsuffixed_defs) == 2
+    # O bug latente raw_fields=raw_fields foi removido do codigo executavel.
+    assert "raw_fields=raw_fields" not in text
 
-    from appgenesis.menu_settings import update_sidebar_menu_additional_fields
+    from appgenesis.menu_settings import (
+        update_sidebar_menu_additional_fields_v1,
+        update_sidebar_menu_additional_fields_v4,
+    )
 
-    live_source = inspect.getsource(update_sidebar_menu_additional_fields)
-    _, live_start_line = inspect.getsourcelines(update_sidebar_menu_additional_fields)
-
-    assert live_start_line == unsuffixed_defs[-1]
-    assert "raw_fields=raw_fields" in live_source
+    v1_source = inspect.getsource(update_sidebar_menu_additional_fields_v1)
+    assert "update_sidebar_menu_additional_fields_v4" in v1_source
+    assert update_sidebar_menu_additional_fields_v4 is not None
 
 
 def test_settings_handlers_only_imports_and_calls_the_v1_suffixed_persistence_function() -> None:
