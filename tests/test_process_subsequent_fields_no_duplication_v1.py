@@ -47,13 +47,24 @@ def test_template_has_single_process_subsequent_fields_form() -> None:
 # existe exatamente 1 definicao no ficheiro fonte (as 2 geracoes mortas e o seu
 # helper exclusivo _normalize_subsequent_field_operator_v2 foram removidos). A
 # definicao restante preserva deduplicacao, geracao deterministica de key e
-# operadores ativos em ingles.
+# operadores ativos em ingles. Realocada na Fase 9 estrutural para
+# appgenesis/services/process_settings/subsequent_field_service.py (menu_settings.py
+# passou a reexporta-la para manter compatibilidade dos call sites existentes).
 ####################################################################################
 
 def test_menu_settings_has_exactly_one_subsequent_fields_normalizer_definition() -> None:
     menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
     menu_settings_text = menu_settings_path.read_text(encoding="utf-8")
-    lines = menu_settings_text.splitlines()
+
+    subsequent_field_service_path = (
+        PROJECT_ROOT
+        / "appgenesis"
+        / "services"
+        / "process_settings"
+        / "subsequent_field_service.py"
+    )
+    subsequent_field_service_text = subsequent_field_service_path.read_text(encoding="utf-8")
+    lines = subsequent_field_service_text.splitlines()
 
     definition_line_numbers = [
         line_number
@@ -78,3 +89,4 @@ def test_menu_settings_has_exactly_one_subsequent_fields_normalizer_definition()
     assert '"not_equals"' in live_source
 
     assert "_normalize_subsequent_field_operator_v2" not in menu_settings_text
+    assert "_normalize_subsequent_field_operator_v2" not in subsequent_field_service_text

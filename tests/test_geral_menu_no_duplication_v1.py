@@ -72,24 +72,44 @@ def test_settings_handlers_imports_and_calls_the_unsuffixed_create_name() -> Non
 # (2) GERACAO UNICA CONFIRMADA: ao contrario de create_sidebar_menu_setting, as
 # restantes funcoes de persistencia/consulta usadas pela aba Geral tem exatamente
 # uma definicao cada no ficheiro fonte -- nao ha ambiguidade de qual versao esta
-# em vigor.
+# em vigor. _menu_exists, _resolve_legacy_menu_alias e resolve_menu_key_alias foram
+# realocadas na Fase 9 estrutural para
+# appgenesis/services/process_settings/normalizers.py (menu_settings.py passou a
+# reexporta-las para manter compatibilidade dos call sites existentes); as
+# restantes permanecem definidas diretamente em menu_settings.py.
 ####################################################################################
 
 def test_menu_settings_single_generation_functions_used_by_geral() -> None:
     menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
+    menu_settings_lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
 
-    single_generation_names = [
+    normalizers_path = (
+        PROJECT_ROOT / "appgenesis" / "services" / "process_settings" / "normalizers.py"
+    )
+    normalizers_lines = normalizers_path.read_text(encoding="utf-8").splitlines()
+
+    single_generation_names_in_menu_settings = [
         "update_sidebar_menu_label",
         "move_sidebar_menu_setting",
         "delete_sidebar_menu_setting",
         "set_sidebar_menu_visibility",
+    ]
+    single_generation_names_in_normalizers = [
         "_menu_exists",
         "_resolve_legacy_menu_alias",
         "resolve_menu_key_alias",
     ]
 
-    for function_name in single_generation_names:
+    for function_name, lines in [
+        *(
+            (name, menu_settings_lines)
+            for name in single_generation_names_in_menu_settings
+        ),
+        *(
+            (name, normalizers_lines)
+            for name in single_generation_names_in_normalizers
+        ),
+    ]:
         definition_line_numbers = [
             line_number
             for line_number, line_text in enumerate(lines, start=1)

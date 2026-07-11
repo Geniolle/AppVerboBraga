@@ -95,12 +95,16 @@ def test_template_has_single_process_quantity_fields_editor_form_action() -> Non
 ####################################################################################
 # (3) MULTIPLAS GERACOES NO BACKEND: ao contrario de Campos Adicionais (3 geracoes
 # de normalizador, 4 de persistencia), Campos Quantidade tem exatamente UMA geracao
-# de cada uma das suas duas funcoes proprias.
+# de cada uma das suas duas funcoes proprias. Realocadas na Fase 9 estrutural para
+# appgenesis/services/process_settings/quantity_field_service.py (menu_settings.py
+# passou a reexporta-las para manter compatibilidade dos call sites existentes).
 ####################################################################################
 
 def test_menu_settings_has_exactly_one_quantity_fields_normalizer_generation() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
+    quantity_field_service_path = (
+        PROJECT_ROOT / "appgenesis" / "services" / "process_settings" / "quantity_field_service.py"
+    )
+    lines = quantity_field_service_path.read_text(encoding="utf-8").splitlines()
 
     definition_line_numbers = [
         line_number
@@ -112,8 +116,10 @@ def test_menu_settings_has_exactly_one_quantity_fields_normalizer_generation() -
 
 
 def test_menu_settings_has_exactly_one_quantity_fields_persistence_generation() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
+    quantity_field_service_path = (
+        PROJECT_ROOT / "appgenesis" / "services" / "process_settings" / "quantity_field_service.py"
+    )
+    lines = quantity_field_service_path.read_text(encoding="utf-8").splitlines()
 
     definition_line_numbers = [
         line_number

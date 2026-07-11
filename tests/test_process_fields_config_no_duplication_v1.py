@@ -82,12 +82,17 @@ def test_template_has_single_process_fields_config_editor_block() -> None:
 # doc especulava que update_sidebar_menu_process_fields_v4 pudesse ser codigo morto
 # ("candidata a codigo morto") -- este teste confirma, por leitura direta, que essa
 # especulacao estava incorreta: e' a implementacao real, chamada pela funcao sem
-# sufixo, que por sua vez e' a unica importada por settings_handlers.py.
+# sufixo, que por sua vez e' a unica importada por settings_handlers.py. Realocadas
+# na Fase 9 estrutural para appgenesis/services/process_settings/field_service.py
+# (menu_settings.py passou a reexporta-las para manter compatibilidade dos call
+# sites existentes).
 ####################################################################################
 
 def test_menu_settings_has_exactly_two_process_fields_persistence_generations() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
+    field_service_path = (
+        PROJECT_ROOT / "appgenesis" / "services" / "process_settings" / "field_service.py"
+    )
+    lines = field_service_path.read_text(encoding="utf-8").splitlines()
 
     definition_line_numbers = [
         line_number
@@ -115,8 +120,10 @@ def test_menu_settings_has_exactly_two_process_fields_persistence_generations() 
 
 
 def test_menu_settings_has_exactly_two_process_fields_normalizer_generations() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
+    field_service_path = (
+        PROJECT_ROOT / "appgenesis" / "services" / "process_settings" / "field_service.py"
+    )
+    lines = field_service_path.read_text(encoding="utf-8").splitlines()
 
     definition_line_numbers = [
         line_number

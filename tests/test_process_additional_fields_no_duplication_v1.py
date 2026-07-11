@@ -79,7 +79,10 @@ def test_template_has_single_additional_field_editor_block() -> None:
 
 
 ####################################################################################
-# (3) NORMALIZE_MENU_PROCESS_ADDITIONAL_FIELDS: consolidado na Fase 3 estrutural.
+# (3) NORMALIZE_MENU_PROCESS_ADDITIONAL_FIELDS: consolidado na Fase 3 estrutural e
+# realocado na Fase 9 estrutural para
+# appgenesis/services/process_settings/additional_field_service.py (menu_settings.py
+# passou a reexportar ambas as implementacoes para manter compatibilidade externa).
 # As geracoes mortas (v0 bare, v2, v3 x2, v4, e o wrapper bare que apenas delegava
 # para _v1) foram removidas, junto dos guards _original_..._for_list_vN exclusivos
 # a essa cadeia. Restam exatamente DUAS implementacoes ativas, com responsabilidades
@@ -94,8 +97,14 @@ def test_template_has_single_additional_field_editor_block() -> None:
 ####################################################################################
 
 def test_menu_settings_has_exactly_two_active_additional_fields_normalizers() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    text = menu_settings_path.read_text(encoding="utf-8")
+    additional_field_service_path = (
+        PROJECT_ROOT
+        / "appgenesis"
+        / "services"
+        / "process_settings"
+        / "additional_field_service.py"
+    )
+    text = additional_field_service_path.read_text(encoding="utf-8")
     lines = text.splitlines()
 
     bare_definition_line_numbers = [
@@ -137,8 +146,11 @@ def test_menu_settings_has_exactly_two_active_additional_fields_normalizers() ->
 
 
 ####################################################################################
-# (4) UPDATE_SIDEBAR_MENU_ADDITIONAL_FIELDS: consolidado na Fase 3 estrutural. As
-# duas definicoes de nome nao sufixado (a original e a que continha o bug latente
+# (4) UPDATE_SIDEBAR_MENU_ADDITIONAL_FIELDS: consolidado na Fase 3 estrutural e
+# realocado na Fase 9 estrutural para
+# appgenesis/services/process_settings/additional_field_service.py (menu_settings.py
+# passou a reexportar a cadeia v1->v4 para manter compatibilidade externa). As duas
+# definicoes de nome nao sufixado (a original e a que continha o bug latente
 # raw_fields=raw_fields) foram removidas, junto dos imports orfaos em
 # profile_handlers.py e page_handler.py. Resta apenas a cadeia de persistencia ativa
 # e explicita: update_sidebar_menu_additional_fields_v1 (chamada pelo handler) delega
@@ -146,8 +158,14 @@ def test_menu_settings_has_exactly_two_active_additional_fields_normalizers() ->
 ####################################################################################
 
 def test_menu_settings_has_only_the_v1_to_v4_persistence_chain() -> None:
-    menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    text = menu_settings_path.read_text(encoding="utf-8")
+    additional_field_service_path = (
+        PROJECT_ROOT
+        / "appgenesis"
+        / "services"
+        / "process_settings"
+        / "additional_field_service.py"
+    )
+    text = additional_field_service_path.read_text(encoding="utf-8")
     lines = text.splitlines()
 
     bare_definition_line_numbers = [
