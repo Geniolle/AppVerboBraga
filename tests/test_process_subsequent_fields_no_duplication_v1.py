@@ -43,15 +43,17 @@ def test_template_has_single_process_subsequent_fields_form() -> None:
 
 
 ####################################################################################
-# (3) NORMALIZE_MENU_PROCESS_SUBSEQUENT_FIELDS: apenas a ultima definicao (a de
-# maior numero de linha) deve estar em vigor, dado que Python usa "last-definition
-# -wins" -- este teste trava que continuam a existir 3 geracoes no ficheiro fonte
-# (comportamento estranho documentado, nao removido nesta fase).
+# (3) NORMALIZE_MENU_PROCESS_SUBSEQUENT_FIELDS: apos a consolidacao desta fase,
+# existe exatamente 1 definicao no ficheiro fonte (as 2 geracoes mortas e o seu
+# helper exclusivo _normalize_subsequent_field_operator_v2 foram removidos). A
+# definicao restante preserva deduplicacao, geracao deterministica de key e
+# operadores ativos em ingles.
 ####################################################################################
 
-def test_menu_settings_still_has_three_subsequent_fields_normalizer_generations() -> None:
+def test_menu_settings_has_exactly_one_subsequent_fields_normalizer_definition() -> None:
     menu_settings_path = PROJECT_ROOT / "appgenesis" / "menu_settings.py"
-    lines = menu_settings_path.read_text(encoding="utf-8").splitlines()
+    menu_settings_text = menu_settings_path.read_text(encoding="utf-8")
+    lines = menu_settings_text.splitlines()
 
     definition_line_numbers = [
         line_number
@@ -59,7 +61,7 @@ def test_menu_settings_still_has_three_subsequent_fields_normalizer_generations(
         if line_text.startswith("def normalize_menu_process_subsequent_fields(")
     ]
 
-    assert len(definition_line_numbers) == 3
+    assert len(definition_line_numbers) == 1
 
     from appgenesis.menu_settings import normalize_menu_process_subsequent_fields
     import inspect
@@ -67,5 +69,12 @@ def test_menu_settings_still_has_three_subsequent_fields_normalizer_generations(
     live_source = inspect.getsource(normalize_menu_process_subsequent_fields)
     _, live_start_line = inspect.getsourcelines(normalize_menu_process_subsequent_fields)
 
-    assert live_start_line == definition_line_numbers[-1]
+    assert live_start_line == definition_line_numbers[0]
     assert "seen_fields" in live_source
+    assert "_build_subsequent_field_key_v3" in live_source
+    assert '"is_empty"' in live_source
+    assert '"is_not_empty"' in live_source
+    assert '"equals"' in live_source
+    assert '"not_equals"' in live_source
+
+    assert "_normalize_subsequent_field_operator_v2" not in menu_settings_text
