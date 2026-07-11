@@ -263,6 +263,35 @@ sensível a regressão de arquitetura desta área.
 - `scripts/apply_member_country.py` identificado como quebrado silenciosamente, não corrigido (fora
   do âmbito de uma fase de auditoria; risco residual documentado abaixo).
 
+## Fase 12 — regressão final
+
+- Suite das 6 abas + menu_settings + redirect + permissões: 337 testes, 337 passaram.
+- Suite completa não-Selenium (mesma lista `--ignore` do `.github/workflows/ci.yml`): 493 testes,
+  492 passaram, 1 falha.
+- Falha encontrada: `tests/test_process_submenu_runtime_v1.py::
+  test_new_user_js_keeps_stage6_wrappers_for_process_submenu_runtime`. Confirmado por `git blame`
+  que a linha esperada pelo teste (`return appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu(`) foi
+  alterada em `e12811bb7` ("Add breadcrumb active tab support", 2026-07-08), **antes** do início desta
+  sequência (2026-07-10). Falha pré-existente, não relacionada às 6 abas de configuração de processo
+  nem a `new_user.js`/`process_submenu_runtime` tocados por nenhum commit desta sequência. Não
+  corrigida (fora do âmbito; risco de alterar código de navegação de menu não relacionado).
+- `python -m compileall appgenesis web_app.py scripts`: sem erros.
+- `python -c "import web_app"`: importa sem erro.
+- `node --check` em todos os 39 ficheiros JS ativos (referenciados por `<script src=` em
+  `templates/*.html`): sem erros de sintaxe.
+- Busca por rotas duplicadas (`@router.<método>("<path>")` em todo `appgenesis/`): nenhuma encontrada.
+- Busca por rotas em falta (paths `/settings/menu/*` referenciados em JS/templates vs. registados):
+  todas as 13 rotas referenciadas resolvem para uma rota registada.
+- Busca por imports órfãos (`pyflakes`): achados novos documentados nos itens #7 e #8 da secção
+  "Riscos residuais" acima; reexports intencionais (Fase 9) confirmados como já documentados, não
+  são achados novos.
+- Testes Selenium/browser pré-existentes (14 ficheiros excluídos do CI): execução isolada tentada
+  nesta fase; ambiente Windows local sem browser/driver configurado impediu conclusão em tempo útil
+  (sem output após vários minutos, consistente com a necessidade de validação manual com browser
+  real já documentada desde a Fase 0/10). Nenhuma alteração de código feita com base nesta tentativa.
+- `git status` ao final desta fase: apenas este ficheiro genuinamente alterado (achados #7/#8 e esta
+  secção); nenhuma alteração de código de produção.
+
 ## Riscos residuais
 
 1. `scripts/apply_member_country.py` faz no-op silencioso contra `menu_settings.py` desde a Fase 9 —
@@ -281,6 +310,16 @@ sensível a regressão de arquitetura desta área.
 6. `settings_handlers.py` (1472 linhas, Sessões + Menu) e a parte residual de `menu_settings.py`
    (1594 linhas, hub + cadeia de wrappers) continuam grandes e multi-responsabilidade — aceite como
    estado final desta sequência, não um defeito a corrigir sem pedido de negócio explícito.
+7. **(Achado da Fase 12)** `pyflakes` sobre `menu_settings.py` confirma 4 imports de módulo
+   genuinamente órfãos (zero uso no ficheiro, verificado por grep): `re`, `unicodedata`,
+   `uuid.uuid4`, `get_admin_subprocess_config`. Distinto dos "imported but unused" da secção
+   "Reexports" (esses são intencionais, consumidos por ficheiros externos). Não removidos nesta
+   sequência — risco zero de execução, candidato a limpeza trivial numa fase futura.
+8. **(Achado da Fase 12)** `pyflakes` sobre `settings_handlers.py` confirma imports de módulo
+   genuinamente órfãos: `urllib.parse.{parse_qsl,urlencode,urlsplit}` (sombreados por reimportações
+   locais idênticas dentro de 5 funções, linhas 287/387/426/454/472), `fastapi.APIRouter`,
+   `starlette.requests.Request as RequestType`. Pré-existentes a esta sequência (não introduzidos
+   pela Fase 8). Não removidos — mesma justificação do achado #7.
 
 ## Instruções para criar ou alterar novas abas
 
