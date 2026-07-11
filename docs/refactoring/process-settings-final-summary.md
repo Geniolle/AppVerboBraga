@@ -285,10 +285,17 @@ sensível a regressão de arquitetura desta área.
 - Busca por imports órfãos (`pyflakes`): achados novos documentados nos itens #7 e #8 da secção
   "Riscos residuais" acima; reexports intencionais (Fase 9) confirmados como já documentados, não
   são achados novos.
-- Testes Selenium/browser pré-existentes (14 ficheiros excluídos do CI): execução isolada tentada
-  nesta fase; ambiente Windows local sem browser/driver configurado impediu conclusão em tempo útil
-  (sem output após vários minutos, consistente com a necessidade de validação manual com browser
-  real já documentada desde a Fase 0/10). Nenhuma alteração de código feita com base nesta tentativa.
+- Testes Selenium/browser pré-existentes (14 ficheiros excluídos do CI): execução isolada concluída
+  nesta fase (17m26s): 50 passaram, 9 falharam. As 9 falhas (`test_estruturas_menu_client_navigation.py`
+  ×2, `test_menu_move_diagnostic_browser.py` ×1, `test_process_keys_registry_stage1_browser.py` ×2,
+  `test_process_menu_config_builder_stage3_browser.py` ×2, `test_process_navigation_state_stage4_browser.py`
+  ×2) são todas `selenium.common.exceptions.TimeoutException` em `WebDriverWait` — padrão típico de
+  flakiness de browser, não de asserção de conteúdo. Confirmado por `git log`/grep: nenhum destes 5
+  ficheiros foi tocado por nenhum commit desta sequência (último commit `b458ea7a`, 2026-07-10, antes
+  do início desta sequência) e nenhum referencia `settings_tab`/`menu_settings`/as 6 abas de
+  configuração de processo — cobrem Entidade/Menu/Sessões/Perfil de autorização
+  (`admin_subprocesses`), fora do âmbito. Não corrigidas (fora do âmbito; risco de mascarar
+  flakiness real de browser sem investigação dedicada).
 - `git status` ao final desta fase: apenas este ficheiro genuinamente alterado (achados #7/#8 e esta
   secção); nenhuma alteração de código de produção.
 
