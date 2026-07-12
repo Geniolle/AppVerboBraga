@@ -52,6 +52,44 @@ def _open_lists_editor_v1(driver, wait) -> None:
     )
 
 
+####################################################################################
+# (2) GRID RESPONSIVO DO EDITOR DE LISTAS
+####################################################################################
+
+
+def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+
+        expected_columns = ((1920, 3), (1366, 3), (1024, 2), (768, 1))
+        for width, expected_count in expected_columns:
+            driver.set_window_size(width, 1200)
+            columns = driver.execute_script(
+                """
+                const editor = document.querySelector(
+                  "[data-process-list-reusable-manager] " +
+                  "[data-process-list-reusable-editor-block].process-lists-editor-grid-v1"
+                );
+                return editor ? getComputedStyle(editor).gridTemplateColumns : "";
+                """
+            )
+            assert len(columns.split()) == expected_count, (width, columns)
+
+        stylesheet_urls = driver.execute_script(
+            "return Array.from(document.styleSheets, (sheet) => sheet.href || '');"
+        )
+        assert any(
+                "configurable_items_manager_v1.css"
+                "?v=20260712-process-lists-source-menu-v1" in url
+            for url in stylesheet_urls
+        )
+    finally:
+        driver.quit()
+
+
 def _remove_test_list_v1(driver, wait) -> None:
     _open_lists_editor_v1(driver, wait)
     removed = driver.execute_script(
@@ -160,5 +198,111 @@ def test_create_reusable_list_reads_visible_editor_values() -> None:
             assert "Lista teste" not in driver.find_element(
                 By.CSS_SELECTOR, "[data-process-lists-table-body]"
             ).text
+        finally:
+            driver.quit()
+
+
+####################################################################################
+# (3) LISTA AUTOMÁTICA COM MENU DE ORIGEM
+####################################################################################
+
+
+def test_automatic_list_source_menu_real_flow() -> None:
+    label = "Lista automática Selenium"
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+        removed_before = driver.execute_script(
+            """
+            const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+            const manager = form && form.processListsManagerV1;
+            const expected = String(arguments[0] || '').toLowerCase();
+            if (!manager) return false;
+            const filtered = manager.getItems().filter(
+              (item) => String(item.label || '').toLowerCase() !== expected
+            );
+            if (filtered.length === manager.getItems().length) return false;
+            manager.setItems(filtered);
+            manager.syncHiddenInputs();
+            return true;
+            """,
+            label,
+        )
+        if removed_before:
+            submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+            submit.click()
+            wait.until(EC.staleness_of(submit))
+            _open_lists_editor_v1(driver, wait)
+        field_type = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-field-type]")
+        items = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-items]")
+        menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
+
+        assert field_type.get_attribute("value") == "manual"
+        assert items.is_displayed()
+        assert not menu.is_displayed()
+
+        items.send_keys("Rascunho manual")
+        driver.execute_script(
+            "arguments[0].value='automatic'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            field_type,
+        )
+        assert not items.is_displayed()
+        assert menu.is_displayed()
+        source_options = [option for option in menu.find_elements(By.TAG_NAME, "option") if option.get_attribute("value")]
+        assert source_options
+        source_key = source_options[0].get_attribute("value")
+        source_label = source_options[0].text
+        driver.execute_script("arguments[0].value=arguments[1]", menu, source_key)
+        assert menu.get_attribute("value") == source_key
+        driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-label]").send_keys(label)
+        submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+        submit.click()
+        wait.until(EC.staleness_of(submit))
+
+        _open_lists_editor_v1(driver, wait)
+        assert "settings_tab=lista" in driver.current_url
+        table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        assert label.lower() in table_body.text.lower()
+        assert source_label in table_body.text
+        row = next(row for row in table_body.find_elements(By.TAG_NAME, "tr") if label.lower() in row.text.lower())
+        edit_button = row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
+        driver.execute_script("arguments[0].click()", edit_button)
+        menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
+        assert menu.is_displayed()
+        assert menu.get_attribute("value") == source_key
+
+        field_type = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-field-type]")
+        driver.execute_script(
+            "arguments[0].value='manual'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            field_type,
+        )
+        assert driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-items]").is_displayed()
+        driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-cancel]").click()
+        wait.until(lambda current: current.find_element(By.CSS_SELECTOR, "[data-process-list-editor-field-type]").get_attribute("value") == "manual")
+        assert driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]").get_attribute("value") == ""
+    finally:
+        try:
+            _open_lists_editor_v1(driver, wait)
+            removed = driver.execute_script(
+                """
+                const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+                const manager = form && form.processListsManagerV1;
+                if (!manager) return false;
+                const expected = String(arguments[0] || '').toLowerCase();
+                const filtered = manager.getItems().filter(
+                  (item) => String(item.label || '').toLowerCase() !== expected
+                );
+                manager.setItems(filtered);
+                manager.syncHiddenInputs();
+                return true;
+                """,
+                label,
+            )
+            if removed:
+                submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+                submit.click()
+                wait.until(EC.staleness_of(submit))
         finally:
             driver.quit()

@@ -26,6 +26,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_label: list[str] = Form(default=[]),
     process_list_items_csv: list[str] = Form(default=[]),
     process_list_field_type: list[str] = Form(default=[]),
+    process_list_source_menu_key: list[str] = Form(default=[]),
     process_list_column_key: list[str] = Form(default=[]),
     process_list_column_label: list[str] = Form(default=[]),
     process_list_column_field_key: list[str] = Form(default=[]),
@@ -38,6 +39,8 @@ def edit_sidebar_menu_process_lists_handler(
     return_url: str = Form(""),
 ) -> RedirectResponse:
     clean_menu_key = resolve_menu_key_alias(menu_key)
+    if not isinstance(process_list_source_menu_key, list):
+        process_list_source_menu_key = []
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -92,6 +95,7 @@ def edit_sidebar_menu_process_lists_handler(
             len(process_list_label),
             len(process_list_items_csv),
             len(process_list_field_type),
+            len(process_list_source_menu_key),
         )
 
         payload_lists: list[dict[str, str]] = []
@@ -112,8 +116,17 @@ def edit_sidebar_menu_process_lists_handler(
                 if row_index < len(process_list_field_type)
                 else ""
             )
+            source_menu_key = (
+                process_list_source_menu_key[row_index]
+                if row_index < len(process_list_source_menu_key)
+                else ""
+            )
 
-            if not str(label or "").strip() and not str(items_csv or "").strip():
+            if (
+                not str(label or "").strip()
+                and not str(items_csv or "").strip()
+                and not str(source_menu_key or "").strip()
+            ):
                 continue
 
             # normalize field_type values: only 'manual' or 'automatic' allowed
@@ -129,6 +142,7 @@ def edit_sidebar_menu_process_lists_handler(
                     "label": label,
                     "field_type": ft,
                     "items_csv": items_csv if ft == "manual" else "",
+                    "source_menu_key": source_menu_key if ft == "automatic" else "",
                 }
             )
 
@@ -175,6 +189,7 @@ def edit_sidebar_menu_process_lists_handler(
             raw_columns=payload_columns
             if str(process_list_columns_configured or "").strip() == "1"
             else None,
+            active_entity_id=selected_entity_id,
         )
 
         if not ok:

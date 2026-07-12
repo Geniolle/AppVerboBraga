@@ -27,12 +27,12 @@ def _build_session_factory():
     return sessionmaker(bind=engine, future=True)
 
 
-def _seed_menu(SessionLocal, *, menu_config):
+def _seed_menu(SessionLocal, *, menu_config, entity_id=1, menu_key=MENU_KEY):
     session = SessionLocal()
     row = SidebarMenuSetting(
-        entity_id=1,
-        menu_key=MENU_KEY,
-        menu_label=MENU_KEY,
+        entity_id=entity_id,
+        menu_key=menu_key,
+        menu_label=menu_key,
         menu_config=json.dumps(menu_config),
     )
     session.add(row)
@@ -51,16 +51,27 @@ def _load_config(SessionLocal):
 
 
 def _build_request() -> Request:
-    return Request({"type": "http", "method": "POST", "path": "/users/new", "headers": []})
+    return Request(
+        {"type": "http", "method": "POST", "path": "/users/new", "headers": []}
+    )
 
 
-def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_overrides):
+def _call_handler(
+    SessionLocal,
+    current_user,
+    is_admin,
+    permissions,
+    *,
+    session_entity_id=1,
+    **form_overrides,
+):
     form = dict(
         menu_key=MENU_KEY,
         process_list_key=[],
         process_list_label=[],
         process_list_items_csv=[],
         process_list_field_type=[],
+        process_list_source_menu_key=[],
         process_list_column_key=[],
         process_list_column_label=[],
         process_list_column_field_key=[],
@@ -74,14 +85,22 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
     )
     form.update(form_overrides)
 
-    with patch.object(settings_handlers_module, "SessionLocal", SessionLocal), patch.object(
-        settings_handlers_module, "get_current_user", return_value=current_user
-    ), patch.object(
-        settings_handlers_module, "is_admin_user", return_value=is_admin
-    ), patch.object(
-        settings_handlers_module, "get_session_entity_id", return_value=1
-    ), patch.object(
-        settings_handlers_module, "get_user_entity_permissions", return_value=permissions
+    with (
+        patch.object(settings_handlers_module, "SessionLocal", SessionLocal),
+        patch.object(
+            settings_handlers_module, "get_current_user", return_value=current_user
+        ),
+        patch.object(settings_handlers_module, "is_admin_user", return_value=is_admin),
+        patch.object(
+            settings_handlers_module,
+            "get_session_entity_id",
+            return_value=session_entity_id,
+        ),
+        patch.object(
+            settings_handlers_module,
+            "get_user_entity_permissions",
+            return_value=permissions,
+        ),
     ):
         return settings_handlers_module.edit_sidebar_menu_process_lists_handler(
             request=_build_request(), **form
@@ -91,11 +110,15 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
 def test_edit_process_lists_requires_login():
     SessionLocal = _build_session_factory()
     _seed_menu(SessionLocal, menu_config={"process_lists": []})
-
-    response = _call_handler(SessionLocal, current_user=None, is_admin=False, permissions={})
+    response = _call_handler(
+        SessionLocal, current_user=None, is_admin=False, permissions={}
+    )
 
     assert response.status_code == 302
-    assert response.headers["location"] == "/login?error=Efetue%20login%20para%20continuar."
+    assert (
+        response.headers["location"]
+        == "/login?error=Efetue%20login%20para%20continuar."
+    )
     assert _load_config(SessionLocal)["process_lists"] == []
 
 
@@ -112,7 +135,10 @@ def test_edit_process_lists_blocks_non_admin():
 
     assert response.status_code == 303
     location = response.headers["location"]
-    assert "Apenas%20administradores%20podem%20alterar%20listas%20do%20processo." in location
+    assert (
+        "Apenas%20administradores%20podem%20alterar%20listas%20do%20processo."
+        in location
+    )
     assert "settings_tab=lista" in location
     assert _load_config(SessionLocal)["process_lists"] == []
 
@@ -125,7 +151,10 @@ def test_edit_process_lists_blocks_admin_non_owner():
         SessionLocal,
         current_user={"id": 1, "login_email": "admin@example.com"},
         is_admin=True,
-        permissions={"can_manage_tenant_structure": False, "can_manage_all_entities": False},
+        permissions={
+            "can_manage_tenant_structure": False,
+            "can_manage_all_entities": False,
+        },
     )
 
     assert response.status_code == 303
@@ -135,9 +164,53 @@ def test_edit_process_lists_blocks_admin_non_owner():
     assert _load_config(SessionLocal)["process_lists"] == []
 
 
+def test_edit_process_lists_uses_session_entity_id_not_form_value():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_config={"process_lists": []}, entity_id=1)
+    _seed_menu(SessionLocal, menu_config={"process_lists": []}, entity_id=2)
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        session_entity_id=2,
+        process_list_key=["a"],
+        process_list_label=["Lista A"],
+        process_list_items_csv=["1,2"],
+        process_list_field_type=["manual"],
+    )
+
+    assert response.status_code == 303
+    entity_1_session = SessionLocal()
+    entity_1_row = entity_1_session.execute(
+        select(SidebarMenuSetting).where(
+            SidebarMenuSetting.menu_key == MENU_KEY,
+            SidebarMenuSetting.entity_id == 1,
+        )
+    ).scalar_one()
+    entity_2_row = entity_1_session.execute(
+        select(SidebarMenuSetting).where(
+            SidebarMenuSetting.menu_key == MENU_KEY,
+            SidebarMenuSetting.entity_id == 2,
+        )
+    ).scalar_one()
+    entity_1_config = json.loads(entity_1_row.menu_config)
+    entity_2_config = json.loads(entity_2_row.menu_config)
+    entity_1_session.close()
+
+    assert entity_1_config["process_lists"] == []
+    assert entity_2_config["process_lists"][0]["label"] == "Lista a"
+
+
 def test_edit_process_lists_owner_success_creates_and_edits_lists():
     SessionLocal = _build_session_factory()
     _seed_menu(SessionLocal, menu_config={"process_lists": []})
+    _seed_menu(
+        SessionLocal,
+        menu_config={"process_lists": []},
+        menu_key="menu_origem",
+    )
 
     response = _call_handler(
         SessionLocal,
@@ -148,6 +221,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
         process_list_label=["Lista A", "Lista B"],
         process_list_items_csv=["1,2", ""],
         process_list_field_type=["manual", "automatic"],
+        process_list_source_menu_key=["", "menu_origem"],
     )
 
     assert response.status_code == 303
@@ -162,6 +236,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     assert [item["field_type"] for item in process_lists] == ["manual", "automatic"]
     assert process_lists[0]["items"] == ["1", "2"]
     assert process_lists[1]["items"] == []
+    assert process_lists[1]["source_menu_key"] == "menu_origem"
 
 
 def test_edit_process_lists_removal_via_blank_rows():

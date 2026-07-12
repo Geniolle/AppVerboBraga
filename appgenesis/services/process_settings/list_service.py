@@ -3,6 +3,11 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from appgenesis.models.sidebar_menu_setting import SidebarMenuSetting
+
 from appgenesis.services.process_settings.normalizers import (
     _build_menu_key_from_label,
     _normalize_sentence_case_text,
@@ -340,5 +345,61 @@ def normalize_menu_process_lists_v3(raw_lists: Any) -> list[dict[str, Any]]:
                 "items_csv": ", ".join(items),
             }
         )
+
+    return normalized
+
+
+# ###################################################################################
+# (4) ORIGEM DE MENU PARA LISTAS AUTOMÁTICAS
+# ###################################################################################
+
+
+def get_process_list_source_menus_v1(
+    session: Session,
+    active_entity_id: int | None,
+) -> list[dict[str, str]]:
+    if active_entity_id is None:
+        return []
+
+    rows = session.execute(
+        select(SidebarMenuSetting.menu_key, SidebarMenuSetting.menu_label)
+        .where(
+            SidebarMenuSetting.entity_id == int(active_entity_id),
+            SidebarMenuSetting.is_deleted.is_(False),
+            SidebarMenuSetting.is_active.is_(True),
+        )
+        .order_by(SidebarMenuSetting.menu_label, SidebarMenuSetting.menu_key)
+    ).all()
+
+    return [
+        {
+            "menu_key": str(row.menu_key or "").strip().lower(),
+            "menu_label": str(row.menu_label or row.menu_key or "").strip(),
+        }
+        for row in rows
+        if str(row.menu_key or "").strip()
+    ]
+
+
+def normalize_menu_process_lists_v4(raw_lists: Any) -> list[dict[str, Any]]:
+    normalized = normalize_menu_process_lists_v3(raw_lists)
+    raw_by_key: dict[str, dict[str, Any]] = {}
+
+    for raw_item in raw_lists if isinstance(raw_lists, (list, tuple, set)) else []:
+        if not isinstance(raw_item, dict):
+            continue
+        raw_key = _normalize_process_list_key_v3(raw_item.get("key"))
+        if raw_key:
+            raw_by_key[raw_key] = raw_item
+
+    for item in normalized:
+        raw_item = raw_by_key.get(str(item.get("key") or ""), {})
+        field_type = str(item.get("field_type") or "manual").strip().lower()
+        source_menu_key = str(raw_item.get("source_menu_key") or "").strip().lower()
+        item["source_menu_key"] = source_menu_key if field_type == "automatic" else ""
+
+        if field_type == "automatic":
+            item["items"] = []
+            item["items_csv"] = ""
 
     return normalized

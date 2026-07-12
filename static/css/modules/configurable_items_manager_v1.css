@@ -611,26 +611,32 @@
   gap: 12px;
 }
 
-.process-lists-editor-grid-v1 {
+[data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 {
   display: grid;
-  grid-template-columns: minmax(240px, 0.8fr) minmax(360px, 1.2fr);
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.55fr) minmax(300px, 1.5fr);
   gap: 12px;
   align-items: end;
 }
 
-.process-lists-editor-grid-v1 .field {
+[data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 > .field {
   min-width: 0;
   margin: 0;
 }
 
-.process-lists-editor-grid-v1 .field.full {
+[data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 > .field.full {
   grid-column: 1 / -1;
   margin-top: 4px;
 }
 
-.process-lists-editor-grid-v1 input {
+[data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 input,
+[data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 select {
+  box-sizing: border-box;
   width: 100%;
   min-height: 38px;
+}
+
+[data-process-list-reusable-manager] [data-process-list-reusable-editor-block] > [hidden] {
+  display: none;
 }
 
 .process-lists-created-v1 {
@@ -643,12 +649,14 @@
   word-break: break-word;
 }
 
-@media (max-width: 900px) {
-  .process-lists-editor-grid-v1 {
-    grid-template-columns: 1fr;
+@media (max-width: 1100px) {
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .process-lists-editor-grid-v1 .field.full {
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-items-wrapper],
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-menu-wrapper],
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 > .field.full {
     grid-column: 1 / -1;
   }
 }
@@ -909,14 +917,14 @@
 
   [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block],
   .process-fields-config-editor-grid-v1,
-  .process-lists-editor-grid-v1,
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1,
   .process-subsequent-fields-editor-grid-v1 {
     grid-template-columns: 1fr 1fr;
   }
 
   [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .field.full,
   .process-fields-config-editor-grid-v1 .field.full,
-  .process-lists-editor-grid-v1 .field.full,
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1 .field.full,
   .process-subsequent-fields-editor-grid-v1 .field.full {
     grid-column: 1 / -1;
   }
@@ -926,7 +934,7 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   #settings-menu-edit-card {
     padding-left: 8px;
     padding-right: 8px;
@@ -934,7 +942,7 @@
 
   [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block],
   .process-fields-config-editor-grid-v1,
-  .process-lists-editor-grid-v1,
+  [data-process-list-reusable-manager] [data-process-list-reusable-editor-block].process-lists-editor-grid-v1,
   .process-subsequent-fields-editor-grid-v1 {
     grid-template-columns: 1fr;
   }

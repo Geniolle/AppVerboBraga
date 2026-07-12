@@ -79,7 +79,10 @@
       editorKey: root.querySelector("[data-process-list-editor-key]"),
       editorLabel: root.querySelector("[data-process-list-editor-label]"),
       editorItems: root.querySelector("[data-process-list-editor-items]"),
+      editorItemsWrapper: root.querySelector("[data-process-list-editor-items-wrapper]"),
       editorFieldType: root.querySelector("[data-process-list-editor-field-type]"),
+      editorSourceMenu: root.querySelector("[data-process-list-editor-source-menu]"),
+      editorSourceMenuWrapper: root.querySelector("[data-process-list-editor-menu-wrapper]"),
       submitButton: root.querySelector("[data-process-list-editor-submit]"),
       cancelButton: root.querySelector("[data-process-list-editor-cancel]"),
       table: root.querySelector("[data-process-lists-table]"),
@@ -102,6 +105,9 @@
       elements.editorLabel &&
       elements.editorFieldType &&
       elements.editorItems &&
+      elements.editorItemsWrapper &&
+      elements.editorSourceMenu &&
+      elements.editorSourceMenuWrapper &&
       elements.submitButton &&
       elements.cancelButton &&
       elements.table &&
@@ -128,13 +134,15 @@
         const key = readInput_v1(row, "process_list_key") || normalizeKey_v1(label) || `lista_${index + 1}`;
         const fieldType = (readInput_v1(row, "process_list_field_type") || "").trim().toLowerCase();
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
+        const sourceMenuKey = readInput_v1(row, "process_list_source_menu_key");
 
         return {
           managerId: `list_${index}_${key}`,
           key,
           label,
           field_type: fieldType || "manual",
-          itemsCsv
+          itemsCsv,
+          sourceMenuKey
         };
       })
       .filter((item) => item.label || item.itemsCsv);
@@ -291,12 +299,14 @@
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorItems.value = "";
+    elements.editorSourceMenu.value = "";
+    delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = "manual";
     }
     // ensure items input enabled when cleared
     if (elements.editorFieldType) {
-      applyEditorFieldTypeState_v1(elements);
+      applyEditorFieldTypeState_v2(elements, { resetTemporaryState: true });
     }
   }
 
@@ -315,12 +325,14 @@
     elements.editorKey.value = item.key || "";
     elements.editorLabel.value = item.label || "";
     elements.editorItems.value = item.itemsCsv || "";
+    elements.editorSourceMenu.value = item.sourceMenuKey || "";
+    delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = item.field_type || "manual";
     }
     // apply enable/disable state according to field type
     if (elements.editorFieldType) {
-      applyEditorFieldTypeState_v1(elements);
+      applyEditorFieldTypeState_v2(elements);
     }
     elements.editorLabel.focus();
   }
@@ -331,6 +343,7 @@
     const label = toSafeString_v1(elements.editorLabel ? elements.editorLabel.value : "").trim();
     const itemsCsv = toSafeString_v1(elements.editorItems ? elements.editorItems.value : "").trim();
     const fieldType = toSafeString_v1(elements.editorFieldType ? elements.editorFieldType.value : "").trim().toLowerCase();
+    const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
     const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
     const editingId = toSafeString_v1(state.editingId).trim();
     const key = currentKey || normalizeKey_v1(label);
@@ -340,7 +353,8 @@
       key,
       label,
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
-      itemsCsv
+      itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
+      sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : ""
     };
   }
 
@@ -368,6 +382,17 @@
       };
     }
 
+    if (item.field_type === "manual" && !item.itemsCsv) {
+      return { valid: false, message: "Informe o conteúdo da lista." };
+    }
+
+    if (item.field_type === "automatic" && !item.sourceMenuKey) {
+      return {
+        valid: false,
+        message: "Selecione o menu de origem da lista automática."
+      };
+    }
+
     return { valid: true };
   }
 
@@ -376,6 +401,7 @@
       (manager && manager.state && manager.state.editingId) ||
       toSafeString_v1(elements.editorLabel.value).trim() ||
       toSafeString_v1(elements.editorItems.value).trim()
+      || toSafeString_v1(elements.editorSourceMenu.value).trim()
     );
   }
 
@@ -394,7 +420,8 @@
         ["process_list_key", item.key],
         ["process_list_label", item.label],
         ["process_list_field_type", item.field_type || "manual"],
-        ["process_list_items_csv", item.itemsCsv]
+        ["process_list_items_csv", item.field_type === "automatic" ? "" : item.itemsCsv],
+        ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""]
       ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -409,31 +436,37 @@
   // (4.5) FIELD TYPE UI BEHAVIOR
   //###################################################################################
 
-  function applyEditorFieldTypeState_v1(elements) {
-    if (!elements || !elements.editorFieldType || !elements.editorItems) {
+  function applyEditorFieldTypeState_v2(elements, options) {
+    if (!elements || !elements.editorFieldType || !elements.editorItems ||
+        !elements.editorItemsWrapper || !elements.editorSourceMenu ||
+        !elements.editorSourceMenuWrapper) {
       return;
     }
 
     const val = String(elements.editorFieldType.value || "").trim().toLowerCase();
+    const resetTemporaryState = Boolean(options && options.resetTemporaryState);
 
     if (val === "automatic") {
-      // stash previous manual content in dataset if not already present
       if (elements.editorItems.dataset.previousItems === undefined) {
         elements.editorItems.dataset.previousItems = elements.editorItems.value || "";
       }
       elements.editorItems.value = "";
       elements.editorItems.disabled = true;
-      elements.editorItems.classList.add("is-disabled");
+      elements.editorItemsWrapper.hidden = true;
+      elements.editorSourceMenuWrapper.hidden = false;
+      elements.editorSourceMenu.disabled = false;
     } else {
-      // restore previous content if any
+      elements.editorSourceMenu.value = "";
+      elements.editorSourceMenu.disabled = true;
+      elements.editorSourceMenuWrapper.hidden = true;
+      elements.editorItemsWrapper.hidden = false;
       elements.editorItems.disabled = false;
-      elements.editorItems.classList.remove("is-disabled");
-      if (elements.editorItems.dataset.previousItems !== undefined) {
+      if (!resetTemporaryState && elements.editorItems.dataset.previousItems !== undefined) {
         if (!elements.editorItems.value) {
           elements.editorItems.value = elements.editorItems.dataset.previousItems || "";
         }
-        delete elements.editorItems.dataset.previousItems;
       }
+      delete elements.editorItems.dataset.previousItems;
     }
   }
 
@@ -559,15 +592,6 @@
     }
 
     Object.assign(manager.elements, elements);
-    // bind change behavior for field type to enable/disable items input
-    if (elements.editorFieldType) {
-      elements.editorFieldType.addEventListener("change", () => {
-        applyEditorFieldTypeState_v1(elements);
-      });
-      // ensure initial state matches current value
-      applyEditorFieldTypeState_v1(elements);
-    }
-
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
     form.addEventListener("appgenesis:cancelled", (event) => {
@@ -652,16 +676,26 @@
           label: "Tipo de campo",
           render: (item) => {
             const ft = String(item.field_type || "").trim().toLowerCase();
-            if (ft === "automatic") {
-              return (item.itemsCsv && item.itemsCsv.trim()) ? "Automático" : "Preenchimento automático";
-            }
-            return "Manual";
+            return ft === "automatic" ? "Automático" : "Manual";
           }
         },
         {
           key: "itemsCsv",
           label: "Conteúdo da lista",
           render: (item) => item.itemsCsv || "-"
+        },
+        {
+          key: "sourceMenuKey",
+          label: "Menu",
+          render: (item) => {
+            if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
+              return "-";
+            }
+            const option = Array.from(elements.editorSourceMenu.options).find(
+              (entry) => entry.value === item.sourceMenuKey
+            );
+            return option ? option.textContent : "Menu indisponível";
+          }
         }
       ],
       getItemId: (item, index) => item.managerId || item.__managerId || item.key || `list_${index + 1}`,
@@ -678,6 +712,11 @@
     }
 
     Object.assign(manager.elements, elements);
+
+    elements.editorFieldType.addEventListener("change", () => {
+      applyEditorFieldTypeState_v2(elements);
+    });
+    applyEditorFieldTypeState_v2(elements, { resetTemporaryState: true });
 
     bindCancel_v1(form, elements, manager);
     form.processListsManagerV1 = manager;

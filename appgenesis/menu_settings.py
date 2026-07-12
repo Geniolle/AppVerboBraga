@@ -133,9 +133,11 @@ from appgenesis.services.process_settings.list_service import (
     _normalize_process_list_key_v3,
     get_menu_process_lists_v1,
     get_menu_process_lists_v2,
+    get_process_list_source_menus_v1,
     normalize_menu_process_lists_v1,
     normalize_menu_process_lists_v2,
     normalize_menu_process_lists_v3,
+    normalize_menu_process_lists_v4,
 )
 from appgenesis.services.process_settings.field_service import (
     get_menu_process_default_visible_fields,
@@ -836,17 +838,71 @@ def update_sidebar_menu_process_lists(
     menu_key: str,
     raw_lists: Any,
     raw_columns: Any = None,
+    active_entity_id: int | None = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
 
     if not clean_menu_key:
         return False, "Menu inválido."
 
-    if not _menu_exists(session, clean_menu_key):
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+
+    if resolved_entity_id is None:
+        return False, "Entidade ativa inválida."
+
+    target_row = (
+        session.execute(
+            text(
+                """
+                SELECT menu_config
+                FROM sidebar_menu_settings
+                WHERE entity_id = :entity_id
+                  AND lower(trim(menu_key)) = :menu_key
+                  AND COALESCE(is_deleted, false) = false
+                LIMIT 1
+                """
+            ),
+            {
+                "entity_id": int(resolved_entity_id),
+                "menu_key": clean_menu_key,
+            },
+        )
+        .mappings()
+        .one_or_none()
+    )
+
+    if target_row is None:
         return False, "Menu não encontrado."
 
-    menu_config = _load_menu_config(session, clean_menu_key)
-    normalized_lists = normalize_menu_process_lists_v3(raw_lists)
+    menu_config = _parse_menu_config(target_row.get("menu_config"))
+    existing_lists = normalize_menu_process_lists_v4(menu_config.get("process_lists"))
+    legacy_automatic_keys = {
+        str(item.get("key") or "")
+        for item in existing_lists
+        if item.get("field_type") == "automatic" and not item.get("source_menu_key")
+    }
+    available_source_menu_keys = {
+        item["menu_key"]
+        for item in get_process_list_source_menus_v1(session, int(resolved_entity_id))
+    }
+    normalized_lists = normalize_menu_process_lists_v4(raw_lists)
+
+    for process_list in normalized_lists:
+        if process_list.get("field_type") != "automatic":
+            continue
+
+        source_menu_key = str(process_list.get("source_menu_key") or "").strip()
+        process_list_key = str(process_list.get("key") or "").strip()
+
+        if not source_menu_key and process_list_key in legacy_automatic_keys:
+            continue
+        if not source_menu_key:
+            return False, "Selecione o menu de origem da lista automática."
+        if source_menu_key not in available_source_menu_keys:
+            return False, "O menu de origem selecionado não está disponível."
+
     menu_config["process_lists"] = normalized_lists
 
     if raw_columns is not None:
@@ -906,10 +962,13 @@ def update_sidebar_menu_process_lists(
             UPDATE sidebar_menu_settings
             SET menu_config = :menu_config
             WHERE lower(trim(menu_key)) = :menu_key
+              AND entity_id = :entity_id
+              AND COALESCE(is_deleted, false) = false
             """
         ),
         {
             "menu_key": clean_menu_key,
+            "entity_id": int(resolved_entity_id),
             "menu_config": json.dumps(menu_config, ensure_ascii=False),
         },
     )
@@ -1350,7 +1409,7 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
     for item in settings:
         clean_key = _normalize_menu_key(item.get("key"))
         menu_config = config_by_key.get(clean_key, {})
-        process_lists = normalize_menu_process_lists_v3(
+        process_lists = normalize_menu_process_lists_v4(
             menu_config.get("process_lists")
         )
         process_subsequent_fields = normalize_menu_process_subsequent_fields(

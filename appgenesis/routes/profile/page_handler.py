@@ -21,6 +21,9 @@ from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_entity_context_v1,
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
+from appgenesis.services.process_settings.list_service import (
+    get_process_list_source_menus_v1,
+)
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_END
 from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import (
@@ -763,6 +766,11 @@ def new_user_page(
                 settings_edit_data = dict(row)
                 break
 
+    process_list_source_menus_v1 = get_process_list_source_menus_v1(
+        session,
+        selected_entity_id,
+    )
+
     initial_target_query_edit_params_v1 = {
         "sidebar_section_edit_key": sidebar_section_edit_key,
         "auth_profile_edit_key": auth_profile_edit_key,
@@ -1106,6 +1114,7 @@ def new_user_page(
         "settings_success": settings_success or "",
         "settings_error": settings_error or "",
         "settings_edit_data": settings_edit_data,
+        "process_list_source_menus": process_list_source_menus_v1,
         "selected_entity_number": str(selected_entity_number) if selected_entity_number is not None else "",
         "settings_edit_key": clean_settings_edit_key,
         "settings_action": clean_settings_action,
