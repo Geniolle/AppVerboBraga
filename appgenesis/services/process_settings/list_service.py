@@ -396,10 +396,58 @@ def normalize_menu_process_lists_v4(raw_lists: Any) -> list[dict[str, Any]]:
         raw_item = raw_by_key.get(str(item.get("key") or ""), {})
         field_type = str(item.get("field_type") or "manual").strip().lower()
         source_menu_key = str(raw_item.get("source_menu_key") or "").strip().lower()
+        source_subprocess_key = str(raw_item.get("source_subprocess_key") or "").strip().lower()
         item["source_menu_key"] = source_menu_key if field_type == "automatic" else ""
+        item["source_subprocess_key"] = (
+            source_subprocess_key if field_type == "automatic" else ""
+        )
 
         if field_type == "automatic":
             item["items"] = []
             item["items_csv"] = ""
 
     return normalized
+
+
+def get_process_list_source_subprocess_map_v1(
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+    source_menu_keys: list[dict[str, str]] | list[str] | None,
+    *,
+    visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+) -> dict[str, list[dict[str, str]]]:
+    settings = [
+        dict(item)
+        for item in (sidebar_menu_settings or [])
+        if isinstance(item, dict)
+    ]
+    if not settings:
+        return {}
+
+    from appgenesis.services.process_tabs import resolve_process_tab_options_v1
+
+    visible_keys = {
+        str(raw_key or "").strip().lower()
+        for raw_key in (visible_sidebar_menu_keys or [])
+        if str(raw_key or "").strip()
+    }
+    source_menu_key_values: list[str] = []
+
+    for raw_menu in source_menu_keys or []:
+        if isinstance(raw_menu, dict):
+            clean_menu_key = str(raw_menu.get("menu_key") or "").strip().lower()
+        else:
+            clean_menu_key = str(raw_menu or "").strip().lower()
+        if not clean_menu_key or clean_menu_key in source_menu_key_values:
+            continue
+        if visible_keys and clean_menu_key not in visible_keys:
+            continue
+        source_menu_key_values.append(clean_menu_key)
+
+    return {
+        menu_key: resolve_process_tab_options_v1(
+            menu_key,
+            settings,
+            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+        )
+        for menu_key in source_menu_key_values
+    }

@@ -27,6 +27,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_items_csv: list[str] = Form(default=[]),
     process_list_field_type: list[str] = Form(default=[]),
     process_list_source_menu_key: list[str] = Form(default=[]),
+    process_list_source_subprocess_key: list[str] = Form(default=[]),
     process_list_column_key: list[str] = Form(default=[]),
     process_list_column_label: list[str] = Form(default=[]),
     process_list_column_field_key: list[str] = Form(default=[]),
@@ -41,6 +42,8 @@ def edit_sidebar_menu_process_lists_handler(
     clean_menu_key = resolve_menu_key_alias(menu_key)
     if not isinstance(process_list_source_menu_key, list):
         process_list_source_menu_key = []
+    if not isinstance(process_list_source_subprocess_key, list):
+        process_list_source_subprocess_key = []
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -96,6 +99,7 @@ def edit_sidebar_menu_process_lists_handler(
             len(process_list_items_csv),
             len(process_list_field_type),
             len(process_list_source_menu_key),
+            len(process_list_source_subprocess_key),
         )
 
         payload_lists: list[dict[str, str]] = []
@@ -121,6 +125,11 @@ def edit_sidebar_menu_process_lists_handler(
                 if row_index < len(process_list_source_menu_key)
                 else ""
             )
+            source_subprocess_key = (
+                process_list_source_subprocess_key[row_index]
+                if row_index < len(process_list_source_subprocess_key)
+                else ""
+            )
 
             if (
                 not str(label or "").strip()
@@ -143,6 +152,7 @@ def edit_sidebar_menu_process_lists_handler(
                     "field_type": ft,
                     "items_csv": items_csv if ft == "manual" else "",
                     "source_menu_key": source_menu_key if ft == "automatic" else "",
+                    "source_subprocess_key": source_subprocess_key if ft == "automatic" else "",
                 }
             )
 

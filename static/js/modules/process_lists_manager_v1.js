@@ -83,6 +83,9 @@
       editorFieldType: root.querySelector("[data-process-list-editor-field-type]"),
       editorSourceMenu: root.querySelector("[data-process-list-editor-source-menu]"),
       editorSourceMenuWrapper: root.querySelector("[data-process-list-editor-menu-wrapper]"),
+      editorSourceSubprocess: root.querySelector("[data-process-list-editor-source-subprocess]"),
+      editorSourceSubprocessWrapper: root.querySelector("[data-process-list-editor-subprocess-wrapper]"),
+      sourceSubprocessMapScript: root.querySelector("[data-process-list-source-subprocess-map]"),
       submitButton: root.querySelector("[data-process-list-editor-submit]"),
       cancelButton: root.querySelector("[data-process-list-editor-cancel]"),
       table: root.querySelector("[data-process-lists-table]"),
@@ -108,6 +111,8 @@
       elements.editorItemsWrapper &&
       elements.editorSourceMenu &&
       elements.editorSourceMenuWrapper &&
+      elements.editorSourceSubprocess &&
+      elements.editorSourceSubprocessWrapper &&
       elements.submitButton &&
       elements.cancelButton &&
       elements.table &&
@@ -135,6 +140,7 @@
         const fieldType = (readInput_v1(row, "process_list_field_type") || "").trim().toLowerCase();
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
         const sourceMenuKey = readInput_v1(row, "process_list_source_menu_key");
+        const sourceSubprocessKey = readInput_v1(row, "process_list_source_subprocess_key");
 
         return {
           managerId: `list_${index}_${key}`,
@@ -142,10 +148,72 @@
           label,
           field_type: fieldType || "manual",
           itemsCsv,
-          sourceMenuKey
+          sourceMenuKey,
+          sourceSubprocessKey
         };
       })
       .filter((item) => item.label || item.itemsCsv);
+  }
+
+  function getSourceSubprocessMap_v1(elements) {
+    if (!elements || !elements.sourceSubprocessMapScript) {
+      return {};
+    }
+
+    const rawText = toSafeString_v1(elements.sourceSubprocessMapScript.textContent).trim();
+
+    if (!rawText) {
+      return {};
+    }
+
+    try {
+      const parsed = JSON.parse(rawText);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch (error) {
+      if (window.console && typeof window.console.warn === "function") {
+        window.console.warn("[ProcessListsManagerV1] mapa de subprocessos invalido", error);
+      }
+      return {};
+    }
+  }
+
+  function normalizeSourceSubprocessOptions_v1(rawOptions) {
+    if (!Array.isArray(rawOptions)) {
+      return [];
+    }
+
+    const options = [];
+    const seen = new Set();
+
+    rawOptions.forEach((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawOption.value || rawOption.key).trim();
+      const label = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key).trim();
+
+      if (!value || !label) {
+        return;
+      }
+
+      const lookup = value.toLowerCase();
+      if (seen.has(lookup)) {
+        return;
+      }
+
+      seen.add(lookup);
+      options.push({ value, label });
+    });
+
+    return options;
+  }
+
+  function getSourceSubprocessOptions_v1(sourceSubprocessMap, menuKey) {
+    const cleanMenuKey = normalizeKey_v1(menuKey);
+    return normalizeSourceSubprocessOptions_v1(
+      sourceSubprocessMap && cleanMenuKey ? sourceSubprocessMap[cleanMenuKey] : []
+    );
   }
 
   //###################################################################################
@@ -287,6 +355,7 @@
   function clearEditor_v1(context) {
     const elements = context && context.elements ? context.elements : context;
     const manager = context && context.manager ? context.manager : null;
+    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
 
     if (manager && manager.root) {
       manager.root.classList.remove("configurable-items-editing-v1");
@@ -300,19 +369,21 @@
     elements.editorLabel.value = "";
     elements.editorItems.value = "";
     elements.editorSourceMenu.value = "";
+    elements.editorSourceSubprocess.value = "";
     delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = "manual";
     }
-    // ensure items input enabled when cleared
-    if (elements.editorFieldType) {
-      applyEditorFieldTypeState_v2(elements, { resetTemporaryState: true });
-    }
+    applyEditorFieldTypeState_v3(
+      { elements, manager, sourceSubprocessMap },
+      { resetTemporaryState: true, clearSourceSelection: true }
+    );
   }
 
   function loadEditorItem_v1(item, context) {
     const elements = context && context.elements ? context.elements : null;
     const manager = context && context.manager ? context.manager : null;
+    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
 
     if (!item || !elements) {
       return;
@@ -326,14 +397,18 @@
     elements.editorLabel.value = item.label || "";
     elements.editorItems.value = item.itemsCsv || "";
     elements.editorSourceMenu.value = item.sourceMenuKey || "";
+    elements.editorSourceSubprocess.value = item.sourceSubprocessKey || "";
     delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = item.field_type || "manual";
     }
-    // apply enable/disable state according to field type
-    if (elements.editorFieldType) {
-      applyEditorFieldTypeState_v2(elements);
-    }
+    applyEditorFieldTypeState_v3(
+      { elements, manager, sourceSubprocessMap },
+      {
+        selectedSubprocessKey: item.sourceSubprocessKey || "",
+        preserveUnavailableSelection: true
+      }
+    );
     elements.editorLabel.focus();
   }
 
@@ -344,6 +419,7 @@
     const itemsCsv = toSafeString_v1(elements.editorItems ? elements.editorItems.value : "").trim();
     const fieldType = toSafeString_v1(elements.editorFieldType ? elements.editorFieldType.value : "").trim().toLowerCase();
     const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
+    const sourceSubprocessKey = toSafeString_v1(elements.editorSourceSubprocess ? elements.editorSourceSubprocess.value : "").trim().toLowerCase();
     const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
     const editingId = toSafeString_v1(state.editingId).trim();
     const key = currentKey || normalizeKey_v1(label);
@@ -354,7 +430,8 @@
       label,
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
       itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
-      sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : ""
+      sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : "",
+      sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : ""
     };
   }
 
@@ -386,7 +463,18 @@
       return { valid: false, message: "Informe o conteúdo da lista." };
     }
 
-    if (item.field_type === "automatic" && !item.sourceMenuKey) {
+    const currentItem = items.find((existing) => {
+      const existingId = toSafeString_v1(existing.__managerId || existing.managerId).trim();
+      return existingId === editingId;
+    }) || null;
+    const isLegacyAutomaticWithoutSource = Boolean(
+      currentItem &&
+      String(currentItem.field_type || "").trim().toLowerCase() === "automatic" &&
+      !toSafeString_v1(currentItem.sourceMenuKey).trim() &&
+      !toSafeString_v1(currentItem.sourceSubprocessKey).trim()
+    );
+
+    if (item.field_type === "automatic" && !item.sourceMenuKey && !isLegacyAutomaticWithoutSource) {
       return {
         valid: false,
         message: "Selecione o menu de origem da lista automática."
@@ -400,8 +488,9 @@
     return Boolean(
       (manager && manager.state && manager.state.editingId) ||
       toSafeString_v1(elements.editorLabel.value).trim() ||
-      toSafeString_v1(elements.editorItems.value).trim()
-      || toSafeString_v1(elements.editorSourceMenu.value).trim()
+      toSafeString_v1(elements.editorItems.value).trim() ||
+      toSafeString_v1(elements.editorSourceMenu.value).trim() ||
+      toSafeString_v1(elements.editorSourceSubprocess.value).trim()
     );
   }
 
@@ -421,7 +510,8 @@
         ["process_list_label", item.label],
         ["process_list_field_type", item.field_type || "manual"],
         ["process_list_items_csv", item.field_type === "automatic" ? "" : item.itemsCsv],
-        ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""]
+        ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""],
+        ["process_list_source_subprocess_key", item.field_type === "automatic" ? item.sourceSubprocessKey : ""]
       ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -436,15 +526,70 @@
   // (4.5) FIELD TYPE UI BEHAVIOR
   //###################################################################################
 
-  function applyEditorFieldTypeState_v2(elements, options) {
+  function populateSourceSubprocessOptions_v1(context, options) {
+    const elements = context && context.elements ? context.elements : null;
+
+    if (!elements || !elements.editorSourceSubprocess) {
+      return;
+    }
+
+    const availableOptions = Array.isArray(options && options.options) ? options.options : [];
+    const selectedValue = toSafeString_v1(options && options.selectedValue ? options.selectedValue : "").trim();
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection);
+    const keepVisible = Boolean(options && options.keepVisible);
+    const forceVisible = Boolean(options && options.forceVisible);
+
+    elements.editorSourceSubprocess.innerHTML = "";
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Todos os subprocessos";
+    elements.editorSourceSubprocess.appendChild(defaultOption);
+
+    let hasSelectedOption = false;
+
+    availableOptions.forEach((option) => {
+      const optionEl = document.createElement("option");
+      optionEl.value = option.value;
+      optionEl.textContent = option.label;
+      if (option.value === selectedValue) {
+        optionEl.selected = true;
+        hasSelectedOption = true;
+      }
+      elements.editorSourceSubprocess.appendChild(optionEl);
+    });
+
+    if (selectedValue && !hasSelectedOption && preserveUnavailableSelection) {
+      const unavailableOption = document.createElement("option");
+      unavailableOption.value = selectedValue;
+      unavailableOption.textContent = "Subprocesso indisponível";
+      unavailableOption.selected = true;
+      elements.editorSourceSubprocess.appendChild(unavailableOption);
+      hasSelectedOption = true;
+    }
+
+    if (!hasSelectedOption) {
+      elements.editorSourceSubprocess.value = "";
+    }
+
+    elements.editorSourceSubprocess.disabled = !(keepVisible || forceVisible);
+  }
+
+  function applyEditorFieldTypeState_v3(context, options) {
+    const elements = context && context.elements ? context.elements : context;
+    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
+
     if (!elements || !elements.editorFieldType || !elements.editorItems ||
         !elements.editorItemsWrapper || !elements.editorSourceMenu ||
-        !elements.editorSourceMenuWrapper) {
+        !elements.editorSourceMenuWrapper || !elements.editorSourceSubprocess ||
+        !elements.editorSourceSubprocessWrapper || !elements.root) {
       return;
     }
 
     const val = String(elements.editorFieldType.value || "").trim().toLowerCase();
     const resetTemporaryState = Boolean(options && options.resetTemporaryState);
+    const clearSourceSelection = Boolean(options && options.clearSourceSelection);
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection);
 
     if (val === "automatic") {
       if (elements.editorItems.dataset.previousItems === undefined) {
@@ -455,16 +600,53 @@
       elements.editorItemsWrapper.hidden = true;
       elements.editorSourceMenuWrapper.hidden = false;
       elements.editorSourceMenu.disabled = false;
+      elements.root.dataset.hasSourceSubprocess = "0";
+
+      const menuKey = toSafeString_v1(elements.editorSourceMenu.value).trim().toLowerCase();
+      if (!menuKey) {
+        elements.editorSourceSubprocess.value = "";
+        elements.editorSourceSubprocessWrapper.hidden = true;
+        elements.editorSourceSubprocess.disabled = true;
+        return;
+      }
+
+      const sourceSubprocessOptions = getSourceSubprocessOptions_v1(sourceSubprocessMap, menuKey);
+      const selectedSubprocessKey = clearSourceSelection
+        ? ""
+        : toSafeString_v1(
+            options && options.selectedSubprocessKey
+              ? options.selectedSubprocessKey
+              : elements.editorSourceSubprocess.value
+          ).trim().toLowerCase();
+      populateSourceSubprocessOptions_v1(
+        { elements },
+        {
+          options: sourceSubprocessOptions,
+          selectedValue: selectedSubprocessKey,
+          preserveUnavailableSelection,
+          keepVisible: true
+        }
+      );
+      elements.editorSourceSubprocessWrapper.hidden = false;
+      elements.root.dataset.hasSourceSubprocess = "1";
     } else {
+      elements.editorItemsWrapper.hidden = false;
+      elements.editorItems.disabled = false;
       elements.editorSourceMenu.value = "";
       elements.editorSourceMenu.disabled = true;
       elements.editorSourceMenuWrapper.hidden = true;
-      elements.editorItemsWrapper.hidden = false;
-      elements.editorItems.disabled = false;
+      elements.editorSourceSubprocess.value = "";
+      elements.editorSourceSubprocess.disabled = true;
+      elements.editorSourceSubprocessWrapper.hidden = true;
+      elements.root.dataset.hasSourceSubprocess = "0";
       if (!resetTemporaryState && elements.editorItems.dataset.previousItems !== undefined) {
         if (!elements.editorItems.value) {
           elements.editorItems.value = elements.editorItems.dataset.previousItems || "";
         }
+      }
+      if (clearSourceSelection) {
+        elements.editorSourceMenu.value = "";
+        elements.editorSourceSubprocess.value = "";
       }
       delete elements.editorItems.dataset.previousItems;
     }
@@ -647,6 +829,8 @@
     }
 
     form.dataset.processListsManagerBoundV1 = "1";
+    const sourceSubprocessMap = getSourceSubprocessMap_v1(elements);
+    elements.root.dataset.hasSourceSubprocess = "0";
 
     const manager = core.createConfigurableItemsManager_v1({
       root: elements.root,
@@ -691,17 +875,43 @@
             if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
               return "-";
             }
+            if (!String(item.sourceMenuKey || "").trim()) {
+              return "-";
+            }
             const option = Array.from(elements.editorSourceMenu.options).find(
               (entry) => entry.value === item.sourceMenuKey
             );
             return option ? option.textContent : "Menu indisponível";
           }
+        },
+        {
+          key: "sourceSubprocessKey",
+          label: "Subprocesso",
+          render: (item) => {
+            if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
+              return "-";
+            }
+            if (!String(item.sourceMenuKey || "").trim()) {
+              return "-";
+            }
+            if (!String(item.sourceSubprocessKey || "").trim()) {
+              return "Todos os subprocessos";
+            }
+            const sourceOptions = getSourceSubprocessOptions_v1(
+              sourceSubprocessMap,
+              item.sourceMenuKey
+            );
+            const sourceOption = sourceOptions.find(
+              (entry) => entry.value === item.sourceSubprocessKey
+            );
+            return sourceOption ? sourceOption.label : "Subprocesso indisponível";
+          }
         }
       ],
       getItemId: (item, index) => item.managerId || item.__managerId || item.key || `list_${index + 1}`,
-      readEditorItem: readEditorItem_v1,
-      loadEditorItem: loadEditorItem_v1,
-      clearEditor: clearEditor_v1,
+      readEditorItem: (context) => readEditorItem_v1({ ...context, sourceSubprocessMap }),
+      loadEditorItem: (item, context) => loadEditorItem_v1(item, { ...context, sourceSubprocessMap }),
+      clearEditor: (context) => clearEditor_v1({ ...context, sourceSubprocessMap }),
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1
     });
@@ -714,9 +924,21 @@
     Object.assign(manager.elements, elements);
 
     elements.editorFieldType.addEventListener("change", () => {
-      applyEditorFieldTypeState_v2(elements);
+      applyEditorFieldTypeState_v3(
+        { elements, manager, sourceSubprocessMap },
+        { clearSourceSelection: true }
+      );
     });
-    applyEditorFieldTypeState_v2(elements, { resetTemporaryState: true });
+    elements.editorSourceMenu.addEventListener("change", () => {
+      applyEditorFieldTypeState_v3(
+        { elements, manager, sourceSubprocessMap },
+        { clearSourceSelection: true }
+      );
+    });
+    applyEditorFieldTypeState_v3(
+      { elements, manager, sourceSubprocessMap },
+      { resetTemporaryState: true, clearSourceSelection: true }
+    );
 
     bindCancel_v1(form, elements, manager);
     form.processListsManagerV1 = manager;

@@ -20,7 +20,12 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     assert 'itemName: "lista"' in script_text
     assert 'itemNamePlural: "listas"' in script_text
     assert 'submitNative_v1(form);' in script_text
+    assert 'data-process-list-editor-source-subprocess' in script_text
+    assert 'data-process-list-source-subprocess-map' in script_text
+    assert 'Subprocesso indisponível' in script_text
 
     assert 'aria-label="Pesquisar listas criadas"' in template_text
     assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text
     assert 'data-process-lists-total-label' in template_text
+    assert 'process_list_source_subprocess_key' in template_text
+    assert '<th>Subprocesso</th>' in template_text

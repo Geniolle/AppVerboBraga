@@ -100,6 +100,7 @@ def test_process_lists_css_is_scoped_to_the_reusable_editor():
         "grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.55fr) minmax(300px, 1.5fr);"
         in css_text
     )
+    assert '[data-process-list-reusable-manager][data-has-source-subprocess="1"]' in css_text
     assert "grid-column: 1 / -1;" in css_text
     assert "@media (max-width: 1100px)" in css_text
     assert "@media (max-width: 768px)" in css_text
@@ -110,12 +111,14 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
 
     assert (
         "/static/css/modules/configurable_items_manager_v1.css"
-        "?v=20260712-process-lists-source-menu-v1"
+        "?v=20260712-process-lists-source-subprocess-v1"
         in template_text
     )
     assert "data-process-list-reusable-manager" in template_text
     assert "data-process-list-reusable-editor-block" in template_text
     assert "process-lists-editor-grid-v1" in template_text
+    assert "data-process-list-editor-source-subprocess" in template_text
+    assert "data-process-list-source-subprocess-map" in template_text
 
 
 def test_update_process_lists_isolated_between_menu_keys():
@@ -240,6 +243,108 @@ def test_update_process_lists_automatic_requires_source_menu():
     assert config["process_lists"] == []
 
 
+def test_update_process_lists_rejects_inactive_target_menu():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    with SessionLocal() as session:
+        session.execute(
+            SidebarMenuSetting.__table__.update()
+            .where(SidebarMenuSetting.menu_key == "processo_teste_a")
+            .values(is_active=False)
+        )
+        session.commit()
+        ok, error = update_sidebar_menu_process_lists(
+            session,
+            "processo_teste_a",
+            raw_lists=[{"key": "auto", "label": "Auto", "field_type": "manual", "items": ["1"]}],
+            raw_columns=None,
+            active_entity_id=1,
+        )
+
+    assert ok is False
+    assert error == "Menu não encontrado."
+
+
+def test_update_process_lists_automatic_rejects_invalid_source_subprocess():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="perfil_de_autorizacao",
+        entity_id=1,
+        menu_config={},
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    session = SessionLocal()
+    ok, error = update_sidebar_menu_process_lists(
+        session,
+        "processo",
+        raw_lists=[{
+            "key": "auto",
+            "label": "Auto",
+            "field_type": "automatic",
+            "source_menu_key": "perfil_de_autorizacao",
+            "source_subprocess_key": "inexistente",
+        }],
+        raw_columns=None,
+        active_entity_id=1,
+    )
+    session.close()
+
+    assert ok is False
+    assert error == "O subprocesso selecionado não pertence ao menu de origem."
+
+
+def test_update_process_lists_automatic_stores_source_subprocess():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="perfil_de_autorizacao",
+        entity_id=1,
+        menu_config={},
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    session = SessionLocal()
+    ok, error = update_sidebar_menu_process_lists(
+        session,
+        "processo",
+        raw_lists=[{
+            "key": "auto",
+            "label": "Auto",
+            "field_type": "automatic",
+            "source_menu_key": "perfil_de_autorizacao",
+            "source_subprocess_key": "perfis",
+        }],
+        raw_columns=None,
+        active_entity_id=1,
+    )
+    session.close()
+
+    config, _ = _load_config(SessionLocal, "processo")
+
+    assert ok is True
+    assert error == ""
+    assert config["process_lists"][0]["source_menu_key"] == "perfil_de_autorizacao"
+    assert config["process_lists"][0]["source_subprocess_key"] == "perfis"
+
+
 def test_update_process_lists_preserves_existing_entity_and_state_flags():
     SessionLocal = _build_session_factory()
     _seed_menu(
@@ -256,7 +361,6 @@ def test_update_process_lists_preserves_existing_entity_and_state_flags():
             SidebarMenuSetting.entity_id == 4,
         )
     ).scalar_one()
-    row.is_active = False
     row.is_deleted = False
     session.commit()
 
@@ -278,7 +382,7 @@ def test_update_process_lists_preserves_existing_entity_and_state_flags():
     session.close()
 
     assert updated_row.entity_id == 4
-    assert updated_row.is_active is False
+    assert updated_row.is_active is True
     assert updated_row.is_deleted is False
     assert updated_config["other_section"] == {"keep": True}
     assert updated_config["process_lists"][0]["key"] == "list_estado"
@@ -363,4 +467,5 @@ def test_legacy_automatic_without_source_is_preserved_on_general_submit():
     config, _ = _load_config(SessionLocal, "processo", entity_id=1)
     assert (ok, error) == (True, "")
     assert config["process_lists"][0]["source_menu_key"] == ""
+    assert config["process_lists"][0]["source_subprocess_key"] == ""
     assert config["other_section"] == {"keep": True}

@@ -5,6 +5,7 @@ from appgenesis.process_settings import (
     is_admin_menu_process_v1,
     resolve_admin_process_settings_tab_v1,
 )
+from appgenesis.services.process_tabs import resolve_process_tab_options_v1
 
 
 ####################################################################################
@@ -79,3 +80,20 @@ def test_build_admin_process_settings_context_v1():
     assert context["settings_tabs_enabled"] is True
     assert context["settings_tab"] == "campos_adicionais"
     assert len(context["settings_tabs"]) == 6
+
+
+####################################################################################
+# (6) TESTAR RESOLUCAO DE SUBPROCESSOS POR MENU
+####################################################################################
+
+
+def test_resolve_process_tab_options_v1_for_authorization_profile():
+    options = resolve_process_tab_options_v1(
+        "perfil_de_autorizacao",
+        sidebar_menu_settings=[],
+    )
+
+    assert [option["value"] for option in options] == [
+        "perfis",
+        "objeto_de_autorizacao",
+    ]

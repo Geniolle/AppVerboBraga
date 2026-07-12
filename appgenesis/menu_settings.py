@@ -860,6 +860,7 @@ def update_sidebar_menu_process_lists(
                 FROM sidebar_menu_settings
                 WHERE entity_id = :entity_id
                   AND lower(trim(menu_key)) = :menu_key
+                  AND COALESCE(is_active, false) = true
                   AND COALESCE(is_deleted, false) = false
                 LIMIT 1
                 """
@@ -887,6 +888,9 @@ def update_sidebar_menu_process_lists(
         item["menu_key"]
         for item in get_process_list_source_menus_v1(session, int(resolved_entity_id))
     }
+    sidebar_menu_settings = get_sidebar_menu_settings(session)
+    source_subprocess_options_cache: dict[str, list[dict[str, str]]] = {}
+
     normalized_lists = normalize_menu_process_lists_v4(raw_lists)
 
     for process_list in normalized_lists:
@@ -894,14 +898,36 @@ def update_sidebar_menu_process_lists(
             continue
 
         source_menu_key = str(process_list.get("source_menu_key") or "").strip()
+        source_subprocess_key = str(process_list.get("source_subprocess_key") or "").strip()
         process_list_key = str(process_list.get("key") or "").strip()
 
-        if not source_menu_key and process_list_key in legacy_automatic_keys:
+        if (
+            not source_menu_key
+            and not source_subprocess_key
+            and process_list_key in legacy_automatic_keys
+        ):
             continue
         if not source_menu_key:
             return False, "Selecione o menu de origem da lista automática."
         if source_menu_key not in available_source_menu_keys:
             return False, "O menu de origem selecionado não está disponível."
+
+        if source_subprocess_key:
+            if source_menu_key not in source_subprocess_options_cache:
+                from appgenesis.services.process_tabs import resolve_process_tab_options_v1
+
+                source_subprocess_options_cache[source_menu_key] = resolve_process_tab_options_v1(
+                    source_menu_key,
+                    sidebar_menu_settings,
+                )
+
+            allowed_source_subprocess_keys = {
+                str(option.get("value") or "").strip().lower()
+                for option in source_subprocess_options_cache[source_menu_key]
+                if isinstance(option, dict) and str(option.get("value") or "").strip()
+            }
+            if source_subprocess_key.lower() not in allowed_source_subprocess_keys:
+                return False, "O subprocesso selecionado não pertence ao menu de origem."
 
     menu_config["process_lists"] = normalized_lists
 

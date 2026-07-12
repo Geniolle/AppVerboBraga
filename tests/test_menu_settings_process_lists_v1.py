@@ -1,4 +1,4 @@
-from appgenesis.menu_settings import normalize_menu_process_lists_v3
+from appgenesis.menu_settings import normalize_menu_process_lists_v3, normalize_menu_process_lists_v4
 
 
 def test_manual_default_and_items_dedup():
@@ -42,3 +42,20 @@ def test_existing_without_field_type_assumed_manual():
     normalized = normalize_menu_process_lists_v3(raw)
     assert normalized[0]["field_type"] == "manual"
     assert normalized[0]["items"] == ["One"]
+
+
+def test_automatic_source_subprocess_is_preserved_in_v4():
+    raw = [
+        {
+            "key": "auto",
+            "label": "Auto",
+            "field_type": "automatic",
+            "source_menu_key": "perfil_de_autorizacao",
+            "source_subprocess_key": "perfis",
+        }
+    ]
+
+    normalized = normalize_menu_process_lists_v4(raw)
+    assert normalized[0]["source_menu_key"] == "perfil_de_autorizacao"
+    assert normalized[0]["source_subprocess_key"] == "perfis"
+    assert normalized[0]["items"] == []

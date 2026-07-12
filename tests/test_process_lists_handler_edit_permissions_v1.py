@@ -72,6 +72,7 @@ def _call_handler(
         process_list_items_csv=[],
         process_list_field_type=[],
         process_list_source_menu_key=[],
+        process_list_source_subprocess_key=[],
         process_list_column_key=[],
         process_list_column_label=[],
         process_list_column_field_key=[],
@@ -222,6 +223,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
         process_list_items_csv=["1,2", ""],
         process_list_field_type=["manual", "automatic"],
         process_list_source_menu_key=["", "menu_origem"],
+        process_list_source_subprocess_key=["", ""],
     )
 
     assert response.status_code == 303
@@ -237,6 +239,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     assert process_lists[0]["items"] == ["1", "2"]
     assert process_lists[1]["items"] == []
     assert process_lists[1]["source_menu_key"] == "menu_origem"
+    assert process_lists[1]["source_subprocess_key"] == ""
 
 
 def test_edit_process_lists_removal_via_blank_rows():
