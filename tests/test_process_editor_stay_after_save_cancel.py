@@ -71,12 +71,15 @@ def test_cancel_buttons_stay_in_editor_and_list_column_cancel_is_local() -> None
         PROJECT_ROOT / "static" / "js" / "modules" / "appgenesis_cancel_controller_v1.js"
     ).read_text(encoding="utf-8")
 
+    # O cancelar do editor de processo devolve o utilizador a lista de origem (nunca
+    # ao proprio card do editor) -- por isso o alvo/URL de retorno usam as variaveis
+    # de saida resolvidas no template, nao mais o "settings-menu-edit-card" estatico.
     assert html_text.count(
-        'data-appgenesis-cancel-return-target="#settings-menu-edit-card"'
-    ) == 8
+        'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
+    ) == 7
     assert html_text.count(
-        'data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"'
-    ) == 8
+        'data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"'
+    ) == 7
     assert '"[data-process-list-column-editor-cancel]"' in controller_text
 
 

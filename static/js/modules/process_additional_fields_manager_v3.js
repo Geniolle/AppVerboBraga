@@ -934,6 +934,20 @@
     }));
   }
 
+  function hasDraft_v3(root, manager) {
+    if (manager && manager.state && manager.state.editingId) {
+      return true;
+    }
+
+    const editor = getEditorRoot_v3(root);
+
+    return Boolean(
+      getInputValue_v3(editor, "[data-additional-field-editor-label]").trim() ||
+      getInputValue_v3(editor, "[data-additional-field-editor-key]").trim() ||
+      getInputValue_v3(editor, "[data-additional-field-editor-manual-items]").trim()
+    );
+  }
+
   function bindGlobalCancelReaction_v3(root, cancelButton, manager, datasetKey) {
     if (!root || !cancelButton || !manager) {
       return;
@@ -948,6 +962,9 @@
     root.dataset[boundKey] = "1";
     cancelButton.dataset.appgenesisCancel = "1";
     cancelButton.dataset.appgenesisCancelLocal = "1";
+    cancelButton.__appgenesisLocalDraftCheckV1 = function () {
+      return hasDraft_v3(root, manager);
+    };
 
     root.addEventListener("appgenesis:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
@@ -1290,8 +1307,10 @@
       root,
       itemName: "campo",
       itemNamePlural: "campos",
-      pageSizeDefault: 5,
-      pageSizeOptions: [5, 10, 20],
+      createTitle: "Criar campo adicional",
+      editTitle: "Editar campo adicional",
+      pageSizeDefault: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems,
       selectors: {
         editorForm: "[data-additional-field-editor-block]",

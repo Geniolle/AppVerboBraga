@@ -772,7 +772,7 @@ def new_user_page(
         selected_entity_id,
     )
     process_list_source_subprocess_map_v1 = get_process_list_source_subprocess_map_v1(
-        list(get_sidebar_menu_settings(session)),
+        list(get_sidebar_menu_settings(session, active_entity_id=selected_entity_id)),
         process_list_source_menus_v1,
     )
 

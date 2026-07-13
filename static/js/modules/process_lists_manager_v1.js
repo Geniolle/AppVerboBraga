@@ -85,6 +85,7 @@
       editorSourceMenuWrapper: root.querySelector("[data-process-list-editor-menu-wrapper]"),
       editorSourceSubprocess: root.querySelector("[data-process-list-editor-source-subprocess]"),
       editorSourceSubprocessWrapper: root.querySelector("[data-process-list-editor-subprocess-wrapper]"),
+      editorStatus: root.querySelector("[data-process-list-editor-status]"),
       sourceSubprocessMapScript: root.querySelector("[data-process-list-source-subprocess-map]"),
       submitButton: root.querySelector("[data-process-list-editor-submit]"),
       cancelButton: root.querySelector("[data-process-list-editor-cancel]"),
@@ -113,6 +114,7 @@
       elements.editorSourceMenuWrapper &&
       elements.editorSourceSubprocess &&
       elements.editorSourceSubprocessWrapper &&
+      elements.editorStatus &&
       elements.submitButton &&
       elements.cancelButton &&
       elements.table &&
@@ -141,6 +143,7 @@
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
         const sourceMenuKey = readInput_v1(row, "process_list_source_menu_key");
         const sourceSubprocessKey = readInput_v1(row, "process_list_source_subprocess_key");
+        const status = (readInput_v1(row, "process_list_status") || "").trim().toLowerCase();
 
         return {
           managerId: `list_${index}_${key}`,
@@ -149,7 +152,8 @@
           field_type: fieldType || "manual",
           itemsCsv,
           sourceMenuKey,
-          sourceSubprocessKey
+          sourceSubprocessKey,
+          status: status === "inativo" ? "inativo" : "ativo"
         };
       })
       .filter((item) => item.label || item.itemsCsv);
@@ -370,6 +374,9 @@
     elements.editorItems.value = "";
     elements.editorSourceMenu.value = "";
     elements.editorSourceSubprocess.value = "";
+    if (elements.editorStatus) {
+      elements.editorStatus.value = "ativo";
+    }
     delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = "manual";
@@ -398,6 +405,9 @@
     elements.editorItems.value = item.itemsCsv || "";
     elements.editorSourceMenu.value = item.sourceMenuKey || "";
     elements.editorSourceSubprocess.value = item.sourceSubprocessKey || "";
+    if (elements.editorStatus) {
+      elements.editorStatus.value = item.status === "inativo" ? "inativo" : "ativo";
+    }
     delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = item.field_type || "manual";
@@ -420,6 +430,7 @@
     const fieldType = toSafeString_v1(elements.editorFieldType ? elements.editorFieldType.value : "").trim().toLowerCase();
     const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
     const sourceSubprocessKey = toSafeString_v1(elements.editorSourceSubprocess ? elements.editorSourceSubprocess.value : "").trim().toLowerCase();
+    const status = toSafeString_v1(elements.editorStatus ? elements.editorStatus.value : "").trim().toLowerCase();
     const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
     const editingId = toSafeString_v1(state.editingId).trim();
     const key = currentKey || normalizeKey_v1(label);
@@ -431,7 +442,8 @@
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
       itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
       sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : "",
-      sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : ""
+      sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : "",
+      status: status === "inativo" ? "inativo" : "ativo"
     };
   }
 
@@ -511,7 +523,8 @@
         ["process_list_field_type", item.field_type || "manual"],
         ["process_list_items_csv", item.field_type === "automatic" ? "" : item.itemsCsv],
         ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""],
-        ["process_list_source_subprocess_key", item.field_type === "automatic" ? item.sourceSubprocessKey : ""]
+        ["process_list_source_subprocess_key", item.field_type === "automatic" ? item.sourceSubprocessKey : ""],
+        ["process_list_status", item.status === "inativo" ? "inativo" : "ativo"]
       ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -660,6 +673,9 @@
     form.dataset.processListsCancelBoundV1 = "1";
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
+    elements.cancelButton.__appgenesisLocalDraftCheckV1 = function () {
+      return hasDraft_v1(elements, manager);
+    };
 
     form.addEventListener("appgenesis:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
@@ -739,8 +755,8 @@
       root: elements.root,
       itemName: "coluna",
       itemNamePlural: "colunas",
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 20],
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems: readInitialColumns_v2(elements),
       selectors: {
         editorForm: "[data-process-list-column-editor-block]",
@@ -836,8 +852,8 @@
       root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 20],
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems: readInitialItems_v1(elements),
       selectors: {
         editorForm: "[data-process-list-reusable-editor-block]",
@@ -905,6 +921,24 @@
               (entry) => entry.value === item.sourceSubprocessKey
             );
             return sourceOption ? sourceOption.label : "Subprocesso indisponível";
+          }
+        },
+        {
+          key: "entidade",
+          label: "Entidade",
+          render: () => elements.root.dataset.entityNumber || "-"
+        },
+        {
+          key: "status",
+          label: "Estado",
+          render: (item) => {
+            const isInactive = String(item.status || "ativo").trim().toLowerCase() === "inativo";
+            const badgeClass = isInactive ? "entity-status-inactive" : "entity-status-active";
+            const badgeLabel = isInactive ? "Inativo" : "Ativo";
+            const badge = document.createElement("span");
+            badge.className = `entity-status ${badgeClass}`;
+            badge.textContent = badgeLabel;
+            return badge;
           }
         }
       ],

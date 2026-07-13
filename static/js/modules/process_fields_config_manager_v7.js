@@ -724,6 +724,9 @@
     form.dataset.processFieldsConfigCancelBoundV7 = "1";
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
+    elements.cancelButton.__appgenesisLocalDraftCheckV1 = function () {
+      return existeDraft_v7(elements, manager);
+    };
 
     form.addEventListener("appgenesis:cancelled", function (event) {
       const detail = event && event.detail ? event.detail : {};
@@ -869,8 +872,10 @@
       root: form,
       itemName: "campo",
       itemNamePlural: "campos",
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 25],
+      createTitle: "Configurar campo",
+      editTitle: "Editar configuração do campo",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems,
       selectors: {
         editorForm: "[data-process-fields-config-editor-block]",

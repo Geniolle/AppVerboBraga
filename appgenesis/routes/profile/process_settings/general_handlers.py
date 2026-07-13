@@ -11,6 +11,7 @@ from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
     _require_menu_settings_owner_v1,
+    _SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
 )
 from appgenesis.menu_settings import (
     create_sidebar_menu_setting,
@@ -138,14 +139,29 @@ def edit_sidebar_menu_setting_handler_v1(
                     status_code=HTTP_303_SEE_OTHER,
                 )
 
-        return RedirectResponse(
-            url=_build_settings_editor_stay_redirect_url_v1(
+        # O hidden "redirect_target" enviado pela aba Geral distingue permanecer no editor
+        # (valor legado "settings-menu-edit-card") de sair para a lista de origem (qualquer
+        # outro alvo, resolvido no template a partir do menu/aba de onde o editor foi aberto).
+        clean_redirect_target = str(redirect_target or "").strip().lstrip("#")
+
+        if clean_redirect_target == _SETTINGS_MENU_EDITOR_STAY_TARGET_V1:
+            success_redirect_url = _build_settings_editor_stay_redirect_url_v1(
                 success_message="Menu atualizado com sucesso.",
                 redirect_menu=redirect_menu,
                 settings_edit_key=clean_menu_key,
                 settings_tab="geral",
                 return_url=return_url,
-            ),
+            )
+        else:
+            success_redirect_url = _build_settings_redirect_url(
+                success_message="Menu atualizado com sucesso.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                return_url=return_url,
+            )
+
+        return RedirectResponse(
+            url=success_redirect_url,
             status_code=HTTP_303_SEE_OTHER,
         )
 

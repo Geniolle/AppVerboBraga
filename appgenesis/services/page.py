@@ -202,8 +202,11 @@ def _resolve_sidebar_menu_context(
     session: Session,
     current_user_is_admin: bool,
     current_entity_scope: str,
+    selected_entity_id: int | None = None,
 ) -> dict[str, Any]:
-    sidebar_menu_settings = get_sidebar_menu_settings(session)
+    sidebar_menu_settings = get_sidebar_menu_settings(
+        session, active_entity_id=selected_entity_id
+    )
     active_menu_rows = [
         row for row in sidebar_menu_settings
         if row.get("is_active") and not row.get("is_deleted")
@@ -585,7 +588,7 @@ def get_page_data(
     current_entity_scope = actor_context["current_entity_scope"]
 
     menu_context = _resolve_sidebar_menu_context(
-        session, current_user_is_admin, current_entity_scope
+        session, current_user_is_admin, current_entity_scope, selected_entity_id
     )
     sidebar_menu_settings = menu_context["sidebar_menu_settings"]
     visible_sidebar_menu_keys = menu_context["visible_sidebar_menu_keys"]

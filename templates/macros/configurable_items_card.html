@@ -1,0 +1,31 @@
+{#
+  Casca visual generica para as abas de "Editar processo" baseadas em
+  configurable_items_manager_core_v1.js. Estas macros NAO conhecem campos,
+  validacao ou hidden inputs de nenhum manager especifico - apenas fornecem
+  a estrutura de card/cabecalho/titulo/botao Criar/slot de conteudo. Todo o
+  conteudo especifico (pesquisa, tabela, editor) e passado via {% call %}.
+#}
+
+{% macro render_configurable_list_card(card_id, title, create_label=none, create_target=none, extra_class="") %}
+<section class="card admin-subprocess-table-card-v1 configurable-items-list-card-v1{% if extra_class %} {{ extra_class }}{% endif %}" id="{{ card_id }}">
+  <div class="configurable-items-list-card-head-v1">
+    <h3 class="configurable-items-list-card-title-v1">{{ title }}</h3>
+    {% if create_label and create_target %}
+    <button
+      type="button"
+      class="action-btn configurable-items-create-trigger-v1"
+      data-configurable-create-trigger
+      data-configurable-manager-target="{{ create_target }}"
+    >{{ create_label }}</button>
+    {% endif %}
+  </div>
+  {{ caller() }}
+</section>
+{% endmacro %}
+
+{% macro render_configurable_form_card(form_card_attr, form_title_attr, extra_class="") %}
+<section class="card admin-subprocess-form-card-v1 configurable-items-form-card-v1{% if extra_class %} {{ extra_class }}{% endif %}" {{ form_card_attr }} hidden>
+  <h2 {{ form_title_attr }}></h2>
+  {{ caller() }}
+</section>
+{% endmacro %}

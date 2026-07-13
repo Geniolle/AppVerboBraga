@@ -15,6 +15,9 @@
 
   const namespace = window.AppGenesisConfigurableItems;
 
+  const DEFAULT_CONFIGURABLE_PAGE_SIZE_V1 = 5;
+  const DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = [5, 10, 20];
+
   //###################################################################################
   // (2) HELPERS GERAIS
   //###################################################################################
@@ -142,14 +145,16 @@
     const selectors = config.selectors && typeof config.selectors === "object" ? config.selectors : {};
     const pageSizeOptions = toArray_v1(config.pageSizeOptions).length
       ? toArray_v1(config.pageSizeOptions)
-      : [5, 10, 25];
+      : DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1;
 
     return {
       root: config.root || null,
       rootSelector: String(config.rootSelector || "").trim(),
       itemName: String(config.itemName || "item").trim(),
       itemNamePlural: String(config.itemNamePlural || "itens").trim(),
-      pageSizeDefault: clampNumber_v1(config.pageSizeDefault, 1, 100, 5),
+      createTitle: String(config.createTitle || "").trim(),
+      editTitle: String(config.editTitle || "").trim(),
+      pageSizeDefault: clampNumber_v1(config.pageSizeDefault, 1, 100, DEFAULT_CONFIGURABLE_PAGE_SIZE_V1),
       pageSizeOptions,
       columns: toArray_v1(config.columns).map(normalizeColumn_v1).filter((column) => column.key || column.label),
       selectors: {
@@ -161,7 +166,9 @@
         pageSize: selectors.pageSize || "[data-configurable-page-size]",
         hiddenContainer: selectors.hiddenContainer || "[data-configurable-hidden-container]",
         totalLabel: selectors.totalLabel || "[data-configurable-total-label]",
-        searchInput: selectors.searchInput || "[data-configurable-search]"
+        searchInput: selectors.searchInput || "[data-configurable-search]",
+        formCard: selectors.formCard || "[data-configurable-form-card]",
+        formTitle: selectors.formTitle || "[data-configurable-form-title]"
       },
       getItemId: typeof config.getItemId === "function" ? config.getItemId : defaultGetItemId_v1,
       readEditorItem: typeof config.readEditorItem === "function" ? config.readEditorItem : null,
@@ -235,7 +242,9 @@
       pageSize: resolveElement_v1(root, config.selectors.pageSize),
       hiddenContainer: resolveElement_v1(root, config.selectors.hiddenContainer),
       totalLabel: resolveElement_v1(root, config.selectors.totalLabel),
-      searchEl: resolveElement_v1(root, config.selectors.searchInput)
+      searchEl: resolveElement_v1(root, config.selectors.searchInput),
+      formCard: resolveElement_v1(root, config.selectors.formCard),
+      formTitle: resolveElement_v1(root, config.selectors.formTitle)
     };
   }
 
@@ -311,7 +320,30 @@
   }
 
   const _configurableManagerRegistry = new Map();
+  const _configurableManagerByRoot = new WeakMap();
   let _configurableManagerNextId = 1;
+
+  function ensureConfigurableManagerCreateTriggerDelegation() {
+    if (ensureConfigurableManagerCreateTriggerDelegation._ready) return;
+    ensureConfigurableManagerCreateTriggerDelegation._ready = true;
+
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("[data-configurable-create-trigger]");
+      if (!trigger) return;
+
+      const targetSelector = String(trigger.dataset.configurableManagerTarget || "").trim();
+      if (!targetSelector) return;
+
+      const targetRoot = document.querySelector(targetSelector);
+      if (!targetRoot) return;
+
+      const manager = _configurableManagerByRoot.get(targetRoot);
+      if (!manager) return;
+
+      event.preventDefault();
+      openCreateItem_v1(manager);
+    });
+  }
 
   function handleConfigurableAction_v1(manager, action, itemId) {
     if (action === "edit") {
@@ -589,20 +621,30 @@
     const currentCount = Math.min(manager.state.visibleCount, totalItems);
     const showMais = currentCount < totalItems;
     const showMenos = manager.state.visibleCount > manager.state.pageSize;
+    const showCounter = totalItems > 0;
 
     paginationEl.innerHTML = "";
     if (lessEl) {
       lessEl.innerHTML = "";
     }
 
-    if (!showMais && !showMenos) {
+    if (!showCounter) {
       paginationEl.style.display = "none";
       if (lessEl) {
         lessEl.style.display = "none";
       }
+      // O CSS partilhado com o Process Shell aplica display:flex !important em
+      // .appgenesis-load-more-status-v1; so o atributo [hidden] no rodape (que tem
+      // uma regra !important dedicada) consegue realmente escondê-lo.
+      if (footerEl) {
+        footerEl.hidden = true;
+      }
       return;
     }
 
+    if (footerEl) {
+      footerEl.hidden = false;
+    }
     paginationEl.style.display = "";
     if (lessEl) {
       lessEl.style.display = "";
@@ -640,6 +682,78 @@
     return manager.state.items.findIndex((item) => String(item.__managerId) === String(itemId));
   }
 
+  function focusFirstEditableField_v1(container) {
+    if (!container) {
+      return;
+    }
+
+    const field = container.querySelector(
+      "input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])"
+    );
+
+    if (field && typeof field.focus === "function") {
+      field.focus();
+    }
+  }
+
+  function openFormCard_v1(manager, title) {
+    const formCard = manager.elements.formCard;
+
+    if (formCard) {
+      formCard.hidden = false;
+
+      if (typeof formCard.scrollIntoView === "function") {
+        formCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    if (manager.elements.formTitle && title) {
+      manager.elements.formTitle.textContent = title;
+    }
+  }
+
+  function closeFormCard_v1(manager) {
+    if (manager.elements.formCard) {
+      manager.elements.formCard.hidden = true;
+    }
+  }
+
+  function openCreateItem_v1(manager) {
+    manager.state.editingId = "";
+    manager.root.classList.remove("configurable-items-editing-v1");
+
+    if (typeof manager.config.clearEditor === "function") {
+      manager.config.clearEditor({
+        manager,
+        root: manager.root,
+        elements: manager.elements
+      });
+    }
+
+    openFormCard_v1(manager, manager.config.createTitle);
+
+    if (manager.elements.formCard) {
+      focusFirstEditableField_v1(manager.elements.editorForm);
+    }
+
+    emitManagerEvent_v1(manager, "appgenesis:configurable-items-create-open", {});
+  }
+
+  function closeEditorItem_v1(manager) {
+    manager.state.editingId = "";
+    manager.root.classList.remove("configurable-items-editing-v1");
+
+    if (typeof manager.config.clearEditor === "function") {
+      manager.config.clearEditor({
+        manager,
+        root: manager.root,
+        elements: manager.elements
+      });
+    }
+
+    closeFormCard_v1(manager);
+  }
+
   function editItem_v1(manager, itemId) {
     const itemIndex = findItemIndexById_v1(manager, itemId);
 
@@ -673,6 +787,12 @@
     }
 
     manager.root.classList.add("configurable-items-editing-v1");
+    openFormCard_v1(manager, manager.config.editTitle);
+
+    if (manager.elements.formCard) {
+      focusFirstEditableField_v1(manager.elements.editorForm);
+    }
+
     emitManagerEvent_v1(manager, "appgenesis:configurable-items-edit", { item, index: itemIndex });
   }
 
@@ -927,16 +1047,7 @@
       },
 
       clearEditing() {
-        this.state.editingId = "";
-        this.root.classList.remove("configurable-items-editing-v1");
-
-        if (typeof this.config.clearEditor === "function") {
-          this.config.clearEditor({
-            manager: this,
-            root: this.root,
-            elements: this.elements
-          });
-        }
+        closeEditorItem_v1(this);
       },
 
       syncHiddenInputs() {
@@ -945,6 +1056,22 @@
 
       render() {
         renderManager_v1(this);
+      },
+
+      openCreate() {
+        openCreateItem_v1(this);
+      },
+
+      openEdit(itemId) {
+        editItem_v1(this, itemId);
+      },
+
+      closeEditor() {
+        closeEditorItem_v1(this);
+      },
+
+      isEditing() {
+        return Boolean(this.state.editingId);
       }
     };
 
@@ -952,6 +1079,7 @@
 
     root.dataset.configurableManagerActive = "1";
     root.classList.add("configurable-items-manager-v1");
+    _configurableManagerByRoot.set(root, manager);
 
     bindTableActions_v1(manager);
     bindPaginationActions_v1(manager);
@@ -960,6 +1088,7 @@
     bindParentFormSubmit_v1(manager);
 
     ensureConfigurableManagerActionDelegation();
+    ensureConfigurableManagerCreateTriggerDelegation();
 
     manager.render();
     notifyChange_v1(manager);
@@ -973,4 +1102,6 @@
   namespace.normalizeLookup_v1 = normalizeLookup_v1;
   namespace.showAlertDialog_v1 = showAlertDialog_v1;
   namespace.toSafeString_v1 = toSafeString_v1;
+  namespace.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1 = DEFAULT_CONFIGURABLE_PAGE_SIZE_V1;
+  namespace.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1;
 })(window, document);

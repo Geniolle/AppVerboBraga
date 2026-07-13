@@ -396,6 +396,9 @@
     form.dataset.processSubsequentCancelBoundV1 = "1";
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
+    elements.cancelButton.__appgenesisLocalDraftCheckV1 = function () {
+      return hasDraft_v1(elements, manager);
+    };
 
     form.addEventListener("appgenesis:cancelled", function (event) {
       const detail = event && event.detail ? event.detail : {};
@@ -486,8 +489,10 @@
       root: form,
       itemName: "campo subsequente",
       itemNamePlural: "campos subsequentes",
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 20],
+      createTitle: "Criar campo subsequente",
+      editTitle: "Editar campo subsequente",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems: readInitialItems_v1(elements),
       selectors: {
         editorForm: "[data-process-subsequent-field-editor-block]",
@@ -498,7 +503,9 @@
         pageSize: "[data-process-subsequent-fields-page-size]",
         hiddenContainer: "[data-process-subsequent-fields-hidden-container]",
         totalLabel: "[data-process-subsequent-fields-total-label]",
-        searchInput: "[data-configurable-search]"
+        searchInput: "[data-configurable-search]",
+        formCard: "[data-configurable-form-card]",
+        formTitle: "[data-configurable-form-title]"
       },
       columns: [
         {

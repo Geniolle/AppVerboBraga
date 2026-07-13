@@ -409,6 +409,44 @@ def normalize_menu_process_lists_v4(raw_lists: Any) -> list[dict[str, Any]]:
     return normalized
 
 
+def _normalize_process_list_status_v1(raw_status: Any) -> str:
+    if isinstance(raw_status, bool):
+        return "ativo" if raw_status else "inativo"
+    clean_status = str(raw_status or "").strip().lower()
+    if clean_status in {"inativo", "inactive", "0", "false", "no", "nao", "não", "off"}:
+        return "inativo"
+    return "ativo"
+
+
+def _process_list_status_label_v1(raw_status: Any) -> str:
+    return (
+        "Inativo"
+        if _normalize_process_list_status_v1(raw_status) == "inativo"
+        else "Ativo"
+    )
+
+
+def normalize_menu_process_lists_v5(raw_lists: Any) -> list[dict[str, Any]]:
+    normalized = normalize_menu_process_lists_v4(raw_lists)
+    raw_by_key: dict[str, dict[str, Any]] = {}
+
+    for raw_item in raw_lists if isinstance(raw_lists, (list, tuple, set)) else []:
+        if not isinstance(raw_item, dict):
+            continue
+        raw_key = _normalize_process_list_key_v3(raw_item.get("key"))
+        if raw_key:
+            raw_by_key[raw_key] = raw_item
+
+    for item in normalized:
+        raw_item = raw_by_key.get(str(item.get("key") or ""), {})
+        status = _normalize_process_list_status_v1(raw_item.get("status"))
+        item["status"] = status
+        item["is_active"] = status == "ativo"
+        item["status_label"] = _process_list_status_label_v1(status)
+
+    return normalized
+
+
 def get_process_list_source_subprocess_map_v1(
     sidebar_menu_settings: list[dict[str, Any]] | None,
     source_menu_keys: list[dict[str, str]] | list[str] | None,

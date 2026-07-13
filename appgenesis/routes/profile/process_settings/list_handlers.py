@@ -28,6 +28,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_field_type: list[str] = Form(default=[]),
     process_list_source_menu_key: list[str] = Form(default=[]),
     process_list_source_subprocess_key: list[str] = Form(default=[]),
+    process_list_status: list[str] = Form(default=[]),
     process_list_column_key: list[str] = Form(default=[]),
     process_list_column_label: list[str] = Form(default=[]),
     process_list_column_field_key: list[str] = Form(default=[]),
@@ -100,6 +101,7 @@ def edit_sidebar_menu_process_lists_handler(
             len(process_list_field_type),
             len(process_list_source_menu_key),
             len(process_list_source_subprocess_key),
+            len(process_list_status),
         )
 
         payload_lists: list[dict[str, str]] = []
@@ -130,6 +132,11 @@ def edit_sidebar_menu_process_lists_handler(
                 if row_index < len(process_list_source_subprocess_key)
                 else ""
             )
+            raw_status = (
+                process_list_status[row_index]
+                if row_index < len(process_list_status)
+                else ""
+            )
 
             if (
                 not str(label or "").strip()
@@ -143,6 +150,12 @@ def edit_sidebar_menu_process_lists_handler(
             if ft not in {"manual", "automatic"}:
                 ft = "manual"
 
+            # normalize status values: only 'ativo' or 'inativo' allowed,
+            # defaulting to 'ativo' for backward compatibility with legacy lists
+            list_status = str(raw_status or "").strip().lower()
+            if list_status not in {"ativo", "inativo"}:
+                list_status = "ativo"
+
             payload_lists.append(
                 {
                     "key": process_list_key[row_index]
@@ -153,6 +166,7 @@ def edit_sidebar_menu_process_lists_handler(
                     "items_csv": items_csv if ft == "manual" else "",
                     "source_menu_key": source_menu_key if ft == "automatic" else "",
                     "source_subprocess_key": source_subprocess_key if ft == "automatic" else "",
+                    "status": list_status,
                 }
             )
 

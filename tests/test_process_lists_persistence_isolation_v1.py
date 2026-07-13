@@ -5,7 +5,10 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from appgenesis.menu_settings import update_sidebar_menu_process_lists
+from appgenesis.menu_settings import (
+    get_sidebar_menu_settings,
+    update_sidebar_menu_process_lists,
+)
 from appgenesis.models import Base, Entity, SidebarMenuSetting
 from appgenesis.services.process_settings.list_service import (
     get_process_list_source_menus_v1,
@@ -97,10 +100,9 @@ def test_process_lists_css_is_scoped_to_the_reusable_editor():
     assert "[data-process-list-reusable-editor-block]" in css_text
     assert ".process-lists-editor-grid-v1" in css_text
     assert (
-        "grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.55fr) minmax(300px, 1.5fr);"
+        "grid-template-columns: repeat(3, minmax(0, 1fr));"
         in css_text
     )
-    assert '[data-process-list-reusable-manager][data-has-source-subprocess="1"]' in css_text
     assert "grid-column: 1 / -1;" in css_text
     assert "@media (max-width: 1100px)" in css_text
     assert "@media (max-width: 768px)" in css_text
@@ -111,7 +113,7 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
 
     assert (
         "/static/css/modules/configurable_items_manager_v1.css"
-        "?v=20260712-process-lists-source-subprocess-v1"
+        "?v=20260712-process-lists-entity-number-v1"
         in template_text
     )
     assert "data-process-list-reusable-manager" in template_text
@@ -119,6 +121,36 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
     assert "process-lists-editor-grid-v1" in template_text
     assert "data-process-list-editor-source-subprocess" in template_text
     assert "data-process-list-source-subprocess-map" in template_text
+
+
+def _extract_lista_tab_html() -> str:
+    template_text = Path("templates/new_user.html").read_text(encoding="utf-8")
+    start = template_text.index('id="settings-tab-lista"')
+    end = template_text.index('id="settings-tab-campos-subsequentes"', start)
+    return template_text[start:end]
+
+
+def test_process_lists_entity_field_uses_entity_number_not_entity_name():
+    lista_tab_html = _extract_lista_tab_html()
+
+    assert "selected_entity_number" in lista_tab_html
+    assert "current_user_entity_name" not in lista_tab_html
+    assert 'value="{{ selected_entity_number }}"' in lista_tab_html
+    assert 'data-entity-number="{{ selected_entity_number }}"' in lista_tab_html
+
+
+def test_process_lists_columns_section_is_not_rendered_in_lista_tab():
+    lista_tab_html = _extract_lista_tab_html()
+
+    assert "data-process-list-columns-manager" not in lista_tab_html
+    assert "Colunas da listagem do processo" not in lista_tab_html
+
+
+def test_process_lists_columns_configured_hidden_input_is_not_forced_to_one():
+    lista_tab_html = _extract_lista_tab_html()
+
+    assert 'name="process_list_columns_configured" value="1"' not in lista_tab_html
+    assert 'name="process_list_columns_configured" value="0"' in lista_tab_html
 
 
 def test_update_process_lists_isolated_between_menu_keys():
@@ -469,3 +501,142 @@ def test_legacy_automatic_without_source_is_preserved_on_general_submit():
     assert config["process_lists"][0]["source_menu_key"] == ""
     assert config["process_lists"][0]["source_subprocess_key"] == ""
     assert config["other_section"] == {"keep": True}
+
+
+# ###################################################################################
+# ROOT CAUSE B - LEITURA DE get_sidebar_menu_settings ISOLADA POR ENTIDADE ATIVA
+# ###################################################################################
+
+
+def test_get_sidebar_menu_settings_isolates_process_lists_by_entity():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_isolado",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {"key": "list_a", "label": "Lista A", "field_type": "manual", "items": ["1"]}
+            ]
+        },
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_isolado",
+        entity_id=2,
+        menu_config={
+            "process_lists": [
+                {"key": "list_b", "label": "Lista B", "field_type": "manual", "items": ["2"]}
+            ]
+        },
+    )
+
+    with SessionLocal() as session:
+        settings_entity_1 = get_sidebar_menu_settings(session, active_entity_id=1)
+    with SessionLocal() as session:
+        settings_entity_2 = get_sidebar_menu_settings(session, active_entity_id=2)
+
+    item_1 = next(row for row in settings_entity_1 if row["key"] == "processo_isolado")
+    item_2 = next(row for row in settings_entity_2 if row["key"] == "processo_isolado")
+
+    assert [entry["key"] for entry in item_1["process_lists"]] == ["list_a"]
+    assert [entry["key"] for entry in item_2["process_lists"]] == ["list_b"]
+
+
+def test_get_sidebar_menu_settings_isolates_is_active_and_is_deleted_by_entity():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal, menu_key="processo_estado", entity_id=1, menu_config={})
+    _seed_menu(SessionLocal, menu_key="processo_estado", entity_id=2, menu_config={})
+
+    with SessionLocal() as session:
+        session.execute(
+            SidebarMenuSetting.__table__.update()
+            .where(
+                SidebarMenuSetting.menu_key == "processo_estado",
+                SidebarMenuSetting.entity_id == 1,
+            )
+            .values(is_active=False)
+        )
+        session.commit()
+
+    with SessionLocal() as session:
+        settings_entity_1 = get_sidebar_menu_settings(session, active_entity_id=1)
+    with SessionLocal() as session:
+        settings_entity_2 = get_sidebar_menu_settings(session, active_entity_id=2)
+
+    item_1 = next(row for row in settings_entity_1 if row["key"] == "processo_estado")
+    item_2 = next(row for row in settings_entity_2 if row["key"] == "processo_estado")
+
+    assert item_1["is_active"] is False
+    assert item_2["is_active"] is True
+
+
+def test_get_sidebar_menu_settings_reflects_freshly_saved_list_for_same_entity():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    with SessionLocal() as session:
+        update_sidebar_menu_process_lists(
+            session,
+            "processo_teste_a",
+            raw_lists=[
+                {"key": "nova", "label": "Lista Nova", "field_type": "manual", "items": ["1", "2"]}
+            ],
+            raw_columns=None,
+            active_entity_id=1,
+        )
+
+    with SessionLocal() as session:
+        settings = get_sidebar_menu_settings(session, active_entity_id=1)
+
+    item = next(row for row in settings if row["key"] == "processo_teste_a")
+    assert [entry["label"] for entry in item["process_lists"]] == ["Lista nova"]
+
+
+def test_get_sidebar_menu_settings_defaults_to_resolved_entity_when_not_specified():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {"key": "list_x", "label": "X", "field_type": "manual", "items": ["1"]}
+            ]
+        },
+    )
+
+    with SessionLocal() as session:
+        settings = get_sidebar_menu_settings(session)
+
+    item = next(row for row in settings if row["key"] == "processo_teste_a")
+    assert [entry["key"] for entry in item["process_lists"]] == ["list_x"]
+
+
+def test_update_process_lists_menu_missing_for_active_entity_returns_error():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    with SessionLocal() as session:
+        ok, error = update_sidebar_menu_process_lists(
+            session,
+            "processo_teste_a",
+            raw_lists=[
+                {"key": "x", "label": "X", "field_type": "manual", "items": ["1"]}
+            ],
+            raw_columns=None,
+            active_entity_id=2,
+        )
+
+    assert ok is False
+    assert error == "Menu não encontrado."

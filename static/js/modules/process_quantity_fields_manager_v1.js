@@ -482,6 +482,9 @@
     form.dataset.processQuantityCancelBoundV1 = "1";
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
+    elements.cancelButton.__appgenesisLocalDraftCheckV1 = function () {
+      return hasDraft_v1(elements, manager);
+    };
 
     form.addEventListener("appgenesis:cancelled", (event) => {
       const detail = event && event.detail ? event.detail : {};
@@ -507,12 +510,12 @@
       if (hasDraft_v1(elements, manager)) {
         const item = readEditorItem_v1({
           manager,
-          elements: manager.elements,
+          elements,
           state: manager.state
         });
         const validationResult = validateItem_v1(item, {
           manager,
-          elements: manager.elements,
+          elements,
           state: manager.state,
           items: manager.getItems()
         });
@@ -573,8 +576,10 @@
       root: form,
       itemName: "regra",
       itemNamePlural: "regras",
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || 5,
-      pageSizeOptions: [5, 10, 20],
+      createTitle: "Criar regra",
+      editTitle: "Editar regra",
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems: readInitialItems_v1(elements),
       selectors: {
         editorForm: ".process-quantity-fields-editor-grid-v1",
@@ -623,9 +628,9 @@
         }
       ],
       getItemId: (item, index) => item.managerId || item.__managerId || item.key || `quantity_${index + 1}`,
-      readEditorItem: readEditorItem_v1,
-      loadEditorItem: loadEditorItem_v1,
-      clearEditor: clearEditor_v1,
+      readEditorItem: (context) => readEditorItem_v1(Object.assign({}, context, { elements })),
+      loadEditorItem: (item, context) => loadEditorItem_v1(item, Object.assign({}, context, { elements })),
+      clearEditor: (context) => clearEditor_v1(Object.assign({}, context, { elements })),
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1
     });

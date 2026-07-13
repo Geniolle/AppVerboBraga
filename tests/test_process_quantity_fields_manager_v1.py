@@ -21,6 +21,10 @@ def test_process_quantity_fields_manager_v1_uses_configurable_core_and_search_fo
     assert 'itemNamePlural: "regras"' in script_text
     assert 'submitNative_v1(form);' in script_text
 
+    macro_path = PROJECT_ROOT / "templates" / "macros" / "configurable_items_pagination.html"
+    macro_text = macro_path.read_text(encoding="utf-8")
+
     assert 'aria-label="Pesquisar regras criadas"' in template_text
     assert 'data-process-quantity-total-label' in template_text
-    assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in template_text
+    assert 'render_configurable_items_pagination_footer("data-process-quantity-page-size", "data-process-quantity-pagination")' in template_text
+    assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in macro_text

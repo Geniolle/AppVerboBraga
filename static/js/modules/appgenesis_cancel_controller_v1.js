@@ -262,6 +262,25 @@
     );
   }
 
+  // Um cancelar local (item de uma lista configuravel, ex.: Config./Quantidade/Lista/
+  // Subsequentes/Adicionais) so permanece no editor quando existe um rascunho ativo
+  // (item a ser criado/editado); sem rascunho, deve sair como qualquer outro cancelar.
+  // O checker e' registado pelo proprio manager em cancelButton.__appgenesisLocalDraftCheckV1;
+  // na ausencia de um checker registado preserva-se o comportamento atual (permanecer).
+  function shouldStayInLocalEditorV1(trigger, localEditorOnly) {
+    if (!localEditorOnly) {
+      return false;
+    }
+
+    const draftChecker = trigger && trigger.__appgenesisLocalDraftCheckV1;
+
+    if (typeof draftChecker !== "function") {
+      return true;
+    }
+
+    return Boolean(draftChecker());
+  }
+
   function syncKnownHelpersV1(detail) {
     const card = detail.card;
 
@@ -369,7 +388,8 @@
     const details = resolveDetailsV1(context) || resolveDetailsV1(trigger);
     const form = resolveFormV1(trigger, context);
     const localEditorOnly = matchesV1(trigger, LOCAL_EDITOR_CANCEL_SELECTOR_V1);
-    const shouldHideCurrentCard = Boolean(returnTarget && card && returnTarget !== card);
+    const shouldStayLocal = shouldStayInLocalEditorV1(trigger, localEditorOnly);
+    const shouldHideCurrentCard = Boolean(returnTarget && card && returnTarget !== card && !shouldStayLocal);
 
     if (!localEditorOnly && form) {
       resetFormV1(form);
@@ -385,11 +405,13 @@
       hideCardV1(card);
     }
 
-    if (returnTarget) {
+    if (returnTarget && !shouldStayLocal) {
       showCardV1(resolveCardV1(returnTarget) || returnTarget);
     }
 
-    replaceHistoryUrlV1(trigger.getAttribute("data-appgenesis-cancel-return-url"));
+    if (!shouldStayLocal) {
+      replaceHistoryUrlV1(trigger.getAttribute("data-appgenesis-cancel-return-url"));
+    }
 
     const detail = {
       trigger,

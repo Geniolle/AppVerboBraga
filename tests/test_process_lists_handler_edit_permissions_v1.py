@@ -73,6 +73,7 @@ def _call_handler(
         process_list_field_type=[],
         process_list_source_menu_key=[],
         process_list_source_subprocess_key=[],
+        process_list_status=[],
         process_list_column_key=[],
         process_list_column_label=[],
         process_list_column_field_key=[],
@@ -271,6 +272,39 @@ def test_edit_process_lists_removal_via_blank_rows():
 
     assert response.status_code == 303
     assert _load_config(SessionLocal)["process_lists"] == []
+
+
+def test_edit_process_lists_columns_configured_zero_preserves_legacy_columns():
+    SessionLocal = _build_session_factory()
+    existing_columns = [
+        {
+            "key": "perfil",
+            "label": "Perfil",
+            "source_kind": "field",
+            "field_key": "perfil",
+            "always_visible": True,
+            "responsive_priority": 1,
+        }
+    ]
+    _seed_menu(
+        SessionLocal,
+        menu_config={"process_lists": [], "process_list_columns": existing_columns},
+    )
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        process_list_key=["a"],
+        process_list_label=["Lista A"],
+        process_list_items_csv=["1,2"],
+        process_list_field_type=["manual"],
+        process_list_columns_configured="0",
+    )
+
+    assert response.status_code == 303
+    assert _load_config(SessionLocal)["process_list_columns"] == existing_columns
 
 
 def test_edit_process_lists_invalid_field_type_normalized_to_manual():

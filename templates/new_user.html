@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% from "macros/admin_subprocess.html" import render_admin_subprocess_state, render_admin_subprocess_form, render_admin_subprocess_tables with context %}
+{% from "macros/configurable_items_pagination.html" import render_configurable_items_pagination_footer %}
+{% from "macros/configurable_items_card.html" import render_configurable_list_card, render_configurable_form_card %}
 
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
@@ -9,7 +11,7 @@
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260708-invite-link-header-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260708-invite-link-header-v1">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260712-process-lists-source-subprocess-v1">
+  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260712-process-lists-entity-number-v1">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
@@ -1350,6 +1352,25 @@
         {# depender de logica de correcao no cliente. Reutilizavel: nenhuma aba tem sua propria #}
         {# construcao de return_url. #}
         {% set settings_edit_return_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "&settings_action=edit&target=settings-menu-edit-card&settings_edit_key=" ~ settings_edit_data.key ~ "&settings_tab=" ~ settings_edit_active_tab ~ "#settings-menu-edit-card" %}
+        {# Alvo/URL de SAIDA do editor (Cancelar/Guardar) -- devolve o utilizador a lista de #}
+        {# origem, nunca ao proprio editor. Espelha a resolucao de _resolve_initial_menu_target #}
+        {# em page_handler.py para os menus a partir dos quais o editor pode ser aberto. #}
+        {% if settings_edit_origin_menu == "administrativo" %}
+          {% if admin_tab == "contas" %}
+            {% set settings_edit_exit_target = "menu-subprocess-card-active" %}
+          {% elif admin_tab == "utilizador" %}
+            {% set settings_edit_exit_target = "create-user-card" %}
+          {% else %}
+            {% set settings_edit_exit_target = "recent-entities-card" %}
+          {% endif %}
+        {% elif settings_edit_origin_menu == "configuracao" %}
+          {% set settings_edit_exit_target = "admin-account-status-card" %}
+        {% elif admin_tab == "contas" %}
+          {% set settings_edit_exit_target = "menu-subprocess-card-active" %}
+        {% else %}
+          {% set settings_edit_exit_target = "admin-sidebar-sections-card" %}
+        {% endif %}
+        {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "#" ~ settings_edit_exit_target %}
         <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes" {% if initial_menu not in ['administrativo', 'sessoes'] or initial_menu_target != '#settings-menu-edit-card' %}style="display: none;"{% endif %}>
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
@@ -1372,7 +1393,7 @@
               <form method="post" action="/settings/menu/edit">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
                 <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
                 <div class="grid settings-general-grid settings-general-grid-menu-geral">
                   <div class="field">
@@ -1426,8 +1447,8 @@
                     class="action-btn-cancel"
                     data-appgenesis-cancel="1"
                     data-appgenesis-cancel-target="settings-menu-edit-card"
-                    data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                    data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                    data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                    data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                   >Cancelar</button>
                 </div>
               </form>
@@ -1490,8 +1511,8 @@
                   class="action-btn-cancel"
                   data-appgenesis-cancel="1"
                   data-appgenesis-cancel-target="settings-menu-edit-card"
-                  data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                  data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                  data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                  data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                 >Cancelar</button>
               </div>
               {% endif %}
@@ -1500,7 +1521,7 @@
             <div class="admin-subsection">
               <h3>Campos disponíveis</h3>
               {% if settings_process_visible_field_rows %}
-              <table>
+              <table id="settings-process-fields-table">
                 <thead>
                   <tr>
                     <th>Ordem</th>
@@ -1528,6 +1549,7 @@
                   {% endfor %}
                 </tbody>
               </table>
+              <div id="settings-process-fields-limiter" class="table-limiter"></div>
               {% else %}
               <p class="empty">Sem campos definidos para este processo.</p>
               {% endif %}
@@ -1571,6 +1593,7 @@
 
                   <div data-process-fields-config-hidden-container></div>
 
+                  {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1 process-fields-config-editor-v1">
                     <div data-process-fields-config-editor-block class="configurable-items-editor-grid-v1 process-fields-config-editor-grid-v1 process-fields-picker-row-v4 process-fields-config-editor-row-v5">
                       <div class="field">
@@ -1617,18 +1640,28 @@
                             data-appgenesis-cancel="1"
                             data-process-fields-config-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                            data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
                     </div>
                   </div>
+                  {% endcall %}
 
-                  <div class="configurable-items-list-v1 process-fields-config-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Campos configurados</h4>
-                      <span class="configurable-items-total-v1" data-process-fields-config-total-label>0 campos</span>
+                  {% call render_configurable_list_card('settings-process-fields-config-list-card', 'Campos configurados', '+ Configurar campo', "[data-process-fields-config-manager-v1='1']") %}
+                  <div class="process-fields-config-created-v1">
+                    <div class="configurable-items-list-card-toolbar-v1">
+                      <label class="appgenesis-card-search-v1">
+                        <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                        <input
+                          type="search"
+                          placeholder="Pesquisar..."
+                          data-configurable-search
+                          aria-label="Pesquisar campos configurados"
+                        >
+                      </label>
+                      <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-fields-config-total-label>0 campos</span>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -1650,18 +1683,9 @@
                       style="display: none;"
                     >Sem campos configurados.</p>
 
-                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appgenesis-load-more-page-size-v1">
-                        <select data-process-fields-config-page-size>
-                          <option value="5" selected>5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                        </select>
-                        <span>entradas por página</span>
-                      </div>
-                      <div class="appgenesis-load-more-status-v1" data-process-fields-config-pagination></div>
-                    </div>
+                    {{ render_configurable_items_pagination_footer("data-process-fields-config-page-size", "data-process-fields-config-pagination") }}
                   </div>
+                  {% endcall %}
                 </div>
               </form>
               {% else %}
@@ -1700,6 +1724,7 @@
 
                   <div data-process-quantity-fields-hidden-container></div>
 
+                  {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1 process-quantity-fields-editor-v1">
                     <div class="configurable-items-editor-grid-v1 process-quantity-fields-editor-grid-v1">
                       <input type="hidden" data-process-quantity-editor-key>
@@ -1759,17 +1784,18 @@
                             data-appgenesis-cancel="1"
                             data-process-quantity-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                            data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
                     </div>
                   </div>
+                  {% endcall %}
 
+                  {% call render_configurable_list_card('settings-process-quantity-fields-list-card', 'Regras de quantidade', '+ Criar regra', "[data-process-quantity-fields-manager-v1='1']") %}
                   <div class="configurable-items-list-v1 process-quantity-fields-created-v1">
                     <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Regras criadas</h4>
                       <div class="configurable-items-list-head-actions-v1">
                         <label class="appgenesis-card-search-v1">
                           <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
@@ -1807,19 +1833,9 @@
                       style="display: none;"
                     >Sem regras criadas.</p>
 
-                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appgenesis-load-more-page-size-v1">
-                        <select data-process-quantity-page-size>
-                          <option value="5" selected>5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                        </select>
-                        <span>entradas por página</span>
-                      </div>
-
-                      <div class="appgenesis-load-more-status-v1" data-process-quantity-pagination></div>
-                    </div>
+                    {{ render_configurable_items_pagination_footer("data-process-quantity-page-size", "data-process-quantity-pagination") }}
                   </div>
+                  {% endcall %}
                 </div>
               </form>
             </div>
@@ -1827,17 +1843,16 @@
 
           <div id="settings-tab-lista" class="process-edit-pane {% if settings_edit_active_tab == 'lista' %}active{% endif %}" data-process-edit-pane="lista">
             <div class="admin-subsection process-lists-panel-v8" id="settings-process-lists-card">
-              <h3>Listas</h3>
-                            <p class="muted process-tab-description-v1">Crie listas reutilizáveis para usar no tipo de campo Lista.</p>
-<form method="post" action="/settings/menu/process-lists" data-process-lists-manager-v1="1">
+              <h3>Listas reutilizáveis</h3>
+              <p class="muted process-tab-description-v1">Crie e gira listas para utilizar em campos do tipo Lista.</p>
+              <form method="post" action="/settings/menu/process-lists" data-process-lists-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
                 <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
                 <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
-                <input type="hidden" name="process_list_columns_configured" value="1">
+                <input type="hidden" name="process_list_columns_configured" value="0">
 
-                <div class="configurable-items-manager-v1 process-lists-manager-v1" data-process-list-reusable-manager>
-                  <h4>Listas reutilizáveis</h4>
+                <div class="configurable-items-manager-v1 process-lists-manager-v1" data-process-list-reusable-manager data-entity-number="{{ selected_entity_number }}">
                   <div class="configurable-items-hidden-v1" data-process-lists-legacy-container>
                     {% set process_lists = settings_edit_data.process_lists|default([]) %}
                     {% for process_list in process_lists %}
@@ -1848,6 +1863,7 @@
                       <input type="hidden" name="process_list_items_csv" value="{{ process_list.items_csv }}" disabled>
                       <input type="hidden" name="process_list_source_menu_key" value="{{ process_list.source_menu_key|default('') }}" disabled>
                       <input type="hidden" name="process_list_source_subprocess_key" value="{{ process_list.source_subprocess_key|default('') }}" disabled>
+                      <input type="hidden" name="process_list_status" value="{{ process_list.status|default('ativo') }}" disabled>
                     </div>
                     {% endfor %}
                   </div>
@@ -1914,6 +1930,26 @@
                         </select>
                       </div>
 
+                      <div class="field">
+                        <label for="process-list-editor-entity">Entidade</label>
+                        <input
+                          id="process-list-editor-entity"
+                          type="text"
+                          value="{{ selected_entity_number }}"
+                          readonly
+                          disabled
+                          class="readonly-field"
+                        >
+                      </div>
+
+                      <div class="field">
+                        <label for="process-list-editor-status">Estado</label>
+                        <select id="process-list-editor-status" data-process-list-editor-status>
+                          <option value="ativo">Ativo</option>
+                          <option value="inativo">Inativo</option>
+                        </select>
+                      </div>
+
                       <div class="field full">
                         <div class="form-action-row">
                           <button
@@ -1927,8 +1963,8 @@
                             data-appgenesis-cancel="1"
                             data-process-list-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                            data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
@@ -1961,6 +1997,8 @@
                           <th>Conteúdo da lista</th>
                           <th>Menu</th>
                           <th>Subprocesso</th>
+                          <th>Entidade</th>
+                          <th>Estado</th>
                           <th class="configurable-items-actions-col-v1">Ações</th>
                         </tr>
                       </thead>
@@ -1974,119 +2012,7 @@
                       style="display: none;"
                     >Sem listas criadas.</p>
 
-                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appgenesis-load-more-page-size-v1">
-                        <select data-process-lists-page-size>
-                          <option value="5" selected>5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                        </select>
-                        <span>entradas por página</span>
-                      </div>
-
-                      <div class="appgenesis-load-more-status-v1" data-process-lists-pagination></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="configurable-items-manager-v1 process-list-columns-manager-v1" data-process-list-columns-manager>
-                  <h4>Colunas da listagem do processo</h4>
-
-                  <div class="configurable-items-hidden-v1" data-process-list-columns-legacy-container>
-                    {% for column in settings_edit_data.process_list_columns|default([]) %}
-                    <div data-process-list-column-row>
-                      <input type="hidden" name="process_list_column_key" value="{{ column.key }}" disabled>
-                      <input type="hidden" name="process_list_column_label" value="{{ column.label }}" disabled>
-                      <input type="hidden" name="process_list_column_field_key" value="{{ column.field_key }}" disabled>
-                      <input type="hidden" name="process_list_column_source_kind" value="{{ column.source_kind }}" disabled>
-                      <input type="hidden" name="process_list_column_always_visible" value="{{ '1' if column.always_visible else '0' }}" disabled>
-                      <input type="hidden" name="process_list_column_responsive_priority" value="{{ column.responsive_priority|default(0) }}" disabled>
-                    </div>
-                    {% endfor %}
-                  </div>
-
-                  <div data-process-list-columns-hidden-container></div>
-
-                  <div class="configurable-items-editor-v1 process-list-columns-editor-v1">
-                    <div data-process-list-column-editor-block class="configurable-items-editor-grid-v1 process-list-columns-editor-grid-v1">
-                      <input type="hidden" data-process-list-column-editor-key>
-                      <input type="hidden" value="field" data-process-list-column-editor-source-kind>
-
-                      <div class="field">
-                        <label for="process-list-column-field">Campo da coluna</label>
-                        <select id="process-list-column-field" data-process-list-column-editor-field>
-                          <option value="">Selecione</option>
-                          {% for field in settings_process_select_options %}
-                          <option value="{{ field.key }}">{{ field.label }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-
-                      <div class="field">
-                        <label for="process-list-column-label">Nome da coluna</label>
-                        <input id="process-list-column-label" type="text" maxlength="80" data-process-list-column-editor-label>
-                      </div>
-
-                      <div class="field">
-                        <label for="process-list-column-priority">Prioridade responsiva</label>
-                        <input id="process-list-column-priority" type="number" min="0" max="99" value="0" data-process-list-column-editor-priority>
-                      </div>
-
-                      <div class="field process-list-column-checkbox-v1">
-                        <label>
-                          <input type="checkbox" data-process-list-column-editor-always-visible>
-                          Sempre visível
-                        </label>
-                      </div>
-
-                      <div class="field full">
-                        <div class="form-action-row">
-                          <button type="button" class="action-btn" data-process-list-column-editor-submit>Guardar</button>
-                          <button
-                            type="button"
-                            class="action-btn-cancel"
-                            data-appgenesis-cancel="1"
-                            data-process-list-column-editor-cancel
-                            data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
-                          >Cancelar</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="configurable-items-list-v1 process-list-columns-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Colunas criadas</h4>
-                      <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-list-columns-total-label>0 colunas</span>
-                    </div>
-                    <div class="configurable-items-table-wrap-v1">
-                      <table class="configurable-items-table-v1" data-process-list-columns-table>
-                        <thead>
-                          <tr>
-                            <th>Campo da coluna</th>
-                            <th>Nome da coluna</th>
-                            <th>Sempre visível</th>
-                            <th>Prioridade</th>
-                            <th class="configurable-items-actions-col-v1">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody data-process-list-columns-table-body></tbody>
-                      </table>
-                    </div>
-                    <p class="configurable-items-empty-v1" data-process-list-columns-empty style="display: none;">Sem colunas criadas.</p>
-                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appgenesis-load-more-page-size-v1">
-                        <select data-process-list-columns-page-size>
-                          <option value="5" selected>5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                        </select>
-                        <span>entradas por página</span>
-                      </div>
-                      <div class="appgenesis-load-more-status-v1" data-process-list-columns-pagination></div>
-                    </div>
+                    {{ render_configurable_items_pagination_footer("data-process-lists-page-size", "data-process-lists-pagination") }}
                   </div>
                 </div>
               </form>
@@ -2120,6 +2046,7 @@
 
                   <div data-process-subsequent-fields-hidden-container></div>
 
+                  {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1 process-subsequent-fields-editor-v1">
                     <div data-process-subsequent-field-editor-block class="configurable-items-editor-grid-v1 process-subsequent-fields-editor-grid-v1">
                       <input type="hidden" data-process-subsequent-field-editor-key>
@@ -2168,29 +2095,28 @@
                             data-appgenesis-cancel="1"
                             data-process-subsequent-field-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                            data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
                     </div>
                   </div>
+                  {% endcall %}
 
-                  <div class="configurable-items-list-v1 process-subsequent-fields-created-v1">
-                    <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Campos subsequentes criados</h4>
-                      <div class="configurable-items-list-head-actions-v1">
-                        <label class="appgenesis-card-search-v1">
-                          <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
-                          <input
-                            type="search"
-                            placeholder="Pesquisar..."
-                            data-configurable-search
-                            aria-label="Pesquisar campos subsequentes criados"
-                          >
-                        </label>
-                        <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-subsequent-fields-total-label>0 campos subsequentes</span>
-                      </div>
+                  {% call render_configurable_list_card('settings-process-subsequent-fields-list-card', 'Campos subsequentes criados', 'Criar campo subsequente', "[data-process-subsequent-fields-manager-v1='1']") %}
+                  <div class="process-subsequent-fields-created-v1">
+                    <div class="configurable-items-list-card-toolbar-v1">
+                      <label class="appgenesis-card-search-v1">
+                        <span class="appgenesis-card-search-icon-v1" aria-hidden="true">&#8981;</span>
+                        <input
+                          type="search"
+                          placeholder="Pesquisar..."
+                          data-configurable-search
+                          aria-label="Pesquisar campos subsequentes criados"
+                        >
+                      </label>
+                      <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-subsequent-fields-total-label>0 campos subsequentes</span>
                     </div>
 
                     <div class="configurable-items-table-wrap-v1">
@@ -2214,19 +2140,9 @@
                       style="display: none;"
                     >Sem campos subsequentes criados.</p>
 
-                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appgenesis-load-more-page-size-v1">
-                        <select data-process-subsequent-fields-page-size>
-                          <option value="5" selected>5</option>
-                          <option value="10">10</option>
-                          <option value="20">20</option>
-                        </select>
-                        <span>entradas por página</span>
-                      </div>
-
-                      <div class="appgenesis-load-more-status-v1" data-process-subsequent-fields-pagination></div>
-                    </div>
+                    {{ render_configurable_items_pagination_footer("data-process-subsequent-fields-page-size", "data-process-subsequent-fields-pagination") }}
                   </div>
+                  {% endcall %}
                 </div>
               </form>
             </div>
@@ -2282,6 +2198,7 @@
 
                   <div data-additional-fields-hidden-container></div>
 
+                  {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1">
 <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
                       <div class="field">
@@ -2473,17 +2390,18 @@
                             data-appgenesis-cancel="1"
                             data-additional-field-editor-cancel
                             data-appgenesis-cancel-target="settings-menu-edit-card"
-                            data-appgenesis-cancel-return-target="#settings-menu-edit-card"
-                            data-appgenesis-cancel-return-url="{{ settings_edit_return_url }}"
+                            data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                            data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
                           >Cancelar</button>
                         </div>
                       </div>
                     </div>
                   </div>
+                  {% endcall %}
 
+                  {% call render_configurable_list_card('settings-process-additional-fields-list-card', 'Campos adicionais', '+ Criar campo adicional', "[data-process-additional-fields-manager-v3='1']") %}
                   <div class="configurable-items-list-v1">
                     <div class="configurable-items-list-head-v1">
-                      <h4 class="configurable-items-list-title-v1">Campos criados</h4>
                       <div class="configurable-items-list-head-actions-v1">
                         <label class="appgenesis-card-search-v1">
                           <span class="appgenesis-card-search-icon-v1" aria-hidden="true">⌕</span>
@@ -2494,6 +2412,7 @@
                             aria-label="Pesquisar campos criados"
                           >
                         </label>
+                        <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-configurable-total-label>0 campos</span>
                       </div>
                     </div>
 
@@ -2514,20 +2433,9 @@
                       style="display: none;"
                     >Sem campos criados.</p>
 
-                    <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
-                      <div class="appgenesis-load-more-page-size-v1">
-                        <select
-                          id="process-additional-fields-page-size"
-                          data-configurable-page-size
-                        ></select>
-                        <span>entradas por página</span>
-                      </div>
-                      <div
-                        class="appgenesis-load-more-status-v1"
-                        data-configurable-pagination
-                      ></div>
-                    </div>
+                    {{ render_configurable_items_pagination_footer("data-configurable-page-size", "data-configurable-pagination", page_size_id="process-additional-fields-page-size", include_options=false) }}
                   </div>
+                  {% endcall %}
                 </div>
               </form>
               <form
@@ -2841,11 +2749,11 @@
   <script src="/static/js/modules/debug_flicker_v1.js?v=20260627-flicker-debug-v1"></script>
   <script src="/static/js/modules/appgenesis_dialog_v1.js?v=20260704-dialog-v1"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260702-debug-log-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260701-time-type-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260712-source-subprocess-v1"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260630-core-migration-v1"></script>
-  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260630-configurable-core-v1"></script>
+  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-invite-link-header-v1"></script>
   <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
@@ -2870,6 +2778,6 @@
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
   <script src="/static/js/modules/sidebar_sections_autosave_v1.js?v=20260430-sidebar-sections-v1a-no-refresh"></script>
   <script src="/static/js/modules/sidebar_global_refresh_v1.js?v=20260706-stop-on-submit-capture-v2"></script>
-  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260629-edit-mode-options-v1"></script>
+  <script src="/static/js/modules/process_fields_config_manager_v7.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/user_entity_selector_v1.js?v=20260623-user-entity-selector-v1"></script>
 {% endblock %}

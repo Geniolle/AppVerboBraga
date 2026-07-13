@@ -25,6 +25,7 @@ def _build_driver_v1():
     options = webdriver.ChromeOptions()
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1440,1200")
+    options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
     try:
         return webdriver.Chrome(options=options)
     except WebDriverException as exc:
@@ -83,9 +84,32 @@ def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
         )
         assert any(
                 "configurable_items_manager_v1.css"
-                "?v=20260712-process-lists-source-subprocess-v1" in url
+                "?v=20260712-process-lists-entity-number-v1" in url
             for url in stylesheet_urls
         )
+    finally:
+        driver.quit()
+
+
+def test_process_lists_entity_field_shows_only_entity_number_in_real_browser() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        for width in (1920, 1366, 1024, 768):
+            driver.set_window_size(width, 1200)
+            _open_lists_editor_v1(driver, wait)
+
+            entity_input = driver.find_element(By.ID, "process-list-editor-entity")
+            entity_value = entity_input.get_attribute("value").strip()
+
+            assert entity_value != ""
+            assert entity_value.isdigit(), (width, entity_value)
+
+            assert not driver.find_elements(
+                By.CSS_SELECTOR, "[data-process-list-columns-manager]"
+            )
+            assert "Colunas da listagem do processo" not in driver.page_source
     finally:
         driver.quit()
 
@@ -155,23 +179,24 @@ def test_create_reusable_list_reads_visible_editor_values() -> None:
         column_diagnostics = driver.execute_script(
             """
             const form = document.querySelector("form[data-process-lists-manager-v1='1']");
-            const manager = form && form.processListColumnsManagerV2;
             return {
-              fieldCount: document.querySelectorAll("[data-process-list-column-editor-field]").length,
-              labelCount: document.querySelectorAll("[data-process-list-column-editor-label]").length,
-              submitCount: document.querySelectorAll("[data-process-list-column-editor-submit]").length,
-              managerFieldReady: Boolean(manager && manager.elements.editorField),
-              managerLabelReady: Boolean(manager && manager.elements.editorLabel)
+              managerAbsent: document.querySelector("[data-process-list-columns-manager]") === null,
+              sectionTitleAbsent: !document.body.innerHTML.includes("Colunas da listagem do processo"),
+              managerNotInitialized: !form || form.processListColumnsManagerV2 === undefined
             };
             """
         )
         assert column_diagnostics == {
-            "fieldCount": 1,
-            "labelCount": 1,
-            "submitCount": 1,
-            "managerFieldReady": True,
-            "managerLabelReady": True,
+            "managerAbsent": True,
+            "sectionTitleAbsent": True,
+            "managerNotInitialized": True,
         }
+        assert not [
+            entry
+            for entry in driver.get_log("browser")
+            if entry.get("level") == "SEVERE"
+            and "favicon.ico" not in entry.get("message", "")
+        ]
 
         submit_button = driver.find_element(
             By.CSS_SELECTOR, "[data-process-list-editor-submit]"
@@ -188,9 +213,17 @@ def test_create_reusable_list_reads_visible_editor_values() -> None:
 
         assert "Informe o nome da lista." not in messages
         _open_lists_editor_v1(driver, wait)
-        assert "Lista teste" in driver.find_element(
-            By.CSS_SELECTOR, "[data-process-lists-table-body]"
-        ).text
+        table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        assert "Lista teste" in table_body.text
+        row = next(row for row in table_body.find_elements(By.TAG_NAME, "tr") if "Lista teste" in row.text)
+        entity_cell_value = driver.execute_script(
+            """
+            const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+            return form ? form.querySelector("[data-process-list-reusable-manager]").dataset.entityNumber : null;
+            """
+        )
+        assert entity_cell_value.isdigit()
+        assert entity_cell_value in row.text
     finally:
         try:
             _remove_test_list_v1(driver, wait)

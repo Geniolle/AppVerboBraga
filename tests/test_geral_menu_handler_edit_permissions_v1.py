@@ -212,13 +212,12 @@ def test_edit_owner_success():
     assert row["menu_label"] == "Processo A Editado"
 
 
-def test_edit_success_redirect_always_targets_editor_card_ignoring_form_redirect_target():
+def test_edit_success_redirect_honors_form_redirect_target_when_not_the_stay_target():
     """
-    Comportamento estranho documentado (nao corrigido): o redirect de sucesso usa
-    _build_settings_editor_stay_redirect_url_v1, que fixa internamente
-    redirect_target="#settings-menu-edit-card" -- o valor de redirect_target vindo
-    do formulario e' ignorado no caminho de sucesso (mas e' respeitado nos
-    caminhos de erro).
+    Guardar na aba Geral deve devolver o utilizador ao alvo submetido pelo formulario
+    (a lista de origem) sempre que esse alvo nao for o card do proprio editor -- apenas
+    o valor sentinela "#settings-menu-edit-card" faz o redirect permanecer no editor
+    (ver test_edit_owner_success).
     """
     SessionLocal = _build_session_factory()
     _seed_menu(SessionLocal, menu_key="processo_a", menu_label="Processo A")
@@ -230,7 +229,10 @@ def test_edit_success_redirect_always_targets_editor_card_ignoring_form_redirect
     )
 
     assert response.status_code == 303
-    assert "target=settings-menu-edit-card" in response.headers["location"]
+    location = response.headers["location"]
+    assert "target=admin-account-status-card" in location
+    assert "settings_edit_key" not in location
+    assert "settings_action" not in location
 
 
 def test_edit_menu_not_found_redirect():

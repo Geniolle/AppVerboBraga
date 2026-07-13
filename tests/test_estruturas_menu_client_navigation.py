@@ -480,17 +480,17 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
 
         wait.until(lambda drv: "settings_edit_key" not in _current_href_v1(drv))
         _assert_editor_closed_and_list_visible_v1(driver, wait)
-        # O parametro "success" e' removido do URL logo no DOMContentLoaded por
-        # appgenesisAutoDismissFlashMessages_v1 (comportamento existente e intencional, para nao
-        # reexibir a mensagem num refresh) -- por isso a confirmacao de feedback verifica o
-        # alerta ".alert.ok" renderizado pelo backend, nao o URL.
-        success_alerts = driver.find_elements(By.CSS_SELECTOR, ".alert.ok")
-        assert success_alerts, (
-            "Mensagem de sucesso do Guardar nao foi exibida apos o redirect"
+        # No subprocesso "Sessoes > Menu" o alerta inline ".alert.ok" e' deliberadamente
+        # suprimido (ver _suppress_inline_success_feedback em macros/admin_subprocess.html) --
+        # o feedback de sucesso desse fluxo e' promovido a um toast global lido do query
+        # param "success" pelo runtime (enhanceFeedbackToasts), por isso a confirmacao aqui
+        # verifica o toast, nao o alerta inline.
+        success_toast = wait.until(
+            lambda drv: drv.find_element(
+                By.CSS_SELECTOR, ".appgenesis-toast-v1.appgenesis-toast-success-v1"
+            )
         )
-        assert "sucesso" in success_alerts[0].text.strip().lower(), success_alerts[
-            0
-        ].text
+        assert "sucesso" in success_toast.text.strip().lower(), success_toast.text
     finally:
         driver.quit()
 

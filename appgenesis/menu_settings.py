@@ -138,6 +138,7 @@ from appgenesis.services.process_settings.list_service import (
     normalize_menu_process_lists_v2,
     normalize_menu_process_lists_v3,
     normalize_menu_process_lists_v4,
+    normalize_menu_process_lists_v5,
 )
 from appgenesis.services.process_settings.field_service import (
     get_menu_process_default_visible_fields,
@@ -171,16 +172,23 @@ def _normalize_system_menu_label(menu_key: Any, menu_label: Any) -> str:
     return clean_menu_label
 
 
-def get_sidebar_menu_settings(session: Session) -> list[dict[str, Any]]:
+def get_sidebar_menu_settings(
+    session: Session, active_entity_id: int | None = None
+) -> list[dict[str, Any]]:
     ensure_sidebar_menu_settings_defaults(session)
     defaults_by_key = _sidebar_menu_defaults_by_key()
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
     rows = session.execute(
         text(
             """
             SELECT menu_key, menu_label, is_active, is_deleted, menu_config
             FROM sidebar_menu_settings
+            WHERE entity_id = :entity_id
             """
-        )
+        ),
+        {"entity_id": resolved_entity_id},
     ).all()
     db_by_key = {
         _normalize_menu_key(row.menu_key): row
@@ -878,7 +886,7 @@ def update_sidebar_menu_process_lists(
         return False, "Menu não encontrado."
 
     menu_config = _parse_menu_config(target_row.get("menu_config"))
-    existing_lists = normalize_menu_process_lists_v4(menu_config.get("process_lists"))
+    existing_lists = normalize_menu_process_lists_v5(menu_config.get("process_lists"))
     legacy_automatic_keys = {
         str(item.get("key") or "")
         for item in existing_lists
@@ -888,10 +896,12 @@ def update_sidebar_menu_process_lists(
         item["menu_key"]
         for item in get_process_list_source_menus_v1(session, int(resolved_entity_id))
     }
-    sidebar_menu_settings = get_sidebar_menu_settings(session)
+    sidebar_menu_settings = get_sidebar_menu_settings(
+        session, active_entity_id=int(resolved_entity_id)
+    )
     source_subprocess_options_cache: dict[str, list[dict[str, str]]] = {}
 
-    normalized_lists = normalize_menu_process_lists_v4(raw_lists)
+    normalized_lists = normalize_menu_process_lists_v5(raw_lists)
 
     for process_list in normalized_lists:
         if process_list.get("field_type") != "automatic":
@@ -1340,16 +1350,25 @@ if "_original_get_sidebar_menu_settings_for_lists_v1" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v1 = get_sidebar_menu_settings
 
 
-def get_sidebar_menu_settings_v2(session: Session) -> list[dict[str, Any]]:
-    settings = _original_get_sidebar_menu_settings_for_lists_v1(session)
+def get_sidebar_menu_settings_v2(
+    session: Session, active_entity_id: int | None = None
+) -> list[dict[str, Any]]:
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+    settings = _original_get_sidebar_menu_settings_for_lists_v1(
+        session, active_entity_id=resolved_entity_id
+    )
 
     rows = session.execute(
         text(
             """
             SELECT menu_key, menu_config
             FROM sidebar_menu_settings
+            WHERE entity_id = :entity_id
             """
-        )
+        ),
+        {"entity_id": resolved_entity_id},
     ).all()
 
     config_by_key = {
@@ -1377,16 +1396,25 @@ if "_original_get_sidebar_menu_settings_for_lists_v2" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v2 = get_sidebar_menu_settings
 
 
-def get_sidebar_menu_settings_v3(session: Session) -> list[dict[str, Any]]:
-    settings = _original_get_sidebar_menu_settings_for_lists_v2(session)
+def get_sidebar_menu_settings_v3(
+    session: Session, active_entity_id: int | None = None
+) -> list[dict[str, Any]]:
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+    settings = _original_get_sidebar_menu_settings_for_lists_v2(
+        session, active_entity_id=resolved_entity_id
+    )
 
     rows = session.execute(
         text(
             """
             SELECT menu_key, menu_config
             FROM sidebar_menu_settings
+            WHERE entity_id = :entity_id
             """
-        )
+        ),
+        {"entity_id": resolved_entity_id},
     ).all()
 
     config_by_key = {
@@ -1414,16 +1442,25 @@ if "_original_get_sidebar_menu_settings_for_lists_v3" not in globals():
     _original_get_sidebar_menu_settings_for_lists_v3 = get_sidebar_menu_settings
 
 
-def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
-    settings = _original_get_sidebar_menu_settings_for_lists_v3(session)
+def get_sidebar_menu_settings_v4(
+    session: Session, active_entity_id: int | None = None
+) -> list[dict[str, Any]]:
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+    settings = _original_get_sidebar_menu_settings_for_lists_v3(
+        session, active_entity_id=resolved_entity_id
+    )
 
     rows = session.execute(
         text(
             """
             SELECT menu_key, menu_config
             FROM sidebar_menu_settings
+            WHERE entity_id = :entity_id
             """
-        )
+        ),
+        {"entity_id": resolved_entity_id},
     ).all()
 
     config_by_key = {
@@ -1435,7 +1472,7 @@ def get_sidebar_menu_settings_v4(session: Session) -> list[dict[str, Any]]:
     for item in settings:
         clean_key = _normalize_menu_key(item.get("key"))
         menu_config = config_by_key.get(clean_key, {})
-        process_lists = normalize_menu_process_lists_v4(
+        process_lists = normalize_menu_process_lists_v5(
             menu_config.get("process_lists")
         )
         process_subsequent_fields = normalize_menu_process_subsequent_fields(

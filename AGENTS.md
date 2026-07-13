@@ -1418,3 +1418,79 @@ Nos processos dinâmicos e subprocessos admin que renderizam campos vindos de co
 6. Listas manuais e automáticas devem usar resolver reutilizável central, sem hardcode por processo ou por campo.
 7. Se a definição completa do campo existir em `Campos adicionais`, o renderer deve respeitá-la antes de qualquer fallback legado.
 <!-- APPGENESIS_DYNAMIC_RENDER_FIELDS_RULE_V1_END -->
+
+## Estratégia proporcional de validação
+
+Os testes devem ser proporcionais ao risco e ao escopo da alteração.
+
+### Durante a implementação
+
+1. Executar primeiro verificações estáticas:
+   - node --check para JavaScript;
+   - python -m py_compile para Python;
+   - git diff --check.
+
+2. Executar somente os testes diretamente relacionados com os ficheiros e fluxos alterados.
+
+3. Durante a correção, usar `pytest -x` para parar na primeira falha.
+
+4. Depois da correção, executar o conjunto focado completo sem `-x`.
+
+5. Não executar a suíte completa a cada subetapa.
+
+### Navegador
+
+Executar Selenium somente quando houver alteração em:
+
+- comportamento JavaScript;
+- HTML;
+- navegação;
+- abertura/fecho de componentes;
+- layout ou responsividade.
+
+Não repetir Selenium quando o código funcional relacionado não mudou.
+
+Para mudanças funcionais sem layout, usar um viewport desktop representativo.
+
+Para mudanças visuais, validar desktop e mobile.
+
+Usar quatro breakpoints somente na conclusão de uma refatoração visual ampla.
+
+### Suíte completa
+
+Executar a suíte completa somente:
+
+- no final de uma etapa grande;
+- antes de preparar commit/release;
+- após alterações em core compartilhado;
+- após alterações de navegação, autenticação, permissões ou multi-tenant.
+
+### Testes preexistentes ou instáveis
+
+Não investigar repetidamente testes conhecidos como preexistentes e fora do escopo.
+
+Registar:
+
+- nome do teste;
+- erro;
+- ficheiro envolvido;
+- motivo pelo qual não está relacionado com o diff.
+
+Não corrigir nem bloquear a tarefa sem relação comprovada.
+
+### Processos presos
+
+- Não deixar pytest ou Selenium executar indefinidamente.
+- Verificar o progresso quando ultrapassar o tempo habitual do grupo.
+- Encerrar somente o processo pertencente à tarefa quando estiver comprovadamente preso.
+- Não executar grupos de integração/Selenium em paralelo quando compartilham banco ou navegador.
+
+### Critério de parada
+
+Quando os testes focados, verificações estáticas e a validação necessária do navegador passarem:
+
+- atualizar AGENT_HANDOFF.md;
+- apresentar o relatório;
+- parar.
+
+Não continuar criando testes ou investigando áreas fora do escopo sem autorização.
