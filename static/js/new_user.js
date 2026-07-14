@@ -4824,6 +4824,9 @@ function setupProcessAdditionalFieldsManagerV2() {
     return;
   }
 
+  // Manager V2 desativado: o fluxo canónico e' o V3.
+  return;
+
   const containerEl = document.getElementById("process-additional-fields-container");
   const editorKeyEl = document.getElementById("process-additional-field-editor-key");
   const editorLabelEl = document.getElementById("process-additional-field-editor-label");
@@ -5175,8 +5178,6 @@ function setupProcessAdditionalFieldsManagerV2() {
 
   addButtonEl.addEventListener("click", handleAddAdditionalFieldV2);
   clearButtonEl.addEventListener("click", handleClearAdditionalFieldV2);
-  window.__appgenesisAddAdditionalFieldV2 = handleAddAdditionalFieldV2;
-  window.__appgenesisClearAdditionalFieldV2 = handleClearAdditionalFieldV2;
 
   editorTypeEl.addEventListener("change", () => {
     syncEditorState();
@@ -5829,19 +5830,6 @@ logAppGenesisProcessEditorDebugV1("page_load:after_setup_snapshot", {
   })()
 });
 setupProcessFieldsBuilder();
-setupProcessAdditionalFieldsManagerV2_guard_v1();
-window.setTimeout(() => {
-  try {
-    setupProcessAdditionalFieldsManagerV2_guard_v1();
-  } catch (_error) {
-  }
-}, 150);
-window.setTimeout(() => {
-  try {
-    setupProcessAdditionalFieldsManagerV2_guard_v1();
-  } catch (_error) {
-  }
-}, 600);
 setupGeneratedInviteLinkCopy();
 setupCreateUserGenerateLinkShortcut();
 relocateUtilizadorInviteLinkButtonV1();
@@ -5940,20 +5928,6 @@ function buildMenuItemUniqueKey_v1(item) {
   const label = String(item && item.label ? item.label : "").trim();
 
   return `${target}::${sectionKey}::${profileSection}::${label}`;
-}
-
-//###################################################################################
-// (99) COMPATIBILIDADE - BLOQUEIO DO MANAGER V2 QUANDO O V3 ESTIVER ATIVO
-//###################################################################################
-
-function setupProcessAdditionalFieldsManagerV2_guard_v1() {
-  if (document.querySelector("[data-process-additional-fields-manager-v3='1']")) {
-    return;
-  }
-
-  if (typeof setupProcessAdditionalFieldsManagerV2 === "function") {
-    setupProcessAdditionalFieldsManagerV2();
-  }
 }
 
 // APPGENESIS_MEU_PERFIL_QUANTITY_RENDERER_V1_START

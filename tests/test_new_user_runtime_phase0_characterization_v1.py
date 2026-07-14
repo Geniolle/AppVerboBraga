@@ -37,16 +37,17 @@ def test_new_user_post_save_runtime_keeps_current_compatibility_layers_present()
 
 
 ####################################################################################
-# (3) CAMPO ADICIONAL: O LEGADO V2 AINDA EXISTE MAS SO PODE EXECUTAR ATRAVES DO GUARD
+# (3) CAMPO ADICIONAL: O LEGADO V2 FOI DESLIGADO E O BOOTSTRAP NAO PODE MAIS
+# INVOCAR O GUARD DE COEXISTENCIA.
 ####################################################################################
 
-def test_new_user_legacy_additional_fields_v2_is_still_guarded() -> None:
+def test_new_user_legacy_additional_fields_v2_is_removed_from_bootstrap() -> None:
     script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
 
-    assert "function setupProcessAdditionalFieldsManagerV2()" in script_text
-    assert "function setupProcessAdditionalFieldsManagerV2_guard_v1()" in script_text
-    assert "setupProcessAdditionalFieldsManagerV2_guard_v1();" in script_text
-    assert 'document.querySelector("[data-process-additional-fields-manager-v3=\'1\']")' in script_text
+    assert "setupProcessAdditionalFieldsManagerV2_guard_v1" not in script_text
+    assert "setupProcessAdditionalFieldsManagerV2();" not in script_text
+    assert "window.__appgenesisAddAdditionalFieldV2" not in script_text
+    assert "window.__appgenesisClearAdditionalFieldV2" not in script_text
 
 
 ####################################################################################
