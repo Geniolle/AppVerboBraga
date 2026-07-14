@@ -9617,3 +9617,166 @@ window.addEventListener("popstate", function () {
   } catch (_) {}
 });
 // APPGENESIS_ADMIN_POPSTATE_NAV_V1_END
+
+//###################################################################################
+// (9) ORQUESTRACAO DA PAGINA
+//###################################################################################
+
+const newUserPageBootstrapStateV1 = {
+  initialized: false,
+  references: null,
+  lastContext: null
+};
+
+function collectNewUserDomReferencesV1(root = document) {
+  const scopeRoot = root && typeof root.querySelector === "function" ? root : document;
+
+  return {
+    documentRef: scopeRoot,
+    bodyEl: scopeRoot.body || null,
+    mainEl: typeof scopeRoot.querySelector === "function" ? scopeRoot.querySelector("main") : null,
+    pageRootEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("[data-appgenesis-new-user-page]")
+      : null,
+    shellEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("[data-process-shell]")
+      : null,
+    menuRootEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("[data-process-menu-root]")
+      : null,
+    formEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("form")
+      : null
+  };
+}
+
+function initializeNavigationRuntimeV1(context = {}) {
+  if (context.navigationRuntimeInitialized) {
+    return context;
+  }
+
+  context.navigationRuntimeInitialized = true;
+  return context;
+}
+
+function initializeProfileRuntimeV1(context = {}) {
+  if (context.profileRuntimeInitialized) {
+    return context;
+  }
+
+  context.profileRuntimeInitialized = true;
+  return context;
+}
+
+function initializeDynamicProcessRuntimeV1(context = {}) {
+  if (context.dynamicProcessRuntimeInitialized) {
+    return context;
+  }
+
+  context.dynamicProcessRuntimeInitialized = true;
+  return context;
+}
+
+function initializeAdminRuntimeV1(context = {}) {
+  if (context.adminRuntimeInitialized) {
+    return context;
+  }
+
+  context.adminRuntimeInitialized = true;
+  return context;
+}
+
+function initializeTableRuntimeV1(context = {}) {
+  if (context.tableRuntimeInitialized) {
+    return context;
+  }
+
+  context.tableRuntimeInitialized = true;
+  return context;
+}
+
+function initializeInviteRuntimeV1(context = {}) {
+  if (context.inviteRuntimeInitialized) {
+    return context;
+  }
+
+  context.inviteRuntimeInitialized = true;
+  return context;
+}
+
+function initializeProcessSettingsRuntimeV1(context = {}) {
+  if (context.processSettingsRuntimeInitialized) {
+    return context;
+  }
+
+  context.processSettingsRuntimeInitialized = true;
+  return context;
+}
+
+function initializePostSaveRuntimeV1(context = {}) {
+  if (context.postSaveRuntimeInitialized) {
+    return context;
+  }
+
+  context.postSaveRuntimeInitialized = true;
+
+  if (typeof appgenesisAutoDismissFlashMessages_v1 === "function") {
+    appgenesisAutoDismissFlashMessages_v1();
+  }
+
+  return context;
+}
+
+function initializeNewUserPageV1() {
+  if (newUserPageBootstrapStateV1.initialized) {
+    return newUserPageBootstrapStateV1.lastContext || newUserPageBootstrapStateV1;
+  }
+
+  const references = collectNewUserDomReferencesV1(document);
+  const context = {
+    bootstrap,
+    documentRef: document,
+    windowRef: window,
+    references
+  };
+
+  initializeNavigationRuntimeV1(context);
+  initializeProfileRuntimeV1(context);
+  initializeDynamicProcessRuntimeV1(context);
+  initializeAdminRuntimeV1(context);
+  initializeTableRuntimeV1(context);
+  initializeInviteRuntimeV1(context);
+  initializeProcessSettingsRuntimeV1(context);
+  initializePostSaveRuntimeV1(context);
+
+  newUserPageBootstrapStateV1.initialized = true;
+  newUserPageBootstrapStateV1.references = references;
+  newUserPageBootstrapStateV1.lastContext = context;
+
+  document.dispatchEvent(
+    new CustomEvent("appgenesis:new-user-page-ready", {
+      detail: context
+    })
+  );
+
+  return context;
+}
+
+window.AppGenesisNewUserPageV1 = Object.freeze({
+  collectNewUserDomReferencesV1,
+  initializeNavigationRuntimeV1,
+  initializeProfileRuntimeV1,
+  initializeDynamicProcessRuntimeV1,
+  initializeAdminRuntimeV1,
+  initializeTableRuntimeV1,
+  initializeInviteRuntimeV1,
+  initializeProcessSettingsRuntimeV1,
+  initializePostSaveRuntimeV1,
+  initializeNewUserPageV1
+});
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeNewUserPageV1, { once: true });
+} else {
+  initializeNewUserPageV1();
+}
