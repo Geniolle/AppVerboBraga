@@ -6,6 +6,11 @@
   "use strict";
 
   const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+  const profileFieldRegistryV1 =
+    window.AppGenesisProfileFieldRegistryV1 &&
+    typeof window.AppGenesisProfileFieldRegistryV1 === "object"
+      ? window.AppGenesisProfileFieldRegistryV1
+      : null;
   const profilePersonalVisibleFields = Array.isArray(bootstrap.profilePersonalVisibleFields)
     ? bootstrap.profilePersonalVisibleFields
       .map((fieldKey) => String(fieldKey || "").trim().toLowerCase())
@@ -24,6 +29,10 @@
   //###################################################################################
 
   function normalizeLookupText(value) {
+    if (profileFieldRegistryV1 && typeof profileFieldRegistryV1.normalizeLookupText === "function") {
+      return profileFieldRegistryV1.normalizeLookupText(value);
+    }
+
     return String(value || "")
       .trim()
       .toLowerCase()
@@ -32,6 +41,10 @@
   }
 
   function getProfileForm() {
+    if (profileFieldRegistryV1 && typeof profileFieldRegistryV1.getProfileForm === "function") {
+      return profileFieldRegistryV1.getProfileForm(document);
+    }
+
     return (
       document.querySelector('form[action="/users/profile/personal"]') ||
       document.querySelector("#perfil-pessoal-card form")
@@ -59,6 +72,14 @@
   }
 
   function getFormFieldByKey(form, fieldKey) {
+    if (profileFieldRegistryV1 && typeof profileFieldRegistryV1.findProfileControl === "function") {
+      const control = profileFieldRegistryV1.findProfileControl(form, fieldKey);
+
+      if (control) {
+        return control.closest ? (control.closest(".field") || control) : control;
+      }
+    }
+
     const keyedField = form.querySelector(`[data-profile-field-key="${fieldKey}"]`);
     if (keyedField) {
       return keyedField.closest(".field") || keyedField;

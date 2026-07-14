@@ -48,6 +48,11 @@ const appGenesisProcessMenuRuntimeV1 =
   typeof window.AppGenesisProcessMenuRuntimeV1 === "object"
     ? window.AppGenesisProcessMenuRuntimeV1
     : null;
+const appGenesisProfileFieldRegistryV1 =
+  window.AppGenesisProfileFieldRegistryV1 &&
+  typeof window.AppGenesisProfileFieldRegistryV1 === "object"
+    ? window.AppGenesisProfileFieldRegistryV1
+    : null;
 const MEU_PERFIL_MENU_KEY = appGenesisProcessKeysRegistryV1
   ? appGenesisProcessKeysRegistryV1.MEU_PERFIL_MENU_KEY
   : "meu_perfil";
@@ -3994,6 +3999,13 @@ function collectCurrentMeuPerfilProcessValues() {
     return valuesByField;
   }
 
+  if (
+    appGenesisProfileFieldRegistryV1 &&
+    typeof appGenesisProfileFieldRegistryV1.collectProfileValues === "function"
+  ) {
+    return appGenesisProfileFieldRegistryV1.collectProfileValues(formEl);
+  }
+
   const fixedFieldMap = {
     full_name: "nome",
     primary_phone: "telefone",
@@ -4093,7 +4105,14 @@ function setupMeuPerfilQuantityRules() {
   formEl.querySelectorAll("[name]").forEach((controlEl) => {
     const rawName = String(controlEl.getAttribute("name") || "").trim();
     let fieldKey = "";
-    if (rawName.startsWith("custom_field__")) {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.resolveFieldKeyFromControlName === "function"
+    ) {
+      fieldKey = normalizeMenuKey(
+        appGenesisProfileFieldRegistryV1.resolveFieldKeyFromControlName(rawName)
+      );
+    } else if (rawName.startsWith("custom_field__")) {
       fieldKey = normalizeMenuKey(rawName.replace(/^custom_field__/, ""));
     } else if (rawName === "full_name") {
       fieldKey = "nome";
@@ -5993,6 +6012,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function resolveQuantityControlNameV1(fieldKey) {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.resolveControlName === "function"
+    ) {
+      return appGenesisProfileFieldRegistryV1.resolveControlName(fieldKey);
+    }
+
     const cleanFieldKey = normalizeMenuKey(fieldKey);
     if (!cleanFieldKey) {
       return "";
@@ -6864,6 +6890,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionFromInputV1() {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizeEditSectionKeyV1(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     const selectors = [
       "input[name='profile_section']",
       "[data-meu-perfil-section-input]",
@@ -6926,6 +6965,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionV1() {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizeEditSectionKeyV1(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     return (
       getCurrentProfileSectionFromInputV1() ||
       getCurrentProfileSectionFromActiveTabV1() ||
@@ -7271,6 +7323,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionKeepProcessV1(form) {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizeKeepProcessKeyV1(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(form || document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     return (
       getSectionFromKnownInputKeepProcessV1() ||
       getSectionFromActiveTabKeepProcessV1() ||
@@ -7555,6 +7620,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionPostSaveV3() {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizePostSaveKeyV3(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     return (
       getProfileSectionFromInputPostSaveV3() ||
       getProfileSectionFromActiveTabPostSaveV3() ||
@@ -8202,6 +8280,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionReturnUrlV4() {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizeReturnUrlKeyV4(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     return (
       getProfileSectionFromInputReturnUrlV4() ||
       getProfileSectionFromActiveTabReturnUrlV4() ||
@@ -8636,6 +8727,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionReturnUrlV6() {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizeReturnUrlKeyV6(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     return (
       getProfileSectionFromInputsReturnUrlV6() ||
       getProfileSectionFromActiveTabReturnUrlV6() ||
@@ -9034,6 +9138,19 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getCurrentProfileSectionSubsequentV1() {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+    ) {
+      const registrySection = normalizeSubsequentKeyV1(
+        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
+      );
+
+      if (registrySection) {
+        return registrySection;
+      }
+    }
+
     const selectors = [
       "input[name='profile_section']",
       "[data-meu-perfil-section-input]",
@@ -9119,6 +9236,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   //###################################################################################
 
   function resolveProfileControlNameSubsequentV1(fieldKey) {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.resolveControlName === "function"
+    ) {
+      return appGenesisProfileFieldRegistryV1.resolveControlName(fieldKey);
+    }
+
     const cleanKey = normalizeSubsequentKeyV1(fieldKey);
 
     if (!cleanKey) {
@@ -9207,6 +9331,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const controlName = resolveProfileControlNameSubsequentV1(cleanKey);
 
     const controls = [];
+
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.findProfileControl === "function"
+    ) {
+      const registryControl = appGenesisProfileFieldRegistryV1.findProfileControl(
+        document.querySelector("#perfil-pessoal-card") || document,
+        cleanKey
+      );
+
+      if (registryControl) {
+        controls.push(registryControl);
+      }
+    }
 
     if (controlName) {
       document.querySelectorAll(
