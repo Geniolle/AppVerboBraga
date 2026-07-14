@@ -107,6 +107,14 @@ function debugTabsLogV1(label, payload = {}) {
   if (!APPGENESIS_DEBUG_TABS_V1) return;
   console.log("[AppGenesis Tabs Debug]", label, payload);
 }
+
+function logMissingNavigationRuntimeV1(moduleName) {
+  if (!APPGENESIS_DEBUG_TABS_V1 || !moduleName) {
+    return;
+  }
+
+  console.warn("[AppGenesis Tabs Debug] navigation runtime missing:", moduleName);
+}
 const dashboardData = bootstrap.dashboardData || {};
 const currentUserPhone = bootstrap.currentUserPhone || "";
 const currentUserAccountStatus = bootstrap.currentUserAccountStatus || "";
@@ -986,8 +994,6 @@ if (
     EMPRESA_MENU_KEY_V1
   });
 }
-const EMPRESA_NATIVE_TARGETS_V1 = new Set(["#empresa-card"]);
-
 function filterProcessExtraMenuItemsV1(dynamicItems) {
   return (Array.isArray(dynamicItems) ? dynamicItems : []).filter((item) => {
     const sectionKey = String(item && item.dynamicProcessSectionKey ? item.dynamicProcessSectionKey : "")
@@ -1126,37 +1132,13 @@ if (initialProfileTab === "morada") {
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_START
 const NATIVE_ADMIN_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.NATIVE_ADMIN_TARGETS_V1
-  : new Set([
-      "#create-entity-card",
-      "#edit-entity-card",
-      "#recent-entities-card",
-      "#inactive-entities-card",
-      "#create-user-card",
-      "#edit-user-card",
-      "#admin-users-created-card",
-      "#inactive-users-card",
-      "#admin-account-create-card",
-      "#admin-account-status-card",
-      "#admin-sidebar-sections-card",
-      "#admin-sidebar-sections-form-card",
-      "#settings-card",
-      "#settings-menu-edit-card"
-    ]);
+  : new Set();
 const ESTRUTURAS_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.ESTRUTURAS_NATIVE_TARGETS_V1
-  : new Set([
-      "#admin-account-create-card",
-      "#admin-account-status-card",
-      "#menu-subprocess-card",
-      "#menu-subprocess-card-active",
-      "#menu-subprocess-card-inactive",
-      "#admin-sidebar-sections-card",
-      "#admin-sidebar-sections-card-active",
-      "#admin-sidebar-sections-card-inactive",
-      "#admin-sidebar-sections-form-card",
-      "#settings-card",
-      "#settings-menu-edit-card"
-    ]);
+  : new Set();
+const EMPRESA_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
+  ? appGenesisAdminTargetRegistryV1.EMPRESA_NATIVE_TARGETS_V1
+  : new Set();
 function normalizeTargetV1(value) {
   if (
     appGenesisProcessKeysRegistryV1 &&
@@ -1173,21 +1155,10 @@ function normalizeTargetV1(value) {
 }
 const AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1
-  : Object.freeze({
-      "#auth-profile": "#auth-profile-card",
-      "#auth-profile-card": "#auth-profile-card",
-      "#auth-profile-active-card": "#auth-profile-card",
-      "#auth-profile-inactive-card": "#auth-profile-card",
-      "#auth-profile-form-card": "#auth-profile-card",
-      "#auth-objeto": "#auth-objeto-card",
-      "#auth-objeto-card": "#auth-objeto-card",
-      "#auth-objeto-active-card": "#auth-objeto-card",
-      "#auth-objeto-inactive-card": "#auth-objeto-card",
-      "#auth-objeto-form-card": "#auth-objeto-card"
-    });
+  : Object.freeze({});
 const AUTH_PROFILE_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.AUTH_PROFILE_NATIVE_TARGETS_V1
-  : new Set(Object.keys(AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1));
+  : new Set();
 function normalizeAuthorizationProfileTargetV1(value) {
   if (
     appGenesisAdminTargetRegistryV1 &&
@@ -1195,7 +1166,8 @@ function normalizeAuthorizationProfileTargetV1(value) {
   ) {
     return appGenesisAdminTargetRegistryV1.normalizeAuthorizationProfileTarget(value);
   }
-  return AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1[normalizeTargetV1(value)] || "";
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.normalizeAuthorizationProfileTarget");
+  return "";
 }
 function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
   if (
@@ -1204,11 +1176,7 @@ function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
   ) {
     return appGenesisAdminTargetRegistryV1.authorizationProfileTargetsMatch(leftTarget, rightTarget);
   }
-  const normalizedLeftTarget = normalizeAuthorizationProfileTargetV1(leftTarget);
-  const normalizedRightTarget = normalizeAuthorizationProfileTargetV1(rightTarget);
-  if (normalizedLeftTarget || normalizedRightTarget) {
-    return normalizedLeftTarget === normalizedRightTarget;
-  }
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.authorizationProfileTargetsMatch");
   return normalizeTargetV1(leftTarget) === normalizeTargetV1(rightTarget);
 }
 function isNativeAdminTargetV1(value) {
@@ -1218,7 +1186,8 @@ function isNativeAdminTargetV1(value) {
   ) {
     return appGenesisAdminTargetRegistryV1.isNativeAdminTarget(value);
   }
-  return NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.isNativeAdminTarget");
+  return false;
 }
 function isNativeTargetForMenuV1(menuKey, value) {
   if (
@@ -1227,55 +1196,7 @@ function isNativeTargetForMenuV1(menuKey, value) {
   ) {
     return appGenesisAdminTargetRegistryV1.isNativeTargetForMenu(menuKey, value);
   }
-  const cleanMenuKey = normalizeMenuKey(menuKey);
-  let cleanTarget = normalizeTargetV1(value);
-
-  if (!cleanTarget) {
-    return false;
-  }
-
-  // Normalize subprocess target suffixes (like -active, -inactive, -form-card)
-  if (cleanTarget.endsWith("-active")) {
-    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 7);
-  } else if (cleanTarget.endsWith("-inactive")) {
-    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 9);
-  } else if (cleanTarget.endsWith("-form-card")) {
-    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 10) + "-card";
-  }
-  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
-  if (normalizedAuthorizationProfileTarget) {
-    cleanTarget = normalizedAuthorizationProfileTarget;
-  }
-
-  if (cleanMenuKey === ADMINISTRATIVO_MENU_KEY_V1) {
-    return NATIVE_ADMIN_TARGETS_V1.has(cleanTarget) || NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
-  }
-
-  if (cleanMenuKey === ESTRUTURAS_MENU_KEY_V1) {
-    return ESTRUTURAS_NATIVE_TARGETS_V1.has(cleanTarget) || ESTRUTURAS_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
-  }
-
-  if (cleanMenuKey === EMPRESA_MENU_KEY_V1) {
-    return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget) || EMPRESA_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
-  }
-
-  if (cleanMenuKey === PERFIL_AUTORIZACAO_MENU_KEY_V1) {
-    return (
-      AUTH_PROFILE_NATIVE_TARGETS_V1.has(cleanTarget) ||
-      AUTH_PROFILE_NATIVE_TARGETS_V1.has(normalizeTargetV1(value))
-    );
-  }
-
-  const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(cleanMenuKey);
-  if (sidebarAdminSubprocessSetting) {
-    return (
-      cleanTarget === sidebarAdminSubprocessSetting.defaultTarget ||
-      cleanTarget === sidebarAdminSubprocessSetting.editTarget ||
-      normalizeTargetV1(value) === sidebarAdminSubprocessSetting.defaultTarget ||
-      normalizeTargetV1(value) === sidebarAdminSubprocessSetting.editTarget
-    );
-  }
-
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.isNativeTargetForMenu");
   return false;
 }
 if (
@@ -3617,42 +3538,8 @@ function getAdminSubprocessKeyByTargetV1(target) {
   ) {
     return appGenesisAdminTargetRegistryV1.getAdminSubprocessKeyByTarget(target);
   }
-  const cleanTarget = normalizeTargetV1(target);
-  const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
-  if (sidebarAdminMenuKey) {
-    const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(sidebarAdminMenuKey);
-    return sidebarAdminSubprocessSetting ? sidebarAdminSubprocessSetting.subprocessKey : "";
-  }
-  const targetMap = {
-    "#create-entity-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#edit-entity-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#recent-entities-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#inactive-entities-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#create-user-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#edit-user-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#admin-users-created-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#inactive-users-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#admin-sidebar-sections-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-form-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-card-active": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-card-inactive": ESTRUTURAS_MENU_KEY_V1,
-    "#settings-card": MENU_SUBPROCESS_KEY_V1,
-    "#settings-menu-edit-card": MENU_SUBPROCESS_KEY_V1,
-    "#admin-account-status-card": MENU_SUBPROCESS_KEY_V1,
-    "#admin-account-create-card": MENU_SUBPROCESS_KEY_V1,
-    "#menu-subprocess-card": MENU_SUBPROCESS_KEY_V1,
-    "#menu-subprocess-card-active": MENU_SUBPROCESS_KEY_V1,
-    "#menu-subprocess-card-inactive": MENU_SUBPROCESS_KEY_V1,
-    "#auth-profile-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-profile-form-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-profile-active-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-profile-inactive-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-objeto-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-form-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-active-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-inactive-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
-  };
-  return targetMap[cleanTarget] || "";
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.getAdminSubprocessKeyByTarget");
+  return "";
 }
 // APPGENESIS_ADMIN_SUBPROCESS_GROUP_V1_END
 
@@ -3720,33 +3607,8 @@ function normalizeSubmenuTargetAlias(targetSelector) {
   ) {
     return appGenesisAdminTargetRegistryV1.normalizeSubmenuTargetAlias(targetSelector);
   }
-  const cleanTarget = String(targetSelector || "").trim();
-  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
-  if (normalizedAuthorizationProfileTarget) {
-    return normalizedAuthorizationProfileTarget;
-  }
-  const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
-  if (sidebarAdminMenuKey) {
-    const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(sidebarAdminMenuKey);
-    if (
-      sidebarAdminSubprocessSetting &&
-      cleanTarget === sidebarAdminSubprocessSetting.editTarget
-    ) {
-      return sidebarAdminSubprocessSetting.defaultTarget;
-    }
-  }
-  const targetAliasMap = {
-    "#edit-user-card": "#create-user-card",
-    "#admin-users-created-card": "#create-user-card",
-    "#inactive-users-card": "#create-user-card",
-    "#create-entity-card": "#recent-entities-card",
-    "#edit-entity-card": "#recent-entities-card",
-    "#inactive-entities-card": "#recent-entities-card",
-    "#admin-account-create-card": "#menu-subprocess-card-active",
-    "#settings-menu-edit-card": "#menu-subprocess-card-active",
-    "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"
-  };
-  return targetAliasMap[cleanTarget] || cleanTarget;
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.normalizeSubmenuTargetAlias");
+  return normalizeTargetV1(targetSelector);
 }
 
 function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
