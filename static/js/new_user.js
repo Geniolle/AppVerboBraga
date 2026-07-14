@@ -53,6 +53,11 @@ const appGenesisProfileFieldRegistryV1 =
   typeof window.AppGenesisProfileFieldRegistryV1 === "object"
     ? window.AppGenesisProfileFieldRegistryV1
     : null;
+const appGenesisProcessQuantityRuntimeV1 =
+  window.AppGenesisProcessQuantityRuntimeV1 &&
+  typeof window.AppGenesisProcessQuantityRuntimeV1 === "object"
+    ? window.AppGenesisProcessQuantityRuntimeV1
+    : null;
 const MEU_PERFIL_MENU_KEY = appGenesisProcessKeysRegistryV1
   ? appGenesisProcessKeysRegistryV1.MEU_PERFIL_MENU_KEY
   : "meu_perfil";
@@ -463,6 +468,13 @@ function getProcessQuantityStorageKey(menuKey, ruleKey) {
 }
 
 function normalizeProcessQuantityItems(rawItems) {
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.normalizeItems === "function"
+  ) {
+    return appGenesisProcessQuantityRuntimeV1.normalizeItems(rawItems);
+  }
+
   if (!Array.isArray(rawItems)) {
     return [];
   }
@@ -485,6 +497,13 @@ function normalizeProcessQuantityItems(rawItems) {
 }
 
 function normalizeProcessQuantityRules(rawRules) {
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.normalizeRules === "function"
+  ) {
+    return appGenesisProcessQuantityRuntimeV1.normalizeRules(rawRules);
+  }
+
   if (!Array.isArray(rawRules)) {
     return [];
   }

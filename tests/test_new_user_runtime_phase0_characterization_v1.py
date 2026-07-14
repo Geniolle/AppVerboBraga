@@ -57,7 +57,7 @@ def test_new_user_template_keeps_reload_guard_in_head_and_new_user_after_canonic
     template_text = (PROJECT_ROOT / "templates" / "new_user.html").read_text(encoding="utf-8")
 
     head_guard_index = template_text.index('src="/static/js/modules/navigation_reload_guard_v1.js')
-    body_new_user_index = template_text.index('src="/static/js/new_user.js?v=20260708-invite-link-header-v1"')
+    body_new_user_index = template_text.index('src="/static/js/new_user.js')
     quantity_manager_index = template_text.index('src="/static/js/modules/process_quantity_fields_manager_v1.js')
     subsequent_manager_index = template_text.index('src="/static/js/modules/process_subsequent_fields_manager_v1.js')
 
