@@ -53,6 +53,11 @@ const appGenesisProfileFieldRegistryV1 =
   typeof window.AppGenesisProfileFieldRegistryV1 === "object"
     ? window.AppGenesisProfileFieldRegistryV1
     : null;
+const appGenesisProcessSubsequentVisibilityRuntimeV1 =
+  window.AppGenesisProcessSubsequentVisibilityRuntimeV1 &&
+  typeof window.AppGenesisProcessSubsequentVisibilityRuntimeV1 === "object"
+    ? window.AppGenesisProcessSubsequentVisibilityRuntimeV1
+    : null;
 const appGenesisProcessQuantityRuntimeV1 =
   window.AppGenesisProcessQuantityRuntimeV1 &&
   typeof window.AppGenesisProcessQuantityRuntimeV1 === "object"
@@ -378,11 +383,25 @@ function getSidebarAdminSubprocessMenuKeyByTargetV1(targetSelector) {
 }
 
 function normalizeProcessSubsequentOperator(value) {
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeOperator === "function"
+  ) {
+    return appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeOperator(value);
+  }
+
   const cleanOperator = String(value || "equals").trim().toLowerCase();
   return processSubsequentOperators.has(cleanOperator) ? cleanOperator : "equals";
 }
 
 function normalizeProcessSubsequentRules(rawRules) {
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeRules === "function"
+  ) {
+    return appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeRules(rawRules);
+  }
+
   if (!Array.isArray(rawRules)) {
     return [];
   }
@@ -427,6 +446,13 @@ function isProcessSubsequentRuleSatisfied(rule, valuesByField = {}) {
 }
 
 function getHiddenProcessTargets(rules, valuesByField = {}) {
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.getHiddenTargets === "function"
+  ) {
+    return appGenesisProcessSubsequentVisibilityRuntimeV1.getHiddenTargets(rules, valuesByField);
+  }
+
   const groupedRules = new Map();
   normalizeProcessSubsequentRules(rules).forEach((rule) => {
     if (!groupedRules.has(rule.targetField)) {
@@ -4059,6 +4085,24 @@ function applyMeuPerfilProcessSubsequentVisibility() {
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   const personalCardEl = document.getElementById("perfil-pessoal-card");
   if (!setting || !personalCardEl) {
+    return;
+  }
+
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.refresh === "function"
+  ) {
+    const evaluation = appGenesisProcessSubsequentVisibilityRuntimeV1.refresh({
+      mode: "profile",
+      root: personalCardEl,
+      formEl: personalCardEl.querySelector(".profile-edit-form"),
+      setting,
+      rules: setting.process_subsequent_fields,
+      getValues: collectCurrentMeuPerfilProcessValues,
+      getCurrentSection: getCurrentProfileSectionSubsequentV1
+    });
+
+    hiddenMeuPerfilSectionKeys = evaluation && evaluation.hiddenTargets ? evaluation.hiddenTargets : new Set();
     return;
   }
 
