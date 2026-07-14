@@ -74,12 +74,15 @@ def test_cancel_buttons_stay_in_editor_and_list_column_cancel_is_local() -> None
     # O cancelar do editor de processo devolve o utilizador a lista de origem (nunca
     # ao proprio card do editor) -- por isso o alvo/URL de retorno usam as variaveis
     # de saida resolvidas no template, nao mais o "settings-menu-edit-card" estatico.
+    # A aba Geral nao tem formulario/Guardar/Cancelar (regra aprovada: mostra apenas
+    # "Campos disponiveis"), por isso a contagem cobre somente os 5 managers do editor
+    # com criacao/edicao (campos-config, quantidade, listas, subsequentes, adicionais).
     assert html_text.count(
         'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
-    ) == 7
+    ) == 5
     assert html_text.count(
         'data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"'
-    ) == 7
+    ) == 5
     assert '"[data-process-list-column-editor-cancel]"' in controller_text
 
 
@@ -123,6 +126,14 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
     def open_editor() -> None:
         driver.get(target_url)
         wait.until(EC.visibility_of_element_located((By.ID, "settings-menu-edit-card")))
+        wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.CSS_SELECTOR,
+                    "[data-process-list-reusable-manager] [data-configurable-create-trigger]",
+                )
+            )
+        ).click()
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-process-list-editor-label]")))
 
     def remove_test_list() -> None:
@@ -182,7 +193,17 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-process-lists-table-body]")))
         assert "Lista teste stay" in driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]").text
 
-        name_input = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-label]")
+        wait.until(
+            EC.visibility_of_element_located(
+                (
+                    By.CSS_SELECTOR,
+                    "[data-process-list-reusable-manager] [data-configurable-create-trigger]",
+                )
+            )
+        ).click()
+        name_input = wait.until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-process-list-editor-label]"))
+        )
         name_input.send_keys("Cancelar")
         driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-cancel]").click()
         assert name_input.get_attribute("value") == ""

@@ -1740,7 +1740,7 @@
                     {{ process_list_source_subprocess_map|default({})|tojson }}
                   </script>
 
-                  <section class="card admin-subprocess-form-card-v1" id="settings-process-lists-form-card">
+                  {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1 process-lists-editor-v1">
                     <div data-process-list-reusable-editor-block class="configurable-items-editor-grid-v1 process-lists-editor-grid-v1">
                       <input type="hidden" data-process-list-editor-key>
@@ -1837,7 +1837,7 @@
                       </div>
                     </div>
                   </div>
-                </section>
+                  {% endcall %}
 
                 {% set lists_search_widget %}
                   <label class="appgenesis-card-search-v1">
@@ -1851,7 +1851,7 @@
                   </label>
                   <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-lists-total-label>0 listas</span>
                 {% endset %}
-                {% call render_configurable_list_card('settings-process-lists-active-card', 'Listas ativas', head_extra=lists_search_widget) %}
+                {% call render_configurable_list_card('settings-process-lists-active-card', 'Listas ativas', '+ Criar lista', "[data-process-list-reusable-manager]", head_extra=lists_search_widget) %}
                   <div class="configurable-items-table-wrap-v1">
                     <table class="configurable-items-table-v1 process-lists-table-v1" data-process-lists-table>
                       <thead>

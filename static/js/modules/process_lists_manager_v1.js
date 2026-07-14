@@ -895,6 +895,8 @@
       root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",
+      createTitle: "Criar lista",
+      editTitle: "Editar lista",
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems: readInitialItems_v1(elements),
