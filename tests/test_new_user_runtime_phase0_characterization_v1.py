@@ -1,0 +1,64 @@
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+####################################################################################
+# (1) POST-SAVE: A URL DO BACKEND E O CONTEXTO ATUAL DEVEM MANTER MENU, TARGET E secção
+####################################################################################
+
+def test_new_user_post_save_runtime_preserves_menu_target_and_section_order() -> None:
+    script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+
+    function_start = script_text.index("function buildReturnUrlPostSaveV6(form)")
+    function_end = script_text.index("function syncReturnUrlPostSaveV6(form)", function_start)
+    function_body = script_text[function_start:function_end]
+
+    menu_index = function_body.index('url.searchParams.set("menu", menuKey);')
+    target_index = function_body.index('url.searchParams.set("target", target);')
+    section_index = function_body.index('url.searchParams.set("dynamic_process_section", sectionKey);')
+
+    assert menu_index < target_index < section_index
+
+
+####################################################################################
+# (2) POST-SAVE: O RUNTIME CONTINUA A TER AS DUAS FASES HISTORICAS DE CONTRATO
+####################################################################################
+
+def test_new_user_post_save_runtime_keeps_current_compatibility_layers_present() -> None:
+    script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+
+    assert "APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_START" in script_text
+    assert "APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_START" in script_text
+    assert "APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_START" in script_text
+    assert "APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_START" in script_text
+    assert "APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START" in script_text
+
+
+####################################################################################
+# (3) CAMPO ADICIONAL: O LEGADO V2 AINDA EXISTE MAS SO PODE EXECUTAR ATRAVES DO GUARD
+####################################################################################
+
+def test_new_user_legacy_additional_fields_v2_is_still_guarded() -> None:
+    script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
+
+    assert "function setupProcessAdditionalFieldsManagerV2()" in script_text
+    assert "function setupProcessAdditionalFieldsManagerV2_guard_v1()" in script_text
+    assert "setupProcessAdditionalFieldsManagerV2_guard_v1();" in script_text
+    assert 'document.querySelector("[data-process-additional-fields-manager-v3=\'1\']")' in script_text
+
+
+####################################################################################
+# (4) LOAD ORDER: O RELOAD GUARD TEM DE FICAR NO HEAD E O NEW_USER DEPOIS DOS MODULOS
+####################################################################################
+
+def test_new_user_template_keeps_reload_guard_in_head_and_new_user_after_canonical_modules() -> None:
+    template_text = (PROJECT_ROOT / "templates" / "new_user.html").read_text(encoding="utf-8")
+
+    head_guard_index = template_text.index('src="/static/js/modules/navigation_reload_guard_v1.js')
+    body_new_user_index = template_text.index('src="/static/js/new_user.js?v=20260708-invite-link-header-v1"')
+    quantity_manager_index = template_text.index('src="/static/js/modules/process_quantity_fields_manager_v1.js')
+    subsequent_manager_index = template_text.index('src="/static/js/modules/process_subsequent_fields_manager_v1.js')
+
+    assert head_guard_index < quantity_manager_index < subsequent_manager_index < body_new_user_index
