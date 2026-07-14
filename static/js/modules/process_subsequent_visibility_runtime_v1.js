@@ -134,6 +134,216 @@
     return evaluateRules(rules, valuesByField);
   }
 
+  function resolveForm(root) {
+    const scope = root && typeof root.querySelector === "function" ? root : document;
+    return (
+      scope.querySelector('form[action="/users/profile/personal"]') ||
+      scope.querySelector("#perfil-pessoal-card form") ||
+      scope.querySelector("form[data-process-edit-form='1'], form[data-process-edit-form], form") ||
+      null
+    );
+  }
+
+  function getRuntimeState(context) {
+    if (!context || typeof context !== "object") {
+      return null;
+    }
+
+    if (!context.__appGenesisProcessSubsequentVisibilityRuntimeV1) {
+      context.__appGenesisProcessSubsequentVisibilityRuntimeV1 = {
+        listeners: [],
+        destroyed: false
+      };
+    }
+
+    return context.__appGenesisProcessSubsequentVisibilityRuntimeV1;
+  }
+
+  function bindListener(state, target, type, handler, capture) {
+    if (!state || !target || !type || typeof handler !== "function") {
+      return;
+    }
+
+    target.addEventListener(type, handler, Boolean(capture));
+    state.listeners.push({ target, type, handler, capture: Boolean(capture) });
+  }
+
+  function clearRuntimeListeners(state) {
+    if (!state || !Array.isArray(state.listeners)) {
+      return;
+    }
+
+    state.listeners.forEach((binding) => {
+      if (binding && binding.target && binding.type && binding.handler) {
+        binding.target.removeEventListener(binding.type, binding.handler, Boolean(binding.capture));
+      }
+    });
+
+    state.listeners = [];
+  }
+
+  function getSettingFromContext(context) {
+    if (context && typeof context.getSetting === "function") {
+      return context.getSetting() || null;
+    }
+
+    return context && context.setting ? context.setting : null;
+  }
+
+  function resolveRulesFromContext(context) {
+    const setting = getSettingFromContext(context);
+    const rawRules = (context && Array.isArray(context.rules) ? context.rules : null) ||
+      (setting && (setting.process_subsequent_fields || setting.process_subsequent_rules || setting.process_subsequent)) ||
+      [];
+
+    return normalizeRules(rawRules);
+  }
+
+  function getFieldMetaMapFromContext(context) {
+    const setting = getSettingFromContext(context);
+    const metaMap = new Map();
+
+    (Array.isArray(setting && setting.process_field_options) ? setting.process_field_options : []).forEach((option) => {
+      const key = normalizeKey(option && option.key);
+      if (!key) {
+        return;
+      }
+
+      metaMap.set(key, {
+        key,
+        label: toSafeString(option.label || key).trim(),
+        fieldType: normalizeKey(option.field_type)
+      });
+    });
+
+    return metaMap;
+  }
+
+  function isSectionTarget(fieldKey, fieldMetaMap) {
+    const meta = fieldMetaMap.get(normalizeKey(fieldKey));
+    return Boolean(meta && normalizeKey(meta.fieldType) === "header");
+  }
+
+  function getTargetWrappers(root, fieldKey) {
+    const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+    const cleanKey = normalizeKey(fieldKey);
+    const wrappers = [];
+
+    scope.querySelectorAll(
+      `#perfil-pessoal-card [data-profile-field-key="${cleanKey}"], [data-process-field-key="${cleanKey}"], [data-process-subsequent-target-key="${cleanKey}"]`
+    ).forEach((node) => {
+      const wrapper = node.matches("[data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]")
+        ? node
+        : node.closest("[data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]");
+
+      if (wrapper && !wrappers.includes(wrapper)) {
+        wrappers.push(wrapper);
+      }
+    });
+
+    return wrappers;
+  }
+
+  function getTargetTabs(root, fieldKey) {
+    const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+    const cleanKey = normalizeKey(fieldKey);
+    const tabs = [];
+
+    scope.querySelectorAll(
+      "#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button], #perfil-pessoal-card .profile-section-tab, [data-process-section-tab]"
+    ).forEach((tab) => {
+      const dataKey = normalizeKey(
+        tab.dataset.profileSection ||
+        tab.dataset.profileSectionKey ||
+        tab.dataset.profileSectionTab ||
+        tab.dataset.sectionKey ||
+        tab.dataset.processSectionKey ||
+        ""
+      );
+
+      if (dataKey && dataKey === cleanKey) {
+        tabs.push(tab);
+      }
+    });
+
+    return tabs;
+  }
+
+  function getCurrentValues(context) {
+    if (context && typeof context.getValues === "function") {
+      return context.getValues();
+    }
+
+    if (context && context.valuesByField) {
+      return context.valuesByField;
+    }
+
+    const formEl = context && context.formEl ? context.formEl : resolveForm(context && context.root);
+    return collectProfileValues(formEl);
+  }
+
+  function applyTargets(context, hiddenTargets) {
+    const root = context && context.root ? context.root : document;
+    const hiddenSet = hiddenTargets instanceof Set ? hiddenTargets : new Set();
+    const fieldMetaMap = getFieldMetaMapFromContext(context);
+
+    hiddenSet.forEach((fieldKey) => {
+      getTargetWrappers(root, fieldKey).forEach((wrapper) => {
+        setWrapperHidden(wrapper, true);
+      });
+      getTargetTabs(root, fieldKey).forEach((tab) => {
+        tab.hidden = true;
+        tab.style.display = "none";
+      });
+    });
+
+    root.querySelectorAll(
+      "#perfil-pessoal-card [data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]"
+    ).forEach((element) => {
+      const wrapper = element.matches("[data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]")
+        ? element
+        : element.closest("[data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]");
+
+      if (!wrapper) {
+        return;
+      }
+
+      const cleanKey = normalizeKey(wrapper.dataset.profileFieldKey || wrapper.dataset.processFieldKey || wrapper.dataset.processSubsequentTargetKey || "");
+      setWrapperHidden(wrapper, hiddenSet.has(cleanKey));
+    });
+
+    root.querySelectorAll(
+      "#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button], #perfil-pessoal-card .profile-section-tab, [data-process-section-tab]"
+    ).forEach((tab) => {
+      const cleanKey = normalizeKey(
+        tab.dataset.profileSection ||
+        tab.dataset.profileSectionKey ||
+        tab.dataset.profileSectionTab ||
+        tab.dataset.sectionKey ||
+        tab.dataset.processSectionKey ||
+        ""
+      );
+
+      tab.hidden = hiddenSet.has(cleanKey);
+      tab.style.display = hiddenSet.has(cleanKey) ? "none" : "";
+    });
+
+    const currentSection = typeof context.getCurrentSection === "function" ? normalizeKey(context.getCurrentSection()) : "";
+    if (currentSection && hiddenSet.has(currentSection)) {
+      const nextVisible = Array.from(root.querySelectorAll(
+        "#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button], #perfil-pessoal-card .profile-section-tab, [data-process-section-tab]"
+      ))
+        .map((tab) => normalizeKey(tab.dataset.profileSection || tab.dataset.profileSectionKey || tab.dataset.profileSectionTab || tab.dataset.sectionKey || tab.dataset.processSectionKey || ""))
+        .find((sectionKey) => sectionKey && !hiddenSet.has(sectionKey));
+
+      if (nextVisible && typeof window.activateProfilePersonalSection === "function") {
+        window.activateProfilePersonalSection(nextVisible);
+      }
+    }
+
+    return hiddenSet;
+  }
+
   function getProfileForm(root) {
     const scope = root && typeof root.querySelector === "function" ? root : document;
     return (
@@ -379,10 +589,8 @@
 
   function evaluate(context) {
     const safeContext = context && typeof context === "object" ? context : {};
-    const rules = normalizeRules(safeContext.rules || (safeContext.setting && (safeContext.setting.process_subsequent_fields || safeContext.setting.process_subsequent_rules || safeContext.setting.process_subsequent)) || []);
-    const valuesByField = typeof safeContext.getValues === "function"
-      ? safeContext.getValues()
-      : (safeContext.valuesByField || {});
+    const rules = resolveRulesFromContext(safeContext);
+    const valuesByField = getCurrentValues(safeContext);
     return {
       rules,
       valuesByField,
@@ -393,10 +601,7 @@
   function apply(context) {
     const safeContext = context && typeof context === "object" ? context : {};
     const evaluation = safeContext.evaluation || evaluate(safeContext);
-
-    if (safeContext.mode === "profile") {
-      applyProfileVisibility(safeContext, evaluation.hiddenTargets);
-    }
+    applyTargets(safeContext, evaluation.hiddenTargets);
 
     return evaluation;
   }
@@ -407,22 +612,53 @@
 
   function initialize(context) {
     const safeContext = context && typeof context === "object" ? context : {};
-    const formEl = safeContext.formEl || getProfileForm(safeContext.root);
+    const state = getRuntimeState(safeContext);
+    const formEl = safeContext.formEl || resolveForm(safeContext.root);
 
-    if (formEl && formEl.dataset.processSubsequentVisibilityBoundV1 !== "1") {
-      formEl.dataset.processSubsequentVisibilityBoundV1 = "1";
-      ["input", "change"].forEach((eventName) => {
-        formEl.addEventListener(eventName, () => {
-          refresh(safeContext);
-        });
-      });
+    if (!state || state.destroyed || !formEl) {
+      return safeContext;
     }
+
+    if (state.initialized && state.formEl === formEl) {
+      return safeContext;
+    }
+
+    clearRuntimeListeners(state);
+    state.formEl = formEl;
+    state.root = safeContext.root || document;
+    state.initialized = true;
+    state.destroyed = false;
+
+    bindListener(state, formEl, "input", () => {
+      refresh(safeContext);
+    }, true);
+
+    bindListener(state, formEl, "change", () => {
+      refresh(safeContext);
+    }, true);
+
+    bindListener(state, formEl, "appgenesis:profile-section-restored", () => {
+      refresh(safeContext);
+    }, true);
 
     return safeContext;
   }
 
   function destroy(context) {
-    return context || null;
+    const safeContext = context && typeof context === "object" ? context : null;
+    if (!safeContext) {
+      return null;
+    }
+
+    const state = getRuntimeState(safeContext);
+    if (!state || state.destroyed) {
+      return safeContext;
+    }
+
+    clearRuntimeListeners(state);
+    state.destroyed = true;
+    state.initialized = false;
+    return safeContext;
   }
 
   window.AppGenesisProcessSubsequentVisibilityRuntimeV1 = {

@@ -32,9 +32,7 @@ def test_new_user_runtime_delegates_profile_field_mapping_to_registry() -> None:
 
     assert "window.AppGenesisProfileFieldRegistryV1" in script_text
     assert "collectProfileValues(formEl)" in script_text
-    assert "resolveFieldKeyFromControlName(rawName)" in script_text
     assert "resolveControlName(fieldKey)" in script_text
-    assert "findProfileControl(" in script_text
 
 
 ####################################################################################
@@ -59,8 +57,7 @@ def test_new_user_template_loads_profile_registry_before_runtime_and_order_modul
     template_text = (PROJECT_ROOT / "templates" / "new_user.html").read_text(encoding="utf-8")
 
     registry_index = template_text.index('src="/static/js/modules/profile_field_registry_v1.js?v=20260714-profile-field-registry-v1"')
-    runtime_index = template_text.index('src="/static/js/new_user.js?v=20260714-profile-field-registry-v1"')
+    runtime_index = template_text.index('src="/static/js/new_user.js?v=20260714-new-user-runtime-v2"')
     order_index = template_text.index('src="/static/js/modules/profile_field_order.js?v=20260714-profile-field-registry-v1"')
 
     assert registry_index < runtime_index < order_index
-

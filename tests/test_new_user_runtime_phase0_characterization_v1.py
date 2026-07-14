@@ -5,35 +5,28 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 ####################################################################################
-# (1) POST-SAVE: A URL DO BACKEND E O CONTEXTO ATUAL DEVEM MANTER MENU, TARGET E secção
+# (1) POST-SAVE: O MOTOR LEGADO FOI REMOVIDO DO NEW_USER.JS
 ####################################################################################
 
 def test_new_user_post_save_runtime_preserves_menu_target_and_section_order() -> None:
     script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
 
-    function_start = script_text.index("function buildReturnUrlPostSaveV6(form)")
-    function_end = script_text.index("function syncReturnUrlPostSaveV6(form)", function_start)
-    function_body = script_text[function_start:function_end]
-
-    menu_index = function_body.index('url.searchParams.set("menu", menuKey);')
-    target_index = function_body.index('url.searchParams.set("target", target);')
-    section_index = function_body.index('url.searchParams.set("dynamic_process_section", sectionKey);')
-
-    assert menu_index < target_index < section_index
+    assert "function buildReturnUrlPostSaveV6(form)" not in script_text
+    assert "function syncReturnUrlPostSaveV6(form)" not in script_text
 
 
 ####################################################################################
-# (2) POST-SAVE: O RUNTIME CONTINUA A TER AS DUAS FASES HISTORICAS DE CONTRATO
+# (2) POST-SAVE: OS BLOCOS HISTORICOS FORAM REMOVIDOS DO NEW_USER.JS
 ####################################################################################
 
-def test_new_user_post_save_runtime_keeps_current_compatibility_layers_present() -> None:
+def test_new_user_post_save_runtime_removed_legacy_blocks_from_bootstrap() -> None:
     script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
 
-    assert "APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_START" in script_text
-    assert "APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_START" in script_text
-    assert "APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_START" in script_text
-    assert "APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_START" in script_text
-    assert "APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START" in script_text
+    assert "APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_START" not in script_text
+    assert "APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_START" not in script_text
+    assert "APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_START" not in script_text
+    assert "APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_START" not in script_text
+    assert "APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START" not in script_text
 
 
 ####################################################################################
