@@ -113,7 +113,7 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
 
     assert (
         "/static/css/modules/configurable_items_manager_v1.css"
-        "?v=20260712-process-lists-entity-number-v1"
+        "?v=20260713-shared-list-card-header-v1"
         in template_text
     )
     assert "data-process-list-reusable-manager" in template_text

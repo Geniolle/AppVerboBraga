@@ -84,7 +84,7 @@ def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
         )
         assert any(
                 "configurable_items_manager_v1.css"
-                "?v=20260712-process-lists-entity-number-v1" in url
+                "?v=20260713-shared-list-card-header-v1" in url
             for url in stylesheet_urls
         )
     finally:

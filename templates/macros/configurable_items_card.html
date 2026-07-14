@@ -6,17 +6,22 @@
   conteudo especifico (pesquisa, tabela, editor) e passado via {% call %}.
 #}
 
-{% macro render_configurable_list_card(card_id, title, create_label=none, create_target=none, extra_class="") %}
+{% macro render_configurable_list_card(card_id, title, create_label=none, create_target=none, extra_class="", head_extra=none) %}
 <section class="card admin-subprocess-table-card-v1 configurable-items-list-card-v1{% if extra_class %} {{ extra_class }}{% endif %}" id="{{ card_id }}">
   <div class="configurable-items-list-card-head-v1">
     <h3 class="configurable-items-list-card-title-v1">{{ title }}</h3>
-    {% if create_label and create_target %}
-    <button
-      type="button"
-      class="action-btn configurable-items-create-trigger-v1"
-      data-configurable-create-trigger
-      data-configurable-manager-target="{{ create_target }}"
-    >{{ create_label }}</button>
+    {% if (create_label and create_target) or head_extra %}
+    <div class="configurable-items-list-head-actions-v1">
+      {% if create_label and create_target %}
+      <button
+        type="button"
+        class="action-btn configurable-items-create-trigger-v1"
+        data-configurable-create-trigger
+        data-configurable-manager-target="{{ create_target }}"
+      >{{ create_label }}</button>
+      {% endif %}
+      {% if head_extra %}{{ head_extra|safe }}{% endif %}
+    </div>
     {% endif %}
   </div>
   {{ caller() }}

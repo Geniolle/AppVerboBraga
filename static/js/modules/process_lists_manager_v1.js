@@ -92,6 +92,9 @@
       table: root.querySelector("[data-process-lists-table]"),
       tableBody: root.querySelector("[data-process-lists-table-body]"),
       emptyState: root.querySelector("[data-process-lists-empty]"),
+      inactiveTable: root.querySelector("[data-process-lists-inactive-table]"),
+      inactiveTableBody: root.querySelector("[data-process-lists-inactive-table-body]"),
+      inactiveEmptyState: root.querySelector("[data-process-lists-inactive-empty]"),
       totalLabel: root.querySelector("[data-process-lists-total-label]"),
       pageSize: root.querySelector("[data-process-lists-page-size]"),
       pagination: root.querySelector("[data-process-lists-pagination]"),
@@ -823,6 +826,46 @@
     return manager;
   }
 
+  function distributeListRowsByStatus_v1({ manager, elements }) {
+    if (!elements.tableBody || !elements.inactiveTableBody) {
+      return;
+    }
+
+    const rows = Array.from(elements.tableBody.children);
+    let activeCount = 0;
+    let inactiveCount = 0;
+
+    elements.inactiveTableBody.innerHTML = "";
+
+    rows.forEach((row) => {
+      const itemId = row.dataset.configurableItemId;
+      const item = manager.state.items.find(
+        (candidate) => String(candidate.__managerId) === String(itemId)
+      );
+      const isInactive = item && String(item.status || "ativo").trim().toLowerCase() === "inativo";
+
+      if (isInactive) {
+        elements.inactiveTableBody.appendChild(row);
+        inactiveCount += 1;
+      } else {
+        activeCount += 1;
+      }
+    });
+
+    if (elements.table) {
+      elements.table.style.display = activeCount ? "" : "none";
+    }
+    if (elements.emptyState) {
+      elements.emptyState.style.display = activeCount ? "none" : "";
+    }
+    if (elements.inactiveTable) {
+      elements.inactiveTable.style.display = inactiveCount ? "" : "none";
+    }
+    if (elements.inactiveEmptyState) {
+      elements.inactiveEmptyState.style.display = inactiveCount ? "none" : "";
+    }
+  }
+
   //###################################################################################
   // (5) INICIALIZACAO
   //###################################################################################
@@ -947,7 +990,8 @@
       loadEditorItem: (item, context) => loadEditorItem_v1(item, { ...context, sourceSubprocessMap }),
       clearEditor: (context) => clearEditor_v1({ ...context, sourceSubprocessMap }),
       validateItem: validateItem_v1,
-      syncHiddenInputs: syncHiddenInputs_v1
+      syncHiddenInputs: syncHiddenInputs_v1,
+      onRender: distributeListRowsByStatus_v1
     });
 
     if (!manager) {
@@ -956,6 +1000,7 @@
     }
 
     Object.assign(manager.elements, elements);
+    manager.render();
 
     elements.editorFieldType.addEventListener("change", () => {
       applyEditorFieldTypeState_v3(
