@@ -138,11 +138,10 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             )
 
         return RedirectResponse(
-            url=_build_settings_editor_stay_redirect_url_v1(
+            url=_build_settings_redirect_url(
                 success_message="Campos subsequentes atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                settings_edit_key=clean_menu_key,
-                settings_tab="campos-subsequentes",
+                redirect_target=redirect_target,
                 return_url=return_url,
             ),
             status_code=HTTP_303_SEE_OTHER,

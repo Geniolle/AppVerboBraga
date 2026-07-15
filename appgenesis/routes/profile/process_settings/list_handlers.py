@@ -232,11 +232,10 @@ def edit_sidebar_menu_process_lists_handler(
             )
 
         return RedirectResponse(
-            url=_build_settings_editor_stay_redirect_url_v1(
+            url=_build_settings_redirect_url(
                 success_message="Listas do processo atualizadas com sucesso.",
                 redirect_menu=redirect_menu,
-                settings_edit_key=clean_menu_key,
-                settings_tab="lista",
+                redirect_target=redirect_target,
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,

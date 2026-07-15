@@ -253,7 +253,7 @@
     ) {
       windowRef.setTimeout(
         () => windowRef.hideGlobalLoadingOverlayV1("navigation:" + cleanSource),
-        200
+        800
       );
     }
   }

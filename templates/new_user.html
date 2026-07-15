@@ -1349,11 +1349,6 @@
         {% set settings_has_process_fields = true %}
         {% set settings_owner_fields_enabled = current_user_can_manage_tenant_structure %}
         {% set settings_edit_active_tab = settings_tab|default('geral') %}
-        {# URL completa do proprio editor no momento do submit -- enviada como return_url por #}
-        {# TODAS as abas para que o backend preserve contexto incidental (ex.: admin_tab) sem #}
-        {# depender de logica de correcao no cliente. Reutilizavel: nenhuma aba tem sua propria #}
-        {# construcao de return_url. #}
-        {% set settings_edit_return_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "&settings_action=edit&target=settings-menu-edit-card&settings_edit_key=" ~ settings_edit_data.key ~ "&settings_tab=" ~ settings_edit_active_tab ~ "#settings-menu-edit-card" %}
         {# Alvo/URL de SAIDA do editor (Cancelar/Guardar) -- devolve o utilizador a lista de #}
         {# origem, nunca ao proprio editor. Espelha a resolucao de _resolve_initial_menu_target #}
         {# em page_handler.py para os menus a partir dos quais o editor pode ser aberto. #}
@@ -1440,8 +1435,8 @@
               <form method="post" action="/settings/menu/process-fields" data-process-fields-config-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div class="configurable-items-manager-v1 process-fields-config-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-fields-config-legacy-container>
@@ -1575,8 +1570,8 @@
               <form method="post" action="/settings/menu/process-quantity-fields" data-process-quantity-fields-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div class="configurable-items-manager-v1 process-quantity-fields-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-quantity-fields-legacy-container>
@@ -1716,8 +1711,8 @@
               <form method="post" action="/settings/menu/process-lists" data-process-lists-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
                 <input type="hidden" name="process_list_columns_configured" value="0">
 
                 <div class="configurable-items-manager-v1 process-lists-manager-v1" data-process-list-reusable-manager data-entity-number="{{ selected_entity_number }}">
@@ -1918,8 +1913,8 @@
 <form method="post" action="/settings/menu/process-subsequent-fields" data-process-subsequent-fields-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div class="configurable-items-manager-v1 process-subsequent-fields-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-subsequent-fields-legacy-container>
@@ -2049,8 +2044,8 @@
               >
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div
                   id="process-additional-fields-builder-v3"
@@ -2650,7 +2645,7 @@
   <script src="/static/js/modules/admin_target_registry_v1.js?v=20260707-admin-target-registry-v1"></script>
   <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260707-process-menu-config-stage3-v1"></script>
   <script src="/static/js/modules/process_navigation_state_v1.js?v=20260707-process-navigation-stage4-v1"></script>
-  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260707-process-cards-stage5-v1"></script>
+  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260715-process-cards-stage5-v2"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260708-breadcrumb-section-v1"></script>
   <script src="/static/js/modules/profile_field_registry_v1.js?v=20260714-profile-field-registry-v1"></script>
