@@ -4,7 +4,7 @@ Data: 2026-07-14
 
 ## Summary
 
-O runtime do `new_user.js` foi consolidado para os módulos canónicos carregados no template, com execução real para quantidade, campos subsequentes e pós-save. Os blocos históricos grandes foram removidos do `new_user.js` e substituídos por delegação ou por helpers curtos de compatibilidade.
+O `new_user.js` passou a orquestrar os runtimes canónicos reais para quantity, subsequentes, pós-save e navegação. Os blocos legados mais problemáticos foram removidos do bootstrap direto e a execução real ficou concentrada nos módulos canónicos.
 
 ## Quantity
 
@@ -14,30 +14,17 @@ O runtime do `new_user.js` foi consolidado para os módulos canónicos carregado
 
 ### Implementação realmente ativa
 
-- `initialize(context)` cria estado por formulário, liga listeners e renderiza.
-- `render(context)` monta hosts, itens repetidos, render readonly e payload hidden.
-- `sync(context)` reconstrói o JSON com base no DOM atual.
-- `getValues(context)` lê valores atuais do formulário.
+- `initialize(context)` instancia um runtime por formulário e evita listeners por control.
+- `render(context)` cria hosts, itens repetidos, readonly e payload hidden.
+- `sync(context)` reconstrói o JSON a partir do DOM atual.
+- `getValues(context)` lê os valores atuais.
 - `destroy(context)` remove listeners e nós gerados.
-- Os adaptadores `createMeuPerfilQuantityAdapterV1()` e `createDynamicProcessQuantityAdapterV1()` estão expostos.
+- Os adaptadores `createMeuPerfilQuantityAdapterV1()` e `createDynamicProcessQuantityAdapterV1()` estão ativos.
 
 ### Implementação antiga ainda ativa
 
-- Não há mais o bloco histórico grande de pós-save/quantity/subsequent no `new_user.js`.
-- Ainda existem helpers de integração no `new_user.js`, mas o fluxo real passa pelo runtime canónico.
-
-### Stub
-
-- Não há stubs principais restantes no módulo.
-
-### Consumers
-
-- `new_user.js` inicia o runtime para `Meu Perfil` e para o processo dinâmico.
-- Testes browser sintéticos validam render e sync.
-
-### Código morto
-
-- Os blocos históricos de pós-save e subsequentes foram removidos do `new_user.js`.
+- Não há mais o bloco histórico de quantity/subsequentes/pós-save a executar diretamente no `new_user.js`.
+- O bootstrap mantém apenas a ligação ao runtime canónico.
 
 ### Compatibilidade necessária
 
@@ -62,11 +49,6 @@ O runtime do `new_user.js` foi consolidado para os módulos canónicos carregado
 - `refresh(context)` reaplica o estado.
 - `destroy(context)` limpa listeners.
 
-### Implementação antiga ainda ativa
-
-- O bloco legado grande foi removido.
-- `new_user.js` apenas conserva o bootstrap mínimo para chamar o runtime.
-
 ### Compatibilidade necessária
 
 - Operadores `equals`, `not_equals`, `is_empty`, `is_not_empty`.
@@ -83,14 +65,9 @@ O runtime do `new_user.js` foi consolidado para os módulos canónicos carregado
 
 ### Implementação realmente ativa
 
-- O contrato grava, lê e limpa o contexto com `sessionStorage`.
-- O capture canonical expõe `initialize`, `bindForm`, `captureForm` e `destroy`.
+- O contrato mantém e expira o contexto em `sessionStorage`.
+- O capture canónico expõe `initialize`, `bindForm`, `captureForm` e `destroy`.
 - O reload guard consome o contrato antes de navegar.
-
-### Implementação antiga ainda ativa
-
-- Os blocos históricos grandes de `KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1`, `POST_SAVE_CONTEXT_CAPTURE_V3`, `RETURN_URL_POST_SAVE_CAPTURE_V4`, `FRONTEND_RETURN_URL_POST_SAVE_V6` e `INITIAL_PROFILE_SECTION_FROM_URL_V1` foram removidos do `new_user.js`.
-- A reativação inicial da secção do perfil foi preservada num helper curto de compatibilidade.
 
 ### Compatibilidade necessária
 
@@ -102,8 +79,7 @@ O runtime do `new_user.js` foi consolidado para os módulos canónicos carregado
 
 ### Estado atual
 
-- `static/js/modules/process_additional_fields_manager_v3.js` continua como implementação canónica ativa.
-- Não houve duplicação nova neste ciclo.
+- `static/js/modules/process_additional_fields_manager_v3.js` permanece como a única implementação ativa.
 
 ## Navegação
 
@@ -116,40 +92,52 @@ O runtime do `new_user.js` foi consolidado para os módulos canónicos carregado
 
 ### Estado atual
 
-- `new_user.js` continua como orquestrador, mas agora chama os runtimes canónicos.
-- A execução principal não está mais ancorada nos blocos históricos grandes.
+- `new_user.js` continua como orquestrador, mas agora só chama runtimes canónicos e módulos utilitários.
+- O evento `appgenesis:new-user-page-ready` é emitido depois da inicialização real.
 
 ## Meu Perfil
 
 ### Estado atual
 
-- O registry canónico `profile_field_registry_v1.js` permanece ativo.
-- O runtime de quantidade e o runtime de subsequentes já usam o registry.
-- A secção inicial do perfil ainda é reativada via helper curto.
+- O registry canónico `profile_field_registry_v1.js` continua ativo.
+- O runtime de quantity e o runtime de subsequentes usam o registry real.
+- A lógica legada de dedup e filtro de secção foi removida do bootstrap direto.
 
 ## Processos dinâmicos
 
 ### Estado atual
 
-- O runtime de quantidade passa a renderizar e sincronizar também no contexto dinâmico.
+- O runtime de quantity já atua também no contexto dinâmico.
 - O runtime de subsequentes aplica regras em formulários dinâmicos quando o contexto fornece `setting` e `root`.
 
 ## Sessões
 
 ### Estado atual
 
-- Não houve alteração estrutural a sessões neste ciclo.
-- A validação de sessão/menu continua a depender da infraestrutura existente.
+- A navegação de sessões continua ligada ao resolver canónico de targets.
+- O browser real ainda mantém um xfail isolado para o card de secções em `admin_tab=sessoes`.
 
 ## Validação executada
 
 - `node --check static/js/new_user.js`
 - `node --check static/js/modules/process_quantity_runtime_v1.js`
-- `node --check static/js/modules/process_subsequent_visibility_runtime_v1.js`
-- `node --check static/js/modules/post_save_context_capture_v1.js`
-- `pytest -q tests/test_new_user_runtime_functional_v1.py tests/test_process_quantity_runtime_v1.py tests/test_process_subsequent_visibility_runtime_v1.py tests/test_post_save_context_contract_v1.py tests/test_new_user_runtime_phase0_characterization_v1.py tests/test_profile_field_registry_v1.py`
+- `node --check static/js/modules/process_menu_config_builder_v1.js`
+- `node --check static/js/modules/ui_text_cleanup.js`
+- `pytest -q tests/test_new_user_page_orchestrator_v1.py tests/test_process_quantity_runtime_v1.py tests/test_new_user_runtime_phase0_characterization_v1.py tests/test_profile_field_registry_v1.py`
+- `pytest -q tests/test_admin_target_registry_stage2_browser.py`
+- `pytest -q tests/test_navigation_reload_and_loading_overlay.py`
+- `pytest -q tests/test_process_cards_visibility_stage5_browser.py`
+- `pytest -q tests/test_process_submenu_runtime_stage6_browser.py`
+- `pytest -q tests/test_process_navigation_state_stage4_browser.py`
+- `pytest -q tests/test_process_menu_config_builder_stage3_browser.py`
+
+## Resultados observados
+
+- Os testes sintéticos principais passaram.
+- Os browser suites reais passaram, com xfail explícitos apenas nos casos de wrapper de autorização e no card de secções com `admin_tab=sessoes`.
+- O `ui_text_cleanup.js` deixou de lançar o `createTreeWalker` error em páginas reais.
 
 ## Residual risks
 
-- O fluxo de restauração inicial da secção do perfil foi compactado e mantido no `new_user.js`; deve ser revisto se surgir uma migração dedicada futura.
-- A cobertura browser atual valida o comportamento principal em página sintética, mas não substitui totalmente uma execução completa no app real.
+- Os três xfails atuais continuam a refletir um desfasamento entre o target wrapper esperado e a montagem real do DOM nos fluxos de autorização e secções.
+- O bootstrap ficou funcional, mas ainda depende de módulos canónicos já existentes no lado do backend.

@@ -233,6 +233,6 @@ def test_reload_guard_normalizes_regardless_of_feedback_markers() -> None:
 def test_post_save_uses_authoritative_menu_and_config_return_url() -> None:
     js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
 
-    assert "function resolveAuthoritativeActiveMenuKeyForPostSaveV1()" in js_text
-    assert "function findConfigProvidedReturnUrlV1(form)" in js_text
-    assert "window.__appgenesisGetActiveMenuKeyV1()" in js_text
+    assert "function initializePostSaveRuntimeV1(context = {})" in js_text
+    assert "window.AppGenesisPostSaveContextCaptureV1.initialize" in js_text
+    assert "appgenesisAutoDismissFlashMessages_v1()" in js_text

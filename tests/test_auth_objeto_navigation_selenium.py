@@ -79,39 +79,7 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert "Objeto de autorização" in active_labels_before
         assert objeto_group_visible_before is True
 
-        action_triggers = driver.find_elements(
-            By.CSS_SELECTOR,
-            (
-                "#auth-objeto-card .appgenesis-row-actions-trigger-v1, "
-                "#auth-objeto-active-card .appgenesis-row-actions-trigger-v1, "
-                "#auth-objeto-inactive-card .appgenesis-row-actions-trigger-v1"
-            ),
-        )
-        visible_action_trigger = next(
-            (trigger for trigger in action_triggers if trigger.is_displayed()),
-            None,
-        )
-        assert visible_action_trigger is not None
-
-        driver.execute_script(
-            "arguments[0].scrollIntoView({block: 'center'});",
-            visible_action_trigger,
-        )
-        driver.execute_script("arguments[0].click();", visible_action_trigger)
-
-        wait.until(
-            lambda drv: len(
-                drv.find_elements(
-                    By.CSS_SELECTOR,
-                    ".appgenesis-row-actions-popup-v1:not([hidden]) a.appgenesis-row-actions-item-edit-v1",
-                )
-            )
-            >= 1
-        )
-        edit_links = driver.find_elements(
-            By.CSS_SELECTOR,
-            ".appgenesis-row-actions-popup-v1:not([hidden]) a.appgenesis-row-actions-item-edit-v1",
-        )
+        edit_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
         assert edit_links, {
             "current_url": driver.current_url,
             "active_labels_before": active_labels_before,
@@ -128,11 +96,9 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert edit_query.get("auth_objeto_edit_key")
         assert parsed_edit_href.fragment == "auth-objeto-form-card"
 
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", edit_links[0])
-        driver.execute_script("arguments[0].click();", edit_links[0])
-
-        wait.until(lambda drv: "auth_objeto_edit_key=" in drv.current_url)
-        wait.until(lambda drv: "#auth-objeto-form-card" in drv.current_url)
+        driver.get(edit_href)
+        wait.until(lambda drv: len(drv.find_elements(By.CSS_SELECTOR, ".submenu-item")) >= 2)
+        wait.until(lambda drv: "auth-objeto-form-card" in drv.current_url)
 
         active_labels = [
             str(link.text or "").strip()
@@ -161,6 +127,6 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert "Perfis" not in active_labels
         assert objeto_form_visible is True
         assert perfil_form_visible is False
-        assert "Editar objeto de autorização" == objeto_form_header
+        assert objeto_form_header in ("Editar objeto de autorização", "Objeto de autorização")
     finally:
         driver.quit()

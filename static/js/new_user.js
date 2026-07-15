@@ -258,6 +258,17 @@ function normalizeMenuKey(value) {
   return cleanKey;
 }
 
+function getCurrentProfileSectionV1(root) {
+  if (
+    appGenesisProfileFieldRegistryV1 &&
+    typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+  ) {
+    return appGenesisProfileFieldRegistryV1.getCurrentProfileSection(root);
+  }
+
+  return "";
+}
+
 sidebarMenuSettings.forEach((setting) => {
   const menuKey = normalizeMenuKey(setting && setting.key);
   if (!menuKey) {
@@ -3957,12 +3968,12 @@ function applyMeuPerfilProcessSubsequentVisibility() {
     const evaluation = appGenesisProcessSubsequentVisibilityRuntimeV1.refresh({
       mode: "profile",
       root: personalCardEl,
-      formEl: personalCardEl.querySelector(".profile-edit-form"),
-      setting,
-      rules: setting.process_subsequent_fields,
-      getValues: collectCurrentMeuPerfilProcessValues,
-      getCurrentSection: getCurrentProfileSectionSubsequentV1
-    });
+    formEl: personalCardEl.querySelector(".profile-edit-form"),
+    setting,
+    rules: setting.process_subsequent_fields,
+    getValues: collectCurrentMeuPerfilProcessValues,
+    getCurrentSection: getCurrentProfileSectionV1
+  });
 
     hiddenMeuPerfilSectionKeys = evaluation && evaluation.hiddenTargets ? evaluation.hiddenTargets : new Set();
     return;
@@ -4031,7 +4042,7 @@ function setupMeuPerfilQuantityRules() {
     rules: setting.process_quantity_fields,
     getSetting: () => setting,
     getValues: collectCurrentMeuPerfilQuantityValues,
-    getCurrentSection: getCurrentProfileSectionSubsequentV1,
+    getCurrentSection: getCurrentProfileSectionV1,
     readonlyGridEl: personalCardEl.querySelector(".profile-readonly .personal-grid"),
     editGridEl: formEl.querySelector(".personal-grid")
   });
@@ -4052,7 +4063,7 @@ function setupConditionalProcessVisibility() {
       setting: getSidebarMenuSetting(MEU_PERFIL_MENU_KEY),
       rules: getSidebarMenuSetting(MEU_PERFIL_MENU_KEY) && getSidebarMenuSetting(MEU_PERFIL_MENU_KEY).process_subsequent_fields,
       getValues: collectCurrentMeuPerfilProcessValues,
-      getCurrentSection: getCurrentProfileSectionSubsequentV1
+      getCurrentSection: getCurrentProfileSectionV1
     });
   }
 
@@ -4703,443 +4714,6 @@ function setupProcessAdditionalFieldsBuilder() {
   renderAdditionalFieldsPagination();
 }
 
-function setupProcessAdditionalFieldsManagerV2() {
-  const builderEl = document.getElementById("process-additional-fields-builder");
-  const formEl = builderEl ? builderEl.closest("form[data-additional-fields-manager-v2='1']") : null;
-  if (!builderEl || !formEl) {
-    return;
-  }
-  if (builderEl.dataset.additionalFieldsManagerV2Bound === "1") {
-    return;
-  }
-
-  // Manager V2 desativado: o fluxo canónico e' o V3.
-  return;
-
-  const containerEl = document.getElementById("process-additional-fields-container");
-  const editorKeyEl = document.getElementById("process-additional-field-editor-key");
-  const editorLabelEl = document.getElementById("process-additional-field-editor-label");
-  const editorTypeEl = document.getElementById("process-additional-field-editor-type");
-  const editorRequiredEl = document.getElementById("process-additional-field-editor-required");
-  const editorSizeFieldEl = document.getElementById("process-additional-field-editor-size-field");
-  const editorSizeEl = document.getElementById("process-additional-field-editor-size");
-  const editorListFieldEl = document.getElementById("process-additional-field-editor-list-field");
-  const editorListKeyEl = document.getElementById("process-additional-field-editor-list-key");
-  const feedbackEl = document.getElementById("process-additional-field-editor-feedback");
-  const addButtonEl = document.getElementById("process-additional-field-add-btn");
-  const clearButtonEl = document.getElementById("process-additional-field-clear-btn");
-  const tableBodyEl = document.getElementById("process-additional-fields-created-body");
-  const emptyEl = document.getElementById("process-additional-fields-empty");
-  const limiterEl = document.getElementById("process-additional-fields-limiter");
-  const pageSizeEl = document.getElementById("process-additional-fields-page-size");
-  const prevEl = document.getElementById("process-additional-fields-prev");
-  const nextEl = document.getElementById("process-additional-fields-next");
-  const pageEl = document.getElementById("process-additional-fields-page");
-  const fieldTypesRaw = builderEl.getAttribute("data-field-types") || "[]";
-  const processListsRaw = builderEl.getAttribute("data-process-lists") || "[]";
-
-  if (
-    !containerEl ||
-    !editorKeyEl ||
-    !editorLabelEl ||
-    !editorTypeEl ||
-    !editorRequiredEl ||
-    !editorSizeFieldEl ||
-    !editorSizeEl ||
-    !editorListFieldEl ||
-    !editorListKeyEl ||
-    !feedbackEl ||
-    !addButtonEl ||
-    !clearButtonEl ||
-    !tableBodyEl ||
-    !emptyEl ||
-    !limiterEl ||
-    !pageSizeEl ||
-    !prevEl ||
-    !nextEl ||
-    !pageEl
-  ) {
-    return;
-  }
-
-  let fieldTypes = [];
-  let processLists = [];
-  let tempIndex = 1;
-  let currentPage = 1;
-  let pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-  const sizedTypes = new Set(["text", "number", "email", "phone"]);
-
-  try {
-    fieldTypes = JSON.parse(fieldTypesRaw);
-  } catch (_error) {
-    fieldTypes = [];
-  }
-  try {
-    processLists = JSON.parse(processListsRaw);
-  } catch (_error) {
-    processLists = [];
-  }
-
-  const typeLabelByKey = new Map(
-    (Array.isArray(fieldTypes) ? fieldTypes : []).map((item) => [
-      String(item.key || "").trim().toLowerCase(),
-      String(item.label || item.key || "").trim()
-    ])
-  );
-  typeLabelByKey.set("list", "Lista");
-
-  function normalizeKey(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_]+/g, "_")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "");
-  }
-
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function getListLabel(listKey) {
-    const cleanListKey = normalizeKey(listKey);
-    const matched = (Array.isArray(processLists) ? processLists : []).find((item) => {
-      return normalizeKey(item.key) === cleanListKey;
-    });
-    return matched ? String(matched.label || matched.key || "-") : "-";
-  }
-
-  function syncEditorState() {
-    const cleanType = String(editorTypeEl.value || "text").trim().toLowerCase();
-    const isHeader = cleanType === "header";
-    const isList = cleanType === "list";
-    const sizeEnabled = sizedTypes.has(cleanType);
-
-    editorRequiredEl.disabled = isHeader;
-    if (isHeader) {
-      editorRequiredEl.value = "0";
-    }
-
-    editorSizeFieldEl.style.display = sizeEnabled ? "" : "none";
-    editorSizeEl.readOnly = !sizeEnabled;
-    editorSizeEl.classList.toggle("process-additional-size-readonly", !sizeEnabled);
-    if (!sizeEnabled) {
-      editorSizeEl.value = "";
-    } else if (!String(editorSizeEl.value || "").trim()) {
-      editorSizeEl.value = "30";
-    }
-
-    editorListFieldEl.style.display = isList ? "" : "none";
-    editorListKeyEl.disabled = !isList;
-    if (!isList) {
-      editorListKeyEl.value = "";
-    }
-  }
-
-  function setEditorFeedback(message, type = "error") {
-    feedbackEl.textContent = String(message || "").trim();
-    feedbackEl.style.display = feedbackEl.textContent ? "" : "none";
-    feedbackEl.classList.toggle("error", type === "error");
-    feedbackEl.classList.toggle("ok", type === "ok");
-  }
-
-  function clearEditor() {
-    editorKeyEl.value = "";
-    editorLabelEl.value = "";
-    editorTypeEl.value = "text";
-    editorRequiredEl.value = "0";
-    editorSizeEl.value = "30";
-    editorListKeyEl.value = "";
-    addButtonEl.textContent = "Guardar";
-    setEditorFeedback("");
-    syncEditorState();
-  }
-
-  function readStoreRow(rowEl) {
-    const keyEl = rowEl.querySelector("input[name='additional_field_key']");
-    const labelEl = rowEl.querySelector("input[name='additional_field_label']");
-    const typeEl = rowEl.querySelector("select[name='additional_field_type'], input[name='additional_field_type']");
-    const requiredEl = rowEl.querySelector("select[name='additional_field_required'], input[name='additional_field_required']");
-    const sizeEl = rowEl.querySelector("input[name='additional_field_size']");
-    const listKeyEl = rowEl.querySelector("select[name='additional_field_list_key'], input[name='additional_field_list_key']");
-    if (!labelEl || !typeEl || !requiredEl || !sizeEl) {
-      return null;
-    }
-
-    return {
-      key: String(keyEl ? keyEl.value : rowEl.getAttribute("data-field-key") || "").trim(),
-      label: String(labelEl.value || "").trim(),
-      fieldType: String(typeEl.value || "text").trim().toLowerCase(),
-      isRequired: String(requiredEl.value || "0").trim() === "1",
-      size: String(sizeEl.value || "").trim(),
-      listKey: String(listKeyEl ? listKeyEl.value : "").trim()
-    };
-  }
-
-  function readStoreRows() {
-    return Array.from(containerEl.children)
-      .map((rowEl) => readStoreRow(rowEl))
-      .filter((row) => row && row.label);
-  }
-
-  function createHiddenInput(name, value) {
-    const inputEl = document.createElement("input");
-    inputEl.type = "hidden";
-    inputEl.name = name;
-    inputEl.value = String(value || "");
-    return inputEl;
-  }
-
-  function buildStoreRow(fieldData) {
-    const rowEl = document.createElement("div");
-    rowEl.className = "process-additional-field-store-row";
-    rowEl.setAttribute("data-field-key", fieldData.key);
-    rowEl.appendChild(createHiddenInput("additional_field_key", fieldData.key));
-    rowEl.appendChild(createHiddenInput("additional_field_label", fieldData.label));
-    rowEl.appendChild(createHiddenInput("additional_field_type", fieldData.fieldType));
-    rowEl.appendChild(createHiddenInput("additional_field_required", fieldData.isRequired ? "1" : "0"));
-    rowEl.appendChild(createHiddenInput("additional_field_size", fieldData.size || ""));
-    rowEl.appendChild(createHiddenInput("additional_field_list_key", fieldData.listKey || ""));
-    return rowEl;
-  }
-
-  function removeStoreRow(fieldKey) {
-    const rowEl = Array.from(containerEl.children).find((item) => {
-      return String(item.getAttribute("data-field-key") || "").trim() === String(fieldKey || "").trim();
-    });
-    if (rowEl) {
-      rowEl.remove();
-    }
-  }
-
-  function upsertStoreRow(fieldData) {
-    const existingRowEl = Array.from(containerEl.children).find((item) => {
-      return String(item.getAttribute("data-field-key") || "").trim() === String(fieldData.key || "").trim();
-    });
-    const nextSiblingEl = existingRowEl ? existingRowEl.nextSibling : null;
-
-    removeStoreRow(fieldData.key);
-
-    const newRowEl = buildStoreRow(fieldData);
-    if (nextSiblingEl) {
-      containerEl.insertBefore(newRowEl, nextSiblingEl);
-    } else {
-      containerEl.appendChild(newRowEl);
-    }
-  }
-
-  function buildPayloadFromEditor() {
-    const cleanLabel = String(editorLabelEl.value || "").trim();
-    if (!cleanLabel) {
-      setEditorFeedback("Informe o nome do campo adicional.");
-      editorLabelEl.focus();
-      return null;
-    }
-
-    const cleanType = String(editorTypeEl.value || "text").trim().toLowerCase();
-    const cleanKey = String(editorKeyEl.value || "").trim() || `tmp_${normalizeKey(cleanLabel) || "campo"}_${tempIndex++}`;
-    const duplicateLabel = readStoreRows().some((row) => {
-      return row.key !== cleanKey && String(row.label || "").trim().toLowerCase() === cleanLabel.toLowerCase();
-    });
-    if (duplicateLabel) {
-      setEditorFeedback("Já existe um campo adicional com esse nome.");
-      editorLabelEl.focus();
-      return null;
-    }
-
-    return {
-      key: cleanKey,
-      label: cleanLabel,
-      fieldType: cleanType,
-      isRequired: cleanType === "header" ? false : String(editorRequiredEl.value || "0") === "1",
-      size: sizedTypes.has(cleanType) ? String(editorSizeEl.value || "").trim() || "30" : "",
-      listKey: cleanType === "list" ? String(editorListKeyEl.value || "").trim() : ""
-    };
-  }
-
-  function fillEditor(fieldData) {
-    editorKeyEl.value = fieldData.key;
-    editorLabelEl.value = fieldData.label;
-    editorTypeEl.value = fieldData.fieldType || "text";
-    editorRequiredEl.value = fieldData.isRequired ? "1" : "0";
-    editorSizeEl.value = fieldData.size || "30";
-    editorListKeyEl.value = fieldData.listKey || "";
-    addButtonEl.textContent = "Atualizar campo";
-    syncEditorState();
-    editorLabelEl.focus();
-  }
-
-  function moveStoreRow(fieldKey, direction) {
-    const rowEls = Array.from(containerEl.children);
-    const currentIndex = rowEls.findIndex((rowEl) => {
-      return String(rowEl.getAttribute("data-field-key") || "").trim() === String(fieldKey || "").trim();
-    });
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= rowEls.length) {
-      return;
-    }
-    const currentRowEl = rowEls[currentIndex];
-    const targetRowEl = rowEls[targetIndex];
-    if (direction === "up") {
-      containerEl.insertBefore(currentRowEl, targetRowEl);
-    } else {
-      containerEl.insertBefore(targetRowEl, currentRowEl);
-    }
-  }
-
-  function renderPagination() {
-    const rowEls = Array.from(tableBodyEl.querySelectorAll("tr"));
-    if (!rowEls.length) {
-      limiterEl.style.display = "none";
-      return;
-    }
-
-    const totalPages = Math.max(1, Math.ceil(rowEls.length / pageSize));
-    if (currentPage > totalPages) {
-      currentPage = totalPages;
-    }
-
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-
-    rowEls.forEach((rowEl, index) => {
-      rowEl.style.display = index >= start && index < end ? "" : "none";
-    });
-
-    pageEl.textContent = String(currentPage);
-    prevEl.disabled = currentPage <= 1;
-    nextEl.disabled = currentPage >= totalPages;
-    limiterEl.style.display = rowEls.length > pageSize ? "flex" : "none";
-  }
-
-  function renderTable() {
-    const rows = readStoreRows();
-    tableBodyEl.innerHTML = "";
-
-    if (!rows.length) {
-      emptyEl.style.display = "";
-      limiterEl.style.display = "none";
-      return;
-    }
-
-    emptyEl.style.display = "none";
-    rows.forEach((row) => {
-      const trEl = document.createElement("tr");
-      trEl.setAttribute("data-field-key", row.key);
-      trEl.innerHTML = [
-        `<td>${escapeHtml(row.label)}</td>`,
-        `<td>${escapeHtml(typeLabelByKey.get(row.fieldType) || row.fieldType || "-")}</td>`,
-        `<td>${row.isRequired ? "Sim" : "Não"}</td>`,
-        `<td>${escapeHtml(row.size || "-")}</td>`,
-        `<td>${escapeHtml(row.fieldType === "list" ? getListLabel(row.listKey) : "-")}</td>`,
-        '<td><div class="table-actions">',
-        '<button type="button" class="table-icon-btn" data-additional-field-action="edit" title="Modificar campo" aria-label="Modificar campo">&#9998;</button>',
-        '<button type="button" class="table-icon-btn" data-additional-field-action="up" title="Mover para cima" aria-label="Mover para cima">&#8593;</button>',
-        '<button type="button" class="table-icon-btn" data-additional-field-action="down" title="Mover para baixo" aria-label="Mover para baixo">&#8595;</button>',
-        '<button type="button" class="table-icon-btn table-icon-btn-danger" data-additional-field-action="delete" title="Remover campo" aria-label="Remover campo">&#128465;</button>',
-        "</div></td>"
-      ].join("");
-      tableBodyEl.appendChild(trEl);
-    });
-
-    renderPagination();
-  }
-
-  function handleAddAdditionalFieldV2() {
-    const payload = buildPayloadFromEditor();
-    if (!payload) {
-      return;
-    }
-    upsertStoreRow(payload);
-    clearEditor();
-    setEditorFeedback("Campo adicional preparado para guardar.", "ok");
-    currentPage = Math.max(1, Math.ceil(readStoreRows().length / pageSize));
-    renderTable();
-  }
-
-  function handleClearAdditionalFieldV2() {
-    clearEditor();
-  }
-
-  addButtonEl.addEventListener("click", handleAddAdditionalFieldV2);
-  clearButtonEl.addEventListener("click", handleClearAdditionalFieldV2);
-
-  editorTypeEl.addEventListener("change", () => {
-    syncEditorState();
-  });
-
-  pageSizeEl.addEventListener("change", () => {
-    pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-    currentPage = 1;
-    renderPagination();
-  });
-
-  prevEl.addEventListener("click", () => {
-    if (currentPage <= 1) {
-      return;
-    }
-    currentPage -= 1;
-    renderPagination();
-  });
-
-  nextEl.addEventListener("click", () => {
-    const totalPages = Math.max(1, Math.ceil(tableBodyEl.querySelectorAll("tr").length / pageSize));
-    if (currentPage >= totalPages) {
-      return;
-    }
-    currentPage += 1;
-    renderPagination();
-  });
-
-  tableBodyEl.addEventListener("click", (event) => {
-    const actionBtn = event.target.closest("[data-additional-field-action]");
-    if (!actionBtn) {
-      return;
-    }
-
-    const action = String(actionBtn.getAttribute("data-additional-field-action") || "").trim();
-    const rowEl = actionBtn.closest("tr[data-field-key]");
-    const fieldKey = String(rowEl ? rowEl.getAttribute("data-field-key") || "" : "").trim();
-    const fieldData = readStoreRows().find((row) => row.key === fieldKey);
-    if (!action || !fieldKey || !fieldData) {
-      return;
-    }
-
-    if (action === "edit") {
-      fillEditor(fieldData);
-      return;
-    }
-    if (action === "delete") {
-      removeStoreRow(fieldKey);
-      if (String(editorKeyEl.value || "").trim() === fieldKey) {
-        clearEditor();
-      }
-      renderTable();
-      return;
-    }
-    if (action === "up" || action === "down") {
-      moveStoreRow(fieldKey, action);
-      renderTable();
-    }
-  });
-
-  formEl.addEventListener("submit", () => {
-    if (String(editorLabelEl.value || "").trim()) {
-      const payload = buildPayloadFromEditor();
-      if (payload) {
-        upsertStoreRow(payload);
-      }
-    }
-  });
-
-  clearEditor();
-  renderTable();
-  builderEl.dataset.additionalFieldsManagerV2Bound = "1";
-}
 
 function normalizeProcessEditTabKey_v1(value) {
   return String(value || "")
@@ -5698,11 +5272,6 @@ if (
 
 syncTrainingOutrosState();
 renderHomeCharts();
-setupReadOnlyCards();
-setupProfileProcessTabs();
-restoreInitialProfileSectionFromUrlV2();
-setupMeuPerfilQuantityRules();
-setupConditionalProcessVisibility();
 setupProcessEditTabs();
 logAppGenesisProcessEditorDebugV1("page_load:after_setup_snapshot", {
   href: window.location.href,
@@ -6510,593 +6079,7 @@ function buildMenuItemUniqueKey_v1(item) {
 
 // APPGENESIS_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
 
-// APPGENESIS_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_START
-//###################################################################################
-// (MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1) EVITAR DUPLICACAO DO CAMPO ORIGEM
-//###################################################################################
 
-(function setupMeuPerfilQuantityOriginDedupV1() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safeQuantityOriginDedupTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function getMeuPerfilQuantityOriginSettingV1() {
-    if (typeof getSidebarMenuSetting === "function") {
-      const foundSetting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-      if (foundSetting) {
-        return foundSetting;
-      }
-    }
-
-    return (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
-      return normalizeMenuKey(setting && setting.key) === MEU_PERFIL_MENU_KEY;
-    }) || null;
-  }
-
-  function getMeuPerfilQuantityOriginFormV1() {
-    return document.querySelector("form[action='/users/profile/personal']")
-      || document.querySelector('form[action="/users/profile/personal"]');
-  }
-
-  function resolveQuantityOriginControlNameV1(fieldKey) {
-    const cleanFieldKey = normalizeMenuKey(fieldKey);
-
-    if (!cleanFieldKey) {
-      return "";
-    }
-
-    if (cleanFieldKey.startsWith("custom_")) {
-      return "custom_field__" + cleanFieldKey;
-    }
-
-    const builtinNames = {
-      nome: "full_name",
-      telefone: "primary_phone",
-      email: "login_email",
-      pais: "country",
-      data_nascimento: "birth_date",
-      autorizacao_whatsapp: "whatsapp_notice_opt_in"
-    };
-
-    return builtinNames[cleanFieldKey] || cleanFieldKey;
-  }
-
-  function getQuantityOriginCurrentSectionV1() {
-    const sectionInput = document.querySelector("[data-meu-perfil-section-input]");
-    return normalizeMenuKey(sectionInput ? sectionInput.value : "");
-  }
-
-  function getQuantityOriginWrapperV1(control) {
-    if (!control) {
-      return null;
-    }
-
-    return control.closest(".field")
-      || control.closest("[data-profile-field-key]")
-      || control.parentElement;
-  }
-
-  function getControlsByNameV1(form, controlName) {
-    if (!form || !controlName) {
-      return [];
-    }
-
-    return Array.from(form.elements || []).filter((control) => {
-      return safeQuantityOriginDedupTextV1(control.name) === controlName;
-    });
-  }
-
-  function disableDuplicateWrapperV1(wrapper, fieldKey) {
-    if (!wrapper) {
-      return;
-    }
-
-    wrapper.dataset.profileQuantityOriginDuplicateV1 = "1";
-    wrapper.dataset.profileFieldKey = normalizeMenuKey(fieldKey);
-    wrapper.hidden = true;
-    wrapper.style.display = "none";
-
-    Array.from(wrapper.querySelectorAll("input, select, textarea, button")).forEach((control) => {
-      control.disabled = true;
-      control.dataset.profileQuantityOriginDuplicateDisabledV1 = "1";
-    });
-  }
-
-  function enableKeptWrapperV1(wrapper, rule) {
-    if (!wrapper || !rule) {
-      return;
-    }
-
-    wrapper.dataset.profileQuantityOriginKeepV1 = "1";
-    wrapper.dataset.profileFieldKey = normalizeMenuKey(rule.quantityFieldKey);
-
-    if (rule.headerKey) {
-      wrapper.dataset.profileSectionPane = rule.headerKey;
-    }
-
-    wrapper.hidden = false;
-
-    Array.from(wrapper.querySelectorAll("input, select, textarea, button")).forEach((control) => {
-      if (control.dataset.profileQuantityOriginDuplicateDisabledV1 === "1") {
-        return;
-      }
-
-      control.disabled = false;
-    });
-  }
-
-  function applyQuantityOriginVisibilityV1(wrapper, rule) {
-    if (!wrapper || !rule) {
-      return;
-    }
-
-    const currentSection = getQuantityOriginCurrentSectionV1();
-    const targetSection = normalizeMenuKey(rule.headerKey || wrapper.dataset.profileSectionPane || "");
-
-    if (!currentSection || !targetSection) {
-      wrapper.style.display = "";
-      return;
-    }
-
-    wrapper.style.display = currentSection === targetSection ? "" : "none";
-  }
-
-  //###################################################################################
-  // (2) DEDUP POR REGRA
-  //###################################################################################
-
-  function dedupQuantityOriginRuleV1(form, rule) {
-    const quantityFieldKey = normalizeMenuKey(rule && rule.quantityFieldKey);
-    const controlName = resolveQuantityOriginControlNameV1(quantityFieldKey);
-
-    if (!quantityFieldKey || !controlName) {
-      return;
-    }
-
-    const controls = getControlsByNameV1(form, controlName);
-
-    if (!controls.length) {
-      return;
-    }
-
-    const wrappers = [];
-    const seenWrappers = new Set();
-
-    controls.forEach((control) => {
-      const wrapper = getQuantityOriginWrapperV1(control);
-
-      if (!wrapper || seenWrappers.has(wrapper)) {
-        return;
-      }
-
-      seenWrappers.add(wrapper);
-      wrappers.push(wrapper);
-    });
-
-    if (!wrappers.length) {
-      return;
-    }
-
-    const targetSection = normalizeMenuKey(rule.headerKey);
-
-    let keepWrapper = null;
-
-    if (targetSection) {
-      keepWrapper = wrappers.find((wrapper) => {
-        return normalizeMenuKey(wrapper.dataset.profileSectionPane) === targetSection;
-      }) || null;
-    }
-
-    if (!keepWrapper) {
-      keepWrapper = wrappers[0];
-    }
-
-    enableKeptWrapperV1(keepWrapper, rule);
-
-    wrappers.forEach((wrapper) => {
-      if (wrapper === keepWrapper) {
-        return;
-      }
-
-      disableDuplicateWrapperV1(wrapper, quantityFieldKey);
-    });
-
-    applyQuantityOriginVisibilityV1(keepWrapper, rule);
-  }
-
-  //###################################################################################
-  // (3) DEDUP GLOBAL
-  //###################################################################################
-
-  function dedupMeuPerfilQuantityOriginsV1() {
-    const form = getMeuPerfilQuantityOriginFormV1();
-    const setting = getMeuPerfilQuantityOriginSettingV1();
-
-    if (!form || !setting) {
-      return;
-    }
-
-    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
-
-    if (!rules.length) {
-      return;
-    }
-
-    rules.forEach((rule) => {
-      dedupQuantityOriginRuleV1(form, rule);
-    });
-  }
-
-  function scheduleDedupMeuPerfilQuantityOriginsV1() {
-    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 0);
-    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 80);
-    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 250);
-  }
-
-  document.addEventListener("click", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("input", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("change", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleDedupMeuPerfilQuantityOriginsV1);
-  } else {
-    scheduleDedupMeuPerfilQuantityOriginsV1();
-  }
-
-  window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 150);
-  window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 600);
-})();
-
-// APPGENESIS_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_END
-
-// APPGENESIS_MEU_PERFIL_EDIT_SECTION_FILTER_V1_START
-//###################################################################################
-// (MEU_PERFIL_EDIT_SECTION_FILTER_V1) FILTRAR CAMPOS DO EDITAR POR ABA/CABECALHO
-//###################################################################################
-
-(function setupMeuPerfilEditSectionFilterV1() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safeEditSectionTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeEditSectionKeyV1(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeEditSectionTextV1(value).trim().toLowerCase();
-  }
-
-  function normalizeEditSectionLookupV1(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeEditSectionTextV1(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function getMeuPerfilEditFormV1() {
-    return document.querySelector("form[action='/users/profile/personal']")
-      || document.querySelector('form[action="/users/profile/personal"]');
-  }
-
-  function sectionKeyFromLabelV1(label) {
-    const cleanLabel = normalizeEditSectionLookupV1(label);
-
-    if (!cleanLabel) {
-      return "";
-    }
-
-    const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
-
-    for (const section of sections) {
-      const sectionLabel = normalizeEditSectionLookupV1(section && section.label);
-
-      if (sectionLabel && sectionLabel === cleanLabel) {
-        return normalizeEditSectionKeyV1(section && section.key);
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionFromInputV1() {
-    if (
-      appGenesisProfileFieldRegistryV1 &&
-      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
-    ) {
-      const registrySection = normalizeEditSectionKeyV1(
-        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
-      );
-
-      if (registrySection) {
-        return registrySection;
-      }
-    }
-
-    const selectors = [
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizeEditSectionKeyV1(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionFromActiveTabV1() {
-    const activeSelectors = [
-      "[data-profile-section-tab].active",
-      "[data-profile-section-tab][aria-selected='true']",
-      "[data-profile-section-button].active",
-      "[data-profile-section-button][aria-selected='true']",
-      ".profile-section-tab.active",
-      ".profile-section-tab[aria-selected='true']",
-      "#perfil-pessoal-card .tab.active",
-      "#perfil-pessoal-card .active"
-    ];
-
-    for (const selector of activeSelectors) {
-      const activeElement = document.querySelector(selector);
-
-      if (!activeElement) {
-        continue;
-      }
-
-      const datasetValue = (
-        activeElement.dataset.profileSection ||
-        activeElement.dataset.profileSectionKey ||
-        activeElement.dataset.profileSectionTab ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      const datasetSection = normalizeEditSectionKeyV1(datasetValue);
-
-      if (datasetSection) {
-        return datasetSection;
-      }
-
-      const textSection = sectionKeyFromLabelV1(activeElement.textContent);
-
-      if (textSection) {
-        return textSection;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionV1() {
-    if (
-      appGenesisProfileFieldRegistryV1 &&
-      typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
-    ) {
-      const registrySection = normalizeEditSectionKeyV1(
-        appGenesisProfileFieldRegistryV1.getCurrentProfileSection(document)
-      );
-
-      if (registrySection) {
-        return registrySection;
-      }
-    }
-
-    return (
-      getCurrentProfileSectionFromInputV1() ||
-      getCurrentProfileSectionFromActiveTabV1() ||
-      (
-        Array.isArray(profilePersonalSections) &&
-        profilePersonalSections.length
-          ? normalizeEditSectionKeyV1(profilePersonalSections[0].key)
-          : ""
-      )
-    );
-  }
-
-  function getElementSectionPaneV1(element) {
-    if (!element) {
-      return "";
-    }
-
-    return normalizeEditSectionKeyV1(
-      element.dataset.profileSectionPane ||
-      element.dataset.profileSection ||
-      element.dataset.sectionKey ||
-      ""
-    );
-  }
-
-  function getVisibilityWrapperV1(element) {
-    if (!element) {
-      return null;
-    }
-
-    if (
-      element.classList &&
-      (
-        element.classList.contains("field") ||
-        element.classList.contains("profile-quantity-rule-v1") ||
-        element.classList.contains("profile-quantity-readonly-v1")
-      )
-    ) {
-      return element;
-    }
-
-    return (
-      element.closest(".field") ||
-      element.closest("[data-profile-quantity-rule-key]") ||
-      element.closest("[data-profile-quantity-readonly-rule-key]") ||
-      element
-    );
-  }
-
-  function isDuplicateOriginWrapperV1(wrapper) {
-    if (!wrapper || !wrapper.dataset) {
-      return false;
-    }
-
-    return wrapper.dataset.profileQuantityOriginDuplicateV1 === "1";
-  }
-
-  function setWrapperVisibleBySectionV1(wrapper, currentSection, expectedSection) {
-    if (!wrapper || !currentSection || !expectedSection) {
-      return;
-    }
-
-    if (isDuplicateOriginWrapperV1(wrapper)) {
-      wrapper.hidden = true;
-      wrapper.style.display = "none";
-      return;
-    }
-
-    if (currentSection === expectedSection) {
-      wrapper.hidden = false;
-      wrapper.style.display = "";
-      return;
-    }
-
-    wrapper.hidden = true;
-    wrapper.style.display = "none";
-  }
-
-  function applyQuantityHostsSectionV1(form) {
-    if (!form || typeof getSidebarMenuSetting !== "function" || typeof normalizeProcessQuantityRules !== "function") {
-      return;
-    }
-
-    const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-
-    if (!setting) {
-      return;
-    }
-
-    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
-
-    rules.forEach((rule) => {
-      const ruleKey = normalizeEditSectionKeyV1(rule.key);
-      const headerKey = normalizeEditSectionKeyV1(rule.headerKey);
-
-      if (!ruleKey || !headerKey) {
-        return;
-      }
-
-      const hosts = form.querySelectorAll(
-        "[data-profile-quantity-rule-key='" + ruleKey + "'], " +
-        "[data-profile-quantity-readonly-rule-key='" + ruleKey + "']"
-      );
-
-      hosts.forEach((host) => {
-        host.dataset.profileSectionPane = headerKey;
-      });
-    });
-  }
-
-  //###################################################################################
-  // (2) APLICAR FILTRO NO FORMULARIO EDITAR
-  //###################################################################################
-
-  function applyMeuPerfilEditSectionFilterV1() {
-    const form = getMeuPerfilEditFormV1();
-
-    if (!form) {
-      return;
-    }
-
-    const currentSection = getCurrentProfileSectionV1();
-
-    if (!currentSection) {
-      return;
-    }
-
-    applyQuantityHostsSectionV1(form);
-
-    const wrappers = new Set();
-
-    Array.from(
-      form.querySelectorAll("[data-profile-section-pane], [data-profile-section], [data-section-key]")
-    ).forEach((element) => {
-      const wrapper = getVisibilityWrapperV1(element);
-
-      if (!wrapper || !form.contains(wrapper)) {
-        return;
-      }
-
-      wrappers.add(wrapper);
-    });
-
-    Array.from(
-      form.querySelectorAll("[data-profile-quantity-rule-key]")
-    ).forEach((element) => {
-      const wrapper = getVisibilityWrapperV1(element);
-
-      if (!wrapper || !form.contains(wrapper)) {
-        return;
-      }
-
-      wrappers.add(wrapper);
-    });
-
-    wrappers.forEach((wrapper) => {
-      const wrapperSection = getElementSectionPaneV1(wrapper);
-
-      if (!wrapperSection) {
-        return;
-      }
-
-      setWrapperVisibleBySectionV1(wrapper, currentSection, wrapperSection);
-    });
-  }
-
-  function scheduleMeuPerfilEditSectionFilterV1() {
-    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 0);
-    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 80);
-    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 250);
-  }
-
-  //###################################################################################
-  // (3) EVENTOS
-  //###################################################################################
-
-  document.addEventListener("click", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("input", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("change", scheduleMeuPerfilEditSectionFilterV1, true);
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleMeuPerfilEditSectionFilterV1);
-  } else {
-    scheduleMeuPerfilEditSectionFilterV1();
-  }
-
-  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 150);
-  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 600);
-  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 1200);
-})();
-
-// APPGENESIS_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
 
 // Legacy post-save, initial profile section, and subsequent-visibility engines removed after migration to canonical modules.\n\n/* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
 function appgenesisAutoDismissFlashMessages_v1() {
@@ -7218,9 +6201,56 @@ function collectNewUserDomReferencesV1(root = document) {
   };
 }
 
+function getNewUserRuntimeRefsV1(context) {
+  if (!context || typeof context !== "object") {
+    return null;
+  }
+
+  if (!context.runtimeRefs || typeof context.runtimeRefs !== "object") {
+    context.runtimeRefs = {};
+  }
+
+  return context.runtimeRefs;
+}
+
 function initializeNavigationRuntimeV1(context = {}) {
   if (context.navigationRuntimeInitialized) {
     return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (runtimeRefs) {
+    runtimeRefs.navigation = {
+      root: context.documentRef || document
+    };
+  }
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.bindMenuButtonListeners === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.bindMenuButtonListeners();
+  }
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.bindHashChangeListener === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.bindHashChangeListener();
+  }
+
+  if (typeof syncTrainingOutrosState === "function") {
+    syncTrainingOutrosState();
+  }
+  if (typeof renderHomeCharts === "function") {
+    renderHomeCharts();
+  }
+  if (typeof setupReadOnlyCards === "function") {
+    setupReadOnlyCards();
+  }
+  if (typeof setupProfileProcessTabs === "function") {
+    setupProfileProcessTabs();
   }
 
   context.navigationRuntimeInitialized = true;
@@ -7232,6 +6262,72 @@ function initializeProfileRuntimeV1(context = {}) {
     return context;
   }
 
+  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
+  const setting = typeof getSidebarMenuSetting === "function" ? getSidebarMenuSetting(MEU_PERFIL_MENU_KEY) : null;
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (!personalCardEl || !formEl || !setting) {
+    context.profileRuntimeInitialized = true;
+    return context;
+  }
+
+  const quantityAdapter = appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.createMeuPerfilQuantityAdapterV1 === "function"
+      ? appGenesisProcessQuantityRuntimeV1.createMeuPerfilQuantityAdapterV1({
+          root: personalCardEl,
+          getSetting: () => setting
+        })
+      : null;
+  const quantityContext = {
+    mode: "profile",
+    adapterName: "profile",
+    root: personalCardEl,
+    formEl,
+    readonlyGridEl: personalCardEl.querySelector(".profile-readonly .personal-grid"),
+    editGridEl: formEl.querySelector(".personal-grid"),
+    setting,
+    rules: setting.process_quantity_fields,
+    getSetting: () => setting,
+    getValues: collectCurrentMeuPerfilQuantityValues,
+    getCurrentSection: getCurrentProfileSectionV1,
+    adapter: quantityAdapter || undefined
+  };
+  const subsequentContext = {
+    mode: "profile",
+    root: personalCardEl,
+    formEl,
+    setting,
+    rules: setting.process_subsequent_fields,
+    getValues: collectCurrentMeuPerfilProcessValues,
+    getCurrentSection: getCurrentProfileSectionV1
+  };
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessQuantityRuntimeV1.initialize(quantityContext);
+  }
+
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessSubsequentVisibilityRuntimeV1.initialize(subsequentContext);
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.profile = {
+      personalCardEl,
+      formEl,
+      setting,
+      quantityAdapter,
+      quantityContext,
+      subsequentContext
+    };
+  }
+
   context.profileRuntimeInitialized = true;
   return context;
 }
@@ -7239,6 +6335,75 @@ function initializeProfileRuntimeV1(context = {}) {
 function initializeDynamicProcessRuntimeV1(context = {}) {
   if (context.dynamicProcessRuntimeInitialized) {
     return context;
+  }
+
+  const formEl = dynamicProcessEditFormEl;
+  const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
+  const setting = cleanMenuKey && typeof getSidebarMenuSetting === "function" ? getSidebarMenuSetting(cleanMenuKey) : null;
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (!formEl || !setting) {
+    context.dynamicProcessRuntimeInitialized = true;
+    return context;
+  }
+
+  const quantityAdapter = appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.createDynamicProcessQuantityAdapterV1 === "function"
+      ? appGenesisProcessQuantityRuntimeV1.createDynamicProcessQuantityAdapterV1({
+          root: document,
+          formEl,
+          readonlyGridEl: dynamicProcessReadOnlyGridEl || null,
+          editGridEl: dynamicProcessEditGridEl || null,
+          getSetting: () => setting,
+          getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
+        })
+      : null;
+  const quantityContext = {
+    mode: "dynamic",
+    adapterName: "dynamic",
+    root: document,
+    formEl,
+    readonlyGridEl: dynamicProcessReadOnlyGridEl || null,
+    editGridEl: dynamicProcessEditGridEl || null,
+    setting,
+    rules: setting.process_quantity_fields,
+    getSetting: () => setting,
+    getValues: () => collectCurrentDynamicProcessQuantityValues(cleanMenuKey),
+    getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : ""),
+    adapter: quantityAdapter || undefined
+  };
+  const subsequentContext = {
+    mode: "dynamic",
+    root: document,
+    formEl,
+    setting,
+    rules: setting.process_subsequent_fields,
+    getValues: () => collectCurrentDynamicProcessValues(cleanMenuKey),
+    getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
+  };
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessQuantityRuntimeV1.initialize(quantityContext);
+  }
+
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessSubsequentVisibilityRuntimeV1.initialize(subsequentContext);
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.dynamicProcess = {
+      formEl,
+      setting,
+      quantityAdapter,
+      quantityContext,
+      subsequentContext
+    };
   }
 
   context.dynamicProcessRuntimeInitialized = true;
@@ -7250,6 +6415,22 @@ function initializeAdminRuntimeV1(context = {}) {
     return context;
   }
 
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (typeof setupProcessFieldsBuilder === "function") {
+    setupProcessFieldsBuilder();
+  }
+  if (typeof setupProcessAdditionalFieldsManagerV3 === "function") {
+    setupProcessAdditionalFieldsManagerV3();
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.admin = {
+      builderInitialized: true,
+      additionalFieldsManagerInitialized: true
+    };
+  }
+
   context.adminRuntimeInitialized = true;
   return context;
 }
@@ -7257,6 +6438,27 @@ function initializeAdminRuntimeV1(context = {}) {
 function initializeTableRuntimeV1(context = {}) {
   if (context.tableRuntimeInitialized) {
     return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+  const prefixes = [
+    "recent-entities",
+    "inactive-entities",
+    "admin-users",
+    "menu-ativo",
+    "menu-inativo",
+    "sessoes-ativo",
+    "sessoes-inativo"
+  ];
+
+  if (typeof setupTableLimiter === "function") {
+    prefixes.forEach((prefix) => {
+      setupTableLimiter(prefix);
+    });
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.table = { prefixes };
   }
 
   context.tableRuntimeInitialized = true;
@@ -7268,6 +6470,22 @@ function initializeInviteRuntimeV1(context = {}) {
     return context;
   }
 
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (typeof setupGeneratedInviteLinkCopy === "function") {
+    setupGeneratedInviteLinkCopy();
+  }
+  if (typeof setupCreateUserGenerateLinkShortcut === "function") {
+    setupCreateUserGenerateLinkShortcut();
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.invite = {
+      linkCopyInitialized: true,
+      shortcutInitialized: true
+    };
+  }
+
   context.inviteRuntimeInitialized = true;
   return context;
 }
@@ -7277,6 +6495,18 @@ function initializeProcessSettingsRuntimeV1(context = {}) {
     return context;
   }
 
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (typeof setupProcessEditTabs === "function") {
+    setupProcessEditTabs();
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.processSettings = {
+      tabsInitialized: true
+    };
+  }
+
   context.processSettingsRuntimeInitialized = true;
   return context;
 }
@@ -7284,6 +6514,23 @@ function initializeProcessSettingsRuntimeV1(context = {}) {
 function initializePostSaveRuntimeV1(context = {}) {
   if (context.postSaveRuntimeInitialized) {
     return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (
+    window.AppGenesisPostSaveContextCaptureV1 &&
+    typeof window.AppGenesisPostSaveContextCaptureV1.initialize === "function"
+  ) {
+    const captureContext = window.AppGenesisPostSaveContextCaptureV1.initialize({
+      root: context.documentRef || document
+    });
+
+    if (runtimeRefs) {
+      runtimeRefs.postSave = {
+        captureContext
+      };
+    }
   }
 
   context.postSaveRuntimeInitialized = true;
@@ -7316,6 +6563,23 @@ function initializeNewUserPageV1() {
   initializeInviteRuntimeV1(context);
   initializeProcessSettingsRuntimeV1(context);
   initializePostSaveRuntimeV1(context);
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.activateMenu === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.activateMenu(startupMenu, {
+      resetDynamicToFirst: false,
+      source: "bootstrap:finalize"
+    });
+  }
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.handleHashNavigation === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.handleHashNavigation(window.location.hash || "");
+  }
 
   newUserPageBootstrapStateV1.initialized = true;
   newUserPageBootstrapStateV1.references = references;

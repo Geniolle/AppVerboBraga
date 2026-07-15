@@ -314,6 +314,7 @@
       context.__appGenesisProcessQuantityRuntimeV1 = {
         listeners: [],
         renderedKeys: new Set(),
+        quantityOriginControlNames: new Set(),
         destroyed: false
       };
     }
@@ -518,11 +519,6 @@
         editGridEl.appendChild(host);
       }
 
-      const hiddenInput = ensureHiddenPayloadInput(formEl, rule.key, "data-process-quantity-payload", valuesByRule[rule.key] || []);
-      if (hiddenInput) {
-        hiddenInput.dataset.processQuantityGenerated = "1";
-      }
-
       existingItems.forEach((itemValues, itemIndex) => {
         const itemBlock = document.createElement("div");
         itemBlock.className = "profile-quantity-item-v1";
@@ -551,8 +547,6 @@
           label.textContent = `${fieldMeta.label || fieldKey}${fieldMeta.isRequired ? " *" : ""}`;
 
           const controlEl = buildFieldControl(rule, itemIndex, fieldMeta, itemValues[fieldKey] || "", "data-process-quantity");
-          controlEl.addEventListener("input", () => sync(context));
-          controlEl.addEventListener("change", () => sync(context));
 
           fieldWrapper.appendChild(label);
           fieldWrapper.appendChild(controlEl);
@@ -678,8 +672,6 @@
 
           const controlEl = buildFieldControl(rule, itemIndex, fieldMeta, itemValues[fieldKey] || "", "data-process-quantity");
           controlEl.id = inputId;
-          controlEl.addEventListener("input", () => sync(context));
-          controlEl.addEventListener("change", () => sync(context));
           fieldContainerEl.appendChild(controlEl);
           itemGridEl.appendChild(fieldContainerEl);
         });
@@ -728,6 +720,54 @@
     });
 
     return safeContext;
+  }
+
+  function buildQuantityOriginControlNames(rules) {
+    return normalizeRules(rules).reduce((names, rule) => {
+      const quantityControlName = resolveControlName(rule.quantityFieldKey);
+      if (quantityControlName) {
+        names.add(quantityControlName);
+      }
+      return names;
+    }, new Set());
+  }
+
+  function matchesQuantityOriginControl(target, state) {
+    if (!target || !state) {
+      return false;
+    }
+
+    const controlName = String(target.getAttribute && target.getAttribute("name") || "").trim();
+    return Boolean(controlName && state.quantityOriginControlNames && state.quantityOriginControlNames.has(controlName));
+  }
+
+  function matchesQuantityItemControl(target) {
+    if (!target || !target.matches) {
+      return false;
+    }
+
+    return target.matches(
+      "[name^='process_quantity_field__'], [data-process-quantity-field-key], [data-meu-perfil-quantity-field-key]"
+    );
+  }
+
+  function handleQuantityFormMutation(context, state, event, shouldRender) {
+    const target = event && event.target;
+    if (!target) {
+      return;
+    }
+
+    if (matchesQuantityOriginControl(target, state)) {
+      if (shouldRender) {
+        render(context);
+      }
+      sync(context);
+      return;
+    }
+
+    if (matchesQuantityItemControl(target) || (target.matches && target.matches("[name^='process_quantity_payload__']"))) {
+      sync(context);
+    }
   }
 
   function getFormQuantityPayloadInputs(form) {
@@ -887,45 +927,16 @@
     const nextState = getRuntimeState(safeContext);
     nextState.formEl = formEl;
     nextState.root = safeContext.root || document;
+    nextState.quantityOriginControlNames = buildQuantityOriginControlNames(resolveRulesFromContext(safeContext));
     nextState.initialized = true;
     nextState.destroyed = false;
 
-    const scheduleRender = () => {
-      renderQuantityContext(safeContext);
-    };
-    const scheduleSync = () => {
-      sync(safeContext);
-    };
-
     bindListener(nextState, formEl, "input", (event) => {
-      const target = event.target;
-      if (!target) {
-        return;
-      }
-      if (target.matches && target.matches("[data-process-quantity-field-key], [data-meu-perfil-quantity-field-key]")) {
-        scheduleSync();
-        return;
-      }
-      if (target.matches && target.matches("[name^='process_quantity_payload__']")) {
-        scheduleSync();
-      }
-      if (target.matches && target.matches("[name='" + resolveControlName((nextState.rules[0] && nextState.rules[0].quantityFieldKey) || "") + "']")) {
-        scheduleRender();
-        scheduleSync();
-      }
+      handleQuantityFormMutation(safeContext, nextState, event, true);
     }, true);
 
     bindListener(nextState, formEl, "change", (event) => {
-      const target = event.target;
-      if (!target) {
-        return;
-      }
-      if (target.matches && target.matches("[data-process-quantity-field-key], [data-meu-perfil-quantity-field-key]")) {
-        scheduleSync();
-        return;
-      }
-      scheduleRender();
-      scheduleSync();
+      handleQuantityFormMutation(safeContext, nextState, event, true);
     }, true);
 
     bindListener(nextState, formEl, "submit", () => {
@@ -970,7 +981,9 @@
 
     rules.forEach((rule) => {
       const nextValues = Array.isArray(valuesByRule[rule.key]) ? valuesByRule[rule.key] : [];
-      ensureHiddenPayloadInput(formEl, rule.key, "data-process-quantity-payload", nextValues);
+      if (!safeContext.adapter || typeof safeContext.adapter.sync !== "function") {
+        ensureHiddenPayloadInput(formEl, rule.key, "data-process-quantity-payload", nextValues);
+      }
     });
 
     if (state) {

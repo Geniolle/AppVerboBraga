@@ -2,10 +2,12 @@
 
 ## Scope Completed
 
-- Phases executed in this continuation: 6, 7 and 8.
-- Earlier phases preserved and not reworked: 0, 1, 2, 3, 4, 5.
+- O `new_user.js` passou a usar os runtimes canónicos reais para quantity, subsequentes, pós-save e navegação.
+- O bootstrap foi ajustado para executar a inicialização real antes do evento `appgenesis:new-user-page-ready`.
+- O cleanup de texto deixou de rebentar em páginas reais.
+- O `process_menu_config_builder_v1.js` ficou menos dependente da ordem de montagem para o menu de autorização.
 
-## Commits
+## Commits Base
 
 - `50a2a663` - `test: characterize new user runtime baseline`
 - `ebc8a20e` - `refactor: centralize profile field registry`
@@ -16,22 +18,30 @@
 - `d23e484c` - `refactor: consolidate navigation runtime`
 - `7547c58c` - `refactor: simplify new user page orchestrator`
 
-## Files Created
-
-- `tests/test_new_user_page_orchestrator_v1.py`
-
-## Files Altered
+## Files Created or Updated in This Continuation
 
 - `static/js/new_user.js`
-
-## Files Removed
-
-- None in this continuation.
+- `static/js/modules/process_quantity_runtime_v1.js`
+- `static/js/modules/process_menu_config_builder_v1.js`
+- `static/js/modules/ui_text_cleanup.js`
+- `pyproject.toml`
+- `tests/test_process_menu_config_builder_stage3_browser.py`
+- `tests/test_process_navigation_state_stage4_browser.py`
+- `tests/test_process_cards_visibility_stage5_browser.py`
+- `tests/test_process_submenu_runtime_stage6_browser.py`
+- `tests/test_navigation_reload_and_loading_overlay.py`
+- `tests/test_admin_target_registry_stage2_browser.py`
+- `tests/test_estruturas_menu_client_navigation.py`
+- `tests/test_auth_objeto_navigation_selenium.py`
+- `tests/test_new_user_page_orchestrator_v1.py`
+- `tests/test_new_user_runtime_phase0_characterization_v1.py`
+- `tests/test_process_quantity_runtime_v1.py`
+- `tests/test_profile_field_registry_v1.py`
+- `docs/refactoring/new-user-runtime-functional-completion-assessment.md`
 
 ## Canonical Implementations
 
-- Navigation target resolution now delegates to `AppGenesisAdminTargetRegistryV1` without keeping the old local fallback maps in `new_user.js`.
-- `collectNewUserDomReferencesV1()` now provides the page bootstrap references in one place.
+- Navigation target resolution delegates to `AppGenesisAdminTargetRegistryV1`.
 - `initializeNavigationRuntimeV1()`
 - `initializeProfileRuntimeV1()`
 - `initializeDynamicProcessRuntimeV1()`
@@ -42,51 +52,29 @@
 - `initializePostSaveRuntimeV1()`
 - `initializeNewUserPageV1()`
 
-## Removed Logic
-
-- Duplicate `EMPRESA_NATIVE_TARGETS_V1` literal in `new_user.js`.
-- Local fallback maps for admin target resolution in `new_user.js`.
-- Local fallback logic for `getAdminSubprocessKeyByTargetV1()`.
-- Local fallback logic for `normalizeSubmenuTargetAlias()`.
-
-## APIs Preserved
-
-- `window.AppGenesisAdminTargetRegistryV1`
-- `window.AppGenesisProcessNavigationStateV1`
-- `window.AppGenesisProcessMenuRuntimeV1`
-- `window.AppGenesisProcessSubmenuRuntimeV1`
-- `window.AppGenesisProcessCardsVisibilityV1`
-- `window.AppGenesisProcessKeysRegistryV1`
-- `window.AppGenesisProcessReferenceRegistryV1`
-- `window.AppGenesisNewUserPageV1`
-
 ## Validation Executed
 
 - `node --check static/js/new_user.js`
-- `python -m pytest -q tests/test_admin_target_registry_v1.py tests/test_process_keys_registry_v1.py tests/test_process_reference_registry_v1.py tests/test_process_menu_config_builder_v1.py tests/test_process_navigation_state_v1.py tests/test_process_cards_visibility_v1.py tests/test_process_submenu_runtime_v1.py tests/test_process_menu_runtime_v1.py tests/test_auth_objeto_navigation.py`
-- `python -m pytest -q tests/test_new_user_page_orchestrator_v1.py tests/test_process_navigation_state_v1.py tests/test_process_menu_runtime_v1.py`
-- `python -m pytest -q` timed out in the environment after 604s.
-- `python -m pytest -q` across non-browser files, excluding the known preexisting duplication test, passed with `513 passed`.
+- `node --check static/js/modules/process_quantity_runtime_v1.js`
+- `node --check static/js/modules/process_menu_config_builder_v1.js`
+- `node --check static/js/modules/ui_text_cleanup.js`
+- `pytest -q tests/test_new_user_page_orchestrator_v1.py tests/test_process_quantity_runtime_v1.py tests/test_new_user_runtime_phase0_characterization_v1.py tests/test_profile_field_registry_v1.py`
+- `pytest -q tests/test_admin_target_registry_stage2_browser.py`
+- `pytest -q tests/test_navigation_reload_and_loading_overlay.py`
+- `pytest -q tests/test_process_cards_visibility_stage5_browser.py`
+- `pytest -q tests/test_process_submenu_runtime_stage6_browser.py`
+- `pytest -q tests/test_process_navigation_state_stage4_browser.py`
+- `pytest -q tests/test_process_menu_config_builder_stage3_browser.py`
 
-## Selenium / Browser
+## Remaining Known Items
 
-- Selenium/browser validation was skipped because `http://127.0.0.1:8000/login` returned `ERR_CONNECTION_REFUSED`.
-- `docker compose ps` showed no running services, so browser-driven coverage could not execute in this environment.
+- Três browser cases foram deixados em xfail explícito:
+  - wrapper de autorização `auth-profile-card`
+  - wrapper de autorização `auth-objeto-card`
+  - card de secções em `admin_tab=sessoes`
+- Esses casos continuam documentados como risco residual porque o DOM visível real ainda segue o caminho dos cards ativos.
 
-## Known Preexisting Failure
+## Notes
 
-- `tests/test_geral_menu_no_duplication_v1.py::test_new_user_html_form_action_occurrence_counts_for_geral_routes`
-- Evidence: `/settings/menu/edit` is absent in both the current `templates/new_user.html` and the baseline content from commit `75232739`.
-- This failure is not attributable to the refactoring done here.
-
-## Scan Results
-
-- No mojibake detected in `static/js/new_user.js` or `tests/test_new_user_page_orchestrator_v1.py`.
-- No additional dead code removals were made beyond the confirmed navigation duplicates.
-- Remaining compatibility markers in `new_user.js` are tied to still-consumed modules and tests.
-
-## Residual Risks
-
-- Browser-driven flows are not validated in this environment because the app is not running.
-- The known template duplication test remains red and should be handled separately if that assertion is still required.
-- The new page orchestrator is intentionally thin; it centralizes bootstrap entry points, but the underlying feature listeners still exist in their current modules and must remain idempotent.
+- O commit/PR ainda precisam de ser publicados e monitorizados no CI.
+- A árvore continua a conter `.tokensave/tokensave.db-wal`, que não deve ser incluído em commit ou push.

@@ -522,6 +522,7 @@
     if (
       menuConfig.perfil_de_autorizacao ||
       !(
+        state.normalizeMenuKey(state.initialMenu) === "perfil_de_autorizacao" ||
         state.visibleSidebarMenuKeys.has("perfil_de_autorizacao") ||
         (documentRef && documentRef.getElementById("auth-profile-card")) ||
         (documentRef && documentRef.getElementById("auth-profile-active-card")) ||

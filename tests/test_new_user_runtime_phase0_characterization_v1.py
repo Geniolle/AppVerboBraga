@@ -37,6 +37,7 @@ def test_new_user_post_save_runtime_removed_legacy_blocks_from_bootstrap() -> No
 def test_new_user_legacy_additional_fields_v2_is_removed_from_bootstrap() -> None:
     script_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
 
+    assert "setupProcessAdditionalFieldsManagerV2" not in script_text
     assert "setupProcessAdditionalFieldsManagerV2_guard_v1" not in script_text
     assert "setupProcessAdditionalFieldsManagerV2();" not in script_text
     assert "window.__appgenesisAddAdditionalFieldV2" not in script_text
