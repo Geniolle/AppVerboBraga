@@ -2130,63 +2130,26 @@
                         data-additional-field-list-source-wrap
                         style="display: none;"
                       >
-                        <label for="process-additional-field-editor-list-source-type">
-                          Fonte dos dados
-                          <span class="field-info-tooltip-v1" data-field-info-tooltip>
-                            <button
-                              type="button"
-                              class="field-info-trigger-v1"
-                              data-field-info-trigger
-                              aria-expanded="false"
-                              aria-describedby="process-additional-field-editor-list-source-type-info"
-                              aria-label="Ajuda sobre Fonte dos dados"
-                            >
-                              <svg class="field-info-icon-v1" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"></circle>
-                                <line x1="12" y1="11" x2="12" y2="16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-                                <circle cx="12" cy="7.6" r="1.15" fill="currentColor" stroke="none"></circle>
-                              </svg>
-                            </button>
-                            <span
-                              class="field-info-panel-v1"
-                              id="process-additional-field-editor-list-source-type-info"
-                              role="tooltip"
-                            >
-                              <ul>
-                                <li><strong>Manual:</strong> opções escritas manualmente.</li>
-                                <li><strong>Menus ativos:</strong> carrega os menus/processos ativos do sistema.</li>
-                                <li><strong>Abas do processo selecionado:</strong> carrega automaticamente as abas/subprocessos do processo escolhido em outro campo. Exemplo: se o campo Processo for "Extrato", esta lista mostra as abas do Extrato.</li>
-                                <li><strong>Automática por registos:</strong> monta a lista com base em valores já registados.</li>
-                                <li><strong>Lista de outro campo:</strong> reutiliza a lista configurada noutro campo.</li>
-                              </ul>
-                            </span>
-                          </span>
-                        </label>
-                        <select
-                          id="process-additional-field-editor-list-source-type"
-                          data-additional-field-editor-list-source-type
-                        >
-                          <option value="manual">Manual</option>
-                          <option value="active_menus">Menus ativos</option>
-                          <option value="profile_menu_tabs">Abas do processo selecionado</option>
-                          <option value="automatic">Automática por registos</option>
-                          <option value="field_list">Lista de outro campo</option>
-                        </select>
-                      </div>
-
-                      <div
-                        class="field"
-                        id="process-additional-field-editor-list-field"
-                        data-additional-field-list-wrap
-                        style="display: none;"
-                      >
-                        <label for="process-additional-field-editor-manual-items">Lista manual</label>
+                        <label for="process-additional-field-editor-list-key">Nome da Lista</label>
                         <input
-                          id="process-additional-field-editor-manual-items"
-                          type="text"
-                          data-additional-field-editor-manual-items
-                          placeholder="Ex.: Criar, Editar, Eliminar, Visualizar"
+                          type="hidden"
+                          data-additional-field-editor-list-source-type
+                          value="manual"
                         >
+                        <input
+                          type="hidden"
+                          data-additional-field-editor-manual-items
+                          value=""
+                        >
+                        <select
+                          id="process-additional-field-editor-list-key"
+                          data-additional-field-editor-list-key
+                        >
+                          <option value="">Selecione a lista</option>
+                          {% for process_list in settings_edit_data.process_lists|default([]) %}
+                          <option value="{{ process_list.key }}">{{ process_list.label }}</option>
+                          {% endfor %}
+                        </select>
                       </div>
 
                       <div
@@ -2633,7 +2596,7 @@
   <script src="/static/js/modules/appgenesis_dialog_v1.js?v=20260704-dialog-v1"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260712-pagination-footer-fix-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260712-pagination-footer-fix-v1"></script>
+   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>

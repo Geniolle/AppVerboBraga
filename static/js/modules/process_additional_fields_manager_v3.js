@@ -95,6 +95,114 @@
     return "manual";
   }
 
+  function getProcessListOptions_v3(root) {
+    const rawText = toSafeString_v3(root && root.dataset ? root.dataset.processLists : "").trim();
+
+    if (!rawText) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(rawText);
+
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      const options = [];
+      const seenKeys = new Set();
+
+      parsed.forEach((rawItem) => {
+        if (!rawItem || typeof rawItem !== "object") {
+          return;
+        }
+
+        const key = normalizeListKey_v3(
+          rawItem.key || rawItem.list_key || rawItem.manual_list_key || rawItem.process_list_key
+        );
+        const baseLabel = toSafeString_v3(rawItem.label || rawItem.name || rawItem.key).trim();
+        const status = toSafeString_v3(rawItem.status || "").trim().toLowerCase();
+        const isActive = rawItem.is_active !== undefined
+          ? Boolean(rawItem.is_active)
+          : status !== "inativo" && status !== "inactive";
+        const label = baseLabel ? (isActive ? baseLabel : `${baseLabel} (Inativa)`) : "";
+
+        if (!key || !label) {
+          return;
+        }
+
+        if (seenKeys.has(key)) {
+          return;
+        }
+
+        seenKeys.add(key);
+        options.push({ key, label, isActive });
+      });
+
+      return options;
+    } catch (error) {
+      if (window.console && typeof window.console.warn === "function") {
+        window.console.warn("[ProcessAdditionalFieldsManagerV3] lista de processos invalida", error);
+      }
+      return [];
+    }
+  }
+
+  function refreshProcessListOptions_v3(root, selectedValue) {
+    const editor = getEditorRoot_v3(root);
+    const listSelect = editor.querySelector("[data-additional-field-editor-list-key]");
+
+    if (!listSelect) {
+      return;
+    }
+
+    const selectedKey = normalizeListKey_v3(selectedValue);
+    const options = getProcessListOptions_v3(root);
+    const matchedOption = selectedKey
+      ? options.find((option) => normalizeListKey_v3(option.key) === selectedKey)
+      : null;
+
+    listSelect.innerHTML = "";
+
+    if (!options.length) {
+      const option = document.createElement("option");
+      option.value = selectedKey || "";
+      option.textContent = selectedKey ? "Lista não encontrada" : "Nenhuma lista criada";
+      option.disabled = !selectedKey;
+      option.selected = true;
+      listSelect.appendChild(option);
+      listSelect.disabled = !selectedKey;
+      listSelect.value = selectedKey || "";
+      return;
+    }
+
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = "Selecione a lista";
+    listSelect.appendChild(placeholderOption);
+
+    options.forEach((option) => {
+      const optionElement = document.createElement("option");
+      optionElement.value = option.key;
+      optionElement.textContent = option.label;
+      listSelect.appendChild(optionElement);
+    });
+
+    let hasSelectedOption = Boolean(matchedOption);
+
+    if (selectedKey && !matchedOption) {
+      const option = document.createElement("option");
+      option.value = selectedKey;
+      option.textContent = "Lista não encontrada";
+      option.selected = true;
+      listSelect.appendChild(option);
+      hasSelectedOption = true;
+    }
+
+    listSelect.disabled = false;
+    listSelect.value = hasSelectedOption ? selectedKey : "";
+  }
+
   function normalizeRequired_v3(value) {
     if (typeof value === "boolean") {
       return value;
@@ -307,7 +415,12 @@
       return "-";
     }
 
+    const manualListKey = normalizeListKey_v3(item.manualListKey || item.listKey);
     const listSourceType = normalizeListSourceType_v3(item.listSourceType);
+
+    if (manualListKey) {
+      return `Lista: ${getManualListLabelByKey_v3(root, manualListKey)}`;
+    }
 
     if (listSourceType === "active_menus") {
       return "Menus ativos";
@@ -424,6 +537,7 @@
 
     if (resetSourceType) {
       setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
+      setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
     }
 
     if (resetManual) {
@@ -563,11 +677,13 @@
     setInputValue_v3(editor, "[data-additional-field-editor-size]", "255");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", "manual");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", "");
     setInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]", "");
+    refreshProcessListOptions_v3(root, "");
     refreshAutomaticSourceOptions_v3(root, {
       processKey: "",
       sectionKey: "",
@@ -586,6 +702,7 @@
   function loadEditorItem_v3(item, context) {
     const root = context.root;
     const editor = getEditorRoot_v3(root);
+    const selectedListKey = normalizeListKey_v3(item.manualListKey || item.listKey);
 
     setInputValue_v3(editor, "[data-additional-field-editor-key]", item.key || "");
     setInputValue_v3(editor, "[data-additional-field-editor-label]", item.label || "");
@@ -593,11 +710,13 @@
     setInputValue_v3(editor, "[data-additional-field-editor-size]", item.size || "");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", item.isRequired ? "1" : "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", item.listSourceType || "manual");
+    setInputValue_v3(editor, "[data-additional-field-editor-list-key]", selectedListKey);
     setInputValue_v3(editor, "[data-additional-field-editor-manual-items]", item.manualListItemsCsv || (item.manualListItems && item.manualListItems.length ? item.manualListItems.join(", ") : "") || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-process-key]", item.automaticSourceProcessKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-section-key]", item.automaticSourceSectionKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-source-field-key]", item.automaticSourceFieldKey || "");
     setInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]", item.automaticOnlyActive ? "1" : "");
+    refreshProcessListOptions_v3(root, selectedListKey);
     refreshAutomaticSourceOptions_v3(root, {
       processKey: item.automaticSourceProcessKey || "",
       sectionKey: item.automaticSourceSectionKey || "",
@@ -622,25 +741,10 @@
     const rawKey = explicitRawKey || label;
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
     const key = normalizeFieldKey_v3(rawKey);
-    const listSourceType = normalizeListSourceType_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
+    const selectedListKey = normalizeListKey_v3(
+      getInputValue_v3(editor, "[data-additional-field-editor-list-key]")
     );
-    const manualItemsRaw = toSafeString_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-manual-items]")
-    ).trim();
-    const manualListItemsParsed = manualItemsRaw
-      ? manualItemsRaw.split(",").map(function(s) { return s.trim(); }).filter(Boolean)
-      : [];
-    const manualListItemsCsv = manualListItemsParsed.join(", ");
-    const automaticSourceProcessKey = normalizeLookup_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")
-    );
-    const automaticSourceSectionKey = normalizeLookup_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-source-section-key]")
-    );
-    const automaticSourceFieldKey = normalizeLookup_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-source-field-key]")
-    );
+    const resolvedListKey = selectedListKey || "";
 
     return {
       id: key,
@@ -652,17 +756,15 @@
         ? false
         : normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]")),
       size: normalizeSize_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]"), fieldType),
-      listSourceType: fieldType === "list" ? listSourceType : "manual",
-      manualListKey: "",
-      listKey: "",
-      manualListItemsCsv: fieldType === "list" && listSourceType === "manual" ? manualListItemsCsv : "",
-      manualListItems: fieldType === "list" && listSourceType === "manual" ? manualListItemsParsed : [],
-      automaticSourceProcessKey: fieldType === "list" ? automaticSourceProcessKey : "",
-      automaticSourceSectionKey: fieldType === "list" ? automaticSourceSectionKey : "",
-      automaticSourceFieldKey: fieldType === "list" ? automaticSourceFieldKey : "",
-      automaticOnlyActive: fieldType === "list"
-        ? normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]"))
-        : false
+      listSourceType: "manual",
+      manualListKey: fieldType === "list" ? resolvedListKey : "",
+      listKey: fieldType === "list" ? resolvedListKey : "",
+      manualListItemsCsv: "",
+      manualListItems: [],
+      automaticSourceProcessKey: "",
+      automaticSourceSectionKey: "",
+      automaticSourceFieldKey: "",
+      automaticOnlyActive: false
     };
   }
 
@@ -777,6 +879,8 @@
   }
 
   function validateEditorItem_v3(item, context) {
+    const selectedListKey = normalizeListKey_v3(item.manualListKey || item.listKey);
+
     if (!item.label) {
       return { valid: false, message: "Informe o nome do campo." };
     }
@@ -785,29 +889,8 @@
       return { valid: false, message: "Informe a chave do campo." };
     }
 
-    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "manual" && !item.manualListItemsCsv) {
-      return { valid: false, message: "Informe pelo menos uma opção da lista manual." };
-    }
-
-    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "automatic") {
-      if (!item.automaticSourceProcessKey) {
-        return { valid: false, message: "Selecione o processo de origem da lista." };
-      }
-      if (!item.automaticSourceSectionKey) {
-        return { valid: false, message: "Selecione a secao de origem da lista." };
-      }
-      if (!item.automaticSourceFieldKey) {
-        return { valid: false, message: "Selecione o campo de origem da lista." };
-      }
-    }
-
-    if (item.fieldType === "list" && normalizeListSourceType_v3(item.listSourceType) === "field_list") {
-      if (!item.automaticSourceProcessKey) {
-        return { valid: false, message: "Selecione o processo de origem do campo de lista." };
-      }
-      if (!item.automaticSourceFieldKey) {
-        return { valid: false, message: "Selecione o campo de lista de origem." };
-      }
+    if (item.fieldType === "list" && !selectedListKey) {
+      return { valid: false, message: "Selecione o nome da lista." };
     }
 
     const duplicated = findGroupDuplicate_v3(item, context);
@@ -827,12 +910,8 @@
   function updateEditorVisibility_v3(root) {
     const editor = getEditorRoot_v3(root);
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
-    const listSourceType = normalizeListSourceType_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
-    );
     const sizeWrap = editor.querySelector("[data-additional-field-size-wrap]");
     const listSourceWrap = editor.querySelector("[data-additional-field-list-source-wrap]");
-    const manualListWrap = editor.querySelector("[data-additional-field-list-wrap]");
     const automaticProcessWrap = editor.querySelector("[data-additional-field-automatic-process-wrap]");
     const automaticSectionWrap = editor.querySelector("[data-additional-field-automatic-section-wrap]");
     const automaticFieldWrap = editor.querySelector("[data-additional-field-automatic-field-wrap]");
@@ -846,58 +925,37 @@
         resetManual: true,
         resetAutomatic: true
       });
-    } else if (listSourceType === "manual") {
-      resetListSourceFields_v3(root, {
-        resetSourceType: false,
-        resetManual: false,
-        resetAutomatic: true
-      });
-    } else if (listSourceType === "active_menus" || listSourceType === "profile_menu_tabs") {
-      resetListSourceFields_v3(root, {
-        resetSourceType: false,
-        resetManual: true,
-        resetAutomatic: true
-      });
-    } else {
-      resetListSourceFields_v3(root, {
-        resetSourceType: false,
-        resetManual: true,
-        resetAutomatic: false
-      });
     }
 
     if (sizeWrap) {
       sizeWrap.style.display = TEXTUAL_TYPES.has(fieldType) ? "" : "none";
     }
 
-    if (listSourceWrap) {
-      listSourceWrap.style.display = isListField ? "" : "none";
-    }
-
-    if (manualListWrap) {
-      manualListWrap.style.display = isListField && listSourceType === "manual" ? "" : "none";
-    }
-
-    const isSourceGroupVisible = isListField && (listSourceType === "automatic" || listSourceType === "field_list");
-
     if (automaticProcessWrap) {
-      automaticProcessWrap.style.display = isSourceGroupVisible ? "" : "none";
+      automaticProcessWrap.style.display = "none";
     }
 
     if (automaticSectionWrap) {
-      automaticSectionWrap.style.display = isSourceGroupVisible ? "" : "none";
+      automaticSectionWrap.style.display = "none";
     }
 
     if (automaticFieldWrap) {
-      automaticFieldWrap.style.display = isSourceGroupVisible ? "" : "none";
+      automaticFieldWrap.style.display = "none";
     }
 
     if (automaticOnlyActiveWrap) {
-      automaticOnlyActiveWrap.style.display = isListField && listSourceType === "automatic" ? "" : "none";
+      automaticOnlyActiveWrap.style.display = "none";
     }
 
     if (requiredWrap) {
       requiredWrap.style.display = fieldType === "header" ? "none" : "";
+    }
+
+    if (listSourceWrap) {
+      listSourceWrap.style.display = isListField ? "" : "none";
+      if (isListField) {
+        refreshProcessListOptions_v3(root, getInputValue_v3(editor, "[data-additional-field-editor-list-key]"));
+      }
     }
   }
 
@@ -944,6 +1002,7 @@
     return Boolean(
       getInputValue_v3(editor, "[data-additional-field-editor-label]").trim() ||
       getInputValue_v3(editor, "[data-additional-field-editor-key]").trim() ||
+      getInputValue_v3(editor, "[data-additional-field-editor-list-key]").trim() ||
       getInputValue_v3(editor, "[data-additional-field-editor-manual-items]").trim()
     );
   }
@@ -1109,16 +1168,7 @@
     const label = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-label]")).trim();
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
     const size = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-size]")).trim();
-    const listSourceType = normalizeListSourceType_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
-    );
-    const listKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-manual-items]")).trim();
-    const automaticSourceProcessKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-process-key]")).trim();
-    const automaticSourceSectionKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-section-key]")).trim();
-    const automaticSourceFieldKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-source-field-key]")).trim();
-    const automaticOnlyActive = normalizeRequired_v3(
-      getInputValue_v3(editor, "[data-additional-field-editor-automatic-only-active]")
-    );
+    const selectedListKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-list-key]")).trim();
     const isRequired = normalizeRequired_v3(getInputValue_v3(editor, "[data-additional-field-editor-required]"));
 
     if (manager && manager.state && manager.state.editingId) {
@@ -1127,13 +1177,9 @@
 
     return Boolean(
       label ||
-      listKey ||
-      automaticSourceProcessKey ||
-      automaticSourceSectionKey ||
-      automaticSourceFieldKey ||
-      automaticOnlyActive ||
+      selectedListKey ||
       isRequired ||
-      (fieldType === "list" && listSourceType !== "manual") ||
+      (fieldType === "list" && selectedListKey) ||
       fieldType !== "text" ||
       (size && size !== "255" && size !== "30")
     );
@@ -1372,6 +1418,7 @@
 
     root.dataset.additionalFieldsManagerReadyV3 = "1";
     bindEditorExtras_v4(root, manager);
+    refreshProcessListOptions_v3(root, "");
     refreshAutomaticSourceOptions_v3(root);
     manager.syncHiddenInputs();
 
