@@ -113,7 +113,7 @@ def _build_driver_v1():
         pytest.skip(f"Selenium Chrome indisponivel neste ambiente: {exc}")
 
 
-def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
+def test_lists_save_returns_to_origin_list_and_cancel_stays_local_in_browser() -> None:
     email = str(ADMIN_LOGIN_EMAIL or "").strip()
     password = str(ADMIN_LOGIN_PASSWORD or "").strip()
     if not email or not password:
@@ -171,26 +171,20 @@ def test_lists_save_and_cancel_stay_in_editor_in_browser() -> None:
         driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-items]").send_keys("A, B, C")
         submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
         submit.click()
+        wait.until(lambda drv: "menu-subprocess-card-active" in drv.current_url)
+
+        parsed = urlsplit(driver.current_url)
+        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        assert parsed.fragment == "menu-subprocess-card-active"
+        assert params["target"] == "menu-subprocess-card-active"
+
+        wait.until(EC.invisibility_of_element_located((By.ID, "settings-menu-edit-card")))
+
+        open_editor()
         wait.until(
             lambda drv: "Lista teste stay"
             in drv.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]").text
         )
-        form = driver.find_element(By.CSS_SELECTOR, "form[data-process-lists-manager-v1='1']")
-        driver.execute_script(
-            "HTMLFormElement.prototype.submit.call("
-            "document.querySelector(\"form[data-process-lists-manager-v1='1']\"));"
-        )
-        wait.until(EC.staleness_of(form))
-
-        parsed = urlsplit(driver.current_url)
-        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
-        assert parsed.fragment == "settings-menu-edit-card"
-        assert params["settings_edit_key"] == "perfil_de_autorizacao"
-        assert params["settings_tab"] == "lista"
-        assert params["target"] == "settings-menu-edit-card"
-
-        driver.refresh()
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-process-lists-table-body]")))
         assert "Lista teste stay" in driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]").text
 
         wait.until(

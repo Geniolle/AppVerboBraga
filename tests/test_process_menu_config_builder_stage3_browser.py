@@ -103,22 +103,14 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
         pytest.param(
             "/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
             "perfil_de_autorizacao",
-            "auth-profile-card",
+            "auth-profile-active-card",
             "Perfis",
-            marks=pytest.mark.xfail(
-                strict=False,
-                reason="Authorization profile wrapper target is still rendered through the active card path.",
-            ),
         ),
         pytest.param(
             "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-card#auth-objeto-card",
             "perfil_de_autorizacao",
-            "auth-objeto-card",
+            "auth-objeto-active-card",
             "Objeto de autorização",
-            marks=pytest.mark.xfail(
-                strict=False,
-                reason="Authorization object wrapper target is still rendered through the active card path.",
-            ),
         ),
     ],
 )

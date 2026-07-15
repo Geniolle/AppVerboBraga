@@ -7,8 +7,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ####################################################################################
 # (1) TODOS OS BOTOES CANCELAR DO EDITOR DEVOLVEM O UTILIZADOR A LISTA DE ORIGEM
 # (o "target" de contexto continua a ser o proprio card do editor -- necessario para o
-# controlador global localizar/fechar o card -- mas o "return-target"/"return-url" ja
-# nao apontam mais para o proprio editor, e sim para a lista de onde ele foi aberto).
+# controlador global localizar/fechar o card -- mas o "return-target"/"return-url" apontam
+# para a lista de onde ele foi aberto).
 ####################################################################################
 
 CANCEL_BUTTON_MARKERS = [
@@ -86,7 +86,7 @@ def test_geral_tab_has_no_form_only_available_fields_card() -> None:
 
 ####################################################################################
 # (1.1) TODAS AS ABAS DO EDITOR ENVIAM return_url NO GUARDAR, REUSANDO A MESMA VARIAVEL
-# GLOBAL (settings_edit_return_url), PARA O BACKEND PRESERVAR CONTEXTO (ex.: admin_tab)
+# GLOBAL (settings_edit_exit_url), PARA O BACKEND PRESERVAR O CONTEXTO DE SAIDA (ex.: admin_tab)
 # SEM DEPENDER DE NAVEGACAO CORRETIVA NO CLIENTE.
 ####################################################################################
 
@@ -105,7 +105,7 @@ def test_all_process_editor_tab_forms_send_generic_return_url() -> None:
     html_text = _read_new_user_html()
 
     assert html_text.count(
-        '<input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">'
+        '<input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">'
     ) == len(PROCESS_EDITOR_FORM_ACTIONS)
 
     for action in PROCESS_EDITOR_FORM_ACTIONS:

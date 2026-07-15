@@ -209,10 +209,11 @@ def test_administrativo_clean_url_tab_still_activates_correct_tab() -> None:
         )
         wait.until(
             lambda drv: bool(
-                [
-                    e.text.strip()
-                    for e in drv.find_elements(By.CSS_SELECTOR, ".submenu-item.active")
-                ]
+                drv.execute_script(
+                    "return Array.from(document.querySelectorAll('.submenu-item.active'))"
+                    ".map((e) => (e.textContent || '').trim())"
+                    ".filter(Boolean).length > 0;"
+                )
             )
         )
 
@@ -410,10 +411,6 @@ def _assert_editor_closed_and_list_visible_v1(
     assert "settings_edit_key" not in current_href, current_href
 
 
-@pytest.mark.xfail(
-    reason="Menu editor save/cancel are covered by dedicated stay tests; this browser path is not stable.",
-    strict=False,
-)
 def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None:
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)
@@ -424,17 +421,16 @@ def test_process_editor_cancel_returns_to_origin_list_on_multiple_tabs() -> None
 
         # (a) Cancelar na aba "Geral" (aba ativa por omissao).
         _open_process_editor_from_list_v1(driver, wait)
-        cancel_button = driver.find_elements(By.CSS_SELECTOR, ".action-btn-cancel")[0]
+        cancel_button = driver.find_element(
+            By.CSS_SELECTOR,
+            "#settings-menu-edit-card .action-btn-cancel[data-appgenesis-cancel-target='settings-menu-edit-card']",
+        )
         driver.execute_script("arguments[0].click();", cancel_button)
         _assert_editor_closed_and_list_visible_v1(driver, wait)
     finally:
         driver.quit()
 
 
-@pytest.mark.xfail(
-    reason="Menu editor save/cancel are covered by dedicated stay tests; this browser path is not stable.",
-    strict=False,
-)
 def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> None:
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)
@@ -446,12 +442,16 @@ def test_process_editor_save_returns_to_origin_list_without_manual_refresh() -> 
         _open_process_editor_from_list_v1(driver, wait)
 
         # Guarda na aba "Geral" sem tocar em nenhum campo -- reenvia os mesmos valores ja
-        # carregados no formulario, cobrindo "Guardar" sem alterar dados criticos.
-        submit_button = driver.find_elements(By.CSS_SELECTOR, "button[type='submit']")[0]
+        # carregados no formulario e deve devolver o utilizador a lista de origem.
+        submit_button = driver.find_element(
+            By.CSS_SELECTOR,
+            "#settings-menu-edit-card button[type='submit']",
+        )
         driver.execute_script("arguments[0].click();", submit_button)
 
-        wait.until(lambda drv: "settings_edit_key" not in _current_href_v1(drv))
         _assert_editor_closed_and_list_visible_v1(driver, wait)
+        assert "settings_edit_key" not in _current_href_v1(driver)
+        assert "menu-subprocess-card-active" in _current_href_v1(driver)
         # No subprocesso "Sessoes > Menu" o alerta inline ".alert.ok" e' deliberadamente
         # suprimido (ver _suppress_inline_success_feedback em macros/admin_subprocess.html) --
         # o feedback de sucesso desse fluxo e' promovido a um toast global lido do query

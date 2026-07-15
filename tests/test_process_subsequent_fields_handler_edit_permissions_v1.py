@@ -151,10 +151,9 @@ def test_edit_subsequent_fields_owner_success_creates_and_edits_rows():
     assert response.status_code == 303
     location = response.headers["location"]
     assert "target=settings-menu-edit-card" in location
-    # Comportamento existente: o redirect de SUCESSO usa hifen, ao contrario dos
-    # redirects de erro desta mesma aba (ver testes acima e abaixo).
-    assert "settings_tab=campos-subsequentes" in location
-    assert f"settings_edit_key={MENU_KEY}" in location
+    assert "appgenesis_after_save=1" in location
+    assert "settings_tab=" not in location
+    assert "settings_edit_key=" not in location
     assert "Campos%20subsequentes%20atualizados%20com%20sucesso." in location
 
     subsequent_fields = _load_config(SessionLocal)["subsequent_fields"]
@@ -272,5 +271,6 @@ def test_regression_hyphen_underscore_settings_tab_inconsistency_is_locked():
         is_admin=True,
         permissions={"can_manage_tenant_structure": True},
     )
-    assert "settings_tab=campos-subsequentes" in success_response.headers["location"]
+    assert "appgenesis_after_save=1" in success_response.headers["location"]
+    assert "settings_tab=" not in success_response.headers["location"]
     assert "settings_tab=campos_subsequentes" not in success_response.headers["location"]

@@ -201,8 +201,9 @@ def test_edit_quantity_fields_owner_success():
 
     assert response.status_code == 303
     location = response.headers["location"]
-    assert "settings_tab=campos-quantidade" in location
-    assert f"settings_edit_key={MENU_KEY}" in location
+    assert "appgenesis_after_save=1" in location
+    assert "settings_tab=" not in location
+    assert "settings_edit_key=" not in location
     assert "Campos%20Quantidade%20atualizados%20com%20sucesso." in location
 
     config = _load_config(SessionLocal)
@@ -430,7 +431,8 @@ def test_regression_settings_tab_is_always_hyphenated_never_underscore():
         permissions={"can_manage_tenant_structure": True},
         **_one_row_form(),
     )
-    assert "settings_tab=campos-quantidade" in success_response.headers["location"]
+    assert "appgenesis_after_save=1" in success_response.headers["location"]
+    assert "settings_tab=" not in success_response.headers["location"]
     assert "settings_tab=campos_quantidade" not in success_response.headers["location"]
 
 
