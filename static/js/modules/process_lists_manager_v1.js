@@ -138,7 +138,7 @@
     return input ? toSafeString_v1(input.value).trim() : "";
   }
 
-  function readInitialItems_v1(elements) {
+  function readInitialItems_v1(elements, sourceMenuOptions) {
     const rows = Array.from(
       elements.legacyContainer.querySelectorAll("[data-process-list-row]")
     );
@@ -149,8 +149,9 @@
         const key = readInput_v1(row, "process_list_key") || normalizeKey_v1(label) || `lista_${index + 1}`;
         const fieldType = (readInput_v1(row, "process_list_field_type") || "").trim().toLowerCase();
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
-        const sourceSessionKey = readInput_v1(row, "process_list_source_session_key");
         const sourceMenuKey = readInput_v1(row, "process_list_source_menu_key");
+        const sourceSessionKey = readInput_v1(row, "process_list_source_session_key") ||
+          getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, sourceMenuKey);
         const sourceSubprocessKey = readInput_v1(row, "process_list_source_subprocess_key");
         const status = (readInput_v1(row, "process_list_status") || "").trim().toLowerCase();
 
@@ -399,11 +400,13 @@
         : elements.editorSourceSubprocess.value
     ).trim().toLowerCase();
 
+    const resolvedSessionKey = selectedSessionKey || getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, selectedMenuKey);
+
     populateSelectOptions_v1(
       elements.editorSourceSession,
       "Selecione a sessão",
       sourceSessionOptions,
-      selectedSessionKey,
+      resolvedSessionKey,
       {
         preserveUnavailableSelection,
         unavailableLabel: "Sessão indisponível"
@@ -648,6 +651,7 @@
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorItems.value = "";
+    elements.editorSourceSession.value = "";
     elements.editorSourceMenu.value = "";
     elements.editorSourceSubprocess.value = "";
     if (elements.editorStatus) {
@@ -716,6 +720,10 @@
     const sourceSessionKey = toSafeString_v1(elements.editorSourceSession ? elements.editorSourceSession.value : "").trim().toLowerCase();
     const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
     const sourceSubprocessKey = toSafeString_v1(elements.editorSourceSubprocess ? elements.editorSourceSubprocess.value : "").trim().toLowerCase();
+    const resolvedSourceSessionKey = sourceSessionKey || getSourceSessionKeyFromMenuOptions_v1(
+      context && Array.isArray(context.sourceMenuOptions) ? context.sourceMenuOptions : [],
+      sourceMenuKey
+    );
     const status = toSafeString_v1(elements.editorStatus ? elements.editorStatus.value : "").trim().toLowerCase();
     const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
     const editingId = toSafeString_v1(state.editingId).trim();
@@ -727,7 +735,7 @@
       label,
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
       itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
-      sourceSessionKey: fieldType === "automatic" ? sourceSessionKey : "",
+      sourceSessionKey: fieldType === "automatic" ? resolvedSourceSessionKey : "",
       sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : "",
       sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : "",
       status: status === "inativo" ? "inativo" : "ativo"
@@ -1189,7 +1197,7 @@
       editTitle: "Editar lista",
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
-      initialItems: readInitialItems_v1(elements),
+      initialItems: readInitialItems_v1(elements, sourceMenuOptions),
       selectors: {
         editorForm: "[data-process-list-reusable-editor-block]",
         table: "[data-process-lists-table]",

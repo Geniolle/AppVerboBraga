@@ -293,6 +293,27 @@ def test_automatic_list_source_menu_real_flow() -> None:
         assert menu.is_displayed()
         assert driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-subprocess-wrapper]").is_displayed() is False
 
+        session = driver.find_element(By.ID, "process-list-editor-source-session")
+        session_options = [
+            (option.get_attribute("value"), option.get_attribute("textContent").strip())
+            for option in session.find_elements(By.TAG_NAME, "option")
+        ]
+        assert ("", "Selecione a sessão") in session_options
+        assert ("sistema", "Sistema") in session_options
+        assert ("geral", "Geral") in session_options
+        assert ("tesouraria", "Tesouraria") in session_options
+        assert ("dados_gerais", "Dados gerais") in session_options
+
+        driver.execute_script(
+            "arguments[0].value='sistema'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            session,
+        )
+        menu_options_after_session = [
+            (option.get_attribute("value"), option.get_attribute("textContent").strip())
+            for option in menu.find_elements(By.TAG_NAME, "option")
+        ]
+        assert ("perfil_de_autorizacao", "Perfil de autorização") in menu_options_after_session
+
         driver.execute_script(
             "arguments[0].value='perfil_de_autorizacao'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
             menu,
@@ -323,7 +344,10 @@ def test_automatic_list_source_menu_real_flow() -> None:
         edit_button = row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
         driver.execute_script("arguments[0].click()", edit_button)
         menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
+        session = driver.find_element(By.ID, "process-list-editor-source-session")
         assert menu.is_displayed()
+        assert session.is_displayed()
+        assert session.get_attribute("value") == "sistema"
         assert menu.get_attribute("value") == "perfil_de_autorizacao"
         subprocess = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-subprocess]")
         assert subprocess.get_attribute("value") == "perfis"
