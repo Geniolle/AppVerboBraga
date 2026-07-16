@@ -361,6 +361,18 @@ def get_process_list_source_menus_v1(
     if active_entity_id is None:
         return []
 
+    from appgenesis.menu_settings import get_sidebar_menu_settings
+
+    sidebar_menu_settings = get_sidebar_menu_settings(session, active_entity_id)
+    sidebar_section_by_menu_key = {
+        str(item.get("key") or "").strip().lower(): {
+            "sidebar_section_key": str(item.get("sidebar_section_key") or "").strip().lower(),
+            "sidebar_section_label": str(item.get("sidebar_section_label") or "").strip(),
+        }
+        for item in sidebar_menu_settings
+        if isinstance(item, dict) and str(item.get("key") or "").strip()
+    }
+
     rows = session.execute(
         select(SidebarMenuSetting.menu_key, SidebarMenuSetting.menu_label)
         .where(
@@ -375,6 +387,12 @@ def get_process_list_source_menus_v1(
         {
             "menu_key": str(row.menu_key or "").strip().lower(),
             "menu_label": str(row.menu_label or row.menu_key or "").strip(),
+            "sidebar_section_key": sidebar_section_by_menu_key.get(
+                str(row.menu_key or "").strip().lower(), {}
+            ).get("sidebar_section_key", ""),
+            "sidebar_section_label": sidebar_section_by_menu_key.get(
+                str(row.menu_key or "").strip().lower(), {}
+            ).get("sidebar_section_label", ""),
         }
         for row in rows
         if str(row.menu_key or "").strip()
@@ -397,10 +415,20 @@ def normalize_menu_process_lists_v4(raw_lists: Any) -> list[dict[str, Any]]:
         field_type = str(item.get("field_type") or "manual").strip().lower()
         source_menu_key = str(raw_item.get("source_menu_key") or "").strip().lower()
         source_subprocess_key = str(raw_item.get("source_subprocess_key") or "").strip().lower()
+        source_session_key = str(
+            raw_item.get("source_session_key")
+            or raw_item.get("source_sidebar_section_key")
+            or raw_item.get("sourceSidebarSectionKey")
+            or ""
+        ).strip().lower()
         item["source_menu_key"] = source_menu_key if field_type == "automatic" else ""
         item["source_subprocess_key"] = (
             source_subprocess_key if field_type == "automatic" else ""
         )
+        item["source_session_key"] = (
+            source_session_key if field_type == "automatic" else ""
+        )
+        item["source_sidebar_section_key"] = item["source_session_key"]
 
         if field_type == "automatic":
             item["items"] = []

@@ -512,13 +512,61 @@ def _resolve_active_sidebar_menu_list_options_v1(
     return resolved_options
 
 
-def _build_automatic_source_section_candidates_v1(source_section_key: str) -> list[str]:
+def _resolve_source_setting_first_section_key_v1(
+    source_setting: dict[str, Any] | None,
+) -> str:
+    if not isinstance(source_setting, dict):
+        return ""
+
+    raw_rows = source_setting.get("process_visible_field_rows")
+    if isinstance(raw_rows, list):
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            header_key = _normalize_process_list_source_key_v1(raw_row.get("header_key"))
+            if header_key:
+                return header_key
+
+    for collection_key in ("process_field_options", "process_additional_fields"):
+        raw_fields = source_setting.get(collection_key)
+        if not isinstance(raw_fields, list):
+            continue
+        for raw_field in raw_fields:
+            if not isinstance(raw_field, dict):
+                continue
+            field_type = _normalize_process_list_source_key_v1(
+                raw_field.get("field_type") or raw_field.get("type")
+            )
+            if field_type == "header":
+                field_key = _normalize_process_list_source_key_v1(raw_field.get("key"))
+                if field_key:
+                    return field_key
+
+    return ""
+
+
+def _build_automatic_source_section_candidates_v1(
+    source_section_key: str,
+    *,
+    source_setting: dict[str, Any] | None = None,
+) -> list[str]:
     candidates: list[str] = []
+
+    source_setting_first_section_key = _resolve_source_setting_first_section_key_v1(
+        source_setting
+    )
 
     for candidate in (
         source_section_key,
         f"{source_section_key}_header" if source_section_key and not source_section_key.endswith("_header") else "",
         source_section_key[: -len("_header")] if source_section_key.endswith("_header") else "",
+        source_setting_first_section_key,
+        f"{source_setting_first_section_key}_header"
+        if source_setting_first_section_key and not source_setting_first_section_key.endswith("_header")
+        else "",
+        source_setting_first_section_key[: -len("_header")]
+        if source_setting_first_section_key.endswith("_header")
+        else "",
     ):
         clean_candidate = _normalize_process_list_source_key_v1(candidate)
         if clean_candidate and clean_candidate not in candidates:
@@ -974,8 +1022,6 @@ def _resolve_automatic_process_list_options_from_history_v1(
     settings_by_key: dict[str, dict[str, Any]],
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None,
 ) -> list[dict[str, str]]:
-    del current_menu_key
-
     source_menu_key = _normalize_process_list_source_key_v1(
         process_list.get("source_menu_key") or process_list.get("sourceMenuKey")
     )
@@ -988,6 +1034,18 @@ def _resolve_automatic_process_list_options_from_history_v1(
 
     source_section_key = _normalize_process_list_source_key_v1(
         process_list.get("source_subprocess_key") or process_list.get("sourceSubprocessKey")
+    )
+    only_active = (
+        str(
+            process_list.get("automatic_only_active")
+            or process_list.get("automaticOnlyActive")
+            or field_definition.get("automatic_only_active")
+            or field_definition.get("automaticOnlyActive")
+            or ""
+        )
+        .strip()
+        .lower()
+        in {"1", "true", "sim", "yes", "on"}
     )
     source_field_key = _normalize_process_list_source_key_v1(field_definition.get("key"))
     if not source_field_key:
@@ -1013,7 +1071,10 @@ def _resolve_automatic_process_list_options_from_history_v1(
         source_setting.get("process_record_status_field_key") or "__estado"
     ) or "__estado"
     section_candidates = (
-        _build_automatic_source_section_candidates_v1(source_section_key)
+        _build_automatic_source_section_candidates_v1(
+            source_section_key,
+            source_setting=source_setting,
+        )
         if source_section_key
         else []
     )
@@ -1050,6 +1111,8 @@ def _resolve_automatic_process_list_options_from_history_v1(
             option_status = _normalize_process_record_state_v1(
                 values.get(status_field_key, values.get("__estado"))
             )
+            if only_active and option_status != "active":
+                continue
             resolved_options.append(
                 {
                     "value": raw_option_value,
@@ -1063,9 +1126,6 @@ def _resolve_automatic_process_list_options_from_history_v1(
     resolved_options = collect_options(enforce_section_match=True)
     if resolved_options:
         return resolved_options
-
-    if section_candidates:
-        return collect_options(enforce_section_match=False)
 
     return []
 
@@ -1081,8 +1141,6 @@ def resolve_field_list_options_v1(
     current_field_values: dict[str, Any] | None = None,
     _visited: frozenset[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
-    del active_entity_id
-
     if not isinstance(field_definition, dict):
         return []
 

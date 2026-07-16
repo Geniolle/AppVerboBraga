@@ -903,6 +903,17 @@ def update_sidebar_menu_process_lists(
     if resolved_entity_id is None:
         return False, "Entidade ativa inválida."
 
+    administrative_config = _load_menu_config(session, "administrativo")
+    active_sidebar_section_options = normalize_sidebar_sections(
+        administrative_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+    active_sidebar_section_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in active_sidebar_section_options
+        if str(item.get("key") or "").strip()
+        and _normalize_sidebar_section_status_v5(item.get("status")) == "ativo"
+    }
+
     target_row = (
         session.execute(
             text(
@@ -930,6 +941,11 @@ def update_sidebar_menu_process_lists(
 
     menu_config = _parse_menu_config(target_row.get("menu_config"))
     existing_lists = normalize_menu_process_lists_v5(menu_config.get("process_lists"))
+    existing_lists_by_key = {
+        str(item.get("key") or "").strip().lower(): item
+        for item in existing_lists
+        if str(item.get("key") or "").strip()
+    }
     legacy_automatic_keys = {
         str(item.get("key") or "")
         for item in existing_lists
@@ -942,6 +958,15 @@ def update_sidebar_menu_process_lists(
     sidebar_menu_settings = get_sidebar_menu_settings(
         session, active_entity_id=int(resolved_entity_id)
     )
+    source_menu_section_map = {
+        str(item.get("key") or "").strip().lower(): str(
+            item.get("sidebar_section_key") or ""
+        )
+        .strip()
+        .lower()
+        for item in sidebar_menu_settings
+        if isinstance(item, dict) and str(item.get("key") or "").strip()
+    }
     source_subprocess_options_cache: dict[str, list[dict[str, str]]] = {}
 
     normalized_lists = normalize_menu_process_lists_v5(raw_lists)
@@ -952,7 +977,13 @@ def update_sidebar_menu_process_lists(
 
         source_menu_key = str(process_list.get("source_menu_key") or "").strip()
         source_subprocess_key = str(process_list.get("source_subprocess_key") or "").strip()
+        source_session_key = str(
+            process_list.get("source_session_key")
+            or process_list.get("source_sidebar_section_key")
+            or ""
+        ).strip().lower()
         process_list_key = str(process_list.get("key") or "").strip()
+        existing_item = existing_lists_by_key.get(process_list_key.lower())
 
         if (
             not source_menu_key
@@ -964,6 +995,23 @@ def update_sidebar_menu_process_lists(
             return False, "Selecione o menu de origem da lista automática."
         if source_menu_key not in available_source_menu_keys:
             return False, "O menu de origem selecionado não está disponível."
+
+        inferred_session_key = source_menu_section_map.get(source_menu_key, "")
+        if not source_session_key:
+            if (
+                existing_item
+                and not str(existing_item.get("source_session_key") or "").strip()
+                and inferred_session_key
+            ):
+                source_session_key = inferred_session_key
+            else:
+                return False, "Selecione a sessão."
+
+        if source_session_key not in active_sidebar_section_keys:
+            return False, "A sessão selecionada não está disponível."
+
+        if inferred_session_key and inferred_session_key != source_session_key:
+            return False, "O menu de origem selecionado não pertence à sessão selecionada."
 
         if source_subprocess_key:
             if source_menu_key not in source_subprocess_options_cache:
@@ -981,6 +1029,9 @@ def update_sidebar_menu_process_lists(
             }
             if source_subprocess_key.lower() not in allowed_source_subprocess_keys:
                 return False, "O subprocesso selecionado não pertence ao menu de origem."
+
+        process_list["source_session_key"] = source_session_key
+        process_list["source_sidebar_section_key"] = source_session_key
 
     menu_config["process_lists"] = normalized_lists
 

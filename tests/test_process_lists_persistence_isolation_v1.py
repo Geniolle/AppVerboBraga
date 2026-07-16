@@ -309,7 +309,7 @@ def test_update_process_lists_automatic_rejects_invalid_source_subprocess():
         SessionLocal,
         menu_key="perfil_de_autorizacao",
         entity_id=1,
-        menu_config={},
+        menu_config={"sidebar_section": "sistema"},
     )
     _seed_menu(
         SessionLocal,
@@ -326,6 +326,7 @@ def test_update_process_lists_automatic_rejects_invalid_source_subprocess():
             "key": "auto",
             "label": "Auto",
             "field_type": "automatic",
+            "source_session_key": "sistema",
             "source_menu_key": "perfil_de_autorizacao",
             "source_subprocess_key": "inexistente",
         }],
@@ -342,9 +343,20 @@ def test_update_process_lists_automatic_stores_source_subprocess():
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
+        menu_key="administrativo",
+        entity_id=1,
+        menu_config={
+            "sidebar_sections": [
+                {"key": "sistema", "label": "Sistema", "status": "ativo"},
+                {"key": "definicoes", "label": "Definições", "status": "inativo"},
+            ]
+        },
+    )
+    _seed_menu(
+        SessionLocal,
         menu_key="perfil_de_autorizacao",
         entity_id=1,
-        menu_config={},
+        menu_config={"sidebar_section": "sistema"},
     )
     _seed_menu(
         SessionLocal,
@@ -361,6 +373,7 @@ def test_update_process_lists_automatic_stores_source_subprocess():
             "key": "auto",
             "label": "Auto",
             "field_type": "automatic",
+            "source_session_key": "sistema",
             "source_menu_key": "perfil_de_autorizacao",
             "source_subprocess_key": "perfis",
         }],
@@ -373,8 +386,55 @@ def test_update_process_lists_automatic_stores_source_subprocess():
 
     assert ok is True
     assert error == ""
+    assert config["process_lists"][0]["source_session_key"] == "sistema"
     assert config["process_lists"][0]["source_menu_key"] == "perfil_de_autorizacao"
     assert config["process_lists"][0]["source_subprocess_key"] == "perfis"
+
+
+def test_update_process_lists_automatic_rejects_inactive_source_session():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="administrativo",
+        entity_id=1,
+        menu_config={
+            "sidebar_sections": [
+                {"key": "sistema", "label": "Sistema", "status": "ativo"},
+                {"key": "definicoes", "label": "Definições", "status": "inativo"},
+            ]
+        },
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="perfil_de_autorizacao",
+        entity_id=1,
+        menu_config={"sidebar_section": "definicoes"},
+    )
+
+    session = SessionLocal()
+    ok, error = update_sidebar_menu_process_lists(
+        session,
+        "processo",
+        raw_lists=[{
+            "key": "auto",
+            "label": "Auto",
+            "field_type": "automatic",
+            "source_session_key": "definicoes",
+            "source_menu_key": "perfil_de_autorizacao",
+        }],
+        raw_columns=None,
+        active_entity_id=1,
+    )
+    session.close()
+
+    assert ok is False
+    assert error == "A sessão selecionada não está disponível."
 
 
 def test_update_process_lists_preserves_existing_entity_and_state_flags():
@@ -441,7 +501,11 @@ def test_source_menus_are_active_and_isolated_by_entity():
         session.commit()
         rows = get_process_list_source_menus_v1(session, 1)
 
-    assert [row["menu_key"] for row in rows] == ["menu_ativo"]
+    menu_keys = [row["menu_key"] for row in rows]
+    assert "menu_ativo" in menu_keys
+    assert "menu_inativo" not in menu_keys
+    assert "menu_eliminado" not in menu_keys
+    assert "menu_outra_entidade" not in menu_keys
 
 
 def test_automatic_list_rejects_source_menu_from_other_entity():

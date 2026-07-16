@@ -81,11 +81,14 @@
       editorItems: root.querySelector("[data-process-list-editor-items]"),
       editorItemsWrapper: root.querySelector("[data-process-list-editor-items-wrapper]"),
       editorFieldType: root.querySelector("[data-process-list-editor-field-type]"),
+      editorSourceSession: root.querySelector("[data-process-list-editor-source-session]"),
+      editorSourceSessionWrapper: root.querySelector("[data-process-list-editor-session-wrapper]"),
       editorSourceMenu: root.querySelector("[data-process-list-editor-source-menu]"),
       editorSourceMenuWrapper: root.querySelector("[data-process-list-editor-menu-wrapper]"),
       editorSourceSubprocess: root.querySelector("[data-process-list-editor-source-subprocess]"),
       editorSourceSubprocessWrapper: root.querySelector("[data-process-list-editor-subprocess-wrapper]"),
       editorStatus: root.querySelector("[data-process-list-editor-status]"),
+      sourceSessionOptionsScript: root.querySelector("[data-process-list-source-sessions]"),
       sourceSubprocessMapScript: root.querySelector("[data-process-list-source-subprocess-map]"),
       submitButton: root.querySelector("[data-process-list-editor-submit]"),
       cancelButton: root.querySelector("[data-process-list-editor-cancel]"),
@@ -111,6 +114,8 @@
       elements.editorKey &&
       elements.editorLabel &&
       elements.editorFieldType &&
+      elements.editorSourceSession &&
+      elements.editorSourceSessionWrapper &&
       elements.editorItems &&
       elements.editorItemsWrapper &&
       elements.editorSourceMenu &&
@@ -144,6 +149,7 @@
         const key = readInput_v1(row, "process_list_key") || normalizeKey_v1(label) || `lista_${index + 1}`;
         const fieldType = (readInput_v1(row, "process_list_field_type") || "").trim().toLowerCase();
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
+        const sourceSessionKey = readInput_v1(row, "process_list_source_session_key");
         const sourceMenuKey = readInput_v1(row, "process_list_source_menu_key");
         const sourceSubprocessKey = readInput_v1(row, "process_list_source_subprocess_key");
         const status = (readInput_v1(row, "process_list_status") || "").trim().toLowerCase();
@@ -154,6 +160,7 @@
           label,
           field_type: fieldType || "manual",
           itemsCsv,
+          sourceSessionKey,
           sourceMenuKey,
           sourceSubprocessKey,
           status: status === "inativo" ? "inativo" : "ativo"
@@ -181,6 +188,272 @@
         window.console.warn("[ProcessListsManagerV1] mapa de subprocessos invalido", error);
       }
       return {};
+    }
+  }
+
+  function readSourceSessionOptionsFromElement_v1(elements) {
+    if (!elements) {
+      return [];
+    }
+
+    const sourceElement = elements.sourceSessionOptionsScript || elements.editorSourceSession;
+    if (!sourceElement) {
+      return [];
+    }
+
+    const rawText = sourceElement.tagName === "SCRIPT"
+      ? toSafeString_v1(sourceElement.textContent).trim()
+      : "";
+
+    if (rawText) {
+      try {
+        const parsed = JSON.parse(rawText);
+        const rawItems = Array.isArray(parsed) ? parsed : [];
+        const normalized = [];
+        const seen = new Set();
+
+        rawItems.forEach((rawItem) => {
+          if (!rawItem || typeof rawItem !== "object") {
+            return;
+          }
+
+          const value = toSafeString_v1(
+            rawItem.key ||
+            rawItem.section_key ||
+            rawItem.sidebar_section_key ||
+            rawItem.value ||
+            rawItem.menu_section ||
+            ""
+          ).trim().toLowerCase();
+          const label = toSafeString_v1(
+            rawItem.label ||
+            rawItem.name ||
+            rawItem.section_label ||
+            rawItem.value ||
+            rawItem.key ||
+            ""
+          ).trim();
+          const status = toSafeString_v1(
+            rawItem.status !== undefined ? rawItem.status : rawItem.is_active
+          ).trim().toLowerCase();
+          const isInactive = status === "inativo" || status === "inactive" || status === "false" || status === "0";
+
+          if (!value || !label || isInactive) {
+            return;
+          }
+
+          if (seen.has(value)) {
+            return;
+          }
+
+          seen.add(value);
+          normalized.push({ value, label });
+        });
+
+        return normalized;
+      } catch (error) {
+        if (window.console && typeof window.console.warn === "function") {
+          window.console.warn("[ProcessListsManagerV1] secções de sessão invalidas", error);
+        }
+      }
+    }
+
+    if (sourceElement.tagName !== "SELECT") {
+      return [];
+    }
+
+    return Array.from(sourceElement.options)
+      .map((option) => ({
+        value: toSafeString_v1(option.value).trim(),
+        label: toSafeString_v1(option.textContent).trim()
+      }))
+      .filter((option) => option.value && option.label);
+  }
+
+  function readSourceSessionOptions_v1(elements) {
+    return readSourceSessionOptionsFromElement_v1(elements);
+  }
+
+  function readSourceMenuOptions_v1(elements) {
+    if (!elements || !elements.editorSourceMenu) {
+      return [];
+    }
+
+    return Array.from(elements.editorSourceMenu.options)
+      .map((option) => ({
+        value: toSafeString_v1(option.value).trim(),
+        label: toSafeString_v1(option.textContent).trim(),
+        sourceSessionKey: toSafeString_v1(
+          option.dataset.processListSourceSessionKey || option.dataset.sourceSessionKey || ""
+        ).trim().toLowerCase(),
+        sourceSessionLabel: toSafeString_v1(
+          option.dataset.processListSourceSessionLabel || option.dataset.sourceSessionLabel || ""
+        ).trim()
+      }))
+      .filter((option) => option.value && option.label);
+  }
+
+  function populateSelectOptions_v1(select, placeholderLabel, availableOptions, selectedValue, options) {
+    if (!select) {
+      return false;
+    }
+
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection);
+    const unavailableLabel = toSafeString_v1(options && options.unavailableLabel ? options.unavailableLabel : "Indisponível").trim() || "Indisponível";
+    const optionValue = toSafeString_v1(selectedValue).trim();
+    const normalizedSelectedValue = normalizeKey_v1(optionValue);
+    const normalizedOptions = Array.isArray(availableOptions) ? availableOptions : [];
+
+    select.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = placeholderLabel;
+    select.appendChild(placeholder);
+
+    let hasSelectedOption = false;
+
+    normalizedOptions.forEach((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawOption.value || rawOption.key || "").trim();
+      const label = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key || "").trim();
+
+      if (!value || !label) {
+        return;
+      }
+
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      if (rawOption.disabled) {
+        option.disabled = true;
+      }
+      if (normalizedSelectedValue && normalizeKey_v1(value) === normalizedSelectedValue) {
+        option.selected = true;
+        hasSelectedOption = true;
+      }
+      select.appendChild(option);
+    });
+
+    if (optionValue && !hasSelectedOption && preserveUnavailableSelection) {
+      const unavailableOption = document.createElement("option");
+      unavailableOption.value = optionValue;
+      unavailableOption.textContent = unavailableLabel;
+      unavailableOption.selected = true;
+      select.appendChild(unavailableOption);
+      hasSelectedOption = true;
+    }
+
+    if (!hasSelectedOption) {
+      select.value = "";
+    }
+
+    return hasSelectedOption;
+  }
+
+  function getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, menuKey) {
+    const selectedMenuKey = normalizeKey_v1(menuKey);
+    if (!selectedMenuKey) {
+      return "";
+    }
+
+    const selectedMenuOption = Array.isArray(sourceMenuOptions)
+      ? sourceMenuOptions.find((option) => normalizeKey_v1(option.value) === selectedMenuKey)
+      : null;
+
+    return toSafeString_v1(selectedMenuOption && selectedMenuOption.sourceSessionKey ? selectedMenuOption.sourceSessionKey : "").trim().toLowerCase();
+  }
+
+  function updateAutomaticSourceControls_v1(context, options) {
+    const elements = context && context.elements ? context.elements : null;
+    const sourceSessionOptions = context && Array.isArray(context.sourceSessionOptions)
+      ? context.sourceSessionOptions
+      : [];
+    const sourceMenuOptions = context && Array.isArray(context.sourceMenuOptions)
+      ? context.sourceMenuOptions
+      : [];
+    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
+
+    if (!elements || !elements.editorSourceSession || !elements.editorSourceMenu || !elements.editorSourceSubprocess) {
+      return;
+    }
+
+    const keepVisible = Boolean(options && options.keepVisible);
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection);
+    const selectedSessionKey = toSafeString_v1(
+      options && Object.prototype.hasOwnProperty.call(options, "selectedSessionKey")
+        ? options.selectedSessionKey
+        : elements.editorSourceSession.value
+    ).trim().toLowerCase();
+    const selectedMenuKey = toSafeString_v1(
+      options && Object.prototype.hasOwnProperty.call(options, "selectedMenuKey")
+        ? options.selectedMenuKey
+        : elements.editorSourceMenu.value
+    ).trim().toLowerCase();
+    const selectedSubprocessKey = toSafeString_v1(
+      options && Object.prototype.hasOwnProperty.call(options, "selectedSubprocessKey")
+        ? options.selectedSubprocessKey
+        : elements.editorSourceSubprocess.value
+    ).trim().toLowerCase();
+
+    populateSelectOptions_v1(
+      elements.editorSourceSession,
+      "Selecione a sessão",
+      sourceSessionOptions,
+      selectedSessionKey,
+      {
+        preserveUnavailableSelection,
+        unavailableLabel: "Sessão indisponível"
+      }
+    );
+
+    const normalizedSessionKey = toSafeString_v1(elements.editorSourceSession.value).trim().toLowerCase();
+    const filteredMenuOptions = normalizedSessionKey
+      ? sourceMenuOptions.filter((option) => option.sourceSessionKey === normalizedSessionKey)
+      : [];
+
+    populateSelectOptions_v1(
+      elements.editorSourceMenu,
+      "Selecione o menu",
+      filteredMenuOptions,
+      selectedMenuKey,
+      {
+        preserveUnavailableSelection: preserveUnavailableSelection && Boolean(normalizedSessionKey),
+        unavailableLabel: "Menu indisponível"
+      }
+    );
+
+    const normalizedMenuKey = toSafeString_v1(elements.editorSourceMenu.value).trim().toLowerCase();
+    const sourceSubprocessOptions = normalizedMenuKey
+      ? getSourceSubprocessOptions_v1(sourceSubprocessMap, normalizedMenuKey)
+      : [];
+
+    populateSourceSubprocessOptions_v1(
+      { elements },
+      {
+        options: sourceSubprocessOptions,
+        selectedValue: selectedSubprocessKey,
+        preserveUnavailableSelection,
+        keepVisible: keepVisible && Boolean(normalizedMenuKey)
+      }
+    );
+
+    elements.editorSourceSession.disabled = !keepVisible;
+    elements.editorSourceMenu.disabled = !keepVisible || !normalizedSessionKey;
+    elements.editorSourceSubprocess.disabled = !keepVisible || !normalizedMenuKey;
+    elements.editorSourceMenuWrapper.hidden = !keepVisible;
+    elements.editorSourceSubprocessWrapper.hidden = !keepVisible || !normalizedMenuKey;
+
+    if (!normalizedSessionKey && !preserveUnavailableSelection) {
+      elements.editorSourceMenu.value = "";
+      elements.editorSourceSubprocess.value = "";
+    }
+
+    if (!normalizedMenuKey && !preserveUnavailableSelection) {
+      elements.editorSourceSubprocess.value = "";
     }
   }
 
@@ -394,6 +667,7 @@
     const elements = context && context.elements ? context.elements : null;
     const manager = context && context.manager ? context.manager : null;
     const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
+    const sourceMenuOptions = context && Array.isArray(context.sourceMenuOptions) ? context.sourceMenuOptions : [];
 
     if (!item || !elements) {
       return;
@@ -406,8 +680,6 @@
     elements.editorKey.value = item.key || "";
     elements.editorLabel.value = item.label || "";
     elements.editorItems.value = item.itemsCsv || "";
-    elements.editorSourceMenu.value = item.sourceMenuKey || "";
-    elements.editorSourceSubprocess.value = item.sourceSubprocessKey || "";
     if (elements.editorStatus) {
       elements.editorStatus.value = item.status === "inativo" ? "inativo" : "ativo";
     }
@@ -415,9 +687,19 @@
     if (elements.editorFieldType) {
       elements.editorFieldType.value = item.field_type || "manual";
     }
+    const inferredSessionKey = toSafeString_v1(
+      item.sourceSessionKey ||
+      item.sourceSidebarSectionKey ||
+      getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, item.sourceMenuKey)
+    ).trim().toLowerCase();
+    elements.editorSourceSession.value = inferredSessionKey;
+    elements.editorSourceMenu.value = item.sourceMenuKey || "";
+    elements.editorSourceSubprocess.value = item.sourceSubprocessKey || "";
     applyEditorFieldTypeState_v3(
       { elements, manager, sourceSubprocessMap },
       {
+        selectedSessionKey: inferredSessionKey,
+        selectedMenuKey: item.sourceMenuKey || "",
         selectedSubprocessKey: item.sourceSubprocessKey || "",
         preserveUnavailableSelection: true
       }
@@ -431,6 +713,7 @@
     const label = toSafeString_v1(elements.editorLabel ? elements.editorLabel.value : "").trim();
     const itemsCsv = toSafeString_v1(elements.editorItems ? elements.editorItems.value : "").trim();
     const fieldType = toSafeString_v1(elements.editorFieldType ? elements.editorFieldType.value : "").trim().toLowerCase();
+    const sourceSessionKey = toSafeString_v1(elements.editorSourceSession ? elements.editorSourceSession.value : "").trim().toLowerCase();
     const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
     const sourceSubprocessKey = toSafeString_v1(elements.editorSourceSubprocess ? elements.editorSourceSubprocess.value : "").trim().toLowerCase();
     const status = toSafeString_v1(elements.editorStatus ? elements.editorStatus.value : "").trim().toLowerCase();
@@ -444,6 +727,7 @@
       label,
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
       itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
+      sourceSessionKey: fieldType === "automatic" ? sourceSessionKey : "",
       sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : "",
       sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : "",
       status: status === "inativo" ? "inativo" : "ativo"
@@ -485,9 +769,17 @@
     const isLegacyAutomaticWithoutSource = Boolean(
       currentItem &&
       String(currentItem.field_type || "").trim().toLowerCase() === "automatic" &&
+      !toSafeString_v1(currentItem.sourceSessionKey || currentItem.sourceSidebarSectionKey).trim() &&
       !toSafeString_v1(currentItem.sourceMenuKey).trim() &&
       !toSafeString_v1(currentItem.sourceSubprocessKey).trim()
     );
+
+    if (item.field_type === "automatic" && !item.sourceSessionKey && !isLegacyAutomaticWithoutSource) {
+      return {
+        valid: false,
+        message: "Selecione a sessão."
+      };
+    }
 
     if (item.field_type === "automatic" && !item.sourceMenuKey && !isLegacyAutomaticWithoutSource) {
       return {
@@ -504,6 +796,7 @@
       (manager && manager.state && manager.state.editingId) ||
       toSafeString_v1(elements.editorLabel.value).trim() ||
       toSafeString_v1(elements.editorItems.value).trim() ||
+      toSafeString_v1(elements.editorSourceSession.value).trim() ||
       toSafeString_v1(elements.editorSourceMenu.value).trim() ||
       toSafeString_v1(elements.editorSourceSubprocess.value).trim()
     );
@@ -525,6 +818,7 @@
         ["process_list_label", item.label],
         ["process_list_field_type", item.field_type || "manual"],
         ["process_list_items_csv", item.field_type === "automatic" ? "" : item.itemsCsv],
+        ["process_list_source_session_key", item.field_type === "automatic" ? (item.sourceSessionKey || item.sourceSidebarSectionKey || "") : ""],
         ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""],
         ["process_list_source_subprocess_key", item.field_type === "automatic" ? item.sourceSubprocessKey : ""],
         ["process_list_status", item.status === "inativo" ? "inativo" : "ativo"]
@@ -593,10 +887,10 @@
 
   function applyEditorFieldTypeState_v3(context, options) {
     const elements = context && context.elements ? context.elements : context;
-    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
 
     if (!elements || !elements.editorFieldType || !elements.editorItems ||
-        !elements.editorItemsWrapper || !elements.editorSourceMenu ||
+        !elements.editorItemsWrapper || !elements.editorSourceSession ||
+        !elements.editorSourceSessionWrapper || !elements.editorSourceMenu ||
         !elements.editorSourceMenuWrapper || !elements.editorSourceSubprocess ||
         !elements.editorSourceSubprocessWrapper || !elements.root) {
       return;
@@ -614,40 +908,32 @@
       elements.editorItems.value = "";
       elements.editorItems.disabled = true;
       elements.editorItemsWrapper.hidden = true;
+      elements.editorSourceSessionWrapper.hidden = false;
       elements.editorSourceMenuWrapper.hidden = false;
-      elements.editorSourceMenu.disabled = false;
       elements.root.dataset.hasSourceSubprocess = "0";
-
-      const menuKey = toSafeString_v1(elements.editorSourceMenu.value).trim().toLowerCase();
-      if (!menuKey) {
-        elements.editorSourceSubprocess.value = "";
-        elements.editorSourceSubprocessWrapper.hidden = true;
-        elements.editorSourceSubprocess.disabled = true;
-        return;
-      }
-
-      const sourceSubprocessOptions = getSourceSubprocessOptions_v1(sourceSubprocessMap, menuKey);
-      const selectedSubprocessKey = clearSourceSelection
-        ? ""
-        : toSafeString_v1(
-            options && options.selectedSubprocessKey
-              ? options.selectedSubprocessKey
-              : elements.editorSourceSubprocess.value
-          ).trim().toLowerCase();
-      populateSourceSubprocessOptions_v1(
-        { elements },
+      updateAutomaticSourceControls_v1(
+        context,
         {
-          options: sourceSubprocessOptions,
-          selectedValue: selectedSubprocessKey,
+          selectedSessionKey: clearSourceSelection ? "" : options && Object.prototype.hasOwnProperty.call(options, "selectedSessionKey")
+            ? options.selectedSessionKey
+            : elements.editorSourceSession.value,
+          selectedMenuKey: clearSourceSelection ? "" : options && Object.prototype.hasOwnProperty.call(options, "selectedMenuKey")
+            ? options.selectedMenuKey
+            : elements.editorSourceMenu.value,
+          selectedSubprocessKey: clearSourceSelection ? "" : options && Object.prototype.hasOwnProperty.call(options, "selectedSubprocessKey")
+            ? options.selectedSubprocessKey
+            : elements.editorSourceSubprocess.value,
           preserveUnavailableSelection,
           keepVisible: true
         }
       );
-      elements.editorSourceSubprocessWrapper.hidden = false;
-      elements.root.dataset.hasSourceSubprocess = "1";
+      elements.root.dataset.hasSourceSubprocess = toSafeString_v1(elements.editorSourceMenu.value).trim() ? "1" : "0";
     } else {
       elements.editorItemsWrapper.hidden = false;
       elements.editorItems.disabled = false;
+      elements.editorSourceSession.value = "";
+      elements.editorSourceSession.disabled = true;
+      elements.editorSourceSessionWrapper.hidden = true;
       elements.editorSourceMenu.value = "";
       elements.editorSourceMenu.disabled = true;
       elements.editorSourceMenuWrapper.hidden = true;
@@ -661,6 +947,7 @@
         }
       }
       if (clearSourceSelection) {
+        elements.editorSourceSession.value = "";
         elements.editorSourceMenu.value = "";
         elements.editorSourceSubprocess.value = "";
       }
@@ -889,9 +1176,12 @@
 
     form.dataset.processListsManagerBoundV1 = "1";
     const sourceSubprocessMap = getSourceSubprocessMap_v1(elements);
+    const sourceSessionOptions = readSourceSessionOptions_v1(elements);
+    const sourceMenuOptions = readSourceMenuOptions_v1(elements);
     elements.root.dataset.hasSourceSubprocess = "0";
 
-    const manager = core.createConfigurableItemsManager_v1({
+    let manager = null;
+    manager = core.createConfigurableItemsManager_v1({
       root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",
@@ -988,9 +1278,24 @@
         }
       ],
       getItemId: (item, index) => item.managerId || item.__managerId || item.key || `list_${index + 1}`,
-      readEditorItem: (context) => readEditorItem_v1({ ...context, sourceSubprocessMap }),
-      loadEditorItem: (item, context) => loadEditorItem_v1(item, { ...context, sourceSubprocessMap }),
-      clearEditor: (context) => clearEditor_v1({ ...context, sourceSubprocessMap }),
+      readEditorItem: (context) => readEditorItem_v1({
+        ...context,
+        sourceSubprocessMap,
+        sourceSessionOptions,
+        sourceMenuOptions
+      }),
+      loadEditorItem: (item, context) => loadEditorItem_v1(item, {
+        ...context,
+        sourceSubprocessMap,
+        sourceSessionOptions,
+        sourceMenuOptions
+      }),
+      clearEditor: (context) => clearEditor_v1({
+        ...context,
+        sourceSubprocessMap,
+        sourceSessionOptions,
+        sourceMenuOptions
+      }),
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1,
       onRender: distributeListRowsByStatus_v1
@@ -1004,21 +1309,52 @@
     Object.assign(manager.elements, elements);
     manager.render();
 
+    const managerContext = {
+      elements,
+      manager,
+      sourceSubprocessMap,
+      sourceSessionOptions,
+      sourceMenuOptions
+    };
+
     elements.editorFieldType.addEventListener("change", () => {
       applyEditorFieldTypeState_v3(
-        { elements, manager, sourceSubprocessMap },
-        { clearSourceSelection: true }
+        managerContext,
+        {
+          clearSourceSelection: true,
+          selectedSessionKey: elements.editorSourceSession.value,
+          selectedMenuKey: elements.editorSourceMenu.value,
+          selectedSubprocessKey: elements.editorSourceSubprocess.value
+        }
       );
+    });
+    elements.editorSourceSession.addEventListener("change", () => {
+      updateAutomaticSourceControls_v1(managerContext, {
+        selectedSessionKey: elements.editorSourceSession.value,
+        selectedMenuKey: elements.editorSourceMenu.value,
+        selectedSubprocessKey: elements.editorSourceSubprocess.value,
+        preserveUnavailableSelection: false,
+        keepVisible: true
+      });
     });
     elements.editorSourceMenu.addEventListener("change", () => {
-      applyEditorFieldTypeState_v3(
-        { elements, manager, sourceSubprocessMap },
-        { clearSourceSelection: true }
-      );
+      updateAutomaticSourceControls_v1(managerContext, {
+        selectedSessionKey: elements.editorSourceSession.value,
+        selectedMenuKey: elements.editorSourceMenu.value,
+        selectedSubprocessKey: elements.editorSourceSubprocess.value,
+        preserveUnavailableSelection: true,
+        keepVisible: true
+      });
     });
     applyEditorFieldTypeState_v3(
-      { elements, manager, sourceSubprocessMap },
-      { resetTemporaryState: true, clearSourceSelection: true }
+      managerContext,
+      {
+        resetTemporaryState: true,
+        clearSourceSelection: true,
+        selectedSessionKey: elements.editorSourceSession.value,
+        selectedMenuKey: elements.editorSourceMenu.value,
+        selectedSubprocessKey: elements.editorSourceSubprocess.value
+      }
     );
 
     bindCancel_v1(form, elements, manager);

@@ -2734,7 +2734,8 @@ def test_resolve_field_list_options_manual_reference_uses_automatic_process_list
                         "label": "Perfil",
                         "field_type": "automatic",
                         "source_menu_key": "perfil_de_autorizacao",
-                        "source_subprocess_key": "custom_perfil_header",
+                        "source_subprocess_key": "perfis",
+                        "automatic_only_active": True,
                         "items": [],
                     }
                 ],
@@ -2759,17 +2760,31 @@ def test_resolve_field_list_options_manual_reference_uses_automatic_process_list
                     },
                 },
                 {
+                    "section_key": "custom_perfil",
+                    "values": {
+                        "custom_nome_do_perfil": "Calendário Geral",
+                        "__estado": "active",
+                    },
+                },
+                {
                     "section_key": "custom_perfil_header",
                     "values": {
-                        "custom_nome_do_perfil": "Arquivo",
-                        "__estado": "inativo",
+                        "custom_nome_do_perfil": "Gestor de sistema",
+                        "__estado": "ativo",
+                    },
+                },
+                {
+                    "section_key": "outra_secao",
+                    "values": {
+                        "custom_nome_do_perfil": "Não entra",
+                        "__estado": "active",
                     },
                 },
                 {
                     "section_key": "custom_perfil_header",
                     "values": {
                         "custom_nome_do_perfil": "Gestor de Tesouraria",
-                        "__estado": "ativo",
+                        "__estado": "inactive",
                     },
                 },
             ]
@@ -2778,5 +2793,6 @@ def test_resolve_field_list_options_manual_reference_uses_automatic_process_list
 
     assert resolved == [
         {"value": "Gestor de Tesouraria", "label": "Gestor de Tesouraria", "status": "active"},
-        {"value": "Arquivo", "label": "Arquivo", "status": "inactive"},
+        {"value": "Calendário Geral", "label": "Calendário Geral", "status": "active"},
+        {"value": "Gestor de sistema", "label": "Gestor de sistema", "status": "active"},
     ]

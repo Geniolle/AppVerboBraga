@@ -52,10 +52,13 @@ def test_automatic_source_subprocess_is_preserved_in_v4():
             "field_type": "automatic",
             "source_menu_key": "perfil_de_autorizacao",
             "source_subprocess_key": "perfis",
+            "source_session_key": "sistema",
         }
     ]
 
     normalized = normalize_menu_process_lists_v4(raw)
     assert normalized[0]["source_menu_key"] == "perfil_de_autorizacao"
     assert normalized[0]["source_subprocess_key"] == "perfis"
+    assert normalized[0]["source_session_key"] == "sistema"
+    assert normalized[0]["source_sidebar_section_key"] == "sistema"
     assert normalized[0]["items"] == []

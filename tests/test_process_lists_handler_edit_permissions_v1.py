@@ -210,7 +210,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     _seed_menu(SessionLocal, menu_config={"process_lists": []})
     _seed_menu(
         SessionLocal,
-        menu_config={"process_lists": []},
+        menu_config={"process_lists": [], "sidebar_section": "sistema"},
         menu_key="menu_origem",
     )
 
@@ -223,6 +223,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
         process_list_label=["Lista A", "Lista B"],
         process_list_items_csv=["1,2", ""],
         process_list_field_type=["manual", "automatic"],
+        process_list_source_session_key=["", "sistema"],
         process_list_source_menu_key=["", "menu_origem"],
         process_list_source_subprocess_key=["", ""],
     )
@@ -240,6 +241,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     assert [item["field_type"] for item in process_lists] == ["manual", "automatic"]
     assert process_lists[0]["items"] == ["1", "2"]
     assert process_lists[1]["items"] == []
+    assert process_lists[1]["source_session_key"] == "sistema"
     assert process_lists[1]["source_menu_key"] == "menu_origem"
     assert process_lists[1]["source_subprocess_key"] == ""
 

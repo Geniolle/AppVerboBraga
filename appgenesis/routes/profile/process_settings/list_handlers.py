@@ -26,6 +26,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_label: list[str] = Form(default=[]),
     process_list_items_csv: list[str] = Form(default=[]),
     process_list_field_type: list[str] = Form(default=[]),
+    process_list_source_session_key: list[str] = Form(default=[]),
     process_list_source_menu_key: list[str] = Form(default=[]),
     process_list_source_subprocess_key: list[str] = Form(default=[]),
     process_list_status: list[str] = Form(default=[]),
@@ -43,6 +44,8 @@ def edit_sidebar_menu_process_lists_handler(
     clean_menu_key = resolve_menu_key_alias(menu_key)
     if not isinstance(process_list_source_menu_key, list):
         process_list_source_menu_key = []
+    if not isinstance(process_list_source_session_key, list):
+        process_list_source_session_key = []
     if not isinstance(process_list_source_subprocess_key, list):
         process_list_source_subprocess_key = []
 
@@ -99,6 +102,7 @@ def edit_sidebar_menu_process_lists_handler(
             len(process_list_label),
             len(process_list_items_csv),
             len(process_list_field_type),
+            len(process_list_source_session_key),
             len(process_list_source_menu_key),
             len(process_list_source_subprocess_key),
             len(process_list_status),
@@ -125,6 +129,11 @@ def edit_sidebar_menu_process_lists_handler(
             source_menu_key = (
                 process_list_source_menu_key[row_index]
                 if row_index < len(process_list_source_menu_key)
+                else ""
+            )
+            source_session_key = (
+                process_list_source_session_key[row_index]
+                if row_index < len(process_list_source_session_key)
                 else ""
             )
             source_subprocess_key = (
@@ -164,6 +173,7 @@ def edit_sidebar_menu_process_lists_handler(
                     "label": label,
                     "field_type": ft,
                     "items_csv": items_csv if ft == "manual" else "",
+                    "source_session_key": source_session_key if ft == "automatic" else "",
                     "source_menu_key": source_menu_key if ft == "automatic" else "",
                     "source_subprocess_key": source_subprocess_key if ft == "automatic" else "",
                     "status": list_status,

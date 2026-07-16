@@ -1724,6 +1724,7 @@
                       <input type="hidden" name="process_list_label" value="{{ process_list.label }}" disabled>
                       <input type="hidden" name="process_list_field_type" value="{{ process_list.field_type|default('manual') }}" disabled>
                       <input type="hidden" name="process_list_items_csv" value="{{ process_list.items_csv }}" disabled>
+                      <input type="hidden" name="process_list_source_session_key" value="{{ process_list.source_session_key|default(process_list.source_sidebar_section_key|default('')) }}" disabled>
                       <input type="hidden" name="process_list_source_menu_key" value="{{ process_list.source_menu_key|default('') }}" disabled>
                       <input type="hidden" name="process_list_source_subprocess_key" value="{{ process_list.source_subprocess_key|default('') }}" disabled>
                       <input type="hidden" name="process_list_status" value="{{ process_list.status|default('ativo') }}" disabled>
@@ -1732,6 +1733,10 @@
                   </div>
 
                   <div data-process-lists-hidden-container></div>
+
+                  <script type="application/json" data-process-list-source-sessions>
+                    {{ active_sidebar_sections|default([])|tojson }}
+                  </script>
 
                   <script type="application/json" data-process-list-source-subprocess-map>
                     {{ process_list_source_subprocess_map|default({})|tojson }}
@@ -1760,6 +1765,20 @@
                         </select>
                       </div>
 
+                      <div class="field" data-process-list-editor-session-wrapper hidden>
+                        <label for="process-list-editor-source-session">Sessão</label>
+                        <select
+                          id="process-list-editor-source-session"
+                          data-process-list-editor-source-session
+                          disabled
+                        >
+                          <option value="">Selecione a sessão</option>
+                          {% for source_session in active_sidebar_sections|default([]) %}
+                          <option value="{{ source_session.key }}">{{ source_session.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
                       <div class="field" data-process-list-editor-items-wrapper>
                         <label for="process-list-editor-items">Conteúdo da lista</label>
                         <input
@@ -1778,7 +1797,11 @@
                         >
                           <option value="">Selecione o menu</option>
                           {% for source_menu in process_list_source_menus|default([]) %}
-                          <option value="{{ source_menu.menu_key }}">{{ source_menu.menu_label }}</option>
+                          <option
+                            value="{{ source_menu.menu_key }}"
+                            data-process-list-source-session-key="{{ source_menu.sidebar_section_key|default('') }}"
+                            data-process-list-source-session-label="{{ source_menu.sidebar_section_label|default('') }}"
+                          >{{ source_menu.menu_label }}</option>
                           {% endfor %}
                         </select>
                       </div>
@@ -2602,7 +2625,7 @@
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260712-pagination-footer-fix-v1"></script>
    <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v2"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260716-session-select-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-invite-link-header-v1"></script>
