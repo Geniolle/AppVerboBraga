@@ -966,6 +966,110 @@ def _resolve_profile_menu_tabs_list_options_v1(
     )
 
 
+def _resolve_automatic_process_list_options_from_history_v1(
+    *,
+    current_menu_key: str,
+    field_definition: dict[str, Any],
+    process_list: dict[str, Any],
+    settings_by_key: dict[str, dict[str, Any]],
+    menu_process_history_map: dict[str, list[dict[str, Any]]] | None,
+) -> list[dict[str, str]]:
+    del current_menu_key
+
+    source_menu_key = _normalize_process_list_source_key_v1(
+        process_list.get("source_menu_key") or process_list.get("sourceMenuKey")
+    )
+    if not source_menu_key:
+        return []
+
+    source_setting = settings_by_key.get(source_menu_key)
+    if not isinstance(source_setting, dict):
+        return []
+
+    source_section_key = _normalize_process_list_source_key_v1(
+        process_list.get("source_subprocess_key") or process_list.get("sourceSubprocessKey")
+    )
+    source_field_key = _normalize_process_list_source_key_v1(field_definition.get("key"))
+    if not source_field_key:
+        return []
+
+    source_field_candidates = _build_automatic_source_field_candidates_v1(
+        source_setting=source_setting,
+        source_section_key=source_section_key,
+        source_field_key=source_field_key,
+    )
+    if not source_field_candidates:
+        return []
+
+    history_rows = (
+        menu_process_history_map.get(source_menu_key)
+        if isinstance(menu_process_history_map, dict)
+        else []
+    )
+    if not isinstance(history_rows, list):
+        return []
+
+    status_field_key = _normalize_process_list_source_key_v1(
+        source_setting.get("process_record_status_field_key") or "__estado"
+    ) or "__estado"
+    section_candidates = (
+        _build_automatic_source_section_candidates_v1(source_section_key)
+        if source_section_key
+        else []
+    )
+
+    def collect_options(*, enforce_section_match: bool) -> list[dict[str, str]]:
+        resolved_options: list[dict[str, str]] = []
+        seen_lookup: set[str] = set()
+
+        for raw_row in history_rows:
+            if not isinstance(raw_row, dict):
+                continue
+
+            row_section_key = _normalize_process_list_source_key_v1(raw_row.get("section_key"))
+            if enforce_section_match and section_candidates and row_section_key not in section_candidates:
+                continue
+
+            values = raw_row.get("values")
+            if not isinstance(values, dict):
+                continue
+
+            raw_option_value = ""
+            for candidate_field_key in source_field_candidates:
+                raw_option_value = str(values.get(candidate_field_key) or "").strip()
+                if raw_option_value:
+                    break
+            if not raw_option_value:
+                continue
+
+            option_lookup = _normalize_process_rule_lookup_text(raw_option_value)
+            if not option_lookup or option_lookup in seen_lookup:
+                continue
+
+            seen_lookup.add(option_lookup)
+            option_status = _normalize_process_record_state_v1(
+                values.get(status_field_key, values.get("__estado"))
+            )
+            resolved_options.append(
+                {
+                    "value": raw_option_value,
+                    "label": raw_option_value,
+                    "status": option_status,
+                }
+            )
+
+        return resolved_options
+
+    resolved_options = collect_options(enforce_section_match=True)
+    if resolved_options:
+        return resolved_options
+
+    if section_candidates:
+        return collect_options(enforce_section_match=False)
+
+    return []
+
+
 def resolve_field_list_options_v1(
     *,
     active_entity_id: int | None = None,
@@ -1081,7 +1185,7 @@ def resolve_field_list_options_v1(
             )
             if process_list_key != manual_list_key:
                 continue
-            return [
+            resolved_manual_options = [
                 {
                     "value": clean_value,
                     "label": clean_value,
@@ -1093,6 +1197,17 @@ def resolve_field_list_options_v1(
                 ]
                 if clean_value
             ]
+            if resolved_manual_options:
+                return resolved_manual_options
+            if str(process_list.get("field_type") or "").strip().lower() == "automatic":
+                return _resolve_automatic_process_list_options_from_history_v1(
+                    current_menu_key=current_menu_key,
+                    field_definition=field_definition,
+                    process_list=process_list,
+                    settings_by_key=settings_by_key,
+                    menu_process_history_map=menu_process_history_map,
+                )
+            return []
         return []
 
     if list_source_type == "field_list":

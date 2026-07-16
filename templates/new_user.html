@@ -2086,7 +2086,12 @@
 
                   {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1">
-<div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                    <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                      <input
+                        type="hidden"
+                        data-additional-field-editor-key
+                        value=""
+                      >
                       <div class="field">
                         <label for="process-additional-field-editor-label">Nome do campo adicional</label>
                         <input
@@ -2596,7 +2601,7 @@
   <script src="/static/js/modules/appgenesis_dialog_v1.js?v=20260704-dialog-v1"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260712-pagination-footer-fix-v1"></script>
-   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v1"></script>
+   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v2"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>

@@ -106,6 +106,9 @@ def build_admin_subprocess_state(
         raw_values = edit_data.get("values")
         if isinstance(raw_values, dict):
             edit_values = dict(raw_values)
+        normalized_edit_values = edit_data.get("edit_values")
+        if isinstance(normalized_edit_values, dict):
+            edit_values.update(normalized_edit_values)
 
     resolved_dynamic_fields: list[dict[str, Any]] = []
     if config.uses_dynamic_fields and sidebar_menu_settings is not None:

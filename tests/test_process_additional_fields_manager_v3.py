@@ -45,10 +45,13 @@ def test_process_additional_fields_manager_v3_exposes_named_list_selector() -> N
     assert "Nome da Lista" in template_text
     assert "Lista manual" not in template_text
     assert "Fonte dos dados" not in template_text
+    assert "data-additional-field-editor-key" in template_text
     assert 'data-additional-field-editor-list-key' in template_text
     assert 'data-additional-field-list-wrap' not in template_text
     assert "settings_edit_data.process_lists|default([])" in template_text
     assert "function getProcessListOptions_v3(root)" in script_text
+    assert 'function getProcessListsSourceElement_v3(root)' in script_text
+    assert 'root.querySelector("[data-process-lists]")' in script_text
     assert 'refreshProcessListOptions_v3(root, selectedListKey);' in script_text
     assert 'Lista: ${getManualListLabelByKey_v3(root, manualListKey)}' in script_text
     assert 'Selecione o nome da lista.' in script_text

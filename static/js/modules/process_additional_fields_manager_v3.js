@@ -95,8 +95,26 @@
     return "manual";
   }
 
-  function getProcessListOptions_v3(root) {
-    const rawText = toSafeString_v3(root && root.dataset ? root.dataset.processLists : "").trim();
+  function getProcessListsSourceElement_v3(root) {
+    if (!root) {
+      return null;
+    }
+
+    if (typeof root.matches === "function" && root.matches("[data-process-lists]")) {
+      return root;
+    }
+
+    return root.querySelector("[data-process-lists]");
+  }
+
+  function readProcessListsPayload_v3(root) {
+    const sourceElement = getProcessListsSourceElement_v3(root);
+
+    if (!sourceElement) {
+      return [];
+    }
+
+    const rawText = toSafeString_v3(sourceElement.dataset ? sourceElement.dataset.processLists : sourceElement.getAttribute("data-process-lists")).trim();
 
     if (!rawText) {
       return [];
@@ -104,48 +122,46 @@
 
     try {
       const parsed = JSON.parse(rawText);
-
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-
-      const options = [];
-      const seenKeys = new Set();
-
-      parsed.forEach((rawItem) => {
-        if (!rawItem || typeof rawItem !== "object") {
-          return;
-        }
-
-        const key = normalizeListKey_v3(
-          rawItem.key || rawItem.list_key || rawItem.manual_list_key || rawItem.process_list_key
-        );
-        const baseLabel = toSafeString_v3(rawItem.label || rawItem.name || rawItem.key).trim();
-        const status = toSafeString_v3(rawItem.status || "").trim().toLowerCase();
-        const isActive = rawItem.is_active !== undefined
-          ? Boolean(rawItem.is_active)
-          : status !== "inativo" && status !== "inactive";
-        const label = baseLabel ? (isActive ? baseLabel : `${baseLabel} (Inativa)`) : "";
-
-        if (!key || !label) {
-          return;
-        }
-
-        if (seenKeys.has(key)) {
-          return;
-        }
-
-        seenKeys.add(key);
-        options.push({ key, label, isActive });
-      });
-
-      return options;
+      return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
       if (window.console && typeof window.console.warn === "function") {
         window.console.warn("[ProcessAdditionalFieldsManagerV3] lista de processos invalida", error);
       }
       return [];
     }
+  }
+
+  function getProcessListOptions_v3(root) {
+    const parsed = readProcessListsPayload_v3(root);
+    const options = [];
+    const seenKeys = new Set();
+
+    parsed.forEach((rawItem) => {
+      if (!rawItem || typeof rawItem !== "object") {
+        return;
+      }
+
+      const key = normalizeListKey_v3(
+        rawItem.key || rawItem.list_key || rawItem.process_list_key || rawItem.manual_list_key
+      );
+      const baseLabel = toSafeString_v3(
+        rawItem.label || rawItem.name || rawItem.list_label || rawItem.process_list_label || rawItem.key
+      ).trim();
+      const statusLookup = toSafeString_v3(rawItem.status || "").trim().toLowerCase();
+      const isActive = rawItem.is_active !== undefined
+        ? Boolean(rawItem.is_active)
+        : !["inativo", "inactive", "0", "false"].includes(statusLookup);
+      const label = baseLabel ? (isActive ? baseLabel : `${baseLabel} (Inativa)`) : "";
+
+      if (!key || !label || seenKeys.has(key)) {
+        return;
+      }
+
+      seenKeys.add(key);
+      options.push({ key, label, isActive });
+    });
+
+    return options;
   }
 
   function refreshProcessListOptions_v3(root, selectedValue) {

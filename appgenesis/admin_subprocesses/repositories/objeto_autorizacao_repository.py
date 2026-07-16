@@ -46,6 +46,31 @@ OBJETO_AUTORIZACAO_AUTHORIZATION_DISPLAY_KEYS = (
     "autorizacao",
     "subprocesso",
 )
+OBJETO_AUTORIZACAO_EDIT_VALUE_KEYS = (
+    "objeto_de_autorizacao",
+    "custom_objeto_label",
+    "custom_nome_do_perfil",
+    "custom_perfil",
+)
+OBJETO_AUTORIZACAO_PROCESS_EDIT_VALUE_KEYS = (
+    "custom_processo",
+    "process_label",
+    "processo_label",
+    "custom_processo_label",
+    "custom_nome_do_processo",
+    "processo",
+)
+OBJETO_AUTORIZACAO_AUTHORIZATION_EDIT_VALUE_KEYS = (
+    "custom_subprocesso",
+    "authorization_label",
+    "autorizacao_label",
+    "custom_autorizacao_label",
+    "custom_subprocesso_label",
+    "custom_autorizacao",
+    "authorization",
+    "autorizacao",
+    "subprocesso",
+)
 OBJETO_AUTORIZACAO_SCOPE_MODE_KEY = "__scope_mode"
 OBJETO_AUTORIZACAO_SCOPE_LABEL_KEY = "__scope_label"
 OBJETO_AUTORIZACAO_STATUS_KEY = "__estado"
@@ -162,6 +187,51 @@ def _resolve_display_value_from_values(
                 return candidate
 
     return fallback
+
+
+def _build_edit_values_from_row_v1(row: dict[str, Any]) -> dict[str, Any]:
+    values = (
+        dict(row.get("values"))
+        if isinstance(row.get("values"), dict)
+        else {}
+    )
+    label = str(row.get("label") or "").strip()
+
+    resolved_label = _resolve_display_value_from_values(
+        values,
+        key_candidates=OBJETO_AUTORIZACAO_EDIT_VALUE_KEYS,
+        fallback=label,
+    )
+    resolved_process = _resolve_display_value_from_values(
+        values,
+        key_candidates=OBJETO_AUTORIZACAO_PROCESS_EDIT_VALUE_KEYS,
+        fallback="",
+    )
+    resolved_authorization = _resolve_display_value_from_values(
+        values,
+        key_candidates=OBJETO_AUTORIZACAO_AUTHORIZATION_EDIT_VALUE_KEYS,
+        fallback="",
+    )
+
+    edit_values = dict(values)
+    for raw_key in OBJETO_AUTORIZACAO_EDIT_VALUE_KEYS:
+        if resolved_label:
+            edit_values[raw_key] = resolved_label
+    for raw_key in OBJETO_AUTORIZACAO_PROCESS_EDIT_VALUE_KEYS:
+        if resolved_process:
+            edit_values[raw_key] = resolved_process
+    for raw_key in OBJETO_AUTORIZACAO_AUTHORIZATION_EDIT_VALUE_KEYS:
+        if resolved_authorization:
+            edit_values[raw_key] = resolved_authorization
+
+    if resolved_label:
+        edit_values.setdefault("label", resolved_label)
+    if resolved_process:
+        edit_values.setdefault("process_label", resolved_process)
+    if resolved_authorization:
+        edit_values.setdefault("authorization_label", resolved_authorization)
+
+    return edit_values
 
 
 class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
@@ -295,6 +365,12 @@ class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
                     "created_at": str(raw_record.get("created_at") or "").strip(),
                     "section_key": str(raw_record.get("section_key") or "").strip() or OBJETO_AUTORIZACAO_SECTION_KEY,
                     "values": dict(values),
+                    "edit_values": _build_edit_values_from_row_v1(
+                        {
+                            "label": label,
+                            "values": values,
+                        }
+                    ),
                 }
             )
 

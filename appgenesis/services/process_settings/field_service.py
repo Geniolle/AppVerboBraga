@@ -420,6 +420,189 @@ def get_menu_process_visible_field_rows(
     ]
 
 
+def repair_profile_authorization_menu_config_v1(
+    menu_key: str,
+    menu_config: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], bool]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    if clean_menu_key != "perfil_de_autorizacao" or not isinstance(menu_config, dict):
+        return (dict(menu_config) if isinstance(menu_config, dict) else {}, False)
+
+    normalized_fields = get_menu_process_additional_fields(menu_config)
+    fields_by_key: dict[str, dict[str, Any]] = {}
+    original_field_order: list[str] = []
+
+    for raw_field in normalized_fields:
+        field_key = str(raw_field.get("key") or "").strip().lower()
+        if not field_key:
+            continue
+        if field_key not in fields_by_key:
+            original_field_order.append(field_key)
+        fields_by_key[field_key] = dict(raw_field)
+
+    def upsert_field(template: dict[str, Any]) -> bool:
+        field_key = str(template.get("key") or "").strip().lower()
+        if not field_key:
+            return False
+
+        existing_field = fields_by_key.get(field_key)
+        if existing_field is None:
+            fields_by_key[field_key] = dict(template)
+            return True
+
+        merged_field = dict(template)
+        for raw_key, raw_value in existing_field.items():
+            if raw_key == "key":
+                continue
+            if raw_value not in (None, "", [], {}):
+                merged_field[raw_key] = raw_value
+
+        fields_by_key[field_key] = merged_field
+        return merged_field != existing_field
+
+    changed = False
+    changed = upsert_field(
+        {
+            "key": "custom_nome_do_perfil",
+            "label": "Nome do perfil",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_key": "list_perfil",
+            "list_key": "list_perfil",
+        }
+    ) or changed
+    changed = upsert_field(
+        {
+            "key": "custom_processo",
+            "label": "Processo",
+            "field_type": "list",
+            "list_source_type": "profile_menu_tabs",
+            "automatic_source_field_key": "custom_nome_do_perfil",
+        }
+    ) or changed
+    changed = upsert_field(
+        {
+            "key": "custom_subprocesso",
+            "label": "Autorização",
+            "field_type": "list",
+            "list_source_type": "profile_menu_tabs",
+            "automatic_source_field_key": "custom_processo",
+        }
+    ) or changed
+
+    canonical_field_order = [
+        "custom_perfil",
+        "custom_field_perfil",
+        "custom_objeto_de_autorizacao",
+        "custom_nome_do_perfil",
+        "custom_processo",
+        "custom_subprocesso",
+    ]
+    ordered_field_keys: list[str] = []
+    seen_field_keys: set[str] = set()
+
+    for field_key in canonical_field_order:
+        if field_key in fields_by_key and field_key not in seen_field_keys:
+            ordered_field_keys.append(field_key)
+            seen_field_keys.add(field_key)
+
+    for field_key in original_field_order:
+        if field_key in fields_by_key and field_key not in seen_field_keys:
+            ordered_field_keys.append(field_key)
+            seen_field_keys.add(field_key)
+
+    repaired_fields = [dict(fields_by_key[field_key]) for field_key in ordered_field_keys]
+    if repaired_fields != normalized_fields:
+        changed = True
+
+    canonical_visible_rows: list[dict[str, str]] = []
+    visible_field_headers: dict[str, str] = {}
+    preserved_headerless_rows: list[dict[str, str]] = []
+
+    raw_rows = menu_config.get("process_visible_field_rows")
+    remapped_keys = {
+        "custom_field_perfil",
+        "custom_nome_do_perfil",
+        "custom_processo",
+        "custom_subprocesso",
+    }
+
+    if isinstance(raw_rows, list):
+        for raw_row in raw_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            header_key = str(raw_row.get("header_key") or "").strip().lower()
+            if not field_key:
+                continue
+            if field_key in remapped_keys:
+                continue
+            if header_key:
+                canonical_visible_rows.append(
+                    {
+                        "field_key": field_key,
+                        "header_key": header_key,
+                    }
+                )
+                visible_field_headers[field_key] = header_key
+            else:
+                preserved_headerless_rows.append(
+                    {
+                        "field_key": field_key,
+                        "header_key": "",
+                    }
+                )
+
+    if "custom_field_perfil" in fields_by_key:
+        canonical_visible_rows = [
+            {
+                "field_key": "custom_field_perfil",
+                "header_key": "custom_perfil",
+            }
+        ] + canonical_visible_rows
+        visible_field_headers["custom_field_perfil"] = "custom_perfil"
+
+    for field_key in ("custom_nome_do_perfil", "custom_processo", "custom_subprocesso"):
+        if field_key in fields_by_key:
+            canonical_visible_rows.append(
+                {
+                    "field_key": field_key,
+                    "header_key": "custom_objeto_de_autorizacao",
+                }
+            )
+            visible_field_headers[field_key] = "custom_objeto_de_autorizacao"
+
+    repaired_rows = canonical_visible_rows + preserved_headerless_rows
+    repaired_visible_fields: list[str] = []
+    seen_visible_keys: set[str] = set()
+
+    for row in repaired_rows:
+        header_key = str(row.get("header_key") or "").strip().lower()
+        field_key = str(row.get("field_key") or "").strip().lower()
+        if header_key and header_key not in seen_visible_keys:
+            repaired_visible_fields.append(header_key)
+            seen_visible_keys.add(header_key)
+        if field_key and field_key not in seen_visible_keys:
+            repaired_visible_fields.append(field_key)
+            seen_visible_keys.add(field_key)
+
+    if not changed:
+        return dict(menu_config), False
+
+    repaired_menu_config = dict(menu_config)
+    repaired_menu_config["additional_fields"] = repaired_fields
+    repaired_menu_config["process_visible_fields"] = repaired_visible_fields
+    repaired_menu_config["process_visible_field_rows"] = repaired_rows
+    repaired_menu_config["process_visible_field_header_map"] = dict(visible_field_headers)
+    repaired_menu_config["visible_fields"] = repaired_visible_fields
+    repaired_menu_config["visible_field_headers"] = dict(visible_field_headers)
+    repaired_menu_config["process_visible_fields_configured"] = True
+    repaired_menu_config["process_visible_fields_refresh_version"] = str(uuid4())
+    repaired_menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = str(uuid4())
+
+    return repaired_menu_config, True
+
+
 def update_sidebar_menu_process_fields_v4(
     session: Session,
     menu_key: str,

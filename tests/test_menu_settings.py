@@ -343,6 +343,143 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
     ]
 
 
+def test_get_sidebar_menu_settings_repairs_profile_authorization_object_section() -> (
+    None
+):
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    profile_menu_config = {
+        "additional_fields": [
+            {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
+            {
+                "key": "custom_objeto_de_autorizacao",
+                "label": "Objeto de autorização",
+                "field_type": "header",
+            },
+            {
+                "key": "custom_nome_do_perfil",
+                "label": "Nome do perfil",
+                "field_type": "list",
+                "list_source_type": "manual",
+                "manual_list_key": "list_perfil",
+                "list_key": "list_perfil",
+            },
+            {
+                "key": "custom_field_perfil",
+                "label": "Perfil",
+                "field_type": "text",
+            },
+            {
+                "key": "custom_objeto_de_autorizacao_1",
+                "label": "Objeto de autorização 1",
+                "field_type": "text",
+            },
+        ],
+        "visible_fields": [
+            "custom_perfil",
+            "custom_nome_do_perfil",
+            "custom_objeto_de_autorizacao",
+            "custom_field_perfil",
+            "custom_objeto_de_autorizacao_1",
+        ],
+        "visible_field_headers": {
+            "custom_nome_do_perfil": "custom_perfil",
+            "custom_field_perfil": "custom_objeto_de_autorizacao",
+        },
+        "process_visible_field_rows": [
+            {
+                "field_key": "custom_nome_do_perfil",
+                "header_key": "custom_perfil",
+            },
+            {
+                "field_key": "custom_field_perfil",
+                "header_key": "custom_objeto_de_autorizacao",
+            },
+            {
+                "field_key": "custom_objeto_de_autorizacao_1",
+                "header_key": "",
+            },
+        ],
+        "process_visible_field_header_map": {
+            "custom_nome_do_perfil": "custom_perfil",
+            "custom_field_perfil": "custom_objeto_de_autorizacao",
+        },
+    }
+
+    with Session(engine) as session:
+        session.add(
+            Entity(
+                entity_number=1,
+                name="Igreja Teste",
+                is_active=True,
+            )
+        )
+        session.add(
+            SidebarMenuSetting(
+                entity_id=1,
+                menu_key="perfil_de_autorizacao",
+                menu_label="Perfil de autorização",
+                is_active=True,
+                is_deleted=False,
+                menu_config=json.dumps(profile_menu_config, ensure_ascii=False),
+            )
+        )
+        session.commit()
+
+        settings = get_sidebar_menu_settings(session)
+        profile_setting = next(
+            item for item in settings if item["key"] == "perfil_de_autorizacao"
+        )
+
+        assert [row["field_key"] for row in profile_setting["process_visible_field_rows"]] == [
+            "custom_field_perfil",
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "custom_objeto_de_autorizacao_1",
+        ]
+        assert profile_setting["process_visible_field_header_map"] == {
+            "custom_field_perfil": "custom_perfil",
+            "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
+            "custom_processo": "custom_objeto_de_autorizacao",
+            "custom_subprocesso": "custom_objeto_de_autorizacao",
+        }
+
+        resolved_fields = resolve_subprocess_section_fields_v1(
+            "perfil_de_autorizacao",
+            "custom_objeto_de_autorizacao",
+            settings,
+            active_entity_id=1,
+        )
+
+        assert [item["key"] for item in resolved_fields] == [
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+        ]
+        assert [item["label"] for item in resolved_fields] == [
+            "Nome do perfil",
+            "Processo",
+            "Autorização",
+        ]
+
+        stored_row = session.scalar(
+            select(SidebarMenuSetting).where(
+                SidebarMenuSetting.menu_key == "perfil_de_autorizacao"
+            )
+        )
+        assert stored_row is not None
+        stored_config = json.loads(stored_row.menu_config or "{}")
+        assert [row["field_key"] for row in stored_config["process_visible_field_rows"]] == [
+            "custom_field_perfil",
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "custom_objeto_de_autorizacao_1",
+        ]
+
+
 def test_normalize_additional_fields_list_legacy_defaults_to_manual() -> None:
     normalized = normalize_menu_process_additional_fields(
         [
@@ -614,13 +751,13 @@ def test_resolve_field_list_options_active_menus_filters_visibility_and_state() 
             },
             {
                 "key": "musicas",
-                "label": "MÃºsicas",
+                "label": "Músicas",
                 "is_active": True,
                 "is_deleted": True,
             },
             {
                 "key": "perfil_de_autorizacao",
-                "label": "Perfil de autorizaÃ§Ã£o",
+                "label": "Perfil de autorização",
                 "is_active": True,
                 "is_deleted": False,
             },
@@ -634,7 +771,7 @@ def test_resolve_field_list_options_active_menus_filters_visibility_and_state() 
         {"value": "sessoes", "label": "Estruturas", "status": "active"},
         {
             "value": "perfil_de_autorizacao",
-            "label": "Perfil de autorizaÃ§Ã£o",
+            "label": "Perfil de autorização",
             "status": "active",
         },
     ]
@@ -1869,7 +2006,7 @@ def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -
         [
             {
                 "key": "perfil_de_autorizacao",
-                "label": "Perfil de autorizaÃ§Ã£o",
+                "label": "Perfil de autorização",
                 "is_active": True,
                 "is_deleted": False,
                 "process_additional_fields": [
@@ -1920,7 +2057,7 @@ def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -
             "options": [
                 {
                     "value": "perfil_de_autorizacao",
-                    "label": "Perfil de autorizaÃ§Ã£o",
+                    "label": "Perfil de autorização",
                     "status": "active",
                 },
                 {"value": "sessoes", "label": "Estruturas", "status": "active"},
@@ -2573,4 +2710,73 @@ def test_resolve_field_list_options_manual_legacy_list_key_still_works() -> None
     assert resolved == [
         {"value": "Pastor", "label": "Pastor", "status": "active"},
         {"value": "Líder", "label": "Líder", "status": "active"},
+    ]
+
+
+def test_resolve_field_list_options_manual_reference_uses_automatic_process_list_history() -> (
+    None
+):
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_nome_do_perfil",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_key": "list_perfil",
+            "list_key": "list_perfil",
+        },
+        sidebar_menu_settings=[
+            {
+                "key": "perfil_de_autorizacao",
+                "process_lists": [
+                    {
+                        "key": "list_perfil",
+                        "label": "Perfil",
+                        "field_type": "automatic",
+                        "source_menu_key": "perfil_de_autorizacao",
+                        "source_subprocess_key": "custom_perfil_header",
+                        "items": [],
+                    }
+                ],
+                "process_field_options": [
+                    {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "list",
+                    },
+                ],
+            }
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao"},
+        menu_process_history_map={
+            "perfil_de_autorizacao": [
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "custom_nome_do_perfil": "Gestor de Tesouraria",
+                        "__estado": "ativo",
+                    },
+                },
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "custom_nome_do_perfil": "Arquivo",
+                        "__estado": "inativo",
+                    },
+                },
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "custom_nome_do_perfil": "Gestor de Tesouraria",
+                        "__estado": "ativo",
+                    },
+                },
+            ]
+        },
+    )
+
+    assert resolved == [
+        {"value": "Gestor de Tesouraria", "label": "Gestor de Tesouraria", "status": "active"},
+        {"value": "Arquivo", "label": "Arquivo", "status": "inactive"},
     ]

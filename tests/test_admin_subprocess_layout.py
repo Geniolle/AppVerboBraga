@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.admin_subprocesses.registry import (
     AUTHORIZATION_PROFILE_CONFIG,
@@ -55,6 +56,92 @@ def test_objeto_autorizacao_create_and_edit_forms_both_get_dedicated_grid_varian
 
     assert "admin-subprocess-grid-v1 admin-subprocess-grid-objeto-autorizacao-v1" in create_html
     assert "admin-subprocess-grid-v1 admin-subprocess-grid-objeto-autorizacao-v1" in edit_html
+
+
+def test_objeto_autorizacao_state_prefers_normalized_edit_values() -> None:
+    state = build_admin_subprocess_state(
+        config=OBJETO_AUTORIZACAO_CONFIG,
+        rows=[
+            {
+                "key": "gestor-de-tesouraria",
+                "label": "Gestor de Tesouraria",
+                "is_active": True,
+                "values": {
+                    "objeto_de_autorizacao": "Gestor de Tesouraria",
+                    "process_label": "extrato",
+                    "authorization_label": "Todas autorizações",
+                },
+                "edit_values": {
+                    "custom_nome_do_perfil": "Gestor de Tesouraria",
+                    "custom_processo": "extrato",
+                    "custom_subprocesso": "Todas autorizações",
+                },
+            }
+        ],
+        edit_key="gestor-de-tesouraria",
+        sidebar_menu_settings=[
+            {
+                "key": "perfil_de_autorizacao",
+                "label": "Perfil de autorização",
+                "is_active": True,
+                "is_deleted": False,
+                "process_visible_field_rows": [
+                    {
+                        "field_key": "custom_nome_do_perfil",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
+                    {
+                        "field_key": "custom_processo",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
+                    {
+                        "field_key": "custom_subprocesso",
+                        "header_key": "custom_objeto_de_autorizacao",
+                    },
+                ],
+                "process_field_options": [
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "list",
+                        "list_source_type": "manual",
+                        "manual_list_key": "list_perfil",
+                        "list_key": "list_perfil",
+                        "options": [
+                            {"value": "Gestor de Tesouraria", "label": "Gestor de Tesouraria"}
+                        ],
+                    },
+                    {
+                        "key": "custom_processo",
+                        "label": "Processo",
+                        "field_type": "list",
+                        "list_source_type": "profile_menu_tabs",
+                        "automatic_source_field_key": "custom_nome_do_perfil",
+                        "options": [
+                            {"value": "extrato", "label": "extrato"}
+                        ],
+                    },
+                    {
+                        "key": "custom_subprocesso",
+                        "label": "Autorização",
+                        "field_type": "list",
+                        "list_source_type": "profile_menu_tabs",
+                        "automatic_source_field_key": "custom_processo",
+                        "options": [
+                            {"value": "Todas autorizações", "label": "Todas autorizações"}
+                        ],
+                    },
+                ],
+            }
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao"},
+        menu_process_history_map={"perfil_de_autorizacao": []},
+    )
+
+    assert state.is_editing is True
+    assert state.edit_values["custom_nome_do_perfil"] == "Gestor de Tesouraria"
+    assert state.edit_values["custom_processo"] == "extrato"
+    assert state.edit_values["custom_subprocesso"] == "Todas autorizações"
 
 
 ####################################################################################

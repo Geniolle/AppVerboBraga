@@ -79,7 +79,11 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert "Objeto de autorização" in active_labels_before
         assert objeto_group_visible_before is True
 
-        edit_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
+        edit_row = driver.find_element(
+            By.XPATH,
+            "//tr[contains(., 'Gestor de Tesouraria')]",
+        )
+        edit_links = edit_row.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
         assert edit_links, {
             "current_url": driver.current_url,
             "active_labels_before": active_labels_before,
@@ -122,11 +126,78 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
             return header ? String(header.textContent || '').trim() : '';
             """
         )
+        objeto_field_keys = sorted(
+            {
+                str(element.get_attribute("data-admin-subprocess-field-key") or "").strip()
+                for element in driver.find_elements(
+                    By.CSS_SELECTOR,
+                    '#auth-objeto-form-card [data-admin-subprocess-field-key]',
+                )
+                if str(element.get_attribute("data-admin-subprocess-field-key") or "").strip()
+            }
+        )
+        objeto_selects = driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#auth-objeto-form-card select[name^="process_field__"]')).map((select) => ({
+              name: select.name || '',
+              fieldKey: select.dataset.adminSubprocessFieldKey || '',
+              value: select.value || '',
+              disabled: Boolean(select.disabled),
+              options: Array.from(select.options).map((option) => ({
+                value: option.value || '',
+                label: String(option.textContent || '').trim(),
+                selected: Boolean(option.selected),
+              })),
+            }));
+            """
+        )
 
         assert "Objeto de autorização" in active_labels
         assert "Perfis" not in active_labels
         assert objeto_form_visible is True
         assert perfil_form_visible is False
         assert objeto_form_header in ("Editar objeto de autorização", "Objeto de autorização")
+        assert objeto_field_keys == [
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "status",
+            "visibility_scope_mode",
+        ]
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_nome_do_perfil"] label',
+            ).text.strip()
+            .lower()
+            .startswith("nome do perfil")
+        )
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_processo"] label',
+            ).text.strip()
+            .lower()
+            .startswith("processo")
+        )
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_subprocesso"] label',
+            ).text.strip()
+            .lower()
+            .startswith("autorização")
+        )
+        selects_by_key = {item["fieldKey"]: item for item in objeto_selects}
+        assert set(selects_by_key) == {
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+        }
+        assert all(not item["disabled"] for item in selects_by_key.values())
+        assert selects_by_key["custom_nome_do_perfil"]["value"] == "Gestor de Tesouraria"
+        assert selects_by_key["custom_processo"]["value"] == "custom_extratos_bancarios"
+        assert selects_by_key["custom_subprocesso"]["value"] == "custom_extratos_bancarios"
+        assert all(len(item["options"]) >= 2 for item in selects_by_key.values())
     finally:
         driver.quit()

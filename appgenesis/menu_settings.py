@@ -149,6 +149,7 @@ from appgenesis.services.process_settings.field_service import (
     get_menu_process_selectable_field_options,
     get_menu_process_visible_field_header_map,
     get_menu_process_visible_field_rows,
+    repair_profile_authorization_menu_config_v1,
     normalize_menu_process_visible_fields,
     normalize_menu_process_visible_fields_v4,
     normalize_meu_perfil_visible_fields,
@@ -213,6 +214,27 @@ def get_sidebar_menu_settings(
             is_deleted = bool(row.is_deleted)
 
         menu_config = _parse_menu_config(None if row is None else row.menu_config)
+        repaired_menu_config, repaired_menu_config_changed = (
+            repair_profile_authorization_menu_config_v1(menu_key, menu_config)
+        )
+        if repaired_menu_config_changed and row is not None:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE entity_id = :entity_id
+                      AND lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "entity_id": resolved_entity_id,
+                    "menu_key": menu_key,
+                    "menu_config": json.dumps(repaired_menu_config, ensure_ascii=False),
+                },
+            )
+            session.commit()
+        menu_config = repaired_menu_config
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         process_subsequent_fields = menu_config.get("subsequent_fields", [])
         explicit_display_order = _normalize_menu_display_order(
@@ -326,6 +348,27 @@ def get_sidebar_menu_settings(
         is_active = bool(row.is_active)
         is_deleted = bool(row.is_deleted)
         menu_config = _parse_menu_config(row.menu_config)
+        repaired_menu_config, repaired_menu_config_changed = (
+            repair_profile_authorization_menu_config_v1(menu_key, menu_config)
+        )
+        if repaired_menu_config_changed:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE entity_id = :entity_id
+                      AND lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "entity_id": resolved_entity_id,
+                    "menu_key": menu_key,
+                    "menu_config": json.dumps(repaired_menu_config, ensure_ascii=False),
+                },
+            )
+            session.commit()
+        menu_config = repaired_menu_config
         requires_admin = bool(menu_config.get("requires_admin", True))
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         fallback_order = len(SIDEBAR_MENU_DEFAULTS) + extra_index
