@@ -30,6 +30,125 @@
       .replace(/^_|_$/g, "");
   }
 
+  function readProcessListAllSessionsKey_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    return normalizeKey_v1(bootstrap.processListAllSessionsKey || "all_sessions") || "all_sessions";
+  }
+
+  function readProcessListAllSessionsLabel_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    return toSafeString_v1(bootstrap.processListAllSessionsLabel || "Todas as sessões").trim() || "Todas as sessões";
+  }
+
+  function isProcessListAllSessionsKey_v1(value) {
+    return normalizeKey_v1(value) === readProcessListAllSessionsKey_v1();
+  }
+
+  function normalizeProcessListSourceSessionOptions_v1(sourceSessionOptions) {
+    const normalized = [];
+    const seenValues = new Set();
+    const allSessionsKey = readProcessListAllSessionsKey_v1();
+    const allSessionsLabel = readProcessListAllSessionsLabel_v1();
+
+    normalized.push({
+      value: allSessionsKey,
+      label: allSessionsLabel
+    });
+    seenValues.add(allSessionsKey);
+
+    (Array.isArray(sourceSessionOptions) ? sourceSessionOptions : []).forEach((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawOption.value || rawOption.key || "").trim().toLowerCase();
+      const label = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key || "").trim();
+
+      if (!value || !label || seenValues.has(value)) {
+        return;
+      }
+
+      seenValues.add(value);
+      normalized.push({
+        value,
+        label
+      });
+    });
+
+    return normalized;
+  }
+
+  function filterProcessListSourceMenuOptions_v1(sourceMenuOptions, selectedSessionKey) {
+    const normalizedSessionKey = normalizeKey_v1(selectedSessionKey);
+    const normalizedAllSessionsKey = readProcessListAllSessionsKey_v1();
+    const seenMenuKeys = new Set();
+
+    if (!normalizedSessionKey) {
+      return [];
+    }
+
+    return (Array.isArray(sourceMenuOptions) ? sourceMenuOptions : []).filter((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return false;
+      }
+
+      const menuKey = toSafeString_v1(rawOption.value || rawOption.key || "").trim().toLowerCase();
+      const menuLabel = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key || "").trim();
+      const sourceSessionKey = toSafeString_v1(rawOption.sourceSessionKey || "").trim().toLowerCase();
+
+      if (!menuKey || !menuLabel || !sourceSessionKey) {
+        return false;
+      }
+      if (seenMenuKeys.has(menuKey)) {
+        return false;
+      }
+      if (normalizedSessionKey !== normalizedAllSessionsKey && sourceSessionKey !== normalizedSessionKey) {
+        return false;
+      }
+
+      seenMenuKeys.add(menuKey);
+      return true;
+    });
+  }
+
+  function readProcessListSourceMenusFromBootstrap_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    const rawMenus = Array.isArray(bootstrap.processListSourceMenus)
+      ? bootstrap.processListSourceMenus
+      : [];
+    const normalized = [];
+    const seenMenuKeys = new Set();
+
+    rawMenus.forEach((rawMenu) => {
+      if (!rawMenu || typeof rawMenu !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawMenu.menu_key || rawMenu.value || rawMenu.key || "").trim().toLowerCase();
+      const label = toSafeString_v1(rawMenu.menu_label || rawMenu.label || rawMenu.value || rawMenu.key || "").trim();
+      const sourceSessionKey = toSafeString_v1(
+        rawMenu.sidebar_section_key || rawMenu.source_session_key || rawMenu.sourceSessionKey || ""
+      ).trim().toLowerCase();
+      const sourceSessionLabel = toSafeString_v1(
+        rawMenu.sidebar_section_label || rawMenu.source_session_label || rawMenu.sourceSessionLabel || ""
+      ).trim();
+
+      if (!value || !label || seenMenuKeys.has(value)) {
+        return;
+      }
+
+      seenMenuKeys.add(value);
+      normalized.push({
+        value,
+        label,
+        sourceSessionKey,
+        sourceSessionLabel
+      });
+    });
+
+    return normalized;
+  }
+
   function showValidationMessage_v1(message) {
     const core = getCore_v1();
 
@@ -276,6 +395,11 @@
   }
 
   function readSourceMenuOptions_v1(elements) {
+    const bootstrapSourceMenus = readProcessListSourceMenusFromBootstrap_v1();
+    if (bootstrapSourceMenus.length) {
+      return bootstrapSourceMenus;
+    }
+
     if (!elements || !elements.editorSourceMenu) {
       return [];
     }
@@ -292,6 +416,58 @@
         ).trim()
       }))
       .filter((option) => option.value && option.label);
+  }
+
+  function refreshAutomaticSourceOptions_v1(context) {
+    const elements = context && context.elements ? context.elements : null;
+
+    if (!elements) {
+      return {
+        sourceSessionOptions: [],
+        sourceMenuOptions: [],
+        sourceSubprocessMap: {}
+      };
+    }
+
+    const sourceSessionOptionsSnapshot = Array.isArray(
+      context && context.manager && context.manager.sourceSessionOptionsSnapshot
+    )
+      ? context.manager.sourceSessionOptionsSnapshot
+      : Array.isArray(context && context.sourceSessionOptionsSnapshot)
+        ? context.sourceSessionOptionsSnapshot
+      : normalizeProcessListSourceSessionOptions_v1(readSourceSessionOptions_v1(elements));
+    const sourceMenuOptionsSnapshot = Array.isArray(
+      context && context.manager && context.manager.sourceMenuOptionsSnapshot
+    )
+      ? context.manager.sourceMenuOptionsSnapshot
+      : Array.isArray(context && context.sourceMenuOptionsSnapshot)
+        ? context.sourceMenuOptionsSnapshot
+      : readSourceMenuOptions_v1(elements);
+    const sourceSessionOptions = normalizeProcessListSourceSessionOptions_v1(sourceSessionOptionsSnapshot);
+    const sourceMenuOptions = Array.isArray(sourceMenuOptionsSnapshot) ? sourceMenuOptionsSnapshot : [];
+    const sourceSubprocessMap = getSourceSubprocessMap_v1(elements);
+
+    if (context) {
+      context.sourceSessionOptions = sourceSessionOptions;
+      context.sourceMenuOptions = sourceMenuOptions;
+      context.sourceSubprocessMap = sourceSubprocessMap;
+      if (!Array.isArray(context.sourceSessionOptionsSnapshot)) {
+        context.sourceSessionOptionsSnapshot = sourceSessionOptions;
+      }
+      if (!Array.isArray(context.sourceMenuOptionsSnapshot)) {
+        context.sourceMenuOptionsSnapshot = sourceMenuOptions;
+      }
+      if (context.manager) {
+        context.manager.sourceSessionOptionsSnapshot = sourceSessionOptions;
+        context.manager.sourceMenuOptionsSnapshot = sourceMenuOptions;
+      }
+    }
+
+    return {
+      sourceSessionOptions,
+      sourceMenuOptions,
+      sourceSubprocessMap
+    };
   }
 
   function populateSelectOptions_v1(select, placeholderLabel, availableOptions, selectedValue, options) {
@@ -329,6 +505,12 @@
       const option = document.createElement("option");
       option.value = value;
       option.textContent = label;
+      if (rawOption.sourceSessionKey) {
+        option.dataset.processListSourceSessionKey = toSafeString_v1(rawOption.sourceSessionKey).trim().toLowerCase();
+      }
+      if (rawOption.sourceSessionLabel) {
+        option.dataset.processListSourceSessionLabel = toSafeString_v1(rawOption.sourceSessionLabel).trim();
+      }
       if (rawOption.disabled) {
         option.disabled = true;
       }
@@ -370,20 +552,22 @@
 
   function updateAutomaticSourceControls_v1(context, options) {
     const elements = context && context.elements ? context.elements : null;
-    const sourceSessionOptions = context && Array.isArray(context.sourceSessionOptions)
-      ? context.sourceSessionOptions
-      : [];
-    const sourceMenuOptions = context && Array.isArray(context.sourceMenuOptions)
-      ? context.sourceMenuOptions
-      : [];
-    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
 
     if (!elements || !elements.editorSourceSession || !elements.editorSourceMenu || !elements.editorSourceSubprocess) {
       return;
     }
 
+    const refreshedOptions = refreshAutomaticSourceOptions_v1(context);
+    const sourceSessionOptions = Array.isArray(refreshedOptions.sourceSessionOptions)
+      ? refreshedOptions.sourceSessionOptions
+      : [];
+    const sourceMenuOptions = Array.isArray(refreshedOptions.sourceMenuOptions)
+      ? refreshedOptions.sourceMenuOptions
+      : [];
+    const sourceSubprocessMap = refreshedOptions.sourceSubprocessMap || {};
+    const isHydratingEditor = Boolean(context && context.isHydratingEditor);
     const keepVisible = Boolean(options && options.keepVisible);
-    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection);
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection) && !isHydratingEditor;
     const selectedSessionKey = toSafeString_v1(
       options && Object.prototype.hasOwnProperty.call(options, "selectedSessionKey")
         ? options.selectedSessionKey
@@ -399,14 +583,16 @@
         ? options.selectedSubprocessKey
         : elements.editorSourceSubprocess.value
     ).trim().toLowerCase();
+    const allSessionsKey = readProcessListAllSessionsKey_v1();
 
     const resolvedSessionKey = selectedSessionKey || getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, selectedMenuKey);
+    const normalizedResolvedSessionKey = normalizeKey_v1(resolvedSessionKey);
 
     populateSelectOptions_v1(
       elements.editorSourceSession,
       "Selecione a sessão",
       sourceSessionOptions,
-      resolvedSessionKey,
+      normalizedResolvedSessionKey,
       {
         preserveUnavailableSelection,
         unavailableLabel: "Sessão indisponível"
@@ -414,9 +600,24 @@
     );
 
     const normalizedSessionKey = toSafeString_v1(elements.editorSourceSession.value).trim().toLowerCase();
-    const filteredMenuOptions = normalizedSessionKey
-      ? sourceMenuOptions.filter((option) => option.sourceSessionKey === normalizedSessionKey)
-      : [];
+    if (normalizedSessionKey === allSessionsKey) {
+      elements.editorSourceMenu.value = "";
+      elements.editorSourceMenu.innerHTML = "";
+      elements.editorSourceSubprocess.value = "";
+      elements.editorSourceSubprocess.innerHTML = "";
+      elements.editorSourceSession.disabled = !keepVisible;
+      elements.editorSourceMenu.disabled = true;
+      elements.editorSourceSubprocess.disabled = true;
+      elements.editorSourceMenuWrapper.hidden = true;
+      elements.editorSourceSubprocessWrapper.hidden = true;
+      elements.root.dataset.hasSourceSubprocess = "0";
+      return;
+    }
+
+    const filteredMenuOptions = filterProcessListSourceMenuOptions_v1(
+      sourceMenuOptions,
+      normalizedSessionKey
+    );
 
     populateSelectOptions_v1(
       elements.editorSourceMenu,
@@ -450,12 +651,12 @@
     elements.editorSourceMenuWrapper.hidden = !keepVisible;
     elements.editorSourceSubprocessWrapper.hidden = !keepVisible || !normalizedMenuKey;
 
-    if (!normalizedSessionKey && !preserveUnavailableSelection) {
+    if (!normalizedSessionKey && !preserveUnavailableSelection && !isHydratingEditor) {
       elements.editorSourceMenu.value = "";
       elements.editorSourceSubprocess.value = "";
     }
 
-    if (!normalizedMenuKey && !preserveUnavailableSelection) {
+    if (!normalizedMenuKey && !preserveUnavailableSelection && !isHydratingEditor) {
       elements.editorSourceSubprocess.value = "";
     }
   }
@@ -681,34 +882,53 @@
       manager.root.classList.add("configurable-items-editing-v1");
     }
 
-    elements.editorKey.value = item.key || "";
-    elements.editorLabel.value = item.label || "";
-    elements.editorItems.value = item.itemsCsv || "";
-    if (elements.editorStatus) {
-      elements.editorStatus.value = item.status === "inativo" ? "inativo" : "ativo";
+    if (context) {
+      context.isHydratingEditor = true;
+      refreshAutomaticSourceOptions_v1(context);
     }
-    delete elements.editorItems.dataset.previousItems;
-    if (elements.editorFieldType) {
-      elements.editorFieldType.value = item.field_type || "manual";
-    }
-    const inferredSessionKey = toSafeString_v1(
-      item.sourceSessionKey ||
-      item.sourceSidebarSectionKey ||
-      getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, item.sourceMenuKey)
-    ).trim().toLowerCase();
-    elements.editorSourceSession.value = inferredSessionKey;
-    elements.editorSourceMenu.value = item.sourceMenuKey || "";
-    elements.editorSourceSubprocess.value = item.sourceSubprocessKey || "";
-    applyEditorFieldTypeState_v3(
-      { elements, manager, sourceSubprocessMap },
-      {
-        selectedSessionKey: inferredSessionKey,
-        selectedMenuKey: item.sourceMenuKey || "",
-        selectedSubprocessKey: item.sourceSubprocessKey || "",
-        preserveUnavailableSelection: true
+
+    try {
+      elements.editorKey.value = item.key || "";
+      elements.editorLabel.value = item.label || "";
+      elements.editorItems.value = item.itemsCsv || "";
+      if (elements.editorStatus) {
+        elements.editorStatus.value = item.status === "inativo" ? "inativo" : "ativo";
       }
-    );
-    elements.editorLabel.focus();
+      delete elements.editorItems.dataset.previousItems;
+      if (elements.editorFieldType) {
+        elements.editorFieldType.value = item.field_type || "manual";
+      }
+      const inferredSessionKey = toSafeString_v1(
+        item.sourceSessionKey ||
+        item.sourceSidebarSectionKey ||
+        getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, item.sourceMenuKey)
+      ).trim().toLowerCase();
+      const isAllSessionsSelection = isProcessListAllSessionsKey_v1(inferredSessionKey);
+      elements.editorSourceSession.value = inferredSessionKey;
+      elements.editorSourceMenu.value = isAllSessionsSelection ? "" : (item.sourceMenuKey || "");
+      elements.editorSourceSubprocess.value = isAllSessionsSelection ? "" : (item.sourceSubprocessKey || "");
+      applyEditorFieldTypeState_v3(
+        {
+          elements,
+          manager,
+          sourceSubprocessMap,
+          sourceSessionOptions: context && context.sourceSessionOptions ? context.sourceSessionOptions : [],
+          sourceMenuOptions: context && context.sourceMenuOptions ? context.sourceMenuOptions : [],
+          isHydratingEditor: true
+        },
+        {
+          selectedSessionKey: inferredSessionKey,
+          selectedMenuKey: isAllSessionsSelection ? "" : (item.sourceMenuKey || ""),
+          selectedSubprocessKey: isAllSessionsSelection ? "" : (item.sourceSubprocessKey || ""),
+          preserveUnavailableSelection: false
+        }
+      );
+      elements.editorLabel.focus();
+    } finally {
+      if (context) {
+        context.isHydratingEditor = false;
+      }
+    }
   }
 
   function readEditorItem_v1(context) {
@@ -720,7 +940,8 @@
     const sourceSessionKey = toSafeString_v1(elements.editorSourceSession ? elements.editorSourceSession.value : "").trim().toLowerCase();
     const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
     const sourceSubprocessKey = toSafeString_v1(elements.editorSourceSubprocess ? elements.editorSourceSubprocess.value : "").trim().toLowerCase();
-    const resolvedSourceSessionKey = sourceSessionKey || getSourceSessionKeyFromMenuOptions_v1(
+    const isAllSessionsSelection = isProcessListAllSessionsKey_v1(sourceSessionKey);
+    const resolvedSourceSessionKey = isAllSessionsSelection ? sourceSessionKey : sourceSessionKey || getSourceSessionKeyFromMenuOptions_v1(
       context && Array.isArray(context.sourceMenuOptions) ? context.sourceMenuOptions : [],
       sourceMenuKey
     );
@@ -736,8 +957,8 @@
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
       itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
       sourceSessionKey: fieldType === "automatic" ? resolvedSourceSessionKey : "",
-      sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : "",
-      sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : "",
+      sourceMenuKey: fieldType === "automatic" && !isAllSessionsSelection ? sourceMenuKey : "",
+      sourceSubprocessKey: fieldType === "automatic" && !isAllSessionsSelection ? sourceSubprocessKey : "",
       status: status === "inativo" ? "inativo" : "ativo"
     };
   }
@@ -789,7 +1010,7 @@
       };
     }
 
-    if (item.field_type === "automatic" && !item.sourceMenuKey && !isLegacyAutomaticWithoutSource) {
+    if (item.field_type === "automatic" && !isProcessListAllSessionsKey_v1(item.sourceSessionKey) && !item.sourceMenuKey && !isLegacyAutomaticWithoutSource) {
       return {
         valid: false,
         message: "Selecione o menu de origem da lista automática."
@@ -917,7 +1138,8 @@
       elements.editorItems.disabled = true;
       elements.editorItemsWrapper.hidden = true;
       elements.editorSourceSessionWrapper.hidden = false;
-      elements.editorSourceMenuWrapper.hidden = false;
+      elements.editorSourceMenuWrapper.hidden = true;
+      elements.editorSourceSubprocessWrapper.hidden = true;
       elements.root.dataset.hasSourceSubprocess = "0";
       updateAutomaticSourceControls_v1(
         context,
@@ -1322,10 +1544,21 @@
       manager,
       sourceSubprocessMap,
       sourceSessionOptions,
-      sourceMenuOptions
+      sourceMenuOptions,
+      sourceSessionOptionsSnapshot: normalizeProcessListSourceSessionOptions_v1(sourceSessionOptions),
+      sourceMenuOptionsSnapshot: Array.isArray(sourceMenuOptions) ? sourceMenuOptions : [],
+      isHydratingEditor: false
     };
 
+    manager.sourceSessionOptionsSnapshot = managerContext.sourceSessionOptionsSnapshot;
+    manager.sourceMenuOptionsSnapshot = managerContext.sourceMenuOptionsSnapshot;
+
+    refreshAutomaticSourceOptions_v1(managerContext);
+
     elements.editorFieldType.addEventListener("change", () => {
+      if (managerContext.isHydratingEditor) {
+        return;
+      }
       applyEditorFieldTypeState_v3(
         managerContext,
         {
@@ -1337,6 +1570,10 @@
       );
     });
     elements.editorSourceSession.addEventListener("change", () => {
+      if (managerContext.isHydratingEditor) {
+        return;
+      }
+      refreshAutomaticSourceOptions_v1(managerContext);
       updateAutomaticSourceControls_v1(managerContext, {
         selectedSessionKey: elements.editorSourceSession.value,
         selectedMenuKey: elements.editorSourceMenu.value,
@@ -1346,6 +1583,10 @@
       });
     });
     elements.editorSourceMenu.addEventListener("change", () => {
+      if (managerContext.isHydratingEditor) {
+        return;
+      }
+      refreshAutomaticSourceOptions_v1(managerContext);
       updateAutomaticSourceControls_v1(managerContext, {
         selectedSessionKey: elements.editorSourceSession.value,
         selectedMenuKey: elements.editorSourceMenu.value,

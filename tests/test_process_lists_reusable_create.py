@@ -123,18 +123,26 @@ def test_process_lists_entity_field_shows_only_entity_number_in_real_browser() -
 
 
 def _remove_test_list_v1(driver, wait) -> None:
+    _remove_process_list_by_label_v1(driver, wait, "Lista teste")
+
+
+def _remove_process_list_by_label_v1(driver, wait, label: str) -> None:
     _open_lists_editor_v1(driver, wait)
     removed = driver.execute_script(
         """
         const form = document.querySelector("form[data-process-lists-manager-v1='1']");
         const manager = form && form.processListsManagerV1;
         if (!manager) return false;
-        const filtered = manager.getItems().filter((item) => item.label !== "Lista teste");
+        const expected = String(arguments[0] || '').toLowerCase();
+        const filtered = manager.getItems().filter(
+          (item) => String(item.label || '').toLowerCase() !== expected
+        );
         if (filtered.length === manager.getItems().length) return false;
         manager.setItems(filtered);
         manager.syncHiddenInputs();
         return true;
-        """
+        """,
+        label,
     )
     if removed:
         submit_button = driver.find_element(
@@ -239,6 +247,78 @@ def test_create_reusable_list_reads_visible_editor_values() -> None:
             assert "Lista teste" not in driver.find_element(
                 By.CSS_SELECTOR, "[data-process-lists-table-body]"
             ).text
+        finally:
+            driver.quit()
+
+
+def test_process_lists_editor_redirects_to_list_tab_after_status_toggle() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    label = f"Lista status {__import__('time').time_ns()}"
+    try:
+        _login_owner_v1(driver, wait)
+        _remove_process_list_by_label_v1(driver, wait, label)
+
+        _open_lists_editor_v1(driver, wait)
+        driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-label]").send_keys(label)
+        driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-items]").send_keys("A")
+        submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+        submit.click()
+        wait.until(EC.staleness_of(submit))
+
+        _open_lists_editor_v1(driver, wait)
+        table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        row = next(
+            row for row in table_body.find_elements(By.TAG_NAME, "tr")
+            if label.lower() in row.text.lower()
+        )
+        edit_button = row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
+        driver.execute_script("arguments[0].click()", edit_button)
+
+        status_select = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-status]")
+        driver.execute_script(
+            "arguments[0].value='inativo'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            status_select,
+        )
+        submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+        submit.click()
+        wait.until(EC.staleness_of(submit))
+
+        assert "settings_tab=lista" in driver.current_url
+        assert "settings_action=edit" in driver.current_url
+        assert "settings_edit_key=perfil_de_autorizacao" in driver.current_url
+
+        _open_lists_editor_v1(driver, wait)
+        inactive_table_body = driver.find_element(
+            By.CSS_SELECTOR, "[data-process-lists-inactive-table-body]"
+        )
+        assert label.lower() in inactive_table_body.text.lower()
+
+        inactive_row = next(
+            row for row in inactive_table_body.find_elements(By.TAG_NAME, "tr")
+            if label.lower() in row.text.lower()
+        )
+        edit_button = inactive_row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
+        driver.execute_script("arguments[0].click()", edit_button)
+        status_select = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-status]")
+        driver.execute_script(
+            "arguments[0].value='ativo'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            status_select,
+        )
+        submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+        submit.click()
+        wait.until(EC.staleness_of(submit))
+
+        assert "settings_tab=lista" in driver.current_url
+        assert "settings_action=edit" in driver.current_url
+        assert "settings_edit_key=perfil_de_autorizacao" in driver.current_url
+
+        _open_lists_editor_v1(driver, wait)
+        active_table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        assert label.lower() in active_table_body.text.lower()
+    finally:
+        try:
+            _remove_process_list_by_label_v1(driver, wait, label)
         finally:
             driver.quit()
 
@@ -386,3 +466,182 @@ def test_automatic_list_source_menu_real_flow() -> None:
                 wait.until(EC.staleness_of(submit))
         finally:
             driver.quit()
+
+
+def test_automatic_list_all_sessions_flow_restores_without_extra_click() -> None:
+    label = "Lista automática Todas as Sessões Selenium"
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+        removed_before = driver.execute_script(
+            """
+            const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+            const manager = form && form.processListsManagerV1;
+            const expected = String(arguments[0] || '').toLowerCase();
+            if (!manager) return false;
+            const filtered = manager.getItems().filter(
+              (item) => String(item.label || '').toLowerCase() !== expected
+            );
+            if (filtered.length === manager.getItems().length) return false;
+            manager.setItems(filtered);
+            manager.syncHiddenInputs();
+            return true;
+            """,
+            label,
+        )
+        if removed_before:
+            submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+            submit.click()
+            wait.until(EC.staleness_of(submit))
+            _open_lists_editor_v1(driver, wait)
+
+        field_type = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-field-type]")
+        session = driver.find_element(By.ID, "process-list-editor-source-session")
+        menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
+
+        driver.execute_script(
+            "arguments[0].value='automatic'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            field_type,
+        )
+
+        session_options = [
+            (option.get_attribute("value"), option.text)
+            for option in session.find_elements(By.TAG_NAME, "option")
+        ]
+        assert session_options[:6] == [
+            ("", "Selecione a sessão"),
+            ("all_sessions", "Todas as sessões"),
+            ("sistema", "Sistema"),
+            ("geral", "Geral"),
+            ("tesouraria", "Tesouraria"),
+            ("dados_gerais", "Dados gerais"),
+        ]
+
+        driver.execute_script(
+            "arguments[0].value='all_sessions'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            session,
+        )
+
+        menu_wrapper = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-menu-wrapper]")
+        submenu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-subprocess]")
+        submenu_wrapper = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-subprocess-wrapper]")
+
+        assert menu.get_attribute("value") == ""
+        assert submenu.get_attribute("value") == ""
+        assert not menu.is_displayed()
+        assert not submenu.is_displayed()
+        assert menu_wrapper.get_attribute("hidden") is not None
+        assert submenu_wrapper.get_attribute("hidden") is not None
+        assert menu.find_elements(By.TAG_NAME, "option") == []
+        assert submenu.find_elements(By.TAG_NAME, "option") == []
+        assert "Menu indisponível" not in menu.text
+        assert "Subprocesso indisponível" not in submenu.text
+
+        driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-label]").send_keys(label)
+        submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+        submit.click()
+        wait.until(EC.staleness_of(submit))
+        wait.until(
+            lambda current_driver: (
+                "settings_tab=lista" in current_driver.current_url
+                and "target=settings-menu-edit-card" in current_driver.current_url
+            )
+        )
+        table_body_after_save = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        assert label.lower() in table_body_after_save.text.lower()
+
+        _open_lists_editor_v1(driver, wait)
+        table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        row = next(
+            row
+            for row in table_body.find_elements(By.TAG_NAME, "tr")
+            if label.lower() in row.text.lower()
+        )
+        edit_button = row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
+        driver.execute_script("arguments[0].click()", edit_button)
+
+        session = driver.find_element(By.ID, "process-list-editor-source-session")
+        menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
+        submenu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-subprocess]")
+        menu_wrapper = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-menu-wrapper]")
+        submenu_wrapper = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-subprocess-wrapper]")
+
+        assert session.get_attribute("value") == "all_sessions"
+        assert menu.get_attribute("value") == ""
+        assert submenu.get_attribute("value") == ""
+        assert not menu.is_displayed()
+        assert not submenu.is_displayed()
+        assert menu_wrapper.get_attribute("hidden") is not None
+        assert submenu_wrapper.get_attribute("hidden") is not None
+        assert "Sessão indisponível" not in session.text
+        assert "Menu indisponível" not in menu.text
+
+        driver.execute_script(
+            "arguments[0].value='sistema'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            session,
+        )
+
+        assert menu.is_displayed()
+        assert not submenu.is_displayed()
+        assert menu.find_elements(By.TAG_NAME, "option")
+        assert menu.get_attribute("value") == ""
+    finally:
+        try:
+            _open_lists_editor_v1(driver, wait)
+            removed = driver.execute_script(
+                """
+                const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+                const manager = form && form.processListsManagerV1;
+                if (!manager) return false;
+                const expected = String(arguments[0] || '').toLowerCase();
+                const filtered = manager.getItems().filter(
+                  (item) => String(item.label || '').toLowerCase() !== expected
+                );
+                manager.setItems(filtered);
+                manager.syncHiddenInputs();
+                return true;
+                """,
+                label,
+            )
+            if removed:
+                submit = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-submit]")
+                submit.click()
+                wait.until(EC.staleness_of(submit))
+        finally:
+            driver.quit()
+
+
+def test_legacy_perfil_list_editor_restores_source_controls_without_extra_click() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+
+        table_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        row = next(
+            (
+                candidate
+                for candidate in table_body.find_elements(By.TAG_NAME, "tr")
+                if "Perfil" in candidate.text
+            ),
+            None,
+        )
+        assert row is not None, "A lista legada 'Perfil' não foi encontrada."
+
+        edit_button = row.find_element(By.CSS_SELECTOR, "[data-configurable-action='edit']")
+        driver.execute_script("arguments[0].click()", edit_button)
+
+        session = driver.find_element(By.ID, "process-list-editor-source-session")
+        menu = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-menu]")
+        subprocess = driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-source-subprocess]")
+
+        assert session.get_attribute("value") == "sistema"
+        assert menu.get_attribute("value") == "perfil_de_autorizacao"
+        assert subprocess.get_attribute("value") == "perfis"
+        assert "Sessão indisponível" not in session.text
+        assert "Menu indisponível" not in menu.text
+    finally:
+        driver.quit()

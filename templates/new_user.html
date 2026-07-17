@@ -1352,7 +1352,9 @@
         {# Alvo/URL de SAIDA do editor (Cancelar/Guardar) -- devolve o utilizador a lista de #}
         {# origem, nunca ao proprio editor. Espelha a resolucao de _resolve_initial_menu_target #}
         {# em page_handler.py para os menus a partir dos quais o editor pode ser aberto. #}
-        {% if settings_edit_origin_menu == "administrativo" %}
+        {% if settings_edit_active_tab == "lista" %}
+          {% set settings_edit_exit_target = "settings-menu-edit-card" %}
+        {% elif settings_edit_origin_menu == "administrativo" %}
           {% if admin_tab == "contas" %}
             {% set settings_edit_exit_target = "menu-subprocess-card-active" %}
           {% elif admin_tab == "utilizador" %}
@@ -1367,7 +1369,11 @@
         {% else %}
           {% set settings_edit_exit_target = "admin-sidebar-sections-card" %}
         {% endif %}
-        {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "#" ~ settings_edit_exit_target %}
+        {% if settings_edit_active_tab == "lista" %}
+          {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "&settings_tab=lista#" ~ settings_edit_exit_target %}
+        {% else %}
+          {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "#" ~ settings_edit_exit_target %}
+        {% endif %}
         <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes" {% if initial_menu not in ['administrativo', 'sessoes'] or initial_menu_target != '#settings-menu-edit-card' %}style="display: none;"{% endif %}>
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
@@ -1773,6 +1779,7 @@
                           disabled
                         >
                           <option value="">Selecione a sessão</option>
+                          <option value="{{ process_list_all_sessions_key|default('all_sessions') }}">{{ process_list_all_sessions_label|default('Todas as sessões') }}</option>
                           {% for source_session in active_sidebar_sections|default([]) %}
                           <option value="{{ source_session.key }}">{{ source_session.label }}</option>
                           {% endfor %}
@@ -2615,6 +2622,9 @@
       settingsEditKey: {{ settings_edit_key|tojson }},
       sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
       visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
+      processListSourceMenus: {{ process_list_source_menus|tojson }},
+      processListAllSessionsKey: {{ process_list_all_sessions_key|tojson }},
+      processListAllSessionsLabel: {{ process_list_all_sessions_label|tojson }},
       menuProcessValuesMap: {{ menu_process_values_map|tojson }},
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }},
       menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
@@ -2625,7 +2635,7 @@
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260712-pagination-footer-fix-v1"></script>
    <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v2"></script>
-   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260716-session-select-v2"></script>
+    <script src="/static/js/modules/process_lists_manager_v1.js?v=20260716-all-sessions-v2"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-invite-link-header-v1"></script>

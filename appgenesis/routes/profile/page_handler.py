@@ -30,6 +30,8 @@ from appgenesis.db.session import SessionLocal
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_KEY,
+    PROCESS_LIST_ALL_SESSIONS_KEY,
+    PROCESS_LIST_ALL_SESSIONS_LABEL,
     normalize_sidebar_sections,
     delete_sidebar_menu_setting,
     get_sidebar_menu_settings,
@@ -1121,6 +1123,8 @@ def new_user_page(
         "settings_edit_data": settings_edit_data,
         "process_list_source_menus": process_list_source_menus_v1,
         "process_list_source_subprocess_map": process_list_source_subprocess_map_v1,
+        "process_list_all_sessions_key": PROCESS_LIST_ALL_SESSIONS_KEY,
+        "process_list_all_sessions_label": PROCESS_LIST_ALL_SESSIONS_LABEL,
         "selected_entity_number": str(selected_entity_number) if selected_entity_number is not None else "",
         "settings_edit_key": clean_settings_edit_key,
         "settings_action": clean_settings_action,

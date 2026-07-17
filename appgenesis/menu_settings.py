@@ -140,6 +140,10 @@ from appgenesis.services.process_settings.list_service import (
     normalize_menu_process_lists_v4,
     normalize_menu_process_lists_v5,
 )
+
+PROCESS_LIST_ALL_SESSIONS_KEY = "all_sessions"
+PROCESS_LIST_ALL_SESSIONS_LABEL = "Todas as sessões"
+
 from appgenesis.services.process_settings.field_service import (
     get_menu_process_default_visible_fields,
     get_menu_process_default_visible_fields_v4,
@@ -989,49 +993,59 @@ def update_sidebar_menu_process_lists(
             not source_menu_key
             and not source_subprocess_key
             and process_list_key in legacy_automatic_keys
+            and not source_session_key
         ):
             continue
-        if not source_menu_key:
-            return False, "Selecione o menu de origem da lista automática."
-        if source_menu_key not in available_source_menu_keys:
-            return False, "O menu de origem selecionado não está disponível."
+        if source_session_key == PROCESS_LIST_ALL_SESSIONS_KEY:
+            source_menu_key = ""
+            source_subprocess_key = ""
+        else:
+            if not source_menu_key:
+                return False, "Selecione o menu de origem da lista automática."
+            if source_menu_key not in available_source_menu_keys:
+                return False, "O menu de origem selecionado não está disponível."
 
-        inferred_session_key = source_menu_section_map.get(source_menu_key, "")
-        if not source_session_key:
+            inferred_session_key = source_menu_section_map.get(source_menu_key, "")
+            if not source_session_key:
+                if (
+                    existing_item
+                    and not str(existing_item.get("source_session_key") or "").strip()
+                    and inferred_session_key
+                ):
+                    source_session_key = inferred_session_key
+                else:
+                    return False, "Selecione a sessão."
+
+            if source_session_key not in active_sidebar_section_keys:
+                return False, "A sessão selecionada não está disponível."
+
             if (
-                existing_item
-                and not str(existing_item.get("source_session_key") or "").strip()
-                and inferred_session_key
+                inferred_session_key
+                and inferred_session_key != source_session_key
             ):
-                source_session_key = inferred_session_key
-            else:
-                return False, "Selecione a sessão."
+                return False, "O menu de origem selecionado não pertence à sessão selecionada."
 
-        if source_session_key not in active_sidebar_section_keys:
-            return False, "A sessão selecionada não está disponível."
+            if source_subprocess_key:
+                if source_menu_key not in source_subprocess_options_cache:
+                    from appgenesis.services.process_tabs import resolve_process_tab_options_v1
 
-        if inferred_session_key and inferred_session_key != source_session_key:
-            return False, "O menu de origem selecionado não pertence à sessão selecionada."
+                    source_subprocess_options_cache[source_menu_key] = resolve_process_tab_options_v1(
+                        source_menu_key,
+                        sidebar_menu_settings,
+                    )
 
-        if source_subprocess_key:
-            if source_menu_key not in source_subprocess_options_cache:
-                from appgenesis.services.process_tabs import resolve_process_tab_options_v1
-
-                source_subprocess_options_cache[source_menu_key] = resolve_process_tab_options_v1(
-                    source_menu_key,
-                    sidebar_menu_settings,
-                )
-
-            allowed_source_subprocess_keys = {
-                str(option.get("value") or "").strip().lower()
-                for option in source_subprocess_options_cache[source_menu_key]
-                if isinstance(option, dict) and str(option.get("value") or "").strip()
-            }
-            if source_subprocess_key.lower() not in allowed_source_subprocess_keys:
-                return False, "O subprocesso selecionado não pertence ao menu de origem."
+                allowed_source_subprocess_keys = {
+                    str(option.get("value") or "").strip().lower()
+                    for option in source_subprocess_options_cache[source_menu_key]
+                    if isinstance(option, dict) and str(option.get("value") or "").strip()
+                }
+                if source_subprocess_key.lower() not in allowed_source_subprocess_keys:
+                    return False, "O subprocesso selecionado não pertence ao menu de origem."
 
         process_list["source_session_key"] = source_session_key
         process_list["source_sidebar_section_key"] = source_session_key
+        process_list["source_menu_key"] = source_menu_key
+        process_list["source_subprocess_key"] = source_subprocess_key
 
     menu_config["process_lists"] = normalized_lists
 

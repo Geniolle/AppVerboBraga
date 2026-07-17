@@ -232,8 +232,9 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     location = response.headers["location"]
     assert "target=settings-menu-edit-card" in location
     assert "appgenesis_after_save=1" in location
-    assert "settings_tab=" not in location
-    assert "settings_edit_key=" not in location
+    assert "settings_tab=lista" in location
+    assert "settings_edit_key=" in location
+    assert "settings_action=edit" in location
     assert "Listas%20do%20processo%20atualizadas%20com%20sucesso." in location
 
     process_lists = _load_config(SessionLocal)["process_lists"]

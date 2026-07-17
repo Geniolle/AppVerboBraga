@@ -20,10 +20,18 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     assert 'itemName: "lista"' in script_text
     assert 'itemNamePlural: "listas"' in script_text
     assert 'submitNative_v1(form);' in script_text
+    assert 'refreshAutomaticSourceOptions_v1' in script_text
+    assert 'isHydratingEditor' in script_text
+    assert 'readProcessListAllSessionsKey_v1' in script_text
+    assert 'normalizeProcessListSourceSessionOptions_v1' in script_text
+    assert 'filterProcessListSourceMenuOptions_v1' in script_text
     assert 'data-process-list-editor-source-session' in script_text
     assert 'data-process-list-editor-source-subprocess' in script_text
     assert 'data-process-list-source-subprocess-map' in script_text
     assert 'Subprocesso indisponível' in script_text
+    assert 'processListAllSessionsKey' in template_text
+    assert 'processListAllSessionsLabel' in template_text
+    assert 'Todas as sessões' in template_text
 
     macro_path = PROJECT_ROOT / "templates" / "macros" / "configurable_items_pagination.html"
     macro_text = macro_path.read_text(encoding="utf-8")
