@@ -1,3 +1,7 @@
+import logging
+import os
+import time
+
 from fastapi import Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -16,6 +20,36 @@ from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
 )
+
+
+_PROCESS_LISTS_PERF_LOGGER = logging.getLogger(__name__ + ".perf")
+
+
+def _process_lists_perf_logs_enabled_v1() -> bool:
+    raw_flag = os.environ.get("APPGENESIS_PERF_LOGS", "")
+    clean_flag = str(raw_flag or "").strip().lower()
+    return clean_flag in {"1", "true", "yes"}
+
+
+def _log_process_lists_perf_v1(
+    *,
+    total_ms: float,
+    auth_ms: float,
+    normalize_ms: float,
+    db_ms: float,
+    lists_count: int,
+) -> None:
+    if not _process_lists_perf_logs_enabled_v1():
+        return
+
+    _PROCESS_LISTS_PERF_LOGGER.info(
+        "[PERF][ProcessListsSave] total=%sms auth=%sms normalize=%sms db=%sms lists=%s",
+        int(round(total_ms)),
+        int(round(auth_ms)),
+        int(round(normalize_ms)),
+        int(round(db_ms)),
+        int(lists_count),
+    )
 
 
 @router.post("/settings/menu/process-lists", response_class=HTMLResponse)
@@ -41,6 +75,11 @@ def edit_sidebar_menu_process_lists_handler(
     redirect_target: str = Form("#settings-menu-edit-card"),
     return_url: str = Form(""),
 ) -> RedirectResponse:
+    perf_total_start = time.perf_counter()
+    perf_auth_start = perf_total_start
+    perf_auth_ms = 0.0
+    perf_normalize_ms = 0.0
+    perf_db_ms = 0.0
     clean_menu_key = resolve_menu_key_alias(menu_key)
     if not isinstance(process_list_source_menu_key, list):
         process_list_source_menu_key = []
@@ -96,6 +135,9 @@ def edit_sidebar_menu_process_lists_handler(
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
             )
+
+        perf_auth_ms = time.perf_counter() - perf_auth_start
+        perf_normalize_start = time.perf_counter()
 
         rows_count = max(
             len(process_list_key),
@@ -180,6 +222,8 @@ def edit_sidebar_menu_process_lists_handler(
                 }
             )
 
+        perf_normalize_ms = time.perf_counter() - perf_normalize_start
+
         column_rows_count = max(
             len(process_list_column_key),
             len(process_list_column_label),
@@ -216,6 +260,7 @@ def edit_sidebar_menu_process_lists_handler(
                 }
             )
 
+        perf_db_start = time.perf_counter()
         ok, error_message = update_sidebar_menu_process_lists(
             session=session,
             menu_key=clean_menu_key,
@@ -224,6 +269,14 @@ def edit_sidebar_menu_process_lists_handler(
             if str(process_list_columns_configured or "").strip() == "1"
             else None,
             active_entity_id=selected_entity_id,
+        )
+        perf_db_ms = time.perf_counter() - perf_db_start
+        _log_process_lists_perf_v1(
+            total_ms=time.perf_counter() - perf_total_start,
+            auth_ms=perf_auth_ms,
+            normalize_ms=perf_normalize_ms,
+            db_ms=perf_db_ms,
+            lists_count=len(payload_lists),
         )
 
         if not ok:

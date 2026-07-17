@@ -44,6 +44,29 @@
     return normalizeKey_v1(value) === readProcessListAllSessionsKey_v1();
   }
 
+  function normalizeProcessListStatus_v1(rawStatus, rawIsActive) {
+    const cleanStatus = normalizeKey_v1(rawStatus);
+    const cleanIsActive = toSafeString_v1(rawIsActive).trim().toLowerCase();
+
+    if (rawStatus === false || cleanStatus === "false" || cleanIsActive === "false" || cleanIsActive === "0") {
+      return "inativo";
+    }
+
+    if (rawStatus === true || cleanStatus === "true" || cleanIsActive === "true" || cleanIsActive === "1") {
+      return "ativo";
+    }
+
+    if (cleanStatus === "inactive" || cleanStatus === "inativo" || cleanStatus === "inativa") {
+      return "inativo";
+    }
+
+    if (cleanStatus === "active" || cleanStatus === "ativo" || cleanStatus === "ativa") {
+      return "ativo";
+    }
+
+    return "ativo";
+  }
+
   function normalizeProcessListSourceSessionOptions_v1(sourceSessionOptions) {
     const normalized = [];
     const seenValues = new Set();
@@ -180,6 +203,65 @@
     HTMLFormElement.prototype.submit.call(form);
   }
 
+  function nowMs_v1() {
+    if (window.performance && typeof window.performance.now === "function") {
+      return window.performance.now();
+    }
+
+    return Date.now();
+  }
+
+  function isProcessListsPerfLogsEnabled_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    const rawFlag = bootstrap.processListsPerfLogs
+      ?? bootstrap.perfLogsEnabled
+      ?? window.APPGENESIS_PERF_LOGS
+      ?? "";
+    const cleanFlag = String(rawFlag).trim().toLowerCase();
+
+    return cleanFlag === "1" || cleanFlag === "true" || cleanFlag === "yes";
+  }
+
+  function createProcessListsPerfState_v1() {
+    return {
+      enabled: isProcessListsPerfLogsEnabled_v1(),
+      cycleStart: nowMs_v1(),
+      readMs: 0,
+      renderMs: 0,
+      responsiveMs: 0,
+      responsiveTables: 0,
+      activeCount: 0,
+      inactiveCount: 0,
+      hasLoggedInitial: false
+    };
+  }
+
+  function logProcessListsPerfSummary_v1(perfState) {
+    if (!perfState || !perfState.enabled) {
+      return;
+    }
+
+    const totalMs = Math.max(0, Math.round(nowMs_v1() - perfState.cycleStart));
+    const readMs = Math.max(0, Math.round(perfState.readMs || 0));
+    const renderMs = Math.max(0, Math.round(perfState.renderMs || 0));
+    const responsiveMs = Math.max(0, Math.round(perfState.responsiveMs || 0));
+    const activeCount = Math.max(0, Number.parseInt(perfState.activeCount, 10) || 0);
+    const inactiveCount = Math.max(0, Number.parseInt(perfState.inactiveCount, 10) || 0);
+    const responsiveTables = Math.max(0, Number.parseInt(perfState.responsiveTables, 10) || 0);
+    const summary = `[PERF][ProcessLists] total=${totalMs}ms read=${readMs}ms render=${renderMs}ms responsive=${responsiveMs}ms tables=${responsiveTables} active=${activeCount} inactive=${inactiveCount}`;
+
+    if (window.console && typeof window.console.info === "function") {
+      window.console.info(summary);
+    }
+
+    perfState.cycleStart = nowMs_v1();
+    perfState.readMs = 0;
+    perfState.renderMs = 0;
+    perfState.responsiveMs = 0;
+    perfState.responsiveTables = 0;
+    perfState.hasLoggedInitial = true;
+  }
+
   //###################################################################################
   // (2) ELEMENTOS E LEITURA INICIAL
   //###################################################################################
@@ -217,6 +299,9 @@
       inactiveTable: root.querySelector("[data-process-lists-inactive-table]"),
       inactiveTableBody: root.querySelector("[data-process-lists-inactive-table-body]"),
       inactiveEmptyState: root.querySelector("[data-process-lists-inactive-empty]"),
+      inactiveTotalLabel: root.querySelector("[data-process-lists-inactive-total-label]"),
+      inactivePageSize: root.querySelector("[data-process-lists-inactive-page-size]"),
+      inactivePagination: root.querySelector("[data-process-lists-inactive-pagination]"),
       totalLabel: root.querySelector("[data-process-lists-total-label]"),
       pageSize: root.querySelector("[data-process-lists-page-size]"),
       pagination: root.querySelector("[data-process-lists-pagination]"),
@@ -248,7 +333,9 @@
       elements.tableBody &&
       elements.emptyState &&
       elements.pageSize &&
-      elements.pagination
+      elements.pagination &&
+      elements.inactivePageSize &&
+      elements.inactivePagination
     );
   }
 
@@ -272,7 +359,10 @@
         const sourceSessionKey = readInput_v1(row, "process_list_source_session_key") ||
           getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, sourceMenuKey);
         const sourceSubprocessKey = readInput_v1(row, "process_list_source_subprocess_key");
-        const status = (readInput_v1(row, "process_list_status") || "").trim().toLowerCase();
+        const status = normalizeProcessListStatus_v1(
+          readInput_v1(row, "process_list_status"),
+          readInput_v1(row, "process_list_is_active")
+        );
 
         return {
           managerId: `list_${index}_${key}`,
@@ -283,7 +373,7 @@
           sourceSessionKey,
           sourceMenuKey,
           sourceSubprocessKey,
-          status: status === "inativo" ? "inativo" : "ativo"
+          status
         };
       })
       .filter((item) => item.label || item.itemsCsv);
@@ -855,9 +945,9 @@
     elements.editorSourceSession.value = "";
     elements.editorSourceMenu.value = "";
     elements.editorSourceSubprocess.value = "";
-    if (elements.editorStatus) {
-      elements.editorStatus.value = "ativo";
-    }
+      if (elements.editorStatus) {
+        elements.editorStatus.value = "ativo";
+      }
     delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = "manual";
@@ -892,7 +982,7 @@
       elements.editorLabel.value = item.label || "";
       elements.editorItems.value = item.itemsCsv || "";
       if (elements.editorStatus) {
-        elements.editorStatus.value = item.status === "inativo" ? "inativo" : "ativo";
+        elements.editorStatus.value = normalizeProcessListStatus_v1(item.status, item.is_active);
       }
       delete elements.editorItems.dataset.previousItems;
       if (elements.editorFieldType) {
@@ -959,7 +1049,7 @@
       sourceSessionKey: fieldType === "automatic" ? resolvedSourceSessionKey : "",
       sourceMenuKey: fieldType === "automatic" && !isAllSessionsSelection ? sourceMenuKey : "",
       sourceSubprocessKey: fieldType === "automatic" && !isAllSessionsSelection ? sourceSubprocessKey : "",
-      status: status === "inativo" ? "inativo" : "ativo"
+      status: normalizeProcessListStatus_v1(status)
     };
   }
 
@@ -1050,7 +1140,7 @@
         ["process_list_source_session_key", item.field_type === "automatic" ? (item.sourceSessionKey || item.sourceSidebarSectionKey || "") : ""],
         ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""],
         ["process_list_source_subprocess_key", item.field_type === "automatic" ? item.sourceSubprocessKey : ""],
-        ["process_list_status", item.status === "inativo" ? "inativo" : "ativo"]
+        ["process_list_status", normalizeProcessListStatus_v1(item.status, item.is_active)]
       ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -1310,6 +1400,7 @@
     }
 
     Object.assign(manager.elements, elements);
+    manager.render = () => renderPartitionedLists_v1(manager, elements);
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
     form.addEventListener("appgenesis:cancelled", (event) => {
@@ -1343,44 +1434,47 @@
     return manager;
   }
 
-  function distributeListRowsByStatus_v1({ manager, elements }) {
-    if (!elements.tableBody || !elements.inactiveTableBody) {
+  function renderPartitionedLists_v1(manager, elements) {
+    const core = getCore_v1();
+
+    if (!core || typeof core.renderConfigurableItemsPartitionedViews_v1 !== "function") {
       return;
     }
 
-    const rows = Array.from(elements.tableBody.children);
-    let activeCount = 0;
-    let inactiveCount = 0;
-
-    elements.inactiveTableBody.innerHTML = "";
-
-    rows.forEach((row) => {
-      const itemId = row.dataset.configurableItemId;
-      const item = manager.state.items.find(
-        (candidate) => String(candidate.__managerId) === String(itemId)
-      );
-      const isInactive = item && String(item.status || "ativo").trim().toLowerCase() === "inativo";
-
-      if (isInactive) {
-        elements.inactiveTableBody.appendChild(row);
-        inactiveCount += 1;
-      } else {
-        activeCount += 1;
+    core.renderConfigurableItemsPartitionedViews_v1(manager, [
+      {
+        key: "active",
+        elements: {
+          table: elements.table,
+          tableBody: elements.tableBody,
+          emptyState: elements.emptyState,
+          pagination: elements.pagination,
+          pageSize: elements.pageSize,
+          totalLabel: elements.totalLabel
+        },
+        pageSizeDefault: manager.config.pageSizeDefault,
+        itemName: "lista",
+        itemNamePlural: "listas ativas",
+        emptyText: "Sem listas ativas.",
+        filter: (item) => normalizeProcessListStatus_v1(item.status, item.is_active) !== "inativo"
+      },
+      {
+        key: "inactive",
+        elements: {
+          table: elements.inactiveTable,
+          tableBody: elements.inactiveTableBody,
+          emptyState: elements.inactiveEmptyState,
+          pagination: elements.inactivePagination,
+          pageSize: elements.inactivePageSize,
+          totalLabel: elements.inactiveTotalLabel
+        },
+        pageSizeDefault: manager.config.pageSizeDefault,
+        itemName: "lista",
+        itemNamePlural: "listas inativas",
+        emptyText: "Sem listas inativas.",
+        filter: (item) => normalizeProcessListStatus_v1(item.status, item.is_active) === "inativo"
       }
-    });
-
-    if (elements.table) {
-      elements.table.style.display = activeCount ? "" : "none";
-    }
-    if (elements.emptyState) {
-      elements.emptyState.style.display = activeCount ? "none" : "";
-    }
-    if (elements.inactiveTable) {
-      elements.inactiveTable.style.display = inactiveCount ? "" : "none";
-    }
-    if (elements.inactiveEmptyState) {
-      elements.inactiveEmptyState.style.display = inactiveCount ? "none" : "";
-    }
+    ]);
   }
 
   //###################################################################################
@@ -1409,8 +1503,12 @@
     const sourceSessionOptions = readSourceSessionOptions_v1(elements);
     const sourceMenuOptions = readSourceMenuOptions_v1(elements);
     elements.root.dataset.hasSourceSubprocess = "0";
+    const perfState = createProcessListsPerfState_v1();
+    const readStartMs = perfState.cycleStart;
 
     let manager = null;
+    const initialItems = readInitialItems_v1(elements, sourceMenuOptions);
+    perfState.readMs = nowMs_v1() - readStartMs;
     manager = core.createConfigurableItemsManager_v1({
       root: elements.root,
       itemName: "lista",
@@ -1419,7 +1517,8 @@
       editTitle: "Editar lista",
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
-      initialItems: readInitialItems_v1(elements, sourceMenuOptions),
+      skipInitialRender: true,
+      initialItems,
       selectors: {
         editorForm: "[data-process-list-reusable-editor-block]",
         table: "[data-process-lists-table]",
@@ -1434,11 +1533,14 @@
       columns: [
         {
           key: "label",
-          label: "Nome da lista"
+          label: "Nome da lista",
+          alwaysVisible: true,
+          responsivePriority: 100
         },
         {
           key: "field_type",
           label: "Tipo de campo",
+          responsivePriority: 50,
           render: (item) => {
             const ft = String(item.field_type || "").trim().toLowerCase();
             return ft === "automatic" ? "Automático" : "Manual";
@@ -1447,11 +1549,13 @@
         {
           key: "itemsCsv",
           label: "Conteúdo da lista",
+          responsivePriority: 10,
           render: (item) => item.itemsCsv || "-"
         },
         {
           key: "sourceMenuKey",
           label: "Menu",
+          responsivePriority: 40,
           render: (item) => {
             if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
               return "-";
@@ -1468,6 +1572,7 @@
         {
           key: "sourceSubprocessKey",
           label: "Subprocesso",
+          responsivePriority: 30,
           render: (item) => {
             if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
               return "-";
@@ -1491,11 +1596,14 @@
         {
           key: "entidade",
           label: "Entidade",
+          responsivePriority: 20,
           render: () => elements.root.dataset.entityNumber || "-"
         },
         {
           key: "status",
           label: "Estado",
+          alwaysVisible: true,
+          responsivePriority: 90,
           render: (item) => {
             const isInactive = String(item.status || "ativo").trim().toLowerCase() === "inativo";
             const badgeClass = isInactive ? "entity-status-inactive" : "entity-status-active";
@@ -1528,7 +1636,7 @@
       }),
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1,
-      onRender: distributeListRowsByStatus_v1
+      onRender: null
     });
 
     if (!manager) {
@@ -1537,6 +1645,21 @@
     }
 
     Object.assign(manager.elements, elements);
+    manager._perfMetricsV1 = perfState;
+    manager.render = () => {
+      if (perfState.enabled) {
+        perfState.responsiveMs = 0;
+        perfState.responsiveTables = 0;
+        perfState.renderMs = 0;
+      }
+
+      const renderStartMs = nowMs_v1();
+      renderPartitionedLists_v1(manager, elements);
+      perfState.renderMs = nowMs_v1() - renderStartMs;
+      perfState.activeCount = manager.getItems().filter((item) => normalizeProcessListStatus_v1(item.status, item.is_active) !== "inativo").length;
+      perfState.inactiveCount = manager.getItems().filter((item) => normalizeProcessListStatus_v1(item.status, item.is_active) === "inativo").length;
+      logProcessListsPerfSummary_v1(perfState);
+    };
     manager.render();
 
     const managerContext = {
@@ -1610,6 +1733,7 @@
     form.processListsManagerV1 = manager;
     setupProcessListColumnsManager_v2(form);
     bindSubmit_v1(form, elements, manager);
+    manager.render();
     manager.syncHiddenInputs();
 
     return manager;

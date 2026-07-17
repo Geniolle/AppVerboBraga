@@ -92,9 +92,284 @@ def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
         )
         assert any(
                 "configurable_items_manager_v1.css"
-                "?v=20260713-shared-list-card-header-v1" in url
+                "?v=20260717-process-lists-responsive-partition-v2" in url
             for url in stylesheet_urls
         )
+    finally:
+        driver.quit()
+
+
+def test_process_lists_responsive_layout_and_independent_pagination() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+
+        seeded = driver.execute_script(
+            """
+            const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+            const manager = form && form.processListsManagerV1;
+            if (!manager) return false;
+            const items = [];
+            for (let index = 1; index <= 22; index += 1) {
+              items.push({
+                key: `ativo_${index}`,
+                label: `Ativo ${index}`,
+                field_type: "manual",
+                itemsCsv: `Conteudo ativo ${index}`,
+                status: "ativo"
+              });
+            }
+            for (let index = 1; index <= 13; index += 1) {
+              items.push({
+                key: `inativo_${index}`,
+                label: `Inativo ${index}`,
+                field_type: "manual",
+                itemsCsv: `Conteudo inativo ${index}`,
+                status: "inativo"
+              });
+            }
+            manager.setItems(items);
+            return true;
+            """
+        )
+        assert seeded is True
+
+        active_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-table-body]")
+        inactive_body = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body]")
+        active_page_size = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-page-size]")
+        inactive_page_size = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-inactive-page-size]")
+        active_pagination = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-pagination]")
+        inactive_pagination = driver.find_element(By.CSS_SELECTOR, "[data-process-lists-inactive-pagination]")
+
+        assert len(active_body.find_elements(By.TAG_NAME, "tr")) == 5
+        assert len(inactive_body.find_elements(By.TAG_NAME, "tr")) == 5
+        assert "5 / 22" in active_pagination.text
+        assert "5 / 13" in inactive_pagination.text
+
+        driver.execute_script(
+            "arguments[0].value='10'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            active_page_size,
+        )
+        wait.until(
+            lambda current: len(
+                current.find_elements(By.CSS_SELECTOR, "[data-process-lists-table-body] tr")
+            ) == 10
+        )
+        assert len(inactive_body.find_elements(By.TAG_NAME, "tr")) == 5
+
+        driver.execute_script(
+            "arguments[0].value='10'; arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            inactive_page_size,
+        )
+        wait.until(
+            lambda current: len(
+                current.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            ) == 10
+        )
+        assert len(active_body.find_elements(By.TAG_NAME, "tr")) == 10
+
+        active_more = active_pagination.find_element(By.CSS_SELECTOR, ".appgenesis-load-more-btn-v1")
+        active_more.click()
+        wait.until(
+            lambda current: len(
+                current.find_elements(By.CSS_SELECTOR, "[data-process-lists-table-body] tr")
+            ) == 20
+        )
+        assert len(driver.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")) == 10
+
+        inactive_more = inactive_pagination.find_element(By.CSS_SELECTOR, ".appgenesis-load-more-btn-v1")
+        inactive_more.click()
+        wait.until(
+            lambda current: len(
+                current.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            ) == 20
+        )
+        assert len(driver.find_elements(By.CSS_SELECTOR, "[data-process-lists-table-body] tr")) == 20
+
+        actions_info_after_rerender = driver.execute_script(
+            """
+            const inspectRow = (row) => {
+              if (!row) {
+                return { hasTrigger: false, popupHidden: false, directDelete: false };
+              }
+              const trigger = row.querySelector(".appgenesis-row-actions-trigger-v1");
+              const popup = row.querySelector(".appgenesis-row-actions-popup-v1");
+              const directDelete = Array.from(row.querySelectorAll("button[title='Eliminar']"))
+                .some((button) => !button.closest(".appgenesis-row-actions-popup-v1"));
+              return {
+                hasTrigger: Boolean(trigger),
+                popupHidden: Boolean(popup && popup.hidden),
+                directDelete
+              };
+            };
+            return {
+              active: inspectRow(document.querySelector("[data-process-lists-table-body] tr")),
+              inactive: inspectRow(document.querySelector("[data-process-lists-inactive-table-body] tr"))
+            };
+            """
+        )
+        assert actions_info_after_rerender["active"]["hasTrigger"] is True
+        assert actions_info_after_rerender["inactive"]["hasTrigger"] is True
+        assert actions_info_after_rerender["active"]["popupHidden"] is True
+        assert actions_info_after_rerender["inactive"]["popupHidden"] is True
+        assert actions_info_after_rerender["active"]["directDelete"] is False
+        assert actions_info_after_rerender["inactive"]["directDelete"] is False
+
+        visible_counts = []
+        for width in (1440, 1200, 992, 768, 480, 360):
+            driver.set_window_size(width, 1200)
+            driver.execute_async_script(
+                """
+                const done = arguments[arguments.length - 1];
+                requestAnimationFrame(() => requestAnimationFrame(done));
+                """
+            )
+            metrics = driver.execute_script(
+                """
+                const activeWrap = document.querySelector("[data-process-lists-table]").closest(".configurable-items-table-wrap-v1");
+                const inactiveWrap = document.querySelector("[data-process-lists-inactive-table]").closest(".configurable-items-table-wrap-v1");
+                const activeVisible = document.querySelectorAll("[data-process-lists-table] thead th:not(.configurable-items-responsive-hidden-v1)").length;
+                const inactiveVisible = document.querySelectorAll("[data-process-lists-inactive-table] thead th:not(.configurable-items-responsive-hidden-v1)").length;
+                return {
+                  activeVisible,
+                  inactiveVisible,
+                  activeOk: activeWrap ? activeWrap.scrollWidth <= activeWrap.clientWidth : true,
+                  inactiveOk: inactiveWrap ? inactiveWrap.scrollWidth <= inactiveWrap.clientWidth : true,
+                  docOk: document.documentElement.scrollWidth <= document.documentElement.clientWidth
+                };
+                """
+            )
+            assert metrics["docOk"], (width, metrics)
+            assert metrics["activeOk"], (width, metrics)
+            assert metrics["inactiveOk"], (width, metrics)
+            visible_counts.append(metrics["activeVisible"])
+
+        assert visible_counts == sorted(visible_counts, reverse=True)
+        assert visible_counts[-1] <= 4
+        assert visible_counts[-1] >= 3
+    finally:
+        driver.quit()
+
+
+def test_process_lists_real_dom_separates_active_and_inactive_rows() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 20)
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+        for selector in ("[data-process-lists-page-size]", "[data-process-lists-inactive-page-size]"):
+            driver.execute_script(
+                """
+                const select = document.querySelector(arguments[0]);
+                if (select) {
+                  select.value = '5';
+                  select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                """,
+                selector,
+            )
+
+        actions_info = driver.execute_script(
+            """
+            const activeRow = document.querySelector("[data-process-lists-table-body] tr");
+            const inactiveRow = document.querySelector("[data-process-lists-inactive-table-body] tr");
+            const inspectRow = (row) => {
+              if (!row) {
+                return { hasTrigger: false, popupHidden: false, directDelete: false };
+              }
+              const trigger = row.querySelector(".appgenesis-row-actions-trigger-v1");
+              const popup = row.querySelector(".appgenesis-row-actions-popup-v1");
+              const directDelete = Array.from(row.querySelectorAll("button[title='Eliminar']"))
+                .some((button) => !button.closest(".appgenesis-row-actions-popup-v1"));
+              return {
+                hasTrigger: Boolean(trigger),
+                popupHidden: Boolean(popup && popup.hidden),
+                directDelete
+              };
+            };
+            return {
+              active: inspectRow(activeRow),
+              inactive: inspectRow(inactiveRow)
+            };
+            """
+        )
+        assert actions_info["active"]["hasTrigger"] is True
+        assert actions_info["inactive"]["hasTrigger"] is True
+        assert actions_info["active"]["popupHidden"] is True
+        assert actions_info["inactive"]["popupHidden"] is True
+        assert actions_info["active"]["directDelete"] is False
+        assert actions_info["inactive"]["directDelete"] is False
+
+        stats = driver.execute_script(
+            """
+            const normalizeStatus = (item) => {
+              const rawStatus = item && item.status !== undefined ? item.status : "";
+              const rawIsActive = item && item.is_active !== undefined ? item.is_active : "";
+              const cleanStatus = String(rawStatus || "")
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\\u0300-\\u036f]/g, "")
+                .replace(/[^a-z0-9_]+/g, "_")
+                .replace(/_+/g, "_")
+                .replace(/^_|_$/g, "");
+              const cleanIsActive = String(rawIsActive || "").trim().toLowerCase();
+
+              if (rawStatus === false || cleanStatus === "false" || cleanIsActive === "false" || cleanIsActive === "0") {
+                return "inativo";
+              }
+
+              if (rawStatus === true || cleanStatus === "true" || cleanIsActive === "true" || cleanIsActive === "1") {
+                return "ativo";
+              }
+
+              if (cleanStatus === "inactive" || cleanStatus === "inativo" || cleanStatus === "inativa") {
+                return "inativo";
+              }
+
+              if (cleanStatus === "active" || cleanStatus === "ativo" || cleanStatus === "ativa") {
+                return "ativo";
+              }
+
+              return "ativo";
+            };
+
+            const form = document.querySelector("form[data-process-lists-manager-v1='1']");
+            const manager = form && form.processListsManagerV1;
+            const items = manager ? manager.getItems() : [];
+            const activeTotal = items.filter((item) => normalizeStatus(item) !== "inativo").length;
+            const inactiveTotal = items.filter((item) => normalizeStatus(item) === "inativo").length;
+            const activeBody = document.querySelector("[data-process-lists-table-body]");
+            const inactiveBody = document.querySelector("[data-process-lists-inactive-table-body]");
+            const activeRows = Array.from(activeBody ? activeBody.querySelectorAll("tr") : []);
+            const inactiveRows = Array.from(inactiveBody ? inactiveBody.querySelectorAll("tr") : []);
+            const activeFlags = activeRows.map((row) => Boolean(row.querySelector(".entity-status-active")));
+            const inactiveFlags = inactiveRows.map((row) => Boolean(row.querySelector(".entity-status-inactive")));
+            const activeCounter = document.querySelector("[data-process-lists-pagination]")?.textContent || "";
+            const inactiveCounter = document.querySelector("[data-process-lists-inactive-pagination]")?.textContent || "";
+            return {
+              activeTotal,
+              inactiveTotal,
+              activeRows: activeRows.length,
+              inactiveRows: inactiveRows.length,
+              activeFlags,
+              inactiveFlags,
+              activeCounter,
+              inactiveCounter
+            };
+            """
+        )
+
+        assert stats["activeTotal"] > 0, stats
+        assert stats["inactiveTotal"] > 0, stats
+        assert stats["activeRows"] == min(5, stats["activeTotal"]), stats
+        assert stats["inactiveRows"] == min(5, stats["inactiveTotal"]), stats
+        assert all(stats["activeFlags"]), stats
+        assert all(stats["inactiveFlags"]), stats
+        assert f"{stats['activeRows']} / {stats['activeTotal']}" in stats["activeCounter"], stats
+        assert f"{stats['inactiveRows']} / {stats['inactiveTotal']}" in stats["inactiveCounter"], stats
     finally:
         driver.quit()
 

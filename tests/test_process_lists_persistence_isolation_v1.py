@@ -99,6 +99,9 @@ def test_process_lists_css_is_scoped_to_the_reusable_editor():
     assert "[data-process-list-reusable-manager]" in css_text
     assert "[data-process-list-reusable-editor-block]" in css_text
     assert ".process-lists-editor-grid-v1" in css_text
+    assert ".configurable-items-responsive-wrap-v1" in css_text
+    assert ".configurable-items-responsive-table-v1" in css_text
+    assert ".configurable-items-responsive-hidden-v1" in css_text
     assert (
         "grid-template-columns: repeat(3, minmax(0, 1fr));"
         in css_text
@@ -113,7 +116,7 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
 
     assert (
         "/static/css/modules/configurable_items_manager_v1.css"
-        "?v=20260713-shared-list-card-header-v1"
+        "?v=20260717-process-lists-responsive-partition-v2"
         in template_text
     )
     assert "data-process-list-reusable-manager" in template_text
