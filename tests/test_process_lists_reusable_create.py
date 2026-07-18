@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -6,6 +8,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from appgenesis.core import ADMIN_LOGIN_EMAIL, ADMIN_LOGIN_PASSWORD
+from appgenesis.db.session import SessionLocal
+from appgenesis.models import Entity, SidebarMenuSetting
 
 
 ####################################################################################
@@ -61,6 +65,50 @@ def _open_lists_editor_v1(driver, wait) -> None:
     )
 
 
+def _seed_process_list_delete_test_rows_v1() -> tuple[str, str]:
+    test_label = "Lista teste eliminação"
+    test_key = "list_lista_teste_eliminacao"
+
+    with SessionLocal() as session:
+        entity_ids = [
+            row[0]
+            for row in session.query(Entity.id).all()
+        ]
+
+        for entity_id in entity_ids:
+            row = (
+                session.query(SidebarMenuSetting)
+                .filter(
+                    SidebarMenuSetting.entity_id == entity_id,
+                    SidebarMenuSetting.menu_key == "perfil_de_autorizacao",
+                )
+                .one_or_none()
+            )
+            if row is None:
+                continue
+
+            config = json.loads(row.menu_config or "{}")
+            process_lists = list(config.get("process_lists") or [])
+            if any(str(item.get("key") or "").strip() == test_key for item in process_lists):
+                continue
+
+            process_lists.append(
+                {
+                    "key": test_key,
+                    "label": test_label,
+                    "field_type": "manual",
+                    "items": ["1"],
+                    "status": "inativo",
+                }
+            )
+            config["process_lists"] = process_lists
+            row.menu_config = json.dumps(config, ensure_ascii=False)
+
+        session.commit()
+
+    return test_label, test_key
+
+
 ####################################################################################
 # (2) GRID RESPONSIVO DO EDITOR DE LISTAS
 ####################################################################################
@@ -92,7 +140,7 @@ def test_process_lists_editor_uses_expected_computed_grid_by_viewport() -> None:
         )
         assert any(
                 "configurable_items_manager_v1.css"
-                "?v=20260717-process-lists-responsive-partition-v2" in url
+                "?v=20260717-process-lists-responsive-partition-v3" in url
             for url in stylesheet_urls
         )
     finally:
@@ -370,6 +418,107 @@ def test_process_lists_real_dom_separates_active_and_inactive_rows() -> None:
         assert all(stats["inactiveFlags"]), stats
         assert f"{stats['activeRows']} / {stats['activeTotal']}" in stats["activeCounter"], stats
         assert f"{stats['inactiveRows']} / {stats['inactiveTotal']}" in stats["inactiveCounter"], stats
+    finally:
+        driver.quit()
+
+
+def test_process_lists_inactive_delete_requires_confirm_and_persists_after_refresh() -> None:
+    test_label, test_key = _seed_process_list_delete_test_rows_v1()
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+
+    try:
+        _login_owner_v1(driver, wait)
+        _open_lists_editor_v1(driver, wait)
+
+        search = driver.find_element(By.CSS_SELECTOR, "[data-configurable-search]")
+        search.clear()
+        search.send_keys(test_label)
+
+        wait.until(
+            lambda drv: any(
+                test_label.lower() in row.text.lower()
+                for row in drv.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            )
+        )
+
+        inactive_row = next(
+            row
+            for row in driver.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            if test_label.lower() in row.text.lower()
+        )
+        before_count = len(
+            driver.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+        )
+
+        trigger = inactive_row.find_element(By.CSS_SELECTOR, ".appgenesis-row-actions-trigger-v1")
+        trigger.click()
+        delete_button = wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, ".appgenesis-row-actions-popup-v1:not([hidden]) button[title='Eliminar']")
+            )
+        )
+        delete_button.click()
+
+        cancel_button = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, ".appgenesis-confirm-cancel-v1"))
+        )
+        cancel_button.click()
+
+        wait.until(
+            lambda drv: any(
+                test_label.lower() in row.text.lower()
+                for row in drv.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            )
+        )
+
+        inactive_row = next(
+            row
+            for row in driver.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            if test_label.lower() in row.text.lower()
+        )
+        trigger = inactive_row.find_element(By.CSS_SELECTOR, ".appgenesis-row-actions-trigger-v1")
+        trigger.click()
+        delete_button = wait.until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, ".appgenesis-row-actions-popup-v1:not([hidden]) button[title='Eliminar']")
+            )
+        )
+        delete_button.click()
+
+        confirm_button = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, ".appgenesis-confirm-action-v1"))
+        )
+        confirm_button.click()
+
+        wait.until(
+            lambda drv: not any(
+                test_label.lower() in row.text.lower()
+                for row in drv.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+            )
+        )
+
+        after_count = len(
+            driver.find_elements(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body] tr")
+        )
+        assert after_count == before_count - 1
+
+        driver.refresh()
+        wait.until(
+            lambda drv: test_label.lower()
+            not in drv.find_element(By.CSS_SELECTOR, "[data-process-lists-inactive-table-body]").text.lower()
+        )
+
+        with SessionLocal() as session:
+            menu_row = (
+                session.query(SidebarMenuSetting)
+                .filter(SidebarMenuSetting.menu_key == "perfil_de_autorizacao")
+                .first()
+            )
+            assert menu_row is not None
+            config = json.loads(menu_row.menu_config or "{}")
+            process_lists = config.get("process_lists") or []
+            assert all(str(item.get("key") or "") != test_key for item in process_lists)
     finally:
         driver.quit()
 

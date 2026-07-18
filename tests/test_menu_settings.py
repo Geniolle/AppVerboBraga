@@ -658,6 +658,61 @@ def test_resolve_field_list_options_field_list_inherits_source_field_options() -
     assert [opt["value"] for opt in resolved] == ["Perfil A", "Perfil B"]
 
 
+def test_resolve_field_list_options_manual_delegates_to_automatic_list_with_all_sessions_source_returns_active_menus() -> (
+    None
+):
+    sidebar_menu_settings = [
+        {"key": "home", "label": "Home", "is_active": True, "is_deleted": False},
+        {
+            "key": "perfil_de_autorizacao",
+            "label": "Perfil de autorização",
+            "is_active": True,
+            "is_deleted": False,
+            "process_field_options": [
+                {
+                    "key": "custom_processo",
+                    "label": "Processo",
+                    "field_type": "list",
+                    "list_source_type": "manual",
+                    "manual_list_key": "list_processo",
+                },
+            ],
+            "process_lists": [
+                {
+                    "key": "list_processo",
+                    "label": "L_processo",
+                    "field_type": "automatic",
+                    "source_session_key": "all_sessions",
+                    "source_menu_key": "",
+                    "source_subprocess_key": "",
+                    "items": [],
+                },
+            ],
+        },
+    ]
+
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_processo",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_key": "list_processo",
+        },
+        sidebar_menu_settings=sidebar_menu_settings,
+        visible_sidebar_menu_keys={"home", "perfil_de_autorizacao"},
+    )
+
+    assert resolved == [
+        {"value": "home", "label": "Home", "status": "active"},
+        {
+            "value": "perfil_de_autorizacao",
+            "label": "Perfil de autorização",
+            "status": "active",
+        },
+    ]
+
+
 def test_resolve_field_list_options_field_list_cycle_returns_empty() -> None:
     sidebar_menu_settings = [
         {

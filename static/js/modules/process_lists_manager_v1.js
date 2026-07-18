@@ -230,6 +230,9 @@
       renderMs: 0,
       responsiveMs: 0,
       responsiveTables: 0,
+      backendCount: 0,
+      initialCount: 0,
+      stateCount: 0,
       activeCount: 0,
       inactiveCount: 0,
       hasLoggedInitial: false
@@ -245,13 +248,18 @@
     const readMs = Math.max(0, Math.round(perfState.readMs || 0));
     const renderMs = Math.max(0, Math.round(perfState.renderMs || 0));
     const responsiveMs = Math.max(0, Math.round(perfState.responsiveMs || 0));
+    const backendCount = Math.max(0, Number.parseInt(perfState.backendCount, 10) || 0);
+    const initialCount = Math.max(0, Number.parseInt(perfState.initialCount, 10) || 0);
+    const stateCount = Math.max(0, Number.parseInt(perfState.stateCount, 10) || 0);
     const activeCount = Math.max(0, Number.parseInt(perfState.activeCount, 10) || 0);
     const inactiveCount = Math.max(0, Number.parseInt(perfState.inactiveCount, 10) || 0);
     const responsiveTables = Math.max(0, Number.parseInt(perfState.responsiveTables, 10) || 0);
     const summary = `[PERF][ProcessLists] total=${totalMs}ms read=${readMs}ms render=${renderMs}ms responsive=${responsiveMs}ms tables=${responsiveTables} active=${activeCount} inactive=${inactiveCount}`;
+    const aggregatedSummary = `[PERF][ProcessLists] backend=${backendCount} initial=${initialCount} state=${stateCount} active=${activeCount} inactive=${inactiveCount} total=${totalMs}ms`;
 
     if (window.console && typeof window.console.info === "function") {
       window.console.info(summary);
+      window.console.info(aggregatedSummary);
     }
 
     perfState.cycleStart = nowMs_v1();
@@ -275,6 +283,7 @@
 
     return {
       root,
+      menuKeyInput: form.querySelector("input[name='menu_key']"),
       legacyContainer: root.querySelector("[data-process-lists-legacy-container]"),
       hiddenContainer: root.querySelector("[data-process-lists-hidden-container]"),
       editorKey: root.querySelector("[data-process-list-editor-key]"),
@@ -309,10 +318,24 @@
     };
   }
 
+  function getProcessListsDeleteEndpoint_v1(form) {
+    if (!form) {
+      return "/settings/menu/process-lists/delete";
+    }
+
+    const rawAction = toSafeString_v1(form.getAttribute("action") || "").trim();
+    if (!rawAction) {
+      return "/settings/menu/process-lists/delete";
+    }
+
+    return `${rawAction.replace(/\/?$/, "")}/delete`;
+  }
+
   function hasRequiredElements_v1(elements) {
     return Boolean(
       elements &&
       elements.root &&
+      elements.menuKeyInput &&
       elements.legacyContainer &&
       elements.hiddenContainer &&
       elements.editorKey &&
@@ -1124,9 +1147,21 @@
   function syncHiddenInputs_v1(context) {
     const elements = context && context.elements ? context.elements : null;
     const items = context && Array.isArray(context.items) ? context.items : [];
+    const form = elements && elements.submitButton && elements.submitButton.form
+      ? elements.submitButton.form
+      : elements && elements.cancelButton && elements.cancelButton.form
+        ? elements.cancelButton.form
+        : null;
+    const configuredInput = form
+      ? form.querySelector("[name='process_lists_configured']")
+      : null;
 
     if (!elements || !elements.hiddenContainer) {
       return;
+    }
+
+    if (configuredInput) {
+      configuredInput.value = "1";
     }
 
     elements.hiddenContainer.innerHTML = "";
@@ -1499,6 +1534,8 @@
     }
 
     form.dataset.processListsManagerBoundV1 = "1";
+    const menuKey = toSafeString_v1(elements.menuKeyInput.value).trim().toLowerCase();
+    const deleteEndpoint = getProcessListsDeleteEndpoint_v1(form);
     const sourceSubprocessMap = getSourceSubprocessMap_v1(elements);
     const sourceSessionOptions = readSourceSessionOptions_v1(elements);
     const sourceMenuOptions = readSourceMenuOptions_v1(elements);
@@ -1509,6 +1546,10 @@
     let manager = null;
     const initialItems = readInitialItems_v1(elements, sourceMenuOptions);
     perfState.readMs = nowMs_v1() - readStartMs;
+    perfState.backendCount = Array.from(
+      elements.legacyContainer.querySelectorAll("[data-process-list-row]")
+    ).length;
+    perfState.initialCount = initialItems.length;
     manager = core.createConfigurableItemsManager_v1({
       root: elements.root,
       itemName: "lista",
@@ -1519,6 +1560,7 @@
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       skipInitialRender: true,
       initialItems,
+      menuKey,
       selectors: {
         editorForm: "[data-process-list-reusable-editor-block]",
         table: "[data-process-lists-table]",
@@ -1636,6 +1678,75 @@
       }),
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1,
+      canRemoveItem: (item) => normalizeProcessListStatus_v1(item && item.status, item && item.is_active) === "inativo",
+      deleteItem: async ({ item }) => {
+        const cleanListKey = toSafeString_v1(item && item.key ? item.key : "").trim();
+
+        if (!menuKey) {
+          return {
+            success: false,
+            message: "Menu inválido."
+          };
+        }
+
+        if (!cleanListKey) {
+          return {
+            success: false,
+            message: "Lista inválida."
+          };
+        }
+
+        try {
+          const response = await fetch(deleteEndpoint, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              menu_key: menuKey,
+              list_key: cleanListKey
+            })
+          });
+
+          let payload = null;
+          const responseText = await response.text();
+
+          if (responseText) {
+            try {
+              payload = JSON.parse(responseText);
+            } catch (parseError) {
+              payload = null;
+            }
+          }
+
+          if (!response.ok) {
+            return {
+              success: false,
+              message: payload && payload.message ? payload.message : "Não foi possível eliminar a lista."
+            };
+          }
+
+          if (!payload || payload.success !== true) {
+            return {
+              success: false,
+              message: payload && payload.message ? payload.message : "Não foi possível eliminar a lista."
+            };
+          }
+
+          return {
+            success: true,
+            message: payload.message || "Lista eliminada com sucesso.",
+            listKey: payload.list_key || cleanListKey
+          };
+        } catch (error) {
+          return {
+            success: false,
+            message: error && error.message ? error.message : "Falha de rede ao eliminar a lista."
+          };
+        }
+      },
       onRender: null
     });
 
@@ -1658,6 +1769,7 @@
       perfState.renderMs = nowMs_v1() - renderStartMs;
       perfState.activeCount = manager.getItems().filter((item) => normalizeProcessListStatus_v1(item.status, item.is_active) !== "inativo").length;
       perfState.inactiveCount = manager.getItems().filter((item) => normalizeProcessListStatus_v1(item.status, item.is_active) === "inativo").length;
+      perfState.stateCount = manager.getItems().length;
       logProcessListsPerfSummary_v1(perfState);
     };
     manager.render();

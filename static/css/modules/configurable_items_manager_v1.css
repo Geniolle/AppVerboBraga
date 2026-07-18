@@ -214,7 +214,7 @@ button.action-btn.configurable-items-create-trigger-v1 {
 }
 
 .configurable-items-pagination-footer-v1 {
-  border-top: 1px solid #d9e2ef !important;
+  border-top: 0 !important;
   margin-top: 12px;
 }
 

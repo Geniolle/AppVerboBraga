@@ -228,7 +228,7 @@
       manager.config.columns.length,
       true
     );
-    actionsTd.appendChild(createRawActionsContainer_v1(manager, itemId, fullItemIndex, totalAllItems));
+    actionsTd.appendChild(createRawActionsContainer_v1(manager, item, itemId, fullItemIndex, totalAllItems));
     row.appendChild(actionsTd);
 
     return row;
@@ -449,6 +449,8 @@
       clearEditor: typeof config.clearEditor === "function" ? config.clearEditor : null,
       validateItem: typeof config.validateItem === "function" ? config.validateItem : null,
       syncHiddenInputs: typeof config.syncHiddenInputs === "function" ? config.syncHiddenInputs : null,
+      deleteItem: typeof config.deleteItem === "function" ? config.deleteItem : null,
+      canRemoveItem: typeof config.canRemoveItem === "function" ? config.canRemoveItem : null,
       onChange: typeof config.onChange === "function" ? config.onChange : null,
       onRender: typeof config.onRender === "function" ? config.onRender : null,
       initialItems: toArray_v1(config.initialItems),
@@ -619,7 +621,25 @@
     });
   }
 
-  function handleConfigurableAction_v1(manager, action, itemId) {
+  function showConfigurableActionError_v1(message) {
+    const shell = window.AppGenesisProcessShell || {};
+    const safeMessage = String(message || "").trim() || "Não foi possível concluir a ação.";
+
+    if (shell && typeof shell.showToast === "function") {
+      shell.showToast({
+        type: "error",
+        title: "Erro",
+        message: safeMessage
+      });
+      return;
+    }
+
+    if (window.console && typeof window.console.error === "function") {
+      window.console.error(safeMessage);
+    }
+  }
+
+  function handleConfigurableAction_v1(manager, action, itemId, triggerEl) {
     if (action === "edit") {
       editItem_v1(manager, itemId);
       return;
@@ -642,12 +662,82 @@
           cancelLabel: "Cancelar",
           danger: true
         }).then((confirmed) => {
-          if (confirmed) removeItem_v1(manager, itemId);
+          if (confirmed) {
+            void removeItem_v1(manager, itemId, triggerEl);
+          }
         });
       } else {
         if (window.confirm(`Tem a certeza que pretende eliminar este ${itemName}?`)) {
-          removeItem_v1(manager, itemId);
+          void removeItem_v1(manager, itemId, triggerEl);
         }
+      }
+    }
+  }
+
+  async function removeItem_v1(manager, itemId, triggerEl) {
+    const itemIndex = findItemIndexById_v1(manager, itemId);
+
+    if (itemIndex < 0) {
+      return false;
+    }
+
+    const item = manager.state.items[itemIndex];
+    const deleteHandler = typeof manager.config.deleteItem === "function"
+      ? manager.config.deleteItem
+      : null;
+    const shell = window.AppGenesisProcessShell || {};
+    const previousDisabledState = triggerEl ? triggerEl.disabled : false;
+
+    if (triggerEl) {
+      triggerEl.disabled = true;
+      triggerEl.setAttribute("aria-busy", "true");
+    }
+
+    try {
+      if (deleteHandler) {
+        const deleteResult = await deleteHandler({
+          manager,
+          item,
+          itemId,
+          trigger: triggerEl
+        });
+
+        if (!deleteResult || deleteResult.success !== true) {
+          showConfigurableActionError_v1(
+            deleteResult && deleteResult.message ? deleteResult.message : "Não foi possível eliminar o registo."
+          );
+          return false;
+        }
+      }
+
+      manager.state.items.splice(itemIndex, 1);
+      manager.state.editingId = "";
+
+      if (typeof manager.config.clearEditor === "function") {
+        manager.config.clearEditor({
+          manager,
+          root: manager.root,
+          elements: manager.elements
+        });
+      }
+
+      manager.render();
+      notifyChange_v1(manager);
+
+      if (deleteHandler && shell && typeof shell.showToast === "function") {
+        shell.showToast({
+          type: "success",
+          message: "Registo eliminado com sucesso."
+        });
+      }
+      return true;
+    } catch (error) {
+      showConfigurableActionError_v1(error && error.message ? error.message : "Não foi possível eliminar o registo.");
+      return false;
+    } finally {
+      if (triggerEl) {
+        triggerEl.disabled = previousDisabledState;
+        triggerEl.removeAttribute("aria-busy");
       }
     }
   }
@@ -664,11 +754,11 @@
       const action = String(button.dataset.configurableAction || "").trim();
       const itemId = String(button.dataset.configurableItemId || "").trim();
       if (!action || !itemId) return;
-      handleConfigurableAction_v1(manager, action, itemId);
+      handleConfigurableAction_v1(manager, action, itemId, button);
     });
   }
 
-  function createRawActionsContainer_v1(manager, itemId, fullItemIndex, totalAllItems) {
+  function createRawActionsContainer_v1(manager, item, itemId, fullItemIndex, totalAllItems) {
     if (!manager._configurableManagerId) {
       manager._configurableManagerId = String(_configurableManagerNextId++);
       _configurableManagerRegistry.set(manager._configurableManagerId, manager);
@@ -677,13 +767,52 @@
     const container = document.createElement("div");
     container.className = "table-actions";
     const managerId = manager._configurableManagerId;
+
+    function getRowActionIconSvg_v1(actionType) {
+      const shell = window.AppGenesisProcessShell || {};
+
+      if (typeof shell.getRowActionIconSvgV1 === "function") {
+        return shell.getRowActionIconSvgV1(actionType);
+      }
+
+      if (actionType === "move_up") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>';
+      }
+
+      if (actionType === "move_down") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12l7 7 7-7"/></svg>';
+      }
+
+      if (actionType === "reactivate") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      }
+
+      if (actionType === "hide_menu") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+      }
+
+      if (actionType === "view") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/></svg>';
+      }
+
+      if (actionType === "edit") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg>';
+      }
+
+      if (actionType === "delete") {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+      }
+
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>';
+    }
+
     const createActionButton = (actionType, label) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "table-icon-btn";
       button.title = label;
       button.setAttribute("aria-label", label);
-      button.innerHTML = getRowActionIconSvgV1(actionType);
+      button.innerHTML = getRowActionIconSvg_v1(actionType);
       button.dataset.configurableAction = actionType === "reactivate"
         ? "reactivate"
         : actionType === "move_up"
@@ -718,7 +847,11 @@
       container.appendChild(createActionButton("edit", "Editar"));
     }
 
-    if (manager.config.actions.remove) {
+    const canRemoveItem = typeof manager.config.canRemoveItem === "function"
+      ? manager.config.canRemoveItem(item, fullItemIndex, totalAllItems, manager) !== false
+      : true;
+
+    if (manager.config.actions.remove && canRemoveItem) {
       container.appendChild(createActionButton("delete", "Eliminar"));
     }
 
@@ -1046,28 +1179,6 @@
     }
 
     emitManagerEvent_v1(manager, "appgenesis:configurable-items-edit", { item, index: itemIndex });
-  }
-
-  function removeItem_v1(manager, itemId) {
-    const itemIndex = findItemIndexById_v1(manager, itemId);
-
-    if (itemIndex < 0) {
-      return;
-    }
-
-    manager.state.items.splice(itemIndex, 1);
-    manager.state.editingId = "";
-
-    if (typeof manager.config.clearEditor === "function") {
-      manager.config.clearEditor({
-        manager,
-        root: manager.root,
-        elements: manager.elements
-      });
-    }
-
-    manager.render();
-    notifyChange_v1(manager);
   }
 
   function moveItem_v1(manager, itemId, direction) {

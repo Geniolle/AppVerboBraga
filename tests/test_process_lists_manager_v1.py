@@ -36,11 +36,13 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     assert 'processListAllSessionsKey' in template_text
     assert 'processListAllSessionsLabel' in template_text
     assert 'Todas as sessões' in template_text
-    assert 'process_lists_manager_v1.js?v=20260717-process-lists-responsive-partition-v3' in template_text
-    assert 'configurable_items_manager_core_v1.js?v=20260717-process-lists-responsive-partition-v4' in template_text
+    assert 'process_lists_manager_v1.js?v=20260717-process-lists-responsive-partition-v5' in template_text
+    assert 'configurable_items_manager_core_v1.js?v=20260717-process-lists-actions-helper-v2' in template_text
+    assert 'process_shell_runtime_v1.js?v=20260717-process-lists-actions-helper-v1' in template_text
     assert '[PERF][ProcessLists]' in script_text
     assert 'createProcessListsPerfState_v1' in script_text
     assert 'manager._perfMetricsV1 = perfState;' in script_text
+    assert 'getRowActionIconSvgV1' in (PROJECT_ROOT / "static" / "js" / "modules" / "process_shell_runtime_v1.js").read_text(encoding="utf-8")
     assert '[PERF][ProcessListsSave]' in (PROJECT_ROOT / "appgenesis" / "routes" / "profile" / "process_settings" / "list_handlers.py").read_text(encoding="utf-8")
 
     macro_path = PROJECT_ROOT / "templates" / "macros" / "configurable_items_pagination.html"
@@ -59,4 +61,4 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     assert 'data-responsive-key="sourceSubprocessKey"' in template_text
     assert 'data-responsive-key="label"' in template_text
     assert 'data-responsive-key="status"' in template_text
-    assert 'configurable_items_manager_v1.css?v=20260717-process-lists-responsive-partition-v2' in template_text
+    assert 'configurable_items_manager_v1.css?v=20260717-process-lists-responsive-partition-v3' in template_text

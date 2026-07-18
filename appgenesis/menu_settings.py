@@ -888,10 +888,15 @@ def update_sidebar_menu_sidebar_sections(
     return True, ""
 
 
+def _is_truthy_process_lists_configured_v1(raw_value: Any) -> bool:
+    return str(raw_value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def update_sidebar_menu_process_lists(
     session: Session,
     menu_key: str,
     raw_lists: Any,
+    process_lists_configured: Any = None,
     raw_columns: Any = None,
     active_entity_id: int | None = None,
 ) -> tuple[bool, str]:
@@ -973,7 +978,13 @@ def update_sidebar_menu_process_lists(
     }
     source_subprocess_options_cache: dict[str, list[dict[str, str]]] = {}
 
+    lists_configured = _is_truthy_process_lists_configured_v1(
+        process_lists_configured
+    )
     normalized_lists = normalize_menu_process_lists_v5(raw_lists)
+
+    if not normalized_lists and not lists_configured:
+        return False, "As listas não foram carregadas. Reabra a aba Listas e tente novamente."
 
     for process_list in normalized_lists:
         if process_list.get("field_type") != "automatic":
@@ -1100,7 +1111,7 @@ def update_sidebar_menu_process_lists(
             process_list_config["columns"] = normalized_columns
             menu_config["process_list_config"] = process_list_config
 
-    session.execute(
+    update_result = session.execute(
         text(
             """
             UPDATE sidebar_menu_settings
@@ -1116,8 +1127,132 @@ def update_sidebar_menu_process_lists(
             "menu_config": json.dumps(menu_config, ensure_ascii=False),
         },
     )
+
+    if int(getattr(update_result, "rowcount", 0) or 0) <= 0:
+        session.rollback()
+        return False, "Não foi possível atualizar as listas do processo."
+
+    if clean_menu_key != "administrativo":
+        administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+            build_sidebar_global_refresh_version_v1()
+        )
+        admin_update_result = session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": "administrativo",
+                "menu_config": json.dumps(administrative_config, ensure_ascii=False),
+            },
+        )
+        if int(getattr(admin_update_result, "rowcount", 0) or 0) <= 0:
+            session.rollback()
+            return False, "Não foi possível atualizar a configuração base do processo."
+
     session.commit()
     return True, ""
+
+
+def delete_sidebar_menu_process_list(
+    session: Session,
+    menu_key: str,
+    list_key: str,
+    active_entity_id: int | None = None,
+) -> tuple[bool, str, str]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    clean_list_key = _normalize_process_list_key_v1(list_key)
+
+    if not clean_menu_key:
+        return False, "Menu inválido.", ""
+
+    if not clean_list_key:
+        return False, "Lista inválida.", ""
+
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+
+    if resolved_entity_id is None:
+        return False, "Entidade ativa inválida.", ""
+
+    target_row = (
+        session.execute(
+            text(
+                """
+                SELECT menu_config
+                FROM sidebar_menu_settings
+                WHERE entity_id = :entity_id
+                  AND lower(trim(menu_key)) = :menu_key
+                  AND COALESCE(is_active, false) = true
+                  AND COALESCE(is_deleted, false) = false
+                LIMIT 1
+                """
+            ),
+            {
+                "entity_id": int(resolved_entity_id),
+                "menu_key": clean_menu_key,
+            },
+        )
+        .mappings()
+        .one_or_none()
+    )
+
+    if target_row is None:
+        return False, "Menu não encontrado.", ""
+
+    menu_config = _parse_menu_config(target_row.get("menu_config"))
+    existing_lists = normalize_menu_process_lists_v5(menu_config.get("process_lists"))
+    normalized_list_key = clean_list_key.lower()
+    existing_item = next(
+        (
+            item
+            for item in existing_lists
+            if _normalize_process_list_key_v1(item.get("key")) == normalized_list_key
+        ),
+        None,
+    )
+
+    if existing_item is None:
+        return False, "Lista não encontrada.", ""
+
+    existing_status = str(existing_item.get("status") or "").strip().lower()
+    if existing_status not in {"inativo", "inactive"}:
+        return False, "Só é possível eliminar listas inativas.", ""
+
+    updated_lists = [
+        dict(item)
+        for item in existing_lists
+        if str(item.get("key") or "").strip().lower() != normalized_list_key
+    ]
+    menu_config["process_lists"] = updated_lists
+
+    update_result = session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+              AND entity_id = :entity_id
+              AND COALESCE(is_deleted, false) = false
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "entity_id": int(resolved_entity_id),
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+
+    if int(getattr(update_result, "rowcount", 0) or 0) <= 0:
+        session.rollback()
+        return False, "Não foi possível eliminar a lista.", ""
+
+    session.commit()
+    return True, "", normalized_list_key
 
 
 def delete_sidebar_menu_setting(session: Session, menu_key: str) -> tuple[bool, str]:

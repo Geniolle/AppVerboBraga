@@ -1026,6 +1026,10 @@ def _resolve_automatic_process_list_options_from_history_v1(
         process_list.get("source_menu_key") or process_list.get("sourceMenuKey")
     )
     if not source_menu_key:
+        # Listas automáticas normalizadas com "all_sessions" podem ficar sem menu de origem
+        # explícito. Nesse caso, a própria lista continua a pertencer ao menu atual.
+        source_menu_key = _normalize_process_list_source_key_v1(current_menu_key)
+    if not source_menu_key:
         return []
 
     source_setting = settings_by_key.get(source_menu_key)
@@ -1258,6 +1262,26 @@ def resolve_field_list_options_v1(
             if resolved_manual_options:
                 return resolved_manual_options
             if str(process_list.get("field_type") or "").strip().lower() == "automatic":
+                process_list_source_session_key = _normalize_process_list_source_key_v1(
+                    process_list.get("source_session_key")
+                    or process_list.get("sourceSidebarSectionKey")
+                )
+                process_list_source_menu_key = _normalize_process_list_source_key_v1(
+                    process_list.get("source_menu_key") or process_list.get("sourceMenuKey")
+                )
+                process_list_source_subprocess_key = _normalize_process_list_source_key_v1(
+                    process_list.get("source_subprocess_key")
+                    or process_list.get("sourceSubprocessKey")
+                )
+                if (
+                    process_list_source_session_key == "all_sessions"
+                    and not process_list_source_menu_key
+                    and not process_list_source_subprocess_key
+                ):
+                    return _resolve_active_sidebar_menu_list_options_v1(
+                        sidebar_menu_settings=settings,
+                        visible_sidebar_menu_keys=visible_keys,
+                    )
                 return _resolve_automatic_process_list_options_from_history_v1(
                     current_menu_key=current_menu_key,
                     field_definition=field_definition,
