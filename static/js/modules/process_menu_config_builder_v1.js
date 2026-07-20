@@ -185,8 +185,8 @@
           }
         ]
       },
-      perfil: {
-        title: "Perfil",
+      meu_perfil: {
+        title: "Meu perfil",
         description: "Opcoes do perfil do utilizador.",
         singleView: true,
         toggleOnMenuClick: true,

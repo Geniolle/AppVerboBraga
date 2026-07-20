@@ -165,6 +165,59 @@
     }
   }
 
+  function syncSidebarMenuUrl(menuKey, source) {
+    const cleanSource = String(source || "").trim();
+    if (cleanSource !== "click:sidebar") {
+      return;
+    }
+
+    const windowRef = state.windowRef || global;
+    if (!windowRef.history || typeof windowRef.history.pushState !== "function") {
+      return;
+    }
+
+    try {
+      const nextUrl = new URL(windowRef.location.href);
+      nextUrl.searchParams.set("menu", menuKey);
+      [
+        "target",
+        "admin_tab",
+        "profile_tab",
+        "profile_section",
+        "dynamic_process_section",
+        "settings_action",
+        "settings_edit_key",
+        "settings_tab",
+        "sidebar_section_edit_key",
+        "sidebar_section_return_url",
+        "entity_edit_id",
+        "entity_view",
+        "user_edit_id",
+        "user_view",
+        "appgenesis_after_save"
+      ].forEach((paramName) => {
+        nextUrl.searchParams.delete(paramName);
+      });
+      nextUrl.hash = "";
+
+      const cleanHref = nextUrl.pathname + nextUrl.search;
+      const currentHref = windowRef.location.pathname + windowRef.location.search + windowRef.location.hash;
+      if (cleanHref && cleanHref !== currentHref) {
+        windowRef.history.pushState(
+          { menu: menuKey, source: cleanSource },
+          global.document ? global.document.title : "",
+          cleanHref
+        );
+      }
+    } catch (error) {
+      state.debugTabsLog("activateMenu:syncSidebarMenuUrl:error", {
+        menuKey,
+        source: cleanSource,
+        error: String(error || "")
+      });
+    }
+  }
+
   function activateMenu(menuKey, options) {
     const safeOptions = options && typeof options === "object" ? options : {};
     state.debugTabsLog("activateMenu:start", { menuKey, options: safeOptions });
@@ -252,11 +305,13 @@
           );
         }
       }
+      syncSidebarMenuUrl(menuKey, source);
       return;
     }
     state.applyContentForMenu(menuKey);
     state.setActiveSubmenu("");
     state.refreshProcessShellBreadcrumb({ menuKey, target: "", source });
+    syncSidebarMenuUrl(menuKey, source);
   }
 
   function activateMenuTarget(menuKey, targetSelector, source) {

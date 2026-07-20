@@ -1,4 +1,4 @@
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -27,6 +27,13 @@ def _wait_for_meu_perfil_page_v1(driver: webdriver.Chrome, wait: WebDriverWait) 
             """
         )
     )
+
+
+def _active_sidebar_menu_key_v1(driver: webdriver.Chrome) -> str:
+    active_menu = driver.find_elements(By.CSS_SELECTOR, ".menu-item.active")
+    if not active_menu:
+        return ""
+    return str(active_menu[0].get_attribute("data-menu") or "").strip().lower()
 
 
 def test_meu_perfil_browser_navigation_uses_canonical_bootstrap_and_tabs_v1() -> None:
@@ -70,6 +77,47 @@ def test_meu_perfil_browser_navigation_uses_canonical_bootstrap_and_tabs_v1() ->
                 """
             )
             assert isinstance(active_section, str)
+
+        assert not _browser_console_errors_v1(driver)
+    finally:
+        driver.quit()
+
+
+def test_meu_perfil_sidebar_navigation_updates_url_and_clears_previous_target_v1() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+
+    try:
+        _login_admin_v1(driver, wait)
+        driver.get(
+            "http://127.0.0.1:8000/users/new"
+            "?menu=perfil_de_autorizacao&target=%23auth-objeto-form-card#auth-objeto-form-card"
+        )
+        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        wait.until(lambda drv: _active_sidebar_menu_key_v1(drv) == "perfil_de_autorizacao")
+        assert "perfil_de_autorizacao" in driver.current_url
+        assert "auth-objeto-form-card" in driver.current_url
+
+        for menu_key in ["administrativo", "meu_perfil", "contactos", "meu_perfil", "perfil_de_autorizacao"]:
+            driver.find_element(By.CSS_SELECTOR, f".menu-item[data-menu='{menu_key}']").click()
+            wait.until(lambda drv, expected=menu_key: _active_sidebar_menu_key_v1(drv) == expected)
+
+            parsed_url = urlsplit(driver.current_url)
+            parsed_query = parse_qs(parsed_url.query)
+            assert parsed_query.get("menu") == [menu_key]
+            if menu_key == "meu_perfil":
+                wait.until(EC.visibility_of_element_located((By.ID, "perfil-pessoal-card")))
+                assert driver.find_element(By.ID, "perfil-pessoal-card").is_displayed()
+                assert not driver.find_element(By.ID, "perfil-morada-card").is_displayed()
+                assert not driver.find_element(By.ID, "dados-treinamento-card").is_displayed()
+            else:
+                assert not driver.find_element(By.ID, "perfil-pessoal-card").is_displayed()
+
+            assert "target=%23auth-objeto-form-card" not in driver.current_url
+            assert "#auth-objeto-form-card" not in driver.current_url
+            assert "profile_tab=" not in driver.current_url
+            assert "profile_section=" not in driver.current_url
+            assert parsed_url.fragment == ""
 
         assert not _browser_console_errors_v1(driver)
     finally:
