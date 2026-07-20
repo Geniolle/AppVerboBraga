@@ -170,6 +170,52 @@ def test_meu_perfil_browser_navigation_uses_canonical_bootstrap_and_tabs_v1() ->
         driver.quit()
 
 
+def test_meu_perfil_browser_navigation_includes_quantity_only_section_v1() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+
+    try:
+        _login_admin_v1(driver, wait)
+        driver.get("http://127.0.0.1:8000/users/new?menu=meu_perfil")
+        _wait_for_meu_perfil_page_v1(driver, wait)
+
+        bootstrap = driver.execute_script(
+            """
+            return window.__APPGENESIS_BOOTSTRAP__.meuPerfil;
+            """
+        )
+        submenu_items = driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#submenu-items .submenu-item')).map((el) => ({
+              label: String(el.textContent || '').trim(),
+              profileSection: String(el.dataset.profileSection || '').trim(),
+              target: String(el.getAttribute('href') || '').trim()
+            }));
+            """
+        )
+
+        bootstrap_sections = [
+            str(section.get("key") or "").strip()
+            for section in bootstrap.get("personalSections", [])
+            if str(section.get("key") or "").strip()
+        ]
+        submenu_sections = [str(item.get("profileSection") or "").strip() for item in submenu_items]
+        submenu_labels = [str(item.get("label") or "").strip() for item in submenu_items]
+
+        assert len(submenu_items) == len(bootstrap_sections)
+        assert submenu_sections == bootstrap_sections
+        assert submenu_labels == [
+            str(section.get("label") or "").strip()
+            for section in bootstrap.get("personalSections", [])
+            if str(section.get("key") or "").strip()
+        ]
+        assert "Dados de agregados" in submenu_labels
+        assert "custom_dados_de_agregados" in submenu_sections or "custom_dados_agregados" in submenu_sections
+        assert not _browser_console_errors_v1(driver)
+    finally:
+        driver.quit()
+
+
 def test_meu_perfil_sidebar_navigation_updates_url_and_clears_previous_target_v1() -> None:
     driver = _build_driver_v1()
     wait = WebDriverWait(driver, 30)

@@ -27,7 +27,10 @@ from appgenesis.services.profile import (
     build_profile_menu_tabs_dependency_map_v1,
     resolve_field_list_options_v1,
 )
-from appgenesis.services.process_tabs import resolve_subprocess_section_fields_v1
+from appgenesis.services.process_tabs import (
+    resolve_process_tabs_v1,
+    resolve_subprocess_section_fields_v1,
+)
 
 
 def test_administrativo_process_field_options_defaults() -> None:
@@ -2926,4 +2929,48 @@ def test_resolve_field_list_options_manual_reference_uses_automatic_process_list
         {"value": "Gestor de Tesouraria", "label": "Gestor de Tesouraria", "status": "active"},
         {"value": "Calendário Geral", "label": "Calendário Geral", "status": "active"},
         {"value": "Gestor de sistema", "label": "Gestor de sistema", "status": "active"},
+    ]
+
+
+def test_resolve_process_tabs_v1_includes_quantity_only_section() -> None:
+    tabs = resolve_process_tabs_v1(
+        "meu_perfil",
+        [
+            {
+                "key": "meu_perfil",
+                "label": "Meu Perfil",
+                "process_additional_fields": [
+                    {"key": "custom_dados_pessoais", "label": "Dados pessoais", "field_type": "header"},
+                    {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                    {"key": "nome", "label": "Nome", "field_type": "text"},
+                    {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+                    {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "nome", "header_key": "custom_dados_pessoais"},
+                ],
+                "process_quantity_fields": [
+                    {
+                        "key": "qty_agregados",
+                        "label": "Quantidade de agregados",
+                        "quantity_field_key": "custom_quantos_filhos_tens",
+                        "repeated_field_keys": [
+                            "custom_nome_do_agregado",
+                        ],
+                        "header_key": "custom_dados_de_agregados",
+                        "max_items": 10,
+                        "item_label": "Agregado",
+                    }
+                ],
+            }
+        ],
+    )
+
+    assert [tab.key for tab in tabs] == [
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    ]
+    assert [tab.label for tab in tabs] == [
+        "Dados pessoais",
+        "Dados de agregados",
     ]

@@ -47,32 +47,34 @@ def _build_meu_perfil_settings(
     field_key: str,
     field_label: str,
     visible_label: str,
+    process_sections: list[dict[str, object]] | None = None,
 ) -> list[dict[str, object]]:
-    return [
-        {
-            "key": "meu_perfil",
-            "label": "Meu Perfil",
-            "is_active": True,
-            "is_deleted": False,
-            "process_field_options": [
-                {"key": section_key, "label": visible_label, "field_type": "header"},
-                {"key": field_key, "label": field_label, "field_type": "text"},
-                {"key": "nome", "label": "Nome", "field_type": "text"},
-            ],
-            "process_visible_fields": [field_key],
-            "process_visible_field_header_map": {field_key: section_key},
-            "process_visible_field_rows": [
-                {"field_key": field_key, "header_key": section_key},
-            ],
-            "process_additional_fields": [
-                {"key": section_key, "label": visible_label, "field_type": "header"},
-                {"key": field_key, "label": field_label, "field_type": "text"},
-            ],
-            "process_lists": [],
-            "process_quantity_fields": [],
-            "menu_config": {},
-        }
-    ]
+    setting = {
+        "key": "meu_perfil",
+        "label": "Meu Perfil",
+        "is_active": True,
+        "is_deleted": False,
+        "process_field_options": [
+            {"key": section_key, "label": visible_label, "field_type": "header"},
+            {"key": field_key, "label": field_label, "field_type": "text"},
+            {"key": "nome", "label": "Nome", "field_type": "text"},
+        ],
+        "process_visible_fields": [field_key],
+        "process_visible_field_header_map": {field_key: section_key},
+        "process_visible_field_rows": [
+            {"field_key": field_key, "header_key": section_key},
+        ],
+        "process_additional_fields": [
+            {"key": section_key, "label": visible_label, "field_type": "header"},
+            {"key": field_key, "label": field_label, "field_type": "text"},
+        ],
+        "process_lists": [],
+        "process_quantity_fields": [],
+        "menu_config": {},
+    }
+    if process_sections is not None:
+        setting["process_sections"] = process_sections
+    return [setting]
 
 
 def _build_snapshot(page_data: dict[str, object]) -> dict[str, object]:
@@ -213,3 +215,76 @@ def test_get_page_data_keeps_meu_perfil_configuration_isolated_by_entity(monkeyp
         assert member_personal_1001["training_selected"] == member_personal_2002["training_selected"]
         assert member_personal_1001["custom_fields"] == member_personal_2002["custom_fields"]
         assert member_personal_1001["custom_fields"] == {}
+
+
+def test_get_page_data_includes_quantity_only_profile_section_from_process_sections(monkeypatch) -> None:
+    SessionLocal = _build_session_factory()
+
+    def fake_get_sidebar_menu_settings(session, active_entity_id=None):
+        return _build_meu_perfil_settings(
+            section_key="custom_dados_pessoais",
+            field_key="custom_campo_entidade_1001",
+            field_label="Campo entidade 1001",
+            visible_label="Dados pessoais",
+            process_sections=[
+                {
+                    "key": "custom_dados_pessoais",
+                    "label": "Dados pessoais",
+                    "field_keys": ["custom_campo_entidade_1001"],
+                    "quantity_rule_keys": [],
+                },
+                {
+                    "key": "custom_dados_de_agregados",
+                    "label": "Dados de agregados",
+                    "field_keys": [],
+                    "quantity_rule_keys": ["qty_agregados"],
+                },
+            ],
+        )
+
+    monkeypatch.setattr("appgenesis.services.page.get_sidebar_menu_settings", fake_get_sidebar_menu_settings)
+    monkeypatch.setattr("appgenesis.services.page.get_visible_sidebar_menu_keys", lambda *args, **kwargs: {"meu_perfil"})
+
+    with SessionLocal() as session:
+        entity = Entity(entity_number=1001, name="Entidade 1001", is_active=True)
+        member = Member(
+            full_name="Utilizador Teste",
+            primary_phone="912000111",
+            email="utilizador.teste@example.com",
+            member_status=MemberStatus.ACTIVE.value,
+            profile_custom_fields=serialize_member_profile_fields({}),
+        )
+        session.add_all([entity, member])
+        session.flush()
+        user = User(
+            member_id=member.id,
+            login_email=member.email,
+            password_hash="hash",
+            account_status=UserAccountStatus.ACTIVE.value,
+            system_type="default",
+        )
+        session.add(user)
+        session.add(
+            MemberEntity(
+                member_id=member.id,
+                entity_id=entity.id,
+                status=MemberEntityStatus.ACTIVE.value,
+            )
+        )
+        session.commit()
+
+        page_data = get_page_data(
+            session,
+            actor_user_id=user.id,
+            actor_login_email=user.login_email,
+            selected_entity_id=entity.id,
+        )
+
+        assert [section["key"] for section in page_data["profile_personal_sections"]] == [
+            "custom_dados_pessoais",
+            "custom_dados_de_agregados",
+        ]
+        assert [section["label"] for section in page_data["profile_personal_sections"]] == [
+            "Dados pessoais",
+            "Dados de agregados",
+        ]

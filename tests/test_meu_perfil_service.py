@@ -138,3 +138,49 @@ def test_build_meu_perfil_personal_sections_state_v1_resolves_active_section() -
         "nome": "custom_dados_pessoais",
         "telefone": "custom_morada",
     }
+
+
+def test_build_meu_perfil_personal_sections_state_v1_uses_resolved_sections_for_quantity_only_tabs() -> None:
+    state = build_meu_perfil_personal_sections_state_v1(
+        profile_personal_visible_fields=["nome", "custom_quantos_filhos_tens"],
+        profile_personal_field_labels={
+            "nome": "Nome",
+            "custom_quantos_filhos_tens": "Quantos filhos tens?",
+        },
+        profile_personal_field_types={
+            "nome": "text",
+            "custom_quantos_filhos_tens": "number",
+        },
+        profile_personal_field_header_map={
+            "nome": "custom_dados_pessoais",
+        },
+        profile_personal_custom_field_meta={
+            "custom_dados_pessoais": {"field_type": "header"},
+            "custom_dados_de_agregados": {"field_type": "header"},
+        },
+        resolved_process_sections=[
+            {
+                "key": "custom_dados_pessoais",
+                "label": "Dados pessoais",
+                "field_keys": ["nome"],
+                "quantity_rule_keys": [],
+            },
+            {
+                "key": "custom_dados_de_agregados",
+                "label": "Dados de agregados",
+                "field_keys": [],
+                "quantity_rule_keys": ["qty_agregados"],
+            },
+        ],
+    )
+
+    assert [section["key"] for section in state["personalSections"]] == [
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    ]
+    assert [section["label"] for section in state["personalSections"]] == [
+        "Dados pessoais",
+        "Dados de agregados",
+    ]
+    assert state["defaultPersonalSection"] == "custom_dados_pessoais"
+    assert state["activePersonalSection"] == "custom_dados_pessoais"

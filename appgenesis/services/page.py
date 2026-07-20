@@ -446,7 +446,7 @@ def _resolve_scoped_users(
     ).all()
 
     # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
-    # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
+    # A gestora do tenant nao ve dados operacionais de entidades Legado atraves deste filtro.
     _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
     if apply_scope_filter:
         if _data_entity_ids:
@@ -614,6 +614,7 @@ def get_page_data(
     profile_personal_field_types: dict[str, str] = {}
     profile_personal_field_header_map: dict[str, str] = {}
     profile_personal_custom_field_meta: dict[str, dict[str, Any]] = {}
+    profile_personal_process_sections: list[dict[str, Any]] = []
     profile_personal_duplicate_custom_keys: set[str] = set()
     profile_personal_effective_visible_rows: list[dict[str, str]] = []
     meu_perfil_builtin_duplicate_labels = {
@@ -646,6 +647,13 @@ def get_page_data(
             profile_personal_field_labels = option_labels
         if option_types:
             profile_personal_field_types = option_types
+        process_sections = sidebar_item.get("process_sections")
+        if isinstance(process_sections, list):
+            profile_personal_process_sections = [
+                dict(section)
+                for section in process_sections
+                if isinstance(section, dict)
+            ]
         raw_header_map = sidebar_item.get("process_visible_field_header_map")
         if isinstance(raw_header_map, dict):
             mapped_header_map: dict[str, str] = {}
@@ -808,6 +816,7 @@ def get_page_data(
         profile_personal_field_types=profile_personal_field_types,
         profile_personal_field_header_map=profile_personal_field_header_map,
         profile_personal_custom_field_meta=profile_personal_custom_field_meta,
+        resolved_process_sections=profile_personal_process_sections,
         requested_profile_section="",
     )
     profile_personal_sections = list(profile_personal_state.get("personalSections") or [])

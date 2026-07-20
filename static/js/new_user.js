@@ -1127,6 +1127,7 @@ if (
     normalizeMenuLabelPreserveCase,
     toSentenceCaseText,
     buildProcessSections,
+    meuPerfil: meuPerfilBootstrap,
     getDynamicProcessLayoutConfig,
     getSidebarAdminSubprocessSetting: getSidebarAdminSubprocessSettingV1,
     filterProcessExtraMenuItems: filterProcessExtraMenuItemsV1,

@@ -85,6 +85,7 @@ def build_meu_perfil_personal_sections_state_v1(
     profile_personal_field_types: dict[str, str] | None,
     profile_personal_field_header_map: dict[str, str] | None,
     profile_personal_custom_field_meta: dict[str, dict[str, Any]] | None,
+    resolved_process_sections: list[dict[str, Any]] | None = None,
     requested_profile_section: Any = "",
     hidden_section_keys: list[str] | set[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
@@ -121,24 +122,39 @@ def build_meu_perfil_personal_sections_state_v1(
         if clean_key.startswith("custom_")
         and str((meta or {}).get("field_type") or "").strip().lower() == "header"
     }
+    clean_resolved_sections = [
+        {
+            "key": str((section or {}).get("key") or "").strip().lower(),
+            "label": str((section or {}).get("label") or "").strip(),
+        }
+        for section in (resolved_process_sections or [])
+        if isinstance(section, dict)
+        and str((section or {}).get("key") or "").strip()
+    ]
+    resolved_section_keys = {
+        str(section["key"] or "").strip().lower()
+        for section in clean_resolved_sections
+        if str(section["key"] or "").strip()
+    }
 
     personal_sections: list[dict[str, Any]] = []
     personal_section_order: list[str] = []
     personal_section_seen: set[str] = set()
 
-    def append_personal_section_v1(raw_section_key: Any) -> None:
+    def append_personal_section_v1(raw_section_key: Any, raw_section_label: Any = "") -> None:
         clean_section_key = str(raw_section_key or "").strip().lower()
         if not clean_section_key or clean_section_key in personal_section_seen:
             return
         if clean_section_key in clean_hidden_keys:
             return
-        if clean_section_key not in profile_header_field_keys:
+        if clean_section_key not in profile_header_field_keys and clean_section_key not in resolved_section_keys:
             return
 
         personal_sections.append(
             {
                 "key": clean_section_key,
-                "label": clean_labels.get(clean_section_key, "Aba"),
+                "label": str(raw_section_label or "").strip()
+                or clean_labels.get(clean_section_key, "Aba"),
                 "order": len(personal_sections) + 1,
                 "is_visible": True,
                 "is_active": True,
@@ -146,6 +162,9 @@ def build_meu_perfil_personal_sections_state_v1(
         )
         personal_section_order.append(clean_section_key)
         personal_section_seen.add(clean_section_key)
+
+    for section in clean_resolved_sections:
+        append_personal_section_v1(section["key"], section["label"])
 
     for field_key in clean_visible_fields:
         append_personal_section_v1(field_key)

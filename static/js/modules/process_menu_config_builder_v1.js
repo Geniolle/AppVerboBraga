@@ -167,6 +167,52 @@
   }
 
   function buildBaseMenuConfig() {
+    function buildMeuPerfilMenuItemsV1() {
+      const personalSections = Array.isArray(state.profilePersonalSections)
+        ? state.profilePersonalSections
+        : [];
+      const resolvedSections = personalSections
+        .map((section) => {
+          const cleanSectionKey = String(section && section.key ? section.key : "").trim().toLowerCase();
+          if (!cleanSectionKey) {
+            return null;
+          }
+          if (section && section.is_visible === false) {
+            return null;
+          }
+          if (section && section.is_active === false) {
+            return null;
+          }
+          return {
+            key: cleanSectionKey,
+            label: state.normalizeMenuLabelPreserveCase(section && section.label ? section.label : "") ||
+              state.toSentenceCaseText(cleanSectionKey.replace(/_/g, " "))
+          };
+        })
+        .filter(Boolean);
+
+      if (!resolvedSections.length) {
+        return [
+          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
+          { label: "Dados de morada", target: "#perfil-morada-card" },
+          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
+        ];
+      }
+
+      const seenSectionKeys = new Set();
+      return resolvedSections.filter((section) => {
+        if (seenSectionKeys.has(section.key)) {
+          return false;
+        }
+        seenSectionKeys.add(section.key);
+        return true;
+      }).map((section) => ({
+        label: section.label,
+        target: "#perfil-pessoal-card",
+        profileSection: section.key
+      }));
+    }
+
     const baseMenuConfig = {
       home: {
         title: "Home",
@@ -190,11 +236,7 @@
         description: "Opcoes do perfil do utilizador.",
         singleView: true,
         toggleOnMenuClick: true,
-        items: [
-          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
-          { label: "Dados de morada", target: "#perfil-morada-card" },
-          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
-        ],
+        items: buildMeuPerfilMenuItemsV1(),
         details: [
           { label: "Nome", value: state.currentUserName },
           { label: "Email", value: state.currentUserEmail },
