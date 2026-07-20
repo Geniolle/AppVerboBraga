@@ -17,7 +17,6 @@ from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository im
 from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.services.auth_profile_entity_scope import (
-    build_auth_profile_config_for_context_v1,
     build_auth_profile_entity_context_v1,
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
@@ -41,6 +40,13 @@ from appgenesis.menu_settings import (
     update_sidebar_menu_process_fields,
 )
 from appgenesis.services.auth import is_admin_user
+from appgenesis.domains.meu_perfil.service import (
+    MEU_PERFIL_MENU_KEY_V1,
+    build_meu_perfil_bootstrap_v1,
+    normalize_meu_perfil_menu_key_v1,
+    normalize_meu_perfil_tab_key_v1,
+    resolve_meu_perfil_tab_target_v1,
+)
 from appgenesis.services.page import (
     get_entity_edit_data,
     get_entity_form_defaults,
@@ -294,7 +300,7 @@ def _resolve_initial_menu_target(
         return "#empresa-card", ""
     if clean_menu_key == "home":
         return "#home-summary-card", ""
-    if clean_menu_key == "perfil":
+    if clean_menu_key == MEU_PERFIL_MENU_KEY_V1:
         if resolved_profile_tab == "morada":
             return "#perfil-morada-card", ""
         if resolved_profile_tab == "treinamento":
@@ -564,10 +570,8 @@ def new_user_page(
     is_debug_flicker = (debug_flicker == "1") or (request.query_params.get("debug_flicker") == "1")
     _dbg_page = _debug_sessoes_page_enabled_v1(request)
 
-    resolved_profile_tab = profile_tab.strip().lower()
-    if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
-        resolved_profile_tab = "pessoal"
-    resolved_menu = resolve_menu_key_alias(menu)
+    resolved_profile_tab = normalize_meu_perfil_tab_key_v1(profile_tab)
+    resolved_menu = normalize_meu_perfil_menu_key_v1(menu) or resolve_menu_key_alias(menu)
     if not resolved_menu:
         resolved_menu = "home"
     # Capturado antes de _resolve_estruturas_navigation_context_v1 reescrever resolved_menu.
@@ -667,6 +671,13 @@ def new_user_page(
             actor_login_email=current_user["login_email"],
             selected_entity_id=selected_entity_id,
         )
+        meu_perfil_bootstrap_v1 = build_meu_perfil_bootstrap_v1(
+            profile_tab=resolved_profile_tab,
+            profile_section=profile_section,
+            profile_personal_sections=list(page_data.get("profile_personal_sections") or []),
+            profile_personal_visible_fields=list(page_data.get("profile_personal_visible_fields") or []),
+            profile_personal_field_labels=dict(page_data.get("profile_personal_field_labels") or {}),
+        )
         visible_menu_keys = {
             str(raw_key or "").strip().lower()
             for raw_key in page_data.get("visible_sidebar_menu_keys", [])
@@ -680,7 +691,7 @@ def new_user_page(
         # o contexto de edicao.
         is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
         if (
-            resolved_menu not in {"perfil", MENU_MEU_PERFIL_KEY}
+            resolved_menu != MEU_PERFIL_MENU_KEY_V1
             and resolved_menu not in visible_menu_keys
             and not is_post_save_return
         ):
@@ -803,8 +814,8 @@ def new_user_page(
     if clean_target_from_query:
         initial_menu_target = clean_target_from_query
 
-    if resolved_menu == MENU_MEU_PERFIL_KEY:
-        initial_menu_target = "#perfil-pessoal-card"
+    if resolved_menu == MEU_PERFIL_MENU_KEY_V1:
+        initial_menu_target = resolve_meu_perfil_tab_target_v1(resolved_profile_tab)
 
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
@@ -919,10 +930,6 @@ def new_user_page(
                         ),
                     },
                 )
-                auth_profile_subprocess_config_v1 = build_auth_profile_config_for_context_v1(
-                    auth_profile_subprocess_config_v1,
-                    auth_profile_entity_context_v1,
-                )
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
@@ -935,6 +942,7 @@ def new_user_page(
                     visible_sidebar_menu_keys=visible_menu_keys,
                     menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
                     active_entity_id=selected_entity_id,
+                    entity_context=auth_profile_entity_context_v1,
                 )
             except Exception:
                 auth_profile_subprocess_state_v1 = None
@@ -986,6 +994,7 @@ def new_user_page(
                     visible_sidebar_menu_keys=visible_menu_keys,
                     menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
                     active_entity_id=selected_entity_id,
+                    entity_context=auth_profile_entity_context_v1,
                 )
             except Exception:
                 auth_objeto_subprocess_state_v1 = None
@@ -1089,7 +1098,7 @@ def new_user_page(
     if not active_menu_label:
         if clean_menu_key == "home":
             active_menu_label = "Home"
-        elif clean_menu_key == "meu_perfil":
+        elif clean_menu_key == MEU_PERFIL_MENU_KEY_V1:
             active_menu_label = "Meu perfil"
         else:
             active_menu_label = clean_menu_key.replace("_", " ").title()
@@ -1155,6 +1164,7 @@ def new_user_page(
         "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
         "debug_flicker": is_debug_flicker,
         **page_data,
+        "meu_perfil_bootstrap": meu_perfil_bootstrap_v1,
     }
 
     # ###################################################################################

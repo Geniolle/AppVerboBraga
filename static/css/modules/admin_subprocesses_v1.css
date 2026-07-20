@@ -103,6 +103,10 @@
   grid-template-columns: repeat(2, minmax(200px, 1fr));
 }
 
+.admin-subprocess-grid-entity-context-v1 {
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+}
+
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
   order: 1;
 }
@@ -367,7 +371,8 @@ table[data-appgenesis-sortable-table="1"] td:last-child {
 }
 
 @media (max-width: 1100px) {
-  .admin-subprocess-grid-v1 {
+  .admin-subprocess-grid-v1,
+  .admin-subprocess-grid-entity-context-v1 {
     grid-template-columns: 1fr;
   }
 }

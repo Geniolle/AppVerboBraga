@@ -101,7 +101,12 @@
     if (safeOptions.dashboardData && typeof safeOptions.dashboardData === "object") {
       state.dashboardData = safeOptions.dashboardData;
     }
-    if (Array.isArray(safeOptions.profilePersonalSections)) {
+    const safeMeuPerfil = safeOptions.meuPerfil && typeof safeOptions.meuPerfil === "object"
+      ? safeOptions.meuPerfil
+      : null;
+    if (Array.isArray(safeMeuPerfil && safeMeuPerfil.personalSections)) {
+      state.profilePersonalSections = safeMeuPerfil.personalSections;
+    } else if (Array.isArray(safeOptions.profilePersonalSections)) {
       state.profilePersonalSections = safeOptions.profilePersonalSections;
     }
     if (Array.isArray(safeOptions.sidebarMenuSettings)) {
@@ -360,7 +365,7 @@
   function mergeDynamicProcessMenus() {
     state.sidebarMenuSettings.forEach((setting) => {
       const menuKey = state.normalizeMenuKey(setting.key);
-      if (!menuKey || menuKey === "perfil") {
+      if (!menuKey || menuKey === state.MEU_PERFIL_MENU_KEY) {
         return;
       }
       if (menuKey === "home") {

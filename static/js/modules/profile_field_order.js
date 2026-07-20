@@ -11,6 +11,15 @@
     typeof window.AppGenesisProfileFieldRegistryV1 === "object"
       ? window.AppGenesisProfileFieldRegistryV1
       : null;
+  const meuPerfilRuntimeV1 =
+    window.AppGenesisMeuPerfilV1 &&
+    typeof window.AppGenesisMeuPerfilV1 === "object"
+      ? window.AppGenesisMeuPerfilV1
+      : null;
+  const MEU_PERFIL_PERSONAL_CARD_TARGET = meuPerfilRuntimeV1 &&
+    typeof meuPerfilRuntimeV1.resolvePersonalCardTarget === "function"
+      ? meuPerfilRuntimeV1.resolvePersonalCardTarget()
+      : "#perfil-pessoal-card";
   const profilePersonalVisibleFields = Array.isArray(bootstrap.profilePersonalVisibleFields)
     ? bootstrap.profilePersonalVisibleFields
       .map((fieldKey) => String(fieldKey || "").trim().toLowerCase())
@@ -47,7 +56,7 @@
 
     return (
       document.querySelector('form[action="/users/profile/personal"]') ||
-      document.querySelector("#perfil-pessoal-card form")
+      document.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} form`)
     );
   }
 

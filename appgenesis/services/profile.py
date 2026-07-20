@@ -235,6 +235,20 @@ def _normalize_profile_field_value(raw_field_value: Any) -> str:
         return str(raw_field_value).strip()
     return str(raw_field_value).strip()
 
+
+def _normalize_member_profile_field_map(values: dict[str, Any] | None) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    for raw_key, raw_field_value in (values or {}).items():
+        clean_key = str(raw_key or "").strip().lower()
+        if not clean_key:
+            continue
+        clean_field_value = _normalize_profile_field_value(raw_field_value)
+        if not clean_field_value:
+            continue
+        normalized[clean_key] = clean_field_value
+    return normalized
+
+
 def parse_member_profile_fields(raw_value: Any) -> dict[str, str]:
     if not isinstance(raw_value, str):
         return {}
@@ -248,30 +262,87 @@ def parse_member_profile_fields(raw_value: Any) -> dict[str, str]:
     if not isinstance(parsed, dict):
         return {}
 
-    normalized: dict[str, str] = {}
-    for raw_key, raw_field_value in parsed.items():
-        clean_key = str(raw_key or "").strip().lower()
-        if not clean_key:
-            continue
-        clean_field_value = _normalize_profile_field_value(raw_field_value)
-        if not clean_field_value:
-            continue
-        normalized[clean_key] = clean_field_value
-    return normalized
+    return _normalize_member_profile_field_map(parsed)
 
 def serialize_member_profile_fields(values: dict[str, str]) -> str | None:
-    normalized: dict[str, str] = {}
-    for raw_key, raw_value in (values or {}).items():
-        clean_key = str(raw_key or "").strip().lower()
-        if not clean_key:
-            continue
-        clean_value = _normalize_profile_field_value(raw_value)
-        if not clean_value:
-            continue
-        normalized[clean_key] = clean_value
+    normalized = _normalize_member_profile_field_map(values)
     if not normalized:
         return None
     return json.dumps(normalized, ensure_ascii=False, sort_keys=True)
+
+
+def merge_member_profile_fields_v1(
+    existing_values: Any,
+    updated_values: dict[str, Any] | None = None,
+    *,
+    removed_keys: set[str] | None = None,
+    removed_prefixes: tuple[str, ...] = (),
+) -> dict[str, str]:
+    if isinstance(existing_values, str):
+        merged_fields = parse_member_profile_fields(existing_values)
+    elif isinstance(existing_values, dict):
+        merged_fields = _normalize_member_profile_field_map(existing_values)
+    else:
+        merged_fields = {}
+
+    normalized_removed_keys = {
+        str(raw_key or "").strip().lower()
+        for raw_key in (removed_keys or set())
+        if str(raw_key or "").strip()
+    }
+    normalized_removed_prefixes = tuple(
+        str(raw_prefix or "").strip().lower()
+        for raw_prefix in removed_prefixes
+        if str(raw_prefix or "").strip()
+    )
+
+    if normalized_removed_keys or normalized_removed_prefixes:
+        for existing_key in list(merged_fields.keys()):
+            if existing_key in normalized_removed_keys:
+                merged_fields.pop(existing_key, None)
+                continue
+            if any(existing_key.startswith(prefix) for prefix in normalized_removed_prefixes):
+                merged_fields.pop(existing_key, None)
+
+    merged_fields.update(_normalize_member_profile_field_map(updated_values))
+    return merged_fields
+
+
+def merge_member_profile_fields_v1(
+    existing_values: Any,
+    updated_values: dict[str, Any] | None = None,
+    *,
+    removed_keys: set[str] | None = None,
+    removed_prefixes: tuple[str, ...] = (),
+) -> dict[str, str]:
+    if isinstance(existing_values, str):
+        merged_fields = parse_member_profile_fields(existing_values)
+    elif isinstance(existing_values, dict):
+        merged_fields = _normalize_member_profile_field_map(existing_values)
+    else:
+        merged_fields = {}
+
+    normalized_removed_keys = {
+        str(raw_key or "").strip().lower()
+        for raw_key in (removed_keys or set())
+        if str(raw_key or "").strip()
+    }
+    normalized_removed_prefixes = tuple(
+        str(raw_prefix or "").strip().lower()
+        for raw_prefix in removed_prefixes
+        if str(raw_prefix or "").strip()
+    )
+
+    if normalized_removed_keys or normalized_removed_prefixes:
+        for existing_key in list(merged_fields.keys()):
+            if existing_key in normalized_removed_keys:
+                merged_fields.pop(existing_key, None)
+                continue
+            if any(existing_key.startswith(prefix) for prefix in normalized_removed_prefixes):
+                merged_fields.pop(existing_key, None)
+
+    merged_fields.update(_normalize_member_profile_field_map(updated_values))
+    return merged_fields
 
 def build_menu_process_field_storage_key(menu_key: str, field_key: str) -> str:
     clean_menu_key = str(menu_key or "").strip().lower()
@@ -750,6 +821,85 @@ def _resolve_auth_profile_menu_key_v1(
     return ""
 
 
+_PROFILE_MENU_TABS_ALL_OPTION_V1 = {
+    "value": "Todas as autorizações",
+    "label": "Todas as autorizações",
+    "status": "active",
+}
+
+
+def _prepend_profile_menu_tabs_all_option_v1(
+    options: list[dict[str, str]] | None,
+) -> list[dict[str, str]]:
+    if not options:
+        return []
+
+    resolved_options: list[dict[str, str]] = [dict(_PROFILE_MENU_TABS_ALL_OPTION_V1)]
+    seen_lookups: set[str] = {
+        _normalize_process_rule_lookup_text(_PROFILE_MENU_TABS_ALL_OPTION_V1["value"])
+    }
+
+    for raw_option in options or []:
+        if not isinstance(raw_option, dict):
+            continue
+
+        clean_value = str(raw_option.get("value") or "").strip()
+        clean_label = str(raw_option.get("label") or clean_value).strip()
+        if not clean_value and not clean_label:
+            continue
+
+        option_lookup = _normalize_process_rule_lookup_text(clean_value or clean_label)
+        if option_lookup in seen_lookups:
+            continue
+        seen_lookups.add(option_lookup)
+
+        resolved_options.append(
+            {
+                "value": clean_value or clean_label,
+                "label": clean_label or clean_value,
+                "status": str(raw_option.get("status") or "active").strip() or "active",
+            }
+        )
+
+    return resolved_options
+
+
+def _normalize_manual_list_options_v1(raw_options: Any) -> list[dict[str, str]]:
+    if not isinstance(raw_options, (list, tuple)):
+        return []
+
+    from appgenesis.services.process_tabs import _normalize_render_options_v1
+
+    normalized_options = _normalize_render_options_v1(list(raw_options))
+    if not normalized_options:
+        return []
+
+    return [
+        {
+            **option,
+            "status": str(option.get("status") or "active").strip() or "active",
+        }
+        for option in normalized_options
+    ]
+
+
+def _resolve_profile_menu_tabs_options_v1(
+    *,
+    menu_key: str,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+) -> list[dict[str, str]]:
+    from appgenesis.services.process_tabs import resolve_process_tab_options_v1
+
+    return _prepend_profile_menu_tabs_all_option_v1(
+        resolve_process_tab_options_v1(
+            menu_key,
+            sidebar_menu_settings,
+            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+        )
+    )
+
+
 def _build_auth_profile_menu_entries_v1(
     *,
     sidebar_menu_settings: list[dict[str, Any]],
@@ -909,8 +1059,6 @@ def build_profile_menu_tabs_dependency_map_v1(
     if not profile_entries:
         profile_entries = []
 
-    from appgenesis.services.process_tabs import resolve_process_tab_options_v1
-
     menu_meta_by_key, _menu_key_by_label_lookup = _build_visible_sidebar_menu_meta_v1(
         sidebar_menu_settings=settings,
         visible_sidebar_menu_keys=visible_keys,
@@ -925,9 +1073,9 @@ def build_profile_menu_tabs_dependency_map_v1(
 
         if menu_key not in resolved_options_by_menu_key:
             resolved_options_by_menu_key[menu_key] = (
-                resolve_process_tab_options_v1(
-                    menu_key,
-                    settings,
+                _resolve_profile_menu_tabs_options_v1(
+                    menu_key=menu_key,
+                    sidebar_menu_settings=settings,
                     visible_sidebar_menu_keys=visible_keys,
                 )
                 if menu_key
@@ -942,9 +1090,9 @@ def build_profile_menu_tabs_dependency_map_v1(
 
     for menu_key, menu_meta in menu_meta_by_key.items():
         if menu_key not in resolved_options_by_menu_key:
-            resolved_options_by_menu_key[menu_key] = resolve_process_tab_options_v1(
-                menu_key,
-                settings,
+            resolved_options_by_menu_key[menu_key] = _resolve_profile_menu_tabs_options_v1(
+                menu_key=menu_key,
+                sidebar_menu_settings=settings,
                 visible_sidebar_menu_keys=visible_keys,
             )
         register_dependency_aliases(
@@ -1005,11 +1153,9 @@ def _resolve_profile_menu_tabs_list_options_v1(
     if not menu_key:
         return []
 
-    from appgenesis.services.process_tabs import resolve_process_tab_options_v1
-
-    return resolve_process_tab_options_v1(
-        menu_key,
-        sidebar_menu_settings,
+    return _resolve_profile_menu_tabs_options_v1(
+        menu_key=menu_key,
+        sidebar_menu_settings=sidebar_menu_settings,
         visible_sidebar_menu_keys=visible_sidebar_menu_keys,
     )
 
@@ -1210,6 +1356,15 @@ def resolve_field_list_options_v1(
         )
 
     if list_source_type == "manual":
+        inline_options_raw = (
+            field_definition.get("manual_list_options")
+            or field_definition.get("manualListOptions")
+        )
+        if inline_options_raw is not None:
+            resolved_inline_options = _normalize_manual_list_options_v1(inline_options_raw)
+            if resolved_inline_options:
+                return resolved_inline_options
+
         inline_items_raw = (
             field_definition.get("manual_list_items")
             or field_definition.get("manualListItems")
@@ -1668,6 +1823,7 @@ __all__ = [
     "is_meu_perfil_builtin_duplicate_field",
     "parse_member_profile_fields",
     "serialize_member_profile_fields",
+    "merge_member_profile_fields_v1",
     "build_menu_process_field_storage_key",
     "build_menu_process_records_storage_key",
     "build_menu_process_quantity_storage_key",

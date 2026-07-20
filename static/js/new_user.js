@@ -1,12 +1,3 @@
-(function initAppGenesisFeedbackToastsFromUrl() {
-  if (
-    window.AppGenesisProcessShell &&
-    typeof window.AppGenesisProcessShell.enhanceFeedbackToasts === "function"
-  ) {
-    window.AppGenesisProcessShell.enhanceFeedbackToasts({ source: "url" });
-  }
-})();
-
 const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
 const appGenesisProcessKeysRegistryV1 =
   window.AppGenesisProcessKeysRegistryV1 &&
@@ -124,15 +115,45 @@ const currentUserAddress = bootstrap.currentUserAddress || "";
 const currentUserCity = bootstrap.currentUserCity || "";
 const currentUserFreguesia = bootstrap.currentUserFreguesia || "";
 const currentUserPostalCode = bootstrap.currentUserPostalCode || "";
-const profilePersonalSections = Array.isArray(bootstrap.profilePersonalSections) ? bootstrap.profilePersonalSections : [];
+const meuPerfilDomain = window.AppGenesisMeuPerfilV1 || null;
+const meuPerfilBootstrap = meuPerfilDomain && typeof meuPerfilDomain.getBootstrap === "function"
+  ? meuPerfilDomain.getBootstrap()
+  : (
+    bootstrap.meuPerfil &&
+    typeof bootstrap.meuPerfil === "object" &&
+    !Array.isArray(bootstrap.meuPerfil)
+  )
+    ? bootstrap.meuPerfil
+    : {};
 const profilePersonalFieldLabels = (
-  bootstrap.profilePersonalFieldLabels &&
-  typeof bootstrap.profilePersonalFieldLabels === "object" &&
-  !Array.isArray(bootstrap.profilePersonalFieldLabels)
+  meuPerfilBootstrap.fieldLabels &&
+  typeof meuPerfilBootstrap.fieldLabels === "object" &&
+  !Array.isArray(meuPerfilBootstrap.fieldLabels)
 )
-  ? bootstrap.profilePersonalFieldLabels
+  ? meuPerfilBootstrap.fieldLabels
   : {};
-const initialProfileTab = bootstrap.initialProfileTab || "pessoal";
+function getMeuPerfilPersonalCardTargetV1() {
+  const bootstrapTarget = String(meuPerfilBootstrap.personalCardTarget || "").trim();
+  if (bootstrapTarget) {
+    return bootstrapTarget;
+  }
+  if (meuPerfilDomain && typeof meuPerfilDomain.resolvePersonalCardTarget === "function") {
+    return meuPerfilDomain.resolvePersonalCardTarget();
+  }
+  return "#perfil-pessoal-card";
+}
+function getMeuPerfilPersonalCardElV1(root) {
+  const target = getMeuPerfilPersonalCardTargetV1();
+  const scope = root && typeof root.querySelector === "function" ? root : document;
+  return (
+    scope.querySelector(target) ||
+    document.querySelector(target) ||
+    document.getElementById(String(target || "").replace(/^#/, ""))
+  );
+}
+const initialProfileTab = meuPerfilDomain && typeof meuPerfilDomain.normalizeTabKey === "function"
+  ? meuPerfilDomain.normalizeTabKey(meuPerfilBootstrap.activeTab || bootstrap.initialProfileTab || "pessoal")
+  : (bootstrap.initialProfileTab || "pessoal");
 const initialMenu = normalizeMenuKey(bootstrap.initialMenu || HOME_MENU_KEY_V1) || HOME_MENU_KEY_V1;
 const initialMenuTarget = bootstrap.initialMenuTarget || "";
 const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "";
@@ -1054,7 +1075,6 @@ if (
     filterProcessExtraMenuItems: filterProcessExtraMenuItemsV1,
     buildMenuItemUniqueKey: buildMenuItemUniqueKey_v1,
     dashboardData,
-    profilePersonalSections,
     sidebarMenuSettings,
     visibleSidebarMenuKeys,
     menuProcessValuesMap,
@@ -1134,12 +1154,9 @@ const dynamicProcessInactiveBodyEl = document.getElementById("dynamic-process-in
 const dynamicProcessInactiveEmptyEl = document.getElementById("dynamic-process-inactive-empty");
 const dynamicProcessInactiveLimiterEl = document.getElementById("dynamic-process-inactive-limiter");
 let homeSelectedTarget = "#home-summary-card";
-let profileSelectedTarget = "#perfil-pessoal-card";
-if (initialProfileTab === "morada") {
-  profileSelectedTarget = "#perfil-morada-card";
-} else if (initialProfileTab === "treinamento") {
-  profileSelectedTarget = "#dados-treinamento-card";
-}
+let profileSelectedTarget = meuPerfilDomain && typeof meuPerfilDomain.resolveTabTarget === "function"
+  ? meuPerfilDomain.resolveTabTarget(meuPerfilBootstrap.activeTab || initialProfileTab)
+  : "#perfil-pessoal-card";
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_START
 const NATIVE_ADMIN_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.NATIVE_ADMIN_TARGETS_V1
@@ -1243,17 +1260,12 @@ function resolveAdminSelectedTargetV1({
   return "#dynamic-process-card";
 }
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_END
-let meuPerfilSelectedTarget = "#perfil-pessoal-card";
-const requestedMeuPerfilProfileSection = normalizeMenuKey(
-  (typeof window !== "undefined" && window.location && window.location.search)
-    ? new URLSearchParams(window.location.search).get("profile_section")
-    : ""
-);
-let meuPerfilSelectedProfileSection = (
-  Array.isArray(profilePersonalSections) && profilePersonalSections.length
-)
-  ? String(requestedMeuPerfilProfileSection || profilePersonalSections[0].key || "")
-  : "";
+let meuPerfilSelectedTarget = profileSelectedTarget;
+let meuPerfilSelectedProfileSection = String(
+  meuPerfilBootstrap.activePersonalSection ||
+  meuPerfilBootstrap.activeSection ||
+  ""
+).trim().toLowerCase();
 let hiddenMeuPerfilSectionKeys = new Set();
 if (startupHash === "#home-summary-card") {
   homeSelectedTarget = startupHash;
@@ -1371,6 +1383,7 @@ if (
     renderDynamicProcessCard,
     closeAllProfileEdits,
     syncActiveTabTitle,
+    getMeuPerfilPersonalCardTarget: getMeuPerfilPersonalCardTargetV1,
     applyMeuPerfilProcessSubsequentVisibility,
     applyContentForMenu,
     getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
@@ -2549,7 +2562,7 @@ function collectCurrentMeuPerfilQuantityValues() {
   )
     ? JSON.parse(JSON.stringify(menuProcessQuantityValuesMap[cleanMenuKey]))
     : {};
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   if (!formEl) {
     return baseValues;
@@ -2591,7 +2604,7 @@ function collectCurrentMeuPerfilQuantityValues() {
 }
 
 function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   if (!formEl) {
     return;
@@ -2614,7 +2627,7 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 }
 
 function renderMeuPerfilQuantityGroups() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const readonlyGridEl = personalCardEl ? personalCardEl.querySelector(".profile-readonly .personal-grid") : null;
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const editGridEl = formEl ? formEl.querySelector(".personal-grid") : null;
@@ -2640,7 +2653,11 @@ function renderMeuPerfilQuantityGroups() {
   const quantityValuesByRule = collectCurrentMeuPerfilQuantityValues();
   const nextQuantityValuesByRule = { ...quantityValuesByRule };
   const optionMetaByKey = buildProcessOptionMetaMap(setting);
-  const activeSectionKey = normalizeMenuKey(meuPerfilSelectedProfileSection || (profilePersonalSections[0] && profilePersonalSections[0].key) || "");
+  const activeSectionKey = normalizeMenuKey(
+    meuPerfilSelectedProfileSection ||
+    meuPerfilBootstrap.activePersonalSection ||
+    ""
+  );
 
   normalizedRules.forEach((rule) => {
     const ruleSectionKey = normalizeMenuKey(rule.headerKey || activeSectionKey || "");
@@ -3869,7 +3886,7 @@ function setupAllocationSectionMultiValue(personalCardEl, sectionKey) {
 }
 
 function setupProfileProcessTabs() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   if (!personalCardEl) {
     return;
   }
@@ -3910,7 +3927,7 @@ function setupProfileProcessTabs() {
 }
 
 function collectCurrentMeuPerfilProcessValues() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const valuesByField = {};
   if (!formEl) {
@@ -3956,7 +3973,7 @@ function collectCurrentMeuPerfilProcessValues() {
 
 function applyMeuPerfilProcessSubsequentVisibility() {
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   if (!setting || !personalCardEl) {
     return;
   }
@@ -4000,7 +4017,7 @@ function applyMeuPerfilProcessSubsequentVisibility() {
       `.submenu-item[data-profile-section="${String(meuPerfilSelectedProfileSection || "").replace(/"/g, '\\"')}"]`
     );
     if (selectedLinkEl && selectedLinkEl.style.display !== "none") {
-      setActiveSubmenu("#perfil-pessoal-card", {
+      setActiveSubmenu(getMeuPerfilPersonalCardTargetV1(), {
         profileSection: String(meuPerfilSelectedProfileSection || "")
       });
       return;
@@ -4010,7 +4027,7 @@ function applyMeuPerfilProcessSubsequentVisibility() {
     );
     if (firstVisibleLinkEl) {
       meuPerfilSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "");
-      setActiveSubmenu("#perfil-pessoal-card", {
+      setActiveSubmenu(getMeuPerfilPersonalCardTargetV1(), {
         profileSection: String(meuPerfilSelectedProfileSection || "")
       });
     }
@@ -4019,7 +4036,7 @@ function applyMeuPerfilProcessSubsequentVisibility() {
 }
 
 function setupMeuPerfilQuantityRules() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   if (!formEl || !setting) {
@@ -4049,7 +4066,7 @@ function setupMeuPerfilQuantityRules() {
 }
 
 function setupConditionalProcessVisibility() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const personalFormEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   if (
     appGenesisProcessSubsequentVisibilityRuntimeV1 &&
@@ -4063,7 +4080,8 @@ function setupConditionalProcessVisibility() {
       setting: getSidebarMenuSetting(MEU_PERFIL_MENU_KEY),
       rules: getSidebarMenuSetting(MEU_PERFIL_MENU_KEY) && getSidebarMenuSetting(MEU_PERFIL_MENU_KEY).process_subsequent_fields,
       getValues: collectCurrentMeuPerfilProcessValues,
-      getCurrentSection: getCurrentProfileSectionV1
+      getCurrentSection: getCurrentProfileSectionV1,
+      getMeuPerfilPersonalCardTarget: getMeuPerfilPersonalCardTargetV1
     });
   }
 
@@ -4093,7 +4111,7 @@ function setupConditionalProcessVisibility() {
 }
 
 function restoreInitialProfileSectionFromUrlV2() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   if (!personalCardEl || typeof window.activateProfilePersonalSection !== "function") {
     return;
   }
@@ -4173,7 +4191,7 @@ document.addEventListener("appgenesis:cancelled", function (event) {
 
   if (
     cardId === "dynamic-process-card" ||
-    cardId === "perfil-pessoal-card" ||
+    cardId === String(getMeuPerfilPersonalCardTargetV1()).replace(/^#/, "") ||
     cardId === "perfil-morada-card" ||
     cardId === "dados-treinamento-card"
   ) {
@@ -5856,7 +5874,7 @@ function buildMenuItemUniqueKey_v1(item) {
   }
 
   function getReadonlyGridQuantityReadonlyV1() {
-    return document.querySelector("#perfil-pessoal-card .profile-readonly .personal-grid");
+    return document.querySelector(`${getMeuPerfilPersonalCardTargetV1()} .profile-readonly .personal-grid`);
   }
 
   function getQuantityReadonlyValuesV1(ruleKey) {
@@ -6262,7 +6280,7 @@ function initializeProfileRuntimeV1(context = {}) {
     return context;
   }
 
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const setting = typeof getSidebarMenuSetting === "function" ? getSidebarMenuSetting(MEU_PERFIL_MENU_KEY) : null;
   const runtimeRefs = getNewUserRuntimeRefsV1(context);

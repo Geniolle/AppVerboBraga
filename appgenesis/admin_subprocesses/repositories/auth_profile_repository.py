@@ -538,6 +538,8 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
             or (context or {}).get("entity_number")
             or ""
         ).strip()
+        if self.config.uses_entity_context and not entity_number:
+            return False, "entity_not_found", ""
         requested_edit_key = str(edit_key or "").strip().lower()
 
         existing_rows = self._build_rows(
@@ -607,10 +609,7 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         # O numero da entidade vem sempre do contexto do servidor (nunca do payload
         # do browser) e e' gravado incondicionalmente: todo perfil pertence a
         # entidade ativa de quem o cria ou edita.
-        if entity_number:
-            target_values[AUTH_PROFILE_ENTITY_NUMBER_KEY] = entity_number
-        else:
-            target_values.pop(AUTH_PROFILE_ENTITY_NUMBER_KEY, None)
+        target_values[AUTH_PROFILE_ENTITY_NUMBER_KEY] = entity_number
 
         target_record["section_key"] = str(
             target_record.get("section_key") or AUTH_PROFILE_SECTION_KEY

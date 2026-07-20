@@ -79,11 +79,12 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert "Objeto de autorização" in active_labels_before
         assert objeto_group_visible_before is True
 
-        edit_row = driver.find_element(
-            By.XPATH,
-            "//tr[contains(., 'Gestor de Tesouraria')]",
+        wait.until(
+            lambda drv: bool(
+                drv.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
+            )
         )
-        edit_links = edit_row.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
+        edit_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
         assert edit_links, {
             "current_url": driver.current_url,
             "active_labels_before": active_labels_before,
@@ -159,8 +160,10 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert objeto_form_header in ("Editar objeto de autorização", "Objeto de autorização")
         assert objeto_field_keys == [
             "custom_nome_do_perfil",
+            "custom_permissoes",
             "custom_processo",
             "custom_subprocesso",
+            "entity_number",
             "status",
             "visibility_scope_mode",
         ]
@@ -188,16 +191,49 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
             .lower()
             .startswith("autorização")
         )
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_permissoes"] label',
+            ).text.strip()
+            .lower()
+            .startswith("permissões")
+        )
         selects_by_key = {item["fieldKey"]: item for item in objeto_selects}
         assert set(selects_by_key) == {
             "custom_nome_do_perfil",
             "custom_processo",
             "custom_subprocesso",
+            "custom_permissoes",
         }
         assert all(not item["disabled"] for item in selects_by_key.values())
         assert selects_by_key["custom_nome_do_perfil"]["value"] == "Gestor de Tesouraria"
-        assert selects_by_key["custom_processo"]["value"] == "custom_extratos_bancarios"
-        assert selects_by_key["custom_subprocesso"]["value"] == "custom_extratos_bancarios"
+        assert selects_by_key["custom_processo"]["value"] == "extrato"
+        assert selects_by_key["custom_subprocesso"]["value"] == "Todas as autorizações"
+        assert selects_by_key["custom_subprocesso"]["options"] == [
+            {"value": "", "label": "Selecione", "selected": False},
+            {
+                "value": "Todas as autorizações",
+                "label": "Todas as autorizações",
+                "selected": True,
+            },
+            {
+                "value": "custom_extratos_bancarios",
+                "label": "Extratos bancários",
+                "selected": False,
+            },
+        ]
+        assert selects_by_key["custom_permissoes"]["options"] == [
+            {"value": "", "label": "Selecione", "selected": False},
+            {
+                "value": "all",
+                "label": "Todas as permissões",
+                "selected": False,
+            },
+            {"value": "view", "label": "Exibir", "selected": False},
+            {"value": "edit", "label": "Editar", "selected": False},
+            {"value": "delete", "label": "Eliminar", "selected": False},
+        ]
         assert all(len(item["options"]) >= 2 for item in selects_by_key.values())
     finally:
         driver.quit()

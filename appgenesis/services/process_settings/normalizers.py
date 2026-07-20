@@ -9,8 +9,9 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config
+from appgenesis.domains.meu_perfil.constants import MEU_PERFIL_MENU_KEY_V1
 
-MENU_MEU_PERFIL_KEY = "meu_perfil"
+MENU_MEU_PERFIL_KEY = MEU_PERFIL_MENU_KEY_V1
 MENU_MEU_PERFIL_LEGACY_KEY = "documentos"
 
 SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (

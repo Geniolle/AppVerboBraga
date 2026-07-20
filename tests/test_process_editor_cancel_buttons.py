@@ -84,6 +84,48 @@ def test_geral_tab_has_no_form_only_available_fields_card() -> None:
     assert "Campos disponíveis" in geral_pane
 
 
+def test_non_general_process_editor_tabs_do_not_render_internal_heading_blocks() -> None:
+    html_text = _read_new_user_html()
+
+    removed_blocks = [
+        (
+            "campos-config",
+            "<h3>Configuração dos campos</h3>",
+            "Defina quais campos ficam visíveis no processo e a ordem de exibição.",
+        ),
+        (
+            "campos-quantidade",
+            "<h3>Campos Quantidade</h3>",
+            "Configure regras onde um campo numérico controla quantos blocos de outros campos serão exibidos no processo.",
+        ),
+        (
+            "lista",
+            "<h3>Listas reutilizáveis</h3>",
+            "Crie e gira listas para utilizar em campos do tipo Lista.",
+        ),
+        (
+            "campos-subsequentes",
+            "<h3>Campos Subsequentes</h3>",
+            "Configure campos que aparecem conforme a resposta de outro campo.",
+        ),
+        (
+            "campos-adicionais",
+            "<h3>Campos Adicionais</h3>",
+            "Crie, edite, ordene e remova campos adicionais exibidos neste processo.",
+        ),
+    ]
+
+    for pane_key, heading_html, description_text in removed_blocks:
+        pane_marker = f'data-process-edit-pane="{pane_key}"'
+        pane_start = html_text.index(pane_marker)
+        next_pane_start = html_text.find('data-process-edit-pane="', pane_start + 1)
+        pane_text = html_text[pane_start: next_pane_start if next_pane_start != -1 else len(html_text)]
+
+        assert heading_html not in pane_text
+        assert description_text not in pane_text
+        assert "process-tab-description-v1" not in pane_text
+
+
 ####################################################################################
 # (1.1) TODAS AS ABAS DO EDITOR ENVIAM return_url NO GUARDAR, REUSANDO A MESMA VARIAVEL
 # GLOBAL (settings_edit_exit_url), PARA O BACKEND PRESERVAR O CONTEXTO DE SAIDA (ex.: admin_tab)

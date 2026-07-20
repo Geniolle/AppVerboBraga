@@ -258,6 +258,12 @@ def _build_render_field_meta_map_v1(
                     or existing_field.get("manual_list_items")
                     or []
                 ),
+                "manual_list_options": (
+                    raw_field.get("manual_list_options")
+                    or raw_field.get("manualListOptions")
+                    or existing_field.get("manual_list_options")
+                    or []
+                ),
                 "manual_list_items_csv": str(
                     raw_field.get("manual_list_items_csv")
                     or raw_field.get("manualListItemsCsv")

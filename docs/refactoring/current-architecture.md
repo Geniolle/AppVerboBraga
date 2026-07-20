@@ -7,6 +7,46 @@ página administrativa central (`/users/new`, servida por `routes/profile/page_h
 `services/page.py`) que concentra várias abas: Entidade, Utilizador, Menu, Sessões, Perfil de
 autorização, Objeto de autorização, Meu Perfil, e processos dinâmicos configuráveis.
 
+## Meu Perfil
+
+O domínio funcional de **Meu Perfil** ficou consolidado com uma cadeia única:
+
+```text
+request
+→ autenticação
+→ entidade ativa validada
+→ page_handler
+→ domínio `meu_perfil`
+→ `get_page_data(...)`
+→ configuração da entidade
+→ bootstrap
+→ template
+→ `meu_perfil_v1.js`
+→ runtimes genéricos
+→ DOM
+```
+
+Pontos centrais do contrato:
+
+- chave canónica: `meu_perfil`;
+- aliases legados: `perfil` e `documentos`, normalizados numa camada central;
+- tabs canónicas: `pessoal`, `morada`, `treinamento`;
+- target canónico do cartão pessoal: `#perfil-pessoal-card`;
+- `profile_personal_sections` e o bootstrap `window.__APPGENESIS_BOOTSTRAP__.meuPerfil` são
+  resolvidos pelo domínio e transportados ao frontend;
+- os dados globais do Member continuam globais;
+- a configuração visual e os campos permitidos continuam a variar por entidade;
+- o POST filtra campos pela entidade ativa e ignora campos arbitrários ou de outra entidade;
+- o helper `merge_member_profile_fields_v1(...)` permanece puro e faz apenas merge parcial.
+
+Cobertura validada nesta fase:
+
+- resultado final de `get_page_data(...)` isolado por entidade;
+- bootstrap por entidade sem contaminação entre chamadas;
+- POST filtrado pelos campos permitidos na entidade ativa;
+- preservação de campos globais e legados;
+- navegação browser real e arquitetura frontend.
+
 ```
 Request
   → routes/<area>/router.py (registo de rotas por efeito colateral de import)

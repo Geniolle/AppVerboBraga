@@ -10,6 +10,12 @@
     typeof window.AppGenesisProfileFieldRegistryV1 === "object"
       ? window.AppGenesisProfileFieldRegistryV1
       : null;
+  const meuPerfilRuntimeV1 =
+    window.AppGenesisMeuPerfilV1 &&
+    typeof window.AppGenesisMeuPerfilV1 === "object"
+      ? window.AppGenesisMeuPerfilV1
+      : null;
+  const FALLBACK_MEU_PERFIL_PERSONAL_CARD_TARGET = "#perfil-pessoal-card";
 
   const ALLOWED_OPERATORS = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 
@@ -134,11 +140,29 @@
     return evaluateRules(rules, valuesByField);
   }
 
+  function resolveMeuPerfilPersonalCardTarget(context) {
+    const injectedTarget = String(
+      context && typeof context.getMeuPerfilPersonalCardTarget === "function"
+        ? context.getMeuPerfilPersonalCardTarget()
+        : ""
+    ).trim();
+    if (injectedTarget) {
+      return injectedTarget;
+    }
+    const bootstrapTarget = String(
+      meuPerfilRuntimeV1 && typeof meuPerfilRuntimeV1.resolvePersonalCardTarget === "function"
+        ? meuPerfilRuntimeV1.resolvePersonalCardTarget()
+        : ""
+    ).trim();
+    return bootstrapTarget || FALLBACK_MEU_PERFIL_PERSONAL_CARD_TARGET;
+  }
+
   function resolveForm(root) {
     const scope = root && typeof root.querySelector === "function" ? root : document;
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     return (
       scope.querySelector('form[action="/users/profile/personal"]') ||
-      scope.querySelector("#perfil-pessoal-card form") ||
+      scope.querySelector(`${personalCardTarget} form`) ||
       scope.querySelector("form[data-process-edit-form='1'], form[data-process-edit-form], form") ||
       null
     );
@@ -227,10 +251,11 @@
   function getTargetWrappers(root, fieldKey) {
     const scope = root && typeof root.querySelectorAll === "function" ? root : document;
     const cleanKey = normalizeKey(fieldKey);
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     const wrappers = [];
 
     scope.querySelectorAll(
-      `#perfil-pessoal-card [data-profile-field-key="${cleanKey}"], [data-process-field-key="${cleanKey}"], [data-process-subsequent-target-key="${cleanKey}"]`
+      `${personalCardTarget} [data-profile-field-key="${cleanKey}"], [data-process-field-key="${cleanKey}"], [data-process-subsequent-target-key="${cleanKey}"]`
     ).forEach((node) => {
       const wrapper = node.matches("[data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]")
         ? node
@@ -247,10 +272,11 @@
   function getTargetTabs(root, fieldKey) {
     const scope = root && typeof root.querySelectorAll === "function" ? root : document;
     const cleanKey = normalizeKey(fieldKey);
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     const tabs = [];
 
     scope.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button], #perfil-pessoal-card .profile-section-tab, [data-process-section-tab]"
+      `${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button], ${personalCardTarget} .profile-section-tab, [data-process-section-tab]`
     ).forEach((tab) => {
       const dataKey = normalizeKey(
         tab.dataset.profileSection ||
@@ -286,6 +312,7 @@
     const root = context && context.root ? context.root : document;
     const hiddenSet = hiddenTargets instanceof Set ? hiddenTargets : new Set();
     const fieldMetaMap = getFieldMetaMapFromContext(context);
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(context);
 
     hiddenSet.forEach((fieldKey) => {
       getTargetWrappers(root, fieldKey).forEach((wrapper) => {
@@ -298,7 +325,7 @@
     });
 
     root.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]"
+      `${personalCardTarget} [data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]`
     ).forEach((element) => {
       const wrapper = element.matches("[data-profile-field-key], [data-process-field-key], [data-process-subsequent-target-key]")
         ? element
@@ -313,7 +340,7 @@
     });
 
     root.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button], #perfil-pessoal-card .profile-section-tab, [data-process-section-tab]"
+      `${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button], ${personalCardTarget} .profile-section-tab, [data-process-section-tab]`
     ).forEach((tab) => {
       const cleanKey = normalizeKey(
         tab.dataset.profileSection ||
@@ -331,7 +358,7 @@
     const currentSection = typeof context.getCurrentSection === "function" ? normalizeKey(context.getCurrentSection()) : "";
     if (currentSection && hiddenSet.has(currentSection)) {
       const nextVisible = Array.from(root.querySelectorAll(
-        "#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button], #perfil-pessoal-card .profile-section-tab, [data-process-section-tab]"
+        `${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button], ${personalCardTarget} .profile-section-tab, [data-process-section-tab]`
       ))
         .map((tab) => normalizeKey(tab.dataset.profileSection || tab.dataset.profileSectionKey || tab.dataset.profileSectionTab || tab.dataset.sectionKey || tab.dataset.processSectionKey || ""))
         .find((sectionKey) => sectionKey && !hiddenSet.has(sectionKey));
@@ -346,9 +373,10 @@
 
   function getProfileForm(root) {
     const scope = root && typeof root.querySelector === "function" ? root : document;
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     return (
       scope.querySelector('form[action="/users/profile/personal"]') ||
-      scope.querySelector("#perfil-pessoal-card form") ||
+      scope.querySelector(`${personalCardTarget} form`) ||
       null
     );
   }
@@ -359,10 +387,11 @@
     }
 
     const scope = root && typeof root.querySelector === "function" ? root : document;
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     const activeTab = scope.querySelector(
-      "#perfil-pessoal-card [data-profile-section-button].active, " +
-      "#perfil-pessoal-card .profile-section-tab.active, " +
-      "#perfil-pessoal-card .active"
+      `${personalCardTarget} [data-profile-section-button].active, ` +
+      `${personalCardTarget} .profile-section-tab.active, ` +
+      `${personalCardTarget} .active`
     );
 
     if (activeTab) {
@@ -465,9 +494,10 @@
   function getFieldWrappers(root, fieldKey) {
     const scope = root && typeof root.querySelectorAll === "function" ? root : document;
     const cleanKey = normalizeKey(fieldKey);
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     const wrappers = [];
 
-    scope.querySelectorAll("#perfil-pessoal-card [data-profile-field-key]").forEach((element) => {
+    scope.querySelectorAll(`${personalCardTarget} [data-profile-field-key]`).forEach((element) => {
       const wrapper = element.matches("[data-profile-field-key]") ? element : element.closest("[data-profile-field-key]");
       if (wrapper && normalizeKey(wrapper.dataset.profileFieldKey) === cleanKey) {
         wrappers.push(wrapper);
@@ -480,14 +510,15 @@
   function getSectionTabs(root, sectionKey) {
     const scope = root && typeof root.querySelectorAll === "function" ? root : document;
     const cleanKey = normalizeKey(sectionKey);
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
     const tabs = [];
 
     scope.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-section-tab], " +
-      "#perfil-pessoal-card [data-profile-section-button], " +
-      "#perfil-pessoal-card .profile-section-tab, " +
-      "#perfil-pessoal-card button, " +
-      "#perfil-pessoal-card a"
+      `${personalCardTarget} [data-profile-section-tab], ` +
+      `${personalCardTarget} [data-profile-section-button], ` +
+      `${personalCardTarget} .profile-section-tab, ` +
+      `${personalCardTarget} button, ` +
+      `${personalCardTarget} a`
     ).forEach((tab) => {
       const dataKey = normalizeKey(
         tab.dataset.profileSection ||
@@ -542,6 +573,7 @@
   function applyProfileVisibility(context, hiddenTargets) {
     const root = context && context.root ? context.root : document;
     const hiddenSet = hiddenTargets instanceof Set ? hiddenTargets : new Set();
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(context);
 
     hiddenSet.forEach((fieldKey) => {
       getFieldWrappers(root, fieldKey).forEach((wrapper) => setWrapperHidden(wrapper, true));
@@ -551,7 +583,7 @@
       });
     });
 
-    root.querySelectorAll("#perfil-pessoal-card [data-profile-field-key]").forEach((element) => {
+    root.querySelectorAll(`${personalCardTarget} [data-profile-field-key]`).forEach((element) => {
       const wrapper = element.matches("[data-profile-field-key]") ? element : element.closest("[data-profile-field-key]");
       if (!wrapper) {
         return;
@@ -560,7 +592,7 @@
       setWrapperHidden(wrapper, hiddenSet.has(cleanKey));
     });
 
-    root.querySelectorAll("#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button]").forEach((tab) => {
+    root.querySelectorAll(`${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button]`).forEach((tab) => {
       const cleanKey = normalizeKey(
         tab.dataset.profileSection ||
         tab.dataset.profileSectionKey ||
@@ -575,7 +607,7 @@
     if (typeof window.activateProfilePersonalSection === "function") {
       const currentSection = getCurrentProfileSection(root);
       if (currentSection && hiddenSet.has(currentSection)) {
-        const nextVisible = Array.from(root.querySelectorAll("#perfil-pessoal-card [data-profile-section-tab], #perfil-pessoal-card [data-profile-section-button]"))
+        const nextVisible = Array.from(root.querySelectorAll(`${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button]`))
           .map((tab) => normalizeKey(tab.dataset.profileSection || tab.dataset.profileSectionKey || tab.dataset.profileSectionTab || tab.dataset.sectionKey || ""))
           .find((sectionKey) => sectionKey && !hiddenSet.has(sectionKey));
         if (nextVisible) {

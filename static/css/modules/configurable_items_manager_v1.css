@@ -596,17 +596,6 @@ button.action-btn.configurable-items-create-trigger-v1 {
   max-width: 100%;
 }
 
-#settings-menu-edit-card .process-edit-pane .grid,
-#settings-menu-edit-card .process-edit-pane .process-visible-fields,
-#settings-menu-edit-card .process-edit-pane .process-subsequent-fields-grid,
-#settings-menu-edit-card .process-edit-pane .process-lists-grid,
-#settings-menu-edit-card .process-edit-pane .process-fields-builder {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 14px;
-}
-
 #settings-menu-edit-card .process-edit-pane .field {
   margin-bottom: 12px;
 }
@@ -839,6 +828,15 @@ button.action-btn.configurable-items-create-trigger-v1 {
   border-radius: 8px;
   background: #ffffff;
   padding: 14px;
+}
+
+#settings-menu-edit-card .process-edit-pane .configurable-items-list-v1 {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }
 
 #settings-menu-edit-card .process-edit-pane .configurable-items-editor-v1 + .configurable-items-list-v1 {

@@ -24,6 +24,8 @@ services:
       db:
         condition: service_healthy
     environment:
+      APP_BASE_URL: ${APP_BASE_URL:-http://web:8000}
+      SELENIUM_REMOTE_URL: ${SELENIUM_REMOTE_URL:-http://selenium:4444/wd/hub}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-app_igreja}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
       DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-20}
@@ -44,6 +46,21 @@ services:
     command: sh -c "python init_db.py && uvicorn web_app:app --host 0.0.0.0 --port 8000"
     volumes:
       - ./:/app
+
+  selenium:
+    image: selenium/standalone-chromium:4.46.0-20260707
+    profiles:
+      - browser-tests
+    shm_size: "2gb"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:4444/status
+      interval: 3s
+      timeout: 3s
+      retries: 30
 
 volumes:
   pg_data:

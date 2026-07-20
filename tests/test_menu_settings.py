@@ -211,6 +211,7 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
             },
             {"key": "custom_processo", "label": "Processo", "field_type": "text"},
             {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+            {"key": "custom_permissoes", "label": "Permissões", "field_type": "list"},
             {"key": "custom_perfil_2", "label": "Perfil", "field_type": "text"},
         ],
         "visible_fields": [
@@ -240,6 +241,10 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
                 "header_key": "custom_objeto_de_autorizacao",
             },
             {
+                "field_key": "custom_permissoes",
+                "header_key": "custom_objeto_de_autorizacao",
+            },
+            {
                 "field_key": "custom_perfil_2",
                 "header_key": "custom_perfil",
             },
@@ -248,6 +253,7 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
             "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
             "custom_processo": "custom_objeto_de_autorizacao",
             "custom_subprocesso": "custom_objeto_de_autorizacao",
+            "custom_permissoes": "custom_objeto_de_autorizacao",
             "custom_perfil_2": "custom_perfil",
         },
     }
@@ -258,6 +264,7 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
         "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
         "custom_processo": "custom_objeto_de_autorizacao",
         "custom_subprocesso": "custom_objeto_de_autorizacao",
+        "custom_permissoes": "custom_objeto_de_autorizacao",
         "custom_perfil_2": "custom_perfil",
     }
 
@@ -437,6 +444,7 @@ def test_get_sidebar_menu_settings_repairs_profile_authorization_object_section(
             "custom_nome_do_perfil",
             "custom_processo",
             "custom_subprocesso",
+            "custom_permissoes",
             "custom_objeto_de_autorizacao_1",
         ]
         assert profile_setting["process_visible_field_header_map"] == {
@@ -444,6 +452,7 @@ def test_get_sidebar_menu_settings_repairs_profile_authorization_object_section(
             "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
             "custom_processo": "custom_objeto_de_autorizacao",
             "custom_subprocesso": "custom_objeto_de_autorizacao",
+            "custom_permissoes": "custom_objeto_de_autorizacao",
         }
 
         resolved_fields = resolve_subprocess_section_fields_v1(
@@ -457,11 +466,13 @@ def test_get_sidebar_menu_settings_repairs_profile_authorization_object_section(
             "custom_nome_do_perfil",
             "custom_processo",
             "custom_subprocesso",
+            "custom_permissoes",
         ]
         assert [item["label"] for item in resolved_fields] == [
             "Nome do perfil",
             "Processo",
             "Autorização",
+            "Permissões",
         ]
 
         stored_row = session.scalar(
@@ -476,8 +487,35 @@ def test_get_sidebar_menu_settings_repairs_profile_authorization_object_section(
             "custom_nome_do_perfil",
             "custom_processo",
             "custom_subprocesso",
+            "custom_permissoes",
             "custom_objeto_de_autorizacao_1",
         ]
+
+
+def test_resolve_field_list_options_supports_stable_manual_values() -> None:
+    options = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_permissoes",
+            "label": "Permissões",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_options": [
+                {"value": "all", "label": "Todas as permissões"},
+                {"value": "view", "label": "Exibir"},
+                {"value": "edit", "label": "Editar"},
+                {"value": "delete", "label": "Eliminar"},
+            ],
+        },
+        sidebar_menu_settings=[],
+    )
+
+    assert options == [
+        {"value": "all", "label": "Todas as permissões", "status": "active"},
+        {"value": "view", "label": "Exibir", "status": "active"},
+        {"value": "edit", "label": "Editar", "status": "active"},
+        {"value": "delete", "label": "Eliminar", "status": "active"},
+    ]
 
 
 def test_normalize_additional_fields_list_legacy_defaults_to_manual() -> None:
@@ -957,6 +995,11 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
 
     assert resolved == [
         {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
+        {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
             "status": "active",
@@ -1065,6 +1108,11 @@ def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_priorit
 
     assert resolved == [
         {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
+        {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
             "status": "active",
@@ -1126,6 +1174,11 @@ def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_alia
     )
 
     expected_options = [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
@@ -1199,6 +1252,11 @@ def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_wit
     )
 
     assert resolved == [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
@@ -1315,6 +1373,11 @@ def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_pro
 
     assert resolved == [
         {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
+        {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
             "status": "active",
@@ -1368,6 +1431,11 @@ def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_au
     )
 
     assert resolved == [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {"value": "custom_saldo", "label": "Saldo", "status": "active"},
         {"value": "custom_movimentos", "label": "Movimentos", "status": "active"},
     ]
@@ -1490,6 +1558,11 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_inf
     assert dependent_field["dependent_field_key"] == "custom_processo"
     assert dependent_field["automatic_source_field_key"] == "custom_processo"
     assert dependent_field["options"] == [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {"value": "custom_saldo", "label": "Saldo", "status": "active"},
         {"value": "custom_movimentos", "label": "Movimentos", "status": "active"},
     ]
@@ -1743,6 +1816,7 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
             "automatic_source_field_key": "",
             "automatic_only_active": False,
             "manual_list_items": [],
+            "manual_list_options": [],
             "manual_list_items_csv": "",
             "options": [
                 {"value": "Financeiro", "label": "Financeiro", "status": "active"},
@@ -1865,6 +1939,7 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
             "automatic_source_field_key": "custom_nome_do_perfil",
             "automatic_only_active": False,
             "manual_list_items": [],
+            "manual_list_options": [],
             "manual_list_items_csv": "",
             "options": [],
             "header_key": "custom_objeto_de_autorizacao",
@@ -2108,6 +2183,7 @@ def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -
             "automatic_source_field_key": "",
             "automatic_only_active": False,
             "manual_list_items": [],
+            "manual_list_options": [],
             "manual_list_items_csv": "",
             "options": [
                 {

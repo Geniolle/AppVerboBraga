@@ -123,6 +123,7 @@ def test_objeto_autorizacao_repository_save_row_preserves_existing_dynamic_value
             "dynamic_values": {
                 "custom_processo": "Extratos bancários",
                 "custom_subprocesso": "Todas autorizações",
+                "custom_permissoes": "view",
             },
         },
         context={"entity_number": "1001"},
@@ -137,6 +138,7 @@ def test_objeto_autorizacao_repository_save_row_preserves_existing_dynamic_value
     assert len(stored_records) == 1
     assert stored_records[0]["values"]["custom_processo"] == "Extratos bancários"
     assert stored_records[0]["values"]["custom_subprocesso"] == "Todas autorizações"
+    assert stored_records[0]["values"]["custom_permissoes"] == "view"
 
 
 def test_objeto_autorizacao_repository_list_rows_filters_by_entity_number(monkeypatch) -> None:

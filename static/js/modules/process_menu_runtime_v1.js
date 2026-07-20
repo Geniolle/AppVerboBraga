@@ -53,6 +53,9 @@
     getActiveMenuKey: function () {
       return "";
     },
+    getMeuPerfilPersonalCardTarget: function () {
+      return "#perfil-pessoal-card";
+    },
     MEU_PERFIL_MENU_KEY: "meu_perfil",
     ESTRUTURAS_MENU_KEY_V1: "sessoes",
     windowRef: global
@@ -144,6 +147,9 @@
     }
     if (typeof safeOptions.getActiveMenuKey === "function") {
       state.getActiveMenuKey = safeOptions.getActiveMenuKey;
+    }
+    if (typeof safeOptions.getMeuPerfilPersonalCardTarget === "function") {
+      state.getMeuPerfilPersonalCardTarget = safeOptions.getMeuPerfilPersonalCardTarget;
     }
     if (typeof safeOptions.MEU_PERFIL_MENU_KEY === "string" && safeOptions.MEU_PERFIL_MENU_KEY.trim()) {
       state.MEU_PERFIL_MENU_KEY = safeOptions.MEU_PERFIL_MENU_KEY.trim();
@@ -241,7 +247,7 @@
           });
           state.syncActiveTabTitle(
             "#submenu-items",
-            "#perfil-pessoal-card .profile-card-header h2",
+            `${state.getMeuPerfilPersonalCardTarget()} .profile-card-header h2`,
             ["Mais"]
           );
         }

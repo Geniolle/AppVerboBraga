@@ -447,6 +447,8 @@ class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
         scope_label = _scope_label(scope_mode)
         status_value = _normalize_status(payload.get("status"))
         entity_number = str((context or {}).get("entity_number") or "").strip()
+        if self.config.uses_entity_context and not entity_number:
+            return False, "entity_not_found", ""
         requested_edit_key = str(edit_key or "").strip().lower()
 
         existing_rows = self._build_rows(
@@ -500,12 +502,7 @@ class ObjetoAutorizacaoAdminRepository(BaseAdminSubprocessRepository):
         target_values[OBJETO_AUTORIZACAO_SCOPE_MODE_KEY] = scope_mode
         target_values[OBJETO_AUTORIZACAO_SCOPE_LABEL_KEY] = scope_label
         target_values[OBJETO_AUTORIZACAO_STATUS_KEY] = status_value
-        if entity_number:
-            target_values[OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY] = entity_number
-        elif OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY in target_values and not str(
-            target_values.get(OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY) or ""
-        ).strip():
-            target_values.pop(OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY, None)
+        target_values[OBJETO_AUTORIZACAO_ENTITY_NUMBER_KEY] = entity_number
 
         target_record["section_key"] = str(
             target_record.get("section_key") or OBJETO_AUTORIZACAO_SECTION_KEY

@@ -186,6 +186,12 @@
 
   function getCurrentProfileSection(root) {
     const scope = root && typeof root.querySelector === "function" ? root : document;
+    const meuPerfilBootstrap = bootstrap.meuPerfil && typeof bootstrap.meuPerfil === "object"
+      ? bootstrap.meuPerfil
+      : null;
+    const sections = Array.isArray(meuPerfilBootstrap && meuPerfilBootstrap.personalSections)
+      ? meuPerfilBootstrap.personalSections
+      : [];
 
     for (const selector of profileSectionSelectors) {
       const input = scope.querySelector(selector);
@@ -226,9 +232,6 @@
       }
 
       const activeLabel = normalizeLookupText(activeElement.textContent);
-      const sections = Array.isArray(bootstrap.profilePersonalSections)
-        ? bootstrap.profilePersonalSections
-        : [];
 
       for (const section of sections) {
         if (normalizeLookupText(section && section.label) === activeLabel) {
@@ -237,8 +240,8 @@
       }
     }
 
-    const firstSection = Array.isArray(bootstrap.profilePersonalSections) && bootstrap.profilePersonalSections.length
-      ? normalizeFieldKey(bootstrap.profilePersonalSections[0].key)
+    const firstSection = Array.isArray(sections) && sections.length
+      ? normalizeFieldKey(sections[0].key)
       : "";
 
     return firstSection;

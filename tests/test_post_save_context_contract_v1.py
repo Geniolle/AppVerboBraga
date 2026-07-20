@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from test_new_user_runtime_functional_v1 import (
+from tests.test_new_user_runtime_functional_v1 import (
     _build_chrome_driver_v1,
     _inject_js_file_v1,
     _load_blank_page_v1,

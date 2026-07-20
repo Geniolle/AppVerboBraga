@@ -53,6 +53,10 @@ from appgenesis.services.profile import (
     parse_member_profile_fields,
 )
 from appgenesis.domains.meu_perfil.visibility import apply_meu_perfil_subsequent_visibility_v2
+from appgenesis.domains.meu_perfil.service import (
+    build_meu_perfil_bootstrap_v1,
+    build_meu_perfil_personal_sections_state_v1,
+)
 
 
 
@@ -261,7 +265,7 @@ def _resolve_actor_menu_process_maps(
     menu_process_quantity_values_map: dict[str, dict[str, list[dict[str, str]]]] = {}
     for sidebar_item in sidebar_menu_settings:
         menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
-        if not menu_key or menu_key in {"home", "perfil", "administrativo"}:
+        if not menu_key or menu_key in {"home", MENU_MEU_PERFIL_KEY, "administrativo"}:
             continue
         visible_rows = (
             sidebar_item.get("process_visible_field_rows")
@@ -798,72 +802,24 @@ def get_page_data(
                 profile_personal_visible_fields = [next(iter(profile_personal_field_labels.keys()))]
         break
 
-    # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_START
-    profile_personal_sections: list[dict[str, str]] = []
-    profile_personal_field_section_map: dict[str, str] = {}
-    header_section_order: list[str] = []
-    header_section_seen: set[str] = set()
-
-    profile_header_field_keys = {
-        clean_key
-        for clean_key, meta in profile_personal_custom_field_meta.items()
-        if clean_key.startswith("custom_")
-        and str((meta or {}).get("field_type") or "").strip().lower() == "header"
-    }
-
-    def append_profile_header_section_v1(raw_header_key: Any) -> None:
-        clean_header_key = str(raw_header_key or "").strip().lower()
-
-        if not clean_header_key:
-            return
-
-        if clean_header_key in header_section_seen:
-            return
-
-        if clean_header_key not in profile_header_field_keys:
-            return
-
-        section_label = profile_personal_field_labels.get(clean_header_key, "Aba")
-
-        profile_personal_sections.append(
-            {
-                "key": clean_header_key,
-                "label": section_label,
-            }
-        )
-        header_section_order.append(clean_header_key)
-        header_section_seen.add(clean_header_key)
-
-    for field_key in profile_personal_visible_fields:
-        clean_field_key = str(field_key or "").strip().lower()
-        append_profile_header_section_v1(clean_field_key)
-
-    for header_key in profile_personal_field_header_map.values():
-        append_profile_header_section_v1(header_key)
-
-    first_profile_header_key = header_section_order[0] if header_section_order else ""
-
-    for field_key in profile_personal_visible_fields:
-        clean_field_key = str(field_key or "").strip().lower()
-
-        if not clean_field_key:
-            continue
-
-        field_type = str(profile_personal_field_types.get(clean_field_key) or "").strip().lower()
-
-        if field_type == "header":
-            continue
-
-        configured_header_key = str(
-            profile_personal_field_header_map.get(clean_field_key) or ""
-        ).strip().lower()
-
-        if configured_header_key in header_section_seen:
-            profile_personal_field_section_map[clean_field_key] = configured_header_key
-            continue
-
-        profile_personal_field_section_map[clean_field_key] = first_profile_header_key
-    # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_END
+    profile_personal_state = build_meu_perfil_personal_sections_state_v1(
+        profile_personal_visible_fields=profile_personal_visible_fields,
+        profile_personal_field_labels=profile_personal_field_labels,
+        profile_personal_field_types=profile_personal_field_types,
+        profile_personal_field_header_map=profile_personal_field_header_map,
+        profile_personal_custom_field_meta=profile_personal_custom_field_meta,
+        requested_profile_section="",
+    )
+    profile_personal_sections = list(profile_personal_state.get("personalSections") or [])
+    profile_personal_field_section_map = dict(
+        profile_personal_state.get("personalFieldSectionMap") or {}
+    )
+    active_profile_personal_section = str(
+        profile_personal_state.get("activePersonalSection") or ""
+    ).strip().lower()
+    default_profile_header_section_v1 = str(
+        profile_personal_state.get("defaultPersonalSection") or ""
+    ).strip().lower()
 
 
     required_profile_fields = ["nome", "telefone", "email", "pais"]
@@ -897,8 +853,6 @@ def get_page_data(
                 profile_personal_visible_fields.append(required_field)
 
     # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_START
-    default_profile_header_section_v1 = header_section_order[0] if header_section_order else ""
-
     if "pais" not in profile_personal_field_section_map:
         profile_personal_field_section_map["pais"] = profile_personal_field_section_map.get(
             "telefone",
@@ -920,6 +874,14 @@ def get_page_data(
             default_profile_header_section_v1,
         )
     # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
+
+    meu_perfil_bootstrap = build_meu_perfil_bootstrap_v1(
+        profile_tab="pessoal",
+        profile_section=active_profile_personal_section,
+        profile_personal_sections=profile_personal_sections,
+        profile_personal_visible_fields=profile_personal_visible_fields,
+        profile_personal_field_labels=profile_personal_field_labels,
+    )
 
 
     scoped_entities = _resolve_scoped_entities(session, allowed_entity_ids)
@@ -995,7 +957,9 @@ def get_page_data(
         "profile_personal_field_labels": profile_personal_field_labels,
         "profile_personal_field_section_map": profile_personal_field_section_map,
         "profile_personal_sections": profile_personal_sections,
+        "profile_personal_active_section": active_profile_personal_section,
         "profile_personal_custom_field_meta": profile_personal_custom_field_meta,
+        "meu_perfil_bootstrap": meu_perfil_bootstrap,
         "menu_meu_perfil_field_options": [dict(item) for item in MENU_MEU_PERFIL_FIELD_OPTIONS],
         "menu_meu_perfil_field_labels": dict(MENU_MEU_PERFIL_FIELD_LABELS),
         "dashboard_data": get_home_dashboard_data(

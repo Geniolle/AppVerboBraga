@@ -57,6 +57,7 @@ from appgenesis.services.profile import (
     get_hidden_process_targets_from_rules,
     get_menu_process_quantity_repeated_field_keys,
     is_meu_perfil_builtin_duplicate_field,
+    merge_member_profile_fields_v1,
     parse_member_profile_fields,
     parse_menu_process_records,
     parse_optional_date_pt,
@@ -1581,13 +1582,14 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         member.country = clean_country or None
         member.birth_date = parsed_birth_date
         member.whatsapp_notice_opt_in = parsed_whatsapp_notice_opt_in
-        for existing_key in list(existing_profile_fields.keys()):
-            if existing_key.startswith("custom_"):
-                existing_profile_fields.pop(existing_key, None)
-            if existing_key.startswith(f"quantity__{MENU_MEU_PERFIL_KEY}__"):
-                existing_profile_fields.pop(existing_key, None)
-        existing_profile_fields.update(updated_custom_fields)
-        existing_profile_fields.update(updated_quantity_values)
+        existing_profile_fields = merge_member_profile_fields_v1(
+            existing_profile_fields,
+            {**updated_custom_fields, **updated_quantity_values},
+            removed_prefixes=(
+                "custom_",
+                f"quantity__{MENU_MEU_PERFIL_KEY}__",
+            ),
+        )
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
         if previous_phone != clean_primary_phone:
             member.whatsapp_verification_status = "unknown"

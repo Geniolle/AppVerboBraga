@@ -489,6 +489,20 @@ def repair_profile_authorization_menu_config_v1(
             "automatic_source_field_key": "custom_processo",
         }
     ) or changed
+    changed = upsert_field(
+        {
+            "key": "custom_permissoes",
+            "label": "Permissões",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_options": [
+                {"value": "all", "label": "Todas as permissões", "status": "active"},
+                {"value": "view", "label": "Exibir", "status": "active"},
+                {"value": "edit", "label": "Editar", "status": "active"},
+                {"value": "delete", "label": "Eliminar", "status": "active"},
+            ],
+        }
+    ) or changed
 
     canonical_field_order = [
         "custom_perfil",
@@ -497,6 +511,7 @@ def repair_profile_authorization_menu_config_v1(
         "custom_nome_do_perfil",
         "custom_processo",
         "custom_subprocesso",
+        "custom_permissoes",
     ]
     ordered_field_keys: list[str] = []
     seen_field_keys: set[str] = set()
@@ -525,6 +540,7 @@ def repair_profile_authorization_menu_config_v1(
         "custom_nome_do_perfil",
         "custom_processo",
         "custom_subprocesso",
+        "custom_permissoes",
     }
 
     if isinstance(raw_rows, list):
@@ -562,7 +578,12 @@ def repair_profile_authorization_menu_config_v1(
         ] + canonical_visible_rows
         visible_field_headers["custom_field_perfil"] = "custom_perfil"
 
-    for field_key in ("custom_nome_do_perfil", "custom_processo", "custom_subprocesso"):
+    for field_key in (
+        "custom_nome_do_perfil",
+        "custom_processo",
+        "custom_subprocesso",
+        "custom_permissoes",
+    ):
         if field_key in fields_by_key:
             canonical_visible_rows.append(
                 {

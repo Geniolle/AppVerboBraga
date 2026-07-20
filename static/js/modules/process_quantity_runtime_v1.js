@@ -10,6 +10,15 @@
     typeof window.AppGenesisProfileFieldRegistryV1 === "object"
       ? window.AppGenesisProfileFieldRegistryV1
       : null;
+  const meuPerfilRuntimeV1 =
+    window.AppGenesisMeuPerfilV1 &&
+    typeof window.AppGenesisMeuPerfilV1 === "object"
+      ? window.AppGenesisMeuPerfilV1
+      : null;
+  const MEU_PERFIL_PERSONAL_CARD_TARGET = meuPerfilRuntimeV1 &&
+    typeof meuPerfilRuntimeV1.resolvePersonalCardTarget === "function"
+      ? meuPerfilRuntimeV1.resolvePersonalCardTarget()
+      : "#perfil-pessoal-card";
 
   const TEXTUAL_TYPES = new Set(["text", "number", "email", "phone"]);
   const DEFAULT_MAX_ITEMS = 1;
@@ -201,7 +210,7 @@
 
     return (
       scope.querySelector('form[action="/users/profile/personal"]') ||
-      scope.querySelector("#perfil-pessoal-card form") ||
+      scope.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} form`) ||
       null
     );
   }
@@ -279,7 +288,7 @@
     const scope = root && typeof root.querySelector === "function" ? root : document;
     return (
       scope.querySelector('form[action="/users/profile/personal"]') ||
-      scope.querySelector("#perfil-pessoal-card form") ||
+      scope.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} form`) ||
       scope.querySelector("form[data-process-edit-form='1'], form[data-process-edit-form], form") ||
       null
     );
@@ -483,7 +492,7 @@
   function renderProfileQuantityRule(context, rule, valuesByRule, fieldMetaMap) {
     const root = context.root || document;
     const formEl = context.formEl || resolveForm(root);
-    const readonlyGridEl = context.readonlyGridEl || (root.querySelector("#perfil-pessoal-card .profile-readonly .personal-grid") || null);
+    const readonlyGridEl = context.readonlyGridEl || (root.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} .profile-readonly .personal-grid`) || null);
     const editGridEl = context.editGridEl || (formEl ? formEl.querySelector(".personal-grid") : null);
     const setting = getSettingFromContext(context);
     const quantityControlName = resolveControlName(rule.quantityFieldKey);
@@ -840,7 +849,8 @@
 
   function createMeuPerfilQuantityAdapterV1(options = {}) {
     const root = options.root || document;
-    const personalCardEl = root.getElementById ? root.getElementById("perfil-pessoal-card") : document.getElementById("perfil-pessoal-card");
+    const personalCardId = String(MEU_PERFIL_PERSONAL_CARD_TARGET || "#perfil-pessoal-card").replace(/^#/, "");
+    const personalCardEl = root.getElementById ? root.getElementById(personalCardId) : document.getElementById(personalCardId);
     const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
     const readonlyGridEl = personalCardEl ? personalCardEl.querySelector(".profile-readonly .personal-grid") : null;
     const editGridEl = formEl ? formEl.querySelector(".personal-grid") : null;
