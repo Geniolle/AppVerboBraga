@@ -185,8 +185,8 @@
           }
         ]
       },
-      meu_perfil: {
-        title: "Meu perfil",
+      [state.MEU_PERFIL_MENU_KEY]: {
+        title: "Meus dados",
         description: "Opcoes do perfil do utilizador.",
         singleView: true,
         toggleOnMenuClick: true,
@@ -247,25 +247,6 @@
         details: [
           { label: "Modulo", value: "Administrativo" },
           { label: "Acesso", value: "Permitido" }
-        ]
-      },
-      [state.MEU_PERFIL_MENU_KEY]: {
-        title: "Meus dados",
-        description: "Dados do meu perfil.",
-        singleView: true,
-        toggleOnMenuClick: true,
-        items: (
-          Array.isArray(state.profilePersonalSections) && state.profilePersonalSections.length
-            ? state.profilePersonalSections.map((section) => ({
-                label: String(section.label || "Dados pessoais"),
-                target: "#perfil-pessoal-card",
-                profileSection: String(section.key || "")
-              }))
-            : []
-        ),
-        details: [
-          { label: "Modulo", value: "Meu perfil" },
-          { label: "Status", value: "Ativo" }
         ]
       },
       funcionarios: {
@@ -375,16 +356,6 @@
         if (sidebarLabel) {
           menuConfig.home = {
             ...menuConfig.home,
-            title: sidebarLabel
-          };
-        }
-        return;
-      }
-      if (menuKey === state.MEU_PERFIL_MENU_KEY) {
-        const sidebarLabel = state.normalizeMenuLabelPreserveCase(setting.label);
-        if (sidebarLabel) {
-          menuConfig[state.MEU_PERFIL_MENU_KEY] = {
-            ...menuConfig[state.MEU_PERFIL_MENU_KEY],
             title: sidebarLabel
           };
         }

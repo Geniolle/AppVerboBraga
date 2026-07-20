@@ -1,3 +1,4 @@
+from uuid import uuid4
 from urllib.parse import parse_qs, quote, urlsplit
 
 from selenium import webdriver
@@ -5,6 +6,11 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+from appgenesis.db.session import SessionLocal
+from appgenesis.models import Entity, Member, MemberEntity, User
+from appgenesis.models.enums import MemberEntityStatus, MemberStatus, UserAccountStatus
+from appgenesis.services.passwords import hash_password
 
 from tests.test_process_submenu_runtime_stage6_browser import (
     _browser_console_errors_v1,
@@ -34,6 +40,87 @@ def _active_sidebar_menu_key_v1(driver: webdriver.Chrome) -> str:
     if not active_menu:
         return ""
     return str(active_menu[0].get_attribute("data-menu") or "").strip().lower()
+
+
+def _create_regular_user_for_meu_perfil_v1() -> tuple[str, str]:
+    email = f"qa_meu_perfil_{uuid4().hex[:10]}@example.com"
+    password = "SenhaUtilizador123!"
+
+    session = SessionLocal()
+    try:
+        entity = (
+            session.query(Entity)
+            .filter(Entity.is_active.is_(True))
+            .order_by(Entity.id.asc())
+            .first()
+        )
+        if entity is None:
+            raise RuntimeError("Nao existe entidade ativa para testar o utilizador comum.")
+
+        member = Member(
+            full_name="QA Meu Perfil",
+            primary_phone="910000000",
+            email=email,
+            member_status=MemberStatus.ACTIVE.value,
+        )
+        session.add(member)
+        session.flush()
+
+        user = User(
+            member_id=member.id,
+            login_email=email,
+            password_hash=hash_password(password),
+            account_status=UserAccountStatus.ACTIVE.value,
+            system_type="owner",
+        )
+        session.add(user)
+        session.flush()
+
+        session.add(
+            MemberEntity(
+                member_id=member.id,
+                entity_id=entity.id,
+                status=MemberEntityStatus.ACTIVE.value,
+            )
+        )
+        session.commit()
+        return email, password
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def _delete_regular_user_for_meu_perfil_v1(email: str) -> None:
+    session = SessionLocal()
+    try:
+        user = session.query(User).filter(User.login_email == email).one_or_none()
+        if user is None:
+            return
+        session.query(MemberEntity).filter(MemberEntity.member_id == user.member_id).delete()
+        session.query(User).filter(User.id == user.id).delete()
+        session.query(Member).filter(Member.id == user.member_id).delete()
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def _login_regular_user_v1(driver: webdriver.Chrome, wait: WebDriverWait) -> str:
+    regular_email, regular_password = _create_regular_user_for_meu_perfil_v1()
+    try:
+        driver.get("http://127.0.0.1:8000/login")
+        wait.until(EC.presence_of_element_located((By.NAME, "email"))).send_keys(regular_email)
+        driver.find_element(By.NAME, "password").send_keys(regular_password)
+        driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        wait.until(EC.url_contains("/users/new"))
+        return regular_email
+    except Exception:
+        _delete_regular_user_for_meu_perfil_v1(regular_email)
+        raise
 
 
 def test_meu_perfil_browser_navigation_uses_canonical_bootstrap_and_tabs_v1() -> None:
@@ -121,4 +208,42 @@ def test_meu_perfil_sidebar_navigation_updates_url_and_clears_previous_target_v1
 
         assert not _browser_console_errors_v1(driver)
     finally:
+        driver.quit()
+
+
+def test_meu_perfil_sidebar_navigation_updates_url_and_clears_previous_target_regular_user_v1() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+    regular_email = ""
+
+    try:
+        regular_email = _login_regular_user_v1(driver, wait)
+        driver.get("http://127.0.0.1:8000/users/new")
+        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        sidebar_keys = [
+            str(element.get_attribute("data-menu") or "").strip().lower()
+            for element in driver.find_elements(By.CSS_SELECTOR, ".menu-item[data-menu]")
+        ]
+        source_menu_key = next(
+            (menu_key for menu_key in sidebar_keys if menu_key and menu_key != "meu_perfil"),
+            "meu_perfil",
+        )
+        if source_menu_key != _active_sidebar_menu_key_v1(driver):
+            driver.find_element(By.CSS_SELECTOR, f".menu-item[data-menu='{source_menu_key}']").click()
+            wait.until(lambda drv, expected=source_menu_key: _active_sidebar_menu_key_v1(drv) == expected)
+
+        driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='meu_perfil']").click()
+        wait.until(lambda drv: _active_sidebar_menu_key_v1(drv) == "meu_perfil")
+        wait.until(EC.visibility_of_element_located((By.ID, "perfil-pessoal-card")))
+
+        assert "menu=meu_perfil" in driver.current_url
+        assert "target=" not in driver.current_url
+        assert "#auth-objeto-form-card" not in driver.current_url
+        assert not _browser_console_errors_v1(driver)
+    finally:
+        try:
+            if regular_email:
+                _delete_regular_user_for_meu_perfil_v1(regular_email)
+        except Exception:
+            pass
         driver.quit()
