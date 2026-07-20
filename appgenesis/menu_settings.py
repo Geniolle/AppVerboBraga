@@ -123,6 +123,9 @@ from appgenesis.services.process_settings.subsequent_field_service import (
     normalize_menu_process_subsequent_fields,
     update_sidebar_menu_subsequent_fields,
 )
+from appgenesis.services.process_settings.process_sections import (
+    resolve_process_sections_v1,
+)
 from appgenesis.services.process_settings.list_service import (
     _build_process_list_key_from_label_v1,
     _build_process_list_key_from_label_v2,
@@ -265,6 +268,13 @@ def get_sidebar_menu_settings(
         process_visible_field_rows = get_menu_process_visible_field_rows(
             menu_key, menu_config
         )
+        process_sections = resolve_process_sections_v1(
+            {
+                **item,
+                "menu_config": menu_config,
+                "process_visible_field_rows": process_visible_field_rows,
+            }
+        )
         process_layout_config = resolve_dynamic_process_layout_config(
             menu_key,
             menu_label,
@@ -294,6 +304,7 @@ def get_sidebar_menu_settings(
                 "process_visible_fields": process_visible_fields,
                 "process_visible_field_header_map": process_visible_field_header_map,
                 "process_visible_field_rows": process_visible_field_rows,
+                "process_sections": process_sections,
                 "process_field_options": process_field_options,
                 "process_selectable_field_options": process_selectable_field_options,
                 "process_header_options": process_header_options,
@@ -400,6 +411,14 @@ def get_sidebar_menu_settings(
         process_visible_field_rows = get_menu_process_visible_field_rows(
             menu_key, menu_config
         )
+        process_sections = resolve_process_sections_v1(
+            {
+                "key": menu_key,
+                "label": menu_label,
+                "menu_config": menu_config,
+                "process_visible_field_rows": process_visible_field_rows,
+            }
+        )
         process_layout_config = resolve_dynamic_process_layout_config(
             menu_key,
             menu_label,
@@ -425,6 +444,7 @@ def get_sidebar_menu_settings(
                 "process_visible_fields": process_visible_fields,
                 "process_visible_field_header_map": process_visible_field_header_map,
                 "process_visible_field_rows": process_visible_field_rows,
+                "process_sections": process_sections,
                 "process_field_options": process_field_options,
                 "process_selectable_field_options": process_selectable_field_options,
                 "process_header_options": process_header_options,

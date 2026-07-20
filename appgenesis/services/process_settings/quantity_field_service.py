@@ -4,17 +4,20 @@ import json
 import re
 from typing import Any
 
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from appgenesis.services.process_settings.menu_config_repository import (
+    load_menu_config,
+    save_menu_config,
+)
 from appgenesis.services.process_settings.normalizers import (
     SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS,
-    _load_menu_config,
     _menu_exists,
     _normalize_custom_field_key,
     _normalize_menu_key,
     _normalize_sentence_case_text,
     _resolve_legacy_menu_alias,
+    _resolve_sidebar_menu_settings_entity_id,
     ensure_sidebar_menu_settings_defaults,
 )
 from appgenesis.services.process_settings.additional_field_service import (
@@ -133,8 +136,12 @@ def update_sidebar_menu_process_quantity_fields_v1(
     session: Session,
     menu_key: str,
     raw_fields: Any,
+    entity_id: int | None = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    resolved_entity_id = entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -147,7 +154,7 @@ def update_sidebar_menu_process_quantity_fields_v1(
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu não encontrado."
 
-    menu_config = _load_menu_config(session, clean_menu_key)
+    menu_config = load_menu_config(session, resolved_entity_id, clean_menu_key)
     additional_fields = normalize_menu_process_additional_fields(
         menu_config.get("additional_fields")
     )
@@ -245,19 +252,4 @@ def update_sidebar_menu_process_quantity_fields_v1(
 
     menu_config["process_quantity_fields"] = validated_fields
 
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
-    )
-    session.commit()
-
-    return True, ""
+    return save_menu_config(session, resolved_entity_id, clean_menu_key, menu_config)

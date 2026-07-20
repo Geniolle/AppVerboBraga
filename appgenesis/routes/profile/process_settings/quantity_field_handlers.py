@@ -12,7 +12,7 @@ from appgenesis.core import SessionLocal
 from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
-    _require_menu_settings_owner_v1,
+    resolve_menu_settings_write_context_v1,
 )
 
 
@@ -34,7 +34,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
+        write_context = resolve_menu_settings_write_context_v1(
             session,
             request,
             redirect_menu,
@@ -44,8 +44,8 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             settings_tab="campos-quantidade",
             return_url=return_url,
         )
-        if blocked_response is not None:
-            return blocked_response
+        if isinstance(write_context, RedirectResponse):
+            return write_context
 
         rows_count = max(
             len(quantity_rule_key),
@@ -89,6 +89,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
 
         ok, error_message = update_sidebar_menu_process_quantity_fields_v1(
             session=session,
+            entity_id=write_context.entity_id,
             menu_key=clean_menu_key,
             raw_fields=payload_rules,
         )

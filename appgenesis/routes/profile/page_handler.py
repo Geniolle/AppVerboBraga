@@ -250,6 +250,25 @@ def _resolve_estruturas_navigation_context_v1(
 def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
     if not isinstance(menu_row, dict):
         return "__empty__"
+    process_sections = menu_row.get("process_sections")
+    if isinstance(process_sections, list) and process_sections:
+        if len(process_sections) == 1:
+            only_section = process_sections[0]
+            if isinstance(only_section, dict):
+                section_key = str(only_section.get("key") or "").strip().lower()
+                field_keys = [
+                    str(raw_field_key or "").strip().lower()
+                    for raw_field_key in (only_section.get("field_keys") or [])
+                    if str(raw_field_key or "").strip()
+                ]
+                if section_key == "__geral__" and field_keys:
+                    return f"field:{field_keys[0]}"
+        for section in process_sections:
+            if not isinstance(section, dict):
+                continue
+            section_key = str(section.get("key") or "").strip().lower()
+            if section_key:
+                return section_key
     raw_rows = menu_row.get("process_visible_field_rows")
     if not isinstance(raw_rows, list) or not raw_rows:
         return "__empty__"

@@ -785,6 +785,9 @@ function getDynamicProcessLayoutConfig(setting, menuLabel, sectionLabel) {
 }
 
 function buildProcessSections(setting, processValuesByField = {}) {
+  const resolvedProcessSections = Array.isArray(setting && setting.process_sections)
+    ? setting.process_sections
+    : [];
   const processRows = Array.isArray(setting.process_visible_field_rows)
     ? setting.process_visible_field_rows
     : [];
@@ -917,6 +920,60 @@ function buildProcessSections(setting, processValuesByField = {}) {
     return sectionOrder
       .map((sectionKey) => sectionMap.get(sectionKey))
       .filter(Boolean);
+  }
+
+  if (resolvedProcessSections.length) {
+    const sections = [];
+    resolvedProcessSections.forEach((section) => {
+      if (!section || typeof section !== "object") {
+        return;
+      }
+      const sectionKey = normalizeMenuKey(section.key);
+      if (!sectionKey) {
+        return;
+      }
+      const sectionLabel = toSentenceCaseText(section.label || sectionKey || "Aba");
+      const fieldKeys = Array.isArray(section.field_keys)
+        ? section.field_keys
+        : [];
+      const fields = [];
+      const seenFieldKeys = new Set();
+      fieldKeys.forEach((rawFieldKey) => {
+        const fieldKey = normalizeMenuKey(rawFieldKey);
+        if (!fieldKey || seenFieldKeys.has(fieldKey)) {
+          return;
+        }
+        if (quantityRepeatedFieldKeys.has(fieldKey)) {
+          return;
+        }
+        const fieldMeta = optionMetaByKey.get(fieldKey) || {};
+        if (normalizeProcessFieldType(fieldMeta.fieldType) === "header") {
+          return;
+        }
+        seenFieldKeys.add(fieldKey);
+        fields.push(buildFieldEntry(fieldKey, fieldMeta));
+      });
+
+      sections.push({
+        key: sectionKey,
+        label: sectionLabel,
+        quantityRuleKeys: Array.isArray(section.quantity_rule_keys)
+          ? section.quantity_rule_keys.map((item) => normalizeMenuKey(item)).filter(Boolean)
+          : [],
+        fields
+      });
+    });
+
+    if (sections.length) {
+      if (sections.length === 1 && sections[0].key === "__geral__") {
+        return sections[0].fields.map((field) => ({
+          key: `field:${field.key}`,
+          label: field.label,
+          fields: [field]
+        }));
+      }
+      return sections;
+    }
   }
 
   if (!processRows.length) {
