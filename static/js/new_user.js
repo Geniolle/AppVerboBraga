@@ -1317,6 +1317,7 @@ if (
     getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
     renderDynamicProcessCard,
     MEU_PERFIL_MENU_KEY,
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
     setMeuPerfilSelectedProfileSection: (sectionKey) => {
       meuPerfilSelectedProfileSection = sectionKey;
     },
@@ -1351,6 +1352,7 @@ if (
     logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
     getActiveMenuKey: () => activeMenuKey,
     refreshProcessShellBreadcrumb: refreshProcessShellBreadcrumbV1,
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
     setMeuPerfilSelectedProfileSection: (sectionKey) => {
       meuPerfilSelectedProfileSection = sectionKey;
     },
@@ -3885,6 +3887,117 @@ function setupAllocationSectionMultiValue(personalCardEl, sectionKey) {
   });
 }
 
+function getMeuPerfilSectionPaneNodesV1(personalCardEl, sectionKey) {
+  if (!personalCardEl) {
+    return [];
+  }
+
+  const cleanSection = String(sectionKey || "").trim().toLowerCase();
+  if (!cleanSection) {
+    return [];
+  }
+
+  const selector = `[data-profile-section-pane="${cleanSection.replace(/"/g, '\\"')}"]`;
+  return Array.from(personalCardEl.querySelectorAll(selector));
+}
+
+function hasVisibleMeuPerfilSectionContentV1(personalCardEl, sectionKey) {
+  return getMeuPerfilSectionPaneNodesV1(personalCardEl, sectionKey).some((paneEl) => {
+    if (!paneEl) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(paneEl);
+    return style.display !== "none" && style.visibility !== "hidden" && !paneEl.hidden;
+  });
+}
+
+function resolveMeuPerfilVisibleSectionKeyV1(personalCardEl, sectionKey) {
+  if (!personalCardEl) {
+    return String(sectionKey || "").trim().toLowerCase();
+  }
+
+  const normalizedPreferredSection = String(sectionKey || "").trim().toLowerCase();
+  const orderedSections = [];
+
+  Array.from(personalCardEl.querySelectorAll("[data-profile-section-pane]")).forEach((paneEl) => {
+    const paneSection = String(paneEl.getAttribute("data-profile-section-pane") || "").trim().toLowerCase();
+    if (paneSection && !orderedSections.includes(paneSection)) {
+      orderedSections.push(paneSection);
+    }
+  });
+
+  const visibleSections = orderedSections.filter((paneSection) => {
+    return hasVisibleMeuPerfilSectionContentV1(personalCardEl, paneSection);
+  });
+
+  if (normalizedPreferredSection && visibleSections.includes(normalizedPreferredSection)) {
+    return normalizedPreferredSection;
+  }
+
+  if (visibleSections.length) {
+    return visibleSections[0];
+  }
+
+  if (normalizedPreferredSection && orderedSections.includes(normalizedPreferredSection)) {
+    return normalizedPreferredSection;
+  }
+
+  return orderedSections[0] || normalizedPreferredSection || "geral";
+}
+
+function resolveMeuPerfilVisibleSectionKeyV2(personalCardEl, sectionKey, hiddenSectionKeys) {
+  const normalizedPreferredSection = String(sectionKey || "").trim().toLowerCase();
+  const hiddenSet = hiddenSectionKeys instanceof Set
+    ? hiddenSectionKeys
+    : new Set(
+      Array.isArray(hiddenSectionKeys)
+        ? hiddenSectionKeys.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
+        : []
+    );
+  const orderedSections = [];
+
+  if (!personalCardEl || typeof personalCardEl.querySelectorAll !== "function") {
+    return {
+      sectionKey: normalizedPreferredSection || "geral",
+      hasVisibleSection: false
+    };
+  }
+
+  Array.from(personalCardEl.querySelectorAll("[data-profile-section-pane]")).forEach((paneEl) => {
+    const paneSection = String(paneEl.getAttribute("data-profile-section-pane") || "").trim().toLowerCase();
+    if (paneSection && !orderedSections.includes(paneSection)) {
+      orderedSections.push(paneSection);
+    }
+  });
+
+  const visibleSections = orderedSections.filter((paneSection) => {
+    if (hiddenSet.has(paneSection)) {
+      return false;
+    }
+    return hasVisibleMeuPerfilSectionContentV1(personalCardEl, paneSection);
+  });
+
+  if (normalizedPreferredSection && visibleSections.includes(normalizedPreferredSection)) {
+    return {
+      sectionKey: normalizedPreferredSection,
+      hasVisibleSection: true
+    };
+  }
+
+  if (visibleSections.length) {
+    return {
+      sectionKey: visibleSections[0],
+      hasVisibleSection: true
+    };
+  }
+
+  return {
+    sectionKey: orderedSections[0] || normalizedPreferredSection || "geral",
+    hasVisibleSection: false
+  };
+}
+
 function setupProfileProcessTabs() {
   const personalCardEl = getMeuPerfilPersonalCardElV1();
   if (!personalCardEl) {
@@ -3904,15 +4017,21 @@ function setupProfileProcessTabs() {
         )
         .filter((section) => !hiddenMeuPerfilSectionKeys.has(section))
     );
-    const effectiveSection = availableSections.has(normalizedSection)
-      ? normalizedSection
-      : (Array.from(availableSections)[0] || "geral");
+    const orderedAvailableSections = Array.from(availableSections);
+    const visibleResolution = resolveMeuPerfilVisibleSectionKeyV2(
+      personalCardEl,
+      normalizedSection,
+      hiddenMeuPerfilSectionKeys
+    );
+    const effectiveSection = visibleResolution.sectionKey || normalizedSection || "geral";
+    const forceVisibleFallback = !visibleResolution.hasVisibleSection && Boolean(effectiveSection);
 
     sectionPanes.forEach((paneEl) => {
       const paneSection = String(
         paneEl.getAttribute("data-profile-section-pane") || "geral"
       ).trim().toLowerCase();
-      paneEl.style.display = !hiddenMeuPerfilSectionKeys.has(paneSection) && paneSection === effectiveSection ? "" : "none";
+      const isFallbackSection = forceVisibleFallback && paneSection === effectiveSection;
+      paneEl.style.display = (!hiddenMeuPerfilSectionKeys.has(paneSection) || isFallbackSection) && paneSection === effectiveSection ? "" : "none";
     });
     const sectionInputEl = personalCardEl.querySelector("[data-meu-perfil-section-input]");
     if (sectionInputEl) {
@@ -3990,9 +4109,18 @@ function applyMeuPerfilProcessSubsequentVisibility() {
     rules: setting.process_subsequent_fields,
     getValues: collectCurrentMeuPerfilProcessValues,
     getCurrentSection: getCurrentProfileSectionV1
-  });
+    });
 
     hiddenMeuPerfilSectionKeys = evaluation && evaluation.hiddenTargets ? evaluation.hiddenTargets : new Set();
+    if (typeof window.activateProfilePersonalSection === "function") {
+      window.activateProfilePersonalSection(
+        resolveMeuPerfilVisibleSectionKeyV2(
+          personalCardEl,
+          meuPerfilSelectedProfileSection,
+          hiddenMeuPerfilSectionKeys
+        ).sectionKey
+      );
+    }
     return;
   }
 
@@ -4010,7 +4138,13 @@ function applyMeuPerfilProcessSubsequentVisibility() {
   }
 
   if (typeof window.activateProfilePersonalSection === "function") {
-    window.activateProfilePersonalSection(meuPerfilSelectedProfileSection);
+    window.activateProfilePersonalSection(
+      resolveMeuPerfilVisibleSectionKeyV2(
+        personalCardEl,
+        meuPerfilSelectedProfileSection,
+        hiddenMeuPerfilSectionKeys
+      ).sectionKey
+    );
   }
   if (itemsEl) {
     const selectedLinkEl = itemsEl.querySelector(

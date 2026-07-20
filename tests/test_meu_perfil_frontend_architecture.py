@@ -27,6 +27,16 @@ def test_meu_perfil_navigation_state_uses_canonical_menu_key_v1() -> None:
 def test_new_user_bootstrap_composes_meu_perfil_helpers_v1() -> None:
     new_user_text = _read("static/js/new_user.js")
     assert "getMeuPerfilPersonalCardTargetV1" in new_user_text
+    assert "getMeuPerfilSectionPaneNodesV1" in new_user_text
+    assert "hasVisibleMeuPerfilSectionContentV1" in new_user_text
+    assert "resolveMeuPerfilVisibleSectionKeyV1" in new_user_text
+    assert "resolveMeuPerfilVisibleSectionKeyV2" in new_user_text
     assert 'document.getElementById("perfil-pessoal-card")' not in new_user_text
     assert 'setActiveSubmenu("#perfil-pessoal-card"' not in new_user_text
 
+
+def test_meu_perfil_subsequent_runtime_resolves_visible_section_fallback_v1() -> None:
+    runtime_text = _read("static/js/modules/process_subsequent_visibility_runtime_v1.js")
+    assert "resolveVisibleProfileSectionKey" in runtime_text
+    assert "isVisibleElement" in runtime_text
+    assert "activateProfilePersonalSection(resolvedSection)" in runtime_text

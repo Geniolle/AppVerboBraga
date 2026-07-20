@@ -292,6 +292,7 @@
       state.debugTabsLog("activateMenu:before-apply", { menuKey: cleanMenuKey, defaultTarget });
       state.applyContentForMenuTarget(cleanMenuKey, defaultTarget, source);
       state.refreshProcessShellBreadcrumb({ menuKey: cleanMenuKey, target: defaultTarget, source });
+      syncSidebarMenuUrl(cleanMenuKey, source);
       if (cleanMenuKey === state.MEU_PERFIL_MENU_KEY) {
         let selectedSectionItem = menuItems.find(
           (item) => String(item.profileSection || "") === state.getMeuPerfilSelectedProfileSection()
@@ -300,12 +301,19 @@
           selectedSectionItem = menuItems.find((item) => item.target === defaultTarget) || menuItems[0];
         }
         if (selectedSectionItem) {
-          const selectedSectionKey = String(selectedSectionItem.profileSection || "");
+          const selectedSectionKey = String(
+            selectedSectionItem.profileSection ||
+            state.getMeuPerfilSelectedProfileSection() ||
+            ""
+          ).trim();
           state.setMeuPerfilSelectedProfileSection(selectedSectionKey);
           state.activateProfilePersonalSection(selectedSectionKey);
           state.applyMeuPerfilProcessSubsequentVisibility();
+          state.activateProfilePersonalSection(
+            String(state.getMeuPerfilSelectedProfileSection() || selectedSectionKey || "").trim()
+          );
           state.setActiveSubmenu(defaultTarget, {
-            profileSection: selectedSectionKey
+            profileSection: String(state.getMeuPerfilSelectedProfileSection() || selectedSectionKey || "").trim()
           });
           state.syncActiveTabTitle(
             "#submenu-items",

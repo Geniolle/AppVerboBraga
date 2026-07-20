@@ -356,16 +356,9 @@
     });
 
     const currentSection = typeof context.getCurrentSection === "function" ? normalizeKey(context.getCurrentSection()) : "";
-    if (currentSection && hiddenSet.has(currentSection)) {
-      const nextVisible = Array.from(root.querySelectorAll(
-        `${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button], ${personalCardTarget} .profile-section-tab, [data-process-section-tab]`
-      ))
-        .map((tab) => normalizeKey(tab.dataset.profileSection || tab.dataset.profileSectionKey || tab.dataset.profileSectionTab || tab.dataset.sectionKey || tab.dataset.processSectionKey || ""))
-        .find((sectionKey) => sectionKey && !hiddenSet.has(sectionKey));
-
-      if (nextVisible && typeof window.activateProfilePersonalSection === "function") {
-        window.activateProfilePersonalSection(nextVisible);
-      }
+    const resolvedSection = resolveVisibleProfileSectionKey(root, currentSection, hiddenSet);
+    if (resolvedSection && resolvedSection !== currentSection && typeof window.activateProfilePersonalSection === "function") {
+      window.activateProfilePersonalSection(resolvedSection);
     }
 
     return hiddenSet;
@@ -405,6 +398,56 @@
     }
 
     return "";
+  }
+
+  function isVisibleElement(el) {
+    if (!el) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(el);
+    return style.display !== "none" && style.visibility !== "hidden" && !el.hidden;
+  }
+
+  function resolveVisibleProfileSectionKey(root, currentSection, hiddenSet) {
+    const scope = root && typeof root.querySelector === "function" ? root : document;
+    const personalCardTarget = resolveMeuPerfilPersonalCardTarget(root);
+    const sectionOrder = [];
+
+    scope.querySelectorAll(`${personalCardTarget} [data-profile-section-pane]`).forEach((paneEl) => {
+      const sectionKey = normalizeKey(
+        paneEl.dataset.profileSectionPane ||
+        paneEl.getAttribute("data-profile-section-pane") ||
+        ""
+      );
+      if (sectionKey && !sectionOrder.includes(sectionKey)) {
+        sectionOrder.push(sectionKey);
+      }
+    });
+
+    const visibleSections = sectionOrder.filter((sectionKey) => {
+      if (hiddenSet && hiddenSet.has(sectionKey)) {
+        return false;
+      }
+
+      const selector = `${personalCardTarget} [data-profile-section-pane="${sectionKey.replace(/"/g, '\\"')}"]`;
+      return Array.from(scope.querySelectorAll(selector)).some((paneEl) => isVisibleElement(paneEl));
+    });
+
+    const cleanCurrentSection = normalizeKey(currentSection || "");
+    if (cleanCurrentSection && visibleSections.includes(cleanCurrentSection)) {
+      return cleanCurrentSection;
+    }
+
+    if (visibleSections.length) {
+      return visibleSections[0];
+    }
+
+    if (cleanCurrentSection && sectionOrder.includes(cleanCurrentSection)) {
+      return cleanCurrentSection;
+    }
+
+    return sectionOrder[0] || cleanCurrentSection || "geral";
   }
 
   function resolveControlName(fieldKey) {
@@ -606,13 +649,9 @@
 
     if (typeof window.activateProfilePersonalSection === "function") {
       const currentSection = getCurrentProfileSection(root);
-      if (currentSection && hiddenSet.has(currentSection)) {
-        const nextVisible = Array.from(root.querySelectorAll(`${personalCardTarget} [data-profile-section-tab], ${personalCardTarget} [data-profile-section-button]`))
-          .map((tab) => normalizeKey(tab.dataset.profileSection || tab.dataset.profileSectionKey || tab.dataset.profileSectionTab || tab.dataset.sectionKey || ""))
-          .find((sectionKey) => sectionKey && !hiddenSet.has(sectionKey));
-        if (nextVisible) {
-          window.activateProfilePersonalSection(nextVisible);
-        }
+      const resolvedSection = resolveVisibleProfileSectionKey(root, currentSection, hiddenSet);
+      if (resolvedSection && resolvedSection !== currentSection) {
+        window.activateProfilePersonalSection(resolvedSection);
       }
     }
 
