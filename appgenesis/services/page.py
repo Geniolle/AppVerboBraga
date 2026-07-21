@@ -25,6 +25,7 @@ from appgenesis.menu_settings import (
     normalize_sidebar_sections,
     resolve_menu_key_alias,
 )
+from appgenesis.services.process_settings.process_sections import resolve_process_sections_v1
 from appgenesis.services.user_entity_scope import (
     get_actor_primary_entity_v1,
     get_entities_for_user_edit_form_v1,
@@ -647,13 +648,21 @@ def get_page_data(
             profile_personal_field_labels = option_labels
         if option_types:
             profile_personal_field_types = option_types
-        process_sections = sidebar_item.get("process_sections")
-        if isinstance(process_sections, list):
+        resolved_process_sections = resolve_process_sections_v1(sidebar_item)
+        if resolved_process_sections:
             profile_personal_process_sections = [
                 dict(section)
-                for section in process_sections
+                for section in resolved_process_sections
                 if isinstance(section, dict)
             ]
+        else:
+            process_sections = sidebar_item.get("process_sections")
+            if isinstance(process_sections, list):
+                profile_personal_process_sections = [
+                    dict(section)
+                    for section in process_sections
+                    if isinstance(section, dict)
+                ]
         raw_header_map = sidebar_item.get("process_visible_field_header_map")
         if isinstance(raw_header_map, dict):
             mapped_header_map: dict[str, str] = {}
@@ -674,6 +683,12 @@ def get_page_data(
             if isinstance(sidebar_item.get("process_visible_field_rows"), list)
             else []
         )
+        valid_profile_header_keys = {
+            clean_key
+            for clean_key, meta in profile_personal_custom_field_meta.items()
+            if clean_key.startswith("custom_")
+            and str((meta or {}).get("field_type") or "").strip().lower() == "header"
+        }
         effective_visible_rows: list[dict[str, str]] = []
         seen_effective_field_keys: set[str] = set()
         for raw_row in raw_visible_rows:
@@ -701,11 +716,18 @@ def get_page_data(
             )
         if effective_visible_rows:
             profile_personal_effective_visible_rows = effective_visible_rows
-            profile_personal_field_header_map = {
-                str(row.get("field_key") or "").strip().lower(): str(row.get("header_key") or "").strip().lower()
-                for row in effective_visible_rows
-                if str(row.get("field_key") or "").strip() and str(row.get("header_key") or "").strip()
-            }
+            if not profile_personal_field_header_map:
+                profile_personal_field_header_map = {}
+            for row in effective_visible_rows:
+                clean_field_key = str(row.get("field_key") or "").strip().lower()
+                clean_header_key = str(row.get("header_key") or "").strip().lower()
+                if (
+                    clean_field_key
+                    and clean_header_key
+                    and clean_header_key in valid_profile_header_keys
+                    and clean_field_key not in profile_personal_field_header_map
+                ):
+                    profile_personal_field_header_map[clean_field_key] = clean_header_key
         for custom_field in sidebar_item.get("process_additional_fields") or []:
             clean_key = str(custom_field.get("key") or "").strip().lower()
             if not clean_key.startswith("custom_"):

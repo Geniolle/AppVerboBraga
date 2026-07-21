@@ -221,7 +221,7 @@ def test_get_page_data_includes_quantity_only_profile_section_from_process_secti
     SessionLocal = _build_session_factory()
 
     def fake_get_sidebar_menu_settings(session, active_entity_id=None):
-        return _build_meu_perfil_settings(
+        settings = _build_meu_perfil_settings(
             section_key="custom_dados_pessoais",
             field_key="custom_campo_entidade_1001",
             field_label="Campo entidade 1001",
@@ -229,24 +229,163 @@ def test_get_page_data_includes_quantity_only_profile_section_from_process_secti
             process_sections=[
                 {
                     "key": "custom_dados_pessoais",
-                    "label": "Dados pessoais",
+                    "label": "custom_dados_pessoais",
                     "field_keys": ["custom_campo_entidade_1001"],
                     "quantity_rule_keys": [],
                 },
                 {
                     "key": "custom_dados_de_agregados",
-                    "label": "Dados de agregados",
+                    "label": "custom_dados_de_agregados",
                     "field_keys": [],
                     "quantity_rule_keys": ["qty_agregados"],
                 },
             ],
         )
+        setting = settings[0]
+        setting["process_additional_fields"].extend(
+            [
+                {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+            ]
+        )
+        setting["process_field_options"].extend(
+            [
+                {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+            ]
+        )
+        setting["process_quantity_fields"] = [
+            {
+                "key": "qty_agregados",
+                "label": "Agregados",
+                "quantity_field_key": "custom_quantos_filhos_tens",
+                "repeated_field_keys": ["custom_nome_do_agregado"],
+                "header_key": "custom_dados_de_agregados",
+                "max_items": 10,
+                "item_label": "Agregado",
+            }
+        ]
+        return settings
 
     monkeypatch.setattr("appgenesis.services.page.get_sidebar_menu_settings", fake_get_sidebar_menu_settings)
     monkeypatch.setattr("appgenesis.services.page.get_visible_sidebar_menu_keys", lambda *args, **kwargs: {"meu_perfil"})
 
     with SessionLocal() as session:
         entity = Entity(entity_number=1001, name="Entidade 1001", is_active=True)
+        member = Member(
+            full_name="Utilizador Teste",
+            primary_phone="912000111",
+            email="utilizador.teste@example.com",
+            member_status=MemberStatus.ACTIVE.value,
+            profile_custom_fields=serialize_member_profile_fields({}),
+        )
+        session.add_all([entity, member])
+        session.flush()
+        user = User(
+            member_id=member.id,
+            login_email=member.email,
+            password_hash="hash",
+            account_status=UserAccountStatus.ACTIVE.value,
+            system_type="default",
+        )
+        session.add(user)
+        session.add(
+            MemberEntity(
+                member_id=member.id,
+                entity_id=entity.id,
+                status=MemberEntityStatus.ACTIVE.value,
+            )
+        )
+        session.commit()
+
+        page_data = get_page_data(
+            session,
+            actor_user_id=user.id,
+            actor_login_email=user.login_email,
+            selected_entity_id=entity.id,
+        )
+
+        assert [section["key"] for section in page_data["profile_personal_sections"]] == [
+            "custom_dados_pessoais",
+            "custom_dados_de_agregados",
+        ]
+        assert [section["label"] for section in page_data["profile_personal_sections"]] == [
+            "Dados pessoais",
+            "Dados de agregados",
+        ]
+
+
+def test_get_page_data_ignores_technical_field_keys_as_meu_perfil_tabs(monkeypatch) -> None:
+    SessionLocal = _build_session_factory()
+
+    def fake_get_sidebar_menu_settings(session, active_entity_id=None):
+        settings = _build_meu_perfil_settings(
+            section_key="custom_dados_pessoais",
+            field_key="custom_nome",
+            field_label="Nome",
+            visible_label="Dados pessoais",
+            process_sections=[
+                {
+                    "key": "custom_dados_pessoais",
+                    "label": "custom_dados_pessoais",
+                    "field_keys": ["custom_nome"],
+                    "quantity_rule_keys": [],
+                },
+                {
+                    "key": "custom_nome_do_conjuge",
+                    "label": "custom_nome_do_conjuge",
+                    "field_keys": ["custom_nome_do_conjuge"],
+                    "quantity_rule_keys": [],
+                },
+                {
+                    "key": "custom_canais_de_comunicacao_instantanea",
+                    "label": "custom_canais_de_comunicacao_instantanea",
+                    "field_keys": ["custom_canais_de_comunicacao_instantanea"],
+                    "quantity_rule_keys": [],
+                },
+                {
+                    "key": "custom_dados_de_agregados",
+                    "label": "custom_dados_de_agregados",
+                    "field_keys": [],
+                    "quantity_rule_keys": ["qty_agregados"],
+                },
+            ],
+        )
+        setting = settings[0]
+        setting["process_additional_fields"].extend(
+            [
+                {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+            ]
+        )
+        setting["process_field_options"].extend(
+            [
+                {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+            ]
+        )
+        setting["process_quantity_fields"] = [
+            {
+                "key": "qty_agregados",
+                "label": "Agregados",
+                "quantity_field_key": "custom_quantos_filhos_tens",
+                "repeated_field_keys": ["custom_nome_do_agregado"],
+                "header_key": "custom_dados_de_agregados",
+                "max_items": 10,
+                "item_label": "Agregado",
+            }
+        ]
+        return settings
+
+    monkeypatch.setattr("appgenesis.services.page.get_sidebar_menu_settings", fake_get_sidebar_menu_settings)
+    monkeypatch.setattr("appgenesis.services.page.get_visible_sidebar_menu_keys", lambda *args, **kwargs: {"meu_perfil"})
+
+    with SessionLocal() as session:
+        entity = Entity(entity_number=2002, name="Entidade 2002", is_active=True)
         member = Member(
             full_name="Utilizador Teste",
             primary_phone="912000111",

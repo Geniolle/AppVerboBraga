@@ -193,6 +193,15 @@ def test_meu_perfil_browser_navigation_includes_quantity_only_section_v1() -> No
             }));
             """
         )
+        breadcrumb_before = driver.execute_script(
+            """
+            return {
+              section: String(document.getElementById('process-shell-breadcrumb-section-v1')?.textContent || '').trim(),
+              current: String(document.getElementById('process-shell-breadcrumb-current-v1')?.textContent || '').trim(),
+              tab: String(document.getElementById('process-shell-breadcrumb-tab-v1')?.textContent || '').trim()
+            };
+            """
+        )
 
         bootstrap_sections = [
             str(section.get("key") or "").strip()
@@ -209,8 +218,21 @@ def test_meu_perfil_browser_navigation_includes_quantity_only_section_v1() -> No
             for section in bootstrap.get("personalSections", [])
             if str(section.get("key") or "").strip()
         ]
-        assert "Dados de agregados" in submenu_labels
-        assert "custom_dados_de_agregados" in submenu_sections or "custom_dados_agregados" in submenu_sections
+        for expected_label in [
+            "Dados pessoais",
+            "Dados de morada",
+            "Dados de agregados",
+        ]:
+            assert expected_label in submenu_labels
+        assert "custom_canais_de_comunicacao_instantanea" not in submenu_labels
+        assert "custom_nome_do_conjuge" not in submenu_labels
+        assert "custom_morada" not in submenu_labels
+        assert "custom_" not in breadcrumb_before["section"]
+        assert "custom_" not in breadcrumb_before["current"]
+        assert "custom_" not in breadcrumb_before["tab"]
+
+        agregados_link = driver.find_element(By.CSS_SELECTOR, ".submenu-item[data-profile-section='custom_dados_de_agregados']")
+        assert str(agregados_link.get_attribute("data-profile-section") or "").strip() == "custom_dados_de_agregados"
         assert not _browser_console_errors_v1(driver)
     finally:
         driver.quit()

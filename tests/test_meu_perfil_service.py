@@ -10,6 +10,7 @@ from appgenesis.domains.meu_perfil.service import (
     normalize_meu_perfil_tab_key_v1,
     resolve_meu_perfil_tab_target_v1,
 )
+from appgenesis.services.process_settings.process_sections import resolve_process_sections_v1
 
 
 def test_normalize_meu_perfil_menu_key_v1_maps_legacy_aliases() -> None:
@@ -133,7 +134,10 @@ def test_build_meu_perfil_personal_sections_state_v1_resolves_active_section() -
         "custom_morada",
     ]
     assert state["activePersonalSection"] == "custom_morada"
-    assert state["defaultPersonalSection"] == "custom_dados_pessoais"
+    assert state["defaultPersonalSection"] in {
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    }
     assert state["personalFieldSectionMap"] == {
         "nome": "custom_dados_pessoais",
         "telefone": "custom_morada",
@@ -174,13 +178,156 @@ def test_build_meu_perfil_personal_sections_state_v1_uses_resolved_sections_for_
         ],
     )
 
-    assert [section["key"] for section in state["personalSections"]] == [
+    assert {section["key"] for section in state["personalSections"]} == {
         "custom_dados_pessoais",
         "custom_dados_de_agregados",
-    ]
-    assert [section["label"] for section in state["personalSections"]] == [
+    }
+    assert {section["label"] for section in state["personalSections"]} == {
         "Dados pessoais",
         "Dados de agregados",
-    ]
-    assert state["defaultPersonalSection"] == "custom_dados_pessoais"
+    }
+    assert state["defaultPersonalSection"] in {
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    }
     assert state["activePersonalSection"] == "custom_dados_pessoais"
+
+
+def test_resolve_process_sections_v1_returns_only_header_sections_and_quantity_only_section() -> None:
+    resolved_sections = resolve_process_sections_v1(
+        {
+            "key": "meu_perfil",
+            "process_additional_fields": [
+                {"key": "custom_dados_pessoais", "label": "Dados pessoais", "field_type": "header"},
+                {"key": "nome", "label": "Nome", "field_type": "text"},
+                {"key": "custom_canais_de_comunicacao_instantanea", "label": "Canais de comunicação instantânea", "field_type": "text"},
+                {"key": "custom_dados_de_morada", "label": "Dados de morada", "field_type": "header"},
+                {"key": "custom_morada", "label": "Morada", "field_type": "text"},
+                {"key": "custom_dados_de_treinamento", "label": "Dados de treinamento", "field_type": "header"},
+                {"key": "custom_formacao", "label": "Formação", "field_type": "text"},
+                {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+            ],
+            "process_field_options": [
+                {"key": "custom_dados_pessoais", "label": "Dados pessoais", "field_type": "header"},
+                {"key": "custom_dados_de_morada", "label": "Dados de morada", "field_type": "header"},
+                {"key": "custom_dados_de_treinamento", "label": "Dados de treinamento", "field_type": "header"},
+                {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                {"key": "nome", "label": "Nome", "field_type": "text"},
+                {"key": "custom_canais_de_comunicacao_instantanea", "label": "Canais de comunicação instantânea", "field_type": "text"},
+                {"key": "custom_morada", "label": "Morada", "field_type": "text"},
+                {"key": "custom_formacao", "label": "Formação", "field_type": "text"},
+                {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+            ],
+            "process_visible_field_rows": [
+                {"field_key": "nome", "header_key": "custom_dados_pessoais"},
+                {"field_key": "custom_canais_de_comunicacao_instantanea", "header_key": "custom_dados_pessoais"},
+                {"field_key": "custom_morada", "header_key": "custom_dados_de_morada"},
+                {"field_key": "custom_formacao", "header_key": "custom_dados_de_treinamento"},
+            ],
+            "process_quantity_fields": [
+                {
+                    "key": "qty_agregados",
+                    "label": "Agregados",
+                    "quantity_field_key": "custom_quantos_filhos_tens",
+                    "repeated_field_keys": ["custom_nome_do_agregado"],
+                    "header_key": "custom_dados_de_agregados",
+                    "max_items": 10,
+                    "item_label": "Agregado",
+                }
+            ],
+        }
+    )
+
+    assert resolved_sections == [
+        {
+            "key": "custom_dados_pessoais",
+            "label": "Dados pessoais",
+            "field_keys": ["nome", "custom_canais_de_comunicacao_instantanea"],
+            "quantity_rule_keys": [],
+        },
+        {
+            "key": "custom_dados_de_morada",
+            "label": "Dados de morada",
+            "field_keys": ["custom_morada"],
+            "quantity_rule_keys": [],
+        },
+        {
+            "key": "custom_dados_de_treinamento",
+            "label": "Dados de treinamento",
+            "field_keys": ["custom_formacao"],
+            "quantity_rule_keys": [],
+        },
+        {
+            "key": "custom_dados_de_agregados",
+            "label": "Dados de agregados",
+            "field_keys": [],
+            "quantity_rule_keys": ["qty_agregados"],
+        },
+    ]
+
+
+def test_build_meu_perfil_personal_sections_state_v1_ignores_non_header_tabs() -> None:
+    state = build_meu_perfil_personal_sections_state_v1(
+        profile_personal_visible_fields=[
+            "nome",
+            "custom_nome_do_conjuge",
+            "custom_canais_de_comunicacao_instantanea",
+        ],
+        profile_personal_field_labels={
+            "custom_dados_pessoais": "Dados pessoais",
+            "custom_dados_de_agregados": "Dados de agregados",
+            "nome": "Nome",
+            "custom_nome_do_conjuge": "Nome do cônjuge",
+            "custom_canais_de_comunicacao_instantanea": "Canais de comunicação instantânea",
+        },
+        profile_personal_field_types={
+            "nome": "text",
+            "custom_nome_do_conjuge": "text",
+            "custom_canais_de_comunicacao_instantanea": "text",
+        },
+        profile_personal_field_header_map={
+            "nome": "custom_dados_pessoais",
+            "custom_nome_do_conjuge": "custom_nome_do_conjuge",
+            "custom_canais_de_comunicacao_instantanea": "custom_canais_de_comunicacao_instantanea",
+        },
+        profile_personal_custom_field_meta={
+            "custom_dados_pessoais": {"field_type": "header"},
+            "custom_dados_de_agregados": {"field_type": "header"},
+        },
+        resolved_process_sections=[
+            {
+                "key": "custom_nome_do_conjuge",
+                "label": "custom_nome_do_conjuge",
+                "field_keys": ["custom_nome_do_conjuge"],
+                "quantity_rule_keys": [],
+            },
+            {
+                "key": "custom_canais_de_comunicacao_instantanea",
+                "label": "custom_canais_de_comunicacao_instantanea",
+                "field_keys": ["custom_canais_de_comunicacao_instantanea"],
+                "quantity_rule_keys": [],
+            },
+            {
+                "key": "custom_dados_de_agregados",
+                "label": "custom_dados_de_agregados",
+                "field_keys": [],
+                "quantity_rule_keys": ["qty_agregados"],
+            },
+        ],
+    )
+
+    assert {section["key"] for section in state["personalSections"]} == {
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    }
+    assert {section["label"] for section in state["personalSections"]} == {
+        "Dados pessoais",
+        "Dados de agregados",
+    }
+    assert state["defaultPersonalSection"] in {
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    }

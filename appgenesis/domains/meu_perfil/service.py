@@ -122,15 +122,27 @@ def build_meu_perfil_personal_sections_state_v1(
         if clean_key.startswith("custom_")
         and str((meta or {}).get("field_type") or "").strip().lower() == "header"
     }
-    clean_resolved_sections = [
-        {
-            "key": str((section or {}).get("key") or "").strip().lower(),
-            "label": str((section or {}).get("label") or "").strip(),
-        }
-        for section in (resolved_process_sections or [])
-        if isinstance(section, dict)
-        and str((section or {}).get("key") or "").strip()
-    ]
+    clean_resolved_sections = []
+    for section in (resolved_process_sections or []):
+        if not isinstance(section, dict):
+            continue
+        clean_section_key = str((section or {}).get("key") or "").strip().lower()
+        if not clean_section_key:
+            continue
+        quantity_rule_keys = [
+            str(raw_key or "").strip().lower()
+            for raw_key in (section.get("quantity_rule_keys") or [])
+            if str(raw_key or "").strip()
+        ]
+        if clean_section_key not in profile_header_field_keys and not quantity_rule_keys:
+            continue
+        clean_resolved_sections.append(
+            {
+                "key": clean_section_key,
+                "label": str((section or {}).get("label") or "").strip(),
+                "quantity_rule_keys": quantity_rule_keys,
+            }
+        )
     resolved_section_keys = {
         str(section["key"] or "").strip().lower()
         for section in clean_resolved_sections
@@ -150,11 +162,24 @@ def build_meu_perfil_personal_sections_state_v1(
         if clean_section_key not in profile_header_field_keys and clean_section_key not in resolved_section_keys:
             return
 
+        canonical_section_label = str(clean_labels.get(clean_section_key) or "").strip()
+        if not canonical_section_label:
+            section_meta = clean_custom_meta.get(clean_section_key) if isinstance(clean_custom_meta, dict) else None
+            if isinstance(section_meta, dict):
+                canonical_section_label = str(
+                    section_meta.get("label")
+                    or section_meta.get("field_label")
+                    or section_meta.get("display_label")
+                    or ""
+                ).strip()
+        fallback_section_label = str(raw_section_label or "").strip()
+
         personal_sections.append(
             {
                 "key": clean_section_key,
-                "label": str(raw_section_label or "").strip()
-                or clean_labels.get(clean_section_key, "Aba"),
+                "label": canonical_section_label
+                or fallback_section_label
+                or "Aba",
                 "order": len(personal_sections) + 1,
                 "is_visible": True,
                 "is_active": True,

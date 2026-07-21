@@ -185,8 +185,7 @@
           }
           return {
             key: cleanSectionKey,
-            label: state.normalizeMenuLabelPreserveCase(section && section.label ? section.label : "") ||
-              state.toSentenceCaseText(cleanSectionKey.replace(/_/g, " "))
+            label: state.normalizeMenuLabelPreserveCase(section && section.label ? section.label : "")
           };
         })
         .filter(Boolean);
@@ -205,7 +204,7 @@
           return false;
         }
         seenSectionKeys.add(section.key);
-        return true;
+        return Boolean(section.label);
       }).map((section) => ({
         label: section.label,
         target: "#perfil-pessoal-card",

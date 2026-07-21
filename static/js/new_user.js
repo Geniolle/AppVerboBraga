@@ -4335,7 +4335,6 @@ function restoreInitialProfileSectionFromUrlV2() {
       "[data-profile-section-tab], [data-profile-section-button], .profile-section-tab, button, a"
     )
   );
-  const sectionLabel = sectionKey.replace(/_/g, " ");
   const tab = candidates.find((candidate) => {
     const dataKey = normalizeMenuKey(
       candidate.dataset.profileSection ||
@@ -4348,9 +4347,7 @@ function restoreInitialProfileSectionFromUrlV2() {
     if (dataKey && dataKey === sectionKey) {
       return true;
     }
-
-    const textKey = normalizeLookupText(candidate.textContent);
-    return Boolean(sectionLabel && textKey && textKey === sectionLabel);
+    return false;
   });
 
   if (tab && typeof tab.click === "function") {

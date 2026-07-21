@@ -538,7 +538,9 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
                     section_key = str(section.get("key") or "").strip().lower()
                     if not section_key:
                         continue
-                    section_label = str(section.get("label") or "").strip() or section_key.replace("_", " ").title()
+                    section_label = str(section.get("label") or "").strip()
+                    if not section_label:
+                        continue
                     layout = "list" if setting.get("is_list_process") else "form"
                     tabs.append(
                         ProcessTabConfig(
