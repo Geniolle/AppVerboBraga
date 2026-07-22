@@ -524,6 +524,45 @@ function getFieldSectionMap(setting) {
   return sectionMap;
 }
 
+function resolveMeuPerfilQuantitySectionKeyV1(rule, fieldSectionMap, currentSectionKey) {
+  const explicitSectionKey = normalizeMenuKey(rule && (rule.sectionKey || rule.section_key || rule.section));
+  if (explicitSectionKey) {
+    return explicitSectionKey;
+  }
+
+  const headerKey = normalizeMenuKey(rule && (rule.headerKey || rule.header_key));
+  if (headerKey) {
+    return headerKey;
+  }
+
+  const repeatedFieldSections = new Set();
+  const sectionMap = fieldSectionMap instanceof Map ? fieldSectionMap : new Map();
+  (Array.isArray(rule && rule.repeatedFieldKeys) ? rule.repeatedFieldKeys : []).forEach((fieldKey) => {
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+    if (!cleanFieldKey) {
+      return;
+    }
+    const sectionKey = normalizeMenuKey(sectionMap.get(cleanFieldKey));
+    if (sectionKey) {
+      repeatedFieldSections.add(sectionKey);
+    }
+  });
+
+  if (repeatedFieldSections.size === 1) {
+    return repeatedFieldSections.values().next().value || "";
+  }
+
+  const quantityFieldKey = normalizeMenuKey(rule && (rule.quantityFieldKey || rule.quantity_field_key));
+  if (quantityFieldKey) {
+    const quantityFieldSectionKey = normalizeMenuKey(sectionMap.get(quantityFieldKey));
+    if (quantityFieldSectionKey) {
+      return quantityFieldSectionKey;
+    }
+  }
+
+  return normalizeMenuKey(currentSectionKey);
+}
+
 function getProcessQuantityStorageKey(menuKey, ruleKey) {
   const cleanMenuKey = normalizeMenuKey(menuKey);
   const cleanRuleKey = normalizeMenuKey(ruleKey);
@@ -2687,6 +2726,25 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 }
 
 function renderMeuPerfilQuantityGroups() {
+  const runtimeRefs = newUserPageBootstrapStateV1.lastContext && newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    ? newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    : null;
+  const quantityContext = runtimeRefs && runtimeRefs.profile
+    ? runtimeRefs.profile.quantityContext
+    : null;
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.render === "function" &&
+    quantityContext
+  ) {
+    appGenesisProcessQuantityRuntimeV1.render(quantityContext);
+    if (typeof appGenesisProcessQuantityRuntimeV1.sync === "function") {
+      appGenesisProcessQuantityRuntimeV1.sync(quantityContext);
+    }
+    return;
+  }
+
   const personalCardEl = getMeuPerfilPersonalCardElV1();
   const readonlyGridEl = personalCardEl ? personalCardEl.querySelector(".profile-readonly .personal-grid") : null;
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
@@ -2713,6 +2771,7 @@ function renderMeuPerfilQuantityGroups() {
   const quantityValuesByRule = collectCurrentMeuPerfilQuantityValues();
   const nextQuantityValuesByRule = { ...quantityValuesByRule };
   const optionMetaByKey = buildProcessOptionMetaMap(setting);
+  const fieldSectionMap = getFieldSectionMap(setting);
   const activeSectionKey = normalizeMenuKey(
     meuPerfilSelectedProfileSection ||
     meuPerfilBootstrap.activePersonalSection ||
@@ -2720,7 +2779,7 @@ function renderMeuPerfilQuantityGroups() {
   );
 
   normalizedRules.forEach((rule) => {
-    const ruleSectionKey = normalizeMenuKey(rule.headerKey || activeSectionKey || "");
+    const ruleSectionKey = resolveMeuPerfilQuantitySectionKeyV1(rule, fieldSectionMap, activeSectionKey);
     if (ruleSectionKey && activeSectionKey && ruleSectionKey !== activeSectionKey) {
       return;
     }
@@ -2929,6 +2988,25 @@ function renderDynamicProcessQuantityGroups(
   processValuesByField,
   processQuantityValuesByRule
 ) {
+  const runtimeRefs = newUserPageBootstrapStateV1.lastContext && newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    ? newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    : null;
+  const quantityContext = runtimeRefs && runtimeRefs.dynamicProcess
+    ? runtimeRefs.dynamicProcess.quantityContext
+    : null;
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.render === "function" &&
+    quantityContext
+  ) {
+    appGenesisProcessQuantityRuntimeV1.render(quantityContext);
+    if (typeof appGenesisProcessQuantityRuntimeV1.sync === "function") {
+      appGenesisProcessQuantityRuntimeV1.sync(quantityContext);
+    }
+    return;
+  }
+
   const cleanMenuKey = normalizeMenuKey(menuKey);
   const normalizedRules = normalizeProcessQuantityRules(setting && setting.process_quantity_fields);
   if (!normalizedRules.length) {
@@ -3717,14 +3795,24 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
 // .appgenesis-process-action-toggle-v1 define "display: inline-flex !important" no CSS, por isso um
 // simples "el.style.display = 'none'" nao consegue escondê-lo; e preciso usar setProperty com
 // prioridade "important" para vencer a regra do stylesheet.
+function isDynamicProcessActionCardContextV1() {
+  const cleanMenuKey = normalizeMenuKey(activeMenuKey || "");
+  if (!cleanMenuKey || cleanMenuKey === MEU_PERFIL_MENU_KEY || cleanMenuKey === "perfil") {
+    return false;
+  }
+
+  return normalizeTargetV1(selectedTargetByMenu[cleanMenuKey] || "") === "#dynamic-process-card";
+}
+
 function setDynamicProcessEditToggleVisible(isVisible) {
+  const shouldShowDynamicProcessCard = isDynamicProcessActionCardContextV1();
   if (dynamicProcessActionCardEl) {
-    dynamicProcessActionCardEl.style.display = isVisible ? "" : "none";
+    dynamicProcessActionCardEl.style.display = isVisible && shouldShowDynamicProcessCard ? "" : "none";
   }
   if (!dynamicProcessEditToggleEl) {
     return;
   }
-  if (isVisible) {
+  if (isVisible && shouldShowDynamicProcessCard) {
     dynamicProcessEditToggleEl.style.removeProperty("display");
   } else {
     dynamicProcessEditToggleEl.style.setProperty("display", "none", "important");
@@ -3739,7 +3827,8 @@ function restoreDynamicProcessEditToggleVisibility() {
   if (
     dynamicProcessEditToggleEl &&
     dynamicProcessCardEl &&
-    !dynamicProcessCardEl.classList.contains("editing")
+    !dynamicProcessCardEl.classList.contains("editing") &&
+    isDynamicProcessActionCardContextV1()
   ) {
     setDynamicProcessEditToggleVisible(true);
   }
@@ -3765,7 +3854,11 @@ function closeAllProfileEdits() {
     }
   });
   syncTrainingOutrosState();
-  restoreDynamicProcessEditToggleVisibility();
+  if (isDynamicProcessActionCardContextV1()) {
+    restoreDynamicProcessEditToggleVisibility();
+  } else {
+    setDynamicProcessEditToggleVisible(false);
+  }
 }
 
 function resetDynamicProcessCancelStateV1() {
@@ -4100,6 +4193,12 @@ function setupProfileProcessTabs() {
     }
     setupAllocationSectionMultiValue(personalCardEl, effectiveSection);
     meuPerfilSelectedProfileSection = effectiveSection;
+    renderMeuPerfilQuantityGroups();
+    window.dispatchEvent(
+      new CustomEvent("appgenesis:meu-perfil:layout-updated", {
+        detail: { sectionKey: effectiveSection }
+      })
+    );
   }
 
   window.activateProfilePersonalSection = activateSection;

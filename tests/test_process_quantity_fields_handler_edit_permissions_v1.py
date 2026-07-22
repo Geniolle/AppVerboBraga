@@ -86,6 +86,7 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
         quantity_rule_key=[],
         quantity_rule_label=[],
         quantity_field_key=[],
+        quantity_interaction_mode=[],
         quantity_repeated_field_keys_json=[],
         quantity_header_key=[],
         quantity_max_items=[],
@@ -103,7 +104,9 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
     ), patch.object(
         common_module, "get_session_entity_id", return_value=1
     ), patch.object(
-        common_module, "get_user_entity_permissions", return_value=permissions
+        common_module,
+        "get_user_entity_permissions",
+        return_value={**permissions, "selected_entity_id": 1},
     ):
         return settings_handlers_module.edit_sidebar_menu_process_quantity_fields_handler(
             request=_build_request(), **form
@@ -220,7 +223,35 @@ def test_edit_quantity_fields_owner_success():
     ]
 
 
-####################################################################################
+
+
+def test_edit_quantity_fields_owner_can_persist_dynamic_list_mode():
+    SessionLocal = _build_session_factory()
+    _seed_menu(SessionLocal)
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        **_one_row_form(quantity_interaction_mode=["dynamic_list"]),
+    )
+
+    assert response.status_code == 303
+    config = _load_config(SessionLocal)
+    assert config["process_quantity_fields"] == [
+        {
+            "key": "qty_filhos",
+            "label": "Filhos",
+            "quantity_field_key": "custom_quantidade_filhos",
+            "interaction_mode": "dynamic_list",
+            "repeated_field_keys": ["custom_nome_filho"],
+            "header_key": "",
+            "max_items": 10,
+            "item_label": "Filho",
+        }
+    ]
+
 # (2) DEPENDENCIA POR INDICE (nivel do handler): as 7 listas paralelas do formulario
 # sao combinadas por posicao (zip por indice), nao por chave. Se uma lista tiver
 # menos elementos que as outras, os campos em falta assumem string vazia -- e' o

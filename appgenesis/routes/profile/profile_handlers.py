@@ -277,6 +277,7 @@ def _normalize_process_quantity_rules(raw_rules: Any) -> list[dict[str, Any]]:
         quantity_field_key = str(raw_rule.get("quantity_field_key") or "").strip().lower()
         header_key = str(raw_rule.get("header_key") or "").strip().lower()
         item_label = str(raw_rule.get("item_label") or "").strip() or "Item"
+        interaction_mode = str(raw_rule.get("interaction_mode") or "").strip().lower()
         try:
             max_items = int(str(raw_rule.get("max_items") or "").strip())
         except (TypeError, ValueError):
@@ -300,6 +301,7 @@ def _normalize_process_quantity_rules(raw_rules: Any) -> list[dict[str, Any]]:
                 "header_key": header_key,
                 "max_items": max(1, min(max_items, 50)),
                 "item_label": item_label,
+                "interaction_mode": "dynamic_list" if interaction_mode == "dynamic_list" else "quantity",
             }
         )
     return normalized_rules
@@ -396,6 +398,67 @@ def _resolve_submitted_process_quantity_items(
         return []
 
     return []
+
+
+def _normalize_submitted_quantity_items_v1(
+    raw_items: list[dict[str, str]],
+    repeated_field_keys: list[str],
+    field_meta_by_key: dict[str, dict[str, Any]],
+    max_quantity_items: int,
+) -> tuple[list[dict[str, str]], list[str]]:
+    clean_repeated_field_keys = [
+        str(field_key or "").strip().lower()
+        for field_key in repeated_field_keys
+        if str(field_key or "").strip()
+    ]
+    allowed_metadata_field_keys = {"item_id", "__item_id"}
+    normalized_items: list[dict[str, str]] = []
+    missing_required_labels: list[str] = []
+
+    for raw_item in (raw_items or [])[:max(1, min(max_quantity_items, 50))]:
+        if not isinstance(raw_item, dict):
+            continue
+
+        clean_item: dict[str, str] = {}
+        row_has_any_value = False
+        row_missing_required_labels: list[str] = []
+
+        for repeated_field_key in clean_repeated_field_keys:
+            field_meta = field_meta_by_key.get(repeated_field_key) or {}
+            field_type = _normalize_process_field_type(field_meta.get("field_type"))
+            field_size = _normalize_process_field_size(field_meta.get("size"), field_type)
+            raw_value = str(raw_item.get(repeated_field_key) or "").strip()
+            field_label = str(field_meta.get("label") or repeated_field_key).strip() or repeated_field_key
+
+            if field_type == "flag":
+                clean_item[repeated_field_key] = "1" if raw_value == "1" else "0"
+                if raw_value == "1":
+                    row_has_any_value = True
+                continue
+
+            if raw_value:
+                row_has_any_value = True
+                if isinstance(field_size, int) and field_size > 0:
+                    raw_value = raw_value[:field_size]
+                clean_item[repeated_field_key] = raw_value
+            elif bool(field_meta.get("is_required")):
+                row_missing_required_labels.append(field_label)
+
+        for metadata_field_key in allowed_metadata_field_keys:
+            metadata_value = str(raw_item.get(metadata_field_key) or "").strip()
+            if metadata_value:
+                clean_item[metadata_field_key] = metadata_value
+
+        if row_missing_required_labels and row_has_any_value:
+            for field_label in row_missing_required_labels:
+                if field_label not in missing_required_labels:
+                    missing_required_labels.append(field_label)
+            continue
+
+        if clean_item:
+            normalized_items.append(clean_item)
+
+    return normalized_items, missing_required_labels
 
 
 
@@ -1481,7 +1544,26 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if not storage_key:
                 continue
 
-            serialized_quantity_items = serialize_menu_process_quantity_values(parsed_quantity_items)
+            cleaned_quantity_items, missing_required_quantity_labels = _normalize_submitted_quantity_items_v1(
+                parsed_quantity_items,
+                list(quantity_rule.get("repeated_field_keys", [])),
+                field_meta_by_key,
+                int(str(quantity_rule.get("max_items") or "1").strip()) if str(quantity_rule.get("max_items") or "").strip() else 1,
+            )
+
+            if missing_required_quantity_labels:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        profile_error="Preencha os campos obrigatórios: "
+                        + ", ".join(missing_required_quantity_labels)
+                        + ".",
+                        profile_tab="pessoal",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
+            serialized_quantity_items = serialize_menu_process_quantity_values(cleaned_quantity_items)
             if serialized_quantity_items:
                 updated_quantity_values[storage_key] = serialized_quantity_items
             else:
@@ -1553,8 +1635,12 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                     clean_field_key = str(raw_field_key or "").strip().lower()
                     clean_field_value = str(raw_field_value or "").strip()
 
-                    if not clean_field_key or clean_field_key not in allowed_repeated_fields:
+                    if not clean_field_key:
                         continue
+
+                    if clean_field_key not in allowed_repeated_fields:
+                        if clean_field_key not in {"item_id", "__item_id"}:
+                            continue
 
                     if not clean_field_value:
                         continue
@@ -1780,6 +1866,7 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             rule_key = str(rule.get("key") or "").strip().lower()
             header_key = str(rule.get("header_key") or "").strip().lower()
             quantity_field_key = str(rule.get("quantity_field_key") or "").strip().lower()
+            interaction_mode = str(rule.get("interaction_mode") or "").strip().lower()
             repeated_field_keys = [
                 str(raw_field_key or "").strip().lower()
                 for raw_field_key in rule.get("repeated_field_keys", [])
@@ -1808,13 +1895,20 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                 submitted_quantity_values_by_rule[rule_key] = []
                 continue
 
-            try:
-                requested_quantity = int(str(current_process_values_by_field.get(quantity_field_key) or "").strip())
-            except (TypeError, ValueError):
-                requested_quantity = 0
+            max_quantity_items = max(1, min(int(rule.get("max_items") or 1), 50))
+            if interaction_mode == "dynamic_list":
+                limited_items = parsed_payload[:max_quantity_items]
+            else:
+                try:
+                    requested_quantity = int(
+                        str(current_process_values_by_field.get(quantity_field_key) or "").strip()
+                    )
+                except (TypeError, ValueError):
+                    requested_quantity = 0
 
-            limited_quantity = max(0, min(requested_quantity, int(rule.get("max_items") or 1)))
-            limited_items = parsed_payload[:limited_quantity]
+                limited_quantity = max(0, min(requested_quantity, max_quantity_items))
+                limited_items = parsed_payload[:limited_quantity]
+
             normalized_items: list[dict[str, str]] = []
 
             for raw_item in limited_items:
@@ -1831,7 +1925,11 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                         clean_value = clean_value[:field_size]
                     if clean_value:
                         clean_item[repeated_field_key] = clean_value
-                normalized_items.append(clean_item)
+                item_id_value = str(raw_item.get("item_id") or raw_item.get("__item_id") or "").strip()
+                if item_id_value:
+                    clean_item["item_id"] = item_id_value
+                if clean_item:
+                    normalized_items.append(clean_item)
 
             submitted_quantity_values_by_rule[rule_key] = normalized_items
         hidden_process_targets = get_hidden_process_targets_from_rules(
@@ -2064,8 +2162,27 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
             rule_key = str(rule.get("key") or "").strip().lower()
             if rule_key not in submitted_quantity_values_by_rule:
                 continue
+            cleaned_quantity_items, missing_required_quantity_labels = _normalize_submitted_quantity_items_v1(
+                submitted_quantity_values_by_rule.get(rule_key, []),
+                list(rule.get("repeated_field_keys", [])),
+                field_meta_by_key,
+                int(str(rule.get("max_items") or "1").strip()) if str(rule.get("max_items") or "").strip() else 1,
+            )
+
+            if missing_required_quantity_labels:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        menu=clean_menu_key,
+                        profile_error="Preencha os campos obrigatórios: "
+                        + ", ".join(missing_required_quantity_labels)
+                        + ".",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
             serialized_quantity_values = serialize_menu_process_quantity_values(
-                submitted_quantity_values_by_rule.get(rule_key, [])
+                cleaned_quantity_items
             )
             quantity_storage_key = build_menu_process_quantity_storage_key(clean_menu_key, rule_key)
             if history_process_mode:

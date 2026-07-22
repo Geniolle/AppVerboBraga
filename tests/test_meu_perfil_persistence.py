@@ -1,3 +1,4 @@
+import json
 from types import SimpleNamespace
 
 from appgenesis.domains.meu_perfil.schemas import AddressProfileFormInput, TrainingProfileFormInput
@@ -7,8 +8,11 @@ from appgenesis.domains.meu_perfil.use_cases import (
 )
 from appgenesis.services.profile import (
     merge_member_profile_fields_v1,
+    parse_menu_process_quantity_values,
     serialize_member_profile_fields,
+    serialize_menu_process_quantity_values,
 )
+from appgenesis.routes.profile.profile_handlers import _normalize_submitted_quantity_items_v1
 
 
 def test_merge_member_profile_fields_v1_preserves_unrelated_keys_and_replaces_requested_prefixes() -> None:
@@ -145,3 +149,52 @@ def test_execute_update_training_profile_preserves_profile_custom_fields(monkeyp
             "campo_desconhecido": "sim",
         }
     )
+
+
+def test_quantity_payload_serialization_preserves_item_ids() -> None:
+    raw_items = [
+        {
+            "item_id": "item-a",
+            "custom_nome_do_agregado": "Ana",
+            "custom_data_nascimento_do_agregado": "2000-01-01",
+        },
+        {
+            "item_id": "item-b",
+            "custom_nome_do_agregado": "Bruno",
+            "custom_data_nascimento_do_agregado": "2001-02-02",
+        },
+    ]
+
+    serialized = serialize_menu_process_quantity_values(raw_items)
+    assert serialized is not None
+    assert json.loads(serialized) == raw_items
+    assert parse_menu_process_quantity_values(serialized) == raw_items
+
+
+def test_partial_quantity_row_requires_all_configured_required_fields() -> None:
+    cleaned_items, missing_required_labels = _normalize_submitted_quantity_items_v1(
+        [
+            {
+                "item_id": "item-a",
+                "custom_nome_do_agregado": "Ana",
+                "custom_data_nascimento_do_agregado": "",
+            }
+        ],
+        ["custom_nome_do_agregado", "custom_data_nascimento_do_agregado"],
+        {
+            "custom_nome_do_agregado": {
+                "label": "Nome do agregado",
+                "field_type": "text",
+                "is_required": True,
+            },
+            "custom_data_nascimento_do_agregado": {
+                "label": "Data de nascimento do agregado",
+                "field_type": "date",
+                "is_required": True,
+            },
+        },
+        3,
+    )
+
+    assert cleaned_items == []
+    assert missing_required_labels == ["Data de nascimento do agregado"]

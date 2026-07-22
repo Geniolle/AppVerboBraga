@@ -374,3 +374,120 @@ def test_meu_perfil_fields_browser_navigation_and_visibility_v1() -> None:
                 _delete_owner_user_on_entity_v1(email, member_id)
         finally:
             driver.quit()
+
+
+####################################################################################
+# (3) A ORDEM VISUAL DO MEU PERFIL DEVE SER IGUAL EM CONSULTA E EDIÇÃO
+####################################################################################
+
+
+def test_meu_perfil_fields_browser_keeps_order_and_hides_dynamic_action_card_v1() -> None:
+    driver = _build_driver_v1()
+    wait = WebDriverWait(driver, 30)
+    email = ""
+    member_id = 0
+
+    try:
+        email, password, member_id = _create_owner_user_on_entity_v1(8)
+        _login_owner_v1(driver, wait, email, password)
+        _click_sidebar_menu_v1(driver, "meu_perfil")
+        wait.until(EC.visibility_of_element_located((By.ID, "perfil-pessoal-card")))
+
+        def get_profile_order_state() -> dict[str, object]:
+          return driver.execute_script(
+              """
+              const card = document.getElementById("perfil-pessoal-card");
+              const registry = window.AppGenesisProfileFieldRegistryV1 || {};
+              const getVisibleItems = (selector) => Array.from(card.querySelectorAll(selector)).filter((el) => {
+                const style = getComputedStyle(el);
+                return style.display !== "none" && style.visibility !== "hidden" && !el.hidden;
+              });
+              const sortByVisualPosition = (elements) => elements
+                .map((el, index) => {
+                  const rect = el.getBoundingClientRect();
+                  const style = getComputedStyle(el);
+                  return {
+                    el,
+                    index,
+                    top: Math.round(rect.top),
+                    left: Math.round(rect.left),
+                    order: Number.parseInt(style.order || "0", 10) || 0
+                  };
+                })
+                .sort((left, right) => left.top - right.top || left.left - right.left || left.order - right.order || left.index - right.index)
+                .map((item) => item.el);
+              const readonlyKeys = sortByVisualPosition(getVisibleItems(".profile-readonly .personal-item[data-profile-field-key]"))
+                .map((el) => String(el.dataset.profileFieldKey || "").trim())
+                .filter(Boolean);
+              const editKeys = sortByVisualPosition(getVisibleItems(".profile-edit-form .field"))
+                .map((el) => {
+                  const control = el.querySelector("[name]");
+                  const controlName = control ? String(control.getAttribute("name") || "") : "";
+                  return String(
+                    registry.resolveFieldKeyFromControlName
+                      ? registry.resolveFieldKeyFromControlName(controlName)
+                      : ""
+                  ).trim();
+                })
+                .filter(Boolean);
+              const readonlyGrid = card.querySelector(".profile-readonly .personal-grid");
+              const editGrid = card.querySelector(".profile-edit-form .personal-grid");
+              const isVisible = (el) => {
+                if (!el) {
+                  return false;
+                }
+                const style = getComputedStyle(el);
+                return style.display !== "none" && style.visibility !== "hidden" && !el.hidden;
+              };
+              return {
+                readonlyKeys,
+                editKeys,
+                readonlyColumns: readonlyGrid ? getComputedStyle(readonlyGrid).gridTemplateColumns : "",
+                editColumns: editGrid ? getComputedStyle(editGrid).gridTemplateColumns : "",
+                editButtonVisible: isVisible(card.querySelector(".profile-card-header .profile-edit-toggle")),
+                dynamicActionVisible: isVisible(document.getElementById("dynamic-process-action-card")),
+                profileEditing: card.classList.contains("editing")
+              };
+              """
+          )
+
+        initial_state = get_profile_order_state()
+        assert initial_state["readonlyKeys"][:4] == ["nome", "email", "telefone", "pais"]
+        assert initial_state["editKeys"][:4] == ["nome", "email", "telefone", "pais"]
+        assert initial_state["readonlyKeys"] == initial_state["editKeys"]
+        assert "repeat(2" in str(initial_state["readonlyColumns"])
+        assert "repeat(2" in str(initial_state["editColumns"])
+        assert initial_state["editButtonVisible"] is True
+        assert initial_state["dynamicActionVisible"] is False
+
+        edit_button = driver.find_element(By.CSS_SELECTOR, "#perfil-pessoal-card .profile-edit-toggle")
+        edit_button.click()
+        wait.until(lambda drv: drv.find_element(By.ID, "perfil-pessoal-card").get_attribute("class").find("editing") >= 0)
+
+        after_edit_state = get_profile_order_state()
+        assert after_edit_state["readonlyKeys"] == after_edit_state["editKeys"]
+        assert after_edit_state["dynamicActionVisible"] is False
+        assert after_edit_state["editButtonVisible"] is False
+
+        driver.set_window_size(480, 900)
+        mobile_state = get_profile_order_state()
+        assert "1fr" in str(mobile_state["readonlyColumns"])
+        assert "1fr" in str(mobile_state["editColumns"])
+
+        cancel_button = driver.find_element(By.CSS_SELECTOR, "#perfil-pessoal-card [data-appgenesis-cancel='1']")
+        cancel_button.click()
+        wait.until(lambda drv: drv.find_element(By.ID, "perfil-pessoal-card").get_attribute("class").find("editing") < 0)
+
+        driver.find_element(By.CSS_SELECTOR, ".submenu-item[data-profile-section='custom_dados_de_agregados']").click()
+        wait.until(lambda drv: drv.execute_script("return document.querySelector('[data-meu-perfil-section-input]').value;") == "custom_dados_de_agregados")
+        driver.find_element(By.CSS_SELECTOR, "#perfil-pessoal-card .profile-edit-toggle").click()
+        wait.until(lambda drv: drv.find_element(By.ID, "perfil-pessoal-card").get_attribute("class").find("editing") >= 0)
+        agregados_state = get_profile_order_state()
+        assert agregados_state["dynamicActionVisible"] is False
+        assert agregados_state["editButtonVisible"] is False
+    finally:
+        try:
+            if email and member_id:
+                _delete_owner_user_on_entity_v1(email, member_id)
+        finally:
+            driver.quit()

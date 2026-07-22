@@ -2589,6 +2589,56 @@ def test_normalize_menu_process_quantity_fields() -> None:
     ]
 
 
+def test_normalize_menu_process_quantity_fields_defaults_interaction_mode_to_quantity() -> None:
+    normalized = normalize_menu_process_quantity_fields(
+        [
+            {
+                "label": "Agregados",
+                "quantity_field_key": "custom_quantos_filhos_tens",
+                "repeated_field_keys": ["custom_nome_do_agregado"],
+            }
+        ]
+    )
+
+    assert normalized == [
+        {
+            "key": "qty_agregados",
+            "label": "Agregados",
+            "quantity_field_key": "custom_quantos_filhos_tens",
+            "repeated_field_keys": ["custom_nome_do_agregado"],
+            "header_key": "",
+            "max_items": 1,
+            "item_label": "Item",
+        }
+    ]
+
+
+def test_normalize_menu_process_quantity_fields_preserves_dynamic_list_mode() -> None:
+    normalized = normalize_menu_process_quantity_fields(
+        [
+            {
+                "label": "Agregados",
+                "quantity_field_key": "custom_quantos_filhos_tens",
+                "repeated_field_keys": ["custom_nome_do_agregado"],
+                "interaction_mode": "dynamic_list",
+            }
+        ]
+    )
+
+    assert normalized == [
+        {
+            "key": "qty_agregados",
+            "label": "Agregados",
+            "quantity_field_key": "custom_quantos_filhos_tens",
+            "repeated_field_keys": ["custom_nome_do_agregado"],
+            "header_key": "",
+            "max_items": 1,
+            "item_label": "Item",
+            "interaction_mode": "dynamic_list",
+        }
+    ]
+
+
 def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
     Base.metadata.create_all(engine)

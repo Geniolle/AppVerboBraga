@@ -23,6 +23,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
     quantity_rule_key: list[str] = Form(default=[]),
     quantity_rule_label: list[str] = Form(default=[]),
     quantity_field_key: list[str] = Form(default=[]),
+    quantity_interaction_mode: list[str] = Form(default=[]),
     quantity_repeated_field_keys_json: list[str] = Form(default=[]),
     quantity_header_key: list[str] = Form(default=[]),
     quantity_max_items: list[str] = Form(default=[]),
@@ -51,6 +52,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             len(quantity_rule_key),
             len(quantity_rule_label),
             len(quantity_field_key),
+            len(quantity_interaction_mode),
             len(quantity_repeated_field_keys_json),
             len(quantity_header_key),
             len(quantity_max_items),
@@ -69,6 +71,9 @@ def edit_sidebar_menu_process_quantity_fields_handler(
                     else "",
                     "quantity_field_key": quantity_field_key[row_index]
                     if row_index < len(quantity_field_key)
+                    else "",
+                    "interaction_mode": quantity_interaction_mode[row_index]
+                    if row_index < len(quantity_interaction_mode)
                     else "",
                     "repeated_field_keys": (
                         quantity_repeated_field_keys_json[row_index]

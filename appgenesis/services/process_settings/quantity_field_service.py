@@ -40,6 +40,13 @@ def _normalize_process_quantity_max_items_v1(raw_value: Any) -> int:
     return max(1, min(parsed_value, 50))
 
 
+def _normalize_process_quantity_interaction_mode_v1(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    if clean_value in {"quantity", "dynamic_list"}:
+        return clean_value
+    return "quantity"
+
+
 def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_fields, (list, tuple, set)):
         return []
@@ -93,6 +100,10 @@ def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, An
         max_items = _normalize_process_quantity_max_items_v1(
             raw_item.get("max_items") or raw_item.get("maxItems")
         )
+        interaction_mode = _normalize_process_quantity_interaction_mode_v1(
+            raw_item.get("interaction_mode")
+            or raw_item.get("interactionMode")
+        )
         item_label = (
             _normalize_sentence_case_text(
                 raw_item.get("item_label") or raw_item.get("itemLabel") or "Item"
@@ -126,6 +137,11 @@ def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, An
                 "header_key": header_key,
                 "max_items": max_items,
                 "item_label": item_label,
+                **(
+                    {"interaction_mode": interaction_mode}
+                    if interaction_mode != "quantity"
+                    else {}
+                ),
             }
         )
 
@@ -185,6 +201,9 @@ def update_sidebar_menu_process_quantity_fields_v1(
         header_key = str(item.get("header_key") or "").strip().lower()
         item_label = str(item.get("item_label") or "").strip() or "Item"
         max_items = _normalize_process_quantity_max_items_v1(item.get("max_items"))
+        interaction_mode = _normalize_process_quantity_interaction_mode_v1(
+            item.get("interaction_mode")
+        )
 
         if not rule_label:
             return False, f"Informe o nome da regra na linha {row_index + 1}."
@@ -247,6 +266,11 @@ def update_sidebar_menu_process_quantity_fields_v1(
                 "header_key": header_key,
                 "max_items": max_items,
                 "item_label": item_label,
+                **(
+                    {"interaction_mode": interaction_mode}
+                    if interaction_mode != "quantity"
+                    else {}
+                ),
             }
         )
 

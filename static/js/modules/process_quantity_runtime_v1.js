@@ -22,6 +22,7 @@
 
   const TEXTUAL_TYPES = new Set(["text", "number", "email", "phone"]);
   const DEFAULT_MAX_ITEMS = 1;
+  const DYNAMIC_LIST_METADATA_FIELD_KEYS = new Set(["item_id", "__item_id"]);
   const stateByForm = new WeakMap();
 
   function toSafeString(value) {
@@ -79,6 +80,60 @@
       .filter(Boolean);
   }
 
+  function normalizeDateValueForInput_v1(rawValue) {
+    const cleanValue = toSafeString(rawValue).trim();
+
+    if (!cleanValue) {
+      return "";
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanValue)) {
+      return cleanValue;
+    }
+
+    const slashMatch = cleanValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slashMatch) {
+      return `${slashMatch[3]}-${slashMatch[2]}-${slashMatch[1]}`;
+    }
+
+    const compactMatch = cleanValue.match(/^(\d{2})(\d{2})(\d{4})$/);
+    if (compactMatch) {
+      return `${compactMatch[3]}-${compactMatch[2]}-${compactMatch[1]}`;
+    }
+
+    return "";
+  }
+
+  function normalizeDynamicListItemId_v1(rawValue) {
+    const cleanValue = toSafeString(rawValue).trim();
+    if (cleanValue) {
+      return cleanValue;
+    }
+
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+
+    return `item_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  }
+
+  function isDynamicListItemContentField_v1(fieldKey, fieldValue) {
+    const cleanFieldKey = normalizeKey(fieldKey);
+    if (!cleanFieldKey || DYNAMIC_LIST_METADATA_FIELD_KEYS.has(cleanFieldKey)) {
+      return false;
+    }
+    return String(fieldValue || "").trim() !== "";
+  }
+
+  function normalizeDynamicListItemsForPayload_v1(items) {
+    return (Array.isArray(items) ? items : []).filter((item) => {
+      if (!item || typeof item !== "object") {
+        return false;
+      }
+      return Object.keys(item).some((fieldKey) => isDynamicListItemContentField_v1(fieldKey, item[fieldKey]));
+    });
+  }
+
   function calculateItemCount(value, maxItems) {
     const parsedValue = Number.parseInt(toSafeString(value).trim(), 10);
     const parsedMaxItems = Number.parseInt(toSafeString(maxItems || DEFAULT_MAX_ITEMS).trim(), 10);
@@ -131,6 +186,8 @@
         const label = toSentenceCaseText(rawRule.label || rawRule.rule_label || rawRule.name || "Regra");
         const quantityFieldKey = normalizeKey(rawRule.quantity_field_key || rawRule.quantityFieldKey);
         const headerKey = normalizeKey(rawRule.header_key || rawRule.headerKey);
+        const sectionKey = normalizeKey(rawRule.section_key || rawRule.sectionKey || rawRule.section);
+        const interactionMode = normalizeKey(rawRule.interaction_mode || rawRule.interactionMode);
         const itemLabel = toSentenceCaseText(rawRule.item_label || rawRule.itemLabel || "Item") || "Item";
         const maxItemsRaw = Number.parseInt(String(rawRule.max_items || rawRule.maxItems || "1").trim(), 10);
         const maxItems = Number.isFinite(maxItemsRaw) ? Math.min(Math.max(maxItemsRaw, 1), 50) : DEFAULT_MAX_ITEMS;
@@ -155,8 +212,10 @@
           quantityFieldKey,
           repeatedFieldKeys: cleanRepeatedFieldKeys,
           headerKey,
+          sectionKey,
           maxItems,
-          itemLabel
+          itemLabel,
+          interactionMode: interactionMode === "dynamic_list" ? "dynamic_list" : "quantity"
         };
 
         return validateRule(normalizedRule) ? normalizedRule : null;
@@ -199,6 +258,20 @@
     });
 
     return metaMap;
+  }
+
+  function buildFieldSectionMap(setting) {
+    const sectionMap = new Map();
+
+    (Array.isArray(setting && setting.process_visible_field_rows) ? setting.process_visible_field_rows : []).forEach((row) => {
+      const fieldKey = normalizeKey(row && row.field_key);
+      if (!fieldKey) {
+        return;
+      }
+      sectionMap.set(fieldKey, normalizeKey(row && row.header_key));
+    });
+
+    return sectionMap;
   }
 
   function buildFieldMetaByKey(setting) {
@@ -308,6 +381,51 @@
     return context && context.setting ? context.setting : null;
   }
 
+  function resolveQuantityRuleSectionKey_v1(context, rule, fieldSectionMap) {
+    if (!rule || typeof rule !== "object") {
+      return "";
+    }
+
+    const explicitSectionKey = normalizeKey(rule.sectionKey || rule.section_key || rule.section);
+    if (explicitSectionKey) {
+      return explicitSectionKey;
+    }
+
+    const headerKey = normalizeKey(rule.headerKey || rule.header_key);
+    if (headerKey) {
+      return headerKey;
+    }
+
+    const setting = getSettingFromContext(context);
+    const sectionMap = fieldSectionMap instanceof Map ? fieldSectionMap : buildFieldSectionMap(setting);
+    const repeatedFieldSections = new Set();
+
+    (Array.isArray(rule.repeatedFieldKeys) ? rule.repeatedFieldKeys : []).forEach((fieldKey) => {
+      const cleanFieldKey = normalizeKey(fieldKey);
+      if (!cleanFieldKey) {
+        return;
+      }
+      const sectionKey = normalizeKey(sectionMap.get(cleanFieldKey));
+      if (sectionKey) {
+        repeatedFieldSections.add(sectionKey);
+      }
+    });
+
+    if (repeatedFieldSections.size === 1) {
+      return repeatedFieldSections.values().next().value || "";
+    }
+
+    const quantityFieldKey = normalizeKey(rule.quantityFieldKey || rule.quantity_field_key);
+    if (quantityFieldKey) {
+      const quantityFieldSectionKey = normalizeKey(sectionMap.get(quantityFieldKey));
+      if (quantityFieldSectionKey) {
+        return quantityFieldSectionKey;
+      }
+    }
+
+    return getCurrentSectionFromContext(context);
+  }
+
   function resolveRulesFromContext(context) {
     const setting = getSettingFromContext(context);
     const rawRules = (context && Array.isArray(context.rules) ? context.rules : null) || (setting && setting.process_quantity_fields) || [];
@@ -324,6 +442,7 @@
         listeners: [],
         renderedKeys: new Set(),
         quantityOriginControlNames: new Set(),
+        dynamicListStateByRuleKey: {},
         destroyed: false
       };
     }
@@ -426,6 +545,7 @@
   function buildFieldControl(rule, itemIndex, fieldMeta, currentValue, ruleKeyAttrPrefix) {
     const fieldType = normalizeProcessFieldType(fieldMeta.fieldType);
     let controlEl = null;
+    const currentDateValue = normalizeDateValueForInput_v1(currentValue);
 
     if (fieldType === "list") {
       controlEl = document.createElement("select");
@@ -446,6 +566,10 @@
       controlEl.type = "checkbox";
       controlEl.value = "1";
       controlEl.checked = isTruthyFlagValue(currentValue);
+    } else if (fieldType === "date") {
+      controlEl = document.createElement("input");
+      controlEl.type = "date";
+      controlEl.value = currentDateValue;
     } else {
       controlEl = document.createElement("input");
       controlEl.type = TEXTUAL_TYPES.has(fieldType) ? fieldType : "text";
@@ -475,6 +599,388 @@
     return controlEl;
   }
 
+  function isDynamicListMode_v1(rule) {
+    return String(rule && rule.interactionMode || "").trim().toLowerCase() === "dynamic_list";
+  }
+
+  function countValidQuantityItems_v1(items) {
+    return (Array.isArray(items) ? items : []).reduce((count, item) => {
+      if (!item || typeof item !== "object") {
+        return count;
+      }
+      const hasValue = Object.keys(item).some((fieldKey) => {
+        return isDynamicListItemContentField_v1(fieldKey, item[fieldKey]);
+      });
+      return hasValue ? count + 1 : count;
+    }, 0);
+  }
+
+  function getDynamicListRuleState_v1(state, ruleKey) {
+    if (!state) {
+      return null;
+    }
+
+    const cleanRuleKey = normalizeKey(ruleKey);
+    if (!cleanRuleKey) {
+      return null;
+    }
+
+    if (!state.dynamicListStateByRuleKey) {
+      state.dynamicListStateByRuleKey = {};
+    }
+
+    if (!state.dynamicListStateByRuleKey[cleanRuleKey]) {
+      state.dynamicListStateByRuleKey[cleanRuleKey] = {
+        initialized: false,
+        dirty: false,
+        itemMeta: []
+      };
+    }
+
+    return state.dynamicListStateByRuleKey[cleanRuleKey];
+  }
+
+  function seedDynamicListRuleState_v1(ruleState, itemsLength) {
+    if (!ruleState) {
+      return;
+    }
+
+    if (!ruleState.initialized) {
+      ruleState.itemMeta = [];
+      for (let index = 0; index < itemsLength; index += 1) {
+        ruleState.itemMeta.push({ persisted: true });
+      }
+      ruleState.initialized = true;
+      ruleState.dirty = false;
+    }
+  }
+
+  function reconcileDynamicListRuleState_v1(ruleState, itemsLength) {
+    if (!ruleState) {
+      return;
+    }
+
+    while (ruleState.itemMeta.length < itemsLength) {
+      ruleState.itemMeta.push({ persisted: false });
+    }
+
+    if (ruleState.itemMeta.length > itemsLength) {
+      ruleState.itemMeta.length = itemsLength;
+    }
+  }
+
+  function getDynamicListDisplayItems_v1(ruleState, items) {
+    const safeItems = Array.isArray(items) ? items : [];
+    if (safeItems.length > 0) {
+      return safeItems;
+    }
+    return ruleState && ruleState.dirty ? [] : [{}];
+  }
+
+  function hideQuantityOriginControl_v1(quantityControl) {
+    if (!quantityControl) {
+      return;
+    }
+
+    const wrapper = quantityControl.closest(".field") || quantityControl.parentElement;
+    if (wrapper) {
+      wrapper.hidden = true;
+      wrapper.style.display = "none";
+    }
+    quantityControl.setAttribute("aria-hidden", "true");
+    quantityControl.tabIndex = -1;
+  }
+
+  function syncDynamicListQuantityControl_v1(formEl, rule, quantityCount) {
+    if (!formEl || !rule) {
+      return;
+    }
+
+    const quantityControl = formEl.querySelector(`[name="${resolveControlName(rule.quantityFieldKey)}"]`);
+    if (!quantityControl) {
+      return;
+    }
+
+    quantityControl.value = String(Number.isFinite(quantityCount) && quantityCount >= 0 ? quantityCount : 0);
+    hideQuantityOriginControl_v1(quantityControl);
+  }
+
+  function syncDynamicListRulePayload_v1(context, rule, nextItems) {
+    const root = context.root || document;
+    const formEl = context.formEl || resolveForm(root);
+    if (!formEl || !rule) {
+      return;
+    }
+
+    const payloadItems = normalizeDynamicListItemsForPayload_v1(nextItems);
+    ensureHiddenPayloadInput(formEl, rule.key, "data-process-quantity-payload", payloadItems);
+    syncDynamicListQuantityControl_v1(formEl, rule, countValidQuantityItems_v1(payloadItems));
+  }
+
+  function renderDynamicListProfileQuantityRule_v1(context, rule, valuesByRule, fieldMetaMap) {
+    const root = context.root || document;
+    const formEl = context.formEl || resolveForm(root);
+    const readonlyGridEl = context.readonlyGridEl || (root.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} .profile-readonly .personal-grid`) || null);
+    const editGridEl = context.editGridEl || (formEl ? formEl.querySelector(".personal-grid") : null);
+    const setting = getSettingFromContext(context);
+    const fieldSectionMap = buildFieldSectionMap(setting);
+    const activeSectionKey = getCurrentSectionFromContext(context);
+    const quantityControlName = resolveControlName(rule.quantityFieldKey);
+    const quantityControl = formEl ? formEl.querySelector(`[name="${quantityControlName}"]`) : null;
+    const quantityWrapper = quantityControl ? (quantityControl.closest(".field") || quantityControl.parentElement) : null;
+    const sectionPane = resolveQuantityRuleSectionKey_v1(context, rule, fieldSectionMap);
+    const rawItems = Array.isArray(valuesByRule[rule.key]) ? valuesByRule[rule.key] : [];
+    const ruleState = getDynamicListRuleState_v1(getRuntimeState(context), rule.key);
+    seedDynamicListRuleState_v1(ruleState, rawItems.length);
+    reconcileDynamicListRuleState_v1(ruleState, rawItems.length);
+
+    const displayItems = getDynamicListDisplayItems_v1(ruleState, rawItems);
+    const validCount = countValidQuantityItems_v1(rawItems);
+    const readonlyAnchor = readonlyGridEl ? readonlyGridEl.querySelector(`[data-profile-field-key="${rule.quantityFieldKey}"]`) : null;
+    const editAnchor = editGridEl ? editGridEl.querySelector(`[data-profile-field-key="${rule.quantityFieldKey}"]`) : null;
+
+    if (quantityWrapper) {
+      hideQuantityOriginControl_v1(quantityControl);
+    }
+
+    if (!readonlyGridEl && !editGridEl) {
+      return;
+    }
+
+    if (readonlyGridEl) {
+      removeGeneratedRuleNodes(readonlyGridEl, `[data-process-quantity-generated='1'][data-process-quantity-rule-key="${rule.key}"]`);
+    }
+    if (editGridEl) {
+      removeGeneratedRuleNodes(editGridEl, `[data-process-quantity-generated='1'][data-process-quantity-rule-key="${rule.key}"]`);
+    }
+
+    if (activeSectionKey && sectionPane && activeSectionKey !== sectionPane) {
+      return;
+    }
+
+    if (readonlyGridEl) {
+      const readonlyHost = document.createElement("div");
+      readonlyHost.className = "personal-item profile-quantity-readonly-v1 profile-quantity-dynamic-list-readonly-v1";
+      readonlyHost.dataset.processQuantityGenerated = "1";
+      readonlyHost.dataset.processQuantityRuleKey = rule.key;
+      readonlyHost.dataset.profileSectionPane = sectionPane;
+      readonlyHost.style.gridColumn = "1 / -1";
+
+      const mainLabel = document.createElement("span");
+      mainLabel.className = "personal-label";
+      mainLabel.textContent = rule.label || rule.itemLabel || "Itens";
+      readonlyHost.appendChild(mainLabel);
+
+      if (!rawItems.length) {
+        const emptyEl = document.createElement("p");
+        emptyEl.className = "empty";
+        emptyEl.textContent = `Sem ${String(rule.itemLabel || "item").toLowerCase()}s registados.`;
+        readonlyHost.appendChild(emptyEl);
+      } else {
+        const listWrapper = document.createElement("div");
+        listWrapper.className = "profile-quantity-dynamic-list-v1";
+
+        displayItems.forEach((itemValues, itemIndex) => {
+          const itemBlock = document.createElement("div");
+          itemBlock.className = "profile-quantity-dynamic-item-v1";
+
+          const itemTitle = document.createElement("strong");
+          itemTitle.className = "personal-value profile-quantity-readonly-title-v1";
+          itemTitle.textContent = `${rule.itemLabel || "Item"} ${itemIndex + 1}`;
+          itemBlock.appendChild(itemTitle);
+
+          const fieldsList = document.createElement("div");
+          fieldsList.className = "profile-quantity-dynamic-fields-v1";
+
+          rule.repeatedFieldKeys.forEach((fieldKey) => {
+            const fieldMeta = fieldMetaMap.get(fieldKey) || { label: fieldKey, fieldType: "text" };
+            const row = document.createElement("div");
+            row.className = "profile-quantity-readonly-field-v1";
+
+            const label = document.createElement("span");
+            label.className = "personal-label";
+            label.textContent = fieldMeta.label || fieldKey;
+
+            const value = document.createElement("strong");
+            value.className = "personal-value";
+            value.textContent = normalizeProcessFieldType(fieldMeta.fieldType) === "flag"
+              ? (isTruthyFlagValue(itemValues[fieldKey]) ? "Sim" : "Não")
+              : (String(itemValues[fieldKey] || "").trim() || "-");
+
+            row.appendChild(label);
+            row.appendChild(value);
+            fieldsList.appendChild(row);
+          });
+
+          itemBlock.appendChild(fieldsList);
+          listWrapper.appendChild(itemBlock);
+        });
+
+        readonlyHost.appendChild(listWrapper);
+      }
+
+      if (readonlyAnchor && readonlyAnchor.parentElement === readonlyGridEl) {
+        readonlyAnchor.insertAdjacentElement("afterend", readonlyHost);
+      } else {
+        readonlyGridEl.appendChild(readonlyHost);
+      }
+    }
+
+    if (editGridEl) {
+      const host = document.createElement("div");
+      host.className = "field full profile-quantity-rule-v1 profile-quantity-dynamic-list-v1";
+      host.dataset.processQuantityGenerated = "1";
+      host.dataset.processQuantityRuleKey = rule.key;
+      host.dataset.profileSectionPane = sectionPane;
+
+      const titleEl = document.createElement("label");
+      titleEl.className = "dynamic-process-quantity-title";
+      titleEl.textContent = rule.label || rule.itemLabel || "Itens";
+      host.appendChild(titleEl);
+
+      const listEl = document.createElement("div");
+      listEl.className = "profile-quantity-dynamic-list-v1";
+
+      displayItems.forEach((itemValues, itemIndex) => {
+        const itemWrapEl = document.createElement("div");
+        itemWrapEl.className = "profile-quantity-dynamic-item-edit-v1";
+        itemWrapEl.dataset.processQuantityItemIndex = String(itemIndex);
+        const itemId = normalizeDynamicListItemId_v1(itemValues && (itemValues.item_id || itemValues.__item_id));
+        itemValues.item_id = itemId;
+
+        const itemGridEl = document.createElement("div");
+        itemGridEl.className = "profile-quantity-dynamic-item-grid-v1";
+
+        const hiddenItemIdEl = document.createElement("input");
+        hiddenItemIdEl.type = "hidden";
+        hiddenItemIdEl.name = `process_quantity_field__${rule.key}__${itemIndex}__item_id`;
+        hiddenItemIdEl.value = itemId;
+        hiddenItemIdEl.dataset.processQuantityRuleKey = rule.key;
+        hiddenItemIdEl.dataset.processQuantityItemIndex = String(itemIndex);
+        hiddenItemIdEl.dataset.processQuantityFieldKey = "item_id";
+        hiddenItemIdEl.dataset.meuPerfilQuantityRuleKey = rule.key;
+        hiddenItemIdEl.dataset.meuPerfilQuantityIndex = String(itemIndex);
+        hiddenItemIdEl.dataset.meuPerfilQuantityFieldKey = "item_id";
+        itemGridEl.appendChild(hiddenItemIdEl);
+
+        rule.repeatedFieldKeys.forEach((fieldKey) => {
+          const fieldMeta = fieldMetaMap.get(fieldKey);
+          if (!fieldMeta) {
+            return;
+          }
+
+          const fieldContainerEl = document.createElement("div");
+          fieldContainerEl.className = "field";
+
+          const inputId = `meu_perfil_quantity_${rule.key}_${itemIndex}_${fieldKey}`.replace(/[^a-z0-9_]+/gi, "_");
+          const currentValue = String(itemValues[fieldKey] || "").trim();
+          const labelEl = document.createElement("label");
+          labelEl.setAttribute("for", inputId);
+          labelEl.textContent = fieldMeta.isRequired
+            ? `${fieldMeta.label || fieldKey} *`
+            : (fieldMeta.label || fieldKey);
+          fieldContainerEl.appendChild(labelEl);
+
+          let controlEl = null;
+          if (fieldMeta.fieldType === "flag") {
+            const wrapperEl = document.createElement("label");
+            wrapperEl.className = "profile-custom-flag-control";
+            controlEl = document.createElement("input");
+            controlEl.type = "checkbox";
+            controlEl.value = "1";
+            controlEl.checked = isTruthyFlagValue(currentValue);
+            wrapperEl.appendChild(controlEl);
+            const spanEl = document.createElement("span");
+            spanEl.textContent = "Ativo";
+            wrapperEl.appendChild(spanEl);
+            fieldContainerEl.appendChild(wrapperEl);
+          } else if (fieldMeta.fieldType === "list") {
+            controlEl = document.createElement("select");
+            const placeholderEl = document.createElement("option");
+            placeholderEl.value = "";
+            placeholderEl.textContent = "Selecione";
+            controlEl.appendChild(placeholderEl);
+            (Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions : []).forEach((optionValue) => {
+              const optionEl = document.createElement("option");
+              optionEl.value = String(optionValue || "").trim();
+              optionEl.textContent = String(optionValue || "").trim();
+              optionEl.selected = optionEl.value === currentValue;
+              controlEl.appendChild(optionEl);
+            });
+            fieldContainerEl.appendChild(controlEl);
+          } else {
+            controlEl = document.createElement("input");
+            controlEl.type = TEXTUAL_TYPES.has(normalizeProcessFieldType(fieldMeta.fieldType))
+              ? normalizeProcessFieldType(fieldMeta.fieldType)
+              : "text";
+            controlEl.value = currentValue;
+            if (fieldMeta.fieldType === "date" && !currentValue) {
+              controlEl.placeholder = "dd/mm/aaaa";
+            }
+            if (fieldMeta.size && TEXTUAL_TYPES.has(normalizeProcessFieldType(fieldMeta.fieldType))) {
+              controlEl.maxLength = Number(fieldMeta.size) || 255;
+            }
+            fieldContainerEl.appendChild(controlEl);
+          }
+
+          if (controlEl) {
+            controlEl.id = inputId;
+            controlEl.name = `process_quantity_field__${rule.key}__${itemIndex}__${fieldKey}`;
+            controlEl.dataset.processQuantityRuleKey = rule.key;
+            controlEl.dataset.processQuantityItemIndex = String(itemIndex);
+            controlEl.dataset.processQuantityFieldKey = fieldKey;
+            controlEl.dataset.meuPerfilQuantityRuleKey = rule.key;
+            controlEl.dataset.meuPerfilQuantityIndex = String(itemIndex);
+            controlEl.dataset.meuPerfilQuantityFieldKey = fieldKey;
+            controlEl.setAttribute("aria-label", fieldMeta.label || fieldKey);
+          }
+
+          itemGridEl.appendChild(fieldContainerEl);
+        });
+
+        const actionsEl = document.createElement("div");
+        actionsEl.className = "profile-quantity-dynamic-item-actions-v1";
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "action-btn-cancel profile-quantity-dynamic-remove-btn-v1";
+        removeButton.setAttribute("data-process-quantity-remove-item", "1");
+        removeButton.setAttribute("data-process-quantity-rule-key", rule.key);
+        removeButton.setAttribute("data-process-quantity-index", String(itemIndex));
+        removeButton.setAttribute("aria-label", `Remover ${rule.itemLabel || "item"} ${itemIndex + 1}`);
+        removeButton.title = `Remover ${rule.itemLabel || "item"} ${itemIndex + 1}`;
+        removeButton.textContent = "✕";
+        actionsEl.appendChild(removeButton);
+        itemGridEl.appendChild(actionsEl);
+
+        itemWrapEl.appendChild(itemGridEl);
+        listEl.appendChild(itemWrapEl);
+      });
+
+      host.appendChild(listEl);
+
+      const addRow = document.createElement("div");
+      addRow.className = "profile-quantity-dynamic-add-row-v1";
+      const addButton = document.createElement("button");
+      addButton.type = "button";
+      addButton.className = "profile-quantity-dynamic-add-btn-v1";
+      addButton.setAttribute("data-process-quantity-add-item", "1");
+      addButton.setAttribute("data-process-quantity-rule-key", rule.key);
+      addButton.setAttribute("aria-label", `Adicionar ${rule.itemLabel || "item"}`);
+      addButton.textContent = `+ Adicionar ${String(rule.itemLabel || "item").toLowerCase()}`;
+      addButton.disabled = rule.maxItems > 0 && displayItems.length >= rule.maxItems;
+      addRow.appendChild(addButton);
+      host.appendChild(addRow);
+
+      syncDynamicListQuantityControl_v1(formEl, rule, validCount);
+
+      if (editAnchor && editAnchor.parentElement === editGridEl) {
+        editAnchor.insertAdjacentElement("afterend", host);
+      } else {
+        editGridEl.appendChild(host);
+      }
+    }
+  }
+
   function resolveQuantityCountFromControl(controlValue, maxItems) {
     const parsedValue = Number.parseInt(toSafeString(controlValue).trim(), 10);
     const parsedMaxItems = Number.parseInt(toSafeString(maxItems || DEFAULT_MAX_ITEMS).trim(), 10);
@@ -490,15 +996,21 @@
   }
 
   function renderProfileQuantityRule(context, rule, valuesByRule, fieldMetaMap) {
+    if (isDynamicListMode_v1(rule)) {
+      return renderDynamicListProfileQuantityRule_v1(context, rule, valuesByRule, fieldMetaMap);
+    }
+
     const root = context.root || document;
     const formEl = context.formEl || resolveForm(root);
     const readonlyGridEl = context.readonlyGridEl || (root.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} .profile-readonly .personal-grid`) || null);
     const editGridEl = context.editGridEl || (formEl ? formEl.querySelector(".personal-grid") : null);
     const setting = getSettingFromContext(context);
+    const fieldSectionMap = buildFieldSectionMap(setting);
+    const activeSectionKey = getCurrentSectionFromContext(context);
     const quantityControlName = resolveControlName(rule.quantityFieldKey);
     const quantityControl = formEl ? formEl.querySelector(`[name="${quantityControlName}"]`) : null;
     const quantityWrapper = quantityControl ? (quantityControl.closest(".field") || quantityControl.parentElement) : null;
-    const sectionPane = normalizeKey(rule.headerKey || getCurrentSectionFromContext(context) || "");
+    const sectionPane = resolveQuantityRuleSectionKey_v1(context, rule, fieldSectionMap);
     const existingItems = resizeItems(valuesByRule[rule.key] || [], resolveQuantityCountFromControl(quantityControl ? quantityControl.value : "", rule.maxItems) || (valuesByRule[rule.key] || []).length);
     const readonlyAnchor = readonlyGridEl ? readonlyGridEl.querySelector(`[data-profile-field-key="${rule.quantityFieldKey}"]`) : null;
     const editAnchor = editGridEl ? editGridEl.querySelector(`[data-profile-field-key="${rule.quantityFieldKey}"]`) : null;
@@ -512,6 +1024,10 @@
     }
     if (editGridEl) {
       removeGeneratedRuleNodes(editGridEl, `[data-process-quantity-generated='1'][data-process-quantity-rule-key="${rule.key}"]`);
+    }
+
+    if (activeSectionKey && sectionPane && activeSectionKey !== sectionPane) {
+      return;
     }
 
     let host = null;
@@ -779,6 +1295,92 @@
     }
   }
 
+  function handleQuantityFormClick(context, state, event) {
+    const target = event && event.target;
+    if (!target || typeof target.closest !== "function") {
+      return;
+    }
+
+    const addButton = target.closest("[data-process-quantity-add-item='1']");
+    const removeButton = target.closest("[data-process-quantity-remove-item='1']");
+
+    if (!addButton && !removeButton) {
+      return;
+    }
+
+    const formEl = state && state.formEl ? state.formEl : (context && context.formEl ? context.formEl : resolveForm(context && context.root));
+    if (!formEl) {
+      return;
+    }
+
+    const ruleKey = normalizeKey(
+      (addButton || removeButton).getAttribute("data-process-quantity-rule-key")
+    );
+    const rules = resolveRulesFromContext(context);
+    const rule = rules.find((item) => normalizeKey(item.key) === ruleKey && isDynamicListMode_v1(item));
+    if (!rule) {
+      return;
+    }
+
+    const currentValues = typeof context.getValues === "function"
+      ? context.getValues()
+      : collectQuantityValuesFromForm(formEl, "data-process-quantity");
+    const ruleState = getDynamicListRuleState_v1(state, rule.key);
+    const nextItems = Array.isArray(currentValues[rule.key]) ? currentValues[rule.key].map((item) => ({ ...item })) : [];
+
+    if (addButton) {
+      const currentDisplayCount = nextItems.length > 0
+        ? nextItems.length
+        : (ruleState && ruleState.dirty ? 0 : 1);
+      if (rule.maxItems > 0 && currentDisplayCount >= rule.maxItems) {
+        event.preventDefault();
+        return;
+      }
+      nextItems.push({ item_id: normalizeDynamicListItemId_v1() });
+      ruleState.dirty = true;
+      reconcileDynamicListRuleState_v1(ruleState, nextItems.length);
+      syncDynamicListRulePayload_v1(context, rule, nextItems);
+      render(context);
+      sync(context);
+      event.preventDefault();
+      return;
+    }
+
+    const itemIndex = Number.parseInt(String(removeButton.getAttribute("data-process-quantity-index") || "").trim(), 10);
+    if (!Number.isFinite(itemIndex) || itemIndex < 0 || itemIndex >= nextItems.length) {
+      if (itemIndex === 0 && nextItems.length === 0 && ruleState && !ruleState.dirty) {
+        ruleState.dirty = true;
+        syncDynamicListRulePayload_v1(context, rule, []);
+        render(context);
+        sync(context);
+        event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      return;
+    }
+
+    const itemMeta = ruleState && Array.isArray(ruleState.itemMeta) ? ruleState.itemMeta[itemIndex] : null;
+    if (itemMeta && itemMeta.persisted) {
+      const shouldRemove = window.confirm(`Remover ${rule.itemLabel || "item"} ${itemIndex + 1}?`);
+      if (!shouldRemove) {
+        event.preventDefault();
+        return;
+      }
+    }
+
+    nextItems.splice(itemIndex, 1);
+    if (ruleState && Array.isArray(ruleState.itemMeta)) {
+      ruleState.itemMeta.splice(itemIndex, 1);
+      ruleState.dirty = true;
+    }
+
+    syncDynamicListRulePayload_v1(context, rule, nextItems);
+    render(context);
+    sync(context);
+    event.preventDefault();
+  }
+
   function getFormQuantityPayloadInputs(form) {
     if (!form || typeof form.querySelectorAll !== "function") {
       return [];
@@ -949,6 +1551,10 @@
       handleQuantityFormMutation(safeContext, nextState, event, true);
     }, true);
 
+    bindListener(nextState, formEl, "click", (event) => {
+      handleQuantityFormClick(safeContext, nextState, event);
+    }, true);
+
     bindListener(nextState, formEl, "submit", () => {
       sync(safeContext);
     }, true);
@@ -994,6 +1600,13 @@
       if (!safeContext.adapter || typeof safeContext.adapter.sync !== "function") {
         ensureHiddenPayloadInput(formEl, rule.key, "data-process-quantity-payload", nextValues);
       }
+    });
+
+    rules.forEach((rule) => {
+      if (!isDynamicListMode_v1(rule)) {
+        return;
+      }
+      syncDynamicListQuantityControl_v1(formEl, rule, countValidQuantityItems_v1(valuesByRule[rule.key]));
     });
 
     if (state) {
@@ -1079,6 +1692,7 @@
     collectValuesFromForm,
     resolveControlName,
     getProfileForm,
-    getCurrentProfileSection
+    getCurrentProfileSection,
+    resolveQuantityRuleSectionKey_v1
   };
 })();

@@ -11,7 +11,7 @@
 <script src="/static/js/modules/post_save_context_capture_v1.js?v=20260714-post-save-context-contract-v2"></script>
 <script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260714-post-save-context-contract-v2"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260708-invite-link-header-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260722-dynamic-aggregates-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260708-invite-link-header-v1">
     <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260717-process-lists-responsive-partition-v3">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
@@ -311,79 +311,79 @@
           <div class="profile-readonly">
             <div class="personal-grid">
               {% if "nome" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
+              <div class="personal-item" data-profile-field-key="nome" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
                 <span class="personal-label">Nome</span>
                 <strong class="personal-value">{{ user_personal_data.full_name }}</strong>
               </div>
               {% endif %}
               {% if "email" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
+              <div class="personal-item" data-profile-field-key="email" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
                 <span class="personal-label">Email</span>
                 <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
               </div>
               {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
+              <div class="personal-item" data-profile-field-key="telefone" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
                 <span class="personal-label">Telefone</span>
                 <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
               </div>
               {% endif %}
               {% if "pais" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
+              <div class="personal-item" data-profile-field-key="pais" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
                 <span class="personal-label">País</span>
                 <strong class="personal-value">{{ user_personal_data.country }}</strong>
               </div>
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
+              <div class="personal-item" data-profile-field-key="data_nascimento" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
                 <span class="personal-label">Data de nascimento</span>
                 <strong class="personal-value">{{ user_personal_data.birth_date }}</strong>
               </div>
               {% endif %}
               {% if "whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
+              <div class="personal-item" data-profile-field-key="whatsapp" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
                 <span class="personal-label">WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_verification_status }}</strong>
               </div>
               {% endif %}
               {% if "autorizacao_whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
+              <div class="personal-item" data-profile-field-key="autorizacao_whatsapp" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
                 <span class="personal-label">Autorização para avisos por WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_notice_opt_in }}</strong>
               </div>
               {% endif %}
               {% if "conta" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', '') }}">
+              <div class="personal-item" data-profile-field-key="conta" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', '') }}">
                 <span class="personal-label">Conta</span>
                 <strong class="personal-value">{{ user_personal_data.account_status }}</strong>
               </div>
               {% endif %}
               {% if "estado_membro" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', '') }}">
+              <div class="personal-item" data-profile-field-key="estado_membro" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', '') }}">
                 <span class="personal-label">Estado de membro</span>
                 <strong class="personal-value">{{ user_personal_data.member_status }}</strong>
               </div>
               {% endif %}
               {% if "colaborador" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', '') }}">
+              <div class="personal-item" data-profile-field-key="colaborador" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', '') }}">
                 <span class="personal-label">Colaborador</span>
                 <strong class="personal-value">{{ user_personal_data.is_collaborator }}</strong>
               </div>
               {% endif %}
               {% if "entidades" in profile_personal_visible_fields %}
-              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', '') }}">
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-field-key="entidades" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', '') }}">
                 <span class="personal-label">Entidades</span>
                 <strong class="personal-value">{{ user_personal_data.entities }}</strong>
               </div>
               {% endif %}
               {% if "ultima_verificacao_whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', '') }}">
+              <div class="personal-item" data-profile-field-key="ultima_verificacao_whatsapp" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', '') }}">
                 <span class="personal-label">Última verificação WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_check_at }}</strong>
               </div>
               {% endif %}
               {% if "detalhe_verificacao" in profile_personal_visible_fields %}
-              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', '') }}">
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-field-key="detalhe_verificacao" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', '') }}">
                 <span class="personal-label">Detalhe da verificação</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_error }}</strong>
               </div>
@@ -1566,6 +1566,7 @@
                       <input type="hidden" name="quantity_rule_key" value="{{ quantity_rule.key }}" disabled>
                       <input type="hidden" name="quantity_rule_label" value="{{ quantity_rule.label }}" disabled>
                       <input type="hidden" name="quantity_field_key" value="{{ quantity_rule.quantity_field_key }}" disabled>
+                      <input type="hidden" name="quantity_interaction_mode" value="{{ quantity_rule.interaction_mode|default('quantity') }}" disabled>
                       <input type="hidden" name="quantity_repeated_field_keys_json" value='{{ quantity_rule.repeated_field_keys|default([])|tojson }}' disabled>
                       <input type="hidden" name="quantity_header_key" value="{{ quantity_rule.header_key|default('') }}" disabled>
                       <input type="hidden" name="quantity_max_items" value="{{ quantity_rule.max_items|default(10) }}" disabled>
@@ -1595,6 +1596,14 @@
                             <option value="{{ field.key }}">{{ field.label }}</option>
                             {% endif %}
                           {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-interaction-mode">Modo de interação</label>
+                        <select id="process-quantity-editor-interaction-mode" data-process-quantity-editor-interaction-mode>
+                          <option value="quantity">Quantidade</option>
+                          <option value="dynamic_list">Lista dinâmica</option>
                         </select>
                       </div>
 
@@ -2615,7 +2624,7 @@
 <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260717-process-lists-actions-helper-v2"></script>
    <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v2"></script>
       <script src="/static/js/modules/process_lists_manager_v1.js?v=20260717-process-lists-responsive-partition-v5"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260722-dynamic-aggregates-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260717-process-lists-actions-helper-v1"></script>
   <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
@@ -2629,9 +2638,9 @@
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260708-breadcrumb-section-v1"></script>
   <script src="/static/js/modules/profile_field_registry_v1.js?v=20260714-profile-field-registry-v1"></script>
-  <script src="/static/js/modules/process_quantity_runtime_v1.js?v=20260714-process-quantity-runtime-v3"></script>
+  <script src="/static/js/modules/process_quantity_runtime_v1.js?v=20260722-dynamic-aggregates-v1"></script>
   <script src="/static/js/modules/process_subsequent_visibility_runtime_v1.js?v=20260714-process-subsequent-visibility-v2"></script>
-  <script src="/static/js/new_user.js?v=20260721-new-user-runtime-v7"></script>
+  <script src="/static/js/new_user.js?v=20260722-dynamic-aggregates-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
