@@ -726,14 +726,6 @@
       });
       return;
     }
-
-    var createCard = document.getElementById("admin-sidebar-sections-card");
-    if (!createCard) {
-      return;
-    }
-
-    _clearSessoesSaveAjaxFeedbackV1(createCard);
-    _insertSessoesSaveAjaxFeedbackV1(createCard, "alert ok", safeMessage);
   }
 
   function _setSessoesSaveButtonStateV1(button, isPending, originalText) {

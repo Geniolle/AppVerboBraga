@@ -54,13 +54,19 @@ def test_process_quantity_fields_manager_v1_is_the_sole_active_generation() -> N
     """
     Ao contrario de Campos Adicionais (que tem uma geracao morta
     bindEditorExtras_v3 convivendo com a ativa bindEditorExtras_v4), a pasta de
-    modulos JS nao contem nenhum script legado/paralelo para Campos Quantidade.
+    modulos JS nao contem scripts legados/paralelos para Campos Quantidade.
+    O runtime novo passa a coexistir com o manager V1 porque e' a implementacao
+    canonica da fase atual, enquanto o manager continua a ser o unico gerador
+    administrativo.
     """
     modules_dir = PROJECT_ROOT / "static" / "js" / "modules"
     matches = sorted(
         path.name for path in modules_dir.glob("*quantity*")
     )
-    assert matches == ["process_quantity_fields_manager_v1.js"]
+    assert matches == [
+        "process_quantity_fields_manager_v1.js",
+        "process_quantity_runtime_v1.js",
+    ]
 
 
 ####################################################################################

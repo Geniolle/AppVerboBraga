@@ -147,6 +147,7 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
     delete_endpoint="/entities/delete",
     repository_name="entity",
     repository_class="appgenesis.admin_subprocesses.repositories.entity_repository.EntityAdminRepository",
+    uses_entity_context=False,
     status_field="entity_status",
     active_value="active",
     inactive_value="inactive",
@@ -266,6 +267,7 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     delete_endpoint="/settings/menu/sidebar-section-delete",
     repository_name="sidebar_section",
     repository_class="appgenesis.admin_subprocesses.repositories.sidebar_section_repository.SidebarSectionAdminRepository",
+    uses_entity_context=False,
     status_field="status",
     active_value="ativo",
     inactive_value="inativo",
@@ -312,12 +314,6 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
             ("ativo", "Ativo"),
             ("inativo", "Inativo"),
         ),
-    ),
-    AdminFieldConfig(
-        key="entity_number",
-        label="Entidade",
-        input_name="auth_profile_entity_number_display",
-        field_type="readonly",
     ),
 )
 
@@ -366,7 +362,8 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     uses_dynamic_fields=True,
     dynamic_fields_menu_key="perfil_de_autorizacao",
     dynamic_fields_section_header_key="custom_perfil",
-    form_grid_css_class="admin-subprocess-grid-auth-profile-v1",
+    uses_entity_context=True,
+    form_grid_css_class="admin-subprocess-grid-entity-context-v1",
     fields=AUTHORIZATION_PROFILE_TECHNICAL_FIELDS,
     columns=(
         AdminColumnConfig(
@@ -482,7 +479,8 @@ OBJETO_AUTORIZACAO_CONFIG = AdminSubprocessConfig(
     uses_dynamic_fields=True,
     dynamic_fields_menu_key="perfil_de_autorizacao",
     dynamic_fields_section_header_key="custom_objeto_de_autorizacao",
-    form_grid_css_class="admin-subprocess-grid-objeto-autorizacao-v1",
+    uses_entity_context=True,
+    form_grid_css_class="admin-subprocess-grid-entity-context-v1",
     fields=OBJETO_AUTORIZACAO_TECHNICAL_FIELDS,
     columns=(
         AdminColumnConfig(
@@ -577,6 +575,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     delete_endpoint="/users/delete",
     repository_name="user",
     repository_class="",
+    uses_entity_context=False,
     active_value="active",
     inactive_value="inactive",
     identity_field="id",
@@ -769,6 +768,7 @@ MENU_CONFIG = AdminSubprocessConfig(
     enabled=True,
     migration_status="native",
     fields=MENU_FIELDS,
+    uses_entity_context=False,
     columns=(
         AdminColumnConfig(key="label", label="MENU LATERAL", source="label", css_class="admin-col-main-v1", always_visible=True),
         AdminColumnConfig(key="entity_number", label="Nº DA ENTIDADE", source="entity_number", css_class="admin-col-number-v1"),
@@ -805,6 +805,7 @@ CONTAS_CONFIG = AdminSubprocessConfig(
     save_endpoint="",
     repository_name="account",
     repository_class="",
+    uses_entity_context=False,
     enabled=False,
     migration_status="legacy_pending",
     menu_scope="administrativo,sessoes",

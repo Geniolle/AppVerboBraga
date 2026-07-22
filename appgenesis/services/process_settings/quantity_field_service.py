@@ -4,17 +4,20 @@ import json
 import re
 from typing import Any
 
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from appgenesis.services.process_settings.menu_config_repository import (
+    load_menu_config,
+    save_menu_config,
+)
 from appgenesis.services.process_settings.normalizers import (
     SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS,
-    _load_menu_config,
     _menu_exists,
     _normalize_custom_field_key,
     _normalize_menu_key,
     _normalize_sentence_case_text,
     _resolve_legacy_menu_alias,
+    _resolve_sidebar_menu_settings_entity_id,
     ensure_sidebar_menu_settings_defaults,
 )
 from appgenesis.services.process_settings.additional_field_service import (
@@ -35,6 +38,13 @@ def _normalize_process_quantity_max_items_v1(raw_value: Any) -> int:
     except (TypeError, ValueError):
         return 1
     return max(1, min(parsed_value, 50))
+
+
+def _normalize_process_quantity_interaction_mode_v1(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    if clean_value in {"quantity", "dynamic_list"}:
+        return clean_value
+    return "quantity"
 
 
 def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, Any]]:
@@ -90,6 +100,10 @@ def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, An
         max_items = _normalize_process_quantity_max_items_v1(
             raw_item.get("max_items") or raw_item.get("maxItems")
         )
+        interaction_mode = _normalize_process_quantity_interaction_mode_v1(
+            raw_item.get("interaction_mode")
+            or raw_item.get("interactionMode")
+        )
         item_label = (
             _normalize_sentence_case_text(
                 raw_item.get("item_label") or raw_item.get("itemLabel") or "Item"
@@ -123,6 +137,11 @@ def normalize_menu_process_quantity_fields(raw_fields: Any) -> list[dict[str, An
                 "header_key": header_key,
                 "max_items": max_items,
                 "item_label": item_label,
+                **(
+                    {"interaction_mode": interaction_mode}
+                    if interaction_mode != "quantity"
+                    else {}
+                ),
             }
         )
 
@@ -133,8 +152,12 @@ def update_sidebar_menu_process_quantity_fields_v1(
     session: Session,
     menu_key: str,
     raw_fields: Any,
+    entity_id: int | None = None,
 ) -> tuple[bool, str]:
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    resolved_entity_id = entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
 
     if not clean_menu_key:
         return False, "Menu inválido."
@@ -147,7 +170,7 @@ def update_sidebar_menu_process_quantity_fields_v1(
     if not _menu_exists(session, clean_menu_key):
         return False, "Menu não encontrado."
 
-    menu_config = _load_menu_config(session, clean_menu_key)
+    menu_config = load_menu_config(session, resolved_entity_id, clean_menu_key)
     additional_fields = normalize_menu_process_additional_fields(
         menu_config.get("additional_fields")
     )
@@ -178,6 +201,9 @@ def update_sidebar_menu_process_quantity_fields_v1(
         header_key = str(item.get("header_key") or "").strip().lower()
         item_label = str(item.get("item_label") or "").strip() or "Item"
         max_items = _normalize_process_quantity_max_items_v1(item.get("max_items"))
+        interaction_mode = _normalize_process_quantity_interaction_mode_v1(
+            item.get("interaction_mode")
+        )
 
         if not rule_label:
             return False, f"Informe o nome da regra na linha {row_index + 1}."
@@ -240,24 +266,14 @@ def update_sidebar_menu_process_quantity_fields_v1(
                 "header_key": header_key,
                 "max_items": max_items,
                 "item_label": item_label,
+                **(
+                    {"interaction_mode": interaction_mode}
+                    if interaction_mode != "quantity"
+                    else {}
+                ),
             }
         )
 
     menu_config["process_quantity_fields"] = validated_fields
 
-    session.execute(
-        text(
-            """
-            UPDATE sidebar_menu_settings
-            SET menu_config = :menu_config
-            WHERE lower(trim(menu_key)) = :menu_key
-            """
-        ),
-        {
-            "menu_key": clean_menu_key,
-            "menu_config": json.dumps(menu_config, ensure_ascii=False),
-        },
-    )
-    session.commit()
-
-    return True, ""
+    return save_menu_config(session, resolved_entity_id, clean_menu_key, menu_config)

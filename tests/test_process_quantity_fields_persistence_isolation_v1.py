@@ -74,10 +74,13 @@ def _seed_menu(SessionLocal, *, menu_key, entity_id=1, additional_fields=None, p
     session.close()
 
 
-def _load_config(SessionLocal, menu_key):
+def _load_config(SessionLocal, menu_key, entity_id=1):
     session = SessionLocal()
     row = session.execute(
-        select(SidebarMenuSetting).where(SidebarMenuSetting.menu_key == menu_key)
+        select(SidebarMenuSetting).where(
+            SidebarMenuSetting.menu_key == menu_key,
+            SidebarMenuSetting.entity_id == entity_id,
+        )
     ).scalar_one()
     config = json.loads(row.menu_config)
     entity_id = row.entity_id
@@ -93,24 +96,69 @@ BASE_RULE = {
 
 
 ####################################################################################
-# (1) ISOLAMENTO: entity_id ignorado por design; isolamento exclusivo por menu_key.
+# (1) ISOLAMENTO MULTI-TENANT: a atualizacao de Campos Quantidade nao pode afetar
+# outra entidade com o mesmo menu_key.
 ####################################################################################
 
-def test_update_quantity_fields_ignores_entity_id_column_by_design():
+def test_update_quantity_fields_isolated_between_entities_with_same_menu_key():
     SessionLocal = _build_session_factory()
-    _seed_menu(SessionLocal, menu_key="processo_teste_a", entity_id=999)
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        process_quantity_fields=[
+            {
+                "key": "qty_existente",
+                "label": "Existente",
+                "quantity_field_key": "custom_quantidade_filhos",
+                "repeated_field_keys": ["custom_nome_filho"],
+                "header_key": "",
+                "max_items": 3,
+                "item_label": "Item",
+            }
+        ],
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=2,
+        process_quantity_fields=[
+            {
+                "key": "qty_outra_entidade",
+                "label": "Outra entidade",
+                "quantity_field_key": "custom_quantidade_filhos",
+                "repeated_field_keys": ["custom_nome_filho"],
+                "header_key": "",
+                "max_items": 7,
+                "item_label": "Item",
+            }
+        ],
+    )
 
     session = SessionLocal()
     ok, error = update_sidebar_menu_process_quantity_fields_v1(
-        session, "processo_teste_a", [dict(BASE_RULE)]
+        session,
+        "processo_teste_a",
+        [dict(BASE_RULE)],
+        entity_id=1,
     )
     session.close()
 
     assert ok is True
     assert error == ""
-    config, entity_id = _load_config(SessionLocal, "processo_teste_a")
-    assert entity_id == 999
+    config, entity_id = _load_config(SessionLocal, "processo_teste_a", entity_id=1)
+    assert entity_id == 1
     assert config["process_quantity_fields"][0]["key"] == "qty_filhos"
+
+    other_config, other_entity_id = _load_config(
+        SessionLocal,
+        "processo_teste_a",
+        entity_id=2,
+    )
+    assert other_entity_id == 2
+    assert [item["key"] for item in other_config["process_quantity_fields"]] == [
+        "qty_outra_entidade"
+    ]
 
 
 def test_update_quantity_fields_isolated_between_menu_keys():

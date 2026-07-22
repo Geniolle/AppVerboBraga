@@ -7,8 +7,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ####################################################################################
 # (1) TODOS OS BOTOES CANCELAR DO EDITOR DEVOLVEM O UTILIZADOR A LISTA DE ORIGEM
 # (o "target" de contexto continua a ser o proprio card do editor -- necessario para o
-# controlador global localizar/fechar o card -- mas o "return-target"/"return-url" ja
-# nao apontam mais para o proprio editor, e sim para a lista de onde ele foi aberto).
+# controlador global localizar/fechar o card -- mas o "return-target"/"return-url" apontam
+# para a lista de onde ele foi aberto).
 ####################################################################################
 
 CANCEL_BUTTON_MARKERS = [
@@ -48,10 +48,11 @@ def test_process_editor_cancel_buttons_reuse_editor_exit_url() -> None:
         'data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"'
     )
 
-    # Aba Geral (2 variantes: owner editavel + somente leitura) + os 5 managers do editor
+    # A aba Geral nao possui formulario/Guardar/Cancelar (mostra apenas "Campos disponiveis"),
+    # por isso o botao Cancelar so existe nos 5 managers com criacao/edicao do editor
     # (campos-config, quantidade, listas, subsequentes, adicionais). O editor de colunas da
     # listagem foi consolidado dentro do manager de Listas e nao tem mais botao Cancelar proprio.
-    assert matches == 7
+    assert matches == 5
 
     for hardcoded_menu in ("menu=calendario", "menu=administrativo\"", "menu=sessoes\""):
         assert hardcoded_menu not in html_text
@@ -62,17 +63,78 @@ def test_process_editor_cancel_return_target_is_the_origin_list() -> None:
 
     assert html_text.count(
         'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
-    ) == 7
+    ) == 5
+
+
+def test_geral_tab_has_no_form_only_available_fields_card() -> None:
+    html_text = _read_new_user_html()
+
+    geral_start = html_text.index('data-process-edit-pane="geral"')
+    geral_end = html_text.index('data-process-edit-pane="campos-config"', geral_start)
+    geral_pane = html_text[geral_start:geral_end]
+
+    # Regra aprovada: a aba Geral nao tem formulario proprio, nem Guardar/Cancelar --
+    # mostra apenas o card "Campos disponiveis" (somente leitura).
+    assert "<form" not in geral_pane
+    assert 'action="/settings/menu/edit"' not in geral_pane
+    assert ">Guardar<" not in geral_pane
+    assert ">Cancelar<" not in geral_pane
+    assert "data-appgenesis-cancel-return-target" not in geral_pane
+    assert "data-appgenesis-cancel-return-url" not in geral_pane
+    assert "Campos disponíveis" in geral_pane
+
+
+def test_non_general_process_editor_tabs_do_not_render_internal_heading_blocks() -> None:
+    html_text = _read_new_user_html()
+
+    removed_blocks = [
+        (
+            "campos-config",
+            "<h3>Configuração dos campos</h3>",
+            "Defina quais campos ficam visíveis no processo e a ordem de exibição.",
+        ),
+        (
+            "campos-quantidade",
+            "<h3>Campos Quantidade</h3>",
+            "Configure regras onde um campo numérico controla quantos blocos de outros campos serão exibidos no processo.",
+        ),
+        (
+            "lista",
+            "<h3>Listas reutilizáveis</h3>",
+            "Crie e gira listas para utilizar em campos do tipo Lista.",
+        ),
+        (
+            "campos-subsequentes",
+            "<h3>Campos Subsequentes</h3>",
+            "Configure campos que aparecem conforme a resposta de outro campo.",
+        ),
+        (
+            "campos-adicionais",
+            "<h3>Campos Adicionais</h3>",
+            "Crie, edite, ordene e remova campos adicionais exibidos neste processo.",
+        ),
+    ]
+
+    for pane_key, heading_html, description_text in removed_blocks:
+        pane_marker = f'data-process-edit-pane="{pane_key}"'
+        pane_start = html_text.index(pane_marker)
+        next_pane_start = html_text.find('data-process-edit-pane="', pane_start + 1)
+        pane_text = html_text[pane_start: next_pane_start if next_pane_start != -1 else len(html_text)]
+
+        assert heading_html not in pane_text
+        assert description_text not in pane_text
+        assert "process-tab-description-v1" not in pane_text
 
 
 ####################################################################################
 # (1.1) TODAS AS ABAS DO EDITOR ENVIAM return_url NO GUARDAR, REUSANDO A MESMA VARIAVEL
-# GLOBAL (settings_edit_return_url), PARA O BACKEND PRESERVAR CONTEXTO (ex.: admin_tab)
+# GLOBAL (settings_edit_exit_url), PARA O BACKEND PRESERVAR O CONTEXTO DE SAIDA (ex.: admin_tab)
 # SEM DEPENDER DE NAVEGACAO CORRETIVA NO CLIENTE.
 ####################################################################################
 
 PROCESS_EDITOR_FORM_ACTIONS = [
-    "/settings/menu/edit",
+    # A aba Geral nao tem formulario (somente leitura), por isso "/settings/menu/edit"
+    # nao faz parte desta lista -- os 5 managers com criacao/edicao continuam cobertos.
     "/settings/menu/process-fields",
     "/settings/menu/process-quantity-fields",
     "/settings/menu/process-lists",
@@ -85,7 +147,7 @@ def test_all_process_editor_tab_forms_send_generic_return_url() -> None:
     html_text = _read_new_user_html()
 
     assert html_text.count(
-        '<input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">'
+        '<input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">'
     ) == len(PROCESS_EDITOR_FORM_ACTIONS)
 
     for action in PROCESS_EDITOR_FORM_ACTIONS:

@@ -43,6 +43,9 @@
     applyMeuPerfilProcessSubsequentVisibility: function () {},
     syncActiveTabTitle: function () {},
     refreshProcessShellBreadcrumb: function () {},
+    getMeuPerfilSelectedProfileSection: function () {
+      return "";
+    },
     MEU_PERFIL_MENU_KEY: "meu_perfil",
     windowRef: global,
     documentRef: global.document || null
@@ -116,6 +119,9 @@
     }
     if (typeof safeOptions.refreshProcessShellBreadcrumb === "function") {
       state.refreshProcessShellBreadcrumb = safeOptions.refreshProcessShellBreadcrumb;
+    }
+    if (typeof safeOptions.getMeuPerfilSelectedProfileSection === "function") {
+      state.getMeuPerfilSelectedProfileSection = safeOptions.getMeuPerfilSelectedProfileSection;
     }
     if (typeof safeOptions.MEU_PERFIL_MENU_KEY === "string" && safeOptions.MEU_PERFIL_MENU_KEY.trim()) {
       state.MEU_PERFIL_MENU_KEY = safeOptions.MEU_PERFIL_MENU_KEY.trim();
@@ -346,10 +352,25 @@
           menuKey === meuPerfilMenuKey &&
           typeof activateProfilePersonalSection === "function"
         ) {
-          const sectionKey = String(item.profileSection || "");
+          const sectionKey = String(
+            item.profileSection ||
+            (typeof state.getMeuPerfilSelectedProfileSection === "function"
+              ? state.getMeuPerfilSelectedProfileSection()
+              : "") ||
+            ""
+          ).trim();
           setMeuPerfilSelectedProfileSection(sectionKey);
           activateProfilePersonalSection(sectionKey);
           applyMeuPerfilProcessSubsequentVisibility();
+          activateProfilePersonalSection(
+            String(
+              (typeof state.getMeuPerfilSelectedProfileSection === "function"
+                ? state.getMeuPerfilSelectedProfileSection()
+                : "") ||
+              sectionKey ||
+              ""
+            ).trim()
+          );
           syncActiveTabTitle(
             "#submenu-items",
             "#perfil-pessoal-card .profile-card-header h2",
@@ -407,10 +428,25 @@
           menuKey === state.MEU_PERFIL_MENU_KEY &&
           typeof state.activateProfilePersonalSection === "function"
         ) {
-          const sectionKey = String(item.profileSection || "");
+          const sectionKey = String(
+            item.profileSection ||
+            (typeof state.getMeuPerfilSelectedProfileSection === "function"
+              ? state.getMeuPerfilSelectedProfileSection()
+              : "") ||
+            ""
+          ).trim();
           state.setMeuPerfilSelectedProfileSection(sectionKey);
           state.activateProfilePersonalSection(sectionKey);
           state.applyMeuPerfilProcessSubsequentVisibility();
+          state.activateProfilePersonalSection(
+            String(
+              (typeof state.getMeuPerfilSelectedProfileSection === "function"
+                ? state.getMeuPerfilSelectedProfileSection()
+                : "") ||
+              sectionKey ||
+              ""
+            ).trim()
+          );
         }
       });
       state.itemsEl.appendChild(link);

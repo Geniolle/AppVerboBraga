@@ -101,7 +101,12 @@
     if (safeOptions.dashboardData && typeof safeOptions.dashboardData === "object") {
       state.dashboardData = safeOptions.dashboardData;
     }
-    if (Array.isArray(safeOptions.profilePersonalSections)) {
+    const safeMeuPerfil = safeOptions.meuPerfil && typeof safeOptions.meuPerfil === "object"
+      ? safeOptions.meuPerfil
+      : null;
+    if (Array.isArray(safeMeuPerfil && safeMeuPerfil.personalSections)) {
+      state.profilePersonalSections = safeMeuPerfil.personalSections;
+    } else if (Array.isArray(safeOptions.profilePersonalSections)) {
       state.profilePersonalSections = safeOptions.profilePersonalSections;
     }
     if (Array.isArray(safeOptions.sidebarMenuSettings)) {
@@ -162,6 +167,51 @@
   }
 
   function buildBaseMenuConfig() {
+    function buildMeuPerfilMenuItemsV1() {
+      const personalSections = Array.isArray(state.profilePersonalSections)
+        ? state.profilePersonalSections
+        : [];
+      const resolvedSections = personalSections
+        .map((section) => {
+          const cleanSectionKey = String(section && section.key ? section.key : "").trim().toLowerCase();
+          if (!cleanSectionKey) {
+            return null;
+          }
+          if (section && section.is_visible === false) {
+            return null;
+          }
+          if (section && section.is_active === false) {
+            return null;
+          }
+          return {
+            key: cleanSectionKey,
+            label: state.normalizeMenuLabelPreserveCase(section && section.label ? section.label : "")
+          };
+        })
+        .filter(Boolean);
+
+      if (!resolvedSections.length) {
+        return [
+          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
+          { label: "Dados de morada", target: "#perfil-morada-card" },
+          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
+        ];
+      }
+
+      const seenSectionKeys = new Set();
+      return resolvedSections.filter((section) => {
+        if (seenSectionKeys.has(section.key)) {
+          return false;
+        }
+        seenSectionKeys.add(section.key);
+        return Boolean(section.label);
+      }).map((section) => ({
+        label: section.label,
+        target: "#perfil-pessoal-card",
+        profileSection: section.key
+      }));
+    }
+
     const baseMenuConfig = {
       home: {
         title: "Home",
@@ -180,16 +230,12 @@
           }
         ]
       },
-      perfil: {
-        title: "Perfil",
+      [state.MEU_PERFIL_MENU_KEY]: {
+        title: "Meus dados",
         description: "Opcoes do perfil do utilizador.",
         singleView: true,
         toggleOnMenuClick: true,
-        items: [
-          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
-          { label: "Dados de morada", target: "#perfil-morada-card" },
-          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
-        ],
+        items: buildMeuPerfilMenuItemsV1(),
         details: [
           { label: "Nome", value: state.currentUserName },
           { label: "Email", value: state.currentUserEmail },
@@ -242,25 +288,6 @@
         details: [
           { label: "Modulo", value: "Administrativo" },
           { label: "Acesso", value: "Permitido" }
-        ]
-      },
-      [state.MEU_PERFIL_MENU_KEY]: {
-        title: "Meus dados",
-        description: "Dados do meu perfil.",
-        singleView: true,
-        toggleOnMenuClick: true,
-        items: (
-          Array.isArray(state.profilePersonalSections) && state.profilePersonalSections.length
-            ? state.profilePersonalSections.map((section) => ({
-                label: String(section.label || "Dados pessoais"),
-                target: "#perfil-pessoal-card",
-                profileSection: String(section.key || "")
-              }))
-            : []
-        ),
-        details: [
-          { label: "Modulo", value: "Meu perfil" },
-          { label: "Status", value: "Ativo" }
         ]
       },
       funcionarios: {
@@ -360,7 +387,7 @@
   function mergeDynamicProcessMenus() {
     state.sidebarMenuSettings.forEach((setting) => {
       const menuKey = state.normalizeMenuKey(setting.key);
-      if (!menuKey || menuKey === "perfil") {
+      if (!menuKey || menuKey === state.MEU_PERFIL_MENU_KEY) {
         return;
       }
       if (menuKey === "home") {
@@ -370,16 +397,6 @@
         if (sidebarLabel) {
           menuConfig.home = {
             ...menuConfig.home,
-            title: sidebarLabel
-          };
-        }
-        return;
-      }
-      if (menuKey === state.MEU_PERFIL_MENU_KEY) {
-        const sidebarLabel = state.normalizeMenuLabelPreserveCase(setting.label);
-        if (sidebarLabel) {
-          menuConfig[state.MEU_PERFIL_MENU_KEY] = {
-            ...menuConfig[state.MEU_PERFIL_MENU_KEY],
             title: sidebarLabel
           };
         }
@@ -522,6 +539,7 @@
     if (
       menuConfig.perfil_de_autorizacao ||
       !(
+        state.normalizeMenuKey(state.initialMenu) === "perfil_de_autorizacao" ||
         state.visibleSidebarMenuKeys.has("perfil_de_autorizacao") ||
         (documentRef && documentRef.getElementById("auth-profile-card")) ||
         (documentRef && documentRef.getElementById("auth-profile-active-card")) ||

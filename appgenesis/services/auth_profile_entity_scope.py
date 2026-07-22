@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import replace
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from appgenesis.admin_subprocesses.models import AdminFieldConfig, AdminSubprocessConfig
+from appgenesis.admin_subprocesses.models import AdminSubprocessConfig
+from appgenesis.admin_subprocesses.service import build_admin_subprocess_config_for_entity_context_v1
 from appgenesis.core import ENTITY_PROFILE_SCOPE_LEGADO
 from appgenesis.models import Entity
 
@@ -54,25 +54,11 @@ def build_auth_profile_entity_context_v1(
     }
 
 
-########################################################################################
-# (2) CONFIGURACAO DE FORMULARIO (injeta o Nº da entidade no campo read-only)
-########################################################################################
-
-
 def build_auth_profile_config_for_context_v1(
     config: AdminSubprocessConfig,
     entity_context: dict,
 ) -> AdminSubprocessConfig:
-    entity_number_display = str((entity_context or {}).get("selected_entity_number") or "")
-
-    adjusted_fields: list[AdminFieldConfig] = []
-    for field in config.fields:
-        if field.key == AUTH_PROFILE_ENTITY_NUMBER_FIELD_KEY:
-            adjusted_fields.append(replace(field, default_value=entity_number_display))
-            continue
-        adjusted_fields.append(field)
-
-    return replace(config, fields=tuple(adjusted_fields))
+    return build_admin_subprocess_config_for_entity_context_v1(config, entity_context)
 
 
 __all__ = [

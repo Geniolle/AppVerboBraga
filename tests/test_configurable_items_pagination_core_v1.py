@@ -103,7 +103,7 @@ def test_geral_static_fields_table_is_wired_to_the_table_limiter_controller() ->
 
 
 ####################################################################################
-# (4) RODAPE DE PAGINACAO DEDUPLICADO NUM UNICO MACRO REUTILIZADO PELAS 5 ABAS.
+# (4) RODAPE DE PAGINACAO DEDUPLICADO NUM UNICO MACRO REUTILIZADO PELAS 6 ABAS.
 ####################################################################################
 
 def test_pagination_footer_markup_exists_once_in_the_shared_macro_only() -> None:
@@ -116,7 +116,7 @@ def test_pagination_footer_markup_exists_once_in_the_shared_macro_only() -> None
         'from "macros/configurable_items_pagination.html" import '
         "render_configurable_items_pagination_footer" in template_text
     )
-    assert template_text.count("render_configurable_items_pagination_footer(") == 5
+    assert template_text.count("render_configurable_items_pagination_footer(") == 6
     assert (
         macro_text.count(
             'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"'
@@ -144,6 +144,6 @@ def test_process_lists_tab_heading_is_not_duplicated() -> None:
     tab_end = template_text.index('data-process-edit-pane="', tab_start + 1)
     tab_body = template_text[tab_start:tab_end]
 
-    assert tab_body.count("<h3>") == 1
+    assert tab_body.count("<h3>") == 0
     assert "<h4>Listas reutilizáveis</h4>" not in tab_body
-    assert "<h3>Listas reutilizáveis</h3>" in tab_body
+    assert "render_configurable_list_card(" in tab_body

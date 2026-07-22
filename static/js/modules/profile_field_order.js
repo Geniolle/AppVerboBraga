@@ -6,6 +6,20 @@
   "use strict";
 
   const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+  const profileFieldRegistryV1 =
+    window.AppGenesisProfileFieldRegistryV1 &&
+    typeof window.AppGenesisProfileFieldRegistryV1 === "object"
+      ? window.AppGenesisProfileFieldRegistryV1
+      : null;
+  const meuPerfilRuntimeV1 =
+    window.AppGenesisMeuPerfilV1 &&
+    typeof window.AppGenesisMeuPerfilV1 === "object"
+      ? window.AppGenesisMeuPerfilV1
+      : null;
+  const MEU_PERFIL_PERSONAL_CARD_TARGET = meuPerfilRuntimeV1 &&
+    typeof meuPerfilRuntimeV1.resolvePersonalCardTarget === "function"
+      ? meuPerfilRuntimeV1.resolvePersonalCardTarget()
+      : "#perfil-pessoal-card";
   const profilePersonalVisibleFields = Array.isArray(bootstrap.profilePersonalVisibleFields)
     ? bootstrap.profilePersonalVisibleFields
       .map((fieldKey) => String(fieldKey || "").trim().toLowerCase())
@@ -24,6 +38,10 @@
   //###################################################################################
 
   function normalizeLookupText(value) {
+    if (profileFieldRegistryV1 && typeof profileFieldRegistryV1.normalizeLookupText === "function") {
+      return profileFieldRegistryV1.normalizeLookupText(value);
+    }
+
     return String(value || "")
       .trim()
       .toLowerCase()
@@ -32,10 +50,18 @@
   }
 
   function getProfileForm() {
+    if (profileFieldRegistryV1 && typeof profileFieldRegistryV1.getProfileForm === "function") {
+      return profileFieldRegistryV1.getProfileForm(document);
+    }
+
     return (
       document.querySelector('form[action="/users/profile/personal"]') ||
-      document.querySelector("#perfil-pessoal-card form")
+      document.querySelector(`${MEU_PERFIL_PERSONAL_CARD_TARGET} form`)
     );
+  }
+
+  function getProfilePersonalCard() {
+    return document.querySelector(MEU_PERFIL_PERSONAL_CARD_TARGET);
   }
 
   function getBuiltinFieldLabel(fieldKey) {
@@ -59,6 +85,14 @@
   }
 
   function getFormFieldByKey(form, fieldKey) {
+    if (profileFieldRegistryV1 && typeof profileFieldRegistryV1.findProfileControl === "function") {
+      const control = profileFieldRegistryV1.findProfileControl(form, fieldKey);
+
+      if (control) {
+        return control.closest ? (control.closest(".field") || control) : control;
+      }
+    }
+
     const keyedField = form.querySelector(`[data-profile-field-key="${fieldKey}"]`);
     if (keyedField) {
       return keyedField.closest(".field") || keyedField;
@@ -95,8 +129,43 @@
     return null;
   }
 
-  function reorderContainerByFieldOrder(container, resolveElement, itemSelector) {
-    if (!container || !profilePersonalVisibleFields.length) {
+  function collectGridFieldKeys(container) {
+    if (!container || typeof container.querySelectorAll !== "function") {
+      return [];
+    }
+
+    const orderedKeys = [];
+    Array.from(container.querySelectorAll("[data-profile-field-key]")).forEach((element) => {
+      const fieldKey = normalizeLookupText(element.getAttribute("data-profile-field-key") || "");
+      if (!fieldKey || orderedKeys.includes(fieldKey)) {
+        return;
+      }
+      orderedKeys.push(fieldKey);
+    });
+
+    return orderedKeys;
+  }
+
+  function buildCanonicalProfileFieldOrder() {
+    const personalCardEl = getProfilePersonalCard();
+    const readonlyGridEl = personalCardEl
+      ? personalCardEl.querySelector(".profile-readonly .personal-grid")
+      : null;
+    const readonlyKeys = collectGridFieldKeys(readonlyGridEl);
+
+    if (readonlyKeys.length) {
+      return readonlyKeys;
+    }
+
+    return profilePersonalVisibleFields.slice();
+  }
+
+  function reorderContainerByFieldOrder(container, resolveElement, itemSelector, orderedFieldKeys) {
+    const fieldKeys = Array.isArray(orderedFieldKeys) && orderedFieldKeys.length
+      ? orderedFieldKeys
+      : profilePersonalVisibleFields;
+
+    if (!container || !fieldKeys.length) {
       return;
     }
 
@@ -104,7 +173,7 @@
       element.style.order = "";
     });
 
-    profilePersonalVisibleFields.forEach((fieldKey, index) => {
+    fieldKeys.forEach((fieldKey, index) => {
       const element = resolveElement(fieldKey);
       if (element && element.parentNode === container) {
         element.style.order = String((index + 1) * 10);
@@ -123,8 +192,8 @@
       if (!sourceKey) {
         return;
       }
-      const sourceIndex = profilePersonalVisibleFields.indexOf(sourceKey);
-      const baseOrder = sourceIndex >= 0 ? ((sourceIndex + 1) * 10) : ((profilePersonalVisibleFields.length + 1) * 10);
+      const sourceIndex = fieldKeys.indexOf(sourceKey);
+      const baseOrder = sourceIndex >= 0 ? ((sourceIndex + 1) * 10) : ((fieldKeys.length + 1) * 10);
       const sourceCount = generatedCountBySource.get(sourceKey) || 0;
       generatedCountBySource.set(sourceKey, sourceCount + 1);
       blockEl.style.order = String(baseOrder + sourceCount + 1);
@@ -136,26 +205,37 @@
   //###################################################################################
 
   function reorderProfileFields() {
+    const personalCardEl = getProfilePersonalCard();
     const form = getProfileForm();
 
-    if (!form) {
+    if (!personalCardEl || !form) {
       return;
     }
 
+    const readonlyGrid = personalCardEl.querySelector(".profile-readonly .personal-grid");
     const formGrid =
       form.querySelector(".personal-grid") ||
       form.querySelector(".form-grid") ||
       form;
+    const orderedFieldKeys = buildCanonicalProfileFieldOrder();
+
+    reorderContainerByFieldOrder(
+      readonlyGrid,
+      (fieldKey) => personalCardEl.querySelector(`[data-profile-field-key="${fieldKey}"]`),
+      ".personal-item",
+      orderedFieldKeys
+    );
 
     reorderContainerByFieldOrder(
       formGrid,
       (fieldKey) => getFormFieldByKey(form, fieldKey),
-      ".field"
+      ".field",
+      orderedFieldKeys
     );
 
     const actionsRow = form.querySelector(".profile-edit-actions");
     if (actionsRow) {
-      actionsRow.style.order = String((profilePersonalVisibleFields.length + 1) * 10);
+      actionsRow.style.order = String((orderedFieldKeys.length + 1) * 10);
     }
   }
 
@@ -165,10 +245,7 @@
 
   function init() {
     reorderProfileFields();
-
-    window.setTimeout(reorderProfileFields, 100);
-    window.setTimeout(reorderProfileFields, 400);
-    window.setTimeout(reorderProfileFields, 1000);
+    window.addEventListener("appgenesis:meu-perfil:layout-updated", reorderProfileFields);
   }
 
   if (document.readyState === "loading") {

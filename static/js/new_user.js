@@ -1,12 +1,3 @@
-(function initAppGenesisFeedbackToastsFromUrl() {
-  if (
-    window.AppGenesisProcessShell &&
-    typeof window.AppGenesisProcessShell.enhanceFeedbackToasts === "function"
-  ) {
-    window.AppGenesisProcessShell.enhanceFeedbackToasts({ source: "url" });
-  }
-})();
-
 const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
 const appGenesisProcessKeysRegistryV1 =
   window.AppGenesisProcessKeysRegistryV1 &&
@@ -47,6 +38,21 @@ const appGenesisProcessMenuRuntimeV1 =
   window.AppGenesisProcessMenuRuntimeV1 &&
   typeof window.AppGenesisProcessMenuRuntimeV1 === "object"
     ? window.AppGenesisProcessMenuRuntimeV1
+    : null;
+const appGenesisProfileFieldRegistryV1 =
+  window.AppGenesisProfileFieldRegistryV1 &&
+  typeof window.AppGenesisProfileFieldRegistryV1 === "object"
+    ? window.AppGenesisProfileFieldRegistryV1
+    : null;
+const appGenesisProcessSubsequentVisibilityRuntimeV1 =
+  window.AppGenesisProcessSubsequentVisibilityRuntimeV1 &&
+  typeof window.AppGenesisProcessSubsequentVisibilityRuntimeV1 === "object"
+    ? window.AppGenesisProcessSubsequentVisibilityRuntimeV1
+    : null;
+const appGenesisProcessQuantityRuntimeV1 =
+  window.AppGenesisProcessQuantityRuntimeV1 &&
+  typeof window.AppGenesisProcessQuantityRuntimeV1 === "object"
+    ? window.AppGenesisProcessQuantityRuntimeV1
     : null;
 const MEU_PERFIL_MENU_KEY = appGenesisProcessKeysRegistryV1
   ? appGenesisProcessKeysRegistryV1.MEU_PERFIL_MENU_KEY
@@ -92,6 +98,14 @@ function debugTabsLogV1(label, payload = {}) {
   if (!APPGENESIS_DEBUG_TABS_V1) return;
   console.log("[AppGenesis Tabs Debug]", label, payload);
 }
+
+function logMissingNavigationRuntimeV1(moduleName) {
+  if (!APPGENESIS_DEBUG_TABS_V1 || !moduleName) {
+    return;
+  }
+
+  console.warn("[AppGenesis Tabs Debug] navigation runtime missing:", moduleName);
+}
 const dashboardData = bootstrap.dashboardData || {};
 const currentUserPhone = bootstrap.currentUserPhone || "";
 const currentUserAccountStatus = bootstrap.currentUserAccountStatus || "";
@@ -101,15 +115,45 @@ const currentUserAddress = bootstrap.currentUserAddress || "";
 const currentUserCity = bootstrap.currentUserCity || "";
 const currentUserFreguesia = bootstrap.currentUserFreguesia || "";
 const currentUserPostalCode = bootstrap.currentUserPostalCode || "";
-const profilePersonalSections = Array.isArray(bootstrap.profilePersonalSections) ? bootstrap.profilePersonalSections : [];
+const meuPerfilDomain = window.AppGenesisMeuPerfilV1 || null;
+const meuPerfilBootstrap = meuPerfilDomain && typeof meuPerfilDomain.getBootstrap === "function"
+  ? meuPerfilDomain.getBootstrap()
+  : (
+    bootstrap.meuPerfil &&
+    typeof bootstrap.meuPerfil === "object" &&
+    !Array.isArray(bootstrap.meuPerfil)
+  )
+    ? bootstrap.meuPerfil
+    : {};
 const profilePersonalFieldLabels = (
-  bootstrap.profilePersonalFieldLabels &&
-  typeof bootstrap.profilePersonalFieldLabels === "object" &&
-  !Array.isArray(bootstrap.profilePersonalFieldLabels)
+  meuPerfilBootstrap.fieldLabels &&
+  typeof meuPerfilBootstrap.fieldLabels === "object" &&
+  !Array.isArray(meuPerfilBootstrap.fieldLabels)
 )
-  ? bootstrap.profilePersonalFieldLabels
+  ? meuPerfilBootstrap.fieldLabels
   : {};
-const initialProfileTab = bootstrap.initialProfileTab || "pessoal";
+function getMeuPerfilPersonalCardTargetV1() {
+  const bootstrapTarget = String(meuPerfilBootstrap.personalCardTarget || "").trim();
+  if (bootstrapTarget) {
+    return bootstrapTarget;
+  }
+  if (meuPerfilDomain && typeof meuPerfilDomain.resolvePersonalCardTarget === "function") {
+    return meuPerfilDomain.resolvePersonalCardTarget();
+  }
+  return "#perfil-pessoal-card";
+}
+function getMeuPerfilPersonalCardElV1(root) {
+  const target = getMeuPerfilPersonalCardTargetV1();
+  const scope = root && typeof root.querySelector === "function" ? root : document;
+  return (
+    scope.querySelector(target) ||
+    document.querySelector(target) ||
+    document.getElementById(String(target || "").replace(/^#/, ""))
+  );
+}
+const initialProfileTab = meuPerfilDomain && typeof meuPerfilDomain.normalizeTabKey === "function"
+  ? meuPerfilDomain.normalizeTabKey(meuPerfilBootstrap.activeTab || bootstrap.initialProfileTab || "pessoal")
+  : (bootstrap.initialProfileTab || "pessoal");
 const initialMenu = normalizeMenuKey(bootstrap.initialMenu || HOME_MENU_KEY_V1) || HOME_MENU_KEY_V1;
 const initialMenuTarget = bootstrap.initialMenuTarget || "";
 const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "";
@@ -233,6 +277,17 @@ function normalizeMenuKey(value) {
     return ADMINISTRATIVO_MENU_KEY_V1;
   }
   return cleanKey;
+}
+
+function getCurrentProfileSectionV1(root) {
+  if (
+    appGenesisProfileFieldRegistryV1 &&
+    typeof appGenesisProfileFieldRegistryV1.getCurrentProfileSection === "function"
+  ) {
+    return appGenesisProfileFieldRegistryV1.getCurrentProfileSection(root);
+  }
+
+  return "";
 }
 
 sidebarMenuSettings.forEach((setting) => {
@@ -368,11 +423,25 @@ function getSidebarAdminSubprocessMenuKeyByTargetV1(targetSelector) {
 }
 
 function normalizeProcessSubsequentOperator(value) {
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeOperator === "function"
+  ) {
+    return appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeOperator(value);
+  }
+
   const cleanOperator = String(value || "equals").trim().toLowerCase();
   return processSubsequentOperators.has(cleanOperator) ? cleanOperator : "equals";
 }
 
 function normalizeProcessSubsequentRules(rawRules) {
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeRules === "function"
+  ) {
+    return appGenesisProcessSubsequentVisibilityRuntimeV1.normalizeRules(rawRules);
+  }
+
   if (!Array.isArray(rawRules)) {
     return [];
   }
@@ -417,6 +486,13 @@ function isProcessSubsequentRuleSatisfied(rule, valuesByField = {}) {
 }
 
 function getHiddenProcessTargets(rules, valuesByField = {}) {
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.getHiddenTargets === "function"
+  ) {
+    return appGenesisProcessSubsequentVisibilityRuntimeV1.getHiddenTargets(rules, valuesByField);
+  }
+
   const groupedRules = new Map();
   normalizeProcessSubsequentRules(rules).forEach((rule) => {
     if (!groupedRules.has(rule.targetField)) {
@@ -448,6 +524,45 @@ function getFieldSectionMap(setting) {
   return sectionMap;
 }
 
+function resolveMeuPerfilQuantitySectionKeyV1(rule, fieldSectionMap, currentSectionKey) {
+  const explicitSectionKey = normalizeMenuKey(rule && (rule.sectionKey || rule.section_key || rule.section));
+  if (explicitSectionKey) {
+    return explicitSectionKey;
+  }
+
+  const headerKey = normalizeMenuKey(rule && (rule.headerKey || rule.header_key));
+  if (headerKey) {
+    return headerKey;
+  }
+
+  const repeatedFieldSections = new Set();
+  const sectionMap = fieldSectionMap instanceof Map ? fieldSectionMap : new Map();
+  (Array.isArray(rule && rule.repeatedFieldKeys) ? rule.repeatedFieldKeys : []).forEach((fieldKey) => {
+    const cleanFieldKey = normalizeMenuKey(fieldKey);
+    if (!cleanFieldKey) {
+      return;
+    }
+    const sectionKey = normalizeMenuKey(sectionMap.get(cleanFieldKey));
+    if (sectionKey) {
+      repeatedFieldSections.add(sectionKey);
+    }
+  });
+
+  if (repeatedFieldSections.size === 1) {
+    return repeatedFieldSections.values().next().value || "";
+  }
+
+  const quantityFieldKey = normalizeMenuKey(rule && (rule.quantityFieldKey || rule.quantity_field_key));
+  if (quantityFieldKey) {
+    const quantityFieldSectionKey = normalizeMenuKey(sectionMap.get(quantityFieldKey));
+    if (quantityFieldSectionKey) {
+      return quantityFieldSectionKey;
+    }
+  }
+
+  return normalizeMenuKey(currentSectionKey);
+}
+
 function getProcessQuantityStorageKey(menuKey, ruleKey) {
   const cleanMenuKey = normalizeMenuKey(menuKey);
   const cleanRuleKey = normalizeMenuKey(ruleKey);
@@ -458,6 +573,13 @@ function getProcessQuantityStorageKey(menuKey, ruleKey) {
 }
 
 function normalizeProcessQuantityItems(rawItems) {
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.normalizeItems === "function"
+  ) {
+    return appGenesisProcessQuantityRuntimeV1.normalizeItems(rawItems);
+  }
+
   if (!Array.isArray(rawItems)) {
     return [];
   }
@@ -480,6 +602,13 @@ function normalizeProcessQuantityItems(rawItems) {
 }
 
 function normalizeProcessQuantityRules(rawRules) {
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.normalizeRules === "function"
+  ) {
+    return appGenesisProcessQuantityRuntimeV1.normalizeRules(rawRules);
+  }
+
   if (!Array.isArray(rawRules)) {
     return [];
   }
@@ -695,6 +824,9 @@ function getDynamicProcessLayoutConfig(setting, menuLabel, sectionLabel) {
 }
 
 function buildProcessSections(setting, processValuesByField = {}) {
+  const resolvedProcessSections = Array.isArray(setting && setting.process_sections)
+    ? setting.process_sections
+    : [];
   const processRows = Array.isArray(setting.process_visible_field_rows)
     ? setting.process_visible_field_rows
     : [];
@@ -829,6 +961,60 @@ function buildProcessSections(setting, processValuesByField = {}) {
       .filter(Boolean);
   }
 
+  if (resolvedProcessSections.length) {
+    const sections = [];
+    resolvedProcessSections.forEach((section) => {
+      if (!section || typeof section !== "object") {
+        return;
+      }
+      const sectionKey = normalizeMenuKey(section.key);
+      if (!sectionKey) {
+        return;
+      }
+      const sectionLabel = toSentenceCaseText(section.label || sectionKey || "Aba");
+      const fieldKeys = Array.isArray(section.field_keys)
+        ? section.field_keys
+        : [];
+      const fields = [];
+      const seenFieldKeys = new Set();
+      fieldKeys.forEach((rawFieldKey) => {
+        const fieldKey = normalizeMenuKey(rawFieldKey);
+        if (!fieldKey || seenFieldKeys.has(fieldKey)) {
+          return;
+        }
+        if (quantityRepeatedFieldKeys.has(fieldKey)) {
+          return;
+        }
+        const fieldMeta = optionMetaByKey.get(fieldKey) || {};
+        if (normalizeProcessFieldType(fieldMeta.fieldType) === "header") {
+          return;
+        }
+        seenFieldKeys.add(fieldKey);
+        fields.push(buildFieldEntry(fieldKey, fieldMeta));
+      });
+
+      sections.push({
+        key: sectionKey,
+        label: sectionLabel,
+        quantityRuleKeys: Array.isArray(section.quantity_rule_keys)
+          ? section.quantity_rule_keys.map((item) => normalizeMenuKey(item)).filter(Boolean)
+          : [],
+        fields
+      });
+    });
+
+    if (sections.length) {
+      if (sections.length === 1 && sections[0].key === "__geral__") {
+        return sections[0].fields.map((field) => ({
+          key: `field:${field.key}`,
+          label: field.label,
+          fields: [field]
+        }));
+      }
+      return sections;
+    }
+  }
+
   if (!processRows.length) {
     const fallbackSections = buildSectionsFromVisibleFieldOrder();
     if (fallbackSections.length === 1 && fallbackSections[0].key === "__geral__") {
@@ -936,8 +1122,6 @@ if (
     EMPRESA_MENU_KEY_V1
   });
 }
-const EMPRESA_NATIVE_TARGETS_V1 = new Set(["#empresa-card"]);
-
 function filterProcessExtraMenuItemsV1(dynamicItems) {
   return (Array.isArray(dynamicItems) ? dynamicItems : []).filter((item) => {
     const sectionKey = String(item && item.dynamicProcessSectionKey ? item.dynamicProcessSectionKey : "")
@@ -982,12 +1166,12 @@ if (
     normalizeMenuLabelPreserveCase,
     toSentenceCaseText,
     buildProcessSections,
+    meuPerfil: meuPerfilBootstrap,
     getDynamicProcessLayoutConfig,
     getSidebarAdminSubprocessSetting: getSidebarAdminSubprocessSettingV1,
     filterProcessExtraMenuItems: filterProcessExtraMenuItemsV1,
     buildMenuItemUniqueKey: buildMenuItemUniqueKey_v1,
     dashboardData,
-    profilePersonalSections,
     sidebarMenuSettings,
     visibleSidebarMenuKeys,
     menuProcessValuesMap,
@@ -1067,46 +1251,19 @@ const dynamicProcessInactiveBodyEl = document.getElementById("dynamic-process-in
 const dynamicProcessInactiveEmptyEl = document.getElementById("dynamic-process-inactive-empty");
 const dynamicProcessInactiveLimiterEl = document.getElementById("dynamic-process-inactive-limiter");
 let homeSelectedTarget = "#home-summary-card";
-let profileSelectedTarget = "#perfil-pessoal-card";
-if (initialProfileTab === "morada") {
-  profileSelectedTarget = "#perfil-morada-card";
-} else if (initialProfileTab === "treinamento") {
-  profileSelectedTarget = "#dados-treinamento-card";
-}
+let profileSelectedTarget = meuPerfilDomain && typeof meuPerfilDomain.resolveTabTarget === "function"
+  ? meuPerfilDomain.resolveTabTarget(meuPerfilBootstrap.activeTab || initialProfileTab)
+  : "#perfil-pessoal-card";
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_START
 const NATIVE_ADMIN_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.NATIVE_ADMIN_TARGETS_V1
-  : new Set([
-      "#create-entity-card",
-      "#edit-entity-card",
-      "#recent-entities-card",
-      "#inactive-entities-card",
-      "#create-user-card",
-      "#edit-user-card",
-      "#admin-users-created-card",
-      "#inactive-users-card",
-      "#admin-account-create-card",
-      "#admin-account-status-card",
-      "#admin-sidebar-sections-card",
-      "#admin-sidebar-sections-form-card",
-      "#settings-card",
-      "#settings-menu-edit-card"
-    ]);
+  : new Set();
 const ESTRUTURAS_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.ESTRUTURAS_NATIVE_TARGETS_V1
-  : new Set([
-      "#admin-account-create-card",
-      "#admin-account-status-card",
-      "#menu-subprocess-card",
-      "#menu-subprocess-card-active",
-      "#menu-subprocess-card-inactive",
-      "#admin-sidebar-sections-card",
-      "#admin-sidebar-sections-card-active",
-      "#admin-sidebar-sections-card-inactive",
-      "#admin-sidebar-sections-form-card",
-      "#settings-card",
-      "#settings-menu-edit-card"
-    ]);
+  : new Set();
+const EMPRESA_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
+  ? appGenesisAdminTargetRegistryV1.EMPRESA_NATIVE_TARGETS_V1
+  : new Set();
 function normalizeTargetV1(value) {
   if (
     appGenesisProcessKeysRegistryV1 &&
@@ -1123,21 +1280,10 @@ function normalizeTargetV1(value) {
 }
 const AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1
-  : Object.freeze({
-      "#auth-profile": "#auth-profile-card",
-      "#auth-profile-card": "#auth-profile-card",
-      "#auth-profile-active-card": "#auth-profile-card",
-      "#auth-profile-inactive-card": "#auth-profile-card",
-      "#auth-profile-form-card": "#auth-profile-card",
-      "#auth-objeto": "#auth-objeto-card",
-      "#auth-objeto-card": "#auth-objeto-card",
-      "#auth-objeto-active-card": "#auth-objeto-card",
-      "#auth-objeto-inactive-card": "#auth-objeto-card",
-      "#auth-objeto-form-card": "#auth-objeto-card"
-    });
+  : Object.freeze({});
 const AUTH_PROFILE_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.AUTH_PROFILE_NATIVE_TARGETS_V1
-  : new Set(Object.keys(AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1));
+  : new Set();
 function normalizeAuthorizationProfileTargetV1(value) {
   if (
     appGenesisAdminTargetRegistryV1 &&
@@ -1145,7 +1291,8 @@ function normalizeAuthorizationProfileTargetV1(value) {
   ) {
     return appGenesisAdminTargetRegistryV1.normalizeAuthorizationProfileTarget(value);
   }
-  return AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1[normalizeTargetV1(value)] || "";
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.normalizeAuthorizationProfileTarget");
+  return "";
 }
 function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
   if (
@@ -1154,11 +1301,7 @@ function authorizationProfileTargetsMatchV1(leftTarget, rightTarget) {
   ) {
     return appGenesisAdminTargetRegistryV1.authorizationProfileTargetsMatch(leftTarget, rightTarget);
   }
-  const normalizedLeftTarget = normalizeAuthorizationProfileTargetV1(leftTarget);
-  const normalizedRightTarget = normalizeAuthorizationProfileTargetV1(rightTarget);
-  if (normalizedLeftTarget || normalizedRightTarget) {
-    return normalizedLeftTarget === normalizedRightTarget;
-  }
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.authorizationProfileTargetsMatch");
   return normalizeTargetV1(leftTarget) === normalizeTargetV1(rightTarget);
 }
 function isNativeAdminTargetV1(value) {
@@ -1168,7 +1311,8 @@ function isNativeAdminTargetV1(value) {
   ) {
     return appGenesisAdminTargetRegistryV1.isNativeAdminTarget(value);
   }
-  return NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.isNativeAdminTarget");
+  return false;
 }
 function isNativeTargetForMenuV1(menuKey, value) {
   if (
@@ -1177,55 +1321,7 @@ function isNativeTargetForMenuV1(menuKey, value) {
   ) {
     return appGenesisAdminTargetRegistryV1.isNativeTargetForMenu(menuKey, value);
   }
-  const cleanMenuKey = normalizeMenuKey(menuKey);
-  let cleanTarget = normalizeTargetV1(value);
-
-  if (!cleanTarget) {
-    return false;
-  }
-
-  // Normalize subprocess target suffixes (like -active, -inactive, -form-card)
-  if (cleanTarget.endsWith("-active")) {
-    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 7);
-  } else if (cleanTarget.endsWith("-inactive")) {
-    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 9);
-  } else if (cleanTarget.endsWith("-form-card")) {
-    cleanTarget = cleanTarget.substring(0, cleanTarget.length - 10) + "-card";
-  }
-  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
-  if (normalizedAuthorizationProfileTarget) {
-    cleanTarget = normalizedAuthorizationProfileTarget;
-  }
-
-  if (cleanMenuKey === ADMINISTRATIVO_MENU_KEY_V1) {
-    return NATIVE_ADMIN_TARGETS_V1.has(cleanTarget) || NATIVE_ADMIN_TARGETS_V1.has(normalizeTargetV1(value));
-  }
-
-  if (cleanMenuKey === ESTRUTURAS_MENU_KEY_V1) {
-    return ESTRUTURAS_NATIVE_TARGETS_V1.has(cleanTarget) || ESTRUTURAS_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
-  }
-
-  if (cleanMenuKey === EMPRESA_MENU_KEY_V1) {
-    return EMPRESA_NATIVE_TARGETS_V1.has(cleanTarget) || EMPRESA_NATIVE_TARGETS_V1.has(normalizeTargetV1(value));
-  }
-
-  if (cleanMenuKey === PERFIL_AUTORIZACAO_MENU_KEY_V1) {
-    return (
-      AUTH_PROFILE_NATIVE_TARGETS_V1.has(cleanTarget) ||
-      AUTH_PROFILE_NATIVE_TARGETS_V1.has(normalizeTargetV1(value))
-    );
-  }
-
-  const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(cleanMenuKey);
-  if (sidebarAdminSubprocessSetting) {
-    return (
-      cleanTarget === sidebarAdminSubprocessSetting.defaultTarget ||
-      cleanTarget === sidebarAdminSubprocessSetting.editTarget ||
-      normalizeTargetV1(value) === sidebarAdminSubprocessSetting.defaultTarget ||
-      normalizeTargetV1(value) === sidebarAdminSubprocessSetting.editTarget
-    );
-  }
-
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.isNativeTargetForMenu");
   return false;
 }
 if (
@@ -1261,17 +1357,12 @@ function resolveAdminSelectedTargetV1({
   return "#dynamic-process-card";
 }
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_END
-let meuPerfilSelectedTarget = "#perfil-pessoal-card";
-const requestedMeuPerfilProfileSection = normalizeMenuKey(
-  (typeof window !== "undefined" && window.location && window.location.search)
-    ? new URLSearchParams(window.location.search).get("profile_section")
-    : ""
-);
-let meuPerfilSelectedProfileSection = (
-  Array.isArray(profilePersonalSections) && profilePersonalSections.length
-)
-  ? String(requestedMeuPerfilProfileSection || profilePersonalSections[0].key || "")
-  : "";
+let meuPerfilSelectedTarget = profileSelectedTarget;
+let meuPerfilSelectedProfileSection = String(
+  meuPerfilBootstrap.activePersonalSection ||
+  meuPerfilBootstrap.activeSection ||
+  ""
+).trim().toLowerCase();
 let hiddenMeuPerfilSectionKeys = new Set();
 if (startupHash === "#home-summary-card") {
   homeSelectedTarget = startupHash;
@@ -1323,6 +1414,7 @@ if (
     getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
     renderDynamicProcessCard,
     MEU_PERFIL_MENU_KEY,
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
     setMeuPerfilSelectedProfileSection: (sectionKey) => {
       meuPerfilSelectedProfileSection = sectionKey;
     },
@@ -1357,6 +1449,7 @@ if (
     logNavigationBootDebug: logAppGenesisNavigationBootDebugV1,
     getActiveMenuKey: () => activeMenuKey,
     refreshProcessShellBreadcrumb: refreshProcessShellBreadcrumbV1,
+    getMeuPerfilSelectedProfileSection: () => meuPerfilSelectedProfileSection,
     setMeuPerfilSelectedProfileSection: (sectionKey) => {
       meuPerfilSelectedProfileSection = sectionKey;
     },
@@ -1389,6 +1482,7 @@ if (
     renderDynamicProcessCard,
     closeAllProfileEdits,
     syncActiveTabTitle,
+    getMeuPerfilPersonalCardTarget: getMeuPerfilPersonalCardTargetV1,
     applyMeuPerfilProcessSubsequentVisibility,
     applyContentForMenu,
     getAdminSubprocessKeyByTarget: getAdminSubprocessKeyByTargetV1,
@@ -2567,7 +2661,7 @@ function collectCurrentMeuPerfilQuantityValues() {
   )
     ? JSON.parse(JSON.stringify(menuProcessQuantityValuesMap[cleanMenuKey]))
     : {};
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   if (!formEl) {
     return baseValues;
@@ -2609,7 +2703,7 @@ function collectCurrentMeuPerfilQuantityValues() {
 }
 
 function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   if (!formEl) {
     return;
@@ -2632,7 +2726,26 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 }
 
 function renderMeuPerfilQuantityGroups() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const runtimeRefs = newUserPageBootstrapStateV1.lastContext && newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    ? newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    : null;
+  const quantityContext = runtimeRefs && runtimeRefs.profile
+    ? runtimeRefs.profile.quantityContext
+    : null;
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.render === "function" &&
+    quantityContext
+  ) {
+    appGenesisProcessQuantityRuntimeV1.render(quantityContext);
+    if (typeof appGenesisProcessQuantityRuntimeV1.sync === "function") {
+      appGenesisProcessQuantityRuntimeV1.sync(quantityContext);
+    }
+    return;
+  }
+
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const readonlyGridEl = personalCardEl ? personalCardEl.querySelector(".profile-readonly .personal-grid") : null;
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const editGridEl = formEl ? formEl.querySelector(".personal-grid") : null;
@@ -2658,10 +2771,15 @@ function renderMeuPerfilQuantityGroups() {
   const quantityValuesByRule = collectCurrentMeuPerfilQuantityValues();
   const nextQuantityValuesByRule = { ...quantityValuesByRule };
   const optionMetaByKey = buildProcessOptionMetaMap(setting);
-  const activeSectionKey = normalizeMenuKey(meuPerfilSelectedProfileSection || (profilePersonalSections[0] && profilePersonalSections[0].key) || "");
+  const fieldSectionMap = getFieldSectionMap(setting);
+  const activeSectionKey = normalizeMenuKey(
+    meuPerfilSelectedProfileSection ||
+    meuPerfilBootstrap.activePersonalSection ||
+    ""
+  );
 
   normalizedRules.forEach((rule) => {
-    const ruleSectionKey = normalizeMenuKey(rule.headerKey || activeSectionKey || "");
+    const ruleSectionKey = resolveMeuPerfilQuantitySectionKeyV1(rule, fieldSectionMap, activeSectionKey);
     if (ruleSectionKey && activeSectionKey && ruleSectionKey !== activeSectionKey) {
       return;
     }
@@ -2870,6 +2988,25 @@ function renderDynamicProcessQuantityGroups(
   processValuesByField,
   processQuantityValuesByRule
 ) {
+  const runtimeRefs = newUserPageBootstrapStateV1.lastContext && newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    ? newUserPageBootstrapStateV1.lastContext.runtimeRefs
+    : null;
+  const quantityContext = runtimeRefs && runtimeRefs.dynamicProcess
+    ? runtimeRefs.dynamicProcess.quantityContext
+    : null;
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.render === "function" &&
+    quantityContext
+  ) {
+    appGenesisProcessQuantityRuntimeV1.render(quantityContext);
+    if (typeof appGenesisProcessQuantityRuntimeV1.sync === "function") {
+      appGenesisProcessQuantityRuntimeV1.sync(quantityContext);
+    }
+    return;
+  }
+
   const cleanMenuKey = normalizeMenuKey(menuKey);
   const normalizedRules = normalizeProcessQuantityRules(setting && setting.process_quantity_fields);
   if (!normalizedRules.length) {
@@ -3567,42 +3704,8 @@ function getAdminSubprocessKeyByTargetV1(target) {
   ) {
     return appGenesisAdminTargetRegistryV1.getAdminSubprocessKeyByTarget(target);
   }
-  const cleanTarget = normalizeTargetV1(target);
-  const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
-  if (sidebarAdminMenuKey) {
-    const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(sidebarAdminMenuKey);
-    return sidebarAdminSubprocessSetting ? sidebarAdminSubprocessSetting.subprocessKey : "";
-  }
-  const targetMap = {
-    "#create-entity-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#edit-entity-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#recent-entities-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#inactive-entities-card": ENTIDADE_SUBPROCESS_KEY_V1,
-    "#create-user-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#edit-user-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#admin-users-created-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#inactive-users-card": UTILIZADOR_SUBPROCESS_KEY_V1,
-    "#admin-sidebar-sections-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-form-card": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-card-active": ESTRUTURAS_MENU_KEY_V1,
-    "#admin-sidebar-sections-card-inactive": ESTRUTURAS_MENU_KEY_V1,
-    "#settings-card": MENU_SUBPROCESS_KEY_V1,
-    "#settings-menu-edit-card": MENU_SUBPROCESS_KEY_V1,
-    "#admin-account-status-card": MENU_SUBPROCESS_KEY_V1,
-    "#admin-account-create-card": MENU_SUBPROCESS_KEY_V1,
-    "#menu-subprocess-card": MENU_SUBPROCESS_KEY_V1,
-    "#menu-subprocess-card-active": MENU_SUBPROCESS_KEY_V1,
-    "#menu-subprocess-card-inactive": MENU_SUBPROCESS_KEY_V1,
-    "#auth-profile-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-profile-form-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-profile-active-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-profile-inactive-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-objeto-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-form-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-active-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-inactive-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
-  };
-  return targetMap[cleanTarget] || "";
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.getAdminSubprocessKeyByTarget");
+  return "";
 }
 // APPGENESIS_ADMIN_SUBPROCESS_GROUP_V1_END
 
@@ -3670,33 +3773,8 @@ function normalizeSubmenuTargetAlias(targetSelector) {
   ) {
     return appGenesisAdminTargetRegistryV1.normalizeSubmenuTargetAlias(targetSelector);
   }
-  const cleanTarget = String(targetSelector || "").trim();
-  const normalizedAuthorizationProfileTarget = normalizeAuthorizationProfileTargetV1(cleanTarget);
-  if (normalizedAuthorizationProfileTarget) {
-    return normalizedAuthorizationProfileTarget;
-  }
-  const sidebarAdminMenuKey = getSidebarAdminSubprocessMenuKeyByTargetV1(cleanTarget);
-  if (sidebarAdminMenuKey) {
-    const sidebarAdminSubprocessSetting = getSidebarAdminSubprocessSettingV1(sidebarAdminMenuKey);
-    if (
-      sidebarAdminSubprocessSetting &&
-      cleanTarget === sidebarAdminSubprocessSetting.editTarget
-    ) {
-      return sidebarAdminSubprocessSetting.defaultTarget;
-    }
-  }
-  const targetAliasMap = {
-    "#edit-user-card": "#create-user-card",
-    "#admin-users-created-card": "#create-user-card",
-    "#inactive-users-card": "#create-user-card",
-    "#create-entity-card": "#recent-entities-card",
-    "#edit-entity-card": "#recent-entities-card",
-    "#inactive-entities-card": "#recent-entities-card",
-    "#admin-account-create-card": "#menu-subprocess-card-active",
-    "#settings-menu-edit-card": "#menu-subprocess-card-active",
-    "#admin-sidebar-sections-form-card": "#admin-sidebar-sections-card"
-  };
-  return targetAliasMap[cleanTarget] || cleanTarget;
+  logMissingNavigationRuntimeV1("admin_target_registry_v1.normalizeSubmenuTargetAlias");
+  return normalizeTargetV1(targetSelector);
 }
 
 function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
@@ -3717,14 +3795,24 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
 // .appgenesis-process-action-toggle-v1 define "display: inline-flex !important" no CSS, por isso um
 // simples "el.style.display = 'none'" nao consegue escondê-lo; e preciso usar setProperty com
 // prioridade "important" para vencer a regra do stylesheet.
+function isDynamicProcessActionCardContextV1() {
+  const cleanMenuKey = normalizeMenuKey(activeMenuKey || "");
+  if (!cleanMenuKey || cleanMenuKey === MEU_PERFIL_MENU_KEY || cleanMenuKey === "perfil") {
+    return false;
+  }
+
+  return normalizeTargetV1(selectedTargetByMenu[cleanMenuKey] || "") === "#dynamic-process-card";
+}
+
 function setDynamicProcessEditToggleVisible(isVisible) {
+  const shouldShowDynamicProcessCard = isDynamicProcessActionCardContextV1();
   if (dynamicProcessActionCardEl) {
-    dynamicProcessActionCardEl.style.display = isVisible ? "" : "none";
+    dynamicProcessActionCardEl.style.display = isVisible && shouldShowDynamicProcessCard ? "" : "none";
   }
   if (!dynamicProcessEditToggleEl) {
     return;
   }
-  if (isVisible) {
+  if (isVisible && shouldShowDynamicProcessCard) {
     dynamicProcessEditToggleEl.style.removeProperty("display");
   } else {
     dynamicProcessEditToggleEl.style.setProperty("display", "none", "important");
@@ -3739,7 +3827,8 @@ function restoreDynamicProcessEditToggleVisibility() {
   if (
     dynamicProcessEditToggleEl &&
     dynamicProcessCardEl &&
-    !dynamicProcessCardEl.classList.contains("editing")
+    !dynamicProcessCardEl.classList.contains("editing") &&
+    isDynamicProcessActionCardContextV1()
   ) {
     setDynamicProcessEditToggleVisible(true);
   }
@@ -3765,7 +3854,11 @@ function closeAllProfileEdits() {
     }
   });
   syncTrainingOutrosState();
-  restoreDynamicProcessEditToggleVisibility();
+  if (isDynamicProcessActionCardContextV1()) {
+    restoreDynamicProcessEditToggleVisibility();
+  } else {
+    setDynamicProcessEditToggleVisible(false);
+  }
 }
 
 function resetDynamicProcessCancelStateV1() {
@@ -3945,8 +4038,126 @@ function setupAllocationSectionMultiValue(personalCardEl, sectionKey) {
   });
 }
 
+function getMeuPerfilSectionPaneNodesV1(personalCardEl, sectionKey) {
+  if (!personalCardEl) {
+    return [];
+  }
+
+  const cleanSection = String(sectionKey || "").trim().toLowerCase();
+  if (!cleanSection) {
+    return [];
+  }
+
+  const selector = `[data-profile-section-pane="${cleanSection.replace(/"/g, '\\"')}"]`;
+  return Array.from(personalCardEl.querySelectorAll(selector));
+}
+
+function hasVisibleMeuPerfilSectionContentV1(personalCardEl, sectionKey) {
+  return getMeuPerfilSectionPaneNodesV1(personalCardEl, sectionKey).some((paneEl) => {
+    if (!paneEl) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(paneEl);
+    return style.display !== "none" && style.visibility !== "hidden" && !paneEl.hidden;
+  });
+}
+
+function resolveMeuPerfilVisibleSectionKeyV1(personalCardEl, sectionKey) {
+  if (!personalCardEl) {
+    return String(sectionKey || "").trim().toLowerCase();
+  }
+
+  const normalizedPreferredSection = String(sectionKey || "").trim().toLowerCase();
+  const orderedSections = [];
+
+  Array.from(personalCardEl.querySelectorAll("[data-profile-section-pane]")).forEach((paneEl) => {
+    const paneSection = String(paneEl.getAttribute("data-profile-section-pane") || "").trim().toLowerCase();
+    if (paneSection && !orderedSections.includes(paneSection)) {
+      orderedSections.push(paneSection);
+    }
+  });
+
+  const visibleSections = orderedSections.filter((paneSection) => {
+    return hasVisibleMeuPerfilSectionContentV1(personalCardEl, paneSection);
+  });
+
+  if (normalizedPreferredSection && orderedSections.includes(normalizedPreferredSection)) {
+    return normalizedPreferredSection;
+  }
+
+  if (visibleSections.length) {
+    return visibleSections[0];
+  }
+
+  return orderedSections[0] || normalizedPreferredSection || "geral";
+}
+
+function resolveMeuPerfilVisibleSectionKeyV2(personalCardEl, sectionKey, hiddenSectionKeys) {
+  const normalizedPreferredSection = String(sectionKey || "").trim().toLowerCase();
+  const hiddenSet = hiddenSectionKeys instanceof Set
+    ? hiddenSectionKeys
+    : new Set(
+      Array.isArray(hiddenSectionKeys)
+        ? hiddenSectionKeys.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
+        : []
+    );
+  const orderedSections = [];
+
+  if (!personalCardEl || typeof personalCardEl.querySelectorAll !== "function") {
+    return {
+      sectionKey: normalizedPreferredSection || "geral",
+      hasVisibleSection: false
+    };
+  }
+
+  Array.from(personalCardEl.querySelectorAll("[data-profile-section-pane]")).forEach((paneEl) => {
+    const paneSection = String(paneEl.getAttribute("data-profile-section-pane") || "").trim().toLowerCase();
+    if (paneSection && !orderedSections.includes(paneSection)) {
+      orderedSections.push(paneSection);
+    }
+  });
+
+  const visibleSections = orderedSections.filter((paneSection) => {
+    if (hiddenSet.has(paneSection)) {
+      return false;
+    }
+    return hasVisibleMeuPerfilSectionContentV1(personalCardEl, paneSection);
+  });
+
+  if (
+    normalizedPreferredSection &&
+    orderedSections.includes(normalizedPreferredSection) &&
+    !hiddenSet.has(normalizedPreferredSection)
+  ) {
+    return {
+      sectionKey: normalizedPreferredSection,
+      hasVisibleSection: true
+    };
+  }
+
+  if (visibleSections.length) {
+    return {
+      sectionKey: visibleSections[0],
+      hasVisibleSection: true
+    };
+  }
+
+  if (normalizedPreferredSection && orderedSections.includes(normalizedPreferredSection)) {
+    return {
+      sectionKey: normalizedPreferredSection,
+      hasVisibleSection: false
+    };
+  }
+
+  return {
+    sectionKey: orderedSections[0] || normalizedPreferredSection || "geral",
+    hasVisibleSection: false
+  };
+}
+
 function setupProfileProcessTabs() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   if (!personalCardEl) {
     return;
   }
@@ -3957,22 +4168,24 @@ function setupProfileProcessTabs() {
 
   function activateSection(sectionKey) {
     const normalizedSection = String(sectionKey || "").trim().toLowerCase() || "geral";
-    const availableSections = new Set(
-      Array.from(sectionPanes)
-        .map((paneEl) =>
-          String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
-        )
-        .filter((section) => !hiddenMeuPerfilSectionKeys.has(section))
-    );
-    const effectiveSection = availableSections.has(normalizedSection)
+    const orderedSections = Array.from(sectionPanes).reduce((acc, paneEl) => {
+      const paneSection = String(
+        paneEl.getAttribute("data-profile-section-pane") || "geral"
+      ).trim().toLowerCase();
+      if (paneSection && !acc.includes(paneSection)) {
+        acc.push(paneSection);
+      }
+      return acc;
+    }, []);
+    const effectiveSection = orderedSections.includes(normalizedSection)
       ? normalizedSection
-      : (Array.from(availableSections)[0] || "geral");
+      : orderedSections[0] || normalizedSection || "geral";
 
     sectionPanes.forEach((paneEl) => {
       const paneSection = String(
         paneEl.getAttribute("data-profile-section-pane") || "geral"
       ).trim().toLowerCase();
-      paneEl.style.display = !hiddenMeuPerfilSectionKeys.has(paneSection) && paneSection === effectiveSection ? "" : "none";
+      paneEl.style.display = paneSection === effectiveSection ? "" : "none";
     });
     const sectionInputEl = personalCardEl.querySelector("[data-meu-perfil-section-input]");
     if (sectionInputEl) {
@@ -3980,6 +4193,12 @@ function setupProfileProcessTabs() {
     }
     setupAllocationSectionMultiValue(personalCardEl, effectiveSection);
     meuPerfilSelectedProfileSection = effectiveSection;
+    renderMeuPerfilQuantityGroups();
+    window.dispatchEvent(
+      new CustomEvent("appgenesis:meu-perfil:layout-updated", {
+        detail: { sectionKey: effectiveSection }
+      })
+    );
   }
 
   window.activateProfilePersonalSection = activateSection;
@@ -3987,11 +4206,18 @@ function setupProfileProcessTabs() {
 }
 
 function collectCurrentMeuPerfilProcessValues() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const valuesByField = {};
   if (!formEl) {
     return valuesByField;
+  }
+
+  if (
+    appGenesisProfileFieldRegistryV1 &&
+    typeof appGenesisProfileFieldRegistryV1.collectProfileValues === "function"
+  ) {
+    return appGenesisProfileFieldRegistryV1.collectProfileValues(formEl);
   }
 
   const fixedFieldMap = {
@@ -4026,8 +4252,35 @@ function collectCurrentMeuPerfilProcessValues() {
 
 function applyMeuPerfilProcessSubsequentVisibility() {
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   if (!setting || !personalCardEl) {
+    return;
+  }
+
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.refresh === "function"
+  ) {
+    const evaluation = appGenesisProcessSubsequentVisibilityRuntimeV1.refresh({
+      mode: "profile",
+      root: personalCardEl,
+    formEl: personalCardEl.querySelector(".profile-edit-form"),
+    setting,
+    rules: setting.process_subsequent_fields,
+    getValues: collectCurrentMeuPerfilProcessValues,
+    getCurrentSection: getCurrentProfileSectionV1
+    });
+
+    hiddenMeuPerfilSectionKeys = evaluation && evaluation.hiddenTargets ? evaluation.hiddenTargets : new Set();
+    if (typeof window.activateProfilePersonalSection === "function") {
+      window.activateProfilePersonalSection(
+        resolveMeuPerfilVisibleSectionKeyV2(
+          personalCardEl,
+          meuPerfilSelectedProfileSection,
+          hiddenMeuPerfilSectionKeys
+        ).sectionKey
+      );
+    }
     return;
   }
 
@@ -4045,14 +4298,20 @@ function applyMeuPerfilProcessSubsequentVisibility() {
   }
 
   if (typeof window.activateProfilePersonalSection === "function") {
-    window.activateProfilePersonalSection(meuPerfilSelectedProfileSection);
+    window.activateProfilePersonalSection(
+      resolveMeuPerfilVisibleSectionKeyV2(
+        personalCardEl,
+        meuPerfilSelectedProfileSection,
+        hiddenMeuPerfilSectionKeys
+      ).sectionKey
+    );
   }
   if (itemsEl) {
     const selectedLinkEl = itemsEl.querySelector(
       `.submenu-item[data-profile-section="${String(meuPerfilSelectedProfileSection || "").replace(/"/g, '\\"')}"]`
     );
     if (selectedLinkEl && selectedLinkEl.style.display !== "none") {
-      setActiveSubmenu("#perfil-pessoal-card", {
+      setActiveSubmenu(getMeuPerfilPersonalCardTargetV1(), {
         profileSection: String(meuPerfilSelectedProfileSection || "")
       });
       return;
@@ -4062,7 +4321,7 @@ function applyMeuPerfilProcessSubsequentVisibility() {
     );
     if (firstVisibleLinkEl) {
       meuPerfilSelectedProfileSection = String(firstVisibleLinkEl.dataset.profileSection || "");
-      setActiveSubmenu("#perfil-pessoal-card", {
+      setActiveSubmenu(getMeuPerfilPersonalCardTargetV1(), {
         profileSection: String(meuPerfilSelectedProfileSection || "")
       });
     }
@@ -4071,102 +4330,134 @@ function applyMeuPerfilProcessSubsequentVisibility() {
 }
 
 function setupMeuPerfilQuantityRules() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   if (!formEl || !setting) {
     return;
   }
 
-  const normalizedRules = normalizeProcessQuantityRules(setting.process_quantity_fields);
-  if (!normalizedRules.length) {
-    syncMeuPerfilQuantityHiddenInputs({});
+  if (
+    !appGenesisProcessQuantityRuntimeV1 ||
+    typeof appGenesisProcessQuantityRuntimeV1.initialize !== "function"
+  ) {
     return;
   }
 
-  const quantityFieldKeys = new Set(
-    normalizedRules
-      .map((rule) => normalizeMenuKey(rule.quantityFieldKey))
-      .filter(Boolean)
-  );
-
-  formEl.querySelectorAll("[name]").forEach((controlEl) => {
-    const rawName = String(controlEl.getAttribute("name") || "").trim();
-    let fieldKey = "";
-    if (rawName.startsWith("custom_field__")) {
-      fieldKey = normalizeMenuKey(rawName.replace(/^custom_field__/, ""));
-    } else if (rawName === "full_name") {
-      fieldKey = "nome";
-    } else if (rawName === "primary_phone") {
-      fieldKey = "telefone";
-    } else if (rawName === "login_email") {
-      fieldKey = "email";
-    } else if (rawName === "country") {
-      fieldKey = "pais";
-    } else if (rawName === "birth_date") {
-      fieldKey = "data_nascimento";
-    }
-    if (!quantityFieldKeys.has(fieldKey)) {
-      return;
-    }
-    ["input", "change"].forEach((eventName) => {
-      controlEl.addEventListener(eventName, () => {
-        renderMeuPerfilQuantityGroups();
-      });
-    });
+  appGenesisProcessQuantityRuntimeV1.initialize({
+    mode: "profile",
+    adapterName: "profile",
+    root: personalCardEl,
+    formEl,
+    setting,
+    rules: setting.process_quantity_fields,
+    getSetting: () => setting,
+    getValues: collectCurrentMeuPerfilQuantityValues,
+    getCurrentSection: getCurrentProfileSectionV1,
+    readonlyGridEl: personalCardEl.querySelector(".profile-readonly .personal-grid"),
+    editGridEl: formEl.querySelector(".personal-grid")
   });
-
-  if (formEl.dataset.boundMeuPerfilQuantitySubmit !== "1") {
-    formEl.dataset.boundMeuPerfilQuantitySubmit = "1";
-    formEl.addEventListener("submit", () => {
-      syncMeuPerfilQuantityHiddenInputs(collectCurrentMeuPerfilQuantityValues());
-    });
-  }
-
-  renderMeuPerfilQuantityGroups();
 }
 
 function setupConditionalProcessVisibility() {
-  const personalCardEl = document.getElementById("perfil-pessoal-card");
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
   const personalFormEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
-  if (personalFormEl && personalFormEl.dataset.boundSubsequentVisibility !== "1") {
-    personalFormEl.dataset.boundSubsequentVisibility = "1";
-    ["input", "change"].forEach((eventName) => {
-      personalFormEl.addEventListener(eventName, () => {
-        applyMeuPerfilProcessSubsequentVisibility();
-      });
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.initialize === "function" &&
+    personalFormEl
+  ) {
+    appGenesisProcessSubsequentVisibilityRuntimeV1.initialize({
+      mode: "profile",
+      root: personalCardEl,
+      formEl: personalFormEl,
+      setting: getSidebarMenuSetting(MEU_PERFIL_MENU_KEY),
+      rules: getSidebarMenuSetting(MEU_PERFIL_MENU_KEY) && getSidebarMenuSetting(MEU_PERFIL_MENU_KEY).process_subsequent_fields,
+      getValues: collectCurrentMeuPerfilProcessValues,
+      getCurrentSection: getCurrentProfileSectionV1,
+      getMeuPerfilPersonalCardTarget: getMeuPerfilPersonalCardTargetV1
     });
   }
 
-  if (dynamicProcessEditFormEl && dynamicProcessEditFormEl.dataset.boundSubsequentVisibility !== "1") {
-    dynamicProcessEditFormEl.dataset.boundSubsequentVisibility = "1";
-    ["input", "change"].forEach((eventName) => {
-      dynamicProcessEditFormEl.addEventListener(eventName, () => {
-        const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
-        if (!cleanMenuKey) {
-          return;
-        }
-        renderDynamicProcessCard(
-          cleanMenuKey,
-          selectedDynamicSectionByMenu[cleanMenuKey] || (dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
-        );
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.initialize === "function" &&
+    dynamicProcessEditFormEl
+  ) {
+    const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
+    const setting = cleanMenuKey ? getSidebarMenuSetting(cleanMenuKey) : null;
+    if (setting) {
+      appGenesisProcessQuantityRuntimeV1.initialize({
+        mode: "dynamic",
+        adapterName: "dynamic",
+        root: document,
+        formEl: dynamicProcessEditFormEl,
+        setting,
+        rules: setting.process_quantity_fields,
+        getSetting: () => setting,
+        getValues: () => collectCurrentDynamicProcessQuantityValues(cleanMenuKey),
+        getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : ""),
+        readonlyGridEl: dynamicProcessReadOnlyGridEl || null,
+        editGridEl: dynamicProcessEditGridEl || null
       });
-    });
+    }
+  }
+}
+
+function restoreInitialProfileSectionFromUrlV2() {
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
+  if (!personalCardEl || typeof window.activateProfilePersonalSection !== "function") {
+    return;
   }
 
-  if (dynamicProcessEditFormEl && dynamicProcessEditFormEl.dataset.boundQuantitySync !== "1") {
-    dynamicProcessEditFormEl.dataset.boundQuantitySync = "1";
-    dynamicProcessEditFormEl.addEventListener("submit", () => {
-      const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
-      if (!cleanMenuKey) {
-        return;
-      }
-      syncDynamicProcessQuantityHiddenInputs(
-        cleanMenuKey,
-        collectCurrentDynamicProcessQuantityValues(cleanMenuKey)
-      );
-    });
+  const currentUrl = new URL(window.location.href);
+  const sectionKey = normalizeMenuKey(
+    currentUrl.searchParams.get("profile_tab") ||
+    currentUrl.searchParams.get("profile_section") ||
+    currentUrl.searchParams.get("section_key") ||
+    currentUrl.searchParams.get("dynamic_process_section") ||
+    currentUrl.searchParams.get("target") ||
+    ""
+  );
+
+  if (!sectionKey) {
+    return;
   }
+
+  const sectionInputEl = personalCardEl.querySelector(
+    "input[name='profile_section'], [data-meu-perfil-section-input], [data-profile-section-input]"
+  );
+  if (sectionInputEl) {
+    sectionInputEl.value = sectionKey;
+    sectionInputEl.defaultValue = sectionKey;
+  }
+
+  const candidates = Array.from(
+    personalCardEl.querySelectorAll(
+      "[data-profile-section-tab], [data-profile-section-button], .profile-section-tab, button, a"
+    )
+  );
+  const tab = candidates.find((candidate) => {
+    const dataKey = normalizeMenuKey(
+      candidate.dataset.profileSection ||
+      candidate.dataset.profileSectionKey ||
+      candidate.dataset.profileSectionTab ||
+      candidate.dataset.sectionKey ||
+      ""
+    );
+
+    if (dataKey && dataKey === sectionKey) {
+      return true;
+    }
+    return false;
+  });
+
+  if (tab && typeof tab.click === "function") {
+    tab.click();
+  }
+
+  window.activateProfilePersonalSection(sectionKey);
+  document.dispatchEvent(new CustomEvent("appgenesis:profile-section-restored", { detail: { sectionKey } }));
 }
 
 function syncTrainingOutrosState() {
@@ -4191,7 +4482,7 @@ document.addEventListener("appgenesis:cancelled", function (event) {
 
   if (
     cardId === "dynamic-process-card" ||
-    cardId === "perfil-pessoal-card" ||
+    cardId === String(getMeuPerfilPersonalCardTargetV1()).replace(/^#/, "") ||
     cardId === "perfil-morada-card" ||
     cardId === "dados-treinamento-card"
   ) {
@@ -4732,442 +5023,6 @@ function setupProcessAdditionalFieldsBuilder() {
   renderAdditionalFieldsPagination();
 }
 
-function setupProcessAdditionalFieldsManagerV2() {
-  const builderEl = document.getElementById("process-additional-fields-builder");
-  const formEl = builderEl ? builderEl.closest("form[data-additional-fields-manager-v2='1']") : null;
-  if (!builderEl || !formEl) {
-    return;
-  }
-  if (builderEl.dataset.additionalFieldsManagerV2Bound === "1") {
-    return;
-  }
-
-  const containerEl = document.getElementById("process-additional-fields-container");
-  const editorKeyEl = document.getElementById("process-additional-field-editor-key");
-  const editorLabelEl = document.getElementById("process-additional-field-editor-label");
-  const editorTypeEl = document.getElementById("process-additional-field-editor-type");
-  const editorRequiredEl = document.getElementById("process-additional-field-editor-required");
-  const editorSizeFieldEl = document.getElementById("process-additional-field-editor-size-field");
-  const editorSizeEl = document.getElementById("process-additional-field-editor-size");
-  const editorListFieldEl = document.getElementById("process-additional-field-editor-list-field");
-  const editorListKeyEl = document.getElementById("process-additional-field-editor-list-key");
-  const feedbackEl = document.getElementById("process-additional-field-editor-feedback");
-  const addButtonEl = document.getElementById("process-additional-field-add-btn");
-  const clearButtonEl = document.getElementById("process-additional-field-clear-btn");
-  const tableBodyEl = document.getElementById("process-additional-fields-created-body");
-  const emptyEl = document.getElementById("process-additional-fields-empty");
-  const limiterEl = document.getElementById("process-additional-fields-limiter");
-  const pageSizeEl = document.getElementById("process-additional-fields-page-size");
-  const prevEl = document.getElementById("process-additional-fields-prev");
-  const nextEl = document.getElementById("process-additional-fields-next");
-  const pageEl = document.getElementById("process-additional-fields-page");
-  const fieldTypesRaw = builderEl.getAttribute("data-field-types") || "[]";
-  const processListsRaw = builderEl.getAttribute("data-process-lists") || "[]";
-
-  if (
-    !containerEl ||
-    !editorKeyEl ||
-    !editorLabelEl ||
-    !editorTypeEl ||
-    !editorRequiredEl ||
-    !editorSizeFieldEl ||
-    !editorSizeEl ||
-    !editorListFieldEl ||
-    !editorListKeyEl ||
-    !feedbackEl ||
-    !addButtonEl ||
-    !clearButtonEl ||
-    !tableBodyEl ||
-    !emptyEl ||
-    !limiterEl ||
-    !pageSizeEl ||
-    !prevEl ||
-    !nextEl ||
-    !pageEl
-  ) {
-    return;
-  }
-
-  let fieldTypes = [];
-  let processLists = [];
-  let tempIndex = 1;
-  let currentPage = 1;
-  let pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-  const sizedTypes = new Set(["text", "number", "email", "phone"]);
-
-  try {
-    fieldTypes = JSON.parse(fieldTypesRaw);
-  } catch (_error) {
-    fieldTypes = [];
-  }
-  try {
-    processLists = JSON.parse(processListsRaw);
-  } catch (_error) {
-    processLists = [];
-  }
-
-  const typeLabelByKey = new Map(
-    (Array.isArray(fieldTypes) ? fieldTypes : []).map((item) => [
-      String(item.key || "").trim().toLowerCase(),
-      String(item.label || item.key || "").trim()
-    ])
-  );
-  typeLabelByKey.set("list", "Lista");
-
-  function normalizeKey(value) {
-    return String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9_]+/g, "_")
-      .replace(/_+/g, "_")
-      .replace(/^_|_$/g, "");
-  }
-
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function getListLabel(listKey) {
-    const cleanListKey = normalizeKey(listKey);
-    const matched = (Array.isArray(processLists) ? processLists : []).find((item) => {
-      return normalizeKey(item.key) === cleanListKey;
-    });
-    return matched ? String(matched.label || matched.key || "-") : "-";
-  }
-
-  function syncEditorState() {
-    const cleanType = String(editorTypeEl.value || "text").trim().toLowerCase();
-    const isHeader = cleanType === "header";
-    const isList = cleanType === "list";
-    const sizeEnabled = sizedTypes.has(cleanType);
-
-    editorRequiredEl.disabled = isHeader;
-    if (isHeader) {
-      editorRequiredEl.value = "0";
-    }
-
-    editorSizeFieldEl.style.display = sizeEnabled ? "" : "none";
-    editorSizeEl.readOnly = !sizeEnabled;
-    editorSizeEl.classList.toggle("process-additional-size-readonly", !sizeEnabled);
-    if (!sizeEnabled) {
-      editorSizeEl.value = "";
-    } else if (!String(editorSizeEl.value || "").trim()) {
-      editorSizeEl.value = "30";
-    }
-
-    editorListFieldEl.style.display = isList ? "" : "none";
-    editorListKeyEl.disabled = !isList;
-    if (!isList) {
-      editorListKeyEl.value = "";
-    }
-  }
-
-  function setEditorFeedback(message, type = "error") {
-    feedbackEl.textContent = String(message || "").trim();
-    feedbackEl.style.display = feedbackEl.textContent ? "" : "none";
-    feedbackEl.classList.toggle("error", type === "error");
-    feedbackEl.classList.toggle("ok", type === "ok");
-  }
-
-  function clearEditor() {
-    editorKeyEl.value = "";
-    editorLabelEl.value = "";
-    editorTypeEl.value = "text";
-    editorRequiredEl.value = "0";
-    editorSizeEl.value = "30";
-    editorListKeyEl.value = "";
-    addButtonEl.textContent = "Guardar";
-    setEditorFeedback("");
-    syncEditorState();
-  }
-
-  function readStoreRow(rowEl) {
-    const keyEl = rowEl.querySelector("input[name='additional_field_key']");
-    const labelEl = rowEl.querySelector("input[name='additional_field_label']");
-    const typeEl = rowEl.querySelector("select[name='additional_field_type'], input[name='additional_field_type']");
-    const requiredEl = rowEl.querySelector("select[name='additional_field_required'], input[name='additional_field_required']");
-    const sizeEl = rowEl.querySelector("input[name='additional_field_size']");
-    const listKeyEl = rowEl.querySelector("select[name='additional_field_list_key'], input[name='additional_field_list_key']");
-    if (!labelEl || !typeEl || !requiredEl || !sizeEl) {
-      return null;
-    }
-
-    return {
-      key: String(keyEl ? keyEl.value : rowEl.getAttribute("data-field-key") || "").trim(),
-      label: String(labelEl.value || "").trim(),
-      fieldType: String(typeEl.value || "text").trim().toLowerCase(),
-      isRequired: String(requiredEl.value || "0").trim() === "1",
-      size: String(sizeEl.value || "").trim(),
-      listKey: String(listKeyEl ? listKeyEl.value : "").trim()
-    };
-  }
-
-  function readStoreRows() {
-    return Array.from(containerEl.children)
-      .map((rowEl) => readStoreRow(rowEl))
-      .filter((row) => row && row.label);
-  }
-
-  function createHiddenInput(name, value) {
-    const inputEl = document.createElement("input");
-    inputEl.type = "hidden";
-    inputEl.name = name;
-    inputEl.value = String(value || "");
-    return inputEl;
-  }
-
-  function buildStoreRow(fieldData) {
-    const rowEl = document.createElement("div");
-    rowEl.className = "process-additional-field-store-row";
-    rowEl.setAttribute("data-field-key", fieldData.key);
-    rowEl.appendChild(createHiddenInput("additional_field_key", fieldData.key));
-    rowEl.appendChild(createHiddenInput("additional_field_label", fieldData.label));
-    rowEl.appendChild(createHiddenInput("additional_field_type", fieldData.fieldType));
-    rowEl.appendChild(createHiddenInput("additional_field_required", fieldData.isRequired ? "1" : "0"));
-    rowEl.appendChild(createHiddenInput("additional_field_size", fieldData.size || ""));
-    rowEl.appendChild(createHiddenInput("additional_field_list_key", fieldData.listKey || ""));
-    return rowEl;
-  }
-
-  function removeStoreRow(fieldKey) {
-    const rowEl = Array.from(containerEl.children).find((item) => {
-      return String(item.getAttribute("data-field-key") || "").trim() === String(fieldKey || "").trim();
-    });
-    if (rowEl) {
-      rowEl.remove();
-    }
-  }
-
-  function upsertStoreRow(fieldData) {
-    const existingRowEl = Array.from(containerEl.children).find((item) => {
-      return String(item.getAttribute("data-field-key") || "").trim() === String(fieldData.key || "").trim();
-    });
-    const nextSiblingEl = existingRowEl ? existingRowEl.nextSibling : null;
-
-    removeStoreRow(fieldData.key);
-
-    const newRowEl = buildStoreRow(fieldData);
-    if (nextSiblingEl) {
-      containerEl.insertBefore(newRowEl, nextSiblingEl);
-    } else {
-      containerEl.appendChild(newRowEl);
-    }
-  }
-
-  function buildPayloadFromEditor() {
-    const cleanLabel = String(editorLabelEl.value || "").trim();
-    if (!cleanLabel) {
-      setEditorFeedback("Informe o nome do campo adicional.");
-      editorLabelEl.focus();
-      return null;
-    }
-
-    const cleanType = String(editorTypeEl.value || "text").trim().toLowerCase();
-    const cleanKey = String(editorKeyEl.value || "").trim() || `tmp_${normalizeKey(cleanLabel) || "campo"}_${tempIndex++}`;
-    const duplicateLabel = readStoreRows().some((row) => {
-      return row.key !== cleanKey && String(row.label || "").trim().toLowerCase() === cleanLabel.toLowerCase();
-    });
-    if (duplicateLabel) {
-      setEditorFeedback("Já existe um campo adicional com esse nome.");
-      editorLabelEl.focus();
-      return null;
-    }
-
-    return {
-      key: cleanKey,
-      label: cleanLabel,
-      fieldType: cleanType,
-      isRequired: cleanType === "header" ? false : String(editorRequiredEl.value || "0") === "1",
-      size: sizedTypes.has(cleanType) ? String(editorSizeEl.value || "").trim() || "30" : "",
-      listKey: cleanType === "list" ? String(editorListKeyEl.value || "").trim() : ""
-    };
-  }
-
-  function fillEditor(fieldData) {
-    editorKeyEl.value = fieldData.key;
-    editorLabelEl.value = fieldData.label;
-    editorTypeEl.value = fieldData.fieldType || "text";
-    editorRequiredEl.value = fieldData.isRequired ? "1" : "0";
-    editorSizeEl.value = fieldData.size || "30";
-    editorListKeyEl.value = fieldData.listKey || "";
-    addButtonEl.textContent = "Atualizar campo";
-    syncEditorState();
-    editorLabelEl.focus();
-  }
-
-  function moveStoreRow(fieldKey, direction) {
-    const rowEls = Array.from(containerEl.children);
-    const currentIndex = rowEls.findIndex((rowEl) => {
-      return String(rowEl.getAttribute("data-field-key") || "").trim() === String(fieldKey || "").trim();
-    });
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= rowEls.length) {
-      return;
-    }
-    const currentRowEl = rowEls[currentIndex];
-    const targetRowEl = rowEls[targetIndex];
-    if (direction === "up") {
-      containerEl.insertBefore(currentRowEl, targetRowEl);
-    } else {
-      containerEl.insertBefore(targetRowEl, currentRowEl);
-    }
-  }
-
-  function renderPagination() {
-    const rowEls = Array.from(tableBodyEl.querySelectorAll("tr"));
-    if (!rowEls.length) {
-      limiterEl.style.display = "none";
-      return;
-    }
-
-    const totalPages = Math.max(1, Math.ceil(rowEls.length / pageSize));
-    if (currentPage > totalPages) {
-      currentPage = totalPages;
-    }
-
-    const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-
-    rowEls.forEach((rowEl, index) => {
-      rowEl.style.display = index >= start && index < end ? "" : "none";
-    });
-
-    pageEl.textContent = String(currentPage);
-    prevEl.disabled = currentPage <= 1;
-    nextEl.disabled = currentPage >= totalPages;
-    limiterEl.style.display = rowEls.length > pageSize ? "flex" : "none";
-  }
-
-  function renderTable() {
-    const rows = readStoreRows();
-    tableBodyEl.innerHTML = "";
-
-    if (!rows.length) {
-      emptyEl.style.display = "";
-      limiterEl.style.display = "none";
-      return;
-    }
-
-    emptyEl.style.display = "none";
-    rows.forEach((row) => {
-      const trEl = document.createElement("tr");
-      trEl.setAttribute("data-field-key", row.key);
-      trEl.innerHTML = [
-        `<td>${escapeHtml(row.label)}</td>`,
-        `<td>${escapeHtml(typeLabelByKey.get(row.fieldType) || row.fieldType || "-")}</td>`,
-        `<td>${row.isRequired ? "Sim" : "Não"}</td>`,
-        `<td>${escapeHtml(row.size || "-")}</td>`,
-        `<td>${escapeHtml(row.fieldType === "list" ? getListLabel(row.listKey) : "-")}</td>`,
-        '<td><div class="table-actions">',
-        '<button type="button" class="table-icon-btn" data-additional-field-action="edit" title="Modificar campo" aria-label="Modificar campo">&#9998;</button>',
-        '<button type="button" class="table-icon-btn" data-additional-field-action="up" title="Mover para cima" aria-label="Mover para cima">&#8593;</button>',
-        '<button type="button" class="table-icon-btn" data-additional-field-action="down" title="Mover para baixo" aria-label="Mover para baixo">&#8595;</button>',
-        '<button type="button" class="table-icon-btn table-icon-btn-danger" data-additional-field-action="delete" title="Remover campo" aria-label="Remover campo">&#128465;</button>',
-        "</div></td>"
-      ].join("");
-      tableBodyEl.appendChild(trEl);
-    });
-
-    renderPagination();
-  }
-
-  function handleAddAdditionalFieldV2() {
-    const payload = buildPayloadFromEditor();
-    if (!payload) {
-      return;
-    }
-    upsertStoreRow(payload);
-    clearEditor();
-    setEditorFeedback("Campo adicional preparado para guardar.", "ok");
-    currentPage = Math.max(1, Math.ceil(readStoreRows().length / pageSize));
-    renderTable();
-  }
-
-  function handleClearAdditionalFieldV2() {
-    clearEditor();
-  }
-
-  addButtonEl.addEventListener("click", handleAddAdditionalFieldV2);
-  clearButtonEl.addEventListener("click", handleClearAdditionalFieldV2);
-  window.__appgenesisAddAdditionalFieldV2 = handleAddAdditionalFieldV2;
-  window.__appgenesisClearAdditionalFieldV2 = handleClearAdditionalFieldV2;
-
-  editorTypeEl.addEventListener("change", () => {
-    syncEditorState();
-  });
-
-  pageSizeEl.addEventListener("change", () => {
-    pageSize = Number.parseInt(pageSizeEl.value, 10) || 5;
-    currentPage = 1;
-    renderPagination();
-  });
-
-  prevEl.addEventListener("click", () => {
-    if (currentPage <= 1) {
-      return;
-    }
-    currentPage -= 1;
-    renderPagination();
-  });
-
-  nextEl.addEventListener("click", () => {
-    const totalPages = Math.max(1, Math.ceil(tableBodyEl.querySelectorAll("tr").length / pageSize));
-    if (currentPage >= totalPages) {
-      return;
-    }
-    currentPage += 1;
-    renderPagination();
-  });
-
-  tableBodyEl.addEventListener("click", (event) => {
-    const actionBtn = event.target.closest("[data-additional-field-action]");
-    if (!actionBtn) {
-      return;
-    }
-
-    const action = String(actionBtn.getAttribute("data-additional-field-action") || "").trim();
-    const rowEl = actionBtn.closest("tr[data-field-key]");
-    const fieldKey = String(rowEl ? rowEl.getAttribute("data-field-key") || "" : "").trim();
-    const fieldData = readStoreRows().find((row) => row.key === fieldKey);
-    if (!action || !fieldKey || !fieldData) {
-      return;
-    }
-
-    if (action === "edit") {
-      fillEditor(fieldData);
-      return;
-    }
-    if (action === "delete") {
-      removeStoreRow(fieldKey);
-      if (String(editorKeyEl.value || "").trim() === fieldKey) {
-        clearEditor();
-      }
-      renderTable();
-      return;
-    }
-    if (action === "up" || action === "down") {
-      moveStoreRow(fieldKey, action);
-      renderTable();
-    }
-  });
-
-  formEl.addEventListener("submit", () => {
-    if (String(editorLabelEl.value || "").trim()) {
-      const payload = buildPayloadFromEditor();
-      if (payload) {
-        upsertStoreRow(payload);
-      }
-    }
-  });
-
-  clearEditor();
-  renderTable();
-  builderEl.dataset.additionalFieldsManagerV2Bound = "1";
-}
 
 function normalizeProcessEditTabKey_v1(value) {
   return String(value || "")
@@ -5726,10 +5581,6 @@ if (
 
 syncTrainingOutrosState();
 renderHomeCharts();
-setupReadOnlyCards();
-setupProfileProcessTabs();
-setupMeuPerfilQuantityRules();
-setupConditionalProcessVisibility();
 setupProcessEditTabs();
 logAppGenesisProcessEditorDebugV1("page_load:after_setup_snapshot", {
   href: window.location.href,
@@ -5747,19 +5598,6 @@ logAppGenesisProcessEditorDebugV1("page_load:after_setup_snapshot", {
   })()
 });
 setupProcessFieldsBuilder();
-setupProcessAdditionalFieldsManagerV2_guard_v1();
-window.setTimeout(() => {
-  try {
-    setupProcessAdditionalFieldsManagerV2_guard_v1();
-  } catch (_error) {
-  }
-}, 150);
-window.setTimeout(() => {
-  try {
-    setupProcessAdditionalFieldsManagerV2_guard_v1();
-  } catch (_error) {
-  }
-}, 600);
 setupGeneratedInviteLinkCopy();
 setupCreateUserGenerateLinkShortcut();
 relocateUtilizadorInviteLinkButtonV1();
@@ -5858,20 +5696,6 @@ function buildMenuItemUniqueKey_v1(item) {
   const label = String(item && item.label ? item.label : "").trim();
 
   return `${target}::${sectionKey}::${profileSection}::${label}`;
-}
-
-//###################################################################################
-// (99) COMPATIBILIDADE - BLOQUEIO DO MANAGER V2 QUANDO O V3 ESTIVER ATIVO
-//###################################################################################
-
-function setupProcessAdditionalFieldsManagerV2_guard_v1() {
-  if (document.querySelector("[data-process-additional-fields-manager-v3='1']")) {
-    return;
-  }
-
-  if (typeof setupProcessAdditionalFieldsManagerV2 === "function") {
-    setupProcessAdditionalFieldsManagerV2();
-  }
 }
 
 // APPGENESIS_MEU_PERFIL_QUANTITY_RENDERER_V1_START
@@ -5993,6 +5817,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function resolveQuantityControlNameV1(fieldKey) {
+    if (
+      appGenesisProfileFieldRegistryV1 &&
+      typeof appGenesisProfileFieldRegistryV1.resolveControlName === "function"
+    ) {
+      return appGenesisProfileFieldRegistryV1.resolveControlName(fieldKey);
+    }
+
     const cleanFieldKey = normalizeMenuKey(fieldKey);
     if (!cleanFieldKey) {
       return "";
@@ -6334,7 +6165,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   }
 
   function getReadonlyGridQuantityReadonlyV1() {
-    return document.querySelector("#perfil-pessoal-card .profile-readonly .personal-grid");
+    return document.querySelector(`${getMeuPerfilPersonalCardTargetV1()} .profile-readonly .personal-grid`);
   }
 
   function getQuantityReadonlyValuesV1(ruleKey) {
@@ -6557,2943 +6388,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
 // APPGENESIS_MEU_PERFIL_QUANTITY_READONLY_RENDERER_V1_END
 
-// APPGENESIS_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_START
-//###################################################################################
-// (MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1) EVITAR DUPLICACAO DO CAMPO ORIGEM
-//###################################################################################
 
-(function setupMeuPerfilQuantityOriginDedupV1() {
-  "use strict";
 
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safeQuantityOriginDedupTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function getMeuPerfilQuantityOriginSettingV1() {
-    if (typeof getSidebarMenuSetting === "function") {
-      const foundSetting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-      if (foundSetting) {
-        return foundSetting;
-      }
-    }
-
-    return (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
-      return normalizeMenuKey(setting && setting.key) === MEU_PERFIL_MENU_KEY;
-    }) || null;
-  }
-
-  function getMeuPerfilQuantityOriginFormV1() {
-    return document.querySelector("form[action='/users/profile/personal']")
-      || document.querySelector('form[action="/users/profile/personal"]');
-  }
-
-  function resolveQuantityOriginControlNameV1(fieldKey) {
-    const cleanFieldKey = normalizeMenuKey(fieldKey);
-
-    if (!cleanFieldKey) {
-      return "";
-    }
-
-    if (cleanFieldKey.startsWith("custom_")) {
-      return "custom_field__" + cleanFieldKey;
-    }
-
-    const builtinNames = {
-      nome: "full_name",
-      telefone: "primary_phone",
-      email: "login_email",
-      pais: "country",
-      data_nascimento: "birth_date",
-      autorizacao_whatsapp: "whatsapp_notice_opt_in"
-    };
-
-    return builtinNames[cleanFieldKey] || cleanFieldKey;
-  }
-
-  function getQuantityOriginCurrentSectionV1() {
-    const sectionInput = document.querySelector("[data-meu-perfil-section-input]");
-    return normalizeMenuKey(sectionInput ? sectionInput.value : "");
-  }
-
-  function getQuantityOriginWrapperV1(control) {
-    if (!control) {
-      return null;
-    }
-
-    return control.closest(".field")
-      || control.closest("[data-profile-field-key]")
-      || control.parentElement;
-  }
-
-  function getControlsByNameV1(form, controlName) {
-    if (!form || !controlName) {
-      return [];
-    }
-
-    return Array.from(form.elements || []).filter((control) => {
-      return safeQuantityOriginDedupTextV1(control.name) === controlName;
-    });
-  }
-
-  function disableDuplicateWrapperV1(wrapper, fieldKey) {
-    if (!wrapper) {
-      return;
-    }
-
-    wrapper.dataset.profileQuantityOriginDuplicateV1 = "1";
-    wrapper.dataset.profileFieldKey = normalizeMenuKey(fieldKey);
-    wrapper.hidden = true;
-    wrapper.style.display = "none";
-
-    Array.from(wrapper.querySelectorAll("input, select, textarea, button")).forEach((control) => {
-      control.disabled = true;
-      control.dataset.profileQuantityOriginDuplicateDisabledV1 = "1";
-    });
-  }
-
-  function enableKeptWrapperV1(wrapper, rule) {
-    if (!wrapper || !rule) {
-      return;
-    }
-
-    wrapper.dataset.profileQuantityOriginKeepV1 = "1";
-    wrapper.dataset.profileFieldKey = normalizeMenuKey(rule.quantityFieldKey);
-
-    if (rule.headerKey) {
-      wrapper.dataset.profileSectionPane = rule.headerKey;
-    }
-
-    wrapper.hidden = false;
-
-    Array.from(wrapper.querySelectorAll("input, select, textarea, button")).forEach((control) => {
-      if (control.dataset.profileQuantityOriginDuplicateDisabledV1 === "1") {
-        return;
-      }
-
-      control.disabled = false;
-    });
-  }
-
-  function applyQuantityOriginVisibilityV1(wrapper, rule) {
-    if (!wrapper || !rule) {
-      return;
-    }
-
-    const currentSection = getQuantityOriginCurrentSectionV1();
-    const targetSection = normalizeMenuKey(rule.headerKey || wrapper.dataset.profileSectionPane || "");
-
-    if (!currentSection || !targetSection) {
-      wrapper.style.display = "";
-      return;
-    }
-
-    wrapper.style.display = currentSection === targetSection ? "" : "none";
-  }
-
-  //###################################################################################
-  // (2) DEDUP POR REGRA
-  //###################################################################################
-
-  function dedupQuantityOriginRuleV1(form, rule) {
-    const quantityFieldKey = normalizeMenuKey(rule && rule.quantityFieldKey);
-    const controlName = resolveQuantityOriginControlNameV1(quantityFieldKey);
-
-    if (!quantityFieldKey || !controlName) {
-      return;
-    }
-
-    const controls = getControlsByNameV1(form, controlName);
-
-    if (!controls.length) {
-      return;
-    }
-
-    const wrappers = [];
-    const seenWrappers = new Set();
-
-    controls.forEach((control) => {
-      const wrapper = getQuantityOriginWrapperV1(control);
-
-      if (!wrapper || seenWrappers.has(wrapper)) {
-        return;
-      }
-
-      seenWrappers.add(wrapper);
-      wrappers.push(wrapper);
-    });
-
-    if (!wrappers.length) {
-      return;
-    }
-
-    const targetSection = normalizeMenuKey(rule.headerKey);
-
-    let keepWrapper = null;
-
-    if (targetSection) {
-      keepWrapper = wrappers.find((wrapper) => {
-        return normalizeMenuKey(wrapper.dataset.profileSectionPane) === targetSection;
-      }) || null;
-    }
-
-    if (!keepWrapper) {
-      keepWrapper = wrappers[0];
-    }
-
-    enableKeptWrapperV1(keepWrapper, rule);
-
-    wrappers.forEach((wrapper) => {
-      if (wrapper === keepWrapper) {
-        return;
-      }
-
-      disableDuplicateWrapperV1(wrapper, quantityFieldKey);
-    });
-
-    applyQuantityOriginVisibilityV1(keepWrapper, rule);
-  }
-
-  //###################################################################################
-  // (3) DEDUP GLOBAL
-  //###################################################################################
-
-  function dedupMeuPerfilQuantityOriginsV1() {
-    const form = getMeuPerfilQuantityOriginFormV1();
-    const setting = getMeuPerfilQuantityOriginSettingV1();
-
-    if (!form || !setting) {
-      return;
-    }
-
-    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
-
-    if (!rules.length) {
-      return;
-    }
-
-    rules.forEach((rule) => {
-      dedupQuantityOriginRuleV1(form, rule);
-    });
-  }
-
-  function scheduleDedupMeuPerfilQuantityOriginsV1() {
-    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 0);
-    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 80);
-    window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 250);
-  }
-
-  document.addEventListener("click", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("input", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("change", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleDedupMeuPerfilQuantityOriginsV1);
-  } else {
-    scheduleDedupMeuPerfilQuantityOriginsV1();
-  }
-
-  window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 150);
-  window.setTimeout(scheduleDedupMeuPerfilQuantityOriginsV1, 600);
-})();
-
-// APPGENESIS_MEU_PERFIL_QUANTITY_ORIGIN_DEDUP_V1_END
-
-// APPGENESIS_MEU_PERFIL_EDIT_SECTION_FILTER_V1_START
-//###################################################################################
-// (MEU_PERFIL_EDIT_SECTION_FILTER_V1) FILTRAR CAMPOS DO EDITAR POR ABA/CABECALHO
-//###################################################################################
-
-(function setupMeuPerfilEditSectionFilterV1() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safeEditSectionTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeEditSectionKeyV1(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeEditSectionTextV1(value).trim().toLowerCase();
-  }
-
-  function normalizeEditSectionLookupV1(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeEditSectionTextV1(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function getMeuPerfilEditFormV1() {
-    return document.querySelector("form[action='/users/profile/personal']")
-      || document.querySelector('form[action="/users/profile/personal"]');
-  }
-
-  function sectionKeyFromLabelV1(label) {
-    const cleanLabel = normalizeEditSectionLookupV1(label);
-
-    if (!cleanLabel) {
-      return "";
-    }
-
-    const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
-
-    for (const section of sections) {
-      const sectionLabel = normalizeEditSectionLookupV1(section && section.label);
-
-      if (sectionLabel && sectionLabel === cleanLabel) {
-        return normalizeEditSectionKeyV1(section && section.key);
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionFromInputV1() {
-    const selectors = [
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizeEditSectionKeyV1(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionFromActiveTabV1() {
-    const activeSelectors = [
-      "[data-profile-section-tab].active",
-      "[data-profile-section-tab][aria-selected='true']",
-      "[data-profile-section-button].active",
-      "[data-profile-section-button][aria-selected='true']",
-      ".profile-section-tab.active",
-      ".profile-section-tab[aria-selected='true']",
-      "#perfil-pessoal-card .tab.active",
-      "#perfil-pessoal-card .active"
-    ];
-
-    for (const selector of activeSelectors) {
-      const activeElement = document.querySelector(selector);
-
-      if (!activeElement) {
-        continue;
-      }
-
-      const datasetValue = (
-        activeElement.dataset.profileSection ||
-        activeElement.dataset.profileSectionKey ||
-        activeElement.dataset.profileSectionTab ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      const datasetSection = normalizeEditSectionKeyV1(datasetValue);
-
-      if (datasetSection) {
-        return datasetSection;
-      }
-
-      const textSection = sectionKeyFromLabelV1(activeElement.textContent);
-
-      if (textSection) {
-        return textSection;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionV1() {
-    return (
-      getCurrentProfileSectionFromInputV1() ||
-      getCurrentProfileSectionFromActiveTabV1() ||
-      (
-        Array.isArray(profilePersonalSections) &&
-        profilePersonalSections.length
-          ? normalizeEditSectionKeyV1(profilePersonalSections[0].key)
-          : ""
-      )
-    );
-  }
-
-  function getElementSectionPaneV1(element) {
-    if (!element) {
-      return "";
-    }
-
-    return normalizeEditSectionKeyV1(
-      element.dataset.profileSectionPane ||
-      element.dataset.profileSection ||
-      element.dataset.sectionKey ||
-      ""
-    );
-  }
-
-  function getVisibilityWrapperV1(element) {
-    if (!element) {
-      return null;
-    }
-
-    if (
-      element.classList &&
-      (
-        element.classList.contains("field") ||
-        element.classList.contains("profile-quantity-rule-v1") ||
-        element.classList.contains("profile-quantity-readonly-v1")
-      )
-    ) {
-      return element;
-    }
-
-    return (
-      element.closest(".field") ||
-      element.closest("[data-profile-quantity-rule-key]") ||
-      element.closest("[data-profile-quantity-readonly-rule-key]") ||
-      element
-    );
-  }
-
-  function isDuplicateOriginWrapperV1(wrapper) {
-    if (!wrapper || !wrapper.dataset) {
-      return false;
-    }
-
-    return wrapper.dataset.profileQuantityOriginDuplicateV1 === "1";
-  }
-
-  function setWrapperVisibleBySectionV1(wrapper, currentSection, expectedSection) {
-    if (!wrapper || !currentSection || !expectedSection) {
-      return;
-    }
-
-    if (isDuplicateOriginWrapperV1(wrapper)) {
-      wrapper.hidden = true;
-      wrapper.style.display = "none";
-      return;
-    }
-
-    if (currentSection === expectedSection) {
-      wrapper.hidden = false;
-      wrapper.style.display = "";
-      return;
-    }
-
-    wrapper.hidden = true;
-    wrapper.style.display = "none";
-  }
-
-  function applyQuantityHostsSectionV1(form) {
-    if (!form || typeof getSidebarMenuSetting !== "function" || typeof normalizeProcessQuantityRules !== "function") {
-      return;
-    }
-
-    const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-
-    if (!setting) {
-      return;
-    }
-
-    const rules = normalizeProcessQuantityRules(setting.process_quantity_fields);
-
-    rules.forEach((rule) => {
-      const ruleKey = normalizeEditSectionKeyV1(rule.key);
-      const headerKey = normalizeEditSectionKeyV1(rule.headerKey);
-
-      if (!ruleKey || !headerKey) {
-        return;
-      }
-
-      const hosts = form.querySelectorAll(
-        "[data-profile-quantity-rule-key='" + ruleKey + "'], " +
-        "[data-profile-quantity-readonly-rule-key='" + ruleKey + "']"
-      );
-
-      hosts.forEach((host) => {
-        host.dataset.profileSectionPane = headerKey;
-      });
-    });
-  }
-
-  //###################################################################################
-  // (2) APLICAR FILTRO NO FORMULARIO EDITAR
-  //###################################################################################
-
-  function applyMeuPerfilEditSectionFilterV1() {
-    const form = getMeuPerfilEditFormV1();
-
-    if (!form) {
-      return;
-    }
-
-    const currentSection = getCurrentProfileSectionV1();
-
-    if (!currentSection) {
-      return;
-    }
-
-    applyQuantityHostsSectionV1(form);
-
-    const wrappers = new Set();
-
-    Array.from(
-      form.querySelectorAll("[data-profile-section-pane], [data-profile-section], [data-section-key]")
-    ).forEach((element) => {
-      const wrapper = getVisibilityWrapperV1(element);
-
-      if (!wrapper || !form.contains(wrapper)) {
-        return;
-      }
-
-      wrappers.add(wrapper);
-    });
-
-    Array.from(
-      form.querySelectorAll("[data-profile-quantity-rule-key]")
-    ).forEach((element) => {
-      const wrapper = getVisibilityWrapperV1(element);
-
-      if (!wrapper || !form.contains(wrapper)) {
-        return;
-      }
-
-      wrappers.add(wrapper);
-    });
-
-    wrappers.forEach((wrapper) => {
-      const wrapperSection = getElementSectionPaneV1(wrapper);
-
-      if (!wrapperSection) {
-        return;
-      }
-
-      setWrapperVisibleBySectionV1(wrapper, currentSection, wrapperSection);
-    });
-  }
-
-  function scheduleMeuPerfilEditSectionFilterV1() {
-    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 0);
-    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 80);
-    window.setTimeout(applyMeuPerfilEditSectionFilterV1, 250);
-  }
-
-  //###################################################################################
-  // (3) EVENTOS
-  //###################################################################################
-
-  document.addEventListener("click", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("input", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("change", scheduleMeuPerfilEditSectionFilterV1, true);
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleMeuPerfilEditSectionFilterV1);
-  } else {
-    scheduleMeuPerfilEditSectionFilterV1();
-  }
-
-  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 150);
-  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 600);
-  window.setTimeout(scheduleMeuPerfilEditSectionFilterV1, 1200);
-})();
-
-// APPGENESIS_MEU_PERFIL_EDIT_SECTION_FILTER_V1_END
-
-// APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
-//###################################################################################
-// (KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1) MANTER PROCESSO/ABA APOS GRAVAR
-//###################################################################################
-
-(function setupKeepCurrentProcessAfterProfileSaveV1() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safeKeepProcessTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeKeepProcessKeyV1(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeKeepProcessTextV1(value).trim().toLowerCase();
-  }
-
-  function normalizeKeepProcessLookupV1(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeKeepProcessTextV1(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function getProfilePersonalFormKeepProcessV1() {
-    return document.querySelector("form[action='/users/profile/personal']")
-      || document.querySelector('form[action="/users/profile/personal"]');
-  }
-
-  function ensureHiddenInputKeepProcessV1(form, name) {
-    let input = form.querySelector("input[name='" + name + "']");
-
-    if (!input) {
-      input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      form.appendChild(input);
-    }
-
-    return input;
-  }
-
-  function getSectionFromKnownInputKeepProcessV1() {
-    const selectors = [
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizeKeepProcessKeyV1(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getSectionFromActiveTabKeepProcessV1() {
-    const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
-
-    const activeSelectors = [
-      "[data-profile-section-tab].active",
-      "[data-profile-section-tab][aria-selected='true']",
-      "[data-profile-section-button].active",
-      "[data-profile-section-button][aria-selected='true']",
-      ".profile-section-tab.active",
-      ".profile-section-tab[aria-selected='true']",
-      "#perfil-pessoal-card .active"
-    ];
-
-    for (const selector of activeSelectors) {
-      const activeElement = document.querySelector(selector);
-
-      if (!activeElement) {
-        continue;
-      }
-
-      const datasetValue = (
-        activeElement.dataset.profileSection ||
-        activeElement.dataset.profileSectionKey ||
-        activeElement.dataset.profileSectionTab ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      const datasetSection = normalizeKeepProcessKeyV1(datasetValue);
-
-      if (datasetSection) {
-        return datasetSection;
-      }
-
-      const activeLabel = normalizeKeepProcessLookupV1(activeElement.textContent);
-
-      if (!activeLabel) {
-        continue;
-      }
-
-      for (const section of sections) {
-        const sectionLabel = normalizeKeepProcessLookupV1(section && section.label);
-
-        if (sectionLabel && sectionLabel === activeLabel) {
-          return normalizeKeepProcessKeyV1(section && section.key);
-        }
-      }
-    }
-
-    return "";
-  }
-
-  function getSectionFromVisiblePaneKeepProcessV1(form) {
-    const panes = Array.from(
-      form.querySelectorAll("[data-profile-section-pane]")
-    );
-
-    for (const pane of panes) {
-      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
-
-      if (
-        pane.hidden ||
-        pane.style.display === "none" ||
-        (style && style.display === "none")
-      ) {
-        continue;
-      }
-
-      const sectionKey = normalizeKeepProcessKeyV1(pane.dataset.profileSectionPane);
-
-      if (sectionKey) {
-        return sectionKey;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionKeepProcessV1(form) {
-    return (
-      getSectionFromKnownInputKeepProcessV1() ||
-      getSectionFromActiveTabKeepProcessV1() ||
-      getSectionFromVisiblePaneKeepProcessV1(form) ||
-      (
-        Array.isArray(profilePersonalSections) && profilePersonalSections.length
-          ? normalizeKeepProcessKeyV1(profilePersonalSections[0].key)
-          : ""
-      )
-    );
-  }
-
-  //###################################################################################
-  // (2) SINCRONIZAR CONTEXTO ANTES DE GRAVAR
-  //###################################################################################
-
-  function syncProfileSaveContextKeepProcessV1(form) {
-    if (!form) {
-      return;
-    }
-
-    const action = safeKeepProcessTextV1(form.getAttribute("action") || form.action);
-
-    if (!action.includes("/users/profile/personal")) {
-      return;
-    }
-
-    const currentSection = getCurrentProfileSectionKeepProcessV1(form);
-
-    ensureHiddenInputKeepProcessV1(form, "menu").value = MEU_PERFIL_MENU_KEY;
-    ensureHiddenInputKeepProcessV1(form, "target").value = "#perfil-pessoal-card";
-
-    if (currentSection) {
-      ensureHiddenInputKeepProcessV1(form, "profile_section").value = currentSection;
-    }
-
-    ensureHiddenInputKeepProcessV1(form, "appgenesis_after_save").value = "1";
-  }
-
-  function bindProfileSaveContextKeepProcessV1() {
-    const form = getProfilePersonalFormKeepProcessV1();
-
-    if (!form || form.dataset.keepCurrentProcessAfterProfileSaveV1 === "1") {
-      return;
-    }
-
-    form.dataset.keepCurrentProcessAfterProfileSaveV1 = "1";
-
-    form.addEventListener("submit", function () {
-      syncProfileSaveContextKeepProcessV1(form);
-    }, true);
-
-    form.addEventListener("click", function (event) {
-      const submitControl = event.target && event.target.closest
-        ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
-        : null;
-
-      if (!submitControl) {
-        return;
-      }
-
-      syncProfileSaveContextKeepProcessV1(form);
-    }, true);
-  }
-
-  //###################################################################################
-  // (3) COBRIR SUBMIT NATIVO/PROGRAMATICO
-  //###################################################################################
-
-  if (
-    window.HTMLFormElement &&
-    window.HTMLFormElement.prototype &&
-    !window.HTMLFormElement.prototype.__appgenesisKeepProcessSubmitPatchedV1
-  ) {
-    const nativeSubmit = window.HTMLFormElement.prototype.submit;
-
-    window.HTMLFormElement.prototype.submit = function patchedSubmitKeepProcessV1() {
-      syncProfileSaveContextKeepProcessV1(this);
-      return nativeSubmit.call(this);
-    };
-
-    window.HTMLFormElement.prototype.__appgenesisKeepProcessSubmitPatchedV1 = true;
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bindProfileSaveContextKeepProcessV1);
-  } else {
-    bindProfileSaveContextKeepProcessV1();
-  }
-
-  window.setTimeout(bindProfileSaveContextKeepProcessV1, 150);
-  window.setTimeout(bindProfileSaveContextKeepProcessV1, 600);
-})();
-
-// APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_END
-
-// APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_START
-//###################################################################################
-// (POST_SAVE_CONTEXT_CAPTURE_V3) GUARDAR PROCESSO/ABA ANTES DE QUALQUER POST
-//###################################################################################
-
-(function setupAppGenesisPostSaveContextCaptureV3() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safePostSaveTextV3(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizePostSaveKeyV3(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safePostSaveTextV3(value).trim().toLowerCase();
-  }
-
-  function normalizePostSaveLookupV3(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safePostSaveTextV3(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function ensureHiddenPostSaveInputV3(form, name) {
-    let input = form.querySelector("input[name='" + name + "']");
-
-    if (!input) {
-      input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      form.appendChild(input);
-    }
-
-    return input;
-  }
-
-  function getFormActionPostSaveV3(form) {
-    return safePostSaveTextV3(form && (form.getAttribute("action") || form.action));
-  }
-
-  function getFormMethodPostSaveV3(form) {
-    return safePostSaveTextV3(form && (form.getAttribute("method") || form.method || "post"))
-      .trim()
-      .toLowerCase();
-  }
-
-  function readFirstFormValuePostSaveV3(form, names) {
-    if (!form) {
-      return "";
-    }
-
-    for (const name of names) {
-      const control = form.querySelector("[name='" + name + "']");
-
-      if (!control) {
-        continue;
-      }
-
-      const value = safePostSaveTextV3(control.value).trim();
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentUrlPostSaveV3() {
-    try {
-      return new URL(window.location.href);
-    } catch (error) {
-      return new URL("/users/new", window.location.origin);
-    }
-  }
-
-  function getProfileSectionFromInputPostSaveV3() {
-    const selectors = [
-      "#perfil-pessoal-card input[name='profile_section']",
-      "#perfil-pessoal-card [data-meu-perfil-section-input]",
-      "#perfil-pessoal-card [data-profile-section-input]",
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizePostSaveKeyV3(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromActiveTabPostSaveV3() {
-    const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
-
-    const activeSelectors = [
-      "#perfil-pessoal-card [data-profile-section-tab].active",
-      "#perfil-pessoal-card [data-profile-section-tab][aria-selected='true']",
-      "#perfil-pessoal-card [data-profile-section-button].active",
-      "#perfil-pessoal-card [data-profile-section-button][aria-selected='true']",
-      "#perfil-pessoal-card .profile-section-tab.active",
-      "#perfil-pessoal-card .profile-section-tab[aria-selected='true']",
-      "#perfil-pessoal-card .active"
-    ];
-
-    for (const selector of activeSelectors) {
-      const activeElement = document.querySelector(selector);
-
-      if (!activeElement) {
-        continue;
-      }
-
-      const datasetSection = normalizePostSaveKeyV3(
-        activeElement.dataset.profileSection ||
-        activeElement.dataset.profileSectionKey ||
-        activeElement.dataset.profileSectionTab ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      if (datasetSection) {
-        return datasetSection;
-      }
-
-      const activeLabel = normalizePostSaveLookupV3(activeElement.textContent);
-
-      if (!activeLabel) {
-        continue;
-      }
-
-      for (const section of sections) {
-        const sectionLabel = normalizePostSaveLookupV3(section && section.label);
-
-        if (sectionLabel && sectionLabel === activeLabel) {
-          return normalizePostSaveKeyV3(section && section.key);
-        }
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromVisiblePanePostSaveV3() {
-    const panes = Array.from(
-      document.querySelectorAll("#perfil-pessoal-card [data-profile-section-pane]")
-    );
-
-    for (const pane of panes) {
-      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
-
-      if (
-        pane.hidden ||
-        pane.style.display === "none" ||
-        (style && style.display === "none")
-      ) {
-        continue;
-      }
-
-      const sectionKey = normalizePostSaveKeyV3(pane.dataset.profileSectionPane);
-
-      if (sectionKey) {
-        return sectionKey;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionPostSaveV3() {
-    return (
-      getProfileSectionFromInputPostSaveV3() ||
-      getProfileSectionFromActiveTabPostSaveV3() ||
-      getProfileSectionFromVisiblePanePostSaveV3() ||
-      (
-        Array.isArray(profilePersonalSections) && profilePersonalSections.length
-          ? normalizePostSaveKeyV3(profilePersonalSections[0].key)
-          : ""
-      )
-    );
-  }
-
-  function getDynamicSectionPostSaveV3(menuKey) {
-    const formValue = readFirstFormValuePostSaveV3(document, [
-      "dynamic_process_section",
-      "section_key",
-      "process_section",
-      "active_section",
-      "settings_tab"
-    ]);
-
-    if (formValue) {
-      return normalizePostSaveKeyV3(formValue);
-    }
-
-    if (
-      typeof selectedDynamicSectionByMenu === "object" &&
-      selectedDynamicSectionByMenu !== null &&
-      menuKey &&
-      selectedDynamicSectionByMenu[menuKey]
-    ) {
-      return normalizePostSaveKeyV3(selectedDynamicSectionByMenu[menuKey]);
-    }
-
-    const activeElement = document.querySelector(
-      "#dynamic-process-card .active, " +
-      "#dynamic-process-card [aria-selected='true'], " +
-      "[data-dynamic-process-section-key].active, " +
-      "[data-dynamic-process-section-key][aria-selected='true']"
-    );
-
-    if (activeElement) {
-      const datasetSection = normalizePostSaveKeyV3(
-        activeElement.dataset.dynamicProcessSectionKey ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      if (datasetSection) {
-        return datasetSection;
-      }
-    }
-
-    return "";
-  }
-
-  function resolveAuthoritativeActiveMenuKeyForPostSaveV1() {
-    // Sinal autoritativo do menu de topo realmente ativo na SPA (exposto por new_user.js em
-    // window.__appgenesisGetActiveMenuKeyV1, ver ativacao de menu). Navegacao por clique para
-    // qualquer menu que nao seja "administrativo" nao atualiza a URL (nao faz pushState), entao
-    // window.location.href/bootstrap ficam desatualizados assim que o utilizador navega por
-    // clique -- usar esse sinal evita que um submit feito depois de navegar por clique (ex.:
-    // Estruturas > Menu) seja guardado com o menu errado (ex.: "home") e redirecionado para o
-    // lugar errado apos o backend processar o POST.
-    if (typeof window.__appgenesisGetActiveMenuKeyV1 !== "function") {
-      return "";
-    }
-
-    try {
-      return normalizePostSaveKeyV3(window.__appgenesisGetActiveMenuKeyV1());
-    } catch (error) {
-      return "";
-    }
-  }
-
-  function currentMenuFromUrlOrBootstrapPostSaveV3(form) {
-    const currentUrl = getCurrentUrlPostSaveV3();
-
-    // Um campo "menu" explicito no formulario e uma sobreposicao deliberada e tem prioridade
-    // sobre tudo o resto.
-    const explicitFormMenu = normalizePostSaveKeyV3(
-      readFirstFormValuePostSaveV3(form, ["menu"])
-    );
-
-    if (explicitFormMenu) {
-      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
-        source: "explicit_form_menu_field",
-        value: explicitFormMenu
-      });
-      return explicitFormMenu;
-    }
-
-    const authoritativeActiveMenu = resolveAuthoritativeActiveMenuKeyForPostSaveV1();
-
-    if (authoritativeActiveMenu) {
-      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
-        source: "authoritative_active_menu_key",
-        value: authoritativeActiveMenu
-      });
-      return authoritativeActiveMenu;
-    }
-
-    // O "menu" ja presente na URL atual reflete o contexto de navegacao onde o formulario foi
-    // aberto (ex.: o editor de processo dentro de "administrativo"/"sessoes") e tem prioridade
-    // sobre "redirect_menu"/"menu_key" do formulario. "redirect_menu" costuma ser um valor fixo
-    // definido no template e "menu_key" identifica o item a editar (ex.: "calendario"), nao o
-    // menu de navegacao em si — usa-los antes da URL fazia o guardar "saltar" para um contexto
-    // diferente daquele onde o utilizador estava.
-    const urlMenu = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
-
-    if (urlMenu) {
-      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
-        source: "current_url_menu",
-        value: urlMenu
-      });
-      return urlMenu;
-    }
-
-    const fallbackFormMenu = normalizePostSaveKeyV3(
-      readFirstFormValuePostSaveV3(form, [
-        "redirect_menu",
-        "menu_key",
-        "process_menu_key",
-        "dynamic_menu_key",
-        "settings_edit_key"
-      ])
-    );
-
-    if (fallbackFormMenu) {
-      logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
-        source: "fallback_form_menu_field",
-        value: fallbackFormMenu
-      });
-      return fallbackFormMenu;
-    }
-
-    if (typeof initialMenu !== "undefined") {
-      const bootstrapMenu = normalizePostSaveKeyV3(initialMenu);
-
-      if (bootstrapMenu) {
-        logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
-          source: "bootstrap_initial_menu",
-          value: bootstrapMenu
-        });
-        return bootstrapMenu;
-      }
-    }
-
-    logAppGenesisProcessEditorDebugV1("currentMenuFromUrlOrBootstrapPostSaveV3:resolved", {
-      source: "none",
-      value: ""
-    });
-    return "";
-  }
-
-  //###################################################################################
-  // (2) CONSTRUIR URL DE RETORNO
-  //###################################################################################
-
-  function findConfigProvidedReturnUrlV1(form) {
-    // Subprocessos administrativos (menu, sessoes, perfil de autorizacao, objeto de autorizacao)
-    // injetam a sua propria URL de retorno, calculada e validada pelo backend, num campo hidden
-    // cujo nome termina em "_return_url" (ex.: "subprocess_return_url", "sidebar_section_return_url",
-    // "auth_profile_return_url" -- ver return_url_field em appgenesis/admin_subprocesses/registry.py).
-    // Essa e a fonte mais confiavel de "para onde voltar apos o POST": ao contrario da
-    // reconstrucao generica abaixo (baseada em URL/bootstrap, que fica desatualizada em
-    // navegacao client-side sem pushState), o backend ja sabe exatamente o menu/aba/target
-    // corretos porque foi ele quem renderizou o card. Usar essa URL evita redirecionar o
-    // utilizador para o lugar errado apos guardar/mover/apagar um item nesses subprocessos.
-    if (!form || typeof form.querySelectorAll !== "function") {
-      return "";
-    }
-
-    const candidates = Array.from(form.querySelectorAll("input[type='hidden']")).filter((input) => {
-      const name = String(input.name || "");
-      return name.length > "_return_url".length && name.endsWith("_return_url");
-    });
-
-    for (let i = 0; i < candidates.length; i += 1) {
-      const value = String(candidates[i].value || "").trim();
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function buildPostSaveReturnUrlV3(form) {
-    const configProvidedReturnUrl = findConfigProvidedReturnUrlV1(form);
-
-    if (configProvidedReturnUrl) {
-      let configReturnUrlObj = null;
-
-      try {
-        configReturnUrlObj = new URL(configProvidedReturnUrl, window.location.origin);
-      } catch (error) {
-        configReturnUrlObj = null;
-      }
-
-      if (configReturnUrlObj && configReturnUrlObj.pathname === "/users/new") {
-        configReturnUrlObj.searchParams.set("appgenesis_after_save", "1");
-
-        logAppGenesisProcessEditorDebugV1("buildPostSaveReturnUrlV3:resolved", {
-          source: "config_provided_return_url_field",
-          value: configReturnUrlObj.pathname + configReturnUrlObj.search + configReturnUrlObj.hash
-        });
-
-        return configReturnUrlObj.pathname + configReturnUrlObj.search + configReturnUrlObj.hash;
-      }
-    }
-
-    const currentUrl = getCurrentUrlPostSaveV3();
-
-    currentUrl.pathname = "/users/new";
-
-    const action = getFormActionPostSaveV3(form);
-    const actionLookup = normalizePostSaveLookupV3(action);
-    const isEntityUpdateAction = actionLookup.includes("/entities/update");
-    let menuKey = currentMenuFromUrlOrBootstrapPostSaveV3(form);
-
-    if (actionLookup.includes("/users/profile/personal")) {
-      menuKey = MEU_PERFIL_MENU_KEY;
-      currentUrl.searchParams.set("menu", MEU_PERFIL_MENU_KEY);
-      currentUrl.searchParams.set("target", "#perfil-pessoal-card");
-      currentUrl.searchParams.set("profile_tab", "pessoal");
-
-      const profileSection = getCurrentProfileSectionPostSaveV3();
-
-      if (profileSection) {
-        currentUrl.searchParams.set("profile_section", profileSection);
-      }
-    } else {
-      if (isEntityUpdateAction) {
-        currentUrl.searchParams.set("menu", "administrativo");
-        currentUrl.searchParams.set("admin_tab", "entidade");
-        currentUrl.searchParams.set("target", "#recent-entities-card");
-        currentUrl.searchParams.delete("entity_edit_id");
-        currentUrl.searchParams.delete("entity_view");
-        currentUrl.searchParams.delete("user_edit_id");
-        currentUrl.searchParams.delete("user_view");
-        currentUrl.searchParams.delete("settings_edit_key");
-        currentUrl.searchParams.delete("settings_action");
-        currentUrl.searchParams.delete("settings_tab");
-        currentUrl.searchParams.delete("profile_tab");
-        currentUrl.searchParams.delete("profile_section");
-        currentUrl.searchParams.delete("dynamic_process_section");
-        currentUrl.searchParams.delete("section_key");
-        currentUrl.searchParams.delete("sidebar_section_edit_key");
-        currentUrl.hash = "#recent-entities-card";
-      } else {
-        if (menuKey) {
-          currentUrl.searchParams.set("menu", menuKey);
-        }
-
-        const formTarget = readFirstFormValuePostSaveV3(form, ["target", "return_target"]);
-
-        if (formTarget) {
-          currentUrl.searchParams.set("target", formTarget);
-        }
-
-        const formAdminTab = normalizePostSaveKeyV3(
-          readFirstFormValuePostSaveV3(form, [
-            "return_admin_tab",
-            "admin_tab",
-            "active_admin_tab"
-          ])
-        );
-
-        if (formAdminTab) {
-          currentUrl.searchParams.set("admin_tab", formAdminTab);
-        }
-
-        if (
-          currentUrl.searchParams.get("menu") === "administrativo" &&
-          !currentUrl.searchParams.get("admin_tab") &&
-          (
-            actionLookup.includes("/users/delete") ||
-            actionLookup.includes("/users/update") ||
-            actionLookup.includes("/users/new") ||
-            actionLookup.includes("/users/resend")
-          )
-        ) {
-          currentUrl.searchParams.set("admin_tab", "utilizador");
-        }
-
-        if (
-          currentUrl.searchParams.get("menu") === "administrativo" &&
-          !currentUrl.searchParams.get("admin_tab") &&
-          actionLookup.includes("/entities/")
-        ) {
-          currentUrl.searchParams.set("admin_tab", "entidade");
-        }
-
-        const settingsEditKey = normalizePostSaveKeyV3(
-          readFirstFormValuePostSaveV3(form, ["settings_edit_key", "menu_key"])
-        );
-        const settingsAction = normalizePostSaveKeyV3(
-          readFirstFormValuePostSaveV3(form, ["settings_action"])
-        );
-        const settingsTab = normalizePostSaveKeyV3(
-          readFirstFormValuePostSaveV3(form, ["settings_tab"])
-        );
-        const currentMenuKey = normalizePostSaveKeyV3(currentUrl.searchParams.get("menu"));
-
-        if (
-          settingsEditKey &&
-          (currentMenuKey === "administrativo" || currentMenuKey === ESTRUTURAS_MENU_KEY_V1)
-        ) {
-          currentUrl.searchParams.set("settings_edit_key", settingsEditKey);
-          currentUrl.searchParams.set("settings_action", settingsAction || "edit");
-
-          if (settingsTab) {
-            currentUrl.searchParams.set("settings_tab", settingsTab);
-          }
-
-          if (
-            currentMenuKey === ESTRUTURAS_MENU_KEY_V1 &&
-            !currentUrl.searchParams.get("admin_tab")
-          ) {
-            currentUrl.searchParams.set("admin_tab", "contas");
-          }
-
-          if (!currentUrl.searchParams.get("target")) {
-            currentUrl.searchParams.set("target", "#settings-menu-edit-card");
-          }
-        }
-
-        if (
-          settingsEditKey &&
-          (currentMenuKey === "administrativo" || currentMenuKey === ESTRUTURAS_MENU_KEY_V1)
-        ) {
-          currentUrl.searchParams.delete("dynamic_process_section");
-          currentUrl.searchParams.delete("section_key");
-        } else {
-          const dynamicSection = getDynamicSectionPostSaveV3(menuKey);
-
-          if (dynamicSection) {
-            currentUrl.searchParams.set("dynamic_process_section", dynamicSection);
-          }
-        }
-      }
-    }
-
-    currentUrl.searchParams.set("appgenesis_after_save", "1");
-
-    return currentUrl.pathname + currentUrl.search + currentUrl.hash;
-  }
-
-  //###################################################################################
-  // (3) GUARDAR CONTEXTO
-  //###################################################################################
-
-  function debugRelevantFormFieldsV1(form) {
-    const fieldNames = [
-      "menu_key",
-      "redirect_menu",
-      "redirect_target",
-      "settings_edit_key",
-      "settings_action",
-      "settings_tab",
-      "target",
-      "dynamic_process_section"
-    ];
-    const values = {};
-    fieldNames.forEach((name) => {
-      const control = form && typeof form.querySelector === "function"
-        ? form.querySelector("[name='" + name + "']")
-        : null;
-      values[name] = control ? control.value : undefined;
-    });
-    return values;
-  }
-
-  function storePostSaveContextV3(form) {
-    if (!form) {
-      return;
-    }
-
-    const method = getFormMethodPostSaveV3(form);
-
-    if (method && method !== "post") {
-      return;
-    }
-
-    logAppGenesisProcessEditorDebugV1("storePostSaveContextV3:submit", {
-      formAction: form.getAttribute("action") || form.action,
-      formMethod: method,
-      locationHrefBeforeSubmit: window.location.href,
-      hiddenInputs: debugRelevantFormFieldsV1(form)
-    });
-
-    const returnUrl = buildPostSaveReturnUrlV3(form);
-
-    logAppGenesisProcessEditorDebugV1("storePostSaveContextV3:computed_return_url", {
-      returnUrl
-    });
-
-    try {
-      window.sessionStorage.setItem(
-        APPGENESIS_POST_SAVE_CONTEXT_KEY_V3,
-        JSON.stringify({
-          url: returnUrl,
-          createdAt: Date.now()
-        })
-      );
-    } catch (error) {
-      // Ignora falhas de sessionStorage.
-    }
-
-    ensureHiddenPostSaveInputV3(form, "appgenesis_after_save").value = "1";
-    ensureHiddenPostSaveInputV3(form, "return_url").value = returnUrl;
-  }
-
-  function bindPostSaveContextCaptureV3() {
-    document.addEventListener("submit", function (event) {
-      storePostSaveContextV3(event.target);
-    }, true);
-
-    document.addEventListener("click", function (event) {
-      const submitControl = event.target && event.target.closest
-        ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
-        : null;
-
-      if (!submitControl || !submitControl.form) {
-        return;
-      }
-
-      storePostSaveContextV3(submitControl.form);
-    }, true);
-
-    if (
-      window.HTMLFormElement &&
-      window.HTMLFormElement.prototype &&
-      !window.HTMLFormElement.prototype.__appgenesisPostSaveContextPatchedV3
-    ) {
-      const nativeSubmit = window.HTMLFormElement.prototype.submit;
-
-      window.HTMLFormElement.prototype.submit = function patchedSubmitPostSaveContextV3() {
-        storePostSaveContextV3(this);
-        return nativeSubmit.call(this);
-      };
-
-      window.HTMLFormElement.prototype.__appgenesisPostSaveContextPatchedV3 = true;
-    }
-  }
-
-  bindPostSaveContextCaptureV3();
-})();
-
-// APPGENESIS_POST_SAVE_CONTEXT_CAPTURE_V3_END
-
-// APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_START
-//###################################################################################
-// (RETURN_URL_POST_SAVE_CAPTURE_V4) ENVIAR CONTEXTO ATUAL ANTES DO POST
-//###################################################################################
-
-(function setupReturnUrlPostSaveCaptureV4() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS
-  //###################################################################################
-
-  function safeReturnUrlTextV4(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeReturnUrlKeyV4(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeReturnUrlTextV4(value).trim().toLowerCase();
-  }
-
-  function normalizeReturnUrlLookupV4(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeReturnUrlTextV4(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function ensureHiddenReturnUrlInputV4(form, name) {
-    let input = form.querySelector("input[name='" + name + "']");
-
-    if (!input) {
-      input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      form.appendChild(input);
-    }
-
-    return input;
-  }
-
-  function getCurrentUrlReturnUrlV4() {
-    try {
-      return new URL(window.location.href);
-    } catch (error) {
-      return new URL("/users/new", window.location.origin);
-    }
-  }
-
-  function getFormActionReturnUrlV4(form) {
-    return safeReturnUrlTextV4(form && (form.getAttribute("action") || form.action));
-  }
-
-  function getFormMethodReturnUrlV4(form) {
-    return safeReturnUrlTextV4(form && (form.getAttribute("method") || form.method || "post"))
-      .trim()
-      .toLowerCase();
-  }
-
-  function getFormValueReturnUrlV4(form, names) {
-    if (!form) {
-      return "";
-    }
-
-    for (const name of names) {
-      const control = form.querySelector("[name='" + name + "']");
-
-      if (!control) {
-        continue;
-      }
-
-      const value = safeReturnUrlTextV4(control.value).trim();
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  //###################################################################################
-  // (2) DETECTAR ABA DO MEU PERFIL
-  //###################################################################################
-
-  function getProfileSectionFromInputReturnUrlV4() {
-    const selectors = [
-      "#perfil-pessoal-card input[name='profile_section']",
-      "#perfil-pessoal-card [data-meu-perfil-section-input]",
-      "#perfil-pessoal-card [data-profile-section-input]",
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizeReturnUrlKeyV4(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromActiveTabReturnUrlV4() {
-    const sections = Array.isArray(window.profilePersonalSections || profilePersonalSections)
-      ? (window.profilePersonalSections || profilePersonalSections)
-      : [];
-
-    const activeSelectors = [
-      "#perfil-pessoal-card [data-profile-section-tab].active",
-      "#perfil-pessoal-card [data-profile-section-tab][aria-selected='true']",
-      "#perfil-pessoal-card [data-profile-section-button].active",
-      "#perfil-pessoal-card [data-profile-section-button][aria-selected='true']",
-      "#perfil-pessoal-card .profile-section-tab.active",
-      "#perfil-pessoal-card .profile-section-tab[aria-selected='true']",
-      "#perfil-pessoal-card .active"
-    ];
-
-    for (const selector of activeSelectors) {
-      const activeElement = document.querySelector(selector);
-
-      if (!activeElement) {
-        continue;
-      }
-
-      const dataSection = normalizeReturnUrlKeyV4(
-        activeElement.dataset.profileSection ||
-        activeElement.dataset.profileSectionKey ||
-        activeElement.dataset.profileSectionTab ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      if (dataSection) {
-        return dataSection;
-      }
-
-      const activeLabel = normalizeReturnUrlLookupV4(activeElement.textContent);
-
-      if (!activeLabel) {
-        continue;
-      }
-
-      for (const section of sections) {
-        const sectionLabel = normalizeReturnUrlLookupV4(section && section.label);
-
-        if (sectionLabel && sectionLabel === activeLabel) {
-          return normalizeReturnUrlKeyV4(section && section.key);
-        }
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromVisiblePaneReturnUrlV4() {
-    const panes = Array.from(
-      document.querySelectorAll("#perfil-pessoal-card [data-profile-section-pane]")
-    );
-
-    for (const pane of panes) {
-      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
-
-      if (
-        pane.hidden ||
-        pane.style.display === "none" ||
-        (style && style.display === "none")
-      ) {
-        continue;
-      }
-
-      const sectionKey = normalizeReturnUrlKeyV4(pane.dataset.profileSectionPane);
-
-      if (sectionKey) {
-        return sectionKey;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionReturnUrlV4() {
-    return (
-      getProfileSectionFromInputReturnUrlV4() ||
-      getProfileSectionFromActiveTabReturnUrlV4() ||
-      getProfileSectionFromVisiblePaneReturnUrlV4()
-    );
-  }
-
-  //###################################################################################
-  // (3) DETECTAR PROCESSO DINAMICO
-  //###################################################################################
-
-  function getCurrentMenuReturnUrlV4(form) {
-    const url = getCurrentUrlReturnUrlV4();
-
-    const formMenu = normalizeReturnUrlKeyV4(
-      getFormValueReturnUrlV4(form, [
-        "menu",
-        "menu_key",
-        "process_menu_key",
-        "dynamic_menu_key"
-      ])
-    );
-
-    if (formMenu) {
-      return formMenu;
-    }
-
-    // Sinal autoritativo do menu de topo realmente ativo na SPA (ver mesmo padrao em
-    // resolveAuthoritativeActiveMenuKeyForPostSaveV1, noutro escopo de IIFE deste ficheiro):
-    // navegacao por clique para menus que nao sejam "administrativo" nao atualiza a URL, entao
-    // "urlMenu" abaixo fica desatualizado assim que o utilizador navega por clique.
-    if (typeof window.__appgenesisGetActiveMenuKeyV1 === "function") {
-      try {
-        const authoritativeActiveMenu = normalizeReturnUrlKeyV4(window.__appgenesisGetActiveMenuKeyV1());
-        if (authoritativeActiveMenu) {
-          return authoritativeActiveMenu;
-        }
-      } catch (error) {
-        // Ignora falha e cai no fallback pelo URL/bootstrap.
-      }
-    }
-
-    const urlMenu = normalizeReturnUrlKeyV4(url.searchParams.get("menu"));
-
-    if (urlMenu) {
-      return urlMenu;
-    }
-
-    if (typeof initialMenu !== "undefined") {
-      return normalizeReturnUrlKeyV4(initialMenu);
-    }
-
-    return "";
-  }
-
-  function getCurrentDynamicSectionReturnUrlV4(menuKey) {
-    const formSection = normalizeReturnUrlKeyV4(
-      getFormValueReturnUrlV4(document, [
-        "dynamic_process_section",
-        "section_key",
-        "process_section",
-        "active_section"
-      ])
-    );
-
-    if (formSection) {
-      return formSection;
-    }
-
-    if (
-      typeof selectedDynamicSectionByMenu === "object" &&
-      selectedDynamicSectionByMenu !== null &&
-      menuKey &&
-      selectedDynamicSectionByMenu[menuKey]
-    ) {
-      return normalizeReturnUrlKeyV4(selectedDynamicSectionByMenu[menuKey]);
-    }
-
-    const activeElement = document.querySelector(
-      "#dynamic-process-card .active, " +
-      "#dynamic-process-card [aria-selected='true'], " +
-      "[data-dynamic-process-section-key].active, " +
-      "[data-dynamic-process-section-key][aria-selected='true']"
-    );
-
-    if (activeElement) {
-      return normalizeReturnUrlKeyV4(
-        activeElement.dataset.dynamicProcessSectionKey ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-    }
-
-    return "";
-  }
-
-  //###################################################################################
-  // (4) CONSTRUIR return_url
-  //###################################################################################
-
-  function buildReturnUrlPostSaveV4(form) {
-    const url = getCurrentUrlReturnUrlV4();
-    const action = getFormActionReturnUrlV4(form);
-    const actionLookup = normalizeReturnUrlLookupV4(action);
-    const isEntityUpdateAction = actionLookup.includes("/entities/update");
-
-    url.pathname = "/users/new";
-
-    if (actionLookup.includes("/users/profile/personal")) {
-      const profileSection = getCurrentProfileSectionReturnUrlV4();
-
-      url.searchParams.set("menu", "meu_perfil");
-      url.searchParams.set("target", "#perfil-pessoal-card");
-      url.searchParams.set("profile_tab", "pessoal");
-
-      if (profileSection) {
-        url.searchParams.set("profile_section", profileSection);
-      }
-    } else {
-      if (isEntityUpdateAction) {
-        url.searchParams.set("menu", "administrativo");
-        url.searchParams.set("admin_tab", "entidade");
-        url.searchParams.set("target", "#recent-entities-card");
-        url.searchParams.delete("entity_edit_id");
-        url.searchParams.delete("entity_view");
-        url.searchParams.delete("user_edit_id");
-        url.searchParams.delete("user_view");
-        url.searchParams.delete("settings_edit_key");
-        url.searchParams.delete("settings_action");
-        url.searchParams.delete("settings_tab");
-        url.searchParams.delete("profile_tab");
-        url.searchParams.delete("profile_section");
-        url.searchParams.delete("dynamic_process_section");
-        url.searchParams.delete("section_key");
-        url.searchParams.delete("sidebar_section_edit_key");
-        url.hash = "#recent-entities-card";
-      } else {
-        const menuKey = getCurrentMenuReturnUrlV4(form);
-
-        if (menuKey) {
-          url.searchParams.set("menu", menuKey);
-        }
-
-        const target = getFormValueReturnUrlV4(form, ["target", "return_target"]);
-
-        if (target) {
-          url.searchParams.set("target", target);
-        }
-
-        const dynamicSection = getCurrentDynamicSectionReturnUrlV4(menuKey);
-
-        if (dynamicSection) {
-          url.searchParams.set("dynamic_process_section", dynamicSection);
-        }
-      }
-    }
-
-    url.searchParams.set("appgenesis_after_save", "1");
-
-    return url.pathname + url.search + url.hash;
-  }
-
-  //###################################################################################
-  // (5) SINCRONIZAR NO FORMULARIO
-  //###################################################################################
-
-  function syncReturnUrlPostSaveV4(form) {
-    if (!form) {
-      return;
-    }
-
-    const method = getFormMethodReturnUrlV4(form);
-
-    if (method && method !== "post") {
-      return;
-    }
-
-    const returnUrl = buildReturnUrlPostSaveV4(form);
-
-    ensureHiddenReturnUrlInputV4(form, "return_url").value = returnUrl;
-    ensureHiddenReturnUrlInputV4(form, "appgenesis_after_save").value = "1";
-
-    try {
-      window.sessionStorage.setItem(
-        "appgenesis:return-url-post-save-v4",
-        JSON.stringify({
-          url: returnUrl,
-          createdAt: Date.now()
-        })
-      );
-    } catch (error) {
-      // Ignora sessionStorage indisponivel.
-    }
-  }
-
-  document.addEventListener("submit", function (event) {
-    syncReturnUrlPostSaveV4(event.target);
-  }, true);
-
-  document.addEventListener("click", function (event) {
-    const submitControl = event.target && event.target.closest
-      ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
-      : null;
-
-    if (!submitControl || !submitControl.form) {
-      return;
-    }
-
-    syncReturnUrlPostSaveV4(submitControl.form);
-  }, true);
-
-  document.addEventListener("formdata", function (event) {
-    if (!event || !event.formData || !event.target) {
-      return;
-    }
-
-    syncReturnUrlPostSaveV4(event.target);
-
-    const returnUrlInput = event.target.querySelector("input[name='return_url']");
-    const afterSaveInput = event.target.querySelector("input[name='appgenesis_after_save']");
-
-    if (returnUrlInput) {
-      event.formData.set("return_url", returnUrlInput.value);
-    }
-
-    if (afterSaveInput) {
-      event.formData.set("appgenesis_after_save", afterSaveInput.value);
-    }
-  }, true);
-
-  if (
-    window.HTMLFormElement &&
-    window.HTMLFormElement.prototype &&
-    !window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV4
-  ) {
-    const nativeSubmit = window.HTMLFormElement.prototype.submit;
-
-    window.HTMLFormElement.prototype.submit = function patchedSubmitReturnUrlPostSaveV4() {
-      syncReturnUrlPostSaveV4(this);
-      return nativeSubmit.call(this);
-    };
-
-    window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV4 = true;
-  }
-})();
-
-// APPGENESIS_RETURN_URL_POST_SAVE_CAPTURE_V4_END
-
-// APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_START
-//###################################################################################
-// (FRONTEND_RETURN_URL_POST_SAVE_V6) ENVIAR RETURN_URL SEGURO ANTES DO POST
-//###################################################################################
-
-(function setupFrontendReturnUrlPostSaveV6() {
-  "use strict";
-
-  function safeReturnUrlTextV6(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeReturnUrlKeyV6(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeReturnUrlTextV6(value).trim().toLowerCase();
-  }
-
-  function normalizeReturnUrlLookupV6(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeReturnUrlTextV6(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function ensureHiddenReturnUrlInputV6(form, name) {
-    let input = form.querySelector("input[name='" + name + "']");
-
-    if (!input) {
-      input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      form.appendChild(input);
-    }
-
-    return input;
-  }
-
-  function getCurrentUrlReturnUrlV6() {
-    try {
-      return new URL(window.location.href);
-    } catch (error) {
-      return new URL("/users/new", window.location.origin);
-    }
-  }
-
-  function getFormActionReturnUrlV6(form) {
-    return safeReturnUrlTextV6(form && (form.getAttribute("action") || form.action));
-  }
-
-  function getFormMethodReturnUrlV6(form) {
-    return safeReturnUrlTextV6(form && (form.getAttribute("method") || form.method || "post"))
-      .trim()
-      .toLowerCase();
-  }
-
-  function getFormValueReturnUrlV6(form, names) {
-    if (!form) {
-      return "";
-    }
-
-    for (const name of names) {
-      const control = form.querySelector("[name='" + name + "']");
-
-      if (!control) {
-        continue;
-      }
-
-      const value = safeReturnUrlTextV6(control.value).trim();
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromInputsReturnUrlV6() {
-    const selectors = [
-      "#perfil-pessoal-card input[name='profile_section']",
-      "#perfil-pessoal-card [data-meu-perfil-section-input]",
-      "#perfil-pessoal-card [data-profile-section-input]",
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizeReturnUrlKeyV6(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromActiveTabReturnUrlV6() {
-    const sections = (typeof profilePersonalSections !== "undefined" && Array.isArray(profilePersonalSections))
-      ? profilePersonalSections
-      : [];
-
-    const activeSelectors = [
-      "#perfil-pessoal-card [data-profile-section-tab].active",
-      "#perfil-pessoal-card [data-profile-section-tab][aria-selected='true']",
-      "#perfil-pessoal-card [data-profile-section-button].active",
-      "#perfil-pessoal-card [data-profile-section-button][aria-selected='true']",
-      "#perfil-pessoal-card .profile-section-tab.active",
-      "#perfil-pessoal-card .profile-section-tab[aria-selected='true']",
-      "#perfil-pessoal-card .active"
-    ];
-
-    for (const selector of activeSelectors) {
-      const activeElement = document.querySelector(selector);
-
-      if (!activeElement) {
-        continue;
-      }
-
-      const dataSection = normalizeReturnUrlKeyV6(
-        activeElement.dataset.profileSection ||
-        activeElement.dataset.profileSectionKey ||
-        activeElement.dataset.profileSectionTab ||
-        activeElement.dataset.sectionKey ||
-        ""
-      );
-
-      if (dataSection) {
-        return dataSection;
-      }
-
-      const activeLabel = normalizeReturnUrlLookupV6(activeElement.textContent);
-
-      if (!activeLabel) {
-        continue;
-      }
-
-      for (const section of sections) {
-        const sectionLabel = normalizeReturnUrlLookupV6(section && section.label);
-
-        if (sectionLabel && sectionLabel === activeLabel) {
-          return normalizeReturnUrlKeyV6(section && section.key);
-        }
-      }
-    }
-
-    return "";
-  }
-
-  function getProfileSectionFromVisiblePaneReturnUrlV6() {
-    const panes = Array.from(
-      document.querySelectorAll("#perfil-pessoal-card [data-profile-section-pane]")
-    );
-
-    for (const pane of panes) {
-      const style = window.getComputedStyle ? window.getComputedStyle(pane) : null;
-
-      if (
-        pane.hidden ||
-        pane.style.display === "none" ||
-        (style && style.display === "none")
-      ) {
-        continue;
-      }
-
-      const sectionKey = normalizeReturnUrlKeyV6(pane.dataset.profileSectionPane);
-
-      if (sectionKey) {
-        return sectionKey;
-      }
-    }
-
-    return "";
-  }
-
-  function getCurrentProfileSectionReturnUrlV6() {
-    return (
-      getProfileSectionFromInputsReturnUrlV6() ||
-      getProfileSectionFromActiveTabReturnUrlV6() ||
-      getProfileSectionFromVisiblePaneReturnUrlV6()
-    );
-  }
-
-  function getCurrentMenuReturnUrlV6(form) {
-    const currentUrl = getCurrentUrlReturnUrlV6();
-
-    const urlMenu = normalizeReturnUrlKeyV6(currentUrl.searchParams.get("menu"));
-
-    if (urlMenu) {
-      return urlMenu;
-    }
-
-    const formMenu = normalizeReturnUrlKeyV6(
-      getFormValueReturnUrlV6(form, [
-        "menu",
-        "menu_key",
-        "process_menu_key",
-        "dynamic_menu_key"
-      ])
-    );
-
-    if (formMenu) {
-      return formMenu;
-    }
-
-    if (typeof initialMenu !== "undefined") {
-      return normalizeReturnUrlKeyV6(initialMenu);
-    }
-
-    return "";
-  }
-
-  function buildReturnUrlPostSaveV6(form) {
-    const url = getCurrentUrlReturnUrlV6();
-    const actionLookup = normalizeReturnUrlLookupV6(getFormActionReturnUrlV6(form));
-    const isEntityUpdateAction = actionLookup.includes("/entities/update");
-
-    url.pathname = "/users/new";
-    url.searchParams.set("appgenesis_after_save", "1");
-
-    if (actionLookup.includes("/users/profile/personal")) {
-      const profileSection = getCurrentProfileSectionReturnUrlV6();
-
-      url.searchParams.set("menu", "meu_perfil");
-      url.searchParams.set("target", "#perfil-pessoal-card");
-      url.searchParams.set("profile_tab", "pessoal");
-
-      if (profileSection) {
-        url.searchParams.set("profile_section", profileSection);
-      }
-
-      return url.pathname + url.search + url.hash;
-    }
-
-    if (isEntityUpdateAction) {
-      url.searchParams.set("menu", "administrativo");
-      url.searchParams.set("admin_tab", "entidade");
-      url.searchParams.set("target", "#recent-entities-card");
-      url.searchParams.delete("entity_edit_id");
-      url.searchParams.delete("entity_view");
-      url.searchParams.delete("user_edit_id");
-      url.searchParams.delete("user_view");
-      url.searchParams.delete("settings_edit_key");
-      url.searchParams.delete("settings_action");
-      url.searchParams.delete("settings_tab");
-      url.searchParams.delete("profile_tab");
-      url.searchParams.delete("profile_section");
-      url.searchParams.delete("dynamic_process_section");
-      url.searchParams.delete("section_key");
-      url.searchParams.delete("sidebar_section_edit_key");
-      url.hash = "#recent-entities-card";
-
-      return url.pathname + url.search + url.hash;
-    }
-
-    const menuKey = getCurrentMenuReturnUrlV6(form);
-
-    if (menuKey) {
-      url.searchParams.set("menu", menuKey);
-    }
-
-    const target = getFormValueReturnUrlV6(form, ["target", "return_target"]);
-
-    if (target) {
-      url.searchParams.set("target", target);
-    }
-
-    const sectionKey = normalizeReturnUrlKeyV6(
-      getFormValueReturnUrlV6(form, [
-        "section_key",
-        "dynamic_process_section",
-        "process_section",
-        "active_section",
-        "settings_tab"
-      ])
-    );
-
-    if (sectionKey) {
-      url.searchParams.set("dynamic_process_section", sectionKey);
-      url.searchParams.set("section_key", sectionKey);
-    }
-
-    return url.pathname + url.search + url.hash;
-  }
-
-  function syncReturnUrlPostSaveV6(form) {
-    if (!form) {
-      return;
-    }
-
-    const method = getFormMethodReturnUrlV6(form);
-
-    if (method && method !== "post") {
-      return;
-    }
-
-    const returnUrl = buildReturnUrlPostSaveV6(form);
-
-    ensureHiddenReturnUrlInputV6(form, "return_url").value = returnUrl;
-    ensureHiddenReturnUrlInputV6(form, "appgenesis_after_save").value = "1";
-  }
-
-  document.addEventListener("submit", function (event) {
-    syncReturnUrlPostSaveV6(event.target);
-  }, true);
-
-  document.addEventListener("click", function (event) {
-    const submitControl = event.target && event.target.closest
-      ? event.target.closest("button[type='submit'], input[type='submit'], button:not([type])")
-      : null;
-
-    if (!submitControl || !submitControl.form) {
-      return;
-    }
-
-    syncReturnUrlPostSaveV6(submitControl.form);
-  }, true);
-
-  document.addEventListener("formdata", function (event) {
-    if (!event || !event.formData || !event.target) {
-      return;
-    }
-
-    syncReturnUrlPostSaveV6(event.target);
-
-    const returnUrlInput = event.target.querySelector("input[name='return_url']");
-    const afterSaveInput = event.target.querySelector("input[name='appgenesis_after_save']");
-
-    if (returnUrlInput) {
-      event.formData.set("return_url", returnUrlInput.value);
-    }
-
-    if (afterSaveInput) {
-      event.formData.set("appgenesis_after_save", afterSaveInput.value);
-    }
-  }, true);
-
-  if (
-    window.HTMLFormElement &&
-    window.HTMLFormElement.prototype &&
-    !window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV6
-  ) {
-    const nativeSubmit = window.HTMLFormElement.prototype.submit;
-
-    window.HTMLFormElement.prototype.submit = function patchedSubmitReturnUrlPostSaveV6() {
-      syncReturnUrlPostSaveV6(this);
-      return nativeSubmit.call(this);
-    };
-
-    window.HTMLFormElement.prototype.__appgenesisReturnUrlPostSavePatchedV6 = true;
-  }
-})();
-
-// APPGENESIS_FRONTEND_RETURN_URL_POST_SAVE_V6_END
-
-// APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_START
-//###################################################################################
-// (INITIAL_PROFILE_SECTION_FROM_URL_V1) ATIVAR ABA DO MEU PERFIL APOS POS-SAVE
-//###################################################################################
-
-(function setupInitialProfileSectionFromUrlV1() {
-  "use strict";
-
-  function safeInitialProfileSectionTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeInitialProfileSectionKeyV1(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeInitialProfileSectionTextV1(value).trim().toLowerCase();
-  }
-
-  function normalizeInitialProfileSectionLookupV1(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeInitialProfileSectionTextV1(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function readProfileSectionFromUrlV1() {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      return normalizeInitialProfileSectionKeyV1(params.get("profile_section"));
-    } catch (error) {
-      return "";
-    }
-  }
-
-  function setProfileSectionInputsV1(sectionKey) {
-    if (!sectionKey) {
-      return;
-    }
-
-    const selectors = [
-      "#perfil-pessoal-card input[name='profile_section']",
-      "#perfil-pessoal-card [data-meu-perfil-section-input]",
-      "#perfil-pessoal-card [data-profile-section-input]",
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    let changed = false;
-
-    selectors.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((input) => {
-        if (!input) {
-          return;
-        }
-
-        input.value = sectionKey;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-        changed = true;
-      });
-    });
-
-    const form = document.querySelector("form[action='/users/profile/personal']")
-      || document.querySelector('form[action="/users/profile/personal"]');
-
-    if (form && !form.querySelector("input[name='profile_section']")) {
-      const hidden = document.createElement("input");
-      hidden.type = "hidden";
-      hidden.name = "profile_section";
-      hidden.value = sectionKey;
-      form.appendChild(hidden);
-      changed = true;
-    }
-
-    return changed;
-  }
-
-  function findProfileSectionTabByKeyOrLabelV1(sectionKey) {
-    if (!sectionKey) {
-      return null;
-    }
-
-    const sections = (typeof profilePersonalSections !== "undefined" && Array.isArray(profilePersonalSections))
-      ? profilePersonalSections
-      : [];
-
-    const sectionMeta = sections.find((section) => {
-      return normalizeInitialProfileSectionKeyV1(section && section.key) === sectionKey;
-    }) || null;
-
-    const sectionLabel = normalizeInitialProfileSectionLookupV1(sectionMeta && sectionMeta.label);
-
-    const candidates = Array.from(
-      document.querySelectorAll(
-        "#perfil-pessoal-card [data-profile-section-tab], " +
-        "#perfil-pessoal-card [data-profile-section-button], " +
-        "#perfil-pessoal-card .profile-section-tab, " +
-        "#perfil-pessoal-card button, " +
-        "#perfil-pessoal-card a"
-      )
-    );
-
-    return candidates.find((candidate) => {
-      const dataKey = normalizeInitialProfileSectionKeyV1(
-        candidate.dataset.profileSection ||
-        candidate.dataset.profileSectionKey ||
-        candidate.dataset.profileSectionTab ||
-        candidate.dataset.sectionKey ||
-        ""
-      );
-
-      if (dataKey && dataKey === sectionKey) {
-        return true;
-      }
-
-      const textKey = normalizeInitialProfileSectionLookupV1(candidate.textContent);
-
-      return Boolean(sectionLabel && textKey && textKey === sectionLabel);
-    }) || null;
-  }
-
-  function activateProfileSectionFromUrlV1() {
-    const sectionKey = readProfileSectionFromUrlV1();
-
-    if (!sectionKey) {
-      return;
-    }
-
-    setProfileSectionInputsV1(sectionKey);
-
-    const tab = findProfileSectionTabByKeyOrLabelV1(sectionKey);
-
-    if (tab && typeof tab.click === "function") {
-      tab.click();
-    }
-
-    setProfileSectionInputsV1(sectionKey);
-
-    document.dispatchEvent(
-      new CustomEvent("appgenesis:profile-section-restored", {
-        detail: {
-          sectionKey
-        }
-      })
-    );
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", activateProfileSectionFromUrlV1);
-  } else {
-    activateProfileSectionFromUrlV1();
-  }
-
-  window.setTimeout(activateProfileSectionFromUrlV1, 100);
-  window.setTimeout(activateProfileSectionFromUrlV1, 350);
-  window.setTimeout(activateProfileSectionFromUrlV1, 900);
-})();
-
-// APPGENESIS_INITIAL_PROFILE_SECTION_FROM_URL_V1_END
-
-// APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_START
-//###################################################################################
-// (MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1) APLICAR CAMPOS SUBSEQUENTES NO MEU PERFIL
-//###################################################################################
-
-(function setupMeuPerfilSubsequentVisibilityV1() {
-  "use strict";
-
-  //###################################################################################
-  // (1) HELPERS BASE
-  //###################################################################################
-
-  function safeSubsequentTextV1(value) {
-    return String(value === null || value === undefined ? "" : value);
-  }
-
-  function normalizeSubsequentKeyV1(value) {
-    if (typeof normalizeMenuKey === "function") {
-      return normalizeMenuKey(value);
-    }
-
-    return safeSubsequentTextV1(value).trim().toLowerCase();
-  }
-
-  function normalizeSubsequentLookupV1(value) {
-    if (typeof normalizeLookupText === "function") {
-      return normalizeLookupText(value);
-    }
-
-    return safeSubsequentTextV1(value)
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function getMeuPerfilSettingSubsequentV1() {
-    if (typeof getSidebarMenuSetting === "function") {
-      const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
-
-      if (setting) {
-        return setting;
-      }
-    }
-
-    return (Array.isArray(sidebarMenuSettings) ? sidebarMenuSettings : []).find((setting) => {
-      return normalizeSubsequentKeyV1(setting && setting.key) === MEU_PERFIL_MENU_KEY;
-    }) || null;
-  }
-
-  function getCurrentProfileSectionSubsequentV1() {
-    const selectors = [
-      "input[name='profile_section']",
-      "[data-meu-perfil-section-input]",
-      "[data-profile-section-input]"
-    ];
-
-    for (const selector of selectors) {
-      const input = document.querySelector(selector);
-      const value = normalizeSubsequentKeyV1(input ? input.value : "");
-
-      if (value) {
-        return value;
-      }
-    }
-
-    const activeTab = document.querySelector(
-      "#perfil-pessoal-card [data-profile-section-tab].active, " +
-      "#perfil-pessoal-card [data-profile-section-button].active, " +
-      "#perfil-pessoal-card .profile-section-tab.active, " +
-      "#perfil-pessoal-card .active"
-    );
-
-    if (activeTab) {
-      const dataSection = normalizeSubsequentKeyV1(
-        activeTab.dataset.profileSection ||
-        activeTab.dataset.profileSectionKey ||
-        activeTab.dataset.profileSectionTab ||
-        activeTab.dataset.sectionKey ||
-        ""
-      );
-
-      if (dataSection) {
-        return dataSection;
-      }
-
-      const activeLabel = normalizeSubsequentLookupV1(activeTab.textContent);
-      const sections = Array.isArray(profilePersonalSections) ? profilePersonalSections : [];
-
-      for (const section of sections) {
-        if (normalizeSubsequentLookupV1(section && section.label) === activeLabel) {
-          return normalizeSubsequentKeyV1(section && section.key);
-        }
-      }
-    }
-
-    return "";
-  }
-
-  //###################################################################################
-  // (2) METADADOS DOS CAMPOS
-  //###################################################################################
-
-  function buildMeuPerfilFieldMetaMapSubsequentV1(setting) {
-    const metaMap = new Map();
-
-    (Array.isArray(setting && setting.process_field_options) ? setting.process_field_options : []).forEach((option) => {
-      const key = normalizeSubsequentKeyV1(option && option.key);
-
-      if (!key) {
-        return;
-      }
-
-      metaMap.set(key, {
-        key,
-        label: safeSubsequentTextV1(option.label || key).trim(),
-        lookupLabel: normalizeSubsequentLookupV1(option.label || key),
-        fieldType: normalizeProcessFieldType(option.field_type)
-      });
-    });
-
-    return metaMap;
-  }
-
-  function isHeaderTargetSubsequentV1(fieldKey, fieldMetaMap) {
-    const cleanKey = normalizeSubsequentKeyV1(fieldKey);
-    const meta = fieldMetaMap.get(cleanKey);
-
-    return Boolean(meta && normalizeProcessFieldType(meta.fieldType) === "header");
-  }
-
-  //###################################################################################
-  // (3) LEITURA DOS VALORES ATUAIS
-  //###################################################################################
-
-  function resolveProfileControlNameSubsequentV1(fieldKey) {
-    const cleanKey = normalizeSubsequentKeyV1(fieldKey);
-
-    if (!cleanKey) {
-      return "";
-    }
-
-    if (cleanKey.startsWith("custom_")) {
-      return "custom_field__" + cleanKey;
-    }
-
-    const builtinNames = {
-      nome: "full_name",
-      email: "login_email",
-      telefone: "primary_phone",
-      pais: "country",
-      data_nascimento: "birth_date",
-      estado_civil: "estado_civil",
-      tem_filhos: "tem_filhos"
-    };
-
-    return builtinNames[cleanKey] || cleanKey;
-  }
-
-  function readControlValueSubsequentV1(control) {
-    if (!control) {
-      return "";
-    }
-
-    const tagName = safeSubsequentTextV1(control.tagName).toLowerCase();
-    const type = safeSubsequentTextV1(control.type).toLowerCase();
-
-    if (type === "checkbox") {
-      return control.checked ? "Sim" : "Não";
-    }
-
-    if (tagName === "select") {
-      const rawValue = safeSubsequentTextV1(control.value).trim();
-      const optionText = control.options && control.selectedIndex >= 0
-        ? safeSubsequentTextV1(control.options[control.selectedIndex].textContent).trim()
-        : "";
-
-      return optionText || rawValue;
-    }
-
-    return safeSubsequentTextV1(control.value).trim();
-  }
-
-  function findFieldWrapperSubsequentV1(fieldKey) {
-    const cleanKey = normalizeSubsequentKeyV1(fieldKey);
-
-    if (!cleanKey) {
-      return null;
-    }
-
-    return document.querySelector(
-      "#perfil-pessoal-card [data-profile-field-key='" + cleanKey + "']"
-    );
-  }
-
-  function readReadonlyValueSubsequentV1(fieldKey) {
-    const wrapper = findFieldWrapperSubsequentV1(fieldKey);
-
-    if (!wrapper) {
-      return "";
-    }
-
-    const valueElement = wrapper.querySelector(".personal-value, strong, output");
-
-    if (valueElement) {
-      return safeSubsequentTextV1(valueElement.textContent).trim();
-    }
-
-    const labelElement = wrapper.querySelector(".personal-label, label");
-    const labelText = labelElement ? safeSubsequentTextV1(labelElement.textContent).trim() : "";
-    const fullText = safeSubsequentTextV1(wrapper.textContent).trim();
-
-    if (labelText && fullText.startsWith(labelText)) {
-      return fullText.slice(labelText.length).trim();
-    }
-
-    return fullText;
-  }
-
-  function readProfileFieldValueSubsequentV1(fieldKey) {
-    const cleanKey = normalizeSubsequentKeyV1(fieldKey);
-    const controlName = resolveProfileControlNameSubsequentV1(cleanKey);
-
-    const controls = [];
-
-    if (controlName) {
-      document.querySelectorAll(
-        "#perfil-pessoal-card [name='" + controlName + "'], " +
-        "[name='" + controlName + "']"
-      ).forEach((control) => controls.push(control));
-    }
-
-    document.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-field-key='" + cleanKey + "'] input, " +
-      "#perfil-pessoal-card [data-profile-field-key='" + cleanKey + "'] select, " +
-      "#perfil-pessoal-card [data-profile-field-key='" + cleanKey + "'] textarea"
-    ).forEach((control) => controls.push(control));
-
-    for (const control of controls) {
-      if (!control || control.disabled) {
-        continue;
-      }
-
-      const value = readControlValueSubsequentV1(control);
-
-      if (value) {
-        return value;
-      }
-    }
-
-    return readReadonlyValueSubsequentV1(cleanKey);
-  }
-
-  function buildValuesByFieldSubsequentV1(rules) {
-    const valuesByField = {};
-
-    normalizeProcessSubsequentRules(rules).forEach((rule) => {
-      const triggerField = normalizeSubsequentKeyV1(rule.triggerField);
-
-      if (!triggerField || Object.prototype.hasOwnProperty.call(valuesByField, triggerField)) {
-        return;
-      }
-
-      valuesByField[triggerField] = readProfileFieldValueSubsequentV1(triggerField);
-    });
-
-    return valuesByField;
-  }
-
-  //###################################################################################
-  // (4) ENCONTRAR E OCULTAR CAMPOS
-  //###################################################################################
-
-  function getWrappersByLabelSubsequentV1(fieldKey, fieldMetaMap) {
-    const meta = fieldMetaMap.get(normalizeSubsequentKeyV1(fieldKey));
-    const labelLookup = normalizeSubsequentLookupV1(meta && meta.label);
-
-    if (!labelLookup) {
-      return [];
-    }
-
-    const wrappers = [];
-
-    document.querySelectorAll("#perfil-pessoal-card .field, #perfil-pessoal-card .personal-item").forEach((wrapper) => {
-      const labelElement = wrapper.querySelector("label, .personal-label");
-
-      if (!labelElement) {
-        return;
-      }
-
-      const wrapperLabel = normalizeSubsequentLookupV1(labelElement.textContent);
-
-      if (wrapperLabel === labelLookup) {
-        wrappers.push(wrapper);
-      }
-    });
-
-    return wrappers;
-  }
-
-  function getFieldWrappersSubsequentV1(fieldKey, fieldMetaMap) {
-    const cleanKey = normalizeSubsequentKeyV1(fieldKey);
-    const wrappers = [];
-
-    document.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-field-key='" + cleanKey + "']"
-    ).forEach((element) => {
-      const wrapper = (
-        element.classList && (element.classList.contains("field") || element.classList.contains("personal-item"))
-      )
-        ? element
-        : (element.closest(".field, .personal-item") || element);
-
-      if (wrapper && !wrappers.includes(wrapper)) {
-        wrappers.push(wrapper);
-      }
-    });
-
-    getWrappersByLabelSubsequentV1(cleanKey, fieldMetaMap).forEach((wrapper) => {
-      if (wrapper && !wrappers.includes(wrapper)) {
-        wrappers.push(wrapper);
-      }
-    });
-
-    return wrappers;
-  }
-
-  function disableWrapperSubsequentV1(wrapper) {
-    if (!wrapper) {
-      return;
-    }
-
-    wrapper.dataset.profileSubsequentHiddenV1 = "1";
-    wrapper.hidden = true;
-    wrapper.style.display = "none";
-
-    wrapper.querySelectorAll("input, select, textarea, button").forEach((control) => {
-      if (!control.disabled) {
-        control.dataset.profileSubsequentDisabledV1 = "1";
-        control.disabled = true;
-      }
-    });
-  }
-
-  function enableWrapperSubsequentV1(wrapper) {
-    if (!wrapper) {
-      return;
-    }
-
-    delete wrapper.dataset.profileSubsequentHiddenV1;
-
-    const currentSection = getCurrentProfileSectionSubsequentV1();
-    const wrapperSection = normalizeSubsequentKeyV1(wrapper.dataset.profileSectionPane);
-
-    if (wrapper.dataset.profileQuantityOriginDuplicateV1 === "1") {
-      wrapper.hidden = true;
-      wrapper.style.display = "none";
-      return;
-    }
-
-    if (currentSection && wrapperSection && currentSection !== wrapperSection) {
-      wrapper.hidden = true;
-      wrapper.style.display = "none";
-    } else {
-      wrapper.hidden = false;
-      wrapper.style.display = "";
-    }
-
-    wrapper.querySelectorAll("input, select, textarea, button").forEach((control) => {
-      if (control.dataset.profileSubsequentDisabledV1 === "1") {
-        control.disabled = false;
-        delete control.dataset.profileSubsequentDisabledV1;
-      }
-    });
-  }
-
-  //###################################################################################
-  // (5) OCULTAR/EXIBIR SECOES QUANDO O TARGET FOR CABECALHO
-  //###################################################################################
-
-  function getSectionTabsSubsequentV1(sectionKey, fieldMetaMap) {
-    const cleanSectionKey = normalizeSubsequentKeyV1(sectionKey);
-    const meta = fieldMetaMap.get(cleanSectionKey);
-    const labelLookup = normalizeSubsequentLookupV1(meta && meta.label);
-    const tabs = [];
-
-    document.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-section-tab], " +
-      "#perfil-pessoal-card [data-profile-section-button], " +
-      "#perfil-pessoal-card .profile-section-tab, " +
-      "#perfil-pessoal-card button, " +
-      "#perfil-pessoal-card a"
-    ).forEach((tab) => {
-      const dataKey = normalizeSubsequentKeyV1(
-        tab.dataset.profileSection ||
-        tab.dataset.profileSectionKey ||
-        tab.dataset.profileSectionTab ||
-        tab.dataset.sectionKey ||
-        ""
-      );
-
-      const textLookup = normalizeSubsequentLookupV1(tab.textContent);
-
-      if ((dataKey && dataKey === cleanSectionKey) || (labelLookup && textLookup === labelLookup)) {
-        tabs.push(tab);
-      }
-    });
-
-    return tabs;
-  }
-
-  function setSectionVisibleSubsequentV1(sectionKey, visible, fieldMetaMap) {
-    const cleanSectionKey = normalizeSubsequentKeyV1(sectionKey);
-
-    if (!cleanSectionKey) {
-      return;
-    }
-
-    getSectionTabsSubsequentV1(cleanSectionKey, fieldMetaMap).forEach((tab) => {
-      tab.hidden = !visible;
-      tab.style.display = visible ? "" : "none";
-      tab.dataset.profileSubsequentSectionHiddenV1 = visible ? "" : "1";
-    });
-
-    document.querySelectorAll(
-      "#perfil-pessoal-card [data-profile-section-pane='" + cleanSectionKey + "']"
-    ).forEach((element) => {
-      if (visible) {
-        enableWrapperSubsequentV1(element);
-      } else {
-        disableWrapperSubsequentV1(element);
-      }
-    });
-  }
-
-  //###################################################################################
-  // (6) APLICAR REGRAS
-  //###################################################################################
-
-  function applyMeuPerfilSubsequentVisibilityV1() {
-    const setting = getMeuPerfilSettingSubsequentV1();
-
-    if (!setting) {
-      return;
-    }
-
-    const rawRules = setting.process_subsequent_rules || setting.process_subsequent_fields || setting.process_subsequent || [];
-
-    const rules = normalizeProcessSubsequentRules(rawRules);
-
-    if (!rules.length) {
-      return;
-    }
-
-    const fieldMetaMap = buildMeuPerfilFieldMetaMapSubsequentV1(setting);
-    const valuesByField = buildValuesByFieldSubsequentV1(rules);
-    const hiddenTargets = getHiddenProcessTargets(rules, valuesByField);
-    const targetFields = new Set();
-
-    rules.forEach((rule) => {
-      if (rule && rule.targetField) {
-        targetFields.add(normalizeSubsequentKeyV1(rule.targetField));
-      }
-    });
-
-    targetFields.forEach((targetField) => {
-      const shouldHide = hiddenTargets.has(targetField);
-
-      if (isHeaderTargetSubsequentV1(targetField, fieldMetaMap)) {
-        setSectionVisibleSubsequentV1(targetField, !shouldHide, fieldMetaMap);
-        return;
-      }
-
-      getFieldWrappersSubsequentV1(targetField, fieldMetaMap).forEach((wrapper) => {
-        if (shouldHide) {
-          disableWrapperSubsequentV1(wrapper);
-        } else {
-          enableWrapperSubsequentV1(wrapper);
-        }
-      });
-    });
-  }
-
-  function scheduleMeuPerfilSubsequentVisibilityV1() {
-    window.setTimeout(applyMeuPerfilSubsequentVisibilityV1, 0);
-    window.setTimeout(applyMeuPerfilSubsequentVisibilityV1, 80);
-    window.setTimeout(applyMeuPerfilSubsequentVisibilityV1, 250);
-  }
-
-  //###################################################################################
-  // (7) EVENTOS
-  //###################################################################################
-
-  document.addEventListener("input", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("change", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("click", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("appgenesis:profile-section-restored", scheduleMeuPerfilSubsequentVisibilityV1, true);
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", scheduleMeuPerfilSubsequentVisibilityV1);
-  } else {
-    scheduleMeuPerfilSubsequentVisibilityV1();
-  }
-
-  window.setTimeout(scheduleMeuPerfilSubsequentVisibilityV1, 150);
-  window.setTimeout(scheduleMeuPerfilSubsequentVisibilityV1, 600);
-  window.setTimeout(scheduleMeuPerfilSubsequentVisibilityV1, 1200);
-})();
-
-// APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
-/* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
+// Legacy post-save, initial profile section, and subsequent-visibility engines removed after migration to canonical modules.\n\n/* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
 function appgenesisAutoDismissFlashMessages_v1() {
   const successAlerts = Array.from(document.querySelectorAll(".alert.ok"));
 
@@ -9580,3 +6477,447 @@ window.addEventListener("popstate", function () {
   } catch (_) {}
 });
 // APPGENESIS_ADMIN_POPSTATE_NAV_V1_END
+
+//###################################################################################
+// (9) ORQUESTRACAO DA PAGINA
+//###################################################################################
+
+const newUserPageBootstrapStateV1 = {
+  initialized: false,
+  references: null,
+  lastContext: null
+};
+
+function collectNewUserDomReferencesV1(root = document) {
+  const scopeRoot = root && typeof root.querySelector === "function" ? root : document;
+
+  return {
+    documentRef: scopeRoot,
+    bodyEl: scopeRoot.body || null,
+    mainEl: typeof scopeRoot.querySelector === "function" ? scopeRoot.querySelector("main") : null,
+    pageRootEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("[data-appgenesis-new-user-page]")
+      : null,
+    shellEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("[data-process-shell]")
+      : null,
+    menuRootEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("[data-process-menu-root]")
+      : null,
+    formEl: typeof scopeRoot.querySelector === "function"
+      ? scopeRoot.querySelector("form")
+      : null
+  };
+}
+
+function getNewUserRuntimeRefsV1(context) {
+  if (!context || typeof context !== "object") {
+    return null;
+  }
+
+  if (!context.runtimeRefs || typeof context.runtimeRefs !== "object") {
+    context.runtimeRefs = {};
+  }
+
+  return context.runtimeRefs;
+}
+
+function initializeNavigationRuntimeV1(context = {}) {
+  if (context.navigationRuntimeInitialized) {
+    return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (runtimeRefs) {
+    runtimeRefs.navigation = {
+      root: context.documentRef || document
+    };
+  }
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.bindMenuButtonListeners === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.bindMenuButtonListeners();
+  }
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.bindHashChangeListener === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.bindHashChangeListener();
+  }
+
+  if (typeof syncTrainingOutrosState === "function") {
+    syncTrainingOutrosState();
+  }
+  if (typeof renderHomeCharts === "function") {
+    renderHomeCharts();
+  }
+  if (typeof setupReadOnlyCards === "function") {
+    setupReadOnlyCards();
+  }
+  if (typeof setupProfileProcessTabs === "function") {
+    setupProfileProcessTabs();
+  }
+
+  context.navigationRuntimeInitialized = true;
+  return context;
+}
+
+function initializeProfileRuntimeV1(context = {}) {
+  if (context.profileRuntimeInitialized) {
+    return context;
+  }
+
+  const personalCardEl = getMeuPerfilPersonalCardElV1();
+  const formEl = personalCardEl ? personalCardEl.querySelector(".profile-edit-form") : null;
+  const setting = typeof getSidebarMenuSetting === "function" ? getSidebarMenuSetting(MEU_PERFIL_MENU_KEY) : null;
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (!personalCardEl || !formEl || !setting) {
+    context.profileRuntimeInitialized = true;
+    return context;
+  }
+
+  const quantityAdapter = appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.createMeuPerfilQuantityAdapterV1 === "function"
+      ? appGenesisProcessQuantityRuntimeV1.createMeuPerfilQuantityAdapterV1({
+          root: personalCardEl,
+          getSetting: () => setting
+        })
+      : null;
+  const quantityContext = {
+    mode: "profile",
+    adapterName: "profile",
+    root: personalCardEl,
+    formEl,
+    readonlyGridEl: personalCardEl.querySelector(".profile-readonly .personal-grid"),
+    editGridEl: formEl.querySelector(".personal-grid"),
+    setting,
+    rules: setting.process_quantity_fields,
+    getSetting: () => setting,
+    getValues: collectCurrentMeuPerfilQuantityValues,
+    getCurrentSection: getCurrentProfileSectionV1,
+    adapter: quantityAdapter || undefined
+  };
+  const subsequentContext = {
+    mode: "profile",
+    root: personalCardEl,
+    formEl,
+    setting,
+    rules: setting.process_subsequent_fields,
+    getValues: collectCurrentMeuPerfilProcessValues,
+    getCurrentSection: getCurrentProfileSectionV1
+  };
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessQuantityRuntimeV1.initialize(quantityContext);
+  }
+
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessSubsequentVisibilityRuntimeV1.initialize(subsequentContext);
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.profile = {
+      personalCardEl,
+      formEl,
+      setting,
+      quantityAdapter,
+      quantityContext,
+      subsequentContext
+    };
+  }
+
+  context.profileRuntimeInitialized = true;
+  return context;
+}
+
+function initializeDynamicProcessRuntimeV1(context = {}) {
+  if (context.dynamicProcessRuntimeInitialized) {
+    return context;
+  }
+
+  const formEl = dynamicProcessEditFormEl;
+  const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
+  const setting = cleanMenuKey && typeof getSidebarMenuSetting === "function" ? getSidebarMenuSetting(cleanMenuKey) : null;
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (!formEl || !setting) {
+    context.dynamicProcessRuntimeInitialized = true;
+    return context;
+  }
+
+  const quantityAdapter = appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.createDynamicProcessQuantityAdapterV1 === "function"
+      ? appGenesisProcessQuantityRuntimeV1.createDynamicProcessQuantityAdapterV1({
+          root: document,
+          formEl,
+          readonlyGridEl: dynamicProcessReadOnlyGridEl || null,
+          editGridEl: dynamicProcessEditGridEl || null,
+          getSetting: () => setting,
+          getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
+        })
+      : null;
+  const quantityContext = {
+    mode: "dynamic",
+    adapterName: "dynamic",
+    root: document,
+    formEl,
+    readonlyGridEl: dynamicProcessReadOnlyGridEl || null,
+    editGridEl: dynamicProcessEditGridEl || null,
+    setting,
+    rules: setting.process_quantity_fields,
+    getSetting: () => setting,
+    getValues: () => collectCurrentDynamicProcessQuantityValues(cleanMenuKey),
+    getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : ""),
+    adapter: quantityAdapter || undefined
+  };
+  const subsequentContext = {
+    mode: "dynamic",
+    root: document,
+    formEl,
+    setting,
+    rules: setting.process_subsequent_fields,
+    getValues: () => collectCurrentDynamicProcessValues(cleanMenuKey),
+    getCurrentSection: () => normalizeMenuKey(dynamicProcessSectionKeyInputEl ? dynamicProcessSectionKeyInputEl.value : "")
+  };
+
+  if (
+    appGenesisProcessQuantityRuntimeV1 &&
+    typeof appGenesisProcessQuantityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessQuantityRuntimeV1.initialize(quantityContext);
+  }
+
+  if (
+    appGenesisProcessSubsequentVisibilityRuntimeV1 &&
+    typeof appGenesisProcessSubsequentVisibilityRuntimeV1.initialize === "function"
+  ) {
+    appGenesisProcessSubsequentVisibilityRuntimeV1.initialize(subsequentContext);
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.dynamicProcess = {
+      formEl,
+      setting,
+      quantityAdapter,
+      quantityContext,
+      subsequentContext
+    };
+  }
+
+  context.dynamicProcessRuntimeInitialized = true;
+  return context;
+}
+
+function initializeAdminRuntimeV1(context = {}) {
+  if (context.adminRuntimeInitialized) {
+    return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (typeof setupProcessFieldsBuilder === "function") {
+    setupProcessFieldsBuilder();
+  }
+  if (typeof setupProcessAdditionalFieldsManagerV3 === "function") {
+    setupProcessAdditionalFieldsManagerV3();
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.admin = {
+      builderInitialized: true,
+      additionalFieldsManagerInitialized: true
+    };
+  }
+
+  context.adminRuntimeInitialized = true;
+  return context;
+}
+
+function initializeTableRuntimeV1(context = {}) {
+  if (context.tableRuntimeInitialized) {
+    return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+  const prefixes = [
+    "recent-entities",
+    "inactive-entities",
+    "admin-users",
+    "menu-ativo",
+    "menu-inativo",
+    "sessoes-ativo",
+    "sessoes-inativo"
+  ];
+
+  if (typeof setupTableLimiter === "function") {
+    prefixes.forEach((prefix) => {
+      setupTableLimiter(prefix);
+    });
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.table = { prefixes };
+  }
+
+  context.tableRuntimeInitialized = true;
+  return context;
+}
+
+function initializeInviteRuntimeV1(context = {}) {
+  if (context.inviteRuntimeInitialized) {
+    return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (typeof setupGeneratedInviteLinkCopy === "function") {
+    setupGeneratedInviteLinkCopy();
+  }
+  if (typeof setupCreateUserGenerateLinkShortcut === "function") {
+    setupCreateUserGenerateLinkShortcut();
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.invite = {
+      linkCopyInitialized: true,
+      shortcutInitialized: true
+    };
+  }
+
+  context.inviteRuntimeInitialized = true;
+  return context;
+}
+
+function initializeProcessSettingsRuntimeV1(context = {}) {
+  if (context.processSettingsRuntimeInitialized) {
+    return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (typeof setupProcessEditTabs === "function") {
+    setupProcessEditTabs();
+  }
+
+  if (runtimeRefs) {
+    runtimeRefs.processSettings = {
+      tabsInitialized: true
+    };
+  }
+
+  context.processSettingsRuntimeInitialized = true;
+  return context;
+}
+
+function initializePostSaveRuntimeV1(context = {}) {
+  if (context.postSaveRuntimeInitialized) {
+    return context;
+  }
+
+  const runtimeRefs = getNewUserRuntimeRefsV1(context);
+
+  if (
+    window.AppGenesisPostSaveContextCaptureV1 &&
+    typeof window.AppGenesisPostSaveContextCaptureV1.initialize === "function"
+  ) {
+    const captureContext = window.AppGenesisPostSaveContextCaptureV1.initialize({
+      root: context.documentRef || document
+    });
+
+    if (runtimeRefs) {
+      runtimeRefs.postSave = {
+        captureContext
+      };
+    }
+  }
+
+  context.postSaveRuntimeInitialized = true;
+
+  if (typeof appgenesisAutoDismissFlashMessages_v1 === "function") {
+    appgenesisAutoDismissFlashMessages_v1();
+  }
+
+  return context;
+}
+
+function initializeNewUserPageV1() {
+  if (newUserPageBootstrapStateV1.initialized) {
+    return newUserPageBootstrapStateV1.lastContext || newUserPageBootstrapStateV1;
+  }
+
+  const references = collectNewUserDomReferencesV1(document);
+  const context = {
+    bootstrap,
+    documentRef: document,
+    windowRef: window,
+    references
+  };
+
+  initializeNavigationRuntimeV1(context);
+  initializeProfileRuntimeV1(context);
+  initializeDynamicProcessRuntimeV1(context);
+  initializeAdminRuntimeV1(context);
+  initializeTableRuntimeV1(context);
+  initializeInviteRuntimeV1(context);
+  initializeProcessSettingsRuntimeV1(context);
+  initializePostSaveRuntimeV1(context);
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.activateMenu === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.activateMenu(startupMenu, {
+      resetDynamicToFirst: false,
+      source: "bootstrap:finalize"
+    });
+  }
+
+  if (
+    appGenesisProcessMenuRuntimeV1 &&
+    typeof appGenesisProcessMenuRuntimeV1.handleHashNavigation === "function"
+  ) {
+    appGenesisProcessMenuRuntimeV1.handleHashNavigation(window.location.hash || "");
+  }
+
+  newUserPageBootstrapStateV1.initialized = true;
+  newUserPageBootstrapStateV1.references = references;
+  newUserPageBootstrapStateV1.lastContext = context;
+
+  document.dispatchEvent(
+    new CustomEvent("appgenesis:new-user-page-ready", {
+      detail: context
+    })
+  );
+
+  return context;
+}
+
+window.AppGenesisNewUserPageV1 = Object.freeze({
+  collectNewUserDomReferencesV1,
+  initializeNavigationRuntimeV1,
+  initializeProfileRuntimeV1,
+  initializeDynamicProcessRuntimeV1,
+  initializeAdminRuntimeV1,
+  initializeTableRuntimeV1,
+  initializeInviteRuntimeV1,
+  initializeProcessSettingsRuntimeV1,
+  initializePostSaveRuntimeV1,
+  initializeNewUserPageV1
+});
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeNewUserPageV1, { once: true });
+} else {
+  initializeNewUserPageV1();
+}

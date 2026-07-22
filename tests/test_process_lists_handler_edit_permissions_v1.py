@@ -81,6 +81,7 @@ def _call_handler(
         process_list_column_always_visible=[],
         process_list_column_responsive_priority=[],
         process_list_columns_configured="",
+        process_lists_configured="",
         redirect_menu="administrativo",
         redirect_target="#settings-menu-edit-card",
         return_url="",
@@ -105,6 +106,49 @@ def _call_handler(
         ),
     ):
         return settings_handlers_module.edit_sidebar_menu_process_lists_handler(
+            request=_build_request(), **form
+        )
+
+
+def _call_delete_handler(
+    SessionLocal,
+    current_user,
+    is_admin,
+    permissions,
+    *,
+    session_entity_id=1,
+    delete_result=(True, "", "list_lista_inativa"),
+    **form_overrides,
+):
+    form = dict(
+        menu_key=MENU_KEY,
+        list_key="lista_inativa",
+    )
+    form.update(form_overrides)
+
+    with (
+        patch.object(settings_handlers_module, "SessionLocal", SessionLocal),
+        patch.object(
+            settings_handlers_module, "get_current_user", return_value=current_user
+        ),
+        patch.object(settings_handlers_module, "is_admin_user", return_value=is_admin),
+        patch.object(
+            settings_handlers_module,
+            "get_session_entity_id",
+            return_value=session_entity_id,
+        ),
+        patch.object(
+            settings_handlers_module,
+            "get_user_entity_permissions",
+            return_value=permissions,
+        ),
+        patch.object(
+            settings_handlers_module,
+            "delete_sidebar_menu_process_list",
+            return_value=delete_result,
+        ),
+    ):
+        return settings_handlers_module.delete_sidebar_menu_process_list_handler(
             request=_build_request(), **form
         )
 
@@ -210,7 +254,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     _seed_menu(SessionLocal, menu_config={"process_lists": []})
     _seed_menu(
         SessionLocal,
-        menu_config={"process_lists": []},
+        menu_config={"process_lists": [], "sidebar_section": "sistema"},
         menu_key="menu_origem",
     )
 
@@ -223,6 +267,7 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
         process_list_label=["Lista A", "Lista B"],
         process_list_items_csv=["1,2", ""],
         process_list_field_type=["manual", "automatic"],
+        process_list_source_session_key=["", "sistema"],
         process_list_source_menu_key=["", "menu_origem"],
         process_list_source_subprocess_key=["", ""],
     )
@@ -230,8 +275,10 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     assert response.status_code == 303
     location = response.headers["location"]
     assert "target=settings-menu-edit-card" in location
+    assert "appgenesis_after_save=1" in location
     assert "settings_tab=lista" in location
-    assert f"settings_edit_key={MENU_KEY}" in location
+    assert "settings_edit_key=" in location
+    assert "settings_action=edit" in location
     assert "Listas%20do%20processo%20atualizadas%20com%20sucesso." in location
 
     process_lists = _load_config(SessionLocal)["process_lists"]
@@ -239,11 +286,12 @@ def test_edit_process_lists_owner_success_creates_and_edits_lists():
     assert [item["field_type"] for item in process_lists] == ["manual", "automatic"]
     assert process_lists[0]["items"] == ["1", "2"]
     assert process_lists[1]["items"] == []
+    assert process_lists[1]["source_session_key"] == "sistema"
     assert process_lists[1]["source_menu_key"] == "menu_origem"
     assert process_lists[1]["source_subprocess_key"] == ""
 
 
-def test_edit_process_lists_removal_via_blank_rows():
+def test_edit_process_lists_rejects_blank_rows_without_configuration_flag():
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
@@ -268,6 +316,38 @@ def test_edit_process_lists_removal_via_blank_rows():
         process_list_label=[""],
         process_list_items_csv=[""],
         process_list_field_type=["manual"],
+    )
+
+    assert response.status_code == 303
+    assert _load_config(SessionLocal)["process_lists"][0]["label"] == "Existente"
+
+
+def test_edit_process_lists_allows_blank_rows_with_configuration_flag():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "list_existente",
+                    "label": "Existente",
+                    "field_type": "manual",
+                    "items": ["X"],
+                }
+            ]
+        },
+    )
+
+    response = _call_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        process_list_key=[""],
+        process_list_label=[""],
+        process_list_items_csv=[""],
+        process_list_field_type=["manual"],
+        process_lists_configured="1",
     )
 
     assert response.status_code == 303
@@ -326,3 +406,82 @@ def test_edit_process_lists_invalid_field_type_normalized_to_manual():
     process_lists = _load_config(SessionLocal)["process_lists"]
     assert process_lists[0]["field_type"] == "manual"
     assert process_lists[0]["items"] == ["A"]
+
+
+def test_delete_process_lists_requires_login():
+    SessionLocal = _build_session_factory()
+    response = _call_delete_handler(
+        SessionLocal, current_user=None, is_admin=False, permissions={}
+    )
+
+    assert response.status_code == 401
+    assert json.loads(response.body.decode("utf-8")) == {
+        "success": False,
+        "message": "Efetue login para continuar.",
+    }
+
+
+def test_delete_process_lists_blocks_non_admin():
+    SessionLocal = _build_session_factory()
+    response = _call_delete_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "user@example.com"},
+        is_admin=False,
+        permissions={},
+    )
+
+    assert response.status_code == 403
+    assert json.loads(response.body.decode("utf-8")) == {
+        "success": False,
+        "message": "Apenas administradores podem eliminar listas do processo.",
+    }
+
+
+def test_delete_process_lists_blocks_admin_non_owner():
+    SessionLocal = _build_session_factory()
+    response = _call_delete_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": False, "can_manage_all_entities": False},
+    )
+
+    assert response.status_code == 403
+    assert json.loads(response.body.decode("utf-8")) == {
+        "success": False,
+        "message": "Apenas Owner pode eliminar listas do processo.",
+    }
+
+
+def test_delete_process_lists_success_returns_deleted_key():
+    SessionLocal = _build_session_factory()
+    response = _call_delete_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+    )
+
+    assert response.status_code == 200
+    assert json.loads(response.body.decode("utf-8")) == {
+        "success": True,
+        "message": "Lista eliminada com sucesso.",
+        "list_key": "list_lista_inativa",
+    }
+
+
+def test_delete_process_lists_failure_returns_safe_error_message():
+    SessionLocal = _build_session_factory()
+    response = _call_delete_handler(
+        SessionLocal,
+        current_user={"id": 1, "login_email": "owner@example.com"},
+        is_admin=True,
+        permissions={"can_manage_tenant_structure": True},
+        delete_result=(False, "Lista não encontrada.", ""),
+    )
+
+    assert response.status_code == 404
+    assert json.loads(response.body.decode("utf-8")) == {
+        "success": False,
+        "message": "Lista não encontrada.",
+    }

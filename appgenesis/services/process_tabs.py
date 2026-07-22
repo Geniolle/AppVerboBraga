@@ -1,5 +1,10 @@
 from typing import Any
 
+from appgenesis.services.process_settings.process_sections import (
+    resolve_process_section_fields_v1,
+    resolve_process_sections_v1,
+)
+
 
 _SYSTEM_HARDCODED_PROCESS_KEYS: frozenset[str] = frozenset({"administrativo", "sessoes"})
 
@@ -258,6 +263,12 @@ def _build_render_field_meta_map_v1(
                     or existing_field.get("manual_list_items")
                     or []
                 ),
+                "manual_list_options": (
+                    raw_field.get("manual_list_options")
+                    or raw_field.get("manualListOptions")
+                    or existing_field.get("manual_list_options")
+                    or []
+                ),
                 "manual_list_items_csv": str(
                     raw_field.get("manual_list_items_csv")
                     or raw_field.get("manualListItemsCsv")
@@ -354,73 +365,50 @@ def resolve_subprocess_section_fields_v1(
             continue
         if _normalize_process_tab_lookup_v1(setting.get("key")) != clean_menu_key:
             continue
-
-        field_meta_by_key = _build_render_field_meta_map_v1(
-            menu_key=clean_menu_key,
-            setting=setting,
-            sidebar_menu_settings=sidebar_menu_settings,
-            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
-            menu_process_history_map=menu_process_history_map,
-            active_entity_id=active_entity_id,
-            current_field_values=current_field_values,
-        )
-
-        result: list[dict[str, Any]] = []
-        seen: set[str] = set()
-
-        for row in (setting.get("process_visible_field_rows") or []):
-            if not isinstance(row, dict):
-                continue
-            if _normalize_process_tab_lookup_v1(row.get("header_key")) != clean_header_key:
-                continue
-            field_key = _normalize_process_tab_lookup_v1(row.get("field_key"))
-            if not field_key or field_key in seen:
-                continue
-            seen.add(field_key)
-            field_meta = field_meta_by_key.get(field_key)
-            if not field_meta:
-                result.append(
-                    {
-                        "key": field_key,
-                        "label": field_key,
-                        "header_key": clean_header_key,
-                        "header_label": clean_header_key,
-                        "field_type": "text",
-                        "input_type": "text",
-                        "required": False,
-                        "size": None,
-                        "list_source_type": "manual",
-                        "manual_list_key": "",
-                        "list_key": "",
-                        "automatic_source_process_key": "",
-                        "automatic_source_section_key": "",
-                        "automatic_source_field_key": "",
-                        "automatic_only_active": False,
-                        "options": [],
-                    }
-                )
-                continue
-            if str(field_meta.get("field_type") or "").strip().lower() == "header":
-                continue
-            header_meta = field_meta_by_key.get(clean_header_key) or {}
-            result.append(
-                {
-                    **field_meta,
-                    "header_key": clean_header_key,
-                    "header_label": str(header_meta.get("label") or clean_header_key).strip() or clean_header_key,
-                }
+        result = resolve_process_section_fields_v1(setting, clean_header_key)
+        if result:
+            field_meta_by_key = _build_render_field_meta_map_v1(
+                menu_key=clean_menu_key,
+                setting=setting,
+                sidebar_menu_settings=sidebar_menu_settings,
+                visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+                menu_process_history_map=menu_process_history_map,
+                active_entity_id=active_entity_id,
+                current_field_values=current_field_values,
             )
 
-        if result:
+            resolved_result: list[dict[str, Any]] = []
+            for field in result:
+                clean_field_key = _normalize_process_tab_lookup_v1(field.get("key"))
+                field_meta = field_meta_by_key.get(clean_field_key)
+                if field_meta:
+                    resolved_result.append(
+                        {
+                            **field_meta,
+                            "header_key": clean_header_key,
+                            "header_label": str(
+                                field_meta_by_key.get(clean_header_key, {}).get("label")
+                                or clean_header_key
+                            ).strip()
+                            or clean_header_key,
+                        }
+                    )
+                else:
+                    resolved_result.append(dict(field))
+
             from appgenesis.services.profile import (
                 _build_profile_menu_tabs_controller_key_candidates_v1,
                 build_profile_menu_tabs_dependency_map_v1,
             )
 
-            section_field_keys = {str(item.get("key") or "").strip().lower() for item in result}
+            section_field_keys = {
+                str(item.get("key") or "").strip().lower()
+                for item in resolved_result
+                if str(item.get("key") or "").strip()
+            }
             section_field_labels = {
                 str(item.get("key") or "").strip().lower(): str(item.get("label") or "").strip()
-                for item in result
+                for item in resolved_result
                 if str(item.get("key") or "").strip()
             }
             dependency_map = build_profile_menu_tabs_dependency_map_v1(
@@ -429,7 +417,7 @@ def resolve_subprocess_section_fields_v1(
                 menu_process_history_map=menu_process_history_map,
             )
 
-            for field in result:
+            for field in resolved_result:
                 if str(field.get("list_source_type") or "").strip().lower() != "profile_menu_tabs":
                     continue
 
@@ -462,11 +450,32 @@ def resolve_subprocess_section_fields_v1(
                             dependent_field_key = field_key
                             break
 
+                if dependent_field_key and not str(field.get("automatic_source_field_key") or "").strip():
+                    field["automatic_source_field_key"] = dependent_field_key
+                if dependent_field_key and not str(field.get("profile_source_field_key") or "").strip():
+                    field["profile_source_field_key"] = dependent_field_key
+
+                if not _normalize_render_options_v1(field.get("options")):
+                    from appgenesis.services.profile import resolve_field_list_options_v1
+
+                    field["options"] = _normalize_render_options_v1(
+                        resolve_field_list_options_v1(
+                            active_entity_id=active_entity_id,
+                            current_menu_key=clean_menu_key,
+                            field_definition=field,
+                            sidebar_menu_settings=sidebar_menu_settings,
+                            visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+                            menu_process_history_map=menu_process_history_map,
+                            current_field_values=current_field_values,
+                        )
+                    )
+
                 field["dependent_field_key"] = dependent_field_key
                 field["dependent_options_map"] = dependency_map
                 field["options"] = _normalize_render_options_v1(field.get("options"))
 
-        return result
+            return resolved_result
+        return []
 
     return []
 
@@ -522,45 +531,31 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
             continue
         setting_key = str(setting.get("key") or "").strip().lower()
         if setting_key == clean_menu:
-            raw_rows = setting.get("process_visible_field_rows")
-            if isinstance(raw_rows, list) and raw_rows:
-                section_order = []
-                seen_sections = set()
-                first_field_key = ""
-                section_labels = {}
-
-                header_labels = {}
-                for opt in setting.get("process_field_options", []):
-                    if not isinstance(opt, dict):
+            process_sections = resolve_process_sections_v1(setting)
+            if process_sections:
+                tabs = []
+                for section in process_sections:
+                    section_key = str(section.get("key") or "").strip().lower()
+                    if not section_key:
                         continue
-                    opt_key = str(opt.get("key") or "").strip().lower()
-                    if opt.get("field_type") == "header" and opt_key:
-                        header_labels[opt_key] = str(opt.get("label") or "").strip()
-
-                for raw_row in raw_rows:
-                    if not isinstance(raw_row, dict):
+                    section_label = str(section.get("label") or "").strip()
+                    if not section_label:
                         continue
-                    field_key = str(raw_row.get("field_key") or "").strip().lower()
-                    if not field_key:
-                        continue
-                    if not first_field_key:
-                        first_field_key = field_key
-                    header_key = str(raw_row.get("header_key") or "").strip().lower()
-                    section_key = header_key or "__geral__"
-
-                    if section_key not in seen_sections:
-                        seen_sections.add(section_key)
-                        section_order.append(section_key)
-                        
-                        setting_label = str(setting.get("label") or "").strip()
-                        default_fallback = setting_label if section_key == "__geral__" else section_key.replace("_", " ").title()
-                        section_labels[section_key] = header_labels.get(section_key) or default_fallback
-
-                if section_order and not (len(section_order) == 1 and section_order[0] == "__geral__"):
-                    tabs = []
-                    for s_key in section_order:
-                        layout = "list" if setting.get("is_list_process") else "form"
-                        tabs.append(ProcessTabConfig(s_key, section_labels[s_key], "#dynamic-process-card", layout, s_key))
+                    layout = "list" if setting.get("is_list_process") else "form"
+                    tabs.append(
+                        ProcessTabConfig(
+                            section_key,
+                            section_label,
+                            "#dynamic-process-card",
+                            layout,
+                            section_key,
+                        )
+                    )
+                if tabs and not (
+                    len(tabs) == 1
+                    and tabs[0].key == "__geral__"
+                    and not (process_sections[0].get("quantity_rule_keys") or [])
+                ):
                     return tabs
             break
 

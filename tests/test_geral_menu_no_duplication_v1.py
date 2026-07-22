@@ -203,10 +203,10 @@ def test_new_user_html_form_action_occurrence_counts_for_geral_routes() -> None:
     template_path = PROJECT_ROOT / "templates" / "new_user.html"
     template_text = template_path.read_text(encoding="utf-8")
 
-    assert template_text.count('action="/settings/menu/edit"') == 1
-    assert template_text.count('action="/settings/menu/move"') == 2
-    assert template_text.count('action="/settings/menu/delete"') == 1
-    assert template_text.count('action="/settings/menu/create"') == 0
+    assert template_text.count("render_admin_subprocess_state(admin_subprocess_menu_state)") == 1
+    assert template_text.count("render_admin_subprocess_form(admin_subprocess_menu_state)") == 1
+    assert template_text.count("render_admin_subprocess_tables(admin_subprocess_menu_state)") == 1
+    assert template_text.count("action=\"/settings/menu/create\"") == 0
 
 
 ####################################################################################

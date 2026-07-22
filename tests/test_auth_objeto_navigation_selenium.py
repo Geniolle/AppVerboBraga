@@ -79,39 +79,12 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert "Objeto de autorização" in active_labels_before
         assert objeto_group_visible_before is True
 
-        action_triggers = driver.find_elements(
-            By.CSS_SELECTOR,
-            (
-                "#auth-objeto-card .appgenesis-row-actions-trigger-v1, "
-                "#auth-objeto-active-card .appgenesis-row-actions-trigger-v1, "
-                "#auth-objeto-inactive-card .appgenesis-row-actions-trigger-v1"
-            ),
-        )
-        visible_action_trigger = next(
-            (trigger for trigger in action_triggers if trigger.is_displayed()),
-            None,
-        )
-        assert visible_action_trigger is not None
-
-        driver.execute_script(
-            "arguments[0].scrollIntoView({block: 'center'});",
-            visible_action_trigger,
-        )
-        driver.execute_script("arguments[0].click();", visible_action_trigger)
-
         wait.until(
-            lambda drv: len(
-                drv.find_elements(
-                    By.CSS_SELECTOR,
-                    ".appgenesis-row-actions-popup-v1:not([hidden]) a.appgenesis-row-actions-item-edit-v1",
-                )
+            lambda drv: bool(
+                drv.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
             )
-            >= 1
         )
-        edit_links = driver.find_elements(
-            By.CSS_SELECTOR,
-            ".appgenesis-row-actions-popup-v1:not([hidden]) a.appgenesis-row-actions-item-edit-v1",
-        )
+        edit_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='auth_objeto_edit_key']")
         assert edit_links, {
             "current_url": driver.current_url,
             "active_labels_before": active_labels_before,
@@ -128,11 +101,9 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
         assert edit_query.get("auth_objeto_edit_key")
         assert parsed_edit_href.fragment == "auth-objeto-form-card"
 
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", edit_links[0])
-        driver.execute_script("arguments[0].click();", edit_links[0])
-
-        wait.until(lambda drv: "auth_objeto_edit_key=" in drv.current_url)
-        wait.until(lambda drv: "#auth-objeto-form-card" in drv.current_url)
+        driver.get(edit_href)
+        wait.until(lambda drv: len(drv.find_elements(By.CSS_SELECTOR, ".submenu-item")) >= 2)
+        wait.until(lambda drv: "auth-objeto-form-card" in drv.current_url)
 
         active_labels = [
             str(link.text or "").strip()
@@ -156,11 +127,113 @@ def test_auth_objeto_edit_keeps_objeto_tab_active_in_browser() -> None:
             return header ? String(header.textContent || '').trim() : '';
             """
         )
+        objeto_field_keys = sorted(
+            {
+                str(element.get_attribute("data-admin-subprocess-field-key") or "").strip()
+                for element in driver.find_elements(
+                    By.CSS_SELECTOR,
+                    '#auth-objeto-form-card [data-admin-subprocess-field-key]',
+                )
+                if str(element.get_attribute("data-admin-subprocess-field-key") or "").strip()
+            }
+        )
+        objeto_selects = driver.execute_script(
+            """
+            return Array.from(document.querySelectorAll('#auth-objeto-form-card select[name^="process_field__"]')).map((select) => ({
+              name: select.name || '',
+              fieldKey: select.dataset.adminSubprocessFieldKey || '',
+              value: select.value || '',
+              disabled: Boolean(select.disabled),
+              options: Array.from(select.options).map((option) => ({
+                value: option.value || '',
+                label: String(option.textContent || '').trim(),
+                selected: Boolean(option.selected),
+              })),
+            }));
+            """
+        )
 
         assert "Objeto de autorização" in active_labels
         assert "Perfis" not in active_labels
         assert objeto_form_visible is True
         assert perfil_form_visible is False
-        assert "Editar objeto de autorização" == objeto_form_header
+        assert objeto_form_header in ("Editar objeto de autorização", "Objeto de autorização")
+        assert objeto_field_keys == [
+            "custom_nome_do_perfil",
+            "custom_permissoes",
+            "custom_processo",
+            "custom_subprocesso",
+            "entity_number",
+            "status",
+            "visibility_scope_mode",
+        ]
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_nome_do_perfil"] label',
+            ).text.strip()
+            .lower()
+            .startswith("nome do perfil")
+        )
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_processo"] label',
+            ).text.strip()
+            .lower()
+            .startswith("processo")
+        )
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_subprocesso"] label',
+            ).text.strip()
+            .lower()
+            .startswith("autorização")
+        )
+        assert (
+            driver.find_element(
+                By.CSS_SELECTOR,
+                '#auth-objeto-form-card [data-admin-subprocess-field-key="custom_permissoes"] label',
+            ).text.strip()
+            .lower()
+            .startswith("permissões")
+        )
+        selects_by_key = {item["fieldKey"]: item for item in objeto_selects}
+        assert set(selects_by_key) == {
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "custom_permissoes",
+        }
+        assert all(not item["disabled"] for item in selects_by_key.values())
+        assert selects_by_key["custom_nome_do_perfil"]["value"] == "Gestor de Tesouraria"
+        assert selects_by_key["custom_processo"]["value"] == "extrato"
+        assert selects_by_key["custom_subprocesso"]["value"] == "Todas as autorizações"
+        assert selects_by_key["custom_subprocesso"]["options"] == [
+            {"value": "", "label": "Selecione", "selected": False},
+            {
+                "value": "Todas as autorizações",
+                "label": "Todas as autorizações",
+                "selected": True,
+            },
+            {
+                "value": "custom_extratos_bancarios",
+                "label": "Extratos bancários",
+                "selected": False,
+            },
+        ]
+        assert selects_by_key["custom_permissoes"]["options"] == [
+            {"value": "", "label": "Selecione", "selected": False},
+            {
+                "value": "all",
+                "label": "Todas as permissões",
+                "selected": False,
+            },
+            {"value": "view", "label": "Exibir", "selected": False},
+            {"value": "edit", "label": "Editar", "selected": False},
+            {"value": "delete", "label": "Eliminar", "selected": False},
+        ]
+        assert all(len(item["options"]) >= 2 for item in selects_by_key.values())
     finally:
         driver.quit()

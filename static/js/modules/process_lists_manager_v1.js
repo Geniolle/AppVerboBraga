@@ -30,6 +30,148 @@
       .replace(/^_|_$/g, "");
   }
 
+  function readProcessListAllSessionsKey_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    return normalizeKey_v1(bootstrap.processListAllSessionsKey || "all_sessions") || "all_sessions";
+  }
+
+  function readProcessListAllSessionsLabel_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    return toSafeString_v1(bootstrap.processListAllSessionsLabel || "Todas as sessões").trim() || "Todas as sessões";
+  }
+
+  function isProcessListAllSessionsKey_v1(value) {
+    return normalizeKey_v1(value) === readProcessListAllSessionsKey_v1();
+  }
+
+  function normalizeProcessListStatus_v1(rawStatus, rawIsActive) {
+    const cleanStatus = normalizeKey_v1(rawStatus);
+    const cleanIsActive = toSafeString_v1(rawIsActive).trim().toLowerCase();
+
+    if (rawStatus === false || cleanStatus === "false" || cleanIsActive === "false" || cleanIsActive === "0") {
+      return "inativo";
+    }
+
+    if (rawStatus === true || cleanStatus === "true" || cleanIsActive === "true" || cleanIsActive === "1") {
+      return "ativo";
+    }
+
+    if (cleanStatus === "inactive" || cleanStatus === "inativo" || cleanStatus === "inativa") {
+      return "inativo";
+    }
+
+    if (cleanStatus === "active" || cleanStatus === "ativo" || cleanStatus === "ativa") {
+      return "ativo";
+    }
+
+    return "ativo";
+  }
+
+  function normalizeProcessListSourceSessionOptions_v1(sourceSessionOptions) {
+    const normalized = [];
+    const seenValues = new Set();
+    const allSessionsKey = readProcessListAllSessionsKey_v1();
+    const allSessionsLabel = readProcessListAllSessionsLabel_v1();
+
+    normalized.push({
+      value: allSessionsKey,
+      label: allSessionsLabel
+    });
+    seenValues.add(allSessionsKey);
+
+    (Array.isArray(sourceSessionOptions) ? sourceSessionOptions : []).forEach((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawOption.value || rawOption.key || "").trim().toLowerCase();
+      const label = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key || "").trim();
+
+      if (!value || !label || seenValues.has(value)) {
+        return;
+      }
+
+      seenValues.add(value);
+      normalized.push({
+        value,
+        label
+      });
+    });
+
+    return normalized;
+  }
+
+  function filterProcessListSourceMenuOptions_v1(sourceMenuOptions, selectedSessionKey) {
+    const normalizedSessionKey = normalizeKey_v1(selectedSessionKey);
+    const normalizedAllSessionsKey = readProcessListAllSessionsKey_v1();
+    const seenMenuKeys = new Set();
+
+    if (!normalizedSessionKey) {
+      return [];
+    }
+
+    return (Array.isArray(sourceMenuOptions) ? sourceMenuOptions : []).filter((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return false;
+      }
+
+      const menuKey = toSafeString_v1(rawOption.value || rawOption.key || "").trim().toLowerCase();
+      const menuLabel = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key || "").trim();
+      const sourceSessionKey = toSafeString_v1(rawOption.sourceSessionKey || "").trim().toLowerCase();
+
+      if (!menuKey || !menuLabel || !sourceSessionKey) {
+        return false;
+      }
+      if (seenMenuKeys.has(menuKey)) {
+        return false;
+      }
+      if (normalizedSessionKey !== normalizedAllSessionsKey && sourceSessionKey !== normalizedSessionKey) {
+        return false;
+      }
+
+      seenMenuKeys.add(menuKey);
+      return true;
+    });
+  }
+
+  function readProcessListSourceMenusFromBootstrap_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    const rawMenus = Array.isArray(bootstrap.processListSourceMenus)
+      ? bootstrap.processListSourceMenus
+      : [];
+    const normalized = [];
+    const seenMenuKeys = new Set();
+
+    rawMenus.forEach((rawMenu) => {
+      if (!rawMenu || typeof rawMenu !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawMenu.menu_key || rawMenu.value || rawMenu.key || "").trim().toLowerCase();
+      const label = toSafeString_v1(rawMenu.menu_label || rawMenu.label || rawMenu.value || rawMenu.key || "").trim();
+      const sourceSessionKey = toSafeString_v1(
+        rawMenu.sidebar_section_key || rawMenu.source_session_key || rawMenu.sourceSessionKey || ""
+      ).trim().toLowerCase();
+      const sourceSessionLabel = toSafeString_v1(
+        rawMenu.sidebar_section_label || rawMenu.source_session_label || rawMenu.sourceSessionLabel || ""
+      ).trim();
+
+      if (!value || !label || seenMenuKeys.has(value)) {
+        return;
+      }
+
+      seenMenuKeys.add(value);
+      normalized.push({
+        value,
+        label,
+        sourceSessionKey,
+        sourceSessionLabel
+      });
+    });
+
+    return normalized;
+  }
+
   function showValidationMessage_v1(message) {
     const core = getCore_v1();
 
@@ -61,6 +203,73 @@
     HTMLFormElement.prototype.submit.call(form);
   }
 
+  function nowMs_v1() {
+    if (window.performance && typeof window.performance.now === "function") {
+      return window.performance.now();
+    }
+
+    return Date.now();
+  }
+
+  function isProcessListsPerfLogsEnabled_v1() {
+    const bootstrap = window.__APPGENESIS_BOOTSTRAP__ || {};
+    const rawFlag = bootstrap.processListsPerfLogs
+      ?? bootstrap.perfLogsEnabled
+      ?? window.APPGENESIS_PERF_LOGS
+      ?? "";
+    const cleanFlag = String(rawFlag).trim().toLowerCase();
+
+    return cleanFlag === "1" || cleanFlag === "true" || cleanFlag === "yes";
+  }
+
+  function createProcessListsPerfState_v1() {
+    return {
+      enabled: isProcessListsPerfLogsEnabled_v1(),
+      cycleStart: nowMs_v1(),
+      readMs: 0,
+      renderMs: 0,
+      responsiveMs: 0,
+      responsiveTables: 0,
+      backendCount: 0,
+      initialCount: 0,
+      stateCount: 0,
+      activeCount: 0,
+      inactiveCount: 0,
+      hasLoggedInitial: false
+    };
+  }
+
+  function logProcessListsPerfSummary_v1(perfState) {
+    if (!perfState || !perfState.enabled) {
+      return;
+    }
+
+    const totalMs = Math.max(0, Math.round(nowMs_v1() - perfState.cycleStart));
+    const readMs = Math.max(0, Math.round(perfState.readMs || 0));
+    const renderMs = Math.max(0, Math.round(perfState.renderMs || 0));
+    const responsiveMs = Math.max(0, Math.round(perfState.responsiveMs || 0));
+    const backendCount = Math.max(0, Number.parseInt(perfState.backendCount, 10) || 0);
+    const initialCount = Math.max(0, Number.parseInt(perfState.initialCount, 10) || 0);
+    const stateCount = Math.max(0, Number.parseInt(perfState.stateCount, 10) || 0);
+    const activeCount = Math.max(0, Number.parseInt(perfState.activeCount, 10) || 0);
+    const inactiveCount = Math.max(0, Number.parseInt(perfState.inactiveCount, 10) || 0);
+    const responsiveTables = Math.max(0, Number.parseInt(perfState.responsiveTables, 10) || 0);
+    const summary = `[PERF][ProcessLists] total=${totalMs}ms read=${readMs}ms render=${renderMs}ms responsive=${responsiveMs}ms tables=${responsiveTables} active=${activeCount} inactive=${inactiveCount}`;
+    const aggregatedSummary = `[PERF][ProcessLists] backend=${backendCount} initial=${initialCount} state=${stateCount} active=${activeCount} inactive=${inactiveCount} total=${totalMs}ms`;
+
+    if (window.console && typeof window.console.info === "function") {
+      window.console.info(summary);
+      window.console.info(aggregatedSummary);
+    }
+
+    perfState.cycleStart = nowMs_v1();
+    perfState.readMs = 0;
+    perfState.renderMs = 0;
+    perfState.responsiveMs = 0;
+    perfState.responsiveTables = 0;
+    perfState.hasLoggedInitial = true;
+  }
+
   //###################################################################################
   // (2) ELEMENTOS E LEITURA INICIAL
   //###################################################################################
@@ -74,6 +283,7 @@
 
     return {
       root,
+      menuKeyInput: form.querySelector("input[name='menu_key']"),
       legacyContainer: root.querySelector("[data-process-lists-legacy-container]"),
       hiddenContainer: root.querySelector("[data-process-lists-hidden-container]"),
       editorKey: root.querySelector("[data-process-list-editor-key]"),
@@ -81,11 +291,14 @@
       editorItems: root.querySelector("[data-process-list-editor-items]"),
       editorItemsWrapper: root.querySelector("[data-process-list-editor-items-wrapper]"),
       editorFieldType: root.querySelector("[data-process-list-editor-field-type]"),
+      editorSourceSession: root.querySelector("[data-process-list-editor-source-session]"),
+      editorSourceSessionWrapper: root.querySelector("[data-process-list-editor-session-wrapper]"),
       editorSourceMenu: root.querySelector("[data-process-list-editor-source-menu]"),
       editorSourceMenuWrapper: root.querySelector("[data-process-list-editor-menu-wrapper]"),
       editorSourceSubprocess: root.querySelector("[data-process-list-editor-source-subprocess]"),
       editorSourceSubprocessWrapper: root.querySelector("[data-process-list-editor-subprocess-wrapper]"),
       editorStatus: root.querySelector("[data-process-list-editor-status]"),
+      sourceSessionOptionsScript: root.querySelector("[data-process-list-source-sessions]"),
       sourceSubprocessMapScript: root.querySelector("[data-process-list-source-subprocess-map]"),
       submitButton: root.querySelector("[data-process-list-editor-submit]"),
       cancelButton: root.querySelector("[data-process-list-editor-cancel]"),
@@ -95,6 +308,9 @@
       inactiveTable: root.querySelector("[data-process-lists-inactive-table]"),
       inactiveTableBody: root.querySelector("[data-process-lists-inactive-table-body]"),
       inactiveEmptyState: root.querySelector("[data-process-lists-inactive-empty]"),
+      inactiveTotalLabel: root.querySelector("[data-process-lists-inactive-total-label]"),
+      inactivePageSize: root.querySelector("[data-process-lists-inactive-page-size]"),
+      inactivePagination: root.querySelector("[data-process-lists-inactive-pagination]"),
       totalLabel: root.querySelector("[data-process-lists-total-label]"),
       pageSize: root.querySelector("[data-process-lists-page-size]"),
       pagination: root.querySelector("[data-process-lists-pagination]"),
@@ -102,15 +318,31 @@
     };
   }
 
+  function getProcessListsDeleteEndpoint_v1(form) {
+    if (!form) {
+      return "/settings/menu/process-lists/delete";
+    }
+
+    const rawAction = toSafeString_v1(form.getAttribute("action") || "").trim();
+    if (!rawAction) {
+      return "/settings/menu/process-lists/delete";
+    }
+
+    return `${rawAction.replace(/\/?$/, "")}/delete`;
+  }
+
   function hasRequiredElements_v1(elements) {
     return Boolean(
       elements &&
       elements.root &&
+      elements.menuKeyInput &&
       elements.legacyContainer &&
       elements.hiddenContainer &&
       elements.editorKey &&
       elements.editorLabel &&
       elements.editorFieldType &&
+      elements.editorSourceSession &&
+      elements.editorSourceSessionWrapper &&
       elements.editorItems &&
       elements.editorItemsWrapper &&
       elements.editorSourceMenu &&
@@ -124,7 +356,9 @@
       elements.tableBody &&
       elements.emptyState &&
       elements.pageSize &&
-      elements.pagination
+      elements.pagination &&
+      elements.inactivePageSize &&
+      elements.inactivePagination
     );
   }
 
@@ -133,7 +367,7 @@
     return input ? toSafeString_v1(input.value).trim() : "";
   }
 
-  function readInitialItems_v1(elements) {
+  function readInitialItems_v1(elements, sourceMenuOptions) {
     const rows = Array.from(
       elements.legacyContainer.querySelectorAll("[data-process-list-row]")
     );
@@ -145,8 +379,13 @@
         const fieldType = (readInput_v1(row, "process_list_field_type") || "").trim().toLowerCase();
         const itemsCsv = readInput_v1(row, "process_list_items_csv");
         const sourceMenuKey = readInput_v1(row, "process_list_source_menu_key");
+        const sourceSessionKey = readInput_v1(row, "process_list_source_session_key") ||
+          getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, sourceMenuKey);
         const sourceSubprocessKey = readInput_v1(row, "process_list_source_subprocess_key");
-        const status = (readInput_v1(row, "process_list_status") || "").trim().toLowerCase();
+        const status = normalizeProcessListStatus_v1(
+          readInput_v1(row, "process_list_status"),
+          readInput_v1(row, "process_list_is_active")
+        );
 
         return {
           managerId: `list_${index}_${key}`,
@@ -154,9 +393,10 @@
           label,
           field_type: fieldType || "manual",
           itemsCsv,
+          sourceSessionKey,
           sourceMenuKey,
           sourceSubprocessKey,
-          status: status === "inativo" ? "inativo" : "ativo"
+          status
         };
       })
       .filter((item) => item.label || item.itemsCsv);
@@ -181,6 +421,356 @@
         window.console.warn("[ProcessListsManagerV1] mapa de subprocessos invalido", error);
       }
       return {};
+    }
+  }
+
+  function readSourceSessionOptionsFromElement_v1(elements) {
+    if (!elements) {
+      return [];
+    }
+
+    const sourceElement = elements.sourceSessionOptionsScript || elements.editorSourceSession;
+    if (!sourceElement) {
+      return [];
+    }
+
+    const rawText = sourceElement.tagName === "SCRIPT"
+      ? toSafeString_v1(sourceElement.textContent).trim()
+      : "";
+
+    if (rawText) {
+      try {
+        const parsed = JSON.parse(rawText);
+        const rawItems = Array.isArray(parsed) ? parsed : [];
+        const normalized = [];
+        const seen = new Set();
+
+        rawItems.forEach((rawItem) => {
+          if (!rawItem || typeof rawItem !== "object") {
+            return;
+          }
+
+          const value = toSafeString_v1(
+            rawItem.key ||
+            rawItem.section_key ||
+            rawItem.sidebar_section_key ||
+            rawItem.value ||
+            rawItem.menu_section ||
+            ""
+          ).trim().toLowerCase();
+          const label = toSafeString_v1(
+            rawItem.label ||
+            rawItem.name ||
+            rawItem.section_label ||
+            rawItem.value ||
+            rawItem.key ||
+            ""
+          ).trim();
+          const status = toSafeString_v1(
+            rawItem.status !== undefined ? rawItem.status : rawItem.is_active
+          ).trim().toLowerCase();
+          const isInactive = status === "inativo" || status === "inactive" || status === "false" || status === "0";
+
+          if (!value || !label || isInactive) {
+            return;
+          }
+
+          if (seen.has(value)) {
+            return;
+          }
+
+          seen.add(value);
+          normalized.push({ value, label });
+        });
+
+        return normalized;
+      } catch (error) {
+        if (window.console && typeof window.console.warn === "function") {
+          window.console.warn("[ProcessListsManagerV1] secções de sessão invalidas", error);
+        }
+      }
+    }
+
+    if (sourceElement.tagName !== "SELECT") {
+      return [];
+    }
+
+    return Array.from(sourceElement.options)
+      .map((option) => ({
+        value: toSafeString_v1(option.value).trim(),
+        label: toSafeString_v1(option.textContent).trim()
+      }))
+      .filter((option) => option.value && option.label);
+  }
+
+  function readSourceSessionOptions_v1(elements) {
+    return readSourceSessionOptionsFromElement_v1(elements);
+  }
+
+  function readSourceMenuOptions_v1(elements) {
+    const bootstrapSourceMenus = readProcessListSourceMenusFromBootstrap_v1();
+    if (bootstrapSourceMenus.length) {
+      return bootstrapSourceMenus;
+    }
+
+    if (!elements || !elements.editorSourceMenu) {
+      return [];
+    }
+
+    return Array.from(elements.editorSourceMenu.options)
+      .map((option) => ({
+        value: toSafeString_v1(option.value).trim(),
+        label: toSafeString_v1(option.textContent).trim(),
+        sourceSessionKey: toSafeString_v1(
+          option.dataset.processListSourceSessionKey || option.dataset.sourceSessionKey || ""
+        ).trim().toLowerCase(),
+        sourceSessionLabel: toSafeString_v1(
+          option.dataset.processListSourceSessionLabel || option.dataset.sourceSessionLabel || ""
+        ).trim()
+      }))
+      .filter((option) => option.value && option.label);
+  }
+
+  function refreshAutomaticSourceOptions_v1(context) {
+    const elements = context && context.elements ? context.elements : null;
+
+    if (!elements) {
+      return {
+        sourceSessionOptions: [],
+        sourceMenuOptions: [],
+        sourceSubprocessMap: {}
+      };
+    }
+
+    const sourceSessionOptionsSnapshot = Array.isArray(
+      context && context.manager && context.manager.sourceSessionOptionsSnapshot
+    )
+      ? context.manager.sourceSessionOptionsSnapshot
+      : Array.isArray(context && context.sourceSessionOptionsSnapshot)
+        ? context.sourceSessionOptionsSnapshot
+      : normalizeProcessListSourceSessionOptions_v1(readSourceSessionOptions_v1(elements));
+    const sourceMenuOptionsSnapshot = Array.isArray(
+      context && context.manager && context.manager.sourceMenuOptionsSnapshot
+    )
+      ? context.manager.sourceMenuOptionsSnapshot
+      : Array.isArray(context && context.sourceMenuOptionsSnapshot)
+        ? context.sourceMenuOptionsSnapshot
+      : readSourceMenuOptions_v1(elements);
+    const sourceSessionOptions = normalizeProcessListSourceSessionOptions_v1(sourceSessionOptionsSnapshot);
+    const sourceMenuOptions = Array.isArray(sourceMenuOptionsSnapshot) ? sourceMenuOptionsSnapshot : [];
+    const sourceSubprocessMap = getSourceSubprocessMap_v1(elements);
+
+    if (context) {
+      context.sourceSessionOptions = sourceSessionOptions;
+      context.sourceMenuOptions = sourceMenuOptions;
+      context.sourceSubprocessMap = sourceSubprocessMap;
+      if (!Array.isArray(context.sourceSessionOptionsSnapshot)) {
+        context.sourceSessionOptionsSnapshot = sourceSessionOptions;
+      }
+      if (!Array.isArray(context.sourceMenuOptionsSnapshot)) {
+        context.sourceMenuOptionsSnapshot = sourceMenuOptions;
+      }
+      if (context.manager) {
+        context.manager.sourceSessionOptionsSnapshot = sourceSessionOptions;
+        context.manager.sourceMenuOptionsSnapshot = sourceMenuOptions;
+      }
+    }
+
+    return {
+      sourceSessionOptions,
+      sourceMenuOptions,
+      sourceSubprocessMap
+    };
+  }
+
+  function populateSelectOptions_v1(select, placeholderLabel, availableOptions, selectedValue, options) {
+    if (!select) {
+      return false;
+    }
+
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection);
+    const unavailableLabel = toSafeString_v1(options && options.unavailableLabel ? options.unavailableLabel : "Indisponível").trim() || "Indisponível";
+    const optionValue = toSafeString_v1(selectedValue).trim();
+    const normalizedSelectedValue = normalizeKey_v1(optionValue);
+    const normalizedOptions = Array.isArray(availableOptions) ? availableOptions : [];
+
+    select.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = placeholderLabel;
+    select.appendChild(placeholder);
+
+    let hasSelectedOption = false;
+
+    normalizedOptions.forEach((rawOption) => {
+      if (!rawOption || typeof rawOption !== "object") {
+        return;
+      }
+
+      const value = toSafeString_v1(rawOption.value || rawOption.key || "").trim();
+      const label = toSafeString_v1(rawOption.label || rawOption.value || rawOption.key || "").trim();
+
+      if (!value || !label) {
+        return;
+      }
+
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      if (rawOption.sourceSessionKey) {
+        option.dataset.processListSourceSessionKey = toSafeString_v1(rawOption.sourceSessionKey).trim().toLowerCase();
+      }
+      if (rawOption.sourceSessionLabel) {
+        option.dataset.processListSourceSessionLabel = toSafeString_v1(rawOption.sourceSessionLabel).trim();
+      }
+      if (rawOption.disabled) {
+        option.disabled = true;
+      }
+      if (normalizedSelectedValue && normalizeKey_v1(value) === normalizedSelectedValue) {
+        option.selected = true;
+        hasSelectedOption = true;
+      }
+      select.appendChild(option);
+    });
+
+    if (optionValue && !hasSelectedOption && preserveUnavailableSelection) {
+      const unavailableOption = document.createElement("option");
+      unavailableOption.value = optionValue;
+      unavailableOption.textContent = unavailableLabel;
+      unavailableOption.selected = true;
+      select.appendChild(unavailableOption);
+      hasSelectedOption = true;
+    }
+
+    if (!hasSelectedOption) {
+      select.value = "";
+    }
+
+    return hasSelectedOption;
+  }
+
+  function getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, menuKey) {
+    const selectedMenuKey = normalizeKey_v1(menuKey);
+    if (!selectedMenuKey) {
+      return "";
+    }
+
+    const selectedMenuOption = Array.isArray(sourceMenuOptions)
+      ? sourceMenuOptions.find((option) => normalizeKey_v1(option.value) === selectedMenuKey)
+      : null;
+
+    return toSafeString_v1(selectedMenuOption && selectedMenuOption.sourceSessionKey ? selectedMenuOption.sourceSessionKey : "").trim().toLowerCase();
+  }
+
+  function updateAutomaticSourceControls_v1(context, options) {
+    const elements = context && context.elements ? context.elements : null;
+
+    if (!elements || !elements.editorSourceSession || !elements.editorSourceMenu || !elements.editorSourceSubprocess) {
+      return;
+    }
+
+    const refreshedOptions = refreshAutomaticSourceOptions_v1(context);
+    const sourceSessionOptions = Array.isArray(refreshedOptions.sourceSessionOptions)
+      ? refreshedOptions.sourceSessionOptions
+      : [];
+    const sourceMenuOptions = Array.isArray(refreshedOptions.sourceMenuOptions)
+      ? refreshedOptions.sourceMenuOptions
+      : [];
+    const sourceSubprocessMap = refreshedOptions.sourceSubprocessMap || {};
+    const isHydratingEditor = Boolean(context && context.isHydratingEditor);
+    const keepVisible = Boolean(options && options.keepVisible);
+    const preserveUnavailableSelection = Boolean(options && options.preserveUnavailableSelection) && !isHydratingEditor;
+    const selectedSessionKey = toSafeString_v1(
+      options && Object.prototype.hasOwnProperty.call(options, "selectedSessionKey")
+        ? options.selectedSessionKey
+        : elements.editorSourceSession.value
+    ).trim().toLowerCase();
+    const selectedMenuKey = toSafeString_v1(
+      options && Object.prototype.hasOwnProperty.call(options, "selectedMenuKey")
+        ? options.selectedMenuKey
+        : elements.editorSourceMenu.value
+    ).trim().toLowerCase();
+    const selectedSubprocessKey = toSafeString_v1(
+      options && Object.prototype.hasOwnProperty.call(options, "selectedSubprocessKey")
+        ? options.selectedSubprocessKey
+        : elements.editorSourceSubprocess.value
+    ).trim().toLowerCase();
+    const allSessionsKey = readProcessListAllSessionsKey_v1();
+
+    const resolvedSessionKey = selectedSessionKey || getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, selectedMenuKey);
+    const normalizedResolvedSessionKey = normalizeKey_v1(resolvedSessionKey);
+
+    populateSelectOptions_v1(
+      elements.editorSourceSession,
+      "Selecione a sessão",
+      sourceSessionOptions,
+      normalizedResolvedSessionKey,
+      {
+        preserveUnavailableSelection,
+        unavailableLabel: "Sessão indisponível"
+      }
+    );
+
+    const normalizedSessionKey = toSafeString_v1(elements.editorSourceSession.value).trim().toLowerCase();
+    if (normalizedSessionKey === allSessionsKey) {
+      elements.editorSourceMenu.value = "";
+      elements.editorSourceMenu.innerHTML = "";
+      elements.editorSourceSubprocess.value = "";
+      elements.editorSourceSubprocess.innerHTML = "";
+      elements.editorSourceSession.disabled = !keepVisible;
+      elements.editorSourceMenu.disabled = true;
+      elements.editorSourceSubprocess.disabled = true;
+      elements.editorSourceMenuWrapper.hidden = true;
+      elements.editorSourceSubprocessWrapper.hidden = true;
+      elements.root.dataset.hasSourceSubprocess = "0";
+      return;
+    }
+
+    const filteredMenuOptions = filterProcessListSourceMenuOptions_v1(
+      sourceMenuOptions,
+      normalizedSessionKey
+    );
+
+    populateSelectOptions_v1(
+      elements.editorSourceMenu,
+      "Selecione o menu",
+      filteredMenuOptions,
+      selectedMenuKey,
+      {
+        preserveUnavailableSelection: preserveUnavailableSelection && Boolean(normalizedSessionKey),
+        unavailableLabel: "Menu indisponível"
+      }
+    );
+
+    const normalizedMenuKey = toSafeString_v1(elements.editorSourceMenu.value).trim().toLowerCase();
+    const sourceSubprocessOptions = normalizedMenuKey
+      ? getSourceSubprocessOptions_v1(sourceSubprocessMap, normalizedMenuKey)
+      : [];
+
+    populateSourceSubprocessOptions_v1(
+      { elements },
+      {
+        options: sourceSubprocessOptions,
+        selectedValue: selectedSubprocessKey,
+        preserveUnavailableSelection,
+        keepVisible: keepVisible && Boolean(normalizedMenuKey)
+      }
+    );
+
+    elements.editorSourceSession.disabled = !keepVisible;
+    elements.editorSourceMenu.disabled = !keepVisible || !normalizedSessionKey;
+    elements.editorSourceSubprocess.disabled = !keepVisible || !normalizedMenuKey;
+    elements.editorSourceMenuWrapper.hidden = !keepVisible;
+    elements.editorSourceSubprocessWrapper.hidden = !keepVisible || !normalizedMenuKey;
+
+    if (!normalizedSessionKey && !preserveUnavailableSelection && !isHydratingEditor) {
+      elements.editorSourceMenu.value = "";
+      elements.editorSourceSubprocess.value = "";
+    }
+
+    if (!normalizedMenuKey && !preserveUnavailableSelection && !isHydratingEditor) {
+      elements.editorSourceSubprocess.value = "";
     }
   }
 
@@ -375,11 +965,12 @@
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorItems.value = "";
+    elements.editorSourceSession.value = "";
     elements.editorSourceMenu.value = "";
     elements.editorSourceSubprocess.value = "";
-    if (elements.editorStatus) {
-      elements.editorStatus.value = "ativo";
-    }
+      if (elements.editorStatus) {
+        elements.editorStatus.value = "ativo";
+      }
     delete elements.editorItems.dataset.previousItems;
     if (elements.editorFieldType) {
       elements.editorFieldType.value = "manual";
@@ -394,6 +985,7 @@
     const elements = context && context.elements ? context.elements : null;
     const manager = context && context.manager ? context.manager : null;
     const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
+    const sourceMenuOptions = context && Array.isArray(context.sourceMenuOptions) ? context.sourceMenuOptions : [];
 
     if (!item || !elements) {
       return;
@@ -403,26 +995,53 @@
       manager.root.classList.add("configurable-items-editing-v1");
     }
 
-    elements.editorKey.value = item.key || "";
-    elements.editorLabel.value = item.label || "";
-    elements.editorItems.value = item.itemsCsv || "";
-    elements.editorSourceMenu.value = item.sourceMenuKey || "";
-    elements.editorSourceSubprocess.value = item.sourceSubprocessKey || "";
-    if (elements.editorStatus) {
-      elements.editorStatus.value = item.status === "inativo" ? "inativo" : "ativo";
+    if (context) {
+      context.isHydratingEditor = true;
+      refreshAutomaticSourceOptions_v1(context);
     }
-    delete elements.editorItems.dataset.previousItems;
-    if (elements.editorFieldType) {
-      elements.editorFieldType.value = item.field_type || "manual";
-    }
-    applyEditorFieldTypeState_v3(
-      { elements, manager, sourceSubprocessMap },
-      {
-        selectedSubprocessKey: item.sourceSubprocessKey || "",
-        preserveUnavailableSelection: true
+
+    try {
+      elements.editorKey.value = item.key || "";
+      elements.editorLabel.value = item.label || "";
+      elements.editorItems.value = item.itemsCsv || "";
+      if (elements.editorStatus) {
+        elements.editorStatus.value = normalizeProcessListStatus_v1(item.status, item.is_active);
       }
-    );
-    elements.editorLabel.focus();
+      delete elements.editorItems.dataset.previousItems;
+      if (elements.editorFieldType) {
+        elements.editorFieldType.value = item.field_type || "manual";
+      }
+      const inferredSessionKey = toSafeString_v1(
+        item.sourceSessionKey ||
+        item.sourceSidebarSectionKey ||
+        getSourceSessionKeyFromMenuOptions_v1(sourceMenuOptions, item.sourceMenuKey)
+      ).trim().toLowerCase();
+      const isAllSessionsSelection = isProcessListAllSessionsKey_v1(inferredSessionKey);
+      elements.editorSourceSession.value = inferredSessionKey;
+      elements.editorSourceMenu.value = isAllSessionsSelection ? "" : (item.sourceMenuKey || "");
+      elements.editorSourceSubprocess.value = isAllSessionsSelection ? "" : (item.sourceSubprocessKey || "");
+      applyEditorFieldTypeState_v3(
+        {
+          elements,
+          manager,
+          sourceSubprocessMap,
+          sourceSessionOptions: context && context.sourceSessionOptions ? context.sourceSessionOptions : [],
+          sourceMenuOptions: context && context.sourceMenuOptions ? context.sourceMenuOptions : [],
+          isHydratingEditor: true
+        },
+        {
+          selectedSessionKey: inferredSessionKey,
+          selectedMenuKey: isAllSessionsSelection ? "" : (item.sourceMenuKey || ""),
+          selectedSubprocessKey: isAllSessionsSelection ? "" : (item.sourceSubprocessKey || ""),
+          preserveUnavailableSelection: false
+        }
+      );
+      elements.editorLabel.focus();
+    } finally {
+      if (context) {
+        context.isHydratingEditor = false;
+      }
+    }
   }
 
   function readEditorItem_v1(context) {
@@ -431,8 +1050,14 @@
     const label = toSafeString_v1(elements.editorLabel ? elements.editorLabel.value : "").trim();
     const itemsCsv = toSafeString_v1(elements.editorItems ? elements.editorItems.value : "").trim();
     const fieldType = toSafeString_v1(elements.editorFieldType ? elements.editorFieldType.value : "").trim().toLowerCase();
+    const sourceSessionKey = toSafeString_v1(elements.editorSourceSession ? elements.editorSourceSession.value : "").trim().toLowerCase();
     const sourceMenuKey = toSafeString_v1(elements.editorSourceMenu ? elements.editorSourceMenu.value : "").trim().toLowerCase();
     const sourceSubprocessKey = toSafeString_v1(elements.editorSourceSubprocess ? elements.editorSourceSubprocess.value : "").trim().toLowerCase();
+    const isAllSessionsSelection = isProcessListAllSessionsKey_v1(sourceSessionKey);
+    const resolvedSourceSessionKey = isAllSessionsSelection ? sourceSessionKey : sourceSessionKey || getSourceSessionKeyFromMenuOptions_v1(
+      context && Array.isArray(context.sourceMenuOptions) ? context.sourceMenuOptions : [],
+      sourceMenuKey
+    );
     const status = toSafeString_v1(elements.editorStatus ? elements.editorStatus.value : "").trim().toLowerCase();
     const currentKey = toSafeString_v1(elements.editorKey ? elements.editorKey.value : "").trim();
     const editingId = toSafeString_v1(state.editingId).trim();
@@ -444,9 +1069,10 @@
       label,
       field_type: (fieldType === "automatic" ? "automatic" : "manual"),
       itemsCsv: fieldType === "automatic" ? "" : itemsCsv,
-      sourceMenuKey: fieldType === "automatic" ? sourceMenuKey : "",
-      sourceSubprocessKey: fieldType === "automatic" ? sourceSubprocessKey : "",
-      status: status === "inativo" ? "inativo" : "ativo"
+      sourceSessionKey: fieldType === "automatic" ? resolvedSourceSessionKey : "",
+      sourceMenuKey: fieldType === "automatic" && !isAllSessionsSelection ? sourceMenuKey : "",
+      sourceSubprocessKey: fieldType === "automatic" && !isAllSessionsSelection ? sourceSubprocessKey : "",
+      status: normalizeProcessListStatus_v1(status)
     };
   }
 
@@ -485,11 +1111,19 @@
     const isLegacyAutomaticWithoutSource = Boolean(
       currentItem &&
       String(currentItem.field_type || "").trim().toLowerCase() === "automatic" &&
+      !toSafeString_v1(currentItem.sourceSessionKey || currentItem.sourceSidebarSectionKey).trim() &&
       !toSafeString_v1(currentItem.sourceMenuKey).trim() &&
       !toSafeString_v1(currentItem.sourceSubprocessKey).trim()
     );
 
-    if (item.field_type === "automatic" && !item.sourceMenuKey && !isLegacyAutomaticWithoutSource) {
+    if (item.field_type === "automatic" && !item.sourceSessionKey && !isLegacyAutomaticWithoutSource) {
+      return {
+        valid: false,
+        message: "Selecione a sessão."
+      };
+    }
+
+    if (item.field_type === "automatic" && !isProcessListAllSessionsKey_v1(item.sourceSessionKey) && !item.sourceMenuKey && !isLegacyAutomaticWithoutSource) {
       return {
         valid: false,
         message: "Selecione o menu de origem da lista automática."
@@ -504,6 +1138,7 @@
       (manager && manager.state && manager.state.editingId) ||
       toSafeString_v1(elements.editorLabel.value).trim() ||
       toSafeString_v1(elements.editorItems.value).trim() ||
+      toSafeString_v1(elements.editorSourceSession.value).trim() ||
       toSafeString_v1(elements.editorSourceMenu.value).trim() ||
       toSafeString_v1(elements.editorSourceSubprocess.value).trim()
     );
@@ -512,9 +1147,21 @@
   function syncHiddenInputs_v1(context) {
     const elements = context && context.elements ? context.elements : null;
     const items = context && Array.isArray(context.items) ? context.items : [];
+    const form = elements && elements.submitButton && elements.submitButton.form
+      ? elements.submitButton.form
+      : elements && elements.cancelButton && elements.cancelButton.form
+        ? elements.cancelButton.form
+        : null;
+    const configuredInput = form
+      ? form.querySelector("[name='process_lists_configured']")
+      : null;
 
     if (!elements || !elements.hiddenContainer) {
       return;
+    }
+
+    if (configuredInput) {
+      configuredInput.value = "1";
     }
 
     elements.hiddenContainer.innerHTML = "";
@@ -525,9 +1172,10 @@
         ["process_list_label", item.label],
         ["process_list_field_type", item.field_type || "manual"],
         ["process_list_items_csv", item.field_type === "automatic" ? "" : item.itemsCsv],
+        ["process_list_source_session_key", item.field_type === "automatic" ? (item.sourceSessionKey || item.sourceSidebarSectionKey || "") : ""],
         ["process_list_source_menu_key", item.field_type === "automatic" ? item.sourceMenuKey : ""],
         ["process_list_source_subprocess_key", item.field_type === "automatic" ? item.sourceSubprocessKey : ""],
-        ["process_list_status", item.status === "inativo" ? "inativo" : "ativo"]
+        ["process_list_status", normalizeProcessListStatus_v1(item.status, item.is_active)]
       ].forEach((field) => {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -593,10 +1241,10 @@
 
   function applyEditorFieldTypeState_v3(context, options) {
     const elements = context && context.elements ? context.elements : context;
-    const sourceSubprocessMap = context && context.sourceSubprocessMap ? context.sourceSubprocessMap : {};
 
     if (!elements || !elements.editorFieldType || !elements.editorItems ||
-        !elements.editorItemsWrapper || !elements.editorSourceMenu ||
+        !elements.editorItemsWrapper || !elements.editorSourceSession ||
+        !elements.editorSourceSessionWrapper || !elements.editorSourceMenu ||
         !elements.editorSourceMenuWrapper || !elements.editorSourceSubprocess ||
         !elements.editorSourceSubprocessWrapper || !elements.root) {
       return;
@@ -614,40 +1262,33 @@
       elements.editorItems.value = "";
       elements.editorItems.disabled = true;
       elements.editorItemsWrapper.hidden = true;
-      elements.editorSourceMenuWrapper.hidden = false;
-      elements.editorSourceMenu.disabled = false;
+      elements.editorSourceSessionWrapper.hidden = false;
+      elements.editorSourceMenuWrapper.hidden = true;
+      elements.editorSourceSubprocessWrapper.hidden = true;
       elements.root.dataset.hasSourceSubprocess = "0";
-
-      const menuKey = toSafeString_v1(elements.editorSourceMenu.value).trim().toLowerCase();
-      if (!menuKey) {
-        elements.editorSourceSubprocess.value = "";
-        elements.editorSourceSubprocessWrapper.hidden = true;
-        elements.editorSourceSubprocess.disabled = true;
-        return;
-      }
-
-      const sourceSubprocessOptions = getSourceSubprocessOptions_v1(sourceSubprocessMap, menuKey);
-      const selectedSubprocessKey = clearSourceSelection
-        ? ""
-        : toSafeString_v1(
-            options && options.selectedSubprocessKey
-              ? options.selectedSubprocessKey
-              : elements.editorSourceSubprocess.value
-          ).trim().toLowerCase();
-      populateSourceSubprocessOptions_v1(
-        { elements },
+      updateAutomaticSourceControls_v1(
+        context,
         {
-          options: sourceSubprocessOptions,
-          selectedValue: selectedSubprocessKey,
+          selectedSessionKey: clearSourceSelection ? "" : options && Object.prototype.hasOwnProperty.call(options, "selectedSessionKey")
+            ? options.selectedSessionKey
+            : elements.editorSourceSession.value,
+          selectedMenuKey: clearSourceSelection ? "" : options && Object.prototype.hasOwnProperty.call(options, "selectedMenuKey")
+            ? options.selectedMenuKey
+            : elements.editorSourceMenu.value,
+          selectedSubprocessKey: clearSourceSelection ? "" : options && Object.prototype.hasOwnProperty.call(options, "selectedSubprocessKey")
+            ? options.selectedSubprocessKey
+            : elements.editorSourceSubprocess.value,
           preserveUnavailableSelection,
           keepVisible: true
         }
       );
-      elements.editorSourceSubprocessWrapper.hidden = false;
-      elements.root.dataset.hasSourceSubprocess = "1";
+      elements.root.dataset.hasSourceSubprocess = toSafeString_v1(elements.editorSourceMenu.value).trim() ? "1" : "0";
     } else {
       elements.editorItemsWrapper.hidden = false;
       elements.editorItems.disabled = false;
+      elements.editorSourceSession.value = "";
+      elements.editorSourceSession.disabled = true;
+      elements.editorSourceSessionWrapper.hidden = true;
       elements.editorSourceMenu.value = "";
       elements.editorSourceMenu.disabled = true;
       elements.editorSourceMenuWrapper.hidden = true;
@@ -661,6 +1302,7 @@
         }
       }
       if (clearSourceSelection) {
+        elements.editorSourceSession.value = "";
         elements.editorSourceMenu.value = "";
         elements.editorSourceSubprocess.value = "";
       }
@@ -793,6 +1435,7 @@
     }
 
     Object.assign(manager.elements, elements);
+    manager.render = () => renderPartitionedLists_v1(manager, elements);
     elements.cancelButton.dataset.appgenesisCancel = "1";
     elements.cancelButton.dataset.appgenesisCancelLocal = "1";
     form.addEventListener("appgenesis:cancelled", (event) => {
@@ -826,44 +1469,47 @@
     return manager;
   }
 
-  function distributeListRowsByStatus_v1({ manager, elements }) {
-    if (!elements.tableBody || !elements.inactiveTableBody) {
+  function renderPartitionedLists_v1(manager, elements) {
+    const core = getCore_v1();
+
+    if (!core || typeof core.renderConfigurableItemsPartitionedViews_v1 !== "function") {
       return;
     }
 
-    const rows = Array.from(elements.tableBody.children);
-    let activeCount = 0;
-    let inactiveCount = 0;
-
-    elements.inactiveTableBody.innerHTML = "";
-
-    rows.forEach((row) => {
-      const itemId = row.dataset.configurableItemId;
-      const item = manager.state.items.find(
-        (candidate) => String(candidate.__managerId) === String(itemId)
-      );
-      const isInactive = item && String(item.status || "ativo").trim().toLowerCase() === "inativo";
-
-      if (isInactive) {
-        elements.inactiveTableBody.appendChild(row);
-        inactiveCount += 1;
-      } else {
-        activeCount += 1;
+    core.renderConfigurableItemsPartitionedViews_v1(manager, [
+      {
+        key: "active",
+        elements: {
+          table: elements.table,
+          tableBody: elements.tableBody,
+          emptyState: elements.emptyState,
+          pagination: elements.pagination,
+          pageSize: elements.pageSize,
+          totalLabel: elements.totalLabel
+        },
+        pageSizeDefault: manager.config.pageSizeDefault,
+        itemName: "lista",
+        itemNamePlural: "listas ativas",
+        emptyText: "Sem listas ativas.",
+        filter: (item) => normalizeProcessListStatus_v1(item.status, item.is_active) !== "inativo"
+      },
+      {
+        key: "inactive",
+        elements: {
+          table: elements.inactiveTable,
+          tableBody: elements.inactiveTableBody,
+          emptyState: elements.inactiveEmptyState,
+          pagination: elements.inactivePagination,
+          pageSize: elements.inactivePageSize,
+          totalLabel: elements.inactiveTotalLabel
+        },
+        pageSizeDefault: manager.config.pageSizeDefault,
+        itemName: "lista",
+        itemNamePlural: "listas inativas",
+        emptyText: "Sem listas inativas.",
+        filter: (item) => normalizeProcessListStatus_v1(item.status, item.is_active) === "inativo"
       }
-    });
-
-    if (elements.table) {
-      elements.table.style.display = activeCount ? "" : "none";
-    }
-    if (elements.emptyState) {
-      elements.emptyState.style.display = activeCount ? "none" : "";
-    }
-    if (elements.inactiveTable) {
-      elements.inactiveTable.style.display = inactiveCount ? "" : "none";
-    }
-    if (elements.inactiveEmptyState) {
-      elements.inactiveEmptyState.style.display = inactiveCount ? "none" : "";
-    }
+    ]);
   }
 
   //###################################################################################
@@ -888,16 +1534,33 @@
     }
 
     form.dataset.processListsManagerBoundV1 = "1";
+    const menuKey = toSafeString_v1(elements.menuKeyInput.value).trim().toLowerCase();
+    const deleteEndpoint = getProcessListsDeleteEndpoint_v1(form);
     const sourceSubprocessMap = getSourceSubprocessMap_v1(elements);
+    const sourceSessionOptions = readSourceSessionOptions_v1(elements);
+    const sourceMenuOptions = readSourceMenuOptions_v1(elements);
     elements.root.dataset.hasSourceSubprocess = "0";
+    const perfState = createProcessListsPerfState_v1();
+    const readStartMs = perfState.cycleStart;
 
-    const manager = core.createConfigurableItemsManager_v1({
+    let manager = null;
+    const initialItems = readInitialItems_v1(elements, sourceMenuOptions);
+    perfState.readMs = nowMs_v1() - readStartMs;
+    perfState.backendCount = Array.from(
+      elements.legacyContainer.querySelectorAll("[data-process-list-row]")
+    ).length;
+    perfState.initialCount = initialItems.length;
+    manager = core.createConfigurableItemsManager_v1({
       root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",
+      createTitle: "Criar lista",
+      editTitle: "Editar lista",
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
-      initialItems: readInitialItems_v1(elements),
+      skipInitialRender: true,
+      initialItems,
+      menuKey,
       selectors: {
         editorForm: "[data-process-list-reusable-editor-block]",
         table: "[data-process-lists-table]",
@@ -912,11 +1575,14 @@
       columns: [
         {
           key: "label",
-          label: "Nome da lista"
+          label: "Nome da lista",
+          alwaysVisible: true,
+          responsivePriority: 100
         },
         {
           key: "field_type",
           label: "Tipo de campo",
+          responsivePriority: 50,
           render: (item) => {
             const ft = String(item.field_type || "").trim().toLowerCase();
             return ft === "automatic" ? "Automático" : "Manual";
@@ -925,11 +1591,13 @@
         {
           key: "itemsCsv",
           label: "Conteúdo da lista",
+          responsivePriority: 10,
           render: (item) => item.itemsCsv || "-"
         },
         {
           key: "sourceMenuKey",
           label: "Menu",
+          responsivePriority: 40,
           render: (item) => {
             if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
               return "-";
@@ -946,6 +1614,7 @@
         {
           key: "sourceSubprocessKey",
           label: "Subprocesso",
+          responsivePriority: 30,
           render: (item) => {
             if (String(item.field_type || "manual").toLowerCase() !== "automatic") {
               return "-";
@@ -969,11 +1638,14 @@
         {
           key: "entidade",
           label: "Entidade",
+          responsivePriority: 20,
           render: () => elements.root.dataset.entityNumber || "-"
         },
         {
           key: "status",
           label: "Estado",
+          alwaysVisible: true,
+          responsivePriority: 90,
           render: (item) => {
             const isInactive = String(item.status || "ativo").trim().toLowerCase() === "inativo";
             const badgeClass = isInactive ? "entity-status-inactive" : "entity-status-active";
@@ -986,12 +1658,96 @@
         }
       ],
       getItemId: (item, index) => item.managerId || item.__managerId || item.key || `list_${index + 1}`,
-      readEditorItem: (context) => readEditorItem_v1({ ...context, sourceSubprocessMap }),
-      loadEditorItem: (item, context) => loadEditorItem_v1(item, { ...context, sourceSubprocessMap }),
-      clearEditor: (context) => clearEditor_v1({ ...context, sourceSubprocessMap }),
+      readEditorItem: (context) => readEditorItem_v1({
+        ...context,
+        sourceSubprocessMap,
+        sourceSessionOptions,
+        sourceMenuOptions
+      }),
+      loadEditorItem: (item, context) => loadEditorItem_v1(item, {
+        ...context,
+        sourceSubprocessMap,
+        sourceSessionOptions,
+        sourceMenuOptions
+      }),
+      clearEditor: (context) => clearEditor_v1({
+        ...context,
+        sourceSubprocessMap,
+        sourceSessionOptions,
+        sourceMenuOptions
+      }),
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1,
-      onRender: distributeListRowsByStatus_v1
+      canRemoveItem: (item) => normalizeProcessListStatus_v1(item && item.status, item && item.is_active) === "inativo",
+      deleteItem: async ({ item }) => {
+        const cleanListKey = toSafeString_v1(item && item.key ? item.key : "").trim();
+
+        if (!menuKey) {
+          return {
+            success: false,
+            message: "Menu inválido."
+          };
+        }
+
+        if (!cleanListKey) {
+          return {
+            success: false,
+            message: "Lista inválida."
+          };
+        }
+
+        try {
+          const response = await fetch(deleteEndpoint, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              menu_key: menuKey,
+              list_key: cleanListKey
+            })
+          });
+
+          let payload = null;
+          const responseText = await response.text();
+
+          if (responseText) {
+            try {
+              payload = JSON.parse(responseText);
+            } catch (parseError) {
+              payload = null;
+            }
+          }
+
+          if (!response.ok) {
+            return {
+              success: false,
+              message: payload && payload.message ? payload.message : "Não foi possível eliminar a lista."
+            };
+          }
+
+          if (!payload || payload.success !== true) {
+            return {
+              success: false,
+              message: payload && payload.message ? payload.message : "Não foi possível eliminar a lista."
+            };
+          }
+
+          return {
+            success: true,
+            message: payload.message || "Lista eliminada com sucesso.",
+            listKey: payload.list_key || cleanListKey
+          };
+        } catch (error) {
+          return {
+            success: false,
+            message: error && error.message ? error.message : "Falha de rede ao eliminar a lista."
+          };
+        }
+      },
+      onRender: null
     });
 
     if (!manager) {
@@ -1000,29 +1756,96 @@
     }
 
     Object.assign(manager.elements, elements);
+    manager._perfMetricsV1 = perfState;
+    manager.render = () => {
+      if (perfState.enabled) {
+        perfState.responsiveMs = 0;
+        perfState.responsiveTables = 0;
+        perfState.renderMs = 0;
+      }
+
+      const renderStartMs = nowMs_v1();
+      renderPartitionedLists_v1(manager, elements);
+      perfState.renderMs = nowMs_v1() - renderStartMs;
+      perfState.activeCount = manager.getItems().filter((item) => normalizeProcessListStatus_v1(item.status, item.is_active) !== "inativo").length;
+      perfState.inactiveCount = manager.getItems().filter((item) => normalizeProcessListStatus_v1(item.status, item.is_active) === "inativo").length;
+      perfState.stateCount = manager.getItems().length;
+      logProcessListsPerfSummary_v1(perfState);
+    };
     manager.render();
 
+    const managerContext = {
+      elements,
+      manager,
+      sourceSubprocessMap,
+      sourceSessionOptions,
+      sourceMenuOptions,
+      sourceSessionOptionsSnapshot: normalizeProcessListSourceSessionOptions_v1(sourceSessionOptions),
+      sourceMenuOptionsSnapshot: Array.isArray(sourceMenuOptions) ? sourceMenuOptions : [],
+      isHydratingEditor: false
+    };
+
+    manager.sourceSessionOptionsSnapshot = managerContext.sourceSessionOptionsSnapshot;
+    manager.sourceMenuOptionsSnapshot = managerContext.sourceMenuOptionsSnapshot;
+
+    refreshAutomaticSourceOptions_v1(managerContext);
+
     elements.editorFieldType.addEventListener("change", () => {
+      if (managerContext.isHydratingEditor) {
+        return;
+      }
       applyEditorFieldTypeState_v3(
-        { elements, manager, sourceSubprocessMap },
-        { clearSourceSelection: true }
+        managerContext,
+        {
+          clearSourceSelection: true,
+          selectedSessionKey: elements.editorSourceSession.value,
+          selectedMenuKey: elements.editorSourceMenu.value,
+          selectedSubprocessKey: elements.editorSourceSubprocess.value
+        }
       );
+    });
+    elements.editorSourceSession.addEventListener("change", () => {
+      if (managerContext.isHydratingEditor) {
+        return;
+      }
+      refreshAutomaticSourceOptions_v1(managerContext);
+      updateAutomaticSourceControls_v1(managerContext, {
+        selectedSessionKey: elements.editorSourceSession.value,
+        selectedMenuKey: elements.editorSourceMenu.value,
+        selectedSubprocessKey: elements.editorSourceSubprocess.value,
+        preserveUnavailableSelection: false,
+        keepVisible: true
+      });
     });
     elements.editorSourceMenu.addEventListener("change", () => {
-      applyEditorFieldTypeState_v3(
-        { elements, manager, sourceSubprocessMap },
-        { clearSourceSelection: true }
-      );
+      if (managerContext.isHydratingEditor) {
+        return;
+      }
+      refreshAutomaticSourceOptions_v1(managerContext);
+      updateAutomaticSourceControls_v1(managerContext, {
+        selectedSessionKey: elements.editorSourceSession.value,
+        selectedMenuKey: elements.editorSourceMenu.value,
+        selectedSubprocessKey: elements.editorSourceSubprocess.value,
+        preserveUnavailableSelection: true,
+        keepVisible: true
+      });
     });
     applyEditorFieldTypeState_v3(
-      { elements, manager, sourceSubprocessMap },
-      { resetTemporaryState: true, clearSourceSelection: true }
+      managerContext,
+      {
+        resetTemporaryState: true,
+        clearSourceSelection: true,
+        selectedSessionKey: elements.editorSourceSession.value,
+        selectedMenuKey: elements.editorSourceMenu.value,
+        selectedSubprocessKey: elements.editorSourceSubprocess.value
+      }
     );
 
     bindCancel_v1(form, elements, manager);
     form.processListsManagerV1 = manager;
     setupProcessListColumnsManager_v2(form);
     bindSubmit_v1(form, elements, manager);
+    manager.render();
     manager.syncHiddenInputs();
 
     return manager;

@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 # ###################################################################################
 # HELPERS PARTILHADOS PELOS HANDLERS DE PROCESS-SETTINGS (Fase 8)
 # ###################################################################################
 
+from dataclasses import dataclass
 import logging as _logging_sessoes
 import os as _os_sessoes
 from urllib.parse import parse_qsl, urlencode, urlsplit
@@ -172,6 +175,100 @@ def _build_settings_editor_stay_redirect_url_v1(
         settings_action="edit",
         settings_tab=settings_tab,
         return_url=return_url,
+    )
+
+
+@dataclass(frozen=True)
+class MenuSettingsWriteContext:
+    user_id: int
+    login_email: str
+    entity_id: int
+    permissions: dict[str, object]
+    can_manage_tenant_structure: bool
+
+
+def resolve_menu_settings_write_context_v1(
+    session,
+    request: Request,
+    redirect_menu: str,
+    redirect_target: str,
+    *,
+    settings_edit_key: str = "",
+    settings_action: str = "edit",
+    settings_tab: str = "geral",
+    return_url: str = "",
+) -> MenuSettingsWriteContext | RedirectResponse:
+    current_user = get_current_user(request, session)
+
+    if current_user is None:
+        return RedirectResponse(
+            url="/login?error=Efetue login para continuar.",
+            status_code=HTTP_302_FOUND,
+        )
+
+    if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                error_message="Apenas administradores podem alterar definições do menu.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_edit_key=settings_edit_key,
+                settings_action=settings_action,
+                settings_tab=settings_tab,
+                return_url=return_url,
+            ),
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+    selected_entity_id = get_session_entity_id(request)
+    permissions = get_user_entity_permissions(
+        session,
+        current_user["id"],
+        current_user["login_email"],
+        selected_entity_id,
+    )
+    can_manage_tenant_structure = bool(
+        permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        )
+    )
+
+    if not can_manage_tenant_structure:
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                error_message="Apenas Owner pode alterar definições do menu.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_edit_key=settings_edit_key,
+                settings_action=settings_action,
+                settings_tab=settings_tab,
+                return_url=return_url,
+            ),
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+    resolved_entity_id = permissions.get("selected_entity_id")
+    if resolved_entity_id is None:
+        return RedirectResponse(
+            url=_build_settings_redirect_url(
+                error_message="Não foi possível resolver a entidade ativa.",
+                redirect_menu=redirect_menu,
+                redirect_target=redirect_target,
+                settings_edit_key=settings_edit_key,
+                settings_action=settings_action,
+                settings_tab=settings_tab,
+                return_url=return_url,
+            ),
+            status_code=HTTP_303_SEE_OTHER,
+        )
+
+    return MenuSettingsWriteContext(
+        user_id=int(current_user["id"]),
+        login_email=str(current_user["login_email"]),
+        entity_id=int(resolved_entity_id),
+        permissions=permissions,
+        can_manage_tenant_structure=can_manage_tenant_structure,
     )
 
 

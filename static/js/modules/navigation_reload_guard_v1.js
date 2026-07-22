@@ -60,10 +60,23 @@ function logAppGenesisNavigationBootDebugV1(event, payload) {
 // de mostrar Home.
 //###################################################################################
 
-const APPGENESIS_POST_SAVE_CONTEXT_KEY_V3 = "appgenesis:post-save-context-v3";
-const APPGENESIS_POST_SAVE_CONTEXT_MAX_AGE_MS_V3 = 120000;
+const appGenesisPostSaveContextContractV1 =
+  window.AppGenesisPostSaveContextContractV1 &&
+  typeof window.AppGenesisPostSaveContextContractV1 === "object"
+    ? window.AppGenesisPostSaveContextContractV1
+    : null;
+
+const APPGENESIS_POST_SAVE_CONTEXT_KEY_V3 =
+  (appGenesisPostSaveContextContractV1 && appGenesisPostSaveContextContractV1.storageKey) ||
+  "appgenesis:post-save-context-v3";
+const APPGENESIS_POST_SAVE_CONTEXT_MAX_AGE_MS_V3 =
+  (appGenesisPostSaveContextContractV1 && appGenesisPostSaveContextContractV1.maxAgeMs) || 120000;
 
 function getAppGenesisCurrentUrlPostSaveV3() {
+  if (appGenesisPostSaveContextContractV1 && typeof appGenesisPostSaveContextContractV1.getCurrentUrl === "function") {
+    return appGenesisPostSaveContextContractV1.getCurrentUrl();
+  }
+
   try {
     return new URL(window.location.href);
   } catch (error) {
@@ -72,6 +85,10 @@ function getAppGenesisCurrentUrlPostSaveV3() {
 }
 
 function isAppGenesisPostSaveFeedbackUrlV3(url) {
+  if (appGenesisPostSaveContextContractV1 && typeof appGenesisPostSaveContextContractV1.isFeedbackUrl === "function") {
+    return appGenesisPostSaveContextContractV1.isFeedbackUrl(url);
+  }
+
   if (!url) {
     return false;
   }
@@ -97,6 +114,13 @@ function isAppGenesisPostSaveFeedbackUrlV3(url) {
 }
 
 function readAndClearAppGenesisPostSaveContextV3() {
+  if (
+    appGenesisPostSaveContextContractV1 &&
+    typeof appGenesisPostSaveContextContractV1.readStoredContext === "function"
+  ) {
+    return appGenesisPostSaveContextContractV1.readStoredContext();
+  }
+
   try {
     const rawValue = window.sessionStorage.getItem(APPGENESIS_POST_SAVE_CONTEXT_KEY_V3) || "";
 
@@ -129,6 +153,14 @@ function readAndClearAppGenesisPostSaveContextV3() {
 }
 
 function copyPostSaveFeedbackParamsV3(sourceUrl, targetUrl) {
+  if (
+    appGenesisPostSaveContextContractV1 &&
+    typeof appGenesisPostSaveContextContractV1.copyFeedbackParams === "function"
+  ) {
+    appGenesisPostSaveContextContractV1.copyFeedbackParams(sourceUrl, targetUrl);
+    return;
+  }
+
   if (!sourceUrl || !targetUrl) {
     return;
   }
@@ -148,6 +180,14 @@ function copyPostSaveFeedbackParamsV3(sourceUrl, targetUrl) {
 }
 
 function clearPostSaveFeedbackMarkersFromUrlV3() {
+  if (
+    appGenesisPostSaveContextContractV1 &&
+    typeof appGenesisPostSaveContextContractV1.clearFeedbackMarkersFromUrl === "function"
+  ) {
+    appGenesisPostSaveContextContractV1.clearFeedbackMarkersFromUrl();
+    return;
+  }
+
   const url = getAppGenesisCurrentUrlPostSaveV3();
 
   if (!url) {
@@ -176,6 +216,13 @@ function clearPostSaveFeedbackMarkersFromUrlV3() {
 }
 
 function hasProtectedReloadNavigationContextV1(url) {
+  if (
+    appGenesisPostSaveContextContractV1 &&
+    typeof appGenesisPostSaveContextContractV1.hasProtectedReloadContext === "function"
+  ) {
+    return appGenesisPostSaveContextContractV1.hasProtectedReloadContext(url);
+  }
+
   if (!url) {
     return false;
   }

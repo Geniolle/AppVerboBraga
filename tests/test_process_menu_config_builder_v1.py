@@ -49,3 +49,16 @@ def test_process_menu_config_builder_module_exposes_expected_symbols() -> None:
     assert "ensureAuthorizationProfileMenuConfig" in module_text
     assert 'title: "Perfil de autorização"' in module_text
     assert 'target: "#dynamic-process-card"' in module_text
+
+
+def test_process_menu_config_builder_keeps_meu_perfil_as_canonical_key_v1() -> None:
+    module_text = (
+        PROJECT_ROOT / "static" / "js" / "modules" / "process_menu_config_builder_v1.js"
+    ).read_text(encoding="utf-8")
+
+    assert "[state.MEU_PERFIL_MENU_KEY]:" in module_text
+    assert "title: \"Meus dados\"" in module_text
+    assert module_text.index("[state.MEU_PERFIL_MENU_KEY]:") < module_text.index(
+        "if (!state.currentUserIsAdmin) {"
+    )
+    assert "\n      perfil: {" not in module_text

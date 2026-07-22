@@ -130,13 +130,28 @@ def test_build_settings_redirect_url_uses_return_url_when_available() -> None:
 
 
 def test_post_save_context_does_not_reinject_dynamic_section_for_settings_editor() -> None:
-    js_text = (PROJECT_ROOT / "static" / "js" / "new_user.js").read_text(encoding="utf-8")
     module_text = (
         PROJECT_ROOT / "static" / "js" / "modules" / "process_cards_visibility_v1.js"
     ).read_text(encoding="utf-8")
+    from appgenesis.routes.profile.process_settings.common import _sanitize_users_new_settings_return_url_v1
 
-    assert 'currentUrl.searchParams.delete("dynamic_process_section");' in js_text
-    assert 'currentUrl.searchParams.delete("section_key");' in js_text
+    result = _sanitize_users_new_settings_return_url_v1(
+        "/users/new?menu=sessoes&admin_tab=contas&dynamic_process_section=geral#settings-menu-edit-card",
+        {
+            "success": "ok",
+            "menu": "sessoes",
+            "target": "settings-menu-edit-card",
+            "dynamic_process_section": "",
+        },
+    )
+
+    parsed = urlsplit(result)
+    params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+
+    assert parsed.fragment == "settings-menu-edit-card"
+    assert params["menu"] == "sessoes"
+    assert params["target"] == "settings-menu-edit-card"
+    assert "dynamic_process_section" not in params
     assert 'targetSelector !== "#settings-menu-edit-card"' in module_text
 
 

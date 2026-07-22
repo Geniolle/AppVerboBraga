@@ -2317,6 +2317,7 @@
     }
 
     const feedbackMessages = [];
+    const seenFeedbackKeys = new Set();
 
     url.searchParams.forEach(function (rawValue, rawKey) {
       const key = String(rawKey || "").trim().toLowerCase();
@@ -2334,6 +2335,11 @@
       }
 
       if (type) {
+        const feedbackKey = type + "|" + message.toLowerCase();
+        if (seenFeedbackKeys.has(feedbackKey)) {
+          return;
+        }
+        seenFeedbackKeys.add(feedbackKey);
         feedbackMessages.push({ type: type, message: message });
       }
     });

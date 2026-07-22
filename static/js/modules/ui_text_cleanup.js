@@ -12,7 +12,7 @@
 
   const replacements = new Map([
     ["Definições", "Definições"],
-    ["DefiniÃ§Ã£o", "Definição"],
+    ["Definição", "Definição"],
     ["Configuração", "Configuração"],
     ["Configurações", "Configurações"],
     ["configuração", "configuração"],
@@ -20,28 +20,28 @@
     ["Cabeçalho", "Cabeçalho"],
     ["cabeçalho", "cabeçalho"],
     ["Sem cabeçalho", "Sem cabeçalho"],
-    ["InformaÃ§Ãµes", "Informações"],
-    ["informaÃ§Ãµes", "informações"],
+    ["Informações", "Informações"],
+    ["informações", "informações"],
     ["AÇÕES", "AÇÕES"],
-    ["AÃ§Ãµes", "Ações"],
-    ["aÃ§Ãµes", "ações"],
+    ["Ações", "Ações"],
+    ["ações", "ações"],
     ["só", "só"],
-    ["SÃ³", "Só"],
+    ["Só", "Só"],
     ["página", "página"],
-    ["PÃ¡gina", "Página"],
-    ["NÃ£o", "Não"],
-    ["nÃ£o", "não"],
+    ["Página", "Página"],
+    ["Não", "Não"],
+    ["não", "não"],
     ["Entidades criadas", "Entidades criadas"],
     ["Entidades criadas", "Entidades criadas"],
     ["Entidades criadas", "Entidades criadas"]
   ]);
 
-  replacements.set("ObrigatÃ³rio", "Obrigatório");
-  replacements.set("obrigatÃ³rio", "obrigatório");
-  replacements.set("ObrigatÃƒÂ³rio", "Obrigatório");
-  replacements.set("obrigatÃƒÂ³rio", "obrigatório");
-  replacements.set("NÃ£o", "Não");
-  replacements.set("nÃ£o", "não");
+  replacements.set("Obrigatório", "Obrigatório");
+  replacements.set("obrigatório", "obrigatório");
+  replacements.set("obrigatório", "Obrigatório");
+  replacements.set("obrigatório", "obrigatório");
+  replacements.set("Não", "Não");
+  replacements.set("não", "não");
 
   //###################################################################################
   // (3) FUNCOES AUXILIARES
@@ -70,8 +70,14 @@
   //###################################################################################
 
   function repairTextNodes(root) {
+    const rootNode = root && typeof root.nodeType === "number"
+      ? root
+      : document.body || document.documentElement;
+    if (!rootNode || typeof rootNode.nodeType !== "number") {
+      return;
+    }
     const walker = document.createTreeWalker(
-      root || document.body,
+      rootNode,
       NodeFilter.SHOW_TEXT
     );
 
@@ -135,7 +141,7 @@
   //###################################################################################
 
   function runCleanup() {
-    repairTextNodes(document.body);
+    repairTextNodes(document.body || document.documentElement);
     repairAttributes(document);
     removeSessoesDoSidebarButton();
   }

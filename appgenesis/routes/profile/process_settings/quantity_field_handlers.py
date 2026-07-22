@@ -12,7 +12,7 @@ from appgenesis.core import SessionLocal
 from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
-    _require_menu_settings_owner_v1,
+    resolve_menu_settings_write_context_v1,
 )
 
 
@@ -23,6 +23,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
     quantity_rule_key: list[str] = Form(default=[]),
     quantity_rule_label: list[str] = Form(default=[]),
     quantity_field_key: list[str] = Form(default=[]),
+    quantity_interaction_mode: list[str] = Form(default=[]),
     quantity_repeated_field_keys_json: list[str] = Form(default=[]),
     quantity_header_key: list[str] = Form(default=[]),
     quantity_max_items: list[str] = Form(default=[]),
@@ -34,7 +35,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
     clean_menu_key = resolve_menu_key_alias(menu_key)
 
     with SessionLocal() as session:
-        blocked_response = _require_menu_settings_owner_v1(
+        write_context = resolve_menu_settings_write_context_v1(
             session,
             request,
             redirect_menu,
@@ -44,13 +45,14 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             settings_tab="campos-quantidade",
             return_url=return_url,
         )
-        if blocked_response is not None:
-            return blocked_response
+        if isinstance(write_context, RedirectResponse):
+            return write_context
 
         rows_count = max(
             len(quantity_rule_key),
             len(quantity_rule_label),
             len(quantity_field_key),
+            len(quantity_interaction_mode),
             len(quantity_repeated_field_keys_json),
             len(quantity_header_key),
             len(quantity_max_items),
@@ -69,6 +71,9 @@ def edit_sidebar_menu_process_quantity_fields_handler(
                     else "",
                     "quantity_field_key": quantity_field_key[row_index]
                     if row_index < len(quantity_field_key)
+                    else "",
+                    "interaction_mode": quantity_interaction_mode[row_index]
+                    if row_index < len(quantity_interaction_mode)
                     else "",
                     "repeated_field_keys": (
                         quantity_repeated_field_keys_json[row_index]
@@ -89,6 +94,7 @@ def edit_sidebar_menu_process_quantity_fields_handler(
 
         ok, error_message = update_sidebar_menu_process_quantity_fields_v1(
             session=session,
+            entity_id=write_context.entity_id,
             menu_key=clean_menu_key,
             raw_fields=payload_rules,
         )
@@ -109,11 +115,10 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             )
 
         return RedirectResponse(
-            url=_build_settings_editor_stay_redirect_url_v1(
+            url=_build_settings_redirect_url(
                 success_message="Campos Quantidade atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                settings_edit_key=clean_menu_key,
-                settings_tab="campos-quantidade",
+                redirect_target=redirect_target,
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,

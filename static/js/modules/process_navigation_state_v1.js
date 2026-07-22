@@ -36,6 +36,15 @@
     windowRef: global
   };
 
+  const processKeysRegistry =
+    global.AppGenesisProcessKeysRegistryV1 &&
+    typeof global.AppGenesisProcessKeysRegistryV1 === "object"
+      ? global.AppGenesisProcessKeysRegistryV1
+      : null;
+  const MEU_PERFIL_MENU_KEY = processKeysRegistry
+    ? processKeysRegistry.MEU_PERFIL_MENU_KEY || "meu_perfil"
+    : "meu_perfil";
+
   function configure(options) {
     const safeOptions = options && typeof options === "object" ? options : {};
 
@@ -170,12 +179,12 @@
       startupMenu = "home";
     }
 
-    if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== "perfil") {
+    if (!sidebarMenuKeys.has(startupMenu) && startupMenu !== MEU_PERFIL_MENU_KEY) {
       if (sidebarMenuKeys.has("home")) {
         startupMenu = "home";
       } else {
         const fallbackMenu = Array.from(sidebarMenuKeys.values()).find(
-          (key) => key !== "perfil_de_autorizacao"
+          (key) => key !== "perfil_de_autorizacao" && key !== MEU_PERFIL_MENU_KEY
         );
         startupMenu = fallbackMenu || "home";
       }

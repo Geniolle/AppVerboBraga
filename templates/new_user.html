@@ -7,11 +7,13 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-<script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260706-post-save-feedback-always-wins-v1"></script>
+<script src="/static/js/modules/post_save_context_contract_v1.js?v=20260714-post-save-context-contract-v2"></script>
+<script src="/static/js/modules/post_save_context_capture_v1.js?v=20260714-post-save-context-contract-v2"></script>
+<script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260714-post-save-context-contract-v2"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260708-invite-link-header-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260722-dynamic-aggregates-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260708-invite-link-header-v1">
-  <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260713-shared-list-card-header-v1">
+    <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260717-process-lists-responsive-partition-v3">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
 <script src="/static/js/modules/ui_text_cleanup.js?v=20260429b"></script>
 <script src="/static/js/modules/admin_tabs_equal_width_v1.js?v=20260501-equal-tabs-v1"></script>
@@ -97,10 +99,7 @@
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
           </div>
-          {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
-            <div class="alert ok">{{ profile_success }}</div>
-          {% endif %}
-          {% if profile_error and initial_menu not in ["perfil", "meu_perfil"] %}
+          {% if profile_error and initial_menu != "meu_perfil" %}
             <div class="alert error">{{ profile_error }}</div>
           {% endif %}
           <div id="dynamic-process-readonly" class="profile-readonly">
@@ -206,9 +205,6 @@
           {% if entity_error and initial_menu == "empresa" %}
             <div class="alert error">{{ entity_error }}</div>
           {% endif %}
-          {% if entity_success and initial_menu == "empresa" %}
-            <div class="alert ok">{{ entity_success }}</div>
-          {% endif %}
           {% if company_profile_data %}
           <form method="post" action="/empresa/update" enctype="multipart/form-data">
             <input type="hidden" name="entity_id" value="{{ company_profile_data.id }}">
@@ -304,93 +300,90 @@
           {% endif %}
         </section>
 
-        <section id="perfil-pessoal-card" class="card" data-menu-scope="perfil,meu_perfil" {% if initial_menu not in ['perfil', 'meu_perfil'] or (initial_menu_target and initial_menu_target != '#perfil-pessoal-card') %}style="display: none;"{% endif %}>
+        <section id="perfil-pessoal-card" class="card" data-menu-scope="meu_perfil" {% if initial_menu != 'meu_perfil' or (initial_menu_target and initial_menu_target != '#perfil-pessoal-card') %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados pessoais do utilizador</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-pessoal-card">Editar</button>
           </div>
-          {% if profile_tab == "pessoal" and profile_success %}
-            <div class="alert ok">{{ profile_success }}</div>
-          {% endif %}
           {% if profile_tab == "pessoal" and profile_error %}
             <div class="alert error">{{ profile_error }}</div>
           {% endif %}
           <div class="profile-readonly">
             <div class="personal-grid">
               {% if "nome" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
+              <div class="personal-item" data-profile-field-key="nome" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
                 <span class="personal-label">Nome</span>
                 <strong class="personal-value">{{ user_personal_data.full_name }}</strong>
               </div>
               {% endif %}
               {% if "email" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
+              <div class="personal-item" data-profile-field-key="email" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
                 <span class="personal-label">Email</span>
                 <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
               </div>
               {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
+              <div class="personal-item" data-profile-field-key="telefone" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
                 <span class="personal-label">Telefone</span>
                 <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
               </div>
               {% endif %}
               {% if "pais" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
+              <div class="personal-item" data-profile-field-key="pais" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
                 <span class="personal-label">País</span>
                 <strong class="personal-value">{{ user_personal_data.country }}</strong>
               </div>
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
+              <div class="personal-item" data-profile-field-key="data_nascimento" data-profile-section-pane="{{ profile_personal_field_section_map.get('data_nascimento', '') }}">
                 <span class="personal-label">Data de nascimento</span>
                 <strong class="personal-value">{{ user_personal_data.birth_date }}</strong>
               </div>
               {% endif %}
               {% if "whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
+              <div class="personal-item" data-profile-field-key="whatsapp" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
                 <span class="personal-label">WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_verification_status }}</strong>
               </div>
               {% endif %}
               {% if "autorizacao_whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
+              <div class="personal-item" data-profile-field-key="autorizacao_whatsapp" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
                 <span class="personal-label">Autorização para avisos por WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_notice_opt_in }}</strong>
               </div>
               {% endif %}
               {% if "conta" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', '') }}">
+              <div class="personal-item" data-profile-field-key="conta" data-profile-section-pane="{{ profile_personal_field_section_map.get('conta', '') }}">
                 <span class="personal-label">Conta</span>
                 <strong class="personal-value">{{ user_personal_data.account_status }}</strong>
               </div>
               {% endif %}
               {% if "estado_membro" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', '') }}">
+              <div class="personal-item" data-profile-field-key="estado_membro" data-profile-section-pane="{{ profile_personal_field_section_map.get('estado_membro', '') }}">
                 <span class="personal-label">Estado de membro</span>
                 <strong class="personal-value">{{ user_personal_data.member_status }}</strong>
               </div>
               {% endif %}
               {% if "colaborador" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', '') }}">
+              <div class="personal-item" data-profile-field-key="colaborador" data-profile-section-pane="{{ profile_personal_field_section_map.get('colaborador', '') }}">
                 <span class="personal-label">Colaborador</span>
                 <strong class="personal-value">{{ user_personal_data.is_collaborator }}</strong>
               </div>
               {% endif %}
               {% if "entidades" in profile_personal_visible_fields %}
-              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', '') }}">
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-field-key="entidades" data-profile-section-pane="{{ profile_personal_field_section_map.get('entidades', '') }}">
                 <span class="personal-label">Entidades</span>
                 <strong class="personal-value">{{ user_personal_data.entities }}</strong>
               </div>
               {% endif %}
               {% if "ultima_verificacao_whatsapp" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', '') }}">
+              <div class="personal-item" data-profile-field-key="ultima_verificacao_whatsapp" data-profile-section-pane="{{ profile_personal_field_section_map.get('ultima_verificacao_whatsapp', '') }}">
                 <span class="personal-label">Última verificação WhatsApp</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_check_at }}</strong>
               </div>
               {% endif %}
               {% if "detalhe_verificacao" in profile_personal_visible_fields %}
-              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', '') }}">
+              <div class="personal-item" style="grid-column: 1 / -1;" data-profile-field-key="detalhe_verificacao" data-profile-section-pane="{{ profile_personal_field_section_map.get('detalhe_verificacao', '') }}">
                 <span class="personal-label">Detalhe da verificação</span>
                 <strong class="personal-value">{{ user_personal_data.whatsapp_last_error }}</strong>
               </div>
@@ -419,7 +412,7 @@
           <form class="profile-edit-form" method="post" action="/users/profile/personal">
             <input type="hidden" name="menu" value="meu_perfil">
             <input type="hidden" name="target" value="#perfil-pessoal-card">
-            <input type="hidden" name="profile_section" value="{{ profile_personal_sections[0].key if profile_personal_sections else '' }}" data-meu-perfil-section-input>
+            <input type="hidden" name="profile_section" value="{{ profile_personal_active_section if profile_personal_active_section else (profile_personal_sections[0].key if profile_personal_sections else '') }}" data-meu-perfil-section-input>
             <div class="personal-grid">
               {% if "nome" in profile_personal_visible_fields %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('nome', '') }}">
@@ -573,14 +566,11 @@
           </form>
         </section>
 
-        <section id="perfil-morada-card" class="card" data-menu-scope="perfil" {% if initial_menu != 'perfil' or initial_menu_target != '#perfil-morada-card' %}style="display: none;"{% endif %}>
+        <section id="perfil-morada-card" class="card" data-menu-scope="meu_perfil" {% if initial_menu != 'meu_perfil' or initial_menu_target != '#perfil-morada-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados de morada</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-morada-card">Editar</button>
           </div>
-          {% if profile_tab == "morada" and profile_success %}
-            <div class="alert ok">{{ profile_success }}</div>
-          {% endif %}
           {% if profile_tab == "morada" and profile_error %}
             <div class="alert error">{{ profile_error }}</div>
           {% endif %}
@@ -645,14 +635,11 @@
             </div>
           </form>
         </section>
-        <section id="dados-treinamento-card" class="card" data-menu-scope="perfil" {% if initial_menu != 'perfil' or initial_menu_target != '#dados-treinamento-card' %}style="display: none;"{% endif %}>
+        <section id="dados-treinamento-card" class="card" data-menu-scope="meu_perfil" {% if initial_menu != 'meu_perfil' or initial_menu_target != '#dados-treinamento-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados de treinamento</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="dados-treinamento-card">Editar</button>
           </div>
-          {% if profile_tab == "treinamento" and profile_success %}
-            <div class="alert ok">{{ profile_success }}</div>
-          {% endif %}
           {% if profile_tab == "treinamento" and profile_error %}
             <div class="alert error">{{ profile_error }}</div>
           {% endif %}
@@ -1347,15 +1334,12 @@
         {% set settings_has_process_fields = true %}
         {% set settings_owner_fields_enabled = current_user_can_manage_tenant_structure %}
         {% set settings_edit_active_tab = settings_tab|default('geral') %}
-        {# URL completa do proprio editor no momento do submit -- enviada como return_url por #}
-        {# TODAS as abas para que o backend preserve contexto incidental (ex.: admin_tab) sem #}
-        {# depender de logica de correcao no cliente. Reutilizavel: nenhuma aba tem sua propria #}
-        {# construcao de return_url. #}
-        {% set settings_edit_return_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "&settings_action=edit&target=settings-menu-edit-card&settings_edit_key=" ~ settings_edit_data.key ~ "&settings_tab=" ~ settings_edit_active_tab ~ "#settings-menu-edit-card" %}
         {# Alvo/URL de SAIDA do editor (Cancelar/Guardar) -- devolve o utilizador a lista de #}
         {# origem, nunca ao proprio editor. Espelha a resolucao de _resolve_initial_menu_target #}
         {# em page_handler.py para os menus a partir dos quais o editor pode ser aberto. #}
-        {% if settings_edit_origin_menu == "administrativo" %}
+        {% if settings_edit_active_tab == "lista" %}
+          {% set settings_edit_exit_target = "settings-menu-edit-card" %}
+        {% elif settings_edit_origin_menu == "administrativo" %}
           {% if admin_tab == "contas" %}
             {% set settings_edit_exit_target = "menu-subprocess-card-active" %}
           {% elif admin_tab == "utilizador" %}
@@ -1370,7 +1354,11 @@
         {% else %}
           {% set settings_edit_exit_target = "admin-sidebar-sections-card" %}
         {% endif %}
-        {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "#" ~ settings_edit_exit_target %}
+        {% if settings_edit_active_tab == "lista" %}
+          {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "&settings_tab=lista#" ~ settings_edit_exit_target %}
+        {% else %}
+          {% set settings_edit_exit_url = "/users/new?menu=" ~ settings_edit_origin_menu ~ "&admin_tab=" ~ admin_tab ~ "#" ~ settings_edit_exit_target %}
+        {% endif %}
         <section id="settings-menu-edit-card" class="card process-window-card" data-menu-scope="administrativo,sessoes" {% if initial_menu not in ['administrativo', 'sessoes'] or initial_menu_target != '#settings-menu-edit-card' %}style="display: none;"{% endif %}>
           <h2>Editar processo: {{ settings_edit_data.label }}</h2>
           <p>Atualize as configurações deste processo.</p>
@@ -1429,17 +1417,14 @@
           {% if settings_has_process_fields %}
 
           <div id="settings-tab-campos-config" class="process-edit-pane {% if settings_edit_active_tab == 'campos-config' %}active{% endif %}" data-process-edit-pane="campos-config">
-            <div class="admin-subsection process-fields-config-panel-v1" id="settings-process-fields-config-card">
-              <h3>Configuração dos campos</h3>
-
-                            <p class="muted process-tab-description-v1">Defina quais campos ficam visíveis no processo e a ordem de exibição.</p>
+            <div class="process-fields-config-panel-v1" id="settings-process-fields-config-card">
 {% if settings_owner_fields_enabled %}
               {% if settings_process_select_options or settings_process_header_options %}
               <form method="post" action="/settings/menu/process-fields" data-process-fields-config-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div class="configurable-items-manager-v1 process-fields-config-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-fields-config-legacy-container>
@@ -1567,14 +1552,12 @@
           </div>
           {% if settings_owner_fields_enabled %}
           <div id="settings-tab-campos-quantidade" class="process-edit-pane {% if settings_edit_active_tab == 'campos-quantidade' %}active{% endif %}" data-process-edit-pane="campos-quantidade">
-            <div class="admin-subsection process-quantity-fields-panel-v1" id="settings-process-quantity-fields-card">
-              <h3>Campos Quantidade</h3>
-              <p class="muted process-tab-description-v1">Configure regras onde um campo numérico controla quantos blocos de outros campos serão exibidos no processo.</p>
+            <div class="process-quantity-fields-panel-v1" id="settings-process-quantity-fields-card">
               <form method="post" action="/settings/menu/process-quantity-fields" data-process-quantity-fields-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div class="configurable-items-manager-v1 process-quantity-fields-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-quantity-fields-legacy-container>
@@ -1583,6 +1566,7 @@
                       <input type="hidden" name="quantity_rule_key" value="{{ quantity_rule.key }}" disabled>
                       <input type="hidden" name="quantity_rule_label" value="{{ quantity_rule.label }}" disabled>
                       <input type="hidden" name="quantity_field_key" value="{{ quantity_rule.quantity_field_key }}" disabled>
+                      <input type="hidden" name="quantity_interaction_mode" value="{{ quantity_rule.interaction_mode|default('quantity') }}" disabled>
                       <input type="hidden" name="quantity_repeated_field_keys_json" value='{{ quantity_rule.repeated_field_keys|default([])|tojson }}' disabled>
                       <input type="hidden" name="quantity_header_key" value="{{ quantity_rule.header_key|default('') }}" disabled>
                       <input type="hidden" name="quantity_max_items" value="{{ quantity_rule.max_items|default(10) }}" disabled>
@@ -1612,6 +1596,14 @@
                             <option value="{{ field.key }}">{{ field.label }}</option>
                             {% endif %}
                           {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field">
+                        <label for="process-quantity-editor-interaction-mode">Modo de interação</label>
+                        <select id="process-quantity-editor-interaction-mode" data-process-quantity-editor-interaction-mode>
+                          <option value="quantity">Quantidade</option>
+                          <option value="dynamic_list">Lista dinâmica</option>
                         </select>
                       </div>
 
@@ -1708,15 +1700,14 @@
           </div>
 
           <div id="settings-tab-lista" class="process-edit-pane {% if settings_edit_active_tab == 'lista' %}active{% endif %}" data-process-edit-pane="lista">
-            <div class="admin-subsection process-lists-panel-v8" id="settings-process-lists-card">
-              <h3>Listas reutilizáveis</h3>
-              <p class="muted process-tab-description-v1">Crie e gira listas para utilizar em campos do tipo Lista.</p>
+            <div class="process-lists-panel-v8" id="settings-process-lists-card">
               <form method="post" action="/settings/menu/process-lists" data-process-lists-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
                 <input type="hidden" name="process_list_columns_configured" value="0">
+                <input type="hidden" name="process_lists_configured" value="0">
 
                 <div class="configurable-items-manager-v1 process-lists-manager-v1" data-process-list-reusable-manager data-entity-number="{{ selected_entity_number }}">
                   <div class="configurable-items-hidden-v1" data-process-lists-legacy-container>
@@ -1727,6 +1718,7 @@
                       <input type="hidden" name="process_list_label" value="{{ process_list.label }}" disabled>
                       <input type="hidden" name="process_list_field_type" value="{{ process_list.field_type|default('manual') }}" disabled>
                       <input type="hidden" name="process_list_items_csv" value="{{ process_list.items_csv }}" disabled>
+                      <input type="hidden" name="process_list_source_session_key" value="{{ process_list.source_session_key|default(process_list.source_sidebar_section_key|default('')) }}" disabled>
                       <input type="hidden" name="process_list_source_menu_key" value="{{ process_list.source_menu_key|default('') }}" disabled>
                       <input type="hidden" name="process_list_source_subprocess_key" value="{{ process_list.source_subprocess_key|default('') }}" disabled>
                       <input type="hidden" name="process_list_status" value="{{ process_list.status|default('ativo') }}" disabled>
@@ -1736,11 +1728,15 @@
 
                   <div data-process-lists-hidden-container></div>
 
+                  <script type="application/json" data-process-list-source-sessions>
+                    {{ active_sidebar_sections|default([])|tojson }}
+                  </script>
+
                   <script type="application/json" data-process-list-source-subprocess-map>
                     {{ process_list_source_subprocess_map|default({})|tojson }}
                   </script>
 
-                  <section class="card admin-subprocess-form-card-v1" id="settings-process-lists-form-card">
+                  {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1 process-lists-editor-v1">
                     <div data-process-list-reusable-editor-block class="configurable-items-editor-grid-v1 process-lists-editor-grid-v1">
                       <input type="hidden" data-process-list-editor-key>
@@ -1763,6 +1759,21 @@
                         </select>
                       </div>
 
+                      <div class="field" data-process-list-editor-session-wrapper hidden>
+                        <label for="process-list-editor-source-session">Sessão</label>
+                        <select
+                          id="process-list-editor-source-session"
+                          data-process-list-editor-source-session
+                          disabled
+                        >
+                          <option value="">Selecione a sessão</option>
+                          <option value="{{ process_list_all_sessions_key|default('all_sessions') }}">{{ process_list_all_sessions_label|default('Todas as sessões') }}</option>
+                          {% for source_session in active_sidebar_sections|default([]) %}
+                          <option value="{{ source_session.key }}">{{ source_session.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
                       <div class="field" data-process-list-editor-items-wrapper>
                         <label for="process-list-editor-items">Conteúdo da lista</label>
                         <input
@@ -1781,7 +1792,11 @@
                         >
                           <option value="">Selecione o menu</option>
                           {% for source_menu in process_list_source_menus|default([]) %}
-                          <option value="{{ source_menu.menu_key }}">{{ source_menu.menu_label }}</option>
+                          <option
+                            value="{{ source_menu.menu_key }}"
+                            data-process-list-source-session-key="{{ source_menu.sidebar_section_key|default('') }}"
+                            data-process-list-source-session-label="{{ source_menu.sidebar_section_label|default('') }}"
+                          >{{ source_menu.menu_label }}</option>
                           {% endfor %}
                         </select>
                       </div>
@@ -1837,7 +1852,7 @@
                       </div>
                     </div>
                   </div>
-                </section>
+                  {% endcall %}
 
                 {% set lists_search_widget %}
                   <label class="appgenesis-card-search-v1">
@@ -1851,18 +1866,18 @@
                   </label>
                   <span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-lists-total-label>0 listas</span>
                 {% endset %}
-                {% call render_configurable_list_card('settings-process-lists-active-card', 'Listas ativas', head_extra=lists_search_widget) %}
+                {% call render_configurable_list_card('settings-process-lists-active-card', 'Listas ativas', '+ Criar lista', "[data-process-list-reusable-manager]", head_extra=lists_search_widget) %}
                   <div class="configurable-items-table-wrap-v1">
                     <table class="configurable-items-table-v1 process-lists-table-v1" data-process-lists-table>
                       <thead>
                         <tr>
-                          <th>Nome da lista</th>
-                          <th>Tipo de campo</th>
-                          <th>Conteúdo da lista</th>
-                          <th>Menu</th>
-                          <th>Subprocesso</th>
-                          <th>Entidade</th>
-                          <th>Estado</th>
+                          <th data-configurable-always-visible="1" data-configurable-responsive-priority="100" data-responsive-key="label" data-responsive-priority="100" data-always-visible="1">Nome da lista</th>
+                          <th data-configurable-responsive-priority="50" data-responsive-key="field_type" data-responsive-priority="50">Tipo de campo</th>
+                          <th data-configurable-responsive-priority="10" data-responsive-key="itemsCsv" data-responsive-priority="10">Conteúdo da lista</th>
+                          <th data-configurable-responsive-priority="40" data-responsive-key="sourceMenuKey" data-responsive-priority="40">Menu</th>
+                          <th data-configurable-responsive-priority="30" data-responsive-key="sourceSubprocessKey" data-responsive-priority="30">Subprocesso</th>
+                          <th data-configurable-responsive-priority="20" data-responsive-key="entidade" data-responsive-priority="20">Entidade</th>
+                          <th data-configurable-always-visible="1" data-configurable-responsive-priority="90" data-responsive-key="status" data-responsive-priority="90" data-always-visible="1">Estado</th>
                           <th class="configurable-items-actions-col-v1">Ações</th>
                         </tr>
                       </thead>
@@ -1879,18 +1894,18 @@
                   {{ render_configurable_items_pagination_footer("data-process-lists-page-size", "data-process-lists-pagination") }}
                 {% endcall %}
 
-                {% call render_configurable_list_card('settings-process-lists-inactive-card', 'Listas inativas') %}
+                {% call render_configurable_list_card('settings-process-lists-inactive-card', 'Listas inativas', none, none, "", '<span class="configurable-items-total-v1 configurable-items-hidden-v1" data-process-lists-inactive-total-label>0 listas inativas</span>') %}
                   <div class="configurable-items-table-wrap-v1">
                     <table class="configurable-items-table-v1 process-lists-table-v1" data-process-lists-inactive-table>
                       <thead>
                         <tr>
-                          <th>Nome da lista</th>
-                          <th>Tipo de campo</th>
-                          <th>Conteúdo da lista</th>
-                          <th>Menu</th>
-                          <th>Subprocesso</th>
-                          <th>Entidade</th>
-                          <th>Estado</th>
+                          <th data-configurable-always-visible="1" data-configurable-responsive-priority="100" data-responsive-key="label" data-responsive-priority="100" data-always-visible="1">Nome da lista</th>
+                          <th data-configurable-responsive-priority="50" data-responsive-key="field_type" data-responsive-priority="50">Tipo de campo</th>
+                          <th data-configurable-responsive-priority="10" data-responsive-key="itemsCsv" data-responsive-priority="10">Conteúdo da lista</th>
+                          <th data-configurable-responsive-priority="40" data-responsive-key="sourceMenuKey" data-responsive-priority="40">Menu</th>
+                          <th data-configurable-responsive-priority="30" data-responsive-key="sourceSubprocessKey" data-responsive-priority="30">Subprocesso</th>
+                          <th data-configurable-responsive-priority="20" data-responsive-key="entidade" data-responsive-priority="20">Entidade</th>
+                          <th data-configurable-always-visible="1" data-configurable-responsive-priority="90" data-responsive-key="status" data-responsive-priority="90" data-always-visible="1">Estado</th>
                           <th class="configurable-items-actions-col-v1">Ações</th>
                         </tr>
                       </thead>
@@ -1903,6 +1918,8 @@
                     data-process-lists-inactive-empty
                     style="display: none;"
                   >Sem listas inativas.</p>
+
+                  {{ render_configurable_items_pagination_footer("data-process-lists-inactive-page-size", "data-process-lists-inactive-pagination") }}
                 {% endcall %}
                 </div>
               </form>
@@ -1910,14 +1927,12 @@
           </div>
 
           <div id="settings-tab-campos-subsequentes" class="process-edit-pane {% if settings_edit_active_tab == 'campos-subsequentes' %}active{% endif %}" data-process-edit-pane="campos-subsequentes">
-            <div class="admin-subsection process-subsequent-fields-panel-v1" id="settings-process-subsequent-fields-card">
-              <h3>Campos Subsequentes</h3>
-                            <p class="muted process-tab-description-v1">Configure campos que aparecem conforme a resposta de outro campo.</p>
+            <div class="process-subsequent-fields-panel-v1" id="settings-process-subsequent-fields-card">
 <form method="post" action="/settings/menu/process-subsequent-fields" data-process-subsequent-fields-manager-v1="1">
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div class="configurable-items-manager-v1 process-subsequent-fields-manager-v1">
                   <div class="configurable-items-hidden-v1" data-process-subsequent-fields-legacy-container>
@@ -2037,9 +2052,7 @@
             </div>
           </div>
 <div id="settings-tab-campos-adicionais" class="process-edit-pane {% if settings_edit_active_tab == 'campos-adicionais' %}active{% endif %}" data-process-edit-pane="campos-adicionais">
-            <div class="admin-subsection">
-<h3>Campos Adicionais</h3>
-                                          <p class="muted process-tab-description-v1">Crie, edite, ordene e remova campos adicionais exibidos neste processo.</p>
+            <div>
 <form
                 method="post"
                 action="/settings/menu/process-additional-fields"
@@ -2047,8 +2060,8 @@
               >
                 <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
                 <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
-                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
-                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <input type="hidden" name="redirect_target" value="#{{ settings_edit_exit_target }}">
+                <input type="hidden" name="return_url" value="{{ settings_edit_exit_url }}">
 
                 <div
                   id="process-additional-fields-builder-v3"
@@ -2089,7 +2102,12 @@
 
                   {% call render_configurable_form_card('data-configurable-form-card', 'data-configurable-form-title') %}
                   <div class="configurable-items-editor-v1">
-<div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                    <div data-additional-field-editor-block class="configurable-items-editor-grid-v1">
+                      <input
+                        type="hidden"
+                        data-additional-field-editor-key
+                        value=""
+                      >
                       <div class="field">
                         <label for="process-additional-field-editor-label">Nome do campo adicional</label>
                         <input
@@ -2133,63 +2151,26 @@
                         data-additional-field-list-source-wrap
                         style="display: none;"
                       >
-                        <label for="process-additional-field-editor-list-source-type">
-                          Fonte dos dados
-                          <span class="field-info-tooltip-v1" data-field-info-tooltip>
-                            <button
-                              type="button"
-                              class="field-info-trigger-v1"
-                              data-field-info-trigger
-                              aria-expanded="false"
-                              aria-describedby="process-additional-field-editor-list-source-type-info"
-                              aria-label="Ajuda sobre Fonte dos dados"
-                            >
-                              <svg class="field-info-icon-v1" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"></circle>
-                                <line x1="12" y1="11" x2="12" y2="16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line>
-                                <circle cx="12" cy="7.6" r="1.15" fill="currentColor" stroke="none"></circle>
-                              </svg>
-                            </button>
-                            <span
-                              class="field-info-panel-v1"
-                              id="process-additional-field-editor-list-source-type-info"
-                              role="tooltip"
-                            >
-                              <ul>
-                                <li><strong>Manual:</strong> opções escritas manualmente.</li>
-                                <li><strong>Menus ativos:</strong> carrega os menus/processos ativos do sistema.</li>
-                                <li><strong>Abas do processo selecionado:</strong> carrega automaticamente as abas/subprocessos do processo escolhido em outro campo. Exemplo: se o campo Processo for "Extrato", esta lista mostra as abas do Extrato.</li>
-                                <li><strong>Automática por registos:</strong> monta a lista com base em valores já registados.</li>
-                                <li><strong>Lista de outro campo:</strong> reutiliza a lista configurada noutro campo.</li>
-                              </ul>
-                            </span>
-                          </span>
-                        </label>
-                        <select
-                          id="process-additional-field-editor-list-source-type"
-                          data-additional-field-editor-list-source-type
-                        >
-                          <option value="manual">Manual</option>
-                          <option value="active_menus">Menus ativos</option>
-                          <option value="profile_menu_tabs">Abas do processo selecionado</option>
-                          <option value="automatic">Automática por registos</option>
-                          <option value="field_list">Lista de outro campo</option>
-                        </select>
-                      </div>
-
-                      <div
-                        class="field"
-                        id="process-additional-field-editor-list-field"
-                        data-additional-field-list-wrap
-                        style="display: none;"
-                      >
-                        <label for="process-additional-field-editor-manual-items">Lista manual</label>
+                        <label for="process-additional-field-editor-list-key">Nome da Lista</label>
                         <input
-                          id="process-additional-field-editor-manual-items"
-                          type="text"
-                          data-additional-field-editor-manual-items
-                          placeholder="Ex.: Criar, Editar, Eliminar, Visualizar"
+                          type="hidden"
+                          data-additional-field-editor-list-source-type
+                          value="manual"
                         >
+                        <input
+                          type="hidden"
+                          data-additional-field-editor-manual-items
+                          value=""
+                        >
+                        <select
+                          id="process-additional-field-editor-list-key"
+                          data-additional-field-editor-list-key
+                        >
+                          <option value="">Selecione a lista</option>
+                          {% for process_list in settings_edit_data.process_lists|default([]) %}
+                          <option value="{{ process_list.key }}">{{ process_list.label }}</option>
+                          {% endfor %}
+                        </select>
                       </div>
 
                       <div
@@ -2616,6 +2597,7 @@
       profilePersonalSections: {{ profile_personal_sections|tojson }},
       profilePersonalVisibleFields: {{ profile_personal_visible_fields|tojson }},
       profilePersonalFieldLabels: {{ profile_personal_field_labels|tojson }},
+      meuPerfil: {{ meu_perfil_bootstrap|default({}, true)|tojson }},
       initialProfileTab: {{ profile_tab|tojson }},
       initialMenu: {{ initial_menu|tojson }},
       initialMenuTarget: {{ initial_menu_target|tojson }},
@@ -2627,6 +2609,9 @@
       settingsEditKey: {{ settings_edit_key|tojson }},
       sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
       visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
+      processListSourceMenus: {{ process_list_source_menus|tojson }},
+      processListAllSessionsKey: {{ process_list_all_sessions_key|tojson }},
+      processListAllSessionsLabel: {{ process_list_all_sessions_label|tojson }},
       menuProcessValuesMap: {{ menu_process_values_map|tojson }},
       menuProcessHistoryMap: {{ menu_process_history_map|tojson }},
       menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
@@ -2635,27 +2620,31 @@
   <script src="/static/js/modules/debug_flicker_v1.js?v=20260627-flicker-debug-v1"></script>
   <script src="/static/js/modules/appgenesis_dialog_v1.js?v=20260704-dialog-v1"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v=20260629-list-source-resolver-v1"></script>
-  <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260712-pagination-footer-fix-v1"></script>
-  <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260712-pagination-footer-fix-v1"></script>
-  <script src="/static/js/modules/process_lists_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
+  <script src="/static/js/modules/meu_perfil_v1.js?v=20260719-meu-perfil-domain-v1"></script>
+<script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260717-process-lists-actions-helper-v2"></script>
+   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20260715-process-additional-fields-list-select-v2"></script>
+      <script src="/static/js/modules/process_lists_manager_v1.js?v=20260717-process-lists-responsive-partition-v5"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260722-dynamic-aggregates-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260712-pagination-footer-fix-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260708-invite-link-header-v1"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260717-process-lists-actions-helper-v1"></script>
   <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
   <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
   <script src="/static/js/modules/process_reference_registry_v1.js?v=20260707-process-reference-stage8-v1"></script>
   <script src="/static/js/modules/admin_target_registry_v1.js?v=20260707-admin-target-registry-v1"></script>
-  <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260707-process-menu-config-stage3-v1"></script>
+  <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260721-meu-perfil-sections-v2"></script>
   <script src="/static/js/modules/process_navigation_state_v1.js?v=20260707-process-navigation-stage4-v1"></script>
-  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260707-process-cards-stage5-v1"></script>
+  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260715-process-cards-stage5-v2"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260708-breadcrumb-section-v1"></script>
-  <script src="/static/js/new_user.js?v=20260708-invite-link-header-v1"></script>
+  <script src="/static/js/modules/profile_field_registry_v1.js?v=20260714-profile-field-registry-v1"></script>
+  <script src="/static/js/modules/process_quantity_runtime_v1.js?v=20260722-dynamic-aggregates-v1"></script>
+  <script src="/static/js/modules/process_subsequent_visibility_runtime_v1.js?v=20260714-process-subsequent-visibility-v2"></script>
+  <script src="/static/js/new_user.js?v=20260722-dynamic-aggregates-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
-<script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
+  <script src="/static/js/modules/profile_field_order.js?v=20260714-profile-field-registry-v1"></script>
   <script src="/static/js/modules/return_after_save.js?v=20260626-ignore-sessoes-save-v1"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>

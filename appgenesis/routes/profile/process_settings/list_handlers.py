@@ -1,10 +1,15 @@
-from fastapi import Request, Form, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+import logging
+import os
+import time
+
+from fastapi import Body, Request, Form, status
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from appgenesis.routes.profile.router import router
 
 from appgenesis.menu_settings import (
     resolve_menu_key_alias,
+    delete_sidebar_menu_process_list,
     update_sidebar_menu_process_lists,
 )
 from appgenesis.core import SessionLocal
@@ -18,6 +23,58 @@ from appgenesis.routes.profile.process_settings.common import (
 )
 
 
+_PROCESS_LISTS_PERF_LOGGER = logging.getLogger(__name__ + ".perf")
+_PROCESS_LISTS_DELETE_PERF_LOGGER = logging.getLogger(__name__ + ".delete_perf")
+
+
+def _process_lists_perf_logs_enabled_v1() -> bool:
+    raw_flag = os.environ.get("APPGENESIS_PERF_LOGS", "")
+    clean_flag = str(raw_flag or "").strip().lower()
+    return clean_flag in {"1", "true", "yes"}
+
+
+def _log_process_lists_perf_v1(
+    *,
+    total_ms: float,
+    auth_ms: float,
+    normalize_ms: float,
+    db_ms: float,
+    lists_count: int,
+) -> None:
+    if not _process_lists_perf_logs_enabled_v1():
+        return
+
+    _PROCESS_LISTS_PERF_LOGGER.info(
+        "[PERF][ProcessListsSave] total=%sms auth=%sms normalize=%sms db=%sms lists=%s",
+        int(round(total_ms)),
+        int(round(auth_ms)),
+        int(round(normalize_ms)),
+        int(round(db_ms)),
+        int(lists_count),
+    )
+
+
+def _log_process_lists_delete_perf_v1(
+    *,
+    total_ms: float,
+    auth_ms: float,
+    load_ms: float,
+    db_ms: float,
+    result: str,
+) -> None:
+    if not _process_lists_perf_logs_enabled_v1():
+      return
+
+    _PROCESS_LISTS_DELETE_PERF_LOGGER.info(
+        "[PERF][ProcessListDelete] total=%sms auth=%sms load=%sms db=%sms result=%s",
+        int(round(total_ms)),
+        int(round(auth_ms)),
+        int(round(load_ms)),
+        int(round(db_ms)),
+        result,
+    )
+
+
 @router.post("/settings/menu/process-lists", response_class=HTMLResponse)
 def edit_sidebar_menu_process_lists_handler(
     request: Request,
@@ -26,6 +83,7 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_label: list[str] = Form(default=[]),
     process_list_items_csv: list[str] = Form(default=[]),
     process_list_field_type: list[str] = Form(default=[]),
+    process_list_source_session_key: list[str] = Form(default=[]),
     process_list_source_menu_key: list[str] = Form(default=[]),
     process_list_source_subprocess_key: list[str] = Form(default=[]),
     process_list_status: list[str] = Form(default=[]),
@@ -36,13 +94,21 @@ def edit_sidebar_menu_process_lists_handler(
     process_list_column_always_visible: list[str] = Form(default=[]),
     process_list_column_responsive_priority: list[str] = Form(default=[]),
     process_list_columns_configured: str = Form(""),
+    process_lists_configured: str = Form(""),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
     return_url: str = Form(""),
 ) -> RedirectResponse:
+    perf_total_start = time.perf_counter()
+    perf_auth_start = perf_total_start
+    perf_auth_ms = 0.0
+    perf_normalize_ms = 0.0
+    perf_db_ms = 0.0
     clean_menu_key = resolve_menu_key_alias(menu_key)
     if not isinstance(process_list_source_menu_key, list):
         process_list_source_menu_key = []
+    if not isinstance(process_list_source_session_key, list):
+        process_list_source_session_key = []
     if not isinstance(process_list_source_subprocess_key, list):
         process_list_source_subprocess_key = []
 
@@ -94,11 +160,15 @@ def edit_sidebar_menu_process_lists_handler(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
+        perf_auth_ms = time.perf_counter() - perf_auth_start
+        perf_normalize_start = time.perf_counter()
+
         rows_count = max(
             len(process_list_key),
             len(process_list_label),
             len(process_list_items_csv),
             len(process_list_field_type),
+            len(process_list_source_session_key),
             len(process_list_source_menu_key),
             len(process_list_source_subprocess_key),
             len(process_list_status),
@@ -125,6 +195,11 @@ def edit_sidebar_menu_process_lists_handler(
             source_menu_key = (
                 process_list_source_menu_key[row_index]
                 if row_index < len(process_list_source_menu_key)
+                else ""
+            )
+            source_session_key = (
+                process_list_source_session_key[row_index]
+                if row_index < len(process_list_source_session_key)
                 else ""
             )
             source_subprocess_key = (
@@ -164,11 +239,14 @@ def edit_sidebar_menu_process_lists_handler(
                     "label": label,
                     "field_type": ft,
                     "items_csv": items_csv if ft == "manual" else "",
+                    "source_session_key": source_session_key if ft == "automatic" else "",
                     "source_menu_key": source_menu_key if ft == "automatic" else "",
                     "source_subprocess_key": source_subprocess_key if ft == "automatic" else "",
                     "status": list_status,
                 }
             )
+
+        perf_normalize_ms = time.perf_counter() - perf_normalize_start
 
         column_rows_count = max(
             len(process_list_column_key),
@@ -206,14 +284,24 @@ def edit_sidebar_menu_process_lists_handler(
                 }
             )
 
+        perf_db_start = time.perf_counter()
         ok, error_message = update_sidebar_menu_process_lists(
             session=session,
             menu_key=clean_menu_key,
             raw_lists=payload_lists,
+            process_lists_configured=process_lists_configured,
             raw_columns=payload_columns
             if str(process_list_columns_configured or "").strip() == "1"
             else None,
             active_entity_id=selected_entity_id,
+        )
+        perf_db_ms = time.perf_counter() - perf_db_start
+        _log_process_lists_perf_v1(
+            total_ms=time.perf_counter() - perf_total_start,
+            auth_ms=perf_auth_ms,
+            normalize_ms=perf_normalize_ms,
+            db_ms=perf_db_ms,
+            lists_count=len(payload_lists),
         )
 
         if not ok:
@@ -240,4 +328,117 @@ def edit_sidebar_menu_process_lists_handler(
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+
+@router.post("/settings/menu/process-lists/delete", response_class=JSONResponse)
+def delete_sidebar_menu_process_list_handler(
+    request: Request,
+    menu_key: str = Body(...),
+    list_key: str = Body(...),
+) -> JSONResponse:
+    perf_total_start = time.perf_counter()
+    perf_auth_start = perf_total_start
+    perf_auth_ms = 0.0
+    perf_load_ms = 0.0
+    perf_db_ms = 0.0
+    clean_menu_key = resolve_menu_key_alias(menu_key)
+    clean_list_key = str(list_key or "").strip()
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+
+        if current_user is None:
+            _log_process_lists_delete_perf_v1(
+                total_ms=time.perf_counter() - perf_total_start,
+                auth_ms=perf_auth_ms,
+                load_ms=perf_load_ms,
+                db_ms=perf_db_ms,
+                result="error",
+            )
+            return JSONResponse(
+                {"success": False, "message": "Efetue login para continuar."},
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        if not is_admin_user(session, current_user["id"], current_user["login_email"]):
+            perf_auth_ms = time.perf_counter() - perf_auth_start
+            _log_process_lists_delete_perf_v1(
+                total_ms=time.perf_counter() - perf_total_start,
+                auth_ms=perf_auth_ms,
+                load_ms=perf_load_ms,
+                db_ms=perf_db_ms,
+                result="error",
+            )
+            return JSONResponse(
+                {"success": False, "message": "Apenas administradores podem eliminar listas do processo."},
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        selected_entity_id = get_session_entity_id(request)
+        permissions = get_user_entity_permissions(
+            session,
+            current_user["id"],
+            current_user["login_email"],
+            selected_entity_id,
+        )
+
+        if not permissions.get(
+            "can_manage_tenant_structure",
+            permissions.get("can_manage_all_entities", False),
+        ):
+            perf_auth_ms = time.perf_counter() - perf_auth_start
+            _log_process_lists_delete_perf_v1(
+                total_ms=time.perf_counter() - perf_total_start,
+                auth_ms=perf_auth_ms,
+                load_ms=perf_load_ms,
+                db_ms=perf_db_ms,
+                result="error",
+            )
+            return JSONResponse(
+                {"success": False, "message": "Apenas Owner pode eliminar listas do processo."},
+                status_code=status.HTTP_403_FORBIDDEN,
+            )
+
+        perf_auth_ms = time.perf_counter() - perf_auth_start
+        perf_load_start = time.perf_counter()
+        perf_load_ms = time.perf_counter() - perf_load_start
+
+        perf_db_start = time.perf_counter()
+        ok, error_message, deleted_list_key = delete_sidebar_menu_process_list(
+            session=session,
+            menu_key=clean_menu_key,
+            list_key=clean_list_key,
+            active_entity_id=selected_entity_id,
+        )
+        perf_db_ms = time.perf_counter() - perf_db_start
+        result = "success" if ok else "error"
+        _log_process_lists_delete_perf_v1(
+            total_ms=time.perf_counter() - perf_total_start,
+            auth_ms=perf_auth_ms,
+            load_ms=perf_load_ms,
+            db_ms=perf_db_ms,
+            result=result,
+        )
+
+        if not ok:
+            status_code = status.HTTP_400_BAD_REQUEST
+            if error_message == "Menu não encontrado.":
+                status_code = status.HTTP_404_NOT_FOUND
+            elif error_message == "Lista não encontrada.":
+                status_code = status.HTTP_404_NOT_FOUND
+            elif error_message == "Só é possível eliminar listas inativas.":
+                status_code = status.HTTP_409_CONFLICT
+            return JSONResponse(
+                {"success": False, "message": error_message or "Não foi possível eliminar a lista."},
+                status_code=status_code,
+            )
+
+        return JSONResponse(
+            {
+                "success": True,
+                "message": "Lista eliminada com sucesso.",
+                "list_key": deleted_list_key,
+            },
+            status_code=status.HTTP_200_OK,
         )
