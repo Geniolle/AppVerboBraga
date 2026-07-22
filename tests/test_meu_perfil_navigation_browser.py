@@ -231,8 +231,154 @@ def test_meu_perfil_browser_navigation_includes_quantity_only_section_v1() -> No
         assert "custom_" not in breadcrumb_before["current"]
         assert "custom_" not in breadcrumb_before["tab"]
 
+        def _visible_labels_v1() -> list[str]:
+            return driver.execute_script(
+                """
+                const card = document.getElementById('perfil-pessoal-card');
+                return Array.from(card.querySelectorAll('.personal-item, .field'))
+                  .filter((el) => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && !el.hidden;
+                  })
+                  .map((el) => String(el.querySelector('.personal-label')?.textContent || el.querySelector('label')?.textContent || '').trim())
+                  .filter(Boolean);
+                """
+            )
+
+        def _visible_quantity_hosts_v1() -> list[str]:
+            return driver.execute_script(
+                """
+                const card = document.getElementById('perfil-pessoal-card');
+                return Array.from(card.querySelectorAll('[data-profile-quantity-rule-key]'))
+                  .filter((el) => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && !el.hidden;
+                  })
+                  .map((el) => String(el.getAttribute('data-profile-quantity-rule-key') || '').trim())
+                  .filter(Boolean);
+                """
+            )
+
+        def _visible_quantity_controls_v1() -> list[str]:
+            return driver.execute_script(
+                """
+                const card = document.getElementById('perfil-pessoal-card');
+                return Array.from(card.querySelectorAll("[name='custom_field__custom_quantos_filhos_tens']"))
+                  .filter((el) => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && !el.hidden;
+                  })
+                  .map((el) => String(el.getAttribute('name') || '').trim())
+                  .filter(Boolean);
+                """
+            )
+
+        personal_link = driver.find_element(By.CSS_SELECTOR, ".submenu-item[data-profile-section='custom_dados_pessoais']")
+        morada_link = driver.find_element(By.CSS_SELECTOR, ".submenu-item[data-profile-section='custom_dados_de_morada']")
         agregados_link = driver.find_element(By.CSS_SELECTOR, ".submenu-item[data-profile-section='custom_dados_de_agregados']")
-        assert str(agregados_link.get_attribute("data-profile-section") or "").strip() == "custom_dados_de_agregados"
+
+        personal_link.click()
+        wait.until(
+            lambda drv: drv.execute_script(
+                """
+                return String(document.querySelector('[data-meu-perfil-section-input]')?.value || '').trim();
+                """
+            )
+            == "custom_dados_pessoais"
+        )
+        personal_visible = _visible_labels_v1()
+        assert "Nome" in personal_visible
+        assert "Email" in personal_visible
+        assert "Telefone" in personal_visible
+        assert "País" in personal_visible
+        assert "Estado civil" in personal_visible
+        assert "Tem filhos" in personal_visible
+        assert "Canais de comunicação instantânea" in personal_visible
+
+        morada_link.click()
+        wait.until(
+            lambda drv: drv.execute_script(
+                """
+                return String(document.querySelector('[data-meu-perfil-section-input]')?.value || '').trim();
+                """
+            )
+            == "custom_dados_de_morada"
+        )
+        morada_visible = _visible_labels_v1()
+        assert "Nome" not in morada_visible
+        assert "Email" not in morada_visible
+        assert "Telefone" not in morada_visible
+        assert "País" not in morada_visible
+        assert "Morada" in morada_visible
+        assert "Código postal" in morada_visible
+
+        driver.execute_script(
+            """
+            const estadoCivil = document.querySelector("[name='custom_estado_civil']");
+            const temFilhos = document.querySelector("[name='custom_tem_filhos']");
+            const quantidadeFilhos = document.querySelector("[name='custom_field__custom_quantos_filhos_tens']");
+            if (estadoCivil) {
+              estadoCivil.value = "Casado";
+              estadoCivil.dispatchEvent(new Event("input", { bubbles: true }));
+              estadoCivil.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            if (temFilhos) {
+              temFilhos.value = "Sim";
+              temFilhos.dispatchEvent(new Event("input", { bubbles: true }));
+              temFilhos.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            if (quantidadeFilhos) {
+              quantidadeFilhos.value = "2";
+              quantidadeFilhos.dispatchEvent(new Event("input", { bubbles: true }));
+              quantidadeFilhos.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            if (typeof window.applyMeuPerfilProcessSubsequentVisibility === "function") {
+              window.applyMeuPerfilProcessSubsequentVisibility();
+            }
+            """
+        )
+        wait.until(
+            lambda drv: drv.execute_script(
+                """
+                const link = document.querySelector(".submenu-item[data-profile-section='custom_dados_de_agregados']");
+                if (!link) {
+                  return false;
+                }
+                const style = window.getComputedStyle(link);
+                return style.display !== 'none' && style.visibility !== 'hidden';
+                """
+            )
+        )
+        agregados_link.click()
+        wait.until(
+            lambda drv: drv.execute_script(
+                """
+                return String(document.querySelector('[data-meu-perfil-section-input]')?.value || '').trim();
+                """
+            )
+            == "custom_dados_de_agregados"
+        )
+        agregados_visible = _visible_labels_v1()
+        quantity_hosts = _visible_quantity_hosts_v1()
+        quantity_controls = _visible_quantity_controls_v1()
+        assert "Nome" not in agregados_visible
+        assert "Email" not in agregados_visible
+        assert "Telefone" not in agregados_visible
+        assert "País" not in agregados_visible
+        assert quantity_controls == ["custom_field__custom_quantos_filhos_tens"]
+
+        personal_link.click()
+        wait.until(
+            lambda drv: drv.execute_script(
+                """
+                return String(document.querySelector('[data-meu-perfil-section-input]')?.value || '').trim();
+                """
+            )
+            == "custom_dados_pessoais"
+        )
+        personal_visible_again = _visible_labels_v1()
+        assert "Nome" in personal_visible_again
+        assert "Email" in personal_visible_again
         assert not _browser_console_errors_v1(driver)
     finally:
         driver.quit()

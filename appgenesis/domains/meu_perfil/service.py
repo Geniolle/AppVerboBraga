@@ -148,6 +148,22 @@ def build_meu_perfil_personal_sections_state_v1(
         for section in clean_resolved_sections
         if str(section["key"] or "").strip()
     }
+    resolved_section_meta_by_key = {
+        str(section["key"] or "").strip().lower(): {
+            "field_keys": [
+                str(raw_key or "").strip().lower()
+                for raw_key in (section.get("field_keys") or [])
+                if str(raw_key or "").strip()
+            ],
+            "quantity_rule_keys": [
+                str(raw_key or "").strip().lower()
+                for raw_key in (section.get("quantity_rule_keys") or [])
+                if str(raw_key or "").strip()
+            ],
+        }
+        for section in clean_resolved_sections
+        if str(section["key"] or "").strip()
+    }
 
     personal_sections: list[dict[str, Any]] = []
     personal_section_order: list[str] = []
@@ -180,6 +196,12 @@ def build_meu_perfil_personal_sections_state_v1(
                 "label": canonical_section_label
                 or fallback_section_label
                 or "Aba",
+                "field_keys": list(
+                    resolved_section_meta_by_key.get(clean_section_key, {}).get("field_keys") or []
+                ),
+                "quantity_rule_keys": list(
+                    resolved_section_meta_by_key.get(clean_section_key, {}).get("quantity_rule_keys") or []
+                ),
                 "order": len(personal_sections) + 1,
                 "is_visible": True,
                 "is_active": True,

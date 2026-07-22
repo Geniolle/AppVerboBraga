@@ -628,6 +628,11 @@ def get_page_data(
         quantity_repeated_field_keys = get_menu_process_quantity_repeated_field_keys(
             sidebar_item.get("process_quantity_fields")
         )
+        quantity_rules = [
+            quantity_rule
+            for quantity_rule in (sidebar_item.get("process_quantity_fields") or [])
+            if isinstance(quantity_rule, dict)
+        ]
         process_lists_by_key = {
             str(item.get("key") or "").strip().lower(): list(item.get("items") or [])
             for item in (sidebar_item.get("process_lists") or [])
@@ -678,6 +683,17 @@ def get_page_data(
                 )
                 mapped_header_map[resolved_builtin_key or clean_field_key] = clean_header_key
             profile_personal_field_header_map = mapped_header_map
+        for quantity_rule in quantity_rules:
+            quantity_field_key = str(
+                quantity_rule.get("quantity_field_key") or quantity_rule.get("quantityFieldKey") or ""
+            ).strip().lower()
+            quantity_header_key = str(
+                quantity_rule.get("header_key") or quantity_rule.get("headerKey") or ""
+            ).strip().lower()
+            if not quantity_field_key:
+                continue
+            if quantity_header_key and quantity_field_key not in profile_personal_field_header_map:
+                profile_personal_field_header_map[quantity_field_key] = quantity_header_key
         raw_visible_rows = (
             sidebar_item.get("process_visible_field_rows")
             if isinstance(sidebar_item.get("process_visible_field_rows"), list)
@@ -822,6 +838,12 @@ def get_page_data(
                 field_header_map=profile_personal_field_header_map,
             )
             profile_personal_visible_fields = visible_fields
+            for quantity_rule in quantity_rules:
+                quantity_field_key = str(
+                    quantity_rule.get("quantity_field_key") or quantity_rule.get("quantityFieldKey") or ""
+                ).strip().lower()
+                if quantity_field_key and quantity_field_key not in profile_personal_visible_fields:
+                    profile_personal_visible_fields.append(quantity_field_key)
         elif profile_personal_field_labels:
             profile_personal_visible_fields = [
                 field_key

@@ -3989,16 +3989,12 @@ function resolveMeuPerfilVisibleSectionKeyV1(personalCardEl, sectionKey) {
     return hasVisibleMeuPerfilSectionContentV1(personalCardEl, paneSection);
   });
 
-  if (normalizedPreferredSection && visibleSections.includes(normalizedPreferredSection)) {
+  if (normalizedPreferredSection && orderedSections.includes(normalizedPreferredSection)) {
     return normalizedPreferredSection;
   }
 
   if (visibleSections.length) {
     return visibleSections[0];
-  }
-
-  if (normalizedPreferredSection && orderedSections.includes(normalizedPreferredSection)) {
-    return normalizedPreferredSection;
   }
 
   return orderedSections[0] || normalizedPreferredSection || "geral";
@@ -4036,7 +4032,11 @@ function resolveMeuPerfilVisibleSectionKeyV2(personalCardEl, sectionKey, hiddenS
     return hasVisibleMeuPerfilSectionContentV1(personalCardEl, paneSection);
   });
 
-  if (normalizedPreferredSection && visibleSections.includes(normalizedPreferredSection)) {
+  if (
+    normalizedPreferredSection &&
+    orderedSections.includes(normalizedPreferredSection) &&
+    !hiddenSet.has(normalizedPreferredSection)
+  ) {
     return {
       sectionKey: normalizedPreferredSection,
       hasVisibleSection: true
@@ -4047,6 +4047,13 @@ function resolveMeuPerfilVisibleSectionKeyV2(personalCardEl, sectionKey, hiddenS
     return {
       sectionKey: visibleSections[0],
       hasVisibleSection: true
+    };
+  }
+
+  if (normalizedPreferredSection && orderedSections.includes(normalizedPreferredSection)) {
+    return {
+      sectionKey: normalizedPreferredSection,
+      hasVisibleSection: false
     };
   }
 
@@ -4068,28 +4075,24 @@ function setupProfileProcessTabs() {
 
   function activateSection(sectionKey) {
     const normalizedSection = String(sectionKey || "").trim().toLowerCase() || "geral";
-    const availableSections = new Set(
-      Array.from(sectionPanes)
-        .map((paneEl) =>
-          String(paneEl.getAttribute("data-profile-section-pane") || "geral").trim().toLowerCase()
-        )
-        .filter((section) => !hiddenMeuPerfilSectionKeys.has(section))
-    );
-    const orderedAvailableSections = Array.from(availableSections);
-    const visibleResolution = resolveMeuPerfilVisibleSectionKeyV2(
-      personalCardEl,
-      normalizedSection,
-      hiddenMeuPerfilSectionKeys
-    );
-    const effectiveSection = visibleResolution.sectionKey || normalizedSection || "geral";
-    const forceVisibleFallback = !visibleResolution.hasVisibleSection && Boolean(effectiveSection);
+    const orderedSections = Array.from(sectionPanes).reduce((acc, paneEl) => {
+      const paneSection = String(
+        paneEl.getAttribute("data-profile-section-pane") || "geral"
+      ).trim().toLowerCase();
+      if (paneSection && !acc.includes(paneSection)) {
+        acc.push(paneSection);
+      }
+      return acc;
+    }, []);
+    const effectiveSection = orderedSections.includes(normalizedSection)
+      ? normalizedSection
+      : orderedSections[0] || normalizedSection || "geral";
 
     sectionPanes.forEach((paneEl) => {
       const paneSection = String(
         paneEl.getAttribute("data-profile-section-pane") || "geral"
       ).trim().toLowerCase();
-      const isFallbackSection = forceVisibleFallback && paneSection === effectiveSection;
-      paneEl.style.display = (!hiddenMeuPerfilSectionKeys.has(paneSection) || isFallbackSection) && paneSection === effectiveSection ? "" : "none";
+      paneEl.style.display = paneSection === effectiveSection ? "" : "none";
     });
     const sectionInputEl = personalCardEl.querySelector("[data-meu-perfil-section-input]");
     if (sectionInputEl) {
