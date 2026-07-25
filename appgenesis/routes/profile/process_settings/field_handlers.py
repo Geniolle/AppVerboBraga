@@ -192,10 +192,11 @@ def edit_sidebar_menu_process_fields_handler(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        success_redirect_url = _build_settings_redirect_url(
+        success_redirect_url = _build_settings_editor_stay_redirect_url_v1(
             success_message="Configuração dos campos atualizada com sucesso.",
             redirect_menu=redirect_menu,
-            redirect_target=redirect_target,
+            settings_edit_key=clean_menu_key,
+            settings_tab="campos-config",
             return_url=return_url,
         )
         _log_process_editor_flow_v1(

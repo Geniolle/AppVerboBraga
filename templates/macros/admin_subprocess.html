@@ -28,10 +28,12 @@
         readonly
       >
     {% else %}
+      {% set _field_input_type = "number" if field.field_type == "decimal" else field.field_type %}
       <input
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
-        type="{{ field.field_type }}"
+        type="{{ _field_input_type }}"
+        {% if field.field_type == "decimal" %}step="0.01" inputmode="decimal"{% endif %}
         value="{{ value }}"
         {% if field.required %}required{% endif %}
         {% if field.max_length %}maxlength="{{ field.max_length }}"{% endif %}
@@ -81,6 +83,8 @@
           id="{{ id_prefix }}_{{ field.key }}"
           name="process_field__{{ field.key }}"
           type="{{ _input_type }}"
+          {% if field.input_step|default("") %}step="{{ field.input_step }}"{% endif %}
+          {% if field.input_mode|default("") %}inputmode="{{ field.input_mode }}"{% endif %}
           value="{{ value }}"
           {% if field.required %}required{% endif %}
           {% if field.size %}maxlength="{{ field.size }}"{% endif %}

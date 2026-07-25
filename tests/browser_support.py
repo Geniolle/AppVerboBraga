@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import os
+import socket
+from urllib.parse import urlparse
 from typing import Any
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
+
+
+_ORIGINAL_CHROME_WEBDRIVER = webdriver.Chrome
 
 
 def _normalize_base_url_v1(raw_value: Any, fallback: str) -> str:
@@ -21,6 +26,11 @@ EXTERNAL_APP_BASE_URL = _normalize_base_url_v1(
     os.getenv("APP_EXTERNAL_BASE_URL"),
     "http://127.0.0.1:8000",
 )
+if urlparse(INTERNAL_APP_BASE_URL).hostname == "web":
+    try:
+        socket.gethostbyname("web")
+    except OSError:
+        INTERNAL_APP_BASE_URL = EXTERNAL_APP_BASE_URL
 SELENIUM_REMOTE_URL = str(os.getenv("SELENIUM_REMOTE_URL") or "").strip()
 
 
@@ -96,7 +106,7 @@ def build_browser_driver_v1(*args: Any, **kwargs: Any) -> BrowserDriverProxy:
             )
             return BrowserDriverProxy(remote_driver)
 
-        local_driver = webdriver.Chrome(*args, options=browser_options, **kwargs)
+        local_driver = _ORIGINAL_CHROME_WEBDRIVER(*args, options=browser_options, **kwargs)
         return BrowserDriverProxy(local_driver)
     except WebDriverException:
         raise

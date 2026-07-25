@@ -10,12 +10,13 @@
   //###################################################################################
 
   const ROOT_SELECTOR = "[data-process-additional-fields-manager-v3]";
-  const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "time", "flag", "header", "list"]);
+  const SUPPORTED_TYPES = new Set(["text", "number", "decimal", "email", "phone", "date", "time", "flag", "header", "list"]);
   const TEXTUAL_TYPES = new Set(["text", "number", "email", "phone"]);
 
   const TYPE_LABELS = {
     text: "Texto",
-    number: "Numero",
+    number: "Inteiro",
+    decimal: "Numérico (0,00)",
     email: "Email",
     phone: "Telefone",
     date: "Data",

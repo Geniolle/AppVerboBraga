@@ -79,6 +79,26 @@
     return document.querySelector(selector);
   }
 
+  function resolveElements_v1(root, selector) {
+    if (!selector) {
+      return [];
+    }
+
+    if (Array.isArray(selector)) {
+      return selector.filter((element) => element instanceof Element);
+    }
+
+    if (selector instanceof Element) {
+      return [selector];
+    }
+
+    if (root && typeof root.querySelectorAll === "function") {
+      return Array.from(root.querySelectorAll(selector));
+    }
+
+    return Array.from(document.querySelectorAll(selector));
+  }
+
   function createElement_v1(tagName, className, textContent) {
     const element = document.createElement(tagName);
 
@@ -518,6 +538,7 @@
       pageSize: resolveElement_v1(root, config.selectors.pageSize),
       hiddenContainer: resolveElement_v1(root, config.selectors.hiddenContainer),
       totalLabel: resolveElement_v1(root, config.selectors.totalLabel),
+      searchEls: resolveElements_v1(root, config.selectors.searchInput),
       searchEl: resolveElement_v1(root, config.selectors.searchInput),
       formCard: resolveElement_v1(root, config.selectors.formCard),
       formTitle: resolveElement_v1(root, config.selectors.formTitle)
@@ -1318,18 +1339,36 @@
   }
 
   function bindSearchInput_v1(manager) {
-    const searchEl = manager.elements.searchEl;
+    const searchEls = Array.isArray(manager.elements.searchEls) ? manager.elements.searchEls : [];
 
-    if (!searchEl || searchEl.dataset.boundSearchV1 === "1") {
+    if (!searchEls.length) {
       return;
     }
 
-    searchEl.dataset.boundSearchV1 = "1";
+    const syncSearchInputs = (value) => {
+      searchEls.forEach((searchInput) => {
+        if (!searchInput || searchInput.value === value) {
+          return;
+        }
+        searchInput.value = value;
+      });
+    };
 
-    searchEl.addEventListener("input", () => {
-      manager.state.searchQuery = searchEl.value || "";
-      manager.state.visibleCount = manager.state.pageSize;
-      manager.render();
+    searchEls.forEach((searchEl) => {
+      if (!searchEl || searchEl.dataset.boundSearchV1 === "1") {
+        return;
+      }
+
+      searchEl.dataset.boundSearchV1 = "1";
+      searchEl.value = manager.state.searchQuery || "";
+
+      searchEl.addEventListener("input", () => {
+        const nextQuery = searchEl.value || "";
+        manager.state.searchQuery = nextQuery;
+        manager.state.visibleCount = manager.state.pageSize;
+        syncSearchInputs(nextQuery);
+        manager.render();
+      });
     });
   }
 

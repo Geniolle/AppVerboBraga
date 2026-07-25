@@ -10,6 +10,7 @@ from appgenesis.domains.meu_perfil.service import (
     normalize_meu_perfil_tab_key_v1,
     resolve_meu_perfil_tab_target_v1,
 )
+from appgenesis.services.profile import get_hidden_process_targets_from_rules
 from appgenesis.services.process_settings.process_sections import resolve_process_sections_v1
 
 
@@ -191,6 +192,59 @@ def test_build_meu_perfil_personal_sections_state_v1_uses_resolved_sections_for_
         "custom_dados_de_agregados",
     }
     assert state["activePersonalSection"] == "custom_dados_pessoais"
+
+
+def test_get_hidden_process_targets_from_rules_keeps_target_visible_on_any_matching_rule() -> None:
+    hidden_targets = get_hidden_process_targets_from_rules(
+        [
+            {
+                "field_key": "custom_nome_do_conjuge",
+                "trigger_field": "custom_estado_civil",
+                "operator": "equals",
+                "trigger_value": "Casado",
+            },
+            {
+                "field_key": "custom_nome_do_conjuge",
+                "trigger_field": "custom_estado_civil",
+                "operator": "equals",
+                "trigger_value": "União de Facto",
+            },
+        ],
+        {"custom_estado_civil": "Casado"},
+    )
+
+    assert "custom_nome_do_conjuge" not in hidden_targets
+
+
+def test_get_hidden_process_targets_from_rules_keeps_section_visible_when_one_rule_matches() -> None:
+    hidden_targets = get_hidden_process_targets_from_rules(
+        [
+            {
+                "field_key": "custom_dados_de_agregados",
+                "trigger_field": "custom_estado_civil",
+                "operator": "equals",
+                "trigger_value": "Casado",
+            },
+            {
+                "field_key": "custom_dados_de_agregados",
+                "trigger_field": "custom_estado_civil",
+                "operator": "equals",
+                "trigger_value": "União de facto",
+            },
+            {
+                "field_key": "custom_dados_de_agregados",
+                "trigger_field": "custom_tem_filhos",
+                "operator": "equals",
+                "trigger_value": "Sim",
+            },
+        ],
+        {
+            "custom_estado_civil": "Casado",
+            "custom_tem_filhos": "Não",
+        },
+    )
+
+    assert "custom_dados_de_agregados" not in hidden_targets
 
 
 def test_resolve_process_sections_v1_returns_only_header_sections_and_quantity_only_section() -> None:

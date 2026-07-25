@@ -8,6 +8,9 @@ from appgenesis.services.process_settings.quantity_field_service import (
 )
 
 
+NUMERIC_PROCESS_FIELD_TYPES = {"number", "decimal"}
+
+
 def _normalize_process_section_lookup_v1(raw_value: Any) -> str:
     return str(raw_value or "").strip().lower()
 
@@ -140,7 +143,7 @@ def resolve_process_sections_v1(setting: dict[str, Any] | None) -> list[dict[str
         quantity_field_meta = fields_by_key.get(quantity_field_key)
         if not quantity_field_meta:
             continue
-        if _normalize_process_section_lookup_v1(quantity_field_meta.get("field_type")) != "number":
+        if _normalize_process_section_lookup_v1(quantity_field_meta.get("field_type")) not in NUMERIC_PROCESS_FIELD_TYPES:
             continue
 
         repeated_field_keys: list[str] = []

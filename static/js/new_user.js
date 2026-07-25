@@ -2505,7 +2505,7 @@ function renderDynamicProcessListTableCardV1(options) {
   actionsHeadEl.className = "admin-col-actions-v1";
   actionsHeadEl.setAttribute("data-admin-column-key", "actions");
   actionsHeadEl.setAttribute("data-admin-always-visible", "1");
-  actionsHeadEl.textContent = "AÇÕES";
+  actionsHeadEl.textContent = "Ações";
   headerRowEl.appendChild(actionsHeadEl);
   headEl.appendChild(headerRowEl);
 
@@ -2726,8 +2726,9 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 }
 
 function renderMeuPerfilQuantityGroups() {
-  const runtimeRefs = newUserPageBootstrapStateV1.lastContext && newUserPageBootstrapStateV1.lastContext.runtimeRefs
-    ? newUserPageBootstrapStateV1.lastContext.runtimeRefs
+  const bootstrapState = window.newUserPageBootstrapStateV1 || {};
+  const runtimeRefs = bootstrapState.lastContext && bootstrapState.lastContext.runtimeRefs
+    ? bootstrapState.lastContext.runtimeRefs
     : null;
   const quantityContext = runtimeRefs && runtimeRefs.profile
     ? runtimeRefs.profile.quantityContext
@@ -2988,8 +2989,9 @@ function renderDynamicProcessQuantityGroups(
   processValuesByField,
   processQuantityValuesByRule
 ) {
-  const runtimeRefs = newUserPageBootstrapStateV1.lastContext && newUserPageBootstrapStateV1.lastContext.runtimeRefs
-    ? newUserPageBootstrapStateV1.lastContext.runtimeRefs
+  const bootstrapState = window.newUserPageBootstrapStateV1 || {};
+  const runtimeRefs = bootstrapState.lastContext && bootstrapState.lastContext.runtimeRefs
+    ? bootstrapState.lastContext.runtimeRefs
     : null;
   const quantityContext = runtimeRefs && runtimeRefs.dynamicProcess
     ? runtimeRefs.dynamicProcess.quantityContext
@@ -3040,6 +3042,17 @@ function renderDynamicProcessQuantityGroups(
       ? processQuantityValuesByRule
       : {})
   };
+
+  function insertAfterAnchorOrAppendV1(containerEl, blockEl, anchorEl) {
+    if (!containerEl || !blockEl) {
+      return;
+    }
+    if (anchorEl && anchorEl.parentNode === containerEl) {
+      containerEl.insertBefore(blockEl, anchorEl.nextSibling);
+      return;
+    }
+    containerEl.appendChild(blockEl);
+  }
 
   rulesForSection.forEach((rule) => {
     const sourceValueRaw = Number.parseInt(String(processValuesByField[rule.quantityFieldKey] || "").trim(), 10);
@@ -3106,7 +3119,10 @@ function renderDynamicProcessQuantityGroups(
         });
       }
 
-      dynamicProcessReadOnlyGridEl.appendChild(readOnlyBlockEl);
+      const readOnlyAnchorEl = dynamicProcessReadOnlyGridEl.querySelector(
+        `[data-process-field-key="${normalizeMenuKey(rule.quantityFieldKey)}"]`
+      );
+      insertAfterAnchorOrAppendV1(dynamicProcessReadOnlyGridEl, readOnlyBlockEl, readOnlyAnchorEl);
     }
 
     if (dynamicProcessEditGridEl) {
@@ -3229,7 +3245,10 @@ function renderDynamicProcessQuantityGroups(
         });
       }
 
-      dynamicProcessEditGridEl.appendChild(editBlockEl);
+      const editAnchorEl = dynamicProcessEditGridEl.querySelector(
+        `[data-process-field-key="${normalizeMenuKey(rule.quantityFieldKey)}"]`
+      );
+      insertAfterAnchorOrAppendV1(dynamicProcessEditGridEl, editBlockEl, editAnchorEl);
     }
   });
 
@@ -4733,7 +4752,8 @@ function setupProcessAdditionalFieldsBuilder() {
   if (!Array.isArray(fieldTypes) || !fieldTypes.length) {
     fieldTypes = [
       { key: "text", label: "Texto" },
-      { key: "number", label: "Número" },
+      { key: "number", label: "Inteiro" },
+      { key: "decimal", label: "Numérico (0,00)" },
       { key: "email", label: "Email" },
       { key: "phone", label: "Telefone" },
       { key: "date", label: "Data" },

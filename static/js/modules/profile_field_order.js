@@ -25,6 +25,13 @@
       .map((fieldKey) => String(fieldKey || "").trim().toLowerCase())
       .filter(Boolean)
     : [];
+  const profilePersonalFieldSectionMap = (
+    bootstrap.profilePersonalFieldSectionMap &&
+    typeof bootstrap.profilePersonalFieldSectionMap === "object" &&
+    !Array.isArray(bootstrap.profilePersonalFieldSectionMap)
+  )
+    ? bootstrap.profilePersonalFieldSectionMap
+    : {};
   const profilePersonalFieldLabels = (
     bootstrap.profilePersonalFieldLabels &&
     typeof bootstrap.profilePersonalFieldLabels === "object" &&
@@ -147,17 +154,89 @@
   }
 
   function buildCanonicalProfileFieldOrder() {
-    const personalCardEl = getProfilePersonalCard();
-    const readonlyGridEl = personalCardEl
-      ? personalCardEl.querySelector(".profile-readonly .personal-grid")
-      : null;
-    const readonlyKeys = collectGridFieldKeys(readonlyGridEl);
+    const sections = Array.isArray(bootstrap.profilePersonalSections)
+      ? bootstrap.profilePersonalSections
+      : [];
+    const sectionOrder = sections
+      .map((section) => normalizeLookupText(section && section.key))
+      .filter(Boolean);
+    const visibleFields = profilePersonalVisibleFields.slice();
+    const sectionMap = profilePersonalFieldSectionMap;
+    const orderedKeys = [];
+    const seenKeys = new Set();
+    const builtinFieldOrder = [
+      "nome",
+      "email",
+      "telefone",
+      "pais",
+      "data_nascimento",
+      "whatsapp",
+      "autorizacao_whatsapp",
+      "conta",
+      "estado_membro",
+      "colaborador",
+      "entidades",
+      "ultima_verificacao_whatsapp",
+      "detalhe_verificacao"
+    ];
+    const quantitySourceKeys = new Set();
 
-    if (readonlyKeys.length) {
-      return readonlyKeys;
+    function appendKey(fieldKey) {
+      const cleanKey = normalizeLookupText(fieldKey);
+      if (!cleanKey || seenKeys.has(cleanKey)) {
+        return;
+      }
+      orderedKeys.push(cleanKey);
+      seenKeys.add(cleanKey);
     }
 
-    return profilePersonalVisibleFields.slice();
+    if (sectionMap && typeof sectionMap === "object") {
+      const personalCardEl = getProfilePersonalCard();
+      const quantitySourceNodes = personalCardEl
+        ? personalCardEl.querySelectorAll(
+          "[data-meu-perfil-quantity-generated='1'][data-meu-perfil-quantity-source-key]"
+        )
+        : [];
+      Array.from(quantitySourceNodes).forEach((node) => {
+        const sourceKey = normalizeLookupText(node.dataset.meuPerfilQuantitySourceKey || "");
+        if (sourceKey) {
+          quantitySourceKeys.add(sourceKey);
+        }
+      });
+    }
+
+    builtinFieldOrder.forEach((fieldKey) => {
+      if (visibleFields.includes(fieldKey)) {
+        appendKey(fieldKey);
+      }
+    });
+
+    if (sectionOrder.length) {
+      sectionOrder.forEach((sectionKey) => {
+        const sectionFields = visibleFields.filter((fieldKey) => {
+          return (
+            String(fieldKey || "").trim().toLowerCase().startsWith("custom_") &&
+            normalizeLookupText(sectionMap[fieldKey] || "") === sectionKey
+          );
+        });
+
+        sectionFields
+          .filter((fieldKey) => quantitySourceKeys.has(fieldKey))
+          .forEach(appendKey);
+
+        sectionFields
+          .filter((fieldKey) => !quantitySourceKeys.has(fieldKey))
+          .forEach(appendKey);
+      });
+    }
+
+    visibleFields.forEach((fieldKey) => {
+      if (String(fieldKey || "").trim().toLowerCase().startsWith("custom_")) {
+        appendKey(fieldKey);
+      }
+    });
+
+    return orderedKeys.length ? orderedKeys : visibleFields;
   }
 
   function reorderContainerByFieldOrder(container, resolveElement, itemSelector, orderedFieldKeys) {
@@ -169,35 +248,68 @@
       return;
     }
 
-    Array.from(container.querySelectorAll(itemSelector)).forEach((element) => {
-      element.style.order = "";
+    const directChildren = Array.from(container.children || []);
+    const directChildSet = new Set(directChildren);
+    const generatedBlocks = directChildren.filter((element) => {
+      return Boolean(
+        element &&
+        element.dataset &&
+        element.dataset.meuPerfilQuantityGenerated === "1" &&
+        element.dataset.meuPerfilQuantitySourceKey
+      );
     });
-
-    fieldKeys.forEach((fieldKey, index) => {
-      const element = resolveElement(fieldKey);
-      if (element && element.parentNode === container) {
-        element.style.order = String((index + 1) * 10);
-      }
-    });
-
-    const generatedBlocks = Array.from(
-      container.querySelectorAll('[data-meu-perfil-quantity-generated="1"][data-meu-perfil-quantity-source-key]')
-    );
-    const generatedCountBySource = new Map();
+    const generatedBlocksBySource = new Map();
 
     generatedBlocks.forEach((blockEl) => {
-      const sourceKey = String(blockEl.getAttribute("data-meu-perfil-quantity-source-key") || "")
-        .trim()
-        .toLowerCase();
+      const sourceKey = normalizeLookupText(blockEl.dataset.meuPerfilQuantitySourceKey || "");
       if (!sourceKey) {
         return;
       }
-      const sourceIndex = fieldKeys.indexOf(sourceKey);
-      const baseOrder = sourceIndex >= 0 ? ((sourceIndex + 1) * 10) : ((fieldKeys.length + 1) * 10);
-      const sourceCount = generatedCountBySource.get(sourceKey) || 0;
-      generatedCountBySource.set(sourceKey, sourceCount + 1);
-      blockEl.style.order = String(baseOrder + sourceCount + 1);
+      if (!generatedBlocksBySource.has(sourceKey)) {
+        generatedBlocksBySource.set(sourceKey, []);
+      }
+      generatedBlocksBySource.get(sourceKey).push(blockEl);
     });
+
+    const orderedNodes = [];
+    const appendedNodes = new Set();
+
+    const appendNode_v1 = (node) => {
+      if (!node || appendedNodes.has(node)) {
+        return;
+      }
+      orderedNodes.push(node);
+      appendedNodes.add(node);
+    };
+
+    fieldKeys.forEach((fieldKey) => {
+      const element = resolveElement(fieldKey);
+      if (element && element.parentNode === container && directChildSet.has(element)) {
+        appendNode_v1(element);
+      }
+
+      const sourceKey = normalizeLookupText(fieldKey);
+      const relatedBlocks = generatedBlocksBySource.get(sourceKey) || [];
+      relatedBlocks.forEach((blockEl) => {
+        if (blockEl.parentNode === container && directChildSet.has(blockEl)) {
+          appendNode_v1(blockEl);
+        }
+      });
+    });
+
+    directChildren.forEach((child) => {
+      if (!appendedNodes.has(child)) {
+        appendNode_v1(child);
+      }
+    });
+
+    if (orderedNodes.length) {
+      const fragment = document.createDocumentFragment();
+      orderedNodes.forEach((node) => {
+        fragment.appendChild(node);
+      });
+      container.appendChild(fragment);
+    }
   }
 
   //###################################################################################
@@ -233,10 +345,6 @@
       orderedFieldKeys
     );
 
-    const actionsRow = form.querySelector(".profile-edit-actions");
-    if (actionsRow) {
-      actionsRow.style.order = String((orderedFieldKeys.length + 1) * 10);
-    }
   }
 
   //###################################################################################

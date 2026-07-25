@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -49,11 +49,13 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     macro_text = macro_path.read_text(encoding="utf-8")
 
     assert 'aria-label="Pesquisar listas criadas"' in template_text
+    assert "settings-process-lists-inactive-card" in template_text
+    assert 'head_extra=lists_search_widget' in template_text
     assert 'render_configurable_items_pagination_footer("data-process-lists-page-size", "data-process-lists-pagination")' in template_text
     assert 'render_configurable_items_pagination_footer("data-process-lists-inactive-page-size", "data-process-lists-inactive-pagination")' in template_text
     assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in macro_text
-    assert 'data-process-lists-total-label' in template_text
-    assert 'data-process-lists-inactive-total-label' in template_text
+    assert 'data-process-lists-total-label' not in template_text
+    assert 'data-process-lists-inactive-total-label' not in template_text
     assert 'data-configurable-responsive-priority="100"' in template_text
     assert 'data-configurable-responsive-priority="10"' in template_text
     assert 'data-process-list-editor-source-session' in template_text
@@ -62,3 +64,4 @@ def test_process_lists_manager_v1_uses_configurable_core_and_search_footer() -> 
     assert 'data-responsive-key="label"' in template_text
     assert 'data-responsive-key="status"' in template_text
     assert 'configurable_items_manager_v1.css?v=20260717-process-lists-responsive-partition-v3' in template_text
+

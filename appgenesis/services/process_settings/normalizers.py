@@ -31,7 +31,7 @@ SIDEBAR_MENU_KEYS = {item["key"] for item in SIDEBAR_MENU_DEFAULTS}
 SIDEBAR_MENU_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_DELETE_PROTECTED_KEYS = {"home", "administrativo"}
 SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS = {"home"}
-MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home"}
+MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS = {"home", "extrato"}
 MENU_VISIBILITY_SCOPES = ("owner", "legado")
 MENU_VISIBILITY_SCOPE_ALL = "all"
 MENU_CONFIG_DISPLAY_ORDER_KEY = "display_order"
@@ -91,7 +91,8 @@ SIDEBAR_SECTION_DELETE_PROTECTED_KEYS = frozenset(
 ADDITIONAL_FIELD_TEXTUAL_TYPES = {"text", "email", "phone", "number"}
 ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "text", "label": "Texto"},
-    {"key": "number", "label": "Número"},
+    {"key": "number", "label": "Inteiro"},
+    {"key": "decimal", "label": "Numérico (0,00)"},
     {"key": "email", "label": "Email"},
     {"key": "phone", "label": "Telefone"},
     {"key": "date", "label": "Data"},
@@ -143,6 +144,10 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "email", "label": "Email"},
         {"key": "estado", "label": "Estado"},
     ),
+    "extrato": (
+        {"key": "entidade", "label": "Entidade"},
+        {"key": "estado", "label": "Estado"},
+    ),
     "financeiro": (
         {"key": "nome", "label": "Nome"},
         {"key": "estado", "label": "Estado"},
@@ -173,6 +178,7 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "empresa": ["dados_gerais", "morada"],
     MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email"],
     "funcionarios": ["nome", "telefone", "email"],
+    "extrato": ["entidade", "estado"],
     "financeiro": ["nome", "estado", "criado_em"],
     "relatorios": ["nome", "estado", "criado_em"],
     "links": ["sessao", "contactos"],

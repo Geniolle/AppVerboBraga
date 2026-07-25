@@ -115,10 +115,11 @@ def edit_sidebar_menu_process_quantity_fields_handler(
             )
 
         return RedirectResponse(
-            url=_build_settings_redirect_url(
+            url=_build_settings_editor_stay_redirect_url_v1(
                 success_message="Campos Quantidade atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
+                settings_edit_key=clean_menu_key,
+                settings_tab="campos-quantidade",
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,

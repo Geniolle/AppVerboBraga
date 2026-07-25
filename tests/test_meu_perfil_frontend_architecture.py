@@ -40,3 +40,4 @@ def test_meu_perfil_subsequent_runtime_resolves_visible_section_fallback_v1() ->
     assert "resolveVisibleProfileSectionKey" in runtime_text
     assert "isVisibleElement" in runtime_text
     assert "activateProfilePersonalSection(resolvedSection)" in runtime_text
+    assert "appgenesis:meu-perfil:layout-updated" in runtime_text

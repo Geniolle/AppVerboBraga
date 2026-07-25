@@ -25,6 +25,9 @@ from appgenesis.services.process_settings.additional_field_service import (
 )
 
 
+NUMERIC_QUANTITY_FIELD_TYPES = {"number", "decimal"}
+
+
 def _build_process_quantity_rule_key_v1(rule_label: str, fallback_index: int) -> str:
     clean_key = _normalize_menu_key(rule_label)
     if clean_key:
@@ -221,7 +224,7 @@ def update_sidebar_menu_process_quantity_fields_v1(
                 False,
                 f"O campo origem da regra '{rule_label}' deve existir em Campos adicionais.",
             )
-        if str(quantity_field_meta.get("field_type") or "").strip().lower() != "number":
+        if str(quantity_field_meta.get("field_type") or "").strip().lower() not in NUMERIC_QUANTITY_FIELD_TYPES:
             return False, f"O campo origem da regra '{rule_label}' deve ser numérico."
 
         if not repeated_field_keys:

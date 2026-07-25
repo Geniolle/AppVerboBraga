@@ -674,6 +674,14 @@
     const evaluation = safeContext.evaluation || evaluate(safeContext);
     applyTargets(safeContext, evaluation.hiddenTargets);
 
+    if (
+      (safeContext.mode === "profile" || safeContext.adapterName === "profile" || Boolean(resolveMeuPerfilPersonalCardTarget(safeContext.root))) &&
+      typeof window.dispatchEvent === "function" &&
+      typeof window.CustomEvent === "function"
+    ) {
+      window.dispatchEvent(new CustomEvent("appgenesis:meu-perfil:layout-updated"));
+    }
+
     return evaluation;
   }
 

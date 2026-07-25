@@ -546,10 +546,11 @@ def edit_sidebar_menu_process_additional_fields_v1(
             )
 
         return RedirectResponse(
-            url=_build_settings_redirect_url(
+            url=_build_settings_editor_stay_redirect_url_v1(
                 success_message="Campos adicionais e hierarquia do processo atualizados com sucesso.",
                 redirect_menu=redirect_menu,
-                redirect_target=redirect_target,
+                settings_edit_key=clean_menu_key,
+                settings_tab="campos-adicionais",
                 return_url=return_url,
             ),
             status_code=status.HTTP_303_SEE_OTHER,

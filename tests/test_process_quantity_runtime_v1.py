@@ -449,11 +449,18 @@ def test_process_quantity_runtime_v1_dynamic_list_resolves_profile_section_and_t
         agregados_state = driver.execute_script(
             """
             const payload = document.querySelector("input[name='process_quantity_payload__qty_agregados']");
+            const readonlyQuantityBlock = document.querySelector("[data-process-quantity-rule-key='qty_agregados']");
+            const readonlyQuantityField = document.querySelector("[data-profile-field-key='custom_quantos_filhos_tens']");
+            const readonlyFirstField = document.querySelector("[data-profile-field-key='tem_filhos']");
             return {
               agregadosVisible: document.querySelectorAll("[data-process-quantity-rule-key='qty_agregados'] .profile-quantity-dynamic-item-edit-v1").length,
               itemIds: Array.from(document.querySelectorAll("[data-process-quantity-rule-key='qty_agregados'] input[type='hidden'][data-process-quantity-field-key='item_id']")).map((input) => input.value),
               payloadCount: document.querySelectorAll("input[data-meu-perfil-quantity-payload='1']").length,
-              payloadValue: payload ? payload.value : null
+              payloadValue: payload ? payload.value : null,
+              readonlyQuantitySourceKey: readonlyQuantityBlock ? readonlyQuantityBlock.dataset.meuPerfilQuantitySourceKey || "" : "",
+              readonlyQuantityOrder: readonlyQuantityBlock ? String(readonlyQuantityBlock.style.order || "") : "",
+              readonlyQuantityFieldOrder: readonlyQuantityField ? String(readonlyQuantityField.style.order || "") : "",
+              readonlyFirstFieldOrder: readonlyFirstField ? String(readonlyFirstField.style.order || "") : ""
             };
             """
         )
@@ -463,6 +470,9 @@ def test_process_quantity_runtime_v1_dynamic_list_resolves_profile_section_and_t
         assert agregados_state["itemIds"][0] != agregados_state["itemIds"][1]
         assert agregados_state["payloadCount"] == 1
         assert agregados_state["payloadValue"] is not None
+        assert agregados_state["readonlyQuantitySourceKey"] == "custom_quantos_filhos_tens"
+        assert int(agregados_state["readonlyFirstFieldOrder"] or "0") < int(agregados_state["readonlyQuantityFieldOrder"] or "0")
+        assert int(agregados_state["readonlyQuantityFieldOrder"] or "0") < int(agregados_state["readonlyQuantityOrder"] or "0")
 
         driver.execute_script(
             """

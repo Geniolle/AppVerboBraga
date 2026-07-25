@@ -42,9 +42,38 @@ def test_administrativo_process_field_options_defaults() -> None:
     ]
 
 
+def test_extrato_process_field_options_keep_base_fields_with_additional_fields() -> None:
+    menu_config = {
+        "additional_fields": [
+            {"label": "Extratos bancários", "field_type": "header"},
+            {"label": "Descrição", "field_type": "text"},
+        ]
+    }
+
+    options = get_menu_process_field_options("extrato", menu_config)
+    selectable_options = get_menu_process_selectable_field_options("extrato", menu_config)
+
+    assert [item["key"] for item in options] == [
+        "entidade",
+        "estado",
+        "custom_extratos_bancarios",
+        "custom_descricao",
+    ]
+    assert [item["key"] for item in selectable_options] == [
+        "entidade",
+        "estado",
+        "custom_descricao",
+    ]
+
+
 def test_administrativo_default_visible_fields() -> None:
     defaults = get_menu_process_default_visible_fields("administrativo")
     assert defaults == ["entidade", "utilizador", "definicoes"]
+
+
+def test_extrato_default_visible_fields_include_entidade_and_estado() -> None:
+    defaults = get_menu_process_default_visible_fields("extrato")
+    assert defaults == ["entidade", "estado"]
 
 
 def test_legacy_configuracao_alias_maps_to_administrativo_fields() -> None:
@@ -73,7 +102,8 @@ def test_additional_field_types_include_time_with_correct_label() -> None:
     assert types_by_key["time"] == "Horário"
     # Tipos existentes continuam disponiveis e inalterados.
     assert types_by_key["text"] == "Texto"
-    assert types_by_key["number"] == "Número"
+    assert types_by_key["number"] == "Inteiro"
+    assert types_by_key["decimal"] == "Numérico (0,00)"
     assert types_by_key["email"] == "Email"
     assert types_by_key["phone"] == "Telefone"
     assert types_by_key["date"] == "Data"
@@ -101,10 +131,29 @@ def test_normalize_additional_fields_accepts_time_type_and_ignores_size() -> Non
     assert "size" not in normalized[0]
 
 
+def test_normalize_additional_fields_accepts_decimal_type_and_ignores_size() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {
+                "label": "Valor decimal",
+                "field_type": "decimal",
+                "size": "255",
+                "is_required": True,
+            },
+        ]
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["field_type"] == "decimal"
+    assert normalized[0]["is_required"] is True
+    assert "size" not in normalized[0]
+
+
 def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
     raw_fields = [
         {"label": "Campo texto", "field_type": "text"},
         {"label": "Campo numero", "field_type": "number"},
+        {"label": "Campo decimal", "field_type": "decimal"},
         {"label": "Campo email", "field_type": "email"},
         {"label": "Campo telefone", "field_type": "phone"},
         {"label": "Campo data", "field_type": "date"},
@@ -123,6 +172,7 @@ def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
         "header",
         "text",
         "number",
+        "decimal",
         "email",
         "phone",
         "date",
@@ -1879,6 +1929,52 @@ def test_resolve_subprocess_section_fields_renders_time_field_as_time_input() ->
     assert resolved_field["size"] is None
 
 
+def test_resolve_subprocess_section_fields_renders_decimal_field_as_number_input() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "calendario",
+        "custom_valores",
+        [
+            {
+                "key": "calendario",
+                "process_additional_fields": [
+                    {
+                        "key": "custom_valor",
+                        "label": "Valor",
+                        "field_type": "decimal",
+                        "is_required": True,
+                        "header_key": "custom_valores",
+                    },
+                ],
+                "process_field_options": [
+                    {
+                        "key": "custom_valores",
+                        "label": "Valores",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_valor",
+                        "label": "Valor",
+                        "field_type": "decimal",
+                    },
+                ],
+                "process_visible_field_rows": [
+                    {
+                        "field_key": "custom_valor",
+                        "header_key": "custom_valores",
+                    }
+                ],
+            }
+        ],
+    )
+
+    assert len(resolved_fields) == 1
+    resolved_field = resolved_fields[0]
+    assert resolved_field["field_type"] == "decimal"
+    assert resolved_field["input_type"] == "number"
+    assert resolved_field["input_step"] == "0.01"
+    assert resolved_field["input_mode"] == "decimal"
+
+
 def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None:
     resolved_fields = resolve_subprocess_section_fields_v1(
         "perfil_de_autorizacao",
@@ -2671,7 +2767,7 @@ def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None
                             {
                                 "key": "custom_quantos_filhos_tens",
                                 "label": "Quantos filhos tens?",
-                                "field_type": "number",
+                                "field_type": "decimal",
                             },
                             {
                                 "key": "custom_nome_do_agregado",
@@ -2993,7 +3089,7 @@ def test_resolve_process_tabs_v1_includes_quantity_only_section() -> None:
                     {"key": "custom_dados_pessoais", "label": "Dados pessoais", "field_type": "header"},
                     {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
                     {"key": "nome", "label": "Nome", "field_type": "text"},
-                    {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "number"},
+                    {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "decimal"},
                     {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
                 ],
                 "process_visible_field_rows": [

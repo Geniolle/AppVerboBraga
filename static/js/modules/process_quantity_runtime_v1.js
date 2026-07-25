@@ -763,6 +763,8 @@
       readonlyHost.className = "personal-item profile-quantity-readonly-v1 profile-quantity-dynamic-list-readonly-v1";
       readonlyHost.dataset.processQuantityGenerated = "1";
       readonlyHost.dataset.processQuantityRuleKey = rule.key;
+      readonlyHost.dataset.meuPerfilQuantityGenerated = "1";
+      readonlyHost.dataset.meuPerfilQuantitySourceKey = rule.quantityFieldKey;
       readonlyHost.dataset.profileSectionPane = sectionPane;
       readonlyHost.style.gridColumn = "1 / -1";
 
@@ -831,6 +833,8 @@
       host.className = "field full profile-quantity-rule-v1 profile-quantity-dynamic-list-v1";
       host.dataset.processQuantityGenerated = "1";
       host.dataset.processQuantityRuleKey = rule.key;
+      host.dataset.meuPerfilQuantityGenerated = "1";
+      host.dataset.meuPerfilQuantitySourceKey = rule.quantityFieldKey;
       host.dataset.profileSectionPane = sectionPane;
 
       const titleEl = document.createElement("label");
@@ -1243,6 +1247,10 @@
 
       renderDynamicQuantityRule(safeContext, rule, valuesByRule, fieldMetaMap);
     });
+
+    if (safeContext.mode === "profile" || safeContext.adapterName === "profile") {
+      window.dispatchEvent(new CustomEvent("appgenesis:meu-perfil:layout-updated"));
+    }
 
     return safeContext;
   }

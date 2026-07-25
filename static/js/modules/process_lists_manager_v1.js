@@ -308,10 +308,8 @@
       inactiveTable: root.querySelector("[data-process-lists-inactive-table]"),
       inactiveTableBody: root.querySelector("[data-process-lists-inactive-table-body]"),
       inactiveEmptyState: root.querySelector("[data-process-lists-inactive-empty]"),
-      inactiveTotalLabel: root.querySelector("[data-process-lists-inactive-total-label]"),
       inactivePageSize: root.querySelector("[data-process-lists-inactive-page-size]"),
       inactivePagination: root.querySelector("[data-process-lists-inactive-pagination]"),
-      totalLabel: root.querySelector("[data-process-lists-total-label]"),
       pageSize: root.querySelector("[data-process-lists-page-size]"),
       pagination: root.querySelector("[data-process-lists-pagination]"),
       searchInput: root.querySelector("[data-configurable-search]")
@@ -1484,8 +1482,7 @@
           tableBody: elements.tableBody,
           emptyState: elements.emptyState,
           pagination: elements.pagination,
-          pageSize: elements.pageSize,
-          totalLabel: elements.totalLabel
+          pageSize: elements.pageSize
         },
         pageSizeDefault: manager.config.pageSizeDefault,
         itemName: "lista",
@@ -1500,8 +1497,7 @@
           tableBody: elements.inactiveTableBody,
           emptyState: elements.inactiveEmptyState,
           pagination: elements.inactivePagination,
-          pageSize: elements.inactivePageSize,
-          totalLabel: elements.inactiveTotalLabel
+          pageSize: elements.inactivePageSize
         },
         pageSizeDefault: manager.config.pageSizeDefault,
         itemName: "lista",
@@ -1569,7 +1565,6 @@
         pagination: "[data-process-lists-pagination]",
         pageSize: "[data-process-lists-page-size]",
         hiddenContainer: "[data-process-lists-hidden-container]",
-        totalLabel: "[data-process-lists-total-label]",
         searchInput: "[data-configurable-search]"
       },
       columns: [

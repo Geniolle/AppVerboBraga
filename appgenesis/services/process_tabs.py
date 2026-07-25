@@ -9,7 +9,7 @@ from appgenesis.services.process_settings.process_sections import (
 _SYSTEM_HARDCODED_PROCESS_KEYS: frozenset[str] = frozenset({"administrativo", "sessoes"})
 
 _SUPPORTED_RENDER_FIELD_TYPES_V1: frozenset[str] = frozenset(
-    {"text", "number", "email", "phone", "date", "time", "flag", "header", "list"}
+    {"text", "number", "decimal", "email", "phone", "date", "time", "flag", "header", "list"}
 )
 _TEXTUAL_RENDER_FIELD_TYPES_V1: frozenset[str] = frozenset(
     {"text", "number", "email", "phone"}
@@ -102,9 +102,23 @@ def _build_render_input_type_v1(field_type: str) -> str:
         return "tel"
     if field_type == "flag":
         return "checkbox"
+    if field_type == "decimal":
+        return "number"
     if field_type in {"number", "email", "date", "time"}:
         return field_type
     return "text"
+
+
+def _build_render_input_step_v1(field_type: str) -> str:
+    if field_type == "decimal":
+        return "0.01"
+    return ""
+
+
+def _build_render_input_mode_v1(field_type: str) -> str:
+    if field_type == "decimal":
+        return "decimal"
+    return ""
 
 
 def _normalize_render_options_v1(raw_options: Any) -> list[dict[str, str]]:
@@ -277,6 +291,14 @@ def _build_render_field_meta_map_v1(
                 ).strip(),
                 "options": [],
             }
+
+            input_step = _build_render_input_step_v1(field_type)
+            if input_step:
+                normalized_field["input_step"] = input_step
+
+            input_mode = _build_render_input_mode_v1(field_type)
+            if input_mode:
+                normalized_field["input_mode"] = input_mode
 
             if _is_legacy_profile_menu_tabs_render_config_v1(
                 menu_key=menu_key,

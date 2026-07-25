@@ -195,7 +195,10 @@ def get_hidden_process_targets_from_rules(
 
     hidden_targets: set[str] = set()
     for target_field, target_rules in grouped_rules.items():
-        if not all(is_process_subsequent_rule_met(rule, values_by_field) for rule in target_rules):
+        # Um alvo pode ter várias regras alternativas. Se pelo menos uma regra
+        # for satisfeita, o campo continua visível; só escondemos quando nenhuma
+        # das regras do alvo corresponde ao estado atual.
+        if not any(is_process_subsequent_rule_met(rule, values_by_field) for rule in target_rules):
             hidden_targets.add(target_field)
     return hidden_targets
 
