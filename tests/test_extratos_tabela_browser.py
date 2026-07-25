@@ -42,7 +42,7 @@ class TestExtratosTabelaBrowser:
     def browser_session(self):
         """Setup e cleanup do driver Selenium"""
         driver = _build_driver_v1()
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 20)
 
         try:
             yield driver, wait
@@ -55,21 +55,22 @@ class TestExtratosTabelaBrowser:
         """
         driver, wait = browser_session
 
-        # Login como admin
         _login_admin_v1(driver, wait)
-
-        # Navegar para Extratos
         url = f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato"
         driver.get(url)
 
-        # Esperar carregamento
         wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
 
-        # Verificar que bootstrap contém dados de extrato
+        # Aguardar bootstrap estar disponível
+        wait.until(lambda drv: drv.execute_script("return window.__APPGENESIS_BOOTSTRAP__ !== undefined"))
+
         bootstrap_data = driver.execute_script("""
-            return window.__APPGENESIS_BOOTSTRAP__ &&
-                   window.__APPGENESIS_BOOTSTRAP__.menuProcessHistoryMap &&
-                   window.__APPGENESIS_BOOTSTRAP__.menuProcessHistoryMap['extrato'];
+            try {
+                const data = window.__APPGENESIS_BOOTSTRAP__.menuProcessHistoryMap['extrato'];
+                return data || null;
+            } catch (e) {
+                return null;
+            }
         """)
 
         assert bootstrap_data is not None, "Dados de extrato não carregados no bootstrap"

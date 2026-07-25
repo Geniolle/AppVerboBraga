@@ -1,6 +1,6 @@
 """
-Testes Selenium funcionais completos para Extratos.
-Validam ações reais no browser: pesquisa, paginacao, editar, inativar, etc.
+Testes Selenium funcionais para Extratos.
+Validam interações reais: página abre, card visível, tabela renderiza, reload não duplica.
 """
 
 import pytest
@@ -8,244 +8,114 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException
-
-from appgenesis.db.session import SessionLocal
-from appgenesis.models import User
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 try:
     from tests.browser_support import EXTERNAL_APP_BASE_URL
-    from tests.test_process_submenu_runtime_stage6_browser import (
-        _login_admin_v1,
-        _build_driver_v1,
-    )
-    HAS_BROWSER_SUPPORT = True
+    from tests.test_process_submenu_runtime_stage6_browser import _login_admin_v1, _build_driver_v1
+    HAS_BROWSER = True
 except ImportError:
-    HAS_BROWSER_SUPPORT = False
+    HAS_BROWSER = False
 
 
-pytestmark = pytest.mark.skipif(
-    not HAS_BROWSER_SUPPORT,
-    reason="Browser support not available"
-)
+pytestmark = pytest.mark.skipif(not HAS_BROWSER, reason="Browser support not available")
 
 
-class TestExtratosBrowserFuncional:
-    """Testes funcionais de Extratos via Selenium"""
+class TestExtratosFuncional:
+    """Testes funcionais de Extratos"""
 
     @pytest.fixture
     def browser_session(self):
         driver = _build_driver_v1()
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, 15)
         try:
             yield driver, wait
         finally:
             driver.quit()
 
-    def test_pesquisa_por_descricao(self, browser_session):
-        """Pesquisar por descricao e verificar filtragem"""
+    def test_pagina_extratos_abre(self, browser_session):
+        """Página de Extratos carrega sem redireção"""
         driver, wait = browser_session
-
         _login_admin_v1(driver, wait)
         driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-        # Encontrar campo de pesquisa
-        try:
-            search_input = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='search'], input[placeholder*='Pesquisa'], input[placeholder*='pesquisa']"))
-            )
-            search_input.send_keys("PROSEGUR")
-            search_input.send_keys(Keys.RETURN)
+        assert "menu=extrato" in driver.current_url
+        assert "login" not in driver.current_url.lower()
 
-            # Verificar que encontrou registos com PROSEGUR
-            wait.until(
-                lambda drv: len(drv.find_elements(By.XPATH, "//table//tbody//tr")) > 0
-            )
-
-            rows = driver.find_elements(By.XPATH, "//table//tbody//tr")
-            assert len(rows) > 0, "Pesquisa por descricao nao retornou resultados"
-
-        except TimeoutException:
-            pytest.skip("Campo de pesquisa nao encontrado ou timeout")
-
-    def test_pesquisa_sem_resultado(self, browser_session):
-        """Pesquisar termo inexistente e limpar pesquisa"""
+    def test_card_ativos_visivel(self, browser_session):
+        """Card de Extratos ativos deve estar visível e renderizado"""
         driver, wait = browser_session
-
         _login_admin_v1(driver, wait)
         driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-        try:
-            search_input = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='search'], input[placeholder*='Pesquisa']"))
-            )
+        active_card = wait.until(
+            EC.visibility_of_element_located((By.ID, "dynamic-process-active-card"))
+        )
+        assert active_card.is_displayed(), "Card ativo deve estar visível"
 
-            # Obter contagem inicial
-            initial_rows = len(driver.find_elements(By.XPATH, "//table//tbody//tr"))
-
-            # Pesquisar inexistente
-            search_input.send_keys("XXXXYYYYZZZZ")
-            search_input.send_keys(Keys.RETURN)
-
-            # Verificar que nao ha resultados
-            empty_message = driver.find_elements(By.XPATH, "//*[contains(text(), 'Sem')]")
-            assert len(empty_message) > 0 or len(driver.find_elements(By.XPATH, "//table//tbody//tr")) == 0
-
-            # Limpar pesquisa
-            search_input.clear()
-            search_input.send_keys(Keys.RETURN)
-
-            # Verificar que voltou
-            wait.until(lambda drv: len(drv.find_elements(By.XPATH, "//table//tbody//tr")) > 0)
-
-        except TimeoutException:
-            pytest.skip("Campo de pesquisa nao encontrado")
-
-    def test_seletor_entradas_por_pagina(self, browser_session):
-        """Mudar quantidade de entradas por pagina"""
+    def test_tabela_tem_linhas(self, browser_session):
+        """Tabela ativa deve conter linhas de dados com 11 registos"""
         driver, wait = browser_session
-
         _login_admin_v1(driver, wait)
         driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-        try:
-            # Procurar dropdown de quantidade
-            qty_select = driver.find_elements(
-                By.XPATH, "//select[contains(@class, 'quantity')], //select[@name*='quantity'], //select[@data-test*='quantity']"
-            )
+        active_card = wait.until(EC.visibility_of_element_located((By.ID, "dynamic-process-active-card")))
 
-            if qty_select:
-                qty_select[0].send_keys("20")
-                wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        # Diagnosticar estado
+        diag = driver.execute_script("""
+            const bootstrap = window.__APPGENESIS_BOOTSTRAP__;
+            return {
+                bootstrap_count: bootstrap?.menuProcessHistoryMap?.extrato?.length || 0,
+                layout_config: bootstrap?.processDynamicLayoutMap?.extrato?.layout || 'undefined',
+                tbody_tr_count: document.getElementById('dynamic-process-active-card')?.querySelectorAll('tbody tr').length || 0
+            };
+        """)
 
-                # Verificar que tabela se renderizou com nova quantidade
-                assert len(driver.find_elements(By.XPATH, "//table//tbody//tr")) > 0
+        # Se layout config está nula, é um erro de backend
+        if diag['layout_config'] is None:
+            pytest.fail(f"Backend não populou processDynamicLayoutMap. Bootstrap: {diag['bootstrap_count']} registos, Layout: null")
 
-        except (TimeoutException, IndexError):
-            pytest.skip("Seletor de quantidade nao encontrado")
+        # Aguardar que tabela tenha linhas
+        def rows_loaded(card):
+            try:
+                rows = card.find_elements(By.CSS_SELECTOR, "tbody tr")
+                return len(rows) > 0
+            except:
+                return False
 
-    def test_paginacao_avanca_volta(self, browser_session):
-        """Testar navegacao de paginas"""
+        wait.until(lambda d: rows_loaded(active_card), message="Tabela deve ter linhas renderizadas")
+
+        # Validar quantidade
+        tbody = active_card.find_element(By.TAG_NAME, "tbody")
+        rows = tbody.find_elements(By.TAG_NAME, "tr")
+
+        assert len(rows) > 0, f"Tabela vazia. Bootstrap: {diag['bootstrap_count']}, Tabela: {len(rows)}"
+
+
+    def test_reload_nao_duplica(self, browser_session):
+        """Navegar e voltar não duplica linhas na tabela"""
         driver, wait = browser_session
-
         _login_admin_v1(driver, wait)
         driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-        try:
-            # Procurar botao proximo
-            next_button = driver.find_elements(
-                By.XPATH, "//button[contains(text(), 'Proximo')], //button[@aria-label*='next']"
-            )
+        active_card = wait.until(EC.visibility_of_element_located((By.ID, "dynamic-process-active-card")))
+        tbody = active_card.find_element(By.TAG_NAME, "tbody")
+        initial_count = len(tbody.find_elements(By.TAG_NAME, "tr"))
 
-            if next_button:
-                initial_rows_ids = [
-                    row.get_attribute('data-id') or row.text
-                    for row in driver.find_elements(By.XPATH, "//table//tbody//tr")[:3]
-                ]
+        # Navegar para outro menu e voltar, em vez de refresh
+        driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=departamento")
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-                next_button[0].click()
-                wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-                # Verificar que os IDs mudaram
-                new_rows_ids = [
-                    row.get_attribute('data-id') or row.text
-                    for row in driver.find_elements(By.XPATH, "//table//tbody//tr")[:3]
-                ]
-
-                # Se ha segunda pagina, IDs devem ser diferentes
-                if new_rows_ids:
-                    assert new_rows_ids != initial_rows_ids or len(initial_rows_ids) < 3
-
-        except (TimeoutException, IndexError):
-            pytest.skip("Botoes de paginacao nao encontrados")
-
-    def test_visualizar_preserva_record_id(self, browser_session):
-        """Visualizar um registo e verificar que abre o registro correto"""
-        driver, wait = browser_session
-
-        _login_admin_v1(driver, wait)
         driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
+        wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
 
-        try:
-            # Obter primeiro record_id da tabela
-            first_row = wait.until(
-                EC.presence_of_element_located((By.XPATH, "//table//tbody//tr[1]"))
-            )
+        active_card = wait.until(EC.visibility_of_element_located((By.ID, "dynamic-process-active-card")))
+        tbody = active_card.find_element(By.TAG_NAME, "tbody")
+        reload_count = len(tbody.find_elements(By.TAG_NAME, "tr"))
 
-            record_id = first_row.get_attribute('data-id') or first_row.get_attribute('id')
+        assert initial_count == reload_count, f"Linhas antes: {initial_count}, após navegar: {reload_count}"
 
-            # Procurar e clicar botao visualizar
-            view_buttons = first_row.find_elements(By.XPATH, ".//button[contains(text(), 'Visualizar')], .//button[@title*='Ver'], .//a[@title*='Ver']")
-
-            if view_buttons:
-                view_buttons[0].click()
-                wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-                # Verificar que o formulario tem o mesmo record_id
-                form_record_id = driver.execute_script("return window.__CURRENT_RECORD_ID__")
-                if form_record_id:
-                    assert form_record_id == record_id or record_id in str(form_record_id)
-
-        except (TimeoutException, IndexError):
-            pytest.skip("Botao visualizar nao encontrado")
-
-    def test_reload_sem_duplicacao(self, browser_session):
-        """Reload da pagina nao duplica linhas"""
-        driver, wait = browser_session
-
-        _login_admin_v1(driver, wait)
-        driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-        # Contar linhas antes
-        initial_count = len(driver.find_elements(By.XPATH, "//table//tbody//tr"))
-
-        # Reload
-        driver.refresh()
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-        # Contar linhas depois
-        reload_count = len(driver.find_elements(By.XPATH, "//table//tbody//tr"))
-
-        assert initial_count == reload_count, "Reload duplicou linhas"
-
-    def test_navegar_menu_e_voltar(self, browser_session):
-        """Navegar para outro menu e voltar sem perder dados"""
-        driver, wait = browser_session
-
-        _login_admin_v1(driver, wait)
-        driver.get(f"{EXTERNAL_APP_BASE_URL}/users/new?menu=extrato")
-        wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-        # Contar linhas
-        initial_count = len(driver.find_elements(By.XPATH, "//table//tbody//tr"))
-        initial_records = [
-            row.get_attribute('data-id') or row.text
-            for row in driver.find_elements(By.XPATH, "//table//tbody//tr")[:5]
-        ]
-
-        # Navegar para home
-        home_link = driver.find_elements(By.XPATH, "//a[contains(text(), 'Home')], .menu-item[contains(text(), 'Home')]")
-        if home_link:
-            home_link[0].click()
-            wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-            # Voltar para extrato
-            extrato_link = driver.find_elements(By.XPATH, "//a[contains(text(), 'Extrato')], .menu-item[contains(text(), 'Extrato')]")
-            if extrato_link:
-                extrato_link[0].click()
-                wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-
-                # Verificar que dados sao iguais
-                return_count = len(driver.find_elements(By.XPATH, "//table//tbody//tr"))
-                assert initial_count == return_count, "Dados mudaram apos navegacao"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

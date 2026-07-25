@@ -10,6 +10,13 @@ PROCESS_LIST_COLUMN_FIELD = "field"
 PROCESS_LIST_COLUMN_MENU_SCOPE = "menu_visibility_scope"
 PROCESS_LIST_COLUMN_STATUS = "status"
 
+EXTRATO_MENU_KEYS = {
+    "extrato",
+    "extratos",
+    "extrato_bancario",
+    "extratos_bancarios",
+}
+
 
 def _normalize_lookup_text(raw_value: Any) -> str:
     normalized = (
@@ -299,10 +306,11 @@ def resolve_dynamic_process_layout_config(
         if isinstance(clean_menu_config.get("process_list_config"), dict)
         else {}
     )
+    normalized_menu_key = _normalize_lookup_text(menu_key)
     joined_lookup = " ".join(
         part
         for part in (
-            _normalize_lookup_text(menu_key),
+            normalized_menu_key,
             _normalize_lookup_text(menu_label),
             _normalize_lookup_text(clean_menu_config.get("label")),
         )
@@ -358,7 +366,7 @@ def resolve_dynamic_process_layout_config(
         singular_label = singular_label or "departamento"
         plural_label = plural_label or "departamentos"
         state_enabled_default = True
-    elif "extrato" in joined_lookup:
+    elif normalized_menu_key in EXTRATO_MENU_KEYS:
         uses_record_history = True
         inferred_layout = PROCESS_LAYOUT_LIST
         singular_label = singular_label or "extrato"
