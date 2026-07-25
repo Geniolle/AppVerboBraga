@@ -358,6 +358,13 @@ def resolve_dynamic_process_layout_config(
         singular_label = singular_label or "departamento"
         plural_label = plural_label or "departamentos"
         state_enabled_default = True
+    elif "extrato" in joined_lookup:
+        uses_record_history = True
+        inferred_layout = PROCESS_LAYOUT_LIST
+        singular_label = singular_label or "extrato"
+        plural_label = plural_label or "extratos"
+        state_enabled_default = True
+        show_system_column_default = True
 
     layout = explicit_layout if explicit_layout == PROCESS_LAYOUT_LIST else inferred_layout
 
