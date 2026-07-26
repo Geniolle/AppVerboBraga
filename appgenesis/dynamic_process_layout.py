@@ -425,6 +425,15 @@ def resolve_dynamic_process_layout_config(
         show_system_column=show_system_column,
     )
 
+    # Mapa de aliases legados para section_key
+    # Permite compatibilidade com registos históricos que usam section_key antigos
+    section_key_aliases = {}
+    
+    # Para "extrato": dados legados usam "custom_dados_de_extrato"
+    # mas a configuração atual usa "custom_extratos_bancarios"
+    if normalized_menu_key in EXTRATO_MENU_KEYS:
+        section_key_aliases["custom_extratos_bancarios"] = ["custom_dados_de_extrato"]
+    
     return {
         "layout": layout,
         "is_list_process": layout == PROCESS_LAYOUT_LIST,
@@ -442,6 +451,7 @@ def resolve_dynamic_process_layout_config(
         "show_system_column": bool(show_system_column and layout == PROCESS_LAYOUT_LIST),
         "include_remaining_fields": bool(include_remaining_fields and layout == PROCESS_LAYOUT_LIST),
         "list_columns": list_columns if layout == PROCESS_LAYOUT_LIST else [],
+        "section_key_aliases": section_key_aliases,
     }
 
 

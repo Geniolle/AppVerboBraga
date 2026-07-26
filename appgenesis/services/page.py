@@ -58,6 +58,7 @@ from appgenesis.domains.meu_perfil.service import (
     build_meu_perfil_bootstrap_v1,
     build_meu_perfil_personal_sections_state_v1,
 )
+from appgenesis.dynamic_process_layout import resolve_dynamic_process_layout_config
 
 
 
@@ -577,6 +578,50 @@ def _resolve_company_profile_data(
     return _serialize_entity_row_v1(company_entity)
 
 
+def _resolve_process_dynamic_layout_map(
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: list[str],
+) -> dict[str, dict[str, Any]]:
+    process_dynamic_layout_map: dict[str, dict[str, Any]] = {}
+    visible_keys_set = set(visible_sidebar_menu_keys)
+
+    for sidebar_item in sidebar_menu_settings:
+        if not isinstance(sidebar_item, dict):
+            continue
+
+        menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
+        if not menu_key or menu_key not in visible_keys_set:
+            continue
+
+        if menu_key in {"home", MENU_MEU_PERFIL_KEY, "administrativo"}:
+            continue
+
+        menu_label = str(sidebar_item.get("label") or "").strip()
+        menu_config = sidebar_item.get("menu_config") if isinstance(sidebar_item.get("menu_config"), dict) else None
+        visible_field_rows = (
+            sidebar_item.get("process_visible_field_rows")
+            if isinstance(sidebar_item.get("process_visible_field_rows"), list)
+            else None
+        )
+        field_options = (
+            sidebar_item.get("process_field_options")
+            if isinstance(sidebar_item.get("process_field_options"), list)
+            else None
+        )
+
+        layout_config = resolve_dynamic_process_layout_config(
+            menu_key=menu_key,
+            menu_label=menu_label,
+            menu_config=menu_config,
+            visible_field_rows=visible_field_rows,
+            field_options=field_options,
+        )
+
+        process_dynamic_layout_map[menu_key] = layout_config
+
+    return process_dynamic_layout_map
+
+
 def get_page_data(
     session: Session,
     actor_user_id: int | None = None,
@@ -609,6 +654,11 @@ def get_page_data(
     menu_process_values_map = process_maps["menu_process_values_map"]
     menu_process_history_map = process_maps["menu_process_history_map"]
     menu_process_quantity_values_map = process_maps["menu_process_quantity_values_map"]
+
+    process_dynamic_layout_map = _resolve_process_dynamic_layout_map(
+        sidebar_menu_settings,
+        visible_sidebar_menu_keys,
+    )
 
     profile_personal_visible_fields = list(MENU_MEU_PERFIL_FIELDS_DEFAULT)
     profile_personal_field_labels = dict(MENU_MEU_PERFIL_FIELD_LABELS)
@@ -1006,6 +1056,7 @@ def get_page_data(
         "menu_process_values_map": menu_process_values_map,
         "menu_process_history_map": menu_process_history_map,
         "menu_process_quantity_values_map": menu_process_quantity_values_map,
+        "process_dynamic_layout_map": process_dynamic_layout_map,
         "profile_personal_visible_fields": profile_personal_visible_fields,
         "profile_personal_field_labels": profile_personal_field_labels,
         "profile_personal_field_section_map": profile_personal_field_section_map,

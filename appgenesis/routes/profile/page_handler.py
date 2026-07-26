@@ -1108,10 +1108,17 @@ def new_user_page(
 
     active_menu_label = ""
     active_menu_is_list_process = False
+
+    process_dynamic_layout_map = page_data.get("process_dynamic_layout_map", {})
+    layout_config = process_dynamic_layout_map.get(clean_menu_key)
+    if layout_config and isinstance(layout_config, dict):
+        active_menu_is_list_process = bool(layout_config.get("is_list_process", False))
+
     for setting in sidebar_menu_settings:
         if setting.get("key") == clean_menu_key:
             active_menu_label = setting.get("label")
-            active_menu_is_list_process = bool(setting.get("is_list_process", False))
+            if not active_menu_is_list_process:
+                active_menu_is_list_process = bool(setting.get("is_list_process", False))
             break
             
     if not active_menu_label:

@@ -730,6 +730,42 @@ function getHistoryRecordLabels(menuKey, menuLabel, sectionLabel) {
   return { singular: "registo", plural: "registos" };
 }
 
+
+function getDynamicProcessLayoutConfigFromBootstrap(menuKey) {
+  const bootstrap = window.__APPGENESIS_BOOTSTRAP__;
+  const processDynamicLayoutMap = bootstrap && bootstrap.processDynamicLayoutMap;
+  if (!processDynamicLayoutMap || typeof processDynamicLayoutMap !== 'object') {
+    return null;
+  }
+  
+  const normalizedMenuKey = normalizeMenuKey(menuKey);
+  const config = processDynamicLayoutMap[normalizedMenuKey];
+  
+  if (!config || typeof config !== 'object') {
+    return null;
+  }
+  
+  return {
+    layout: String(config.layout || '').trim().toLowerCase(),
+    isListProcess: Boolean(config.is_list_process),
+    singularLabel: String(config.singular_label || '').trim(),
+    pluralLabel: String(config.plural_label || '').trim(),
+    createTitle: String(config.create_title || '').trim(),
+    editTitle: String(config.edit_title || '').trim(),
+    activeTitle: String(config.active_title || '').trim(),
+    inactiveTitle: String(config.inactive_title || '').trim(),
+    emptyActiveMessage: String(config.empty_active_message || '').trim(),
+    emptyInactiveMessage: String(config.empty_inactive_message || '').trim(),
+    stateEnabled: Boolean(config.state_enabled),
+    showSystemColumn: Boolean(config.show_system_column),
+    includeRemainingFields: Boolean(config.include_remaining_fields),
+    statusFieldKey: String(config.status_field_key || '__estado').trim(),
+    listColumns: Array.isArray(config.list_columns) ? config.list_columns : [],
+    usesRecordHistory: Boolean(config.uses_record_history),
+    sectionKeyAliases: (config.section_key_aliases && typeof config.section_key_aliases === 'object') ? config.section_key_aliases : {}
+  };
+}
+
 function getDynamicProcessLayoutConfig(setting, menuLabel, sectionLabel) {
   const resolvedMenuLabel = String(menuLabel || setting && setting.label || "").trim();
   const resolvedSectionLabel = String(sectionLabel || "").trim();
@@ -2007,6 +2043,23 @@ function getDynamicProcessRecordState(row, layoutConfig) {
   const values = row && row.values && typeof row.values === "object" ? row.values : {};
   const statusFieldKey = normalizeMenuKey(layoutConfig && layoutConfig.statusFieldKey || "__estado") || "__estado";
   return normalizeDynamicProcessRecordState(values[statusFieldKey]);
+}
+
+function sectionKeyMatches(recordSectionKey, selectedSectionKey, sectionKeyAliases) {
+  if (!recordSectionKey) {
+    return !selectedSectionKey;
+  }
+  if (recordSectionKey === selectedSectionKey) {
+    return true;
+  }
+  if (!sectionKeyAliases) {
+    return false;
+  }
+  const aliases = sectionKeyAliases[selectedSectionKey];
+  if (!Array.isArray(aliases)) {
+    return false;
+  }
+  return aliases.includes(recordSectionKey);
 }
 
 function splitDynamicProcessListRows(rows, layoutConfig) {
@@ -3379,7 +3432,14 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   const sectionLabel = selectedSection
     ? toSentenceCaseText(selectedSection.label || "Campos")
     : "Campos";
-  const layoutConfig = getDynamicProcessLayoutConfig(processSetting, menuLabel, sectionLabel);
+  // Tentar obter config do bootstrap primeiro (processDynamicLayoutMap)
+  let layoutConfig = getDynamicProcessLayoutConfigFromBootstrap(cleanMenuKey);
+  // Se nao encontrar no bootstrap, usar a funcao legada
+  if (!layoutConfig) {
+    layoutConfig = getDynamicProcessLayoutConfig(processSetting, menuLabel, sectionLabel);
+  }
+  if (layoutConfig) {
+  }
   const listProcessLayoutMode = Boolean(layoutConfig.isListProcess);
   const absenceProcessMode = isAbsenceProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   // "uses_record_history" (calculado no backend a partir de process_record_uses_history/process_layout
@@ -3640,15 +3700,21 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     const historyRowsRaw = Array.isArray(menuProcessHistoryMap[cleanMenuKey])
       ? menuProcessHistoryMap[cleanMenuKey]
       : [];
+    const selectedSectionKey = selectedSection ? String(selectedSection.key || "").trim() : "";
+    const sectionKeyAliases = layoutConfig ? layoutConfig.sectionKeyAliases : {};
+    
+    
     const visibleRows = historyRowsRaw.filter((item) => {
       const rowSectionKey = String(item && item.section_key || "").trim();
-      if (!selectedSection) {
-        return true;
+      const matches = sectionKeyMatches(rowSectionKey, selectedSectionKey, sectionKeyAliases);
+      
+      // Se não há secção selecionada, aceitar registos sem secção
+      if (!selectedSectionKey) {
+        return !rowSectionKey;
       }
-      if (!rowSectionKey) {
-        return true;
-      }
-      return rowSectionKey === String(selectedSection.key || "");
+      
+      // Usar a função de matching que respeita aliases
+      return matches;
     });
     const splitRows = splitDynamicProcessListRows(visibleRows, layoutConfig);
 
