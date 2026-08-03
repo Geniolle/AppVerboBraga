@@ -3,9 +3,9 @@ google:
   project_id: soma-verbo-braga-468506
 
 drive:
-  folder_id: 1mwJmtDnPOMrlKkJuUL91iCkYxHI0Noll
+  folder_id: 19F4LT2Ch5xcv6LnE-6YRqdrTElwa6Gg_
   folder_name: EXTRATO_CARTÃO_Images
-  filename: 07-2026.IMAGEM.102342.jpg
+  filename: EXTRATO_CARTÃO_Files_/07-2026.IMAGEM.181417.pdf
 
 ocr:
   language_hints: [pt, en]
@@ -54,4 +54,3 @@ google_sheets:
   id_prefix: "CAR"
   id_digits: 10
   saidas_id_prefix: "SAI"
-
