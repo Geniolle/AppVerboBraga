@@ -1,0 +1,70 @@
+        <section id="menu-tabs-card" class="card menu-tabs-card appgenesis-process-shell">
+          {# Breadcrumb: 1o segmento = secao lateral do menu ativo (nunca "Home"
+             fixo), lida a partir do proprio setting.sidebar_section_key/menu_section
+             ja resolvido no backend (ver _resolve_sidebar_menu_context em
+             appgenesis/services/page.py); rotulo mapeado via sidebar_section_options
+             (secoes customizadas) com fallback nos rotulos padrao do sistema. Serve
+             apenas para o primeiro paint -- na troca de menu via sidebar, quem manda
+             e' process_shell_runtime_v1.js, lendo data-sidebar-section-label do
+             botao .menu-item ativo (fonte unica de verdade, ver
+             partials/app_shell/sidebar_modern_v1.html). #}
+          {% set breadcrumb_ns = namespace(section_key="", section_label="") %}
+          {% for setting in sidebar_menu_settings %}
+            {% if setting.key|lower == initial_menu %}
+              {% set breadcrumb_ns.section_key = (setting.sidebar_section_key|default(setting.menu_section|default("", true), true))|lower %}
+            {% endif %}
+          {% endfor %}
+          {% set breadcrumb_section_fallback_labels = {
+            "sistema": "Sistema",
+            "geral": "Geral",
+            "dados_gerais": "Dados gerais",
+            "igreja": "Igreja",
+            "tesouraria": "Tesouraria"
+          } %}
+          {% set breadcrumb_ns.section_label = breadcrumb_section_fallback_labels[breadcrumb_ns.section_key] if breadcrumb_ns.section_key in breadcrumb_section_fallback_labels else breadcrumb_ns.section_key|replace("_", " ")|title %}
+          {% if sidebar_section_options is defined and sidebar_section_options %}
+            {% for section_option in sidebar_section_options %}
+              {% if section_option.key|lower == breadcrumb_ns.section_key and section_option.label %}
+                {% set breadcrumb_ns.section_label = section_option.label %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+          <div id="process-shell-header" class="process-shell-header">
+            <div class="process-shell-title-group-v1">
+              <nav id="process-shell-breadcrumb-v1" class="process-shell-breadcrumb-v1" aria-label="Caminho">
+                <span id="process-shell-breadcrumb-section-group-v1" class="process-shell-breadcrumb-section-group-v1"{% if not breadcrumb_ns.section_label %} hidden{% endif %}>
+                  <span id="process-shell-breadcrumb-section-v1" class="process-shell-breadcrumb-section-v1">{{ breadcrumb_ns.section_label }}</span>
+                  <span class="process-shell-breadcrumb-sep-v1" aria-hidden="true">&rsaquo;</span>
+                </span>
+                <span id="process-shell-breadcrumb-current-v1" class="process-shell-breadcrumb-current-v1">{{ initial_menu_label }}</span>
+                <span id="process-shell-breadcrumb-tab-group-v1" class="process-shell-breadcrumb-tab-group-v1" hidden>
+                  <span class="process-shell-breadcrumb-sep-v1" aria-hidden="true">&rsaquo;</span>
+                  <span id="process-shell-breadcrumb-tab-v1" class="process-shell-breadcrumb-tab-v1"></span>
+                </span>
+              </nav>
+              <h1 id="process-shell-title" class="process-shell-title">{{ initial_menu_label }}</h1>
+              {% if initial_menu == 'sessoes' %}
+              <p id="process-shell-subtitle" class="process-shell-subtitle-v1">Gerencie as sessões e a estrutura do sistema.</p>
+              {% endif %}
+            </div>
+            <div id="process-shell-actions" class="process-shell-actions"></div>
+            {% include "partials/app_shell/user_avatar_v1.html" %}
+          </div>
+          <div id="submenu-items" class="menu-tabs" role="tablist" aria-label="Abas do menu" {% if not initial_menu_tabs %}style="display: none;"{% endif %}>
+            {% if initial_menu_tabs %}
+              {% for tab in initial_menu_tabs %}
+                {% set is_active = (loop.index0 == active_tab_index) %}
+                <a
+                  href="{{ tab.target }}"
+                  class="submenu-item {% if is_active %}active{% endif %}"
+                  role="tab"
+                  aria-selected="{{ 'true' if is_active else 'false' }}"
+                  data-submenu-index="{{ loop.index0 }}"
+                  {% if tab.dynamic_process_section %}data-dynamic-process-section="{{ tab.dynamic_process_section }}"{% endif %}
+                >
+                  {{ tab.label }}
+                </a>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </section>

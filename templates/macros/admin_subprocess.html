@@ -1,0 +1,610 @@
+{% from "macros/app_shell/admin_subprocess_inline_create_v1.html" import render_admin_subprocess_inline_create_button %}
+
+{% macro admin_subprocess_get_value(row, key, default="") %}
+  {{ row.get(key, default) if row else default }}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_field(field, value="") %}
+  <div class="field admin-subprocess-field-v1 {{ field.css_class }}" data-admin-subprocess-field-key="{{ field.key }}">
+    <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+
+    {% if field.field_type == "select" %}
+      <select
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        {% if field.required %}required{% endif %}
+      >
+        {% for option_value, option_label in field.options %}
+          <option value="{{ option_value }}" {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
+        {% endfor %}
+      </select>
+    {% elif field.field_type == "readonly" %}
+      <input
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        type="text"
+        value="{{ field.default_value }}"
+        readonly
+      >
+    {% else %}
+      <input
+        id="admin_subprocess_{{ field.key }}"
+        name="{{ field.input_name }}"
+        type="{{ field.field_type }}"
+        value="{{ value }}"
+        {% if field.required %}required{% endif %}
+        {% if field.max_length %}maxlength="{{ field.max_length }}"{% endif %}
+        {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %}
+      >
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_dynamic_field(field, value="", id_prefix="admin_subprocess_dyn") %}
+  {% set _field_type = field.field_type|default("text") %}
+  {% set _input_type = field.input_type|default("text") %}
+  {% if _field_type != "header" %}
+    <div class="field admin-subprocess-field-v1" data-admin-subprocess-field-key="{{ field.key }}">
+      <label for="{{ id_prefix }}_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+
+      {% if _input_type == "select" %}
+        <select
+          id="{{ id_prefix }}_{{ field.key }}"
+          name="process_field__{{ field.key }}"
+          data-admin-subprocess-field-key="{{ field.key }}"
+          {% if field.list_source_type|default("") == "profile_menu_tabs" %}
+          data-admin-subprocess-dependent-select="1"
+          data-admin-subprocess-dependent-source-key="{{ field.dependent_field_key|default('') }}"
+          data-admin-subprocess-dependent-options='{{ field.dependent_options_map|default({})|tojson|forceescape }}'
+          {% endif %}
+          {% if field.required %}required{% endif %}
+        >
+          <option value="">Selecione</option>
+          {% for option in field.options|default([]) %}
+            {% set _option_value = option.value if option.value is defined else option.get("value", "") %}
+            {% set _option_label = option.label if option.label is defined else option.get("label", _option_value) %}
+            <option value="{{ _option_value }}" {% if value|string == _option_value|string %}selected{% endif %}>{{ _option_label }}</option>
+          {% endfor %}
+        </select>
+      {% elif _input_type == "checkbox" %}
+        <input
+          id="{{ id_prefix }}_{{ field.key }}"
+          name="process_field__{{ field.key }}"
+          type="checkbox"
+          value="1"
+          {% if value|string|lower in ["1", "true", "sim", "yes", "on"] %}checked{% endif %}
+        >
+      {% else %}
+        <input
+          id="{{ id_prefix }}_{{ field.key }}"
+          name="process_field__{{ field.key }}"
+          type="{{ _input_type }}"
+          value="{{ value }}"
+          {% if field.required %}required{% endif %}
+          {% if field.size %}maxlength="{{ field.size }}"{% endif %}
+        >
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_form(state) %}
+  {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
+  {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
+  {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
+  {% set _is_active_subprocess = False %}
+  {% set _is_same_edit_target = (_initial_menu_target_resolved == '#' ~ state.config.edit_target) %}
+  {% if _initial_menu_resolved == state.menu_key %}
+    {% if _initial_menu_resolved == 'perfil_de_autorizacao' %}
+      {% set _sub_targets = ['#' ~ state.config.default_target, '#' ~ state.config.edit_target] %}
+      {% if state.config.active_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.active_card_id] %}{% endif %}
+      {% if state.config.inactive_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.inactive_card_id] %}{% endif %}
+      {% if _initial_menu_target_resolved in _sub_targets %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% elif _initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes' %}
+      {% if state.config.key == _admin_tab_resolved or
+            (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
+            (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes') %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% else %}
+      {% set _is_active_subprocess = True %}
+    {% endif %}
+  {% endif %}
+  {% set _show_form = _is_active_subprocess and (state.is_editing or _initial_menu_target_resolved == '#' ~ (state.config.edit_target if state.is_editing else state.config.default_target)) %}
+
+  {# No fluxo moderno de Estruturas > Menu, o feedback de sucesso ja e promovido a toast
+     global pelo runtime a partir dos query params da URL. Suprimimos apenas o alerta inline
+     de sucesso nesse subprocesso para evitar duplicacao visual, mantendo os erros inline. #}
+  {% set _suppress_inline_success_feedback = state.config.key == 'menu' and state.menu_key == 'sessoes' %}
+  {% if state.success and not _suppress_inline_success_feedback %}
+    <div class="alert ok">{{ state.success }}</div>
+  {% endif %}
+  {% if state.error %}
+    <div class="alert error">{{ state.error }}</div>
+  {% endif %}
+
+  <section
+    id="{{ state.config.edit_target if state.is_editing else state.config.default_target }}"
+    class="card admin-subprocess-card-v1 admin-subprocess-form-card-v1 appgenesis-process-action-card-v1"
+    data-admin-subprocess="{{ state.config.key }}"
+    data-admin-subprocess-role="form"
+    data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
+    {% if state.config.create_toggle_in_active_header %}data-admin-subprocess-inline-create-enabled="1"{% endif %}
+    {% if not _show_form %}style="display: none;"{% endif %}
+  >
+    {% if state.is_editing %}
+      <h2>{{ state.config.edit_title }}</h2>
+      {% set _cancel_return_target = state.config.active_card_id or state.config.default_target %}
+
+      <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+        <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.edit_mode_value }}">
+        <input type="hidden" name="{{ state.config.edit_key_field }}" value="{{ state.edit_key }}">
+        <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+
+        <div class="admin-subprocess-grid-v1{% if state.config.form_grid_css_class %} {{ state.config.form_grid_css_class }}{% endif %}">
+          {% if state.resolved_dynamic_fields %}
+            {% for dyn_field in state.resolved_dynamic_fields %}
+              {% set _dyn_value = state.edit_values.get(dyn_field.key, "") if state.edit_values else "" %}
+              {{ render_admin_subprocess_dynamic_field(dyn_field, _dyn_value, "admin_subprocess_dyn_edit") }}
+            {% endfor %}
+          {% endif %}
+          {% for field in state.config.fields %}
+            {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else "" %}
+            {{ render_admin_subprocess_field(field, field_value) }}
+          {% endfor %}
+        </div>
+
+        <div class="form-action-row admin-subprocess-actions-v1">
+          <button type="submit" class="action-btn">Guardar</button>
+          <button
+            type="button"
+            class="action-btn-cancel"
+            data-appgenesis-cancel="1"
+            data-appgenesis-cancel-target="{{ state.config.edit_target }}"
+            data-appgenesis-cancel-return-target="{{ _cancel_return_target }}"
+            data-appgenesis-cancel-return-url="{{ state.return_url }}"
+          >Cancelar</button>
+        </div>
+      </form>
+    {% else %}
+      <div class="appgenesis-process-action-toolbar-v1">
+        <details class="entity-create-collapse admin-subprocess-create-collapse-v1 appgenesis-process-action-details-v1">
+          <summary class="appgenesis-process-action-toggle-v1">
+            <span>{{ state.config.create_title }}</span>
+          </summary>
+
+          <div class="entity-create-body appgenesis-process-action-panel-v1">
+            <form method="post" action="{{ state.config.save_endpoint }}" class="admin-subprocess-form-v1">
+              <input type="hidden" name="{{ state.config.mode_field }}" value="{{ state.config.create_mode_value }}">
+              <input type="hidden" name="{{ state.config.edit_key_field }}" value="">
+              <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+
+              <div class="admin-subprocess-grid-v1{% if state.config.form_grid_css_class %} {{ state.config.form_grid_css_class }}{% endif %}">
+                {% if state.resolved_dynamic_fields %}
+                  {% for dyn_field in state.resolved_dynamic_fields %}
+                    {{ render_admin_subprocess_dynamic_field(dyn_field, "", "admin_subprocess_dyn_create") }}
+                  {% endfor %}
+                {% endif %}
+                {% for field in state.config.fields %}
+                  {{ render_admin_subprocess_field(field, field.default_value) }}
+                {% endfor %}
+              </div>
+
+              <div class="form-action-row admin-subprocess-actions-v1">
+                <button type="submit" class="action-btn">Guardar</button>
+                <button
+                  type="button"
+                  class="action-btn-cancel"
+                  data-appgenesis-cancel="1"
+                >Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </details>
+      </div>
+    {% endif %}
+
+    <script>
+      (function () {
+        if (window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__) {
+          window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
+          return;
+        }
+
+        function normalizeLookup(value) {
+          return String(value === null || value === undefined ? "" : value)
+            .trim()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function rebuildDependentOptions(selectEl, optionsMap, selectedValue) {
+          if (!selectEl) {
+            return;
+          }
+
+          const currentValue = String(selectedValue === null || selectedValue === undefined ? selectEl.value : selectedValue).trim();
+          const matchedOptions = optionsMap[selectEl.dataset.adminSubprocessResolvedKey || ""] || [];
+          selectEl.innerHTML = "";
+
+          const placeholderOption = document.createElement("option");
+          placeholderOption.value = "";
+          placeholderOption.textContent = "Selecione";
+          selectEl.appendChild(placeholderOption);
+
+          matchedOptions.forEach((option) => {
+            if (!option || typeof option !== "object") {
+              return;
+            }
+
+            const optionValue = String(option.value || "").trim();
+            const optionLabel = String(option.label || optionValue).trim();
+
+            if (!optionValue) {
+              return;
+            }
+
+            const optionEl = document.createElement("option");
+            optionEl.value = optionValue;
+            optionEl.textContent = optionLabel || optionValue;
+            selectEl.appendChild(optionEl);
+          });
+
+          if (currentValue && Array.from(selectEl.options).some((option) => String(option.value || "").trim() === currentValue)) {
+            selectEl.value = currentValue;
+          } else {
+            selectEl.value = "";
+          }
+        }
+
+        function resolveDependentOptionsKey(controllerEl, optionsMap) {
+          const controllerValue = String(controllerEl && controllerEl.value ? controllerEl.value : "").trim();
+          const normalizedControllerValue = normalizeLookup(controllerValue);
+
+          if (!normalizedControllerValue) {
+            return "";
+          }
+
+          return Object.keys(optionsMap).find((candidateKey) => {
+            return normalizeLookup(candidateKey) === normalizedControllerValue;
+          }) || "";
+        }
+
+        function bindDependentSelect(selectEl) {
+          if (!selectEl || selectEl.dataset.adminSubprocessDependentBound === "1") {
+            return;
+          }
+
+          let optionsMap = {};
+
+          try {
+            optionsMap = JSON.parse(selectEl.dataset.adminSubprocessDependentOptions || "{}");
+          } catch (error) {
+            optionsMap = {};
+          }
+
+          const sourceFieldKey = String(selectEl.dataset.adminSubprocessDependentSourceKey || "").trim();
+          if (!sourceFieldKey) {
+            return;
+          }
+
+          const formEl = selectEl.closest("form");
+          if (!formEl) {
+            return;
+          }
+
+          const controllerEl = formEl.querySelector(`[name="process_field__${sourceFieldKey}"]`);
+          if (!controllerEl) {
+            return;
+          }
+
+          const refresh = () => {
+            selectEl.dataset.adminSubprocessResolvedKey = resolveDependentOptionsKey(controllerEl, optionsMap);
+            rebuildDependentOptions(selectEl, optionsMap, selectEl.value);
+          };
+
+          controllerEl.addEventListener("change", refresh);
+          selectEl.dataset.adminSubprocessDependentBound = "1";
+          refresh();
+        }
+
+        window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__ = function () {
+          document
+            .querySelectorAll("[data-admin-subprocess-dependent-select='1']")
+            .forEach(bindDependentSelect);
+        };
+
+        window.__APPGENESIS_ADMIN_SUBPROCESS_DEPENDENT_SELECTS_V1__();
+      })();
+    </script>
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_row_actions(state, row, status_value) %}
+  {% set row_key = row.get(state.config.identity_field, row.get("key", row.get("id", ""))) %}
+  {% set row_label = row.get(state.config.label_field, row.get("label", row.get("name", ""))) %}
+  {% set row_status_label = row.get("status_label", "Ativo" if status_value == state.config.active_value else "Inativo") %}
+  {% set row_system_label = row.get("visibility_scope_label", "") %}
+  {% set _form_key_field = state.config.action_form_key_field or "section_key" %}
+
+  <div class="table-actions admin-subprocess-row-actions-v1">
+    {% if status_value == state.config.active_value and state.config.move_endpoint %}
+      {% set _can_move_up = row.get(state.config.move_up_condition_field, True) if state.config.move_up_condition_field else True %}
+      {% set _can_move_down = row.get(state.config.move_down_condition_field, True) if state.config.move_down_condition_field else True %}
+
+      {% if _can_move_up %}
+        <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="direction" value="up">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Subir" aria-label="Subir">↑</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no topo" aria-label="Já está no topo">↑</span>
+      {% endif %}
+
+      {% if _can_move_down %}
+        <form method="post" action="{{ state.config.move_endpoint }}" class="admin-subprocess-inline-form-v1">
+          <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="direction" value="down">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ state.return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1" title="Descer" aria-label="Descer">↓</button>
+        </form>
+      {% else %}
+        <span class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-disabled-v1" title="Já está no fim" aria-label="Já está no fim">↓</span>
+      {% endif %}
+    {% endif %}
+
+    {% if state.config.view_link_param %}
+      <a
+        class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+        title="Visualizar detalhes"
+        aria-label="Visualizar detalhes"
+        href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;{{ state.config.edit_param }}={{ row_key }}&amp;{{ state.config.view_link_param }}=1#{{ state.config.edit_target }}"
+      >&#128065;</a>
+    {% else %}
+      <button
+        type="button"
+        class="admin-subprocess-action-btn-v1"
+        title="Visualizar detalhes"
+        aria-label="Visualizar detalhes"
+        data-admin-subprocess-view
+        data-view-title="{{ state.config.singular_label }}"
+        data-view-details="Nome: {{ row_label }}&#10;Sistema: {{ row_system_label or '-' }}&#10;Estado: {{ row_status_label }}"
+      >👁</button>
+    {% endif %}
+
+    <a
+      class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+      title="Editar"
+      aria-label="Editar"
+      href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.edit_target }}&amp;{{ state.config.edit_param }}={{ row_key }}#{{ state.config.edit_target }}"
+    >✎</a>
+
+    {% if state.config.delete_endpoint %}
+      {% set _delete_ns = namespace(visible_when=(), condition_field="", requires_confirmation=false, confirmation_message="") %}
+      {% for _act in state.config.actions %}
+        {% if _act.key == "delete" %}
+          {% set _delete_ns.visible_when = _act.visible_when %}
+          {% set _delete_ns.condition_field = _act.condition_field %}
+          {% set _delete_ns.requires_confirmation = _act.requires_confirmation %}
+          {% set _delete_ns.confirmation_message = _act.confirmation_message %}
+        {% endif %}
+      {% endfor %}
+
+      {% set _delete_visible = (not _delete_ns.visible_when) or (status_value in _delete_ns.visible_when) %}
+      {% set _can_delete = row.get(_delete_ns.condition_field, True) if _delete_ns.condition_field else True %}
+
+      {% if _delete_visible and _can_delete %}
+        {% set _del_active_card = state.config.active_card_id or (state.config.default_target ~ '-active') %}
+        {% set _del_inactive_card = state.config.inactive_card_id or (state.config.default_target ~ '-inactive') %}
+        {% if status_value == state.config.inactive_value %}
+          {% set _delete_return_url = state.return_url|replace(_del_active_card, _del_inactive_card) %}
+        {% else %}
+          {% set _delete_return_url = state.return_url %}
+        {% endif %}
+        <form
+          method="post"
+          action="{{ state.config.delete_endpoint }}"
+          class="admin-subprocess-inline-form-v1"
+          {% if _delete_ns.requires_confirmation %}
+            data-appgenesis-confirm="1"
+            data-appgenesis-confirm-title="Eliminar"
+            data-appgenesis-confirm-message="{{ _delete_ns.confirmation_message or 'Tem a certeza que pretende eliminar?' }}"
+            data-appgenesis-confirm-action-label="Eliminar"
+            data-appgenesis-confirm-danger="1"
+          {% endif %}
+        >
+          <input type="hidden" name="{{ _form_key_field }}" value="{{ row_key }}">
+          <input type="hidden" name="{{ state.config.return_url_field }}" value="{{ _delete_return_url }}">
+          <button type="submit" class="admin-subprocess-action-btn-v1 admin-subprocess-action-btn-danger-v1" title="Eliminar" aria-label="Eliminar">&#128465;</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_table(state, rows, title, status_value) %}
+  {% set sort_state = namespace(has_sortable_columns=false, has_responsive_columns=false, default_key="", default_direction="") %}
+  {% for column in state.config.columns %}
+    {% if column.sortable %}
+      {% set sort_state.has_sortable_columns = true %}
+    {% endif %}
+    {% if column.responsive_priority %}
+      {% set sort_state.has_responsive_columns = true %}
+    {% endif %}
+    {% if not sort_state.default_key and column.default_sort in ("asc", "desc") %}
+      {% set sort_state.default_key = column.key %}
+      {% set sort_state.default_direction = column.default_sort %}
+    {% endif %}
+  {% endfor %}
+
+  {% set _is_active = (status_value == state.config.active_value) %}
+  {% set _card_id = (state.config.active_card_id if _is_active else state.config.inactive_card_id) or (state.config.default_target ~ ('-active' if _is_active else '-inactive')) %}
+  {% set _table_id = (state.config.active_table_id if _is_active else state.config.inactive_table_id) or (state.config.key ~ '-' ~ status_value ~ '-table') %}
+  {% set _limiter_id = (state.config.active_limiter_id if _is_active else state.config.inactive_limiter_id) or (state.config.key ~ '-' ~ status_value ~ '-limiter') %}
+
+  {% set _initial_menu_resolved = initial_menu if initial_menu is defined else '' %}
+  {% set _admin_tab_resolved = admin_tab if admin_tab is defined else '' %}
+  {% set _initial_menu_target_resolved = initial_menu_target if initial_menu_target is defined else '' %}
+  {% set _is_active_subprocess = False %}
+  {# Mesmo calculo usado em render_admin_subprocess_form: quando o alvo inicial da pagina e' #}
+  {# o proprio editor deste subprocesso, a lista fica presente no DOM (para o Cancelar/Guardar #}
+  {# genericos conseguirem reexibi-la sem reload) mas comeca oculta via display:none. #}
+  {% set _is_same_edit_target = (_initial_menu_target_resolved == '#' ~ state.config.edit_target) %}
+  {% if _initial_menu_resolved == state.menu_key %}
+    {% if _initial_menu_resolved == 'perfil_de_autorizacao' %}
+      {% set _sub_targets = ['#' ~ state.config.default_target, '#' ~ state.config.edit_target] %}
+      {% if state.config.active_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.active_card_id] %}{% endif %}
+      {% if state.config.inactive_card_id %}{% set _sub_targets = _sub_targets + ['#' ~ state.config.inactive_card_id] %}{% endif %}
+      {% if _initial_menu_target_resolved in _sub_targets %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% elif _initial_menu_resolved == 'administrativo' or _initial_menu_resolved == 'sessoes' %}
+      {% if state.config.key == _admin_tab_resolved or
+            (_admin_tab_resolved == 'contas' and state.config.key == 'menu') or
+            (_admin_tab_resolved == 'sessoes' and state.config.key == 'sessoes') %}
+        {% set _is_active_subprocess = True %}
+      {% endif %}
+    {% else %}
+      {% set _is_active_subprocess = True %}
+    {% endif %}
+  {% endif %}
+
+  <section
+    id="{{ _card_id }}"
+    class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1"
+    data-admin-subprocess="{{ state.config.key }}"
+    data-admin-subprocess-role="{{ 'active-table' if _is_active else 'inactive-table' }}"
+    data-admin-subprocess-status="{{ status_value }}"
+    data-menu-scope="{{ state.config.menu_scope or state.menu_scope or 'administrativo' }}"
+    {% if _is_active and state.config.create_toggle_in_active_header %}data-admin-subprocess-inline-create-enabled="1"{% endif %}
+    {% if not _is_active_subprocess or _is_same_edit_target %}style="display: none;"{% endif %}
+  >
+    <h2>{{ title }}</h2>
+    {% if _is_active and state.config.create_toggle_in_active_header %}
+      {{ render_admin_subprocess_inline_create_button(state.config) }}
+    {% endif %}
+
+    {% set _empty_msg = (state.config.empty_active_message if _is_active else state.config.empty_inactive_message) %}
+    {% set _empty_fallback = "Sem " ~ state.config.plural_label|lower ~ (" ativos." if _is_active else " inativos.") %}
+    {% if rows %}
+      <div class="admin-subprocess-table-wrap-v1">
+        <table
+          id="{{ _table_id }}"
+          class="admin-subprocess-table-v1 {{ state.config.table_css_class }}"
+          {% if sort_state.has_sortable_columns %}data-admin-sortable-table="1"{% endif %}
+          {% if sort_state.has_responsive_columns %}data-admin-responsive-table="1"{% endif %}
+        >
+          <colgroup>
+            {% for column in state.config.columns %}
+              <col class="{{ column.css_class }}">
+            {% endfor %}
+            <col class="admin-col-actions-v1">
+          </colgroup>
+          <thead>
+            <tr>
+              {% for column in state.config.columns %}
+                {% if column.sortable %}
+                  {% set column_sort_direction = column.default_sort if column.key == sort_state.default_key else "" %}
+                  {% set column_aria_sort = "ascending" if column_sort_direction == "asc" else ("descending" if column_sort_direction == "desc" else "none") %}
+                  <th
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    data-admin-sortable-column="1"
+                    aria-sort="{{ column_aria_sort }}"
+                    {% if column.responsive_priority %}data-admin-responsive-priority="{{ column.responsive_priority }}"{% endif %}
+                    {% if column.always_visible %}data-admin-always-visible="1"{% endif %}
+                  >
+                    <button
+                      type="button"
+                      class="admin-subprocess-sort-button-v1"
+                      data-admin-sort-button
+                      data-admin-sort-key="{{ column.key }}"
+                      data-admin-sort-type="{{ column.sort_type }}"
+                      data-admin-default-sort="{{ column.default_sort }}"
+                      data-admin-sort-direction="{{ column_sort_direction }}"
+                      aria-label="Ordenar por {{ column.label }}"
+                      aria-pressed="{{ 'true' if column_sort_direction else 'false' }}"
+                    >
+                      <span class="admin-subprocess-sort-label-v1">{{ column.label }}</span>
+                      <span class="admin-subprocess-sort-indicator-v1" aria-hidden="true">⇅</span>
+                    </button>
+                  </th>
+                {% else %}
+                  <th
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    {% if column.responsive_priority %}data-admin-responsive-priority="{{ column.responsive_priority }}"{% endif %}
+                    {% if column.always_visible %}data-admin-always-visible="1"{% endif %}
+                  >{{ column.label }}</th>
+                {% endif %}
+              {% endfor %}
+              <th class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                {% for column in state.config.columns %}
+                  {% set cell_value = row.get(column.source, "") %}
+                  {% set _sort_val = row.get(column.sort_value_source, cell_value) if column.sort_value_source else cell_value %}
+                  <td
+                    class="{{ column.css_class }}"
+                    data-admin-column-key="{{ column.key }}"
+                    data-admin-sort-value="{{ _sort_val }}"
+                    {% if column.responsive_priority %}data-admin-responsive-priority="{{ column.responsive_priority }}"{% endif %}
+                    {% if column.always_visible %}data-admin-always-visible="1"{% endif %}
+                  >
+                    {% if column.key == "status" %}
+                      {% if state.config.status_badge_class %}
+                        {% if column.status_class_source %}
+                          {% set _badge_suffix = row.get(column.status_class_source, status_value) %}
+                        {% else %}
+                          {% set _badge_suffix = status_value %}
+                        {% endif %}
+                        <span class="{{ state.config.status_badge_class }} {{ state.config.status_badge_class }}-{{ _badge_suffix }}">{{ cell_value or ("Ativo" if _is_active else "Inativo") }}</span>
+                      {% else %}
+                        <span class="admin-subprocess-badge-v1 {% if _is_active %}admin-subprocess-badge-active-v1{% else %}admin-subprocess-badge-inactive-v1{% endif %}">
+                          {{ cell_value or ("Ativo" if _is_active else "Inativo") }}
+                        </span>
+                      {% endif %}
+                    {% else %}
+                      {{ cell_value }}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+                <td class="admin-col-actions-v1" data-admin-column-key="actions" data-admin-always-visible="1">
+                  {{ render_admin_subprocess_row_actions(state, row, status_value) }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div id="{{ _limiter_id }}" class="table-limiter"></div>
+    {% else %}
+      <p class="empty">{{ _empty_msg or _empty_fallback }}</p>
+    {% endif %}
+  </section>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_tables(state) %}
+  {{ render_admin_subprocess_table(state, state.active_rows, state.config.active_title, state.config.active_value) }}
+  {{ render_admin_subprocess_table(state, state.inactive_rows, state.config.inactive_title, state.config.inactive_value) }}
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_state(state) %}
+  {{ render_admin_subprocess_form(state) }}
+  {{ render_admin_subprocess_tables(state) }}
+{% endmacro %}

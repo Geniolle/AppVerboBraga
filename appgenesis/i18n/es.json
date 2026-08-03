@@ -1,0 +1,96 @@
+{
+  "auth": {
+    "page_title": "Acceso",
+    "language": {
+      "label": "Idioma"
+    },
+    "login": {
+      "title": "Entrar en su cuenta",
+      "email": "Correo electrónico",
+      "email_placeholder": "ejemplo: juan@dominio.com",
+      "password": "Contraseña",
+      "password_placeholder": "Introduzca su contraseña",
+      "forgot_password": "Olvidó su contraseña",
+      "submit": "Continuar",
+      "no_account": "No tiene cuenta",
+      "create_account": "Crear cuenta",
+      "provider_hint": "Si los botones del proveedor están desactivados, configure `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET` y `GITHUB_CLIENT_ID/SECRET`."
+    },
+    "signup": {
+      "title": "Crear cuenta",
+      "full_name": "Nombre completo",
+      "full_name_placeholder": "Su nombre completo",
+      "country": "País",
+      "country_placeholder": "Seleccione un país",
+      "phone": "Teléfono",
+      "phone_placeholder": "+351 910 000 000",
+      "phone_help": "El número debe comenzar con el prefijo del país seleccionado.",
+      "email": "Correo electrónico",
+      "email_placeholder": "ejemplo: juan@dominio.com",
+      "entity": "Entidad",
+      "entity_placeholder": "Seleccionar automáticamente",
+      "password": "Contraseña",
+      "password_placeholder": "Mínimo 8 caracteres",
+      "confirm_password": "Confirmar contraseña",
+      "confirm_password_placeholder": "Repita su contraseña",
+      "submit": "Crear cuenta",
+      "already_have_account": "Ya tiene cuenta",
+      "login_link": "Entrar"
+    },
+    "admin": {
+      "badge": "ÁREA ADMINISTRATIVA",
+      "title": "Acceso del administrador",
+      "subtitle": "Supervise los indicadores principales y autentíquese con credenciales administrativas.",
+      "email": "Correo administrativo",
+      "email_placeholder": "admin@dominio.com",
+      "entity": "Entidad",
+      "entity_placeholder": "Seleccione",
+      "password": "Contraseña",
+      "password_placeholder": "Introduzca la contraseña",
+      "submit": "Entrar como ADMIN",
+      "switch_text": "Acceder como usuario normal",
+      "switch_link": "Entrar aquí",
+      "metrics": {
+        "total_users": "Usuarios totales",
+        "active_users": "Usuarios activos",
+        "pending_users": "Pendientes",
+        "total_members": "Miembros totales",
+        "active_entities": "Entidades activas",
+        "users_last_7_days": "Nuevos usuarios (7 días)"
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "microsoft": "Microsoft",
+      "github": "GitHub"
+    },
+    "actions": {
+      "login_with_provider": "Entrar con {provider}"
+    },
+    "messages": {
+      "missing_email_password": "Informe su correo electrónico y contraseña.",
+      "select_admin_entity": "Seleccione la entidad para entrar como administrador.",
+      "invalid_selected_entity": "Entidad seleccionada no válida.",
+      "invalid_credentials": "Credenciales no válidas.",
+      "account_status": "La cuenta está en estado '{status}'. Contacte con el administrador.",
+      "admin_only_access": "El acceso administrativo está disponible solo para usuarios administradores.",
+      "user_without_active_entity": "El usuario no tiene una entidad activa asociada.",
+      "forbidden_other_entity": "No está permitido entrar con una entidad distinta de la asociada a su usuario.",
+      "no_permission_selected_entity": "No tiene permiso para entrar en la entidad seleccionada.",
+      "account_exists_use_login": "Ya existe una cuenta con este correo electrónico. Use el acceso.",
+      "signup_failed": "No se pudo crear la cuenta. Inténtelo de nuevo.",
+      "logout_success": "Sesión cerrada correctamente.",
+      "provider_not_configured": "Proveedor no configurado.",
+      "external_auth_failed": "La autenticación externa falló.",
+      "provider_missing_email": "El proveedor no devolvió un correo electrónico.",
+      "external_login_failed": "No se pudo completar el acceso externo.",
+      "password_reset_success": "Contraseña restablecida correctamente. Entre con su nueva contraseña."
+    },
+    "account_status": {
+      "active": "activa",
+      "inactive": "inactiva",
+      "pending": "pendiente",
+      "blocked": "bloqueada"
+    }
+  }
+}

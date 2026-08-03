@@ -1,0 +1,96 @@
+{
+  "auth": {
+    "page_title": "Access",
+    "language": {
+      "label": "Language"
+    },
+    "login": {
+      "title": "Sign in to your account",
+      "email": "Email",
+      "email_placeholder": "example: john@domain.com",
+      "password": "Password",
+      "password_placeholder": "Enter your password",
+      "forgot_password": "Forgot password",
+      "submit": "Continue",
+      "no_account": "Don't have an account",
+      "create_account": "Create account",
+      "provider_hint": "If the provider buttons are disabled, configure `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET`, and `GITHUB_CLIENT_ID/SECRET`."
+    },
+    "signup": {
+      "title": "Create account",
+      "full_name": "Full name",
+      "full_name_placeholder": "Your full name",
+      "country": "Country",
+      "country_placeholder": "Select a country",
+      "phone": "Phone",
+      "phone_placeholder": "+351 910 000 000",
+      "phone_help": "The number must start with the selected country dialing code.",
+      "email": "Email",
+      "email_placeholder": "example: john@domain.com",
+      "entity": "Entity",
+      "entity_placeholder": "Select automatically",
+      "password": "Password",
+      "password_placeholder": "Minimum 8 characters",
+      "confirm_password": "Confirm password",
+      "confirm_password_placeholder": "Repeat your password",
+      "submit": "Create account",
+      "already_have_account": "Already have an account",
+      "login_link": "Sign in"
+    },
+    "admin": {
+      "badge": "ADMIN AREA",
+      "title": "Administrator access",
+      "subtitle": "Monitor key metrics and authenticate with administrative credentials.",
+      "email": "Administrator email",
+      "email_placeholder": "admin@domain.com",
+      "entity": "Entity",
+      "entity_placeholder": "Select",
+      "password": "Password",
+      "password_placeholder": "Enter the password",
+      "submit": "Sign in as ADMIN",
+      "switch_text": "Access as a regular user",
+      "switch_link": "Sign in here",
+      "metrics": {
+        "total_users": "Total users",
+        "active_users": "Active users",
+        "pending_users": "Pending",
+        "total_members": "Total members",
+        "active_entities": "Active entities",
+        "users_last_7_days": "New users (7 days)"
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "microsoft": "Microsoft",
+      "github": "GitHub"
+    },
+    "actions": {
+      "login_with_provider": "Sign in with {provider}"
+    },
+    "messages": {
+      "missing_email_password": "Enter your email and password.",
+      "select_admin_entity": "Select the entity to sign in as administrator.",
+      "invalid_selected_entity": "Invalid selected entity.",
+      "invalid_credentials": "Invalid credentials.",
+      "account_status": "Account is in '{status}' state. Contact the administrator.",
+      "admin_only_access": "Administrative access is available only for administrator users.",
+      "user_without_active_entity": "User has no active linked entity.",
+      "forbidden_other_entity": "You are not allowed to sign in with a different entity than the one linked to your user.",
+      "no_permission_selected_entity": "You do not have permission to sign in to the selected entity.",
+      "account_exists_use_login": "An account with this email already exists. Use sign in.",
+      "signup_failed": "Could not create the account. Try again.",
+      "logout_success": "Session ended successfully.",
+      "provider_not_configured": "Provider not configured.",
+      "external_auth_failed": "External authentication failed.",
+      "provider_missing_email": "The provider did not return an email.",
+      "external_login_failed": "Could not complete external sign in.",
+      "password_reset_success": "Password reset successfully. Sign in with your new password."
+    },
+    "account_status": {
+      "active": "active",
+      "inactive": "inactive",
+      "pending": "pending",
+      "blocked": "blocked"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "auth": {
+    "page_title": "Accès",
+    "language": {
+      "label": "Langue"
+    },
+    "login": {
+      "title": "Connectez-vous à votre compte",
+      "email": "E-mail",
+      "email_placeholder": "exemple : jean@domaine.com",
+      "password": "Mot de passe",
+      "password_placeholder": "Saisissez votre mot de passe",
+      "forgot_password": "Mot de passe oublié",
+      "submit": "Continuer",
+      "no_account": "Vous n'avez pas de compte",
+      "create_account": "Créer un compte",
+      "provider_hint": "Si les boutons fournisseur sont désactivés, configurez `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET` et `GITHUB_CLIENT_ID/SECRET`."
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "full_name": "Nom complet",
+      "full_name_placeholder": "Votre nom complet",
+      "country": "Pays",
+      "country_placeholder": "Sélectionnez un pays",
+      "phone": "Téléphone",
+      "phone_placeholder": "+351 910 000 000",
+      "phone_help": "Le numéro doit commencer par l'indicatif du pays sélectionné.",
+      "email": "E-mail",
+      "email_placeholder": "exemple : jean@domaine.com",
+      "entity": "Entité",
+      "entity_placeholder": "Sélectionner automatiquement",
+      "password": "Mot de passe",
+      "password_placeholder": "Minimum 8 caractères",
+      "confirm_password": "Confirmer le mot de passe",
+      "confirm_password_placeholder": "Répétez votre mot de passe",
+      "submit": "Créer un compte",
+      "already_have_account": "Vous avez déjà un compte",
+      "login_link": "Se connecter"
+    },
+    "admin": {
+      "badge": "ZONE ADMINISTRATIVE",
+      "title": "Accès administrateur",
+      "subtitle": "Surveillez les principaux indicateurs et authentifiez-vous avec des identifiants administratifs.",
+      "email": "E-mail administrateur",
+      "email_placeholder": "admin@domaine.com",
+      "entity": "Entité",
+      "entity_placeholder": "Sélectionnez",
+      "password": "Mot de passe",
+      "password_placeholder": "Saisissez le mot de passe",
+      "submit": "Se connecter comme ADMIN",
+      "switch_text": "Accéder comme utilisateur standard",
+      "switch_link": "Se connecter ici",
+      "metrics": {
+        "total_users": "Utilisateurs totaux",
+        "active_users": "Utilisateurs actifs",
+        "pending_users": "En attente",
+        "total_members": "Membres totaux",
+        "active_entities": "Entités actives",
+        "users_last_7_days": "Nouveaux utilisateurs (7 jours)"
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "microsoft": "Microsoft",
+      "github": "GitHub"
+    },
+    "actions": {
+      "login_with_provider": "Se connecter avec {provider}"
+    },
+    "messages": {
+      "missing_email_password": "Saisissez votre e-mail et votre mot de passe.",
+      "select_admin_entity": "Sélectionnez l'entité pour vous connecter en tant qu'administrateur.",
+      "invalid_selected_entity": "Entité sélectionnée non valide.",
+      "invalid_credentials": "Identifiants invalides.",
+      "account_status": "Le compte est dans l'état '{status}'. Contactez l'administrateur.",
+      "admin_only_access": "L'accès administratif est réservé aux utilisateurs administrateurs.",
+      "user_without_active_entity": "L'utilisateur n'a aucune entité active associée.",
+      "forbidden_other_entity": "Vous n'êtes pas autorisé à vous connecter avec une entité différente de celle associée à votre utilisateur.",
+      "no_permission_selected_entity": "Vous n'avez pas l'autorisation d'accéder à l'entité sélectionnée.",
+      "account_exists_use_login": "Un compte avec cet e-mail existe déjà. Utilisez la connexion.",
+      "signup_failed": "Impossible de créer le compte. Réessayez.",
+      "logout_success": "Session terminée avec succès.",
+      "provider_not_configured": "Fournisseur non configuré.",
+      "external_auth_failed": "L'authentification externe a échoué.",
+      "provider_missing_email": "Le fournisseur n'a pas renvoyé d'e-mail.",
+      "external_login_failed": "Impossible de finaliser la connexion externe.",
+      "password_reset_success": "Mot de passe réinitialisé avec succès. Connectez-vous avec votre nouveau mot de passe."
+    },
+    "account_status": {
+      "active": "actif",
+      "inactive": "inactif",
+      "pending": "en attente",
+      "blocked": "bloqué"
+    }
+  }
+}

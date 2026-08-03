@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{ current_lang|default('pt') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AppGenesis{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/ui-standards.css?v=20260424a">
+  <link rel="stylesheet" href="/static/css/modules/global_loading_overlay_v1.css?v=20260702-global-loading-overlay-v1">
+  <script src="/static/js/modules/global_loading_overlay_v1.js?v=20260702-global-loading-overlay-v1"></script>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div id="appgenesis-global-loading-overlay" class="appgenesis-global-loading-overlay" role="status" aria-live="polite" aria-hidden="true">
+    <span class="appgenesis-global-loading-overlay__spinner" aria-hidden="true"></span>
+    <span class="appgenesis-global-loading-overlay__label">A atualizar...</span>
+  </div>
+  {% block body %}{% endblock %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

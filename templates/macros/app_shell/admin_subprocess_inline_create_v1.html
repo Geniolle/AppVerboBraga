@@ -1,0 +1,18 @@
+{# APPGENESIS_ADMIN_SUBPROCESS_INLINE_CREATE_V1: macro reutilizavel do botao
+   inline "+ Criar/Novo ..." no cabecalho do cartao ativo de um subprocesso
+   administrativo. Sem logica de negocio: apenas renderiza o botao acessivel
+   a partir do proprio AdminSubprocessConfig (key + create_title), sem
+   hardcode de nenhum subprocesso especifico. O clique e tratado por
+   static/js/modules/app_shell/admin_subprocess_inline_create_v1.js, que
+   localiza o <summary> original do mesmo subprocesso (data-admin-subprocess
+   casado) e sintetiza um clique nele -- nenhuma logica nova de gravacao. #}
+
+{% macro render_admin_subprocess_inline_create_button(config) %}
+  <button
+    type="button"
+    class="admin-subprocess-inline-create-btn-v1"
+    data-admin-subprocess-inline-create="{{ config.key }}"
+    aria-label="{{ config.create_title }}"
+    title="{{ config.create_title }}"
+  ><span class="admin-subprocess-inline-create-icon-v1" aria-hidden="true">+</span><span>{{ config.create_title }}</span></button>
+{% endmacro %}

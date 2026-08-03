@@ -1,0 +1,454 @@
+//###################################################################################
+// APPGENESIS - GLOBAL CANCEL CONTROLLER V1
+//###################################################################################
+
+(function (window, document) {
+  "use strict";
+
+  if (window.AppGenesisCancelControllerV1) {
+    return;
+  }
+
+  //###################################################################################
+  // (1) CONSTANTES
+  //###################################################################################
+
+  const CANCEL_TRIGGER_SELECTOR_V1 = [
+    "[data-appgenesis-cancel]",
+    "[data-appgenesis-cancel-target]",
+    "[data-edit-cancel]",
+    ".profile-cancel-btn",
+    ".action-btn-cancel"
+  ].join(", ");
+
+  const LOCAL_EDITOR_CANCEL_SELECTOR_V1 = [
+    "[data-appgenesis-cancel-local]",
+    "[data-additional-field-editor-cancel]",
+    "[data-process-fields-config-cancel]",
+    "[data-process-list-editor-cancel]",
+    "[data-process-list-column-editor-cancel]",
+    "[data-process-quantity-editor-cancel]",
+    "[data-process-subsequent-field-cancel]",
+    ".process-fields-config-cancel-v6",
+    ".appgenesis-sidebar-section-cancel-btn-v3",
+    ".appgenesis-create-entry-cancel-btn-v1",
+    ".appgenesis-create-entry-cancel-btn-v5",
+    ".appgenesis-sidebar-section-edit-cancel-v8",
+    ".appgenesis-sidebar-section-edit-cancel-v9"
+  ].join(", ");
+
+  const DETAILS_SELECTOR_V1 = [
+    "details.entity-create-collapse",
+    "details.admin-subprocess-create-collapse-v1",
+    "details.appgenesis-process-action-details-v1",
+    "details"
+  ].join(", ");
+
+  //###################################################################################
+  // (2) HELPERS
+  //###################################################################################
+
+  function normalizeTextV1(value) {
+    return String(value || "").trim();
+  }
+
+  function normalizeLookupV1(value) {
+    return normalizeTextV1(value)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function normalizeSelectorV1(value) {
+    const rawValue = normalizeTextV1(value);
+
+    if (!rawValue) {
+      return "";
+    }
+
+    if (/^[#.\[]/.test(rawValue)) {
+      return rawValue;
+    }
+
+    return "#" + rawValue;
+  }
+
+  function getClosestV1(element, selector) {
+    if (!element || typeof element.closest !== "function") {
+      return null;
+    }
+
+    return element.closest(selector);
+  }
+
+  function matchesV1(element, selector) {
+    return Boolean(
+      element &&
+      typeof element.matches === "function" &&
+      element.matches(selector)
+    );
+  }
+
+  function getElementBySelectorV1(selector, ownerDocument) {
+    const safeSelector = normalizeSelectorV1(selector);
+    const safeDocument = ownerDocument || document;
+
+    if (!safeSelector) {
+      return null;
+    }
+
+    try {
+      return safeDocument.querySelector(safeSelector);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function isVisualCancelTriggerV1(trigger) {
+    if (!trigger) {
+      return false;
+    }
+
+    if (
+      matchesV1(trigger, "[data-appgenesis-cancel], [data-appgenesis-cancel-target], [data-edit-cancel], .profile-cancel-btn")
+    ) {
+      return true;
+    }
+
+    if (!matchesV1(trigger, ".action-btn-cancel")) {
+      return false;
+    }
+
+    const label = normalizeLookupV1(trigger.textContent);
+    return label === "cancelar" || label === "fechar";
+  }
+
+  function resolveCancelTriggerV1(element) {
+    const trigger = getClosestV1(element, CANCEL_TRIGGER_SELECTOR_V1);
+
+    if (!isVisualCancelTriggerV1(trigger)) {
+      return null;
+    }
+
+    return trigger;
+  }
+
+  function resolveExplicitContextV1(trigger) {
+    if (!trigger) {
+      return null;
+    }
+
+    return getElementBySelectorV1(
+      trigger.getAttribute("data-appgenesis-cancel-target") ||
+      trigger.getAttribute("data-edit-cancel"),
+      trigger.ownerDocument || document
+    );
+  }
+
+  function resolveReturnTargetV1(trigger) {
+    if (!trigger) {
+      return null;
+    }
+
+    return getElementBySelectorV1(
+      trigger.getAttribute("data-appgenesis-cancel-return-target"),
+      trigger.ownerDocument || document
+    );
+  }
+
+  function resolveCancelContextV1(trigger) {
+    if (!trigger) {
+      return null;
+    }
+
+    return (
+      resolveExplicitContextV1(trigger) ||
+      getClosestV1(
+        trigger,
+        [
+          "[data-process-fields-config-editor-block]",
+          "[data-additional-field-editor-block]",
+          "[data-process-additional-fields-manager-v3]",
+          "form[data-process-lists-manager-v1='1']",
+          "form[data-process-quantity-fields-manager-v1='1']",
+          "form[data-process-subsequent-fields-manager-v1='1']",
+          ".appgenesis-create-entry-block-v1",
+          ".appgenesis-create-entry-card-v5",
+          ".appgenesis-create-entry-panel-v1",
+          ".appgenesis-create-entry-panel-v5",
+          ".appgenesis-sidebar-section-edit-actions-v8",
+          ".appgenesis-sidebar-section-edit-actions-v9",
+          ".profile-edit-form",
+          "[data-admin-subprocess-role='form']",
+          DETAILS_SELECTOR_V1,
+          ".card",
+          "form"
+        ].join(", ")
+      ) ||
+      trigger
+    );
+  }
+
+  function resolveCardV1(element) {
+    return getClosestV1(element, ".card");
+  }
+
+  function resolveDetailsV1(element) {
+    return getClosestV1(element, DETAILS_SELECTOR_V1);
+  }
+
+  function resolveFormV1(trigger, context) {
+    if (matchesV1(trigger, LOCAL_EDITOR_CANCEL_SELECTOR_V1)) {
+      return null;
+    }
+
+    if (matchesV1(context, ".profile-edit-form")) {
+      return context;
+    }
+
+    if (matchesV1(context, "form")) {
+      return context;
+    }
+
+    const contextProfileForm = context && typeof context.querySelector === "function"
+      ? context.querySelector(".profile-edit-form")
+      : null;
+
+    if (contextProfileForm) {
+      return contextProfileForm;
+    }
+
+    return getClosestV1(trigger, "form");
+  }
+
+  function hideCardV1(card) {
+    if (!card) {
+      return;
+    }
+
+    card.style.display = "none";
+    card.setAttribute("aria-hidden", "true");
+  }
+
+  function showCardV1(card) {
+    if (!card) {
+      return;
+    }
+
+    card.style.display = "";
+    card.hidden = false;
+    card.removeAttribute("hidden");
+    card.setAttribute("aria-hidden", "false");
+  }
+
+  function replaceHistoryUrlV1(rawUrl) {
+    if (!rawUrl || !window.history || typeof window.history.replaceState !== "function") {
+      return;
+    }
+
+    try {
+      const nextUrl = new URL(rawUrl, window.location.origin);
+      const nextPath = nextUrl.pathname + nextUrl.search + nextUrl.hash;
+      window.history.replaceState(window.history.state, document.title, nextPath);
+    } catch (error) {
+      // Ignore malformed return URLs.
+    }
+  }
+
+  function shouldExitEditingModeV1(trigger, card) {
+    return Boolean(
+      matchesV1(trigger, "[data-appgenesis-cancel], [data-edit-cancel], .profile-cancel-btn") ||
+      (card && card.classList && card.classList.contains("editing"))
+    );
+  }
+
+  // Um cancelar local (item de uma lista configuravel, ex.: Config./Quantidade/Lista/
+  // Subsequentes/Adicionais) so permanece no editor quando existe um rascunho ativo
+  // (item a ser criado/editado); sem rascunho, deve sair como qualquer outro cancelar.
+  // O checker e' registado pelo proprio manager em cancelButton.__appgenesisLocalDraftCheckV1;
+  // na ausencia de um checker registado preserva-se o comportamento atual (permanecer).
+  function shouldStayInLocalEditorV1(trigger, localEditorOnly) {
+    if (!localEditorOnly) {
+      return false;
+    }
+
+    const draftChecker = trigger && trigger.__appgenesisLocalDraftCheckV1;
+
+    if (typeof draftChecker !== "function") {
+      return true;
+    }
+
+    return Boolean(draftChecker());
+  }
+
+  function syncKnownHelpersV1(detail) {
+    const card = detail.card;
+
+    if (
+      card &&
+      card.id === "create-user-card" &&
+      typeof window.AppGenesisSyncUserCreateActionModeV1 === "function"
+    ) {
+      window.AppGenesisSyncUserCreateActionModeV1(document);
+    }
+  }
+
+  function dispatchCancelledEventV1(detail) {
+    const cancelEvent = new CustomEvent("appgenesis:cancelled", {
+      bubbles: true,
+      detail
+    });
+
+    const eventTarget = detail && detail.trigger ? detail.trigger : document;
+    eventTarget.dispatchEvent(cancelEvent);
+  }
+
+  //###################################################################################
+  // (3) API PUBLICA
+  //###################################################################################
+
+  function resetFormV1(form) {
+    if (!form || typeof form.reset !== "function") {
+      return false;
+    }
+
+    form.reset();
+    return true;
+  }
+
+  function closeDetailsV1(details) {
+    if (!details || typeof details.open !== "boolean") {
+      return false;
+    }
+
+    const summary = details.querySelector("summary");
+    details.open = false;
+
+    if (summary && typeof summary.focus === "function") {
+      summary.focus();
+    }
+
+    return true;
+  }
+
+  function closeCardV1(card, options) {
+    if (!card) {
+      return false;
+    }
+
+    const safeOptions = options || {};
+
+    if (card.classList) {
+      card.classList.remove("editing");
+    }
+
+    if (safeOptions.hide === true) {
+      hideCardV1(card);
+      return true;
+    }
+
+    if (safeOptions.show === true) {
+      showCardV1(card);
+      return true;
+    }
+
+    return true;
+  }
+
+  function closeAllOpenEditorsV1(root) {
+    const scope = root || document;
+
+    if (!scope || typeof scope.querySelectorAll !== "function") {
+      return 0;
+    }
+
+    const cards = Array.from(scope.querySelectorAll(".card.editing"));
+
+    cards.forEach(function (card) {
+      closeCardV1(card);
+      const profileForm = card.querySelector(".profile-edit-form");
+      if (profileForm) {
+        resetFormV1(profileForm);
+      }
+    });
+
+    return cards.length;
+  }
+
+  function cancelFromElementV1(element) {
+    const trigger = resolveCancelTriggerV1(element);
+
+    if (!trigger) {
+      return false;
+    }
+
+    const context = resolveCancelContextV1(trigger);
+    const returnTarget = resolveReturnTargetV1(trigger);
+    const card = resolveCardV1(context) || resolveCardV1(trigger);
+    const details = resolveDetailsV1(context) || resolveDetailsV1(trigger);
+    const form = resolveFormV1(trigger, context);
+    const localEditorOnly = matchesV1(trigger, LOCAL_EDITOR_CANCEL_SELECTOR_V1);
+    const shouldStayLocal = shouldStayInLocalEditorV1(trigger, localEditorOnly);
+    const shouldHideCurrentCard = Boolean(returnTarget && card && returnTarget !== card && !shouldStayLocal);
+
+    if (!localEditorOnly && form) {
+      resetFormV1(form);
+    }
+
+    if (details) {
+      closeDetailsV1(details);
+    }
+
+    if (shouldExitEditingModeV1(trigger, card)) {
+      closeCardV1(card, { hide: shouldHideCurrentCard });
+    } else if (shouldHideCurrentCard) {
+      hideCardV1(card);
+    }
+
+    if (returnTarget && !shouldStayLocal) {
+      showCardV1(resolveCardV1(returnTarget) || returnTarget);
+    }
+
+    if (!shouldStayLocal) {
+      replaceHistoryUrlV1(trigger.getAttribute("data-appgenesis-cancel-return-url"));
+    }
+
+    const detail = {
+      trigger,
+      context,
+      form,
+      card,
+      details,
+      returnTarget,
+      localEditorOnly
+    };
+
+    syncKnownHelpersV1(detail);
+    dispatchCancelledEventV1(detail);
+
+    return true;
+  }
+
+  //###################################################################################
+  // (4) EVENT DELEGATION
+  //###################################################################################
+
+  document.addEventListener("click", function (event) {
+    const trigger = resolveCancelTriggerV1(event.target);
+
+    if (!trigger) {
+      return;
+    }
+
+    event.preventDefault();
+    cancelFromElementV1(trigger);
+  });
+
+  window.AppGenesisCancelControllerV1 = {
+    cancelFromElement: cancelFromElementV1,
+    closeCard: closeCardV1,
+    resetForm: resetFormV1,
+    closeDetails: closeDetailsV1,
+    closeAllOpenEditors: closeAllOpenEditorsV1
+  };
+})(window, document);

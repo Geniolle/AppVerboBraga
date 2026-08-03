@@ -1,0 +1,1296 @@
+from __future__ import annotations
+
+from datetime import date
+from typing import Any
+from urllib.parse import urlencode
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from appgenesis.core import (
+    ENTITY_NUMBER_MAX,
+    ENTITY_NUMBER_MIN,
+    ENTITY_PROFILE_SCOPE_LEGADO,
+    ENTITY_PROFILE_SCOPE_OWNER,
+)
+from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
+from appgenesis.menu_settings import (
+    MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
+    MENU_MEU_PERFIL_FIELD_LABELS,
+    MENU_MEU_PERFIL_FIELD_OPTIONS,
+    MENU_MEU_PERFIL_FIELDS_DEFAULT,
+    MENU_MEU_PERFIL_KEY,
+    get_sidebar_menu_settings,
+    get_visible_sidebar_menu_keys,
+    normalize_sidebar_sections,
+    resolve_menu_key_alias,
+)
+from appgenesis.services.user_entity_scope import (
+    get_actor_primary_entity_v1,
+    get_entities_for_user_edit_form_v1,
+)
+from appgenesis.services.permissions import get_user_entity_permissions
+from appgenesis.services.user_status import (
+    is_user_account_status_active_v1,
+    is_user_account_status_inactive_v1,
+    normalize_user_account_status_v1,
+    user_account_status_label_pt_v1,
+)
+from appgenesis.services.user_system import (
+    get_user_system_type_label_v1,
+    normalize_user_system_type_v1,
+)
+from appgenesis.services.profile import (
+    build_menu_process_records_storage_key,
+    build_menu_process_field_storage_key,
+    build_menu_process_quantity_storage_key,
+    get_menu_process_quantity_repeated_field_keys,
+    is_meu_perfil_builtin_duplicate_field,
+    resolve_meu_perfil_builtin_duplicate_field_key,
+    resolve_field_list_options_v1,
+    parse_menu_process_records,
+    parse_menu_process_quantity_values,
+    parse_member_profile_fields,
+)
+from appgenesis.domains.meu_perfil.visibility import apply_meu_perfil_subsequent_visibility_v2
+
+
+
+def _serialize_resolved_list_option_labels_v1(
+    resolved_options: list[dict[str, str]] | None,
+) -> list[str]:
+    if not isinstance(resolved_options, list):
+        return []
+    return [
+        clean_label
+        for clean_label in [
+            str(
+                (raw_option or {}).get("label")
+                or (raw_option or {}).get("value")
+                or ""
+            ).strip()
+            for raw_option in resolved_options
+            if isinstance(raw_option, dict)
+        ]
+        if clean_label
+    ]
+
+
+def _decorate_sidebar_list_field_options_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: set[str],
+    menu_process_history_map: dict[str, list[dict[str, Any]]],
+    selected_entity_id: int | None,
+) -> None:
+    for sidebar_item in sidebar_menu_settings:
+        if not isinstance(sidebar_item, dict):
+            continue
+
+        menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
+        if not menu_key:
+            continue
+
+        for collection_key in ("process_additional_fields", "process_field_options"):
+            raw_fields = sidebar_item.get(collection_key)
+            if not isinstance(raw_fields, list):
+                continue
+
+            decorated_fields: list[dict[str, Any]] = []
+            for raw_field in raw_fields:
+                if not isinstance(raw_field, dict):
+                    continue
+
+                field_definition = dict(raw_field)
+                field_type = str(
+                    field_definition.get("field_type") or field_definition.get("type") or ""
+                ).strip().lower()
+
+                if field_type == "list":
+                    resolved_options = resolve_field_list_options_v1(
+                        active_entity_id=selected_entity_id,
+                        current_menu_key=menu_key,
+                        field_definition=field_definition,
+                        sidebar_menu_settings=sidebar_menu_settings,
+                        visible_sidebar_menu_keys=visible_sidebar_menu_keys,
+                        menu_process_history_map=menu_process_history_map,
+                    )
+                    field_definition["resolved_list_options"] = [
+                        dict(option)
+                        for option in resolved_options
+                    ]
+                    field_definition["list_options"] = _serialize_resolved_list_option_labels_v1(
+                        resolved_options
+                    )
+
+                decorated_fields.append(field_definition)
+
+            sidebar_item[collection_key] = decorated_fields
+
+
+def _resolve_actor_page_context(
+    session: Session,
+    actor_user_id: int | None,
+    actor_login_email: str,
+    selected_entity_id: int | None,
+) -> dict[str, Any]:
+    permissions = {
+        "is_admin": False,
+        "has_owner_membership": False,
+        "can_manage_all_entities": False,
+        "can_manage_tenant_structure": False,
+        "can_create_legacy_entities": False,
+        "can_create_legacy_admin_users": False,
+        "selected_entity_id": selected_entity_id,
+        "allowed_entity_ids": set(),
+        "allowed_structure_entity_ids": set(),
+        "allowed_data_entity_ids": set(),
+    }
+    allowed_entity_ids: set[int] | None = None
+    if actor_user_id is not None:
+        permissions = get_user_entity_permissions(
+            session,
+            actor_user_id,
+            actor_login_email,
+            selected_entity_id,
+        )
+        allowed_entity_ids = set(permissions["allowed_entity_ids"])
+        selected_entity_id = permissions["selected_entity_id"]
+    current_user_is_admin = bool(permissions["is_admin"])
+
+    actor_entity_id: int | None = None
+    actor_entity_name = ""
+    actor_entity_number = None
+    entities_for_user_form: list[dict[str, Any]] = []
+    entities_for_user_edit_form: list[dict[str, Any]] = []
+    can_select_user_entity = bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False)))
+    if actor_user_id is not None:
+        actor_primary_entity = get_actor_primary_entity_v1(session, actor_user_id)
+        if actor_primary_entity is not None:
+            actor_entity_id = actor_primary_entity["id"]
+            actor_entity_name = actor_primary_entity["name"]
+            actor_entity_number = actor_primary_entity["entity_number"]
+        if can_select_user_entity:
+            entities_for_user_form = get_entities_for_user_edit_form_v1(session, permissions)
+        entities_for_user_edit_form = get_entities_for_user_edit_form_v1(session, permissions)
+
+    current_entity_scope = ""
+    if selected_entity_id is not None:
+        raw_entity_scope = session.execute(
+            select(Entity.profile_scope)
+           .where(Entity.id == selected_entity_id)
+           .limit(1)
+        ).scalar_one_or_none()
+        current_entity_scope = str(raw_entity_scope or "").strip().lower()
+
+    return {
+        "permissions": permissions,
+        "allowed_entity_ids": allowed_entity_ids,
+        "selected_entity_id": selected_entity_id,
+        "current_user_is_admin": current_user_is_admin,
+        "current_entity_scope": current_entity_scope,
+        "actor_entity_id": actor_entity_id,
+        "actor_entity_name": actor_entity_name,
+        "actor_entity_number": actor_entity_number,
+        "can_select_user_entity": can_select_user_entity,
+        "entities_for_user_form": entities_for_user_form,
+        "entities_for_user_edit_form": entities_for_user_edit_form,
+    }
+
+
+def _resolve_sidebar_menu_context(
+    session: Session,
+    current_user_is_admin: bool,
+    current_entity_scope: str,
+    selected_entity_id: int | None = None,
+) -> dict[str, Any]:
+    sidebar_menu_settings = get_sidebar_menu_settings(
+        session, active_entity_id=selected_entity_id
+    )
+    active_menu_rows = [
+        row for row in sidebar_menu_settings
+        if row.get("is_active") and not row.get("is_deleted")
+    ]
+    inactive_menu_rows = [
+        row for row in sidebar_menu_settings
+        if not row.get("is_active")
+    ]
+    visible_sidebar_menu_keys = get_visible_sidebar_menu_keys(
+        sidebar_menu_settings,
+        current_user_is_admin=current_user_is_admin,
+        current_entity_scope=current_entity_scope,
+    )
+    administrativo_menu = next(
+        (
+            row
+            for row in sidebar_menu_settings
+            if str(row.get("key") or "").strip().lower() == "administrativo"
+        ),
+        None,
+    )
+    sidebar_section_options = normalize_sidebar_sections(
+        (administrativo_menu or {}).get("menu_config", {}).get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+    return {
+        "sidebar_menu_settings": sidebar_menu_settings,
+        "active_menu_rows": active_menu_rows,
+        "inactive_menu_rows": inactive_menu_rows,
+        "visible_sidebar_menu_keys": visible_sidebar_menu_keys,
+        "sidebar_section_options": sidebar_section_options,
+    }
+
+
+def _resolve_actor_menu_process_maps(
+    session: Session,
+    actor_user_id: int | None,
+    sidebar_menu_settings: list[dict[str, Any]],
+    visible_sidebar_menu_keys: list[str],
+    selected_entity_id: int | None,
+) -> dict[str, Any]:
+    actor_profile_fields: dict[str, str] = {}
+    if actor_user_id is not None:
+        raw_profile_fields = session.execute(
+            select(Member.profile_custom_fields)
+           .join(User, User.member_id == Member.id)
+           .where(User.id == actor_user_id)
+           .limit(1)
+        ).scalar_one_or_none()
+        actor_profile_fields = parse_member_profile_fields(raw_profile_fields)
+    menu_process_values_map: dict[str, dict[str, str]] = {}
+    menu_process_history_map: dict[str, list[dict[str, Any]]] = {}
+    menu_process_quantity_values_map: dict[str, dict[str, list[dict[str, str]]]] = {}
+    for sidebar_item in sidebar_menu_settings:
+        menu_key = resolve_menu_key_alias(sidebar_item.get("key"))
+        if not menu_key or menu_key in {"home", "perfil", "administrativo"}:
+            continue
+        visible_rows = (
+            sidebar_item.get("process_visible_field_rows")
+            if isinstance(sidebar_item.get("process_visible_field_rows"), list)
+            else []
+        )
+        menu_values: dict[str, str] = {}
+        for raw_row in visible_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            field_key = str(raw_row.get("field_key") or "").strip().lower()
+            if not field_key:
+                continue
+            storage_key = build_menu_process_field_storage_key(menu_key, field_key)
+            if not storage_key:
+                continue
+            storage_value = actor_profile_fields.get(storage_key)
+            if storage_value is None:
+                continue
+            menu_values[field_key] = storage_value
+        if menu_values:
+            menu_process_values_map[menu_key] = menu_values
+        quantity_values_by_rule: dict[str, list[dict[str, str]]] = {}
+        for quantity_rule in sidebar_item.get("process_quantity_fields") or []:
+            if not isinstance(quantity_rule, dict):
+                continue
+            rule_key = str(quantity_rule.get("key") or "").strip().lower()
+            if not rule_key:
+                continue
+            quantity_storage_key = build_menu_process_quantity_storage_key(menu_key, rule_key)
+            if not quantity_storage_key:
+                continue
+            quantity_values = parse_menu_process_quantity_values(
+                actor_profile_fields.get(quantity_storage_key)
+            )
+            if quantity_values:
+                quantity_values_by_rule[rule_key] = quantity_values
+        if quantity_values_by_rule:
+            menu_process_quantity_values_map[menu_key] = quantity_values_by_rule
+        history_storage_key = build_menu_process_records_storage_key(menu_key)
+        if history_storage_key:
+            menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
+            if menu_history_rows:
+                menu_process_history_map[menu_key] = menu_history_rows
+    _decorate_sidebar_list_field_options_v1(
+        sidebar_menu_settings=sidebar_menu_settings,
+        visible_sidebar_menu_keys=set(visible_sidebar_menu_keys),
+        menu_process_history_map=menu_process_history_map,
+        selected_entity_id=selected_entity_id,
+    )
+    return {
+        "actor_profile_fields": actor_profile_fields,
+        "menu_process_values_map": menu_process_values_map,
+        "menu_process_history_map": menu_process_history_map,
+        "menu_process_quantity_values_map": menu_process_quantity_values_map,
+    }
+
+
+def _serialize_entity_row_v1(row: Any) -> dict[str, Any]:
+    return {
+        "id": row.id,
+        "entity_number": row.entity_number if row.entity_number is not None else "-",
+        "entity_number_sort_value": row.entity_number if row.entity_number is not None else "",
+        "name": row.name,
+        "acronym": row.acronym or "",
+        "tax_id": row.tax_id or "",
+        "email": row.email or "",
+        "responsible_name": row.responsible_name or "",
+        "door_number": row.door_number or "",
+        "phone": row.phone or "",
+        "address": row.address or "",
+        "city": row.city or "",
+        "freguesia": row.freguesia or "",
+        "postal_code": row.postal_code or "",
+        "country": row.country or "",
+        "description": row.description or "",
+        "profile_scope": (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO),
+        "profile_scope_label": (
+            "Gestora do tenant"
+            if (row.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO) == ENTITY_PROFILE_SCOPE_OWNER
+            else "Entidade operacional"
+        ),
+        "logo_url": row.logo_url or "",
+        "is_active": bool(row.is_active),
+        "status_label": "Ativa" if row.is_active else "Inativa",
+        "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
+    }
+
+
+def _resolve_scoped_entities(
+    session: Session,
+    allowed_entity_ids: set[int] | None,
+) -> dict[str, Any]:
+    scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
+    apply_scope_filter = allowed_entity_ids is not None
+
+    entities_stmt = (
+        select(Entity.id, Entity.name, Entity.entity_number)
+       .where(Entity.is_active.is_(True))
+       .order_by(Entity.name)
+    )
+    if apply_scope_filter:
+        if scoped_entity_ids:
+            entities_stmt = entities_stmt.where(Entity.id.in_(scoped_entity_ids))
+        else:
+            entities_stmt = entities_stmt.where(Entity.id == -1)
+    entities = session.execute(entities_stmt).all()
+
+    entity_rows_stmt = (
+        select(
+            Entity.id,
+            Entity.entity_number,
+            Entity.name,
+            Entity.acronym,
+            Entity.tax_id,
+            Entity.email,
+            Entity.responsible_name,
+            Entity.door_number,
+            Entity.phone,
+            Entity.address,
+            Entity.city,
+            Entity.freguesia,
+            Entity.postal_code,
+            Entity.country,
+            Entity.description,
+            Entity.profile_scope,
+            Entity.logo_url,
+            Entity.is_active,
+            Entity.created_at,
+        )
+       .order_by(
+            Entity.entity_number.is_(None),
+            Entity.entity_number.asc(),
+            Entity.id.asc(),
+        )
+    )
+    if apply_scope_filter:
+        if scoped_entity_ids:
+            entity_rows_stmt = entity_rows_stmt.where(Entity.id.in_(scoped_entity_ids))
+        else:
+            entity_rows_stmt = entity_rows_stmt.where(Entity.id == -1)
+
+    recent_entities = session.execute(
+        entity_rows_stmt.where(Entity.is_active.is_(True)).limit(10)
+    ).all()
+    inactive_entities_rows = session.execute(
+        entity_rows_stmt.where(Entity.is_active.is_not(True))
+    ).all()
+
+    return {
+        "scoped_entity_ids": scoped_entity_ids,
+        "apply_scope_filter": apply_scope_filter,
+        "entities": entities,
+        "recent_entities": recent_entities,
+        "inactive_entities_rows": inactive_entities_rows,
+    }
+
+
+def _resolve_scoped_users(
+    session: Session,
+    permissions: dict[str, Any],
+    apply_scope_filter: bool,
+    scoped_entity_ids: list[int],
+) -> dict[str, Any]:
+    user_rows = session.execute(
+        select(
+            User.id,
+            User.member_id,
+            Member.full_name,
+            Member.primary_phone,
+            User.login_email,
+            User.account_status,
+            User.system_type,
+            User.created_at,
+        )
+       .join(Member, Member.id == User.member_id)
+       .order_by(User.id.asc())
+    ).all()
+
+    # Escopo de dados operacionais: apenas as entidades onde o utilizador tem vínculo ativo.
+    # A gestora do tenant NÃO vê dados operacionais de entidades Legado através deste filtro.
+    _data_entity_ids = sorted(permissions.get("allowed_data_entity_ids") or set())
+    if apply_scope_filter:
+        if _data_entity_ids:
+            scoped_member_ids = {
+                int(raw_id)
+                for raw_id in session.execute(
+                    select(MemberEntity.member_id)
+                   .where(
+                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                        MemberEntity.entity_id.in_(_data_entity_ids),
+                    )
+                   .distinct()
+                ).scalars().all()
+            }
+            user_rows = [
+                row for row in user_rows if int(row.member_id) in scoped_member_ids
+            ]
+        else:
+            user_rows = []
+
+    member_ids = [int(row.member_id) for row in user_rows]
+
+    entity_name_by_member_id: dict[int, str] = {}
+    entity_id_by_member_id: dict[int, int] = {}
+    entity_number_by_member_id: dict[int, int | None] = {}
+    if member_ids:
+        entity_name_stmt = (
+            select(MemberEntity.member_id, MemberEntity.entity_id, Entity.name, Entity.entity_number)
+           .join(Entity, Entity.id == MemberEntity.entity_id)
+           .where(MemberEntity.member_id.in_(member_ids))
+           .order_by(MemberEntity.member_id.asc(), MemberEntity.id.asc())
+        )
+        if apply_scope_filter and scoped_entity_ids:
+            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id.in_(scoped_entity_ids))
+        elif apply_scope_filter:
+            entity_name_stmt = entity_name_stmt.where(MemberEntity.entity_id == -1)
+
+        for row in session.execute(entity_name_stmt).all():
+            member_id_value = int(row.member_id)
+            if member_id_value not in entity_name_by_member_id:
+                entity_id_by_member_id[member_id_value] = int(row.entity_id)
+                entity_name_by_member_id[member_id_value] = row.name
+                entity_number_by_member_id[member_id_value] = row.entity_number
+
+    all_users = [
+        {
+            "id": row.id,
+            "member_id": row.member_id,
+            "full_name": row.full_name,
+            "primary_phone": row.primary_phone or "-",
+            "login_email": row.login_email,
+            "account_status": normalize_user_account_status_v1(row.account_status),
+            "account_status_label": user_account_status_label_pt_v1(row.account_status),
+            "account_status_is_active": is_user_account_status_active_v1(row.account_status),
+            "account_status_is_inactive": is_user_account_status_inactive_v1(row.account_status),
+            "entity_id": entity_id_by_member_id.get(int(row.member_id)),
+            "entity_name": entity_name_by_member_id.get(int(row.member_id), "-"),
+            "entity_number": entity_number_by_member_id.get(int(row.member_id)),
+            "system_type": normalize_user_system_type_v1(row.system_type),
+            "system_type_label": get_user_system_type_label_v1(row.system_type),
+            "created_at": row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "-",
+        }
+        for row in user_rows
+    ]
+    pending_users = [
+        row for row in all_users if row["account_status"] == UserAccountStatus.PENDING.value
+    ]
+    created_users = [
+        row for row in all_users if row["account_status"] != UserAccountStatus.PENDING.value
+    ]
+    active_created_users = [
+        row for row in created_users if is_user_account_status_active_v1(row["account_status"])
+    ]
+    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_START
+    # Mostra no bloco inferior todos os utilizadores cujo estado seja diferente de Ativo.
+    # Assim entram Pendente, Inativo, Bloqueado e outros estados futuros n?o ativos.
+    inactive_users = [
+        row
+        for row in all_users
+        if row["account_status"] != UserAccountStatus.ACTIVE.value
+    ]
+    # APPGENESIS_NON_ACTIVE_USERS_LIST_V1_END
+    recent_users = all_users[:10]
+
+    account_status_map = {
+        UserAccountStatus.ACTIVE.value: 0,
+        UserAccountStatus.PENDING.value: 0,
+        UserAccountStatus.INACTIVE.value: 0,
+        UserAccountStatus.BLOCKED.value: 0,
+    }
+    for row in all_users:
+        normalized_status = str(row.get("account_status") or "").strip().lower()
+        if normalized_status not in account_status_map:
+            account_status_map[normalized_status] = 0
+        account_status_map[normalized_status] += 1
+    account_status_summary = [
+        {"status": UserAccountStatus.ACTIVE.value, "count": account_status_map.get(UserAccountStatus.ACTIVE.value, 0)},
+        {"status": UserAccountStatus.PENDING.value, "count": account_status_map.get(UserAccountStatus.PENDING.value, 0)},
+        {"status": UserAccountStatus.INACTIVE.value, "count": account_status_map.get(UserAccountStatus.INACTIVE.value, 0)},
+        {"status": UserAccountStatus.BLOCKED.value, "count": account_status_map.get(UserAccountStatus.BLOCKED.value, 0)},
+    ]
+
+    return {
+        "all_users": all_users,
+        "pending_users": pending_users,
+        "created_users": created_users,
+        "active_created_users": active_created_users,
+        "inactive_users": inactive_users,
+        "recent_users": recent_users,
+        "account_status_summary": account_status_summary,
+    }
+
+
+def _resolve_company_profile_data(
+    session: Session,
+    selected_entity_id: int | None,
+    permissions: dict[str, Any],
+) -> dict[str, Any] | None:
+    if selected_entity_id is None:
+        return None
+    data_ids = permissions.get("allowed_data_entity_ids") or set()
+    if selected_entity_id not in data_ids:
+        return None
+    company_entity = session.get(Entity, selected_entity_id)
+    if company_entity is None:
+        return None
+    return _serialize_entity_row_v1(company_entity)
+
+
+def get_page_data(
+    session: Session,
+    actor_user_id: int | None = None,
+    actor_login_email: str = "",
+    selected_entity_id: int | None = None,
+) -> dict[str, Any]:
+    actor_context = _resolve_actor_page_context(
+        session, actor_user_id, actor_login_email, selected_entity_id
+    )
+    permissions = actor_context["permissions"]
+    allowed_entity_ids = actor_context["allowed_entity_ids"]
+    selected_entity_id = actor_context["selected_entity_id"]
+    current_user_is_admin = actor_context["current_user_is_admin"]
+    current_entity_scope = actor_context["current_entity_scope"]
+
+    menu_context = _resolve_sidebar_menu_context(
+        session, current_user_is_admin, current_entity_scope, selected_entity_id
+    )
+    sidebar_menu_settings = menu_context["sidebar_menu_settings"]
+    visible_sidebar_menu_keys = menu_context["visible_sidebar_menu_keys"]
+
+    process_maps = _resolve_actor_menu_process_maps(
+        session,
+        actor_user_id,
+        sidebar_menu_settings,
+        visible_sidebar_menu_keys,
+        selected_entity_id,
+    )
+    actor_profile_fields = process_maps["actor_profile_fields"]
+    menu_process_values_map = process_maps["menu_process_values_map"]
+    menu_process_history_map = process_maps["menu_process_history_map"]
+    menu_process_quantity_values_map = process_maps["menu_process_quantity_values_map"]
+
+    profile_personal_visible_fields = list(MENU_MEU_PERFIL_FIELDS_DEFAULT)
+    profile_personal_field_labels = dict(MENU_MEU_PERFIL_FIELD_LABELS)
+    profile_personal_field_types: dict[str, str] = {}
+    profile_personal_field_header_map: dict[str, str] = {}
+    profile_personal_custom_field_meta: dict[str, dict[str, Any]] = {}
+    profile_personal_duplicate_custom_keys: set[str] = set()
+    profile_personal_effective_visible_rows: list[dict[str, str]] = []
+    meu_perfil_builtin_duplicate_labels = {
+        **dict(MENU_MEU_PERFIL_FIELD_LABELS),
+        "pais": "País",
+    }
+    for sidebar_item in sidebar_menu_settings:
+        if resolve_menu_key_alias(sidebar_item.get("key")) != MENU_MEU_PERFIL_KEY:
+            continue
+        quantity_repeated_field_keys = get_menu_process_quantity_repeated_field_keys(
+            sidebar_item.get("process_quantity_fields")
+        )
+        process_lists_by_key = {
+            str(item.get("key") or "").strip().lower(): list(item.get("items") or [])
+            for item in (sidebar_item.get("process_lists") or [])
+            if str(item.get("key") or "").strip()
+        }
+        options = sidebar_item.get("process_field_options") or []
+        option_labels = {
+            str(item.get("key") or "").strip().lower(): str(item.get("label") or "").strip()
+            for item in options
+            if str(item.get("key") or "").strip()
+        }
+        option_types = {
+            str(item.get("key") or "").strip().lower(): str(item.get("field_type") or "").strip().lower()
+            for item in options
+            if str(item.get("key") or "").strip()
+        }
+        if option_labels:
+            profile_personal_field_labels = option_labels
+        if option_types:
+            profile_personal_field_types = option_types
+        raw_header_map = sidebar_item.get("process_visible_field_header_map")
+        if isinstance(raw_header_map, dict):
+            mapped_header_map: dict[str, str] = {}
+            for raw_key, raw_value in raw_header_map.items():
+                clean_field_key = str(raw_key or "").strip().lower()
+                clean_header_key = str(raw_value or "").strip().lower()
+                if not clean_field_key or not clean_header_key:
+                    continue
+                resolved_builtin_key = resolve_meu_perfil_builtin_duplicate_field_key(
+                    clean_field_key,
+                    option_labels.get(clean_field_key, ""),
+                    meu_perfil_builtin_duplicate_labels,
+                )
+                mapped_header_map[resolved_builtin_key or clean_field_key] = clean_header_key
+            profile_personal_field_header_map = mapped_header_map
+        raw_visible_rows = (
+            sidebar_item.get("process_visible_field_rows")
+            if isinstance(sidebar_item.get("process_visible_field_rows"), list)
+            else []
+        )
+        effective_visible_rows: list[dict[str, str]] = []
+        seen_effective_field_keys: set[str] = set()
+        for raw_row in raw_visible_rows:
+            if not isinstance(raw_row, dict):
+                continue
+            clean_field_key = str(raw_row.get("field_key") or "").strip().lower()
+            if not clean_field_key:
+                continue
+            resolved_builtin_key = resolve_meu_perfil_builtin_duplicate_field_key(
+                clean_field_key,
+                option_labels.get(clean_field_key, ""),
+                meu_perfil_builtin_duplicate_labels,
+            )
+            effective_field_key = resolved_builtin_key or clean_field_key
+            if effective_field_key in seen_effective_field_keys:
+                continue
+            if clean_field_key in quantity_repeated_field_keys:
+                continue
+            seen_effective_field_keys.add(effective_field_key)
+            effective_visible_rows.append(
+                {
+                    "field_key": effective_field_key,
+                    "header_key": str(raw_row.get("header_key") or "").strip().lower(),
+                }
+            )
+        if effective_visible_rows:
+            profile_personal_effective_visible_rows = effective_visible_rows
+            profile_personal_field_header_map = {
+                str(row.get("field_key") or "").strip().lower(): str(row.get("header_key") or "").strip().lower()
+                for row in effective_visible_rows
+                if str(row.get("field_key") or "").strip() and str(row.get("header_key") or "").strip()
+            }
+        for custom_field in sidebar_item.get("process_additional_fields") or []:
+            clean_key = str(custom_field.get("key") or "").strip().lower()
+            if not clean_key.startswith("custom_"):
+                continue
+            if is_meu_perfil_builtin_duplicate_field(
+                clean_key,
+                custom_field.get("label"),
+                meu_perfil_builtin_duplicate_labels,
+            ):
+                profile_personal_duplicate_custom_keys.add(clean_key)
+                continue
+            field_type = str(custom_field.get("field_type") or "text").strip().lower()
+            if field_type not in {"text", "number", "email", "phone", "date", "time", "flag", "header", "list"}:
+                field_type = "text"
+            try:
+                parsed_size = int(str(custom_field.get("size") or "").strip())
+            except (TypeError, ValueError):
+                parsed_size = 30
+            if field_type in {"text", "number", "email", "phone"}:
+                field_size: int | None = max(1, min(parsed_size, 255))
+            else:
+                field_size = None
+            raw_required = custom_field.get("is_required", custom_field.get("required"))
+            if isinstance(raw_required, bool):
+                is_required = raw_required
+            else:
+                is_required = str(raw_required or "").strip().lower() in {"1", "true", "sim", "yes", "on"}
+            if field_type == "header":
+                is_required = False
+            list_key = str(
+                custom_field.get("manual_list_key")
+                or custom_field.get("list_key")
+                or ""
+            ).strip().lower()
+            resolved_list_options = custom_field.get("list_options")
+            profile_personal_custom_field_meta[clean_key] = {
+                "field_type": field_type,
+                "size": field_size,
+                "is_required": is_required,
+                "list_key": list_key,
+                "list_source_type": str(custom_field.get("list_source_type") or "manual").strip().lower() or "manual",
+                "automatic_source_process_key": str(custom_field.get("automatic_source_process_key") or "").strip().lower(),
+                "automatic_source_section_key": str(custom_field.get("automatic_source_section_key") or "").strip().lower(),
+                "automatic_source_field_key": str(custom_field.get("automatic_source_field_key") or "").strip().lower(),
+                "automatic_only_active": bool(custom_field.get("automatic_only_active")),
+                "list_options": (
+                    list(resolved_list_options)
+                    if field_type == "list" and isinstance(resolved_list_options, list)
+                    else list(process_lists_by_key.get(list_key, [])) if field_type == "list" else []
+                ),
+            }
+        visible_raw = sidebar_item.get("process_visible_fields") or []
+        visible_fields: list[str] = []
+        if profile_personal_effective_visible_rows:
+            visible_fields = [
+                str(row.get("field_key") or "").strip().lower()
+                for row in profile_personal_effective_visible_rows
+                if str(row.get("field_key") or "").strip()
+            ]
+        else:
+            seen_visible_fields: set[str] = set()
+            for raw_key in visible_raw:
+                clean_field_key = str(raw_key or "").strip().lower()
+                if not clean_field_key:
+                    continue
+                resolved_builtin_key = resolve_meu_perfil_builtin_duplicate_field_key(
+                    clean_field_key,
+                    option_labels.get(clean_field_key, ""),
+                    meu_perfil_builtin_duplicate_labels,
+                )
+                effective_field_key = resolved_builtin_key or clean_field_key
+                if (
+                    clean_field_key not in profile_personal_field_labels
+                    and effective_field_key not in profile_personal_field_labels
+                    and effective_field_key not in MENU_MEU_PERFIL_FIELD_LABELS
+                    and effective_field_key != "pais"
+                ):
+                    continue
+                if effective_field_key in seen_visible_fields:
+                    continue
+                if clean_field_key in quantity_repeated_field_keys:
+                    continue
+                seen_visible_fields.add(effective_field_key)
+                visible_fields.append(effective_field_key)
+        if visible_fields:
+            visible_fields = apply_meu_perfil_subsequent_visibility_v2(
+                session=session,
+                actor_user_id=actor_user_id,
+                sidebar_item=sidebar_item,
+                actor_profile_fields=actor_profile_fields,
+                visible_fields=visible_fields,
+                field_header_map=profile_personal_field_header_map,
+            )
+            profile_personal_visible_fields = visible_fields
+        elif profile_personal_field_labels:
+            profile_personal_visible_fields = [
+                field_key
+                for field_key in MENU_MEU_PERFIL_FIELDS_DEFAULT
+                if field_key in profile_personal_field_labels
+            ]
+            if not profile_personal_visible_fields:
+                profile_personal_visible_fields = [next(iter(profile_personal_field_labels.keys()))]
+        break
+
+    # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_START
+    profile_personal_sections: list[dict[str, str]] = []
+    profile_personal_field_section_map: dict[str, str] = {}
+    header_section_order: list[str] = []
+    header_section_seen: set[str] = set()
+
+    profile_header_field_keys = {
+        clean_key
+        for clean_key, meta in profile_personal_custom_field_meta.items()
+        if clean_key.startswith("custom_")
+        and str((meta or {}).get("field_type") or "").strip().lower() == "header"
+    }
+
+    def append_profile_header_section_v1(raw_header_key: Any) -> None:
+        clean_header_key = str(raw_header_key or "").strip().lower()
+
+        if not clean_header_key:
+            return
+
+        if clean_header_key in header_section_seen:
+            return
+
+        if clean_header_key not in profile_header_field_keys:
+            return
+
+        section_label = profile_personal_field_labels.get(clean_header_key, "Aba")
+
+        profile_personal_sections.append(
+            {
+                "key": clean_header_key,
+                "label": section_label,
+            }
+        )
+        header_section_order.append(clean_header_key)
+        header_section_seen.add(clean_header_key)
+
+    for field_key in profile_personal_visible_fields:
+        clean_field_key = str(field_key or "").strip().lower()
+        append_profile_header_section_v1(clean_field_key)
+
+    for header_key in profile_personal_field_header_map.values():
+        append_profile_header_section_v1(header_key)
+
+    first_profile_header_key = header_section_order[0] if header_section_order else ""
+
+    for field_key in profile_personal_visible_fields:
+        clean_field_key = str(field_key or "").strip().lower()
+
+        if not clean_field_key:
+            continue
+
+        field_type = str(profile_personal_field_types.get(clean_field_key) or "").strip().lower()
+
+        if field_type == "header":
+            continue
+
+        configured_header_key = str(
+            profile_personal_field_header_map.get(clean_field_key) or ""
+        ).strip().lower()
+
+        if configured_header_key in header_section_seen:
+            profile_personal_field_section_map[clean_field_key] = configured_header_key
+            continue
+
+        profile_personal_field_section_map[clean_field_key] = first_profile_header_key
+    # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_END
+
+
+    required_profile_fields = ["nome", "telefone", "email", "pais"]
+
+    for required_field in required_profile_fields:
+        if required_field not in profile_personal_field_labels:
+            profile_personal_field_labels[required_field] = {
+                "nome": "Nome",
+                "telefone": "Telefone",
+                "email": "Email",
+                "pais": "País",
+            }[required_field]
+
+        if required_field not in profile_personal_visible_fields:
+            if required_field == "pais" and "telefone" in profile_personal_visible_fields:
+                profile_personal_visible_fields.insert(
+                    profile_personal_visible_fields.index("telefone") + 1,
+                    required_field,
+                )
+            elif required_field == "email" and "telefone" in profile_personal_visible_fields:
+                profile_personal_visible_fields.insert(
+                    profile_personal_visible_fields.index("telefone") + 1,
+                    required_field,
+                )
+            elif required_field == "telefone" and "nome" in profile_personal_visible_fields:
+                profile_personal_visible_fields.insert(
+                    profile_personal_visible_fields.index("nome") + 1,
+                    required_field,
+                )
+            else:
+                profile_personal_visible_fields.append(required_field)
+
+    # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_START
+    default_profile_header_section_v1 = header_section_order[0] if header_section_order else ""
+
+    if "pais" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["pais"] = profile_personal_field_section_map.get(
+            "telefone",
+            default_profile_header_section_v1,
+        )
+
+    if "nome" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["nome"] = default_profile_header_section_v1
+
+    if "telefone" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["telefone"] = profile_personal_field_section_map.get(
+            "nome",
+            default_profile_header_section_v1,
+        )
+
+    if "email" not in profile_personal_field_section_map:
+        profile_personal_field_section_map["email"] = profile_personal_field_section_map.get(
+            "telefone",
+            default_profile_header_section_v1,
+        )
+    # APPGENESIS_MEU_PERFIL_REQUIRED_SECTION_MAP_V1_END
+
+
+    scoped_entities = _resolve_scoped_entities(session, allowed_entity_ids)
+    scoped_entity_ids = scoped_entities["scoped_entity_ids"]
+    apply_scope_filter = scoped_entities["apply_scope_filter"]
+    entities = scoped_entities["entities"]
+    recent_entities = scoped_entities["recent_entities"]
+    inactive_entities_rows = scoped_entities["inactive_entities_rows"]
+
+    scoped_users = _resolve_scoped_users(
+        session, permissions, apply_scope_filter, scoped_entity_ids
+    )
+    all_users = scoped_users["all_users"]
+    pending_users = scoped_users["pending_users"]
+    created_users = scoped_users["created_users"]
+    active_created_users = scoped_users["active_created_users"]
+    inactive_users = scoped_users["inactive_users"]
+    recent_users = scoped_users["recent_users"]
+    account_status_summary = scoped_users["account_status_summary"]
+
+    company_profile_data = _resolve_company_profile_data(
+        session, selected_entity_id, permissions
+    )
+
+    return {
+        "entities": [
+            {
+                "id": row.id,
+                "name": row.name,
+                "entity_number": row.entity_number,
+            }
+            for row in entities
+        ],
+        "account_status_summary": account_status_summary,
+        "recent_entities": [_serialize_entity_row_v1(row) for row in recent_entities],
+        "inactive_entities": [_serialize_entity_row_v1(row) for row in inactive_entities_rows],
+        "recent_users": [
+            {
+                "id": row["id"],
+                "full_name": row["full_name"],
+                "login_email": row["login_email"],
+                "account_status": row["account_status"],
+                "account_status_label": row.get("account_status_label", user_account_status_label_pt_v1(row["account_status"])),
+                "created_at": row["created_at"],
+            }
+            for row in recent_users
+        ],
+        "all_users": all_users,
+        "created_users": created_users,
+        "active_created_users": active_created_users,
+        "inactive_users": inactive_users,
+        "pending_users": pending_users,
+        "entity_permissions": permissions,
+        "company_profile_data": company_profile_data,
+        "current_user_can_manage_tenant_structure": bool(permissions.get("can_manage_tenant_structure", permissions.get("can_manage_all_entities", False))),
+        "current_user_can_manage_all_entities": bool(permissions.get("can_manage_all_entities", False)),
+        "current_entity_scope": current_entity_scope,
+        "current_user_entity_id": actor_context["actor_entity_id"],
+        "current_user_entity_name": actor_context["actor_entity_name"],
+        "current_user_entity_number": actor_context["actor_entity_number"],
+        "can_select_user_entity": actor_context["can_select_user_entity"],
+        "entities_for_user_form": actor_context["entities_for_user_form"],
+        "entities_for_user_edit_form": actor_context["entities_for_user_edit_form"],
+        "sidebar_menu_settings": sidebar_menu_settings,
+        "active_menu_rows": menu_context["active_menu_rows"],
+        "inactive_menu_rows": menu_context["inactive_menu_rows"],
+        "sidebar_section_options": menu_context["sidebar_section_options"],
+        "visible_sidebar_menu_keys": sorted(visible_sidebar_menu_keys),
+        "menu_process_values_map": menu_process_values_map,
+        "menu_process_history_map": menu_process_history_map,
+        "menu_process_quantity_values_map": menu_process_quantity_values_map,
+        "profile_personal_visible_fields": profile_personal_visible_fields,
+        "profile_personal_field_labels": profile_personal_field_labels,
+        "profile_personal_field_section_map": profile_personal_field_section_map,
+        "profile_personal_sections": profile_personal_sections,
+        "profile_personal_custom_field_meta": profile_personal_custom_field_meta,
+        "menu_meu_perfil_field_options": [dict(item) for item in MENU_MEU_PERFIL_FIELD_OPTIONS],
+        "menu_meu_perfil_field_labels": dict(MENU_MEU_PERFIL_FIELD_LABELS),
+        "dashboard_data": get_home_dashboard_data(
+            session,
+            allowed_entity_ids=allowed_entity_ids,
+        ),
+    }
+
+def get_home_dashboard_data(
+    session: Session,
+    allowed_entity_ids: set[int] | None = None,
+) -> dict[str, Any]:
+    apply_scope_filter = allowed_entity_ids is not None
+    scoped_entity_ids = sorted(allowed_entity_ids) if allowed_entity_ids is not None else []
+
+    entity_counts_stmt = select(Entity.is_active, func.count(Entity.id)).group_by(Entity.is_active)
+    if apply_scope_filter:
+        if scoped_entity_ids:
+            entity_counts_stmt = entity_counts_stmt.where(Entity.id.in_(scoped_entity_ids))
+        else:
+            entity_counts_stmt = entity_counts_stmt.where(Entity.id == -1)
+
+    entity_counts = session.execute(entity_counts_stmt).all()
+    active_entities = 0
+    inactive_entities = 0
+    for row in entity_counts:
+        if bool(row.is_active):
+            active_entities = int(row[1])
+        else:
+            inactive_entities = int(row[1])
+
+    if apply_scope_filter:
+        if scoped_entity_ids:
+            scoped_user_ids = [
+                int(raw_id)
+                for raw_id in session.execute(
+                    select(User.id)
+                   .join(MemberEntity, MemberEntity.member_id == User.member_id)
+                   .where(
+                        MemberEntity.status == MemberEntityStatus.ACTIVE.value,
+                        MemberEntity.entity_id.in_(scoped_entity_ids),
+                    )
+                   .distinct()
+                ).scalars().all()
+            ]
+        else:
+            scoped_user_ids = []
+    else:
+        scoped_user_ids = []
+
+    system_count_map: dict[str, int] = {"default": 0, "owner": 0, "legado": 0}
+    if not apply_scope_filter or scoped_user_ids:
+        system_stmt = select(User.system_type, func.count(User.id)).group_by(User.system_type)
+        if apply_scope_filter:
+            system_stmt = system_stmt.where(User.id.in_(scoped_user_ids))
+        for row in session.execute(system_stmt).all():
+            key = str(row[0] or "default").strip().lower()
+            if key in system_count_map:
+                system_count_map[key] = int(row[1])
+
+    profile_labels = ["Default", "Owner", "Legado"]
+    profile_values = [
+        system_count_map.get("default", 0),
+        system_count_map.get("owner", 0),
+        system_count_map.get("legado", 0),
+    ]
+
+    total_entities = active_entities + inactive_entities
+    if apply_scope_filter:
+        total_users = len(scoped_user_ids)
+    else:
+        total_users = session.scalar(select(func.count(User.id))) or 0
+
+    return {
+        "entity_status": {
+            "labels": ["Ativas", "Inativas"],
+            "values": [active_entities, inactive_entities],
+        },
+        "users_by_profile": {
+            "labels": profile_labels,
+            "values": profile_values,
+        },
+        "totals": {
+            "entities": int(total_entities),
+            "users": int(total_users),
+            "active_entities": int(active_entities),
+            "inactive_entities": int(inactive_entities),
+        },
+    }
+
+def get_form_defaults() -> dict[str, str]:
+    return {
+        "full_name": "",
+        "primary_phone": "",
+        "email": "",
+        "entity_id": "",
+        "entity_name": "",
+        "entity_number": "",
+        "account_status": UserAccountStatus.ACTIVE.value,
+    }
+
+def get_entity_form_defaults() -> dict[str, str]:
+    return {
+        "name": "",
+        "acronym": "",
+        "tax_id": "",
+        "email": "",
+        "responsible_name": "",
+        "door_number": "",
+        "address": "",
+        "city": "",
+        "freguesia": "",
+        "postal_code": "",
+        "country": "",
+        "phone": "",
+        "description": "",
+        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
+        "created_at": date.today().strftime("%d/%m/%Y"),
+    }
+
+def get_entity_edit_defaults() -> dict[str, str]:
+    return {
+        "id": "",
+        "entity_number": "-",
+        "name": "",
+        "acronym": "",
+        "tax_id": "",
+        "email": "",
+        "responsible_name": "",
+        "door_number": "",
+        "address": "",
+        "city": "",
+        "freguesia": "",
+        "postal_code": "",
+        "country": "",
+        "phone": "",
+        "description": "",
+        "profile_scope": ENTITY_PROFILE_SCOPE_LEGADO,
+        "created_at": "",
+        "logo_url": "",
+        "status": "active",
+    }
+
+def get_entity_edit_data(
+    session: Session,
+    entity_id: int | None,
+    allowed_entity_ids: set[int] | None = None,
+) -> dict[str, str]:
+    defaults = get_entity_edit_defaults()
+    if entity_id is None:
+        return defaults
+
+    if allowed_entity_ids is not None and int(entity_id) not in allowed_entity_ids:
+        return defaults
+
+    entity = session.get(Entity, entity_id)
+    if entity is None:
+        return defaults
+
+    return {
+        "id": str(entity.id),
+        "entity_number": str(entity.entity_number) if entity.entity_number is not None else "-",
+        "name": entity.name or "",
+        "acronym": entity.acronym or "",
+        "tax_id": entity.tax_id or "",
+        "email": entity.email or "",
+        "responsible_name": entity.responsible_name or "",
+        "door_number": entity.door_number or "",
+        "address": entity.address or "",
+        "city": entity.city or "",
+        "freguesia": entity.freguesia or "",
+        "postal_code": entity.postal_code or "",
+        "country": entity.country or "",
+        "phone": entity.phone or "",
+        "description": entity.description or "",
+        "profile_scope": entity.profile_scope or ENTITY_PROFILE_SCOPE_LEGADO,
+        "created_at": entity.created_at.strftime("%d/%m/%Y") if entity.created_at else "",
+        "logo_url": entity.logo_url or "",
+        "status": "active" if entity.is_active else "inactive",
+    }
+
+def get_user_edit_defaults() -> dict[str, str]:
+    return {
+        "id": "",
+        "full_name": "",
+        "primary_phone": "",
+        "email": "",
+        "entity_id": "",
+        "entity_name": "",
+        "entity_number": "",
+        "account_status": UserAccountStatus.ACTIVE.value,
+        "system_type": "default",
+    }
+
+def get_user_edit_data(
+    session: Session,
+    user_id: int | None,
+    allowed_entity_ids: set[int] | None = None,
+) -> dict[str, str]:
+    defaults = get_user_edit_defaults()
+    if user_id is None:
+        return defaults
+
+    row = session.execute(
+        select(
+            User.id,
+            User.member_id,
+            Member.full_name,
+            Member.primary_phone,
+            User.login_email,
+            User.account_status,
+            User.system_type,
+        )
+       .join(Member, Member.id == User.member_id)
+       .where(User.id == user_id)
+    ).one_or_none()
+    if row is None:
+        return defaults
+
+    member_entity_stmt = (
+        select(MemberEntity.entity_id)
+       .where(MemberEntity.member_id == row.member_id)
+       .order_by(MemberEntity.id.asc())
+    )
+    if allowed_entity_ids is not None:
+        if allowed_entity_ids:
+            member_entity_stmt = member_entity_stmt.where(
+                MemberEntity.entity_id.in_(sorted(allowed_entity_ids))
+            )
+        else:
+            return defaults
+
+    member_entity_id = session.scalar(member_entity_stmt.limit(1))
+    if allowed_entity_ids is not None and member_entity_id is None:
+        return defaults
+
+    entity_number_value: int | None = None
+    entity_name_value = ""
+    if member_entity_id is not None:
+        entity_row = session.execute(
+            select(Entity.name, Entity.entity_number)
+           .where(Entity.id == member_entity_id)
+           .limit(1)
+        ).one_or_none()
+        if entity_row is not None:
+            entity_name_value = entity_row.name or ""
+            entity_number_value = entity_row.entity_number
+
+    return {
+        "id": str(row.id),
+        "full_name": row.full_name or "",
+        "primary_phone": row.primary_phone or "",
+        "email": row.login_email or "",
+        "entity_id": str(member_entity_id) if member_entity_id is not None else "",
+        "entity_name": entity_name_value,
+        "entity_number": str(entity_number_value) if entity_number_value is not None else "",
+        "account_status": row.account_status or UserAccountStatus.ACTIVE.value,
+        "system_type": normalize_user_system_type_v1(row.system_type),
+    }
+
+def get_next_entity_number(session: Session) -> int:
+    used_numbers = session.scalars(
+        select(Entity.entity_number)
+       .where(
+            Entity.entity_number.is_not(None),
+            Entity.entity_number >= ENTITY_NUMBER_MIN,
+            Entity.entity_number <= ENTITY_NUMBER_MAX,
+        )
+       .order_by(Entity.entity_number.asc())
+    ).all()
+    used_set = {int(number) for number in used_numbers if isinstance(number, int)}
+    for candidate in range(ENTITY_NUMBER_MIN, ENTITY_NUMBER_MAX + 1):
+        if candidate not in used_set:
+            return candidate
+    return ENTITY_NUMBER_MAX
+
+def build_users_new_url(**query_params: str) -> str:
+    clean_query_params = {
+        key: value
+        for key, value in query_params.items()
+        if isinstance(value, str) and value.strip()
+    }
+    if not clean_query_params:
+        return "/users/new"
+    return f"/users/new?{urlencode(clean_query_params)}"
+
+__all__ = [
+    "get_page_data",
+    "get_home_dashboard_data",
+    "get_form_defaults",
+    "get_entity_form_defaults",
+    "get_entity_edit_defaults",
+    "get_entity_edit_data",
+    "get_user_edit_defaults",
+    "get_user_edit_data",
+    "get_next_entity_number",
+    "build_users_new_url",
+]

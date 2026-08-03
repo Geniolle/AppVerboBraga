@@ -1,0 +1,96 @@
+{
+  "auth": {
+    "page_title": "Acesso",
+    "language": {
+      "label": "Idioma"
+    },
+    "login": {
+      "title": "Entrar na sua conta",
+      "email": "Email",
+      "email_placeholder": "exemplo: joao@dominio.com",
+      "password": "Palavra-passe",
+      "password_placeholder": "Digite a sua palavra-passe",
+      "forgot_password": "Esqueceu a palavra-passe",
+      "submit": "Continuar",
+      "no_account": "Não tem conta",
+      "create_account": "Criar conta",
+      "provider_hint": "Se os botões de provedor estiverem desativados, configure `GOOGLE_CLIENT_ID/SECRET`, `MICROSOFT_CLIENT_ID/SECRET` e `GITHUB_CLIENT_ID/SECRET`."
+    },
+    "signup": {
+      "title": "Criar conta",
+      "full_name": "Nome completo",
+      "full_name_placeholder": "Seu nome completo",
+      "country": "País",
+      "country_placeholder": "Selecione o país",
+      "phone": "Telefone",
+      "phone_placeholder": "+351 910 000 000",
+      "phone_help": "O número deve começar com o indicativo do país selecionado.",
+      "email": "Email",
+      "email_placeholder": "exemplo: joao@dominio.com",
+      "entity": "Entidade",
+      "entity_placeholder": "Selecionar automaticamente",
+      "password": "Palavra-passe",
+      "password_placeholder": "Mínimo 8 caracteres",
+      "confirm_password": "Confirmar palavra-passe",
+      "confirm_password_placeholder": "Repita a palavra-passe",
+      "submit": "Criar conta",
+      "already_have_account": "Já tem conta",
+      "login_link": "Entrar"
+    },
+    "admin": {
+      "badge": "ÁREA ADMINISTRATIVA",
+      "title": "Acesso do administrador",
+      "subtitle": "Monitorize indicadores principais e autentique-se com credenciais administrativas.",
+      "email": "Email administrativo",
+      "email_placeholder": "admin@dominio.com",
+      "entity": "Entidade",
+      "entity_placeholder": "Selecione",
+      "password": "Palavra-passe",
+      "password_placeholder": "Digite a palavra-passe",
+      "submit": "Entrar como ADMIN",
+      "switch_text": "Aceder como utilizador comum",
+      "switch_link": "Entrar aqui",
+      "metrics": {
+        "total_users": "Utilizadores totais",
+        "active_users": "Utilizadores ativos",
+        "pending_users": "Pendentes",
+        "total_members": "Membros totais",
+        "active_entities": "Entidades ativas",
+        "users_last_7_days": "Novos users (7 dias)"
+      }
+    },
+    "providers": {
+      "google": "Google",
+      "microsoft": "Microsoft",
+      "github": "GitHub"
+    },
+    "actions": {
+      "login_with_provider": "Entrar com {provider}"
+    },
+    "messages": {
+      "missing_email_password": "Informe email e palavra-passe.",
+      "select_admin_entity": "Selecione a entidade para entrar como administrador.",
+      "invalid_selected_entity": "Entidade selecionada inválida.",
+      "invalid_credentials": "Credenciais inválidas.",
+      "account_status": "Conta com estado '{status}'. Contacte o administrador.",
+      "admin_only_access": "Acesso administrativo disponível apenas para utilizadores administradores.",
+      "user_without_active_entity": "Utilizador sem entidade ativa associada.",
+      "forbidden_other_entity": "Não é permitido entrar com uma entidade diferente da associada ao seu utilizador.",
+      "no_permission_selected_entity": "Não tem permissão para entrar na entidade selecionada.",
+      "account_exists_use_login": "Já existe conta com este email. Use o login.",
+      "signup_failed": "Falha ao criar conta. Tente novamente.",
+      "logout_success": "Sessão encerrada com sucesso.",
+      "provider_not_configured": "Provedor não configurado.",
+      "external_auth_failed": "Falha na autenticação externa.",
+      "provider_missing_email": "O provedor não devolveu email.",
+      "external_login_failed": "Falha ao concluir login externo.",
+      "password_reset_success": "Palavra-passe redefinida com sucesso. Entre com a nova palavra-passe."
+    },
+    "account_status": {
+      "active": "ativa",
+      "inactive": "inativa",
+      "pending": "pendente",
+      "blocked": "bloqueada"
+    }
+  }
+}

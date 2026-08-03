@@ -1,0 +1,302 @@
+/* ###################################################################################
+   APPGENESIS_APP_SHELL_LAYOUT_V1_START
+   Fundacao do App Shell moderno: tokens de design, grade principal (.layout/
+   .app-main-column-v1/.content/.container) e aspeto generico dos cartoes
+   (.card, tabelas, badges, menu de acoes por linha, footer/load-more). Nasceu
+   da divisao de static/css/modules/app_shell_modern_v1.css nesta reorganizacao;
+   especificos de sidebar vivem em sidebar_modern_v1.css/sidebar_collapse_v1.css
+   e especificos do cabecalho do processo (breadcrumb/titulo/CTA/abas) vivem em
+   process_header_v1.css -- todos na mesma pasta static/css/modules/app_shell/.
+################################################################################### */
+
+/* ===================================================================
+   (1) TOKENS
+=================================================================== */
+
+:root {
+  --app-shell-bg-v1: #f5f7fb;
+  --app-shell-surface-v1: #ffffff;
+  --app-shell-border-v1: #e5eaf3;
+  --app-shell-text-v1: #0f172a;
+  --app-shell-muted-v1: #64748b;
+  --app-shell-primary-v1: #0f5fd7;
+  --app-shell-primary-hover-v1: #0b4fb4;
+  --app-shell-radius-card-v1: 16px;
+  --app-shell-radius-control-v1: 10px;
+  --app-shell-shadow-card-v1: 0 12px 30px rgba(15, 23, 42, 0.06);
+  --app-shell-success-v1: #16a34a;
+  --app-shell-success-bg-v1: #e9f8ef;
+  --app-shell-danger-v1: #dc2626;
+  --app-shell-danger-bg-v1: #fdeeee;
+  --app-shell-sidebar-width-v1: 260px;
+}
+
+/* ===================================================================
+   (2) LAYOUT GERAL: body / layout / content / container
+   Fix critico: a base ja define .container em width:100% / max-width:100%.
+   A v1 desta folha tinha introduzido um max-width:1320px + margin:auto que
+   estreitava a area principal e deixava espaco vazio a direita (defeito
+   reportado). Aqui reforcamos explicitamente a largura total.
+
+   Iteracao 3: a topbar deixou de ser uma faixa acima de .layout e passou a
+   viver dentro de uma nova coluna principal (.app-main-column-v1), lado a
+   lado com a sidebar -- por isso .layout usa 100vh (em vez de
+   calc(100vh - 62px)) para que a sidebar ocupe a altura total desde o topo.
+=================================================================== */
+
+body {
+  background: var(--app-shell-bg-v1);
+}
+
+.layout {
+  background: var(--app-shell-bg-v1);
+  height: 100vh;
+  grid-template-columns: var(--app-shell-sidebar-width-v1) minmax(0, 1fr);
+}
+
+.app-main-column-v1 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 20px 36px 32px;
+}
+
+.container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+/* ===================================================================
+   (3) CARDS (escopo alargado ao .card generico, conforme combinado --
+   torna consistente o aspeto de todos os cartoes do painel, incluindo
+   Sessoes ativas/inativas e o formulario de criacao/edicao)
+=================================================================== */
+
+.card {
+  background: var(--app-shell-surface-v1);
+  border: 1px solid var(--app-shell-border-v1);
+  border-radius: var(--app-shell-radius-card-v1);
+  box-shadow: var(--app-shell-shadow-card-v1);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+.admin-subprocess-form-card-v1,
+.admin-subprocess-table-card-v1 {
+  background: var(--app-shell-surface-v1);
+  border: 1px solid var(--app-shell-border-v1);
+  border-radius: var(--app-shell-radius-card-v1);
+  box-shadow: var(--app-shell-shadow-card-v1);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+.admin-subprocess-card-v1 h2 {
+  color: var(--app-shell-text-v1);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Indicador ativo/inativo GLOBAL para qualquer cartao de tabela de
+   subprocesso administrativo (render_admin_subprocess_table sempre define
+   data-admin-subprocess-status, para todos os subprocessos, nao apenas
+   Sessoes). Duas variantes de valor coexistem em AdminSubprocessConfig:
+   "ativo"/"inativo" (maioria dos subprocessos) e "active"/"inactive"
+   (Entidade, Utilizador) -- por isso o seletor cobre ambas, sem depender de
+   data-admin-subprocess="<key>". Novos subprocessos que reutilizem este
+   macro recebem o ponto automaticamente, sem alteracao de CSS. */
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="ativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="active"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inactive"] h2::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="ativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="active"] h2::before {
+  background: var(--app-shell-success-v1);
+}
+
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inativo"] h2::before,
+.admin-subprocess-table-card-v1[data-admin-subprocess-status="inactive"] h2::before {
+  background: var(--app-shell-danger-v1);
+}
+
+/* ===================================================================
+   (4) CABECALHO / PESQUISA
+   Nota: a largura do campo de pesquisa NAO e alterada aqui de proposito --
+   process_shell_runtime_v1.css ja define width:min(300px,32vw) no desktop
+   (dentro dos 260-320px pedidos) e reduz para 100% em ecras estreitos via
+   media query propria; sobrepor a largura aqui, sem media query, venceria
+   essa regra responsiva por carregar depois e quebraria o requisito de
+   pesquisa 100% larga em mobile.
+=================================================================== */
+
+.appgenesis-card-header-v1 h2 {
+  color: var(--app-shell-text-v1);
+}
+
+.appgenesis-card-search-v1 {
+  height: 38px;
+  border-radius: 999px;
+  border-color: var(--app-shell-border-v1);
+  background: #f8fafc;
+}
+
+.appgenesis-card-search-v1:focus-within {
+  background: #ffffff;
+  border-color: var(--app-shell-primary-v1);
+  box-shadow: 0 0 0 3px rgba(15, 95, 215, 0.14);
+}
+
+/* ===================================================================
+   (5) TABELAS
+   Aumenta apenas padding/altura de linha e legibilidade -- as classes
+   admin-col-*-v1 (largura fixa por coluna) nao sao tocadas, pois o JS de
+   compressao responsiva (recalcAdminResponsiveTableV1) depende de medir
+   scrollWidth com essas larguras exatas.
+=================================================================== */
+
+.admin-subprocess-table-v1 th {
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.admin-subprocess-table-v1 td {
+  color: var(--app-shell-text-v1);
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.admin-subprocess-table-v1 th,
+.admin-subprocess-table-v1 td {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.admin-subprocess-table-v1 tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ===================================================================
+   (6) BADGES
+=================================================================== */
+
+.admin-subprocess-badge-v1 {
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.admin-subprocess-badge-active-v1 {
+  background: var(--app-shell-success-bg-v1);
+  color: #0f5132;
+}
+
+.admin-subprocess-badge-inactive-v1 {
+  background: var(--app-shell-danger-bg-v1);
+  color: #b42318;
+}
+
+/* ===================================================================
+   (7) MENU DE ACOES POR LINHA
+=================================================================== */
+
+.appgenesis-row-actions-trigger-v1 {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.appgenesis-row-actions-trigger-v1:hover {
+  background: #eef3fc;
+}
+
+.appgenesis-row-actions-popup-v1 {
+  border-radius: 12px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+}
+
+.appgenesis-row-actions-item-v1:hover {
+  background: #f1f5f9;
+}
+
+/* ===================================================================
+   (8) FOOTER / LOAD-MORE
+=================================================================== */
+
+.appgenesis-load-more-footer-v1 {
+  border-top-color: var(--app-shell-border-v1);
+}
+
+.appgenesis-load-more-page-size-v1 select {
+  border-radius: 8px;
+}
+
+.appgenesis-load-more-btn-v1 {
+  font-weight: 700 !important;
+}
+
+/* ===================================================================
+   (9) RESPONSIVO
+=================================================================== */
+
+@media (max-width: 1024px) {
+  .content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* Restaura o empilhamento vertical legado (static/css/new_user.css ja
+     define .layout{grid-template-columns:1fr; height:auto} neste breakpoint)
+     -- sem isto, o height:100vh do .layout (necessario para a sidebar
+     full-height no desktop) forcaria um recorte indevido em ecras estreitos. */
+  .layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .app-main-column-v1 {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 720px) {
+  .content {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 10px;
+  }
+
+  .card,
+  .admin-subprocess-form-card-v1,
+  .admin-subprocess-table-card-v1 {
+    padding: 16px;
+  }
+}
+
+/* APPGENESIS_APP_SHELL_LAYOUT_V1_END */

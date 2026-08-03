@@ -1,0 +1,705 @@
+
+/* APPGENESIS_ADMIN_SUBPROCESSES_V1_START */
+
+.admin-subprocess-card-v1 {
+  display: block;
+  visibility: visible;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-subprocess-form-card-v1 {
+  background: #f5f7fb;
+  border: 1px solid #d6dde9;
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.admin-subprocess-table-card-v1 {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+
+.admin-subprocess-card-v1 h2 {
+  margin: 0 0 12px;
+  color: #12213a;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.admin-subprocess-form-v1 {
+  width: 100%;
+}
+
+.admin-subprocess-create-collapse-v1 > summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 7px;
+  background: #0f56c5;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-subprocess-create-collapse-v1 > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-subprocess-create-collapse-v1[open] > summary {
+  margin-bottom: 14px;
+}
+
+.admin-subprocess-grid-v1 {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(220px, 260px) minmax(160px, 220px);
+  gap: 12px;
+  align-items: end;
+  width: 100%;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 {
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > .admin-subprocess-field-v1 {
+  order: 20;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_nome_do_perfil"] {
+  order: 1;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_processo"] {
+  order: 2;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_subprocesso"] {
+  order: 3;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="custom_autorizacao"] {
+  order: 4;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
+  order: 5;
+}
+
+.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key="status"] {
+  order: 6;
+}
+
+.admin-subprocess-grid-auth-profile-v1 {
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+}
+
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
+  order: 1;
+}
+
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] {
+  order: 2;
+}
+
+.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] {
+  order: 3;
+}
+
+.admin-subprocess-field-v1 label {
+  display: block;
+  margin-bottom: 6px;
+  color: #12213a;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-subprocess-field-v1 input,
+.admin-subprocess-field-v1 select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #c6d0e2;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #12213a;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.admin-subprocess-field-v1 input[readonly] {
+  background: #eef1f6;
+  color: #445068;
+  cursor: default;
+}
+
+.admin-subprocess-actions-v1 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-subprocess-actions-v1 .action-btn,
+.admin-subprocess-actions-v1 .action-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 112px;
+  width: 112px;
+  height: 38px;
+  min-height: 38px;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+.admin-subprocess-table-wrap-v1 {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
+.admin-subprocess-table-v1 {
+  width: 100%;
+}
+
+.admin-subprocess-table-v1,
+table[data-admin-sortable-table="1"],
+table[data-appgenesis-sortable-table="1"] {
+  border-collapse: collapse;
+}
+
+.admin-subprocess-table-v1 th,
+.admin-subprocess-table-v1 td,
+table[data-admin-sortable-table="1"] th,
+table[data-admin-sortable-table="1"] td,
+table[data-appgenesis-sortable-table="1"] th,
+table[data-appgenesis-sortable-table="1"] td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e3e8f2;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-subprocess-table-v1 th,
+table[data-admin-sortable-table="1"] th,
+table[data-appgenesis-sortable-table="1"] th {
+  color: #12213a;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+th[data-admin-sortable-column="1"],
+th[data-appgenesis-sortable="1"] {
+  white-space: nowrap;
+}
+
+.admin-subprocess-sort-button-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
+  box-shadow: none;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.admin-subprocess-sort-button-v1:hover,
+.admin-subprocess-sort-button-v1:focus,
+.admin-subprocess-sort-button-v1:focus-visible,
+.admin-subprocess-sort-button-v1:active {
+  background: transparent;
+  color: inherit;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.admin-subprocess-sort-button-v1:focus-visible {
+  outline: 1px solid #d5dceb;
+  outline-offset: 2px;
+  border-radius: 4px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: #8f9db0;
+}
+
+.admin-subprocess-sort-label-v1 {
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-subprocess-sort-button-v1::selection,
+.admin-subprocess-sort-label-v1::selection,
+.admin-subprocess-sort-indicator-v1::selection {
+  background: transparent;
+  color: inherit;
+}
+
+.admin-subprocess-sort-indicator-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12px;
+  color: #4a607f;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.admin-subprocess-sort-button-v1:hover .admin-subprocess-sort-indicator-v1,
+.admin-subprocess-sort-button-v1:focus .admin-subprocess-sort-indicator-v1,
+.admin-subprocess-sort-button-v1:focus-visible .admin-subprocess-sort-indicator-v1,
+.admin-subprocess-sort-button-v1:active .admin-subprocess-sort-indicator-v1 {
+  color: #4a607f;
+}
+
+.admin-subprocess-table-v1 th:last-child,
+.admin-subprocess-table-v1 td:last-child,
+table[data-admin-sortable-table="1"] th:last-child,
+table[data-admin-sortable-table="1"] td:last-child,
+table[data-appgenesis-sortable-table="1"] th:last-child,
+table[data-appgenesis-sortable-table="1"] td:last-child {
+  text-align: right;
+}
+
+.admin-subprocess-row-actions-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.admin-subprocess-inline-form-v1 {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-subprocess-action-btn-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-subprocess-action-btn-v1:hover {
+  background: #dfeaff;
+  border-color: #7fa8f2;
+}
+
+.admin-subprocess-action-btn-disabled-v1 {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.admin-subprocess-action-btn-danger-v1 {
+  color: #c0392b;
+  border-color: #e8b4b8;
+}
+
+.admin-subprocess-action-btn-danger-v1:hover {
+  background: #fde8e8;
+  border-color: #c0392b;
+}
+
+.admin-subprocess-badge-v1 {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-subprocess-badge-active-v1 {
+  border-color: #badbcc;
+  background: #e9f7ef;
+  color: #0f5132;
+}
+
+.admin-subprocess-badge-inactive-v1 {
+  border-color: #f1b4b4;
+  background: #fdeaea;
+  color: #c0392b;
+}
+
+@media (max-width: 1100px) {
+  .admin-subprocess-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1280px) {
+  .admin-subprocess-grid-objeto-autorizacao-v1 {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+/* === Semantic column type classes for admin tables ===
+ *
+ * Each column class pins an exact width (min-width == max-width, or a fixed
+ * `width` reinforced by both) so that two separately-rendered <table>
+ * instances sharing the same column classes (e.g. an Ativos/Inativos pair)
+ * always compute identical column widths regardless of each table's own
+ * content — auto table layout otherwise sizes every column independently
+ * per table. admin-col-main-v1 is the deliberate exception: it stays a
+ * flexible column so it can absorb leftover width and compress under the
+ * responsive JS algorithm (see the Entity process table section below).
+ */
+
+th.admin-col-main-v1,
+td.admin-col-main-v1 {
+  text-align: left;
+  min-width: 180px;
+}
+
+th.admin-col-text-v1,
+td.admin-col-text-v1 {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 180px;
+  max-width: 180px;
+}
+
+th.admin-col-number-v1,
+td.admin-col-number-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+}
+
+th.admin-col-section-v1,
+td.admin-col-section-v1 {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 160px;
+  max-width: 160px;
+}
+
+th.admin-col-system-v1,
+td.admin-col-system-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
+}
+
+th.admin-col-phone-v1,
+td.admin-col-phone-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+th.admin-col-status-v1,
+td.admin-col-status-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+}
+
+th.admin-col-date-v1,
+td.admin-col-date-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+}
+
+th.admin-col-actions-v1,
+td.admin-col-actions-v1 {
+  text-align: right;
+  white-space: nowrap;
+  width: 92px;
+  min-width: 72px;
+  max-width: 120px;
+  padding-right: 16px;
+}
+
+th.admin-col-address-v1,
+td.admin-col-address-v1 {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 220px;
+  max-width: 220px;
+}
+
+th.admin-col-email-v1,
+td.admin-col-email-v1 {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 220px;
+  max-width: 220px;
+}
+
+th.admin-col-country-v1,
+td.admin-col-country-v1 {
+  text-align: center;
+  white-space: nowrap;
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
+}
+
+.admin-col-hidden-v1 {
+  display: none !important;
+}
+
+/* === Responsive table global rules (data-admin-responsive-table="1") === */
+
+table[data-admin-responsive-table="1"] {
+  width: 100%;
+  max-width: 100%;
+}
+
+table[data-admin-responsive-table="1"] th,
+table[data-admin-responsive-table="1"] td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table[data-admin-responsive-table="1"] th.admin-col-main-v1,
+table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
+  min-width: 100px;
+  white-space: normal;
+}
+
+/* compact mode: JS applies this class on the wrap when optional cols are exhausted */
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td {
+  padding: 6px 6px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-main-v1,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
+  min-width: 80px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-status-v1,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-status-v1 {
+  width: 90px;
+  min-width: unset;
+  max-width: none;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-actions-v1,
+.admin-subprocess-table-wrap-v1.admin-table-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-actions-v1 {
+  width: 76px;
+  padding-right: 8px;
+}
+
+/* ultra-compact mode: JS applies when compact mode is still insufficient */
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td {
+  padding: 5px 4px;
+  font-size: 12px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-main-v1,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
+  min-width: 60px;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-status-v1,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-status-v1 {
+  width: 76px;
+  min-width: unset;
+  max-width: none;
+}
+
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] th.admin-col-actions-v1,
+.admin-subprocess-table-wrap-v1.admin-table-ultra-compact-v1 table[data-admin-responsive-table="1"] td.admin-col-actions-v1 {
+  width: 64px;
+  min-width: unset;
+  padding-right: 4px;
+}
+
+/* Sortable-table specificity overrides for center-aligned columns */
+[data-admin-sortable-table] th.admin-col-system-v1,
+[data-admin-sortable-table] td.admin-col-system-v1,
+[data-admin-sortable-table] th.admin-col-phone-v1,
+[data-admin-sortable-table] td.admin-col-phone-v1,
+[data-admin-sortable-table] th.admin-col-status-v1,
+[data-admin-sortable-table] td.admin-col-status-v1,
+[data-admin-sortable-table] th.admin-col-date-v1,
+[data-admin-sortable-table] td.admin-col-date-v1,
+[data-admin-sortable-table] th.admin-col-number-v1,
+[data-admin-sortable-table] td.admin-col-number-v1,
+[data-appgenesis-sortable-table] th.admin-col-system-v1,
+[data-appgenesis-sortable-table] td.admin-col-system-v1,
+[data-appgenesis-sortable-table] th.admin-col-phone-v1,
+[data-appgenesis-sortable-table] td.admin-col-phone-v1,
+[data-appgenesis-sortable-table] th.admin-col-status-v1,
+[data-appgenesis-sortable-table] td.admin-col-status-v1,
+[data-appgenesis-sortable-table] th.admin-col-date-v1,
+[data-appgenesis-sortable-table] td.admin-col-date-v1,
+[data-appgenesis-sortable-table] th.admin-col-number-v1,
+[data-appgenesis-sortable-table] td.admin-col-number-v1,
+[data-admin-sortable-table] th.admin-col-country-v1,
+[data-admin-sortable-table] td.admin-col-country-v1,
+[data-appgenesis-sortable-table] th.admin-col-country-v1,
+[data-appgenesis-sortable-table] td.admin-col-country-v1 {
+  text-align: center;
+}
+
+/* === Menu process table — fixed proportional layout === */
+
+.admin-subprocess-table-menu-v1 {
+  table-layout: fixed;
+}
+
+.admin-subprocess-table-menu-v1 th.admin-col-number-v1,
+.admin-subprocess-table-menu-v1 td.admin-col-number-v1 {
+  width: 11%;
+  min-width: unset;
+  max-width: none;
+  white-space: normal;
+}
+
+.admin-subprocess-table-menu-v1 th.admin-col-main-v1,
+.admin-subprocess-table-menu-v1 td.admin-col-main-v1 {
+  width: 26%;
+  min-width: unset;
+  white-space: normal;
+}
+
+.admin-subprocess-table-menu-v1 th.admin-col-section-v1,
+.admin-subprocess-table-menu-v1 td.admin-col-section-v1 {
+  width: 19%;
+  min-width: unset;
+  max-width: none;
+  white-space: normal;
+}
+
+.admin-subprocess-table-menu-v1 th.admin-col-system-v1,
+.admin-subprocess-table-menu-v1 td.admin-col-system-v1 {
+  width: 10%;
+  min-width: unset;
+  max-width: none;
+  white-space: normal;
+}
+
+.admin-subprocess-table-menu-v1 th.admin-col-status-v1,
+.admin-subprocess-table-menu-v1 td.admin-col-status-v1 {
+  width: 12%;
+  min-width: unset;
+  max-width: none;
+  white-space: normal;
+}
+
+.admin-subprocess-table-menu-v1 th.admin-col-actions-v1,
+.admin-subprocess-table-menu-v1 td.admin-col-actions-v1 {
+  width: 22%;
+  max-width: none;
+  white-space: normal;
+}
+
+/* === Entity process table ===
+ *
+ * Auto layout (inherits from admin-subprocess-table-v1).
+ * Each column class owns its width pin (see the semantic column type
+ * classes above) and its white-space: nowrap rule.
+ * The main column (admin-col-main-v1) intentionally stays flexible so it
+ * compresses naturally — this is what allows the JS responsive algorithm
+ * to eliminate horizontal overflow after hiding optional columns.
+ * JS recalcAdminResponsiveTableV1() hides lower-priority columns via scrollWidth.
+ * Column max-width is NOT overridden here (beyond overflow/ellipsis) so the
+ * per-class pins stay identical between this table and every other admin
+ * subprocess table sharing the same column classes.
+ */
+
+.admin-entity-table-v1 {
+  width: 100%;
+}
+
+.admin-entity-table-v1 th:not(.admin-col-actions-v1),
+.admin-entity-table-v1 td:not(.admin-col-actions-v1) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-entity-table-v1 th.admin-col-main-v1,
+.admin-entity-table-v1 td.admin-col-main-v1 {
+  min-width: 120px;
+  max-width: 280px;
+}
+
+.admin-entity-table-v1 th.admin-col-actions-v1,
+.admin-entity-table-v1 td.admin-col-actions-v1 {
+  padding-right: 12px;
+}
+
+.admin-entity-table-v1[data-admin-sortable-table] th.admin-col-number-v1,
+.admin-entity-table-v1[data-admin-sortable-table] td.admin-col-number-v1 {
+  text-align: left;
+}
+
+/* Specificity (0,3,1) — beats new_user.css .card td:last-child .table-actions (0,3,1) because this file loads after */
+.admin-subprocess-table-v1 td.admin-col-actions-v1 .table-actions,
+.admin-entity-table-v1 td.admin-col-actions-v1 .table-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* APPGENESIS_ADMIN_SUBPROCESSES_V1_END */
