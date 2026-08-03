@@ -4,11 +4,12 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
-from main import Movement, parse_money
+if TYPE_CHECKING:
+    from main import Movement
 
 
 class MerchantPatternLearner:
@@ -25,13 +26,15 @@ class MerchantPatternLearner:
         self.patterns: dict[str, dict[str, Any]] = {}
         self.load_patterns()
 
-    def learn_from_movement(self, movement: Movement):
+    def learn_from_movement(self, movement: "Movement"):
         """
         Aprende de um movimento validado.
 
         Args:
             movement: Movimento com status = "VÁLIDO"
         """
+        from main import parse_money
+
         if movement.status != "VÁLIDO":
             return  # Só aprender de movimentos válidos
 

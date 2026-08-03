@@ -42,6 +42,10 @@ except ImportError:
     vision = None  # Tratado em tempo de execução
 
 from ocr_postprocessor import postprocess_ocr_line
+from ocr_validators import apply_ocr_corrections, validate_description_semantics
+from confidence_scoring import cross_validate_movement, detect_potential_false_rejection, calculate_enhanced_confidence_score
+from merchant_patterns import MerchantPatternLearner
+from metrics import generate_ocr_quality_metrics, format_metrics_report
 
 
 DATE_RE = re.compile(r"^(\d{2})/(\d{2})$")
@@ -663,6 +667,14 @@ def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], tru
         debit = parse_money(fields["debito_eur"])
         credit = parse_money(fields["credito_eur"])
 
+        # Calcular confiança da linha
+        confidence = sum(word.confidence for word in row) / max(len(row), 1)
+
+        # Aplicar correções automáticas de OCR na descrição
+        corrected_desc, was_corrected = apply_ocr_corrections(fields["descricao"], confidence)
+        if was_corrected:
+            fields["descricao"] = corrected_desc
+
         reasons = list(postprocess_reasons)  # Começar com razões do pós-processador
         if not valid_date(fields["data_movimento"], cfg["validation"]):
             reasons.append("data movimento inválida")
@@ -672,6 +684,11 @@ def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], tru
         if len(fields["descricao"].strip()) < 3:
             if "descrição ausente" not in reasons:  # Evitar duplicação
                 reasons.append("descrição ausente/curta")
+
+        # Validação semântica de descrição
+        is_valid_desc, desc_reason = validate_description_semantics(fields["descricao"])
+        if not is_valid_desc and desc_reason not in reasons:
+            reasons.append(f"descrição inválida: {desc_reason}")
         if cfg["validation"].get("require_exactly_one_amount") and ((debit is None) == (credit is None)):
             if "débito/crédito ausente" not in reasons:  # Evitar duplicação
                 reasons.append("débito/crédito ausente ou ambíguo")
@@ -689,6 +706,29 @@ def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], tru
 
         if confidence < float(cfg["validation"]["minimum_confidence"]) and not is_trusted:
             reasons.append(f"confiança OCR baixa ({confidence:.1%})")
+
+        # Validação cruzada avançada
+        temp_movement = Movement(
+            line=index + 5,
+            data_movimento=fields["data_movimento"],
+            data_valor=fields["data_valor"],
+            descricao=fields["descricao"],
+            pais=fields["pais"],
+            moeda_original=fields.get("moeda_original", ""),
+            taxa_cambio=fields.get("taxa_cambio", ""),
+            debito_eur=fields["debito_eur"],
+            credito_eur=fields["credito_eur"],
+            confidence=confidence,
+            status="",
+            motivos_revisao="",
+            texto_ocr=raw
+        )
+
+        # Executar validações cruzadas
+        cross_validations = cross_validate_movement(temp_movement, cfg)
+        for validation_key, result in cross_validations.items():
+            if result is False:  # False = problema detectado
+                reasons.append(f"validação cruzada: {validation_key}")
 
         # Deslocar linha em +5 (linha 5 é cabeçalho vazio, dados começam na linha 6)
         linha_deslocada = index + 5
@@ -1590,6 +1630,14 @@ def main() -> int:
 
         rows = group_rows(words, image.shape[1], image.shape[0], cfg.get("table", {}))
         movements = build_movements(rows, image.shape[1], cfg, trusted_texts=trusted_texts)
+
+        # Aprendizado de padrões de comerciantes (Fase 3)
+        learner = MerchantPatternLearner()
+        valid_movements = [m for m in movements if m.status == "VÁLIDO"]
+        for mov in valid_movements:
+            learner.learn_from_movement(mov)
+        merchant_patterns_summary = learner.get_statistics()
+
         metadata = {
             "imagem": source_label,
             "drive": drive_info,
@@ -1599,10 +1647,16 @@ def main() -> int:
             "validas": sum(x.status == "VÁLIDO" for x in movements),
             "revisao": sum(x.status == "REVISÃO" for x in movements),
             "sheet_write": False,
+            "merchant_patterns": merchant_patterns_summary,
         }
 
         sheets_stats = sync_movements_to_sheets(sheets_service, cfg, movements, drive_info, service_account_email)
         metadata.update(sheets_stats)
+
+        # Geração de métricas de qualidade (relatório)
+        quality_metrics = generate_ocr_quality_metrics(movements, cfg)
+        metrics_report = format_metrics_report(quality_metrics)
+        metadata["quality_metrics"] = quality_metrics
 
         dry_run = bool(cfg.get("google_sheets", {}).get("dry_run", True))
         if extrato_info and not dry_run:
@@ -1610,6 +1664,9 @@ def main() -> int:
 
         save_outputs(movements, out_dir, metadata)
         annotate(ocr_image, words, movements, out_dir / "03_diagnostico.png")
+
+        # Guardar relatório de qualidade
+        (out_dir / "relatorio_qualidade.txt").write_text(metrics_report, encoding="utf-8")
 
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
     print(f"Resultados guardados em: {out_dir.resolve()}")

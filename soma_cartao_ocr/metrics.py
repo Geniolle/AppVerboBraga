@@ -4,11 +4,12 @@
 from collections import Counter
 from dataclasses import dataclass, asdict
 from datetime import datetime
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 
-from main import Movement
+if TYPE_CHECKING:
+    from main import Movement
 
 
 @dataclass
@@ -30,7 +31,7 @@ class OCRQualityMetrics:
     metrics_version: str = "1.0"
 
 
-def generate_ocr_quality_metrics(movements: list[Movement]) -> OCRQualityMetrics:
+def generate_ocr_quality_metrics(movements: list["Movement"], cfg: dict | None = None) -> OCRQualityMetrics:
     """
     Gera métricas de qualidade do OCR para monitoramento.
 
@@ -236,7 +237,7 @@ def get_recommendation(metrics: OCRQualityMetrics) -> str:
 
 
 def identify_problematic_merchants(
-    movements: list[Movement],
+    movements: list["Movement"],
     min_occurrences: int = 2
 ) -> dict[str, dict]:
     """

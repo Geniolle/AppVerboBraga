@@ -2,16 +2,18 @@
 """Sistema de scoring de confiança aprimorado para OCR."""
 
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, TYPE_CHECKING
 
 import numpy as np
 
-from main import Movement, parse_money, valid_date, extract_day_month
 from ocr_validators import (
     validate_column_coherence,
     validate_row_consistency,
     validate_description_semantics,
 )
+
+if TYPE_CHECKING:
+    from main import Movement
 
 
 @dataclass
@@ -29,7 +31,7 @@ class ConfidenceBreakdown:
     factors: dict[str, Any]
 
 
-def cross_validate_movement(movement: Movement, cfg: dict) -> dict[str, bool]:
+def cross_validate_movement(movement: "Movement", cfg: dict) -> dict[str, bool]:
     """
     Executa múltiplas validações cruzadas:
     - Coerência data/valor
@@ -43,6 +45,8 @@ def cross_validate_movement(movement: Movement, cfg: dict) -> dict[str, bool]:
     Returns:
         Dict com resultados de cada validação
     """
+    from main import parse_money, extract_day_month, valid_date
+
     validations = {}
 
     # 1. Validação de Coerência Data
@@ -96,7 +100,7 @@ def cross_validate_movement(movement: Movement, cfg: dict) -> dict[str, bool]:
 
 
 def calculate_enhanced_confidence_score(
-    movement: Movement,
+    movement: "Movement",
     row_words: list,
     table_cfg: dict,
     historical_context: dict | None = None,
@@ -221,7 +225,7 @@ def calculate_enhanced_confidence_score(
 
 
 def detect_potential_false_rejection(
-    movement: Movement,
+    movement: "Movement",
     cfg: dict,
     trusted_descriptions: set[str],
     merchant_patterns: dict | None = None
@@ -238,6 +242,7 @@ def detect_potential_false_rejection(
     Returns:
         (deve_reconsiderar, motivo)
     """
+    from main import valid_date
 
     if movement.status != "REVISÃO":
         return False, "not_rejected"
@@ -281,7 +286,7 @@ def detect_potential_false_rejection(
 
 
 def calculate_rejection_confidence_threshold(
-    movements: list[Movement],
+    movements: list["Movement"],
     target_accuracy: float = 0.95
 ) -> float:
     """
