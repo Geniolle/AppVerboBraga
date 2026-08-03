@@ -41,11 +41,13 @@ try:
 except ImportError:
     vision = None  # Tratado em tempo de execução
 
-from ocr_postprocessor import postprocess_ocr_line
+from ocr_postprocessor import postprocess_ocr_line, merge_broken_movement_descriptions, should_skip_line
 from ocr_validators import apply_ocr_corrections, validate_description_semantics
 from confidence_scoring import cross_validate_movement, detect_potential_false_rejection, calculate_enhanced_confidence_score
 from merchant_patterns import MerchantPatternLearner
 from metrics import generate_ocr_quality_metrics, format_metrics_report
+from ocr_hybrid import HybridOCR  # OCR Híbrido para números
+from cross_validator import get_best_value_cross_validated  # Validação cruzada Vision+Tesseract
 
 
 DATE_RE = re.compile(r"^(\d{2})/(\d{2})$")
@@ -340,11 +342,14 @@ def preprocess(image_path: Path, cfg: dict[str, Any], out_dir: Path) -> list[Pat
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     if cfg.get("remove_shadows"):
         gray = remove_shadows(gray)
-    contrast = cv2.createCLAHE(clipLimit=2.2, tileGridSize=(8, 8)).apply(gray)
-    sharp = cv2.addWeighted(contrast, 1.6, cv2.GaussianBlur(contrast, (0, 0), 1.2), -0.6, 0)
+    # Muito menos agressivo: clipLimit reduzido para 1.0 (suave)
+    contrast = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(8, 8)).apply(gray)
+    # Muito menos agressivo: weight 1.0 (sem aumento), gaussian positivo (desfoque suave)
+    sharp = cv2.addWeighted(contrast, 1.0, cv2.GaussianBlur(contrast, (0, 0), 0.8), 0.1, 0)
     variants = [("01_contraste.png", sharp)]
     if cfg.get("adaptive_threshold"):
-        binary = cv2.adaptiveThreshold(sharp, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 41, 13)
+        # Muito menos agressivo: blockSize 21 (pequeno para manter detalhes), constant 2 (mínimo)
+        binary = cv2.adaptiveThreshold(sharp, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 2)
         variants.append(("02_binaria.png", binary))
     paths = []
     for name, variant in variants:
@@ -483,6 +488,36 @@ def split_columns(row: list[Word], width: int, columns: dict[str, list[float]]) 
     return output
 
 
+def detect_multiple_transactions_in_row(split_result: dict[str, str]) -> list[dict[str, str]]:
+    """Detecta se uma linha contém múltiplas transações e as separa.
+
+    Heurística: Uma linha com múltiplas datas diferentes é suspeita de conter
+    múltiplas transações agregadas (problema de agrupamento Y).
+    """
+    data_mov = split_result.get("data_movimento", "").strip()
+    data_valor = split_result.get("data_valor", "").strip()
+
+    if not data_mov or not data_valor:
+        return [split_result]
+
+    # Procurar por múltiplas datas (padrão DD/MM) no mesmo campo
+    date_pattern = re.compile(r'\d{1,2}/\d{1,2}')
+    dates_in_mov = date_pattern.findall(data_mov)
+    dates_in_valor = date_pattern.findall(data_valor)
+
+    # Se encontrar mais de 2 datas únicas em qualquer um dos campos de data,
+    # é provável que haja múltiplas transações agregadas
+    all_dates = dates_in_mov + dates_in_valor
+    unique_dates = len(set(all_dates))
+
+    if unique_dates > 2:
+        # Linha suspeita de conter múltiplas transações
+        # Por enquanto, retorna como single (será marcada para revisão)
+        return [split_result]
+
+    return [split_result]
+
+
 def valid_date(value: str, cfg: dict[str, Any]) -> bool:
     match = DATE_RE.match(value.strip())
     if not match:
@@ -556,7 +591,16 @@ def normalize_description_text(desc: str) -> str:
     return desc
 
 
-def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], trusted_texts: set[str] | list[str] | None = None) -> list[Movement]:
+def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], trusted_texts: set[str] | list[str] | None = None, image_array: np.ndarray | None = None) -> list[Movement]:
+    # Configurar Tesseract PATH para Windows
+    if sys.platform == "win32":
+        os.environ["PATH"] = r"C:\Program Files\Tesseract-OCR" + os.pathsep + os.environ["PATH"]
+        try:
+            import pytesseract
+            pytesseract.pytesseract.pytesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        except:
+            pass
+
     movements = []
     allowed_months = list(cfg.get("validation", {}).get("allowed_months", [6, 7]))
     trusted_set = {str(t).strip().upper() for t in trusted_texts if t and str(t).strip()} if trusted_texts else set()
@@ -660,6 +704,45 @@ def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], tru
         if credit is not None:
             fields["credito_eur"] = f"{credit:.2f}"
 
+        # Tentar HybridOCR com validação cruzada se ambos os campos estão vazios e temos a imagem
+        if (not fields["debito_eur"].strip() and not fields["credito_eur"].strip() and image_array is not None and row):
+            try:
+                # Extrair coordenadas Y da linha
+                y_coords = [word.y0 for word in row]
+                if y_coords:
+                    y_min = min(y_coords)
+                    y_max = max(y_coords)
+                    # Adicionar margem de 10 pixels para maior contexto
+                    y_min = max(0, y_min - 10)
+                    y_max = min(image_array.shape[0], y_max + 10)
+
+                    # Extrair ROI da imagem
+                    row_image = image_array[y_min:y_max, :]
+
+                    # Usar HybridOCR com estratégia otimizada
+                    hybrid_result = HybridOCR.extract_numbers_hybrid(row_image, use_best_psm=True)
+
+                    # Se encontrou números, validar com validação cruzada
+                    if hybrid_result.get("numbers") and hybrid_result.get("confidence", 0) > 0.5:
+                        # Calcular confiança da linha (Vision API)
+                        line_confidence = sum(word.confidence for word in row) / max(len(row), 1)
+
+                        # Usar validação cruzada entre Vision (raw) e Tesseract
+                        best_value, _, _ = get_best_value_cross_validated(
+                            "debito_eur",
+                            raw,  # Texto bruto do Vision
+                            line_confidence,  # Confiança do Vision
+                            hybrid_result.get("numbers", ""),  # Números do Tesseract
+                            hybrid_result.get("confidence", 0),  # Confiança do Tesseract
+                            expected_format="MONEY"
+                        )
+
+                        # Se conseguiu valor monetário válido
+                        if best_value and re.match(r'^\d+[.,]\d{2}$', best_value):
+                            fields["debito_eur"] = best_value.replace(',', '.')
+            except Exception:
+                pass  # Se falhar, continuar com valores vazios
+
         # Pós-processamento OCR: corrigir padrões conhecidos e detectar cabeçalhos
         fields, _, postprocess_reasons = postprocess_ocr_line(raw, fields)
 
@@ -730,20 +813,37 @@ def build_movements(rows: list[list[Word]], width: int, cfg: dict[str, Any], tru
             if result is False:  # False = problema detectado
                 reasons.append(f"validação cruzada: {validation_key}")
 
+        # Verificar se é uma linha de cabeçalho pura que deve ser ignorada
+        if should_skip_line(raw, fields):
+            continue
+
         # Deslocar linha em +5 (linha 5 é cabeçalho vazio, dados começam na linha 6)
         linha_deslocada = index + 5
 
         movements.append(Movement(linha_deslocada, fields["data_movimento"], fields["data_valor"], fields["descricao"], fields["pais"], fields["moeda_original"], fields["taxa_cambio"], fields["debito_eur"], fields["credito_eur"], round(confidence, 4), "REVISÃO" if reasons else "VÁLIDO", "; ".join(reasons), raw))
+
+    # Fase 5: Mesclar descrições quebradas detectadas automaticamente
+    movements_dicts = [asdict(m) for m in movements]
+    movements_dicts = merge_broken_movement_descriptions(movements_dicts)
+    # Remover campos extras que não fazem parte de Movement
+    movements_dicts = [
+        {k: v for k, v in m.items() if k not in ['merged', 'merged_from_line']}
+        for m in movements_dicts
+    ]
+    movements = [Movement(**m) for m in movements_dicts]
+
     return movements
 
 
 def save_outputs(movements: list[Movement], out_dir: Path, metadata: dict[str, Any]) -> None:
     fields = list(Movement.__dataclass_fields__)
+    # Filtrar linha 5 (cabeçalho vazio) ANTES de escrever
+    movements_filtered = [x for x in movements if not (x.line == 5 and not x.data_movimento.strip())]
     with (out_dir / "movimentos.csv").open("w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, delimiter=";")
         writer.writeheader()
-        writer.writerows(asdict(item) for item in movements)
-    (out_dir / "resultado.json").write_text(json.dumps({"metadata": metadata, "movimentos": [asdict(x) for x in movements]}, ensure_ascii=False, indent=2), encoding="utf-8")
+        writer.writerows(asdict(item) for item in movements_filtered)
+    (out_dir / "resultado.json").write_text(json.dumps({"metadata": metadata, "movimentos": [asdict(x) for x in movements_filtered]}, ensure_ascii=False, indent=2), encoding="utf-8")
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "MOVIMENTOS"
@@ -800,7 +900,7 @@ COLUMN_ALIASES: dict[str, list[str]] = {
     "data_valor": ["data valor"],
     "descricao": ["descrição", "descricao"],
     "pais": ["país", "pais"],
-    "valor_original": ["valor original"],
+    "valor_original": ["valor original", "moeda original"],
     "moeda_original": ["moeda original"],
     "taxa_cambio": ["taxa de câmbio", "taxa câmbio", "taxa de cambio", "taxa cambio"],
     "debito_eur": ["débito eur (+)", "débito eur", "debito eur"],
@@ -1629,7 +1729,7 @@ def main() -> int:
         trusted_texts = load_constantes_trusted_texts(sheets_service, spreadsheet_id)
 
         rows = group_rows(words, image.shape[1], image.shape[0], cfg.get("table", {}))
-        movements = build_movements(rows, image.shape[1], cfg, trusted_texts=trusted_texts)
+        movements = build_movements(rows, image.shape[1], cfg, trusted_texts=trusted_texts, image_array=image)
 
         # Aprendizado de padrões de comerciantes (Fase 3)
         learner = MerchantPatternLearner()
@@ -1656,7 +1756,7 @@ def main() -> int:
         # Geração de métricas de qualidade (relatório)
         quality_metrics = generate_ocr_quality_metrics(movements, cfg)
         metrics_report = format_metrics_report(quality_metrics)
-        metadata["quality_metrics"] = quality_metrics
+        metadata["quality_metrics"] = asdict(quality_metrics)
 
         dry_run = bool(cfg.get("google_sheets", {}).get("dry_run", True))
         if extrato_info and not dry_run:
