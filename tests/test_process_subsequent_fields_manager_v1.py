@@ -30,6 +30,6 @@ def test_process_subsequent_fields_manager_v1_uses_configurable_core_and_search_
     macro_text = macro_path.read_text(encoding="utf-8")
 
     assert 'aria-label="Pesquisar campos subsequentes criados"' in template_text
-    assert 'data-process-subsequent-fields-total-label' in template_text
+    assert 'data-process-subsequent-fields-total-label' not in template_text
     assert 'render_configurable_items_pagination_footer("data-process-subsequent-fields-page-size", "data-process-subsequent-fields-pagination")' in template_text
     assert 'class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1"' in macro_text

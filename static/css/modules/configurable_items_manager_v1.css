@@ -96,10 +96,70 @@ button.action-btn.configurable-items-create-trigger-v1 {
   overflow-x: auto;
 }
 
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1 {
+  overflow-x: clip;
+}
+
 .configurable-items-table-v1 {
   width: 100%;
   border-collapse: collapse;
   background: #ffffff;
+}
+
+.configurable-items-table-v1.configurable-items-responsive-table-v1 {
+  table-layout: auto;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.configurable-items-table-v1.configurable-items-responsive-table-v1 th,
+.configurable-items-table-v1.configurable-items-responsive-table-v1 td {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.configurable-items-responsive-hidden-v1 {
+  display: none !important;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 th,
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 td {
+  padding: 6px 6px;
+  font-size: 12px;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 {
+  table-layout: fixed;
+  min-width: 0 !important;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 th[data-responsive-key="label"],
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 td[data-responsive-key="label"] {
+  min-width: 80px;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 th[data-responsive-key="status"],
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 td[data-responsive-key="status"] {
+  width: 76px;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 th[data-responsive-key="actions"],
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-compact-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 td[data-responsive-key="actions"] {
+  width: 72px;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-ultra-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 th,
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-ultra-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 td {
+  padding: 4px 4px;
+  font-size: 11px;
+}
+
+.configurable-items-table-wrap-v1.configurable-items-responsive-wrap-v1.configurable-items-responsive-ultra-v1 .configurable-items-table-v1.configurable-items-responsive-table-v1 {
+  table-layout: fixed;
+  min-width: 0 !important;
 }
 
 .configurable-items-table-v1 th,
@@ -154,7 +214,7 @@ button.action-btn.configurable-items-create-trigger-v1 {
 }
 
 .configurable-items-pagination-footer-v1 {
-  border-top: 1px solid #d9e2ef !important;
+  border-top: 0 !important;
   margin-top: 12px;
 }
 
@@ -536,17 +596,6 @@ button.action-btn.configurable-items-create-trigger-v1 {
   max-width: 100%;
 }
 
-#settings-menu-edit-card .process-edit-pane .grid,
-#settings-menu-edit-card .process-edit-pane .process-visible-fields,
-#settings-menu-edit-card .process-edit-pane .process-subsequent-fields-grid,
-#settings-menu-edit-card .process-edit-pane .process-lists-grid,
-#settings-menu-edit-card .process-edit-pane .process-fields-builder {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 14px;
-}
-
 #settings-menu-edit-card .process-edit-pane .field {
   margin-bottom: 12px;
 }
@@ -779,6 +828,15 @@ button.action-btn.configurable-items-create-trigger-v1 {
   border-radius: 8px;
   background: #ffffff;
   padding: 14px;
+}
+
+#settings-menu-edit-card .process-edit-pane .configurable-items-list-v1 {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
 }
 
 #settings-menu-edit-card .process-edit-pane .configurable-items-editor-v1 + .configurable-items-list-v1 {

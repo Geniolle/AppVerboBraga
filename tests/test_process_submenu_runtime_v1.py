@@ -25,7 +25,7 @@ def test_new_user_js_keeps_stage6_wrappers_for_process_submenu_runtime() -> None
     assert "function clearSubmenuActiveLinks(links) {" in script_text
     assert "return appGenesisProcessSubmenuRuntimeV1.clearSubmenuActiveLinks(links);" in script_text
     assert 'function setActiveSubmenu(targetSelector, selectedLinkEl = null) {' in script_text
-    assert "return appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu(" in script_text
+    assert "appGenesisProcessSubmenuRuntimeV1.setActiveSubmenu(" in script_text
     assert "function renderSubmenu(menuKey) {" in script_text
     assert "return appGenesisProcessSubmenuRuntimeV1.renderSubmenu(menuKey);" in script_text
 

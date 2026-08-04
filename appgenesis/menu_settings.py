@@ -123,6 +123,9 @@ from appgenesis.services.process_settings.subsequent_field_service import (
     normalize_menu_process_subsequent_fields,
     update_sidebar_menu_subsequent_fields,
 )
+from appgenesis.services.process_settings.process_sections import (
+    resolve_process_sections_v1,
+)
 from appgenesis.services.process_settings.list_service import (
     _build_process_list_key_from_label_v1,
     _build_process_list_key_from_label_v2,
@@ -140,6 +143,10 @@ from appgenesis.services.process_settings.list_service import (
     normalize_menu_process_lists_v4,
     normalize_menu_process_lists_v5,
 )
+
+PROCESS_LIST_ALL_SESSIONS_KEY = "all_sessions"
+PROCESS_LIST_ALL_SESSIONS_LABEL = "Todas as sessões"
+
 from appgenesis.services.process_settings.field_service import (
     get_menu_process_default_visible_fields,
     get_menu_process_default_visible_fields_v4,
@@ -149,6 +156,7 @@ from appgenesis.services.process_settings.field_service import (
     get_menu_process_selectable_field_options,
     get_menu_process_visible_field_header_map,
     get_menu_process_visible_field_rows,
+    repair_profile_authorization_menu_config_v1,
     normalize_menu_process_visible_fields,
     normalize_menu_process_visible_fields_v4,
     normalize_meu_perfil_visible_fields,
@@ -213,6 +221,27 @@ def get_sidebar_menu_settings(
             is_deleted = bool(row.is_deleted)
 
         menu_config = _parse_menu_config(None if row is None else row.menu_config)
+        repaired_menu_config, repaired_menu_config_changed = (
+            repair_profile_authorization_menu_config_v1(menu_key, menu_config)
+        )
+        if repaired_menu_config_changed and row is not None:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE entity_id = :entity_id
+                      AND lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "entity_id": resolved_entity_id,
+                    "menu_key": menu_key,
+                    "menu_config": json.dumps(repaired_menu_config, ensure_ascii=False),
+                },
+            )
+            session.commit()
+        menu_config = repaired_menu_config
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         process_subsequent_fields = menu_config.get("subsequent_fields", [])
         explicit_display_order = _normalize_menu_display_order(
@@ -238,6 +267,13 @@ def get_sidebar_menu_settings(
         )
         process_visible_field_rows = get_menu_process_visible_field_rows(
             menu_key, menu_config
+        )
+        process_sections = resolve_process_sections_v1(
+            {
+                **item,
+                "menu_config": menu_config,
+                "process_visible_field_rows": process_visible_field_rows,
+            }
         )
         process_layout_config = resolve_dynamic_process_layout_config(
             menu_key,
@@ -268,6 +304,7 @@ def get_sidebar_menu_settings(
                 "process_visible_fields": process_visible_fields,
                 "process_visible_field_header_map": process_visible_field_header_map,
                 "process_visible_field_rows": process_visible_field_rows,
+                "process_sections": process_sections,
                 "process_field_options": process_field_options,
                 "process_selectable_field_options": process_selectable_field_options,
                 "process_header_options": process_header_options,
@@ -326,6 +363,27 @@ def get_sidebar_menu_settings(
         is_active = bool(row.is_active)
         is_deleted = bool(row.is_deleted)
         menu_config = _parse_menu_config(row.menu_config)
+        repaired_menu_config, repaired_menu_config_changed = (
+            repair_profile_authorization_menu_config_v1(menu_key, menu_config)
+        )
+        if repaired_menu_config_changed:
+            session.execute(
+                text(
+                    """
+                    UPDATE sidebar_menu_settings
+                    SET menu_config = :menu_config
+                    WHERE entity_id = :entity_id
+                      AND lower(trim(menu_key)) = :menu_key
+                    """
+                ),
+                {
+                    "entity_id": resolved_entity_id,
+                    "menu_key": menu_key,
+                    "menu_config": json.dumps(repaired_menu_config, ensure_ascii=False),
+                },
+            )
+            session.commit()
+        menu_config = repaired_menu_config
         requires_admin = bool(menu_config.get("requires_admin", True))
         process_additional_fields = get_menu_process_additional_fields(menu_config)
         fallback_order = len(SIDEBAR_MENU_DEFAULTS) + extra_index
@@ -353,6 +411,14 @@ def get_sidebar_menu_settings(
         process_visible_field_rows = get_menu_process_visible_field_rows(
             menu_key, menu_config
         )
+        process_sections = resolve_process_sections_v1(
+            {
+                "key": menu_key,
+                "label": menu_label,
+                "menu_config": menu_config,
+                "process_visible_field_rows": process_visible_field_rows,
+            }
+        )
         process_layout_config = resolve_dynamic_process_layout_config(
             menu_key,
             menu_label,
@@ -378,6 +444,7 @@ def get_sidebar_menu_settings(
                 "process_visible_fields": process_visible_fields,
                 "process_visible_field_header_map": process_visible_field_header_map,
                 "process_visible_field_rows": process_visible_field_rows,
+                "process_sections": process_sections,
                 "process_field_options": process_field_options,
                 "process_selectable_field_options": process_selectable_field_options,
                 "process_header_options": process_header_options,
@@ -841,10 +908,15 @@ def update_sidebar_menu_sidebar_sections(
     return True, ""
 
 
+def _is_truthy_process_lists_configured_v1(raw_value: Any) -> bool:
+    return str(raw_value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def update_sidebar_menu_process_lists(
     session: Session,
     menu_key: str,
     raw_lists: Any,
+    process_lists_configured: Any = None,
     raw_columns: Any = None,
     active_entity_id: int | None = None,
 ) -> tuple[bool, str]:
@@ -859,6 +931,17 @@ def update_sidebar_menu_process_lists(
 
     if resolved_entity_id is None:
         return False, "Entidade ativa inválida."
+
+    administrative_config = _load_menu_config(session, "administrativo")
+    active_sidebar_section_options = normalize_sidebar_sections(
+        administrative_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+    )
+    active_sidebar_section_keys = {
+        str(item.get("key") or "").strip().lower()
+        for item in active_sidebar_section_options
+        if str(item.get("key") or "").strip()
+        and _normalize_sidebar_section_status_v5(item.get("status")) == "ativo"
+    }
 
     target_row = (
         session.execute(
@@ -887,6 +970,11 @@ def update_sidebar_menu_process_lists(
 
     menu_config = _parse_menu_config(target_row.get("menu_config"))
     existing_lists = normalize_menu_process_lists_v5(menu_config.get("process_lists"))
+    existing_lists_by_key = {
+        str(item.get("key") or "").strip().lower(): item
+        for item in existing_lists
+        if str(item.get("key") or "").strip()
+    }
     legacy_automatic_keys = {
         str(item.get("key") or "")
         for item in existing_lists
@@ -899,9 +987,24 @@ def update_sidebar_menu_process_lists(
     sidebar_menu_settings = get_sidebar_menu_settings(
         session, active_entity_id=int(resolved_entity_id)
     )
+    source_menu_section_map = {
+        str(item.get("key") or "").strip().lower(): str(
+            item.get("sidebar_section_key") or ""
+        )
+        .strip()
+        .lower()
+        for item in sidebar_menu_settings
+        if isinstance(item, dict) and str(item.get("key") or "").strip()
+    }
     source_subprocess_options_cache: dict[str, list[dict[str, str]]] = {}
 
+    lists_configured = _is_truthy_process_lists_configured_v1(
+        process_lists_configured
+    )
     normalized_lists = normalize_menu_process_lists_v5(raw_lists)
+
+    if not normalized_lists and not lists_configured:
+        return False, "As listas não foram carregadas. Reabra a aba Listas e tente novamente."
 
     for process_list in normalized_lists:
         if process_list.get("field_type") != "automatic":
@@ -909,35 +1012,71 @@ def update_sidebar_menu_process_lists(
 
         source_menu_key = str(process_list.get("source_menu_key") or "").strip()
         source_subprocess_key = str(process_list.get("source_subprocess_key") or "").strip()
+        source_session_key = str(
+            process_list.get("source_session_key")
+            or process_list.get("source_sidebar_section_key")
+            or ""
+        ).strip().lower()
         process_list_key = str(process_list.get("key") or "").strip()
+        existing_item = existing_lists_by_key.get(process_list_key.lower())
 
         if (
             not source_menu_key
             and not source_subprocess_key
             and process_list_key in legacy_automatic_keys
+            and not source_session_key
         ):
             continue
-        if not source_menu_key:
-            return False, "Selecione o menu de origem da lista automática."
-        if source_menu_key not in available_source_menu_keys:
-            return False, "O menu de origem selecionado não está disponível."
+        if source_session_key == PROCESS_LIST_ALL_SESSIONS_KEY:
+            source_menu_key = ""
+            source_subprocess_key = ""
+        else:
+            if not source_menu_key:
+                return False, "Selecione o menu de origem da lista automática."
+            if source_menu_key not in available_source_menu_keys:
+                return False, "O menu de origem selecionado não está disponível."
 
-        if source_subprocess_key:
-            if source_menu_key not in source_subprocess_options_cache:
-                from appgenesis.services.process_tabs import resolve_process_tab_options_v1
+            inferred_session_key = source_menu_section_map.get(source_menu_key, "")
+            if not source_session_key:
+                if (
+                    existing_item
+                    and not str(existing_item.get("source_session_key") or "").strip()
+                    and inferred_session_key
+                ):
+                    source_session_key = inferred_session_key
+                else:
+                    return False, "Selecione a sessão."
 
-                source_subprocess_options_cache[source_menu_key] = resolve_process_tab_options_v1(
-                    source_menu_key,
-                    sidebar_menu_settings,
-                )
+            if source_session_key not in active_sidebar_section_keys:
+                return False, "A sessão selecionada não está disponível."
 
-            allowed_source_subprocess_keys = {
-                str(option.get("value") or "").strip().lower()
-                for option in source_subprocess_options_cache[source_menu_key]
-                if isinstance(option, dict) and str(option.get("value") or "").strip()
-            }
-            if source_subprocess_key.lower() not in allowed_source_subprocess_keys:
-                return False, "O subprocesso selecionado não pertence ao menu de origem."
+            if (
+                inferred_session_key
+                and inferred_session_key != source_session_key
+            ):
+                return False, "O menu de origem selecionado não pertence à sessão selecionada."
+
+            if source_subprocess_key:
+                if source_menu_key not in source_subprocess_options_cache:
+                    from appgenesis.services.process_tabs import resolve_process_tab_options_v1
+
+                    source_subprocess_options_cache[source_menu_key] = resolve_process_tab_options_v1(
+                        source_menu_key,
+                        sidebar_menu_settings,
+                    )
+
+                allowed_source_subprocess_keys = {
+                    str(option.get("value") or "").strip().lower()
+                    for option in source_subprocess_options_cache[source_menu_key]
+                    if isinstance(option, dict) and str(option.get("value") or "").strip()
+                }
+                if source_subprocess_key.lower() not in allowed_source_subprocess_keys:
+                    return False, "O subprocesso selecionado não pertence ao menu de origem."
+
+        process_list["source_session_key"] = source_session_key
+        process_list["source_sidebar_section_key"] = source_session_key
+        process_list["source_menu_key"] = source_menu_key
+        process_list["source_subprocess_key"] = source_subprocess_key
 
     menu_config["process_lists"] = normalized_lists
 
@@ -992,7 +1131,7 @@ def update_sidebar_menu_process_lists(
             process_list_config["columns"] = normalized_columns
             menu_config["process_list_config"] = process_list_config
 
-    session.execute(
+    update_result = session.execute(
         text(
             """
             UPDATE sidebar_menu_settings
@@ -1008,8 +1147,132 @@ def update_sidebar_menu_process_lists(
             "menu_config": json.dumps(menu_config, ensure_ascii=False),
         },
     )
+
+    if int(getattr(update_result, "rowcount", 0) or 0) <= 0:
+        session.rollback()
+        return False, "Não foi possível atualizar as listas do processo."
+
+    if clean_menu_key != "administrativo":
+        administrative_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = (
+            build_sidebar_global_refresh_version_v1()
+        )
+        admin_update_result = session.execute(
+            text(
+                """
+                UPDATE sidebar_menu_settings
+                SET menu_config = :menu_config
+                WHERE lower(trim(menu_key)) = :menu_key
+                """
+            ),
+            {
+                "menu_key": "administrativo",
+                "menu_config": json.dumps(administrative_config, ensure_ascii=False),
+            },
+        )
+        if int(getattr(admin_update_result, "rowcount", 0) or 0) <= 0:
+            session.rollback()
+            return False, "Não foi possível atualizar a configuração base do processo."
+
     session.commit()
     return True, ""
+
+
+def delete_sidebar_menu_process_list(
+    session: Session,
+    menu_key: str,
+    list_key: str,
+    active_entity_id: int | None = None,
+) -> tuple[bool, str, str]:
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    clean_list_key = _normalize_process_list_key_v1(list_key)
+
+    if not clean_menu_key:
+        return False, "Menu inválido.", ""
+
+    if not clean_list_key:
+        return False, "Lista inválida.", ""
+
+    resolved_entity_id = active_entity_id
+    if resolved_entity_id is None:
+        resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
+
+    if resolved_entity_id is None:
+        return False, "Entidade ativa inválida.", ""
+
+    target_row = (
+        session.execute(
+            text(
+                """
+                SELECT menu_config
+                FROM sidebar_menu_settings
+                WHERE entity_id = :entity_id
+                  AND lower(trim(menu_key)) = :menu_key
+                  AND COALESCE(is_active, false) = true
+                  AND COALESCE(is_deleted, false) = false
+                LIMIT 1
+                """
+            ),
+            {
+                "entity_id": int(resolved_entity_id),
+                "menu_key": clean_menu_key,
+            },
+        )
+        .mappings()
+        .one_or_none()
+    )
+
+    if target_row is None:
+        return False, "Menu não encontrado.", ""
+
+    menu_config = _parse_menu_config(target_row.get("menu_config"))
+    existing_lists = normalize_menu_process_lists_v5(menu_config.get("process_lists"))
+    normalized_list_key = clean_list_key.lower()
+    existing_item = next(
+        (
+            item
+            for item in existing_lists
+            if _normalize_process_list_key_v1(item.get("key")) == normalized_list_key
+        ),
+        None,
+    )
+
+    if existing_item is None:
+        return False, "Lista não encontrada.", ""
+
+    existing_status = str(existing_item.get("status") or "").strip().lower()
+    if existing_status not in {"inativo", "inactive"}:
+        return False, "Só é possível eliminar listas inativas.", ""
+
+    updated_lists = [
+        dict(item)
+        for item in existing_lists
+        if str(item.get("key") or "").strip().lower() != normalized_list_key
+    ]
+    menu_config["process_lists"] = updated_lists
+
+    update_result = session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+              AND entity_id = :entity_id
+              AND COALESCE(is_deleted, false) = false
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "entity_id": int(resolved_entity_id),
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+
+    if int(getattr(update_result, "rowcount", 0) or 0) <= 0:
+        session.rollback()
+        return False, "Não foi possível eliminar a lista.", ""
+
+    session.commit()
+    return True, "", normalized_list_key
 
 
 def delete_sidebar_menu_setting(session: Session, menu_key: str) -> tuple[bool, str]:

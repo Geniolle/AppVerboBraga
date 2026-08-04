@@ -155,10 +155,9 @@ def test_edit_additional_fields_owner_success_creates_rows():
     assert response.status_code == 303
     location = response.headers["location"]
     assert "target=settings-menu-edit-card" in location
-    # Ao contrario de Campos Subsequentes (mistura hifen/underscore), esta aba usa
-    # hifen de forma consistente em TODOS os redirects (erro e sucesso).
-    assert "settings_tab=campos-adicionais" in location
-    assert f"settings_edit_key={MENU_KEY}" in location
+    assert "appgenesis_after_save=1" in location
+    assert "settings_tab=" not in location
+    assert "settings_edit_key=" not in location
     assert "sucesso" in location
 
     additional_fields = _load_config(SessionLocal)["additional_fields"]
@@ -272,7 +271,8 @@ def test_regression_all_redirects_use_hyphenated_settings_tab_consistently():
         is_admin=True,
         permissions={"can_manage_tenant_structure": True},
     )
-    assert "settings_tab=campos-adicionais" in success_response.headers["location"]
+    assert "appgenesis_after_save=1" in success_response.headers["location"]
+    assert "settings_tab=" not in success_response.headers["location"]
 
 
 def test_regression_header_restore_after_additional_fields_save_locks_current_behavior():

@@ -28,10 +28,12 @@
         readonly
       >
     {% else %}
+      {% set _field_input_type = "number" if field.field_type == "decimal" else field.field_type %}
       <input
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
-        type="{{ field.field_type }}"
+        type="{{ _field_input_type }}"
+        {% if field.field_type == "decimal" %}step="0.01" inputmode="decimal"{% endif %}
         value="{{ value }}"
         {% if field.required %}required{% endif %}
         {% if field.max_length %}maxlength="{{ field.max_length }}"{% endif %}
@@ -81,6 +83,8 @@
           id="{{ id_prefix }}_{{ field.key }}"
           name="process_field__{{ field.key }}"
           type="{{ _input_type }}"
+          {% if field.input_step|default("") %}step="{{ field.input_step }}"{% endif %}
+          {% if field.input_mode|default("") %}inputmode="{{ field.input_mode }}"{% endif %}
           value="{{ value }}"
           {% if field.required %}required{% endif %}
           {% if field.size %}maxlength="{{ field.size }}"{% endif %}
@@ -117,13 +121,6 @@
   {% endif %}
   {% set _show_form = _is_active_subprocess and (state.is_editing or _initial_menu_target_resolved == '#' ~ (state.config.edit_target if state.is_editing else state.config.default_target)) %}
 
-  {# No fluxo moderno de Estruturas > Menu, o feedback de sucesso ja e promovido a toast
-     global pelo runtime a partir dos query params da URL. Suprimimos apenas o alerta inline
-     de sucesso nesse subprocesso para evitar duplicacao visual, mantendo os erros inline. #}
-  {% set _suppress_inline_success_feedback = state.config.key == 'menu' and state.menu_key == 'sessoes' %}
-  {% if state.success and not _suppress_inline_success_feedback %}
-    <div class="alert ok">{{ state.success }}</div>
-  {% endif %}
   {% if state.error %}
     <div class="alert error">{{ state.error }}</div>
   {% endif %}

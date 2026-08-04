@@ -5,7 +5,7 @@
   // (1) CONFIGURACAO
   //###################################################################################
 
-  const POLL_INTERVAL_MS = 5000;
+  const POLL_INTERVAL_MS = 30000;
   const REFRESH_ENDPOINT = "/settings/menu/sidebar-refresh-version";
 
   let initialVersion = "";
@@ -41,6 +41,10 @@
   function shouldIgnoreCurrentPage() {
     const path = String(window.location.pathname || "");
     return !path.startsWith("/users/new");
+  }
+
+  function shouldSkipPollingForVisibilityV1() {
+    return document.visibilityState === "hidden";
   }
 
   function getCurrentVersion(payload) {
@@ -251,7 +255,17 @@
     }
 
     checkRefreshVersion();
-    window.setInterval(checkRefreshVersion, POLL_INTERVAL_MS);
+    window.setInterval(function () {
+      if (!shouldSkipPollingForVisibilityV1()) {
+        checkRefreshVersion();
+      }
+    }, POLL_INTERVAL_MS);
+
+    document.addEventListener("visibilitychange", function () {
+      if (!shouldIgnoreCurrentPage() && !shouldSkipPollingForVisibilityV1()) {
+        checkRefreshVersion();
+      }
+    });
   }
 
   if (document.readyState === "loading") {

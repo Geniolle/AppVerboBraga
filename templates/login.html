@@ -38,9 +38,6 @@
       <h1>{{ t('auth.admin.title') }}</h1>
       <p class="subtitle">{{ t('auth.admin.subtitle') }}</p>
 
-      {% if success %}
-        <div class="alert ok">{{ success }}</div>
-      {% endif %}
       {% if error %}
         <div class="alert error">{{ error }}</div>
       {% endif %}
@@ -106,9 +103,6 @@
     {% elif mode == "signup" %}
       <h1>{{ t('auth.signup.title') }}</h1>
 
-      {% if success %}
-        <div class="alert ok">{{ success }}</div>
-      {% endif %}
       {% if error %}
         <div class="alert error">{{ error }}</div>
       {% endif %}
@@ -190,9 +184,6 @@
     {% else %}
       <h1>{{ t('auth.login.title') }}</h1>
 
-      {% if success %}
-        <div class="alert ok">{{ success }}</div>
-      {% endif %}
       {% if error %}
         <div class="alert error">{{ error }}</div>
       {% endif %}

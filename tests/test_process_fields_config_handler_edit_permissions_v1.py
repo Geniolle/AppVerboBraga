@@ -176,8 +176,9 @@ def test_edit_process_fields_owner_success_via_json_rows():
 
     assert response.status_code == 303
     location = response.headers["location"]
-    assert "settings_tab=campos-config" in location
-    assert f"settings_edit_key={MENU_KEY}" in location
+    assert "appgenesis_after_save=1" in location
+    assert "settings_tab=" not in location
+    assert "settings_edit_key=" not in location
     assert "Configura%C3%A7%C3%A3o%20dos%20campos%20atualizada%20com%20sucesso." in location
 
     config = _load_config(SessionLocal)
@@ -426,7 +427,8 @@ def test_regression_settings_tab_is_always_hyphenated_never_underscore():
         permissions={"can_manage_tenant_structure": True},
         visible_rows_json=json.dumps([{"field_key": "custom_nome", "header_key": ""}]),
     )
-    assert "settings_tab=campos-config" in success_response.headers["location"]
+    assert "appgenesis_after_save=1" in success_response.headers["location"]
+    assert "settings_tab=" not in success_response.headers["location"]
     assert "settings_tab=campos_config" not in success_response.headers["location"]
 
 

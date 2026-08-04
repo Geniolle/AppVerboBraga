@@ -5,7 +5,7 @@
 (function (window, document) {
   "use strict";
 
-  const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "flag", "header", "list"]);
+  const SUPPORTED_TYPES = new Set(["text", "number", "decimal", "email", "phone", "date", "flag", "header", "list"]);
   const ADDITIONAL_FIELDS_ROOT_SELECTOR = "[data-process-additional-fields-manager-v3='1']";
 
   //###################################################################################
@@ -228,8 +228,57 @@
     return new Set(
       rawKeys
         .map((rawKey) => normalizeMenuKey_v1(rawKey))
-        .filter(Boolean)
+      .filter(Boolean)
     );
+  }
+
+  function getBootstrapMenuSetting_v1(menuKey) {
+    const cleanMenuKey = normalizeMenuKey_v1(menuKey);
+    if (!cleanMenuKey) {
+      return null;
+    }
+
+    const settings = getBootstrapSidebarMenuSettings_v1();
+    return (
+      settings.find((setting) => {
+        return normalizeMenuKey_v1(setting && setting.key) === cleanMenuKey;
+      }) || null
+    );
+  }
+
+  function getScopeMenuKey_v1(scopeRoot) {
+    const root = findScopeRoot_v1(scopeRoot);
+    if (!root || typeof root.querySelector !== "function") {
+      return "";
+    }
+
+    const menuKeyInput = root.querySelector("input[name='menu_key']");
+    if (menuKeyInput && menuKeyInput.value) {
+      return normalizeMenuKey_v1(menuKeyInput.value);
+    }
+
+    return normalizeMenuKey_v1(
+      root.getAttribute("data-menu-key") ||
+      root.dataset && root.dataset.menuKey ||
+      ""
+    );
+  }
+
+  function readBootstrapAdditionalFields_v1(scopeRoot) {
+    const menuKey = getScopeMenuKey_v1(scopeRoot);
+    const setting = getBootstrapMenuSetting_v1(menuKey);
+
+    if (!setting) {
+      return [];
+    }
+
+    const rawAdditionalFields = Array.isArray(setting.process_additional_fields)
+      ? setting.process_additional_fields
+      : Array.isArray(setting.additional_fields)
+        ? setting.additional_fields
+        : [];
+
+    return dedupeOptions_v1(rawAdditionalFields);
   }
 
   function buildProcessFieldOptionMap_v1(setting) {
@@ -425,7 +474,9 @@
     const baseStaticOptions = dedupeOptions_v1(staticOptions).filter((option) => {
       return !option.key.startsWith("custom_");
     });
-    const additionalOptions = readAdditionalFields_v1(scopeRoot);
+    const additionalOptions = dedupeOptions_v1(
+      readAdditionalFields_v1(scopeRoot).concat(readBootstrapAdditionalFields_v1(scopeRoot))
+    );
     const fieldOptions = dedupeOptions_v1(baseStaticOptions.concat(additionalOptions));
 
     return {

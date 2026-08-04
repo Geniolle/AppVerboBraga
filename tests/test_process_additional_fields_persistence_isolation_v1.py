@@ -135,6 +135,39 @@ def test_update_additional_fields_preserves_unrelated_menu_config_sections():
     assert config["subsequent_fields"] == [{"key": "subseq_x"}]
 
 
+def test_update_additional_fields_persists_list_key_without_manual_items():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_lista",
+        entity_id=1,
+        menu_config={"additional_fields": [], "process_lists": [{"key": "list_opcoes", "label": "Opcoes"}]},
+    )
+
+    session = SessionLocal()
+    update_sidebar_menu_additional_fields_v1(
+        session,
+        "processo_teste_lista",
+        fields=[
+            {
+                "label": "Estado",
+                "field_type": "list",
+                "list_key": "list_opcoes",
+                "manual_list_key": "list_opcoes",
+            }
+        ],
+    )
+    session.close()
+
+    config, _ = _load_config(SessionLocal, "processo_teste_lista")
+    item = config["additional_fields"][0]
+    assert item["list_key"] == "list_opcoes"
+    assert item["manual_list_key"] == "list_opcoes"
+    assert item["field_type"] == "list"
+    assert item.get("manual_list_items_csv", "") == ""
+    assert item.get("manual_list_items", []) == []
+
+
 def test_update_additional_fields_dedup_identical_label_within_same_group():
     SessionLocal = _build_session_factory()
     _seed_menu(

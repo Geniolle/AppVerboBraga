@@ -1,4 +1,4 @@
-{% macro render_configurable_items_pagination_footer(page_size_attr, pagination_attr, page_size_id=none, include_options=true) %}
+﻿{% macro render_configurable_items_pagination_footer(page_size_attr, pagination_attr, page_size_id=none, include_options=true) %}
 <div class="appgenesis-load-more-footer-v1 configurable-items-pagination-footer-v1">
   <div class="appgenesis-load-more-page-size-v1">
     <select{% if page_size_id %} id="{{ page_size_id }}"{% endif %} {{ page_size_attr }}>
@@ -13,3 +13,4 @@
   <div class="appgenesis-load-more-status-v1" {{ pagination_attr }}></div>
 </div>
 {% endmacro %}
+

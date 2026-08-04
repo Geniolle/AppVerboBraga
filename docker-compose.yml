@@ -23,7 +23,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    environment:
+      db-init:
+        condition: service_completed_successfully
+    environment: &web_environment
+      APP_BASE_URL: ${APP_BASE_URL:-http://web:8000}
+      SELENIUM_REMOTE_URL: ${SELENIUM_REMOTE_URL:-http://selenium:4444/wd/hub}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-app_igreja}
       DB_POOL_SIZE: ${DB_POOL_SIZE:-20}
       DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-20}
@@ -41,9 +45,34 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
     ports:
       - "8000:8000"
-    command: sh -c "python init_db.py && uvicorn web_app:app --host 0.0.0.0 --port 8000"
+    command: uvicorn web_app:app --host 0.0.0.0 --port 8000
     volumes:
       - ./:/app
+
+  db-init:
+    build: .
+    container_name: appgenesis-db-init
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: *web_environment
+    command: python init_db.py
+    restart: "no"
+
+  selenium:
+    image: selenium/standalone-chromium:4.46.0-20260707
+    profiles:
+      - browser-tests
+    shm_size: "2gb"
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:4444/status
+      interval: 3s
+      timeout: 3s
+      retries: 30
 
 volumes:
   pg_data:

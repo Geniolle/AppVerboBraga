@@ -1,5 +1,6 @@
 from dataclasses import replace
 
+from appgenesis.admin_subprocesses.models import AdminFieldConfig
 from appgenesis.admin_subprocesses.registry import (
     CONTAS_CONFIG,
     UTILIZADOR_CONFIG,
@@ -68,3 +69,32 @@ def test_full_registry_validation_only_flags_utilizador() -> None:
 
     assert flagged_keys == {"utilizador"}
     assert len(list_admin_subprocess_configs()) >= len(_NATIVE_REPOSITORY_BACKED_KEYS) + 2
+
+
+def test_entity_scoped_synthetic_config_is_normalized_by_validator() -> None:
+    synthetic_config = replace(
+        UTILIZADOR_CONFIG,
+        key="processo_sintetico",
+        uses_entity_context=True,
+        fields=(
+            AdminFieldConfig(
+                key="status",
+                label="Estado",
+                input_name="processo_sintetico_status",
+                field_type="select",
+                required=True,
+                options=(
+                    ("ativo", "Ativo"),
+                    ("inativo", "Inativo"),
+                ),
+            ),
+        ),
+        form_grid_css_class="",
+    )
+
+    issues = validate_admin_subprocess_config(synthetic_config)
+
+    assert len(issues) == 1
+    assert issues[0].severity == "warning"
+    assert issues[0].subprocess_key == "processo_sintetico"
+    assert "registado != efetivamente migrado" in issues[0].message

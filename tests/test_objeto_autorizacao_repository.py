@@ -43,6 +43,9 @@ def test_objeto_autorizacao_repository_list_rows_exposes_process_and_authorizati
     assert rows[0]["label"] == "Extrato"
     assert rows[0]["process_label"] == "Extratos bancários"
     assert rows[0]["authorization_label"] == "Todas autorizações"
+    assert rows[0]["edit_values"]["custom_nome_do_perfil"] == "Extrato"
+    assert rows[0]["edit_values"]["custom_processo"] == "Extratos bancários"
+    assert rows[0]["edit_values"]["custom_subprocesso"] == "Todas autorizações"
 
 
 def test_objeto_autorizacao_repository_list_rows_prefers_label_fields_and_supports_legacy_fallbacks(
@@ -90,6 +93,9 @@ def test_objeto_autorizacao_repository_list_rows_prefers_label_fields_and_suppor
     assert rows[0]["authorization_label"] == "Todas autorizações"
     assert rows[1]["process_label"] == "-"
     assert rows[1]["authorization_label"] == "-"
+    assert rows[0]["edit_values"]["custom_nome_do_perfil"] == "Extrato"
+    assert rows[0]["edit_values"]["custom_processo"] == "extratos_bancarios"
+    assert rows[0]["edit_values"]["custom_subprocesso"] == "todas_autorizacoes"
 
 
 def test_objeto_autorizacao_repository_save_row_preserves_existing_dynamic_values(monkeypatch) -> None:
@@ -117,6 +123,7 @@ def test_objeto_autorizacao_repository_save_row_preserves_existing_dynamic_value
             "dynamic_values": {
                 "custom_processo": "Extratos bancários",
                 "custom_subprocesso": "Todas autorizações",
+                "custom_permissoes": "view",
             },
         },
         context={"entity_number": "1001"},
@@ -131,6 +138,7 @@ def test_objeto_autorizacao_repository_save_row_preserves_existing_dynamic_value
     assert len(stored_records) == 1
     assert stored_records[0]["values"]["custom_processo"] == "Extratos bancários"
     assert stored_records[0]["values"]["custom_subprocesso"] == "Todas autorizações"
+    assert stored_records[0]["values"]["custom_permissoes"] == "view"
 
 
 def test_objeto_autorizacao_repository_list_rows_filters_by_entity_number(monkeypatch) -> None:

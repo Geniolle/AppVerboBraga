@@ -27,7 +27,10 @@ from appgenesis.services.profile import (
     build_profile_menu_tabs_dependency_map_v1,
     resolve_field_list_options_v1,
 )
-from appgenesis.services.process_tabs import resolve_subprocess_section_fields_v1
+from appgenesis.services.process_tabs import (
+    resolve_process_tabs_v1,
+    resolve_subprocess_section_fields_v1,
+)
 
 
 def test_administrativo_process_field_options_defaults() -> None:
@@ -39,9 +42,38 @@ def test_administrativo_process_field_options_defaults() -> None:
     ]
 
 
+def test_extrato_process_field_options_keep_base_fields_with_additional_fields() -> None:
+    menu_config = {
+        "additional_fields": [
+            {"label": "Extratos bancários", "field_type": "header"},
+            {"label": "Descrição", "field_type": "text"},
+        ]
+    }
+
+    options = get_menu_process_field_options("extrato", menu_config)
+    selectable_options = get_menu_process_selectable_field_options("extrato", menu_config)
+
+    assert [item["key"] for item in options] == [
+        "entidade",
+        "estado",
+        "custom_extratos_bancarios",
+        "custom_descricao",
+    ]
+    assert [item["key"] for item in selectable_options] == [
+        "entidade",
+        "estado",
+        "custom_descricao",
+    ]
+
+
 def test_administrativo_default_visible_fields() -> None:
     defaults = get_menu_process_default_visible_fields("administrativo")
     assert defaults == ["entidade", "utilizador", "definicoes"]
+
+
+def test_extrato_default_visible_fields_include_entidade_and_estado() -> None:
+    defaults = get_menu_process_default_visible_fields("extrato")
+    assert defaults == ["entidade", "estado"]
 
 
 def test_legacy_configuracao_alias_maps_to_administrativo_fields() -> None:
@@ -70,7 +102,8 @@ def test_additional_field_types_include_time_with_correct_label() -> None:
     assert types_by_key["time"] == "Horário"
     # Tipos existentes continuam disponiveis e inalterados.
     assert types_by_key["text"] == "Texto"
-    assert types_by_key["number"] == "Número"
+    assert types_by_key["number"] == "Inteiro"
+    assert types_by_key["decimal"] == "Numérico (0,00)"
     assert types_by_key["email"] == "Email"
     assert types_by_key["phone"] == "Telefone"
     assert types_by_key["date"] == "Data"
@@ -98,10 +131,29 @@ def test_normalize_additional_fields_accepts_time_type_and_ignores_size() -> Non
     assert "size" not in normalized[0]
 
 
+def test_normalize_additional_fields_accepts_decimal_type_and_ignores_size() -> None:
+    normalized = normalize_menu_process_additional_fields(
+        [
+            {
+                "label": "Valor decimal",
+                "field_type": "decimal",
+                "size": "255",
+                "is_required": True,
+            },
+        ]
+    )
+
+    assert len(normalized) == 1
+    assert normalized[0]["field_type"] == "decimal"
+    assert normalized[0]["is_required"] is True
+    assert "size" not in normalized[0]
+
+
 def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
     raw_fields = [
         {"label": "Campo texto", "field_type": "text"},
         {"label": "Campo numero", "field_type": "number"},
+        {"label": "Campo decimal", "field_type": "decimal"},
         {"label": "Campo email", "field_type": "email"},
         {"label": "Campo telefone", "field_type": "phone"},
         {"label": "Campo data", "field_type": "date"},
@@ -120,6 +172,7 @@ def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
         "header",
         "text",
         "number",
+        "decimal",
         "email",
         "phone",
         "date",
@@ -211,6 +264,7 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
             },
             {"key": "custom_processo", "label": "Processo", "field_type": "text"},
             {"key": "custom_subprocesso", "label": "Subprocesso", "field_type": "text"},
+            {"key": "custom_permissoes", "label": "Permissões", "field_type": "list"},
             {"key": "custom_perfil_2", "label": "Perfil", "field_type": "text"},
         ],
         "visible_fields": [
@@ -240,6 +294,10 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
                 "header_key": "custom_objeto_de_autorizacao",
             },
             {
+                "field_key": "custom_permissoes",
+                "header_key": "custom_objeto_de_autorizacao",
+            },
+            {
                 "field_key": "custom_perfil_2",
                 "header_key": "custom_perfil",
             },
@@ -248,6 +306,7 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
             "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
             "custom_processo": "custom_objeto_de_autorizacao",
             "custom_subprocesso": "custom_objeto_de_autorizacao",
+            "custom_permissoes": "custom_objeto_de_autorizacao",
             "custom_perfil_2": "custom_perfil",
         },
     }
@@ -258,6 +317,7 @@ def test_get_menu_process_visible_field_header_map_prefers_process_rows_over_leg
         "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
         "custom_processo": "custom_objeto_de_autorizacao",
         "custom_subprocesso": "custom_objeto_de_autorizacao",
+        "custom_permissoes": "custom_objeto_de_autorizacao",
         "custom_perfil_2": "custom_perfil",
     }
 
@@ -340,6 +400,174 @@ def test_get_menu_process_visible_field_rows_prefers_process_rows_over_legacy_he
             "field_key": "custom_perfil_2",
             "header_key": "custom_perfil",
         },
+    ]
+
+
+def test_get_sidebar_menu_settings_repairs_profile_authorization_object_section() -> (
+    None
+):
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    profile_menu_config = {
+        "additional_fields": [
+            {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
+            {
+                "key": "custom_objeto_de_autorizacao",
+                "label": "Objeto de autorização",
+                "field_type": "header",
+            },
+            {
+                "key": "custom_nome_do_perfil",
+                "label": "Nome do perfil",
+                "field_type": "list",
+                "list_source_type": "manual",
+                "manual_list_key": "list_perfil",
+                "list_key": "list_perfil",
+            },
+            {
+                "key": "custom_field_perfil",
+                "label": "Perfil",
+                "field_type": "text",
+            },
+            {
+                "key": "custom_objeto_de_autorizacao_1",
+                "label": "Objeto de autorização 1",
+                "field_type": "text",
+            },
+        ],
+        "visible_fields": [
+            "custom_perfil",
+            "custom_nome_do_perfil",
+            "custom_objeto_de_autorizacao",
+            "custom_field_perfil",
+            "custom_objeto_de_autorizacao_1",
+        ],
+        "visible_field_headers": {
+            "custom_nome_do_perfil": "custom_perfil",
+            "custom_field_perfil": "custom_objeto_de_autorizacao",
+        },
+        "process_visible_field_rows": [
+            {
+                "field_key": "custom_nome_do_perfil",
+                "header_key": "custom_perfil",
+            },
+            {
+                "field_key": "custom_field_perfil",
+                "header_key": "custom_objeto_de_autorizacao",
+            },
+            {
+                "field_key": "custom_objeto_de_autorizacao_1",
+                "header_key": "",
+            },
+        ],
+        "process_visible_field_header_map": {
+            "custom_nome_do_perfil": "custom_perfil",
+            "custom_field_perfil": "custom_objeto_de_autorizacao",
+        },
+    }
+
+    with Session(engine) as session:
+        session.add(
+            Entity(
+                entity_number=1,
+                name="Igreja Teste",
+                is_active=True,
+            )
+        )
+        session.add(
+            SidebarMenuSetting(
+                entity_id=1,
+                menu_key="perfil_de_autorizacao",
+                menu_label="Perfil de autorização",
+                is_active=True,
+                is_deleted=False,
+                menu_config=json.dumps(profile_menu_config, ensure_ascii=False),
+            )
+        )
+        session.commit()
+
+        settings = get_sidebar_menu_settings(session)
+        profile_setting = next(
+            item for item in settings if item["key"] == "perfil_de_autorizacao"
+        )
+
+        assert [row["field_key"] for row in profile_setting["process_visible_field_rows"]] == [
+            "custom_field_perfil",
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "custom_permissoes",
+            "custom_objeto_de_autorizacao_1",
+        ]
+        assert profile_setting["process_visible_field_header_map"] == {
+            "custom_field_perfil": "custom_perfil",
+            "custom_nome_do_perfil": "custom_objeto_de_autorizacao",
+            "custom_processo": "custom_objeto_de_autorizacao",
+            "custom_subprocesso": "custom_objeto_de_autorizacao",
+            "custom_permissoes": "custom_objeto_de_autorizacao",
+        }
+
+        resolved_fields = resolve_subprocess_section_fields_v1(
+            "perfil_de_autorizacao",
+            "custom_objeto_de_autorizacao",
+            settings,
+            active_entity_id=1,
+        )
+
+        assert [item["key"] for item in resolved_fields] == [
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "custom_permissoes",
+        ]
+        assert [item["label"] for item in resolved_fields] == [
+            "Nome do perfil",
+            "Processo",
+            "Autorização",
+            "Permissões",
+        ]
+
+        stored_row = session.scalar(
+            select(SidebarMenuSetting).where(
+                SidebarMenuSetting.menu_key == "perfil_de_autorizacao"
+            )
+        )
+        assert stored_row is not None
+        stored_config = json.loads(stored_row.menu_config or "{}")
+        assert [row["field_key"] for row in stored_config["process_visible_field_rows"]] == [
+            "custom_field_perfil",
+            "custom_nome_do_perfil",
+            "custom_processo",
+            "custom_subprocesso",
+            "custom_permissoes",
+            "custom_objeto_de_autorizacao_1",
+        ]
+
+
+def test_resolve_field_list_options_supports_stable_manual_values() -> None:
+    options = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_permissoes",
+            "label": "Permissões",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_options": [
+                {"value": "all", "label": "Todas as permissões"},
+                {"value": "view", "label": "Exibir"},
+                {"value": "edit", "label": "Editar"},
+                {"value": "delete", "label": "Eliminar"},
+            ],
+        },
+        sidebar_menu_settings=[],
+    )
+
+    assert options == [
+        {"value": "all", "label": "Todas as permissões", "status": "active"},
+        {"value": "view", "label": "Exibir", "status": "active"},
+        {"value": "edit", "label": "Editar", "status": "active"},
+        {"value": "delete", "label": "Eliminar", "status": "active"},
     ]
 
 
@@ -521,6 +749,61 @@ def test_resolve_field_list_options_field_list_inherits_source_field_options() -
     assert [opt["value"] for opt in resolved] == ["Perfil A", "Perfil B"]
 
 
+def test_resolve_field_list_options_manual_delegates_to_automatic_list_with_all_sessions_source_returns_active_menus() -> (
+    None
+):
+    sidebar_menu_settings = [
+        {"key": "home", "label": "Home", "is_active": True, "is_deleted": False},
+        {
+            "key": "perfil_de_autorizacao",
+            "label": "Perfil de autorização",
+            "is_active": True,
+            "is_deleted": False,
+            "process_field_options": [
+                {
+                    "key": "custom_processo",
+                    "label": "Processo",
+                    "field_type": "list",
+                    "list_source_type": "manual",
+                    "manual_list_key": "list_processo",
+                },
+            ],
+            "process_lists": [
+                {
+                    "key": "list_processo",
+                    "label": "L_processo",
+                    "field_type": "automatic",
+                    "source_session_key": "all_sessions",
+                    "source_menu_key": "",
+                    "source_subprocess_key": "",
+                    "items": [],
+                },
+            ],
+        },
+    ]
+
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_processo",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_key": "list_processo",
+        },
+        sidebar_menu_settings=sidebar_menu_settings,
+        visible_sidebar_menu_keys={"home", "perfil_de_autorizacao"},
+    )
+
+    assert resolved == [
+        {"value": "home", "label": "Home", "status": "active"},
+        {
+            "value": "perfil_de_autorizacao",
+            "label": "Perfil de autorização",
+            "status": "active",
+        },
+    ]
+
+
 def test_resolve_field_list_options_field_list_cycle_returns_empty() -> None:
     sidebar_menu_settings = [
         {
@@ -614,13 +897,13 @@ def test_resolve_field_list_options_active_menus_filters_visibility_and_state() 
             },
             {
                 "key": "musicas",
-                "label": "MÃºsicas",
+                "label": "Músicas",
                 "is_active": True,
                 "is_deleted": True,
             },
             {
                 "key": "perfil_de_autorizacao",
-                "label": "Perfil de autorizaÃ§Ã£o",
+                "label": "Perfil de autorização",
                 "is_active": True,
                 "is_deleted": False,
             },
@@ -634,7 +917,7 @@ def test_resolve_field_list_options_active_menus_filters_visibility_and_state() 
         {"value": "sessoes", "label": "Estruturas", "status": "active"},
         {
             "value": "perfil_de_autorizacao",
-            "label": "Perfil de autorizaÃ§Ã£o",
+            "label": "Perfil de autorização",
             "status": "active",
         },
     ]
@@ -765,6 +1048,11 @@ def test_resolve_field_list_options_profile_menu_tabs_returns_tabs_from_selected
 
     assert resolved == [
         {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
+        {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
             "status": "active",
@@ -873,6 +1161,11 @@ def test_resolve_field_list_options_profile_menu_tabs_objeto_autorizacao_priorit
 
     assert resolved == [
         {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
+        {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
             "status": "active",
@@ -934,6 +1227,11 @@ def test_build_profile_menu_tabs_dependency_map_supports_menu_key_and_label_alia
     )
 
     expected_options = [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
@@ -1007,6 +1305,11 @@ def test_resolve_field_list_options_profile_menu_tabs_accepts_legacy_profile_wit
     )
 
     assert resolved == [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
@@ -1123,6 +1426,11 @@ def test_resolve_field_list_options_legacy_auth_profile_processo_config_uses_pro
 
     assert resolved == [
         {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
+        {
             "value": "custom_extrato_header",
             "label": "Extratos bancários",
             "status": "active",
@@ -1176,6 +1484,11 @@ def test_resolve_field_list_options_profile_menu_tabs_works_outside_perfil_de_au
     )
 
     assert resolved == [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {"value": "custom_saldo", "label": "Saldo", "status": "active"},
         {"value": "custom_movimentos", "label": "Movimentos", "status": "active"},
     ]
@@ -1298,6 +1611,11 @@ def test_resolve_subprocess_section_fields_profile_menu_tabs_generic_process_inf
     assert dependent_field["dependent_field_key"] == "custom_processo"
     assert dependent_field["automatic_source_field_key"] == "custom_processo"
     assert dependent_field["options"] == [
+        {
+            "value": "Todas as autorizações",
+            "label": "Todas as autorizações",
+            "status": "active",
+        },
         {"value": "custom_saldo", "label": "Saldo", "status": "active"},
         {"value": "custom_movimentos", "label": "Movimentos", "status": "active"},
     ]
@@ -1551,6 +1869,7 @@ def test_resolve_subprocess_section_fields_enriches_list_metadata_and_input_type
             "automatic_source_field_key": "",
             "automatic_only_active": False,
             "manual_list_items": [],
+            "manual_list_options": [],
             "manual_list_items_csv": "",
             "options": [
                 {"value": "Financeiro", "label": "Financeiro", "status": "active"},
@@ -1608,6 +1927,52 @@ def test_resolve_subprocess_section_fields_renders_time_field_as_time_input() ->
     assert resolved_field["required"] is True
     # "time" nao e textual: o tamanho maximo enviado e ignorado na renderizacao.
     assert resolved_field["size"] is None
+
+
+def test_resolve_subprocess_section_fields_renders_decimal_field_as_number_input() -> None:
+    resolved_fields = resolve_subprocess_section_fields_v1(
+        "calendario",
+        "custom_valores",
+        [
+            {
+                "key": "calendario",
+                "process_additional_fields": [
+                    {
+                        "key": "custom_valor",
+                        "label": "Valor",
+                        "field_type": "decimal",
+                        "is_required": True,
+                        "header_key": "custom_valores",
+                    },
+                ],
+                "process_field_options": [
+                    {
+                        "key": "custom_valores",
+                        "label": "Valores",
+                        "field_type": "header",
+                    },
+                    {
+                        "key": "custom_valor",
+                        "label": "Valor",
+                        "field_type": "decimal",
+                    },
+                ],
+                "process_visible_field_rows": [
+                    {
+                        "field_key": "custom_valor",
+                        "header_key": "custom_valores",
+                    }
+                ],
+            }
+        ],
+    )
+
+    assert len(resolved_fields) == 1
+    resolved_field = resolved_fields[0]
+    assert resolved_field["field_type"] == "decimal"
+    assert resolved_field["input_type"] == "number"
+    assert resolved_field["input_step"] == "0.01"
+    assert resolved_field["input_mode"] == "decimal"
 
 
 def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None:
@@ -1673,6 +2038,7 @@ def test_resolve_subprocess_section_fields_keeps_empty_lists_as_select() -> None
             "automatic_source_field_key": "custom_nome_do_perfil",
             "automatic_only_active": False,
             "manual_list_items": [],
+            "manual_list_options": [],
             "manual_list_items_csv": "",
             "options": [],
             "header_key": "custom_objeto_de_autorizacao",
@@ -1869,7 +2235,7 @@ def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -
         [
             {
                 "key": "perfil_de_autorizacao",
-                "label": "Perfil de autorizaÃ§Ã£o",
+                "label": "Perfil de autorização",
                 "is_active": True,
                 "is_deleted": False,
                 "process_additional_fields": [
@@ -1916,11 +2282,12 @@ def test_resolve_subprocess_section_fields_active_menus_keeps_select_options() -
             "automatic_source_field_key": "",
             "automatic_only_active": False,
             "manual_list_items": [],
+            "manual_list_options": [],
             "manual_list_items_csv": "",
             "options": [
                 {
                     "value": "perfil_de_autorizacao",
-                    "label": "Perfil de autorizaÃ§Ã£o",
+                    "label": "Perfil de autorização",
                     "status": "active",
                 },
                 {"value": "sessoes", "label": "Estruturas", "status": "active"},
@@ -2318,6 +2685,56 @@ def test_normalize_menu_process_quantity_fields() -> None:
     ]
 
 
+def test_normalize_menu_process_quantity_fields_defaults_interaction_mode_to_quantity() -> None:
+    normalized = normalize_menu_process_quantity_fields(
+        [
+            {
+                "label": "Agregados",
+                "quantity_field_key": "custom_quantos_filhos_tens",
+                "repeated_field_keys": ["custom_nome_do_agregado"],
+            }
+        ]
+    )
+
+    assert normalized == [
+        {
+            "key": "qty_agregados",
+            "label": "Agregados",
+            "quantity_field_key": "custom_quantos_filhos_tens",
+            "repeated_field_keys": ["custom_nome_do_agregado"],
+            "header_key": "",
+            "max_items": 1,
+            "item_label": "Item",
+        }
+    ]
+
+
+def test_normalize_menu_process_quantity_fields_preserves_dynamic_list_mode() -> None:
+    normalized = normalize_menu_process_quantity_fields(
+        [
+            {
+                "label": "Agregados",
+                "quantity_field_key": "custom_quantos_filhos_tens",
+                "repeated_field_keys": ["custom_nome_do_agregado"],
+                "interaction_mode": "dynamic_list",
+            }
+        ]
+    )
+
+    assert normalized == [
+        {
+            "key": "qty_agregados",
+            "label": "Agregados",
+            "quantity_field_key": "custom_quantos_filhos_tens",
+            "repeated_field_keys": ["custom_nome_do_agregado"],
+            "header_key": "",
+            "max_items": 1,
+            "item_label": "Item",
+            "interaction_mode": "dynamic_list",
+        }
+    ]
+
+
 def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
     Base.metadata.create_all(engine)
@@ -2350,7 +2767,7 @@ def test_update_sidebar_menu_process_quantity_fields_persists_per_menu() -> None
                             {
                                 "key": "custom_quantos_filhos_tens",
                                 "label": "Quantos filhos tens?",
-                                "field_type": "number",
+                                "field_type": "decimal",
                             },
                             {
                                 "key": "custom_nome_do_agregado",
@@ -2573,4 +2990,133 @@ def test_resolve_field_list_options_manual_legacy_list_key_still_works() -> None
     assert resolved == [
         {"value": "Pastor", "label": "Pastor", "status": "active"},
         {"value": "Líder", "label": "Líder", "status": "active"},
+    ]
+
+
+def test_resolve_field_list_options_manual_reference_uses_automatic_process_list_history() -> (
+    None
+):
+    resolved = resolve_field_list_options_v1(
+        current_menu_key="perfil_de_autorizacao",
+        field_definition={
+            "key": "custom_nome_do_perfil",
+            "field_type": "list",
+            "list_source_type": "manual",
+            "manual_list_key": "list_perfil",
+            "list_key": "list_perfil",
+        },
+        sidebar_menu_settings=[
+            {
+                "key": "perfil_de_autorizacao",
+                "process_lists": [
+                    {
+                        "key": "list_perfil",
+                        "label": "Perfil",
+                        "field_type": "automatic",
+                        "source_menu_key": "perfil_de_autorizacao",
+                        "source_subprocess_key": "perfis",
+                        "automatic_only_active": True,
+                        "items": [],
+                    }
+                ],
+                "process_field_options": [
+                    {"key": "custom_perfil", "label": "Perfil", "field_type": "header"},
+                    {
+                        "key": "custom_nome_do_perfil",
+                        "label": "Nome do perfil",
+                        "field_type": "list",
+                    },
+                ],
+            }
+        ],
+        visible_sidebar_menu_keys={"perfil_de_autorizacao"},
+        menu_process_history_map={
+            "perfil_de_autorizacao": [
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "custom_nome_do_perfil": "Gestor de Tesouraria",
+                        "__estado": "ativo",
+                    },
+                },
+                {
+                    "section_key": "custom_perfil",
+                    "values": {
+                        "custom_nome_do_perfil": "Calendário Geral",
+                        "__estado": "active",
+                    },
+                },
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "custom_nome_do_perfil": "Gestor de sistema",
+                        "__estado": "ativo",
+                    },
+                },
+                {
+                    "section_key": "outra_secao",
+                    "values": {
+                        "custom_nome_do_perfil": "Não entra",
+                        "__estado": "active",
+                    },
+                },
+                {
+                    "section_key": "custom_perfil_header",
+                    "values": {
+                        "custom_nome_do_perfil": "Gestor de Tesouraria",
+                        "__estado": "inactive",
+                    },
+                },
+            ]
+        },
+    )
+
+    assert resolved == [
+        {"value": "Gestor de Tesouraria", "label": "Gestor de Tesouraria", "status": "active"},
+        {"value": "Calendário Geral", "label": "Calendário Geral", "status": "active"},
+        {"value": "Gestor de sistema", "label": "Gestor de sistema", "status": "active"},
+    ]
+
+
+def test_resolve_process_tabs_v1_includes_quantity_only_section() -> None:
+    tabs = resolve_process_tabs_v1(
+        "meu_perfil",
+        [
+            {
+                "key": "meu_perfil",
+                "label": "Meu Perfil",
+                "process_additional_fields": [
+                    {"key": "custom_dados_pessoais", "label": "Dados pessoais", "field_type": "header"},
+                    {"key": "custom_dados_de_agregados", "label": "Dados de agregados", "field_type": "header"},
+                    {"key": "nome", "label": "Nome", "field_type": "text"},
+                    {"key": "custom_quantos_filhos_tens", "label": "Quantos filhos tens?", "field_type": "decimal"},
+                    {"key": "custom_nome_do_agregado", "label": "Nome do agregado", "field_type": "text"},
+                ],
+                "process_visible_field_rows": [
+                    {"field_key": "nome", "header_key": "custom_dados_pessoais"},
+                ],
+                "process_quantity_fields": [
+                    {
+                        "key": "qty_agregados",
+                        "label": "Quantidade de agregados",
+                        "quantity_field_key": "custom_quantos_filhos_tens",
+                        "repeated_field_keys": [
+                            "custom_nome_do_agregado",
+                        ],
+                        "header_key": "custom_dados_de_agregados",
+                        "max_items": 10,
+                        "item_label": "Agregado",
+                    }
+                ],
+            }
+        ],
+    )
+
+    assert [tab.key for tab in tabs] == [
+        "custom_dados_pessoais",
+        "custom_dados_de_agregados",
+    ]
+    assert [tab.label for tab in tabs] == [
+        "Dados pessoais",
+        "Dados de agregados",
     ]

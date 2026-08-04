@@ -77,6 +77,7 @@
       editorKey: form.querySelector("[data-process-quantity-editor-key]"),
       editorLabel: form.querySelector("[data-process-quantity-editor-label]"),
       editorQuantityField: form.querySelector("[data-process-quantity-editor-field]"),
+      editorInteractionMode: form.querySelector("[data-process-quantity-editor-interaction-mode]"),
       editorRepeatedFields: form.querySelector("[data-process-quantity-editor-repeated-fields]"),
       editorHeaderKey: form.querySelector("[data-process-quantity-editor-header-key]"),
       editorMaxItems: form.querySelector("[data-process-quantity-editor-max-items]"),
@@ -101,6 +102,7 @@
       elements.editorKey &&
       elements.editorLabel &&
       elements.editorQuantityField &&
+      elements.editorInteractionMode &&
       elements.editorRepeatedFields &&
       elements.editorHeaderKey &&
       elements.editorMaxItems &&
@@ -160,6 +162,7 @@
           key,
           label,
           quantityFieldKey: readInput_v1(row, "quantity_field_key"),
+          interactionMode: readInput_v1(row, "quantity_interaction_mode") || "quantity",
           repeatedFieldKeys: parseRepeatedFieldKeys_v1(readInput_v1(row, "quantity_repeated_field_keys_json")),
           headerKey: readInput_v1(row, "quantity_header_key"),
           maxItems: readInput_v1(row, "quantity_max_items") || "10",
@@ -333,6 +336,7 @@
         ["quantity_rule_key", item.key],
         ["quantity_rule_label", item.label],
         ["quantity_field_key", item.quantityFieldKey],
+        ["quantity_interaction_mode", item.interactionMode || "quantity"],
         ["quantity_repeated_field_keys_json", JSON.stringify(item.repeatedFieldKeys || [])],
         ["quantity_header_key", item.headerKey],
         ["quantity_max_items", item.maxItems],
@@ -362,6 +366,7 @@
     elements.editorKey.value = "";
     elements.editorLabel.value = "";
     elements.editorQuantityField.value = "";
+    elements.editorInteractionMode.value = "quantity";
     selectMultipleValues_v1(elements.editorRepeatedFields, []);
     elements.editorHeaderKey.value = "";
     elements.editorMaxItems.value = "10";
@@ -383,6 +388,7 @@
     elements.editorKey.value = item.key || "";
     elements.editorLabel.value = item.label || "";
     elements.editorQuantityField.value = item.quantityFieldKey || "";
+    elements.editorInteractionMode.value = item.interactionMode || "quantity";
     selectMultipleValues_v1(elements.editorRepeatedFields, item.repeatedFieldKeys || []);
     elements.editorHeaderKey.value = item.headerKey || "";
     elements.editorMaxItems.value = item.maxItems || "10";
@@ -395,6 +401,7 @@
     const elements = context && context.elements ? context.elements : {};
     const label = toSafeString_v1(elements.editorLabel ? elements.editorLabel.value : "").trim();
     const quantityFieldKey = toSafeString_v1(elements.editorQuantityField ? elements.editorQuantityField.value : "").trim();
+    const interactionMode = toSafeString_v1(elements.editorInteractionMode ? elements.editorInteractionMode.value : "").trim();
     const repeatedFieldKeys = getSelectedValues_v1(elements.editorRepeatedFields);
     const headerKey = toSafeString_v1(elements.editorHeaderKey ? elements.editorHeaderKey.value : "").trim();
     const maxItems = toSafeString_v1(elements.editorMaxItems ? elements.editorMaxItems.value : "").trim() || "10";
@@ -408,6 +415,7 @@
       key,
       label,
       quantityFieldKey,
+      interactionMode: interactionMode === "dynamic_list" ? "dynamic_list" : "quantity",
       repeatedFieldKeys,
       headerKey,
       maxItems,
@@ -601,6 +609,11 @@
           key: "quantityFieldKey",
           label: "Campo origem",
           render: (item) => getOptionLabel_v1(elements.editorQuantityField, item.quantityFieldKey) || "-"
+        },
+        {
+          key: "interactionMode",
+          label: "Modo",
+          render: (item) => item.interactionMode === "dynamic_list" ? "Lista dinâmica" : "Quantidade"
         },
         {
           key: "repeatedFieldKeys",

@@ -100,16 +100,16 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "menu-subprocess-card-active",
             "Menu",
         ),
-        (
+        pytest.param(
             "/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
             "perfil_de_autorizacao",
-            "auth-profile-card",
+            "auth-profile-active-card",
             "Perfis",
         ),
-        (
+        pytest.param(
             "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-card#auth-objeto-card",
             "perfil_de_autorizacao",
-            "auth-objeto-card",
+            "auth-objeto-active-card",
             "Objeto de autorização",
         ),
     ],

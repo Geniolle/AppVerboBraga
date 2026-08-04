@@ -76,6 +76,52 @@ def _normalize_additional_field_required(raw_required: Any) -> bool:
     return clean_value in {"1", "true", "sim", "yes", "on"}
 
 
+def _normalize_manual_list_options_v1(raw_manual_list_options: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_manual_list_options, (list, tuple)):
+        return []
+
+    normalized_options: list[dict[str, Any]] = []
+    seen_values: set[str] = set()
+
+    for raw_option in raw_manual_list_options:
+        if isinstance(raw_option, dict):
+            clean_value = str(
+                raw_option.get("value")
+                or raw_option.get("key")
+                or raw_option.get("label")
+                or ""
+            ).strip()
+            clean_label = str(
+                raw_option.get("label")
+                or raw_option.get("value")
+                or raw_option.get("key")
+                or ""
+            ).strip()
+            clean_status = str(raw_option.get("status") or "active").strip() or "active"
+        else:
+            clean_value = str(raw_option or "").strip()
+            clean_label = clean_value
+            clean_status = "active"
+
+        if not clean_value or not clean_label:
+            continue
+
+        option_lookup = clean_value.lower()
+        if option_lookup in seen_values:
+            continue
+        seen_values.add(option_lookup)
+
+        normalized_options.append(
+            {
+                "value": clean_value,
+                "label": clean_label,
+                "status": clean_status,
+            }
+        )
+
+    return normalized_options
+
+
 def get_menu_process_additional_fields(
     menu_config: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -125,6 +171,7 @@ def normalize_menu_process_additional_fields_v1(
         item_size: int | None = None
         item_is_required = False
         item_list_key = ""
+        item_manual_list_options: list[dict[str, Any]] = []
 
         if isinstance(raw_item, dict):
             item_label = _normalize_additional_field_label(raw_item.get("label"))
@@ -141,6 +188,10 @@ def normalize_menu_process_additional_fields_v1(
             )
             item_list_key = _normalize_menu_key(
                 raw_item.get("list_key", raw_item.get("listKey", ""))
+            )
+            item_manual_list_options = _normalize_manual_list_options_v1(
+                raw_item.get("manual_list_options")
+                or raw_item.get("manualListOptions")
             )
         else:
             item_label = _normalize_additional_field_label(raw_item)
@@ -188,6 +239,8 @@ def normalize_menu_process_additional_fields_v1(
 
         if item_type == "list" and item_list_key:
             normalized_item["list_key"] = item_list_key
+        if item_type == "list" and item_manual_list_options:
+            normalized_item["manual_list_options"] = item_manual_list_options
 
         normalized.append(normalized_item)
 
@@ -604,6 +657,7 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         item_size: int | None = None
         item_is_required = False
         item_list_key = ""
+        item_manual_list_options: list[dict[str, Any]] = []
         item_list_source_type = "manual"
         item_manual_list_key = ""
         item_manual_list_items: list[str] = []
@@ -636,6 +690,10 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
                 raw_item.get("manual_list_key")
                 or raw_item.get("manualListKey")
                 or item_list_key
+            )
+            item_manual_list_options = _normalize_manual_list_options_v1(
+                raw_item.get("manual_list_options")
+                or raw_item.get("manualListOptions")
             )
             item_automatic_source_process_key = (
                 _normalize_additional_field_source_key_v1(
@@ -745,6 +803,8 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
             normalized_item["list_source_type"] = item_list_source_type
             normalized_item["manual_list_key"] = item_manual_list_key
             normalized_item["list_key"] = item_list_key
+            if item_manual_list_options:
+                normalized_item["manual_list_options"] = item_manual_list_options
             if item_manual_list_items:
                 normalized_item["manual_list_items"] = item_manual_list_items
                 normalized_item["manual_list_items_csv"] = item_manual_list_items_csv

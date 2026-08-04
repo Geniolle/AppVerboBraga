@@ -53,6 +53,9 @@
     getActiveMenuKey: function () {
       return "";
     },
+    getMeuPerfilPersonalCardTarget: function () {
+      return "#perfil-pessoal-card";
+    },
     MEU_PERFIL_MENU_KEY: "meu_perfil",
     ESTRUTURAS_MENU_KEY_V1: "sessoes",
     windowRef: global
@@ -145,6 +148,9 @@
     if (typeof safeOptions.getActiveMenuKey === "function") {
       state.getActiveMenuKey = safeOptions.getActiveMenuKey;
     }
+    if (typeof safeOptions.getMeuPerfilPersonalCardTarget === "function") {
+      state.getMeuPerfilPersonalCardTarget = safeOptions.getMeuPerfilPersonalCardTarget;
+    }
     if (typeof safeOptions.MEU_PERFIL_MENU_KEY === "string" && safeOptions.MEU_PERFIL_MENU_KEY.trim()) {
       state.MEU_PERFIL_MENU_KEY = safeOptions.MEU_PERFIL_MENU_KEY.trim();
     }
@@ -159,47 +165,109 @@
     }
   }
 
+  function syncSidebarMenuUrl(menuKey, source) {
+    const cleanSource = String(source || "").trim();
+    const cleanMenuKey = state.normalizeMenuKey(menuKey);
+    if (cleanSource !== "click:sidebar") {
+      return;
+    }
+
+    const windowRef = state.windowRef || global;
+    if (!windowRef.history || typeof windowRef.history.pushState !== "function") {
+      return;
+    }
+
+    try {
+      const nextUrl = new URL(windowRef.location.href);
+      nextUrl.searchParams.set("menu", cleanMenuKey);
+      [
+        "target",
+        "admin_tab",
+        "profile_tab",
+        "profile_section",
+        "auth_tab",
+        "process_section",
+        "dynamic_process_section",
+        "settings_action",
+        "settings_edit_key",
+        "settings_tab",
+        "sidebar_section_edit_key",
+        "sidebar_section_return_url",
+        "entity_edit_id",
+        "entity_view",
+        "user_edit_id",
+        "user_view",
+        "appgenesis_after_save"
+      ].forEach((paramName) => {
+        nextUrl.searchParams.delete(paramName);
+      });
+      nextUrl.hash = "";
+
+      const cleanHref = nextUrl.pathname + nextUrl.search;
+      const currentHref = windowRef.location.pathname + windowRef.location.search + windowRef.location.hash;
+      if (cleanHref && cleanHref !== currentHref) {
+        windowRef.history.pushState(
+          { menu: cleanMenuKey, source: cleanSource },
+          global.document ? global.document.title : "",
+          cleanHref
+        );
+      }
+    } catch (error) {
+        state.debugTabsLog("activateMenu:syncSidebarMenuUrl:error", {
+        menuKey: cleanMenuKey,
+        source: cleanSource,
+        error: String(error || "")
+      });
+    }
+  }
+
   function activateMenu(menuKey, options) {
     const safeOptions = options && typeof options === "object" ? options : {};
-    state.debugTabsLog("activateMenu:start", { menuKey, options: safeOptions });
-    const config = state.menuConfig[menuKey];
+    const cleanMenuKey = state.normalizeMenuKey(menuKey);
+    state.debugTabsLog("activateMenu:start", { menuKey: cleanMenuKey, options: safeOptions });
+    const config = state.menuConfig[cleanMenuKey];
     if (!config) {
+      state.debugTabsLog("activateMenu:missing-config", {
+        requestedMenuKey: menuKey,
+        normalizedMenuKey: cleanMenuKey,
+        availableMenuKeys: Object.keys(state.menuConfig || {})
+      });
       return;
     }
     const resetDynamicToFirst = Boolean(safeOptions.resetDynamicToFirst);
     const source = String(safeOptions.source || "unspecified");
     const targetButton = Array.from(state.menuButtons || []).find(
-      (btn) => state.normalizeMenuKey(btn.dataset.menu) === menuKey
+      (btn) => state.normalizeMenuKey(btn.dataset.menu) === cleanMenuKey
     );
     const menuItems = Array.isArray(config.items) ? config.items : [];
     if (resetDynamicToFirst) {
       const firstDynamicItem = menuItems.find((item) => item.dynamicProcessSectionKey);
       if (firstDynamicItem) {
-        state.selectedDynamicSectionByMenu[menuKey] = String(
+        state.selectedDynamicSectionByMenu[cleanMenuKey] = String(
           firstDynamicItem.dynamicProcessSectionKey || ""
         );
       }
     }
 
     state.closeAllProfileEdits();
-    state.setActiveMenuKey(menuKey);
+    state.setActiveMenuKey(cleanMenuKey);
     if (state.processShellHeaderController) {
       state.processShellHeaderController.setActions([]);
-      state.processShellHeaderController.setTitle(config.title || "Processo", menuKey);
+      state.processShellHeaderController.setTitle(config.title || "Processo", cleanMenuKey);
     }
     Array.from(state.menuButtons || []).forEach((item) => item.classList.remove("active"));
     if (targetButton) {
       targetButton.classList.add("active");
     }
-    state.renderSubmenu(menuKey);
+      state.renderSubmenu(cleanMenuKey);
 
     const defaultTarget = state.getDefaultTargetForMenu(
-      menuKey,
+      cleanMenuKey,
       config,
       { forceFirstItem: resetDynamicToFirst }
     );
     if (defaultTarget) {
-      const savedDynamicSectionKey = String(state.selectedDynamicSectionByMenu[menuKey] || "");
+      const savedDynamicSectionKey = String(state.selectedDynamicSectionByMenu[cleanMenuKey] || "");
       let selectedDynamicItem = null;
       if (defaultTarget === "#dynamic-process-card") {
         selectedDynamicItem = menuItems.find(
@@ -210,21 +278,22 @@
         }
       }
 
-      state.selectedTargetByMenu[menuKey] = defaultTarget;
+      state.selectedTargetByMenu[cleanMenuKey] = defaultTarget;
       if (selectedDynamicItem) {
         const selectedSectionKey = String(selectedDynamicItem.dynamicProcessSectionKey || "");
         state.setActiveSubmenu(defaultTarget, {
           dynamicProcessSectionKey: selectedSectionKey
         });
-        state.selectedDynamicSectionByMenu[menuKey] = selectedSectionKey;
-        state.renderDynamicProcessCard(menuKey, selectedSectionKey);
+        state.selectedDynamicSectionByMenu[cleanMenuKey] = selectedSectionKey;
+        state.renderDynamicProcessCard(cleanMenuKey, selectedSectionKey);
       } else {
         state.setActiveSubmenu(defaultTarget);
       }
-      state.debugTabsLog("activateMenu:before-apply", { menuKey, defaultTarget });
-      state.applyContentForMenuTarget(menuKey, defaultTarget, source);
-      state.refreshProcessShellBreadcrumb({ menuKey, target: defaultTarget, source });
-      if (menuKey === state.MEU_PERFIL_MENU_KEY) {
+      state.debugTabsLog("activateMenu:before-apply", { menuKey: cleanMenuKey, defaultTarget });
+      state.applyContentForMenuTarget(cleanMenuKey, defaultTarget, source);
+      state.refreshProcessShellBreadcrumb({ menuKey: cleanMenuKey, target: defaultTarget, source });
+      syncSidebarMenuUrl(cleanMenuKey, source);
+      if (cleanMenuKey === state.MEU_PERFIL_MENU_KEY) {
         let selectedSectionItem = menuItems.find(
           (item) => String(item.profileSection || "") === state.getMeuPerfilSelectedProfileSection()
         );
@@ -232,43 +301,53 @@
           selectedSectionItem = menuItems.find((item) => item.target === defaultTarget) || menuItems[0];
         }
         if (selectedSectionItem) {
-          const selectedSectionKey = String(selectedSectionItem.profileSection || "");
+          const selectedSectionKey = String(
+            selectedSectionItem.profileSection ||
+            state.getMeuPerfilSelectedProfileSection() ||
+            ""
+          ).trim();
           state.setMeuPerfilSelectedProfileSection(selectedSectionKey);
           state.activateProfilePersonalSection(selectedSectionKey);
           state.applyMeuPerfilProcessSubsequentVisibility();
+          state.activateProfilePersonalSection(
+            String(state.getMeuPerfilSelectedProfileSection() || selectedSectionKey || "").trim()
+          );
           state.setActiveSubmenu(defaultTarget, {
-            profileSection: selectedSectionKey
+            profileSection: String(state.getMeuPerfilSelectedProfileSection() || selectedSectionKey || "").trim()
           });
           state.syncActiveTabTitle(
             "#submenu-items",
-            "#perfil-pessoal-card .profile-card-header h2",
+            `${state.getMeuPerfilPersonalCardTarget()} .profile-card-header h2`,
             ["Mais"]
           );
         }
       }
+      syncSidebarMenuUrl(cleanMenuKey, source);
       return;
     }
-    state.applyContentForMenu(menuKey);
+    state.applyContentForMenu(cleanMenuKey);
     state.setActiveSubmenu("");
-    state.refreshProcessShellBreadcrumb({ menuKey, target: "", source });
+    state.refreshProcessShellBreadcrumb({ menuKey: cleanMenuKey, target: "", source });
+    syncSidebarMenuUrl(cleanMenuKey, source);
   }
 
   function activateMenuTarget(menuKey, targetSelector, source) {
     const cleanSource = String(source || "unspecified");
-    const config = state.menuConfig[menuKey];
+    const cleanMenuKey = state.normalizeMenuKey(menuKey);
+    const config = state.menuConfig[cleanMenuKey];
     if (!config) {
       return;
     }
-    activateMenu(menuKey, { resetDynamicToFirst: false, source: cleanSource });
+    activateMenu(cleanMenuKey, { resetDynamicToFirst: false, source: cleanSource });
     if (!targetSelector) {
       return;
     }
-    state.selectedTargetByMenu[menuKey] = targetSelector;
+    state.selectedTargetByMenu[cleanMenuKey] = targetSelector;
     state.setActiveSubmenu(targetSelector);
-    state.applyContentForMenuTarget(menuKey, targetSelector, cleanSource);
-    state.refreshProcessShellBreadcrumb({ menuKey, target: targetSelector, source: cleanSource });
+    state.applyContentForMenuTarget(cleanMenuKey, targetSelector, cleanSource);
+    state.refreshProcessShellBreadcrumb({ menuKey: cleanMenuKey, target: targetSelector, source: cleanSource });
     if (targetSelector === "#dynamic-process-card") {
-      state.renderDynamicProcessCard(menuKey, state.selectedDynamicSectionByMenu[menuKey] || "");
+      state.renderDynamicProcessCard(cleanMenuKey, state.selectedDynamicSectionByMenu[cleanMenuKey] || "");
     }
     const targetCard = state.windowRef.document.querySelector(targetSelector);
     if (targetCard) {

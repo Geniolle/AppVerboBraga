@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from appgenesis.menu_settings import (
+    delete_sidebar_menu_process_list,
     get_sidebar_menu_settings,
     update_sidebar_menu_process_lists,
 )
@@ -91,6 +92,268 @@ def test_update_process_lists_isolated_by_active_entity_id():
     assert config_entity_2["process_lists"][0]["key"] == "list_x"
 
 
+def test_delete_process_list_removes_inactive_list_and_preserves_other_config_sections():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "lista_ativa",
+                    "label": "Lista ativa",
+                    "field_type": "manual",
+                    "status": "ativo",
+                    "items": ["1"],
+                },
+                {
+                    "key": "lista_inativa",
+                    "label": "Lista inativa",
+                    "field_type": "manual",
+                    "status": "inativo",
+                    "items": ["2"],
+                },
+            ],
+            "other_section": {"keep": True},
+        },
+    )
+
+    with SessionLocal() as session:
+        ok, error, deleted_key = delete_sidebar_menu_process_list(
+            session,
+            "processo_teste_a",
+            "lista_inativa",
+            active_entity_id=1,
+        )
+
+    config, entity_id = _load_config(SessionLocal, "processo_teste_a", entity_id=1)
+    assert (ok, error, deleted_key) == (True, "", "list_lista_inativa")
+    assert entity_id == 1
+    assert [item["key"] for item in config["process_lists"]] == ["list_lista_ativa"]
+    assert config["other_section"] == {"keep": True}
+
+
+def test_delete_process_list_rejects_active_list():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "lista_ativa",
+                    "label": "Lista ativa",
+                    "field_type": "manual",
+                    "status": "ativo",
+                    "items": ["1"],
+                }
+            ]
+        },
+    )
+
+    with SessionLocal() as session:
+        ok, error, deleted_key = delete_sidebar_menu_process_list(
+            session,
+            "processo_teste_a",
+            "lista_ativa",
+            active_entity_id=1,
+        )
+
+    config, _ = _load_config(SessionLocal, "processo_teste_a", entity_id=1)
+    assert (ok, deleted_key) == (False, "")
+    assert error == "Só é possível eliminar listas inativas."
+    assert [item["key"] for item in config["process_lists"]] == ["lista_ativa"]
+
+
+def test_delete_process_list_rejects_missing_list():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    with SessionLocal() as session:
+        ok, error, deleted_key = delete_sidebar_menu_process_list(
+            session,
+            "processo_teste_a",
+            "lista_inexistente",
+            active_entity_id=1,
+        )
+
+    config, _ = _load_config(SessionLocal, "processo_teste_a", entity_id=1)
+    assert (ok, deleted_key) == (False, "")
+    assert error == "Lista não encontrada."
+    assert config["process_lists"] == []
+
+
+def test_delete_process_list_rejects_other_entity():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "lista_inativa",
+                    "label": "Lista inativa",
+                    "field_type": "manual",
+                    "status": "inativo",
+                    "items": ["2"],
+                }
+            ]
+        },
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=2,
+        menu_config={"process_lists": []},
+    )
+
+    with SessionLocal() as session:
+        ok, error, deleted_key = delete_sidebar_menu_process_list(
+            session,
+            "processo_teste_a",
+            "lista_inativa",
+            active_entity_id=2,
+        )
+
+    config_entity_1, _ = _load_config(SessionLocal, "processo_teste_a", entity_id=1)
+    config_entity_2, _ = _load_config(SessionLocal, "processo_teste_a", entity_id=2)
+    assert (ok, deleted_key) == (False, "")
+    assert error == "Lista não encontrada."
+    assert [item["key"] for item in config_entity_1["process_lists"]] == ["lista_inativa"]
+    assert config_entity_2["process_lists"] == []
+
+
+def test_delete_process_list_rejects_other_menu():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_b",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "lista_inativa",
+                    "label": "Lista inativa",
+                    "field_type": "manual",
+                    "status": "inativo",
+                    "items": ["2"],
+                }
+            ]
+        },
+    )
+
+    with SessionLocal() as session:
+        ok, error, deleted_key = delete_sidebar_menu_process_list(
+            session,
+            "processo_teste_a",
+            "lista_inativa",
+            active_entity_id=1,
+        )
+
+    config_a, _ = _load_config(SessionLocal, "processo_teste_a", entity_id=1)
+    config_b, _ = _load_config(SessionLocal, "processo_teste_b", entity_id=1)
+    assert (ok, deleted_key) == (False, "")
+    assert error == "Lista não encontrada."
+    assert config_a["process_lists"] == []
+    assert [item["key"] for item in config_b["process_lists"]] == ["lista_inativa"]
+
+
+def test_delete_process_list_rejects_invalid_entity(monkeypatch):
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    monkeypatch.setattr(
+        "appgenesis.menu_settings._resolve_sidebar_menu_settings_entity_id",
+        lambda session: None,
+    )
+
+    with SessionLocal() as session:
+        ok, error, deleted_key = delete_sidebar_menu_process_list(
+            session,
+            "processo_teste_a",
+            "lista_inativa",
+            active_entity_id=None,
+        )
+
+    assert (ok, error, deleted_key) == (False, "Entidade ativa inválida.", "")
+
+
+def test_delete_process_list_rolls_back_on_zero_rowcount():
+    class _DummyResult:
+        def __init__(self, *, row=None, rowcount=1):
+            self._row = row
+            self.rowcount = rowcount
+
+        def mappings(self):
+            return self
+
+        def one_or_none(self):
+            return self._row
+
+    class _DummySession:
+        def __init__(self):
+            self.calls = 0
+            self.committed = False
+            self.rolled_back = False
+
+        def execute(self, statement, params=None):
+            self.calls += 1
+            if self.calls == 1:
+                return _DummyResult(
+                    row={
+                        "menu_config": json.dumps(
+                            {
+                                "process_lists": [
+                                    {
+                                        "key": "lista_inativa",
+                                        "label": "Lista inativa",
+                                        "field_type": "manual",
+                                        "status": "inativo",
+                                        "items": ["2"],
+                                    }
+                                ]
+                            }
+                        )
+                    }
+                )
+            return _DummyResult(rowcount=0)
+
+        def commit(self):
+            self.committed = True
+
+        def rollback(self):
+            self.rolled_back = True
+
+    session = _DummySession()
+    ok, error, deleted_key = delete_sidebar_menu_process_list(
+        session, "processo_teste_a", "lista_inativa", active_entity_id=1
+    )
+
+    assert (ok, deleted_key) == (False, "")
+    assert error == "Não foi possível eliminar a lista."
+    assert session.rolled_back is True
+    assert session.committed is False
+
+
 def test_process_lists_css_is_scoped_to_the_reusable_editor():
     css_text = Path("static/css/modules/configurable_items_manager_v1.css").read_text(
         encoding="utf-8"
@@ -99,6 +362,9 @@ def test_process_lists_css_is_scoped_to_the_reusable_editor():
     assert "[data-process-list-reusable-manager]" in css_text
     assert "[data-process-list-reusable-editor-block]" in css_text
     assert ".process-lists-editor-grid-v1" in css_text
+    assert ".configurable-items-responsive-wrap-v1" in css_text
+    assert ".configurable-items-responsive-table-v1" in css_text
+    assert ".configurable-items-responsive-hidden-v1" in css_text
     assert (
         "grid-template-columns: repeat(3, minmax(0, 1fr));"
         in css_text
@@ -113,7 +379,7 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
 
     assert (
         "/static/css/modules/configurable_items_manager_v1.css"
-        "?v=20260713-shared-list-card-header-v1"
+        "?v=20260717-process-lists-responsive-partition-v3"
         in template_text
     )
     assert "data-process-list-reusable-manager" in template_text
@@ -121,6 +387,17 @@ def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
     assert "process-lists-editor-grid-v1" in template_text
     assert "data-process-list-editor-source-subprocess" in template_text
     assert "data-process-list-source-subprocess-map" in template_text
+    assert 'name="process_lists_configured" value="0"' in template_text
+
+
+def test_process_lists_pagination_footer_does_not_add_a_second_top_border():
+    css_text = Path("static/css/modules/configurable_items_manager_v1.css").read_text(
+        encoding="utf-8"
+    )
+
+    assert ".configurable-items-table-v1 th,\n.configurable-items-table-v1 td" in css_text
+    assert ".configurable-items-pagination-footer-v1 {\n  border-top: 0 !important;" in css_text
+    assert "border-top: 1px solid #d9e2ef !important;" not in css_text
 
 
 def _extract_lista_tab_html() -> str:
@@ -151,6 +428,7 @@ def test_process_lists_columns_configured_hidden_input_is_not_forced_to_one():
 
     assert 'name="process_list_columns_configured" value="1"' not in lista_tab_html
     assert 'name="process_list_columns_configured" value="0"' in lista_tab_html
+    assert 'name="process_lists_configured" value="0"' in lista_tab_html
 
 
 def test_update_process_lists_isolated_between_menu_keys():
@@ -224,6 +502,113 @@ def test_update_process_lists_preserves_unrelated_menu_config_sections():
         {"key": "campo_extra", "label": "Campo Extra"}
     ]
     assert config["process_lists"][0]["key"] == "list_x"
+
+
+def test_update_process_lists_rejects_empty_payload_without_configuration_flag():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "list_existente",
+                    "label": "Existente",
+                    "field_type": "manual",
+                    "items": ["X"],
+                }
+            ]
+        },
+    )
+
+    with SessionLocal() as session:
+        ok, error = update_sidebar_menu_process_lists(
+            session,
+            "processo_teste_a",
+            raw_lists=[],
+            raw_columns=None,
+        )
+
+    config, _ = _load_config(SessionLocal, "processo_teste_a")
+
+    assert ok is False
+    assert error == "As listas não foram carregadas. Reabra a aba Listas e tente novamente."
+    assert [item["key"] for item in config["process_lists"]] == ["list_existente"]
+
+
+def test_update_process_lists_allows_empty_payload_with_configuration_flag():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={
+            "process_lists": [
+                {
+                    "key": "list_existente",
+                    "label": "Existente",
+                    "field_type": "manual",
+                    "items": ["X"],
+                }
+            ]
+        },
+    )
+
+    with SessionLocal() as session:
+        ok, error = update_sidebar_menu_process_lists(
+            session,
+            "processo_teste_a",
+            raw_lists=[],
+            process_lists_configured="1",
+            raw_columns=None,
+        )
+
+    config, _ = _load_config(SessionLocal, "processo_teste_a")
+
+    assert ok is True
+    assert error == ""
+    assert config["process_lists"] == []
+
+
+def test_update_process_lists_fails_when_update_rowcount_is_zero(monkeypatch):
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo_teste_a",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+
+    with SessionLocal() as session:
+        real_execute = session.execute
+
+        def fake_execute(statement, *args, **kwargs):
+            statement_sql = str(statement)
+            if (
+                statement_sql.lstrip().startswith("UPDATE sidebar_menu_settings")
+                and "AND entity_id = :entity_id" in statement_sql
+            ):
+                class FakeResult:
+                    rowcount = 0
+
+                return FakeResult()
+            return real_execute(statement, *args, **kwargs)
+
+        monkeypatch.setattr(session, "execute", fake_execute)
+        ok, error = update_sidebar_menu_process_lists(
+            session,
+            "processo_teste_a",
+            raw_lists=[{"key": "x", "label": "X", "field_type": "manual", "items": ["1"]}],
+            raw_columns=None,
+            process_lists_configured="1",
+        )
+
+    config, _ = _load_config(SessionLocal, "processo_teste_a")
+
+    assert ok is False
+    assert error == "Não foi possível atualizar as listas do processo."
+    assert config["process_lists"] == []
 
 
 def test_update_process_lists_legacy_rows_without_field_type_assumed_manual():
@@ -309,7 +694,7 @@ def test_update_process_lists_automatic_rejects_invalid_source_subprocess():
         SessionLocal,
         menu_key="perfil_de_autorizacao",
         entity_id=1,
-        menu_config={},
+        menu_config={"sidebar_section": "sistema"},
     )
     _seed_menu(
         SessionLocal,
@@ -326,6 +711,7 @@ def test_update_process_lists_automatic_rejects_invalid_source_subprocess():
             "key": "auto",
             "label": "Auto",
             "field_type": "automatic",
+            "source_session_key": "sistema",
             "source_menu_key": "perfil_de_autorizacao",
             "source_subprocess_key": "inexistente",
         }],
@@ -342,9 +728,20 @@ def test_update_process_lists_automatic_stores_source_subprocess():
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
+        menu_key="administrativo",
+        entity_id=1,
+        menu_config={
+            "sidebar_sections": [
+                {"key": "sistema", "label": "Sistema", "status": "ativo"},
+                {"key": "definicoes", "label": "Definições", "status": "inativo"},
+            ]
+        },
+    )
+    _seed_menu(
+        SessionLocal,
         menu_key="perfil_de_autorizacao",
         entity_id=1,
-        menu_config={},
+        menu_config={"sidebar_section": "sistema"},
     )
     _seed_menu(
         SessionLocal,
@@ -361,6 +758,7 @@ def test_update_process_lists_automatic_stores_source_subprocess():
             "key": "auto",
             "label": "Auto",
             "field_type": "automatic",
+            "source_session_key": "sistema",
             "source_menu_key": "perfil_de_autorizacao",
             "source_subprocess_key": "perfis",
         }],
@@ -373,8 +771,55 @@ def test_update_process_lists_automatic_stores_source_subprocess():
 
     assert ok is True
     assert error == ""
+    assert config["process_lists"][0]["source_session_key"] == "sistema"
     assert config["process_lists"][0]["source_menu_key"] == "perfil_de_autorizacao"
     assert config["process_lists"][0]["source_subprocess_key"] == "perfis"
+
+
+def test_update_process_lists_automatic_rejects_inactive_source_session():
+    SessionLocal = _build_session_factory()
+    _seed_menu(
+        SessionLocal,
+        menu_key="administrativo",
+        entity_id=1,
+        menu_config={
+            "sidebar_sections": [
+                {"key": "sistema", "label": "Sistema", "status": "ativo"},
+                {"key": "definicoes", "label": "Definições", "status": "inativo"},
+            ]
+        },
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="processo",
+        entity_id=1,
+        menu_config={"process_lists": []},
+    )
+    _seed_menu(
+        SessionLocal,
+        menu_key="perfil_de_autorizacao",
+        entity_id=1,
+        menu_config={"sidebar_section": "definicoes"},
+    )
+
+    session = SessionLocal()
+    ok, error = update_sidebar_menu_process_lists(
+        session,
+        "processo",
+        raw_lists=[{
+            "key": "auto",
+            "label": "Auto",
+            "field_type": "automatic",
+            "source_session_key": "definicoes",
+            "source_menu_key": "perfil_de_autorizacao",
+        }],
+        raw_columns=None,
+        active_entity_id=1,
+    )
+    session.close()
+
+    assert ok is False
+    assert error == "A sessão selecionada não está disponível."
 
 
 def test_update_process_lists_preserves_existing_entity_and_state_flags():
@@ -441,7 +886,11 @@ def test_source_menus_are_active_and_isolated_by_entity():
         session.commit()
         rows = get_process_list_source_menus_v1(session, 1)
 
-    assert [row["menu_key"] for row in rows] == ["menu_ativo"]
+    menu_keys = [row["menu_key"] for row in rows]
+    assert "menu_ativo" in menu_keys
+    assert "menu_inativo" not in menu_keys
+    assert "menu_eliminado" not in menu_keys
+    assert "menu_outra_entidade" not in menu_keys
 
 
 def test_automatic_list_rejects_source_menu_from_other_entity():

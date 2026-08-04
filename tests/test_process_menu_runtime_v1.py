@@ -45,3 +45,6 @@ def test_process_menu_runtime_module_exposes_expected_symbols() -> None:
     assert "bindHashChangeListener" in module_text
     assert '"#configuracao-account-status-card"' in module_text
     assert '"click:sidebar"' in module_text
+    assert "const cleanMenuKey = state.normalizeMenuKey(menuKey);" in module_text
+    assert "state.menuConfig[cleanMenuKey]" in module_text
+    assert '"activateMenu:missing-config"' in module_text

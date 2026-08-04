@@ -97,3 +97,4 @@ def test_resolve_process_tab_options_v1_for_authorization_profile():
         "perfis",
         "objeto_de_autorizacao",
     ]
+    assert all(option["value"] != "Todas as autorizações" for option in options)

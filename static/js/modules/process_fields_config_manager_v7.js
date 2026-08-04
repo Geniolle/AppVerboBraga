@@ -13,6 +13,7 @@
   const FORM_SELECTOR = "form[data-process-fields-config-manager-v1='1']";
   const CORE_NAMESPACE = "AppGenesisConfigurableItems";
   const FIELD_OPTIONS_RESOLVER_NAMESPACE = "AppGenesisProcessFieldOptionsResolverV1";
+  const INITIAL_PAGE_SIZE_V7 = 20;
 
   //###################################################################################
   // (2) HELPERS GERAIS
@@ -139,7 +140,6 @@
       elements.table &&
       elements.tableBody &&
       elements.emptyState &&
-      elements.totalLabel &&
       elements.pageSize &&
       elements.pagination
     );
@@ -838,6 +838,14 @@
       return null;
     }
 
+    if (
+      elements.pageSize &&
+      !elements.pageSize.dataset.processFieldsConfigInitialPageSizeV7
+    ) {
+      elements.pageSize.value = String(INITIAL_PAGE_SIZE_V7);
+      elements.pageSize.dataset.processFieldsConfigInitialPageSizeV7 = "1";
+    }
+
     form.dataset.processFieldsConfigManagerBoundV7 = "1";
     form.__processFieldsConfigElementsV7 = elements;
 
@@ -874,7 +882,7 @@
       itemNamePlural: "campos",
       createTitle: "Configurar campo",
       editTitle: "Editar configuração do campo",
-      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
+      pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || INITIAL_PAGE_SIZE_V7,
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems,
       selectors: {

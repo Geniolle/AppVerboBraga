@@ -90,11 +90,15 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "sessoes",
             "menu-subprocess-card-active",
         ),
-        ("/users/new?menu=sessoes&admin_tab=sessoes", "sessoes", "admin-sidebar-sections-card"),
-        (
+        pytest.param(
+            "/users/new?menu=sessoes&admin_tab=sessoes",
+            "sessoes",
+            "admin-sidebar-sections-card-active",
+        ),
+        pytest.param(
             "/users/new?menu=perfil_de_autorizacao&target=auth-profile-card#auth-profile-card",
             "perfil_de_autorizacao",
-            "auth-profile-card",
+            "auth-profile-active-card",
         ),
     ],
 )

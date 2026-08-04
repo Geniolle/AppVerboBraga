@@ -361,6 +361,18 @@ def get_process_list_source_menus_v1(
     if active_entity_id is None:
         return []
 
+    from appgenesis.menu_settings import get_sidebar_menu_settings
+
+    sidebar_menu_settings = get_sidebar_menu_settings(session, active_entity_id)
+    sidebar_section_by_menu_key = {
+        str(item.get("key") or "").strip().lower(): {
+            "sidebar_section_key": str(item.get("sidebar_section_key") or "").strip().lower(),
+            "sidebar_section_label": str(item.get("sidebar_section_label") or "").strip(),
+        }
+        for item in sidebar_menu_settings
+        if isinstance(item, dict) and str(item.get("key") or "").strip()
+    }
+
     rows = session.execute(
         select(SidebarMenuSetting.menu_key, SidebarMenuSetting.menu_label)
         .where(
@@ -368,16 +380,45 @@ def get_process_list_source_menus_v1(
             SidebarMenuSetting.is_deleted.is_(False),
             SidebarMenuSetting.is_active.is_(True),
         )
-        .order_by(SidebarMenuSetting.menu_label, SidebarMenuSetting.menu_key)
     ).all()
+
+    row_by_menu_key = {
+        str(row.menu_key or "").strip().lower(): row
+        for row in rows
+        if str(row.menu_key or "").strip()
+    }
+    ordered_menu_keys: list[str] = []
+    seen_menu_keys: set[str] = set()
+
+    for item in sidebar_menu_settings:
+        clean_menu_key = str(item.get("key") or "").strip().lower()
+        if not clean_menu_key or clean_menu_key in seen_menu_keys:
+            continue
+        if clean_menu_key not in row_by_menu_key:
+            continue
+        seen_menu_keys.add(clean_menu_key)
+        ordered_menu_keys.append(clean_menu_key)
+
+    for row in rows:
+        clean_menu_key = str(row.menu_key or "").strip().lower()
+        if not clean_menu_key or clean_menu_key in seen_menu_keys:
+            continue
+        seen_menu_keys.add(clean_menu_key)
+        ordered_menu_keys.append(clean_menu_key)
 
     return [
         {
-            "menu_key": str(row.menu_key or "").strip().lower(),
-            "menu_label": str(row.menu_label or row.menu_key or "").strip(),
+            "menu_key": clean_menu_key,
+            "menu_label": str(row_by_menu_key[clean_menu_key].menu_label or row_by_menu_key[clean_menu_key].menu_key or "").strip(),
+            "sidebar_section_key": sidebar_section_by_menu_key.get(
+                clean_menu_key, {}
+            ).get("sidebar_section_key", ""),
+            "sidebar_section_label": sidebar_section_by_menu_key.get(
+                clean_menu_key, {}
+            ).get("sidebar_section_label", ""),
         }
-        for row in rows
-        if str(row.menu_key or "").strip()
+        for clean_menu_key in ordered_menu_keys
+        if clean_menu_key in row_by_menu_key
     ]
 
 
@@ -397,10 +438,27 @@ def normalize_menu_process_lists_v4(raw_lists: Any) -> list[dict[str, Any]]:
         field_type = str(item.get("field_type") or "manual").strip().lower()
         source_menu_key = str(raw_item.get("source_menu_key") or "").strip().lower()
         source_subprocess_key = str(raw_item.get("source_subprocess_key") or "").strip().lower()
-        item["source_menu_key"] = source_menu_key if field_type == "automatic" else ""
-        item["source_subprocess_key"] = (
-            source_subprocess_key if field_type == "automatic" else ""
+        source_session_key = str(
+            raw_item.get("source_session_key")
+            or raw_item.get("source_sidebar_section_key")
+            or raw_item.get("sourceSidebarSectionKey")
+            or ""
+        ).strip().lower()
+        is_all_sessions = source_session_key == "all_sessions"
+        item["source_menu_key"] = (
+            ""
+            if field_type != "automatic" or is_all_sessions
+            else source_menu_key
         )
+        item["source_subprocess_key"] = (
+            ""
+            if field_type != "automatic" or is_all_sessions
+            else source_subprocess_key
+        )
+        item["source_session_key"] = (
+            source_session_key if field_type == "automatic" else ""
+        )
+        item["source_sidebar_section_key"] = item["source_session_key"]
 
         if field_type == "automatic":
             item["items"] = []

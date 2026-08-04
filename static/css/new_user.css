@@ -1143,6 +1143,80 @@ body {
   word-break: break-word;
 }
 
+   .profile-quantity-rule-v1.profile-quantity-dynamic-list-v1 {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+   .profile-quantity-dynamic-list-v1 {
+  display: grid;
+  gap: 10px;
+}
+
+   .profile-quantity-dynamic-item-edit-v1,
+   .profile-quantity-dynamic-item-v1 {
+  border: 1px solid #d6dce8;
+  background: #fafcff;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+   .profile-quantity-dynamic-item-grid-v1 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+   .profile-quantity-dynamic-item-grid-v1 > .field {
+  min-width: 0;
+  width: 100%;
+}
+
+   .profile-quantity-dynamic-item-grid-v1 input,
+   .profile-quantity-dynamic-item-grid-v1 select {
+  width: 100%;
+}
+
+   .profile-quantity-dynamic-item-actions-v1 {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+   .profile-quantity-dynamic-remove-btn-v1 {
+  min-width: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+   .profile-quantity-dynamic-add-row-v1 {
+  display: flex;
+  justify-content: flex-start;
+}
+
+   .profile-quantity-dynamic-add-btn-v1 {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+     .profile-quantity-dynamic-item-grid-v1 {
+    grid-template-columns: 1fr;
+  }
+
+     .profile-quantity-dynamic-item-actions-v1 {
+    justify-content: flex-start;
+  }
+}
+
 h1,
 h2 {
   margin: 0 0 12px;
@@ -1922,11 +1996,12 @@ th {
 }
 
 /* ###################################################################################
-   (PERFIL) Dados pessoais: Nome, Telefone e Email na primeira linha
+   (PERFIL) Dados pessoais: mesma grelha para consulta e edicao
 ################################################################################### */
 
+#perfil-pessoal-card .profile-readonly .personal-grid,
 #perfil-pessoal-card .profile-edit-form .personal-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 #perfil-pessoal-card .profile-edit-form .field.full {
@@ -1937,69 +2012,8 @@ th {
   background: #ffffff;
 }
 
-@media (max-width: 1100px) {
-  #perfil-pessoal-card .profile-edit-form .personal-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 720px) {
-  #perfil-pessoal-card .profile-edit-form .personal-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ###################################################################################
-   (PERFIL) Ordem dos campos: Nome | Telefone | Email
-################################################################################### */
-
-#perfil-pessoal-card .profile-edit-form .personal-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-#perfil-pessoal-card .profile-edit-form .profile-field-name {
-  order: 1;
-}
-
-#perfil-pessoal-card .profile-edit-form .profile-field-phone {
-  order: 2;
-}
-
-#perfil-pessoal-card .profile-edit-form .profile-field-email {
-  order: 3;
-}
-
-#perfil-pessoal-card .profile-edit-form .profile-field-country {
-  order: 4;
-}
-
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_full_name) {
-  order: 1;
-}
-
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_primary_phone) {
-  order: 2;
-}
-
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_login_email) {
-  order: 3;
-}
-
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_country) {
-  order: 4;
-}
-
-#perfil-pessoal-card .profile-edit-form .field.full:has(#edit_login_email) {
-  grid-column: auto;
-}
-
-@media (max-width: 1100px) {
-  #perfil-pessoal-card .profile-edit-form .personal-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 720px) {
+  #perfil-pessoal-card .profile-readonly .personal-grid,
   #perfil-pessoal-card .profile-edit-form .personal-grid {
     grid-template-columns: 1fr;
   }

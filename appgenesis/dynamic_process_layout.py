@@ -10,6 +10,13 @@ PROCESS_LIST_COLUMN_FIELD = "field"
 PROCESS_LIST_COLUMN_MENU_SCOPE = "menu_visibility_scope"
 PROCESS_LIST_COLUMN_STATUS = "status"
 
+EXTRATO_MENU_KEYS = {
+    "extrato",
+    "extratos",
+    "extrato_bancario",
+    "extratos_bancarios",
+}
+
 
 def _normalize_lookup_text(raw_value: Any) -> str:
     normalized = (
@@ -299,10 +306,11 @@ def resolve_dynamic_process_layout_config(
         if isinstance(clean_menu_config.get("process_list_config"), dict)
         else {}
     )
+    normalized_menu_key = _normalize_lookup_text(menu_key)
     joined_lookup = " ".join(
         part
         for part in (
-            _normalize_lookup_text(menu_key),
+            normalized_menu_key,
             _normalize_lookup_text(menu_label),
             _normalize_lookup_text(clean_menu_config.get("label")),
         )
@@ -358,6 +366,13 @@ def resolve_dynamic_process_layout_config(
         singular_label = singular_label or "departamento"
         plural_label = plural_label or "departamentos"
         state_enabled_default = True
+    elif normalized_menu_key in EXTRATO_MENU_KEYS:
+        uses_record_history = True
+        inferred_layout = PROCESS_LAYOUT_LIST
+        singular_label = singular_label or "extrato"
+        plural_label = plural_label or "extratos"
+        state_enabled_default = True
+        show_system_column_default = True
 
     layout = explicit_layout if explicit_layout == PROCESS_LAYOUT_LIST else inferred_layout
 
@@ -410,6 +425,15 @@ def resolve_dynamic_process_layout_config(
         show_system_column=show_system_column,
     )
 
+    # Mapa de aliases legados para section_key
+    # Permite compatibilidade com registos históricos que usam section_key antigos
+    section_key_aliases = {}
+    
+    # Para "extrato": dados legados usam "custom_dados_de_extrato"
+    # mas a configuração atual usa "custom_extratos_bancarios"
+    if normalized_menu_key in EXTRATO_MENU_KEYS:
+        section_key_aliases["custom_extratos_bancarios"] = ["custom_dados_de_extrato"]
+    
     return {
         "layout": layout,
         "is_list_process": layout == PROCESS_LAYOUT_LIST,
@@ -427,6 +451,7 @@ def resolve_dynamic_process_layout_config(
         "show_system_column": bool(show_system_column and layout == PROCESS_LAYOUT_LIST),
         "include_remaining_fields": bool(include_remaining_fields and layout == PROCESS_LAYOUT_LIST),
         "list_columns": list_columns if layout == PROCESS_LAYOUT_LIST else [],
+        "section_key_aliases": section_key_aliases,
     }
 
 

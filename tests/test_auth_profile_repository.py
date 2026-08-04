@@ -593,7 +593,7 @@ def test_auth_profile_repository_save_row_ignores_client_supplied_entity_number(
             "visibility_scope_mode": "owner",
             "status": "ativo",
             "entity_number": "9999",
-            "auth_profile_entity_number_display": "9999",
+            "perfil_de_autorizacao_entity_number_display": "9999",
         },
         context={"entity_number": "1001"},
     )
