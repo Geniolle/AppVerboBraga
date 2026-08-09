@@ -48,10 +48,11 @@ def test_process_editor_cancel_buttons_reuse_editor_exit_url() -> None:
         'data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"'
     )
 
-    # Aba Geral (2 variantes: owner editavel + somente leitura) + os 5 managers do editor
-    # (campos-config, quantidade, listas, subsequentes, adicionais). O editor de colunas da
-    # listagem foi consolidado dentro do manager de Listas e nao tem mais botao Cancelar proprio.
-    assert matches == 7
+    # Os 5 managers do editor (campos-config, quantidade, listas, subsequentes, adicionais).
+    # A aba Geral nao possui formulario proprio (apenas mostra campos disponiveis).
+    # O editor de colunas da listagem foi consolidado dentro do manager de Listas e nao tem
+    # mais botao Cancelar proprio.
+    assert matches == 5
 
     for hardcoded_menu in ("menu=calendario", "menu=administrativo\"", "menu=sessoes\""):
         assert hardcoded_menu not in html_text
@@ -62,7 +63,7 @@ def test_process_editor_cancel_return_target_is_the_origin_list() -> None:
 
     assert html_text.count(
         'data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"'
-    ) == 7
+    ) == 5
 
 
 ####################################################################################
@@ -72,7 +73,6 @@ def test_process_editor_cancel_return_target_is_the_origin_list() -> None:
 ####################################################################################
 
 PROCESS_EDITOR_FORM_ACTIONS = [
-    "/settings/menu/edit",
     "/settings/menu/process-fields",
     "/settings/menu/process-quantity-fields",
     "/settings/menu/process-lists",
@@ -103,6 +103,14 @@ def test_all_process_editor_tab_forms_send_generic_return_url() -> None:
 ####################################################################################
 # (2) OUTROS BOTOES CANCELAR (fora do editor de processo) NAO FORAM ALTERADOS
 ####################################################################################
+
+def test_geral_tab_has_no_form() -> None:
+    """Verificar que a aba Geral nao possui formulario proprio (apenas mostra campos disponiveis)."""
+    html_text = _read_new_user_html()
+
+    # A aba Geral nao tem formulario /settings/menu/edit
+    assert 'action="/settings/menu/edit"' not in html_text
+
 
 def test_unrelated_cancel_buttons_outside_process_editor_are_untouched() -> None:
     html_text = _read_new_user_html()

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Verbo da Vida Braga - Genesis{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="Verbo da Vida Braga - Portal de Gestão Administrativa e Comunitária">
+<meta property="og:title" content="Verbo da Vida Braga">
+<meta property="og:description" content="Portal Genesis para Gestão e Comunidade">
+<link rel="stylesheet" href="/static/css/landing.css">
+{% endblock %}
+
+{% block body %}
+<div class="landing-page">
+    <div class="landing-container">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Verbo da Vida Braga</h1>
+                <p>Portal de Gestão Administrativa e Comunitária - Genesis.</p>
+                <p class="hero-description">Acesse a plataforma de gerenciamento interno para membros e administradores.</p>
+                <a href="/login" class="cta-button">Entrar no Genesis</a>
+            </div>
+            <div class="hero-visual">
+                <div class="hero-visual-content">
+                    <div class="hero-visual-icon">🔐</div>
+                    <div class="hero-visual-text">Acesso Seguro</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-title">📊 Gestão Administrativa</div>
+                <div class="feature-description">Ferramentas completas para gerenciar processos e informações institucionais.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-title">👥 Comunidade Integrada</div>
+                <div class="feature-description">Plataforma conectada para colaboradores e membros da comunidade.</div>
+            </div>
+            <div class="feature">
+                <div class="feature-title">⚡ Performance</div>
+                <div class="feature-description">Carregamento rápido e resposta instantânea em qualquer dispositivo.</div>
+            </div>
+        </div>
+
+        <footer class="landing-footer">
+            <p>&copy; 2026 Verbo da Vida Braga. Todos os direitos reservados.</p>
+            <p class="footer-version">Genesis v1.0</p>
+        </footer>
+    </div>
+</div>
+{% endblock %}
