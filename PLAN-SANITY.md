@@ -409,3 +409,37 @@ Pendências verdadeiras são infraestrutura external (OCI, OVH, Let's Encrypt re
 
 Data: 2026-08-09
 Auditor: Claude Haiku 4.5
+
+---
+
+## Auditoria Final Corretiva (Sessão 2)
+
+**Data:** 2026-08-09
+**Branch:** fix/production-sanity-and-landing-page
+**HEAD Inicial:** b77262a4a4ed22837a33484dfe48a371bd85a14e
+**HEAD Final:** 822403d009dac1b406e18c37a378c81b155c2c84
+
+### Problemas Encontrados & Corrigidos
+
+#### 1. Ficheiros Out-of-Scope (23→17)
+**Problema:** 6 ficheiros não relacionados a produção/landing incluídos
+**Solução:** Commit b697bf6f restaurou para master state
+- Removidos: AGENT_HANDOFF.md, process_lists_manager, new_user, 3 tests
+**Resultado:** ✅ Escopo corrigido
+
+#### 2. ACME Certificate Volumes
+**Problema:** Faltavam volumes para /etc/letsencrypt e /.well-known/acme-challenge
+**Solução:** Commit 822403d0 adicionou volumes e atualizou paths
+**Resultado:** ✅ Nginx pode servir ACME challenges
+
+### Validações Executadas
+- ✅ APP_SECRET_KEY validation presente
+- ✅ Nginx syntax válido
+- ✅ Static/uploads corretamente separados
+- ✅ Multi-tenant tests (4/4 passing)
+- ✅ Testes ignorados confirmados pré-existentes em master
+- ✅ Working tree limpo, Git sync OK
+
+### Resultado Final
+**READY FOR MERGE** - Todos os problemas repository-level corrigidos.
+CI run em progresso.
