@@ -48,14 +48,6 @@ def _open_lists_editor_v1(driver, wait) -> None:
     driver.get(TARGET_URL)
     wait.until(
         EC.visibility_of_element_located(
-            (
-                By.CSS_SELECTOR,
-                "[data-process-list-reusable-manager] [data-configurable-create-trigger]",
-            )
-        )
-    ).click()
-    wait.until(
-        EC.visibility_of_element_located(
             (By.CSS_SELECTOR, "[data-process-list-editor-label]")
         )
     )
