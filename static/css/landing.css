@@ -1,0 +1,193 @@
+/* Landing Page Styles - Verbo da Vida Braga */
+
+:root {
+    --primary-gradient-start: #667eea;
+    --primary-gradient-end: #764ba2;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --bg-light: #f9fafb;
+    --bg-lighter: #f3f4f6;
+    --border-light: #e5e7eb;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 10px 25px rgba(102, 126, 234, 0.3);
+    --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.landing-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.landing-container {
+    max-width: 900px;
+    width: 100%;
+    background: white;
+    border-radius: 2rem;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+    gap: 3rem;
+    align-items: center;
+    padding: 4rem 3rem;
+}
+
+.hero-content h1 {
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-content > p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    line-height: 1.8;
+}
+
+.hero-description {
+    font-size: 0.95rem;
+    margin-bottom: 2rem !important;
+    color: #9ca3af;
+}
+
+.cta-button {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+    color: white;
+    padding: 1rem 2.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+.cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.cta-button:active {
+    transform: translateY(0);
+}
+
+.hero-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-radius: 1.5rem;
+    min-height: 400px;
+}
+
+.hero-visual-content {
+    text-align: center;
+}
+
+.hero-visual-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.hero-visual-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 0 3rem;
+    margin-bottom: 2rem;
+}
+
+.feature {
+    padding: 1.5rem;
+    background: var(--bg-light);
+    border-radius: 0.75rem;
+    border-left: 4px solid var(--primary-gradient-start);
+}
+
+.feature-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.feature-description {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+.landing-footer {
+    background: var(--bg-lighter);
+    padding: 1.5rem 3rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.landing-footer p {
+    margin: 0.25rem 0;
+}
+
+.footer-version {
+    font-size: 0.8rem !important;
+    margin-top: 0.5rem !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .hero {
+        grid-template-columns: 1fr;
+        padding: 2rem 1.5rem;
+        gap: 2rem;
+        min-height: auto;
+    }
+
+    .hero-visual {
+        min-height: 250px;
+    }
+
+    .hero-content h1 {
+        font-size: 1.75rem;
+    }
+
+    .hero-content > p {
+        font-size: 1rem;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .cta-button {
+        transition: none;
+    }
+
+    .cta-button:hover {
+        transform: none;
+    }
+}
