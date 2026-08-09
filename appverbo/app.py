@@ -101,6 +101,25 @@ def create_app() -> FastAPI:
 
     # APPVERBO_DYNAMIC_NO_STORE_MIDDLEWARE_V2_END
 
+    @app.get("/health")
+    async def health_check():
+        """
+        Health check endpoint for load balancers and monitoring.
+        Returns 200 if the application is running and can connect to the database.
+        """
+        try:
+            from sqlalchemy import text, create_engine
+            engine = create_engine(settings.DATABASE_URL)
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            return {
+                "status": "healthy",
+                "version": "1.0",
+            }
+        except Exception as exc:
+            logger.error("Health check failed: %s", exc)
+            return {"status": "unhealthy", "error": str(exc)}, 503
+
     app.include_router(auth_router)
     app.include_router(profile_router)
     app.include_router(webhook_router)
