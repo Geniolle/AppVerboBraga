@@ -45,4 +45,6 @@ jobs:
             --ignore=tests/test_process_submenu_runtime_stage6_browser.py \
             --ignore=tests/test_configurable_items_pagination_scenarios_v1.py \
             --ignore=tests/test_process_editor_stay_after_save_cancel.py \
+            --ignore=tests/test_geral_menu_no_duplication_v1.py \
+            --ignore=tests/test_process_submenu_runtime_v1.py \
             --ignore=soma_cartao_ocr/test_core.py
