@@ -10,12 +10,6 @@ from appgenesis.services.session import get_current_user, get_session_user_id
 
 from appgenesis.routes.auth.router import router
 
-@router.get("/", response_class=HTMLResponse)
-def root_page(request: Request) -> RedirectResponse:
-    if get_session_user_id(request) is None:
-        return RedirectResponse(url="/login", status_code=status.HTTP_302_FOUND)
-    return RedirectResponse(url="/users/new", status_code=status.HTTP_302_FOUND)
-
 @router.get("/home", response_class=HTMLResponse)
 def home_page(request: Request) -> RedirectResponse:
     if get_session_user_id(request) is None:

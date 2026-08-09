@@ -209,7 +209,7 @@ async def landing_page():
                     <h1>Verbo da Vida Braga</h1>
                     <p>Portal de Gestão Administrativa e Comunitária - Genesis.</p>
                     <p style="margin-bottom: 2.5rem; font-size: 0.95rem; color: #9ca3af;">Acesse a plataforma de gerenciamento interno para membros e administradores.</p>
-                    <a href="/auth/login" class="cta-button">Entrar no Genesis</a>
+                    <a href="/login" class="cta-button">Entrar no Genesis</a>
                 </div>
                 <div class="hero-visual">
                     <div class="hero-visual-content">

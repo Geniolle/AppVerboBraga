@@ -25,6 +25,32 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _validate_app_secret_key() -> str:
+    """Validate APP_SECRET_KEY. In production, it must be explicitly set."""
+    secret_key = os.getenv("APP_SECRET_KEY", "").strip()
+    is_production = _env_bool("PRODUCTION", False)
+
+    # Development: generate if not provided
+    if not secret_key and not is_production:
+        return secrets.token_urlsafe(32)
+
+    # Production: require explicit key
+    if is_production and not secret_key:
+        raise RuntimeError(
+            "CRITICAL: APP_SECRET_KEY must be set when PRODUCTION=true. "
+            "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+        )
+
+    # Production: reject placeholder
+    if is_production and secret_key in ("change-me-immediately-in-production", "change-this-in-production"):
+        raise RuntimeError(
+            "CRITICAL: APP_SECRET_KEY cannot be a placeholder in production. "
+            "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+        )
+
+    return secret_key or secrets.token_urlsafe(32)
+
+
 @dataclass(frozen=True)
 class Settings:
     BASE_DIR: Path
@@ -104,7 +130,7 @@ def _build_settings() -> Settings:
         DB_POOL_TIMEOUT_SECONDS=_env_int("DB_POOL_TIMEOUT_SECONDS", 30),
         DB_POOL_RECYCLE_SECONDS=_env_int("DB_POOL_RECYCLE_SECONDS", 1800),
         DB_POOL_PRE_PING=_env_bool("DB_POOL_PRE_PING", True),
-        APP_SECRET_KEY=os.getenv("APP_SECRET_KEY") or secrets.token_urlsafe(32),
+        APP_SECRET_KEY=_validate_app_secret_key(),
         GOOGLE_CLIENT_ID=os.getenv("GOOGLE_CLIENT_ID"),
         GOOGLE_CLIENT_SECRET=os.getenv("GOOGLE_CLIENT_SECRET"),
         MICROSOFT_CLIENT_ID=os.getenv("MICROSOFT_CLIENT_ID"),
