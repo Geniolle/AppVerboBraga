@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ import numpy as np
 from google.api_core.exceptions import PermissionDenied
 from googleapiclient.errors import HttpError
 
+sys.path.insert(0, str(Path(__file__).parent))
 import main
 from main import (
     Movement,
