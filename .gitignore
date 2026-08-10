@@ -60,3 +60,4 @@ __pycache__/
 backups/
 *_output.txt
 diff_output.txt
+nginx/certs/
