@@ -79,7 +79,7 @@ export OVH_AK=$(grep OVH_APPLICATION_KEY ~/.config/appgenesis/ovh.env | cut -d= 
 export OVH_AS=$(grep OVH_APPLICATION_SECRET ~/.config/appgenesis/ovh.env | cut -d= -f2-)
 export OVH_CK=$(python3 -c "import json; print(json.load(open(~/.config/appgenesis/ovh_consumer_key)).get(consumerKey))")
 
-/home/opc/.acme.sh/acme.sh --renew -d verbodavidavidabraga.pt -d www.verbodavidabraga.pt --dns dns_ovh --force
+/home/opc/.acme.sh/acme.sh --renew -d verbodavidabraga.pt -d www.verbodavidabraga.pt --dns dns_ovh --force
 
 sudo nginx -t && sudo systemctl reload nginx
 ```

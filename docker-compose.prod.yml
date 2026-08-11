@@ -66,3 +66,11 @@ services:
     networks:
       - app_network
 
+
+volumes:
+  pg_data_prod:
+  static_prod:
+
+networks:
+  app_network:
+    driver: bridge
