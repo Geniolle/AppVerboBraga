@@ -3,13 +3,11 @@
 {% block title %}Genesis - Igreja Verbo da Vida Braga{% endblock %}
 
 {% block head_extra %}
-<meta name="description" content="Genesis: plataforma de gestão administrativa e comunitária para a Igreja Verbo da Vida Braga. Organiza pessoas, departamentos, processos e agenda.">
-<meta property="og:title" content="Genesis - Verbo da Vida Braga">
-<meta property="og:description" content="Plataforma integrada para gestão administrativa e comunitária">
+<meta name="description" content="Genesis: organiza pessoas, departamentos, processos e agendas da Igreja Verbo da Vida Braga numa única plataforma.">
+<meta property="og:title" content="Genesis">
+<meta property="og:description" content="Plataforma de gestão para Igreja Verbo da Vida Braga">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Genesis">
-<meta name="twitter:description" content="Plataforma de gestão para Igreja Verbo da Vida Braga">
 <link rel="canonical" href="https://verbodavidabraga.pt/">
 <link rel="stylesheet" href="/static/css/genesis-public.css">
 {% endblock %}
@@ -22,126 +20,72 @@
 <main id="main">
   <!-- Hero Section -->
   <section class="hero">
-    <div class="container" style="grid-column: 1 / -1;">
-      <div class="hero-content">
-        <p class="eyebrow">Igreja Verbo da Vida &middot; Braga</p>
-        <h1>A vida da igreja,<br>organizada com cuidado.</h1>
-        <p>Genesis reúne pessoas, departamentos, escalas, processos e informações numa única plataforma para apoiar quem lidera e quem serve.</p>
-
-        <div class="hero-actions">
-          <a href="/login" class="btn btn-primary">Entrar no Genesis</a>
-          <a href="#areas" class="btn btn-secondary">Conhecer a plataforma</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Context Section - 4 Areas -->
-  <section class="context" style="padding: 0;">
-    <div class="context-grid">
-      <div class="context-item">
-        <h3>Pessoas</h3>
-        <p>Dados e colaboração</p>
-      </div>
-      <div class="context-item">
-        <h3>Departamentos</h3>
-        <p>Equipas e responsabilidades</p>
-      </div>
-      <div class="context-item">
-        <h3>Processos</h3>
-        <p>Organização e execução</p>
-      </div>
-      <div class="context-item">
-        <h3>Agenda</h3>
-        <p>Escalas e atividades</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Institutional Section -->
-  <section class="institutional">
     <div class="container">
-      <div class="institutional-inner">
-        <div>
-          <p class="institutional-label">Nossa filosofia</p>
-        </div>
-        <div class="institutional-content">
-          <h2>A tecnologia deve servir as pessoas.</h2>
-          <p>Genesis organiza informação e processos para que a liderança possa dedicar mais tempo ao que realmente importa: cuidar das pessoas e fortalecer a comunidade.</p>
+      <div class="hero-inner">
+        <div class="hero-content">
+          <p class="eyebrow">Igreja Verbo da Vida &middot; Braga</p>
+          <h1><span class="genesis-g">G</span>enesis</h1>
+          <p class="hero-subtitle">Organizar para servir melhor.</p>
+
+          <p class="hero-description">
+            Uma plataforma que centraliza pessoas, departamentos, processos e agendas.
+            Feita para simplificar o trabalho administrativo e deixar mais tempo para o que importa.
+          </p>
+
+          <a href="/login" class="btn btn-primary">Entrar</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Areas / Capabilities -->
-  <section id="areas">
-    <div class="container" style="padding: 0;">
-      <div class="areas-grid">
-        <div class="area-item">
-          <div class="area-number">01</div>
-          <h3>Gestão de Membros</h3>
-          <p>Centralize dados de pessoas, papéis e responsabilidades. Cada membro tem um perfil claro dentro da organização.</p>
+  <!-- What is Genesis -->
+  <section class="about-genesis">
+    <div class="container">
+      <div class="about-inner">
+        <div class="about-label">O que é Genesis</div>
+        <div class="about-content">
+          <p>
+            Genesis reúne informação e processos da Igreja num único lugar.
+            Cada pessoa tem acesso exatamente ao que precisa.
+            Sem planilhas dispersas. Sem emails perdidos. Sem confusão.
+          </p>
         </div>
-        <div class="area-item">
-          <div class="area-number">02</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Areas -->
+  <section class="core-areas" id="areas">
+    <div class="areas-container">
+      <div class="area-column">
+        <div class="area">
+          <h3>Pessoas</h3>
+          <p>Dados e responsabilidades centralizados.</p>
+        </div>
+        <div class="divider"></div>
+        <div class="area">
           <h3>Departamentos</h3>
-          <p>Organize equipas por área de ministério. Defina responsabilidades e facilite a colaboração entre grupos.</p>
-        </div>
-        <div class="area-item">
-          <div class="area-number">03</div>
-          <h3>Processos Administrativos</h3>
-          <p>Padronize e automatize fluxos de trabalho. De aprovações a documentação, tudo fica organizado e rastreável.</p>
-        </div>
-        <div class="area-item">
-          <div class="area-number">04</div>
-          <h3>Escalas e Agenda</h3>
-          <p>Gerencie escalas de ministério e atividades. Sincronize calendários e notifique participantes com antecedência.</p>
-        </div>
-        <div class="area-item">
-          <div class="area-number">05</div>
-          <h3>Permissões e Segurança</h3>
-          <p>Controle granular de acesso. Cada utilizador vê apenas o que precisa, protegendo informação sensível.</p>
-        </div>
-        <div class="area-item">
-          <div class="area-number">06</div>
-          <h3>Autenticação Moderna</h3>
-          <p>Login seguro via Google, Microsoft ou GitHub. Sem gerenciar senhas, com segurança empresarial.</p>
+          <p>Equipas organizadas e coordenadas.</p>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Benefits Section -->
-  <section id="benefits">
-    <div class="container">
-      <h2 style="margin-bottom: var(--space-80);">Porquê Genesis</h2>
-
-      <div class="benefits-list">
-        <div class="benefit-item">
-          <div class="benefit-title">Organização</div>
-          <div class="benefit-description">Informação centralizada em um único lugar. Sem dispersão entre planilhas, emails e ferramentas.</div>
+      <div class="area-column">
+        <div class="area">
+          <h3>Processos</h3>
+          <p>Fluxos de trabalho padronizados.</p>
         </div>
-        <div class="benefit-item">
-          <div class="benefit-title">Clareza</div>
-          <div class="benefit-description">Cada utilizador vê exatamente o que precisa. Hierarquias claras e responsabilidades bem definidas.</div>
-        </div>
-        <div class="benefit-item">
-          <div class="benefit-title">Segurança</div>
-          <div class="benefit-description">Autenticação moderna e criptografia. Controlo granular de acesso a informação sensível.</div>
-        </div>
-        <div class="benefit-item">
-          <div class="benefit-title">Eficiência</div>
-          <div class="benefit-description">Menos tarefas repetitivas, menos comunicação dispersa. Foco em trabalho que importa.</div>
+        <div class="divider"></div>
+        <div class="area">
+          <h3>Agenda</h3>
+          <p>Escalas e atividades sincronizadas.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Final CTA -->
-  <section class="cta-section">
+  <section class="final-cta">
     <div class="container">
-      <h2>Entre e continue o trabalho.</h2>
-      <p>A plataforma já está pronta. Sua organização merece ferramentas que funcionam.</p>
+      <p>Pronto para organizar melhor?</p>
       <a href="/login" class="btn btn-primary">Entrar no Genesis</a>
     </div>
   </section>
@@ -153,7 +97,6 @@
 
 {% block scripts %}
 <script>
-  // Injeta ano atual no footer
   document.addEventListener('DOMContentLoaded', function() {
     const yearSpan = document.querySelector('.footer-bottom p');
     if (yearSpan) {
