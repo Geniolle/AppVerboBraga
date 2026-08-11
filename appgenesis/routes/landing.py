@@ -11,4 +11,4 @@ router = APIRouter()
 @router.get("/", response_class=HTMLResponse)
 async def landing_page(request: Request):
     """Public landing page for Verbo da Vida Braga."""
-    return templates.TemplateResponse("landing.html", {"request": request})
+    return templates.TemplateResponse(request, "landing.html", {"request": request})
