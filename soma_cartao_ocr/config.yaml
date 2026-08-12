@@ -3,9 +3,9 @@ google:
   project_id: soma-verbo-braga-468506
 
 drive:
-  folder_id: 1mwJmtDnPOMrlKkJuUL91iCkYxHI0Noll
+  folder_id: 19F4LT2Ch5xcv6LnE-6YRqdrTElwa6Gg_
   folder_name: EXTRATO_CARTÃO_Images
-  filename: 07-2026.IMAGEM.102342.jpg
+  filename: EXTRATO_CARTÃO_Files_/07-2026.IMAGEM.181417.pdf
 
 ocr:
   language_hints: [pt, en]
@@ -22,15 +22,15 @@ table:
   # Limites relativos à largura da imagem já corrigida (0.0 a 1.0).
   # Ajuste-os apenas se o relatório de diagnóstico mostrar colunas deslocadas.
   columns:
-    data_movimento: [0.00, 0.10]
-    data_valor: [0.10, 0.17]
-    descricao: [0.17, 0.52]
-    pais: [0.52, 0.55]
-    moeda_original: [0.55, 0.65]
-    taxa_cambio: [0.65, 0.78]
-    debito_eur: [0.78, 0.88]
-    credito_eur: [0.88, 1.00]
-  row_tolerance_ratio: 0.010
+    data_movimento: [0.00, 0.10]   # 10%
+    data_valor: [0.10, 0.19]       # 9%
+    descricao: [0.19, 0.56]        # 37%
+    pais: [0.56, 0.62]             # 6%
+    moeda_original: [0.62, 0.72]   # 10%
+    taxa_cambio: [0.72, 0.82]      # 10%
+    debito_eur: [0.82, 0.92]       # 10%
+    credito_eur: [0.92, 1.00]      # 8%
+  row_tolerance_ratio: 0.003  # Tolerância padrão
   header_terms: [data, movimento, descrição, descricao, país, pais, moeda, câmbio, cambio, débito, debito, crédito, credito]
 
 validation:
@@ -47,10 +47,10 @@ google_sheets:
   enabled: true
   spreadsheet_id: "1poVWJGSBb13_2S1YKEzvFmkB9Ru0ZVzfQ0OEcMkfOZw"
   worksheet: "CARTÃO"
+  worksheet_extratos: "EXTRATO_CARTÃO"
   saidas_worksheet: "SAÍDAS"
   write_mode: "append_idempotent"
   dry_run: false
   id_prefix: "CAR"
   id_digits: 10
   saidas_id_prefix: "SAI"
-
