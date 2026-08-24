@@ -1,8 +1,8 @@
 # Especificação de Desenvolvimento — Redesign moderno da tela Estruturas
 
 Data: 2026-07-07  
-Projeto: AppGenesis / AppVerboBraga  
-Repositório: `Geniolle/AppVerboBraga`  
+Projeto: AppGenesis  
+Repositório: `AppGenesis`  
 Escopo principal: `Estruturas > Sessões`
 
 > **Nota (2026-07-08 — reorganização de ficheiros):** os ficheiros citados
@@ -689,7 +689,7 @@ Validação manual:
 Copiar e colar no Codex:
 
 ```text
-Quero implementar um redesign moderno, simples e funcional da tela Estruturas > Sessões no projeto AppGenesis/AppVerboBraga, mantendo o comportamento atual.
+Quero implementar um redesign moderno, simples e funcional da tela Estruturas > Sessões no projeto AppGenesis, mantendo o comportamento atual.
 
 Antes de alterar, analise obrigatoriamente estes ficheiros:
 

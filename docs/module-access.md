@@ -73,7 +73,7 @@ O módulo `tesouraria` está registado em `app_modules` com `is_core=False, is_a
 
 As referências a rotas de Tesouraria no seed (`scripts/modules/seed_app_modules.py`) são
 placeholders para implementação futura. A decisão de não criar UI falsa está documentada
-no [ADR-003](file:///c:/workspace/AppVerboBraga/gsd/adr/ADR-003-module-entitlement-strategy.md).
+no [ADR-003](../gsd/adr/ADR-003-module-entitlement-strategy.md).
 
 ## Contrato Para Implementações Futuras
 
