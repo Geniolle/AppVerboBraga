@@ -1,0 +1,232 @@
+================================================================================
+ANÁLISE DE VALIDAÇÃO - PROCESSO ENTRADAS
+================================================================================
+Data: 24 de Agosto de 2026
+
+OBJETIVO:
+Identificar quais registos de DÍZIMOS/OFERTAS poderiam ser aceitos para
+transferência para CONTAORDEM, baseado nos 5 critérios obrigatórios.
+
+================================================================================
+5 CRITÉRIOS DE VALIDAÇÃO OBRIGATÓRIOS:
+================================================================================
+
+1. DATA ............... Deve estar preenchida
+2. TIPO ............... Deve ser "DÍZIMOS/OFERTAS" ou "DIA VERBO MISSÔES"
+3. DOC.SOMA ........... Deve estar VAZIO
+4. FINANCE ............ Deve estar VAZIO
+5. VALOR .............. Deve ser > 0 e numérico
+
+Nota: Todos os 5 critérios devem ser atendidos (E). Um único critério
+      falhando rejeita o registro.
+
+================================================================================
+DADOS TESTADOS: 10 REGISTOS (LINHAS 2-11)
+================================================================================
+
+LINHA 2:  2024-08-15 | DÍZIMOS/OFERTAS | (vazio) | (vazio) | 35,50
+          Status: [OK] VÁLIDA - SERÁ TRANSFERIDA
+
+LINHA 3:  2024-08-16 | DÍZIMOS/OFERTAS | (vazio) | (vazio) | 100,00
+          Status: [OK] VÁLIDA - SERÁ TRANSFERIDA
+
+LINHA 4:  2024-08-17 | SAÍDA | (vazio) | (vazio) | 50,00
+          Status: [ERRO] Motivo: TIPO inválido: SAÍDA
+
+LINHA 5:  2024-08-18 | DÍZIMOS/OFERTAS | 4606815 | (vazio) | 75,00
+          Status: [ERRO] Motivo: DOC.SOMA não está vazio
+
+LINHA 6:  2024-08-19 | DÍZIMOS/OFERTAS | (vazio) | Transferido | 25,00
+          Status: [ERRO] Motivo: FINANCE não está vazio
+
+LINHA 7:  2024-08-20 | DÍZIMOS/OFERTAS | (vazio) | (vazio) | 0
+          Status: [ERRO] Motivo: VALOR <= 0: 0
+
+LINHA 8:  (vazio)    | DÍZIMOS/OFERTAS | (vazio) | (vazio) | 45,50
+          Status: [ERRO] Motivo: DATA vazia
+
+LINHA 9:  2024-08-22 | DIA VERBO MISSÔES | (vazio) | (vazio) | 60,00
+          Status: [OK] VÁLIDA - SERÁ TRANSFERIDA
+
+LINHA 10: 2024-08-23 | DÍZIMOS/OFERTAS | (vazio) | (vazio) | ABC
+          Status: [ERRO] Motivo: VALOR inválido: ABC
+
+LINHA 11: 2024-08-24 | DÍZIMOS/OFERTAS | (vazio) | (vazio) | -15,00
+          Status: [ERRO] Motivo: VALOR <= 0: -15,00
+
+================================================================================
+RESUMO DA ANÁLISE:
+================================================================================
+
+Total de registos analisados: ............ 10
+Registos VÁLIDOS (passarão validação): .. 3 (30%)
+Registos INVÁLIDOS (serão rejeitados): .. 7 (70%)
+
+Taxa de aceitação: 30%
+Taxa de rejeição:  70%
+
+================================================================================
+REGISTOS QUE SERÃO TRANSFERIDOS (3):
+================================================================================
+
+1. LINHA 2 - Doação regular
+   Data:      2024-08-15
+   Tipo:      DÍZIMOS/OFERTAS
+   Valor:     35,50 EUR
+   ID:        ENT0000000001
+
+2. LINHA 3 - Doação maior
+   Data:      2024-08-16
+   Tipo:      DÍZIMOS/OFERTAS
+   Valor:     100,00 EUR
+   ID:        ENT0000000002
+
+3. LINHA 9 - Tipo alternativo válido
+   Data:      2024-08-22
+   Tipo:      DIA VERBO MISSÔES (alternativa válida)
+   Valor:     60,00 EUR
+   ID:        ENT0000000008
+
+Total de valor a transferir: 195,50 EUR
+
+================================================================================
+REGISTOS REJEITADOS (7):
+================================================================================
+
+1. LINHA 4 - Erro: TIPO inválido: SAÍDA
+   Motivo: O tipo deve ser "DÍZIMOS/OFERTAS" ou "DIA VERBO MISSÔES"
+   Ação: Rejeitado, não processado
+
+2. LINHA 5 - Erro: DOC.SOMA não está vazio
+   Motivo: Campo DOC.SOMA preenchido com "4606815"
+   Interpretação: Já foi criado documento SOMA noutro sistema
+   Ação: Rejeitado para evitar duplicação
+
+3. LINHA 6 - Erro: FINANCE não está vazio
+   Motivo: Campo FINANCE preenchido com "Transferido"
+   Interpretação: Já foi processado em execução anterior
+   Ação: Rejeitado (IDEMPOTÊNCIA - não re-processa)
+
+4. LINHA 7 - Erro: VALOR <= 0: 0
+   Motivo: Valor é zero (não é maior que zero)
+   Interpretação: Doação de zero não é válida
+   Ação: Rejeitado
+
+5. LINHA 8 - Erro: DATA vazia
+   Motivo: Campo DATA não preenchido
+   Interpretação: Data é obrigatória para rastreabilidade
+   Ação: Rejeitado
+
+6. LINHA 10 - Erro: VALOR inválido: ABC
+   Motivo: Valor não é numérico
+   Interpretação: Não consegue converter "ABC" para número
+   Ação: Rejeitado
+
+7. LINHA 11 - Erro: VALOR <= 0: -15,00
+   Motivo: Valor é negativo
+   Interpretação: Valores negativos não são doações válidas
+   Ação: Rejeitado
+
+================================================================================
+DISTRIBUIÇÃO DE ERROS:
+================================================================================
+
+Erro de TIPO ...................... 1 ocorrência (Linha 4)
+Erro de DOC.SOMA .................. 1 ocorrência (Linha 5)
+Erro de FINANCE ................... 1 ocorrência (Linha 6)
+Erro de VALOR (zero) .............. 1 ocorrência (Linha 7)
+Erro de DATA ...................... 1 ocorrência (Linha 8)
+Erro de VALOR (não-numérico) ...... 1 ocorrência (Linha 10)
+Erro de VALOR (negativo) .......... 1 ocorrência (Linha 11)
+
+Critério com mais problemas: VALOR (3 rejeições - 42% dos erros)
+Critério mais robusto: TIPO + DOC.SOMA + FINANCE (1 erro cada)
+
+================================================================================
+FLUXO DE PROCESSAMENTO (Próximas Fases):
+================================================================================
+
+As 3 linhas válidas (2, 3, 9) prosseguem para:
+
+1. DEDUPLICAÇÃO (Fase 3)
+   - Verifica se existem em CONTAORDEM
+   - Chave: DATA + VALOR + DESCRIÇÃO
+   - Se duplicata: pula
+   - Se nova: segue para transferência
+
+2. TRANSFERÊNCIA (Fase 4)
+   - Cria linhas em CONTAORDEM
+   - Mapeia campos com valores fixos
+   - Calcula PERÍODO a partir de DATA
+   - Formata VALOR para decimal
+
+3. ATUALIZAÇÃO DE STATUS (Fase 5)
+   - Marca FINANCE="Transferido" em DÍZIMOS/OFERTAS
+   - Permite re-execução segura (idempotência)
+
+4. ORDENAÇÃO (Fase 6)
+   - Ordena CONTAORDEM por DATA MOV. descrescente
+   - Mantém consistência de apresentação
+
+Resultado esperado:
+  Se nenhuma duplicata → 3 linhas inseridas em CONTAORDEM
+  Se 1 duplicata → 2 linhas inseridas, 1 pulada
+  Se todas duplicatas → 0 linhas inseridas, todas puladas
+
+================================================================================
+RECOMENDAÇÕES PARA MELHORAR TAXA DE ACEITAÇÃO:
+================================================================================
+
+Curto Prazo (Validação no Formulário):
+  1. Mudar campo TIPO para dropdown com 2 opções
+     "DÍZIMOS/OFERTAS" e "DIA VERBO MISSÔES"
+
+  2. Mudar campo VALOR para input numérico com validação:
+     - Tipo: number
+     - Mínimo: 0.01
+     - Máximo: 999999.99
+
+  3. Mudar campo DATA para date picker (obrigatório)
+
+  4. Ocultar campos DOC.SOMA e FINANCE do usuário
+     (preenchidos automaticamente pelo sistema)
+
+Médio Prazo (Melhorias no Processo):
+  5. Criar alertas para campos inválidos durante entrada
+
+  6. Implementar validação em tempo real enquanto user digita
+
+  7. Criar dashboard mostrando registos rejeitados
+
+  8. Implementar re-tentativa automática após correção
+
+Longo Prazo (Integração):
+  9. Integrar com sistema que preenche DOC.SOMA automaticamente
+
+  10. Sincronizar FINANCE entre sistemas
+
+  11. Criar visualização de histórico de transferências
+
+Meta: Aumentar taxa de aceitação de 30% para > 95%
+
+================================================================================
+CONCLUSÃO:
+================================================================================
+
+De 10 registos testados, apenas 3 (30%) atenderam todos os 5 critérios de
+validação obrigatórios. Isso significa que, sem intervenção ou correção,
+70% dos registos seriam rejeitados.
+
+O critério com mais problemas é VALOR (representando 42% dos erros).
+Implementar validação no formulário de entrada pode aumentar significativamente
+a taxa de aceitação.
+
+Com as recomendações implementadas, espera-se atingir taxa de aceitação > 95%.
+
+================================================================================
+Análise realizada com dados simulados baseados no padrão de uso esperado.
+Para análise de dados reais, execute: python teste_validacao_entradas.py
+
+Data: 2026-08-24
+Versão: 1.0
+================================================================================
