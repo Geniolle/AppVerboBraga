@@ -25,7 +25,7 @@ jobs:
         # Kept as a visible report, not a merge gate, until that baseline is
         # cleaned up separately.
         continue-on-error: true
-        run: python -m pyflakes appgenesis/ web_app.py
+        run: python -m pyflakes appgenesis/
       - name: Run tests (excluding Selenium browser tests)
         run: |
           pytest -q \
