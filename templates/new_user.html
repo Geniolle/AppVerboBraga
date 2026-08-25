@@ -7,8 +7,12 @@
 {% block title %}{% if settings_edit_data %}Processo - {{ settings_edit_data.label }}{% else %}Painel do Utilizador{% endif %}{% endblock %}
 
 {% block head_extra %}
-<script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260706-post-save-feedback-always-wins-v1"></script>
-<link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
+<script>
+  window.__APPGENESIS_BOOTSTRAP__ = window.__APPGENESIS_BOOTSTRAP__ || {};
+  window.__APPGENESIS_BOOTSTRAP__.hasCreateUserFormErrors = {{ (errors|length > 0)|tojson }};
+</script>
+<script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260824-validation-error-restore-guard-v2"></script>
+  <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260824-pending-yellow-v1">
   <link rel="stylesheet" href="/static/css/new_user.css?v=20260708-invite-link-header-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260708-invite-link-header-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260713-shared-list-card-header-v1">
@@ -447,6 +451,7 @@
                   required
                   value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
                 >
+                <small class="field-help">Insira apenas o número local. Não é necessário repetir o prefixo internacional.</small>
               </div>
               {% else %}
               <input
@@ -750,7 +755,7 @@
 
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="utilizador" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
+        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="utilizador" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-appgenesis-create-user-form-errors="{% if errors %}1{% else %}0{% endif %}" data-menu-scope="administrativo,funcionarios,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
             <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
             <details id="create-user-collapse" class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1" data-appgenesis-user-create-details="1"{% if errors %} open{% endif %}>
               <summary class="appgenesis-process-action-toggle-v1">
@@ -758,10 +763,17 @@
               </summary>
               <div class="entity-create-body appgenesis-process-action-panel-v1">
                 <div class="admin-subsection">
+                  {% if errors %}
+                  <div class="alert error" role="alert">
+                    {% for error in errors %}
+                      <div>{{ error }}</div>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
                   <form id="create-user-form" method="post" action="/users/new">
                     <input type="hidden" name="return_menu" value="administrativo">
                     <input type="hidden" name="return_admin_tab" value="utilizador">
-                    <input type="hidden" name="return_target" value="#create-user-card">
+                    <input type="hidden" name="return_target" value="#pending-users-card">
                     <div class="grid">
                       <div class="field">
                         <label for="full_name">Nome completo *</label>
@@ -770,6 +782,7 @@
                       <div class="field">
                         <label for="primary_phone">Telefone principal *</label>
                         <input id="primary_phone" name="primary_phone" required value="{{ form_data.primary_phone }}">
+                        <small class="field-help">Insira apenas o número local. Não é necessário repetir o prefixo internacional.</small>
                       </div>
                       <div class="field">
                         <label for="email">Email *</label>
@@ -859,7 +872,7 @@
         {% endif %}
 
         {% if user_edit_data is defined and user_edit_data.id %}
-        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
+        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,funcionarios,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'funcionarios', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           <div class="admin-subsection">
@@ -867,7 +880,13 @@
               <input type="hidden" name="user_id" value="{{ user_edit_data.id }}">
               <input type="hidden" name="return_menu" value="administrativo">
               <input type="hidden" name="return_admin_tab" value="utilizador">
-              <input type="hidden" name="return_target" value="#edit-user-card">
+              {% set edit_user_return_target = "#admin-users-created-card" %}
+              {% if user_edit_data.account_status == "pending" %}
+                {% set edit_user_return_target = "#pending-users-card" %}
+              {% elif user_edit_data.account_status in ["inactive", "blocked"] %}
+                {% set edit_user_return_target = "#inactive-users-card" %}
+              {% endif %}
+              <input type="hidden" name="return_target" value="{{ edit_user_return_target }}">
               <div class="grid">
                 <div class="field">
                   <label for="edit_user_full_name">Nome completo *</label>
@@ -876,6 +895,7 @@
                 <div class="field">
                   <label for="edit_user_primary_phone">Telefone principal *</label>
                   <input id="edit_user_primary_phone" name="primary_phone" required value="{{ user_edit_data.primary_phone }}">
+                  <small class="field-help">Insira apenas o número local. Não é necessário repetir o prefixo internacional.</small>
                 </div>
                 <div class="field">
                   <label for="edit_user_email">Email *</label>
@@ -958,8 +978,8 @@
                   class="action-btn-cancel"
                   data-appgenesis-cancel="1"
                   data-appgenesis-cancel-target="edit-user-card"
-                  data-appgenesis-cancel-return-target="admin-users-created-card"
-                  data-appgenesis-cancel-return-url="/users/new?menu=administrativo&admin_tab=utilizador#admin-users-created-card"
+                  data-appgenesis-cancel-return-target="{{ edit_user_return_target.lstrip('#') }}"
+                  data-appgenesis-cancel-return-url="/users/new?menu=administrativo&admin_tab=utilizador{{ edit_user_return_target }}"
                 >{% if user_readonly_mode %}Fechar{% else %}Cancelar{% endif %}</button>
               </div>
             </form>
@@ -2499,7 +2519,7 @@
         </section>
 
         {% if current_user_can_manage_tenant_structure %}
-        <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil" {% if initial_menu != 'meu_perfil' or (initial_menu_target and initial_menu_target != '#meu-perfil-folder-settings-card') %}style="display: none;"{% endif %}>
+        <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or (initial_menu_target and initial_menu_target != '#meu-perfil-folder-settings-card') %}style="display: none;"{% endif %}>
           <h2>Configuração da pasta Meu perfil</h2>
           <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
           {% for row in sidebar_menu_settings %}
@@ -2556,7 +2576,7 @@
         </section>
         {% endif %}
 
-        <section id="recent-users-card" class="card" data-menu-scope="meu_perfil,funcionarios,financeiro,relatorios,tutorial" {% if initial_menu not in ['meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'tutorial'] or (initial_menu_target and initial_menu_target != '#recent-users-card') %}style="display: none;"{% endif %}>
+        <section id="recent-users-card" class="card" data-menu-scope="funcionarios,financeiro,relatorios,tutorial" {% if initial_menu not in ['funcionarios', 'financeiro', 'relatorios', 'tutorial'] or (initial_menu_target and initial_menu_target != '#recent-users-card') %}style="display: none;"{% endif %}>
           <h2>Últimos utilizadores criados</h2>
           {% if recent_users %}
             <table>
@@ -2613,6 +2633,7 @@
       currentUserCity: {{ user_personal_data.city|tojson }},
       currentUserFreguesia: {{ user_personal_data.freguesia|tojson }},
       currentUserPostalCode: {{ user_personal_data.postal_code|tojson }},
+      hasCreateUserFormErrors: {{ (errors|length > 0)|tojson }},
       profilePersonalSections: {{ profile_personal_sections|tojson }},
       profilePersonalVisibleFields: {{ profile_personal_visible_fields|tojson }},
       profilePersonalFieldLabels: {{ profile_personal_field_labels|tojson }},
@@ -2645,18 +2666,18 @@
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
   <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
   <script src="/static/js/modules/process_reference_registry_v1.js?v=20260707-process-reference-stage8-v1"></script>
-  <script src="/static/js/modules/admin_target_registry_v1.js?v=20260707-admin-target-registry-v1"></script>
+  <script src="/static/js/modules/admin_target_registry_v1.js?v=20260823-pending-users-card-v1"></script>
   <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260707-process-menu-config-stage3-v1"></script>
   <script src="/static/js/modules/process_navigation_state_v1.js?v=20260707-process-navigation-stage4-v1"></script>
-  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260707-process-cards-stage5-v1"></script>
+  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260823-pending-users-card-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260708-breadcrumb-section-v1"></script>
-  <script src="/static/js/new_user.js?v=20260708-invite-link-header-v1"></script>
+  <script src="/static/js/new_user.js?v=20260823-pending-users-card-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
 <script src="/static/js/modules/profile_field_order.js?v=20260502-meu-perfil-order-v4"></script>
-  <script src="/static/js/modules/return_after_save.js?v=20260626-ignore-sessoes-save-v1"></script>
+  <script src="/static/js/modules/return_after_save.js?v=20260824-validation-error-restore-guard-v2"></script>
   <script src="/static/js/modules/settings_edit_focus_mode.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_process_tabs.js?v=20260427a"></script>
   <script src="/static/js/modules/settings_default_tab.js?v=20260427b"></script>

@@ -23,6 +23,7 @@ from appgenesis.services.auth import (
     is_admin_user,
     send_user_invite_email,
 )
+from appgenesis.services.phone_country import normalize_phone_value
 from appgenesis.services.user_entity_scope import (
     get_actor_primary_entity_v1,
 )
@@ -35,9 +36,12 @@ from appgenesis.services.page import (
     get_page_data,
     get_user_edit_defaults,
 )
+from appgenesis.services.navigation_context import build_post_save_return_url_v1
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.profile import get_user_personal_data
 from appgenesis.services.user_system import normalize_user_system_type_v1
+from appgenesis.admin_subprocesses.registry import ENTIDADE_CONFIG, UTILIZADOR_CONFIG
+from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
 
 
 # ###################################################################################
@@ -233,7 +237,7 @@ def normalize_create_user_input_v1(
     system_profile: str = "",
 ) -> CreateUserInput:
     clean_full_name = full_name.strip()
-    clean_primary_phone = primary_phone.strip()
+    clean_primary_phone = normalize_phone_value(primary_phone)
     clean_email = email.strip().lower()
     clean_entity_id = (entity_id or "").strip()
     clean_system_type = normalize_user_system_type_v1(system_profile) if system_profile.strip() else LEGACY_USER_SYSTEM_TYPE_DEFAULT
@@ -284,6 +288,16 @@ def _build_error_context(
     next_entity_number: int,
     page_data: dict[str, Any],
 ) -> dict[str, Any]:
+    admin_subprocess_user_state = build_admin_subprocess_state(
+        config=UTILIZADOR_CONFIG,
+        rows=page_data.get("active_created_users", []),
+        return_url="/users/new?menu=administrativo&admin_tab=utilizador#pending-users-card",
+    )
+    admin_subprocess_entity_state = build_admin_subprocess_state(
+        config=ENTIDADE_CONFIG,
+        rows=page_data.get("recent_entities", []),
+        return_url="/users/new?menu=administrativo&admin_tab=entidade#recent-entities-card",
+    )
     return {
         "request": request,
         "errors": errors,
@@ -320,6 +334,9 @@ def _build_error_context(
         "requested_dynamic_process_section": "",
         "appgenesis_after_save": False,
         "admin_tab": "utilizador",
+        "admin_subprocess_user_state": admin_subprocess_user_state,
+        "admin_subprocess_entity_state": admin_subprocess_entity_state,
+        "admin_subprocess_menu_state": None,
         **page_data,
     }
 
@@ -331,6 +348,7 @@ def execute_create_user(
     actor_user: dict[str, Any],
     selected_entity_id: int | None,
     payload: CreateUserInput,
+    return_target: str = "",
 ) -> CreateUserOutcome:
     current_user_is_admin = bool(
         is_admin_user(
@@ -368,6 +386,7 @@ def execute_create_user(
     errors = list(payload.errors)
     form_data = dict(payload.form_data)
     selected_entity = None
+    success_return_target = return_target.strip() or "#pending-users-card"
 
     # APPGENESIS_ENTITY_SCOPE_RESOLUTION_V1_START
     # A entidade do novo utilizador depende das permissões ativas do utilizador logado:
@@ -479,13 +498,15 @@ def execute_create_user(
                 if payload.clean_invite_delivery == "link":
                     return CreateUserOutcome(
                         kind="redirect",
-                        redirect_url=build_users_new_url(
+                        redirect_url=build_post_save_return_url_v1(
                             success="Utilizador já estava pendente. Link de ativação gerado.",
                             invite_link=invite_link,
                             menu="administrativo",
                             admin_tab="utilizador",
-                        )
-                        + "#create-user-card",
+                            default_menu="administrativo",
+                            default_admin_tab="utilizador",
+                            return_target=success_return_target,
+                        ),
                     )
                 email_sent, email_error = send_user_invite_email(
                     recipient_email=payload.clean_email,
@@ -497,22 +518,26 @@ def execute_create_user(
                 if email_sent:
                     return CreateUserOutcome(
                         kind="redirect",
-                        redirect_url=build_users_new_url(
+                        redirect_url=build_post_save_return_url_v1(
                             success="Utilizador já estava pendente. Convite reenviado por email.",
                             menu="administrativo",
                             admin_tab="utilizador",
-                        )
-                        + "#create-user-card",
+                            default_menu="administrativo",
+                            default_admin_tab="utilizador",
+                            return_target=success_return_target,
+                        ),
                     )
                 return CreateUserOutcome(
                     kind="redirect",
-                    redirect_url=build_users_new_url(
-                        success="Utilizador já estava pendente.",
-                        error=f"{email_error} Link de ativação: {invite_link}",
+                    redirect_url=build_post_save_return_url_v1(
+                        success="Utilizador já estava pendente. Email automático indisponível. Link de ativação gerado.",
+                        invite_link=invite_link,
                         menu="administrativo",
                         admin_tab="utilizador",
-                    )
-                    + "#create-user-card",
+                        default_menu="administrativo",
+                        default_admin_tab="utilizador",
+                        return_target=success_return_target,
+                    ),
                 )
             errors.append("Já existe um utilizador com este email de login.")
 
@@ -627,13 +652,15 @@ def execute_create_user(
     if payload.clean_invite_delivery == "link":
         return CreateUserOutcome(
             kind="redirect",
-            redirect_url=build_users_new_url(
+            redirect_url=build_post_save_return_url_v1(
                 success="Utilizador criado em estado pendente. Link de ativação gerado.",
                 invite_link=invite_link,
                 menu="administrativo",
                 admin_tab="utilizador",
-            )
-            + "#create-user-card",
+                default_menu="administrativo",
+                default_admin_tab="utilizador",
+                return_target=success_return_target,
+            ),
         )
 
     email_sent, email_error = send_user_invite_email(
@@ -646,21 +673,25 @@ def execute_create_user(
     if email_sent:
         return CreateUserOutcome(
             kind="redirect",
-            redirect_url=build_users_new_url(
+            redirect_url=build_post_save_return_url_v1(
                 success="Utilizador criado em estado pendente. Convite enviado por email.",
                 menu="administrativo",
                 admin_tab="utilizador",
-            )
-            + "#create-user-card",
+                default_menu="administrativo",
+                default_admin_tab="utilizador",
+                return_target=success_return_target,
+            ),
         )
 
     return CreateUserOutcome(
         kind="redirect",
-        redirect_url=build_users_new_url(
-            success="Utilizador criado em estado pendente.",
-            error=f"{email_error} Link de ativação: {invite_link}",
+        redirect_url=build_post_save_return_url_v1(
+            success="Utilizador criado em estado pendente. Email automático indisponível. Link de ativação gerado.",
+            invite_link=invite_link,
             menu="administrativo",
             admin_tab="utilizador",
-        )
-        + "#create-user-card",
+            default_menu="administrativo",
+            default_admin_tab="utilizador",
+            return_target=success_return_target,
+        ),
     )
