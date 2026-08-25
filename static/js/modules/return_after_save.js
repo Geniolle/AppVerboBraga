@@ -136,6 +136,29 @@
     }
   }
 
+  function hasVisiblePostSubmitErrorState() {
+    if (
+      window.__APPGENESIS_BOOTSTRAP__ &&
+      window.__APPGENESIS_BOOTSTRAP__.hasCreateUserFormErrors === true
+    ) {
+      return true;
+    }
+
+    if (document.querySelector("#create-user-card[data-appgenesis-create-user-form-errors='1']")) {
+      return true;
+    }
+
+    if (document.querySelector("details[data-appgenesis-user-create-details='1'][open]")) {
+      return true;
+    }
+
+    if (document.querySelector(".alert.error")) {
+      return true;
+    }
+
+    return false;
+  }
+
   function mergeMessageParams(targetUrl, currentUrl) {
     const target = new URL(targetUrl, window.location.origin);
     const current = new URL(currentUrl, window.location.origin);
@@ -301,6 +324,14 @@
 
     if (Date.now() - savedTime > MAX_AGE_MS) {
       _logSessoesFlowUi("restore:skip", { motivo: "expired", age_ms: Date.now() - savedTime });
+      return;
+    }
+
+    if (hasVisiblePostSubmitErrorState()) {
+      _logSessoesFlowUi("restore:skip", {
+        motivo: "validation_error_state",
+        current_url: currentUrl
+      });
       return;
     }
 

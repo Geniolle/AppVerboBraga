@@ -16,7 +16,7 @@ transactions = [
     {'n': 4, 'data_mov': '27/06', 'data_val': '26/06', 'descricao': 'OPUS CLIP OPUS.PRO', 'pais': 'USA', 'moeda': '29,00 USD', 'taxa': '1,00', 'debito': '29,00', 'credito': ''},
     {'n': 5, 'data_mov': '27/06', 'data_val': '26/06', 'descricao': 'COMISSAO ESTRANGEIRO', 'pais': '', 'moeda': '', 'taxa': '', 'debito': '1,09', 'credito': ''},
     {'n': 6, 'data_mov': '27/06', 'data_val': '27/06', 'descricao': 'LEVANT. NUMERARIO A CREDITO', 'pais': '', 'moeda': '', 'taxa': '', 'debito': '160,00', 'credito': ''},
-    {'n': 7, 'data_mov': '27/06', 'data_val': '27/06', 'descricao': 'COMISSAO CASH', 'pais': '', 'moeda': '', 'taxa': '', 'debito': '', 'credito': '11,20'},
+    {'n': 7, 'data_mov': '27/06', 'data_val': '27/06', 'descricao': 'COMISSAO CASH', 'pais': '', 'moeda': '', 'taxa': '', 'debito': '11,20', 'credito': ''},
     {'n': 8, 'data_mov': '27/06', 'data_val': '27/06', 'descricao': 'IS-TGIS 17.3.4.', 'pais': '', 'moeda': '', 'taxa': '', 'debito': '0,04', 'credito': ''},
     {'n': 9, 'data_mov': '27/06', 'data_val': '27/06', 'descricao': 'CANVA 104920-25183857 CANVA.CO', 'pais': 'USA', 'moeda': '0,45 USD', 'taxa': '1,00', 'debito': '0,45', 'credito': ''},
     {'n': 10, 'data_mov': '27/06', 'data_val': '27/06', 'descricao': 'COMISSAO ESTRANGEIRO', 'pais': '', 'moeda': '', 'taxa': '', 'debito': '0,02', 'credito': ''},

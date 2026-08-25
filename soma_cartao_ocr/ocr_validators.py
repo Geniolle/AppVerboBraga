@@ -259,7 +259,12 @@ def validate_description_semantics(desc: str, min_length: int = 3) -> tuple[bool
 
     alpha_ratio = alpha_count / len(desc)
     if alpha_ratio < 0.3:
-        return False, f"mostly_numbers_{alpha_ratio:.1%}"
+        alpha_words = re.findall(r"[A-Za-zÀ-ÿ]{2,}", desc)
+        digit_groups = re.findall(r"\d+", desc)
+        # Aceitar descrições curtas com códigos alfanuméricos e marcações de merchant,
+        # desde que existam pelo menos duas palavras com letras.
+        if not (len(alpha_words) >= 2 and len(digit_groups) <= 3):
+            return False, f"mostly_numbers_{alpha_ratio:.1%}"
 
     # Detectar repetição excessiva de um caractere
     if len(set(desc)) < len(desc) * 0.2 and len(desc) > 5:

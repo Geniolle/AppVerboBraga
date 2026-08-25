@@ -1,4 +1,6 @@
 from unittest.mock import patch
+from pathlib import Path
+from urllib.parse import parse_qsl, urlsplit
 
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
@@ -19,6 +21,8 @@ from appgenesis.use_cases.users.create_user import (
     execute_create_user,
     normalize_create_user_input,
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _build_session_factory():
@@ -54,7 +58,7 @@ def _build_request() -> Request:
 def test_normalize_create_user_input_success() -> None:
     payload = normalize_create_user_input(
         full_name="  Joao Silva  ",
-        primary_phone=" 912345678 ",
+        primary_phone=" 912 345 678 ",
         email="  JOAO@EXAMPLE.COM ",
         invite_delivery="link",
     )
@@ -68,6 +72,13 @@ def test_normalize_create_user_input_success() -> None:
     assert payload.form_data["entity_name"] == ""
     assert "system_type" not in payload.form_data
     assert payload.errors == []
+
+
+def test_create_user_template_shows_local_phone_hint() -> None:
+    html = (PROJECT_ROOT / "templates" / "new_user.html").read_text(encoding="utf-8")
+
+    assert "Insira apenas o número local" in html
+    assert "Não é necessário repetir o prefixo internacional" in html
 
 
 def test_normalize_create_user_input_invalid_delivery_defaults_to_email() -> None:
@@ -146,6 +157,12 @@ def test_execute_create_user_creates_member_user_and_profile() -> None:
             )
 
         assert outcome.kind == "redirect"
+        parsed = urlsplit(outcome.redirect_url)
+        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        assert parsed.fragment == "pending-users-card"
+        assert params["menu"] == "administrativo"
+        assert params["admin_tab"] == "utilizador"
+        assert params["appgenesis_after_save"] == "1"
         assert session.scalar(select(func.count()).select_from(Member)) == 1
         assert session.scalar(select(func.count()).select_from(User)) == 1
 
@@ -223,6 +240,12 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
             )
 
         assert outcome.kind == "redirect"
+        parsed = urlsplit(outcome.redirect_url)
+        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        assert parsed.fragment == "pending-users-card"
+        assert params["menu"] == "administrativo"
+        assert params["admin_tab"] == "utilizador"
+        assert params["appgenesis_after_save"] == "1"
         assert session.scalar(select(func.count()).select_from(Member)) == 1
         assert session.scalar(select(func.count()).select_from(User)) == 1
 
@@ -236,3 +259,120 @@ def test_execute_create_user_reuses_existing_member_without_user() -> None:
         assert stored_user.member_id == member.id
         assert stored_user.login_email == "carlos.base@example.com"
         assert stored_user.account_status == UserAccountStatus.PENDING.value
+
+
+def test_execute_create_user_without_smtp_still_returns_success() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        entity = Entity(entity_number=1, name="Igreja Sul", is_active=True)
+        session.add(entity)
+        session.commit()
+
+        payload = normalize_create_user_input(
+            full_name="Sem SMTP",
+            primary_phone="914444555",
+            email="sem.smtp@example.com",
+            invite_delivery="email",
+        )
+
+        with patch.object(create_user_module, "is_admin_user", return_value=True), patch.object(
+            create_user_module,
+            "get_user_entity_permissions",
+            return_value={
+                "can_manage_all_entities": True,
+                "allowed_entity_ids": {entity.id},
+            },
+        ), patch.object(create_user_module, "get_page_data", return_value={}), patch.object(
+            create_user_module, "get_user_personal_data", return_value={}
+        ), patch.object(
+            create_user_module, "get_next_entity_number", return_value=1
+        ), patch.object(
+            create_user_module,
+            "_resolve_entity_from_user_email_v2",
+            return_value=(entity, ""),
+        ), patch.object(
+            create_user_module,
+            "build_user_invite_link",
+            return_value="https://app.test/invite",
+        ), patch.object(
+            create_user_module,
+            "send_user_invite_email",
+            return_value=(False, "Configuração de email incompleta. Defina SMTP_HOST e SMTP_FROM_EMAIL."),
+        ), patch.object(
+            create_user_module, "build_users_new_url", return_value="/users/new"
+        ):
+            outcome = execute_create_user(
+                session=session,
+                request=_build_request(),
+                actor_user={
+                    "id": 0,
+                    "login_email": "admin@example.com",
+                    "full_name": "Administrador",
+                },
+                selected_entity_id=entity.id,
+                payload=payload,
+            )
+
+        assert outcome.kind == "redirect"
+        parsed = urlsplit(outcome.redirect_url)
+        params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+        assert parsed.fragment == "pending-users-card"
+        assert params["menu"] == "administrativo"
+        assert params["admin_tab"] == "utilizador"
+        assert params["appgenesis_after_save"] == "1"
+        assert "error" not in params
+        assert params["success"].startswith("Utilizador criado em estado pendente.")
+
+
+def test_execute_create_user_error_context_includes_admin_subprocess_user_state() -> None:
+    SessionLocal = _build_session_factory()
+
+    with SessionLocal() as session:
+        entity = Entity(entity_number=1, name="Igreja Norte", is_active=True)
+        session.add(entity)
+        session.commit()
+
+        payload = normalize_create_user_input(
+            full_name="",
+            primary_phone="914444555",
+            email="sem.nome@example.com",
+            invite_delivery="email",
+        )
+
+        with patch.object(create_user_module, "is_admin_user", return_value=True), patch.object(
+            create_user_module,
+            "get_user_entity_permissions",
+            return_value={
+                "can_manage_all_entities": True,
+                "allowed_entity_ids": {entity.id},
+            },
+        ), patch.object(create_user_module, "get_page_data", return_value={}), patch.object(
+            create_user_module, "get_user_personal_data", return_value={}
+        ), patch.object(
+            create_user_module, "get_next_entity_number", return_value=1
+        ), patch.object(
+            create_user_module,
+            "_resolve_entity_from_user_email_v2",
+            return_value=(entity, ""),
+        ), patch.object(
+            create_user_module, "build_users_new_url", return_value="/users/new"
+        ):
+            outcome = execute_create_user(
+                session=session,
+                request=_build_request(),
+                actor_user={
+                    "id": 0,
+                    "login_email": "admin@example.com",
+                    "full_name": "Administrador",
+                },
+                selected_entity_id=entity.id,
+                payload=payload,
+            )
+
+    assert outcome.kind == "template"
+    assert outcome.template_context is not None
+    assert outcome.template_context["admin_subprocess_user_state"] is not None
+    assert outcome.template_context["admin_subprocess_user_state"].config.key == "utilizador"
+    assert outcome.template_context["admin_subprocess_entity_state"] is not None
+    assert outcome.template_context["admin_subprocess_entity_state"].config.key == "entidade"

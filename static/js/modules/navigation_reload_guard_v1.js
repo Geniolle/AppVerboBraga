@@ -96,6 +96,29 @@ function isAppGenesisPostSaveFeedbackUrlV3(url) {
   return false;
 }
 
+function hasAppGenesisValidationErrorStateV3() {
+  if (
+    window.__APPGENESIS_BOOTSTRAP__ &&
+    window.__APPGENESIS_BOOTSTRAP__.hasCreateUserFormErrors === true
+  ) {
+    return true;
+  }
+
+  if (document.querySelector("#create-user-card[data-appgenesis-create-user-form-errors='1']")) {
+    return true;
+  }
+
+  if (document.querySelector("details[data-appgenesis-user-create-details='1'][open]")) {
+    return true;
+  }
+
+  if (document.querySelector(".alert.error")) {
+    return true;
+  }
+
+  return false;
+}
+
 function readAndClearAppGenesisPostSaveContextV3() {
   try {
     const rawValue = window.sessionStorage.getItem(APPGENESIS_POST_SAVE_CONTEXT_KEY_V3) || "";
@@ -253,6 +276,13 @@ function redirectToStoredPostSaveContextV3(storedContext) {
   // "administrativo" e "perfil_de_autorizacao", deixando "sessoes"/Menu vulneravel a este
   // mesmo bug de reversao de navegacao apos Guardar).
   if (currentHasFeedback) {
+    return false;
+  }
+
+  if (hasAppGenesisValidationErrorStateV3()) {
+    logAppGenesisProcessEditorDebugV1("redirectToStoredPostSaveContextV3:skip_validation_error_state", {
+      currentHref: window.location.href
+    });
     return false;
   }
 

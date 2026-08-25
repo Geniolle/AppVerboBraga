@@ -54,14 +54,9 @@ def cross_validate_movement(movement: "Movement", cfg: dict) -> dict[str, bool]:
     d_val = extract_day_month(movement.data_valor)
 
     if d_mov and d_val:
-        # Data de valor não deve ser ANTES de data de movimento
-        # Exceção: 30/6 -> 1/7 (última dia do mês)
-        if d_mov == d_val:
-            validations["date_consistency"] = True
-        elif d_val < d_mov and not (d_mov == (30, 6) and d_val == (1, 7)):
-            validations["date_order"] = False
-        else:
-            validations["date_order"] = True
+        # Em extratos de cartão, a data de valor pode aparecer antes da data de movimento.
+        # Tratamos isto como informação válida para evitar falsos positivos.
+        validations["date_order"] = True
     else:
         validations["date_consistency"] = True  # Assume neutro
 

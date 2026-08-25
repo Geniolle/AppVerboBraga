@@ -6,3 +6,4 @@ google-api-python-client>=2.154.0
 google-cloud-vision>=3.9.0
 openpyxl>=3.1.5
 PyYAML>=6.0.2
+PyMuPDF>=1.28.0

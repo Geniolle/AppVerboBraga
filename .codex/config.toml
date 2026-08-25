@@ -1,3 +1,0 @@
-# Codex: acesso total sem pedidos de aprovação
-approval_policy = "never"
-sandbox_mode = "danger-full-access"
