@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Genesis - Igreja Verbo da Vida Braga{% endblock %}
+{% block title %}Verbo da Vida Braga{% endblock %}
 
 {% block head_extra %}
-<meta name="description" content="Genesis: organiza pessoas, departamentos, processos e agendas da Igreja Verbo da Vida Braga numa única plataforma.">
-<meta property="og:title" content="Genesis">
-<meta property="og:description" content="Plataforma de gestão para Igreja Verbo da Vida Braga">
+<meta name="description" content="Igreja Verbo da Vida Braga: Praceta Beato Inácio de Azevedo, 7, São Vicente, Braga. Quartas-feiras às 20h30 e domingos às 10h.">
+<meta property="og:title" content="Verbo da Vida Braga">
+<meta property="og:description" content="Igreja Verbo da Vida Braga. Venha visitar-nos em São Vicente, Braga.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <link rel="canonical" href="https://verbodavidabraga.pt/">
@@ -18,80 +18,47 @@
 {% include 'partials/public_header.html' %}
 
 <main id="main">
-  <!-- Hero Section -->
   <section class="hero">
     <div class="container">
       <div class="hero-inner">
         <div class="hero-content">
           <p class="eyebrow">Igreja Verbo da Vida &middot; Braga</p>
-          <h1><span class="genesis-g">G</span>enesis</h1>
-          <p class="hero-subtitle">Organizar para servir melhor.</p>
+          <h1>Bem-vindo à <span class="genesis-g">V</span>erbo da Vida</h1>
+          <p class="hero-subtitle">Venha fazer parte da nossa família.</p>
 
           <p class="hero-description">
-            Uma plataforma que centraliza pessoas, departamentos, processos e agendas.
-            Feita para simplificar o trabalho administrativo e deixar mais tempo para o que importa.
+            Somos uma igreja em Braga, em São Vicente. Encontramo-nos para adorar, orar e crescer juntos na fé.
           </p>
 
-          <a href="/login" class="btn btn-primary">Entrar</a>
+          <a href="#visita" class="btn btn-primary">Ver horários</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- What is Genesis -->
   <section class="about-genesis">
     <div class="container">
       <div class="about-inner">
-        <div class="about-label">O que é Genesis</div>
+        <div class="about-label">Quem somos</div>
         <div class="about-content">
           <p>
-            Genesis reúne informação e processos da Igreja num único lugar.
-            Cada pessoa tem acesso exatamente ao que precisa.
-            Sem planilhas dispersas. Sem emails perdidos. Sem confusão.
+            A Igreja Verbo da Vida Braga é uma comunidade aberta a todos.
+            Cada domingo e cada quarta-feira são uma oportunidade para ouvir, partilhar e servir.
           </p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Core Areas -->
-  <section class="core-areas" id="areas">
-    <div class="areas-container">
-      <div class="area-column">
-        <div class="area">
-          <h3>Pessoas</h3>
-          <p>Dados e responsabilidades centralizados.</p>
-        </div>
-        <div class="divider"></div>
-        <div class="area">
-          <h3>Departamentos</h3>
-          <p>Equipas organizadas e coordenadas.</p>
-        </div>
-      </div>
-      <div class="area-column">
-        <div class="area">
-          <h3>Processos</h3>
-          <p>Fluxos de trabalho padronizados.</p>
-        </div>
-        <div class="divider"></div>
-        <div class="area">
-          <h3>Agenda</h3>
-          <p>Escalas e atividades sincronizadas.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Church -->
-  <section class="church" id="igreja">
+  <section class="church" id="visita">
     <div class="container">
       <div class="church-inner">
         <div class="church-brand">
           <img src="/static/img/logo-verbo-da-vida.png" alt="Logótipo Verbo da Vida Braga" width="240" height="210">
         </div>
         <div class="church-content">
-          <p class="eyebrow">Igreja Verbo da Vida &middot; Braga</p>
-          <h2>Venha fazer parte.</h2>
+          <p class="eyebrow">Visite-nos</p>
+          <h2>Venha conhecer-nos.</h2>
 
           <dl class="church-details">
             <div>
@@ -113,11 +80,10 @@
     </div>
   </section>
 
-  <!-- Final CTA -->
   <section class="final-cta">
     <div class="container">
-      <p>Pronto para organizar melhor?</p>
-      <a href="/login" class="btn btn-primary">Entrar no Genesis</a>
+      <p>Estamos à sua espera.</p>
+      <a href="https://www.google.com/maps/search/?api=1&amp;query=Praceta+Beato+In%C3%A1cio+de+Azevedo+7+Braga" target="_blank" rel="noopener" class="btn btn-primary">Como chegar</a>
     </div>
   </section>
 </main>
