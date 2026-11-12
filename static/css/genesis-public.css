@@ -797,3 +797,21 @@ a:hover {
 .vb-card .vb-btn-small {
   align-self: flex-start;
 }
+
+/* Instagram posts */
+.vb-posts {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-56) var(--container-padding-mobile);
+}
+
+.vb-post-embed {
+  display: flex;
+  justify-content: center;
+}
+
+.vb-post-embed .instagram-media {
+  max-width: 540px !important;
+  min-width: 280px !important;
+  width: 100%;
+}
