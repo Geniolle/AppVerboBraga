@@ -18,25 +18,36 @@
 {% include 'partials/public_header.html' %}
 
 <main id="main">
-  <section class="hero">
-    <div class="container">
-      <div class="hero-inner">
-        <div class="hero-content">
-          <p class="eyebrow">Igreja Verbo da Vida &middot; Braga</p>
-          <h1>Bem-vindo à <span class="genesis-g">V</span>erbo da Vida</h1>
-          <p class="hero-subtitle">Venha fazer parte da nossa família.</p>
-
-          <p class="hero-description">
-            Somos uma igreja em Braga, em São Vicente. Encontramo-nos para adorar, orar e crescer juntos na fé.
-          </p>
-
-          <a href="#visita" class="btn btn-primary">Ver horários</a>
-        </div>
-      </div>
+  <section class="vb-hero">
+    <div class="vb-hero-content">
+      <h1>Bem-vindo à Verbo da Vida Braga</h1>
+      <p>Venha fazer parte da nossa família. Adoramos, oramos e crescemos juntos na fé.</p>
+      <a href="#visita" class="vb-btn">Ver horários</a>
     </div>
   </section>
 
-  <section class="about-genesis">
+  <section class="vb-highlights" aria-label="Destaques">
+    <p class="vb-section-label">Destaques da semana</p>
+    <div class="vb-cards">
+      <a href="#visita" class="vb-card">
+        <h2>Quarta-feira</h2>
+        <p>Encontro às 20h30</p>
+        <span class="vb-btn-small">Ver morada</span>
+      </a>
+      <a href="#visita" class="vb-card">
+        <h2>Domingo</h2>
+        <p>Culto às 10h</p>
+        <span class="vb-btn-small">Ver morada</span>
+      </a>
+      <a href="https://www.instagram.com/verbobraga/" target="_blank" rel="noopener" class="vb-card">
+        <h2>Acompanhe</h2>
+        <p>Novidades e vídeos no Instagram e no YouTube</p>
+        <span class="vb-btn-small">Seguir @verbobraga</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="about-genesis" id="quem-somos">
     <div class="container">
       <div class="about-inner">
         <div class="about-label">Quem somos</div>
@@ -90,15 +101,4 @@
 
 {% include 'partials/public_footer.html' %}
 
-{% endblock %}
-
-{% block scripts %}
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const yearSpan = document.querySelector('.footer-bottom p');
-    if (yearSpan) {
-      yearSpan.innerHTML = yearSpan.innerHTML.replace('{{ year }}', new Date().getFullYear());
-    }
-  });
-</script>
 {% endblock %}
