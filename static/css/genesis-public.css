@@ -625,12 +625,12 @@ a:hover {
 
 /* Church landing: top bar, hero, highlight cards */
 :root {
-  --vb-red: #7a1a24;
-  --vb-red-dark: #5c121a;
+  --vb-dark: #1f1f23;
+  --vb-darker: #0d0d0f;
 }
 
 .vb-header {
-  background-color: var(--vb-red);
+  background-color: var(--vb-dark);
   color: #fff;
   position: sticky;
   top: 0;
@@ -688,7 +688,7 @@ a:hover {
   color: #fff;
   background:
     linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.7) 100%),
-    linear-gradient(135deg, #3b0d12 0%, var(--vb-red) 55%, #2a0a0e 100%);
+    linear-gradient(135deg, #2a2a30 0%, var(--vb-dark) 55%, #0d0d0f 100%);
   background-size: cover;
   background-position: center;
 }
@@ -719,7 +719,7 @@ a:hover {
 .vb-btn,
 .vb-btn-small {
   display: inline-block;
-  background: var(--vb-red);
+  background: var(--vb-dark);
   color: #fff;
   text-decoration: none;
   border-radius: 999px;
@@ -739,7 +739,7 @@ a:hover {
 .vb-btn-small:hover,
 .vb-btn:focus-visible,
 .vb-btn-small:focus-visible {
-  background: var(--vb-red-dark);
+  background: var(--vb-darker);
 }
 
 .vb-highlights {
@@ -749,7 +749,7 @@ a:hover {
 }
 
 .vb-section-label {
-  color: var(--vb-red);
+  color: var(--vb-dark);
   font-size: 0.9375rem;
   margin: 0 0 var(--space-24);
 }
@@ -770,7 +770,7 @@ a:hover {
   flex-direction: column;
   gap: var(--space-8);
   padding: var(--space-32);
-  background: var(--vb-red-dark);
+  background: var(--vb-darker);
   color: #fff;
   text-decoration: none;
   min-height: 220px;
@@ -791,7 +791,7 @@ a:hover {
 
 .vb-card:hover,
 .vb-card:focus-visible {
-  background: var(--vb-red);
+  background: var(--vb-dark);
 }
 
 .vb-card .vb-btn-small {
