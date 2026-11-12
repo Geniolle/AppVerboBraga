@@ -43,9 +43,21 @@
   color: var(--app-shell-text-v1);
 }
 
+.process-shell-user-v1 {
+  position: relative;
+  z-index: 50;
+}
+
 .user-dropdown {
+  z-index: 60;
   border-radius: var(--app-shell-radius-card-v1);
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22);
+}
+
+#menu-tabs-card.appgenesis-process-shell {
+  position: relative;
+  z-index: 30;
+  overflow: visible;
 }
 
 /* ===================================================================
