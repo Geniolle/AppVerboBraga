@@ -533,3 +533,92 @@ a:hover {
 .mb-2 { margin-bottom: var(--space-16); }
 .mb-3 { margin-bottom: var(--space-24); }
 .mb-4 { margin-bottom: var(--space-32); }
+
+/* Church section */
+.church {
+  background-color: var(--fg-primary);
+  color: var(--bg-primary);
+  padding: var(--space-80) var(--container-padding-mobile);
+}
+
+@media (min-width: 768px) {
+  .church {
+    padding: var(--space-128) var(--container-padding-desktop);
+  }
+}
+
+.church-inner {
+  display: grid;
+  gap: var(--space-40);
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .church-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: var(--space-80);
+  }
+}
+
+.church-brand img {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+}
+
+.church .eyebrow {
+  color: var(--accent);
+}
+
+.church h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  margin: var(--space-12) 0 var(--space-32);
+}
+
+.church-details {
+  display: grid;
+  gap: var(--space-24);
+  margin: 0 0 var(--space-32);
+}
+
+@media (min-width: 540px) {
+  .church-details {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.church-details dt {
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--space-8);
+}
+
+.church-details dd {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.church-social {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16) var(--space-32);
+}
+
+.church-social a {
+  color: var(--bg-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.church-social a:hover,
+.church-social a:focus-visible {
+  color: var(--accent);
+}
