@@ -217,23 +217,6 @@
         <button class="primary-btn" type="submit">{{ t('auth.login.submit') }}</button>
       </form>
 
-      <div class="providers">
-        {% for provider in oauth_providers %}
-          {% set provider_name = t('auth.providers.' ~ provider.key, fallback=provider.label) %}
-          <a class="provider-btn {% if not provider.enabled %}disabled{% endif %}" href="{% if provider.enabled %}{{ provider.url }}{% else %}#{% endif %}">
-            <span class="provider-icon">{{ provider_name[0]|upper }}</span>
-            {{ t('auth.actions.login_with_provider', provider=provider_name) }}
-          </a>
-        {% endfor %}
-      </div>
-
-      <p class="switch-mode">
-        {{ t('auth.login.no_account') }}
-        <a href="/login?mode=signup&lang={{ current_lang }}">{{ t('auth.login.create_account') }}</a>
-      </p>
-      <p class="hint">
-        {{ t('auth.login.provider_hint') }}
-      </p>
     {% endif %}
   </main>
 {% endblock %}
