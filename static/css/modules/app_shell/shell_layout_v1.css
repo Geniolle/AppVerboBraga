@@ -151,7 +151,8 @@ body {
 }
 
 .appgenesis-card-search-v1 {
-  height: 38px;
+  height: 32px;
+  width: min(240px, 26vw);
   border-radius: 999px;
   border-color: var(--app-shell-border-v1);
   background: #f8fafc;
