@@ -26,7 +26,7 @@ body {
     radial-gradient(circle at -8% 40%, #dfe6f6 0, #dfe6f6 10%, transparent 10.5%),
     radial-gradient(circle at 110% 30%, #e4e9f7 0, #e4e9f7 9%, transparent 9.5%),
     var(--page-bg);
-  font-family: "Plus Jakarta Sans", "Segoe UI", Tahoma, sans-serif;
+  font-family: "Open Sans", "Segoe UI", Tahoma, sans-serif;
   color: var(--text);
 }
 
