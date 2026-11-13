@@ -2498,63 +2498,6 @@
           </table>
         </section>
 
-        {% if current_user_can_manage_tenant_structure %}
-        <section id="meu-perfil-folder-settings-card" class="card" data-menu-scope="meu_perfil" {% if initial_menu != 'meu_perfil' or (initial_menu_target and initial_menu_target != '#meu-perfil-folder-settings-card') %}style="display: none;"{% endif %}>
-          <h2>Configuração da pasta Meu perfil</h2>
-          <p>Defina o nome e a visibilidade desta pasta no menu lateral.</p>
-          {% for row in sidebar_menu_settings %}
-            {% if row.key == "meu_perfil" %}
-            <table>
-              <thead>
-                <tr>
-                  <th>Pasta</th>
-                  {% if current_entity_scope == "owner" %}
-                  <th>Sistema</th>
-                  {% endif %}
-                  <th>Estado</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ row.label }}</td>
-                  {% if current_entity_scope == "owner" %}
-                  <td>{{ row.visibility_scope_label }}</td>
-                  {% endif %}
-                  <td>
-                    {% if row.is_active and not row.is_deleted %}
-                      <span class="entity-status entity-status-active">Ativo</span>
-                    {% else %}
-                      <span class="entity-status entity-status-inactive">Inativo</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <div class="table-actions">
-                      <a
-                        class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=toggle#settings-menu-edit-card"
-                        title="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
-                        aria-label="{% if row.is_active and not row.is_deleted %}Ocultar pasta{% else %}Exibir pasta{% endif %}"
-                      >
-                        &#128065;
-                      </a>
-                      <a
-                        class="table-icon-btn"
-                        href="/users/new?menu=administrativo&settings_edit_key={{ row.key }}&settings_action=edit#settings-menu-edit-card"
-                        title="Editar pasta"
-                        aria-label="Editar pasta"
-                      >
-                        &#9998;
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            {% endif %}
-          {% endfor %}
-        </section>
-        {% endif %}
 
         <section id="recent-users-card" class="card" data-menu-scope="meu_perfil,funcionarios,financeiro,relatorios,tutorial" {% if initial_menu not in ['meu_perfil', 'funcionarios', 'financeiro', 'relatorios', 'tutorial'] or (initial_menu_target and initial_menu_target != '#recent-users-card') %}style="display: none;"{% endif %}>
           <h2>Últimos utilizadores criados</h2>
