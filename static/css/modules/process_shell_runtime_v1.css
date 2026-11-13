@@ -324,14 +324,14 @@
 
 .appgenesis-load-more-footer-v1 .appgenesis-load-more-page-size-v1 select,
 .appgenesis-load-more-footer-v1 select[aria-label="Entradas por página"] {
-  font-size: 12px !important;
+  font-size: 13px !important;
   height: 30px !important;
   line-height: 1.2 !important;
-  max-width: 54px !important;
+  max-width: 72px !important;
   min-height: 30px !important;
-  min-width: 54px !important;
-  padding: 2px 20px 2px 8px !important;
-  width: 54px !important;
+  min-width: 72px !important;
+  padding: 2px 24px 2px 12px !important;
+  width: 72px !important;
 }
 
 .appgenesis-load-more-footer-v1 .appgenesis-load-more-page-size-v1 span {
