@@ -128,6 +128,7 @@
         card.id === "create-user-card" ||
         card.id === "edit-user-card" ||
         card.id === "admin-users-created-card" ||
+        card.id === "recent-users-card" ||
         card.id === "inactive-users-card"
       )
     );
