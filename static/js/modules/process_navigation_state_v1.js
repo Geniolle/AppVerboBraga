@@ -74,8 +74,6 @@
     let cleanHash = state.normalizeTarget(rawHash);
     if (cleanHash === "#edit-user-card") {
       cleanHash = "#create-user-card";
-    } else if (cleanHash === "#edit-entity-card") {
-      cleanHash = "#recent-entities-card";
     }
     const cleanTarget = state.normalizeTarget(rawTarget);
     const cleanTab = String(initialAdminTab || "").trim().toLowerCase();

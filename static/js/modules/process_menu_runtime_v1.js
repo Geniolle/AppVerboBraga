@@ -284,8 +284,6 @@
     let normalizedHash = cleanHash;
     if (normalizedHash === "#edit-user-card") {
       normalizedHash = "#create-user-card";
-    } else if (normalizedHash === "#edit-entity-card") {
-      normalizedHash = "#recent-entities-card";
     } else if (normalizedHash === "#configuracao-account-status-card") {
       normalizedHash = "#admin-account-status-card";
     }
@@ -300,6 +298,7 @@
       "#admin-users-created-card": "administrativo",
       "#inactive-users-card": "administrativo",
       "#create-entity-card": "administrativo",
+      "#edit-entity-card": "administrativo",
       "#recent-entities-card": "administrativo",
       "#inactive-entities-card": "administrativo",
       "#admin-account-status-card": state.ESTRUTURAS_MENU_KEY_V1,
