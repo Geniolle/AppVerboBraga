@@ -49,30 +49,45 @@
   align-items: center;
   flex: 0 0 auto;
   margin-right: auto;
-  gap: 6px;
-  border: 1px solid var(--app-shell-primary-v1);
+  gap: 8px;
+  border: 0;
   border-radius: 999px;
-  background: #eef5ff;
-  color: var(--app-shell-primary-v1);
+  background: #1f1f23;
+  color: #ffffff;
   font-size: 13px;
-  font-weight: 700;
-  padding: 6px 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 6px 16px 6px 6px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
   cursor: pointer;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .admin-subprocess-inline-create-btn-v1:hover {
-  background: #dceaff;
+  background: #0d0d0f;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
+}
+
+.admin-subprocess-inline-create-btn-v1:active {
+  transform: translateY(0);
 }
 
 .admin-subprocess-inline-create-btn-v1:focus-visible {
-  outline: 2px solid var(--app-shell-primary-v1);
+  outline: 2px solid #1f1f23;
   outline-offset: 2px;
 }
 
 .admin-subprocess-inline-create-icon-v1 {
-  font-weight: 800;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-weight: 700;
+  font-size: 15px;
   line-height: 1;
 }
 
