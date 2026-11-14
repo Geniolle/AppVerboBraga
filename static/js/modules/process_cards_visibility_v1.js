@@ -120,6 +120,10 @@
     );
   }
 
+  function cardBelongsToHomeGroup(menuKey, card) {
+    return menuKey === "home" && card.id === "recent-users-card";
+  }
+
   function cardBelongsToUserGroup(menuKey, targetSelector, card) {
     return (
       menuKey === "administrativo" &&
@@ -217,6 +221,7 @@
         isAdminSubprocessGroupedBlock ||
         cardBelongsToEntityGroup(menuKey, targetSelector, card) ||
         cardBelongsToUserGroup(menuKey, targetSelector, card) ||
+        cardBelongsToHomeGroup(menuKey, card) ||
         cardBelongsToSettingsGroup(supportsStructuredAdminGroups, targetSelector, card);
 
       card.style.display = shouldShowCard ? "" : "none";
