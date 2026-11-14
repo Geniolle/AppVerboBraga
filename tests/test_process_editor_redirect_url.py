@@ -203,7 +203,15 @@ def test_appgenesis_cancel_controller_remains_the_single_cancel_entry_point() ->
     assert "window.AppGenesisCancelControllerV1" in cancel_controller_text
     # Nem new_user.js nem return_after_save.js podem definir seu proprio tratamento de
     # clique em "Cancelar" -- toda logica de saida do editor passa pelo controller global.
-    assert "data-appgenesis-cancel" not in new_user_js_text
+    # O modo de leitura preserva o botão Cancelar para o controlador global.
+    readonly_cancel_guard = (
+        'if (control.hasAttribute("data-appgenesis-cancel")) {\n'
+        "        return;\n"
+        "      }\n"
+        "      control.disabled = true;"
+    )
+    assert readonly_cancel_guard in new_user_js_text
+    assert "data-appgenesis-cancel" not in new_user_js_text.replace(readonly_cancel_guard, "", 1)
     assert "data-appgenesis-cancel" not in return_after_save_text
 
 
