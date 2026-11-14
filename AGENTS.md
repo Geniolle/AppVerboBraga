@@ -1494,3 +1494,25 @@ Quando os testes focados, verificações estáticas e a validação necessária 
 - parar.
 
 Não continuar criando testes ou investigando áreas fora do escopo sem autorização.
+
+## 17) Premissa: abas e campos de Meus dados são configuráveis (não fixos)
+
+Decisão do projeto (validada pelo utilizador):
+
+1. As abas de **Igreja › Meus dados** (ex.: Dados pessoais, Dados de morada, Dados de treinamento) NÃO devem ser fixas no código. Devem ser criadas na configuração do processo:
+   - Editor do processo: `Igreja › Sessões › Menu › Editar processo: Meus dados`.
+   - Aba **Campos adicionais**: criar campo com `Tipo do campo = Cabeçalho (aba)`. Cada cabeçalho é uma aba.
+   - Aba **Configuração dos campos**: atribuir o cabeçalho a cada campo via `Cabeçalho do campo`.
+2. Os cabeçalhos configurados chegam ao front-end como `profilePersonalSections` (já existe). A lista de abas e os blocos devem sair daí.
+3. Não acrescentar abas hardcoded em `process_menu_config_builder_v1.js` (ex.: `Dados de morada`, `Dados de Treinamento`). Remover as que existirem quando a configuração estiver completa.
+4. Antes de remover uma aba fixa, garantir que os seus campos existem como campos configuráveis do processo `meu_perfil` (`MENU_MEU_PERFIL_FIELD_OPTIONS` em `appgenesis/services/process_settings/normalizers.py`). Hoje morada (morada, cidade, freguesia, código postal) e treinamento NÃO são campos configuráveis; enquanto não forem, a remoção quebra o acesso a esses dados.
+5. Campos de Dados pessoais devem respeitar a ordem da configuração. Estado atual: Nome, Telefone, Email, Data de nascimento, Género (ver `static/css/new_user.css`, regra `.personal-grid > .field` com `order`).
+
+### Fases (ordem obrigatória)
+- Fase 1: tornar morada e treinamento campos configuráveis do processo `meu_perfil` (backend `profile_handlers.py` + `services/profile.py` + opções em `normalizers.py`).
+- Fase 2: renderizar abas e blocos a partir de `profilePersonalSections` (cabeçalhos configurados), com cada bloco a conter os campos atribuídos ao cabeçalho.
+- Fase 3: remover as abas fixas de `process_menu_config_builder_v1.js` e os cartões fixos de `new_user.html` que deixarem de ser necessários.
+
+### Proibido
+- Adicionar nova aba fixa de Meus dados sem passar pela configuração de Cabeçalho (aba).
+- Remover cartões de morada/treinamento antes da Fase 1 estar concluída.
