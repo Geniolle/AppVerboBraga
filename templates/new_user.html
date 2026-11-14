@@ -2499,7 +2499,7 @@
         </section>
 
 
-        <section id="recent-users-card" class="card" data-menu-scope="administrativo,home" {% if initial_menu not in ['administrativo', 'home'] or (initial_menu_target and initial_menu_target != '#recent-users-card') %}style="display: none;"{% endif %}>
+        <section id="recent-users-card" class="card" data-menu-scope="home" {% if initial_menu != 'home' or (initial_menu_target and initial_menu_target != '#recent-users-card') %}style="display: none;"{% endif %}>
           <h2>Últimos utilizadores criados</h2>
           {% if recent_users %}
             <table>
@@ -2591,10 +2591,10 @@
   <script src="/static/js/modules/admin_target_registry_v1.js?v=20260707-admin-target-registry-v1"></script>
   <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260707-process-menu-config-stage3-v1"></script>
   <script src="/static/js/modules/process_navigation_state_v1.js?v=20260713-entity-edit-startup-v1"></script>
-  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-v1"></script>
+  <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-only-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260713-entity-edit-hash-v1"></script>
-  <script src="/static/js/new_user.js?v=20260714-readonly-close-v1"></script>
+  <script src="/static/js/new_user.js?v=20260714-recent-users-home-only-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>
