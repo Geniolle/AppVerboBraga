@@ -1,6 +1,7 @@
 // Campo de telefone com seletor de indicativo: o seletor mostra "+351 (Portugal)", o utilizador
 // pesquisa o pais e escreve so o numero nacional. Guardamos o pais por nome (country) e o
 // telefone completo em formato internacional (primary_phone), por exemplo "+351 910000000".
+// Se o pais guardado nao estiver na lista, mantemos o pais e o indicativo existentes.
 (function initProfilePhoneFieldV1() {
   const DEFAULT_COUNTRY = "Portugal";
   const DEFAULT_DIAL = "+351";
@@ -47,46 +48,42 @@
     const form = fieldEl.closest("form");
     if (!form) return;
     const countryInputEl = fieldEl.querySelector("[data-phone-country-v1]");
-    const listEl = fieldEl.querySelector("[data-phone-listbox-v1]");
     const nationalEl = fieldEl.querySelector("[data-phone-national-v1]");
     const countryNameEl = fieldEl.querySelector("[data-phone-country-name-v1]");
     const fullEl = fieldEl.querySelector("[data-phone-full-v1]");
+    const comboEl = fieldEl.querySelector("[data-phone-combo-v1]");
+    const listEl = fieldEl.querySelector("[data-phone-listbox-v1]");
     if (!countryInputEl || !nationalEl || !countryNameEl || !fullEl) return;
 
     const options = readOptions(listEl);
-    const current = findByCountry(options, countryNameEl.value)
-      || findByCountry(options, DEFAULT_COUNTRY);
+    const itemEls = listEl ? Array.from(listEl.querySelectorAll("[role=option]")) : [];
+    const storedCountry = String(countryNameEl.value || "").trim();
+    const current = findByCountry(options, storedCountry)
+      || (storedCountry ? null : findByCountry(options, DEFAULT_COUNTRY));
     const initial = splitFullNumber(fullEl.value, options);
-    let selected = current;
-    if (initial.dial) {
-      selected = options.find((item) => item.dial === initial.dial && item.country === (current ? current.country : "")) || options.find((item) => item.dial === initial.dial) || current;
-    }
 
-    countryInputEl.value = selected ? selected.text : `${DEFAULT_DIAL} (${DEFAULT_COUNTRY})`;
+    let dialCode = initial.dial
+      || (current ? current.dial : (storedCountry ? "" : DEFAULT_DIAL));
+    countryInputEl.value = current ? current.text : "";
     nationalEl.value = initial.national;
 
     function syncFromSelector() {
       const matched = findByText(options, countryInputEl.value);
       if (matched) {
-        selected = matched;
+        dialCode = matched.dial;
         countryNameEl.value = matched.country;
       }
     }
 
     function render() {
-      const dial = selected ? selected.dial : DEFAULT_DIAL;
       const national = nationalEl.value.trim();
-      fullEl.value = national ? `${dial} ${national}` : "";
+      fullEl.value = national && dialCode ? `${dialCode} ${national}` : "";
     }
-
-    const comboEl = fieldEl.querySelector("[data-phone-combo-v1]");
-    const itemEls = listEl ? Array.from(listEl.querySelectorAll("[role=option]")) : [];
 
     function filterItems() {
       const query = countryInputEl.value.trim().toLowerCase();
       itemEls.forEach((itemEl) => {
-        const visible = !query || itemEl.textContent.toLowerCase().includes(query);
-        itemEl.hidden = !visible;
+        itemEl.hidden = Boolean(query) && !itemEl.textContent.toLowerCase().includes(query);
       });
     }
 
@@ -113,7 +110,7 @@
     countryInputEl.addEventListener("focus", openList);
     countryInputEl.addEventListener("click", openList);
     countryInputEl.addEventListener("input", () => {
-      listEl.hidden = false;
+      if (listEl) listEl.hidden = false;
       filterItems();
       syncFromSelector();
       render();
@@ -125,9 +122,9 @@
     });
     countryInputEl.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closeList();
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && listEl && !listEl.hidden) {
         const first = itemEls.find((itemEl) => !itemEl.hidden);
-        if (first && !listEl.hidden) {
+        if (first) {
           event.preventDefault();
           chooseItem(first);
         }
@@ -150,7 +147,6 @@
       render();
     });
 
-    syncFromSelector();
     render();
   }
 

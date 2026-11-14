@@ -191,11 +191,62 @@ __all__ = [
 ]
 
 
+
+PROFILE_PHONE_COUNTRIES: tuple[tuple[str, str], ...] = (
+    ("Albânia", "+355"),
+    ("Alemanha", "+49"),
+    ("Andorra", "+376"),
+    ("Áustria", "+43"),
+    ("Bélgica", "+32"),
+    ("Bielorrússia", "+375"),
+    ("Bósnia e Herzegovina", "+387"),
+    ("Brasil", "+55"),
+    ("Bulgária", "+359"),
+    ("Chipre", "+357"),
+    ("Croácia", "+385"),
+    ("Dinamarca", "+45"),
+    ("Eslováquia", "+421"),
+    ("Eslovénia", "+386"),
+    ("Espanha", "+34"),
+    ("Estónia", "+372"),
+    ("Finlândia", "+358"),
+    ("França", "+33"),
+    ("Grécia", "+30"),
+    ("Hungria", "+36"),
+    ("Irlanda", "+353"),
+    ("Islândia", "+354"),
+    ("Itália", "+39"),
+    ("Kosovo", "+383"),
+    ("Letónia", "+371"),
+    ("Liechtenstein", "+423"),
+    ("Lituânia", "+370"),
+    ("Luxemburgo", "+352"),
+    ("Macedónia do Norte", "+389"),
+    ("Malta", "+356"),
+    ("Moldávia", "+373"),
+    ("Mónaco", "+377"),
+    ("Montenegro", "+382"),
+    ("Noruega", "+47"),
+    ("Países Baixos", "+31"),
+    ("Polónia", "+48"),
+    ("Portugal", "+351"),
+    ("Reino Unido", "+44"),
+    ("República Checa", "+420"),
+    ("Roménia", "+40"),
+    ("Rússia", "+7"),
+    ("San Marino", "+378"),
+    ("Sérvia", "+381"),
+    ("Suécia", "+46"),
+    ("Suíça", "+41"),
+    ("Ucrânia", "+380"),
+)
+
+
 def list_phone_country_options() -> list[dict[str, str]]:
     return sorted(
         (
-            {"label": item["label"], "dial_code": item["dial_code"]}
-            for item in SUPPORTED_PHONE_COUNTRIES.values()
+            {"label": label, "dial_code": dial_code}
+            for label, dial_code in PROFILE_PHONE_COUNTRIES
         ),
         key=lambda option: option["label"],
     )
