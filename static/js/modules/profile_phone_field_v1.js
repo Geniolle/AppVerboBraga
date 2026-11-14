@@ -12,10 +12,10 @@
     return { dial: match[1], country: match[2].trim(), text: String(text).trim() };
   }
 
-  function readOptions(datalistEl) {
-    if (!datalistEl) return [];
-    return Array.from(datalistEl.options)
-      .map((option) => parseOption(option.value))
+  function readOptions(listEl) {
+    if (!listEl) return [];
+    return Array.from(listEl.querySelectorAll("[role=option]"))
+      .map((itemEl) => parseOption(itemEl.dataset.value))
       .filter(Boolean);
   }
 
@@ -47,13 +47,13 @@
     const form = fieldEl.closest("form");
     if (!form) return;
     const countryInputEl = fieldEl.querySelector("[data-phone-country-v1]");
-    const datalistEl = form.querySelector("#edit-country-options");
+    const listEl = fieldEl.querySelector("[data-phone-listbox-v1]");
     const nationalEl = fieldEl.querySelector("[data-phone-national-v1]");
     const countryNameEl = fieldEl.querySelector("[data-phone-country-name-v1]");
     const fullEl = fieldEl.querySelector("[data-phone-full-v1]");
     if (!countryInputEl || !nationalEl || !countryNameEl || !fullEl) return;
 
-    const options = readOptions(datalistEl);
+    const options = readOptions(listEl);
     const current = findByCountry(options, countryNameEl.value)
       || findByCountry(options, DEFAULT_COUNTRY);
     const initial = splitFullNumber(fullEl.value, options);
@@ -79,14 +79,71 @@
       fullEl.value = national ? `${dial} ${national}` : "";
     }
 
-    countryInputEl.addEventListener("change", () => {
+    const comboEl = fieldEl.querySelector("[data-phone-combo-v1]");
+    const itemEls = listEl ? Array.from(listEl.querySelectorAll("[role=option]")) : [];
+
+    function filterItems() {
+      const query = countryInputEl.value.trim().toLowerCase();
+      itemEls.forEach((itemEl) => {
+        const visible = !query || itemEl.textContent.toLowerCase().includes(query);
+        itemEl.hidden = !visible;
+      });
+    }
+
+    function openList() {
+      if (!listEl) return;
+      itemEls.forEach((itemEl) => { itemEl.hidden = false; });
+      listEl.hidden = false;
+      countryInputEl.setAttribute("aria-expanded", "true");
+    }
+
+    function closeList() {
+      if (!listEl) return;
+      listEl.hidden = true;
+      countryInputEl.setAttribute("aria-expanded", "false");
+    }
+
+    function chooseItem(itemEl) {
+      countryInputEl.value = itemEl.dataset.value;
       syncFromSelector();
       render();
-    });
+      closeList();
+    }
+
+    countryInputEl.addEventListener("focus", openList);
+    countryInputEl.addEventListener("click", openList);
     countryInputEl.addEventListener("input", () => {
+      listEl.hidden = false;
+      filterItems();
       syncFromSelector();
       render();
     });
+    countryInputEl.addEventListener("blur", () => {
+      syncFromSelector();
+      render();
+      closeList();
+    });
+    countryInputEl.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeList();
+      if (event.key === "Enter") {
+        const first = itemEls.find((itemEl) => !itemEl.hidden);
+        if (first && !listEl.hidden) {
+          event.preventDefault();
+          chooseItem(first);
+        }
+      }
+    });
+    itemEls.forEach((itemEl) => {
+      itemEl.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        chooseItem(itemEl);
+      });
+    });
+    if (comboEl) {
+      document.addEventListener("mousedown", (event) => {
+        if (!comboEl.contains(event.target)) closeList();
+      });
+    }
     nationalEl.addEventListener("input", render);
     form.addEventListener("submit", () => {
       syncFromSelector();
