@@ -3718,6 +3718,10 @@ function setActiveSubmenu(targetSelector, selectedLinkEl = null) {
 // simples "el.style.display = 'none'" nao consegue escondê-lo; e preciso usar setProperty com
 // prioridade "important" para vencer a regra do stylesheet.
 function setDynamicProcessEditToggleVisible(isVisible) {
+  const isProfileMenu = [PERFIL_MENU_KEY_V1, MEU_PERFIL_MENU_KEY].includes(normalizeMenuKey(activeMenuKey));
+  if (isProfileMenu) {
+    isVisible = false;
+  }
   if (dynamicProcessActionCardEl) {
     dynamicProcessActionCardEl.style.display = isVisible ? "" : "none";
   }
