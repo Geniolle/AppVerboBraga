@@ -5727,3 +5727,7 @@ input.action-btn-cancel,
 .phone-country-listbox-v1 li:focus {
   background: #eef2f7;
 }
+
+.card:has(.phone-country-combo-v1) {
+  overflow: visible;
+}
