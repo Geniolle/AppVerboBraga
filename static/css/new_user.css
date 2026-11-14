@@ -957,8 +957,8 @@ body {
    .profile-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -973,6 +973,26 @@ body {
   margin: 0;
   padding: 8px 12px;
   font-size: 13px;
+}
+
+.profile-edit-icon-v1 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #2f3a4a;
+  cursor: pointer;
+}
+
+.profile-edit-icon-v1:hover,
+.profile-edit-icon-v1:focus-visible {
+  background: #eef2f7;
+  color: #0f172a;
 }
 
    .profile-edit-form {
