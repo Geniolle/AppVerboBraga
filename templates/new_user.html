@@ -9,7 +9,7 @@
 {% block head_extra %}
 <script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260706-post-save-feedback-always-wins-v1"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260715-country-overflow-v4">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260715-view-order-v5">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260713-page-size-72-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260713-shared-list-card-header-v1">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
@@ -323,22 +323,16 @@
                 <strong class="personal-value">{{ user_personal_data.full_name }}</strong>
               </div>
               {% endif %}
-              {% if "email" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
-                <span class="personal-label">Email</span>
-                <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
-              </div>
-              {% endif %}
-              {% if "pais" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
-                <span class="personal-label">País</span>
-                <strong class="personal-value">{{ user_personal_data.country }}</strong>
-              </div>
-              {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
               <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
                 <span class="personal-label">Telefone</span>
                 <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
+              </div>
+              {% endif %}
+              {% if "email" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('email', '') }}">
+                <span class="personal-label">Email</span>
+                <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
               </div>
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
