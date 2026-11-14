@@ -103,38 +103,6 @@
   outline-offset: 2px;
 }
 
-/* Tooltip escuro (estilo Gemini): usa o texto de data-sidebar-tooltip,
-   mantido em sincronia com aria-label/title por sidebar_collapse_v1.js.
-   Aparece abaixo do botao, alinhado a direita, para nao cobrir a coluna
-   principal de conteudo. */
-.sidebar-collapse-toggle[data-sidebar-tooltip]::after {
-  content: attr(data-sidebar-tooltip);
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background: #111111;
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-  padding: 5px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 0.12s ease, transform 0.12s ease;
-  z-index: 40;
-}
-
-.sidebar-collapse-toggle[data-sidebar-tooltip]:hover::after,
-.sidebar-collapse-toggle[data-sidebar-tooltip]:focus-visible::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
 body.appgenesis-sidebar-collapsed .app-sidebar-modern-header-v1 {
   position: relative;
   padding: 14px 8px;
@@ -165,18 +133,6 @@ body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle {
 body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle:hover,
 body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle:focus-visible {
   opacity: 1;
-}
-
-body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]::after {
-  top: 50%;
-  left: calc(100% + 10px);
-  right: auto;
-  transform: translate(-4px, -50%);
-}
-
-body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]:hover::after,
-body.appgenesis-sidebar-collapsed .sidebar-collapse-toggle[data-sidebar-tooltip]:focus-visible::after {
-  transform: translate(0, -50%);
 }
 
 /* ===================================================================

@@ -39,7 +39,6 @@
     button.setAttribute("aria-expanded", collapsed ? "false" : "true");
     button.setAttribute("aria-label", label);
     button.setAttribute("title", label);
-    button.setAttribute("data-sidebar-tooltip", label);
   }
 
   function applyState(button, collapsed) {
