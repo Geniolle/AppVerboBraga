@@ -6,13 +6,27 @@
   conteudo especifico (pesquisa, tabela, editor) e passado via {% call %}.
 #}
 
-{% macro render_configurable_list_card(card_id, title, create_label=none, create_target=none, extra_class="", head_extra=none) %}
+{% macro render_configurable_list_card(card_id, title, create_label=none, create_target=none, extra_class="", head_extra=none, create_icon_only=true) %}
 <section class="card admin-subprocess-table-card-v1 configurable-items-list-card-v1{% if extra_class %} {{ extra_class }}{% endif %}" id="{{ card_id }}">
   <div class="configurable-items-list-card-head-v1">
+    {% if create_label and create_target and create_icon_only %}
+    <div class="configurable-items-list-card-title-group-v1">
+      <h3 class="configurable-items-list-card-title-v1">{{ title }}</h3>
+      <button
+        type="button"
+        class="admin-subprocess-inline-create-btn-v1 configurable-items-create-trigger-v1"
+        data-configurable-create-trigger
+        data-configurable-manager-target="{{ create_target }}"
+        aria-label="{{ create_label }}"
+        title="{{ create_label }}"
+      ><span class="admin-subprocess-inline-create-icon-v1" aria-hidden="true">+</span><span>{{ create_label }}</span></button>
+    </div>
+    {% else %}
     <h3 class="configurable-items-list-card-title-v1">{{ title }}</h3>
-    {% if (create_label and create_target) or head_extra %}
+    {% endif %}
+    {% if (create_label and create_target and not create_icon_only) or head_extra %}
     <div class="configurable-items-list-head-actions-v1">
-      {% if create_label and create_target %}
+      {% if create_label and create_target and not create_icon_only %}
       <button
         type="button"
         class="action-btn configurable-items-create-trigger-v1"

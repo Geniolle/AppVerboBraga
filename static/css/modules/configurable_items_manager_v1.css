@@ -1465,3 +1465,40 @@ button.action-btn.configurable-items-create-trigger-v1 {
 }
 
 /* APPGENESIS_PROCESS_FIELDS_CONFIG_STATIC_GRID_V6_END */
+
+/* APPGENESIS_PROCESS_FIELDS_CONFIG_SINGLE_RULES_V1_START */
+
+/* Primeiro bloco de cada aba do processo: sem linha nem espaço extra sob as abas */
+#settings-menu-edit-card .process-edit-pane > .admin-subsection:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Rodapé de paginação: uma só linha de separação */
+.configurable-items-pagination-footer-v1 .configurable-items-pagination-row-v1 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* APPGENESIS_PROCESS_FIELDS_CONFIG_SINGLE_RULES_V1_END */
+
+/* APPGENESIS_CONFIGURABLE_TITLE_GROUP_V1_START */
+.configurable-items-list-card-title-group-v1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.configurable-items-list-card-title-group-v1 .admin-subprocess-inline-create-btn-v1 {
+  margin-right: 0;
+}
+/* APPGENESIS_CONFIGURABLE_TITLE_GROUP_V1_END */
+
+/* Titulo e botao + alinhados (regra .process-edit-pane h3 aplica margens ao titulo) */
+#settings-menu-edit-card .configurable-items-list-card-title-group-v1 .configurable-items-list-card-title-v1 {
+  margin: 0;
+  line-height: 1.2;
+}
