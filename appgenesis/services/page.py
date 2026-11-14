@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from appgenesis.services.phone_country import list_phone_country_options
+from appgenesis.services.profile import PERSONAL_GENDER_OPTIONS
 from appgenesis.core import (
     ENTITY_NUMBER_MAX,
     ENTITY_NUMBER_MIN,
@@ -994,6 +995,7 @@ def get_page_data(
         "menu_process_quantity_values_map": menu_process_quantity_values_map,
         "profile_personal_visible_fields": profile_personal_visible_fields,
         "phone_country_options": list_phone_country_options(),
+        "personal_gender_options": PERSONAL_GENDER_OPTIONS,
         "profile_personal_field_labels": profile_personal_field_labels,
         "profile_personal_field_section_map": profile_personal_field_section_map,
         "profile_personal_sections": profile_personal_sections,

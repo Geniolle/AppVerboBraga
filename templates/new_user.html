@@ -341,6 +341,12 @@
                 <strong class="personal-value">{{ user_personal_data.birth_date }}</strong>
               </div>
               {% endif %}
+              {% if "genero" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('genero', '') }}">
+                <span class="personal-label">Género</span>
+                <strong class="personal-value">{{ user_personal_data.gender }}</strong>
+              </div>
+              {% endif %}
               {% if "whatsapp" in profile_personal_visible_fields %}
               <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('whatsapp', '') }}">
                 <span class="personal-label">WhatsApp</span>
@@ -501,6 +507,17 @@
                 name="birth_date"
                 value="{{ '' if user_personal_data.birth_date == '-' else user_personal_data.birth_date }}"
               >
+              {% endif %}
+              {% if "genero" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('genero', '') }}">
+                <label for="edit_gender">Género</label>
+                <select id="edit_gender" name="gender">
+                  <option value="">Selecionar</option>
+                  {% for option in personal_gender_options %}
+                  <option value="{{ option }}" {% if user_personal_data.gender == option %}selected{% endif %}>{{ option }}</option>
+                  {% endfor %}
+                </select>
+              </div>
               {% endif %}
               <div class="field full" data-profile-section-pane="{{ profile_personal_field_section_map.get('autorizacao_whatsapp', '') }}">
                 <label>

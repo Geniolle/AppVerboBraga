@@ -50,6 +50,7 @@ from appgenesis.services.page import build_users_new_url, get_page_data
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.profile import (
+    PERSONAL_GENDER_OPTIONS,
     build_menu_process_field_storage_key,
     build_menu_process_records_storage_key,
     build_menu_process_quantity_storage_key,
@@ -1172,6 +1173,9 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
     clean_login_email = str(submitted_form.get("login_email") or submitted_form.get("email") or "").strip().lower()
     clean_country = str(submitted_form.get("country") or "").strip()
     clean_birth_date = str(submitted_form.get("birth_date") or "").strip()
+    clean_gender = str(submitted_form.get("gender") or "").strip()
+    if clean_gender not in PERSONAL_GENDER_OPTIONS:
+        clean_gender = ""
     whatsapp_notice_opt_in = str(submitted_form.get("whatsapp_notice_opt_in") or "").strip()
 
     try:
@@ -1580,6 +1584,7 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         user_account.login_email = clean_login_email
         member.country = clean_country or None
         member.birth_date = parsed_birth_date
+        member.gender = clean_gender or None
         member.whatsapp_notice_opt_in = parsed_whatsapp_notice_opt_in
         for existing_key in list(existing_profile_fields.keys()):
             if existing_key.startswith("custom_"):

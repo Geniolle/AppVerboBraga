@@ -1286,6 +1286,9 @@ def parse_optional_date_pt(raw_value: str) -> date | None:
         return None
     return datetime.strptime(clean_value, "%d/%m/%Y").date()
 
+PERSONAL_GENDER_OPTIONS: tuple[str, ...] = ("Feminino", "Masculino")
+
+
 def get_user_personal_data(
     session: Session,
     user_id: int,
@@ -1298,6 +1301,7 @@ def get_user_personal_data(
             Member.primary_phone,
             Member.country,
             Member.birth_date,
+            Member.gender,
             Member.address,
             Member.city,
             Member.freguesia,
@@ -1328,6 +1332,7 @@ def get_user_personal_data(
             "primary_phone": "-",
             "country": "-",
             "birth_date": "-",
+            "gender": "-",
             "address": "-",
             "city": "-",
             "freguesia": "-",
@@ -1427,6 +1432,7 @@ def get_user_personal_data(
         "primary_phone": row.primary_phone or "-",
         "country": row.country or "-",
         "birth_date": format_optional_date_pt(row.birth_date),
+        "gender": row.gender or "-",
         "address": row.address or "-",
         "city": row.city or "-",
         "freguesia": row.freguesia or "-",
