@@ -9,7 +9,7 @@
 {% block head_extra %}
 <script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260706-post-save-feedback-always-wins-v1"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260714-edit-icon-v2">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260715-phone-v1">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260713-page-size-72-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260713-shared-list-card-header-v1">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
@@ -464,13 +464,26 @@
               {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
-                <label for="edit_primary_phone">Telefone *</label>
-                <input
-                  id="edit_primary_phone"
-                  name="primary_phone"
-                  required
-                  value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
-                >
+                <label for="edit_primary_phone_national">Telefone *</label>
+                <div class="phone-field-v1" data-phone-field-v1>
+                  <span class="phone-field-dial-v1" data-phone-dial-v1>+351</span>
+                  <input
+                    id="edit_primary_phone_national"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel-national"
+                    required
+                    placeholder="910 000 000"
+                    data-phone-national-v1
+                  >
+                  <input
+                    type="hidden"
+                    id="edit_primary_phone"
+                    name="primary_phone"
+                    value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
+                    data-phone-full-v1
+                  >
+                </div>
               </div>
               {% else %}
               <input
@@ -2602,6 +2615,7 @@
   <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-only-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260713-entity-edit-hash-v1"></script>
+  <script src="/static/js/modules/profile_phone_field_v1.js?v=20260715-phone-v1"></script>
   <script src="/static/js/new_user.js?v=20260714-no-profile-action-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
