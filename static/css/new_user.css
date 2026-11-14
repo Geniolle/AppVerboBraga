@@ -5731,3 +5731,7 @@ input.action-btn-cancel,
 .card:has(.phone-country-combo-v1) {
   overflow: visible;
 }
+
+.personal-grid > .field:has(select[name="gender"]) {
+  order: 60;
+}
