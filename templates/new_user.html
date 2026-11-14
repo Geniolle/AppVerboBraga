@@ -573,7 +573,7 @@
           </form>
         </section>
 
-        <section id="perfil-morada-card" class="card" data-menu-scope="perfil" {% if initial_menu != 'perfil' or initial_menu_target != '#perfil-morada-card' %}style="display: none;"{% endif %}>
+        <section id="perfil-morada-card" class="card" data-menu-scope="perfil,meu_perfil" {% if initial_menu not in ['perfil', 'meu_perfil'] or initial_menu_target != '#perfil-morada-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados de morada</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="perfil-morada-card">Editar</button>
@@ -645,7 +645,7 @@
             </div>
           </form>
         </section>
-        <section id="dados-treinamento-card" class="card" data-menu-scope="perfil" {% if initial_menu != 'perfil' or initial_menu_target != '#dados-treinamento-card' %}style="display: none;"{% endif %}>
+        <section id="dados-treinamento-card" class="card" data-menu-scope="perfil,meu_perfil" {% if initial_menu not in ['perfil', 'meu_perfil'] or initial_menu_target != '#dados-treinamento-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2>Dados de treinamento</h2>
             <button type="button" class="profile-edit-toggle" data-edit-target="dados-treinamento-card">Editar</button>
@@ -2589,7 +2589,7 @@
   <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
   <script src="/static/js/modules/process_reference_registry_v1.js?v=20260707-process-reference-stage8-v1"></script>
   <script src="/static/js/modules/admin_target_registry_v1.js?v=20260707-admin-target-registry-v1"></script>
-  <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260707-process-menu-config-stage3-v1"></script>
+  <script src="/static/js/modules/process_menu_config_builder_v1.js?v=20260714-meu-dados-ensure-v1"></script>
   <script src="/static/js/modules/process_navigation_state_v1.js?v=20260713-entity-edit-startup-v1"></script>
   <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-only-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>

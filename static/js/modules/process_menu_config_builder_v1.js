@@ -249,15 +249,19 @@
         description: "Dados do meu perfil.",
         singleView: true,
         toggleOnMenuClick: true,
-        items: (
-          Array.isArray(state.profilePersonalSections) && state.profilePersonalSections.length
-            ? state.profilePersonalSections.map((section) => ({
-                label: String(section.label || "Dados pessoais"),
-                target: "#perfil-pessoal-card",
-                profileSection: String(section.key || "")
-              }))
-            : []
-        ),
+        items: [
+          ...(
+            Array.isArray(state.profilePersonalSections) && state.profilePersonalSections.length
+              ? state.profilePersonalSections.map((section) => ({
+                  label: String(section.label || "Dados pessoais"),
+                  target: "#perfil-pessoal-card",
+                  profileSection: String(section.key || "")
+                }))
+              : []
+          ),
+          { label: "Dados de morada", target: "#perfil-morada-card" },
+          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
+        ],
         details: [
           { label: "Modulo", value: "Meu perfil" },
           { label: "Status", value: "Ativo" }
@@ -542,12 +546,26 @@
     };
   }
 
+  function ensureMeuPerfilMenuConfig() {
+    const meuPerfilKey = state.MEU_PERFIL_MENU_KEY;
+    const baseEntry = menuConfig[meuPerfilKey];
+    if (baseEntry && Array.isArray(baseEntry.items) && baseEntry.items.length) {
+      return;
+    }
+    menuConfig[meuPerfilKey] = {
+      ...menuConfig.perfil,
+      title: "Meus dados",
+      description: "Dados do meu perfil."
+    };
+  }
+
   function initializeMenuConfig(options) {
     clearObject(menuConfig);
     clearObject(dynamicProcessDataByMenu);
     clearObject(selectedDynamicSectionByMenu);
     configure(options);
     Object.assign(menuConfig, buildBaseMenuConfig());
+    ensureMeuPerfilMenuConfig();
     mergeDynamicProcessMenus();
     ensureAuthorizationProfileMenuConfig();
     return {
