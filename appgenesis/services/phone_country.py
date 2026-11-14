@@ -189,3 +189,13 @@ __all__ = [
     "normalize_phone_value",
     "validate_phone_prefix_for_country",
 ]
+
+
+def list_phone_country_options() -> list[dict[str, str]]:
+    return sorted(
+        (
+            {"label": item["label"], "dial_code": item["dial_code"]}
+            for item in SUPPORTED_PHONE_COUNTRIES.values()
+        ),
+        key=lambda option: option["label"],
+    )

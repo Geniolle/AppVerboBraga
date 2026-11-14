@@ -329,16 +329,16 @@
                 <strong class="personal-value">{{ user_personal_data.login_email }}</strong>
               </div>
               {% endif %}
-              {% if "telefone" in profile_personal_visible_fields %}
-              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
-                <span class="personal-label">Telefone</span>
-                <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
-              </div>
-              {% endif %}
               {% if "pais" in profile_personal_visible_fields %}
               <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
                 <span class="personal-label">País</span>
                 <strong class="personal-value">{{ user_personal_data.country }}</strong>
+              </div>
+              {% endif %}
+              {% if "telefone" in profile_personal_visible_fields %}
+              <div class="personal-item" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
+                <span class="personal-label">Telefone</span>
+                <strong class="personal-value">{{ user_personal_data.primary_phone }}</strong>
               </div>
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
@@ -438,6 +438,30 @@
                 value="{{ '' if user_personal_data.full_name == '-' else user_personal_data.full_name }}"
               >
               {% endif %}
+              {% if "pais" in profile_personal_visible_fields %}
+              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
+                <label for="edit_country">País</label>
+                <input
+                  id="edit_country"
+                  name="country"
+                  list="edit-country-options"
+                  autocomplete="off"
+                  placeholder="Pesquisar país"
+                  value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}"
+                >
+                <datalist id="edit-country-options">
+                  {% for option in phone_country_options %}
+                  <option value="{{ option.label }}" label="{{ option.dial_code }}"></option>
+                  {% endfor %}
+                </datalist>
+              </div>
+              {% else %}
+              <input
+                type="hidden"
+                name="country"
+                value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}"
+              >
+              {% endif %}
               {% if "telefone" in profile_personal_visible_fields %}
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
                 <label for="edit_primary_phone">Telefone *</label>
@@ -453,22 +477,6 @@
                 type="hidden"
                 name="primary_phone"
                 value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
-              >
-              {% endif %}
-              {% if "pais" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
-                <label for="edit_country">País</label>
-                <input
-                  id="edit_country"
-                  name="country"
-                  value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}"
-                >
-              </div>
-              {% else %}
-              <input
-                type="hidden"
-                name="country"
-                value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}"
               >
               {% endif %}
               {% if "data_nascimento" in profile_personal_visible_fields %}
