@@ -4254,6 +4254,9 @@ function setupReadOnlyCards() {
       if (control.tagName === "INPUT" && control.type === "hidden") {
         return;
       }
+      if (control.hasAttribute("data-appgenesis-cancel")) {
+        return;
+      }
       control.disabled = true;
       control.required = false;
       control.classList.add("readonly-field");
