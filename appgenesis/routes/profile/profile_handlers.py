@@ -1585,6 +1585,20 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         member.country = clean_country or None
         member.birth_date = parsed_birth_date
         member.gender = clean_gender or None
+        if str(submitted_form.get("address_fields_present") or "") == "1":
+            member.address = str(submitted_form.get("address") or "").strip() or None
+            member.city = str(submitted_form.get("city") or "").strip() or None
+            member.freguesia = str(submitted_form.get("freguesia") or "").strip() or None
+            member.postal_code = str(submitted_form.get("postal_code") or "").strip() or None
+        if str(submitted_form.get("training_fields_present") or "") == "1":
+            training_outros_enabled = str(submitted_form.get("training_outros_enabled") or "") == "1"
+            clean_training_outros = str(submitted_form.get("training_outros") or "").strip()
+            member.training_discipulado_verbo_vida = str(submitted_form.get("training_discipulado_verbo_vida") or "") == "1"
+            member.training_ebvv = str(submitted_form.get("training_ebvv") or "") == "1"
+            member.training_rhema = str(submitted_form.get("training_rhema") or "") == "1"
+            member.training_escola_ministerial = str(submitted_form.get("training_escola_ministerial") or "") == "1"
+            member.training_escola_missoes = str(submitted_form.get("training_escola_missoes") or "") == "1"
+            member.training_outros = clean_training_outros if training_outros_enabled else None
         member.whatsapp_notice_opt_in = parsed_whatsapp_notice_opt_in
         for existing_key in list(existing_profile_fields.keys()):
             if existing_key.startswith("custom_"):

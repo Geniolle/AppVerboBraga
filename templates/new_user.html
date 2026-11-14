@@ -596,8 +596,59 @@
               {% endif %}
               {% endif %}
               {% endfor %}
-            </div>
-            <div class="profile-edit-actions">
+              {% if 'morada' in profile_personal_visible_fields or 'cidade' in profile_personal_visible_fields or 'freguesia' in profile_personal_visible_fields or 'codigo_postal' in profile_personal_visible_fields %}
+              <input type="hidden" name="address_fields_present" value="1">
+              {% endif %}
+              {% if 'morada' in profile_personal_visible_fields %}
+              <div class="field full" style="order: 70;">
+                <label for="edit_address">Morada</label>
+                <input id="edit_address" name="address" value="{{ '' if user_personal_data.address == '-' else user_personal_data.address }}">
+              </div>
+              {% endif %}
+              {% if 'cidade' in profile_personal_visible_fields %}
+              <div class="field" style="order: 71;">
+                <label for="edit_city">Cidade</label>
+                <input id="edit_city" name="city" value="{{ '' if user_personal_data.city == '-' else user_personal_data.city }}">
+              </div>
+              {% endif %}
+              {% if 'freguesia' in profile_personal_visible_fields %}
+              <div class="field" style="order: 72;">
+                <label for="edit_freguesia">Freguesia</label>
+                <input id="edit_freguesia" name="freguesia" value="{{ '' if user_personal_data.freguesia == '-' else user_personal_data.freguesia }}">
+              </div>
+              {% endif %}
+              {% if 'codigo_postal' in profile_personal_visible_fields %}
+              <div class="field" style="order: 73;">
+                <label for="edit_postal_code">Código postal</label>
+                <input id="edit_postal_code" name="postal_code" value="{{ '' if user_personal_data.postal_code == '-' else user_personal_data.postal_code }}">
+              </div>
+              {% endif %}
+              {% if 'treino_discipulado_verbo_vida' in profile_personal_visible_fields or 'treino_ebvv' in profile_personal_visible_fields or 'treino_rhema' in profile_personal_visible_fields or 'treino_escola_ministerial' in profile_personal_visible_fields or 'treino_escola_missoes' in profile_personal_visible_fields or 'treino_outros' in profile_personal_visible_fields %}
+              <input type="hidden" name="training_fields_present" value="1">
+              <div class="field full training-options-grid" style="order: 74;">
+                <span class="personal-label">Treinamentos</span>
+                {% if 'treino_discipulado_verbo_vida' in profile_personal_visible_fields %}
+                <label class="training-option-row"><input type="checkbox" name="training_discipulado_verbo_vida" value="1" {% if user_personal_data.training_discipulado_verbo_vida %}checked{% endif %}><span>Discipulado Verbo da Vida</span></label>
+                {% endif %}
+                {% if 'treino_ebvv' in profile_personal_visible_fields %}
+                <label class="training-option-row"><input type="checkbox" name="training_ebvv" value="1" {% if user_personal_data.training_ebvv %}checked{% endif %}><span>EBVV</span></label>
+                {% endif %}
+                {% if 'treino_rhema' in profile_personal_visible_fields %}
+                <label class="training-option-row"><input type="checkbox" name="training_rhema" value="1" {% if user_personal_data.training_rhema %}checked{% endif %}><span>RHEMA</span></label>
+                {% endif %}
+                {% if 'treino_escola_ministerial' in profile_personal_visible_fields %}
+                <label class="training-option-row"><input type="checkbox" name="training_escola_ministerial" value="1" {% if user_personal_data.training_escola_ministerial %}checked{% endif %}><span>Escola Ministerial</span></label>
+                {% endif %}
+                {% if 'treino_escola_missoes' in profile_personal_visible_fields %}
+                <label class="training-option-row"><input type="checkbox" name="training_escola_missoes" value="1" {% if user_personal_data.training_escola_missoes %}checked{% endif %}><span>Escola de Missões</span></label>
+                {% endif %}
+                {% if 'treino_outros' in profile_personal_visible_fields %}
+                <label class="training-option-row"><input type="checkbox" name="training_outros_enabled" value="1" {% if user_personal_data.training_outros %}checked{% endif %}><span>Outros</span></label>
+                <input name="training_outros" placeholder="Indique qual é o treinamento" value="{{ user_personal_data.training_outros or '' }}">
+                {% endif %}
+              </div>
+              {% endif %}
+              <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
               <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="perfil-pessoal-card">Cancelar</button>
             </div>
