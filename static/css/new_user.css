@@ -5673,27 +5673,20 @@ input.action-btn-cancel,
 }
 /* APPGENESIS_USER_CREATE_SUMMARY_HIDE_V1_END */
 
-.phone-field-v1 {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
+.phone-row-controls-v1 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 12px;
 }
 
-.phone-field-dial-v1 {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 64px;
-  justify-content: center;
-  padding: 0 10px;
-  border: 1px solid #d4ddeb;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #253046;
-  font-weight: 600;
-}
-
-.phone-field-v1 > input[type="tel"] {
-  flex: 1 1 auto;
+.phone-country-input-v1,
+.phone-row-controls-v1 > input[type="tel"] {
+  width: 100%;
   min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .phone-row-controls-v1 {
+    grid-template-columns: 1fr;
+  }
 }

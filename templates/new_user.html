@@ -9,7 +9,7 @@
 {% block head_extra %}
 <script src="/static/js/modules/navigation_reload_guard_v1.js?v=20260706-post-save-feedback-always-wins-v1"></script>
 <link rel="stylesheet" href="/static/css/modules/admin_status_tables_v1.css?v=20260625-badge-colors-v1">
-  <link rel="stylesheet" href="/static/css/new_user.css?v=20260715-phone-v1">
+  <link rel="stylesheet" href="/static/css/new_user.css?v=20260715-phone-row-v2">
   <link rel="stylesheet" href="/static/css/modules/process_shell_runtime_v1.css?v=20260713-page-size-72-v1">
   <link rel="stylesheet" href="/static/css/modules/configurable_items_manager_v1.css?v=20260713-shared-list-card-header-v1">
   <link rel="stylesheet" href="/static/css/modules/sidebar_sections_layout_v1.css?v=20260505-sessoes-sem-piscar-v26">
@@ -438,22 +438,42 @@
                 value="{{ '' if user_personal_data.full_name == '-' else user_personal_data.full_name }}"
               >
               {% endif %}
-              {% if "pais" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('pais', '') }}">
-                <label for="edit_country">País</label>
+              {% if "telefone" in profile_personal_visible_fields %}
+              <div class="field phone-row-v1" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}" data-phone-field-v1>
+                <label for="edit_country_code">Telefone *</label>
+                <div class="phone-row-controls-v1">
+                  <input
+                    id="edit_country_code"
+                    class="phone-country-input-v1"
+                    list="edit-country-options"
+                    autocomplete="off"
+                    placeholder="Pesquisar país"
+                    aria-label="Indicativo e país"
+                    data-phone-country-v1
+                  >
+                  <datalist id="edit-country-options">
+                    {% for option in phone_country_options %}
+                    <option value="{{ option.dial_code }} ({{ option.label }})"></option>
+                    {% endfor %}
+                  </datalist>
+                  <input
+                    id="edit_primary_phone_national"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel-national"
+                    required
+                    placeholder="Telemóvel"
+                    data-phone-national-v1
+                  >
+                </div>
+                <input type="hidden" name="country" id="edit_country" value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}" data-phone-country-name-v1>
                 <input
-                  id="edit_country"
-                  name="country"
-                  list="edit-country-options"
-                  autocomplete="off"
-                  placeholder="Pesquisar país"
-                  value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}"
+                  type="hidden"
+                  id="edit_primary_phone"
+                  name="primary_phone"
+                  value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
+                  data-phone-full-v1
                 >
-                <datalist id="edit-country-options">
-                  {% for option in phone_country_options %}
-                  <option value="{{ option.label }}" label="{{ option.dial_code }}"></option>
-                  {% endfor %}
-                </datalist>
               </div>
               {% else %}
               <input
@@ -461,31 +481,6 @@
                 name="country"
                 value="{{ '' if user_personal_data.country == '-' else user_personal_data.country }}"
               >
-              {% endif %}
-              {% if "telefone" in profile_personal_visible_fields %}
-              <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}">
-                <label for="edit_primary_phone_national">Telefone *</label>
-                <div class="phone-field-v1" data-phone-field-v1>
-                  <span class="phone-field-dial-v1" data-phone-dial-v1>+351</span>
-                  <input
-                    id="edit_primary_phone_national"
-                    type="tel"
-                    inputmode="tel"
-                    autocomplete="tel-national"
-                    required
-                    placeholder="910 000 000"
-                    data-phone-national-v1
-                  >
-                  <input
-                    type="hidden"
-                    id="edit_primary_phone"
-                    name="primary_phone"
-                    value="{{ '' if user_personal_data.primary_phone == '-' else user_personal_data.primary_phone }}"
-                    data-phone-full-v1
-                  >
-                </div>
-              </div>
-              {% else %}
               <input
                 type="hidden"
                 name="primary_phone"
@@ -2615,7 +2610,7 @@
   <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-only-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260713-entity-edit-hash-v1"></script>
-  <script src="/static/js/modules/profile_phone_field_v1.js?v=20260715-phone-v1"></script>
+  <script src="/static/js/modules/profile_phone_field_v1.js?v=20260715-phone-row-v2"></script>
   <script src="/static/js/new_user.js?v=20260714-no-profile-action-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
