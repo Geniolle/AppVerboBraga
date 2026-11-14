@@ -49,6 +49,8 @@
 
 /* ── Transição suave da sidebar ── */
 .sidebar {
+  position: relative;
+  z-index: 50;
   transition: width 0.22s ease, min-width 0.22s ease;
   overflow: hidden;
 }
