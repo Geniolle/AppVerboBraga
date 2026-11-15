@@ -596,65 +596,6 @@
               {% endif %}
               {% endif %}
               {% endfor %}
-              {% if 'morada' in profile_personal_visible_fields or 'cidade' in profile_personal_visible_fields or 'freguesia' in profile_personal_visible_fields or 'codigo_postal' in profile_personal_visible_fields %}
-              <input type="hidden" name="address_fields_present" value="1">
-              {% endif %}
-              {% if 'morada' in profile_personal_visible_fields %}
-              <div class="field full" style="order: 70;" data-profile-section-pane="{{ profile_personal_field_section_map.get('morada', '') }}">
-                <label for="edit_address">Morada</label>
-                <input id="edit_address" name="address" value="{{ '' if user_personal_data.address == '-' else user_personal_data.address }}">
-              </div>
-              {% endif %}
-              {% if 'cidade' in profile_personal_visible_fields %}
-              <div class="field" style="order: 71;" data-profile-section-pane="{{ profile_personal_field_section_map.get('cidade', '') }}">
-                <label for="edit_city">Cidade</label>
-                <input id="edit_city" name="city" value="{{ '' if user_personal_data.city == '-' else user_personal_data.city }}">
-              </div>
-              {% endif %}
-              {% if 'freguesia' in profile_personal_visible_fields %}
-              <div class="field" style="order: 72;" data-profile-section-pane="{{ profile_personal_field_section_map.get('freguesia', '') }}">
-                <label for="edit_freguesia">Freguesia</label>
-                <input id="edit_freguesia" name="freguesia" value="{{ '' if user_personal_data.freguesia == '-' else user_personal_data.freguesia }}">
-              </div>
-              {% endif %}
-              {% if 'codigo_postal' in profile_personal_visible_fields %}
-              <div class="field" style="order: 73;" data-profile-section-pane="{{ profile_personal_field_section_map.get('codigo_postal', '') }}">
-                <label for="edit_postal_code">Código postal</label>
-                <input id="edit_postal_code" name="postal_code" value="{{ '' if user_personal_data.postal_code == '-' else user_personal_data.postal_code }}">
-              </div>
-              {% endif %}
-              {% set training_options = [
-                ('treino_discipulado_verbo_vida', 'training_discipulado_verbo_vida', 'Discipulado Verbo da Vida', 'training_discipulado_verbo_vida'),
-                ('treino_ebvv', 'training_ebvv', 'EBVV', 'training_ebvv'),
-                ('treino_rhema', 'training_rhema', 'RHEMA', 'training_rhema'),
-                ('treino_escola_ministerial', 'training_escola_ministerial', 'Escola Ministerial', 'training_escola_ministerial'),
-                ('treino_escola_missoes', 'training_escola_missoes', 'Escola de Missões', 'training_escola_missoes'),
-                ('treino_outros', 'training_outros_enabled', 'Outros', 'training_outros')
-              ] %}
-              {% set training_visible = [] %}
-              {% for option in training_options %}
-                {% if option[0] in profile_personal_visible_fields %}{% set _ = training_visible.append(option) %}{% endif %}
-              {% endfor %}
-              {% if training_visible %}
-              <input type="hidden" name="training_fields_present" value="1">
-              {% endif %}
-              {% for section in profile_personal_sections %}
-              {% set section_options = [] %}
-              {% for option in training_visible %}
-                {% if profile_personal_field_section_map.get(option[0], '') == section.key %}{% set _ = section_options.append(option) %}{% endif %}
-              {% endfor %}
-              {% if section_options %}
-              <div class="field full training-options-grid" data-profile-section-pane="{{ section.key }}" style="order: 74;">
-                <span class="personal-label">Treinamentos</span>
-                {% for option in section_options %}
-                <label class="training-option-row"><input type="checkbox" name="{{ option[1] }}" value="1" {% if user_personal_data[option[3]] %}checked{% endif %}><span>{{ option[2] }}</span></label>
-                {% if option[0] == 'treino_outros' %}
-                <input name="training_outros" placeholder="Indique qual é o treinamento" value="{{ user_personal_data.training_outros or '' }}">
-                {% endif %}
-                {% endfor %}
-              </div>
-              {% endif %}
-              {% endfor %}
               <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
               <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="perfil-pessoal-card">Cancelar</button>
@@ -2502,7 +2443,7 @@
   <script src="/static/js/modules/process_cards_visibility_v1.js?v=20260714-recent-users-home-only-v1"></script>
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260713-entity-edit-hash-v1"></script>
-  <script src="/static/js/modules/profile_phone_field_v1.js?v=20260715-europe-v7"></script>
+  <script src="/static/js/modules/profile_phone_field_v1.js?v=20260716-reset-v8"></script>
   <script src="/static/js/new_user.js?v=20260715-sections-tabs-v3"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>

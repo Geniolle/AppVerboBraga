@@ -273,6 +273,54 @@ def serialize_member_profile_fields(values: dict[str, str]) -> str | None:
         return None
     return json.dumps(normalized, ensure_ascii=False, sort_keys=True)
 
+
+# Morada e treinamento de Meus dados são campos adicionais (profile_custom_fields).
+# As colunas de members ficam espelhadas para o pré-preenchimento de convites e relatórios.
+MEU_PERFIL_CUSTOM_ADDRESS_KEYS: dict[str, str] = {
+    "custom_morada": "address",
+    "custom_cidade": "city",
+    "custom_freguesia": "freguesia",
+    "custom_codigo_postal": "postal_code",
+}
+MEU_PERFIL_CUSTOM_TRAINING_FLAG_KEYS: dict[str, str] = {
+    "custom_discipulado_verbo_da_vida": "training_discipulado_verbo_vida",
+    "custom_ebvv": "training_ebvv",
+    "custom_rhema": "training_rhema",
+    "custom_escola_ministerial": "training_escola_ministerial",
+    "custom_escola_de_missoes": "training_escola_missoes",
+}
+MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY = "custom_outros_treinamentos"
+
+
+def mirror_meu_perfil_custom_fields_to_member_columns(member: Member, values: dict[str, str]) -> None:
+    for custom_key, column in MEU_PERFIL_CUSTOM_ADDRESS_KEYS.items():
+        setattr(member, column, str(values.get(custom_key) or "").strip() or None)
+    for custom_key, column in MEU_PERFIL_CUSTOM_TRAINING_FLAG_KEYS.items():
+        setattr(member, column, str(values.get(custom_key) or "") == "1")
+    member.training_outros = str(values.get(MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY) or "").strip() or None
+
+
+def migrate_meu_perfil_columns_to_custom_fields(session: Session) -> int:
+    """Copia morada e treinamento das colunas de members para profile_custom_fields (só campos vazios)."""
+    changed = 0
+    for member in session.execute(select(Member)).scalars():
+        values = parse_member_profile_fields(member.profile_custom_fields)
+        before = dict(values)
+        for custom_key, column in MEU_PERFIL_CUSTOM_ADDRESS_KEYS.items():
+            column_value = str(getattr(member, column) or "").strip()
+            if column_value and not values.get(custom_key):
+                values[custom_key] = column_value
+        for custom_key, column in MEU_PERFIL_CUSTOM_TRAINING_FLAG_KEYS.items():
+            if getattr(member, column) and not values.get(custom_key):
+                values[custom_key] = "1"
+        outros_value = str(member.training_outros or "").strip()
+        if outros_value and not values.get(MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY):
+            values[MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY] = outros_value
+        if values != before:
+            member.profile_custom_fields = serialize_member_profile_fields(values)
+            changed += 1
+    session.commit()
+    return changed
 def build_menu_process_field_storage_key(menu_key: str, field_key: str) -> str:
     clean_menu_key = str(menu_key or "").strip().lower()
     clean_field_key = str(field_key or "").strip().lower()

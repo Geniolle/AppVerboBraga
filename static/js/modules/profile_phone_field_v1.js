@@ -146,6 +146,18 @@
       syncFromSelector();
       render();
     });
+    // form.reset() (troca de aba/cancelar) limpa campos preenchidos por JS: repor a partir do telefone guardado.
+    form.addEventListener("reset", () => {
+      setTimeout(() => {
+        const restored = findByCountry(options, countryNameEl.value);
+        if (restored) {
+          dialCode = restored.dial;
+        }
+        countryInputEl.value = restored ? restored.text : "";
+        nationalEl.value = splitFullNumber(fullEl.value, options).national;
+        render();
+      }, 0);
+    });
 
     render();
   }

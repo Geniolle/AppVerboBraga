@@ -47,6 +47,17 @@ PT_PT_LABEL_REPLACEMENTS: tuple[tuple[str, str], ...] = (
 )
 
 
+ADDITIONAL_FIELD_KEEP_UPPERCASE_TOKENS = {"EBVV", "RHEMA"}
+
+
+def _normalize_sentence_case_label_keep_acronyms(raw_label: str) -> str:
+    words = _normalize_sentence_case_text(raw_label).split(" ")
+    return " ".join(
+        word.upper() if word.upper() in ADDITIONAL_FIELD_KEEP_UPPERCASE_TOKENS else word
+        for word in words
+    )
+
+
 def _normalize_additional_field_label(raw_label: Any) -> str:
     clean_label = _fix_common_mojibake(str(raw_label or ""))
     clean_label = " ".join(clean_label.strip().split())
@@ -55,7 +66,7 @@ def _normalize_additional_field_label(raw_label: Any) -> str:
     clean_label = clean_label.upper()
     for pattern, replacement in PT_PT_LABEL_REPLACEMENTS:
         clean_label = re.sub(pattern, replacement, clean_label)
-    return _normalize_sentence_case_text(clean_label)
+    return _normalize_sentence_case_label_keep_acronyms(clean_label)
 
 
 def _normalize_additional_field_size(raw_size: Any, field_type: str) -> int | None:
