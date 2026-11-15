@@ -42,10 +42,7 @@ from appgenesis.services.phone_country import (
     validate_phone_prefix_for_country,
 )
 from appgenesis.services.profile import (
-    format_optional_date_pt,
-    parse_member_profile_fields,
     parse_optional_date_pt,
-    serialize_member_profile_fields,
 )
 from appgenesis.services.session import get_current_user, get_entity_context_for_user
 from appgenesis.shared.results import RedirectOutcome
@@ -473,7 +470,7 @@ def resolve_invite_accept_page(
             "city": member.city or "",
             "freguesia": member.freguesia or "",
             "postal_code": member.postal_code or "",
-            "birth_date": format_optional_date_pt(member.birth_date),
+            "birth_date": member.birth_date.isoformat() if member.birth_date else "",
             "entity_name": entity_name,
             "email": user.login_email or "",
         }
@@ -549,11 +546,13 @@ def execute_invite_accept(
         errors.append("A confirmação da palavra-passe não confere.")
 
     parsed_birth_date: date | None = None
-    if clean_birth_date:
+    if not clean_birth_date:
+        errors.append("Data de nascimento é obrigatória.")
+    else:
         try:
             parsed_birth_date = parse_optional_date_pt(clean_birth_date)
         except ValueError:
-            errors.append("Data de nascimento inválida. Use o formato dd/mm/aaaa.")
+            errors.append("Data de nascimento inválida.")
 
     user = session.get(User, int(invite_payload["uid"]))
     if user is None or (user.login_email or "").strip().lower() != invite_payload["email"]:
@@ -595,15 +594,6 @@ def execute_invite_accept(
     member.city = clean_city
     member.freguesia = clean_freguesia
     member.postal_code = clean_postal_code
-    member.profile_custom_fields = serialize_member_profile_fields(
-        {
-            **parse_member_profile_fields(member.profile_custom_fields),
-            "custom_morada": clean_address,
-            "custom_cidade": clean_city,
-            "custom_freguesia": clean_freguesia,
-            "custom_codigo_postal": clean_postal_code,
-        }
-    )
     member.birth_date = parsed_birth_date
     user.password_hash = hash_password(form.password)
     user.account_status = UserAccountStatus.ACTIVE.value

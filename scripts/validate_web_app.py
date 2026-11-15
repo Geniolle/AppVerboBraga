@@ -139,12 +139,12 @@ def run_validation(args: argparse.Namespace) -> list[CheckResult]:
         add("Validação visual dados pessoais", ok, detail)
 
     address_payload = {
-        "custom_morada": "Rua de Teste, 123",
-        "custom_cidade": "Braga",
-        "custom_freguesia": "São Victor",
-        "custom_codigo_postal": "4700-000",
+        "address": "Rua de Teste, 123",
+        "city": "Braga",
+        "freguesia": "São Victor",
+        "postal_code": "4700-000",
     }
-    response = client.post("/users/profile/personal", data={**personal_payload, **{f"custom_field__{k}": v for k, v in address_payload.items()}})
+    response = client.post("/users/profile/personal", data={**personal_payload, **address_payload, "address_fields_present": "1"})
     if response.status_code not in (302, 303):
         return fail_and_stop("POST /users/profile/personal (morada)", f"Status inesperado: {response.status_code}")
     add("POST /users/profile/personal (morada)", True, "Dados de morada gravados.")
@@ -152,10 +152,10 @@ def run_validation(args: argparse.Namespace) -> list[CheckResult]:
     response = client.get("/users/new")
     html = response.text
     address_checks = [
-        (address_payload["custom_morada"] in html, "Morada visível."),
-        (address_payload["custom_cidade"] in html, "Cidade visível."),
-        (address_payload["custom_freguesia"] in html, "Freguesia visível."),
-        (address_payload["custom_codigo_postal"] in html, "Código postal visível."),
+        (address_payload["address"] in html, "Morada visível."),
+        (address_payload["city"] in html, "Cidade visível."),
+        (address_payload["freguesia"] in html, "Freguesia visível."),
+        (address_payload["postal_code"] in html, "Código postal visível."),
     ]
     for ok, detail in address_checks:
         add("Validação visual dados de morada", ok, detail)

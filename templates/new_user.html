@@ -498,6 +498,7 @@
                   id="edit_birth_date"
                   type="date"
                   name="birth_date"
+                  required
                   value="{{ user_personal_data.birth_date_iso or '' }}"
                 >
               </div>
@@ -596,6 +597,33 @@
               {% endif %}
               {% endif %}
               {% endfor %}
+              {% if 'morada' in profile_personal_visible_fields or 'cidade' in profile_personal_visible_fields or 'freguesia' in profile_personal_visible_fields or 'codigo_postal' in profile_personal_visible_fields %}
+              <input type="hidden" name="address_fields_present" value="1">
+              {% endif %}
+              {% if 'morada' in profile_personal_visible_fields %}
+              <div class="field full" style="order: 70;" data-profile-section-pane="{{ profile_personal_field_section_map.get('morada', '') }}">
+                <label for="edit_address">Morada</label>
+                <input id="edit_address" name="address" value="{{ '' if user_personal_data.address == '-' else user_personal_data.address }}">
+              </div>
+              {% endif %}
+              {% if 'cidade' in profile_personal_visible_fields %}
+              <div class="field" style="order: 71;" data-profile-section-pane="{{ profile_personal_field_section_map.get('cidade', '') }}">
+                <label for="edit_city">Cidade</label>
+                <input id="edit_city" name="city" value="{{ '' if user_personal_data.city == '-' else user_personal_data.city }}">
+              </div>
+              {% endif %}
+              {% if 'freguesia' in profile_personal_visible_fields %}
+              <div class="field" style="order: 72;" data-profile-section-pane="{{ profile_personal_field_section_map.get('freguesia', '') }}">
+                <label for="edit_freguesia">Freguesia</label>
+                <input id="edit_freguesia" name="freguesia" value="{{ '' if user_personal_data.freguesia == '-' else user_personal_data.freguesia }}">
+              </div>
+              {% endif %}
+              {% if 'codigo_postal' in profile_personal_visible_fields %}
+              <div class="field" style="order: 73;" data-profile-section-pane="{{ profile_personal_field_section_map.get('codigo_postal', '') }}">
+                <label for="edit_postal_code">Código postal</label>
+                <input id="edit_postal_code" name="postal_code" value="{{ '' if user_personal_data.postal_code == '-' else user_personal_data.postal_code }}">
+              </div>
+              {% endif %}
               <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
               <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="perfil-pessoal-card">Cancelar</button>

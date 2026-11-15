@@ -1171,6 +1171,11 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         clean_gender = ""
     whatsapp_notice_opt_in = str(submitted_form.get("whatsapp_notice_opt_in") or "").strip()
 
+    if not clean_birth_date:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Data de nascimento é obrigatória.", profile_tab="pessoal"),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
     try:
         parsed_birth_date = parse_optional_date_pt(clean_birth_date)
     except ValueError:
@@ -1587,6 +1592,11 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         existing_profile_fields.update(updated_custom_fields)
         existing_profile_fields.update(updated_quantity_values)
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+        if str(submitted_form.get("address_fields_present") or "") == "1":
+            member.address = str(submitted_form.get("address") or "").strip() or None
+            member.city = str(submitted_form.get("city") or "").strip() or None
+            member.freguesia = str(submitted_form.get("freguesia") or "").strip() or None
+            member.postal_code = str(submitted_form.get("postal_code") or "").strip() or None
         mirror_meu_perfil_custom_fields_to_member_columns(member, existing_profile_fields)
         if previous_phone != clean_primary_phone:
             member.whatsapp_verification_status = "unknown"
