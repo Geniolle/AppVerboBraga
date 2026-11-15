@@ -124,7 +124,6 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "telefone", "label": "Telefone"},
         {"key": "email", "label": "Email"},
         {"key": "data_nascimento", "label": "Data de nascimento"},
-        {"key": "genero", "label": "Género"},
         {"key": "whatsapp", "label": "WhatsApp"},
         {
             "key": "autorizacao_whatsapp",
@@ -175,7 +174,7 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "home": ["resumo_geral", "indicadores", "graficos"],
     "administrativo": ["entidade", "utilizador", "definicoes"],
     "empresa": ["dados_gerais", "morada"],
-    MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email", "data_nascimento", "genero"],
+    MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email", "data_nascimento"],
     "funcionarios": ["nome", "telefone", "email"],
     "financeiro": ["nome", "estado", "criado_em"],
     "relatorios": ["nome", "estado", "criado_em"],
@@ -193,7 +192,7 @@ MENU_MEU_PERFIL_FIELD_KEYS = tuple(
 MENU_MEU_PERFIL_FIELD_LABELS = {
     item["key"]: item["label"] for item in MENU_MEU_PERFIL_FIELD_OPTIONS
 }
-MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "telefone", "email", "data_nascimento", "genero"]
+MENU_MEU_PERFIL_FIELDS_DEFAULT = ["nome", "telefone", "email", "data_nascimento"]
 
 
 def _sidebar_menu_defaults_by_key() -> dict[str, dict[str, Any]]:

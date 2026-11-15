@@ -283,9 +283,11 @@ MEU_PERFIL_CUSTOM_TRAINING_FLAG_KEYS: dict[str, str] = {
     "custom_escola_de_missoes": "training_escola_missoes",
 }
 MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY = "custom_outros_treinamentos"
+MEU_PERFIL_CUSTOM_GENDER_KEY = "custom_genero"
 
 
 def mirror_meu_perfil_custom_fields_to_member_columns(member: Member, values: dict[str, str]) -> None:
+    member.gender = str(values.get(MEU_PERFIL_CUSTOM_GENDER_KEY) or "").strip() or None
     for custom_key, column in MEU_PERFIL_CUSTOM_TRAINING_FLAG_KEYS.items():
         setattr(member, column, str(values.get(custom_key) or "") == "1")
     member.training_outros = str(values.get(MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY) or "").strip() or None
@@ -1540,3 +1542,17 @@ __all__ = [
     "parse_optional_date_pt",
     "get_user_personal_data",
 ]
+
+
+def migrate_meu_perfil_gender_to_custom_field(session: Session) -> int:
+    """Copia members.gender para custom_genero (só quando o campo adicional está vazio)."""
+    changed = 0
+    for member in session.execute(select(Member)).scalars():
+        values = parse_member_profile_fields(member.profile_custom_fields)
+        gender_value = str(member.gender or "").strip()
+        if gender_value and not values.get(MEU_PERFIL_CUSTOM_GENDER_KEY):
+            values[MEU_PERFIL_CUSTOM_GENDER_KEY] = gender_value
+            member.profile_custom_fields = serialize_member_profile_fields(values)
+            changed += 1
+    session.commit()
+    return changed
