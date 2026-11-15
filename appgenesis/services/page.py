@@ -612,6 +612,7 @@ def get_page_data(
     profile_personal_field_types: dict[str, str] = {}
     profile_personal_field_header_map: dict[str, str] = {}
     profile_personal_custom_field_meta: dict[str, dict[str, Any]] = {}
+    profile_personal_additional_order: dict[str, int] = {}
     profile_personal_duplicate_custom_keys: set[str] = set()
     profile_personal_effective_visible_rows: list[dict[str, str]] = []
     meu_perfil_builtin_duplicate_labels = {
@@ -696,8 +697,9 @@ def get_page_data(
                 for row in effective_visible_rows
                 if str(row.get("field_key") or "").strip() and str(row.get("header_key") or "").strip()
             }
-        for custom_field in sidebar_item.get("process_additional_fields") or []:
+        for additional_index, custom_field in enumerate(sidebar_item.get("process_additional_fields") or []):
             clean_key = str(custom_field.get("key") or "").strip().lower()
+            profile_personal_additional_order[clean_key] = additional_index
             if not clean_key.startswith("custom_"):
                 continue
             if is_meu_perfil_builtin_duplicate_field(
@@ -800,6 +802,14 @@ def get_page_data(
                 profile_personal_visible_fields = [next(iter(profile_personal_field_labels.keys()))]
         break
 
+    profile_personal_visible_fields = sorted(
+        profile_personal_visible_fields,
+        key=lambda field_key: (
+            (1, profile_personal_additional_order[field_key])
+            if field_key in profile_personal_additional_order
+            else (0, 0)
+        ),
+    )
     # APPGENESIS_MEU_PERFIL_HEADER_TABS_ONLY_V1_START
     profile_personal_sections: list[dict[str, str]] = []
     profile_personal_field_section_map: dict[str, str] = {}
@@ -843,7 +853,10 @@ def get_page_data(
     for header_key in profile_personal_field_header_map.values():
         append_profile_header_section_v1(header_key)
 
-    first_profile_header_key = header_section_order[0] if header_section_order else ""
+    profile_personal_sections.sort(
+        key=lambda section: profile_personal_additional_order.get(section["key"], len(profile_personal_additional_order))
+    )
+    first_profile_header_key = profile_personal_sections[0]["key"] if profile_personal_sections else ""
 
     for field_key in profile_personal_visible_fields:
         clean_field_key = str(field_key or "").strip().lower()

@@ -281,6 +281,19 @@ def _rebuild_menu_process_hierarchy_from_additional_fields_v1(
             }
         )
 
+    # Campos built-in (nome, telefone, ...) não estão na lista de campos adicionais: manter as suas linhas e cabeçalho.
+    builtin_rows: list[dict[str, Any]] = []
+    for previous_row in existing_visible_raw_rows(menu_config):
+        builtin_key = str(previous_row.get("field_key") or "").strip().lower()
+        if not builtin_key or builtin_key.startswith("custom_") or builtin_key in previous_field_keys:
+            continue
+        builtin_header = str(previous_row.get("header_key") or "").strip().lower()
+        builtin_rows.append({"field_key": builtin_key, "header_key": builtin_header, "display_order": -1})
+        if builtin_header:
+            field_header_map[builtin_key] = builtin_header
+    visible_order = [str(row["field_key"]) for row in builtin_rows] + visible_order
+    visible_rows = builtin_rows + visible_rows
+
     used_headers = {
         str(row.get("header_key") or "").strip().lower()
         for row in visible_rows
@@ -783,14 +796,10 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
     if not normalized:
         return normalized
 
-    header_items = [
-        dict(item)
-        for item in normalized
-        if str(item.get("field_type") or "").strip().lower() == "header"
-    ]
-    non_header_items = [
-        dict(item)
-        for item in normalized
-        if str(item.get("field_type") or "").strip().lower() != "header"
-    ]
-    return header_items + non_header_items
+    # A ordem da lista é a ordem de exibição: cada campo pertence ao cabeçalho que o precede.
+    return normalized
+
+
+def existing_visible_raw_rows(menu_config: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_rows = menu_config.get("process_visible_field_rows")
+    return [row for row in raw_rows if isinstance(row, dict)] if isinstance(raw_rows, list) else []
