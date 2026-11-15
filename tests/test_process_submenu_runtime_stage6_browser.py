@@ -124,19 +124,7 @@ def test_stage6_process_submenu_runtime_clicks_keep_runtime_behavior() -> None:
 
         driver.get("http://127.0.0.1:8000/users/new?menu=meu_perfil")
         wait.until(lambda drv: drv.execute_script("return document.readyState") == "complete")
-        meu_perfil_submenus = driver.execute_script(
-            """
-            return Array.from(document.querySelectorAll(".submenu-item"))
-              .map((element) => String(element.textContent || "").trim())
-              .filter(Boolean);
-            """
-        )
-        if "Dados de morada" in meu_perfil_submenus:
-            _click_submenu_v1(driver, "Dados de morada")
-            wait.until(lambda drv: "Dados de morada" in _active_submenu_labels_v1(drv))
-            wait.until(lambda drv: _card_is_visible_v1(drv, "perfil-morada-card"))
-        else:
-            wait.until(lambda drv: _card_is_visible_v1(drv, "perfil-pessoal-card"))
+        wait.until(lambda drv: _card_is_visible_v1(drv, "perfil-pessoal-card"))
 
         candidate_menu_keys = driver.execute_script(
             """

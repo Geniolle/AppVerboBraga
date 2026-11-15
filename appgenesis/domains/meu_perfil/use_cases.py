@@ -7,91 +7,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from appgenesis.domains.meu_perfil.repositories import find_member_for_user
-from appgenesis.domains.meu_perfil.schemas import (
-    AddressProfileFormInput,
-    TrainingProfileFormInput,
-)
 from appgenesis.services.whatsapp import (
     normalize_whatsapp_recipient,
     send_whatsapp_verification_template,
 )
-
-
-@dataclass(frozen=True)
-class UpdateAddressFailure:
-    error: str
-    profile_tab: str = "morada"
-
-
-@dataclass(frozen=True)
-class UpdateAddressSuccess:
-    success: str = "Dados de morada atualizados com sucesso."
-    profile_tab: str = "morada"
-
-
-UpdateAddressResult = UpdateAddressFailure | UpdateAddressSuccess
-
-
-def execute_update_address_profile(
-    session: Session, user_id: int, form: AddressProfileFormInput
-) -> UpdateAddressResult:
-    member = find_member_for_user(session, user_id)
-    if member is None:
-        return UpdateAddressFailure(error="Membro associado ao utilizador não encontrado.")
-
-    member.address = form.address.strip() or None
-    member.city = form.city.strip() or None
-    member.freguesia = form.freguesia.strip() or None
-    member.postal_code = form.postal_code.strip() or None
-
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        return UpdateAddressFailure(error="Falha ao gravar dados de morada.")
-
-    return UpdateAddressSuccess()
-
-
-@dataclass(frozen=True)
-class UpdateTrainingFailure:
-    error: str
-    profile_tab: str = "treinamento"
-
-
-@dataclass(frozen=True)
-class UpdateTrainingSuccess:
-    success: str = "Dados de treinamento atualizados com sucesso."
-    profile_tab: str = "treinamento"
-
-
-UpdateTrainingResult = UpdateTrainingFailure | UpdateTrainingSuccess
-
-
-def execute_update_training_profile(
-    session: Session, user_id: int, form: TrainingProfileFormInput
-) -> UpdateTrainingResult:
-    member = find_member_for_user(session, user_id)
-    if member is None:
-        return UpdateTrainingFailure(error="Membro associado ao utilizador não encontrado.")
-
-    is_outros_enabled = form.training_outros_enabled == "1"
-    clean_training_outros = form.training_outros.strip()
-
-    member.training_discipulado_verbo_vida = form.training_discipulado_verbo_vida == "1"
-    member.training_ebvv = form.training_ebvv == "1"
-    member.training_rhema = form.training_rhema == "1"
-    member.training_escola_ministerial = form.training_escola_ministerial == "1"
-    member.training_escola_missoes = form.training_escola_missoes == "1"
-    member.training_outros = clean_training_outros if is_outros_enabled else None
-
-    try:
-        session.commit()
-    except IntegrityError:
-        session.rollback()
-        return UpdateTrainingFailure(error="Falha ao gravar dados de treinamento.")
-
-    return UpdateTrainingSuccess()
 
 
 @dataclass(frozen=True)

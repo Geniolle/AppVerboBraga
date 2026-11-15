@@ -144,10 +144,10 @@ def run_validation(args: argparse.Namespace) -> list[CheckResult]:
         "freguesia": "São Victor",
         "postal_code": "4700-000",
     }
-    response = client.post("/users/profile/address", data=address_payload)
+    response = client.post("/users/profile/personal", data={**personal_payload, **address_payload, "address_fields_present": "1"})
     if response.status_code not in (302, 303):
-        return fail_and_stop("POST /users/profile/address", f"Status inesperado: {response.status_code}")
-    add("POST /users/profile/address", True, "Dados de morada gravados.")
+        return fail_and_stop("POST /users/profile/personal (morada)", f"Status inesperado: {response.status_code}")
+    add("POST /users/profile/personal (morada)", True, "Dados de morada gravados.")
 
     response = client.get("/users/new")
     html = response.text

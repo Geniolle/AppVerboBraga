@@ -1509,9 +1509,9 @@ Decisão do projeto (validada pelo utilizador):
 5. Campos de Dados pessoais devem respeitar a ordem da configuração. Estado atual: Nome, Telefone, Email, Data de nascimento, Género (ver `static/css/new_user.css`, regra `.personal-grid > .field` com `order`).
 
 ### Fases (ordem obrigatória)
-- Fase 1: tornar morada e treinamento campos configuráveis do processo `meu_perfil` (backend `profile_handlers.py` + `services/profile.py` + opções em `normalizers.py`).
-- Fase 2: renderizar abas e blocos a partir de `profilePersonalSections` (cabeçalhos configurados), com cada bloco a conter os campos atribuídos ao cabeçalho.
-- Fase 3: remover as abas fixas de `process_menu_config_builder_v1.js` e os cartões fixos de `new_user.html` que deixarem de ser necessários.
+- Fase 1 (concluída): tornar morada e treinamento campos configuráveis do processo `meu_perfil` (backend `profile_handlers.py` + `services/profile.py` + opções em `normalizers.py`).
+- Fase 2 (concluída): renderizar abas e blocos a partir de `profilePersonalSections` (cabeçalhos configurados), com cada bloco a conter os campos atribuídos ao cabeçalho.
+- Fase 3 (concluída): removidas as abas fixas de morada/treinamento em `process_menu_config_builder_v1.js`, os cartões `perfil-morada-card` e `dados-treinamento-card` de `new_user.html`, as rotas `/users/profile/address` e `/users/profile/training` (e o domínio associado). Morada e treinamento são gravados pelo formulário `/users/profile/personal`.
 
 ### Proibido
 - Adicionar nova aba fixa de Meus dados sem passar pela configuração de Cabeçalho (aba).

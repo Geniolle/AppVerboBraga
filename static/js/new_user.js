@@ -109,7 +109,6 @@ const profilePersonalFieldLabels = (
 )
   ? bootstrap.profilePersonalFieldLabels
   : {};
-const initialProfileTab = bootstrap.initialProfileTab || "pessoal";
 const initialMenu = normalizeMenuKey(bootstrap.initialMenu || HOME_MENU_KEY_V1) || HOME_MENU_KEY_V1;
 const initialMenuTarget = bootstrap.initialMenuTarget || "";
 const initialDynamicProcessSection = bootstrap.initialDynamicProcessSection || "";
@@ -1011,7 +1010,7 @@ if (
   appGenesisProcessMenuConfigBuilderV1 &&
   typeof appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig === "function"
 ) {
-  appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig();
+  appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig({ profilePersonalSections });
 }
 
 const itemsEl = document.getElementById("submenu-items");
@@ -1068,11 +1067,6 @@ const dynamicProcessInactiveEmptyEl = document.getElementById("dynamic-process-i
 const dynamicProcessInactiveLimiterEl = document.getElementById("dynamic-process-inactive-limiter");
 let homeSelectedTarget = "#home-summary-card";
 let profileSelectedTarget = "#perfil-pessoal-card";
-if (initialProfileTab === "morada") {
-  profileSelectedTarget = "#perfil-morada-card";
-} else if (initialProfileTab === "treinamento") {
-  profileSelectedTarget = "#dados-treinamento-card";
-}
 // APPGENESIS_ADMIN_TARGET_RESOLVER_V1_START
 const NATIVE_ADMIN_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.NATIVE_ADMIN_TARGETS_V1
@@ -4195,9 +4189,7 @@ document.addEventListener("appgenesis:cancelled", function (event) {
 
   if (
     cardId === "dynamic-process-card" ||
-    cardId === "perfil-pessoal-card" ||
-    cardId === "perfil-morada-card" ||
-    cardId === "dados-treinamento-card"
+    cardId === "perfil-pessoal-card"
   ) {
     syncTrainingOutrosState();
   }

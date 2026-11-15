@@ -293,10 +293,6 @@ def _resolve_initial_menu_target(
     if clean_menu_key == "home":
         return "#home-summary-card", ""
     if clean_menu_key == "perfil":
-        if resolved_profile_tab == "morada":
-            return "#perfil-morada-card", ""
-        if resolved_profile_tab == "treinamento":
-            return "#dados-treinamento-card", ""
         return "#perfil-pessoal-card", ""
     if clean_menu_key == "administrativo":
         if settings_edit_key:

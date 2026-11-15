@@ -115,10 +115,9 @@ def test_geral_tab_has_no_form() -> None:
 def test_unrelated_cancel_buttons_outside_process_editor_are_untouched() -> None:
     html_text = _read_new_user_html()
 
-    # Botoes de cancelar de outros fluxos (perfil pessoal, dados de treino, entidade, utilizador,
+    # Botoes de cancelar de outros fluxos (perfil pessoal, entidade, utilizador,
     # processo dinamico) continuam a apontar para os proprios cards, nao para settings-menu-edit-card.
     assert 'data-appgenesis-cancel-target="dynamic-process-card"' in html_text
     assert 'data-appgenesis-cancel-target="perfil-pessoal-card"' in html_text
-    assert 'data-appgenesis-cancel-target="dados-treinamento-card"' in html_text
     assert 'data-appgenesis-cancel-target="edit-entity-card"' in html_text
     assert 'data-appgenesis-cancel-target="edit-user-card"' in html_text

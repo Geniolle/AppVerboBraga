@@ -21,16 +21,8 @@ from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository im
     ObjetoAutorizacaoAdminRepository,
 )
 from appgenesis.db.session import SessionLocal
-from appgenesis.domains.meu_perfil.schemas import (
-    AddressProfileFormInput,
-    TrainingProfileFormInput,
-)
 from appgenesis.domains.meu_perfil.use_cases import (
-    UpdateAddressFailure,
-    UpdateTrainingFailure,
     UpdateWhatsappVerificationFailure,
-    execute_update_address_profile,
-    execute_update_training_profile,
     execute_verify_whatsapp_profile,
 )
 from appgenesis.menu_settings import (
@@ -2189,102 +2181,6 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     return RedirectResponse(
         url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key,
             profile_success=success_message,
-        ),
-        status_code=status.HTTP_303_SEE_OTHER,
-    )
-
-@router.post("/users/profile/address")
-def update_address_profile(
-    request: Request,
-    address: str = Form(""),
-    city: str = Form(""),
-    freguesia: str = Form(""),
-    postal_code: str = Form(""),
-) -> RedirectResponse:
-    form = AddressProfileFormInput(
-        address=address, city=city, freguesia=freguesia, postal_code=postal_code
-    )
-
-    with SessionLocal() as session:
-        current_user = get_current_user(request, session)
-        if current_user is None:
-            return RedirectResponse(
-                url="/login?error=Efetue login para continuar.",
-                status_code=status.HTTP_302_FOUND,
-            )
-
-        result = execute_update_address_profile(session, current_user["id"], form)
-
-    if isinstance(result, UpdateAddressFailure):
-        return RedirectResponse(
-            url=build_users_new_url(
-                profile_error=result.error,
-                profile_tab=result.profile_tab,
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    return RedirectResponse(
-        url=build_users_new_url(
-            profile_success=result.success,
-            profile_tab=result.profile_tab,
-        ),
-        status_code=status.HTTP_303_SEE_OTHER,
-    )
-
-@router.post("/users/profile/training")
-def update_training_profile(
-    request: Request,
-    training_discipulado_verbo_vida: str | None = Form(default=None),
-    training_ebvv: str | None = Form(default=None),
-    training_rhema: str | None = Form(default=None),
-    training_escola_ministerial: str | None = Form(default=None),
-    training_escola_missoes: str | None = Form(default=None),
-    training_outros_enabled: str | None = Form(default=None),
-    training_outros: str = Form(""),
-) -> RedirectResponse:
-    form = TrainingProfileFormInput(
-        training_discipulado_verbo_vida=training_discipulado_verbo_vida,
-        training_ebvv=training_ebvv,
-        training_rhema=training_rhema,
-        training_escola_ministerial=training_escola_ministerial,
-        training_escola_missoes=training_escola_missoes,
-        training_outros_enabled=training_outros_enabled,
-        training_outros=training_outros,
-    )
-
-    if form.training_outros_enabled == "1" and not form.training_outros.strip():
-        return RedirectResponse(
-            url=build_users_new_url(
-                profile_error="Preencha o campo Outros para gravar o treinamento.",
-                profile_tab="treinamento",
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    with SessionLocal() as session:
-        current_user = get_current_user(request, session)
-        if current_user is None:
-            return RedirectResponse(
-                url="/login?error=Efetue login para continuar.",
-                status_code=status.HTTP_302_FOUND,
-            )
-
-        result = execute_update_training_profile(session, current_user["id"], form)
-
-    if isinstance(result, UpdateTrainingFailure):
-        return RedirectResponse(
-            url=build_users_new_url(
-                profile_error=result.error,
-                profile_tab=result.profile_tab,
-            ),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    return RedirectResponse(
-        url=build_users_new_url(
-            profile_success=result.success,
-            profile_tab=result.profile_tab,
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )

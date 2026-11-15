@@ -5735,3 +5735,10 @@ input.action-btn-cancel,
 .personal-grid > .field:has(select[name="gender"]) {
   order: 60;
 }
+
+/* Botoes Gravar/Cancelar em Dados pessoais: linha propria, abaixo dos campos */
+#perfil-pessoal-card .personal-grid > .profile-edit-actions {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 8px;
+}

@@ -186,9 +186,7 @@
         singleView: true,
         toggleOnMenuClick: true,
         items: [
-          { label: "Dados pessoais", target: "#perfil-pessoal-card" },
-          { label: "Dados de morada", target: "#perfil-morada-card" },
-          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
+          { label: "Dados pessoais", target: "#perfil-pessoal-card" }
         ],
         details: [
           { label: "Nome", value: state.currentUserName },
@@ -259,8 +257,6 @@
                 }))
               : []
           ),
-          { label: "Dados de morada", target: "#perfil-morada-card" },
-          { label: "Dados de Treinamento", target: "#dados-treinamento-card" }
         ],
         details: [
           { label: "Modulo", value: "Meu perfil" },
@@ -555,8 +551,20 @@
     menuConfig[meuPerfilKey] = {
       ...menuConfig.perfil,
       title: "Meus dados",
-      description: "Dados do meu perfil."
+      description: "Dados do meu perfil.",
+      items: buildMeuPerfilSectionItems()
     };
+  }
+
+  function buildMeuPerfilSectionItems() {
+    if (!Array.isArray(state.profilePersonalSections) || !state.profilePersonalSections.length) {
+      return (menuConfig.perfil && menuConfig.perfil.items) || [];
+    }
+    return state.profilePersonalSections.map((section) => ({
+      label: String(section.label || "Dados pessoais"),
+      target: "#perfil-pessoal-card",
+      profileSection: String(section.key || "")
+    }));
   }
 
   function initializeMenuConfig(options) {
