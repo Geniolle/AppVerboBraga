@@ -1284,6 +1284,8 @@ def parse_optional_date_pt(raw_value: str) -> date | None:
     clean_value = (raw_value or "").strip()
     if not clean_value:
         return None
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", clean_value):
+        return date.fromisoformat(clean_value)
     return datetime.strptime(clean_value, "%d/%m/%Y").date()
 
 PERSONAL_GENDER_OPTIONS: tuple[str, ...] = ("Feminino", "Masculino")
@@ -1432,6 +1434,7 @@ def get_user_personal_data(
         "primary_phone": row.primary_phone or "-",
         "country": row.country or "-",
         "birth_date": format_optional_date_pt(row.birth_date),
+        "birth_date_iso": row.birth_date.isoformat() if row.birth_date else "",
         "gender": row.gender or "-",
         "address": row.address or "-",
         "city": row.city or "-",
