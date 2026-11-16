@@ -1497,6 +1497,49 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             )
 
 
+        # Validacao: nao diminuir a quantidade enquanto os itens que deixam de existir tiverem dados gravados.
+        # O utilizador limpa esses itens, grava, e so depois diminui a quantidade.
+        for quantity_rule in quantity_rules:
+            rule_key = str(quantity_rule.get("key") or "").strip().lower()
+            quantity_field_key = str(quantity_rule.get("quantity_field_key") or "").strip().lower()
+            if not rule_key or not quantity_field_key:
+                continue
+            if (
+                quantity_field_key in hidden_meu_perfil_targets
+                or visible_field_section_map.get(quantity_field_key) in hidden_meu_perfil_targets
+            ):
+                continue
+            try:
+                new_quantity_count = int(str(current_meu_perfil_values.get(quantity_field_key) or "").strip())
+            except ValueError:
+                continue
+
+            validation_storage_key = build_menu_process_quantity_storage_key(MENU_MEU_PERFIL_KEY, rule_key)
+            stored_quantity_items = parse_menu_process_quantity_values(
+                existing_profile_fields.get(validation_storage_key)
+            )
+            blocked_item_numbers = [
+                str(item_index + 1)
+                for item_index, stored_item in enumerate(stored_quantity_items)
+                if item_index >= new_quantity_count
+                and any(str(stored_value or "").strip() for stored_value in stored_item.values())
+            ]
+            if blocked_item_numbers:
+                origin_label = option_labels_by_key.get(quantity_field_key) or quantity_field_key
+                rule_label = quantity_rule.get("label") or rule_key
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(
+                        submitted_form,
+                        profile_error=(
+                            f"Antes de diminuir '{origin_label}' para {new_quantity_count}, "
+                            f"limpe os dados do(s) Item(ns) {', '.join(blocked_item_numbers)} "
+                            f"em '{rule_label}' e grave."
+                        ),
+                        profile_tab="pessoal",
+                    ),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+
         # APPGENESIS_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_START
         # Reforco de persistencia dos Campos Quantidade do Meu perfil.
         #
@@ -1606,11 +1649,6 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         existing_profile_fields.update(updated_custom_fields)
         existing_profile_fields.update(updated_quantity_values)
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
-        if str(submitted_form.get("address_fields_present") or "") == "1":
-            member.address = str(submitted_form.get("address") or "").strip() or None
-            member.city = str(submitted_form.get("city") or "").strip() or None
-            member.freguesia = str(submitted_form.get("freguesia") or "").strip() or None
-            member.postal_code = str(submitted_form.get("postal_code") or "").strip() or None
         mirror_meu_perfil_custom_fields_to_member_columns(member, existing_profile_fields)
         if previous_phone != clean_primary_phone:
             member.whatsapp_verification_status = "unknown"

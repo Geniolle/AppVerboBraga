@@ -135,10 +135,6 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "entidades", "label": "Entidades"},
         {"key": "ultima_verificacao_whatsapp", "label": "Última verificação WhatsApp"},
         {"key": "detalhe_verificacao", "label": "Detalhe da verificação"},
-        {"key": "morada", "label": "Morada"},
-        {"key": "cidade", "label": "Cidade"},
-        {"key": "freguesia", "label": "Freguesia"},
-        {"key": "codigo_postal", "label": "Código postal"},
     ),
     "funcionarios": (
         {"key": "nome", "label": "Nome"},

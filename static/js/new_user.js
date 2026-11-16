@@ -9588,14 +9588,16 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 // APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
 /* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
 function appgenesisAutoDismissFlashMessages_v1() {
-  const successAlerts = Array.from(document.querySelectorAll(".alert.ok"));
+  // Sucesso: 4 s. Erro: 8 s. Ambos desaparecem com fade.
+  const flashAlerts = Array.from(document.querySelectorAll(".alert.ok, .alert.error"));
 
-  successAlerts.forEach((alertElement) => {
+  flashAlerts.forEach((alertElement) => {
     if (!alertElement || alertElement.dataset.appgenesisAutoDismiss === "1") {
       return;
     }
 
     alertElement.dataset.appgenesisAutoDismiss = "1";
+    const dismissMs = alertElement.classList.contains("error") ? 8000 : 4000;
 
     window.setTimeout(() => {
       alertElement.style.transition = "opacity 250ms ease, max-height 250ms ease, margin 250ms ease, padding 250ms ease";
@@ -9610,7 +9612,7 @@ function appgenesisAutoDismissFlashMessages_v1() {
       window.setTimeout(() => {
         alertElement.remove();
       }, 300);
-    }, 5000);
+    }, dismissMs);
   });
 
   const url = new URL(window.location.href);

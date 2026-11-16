@@ -2166,7 +2166,7 @@
     const safeConfig = config && typeof config === "object" ? config : {};
     const root = safeConfig.root || (global.document && global.document.body) || null;
     const position = normalizeText(safeConfig.position, "bottom-right");
-    const defaultAutoCloseMs = parsePositiveInteger(safeConfig.autoCloseMs, 4500);
+    const defaultAutoCloseMs = parsePositiveInteger(safeConfig.autoCloseMs, 4000);
 
     if (!root) {
       return null;
@@ -2210,7 +2210,11 @@
       const safeOptions = options && typeof options === "object" ? options : {};
       const type = normalizeText(safeOptions.type, "info");
       const message = normalizeText(safeOptions.message, "");
-      const autoCloseMs = parsePositiveInteger(safeOptions.autoCloseMs, defaultAutoCloseMs);
+      // Sucesso 4 s; erro 8 s (tempo maior para ler).
+      const autoCloseMs = parsePositiveInteger(
+        safeOptions.autoCloseMs,
+        type === "error" ? 8000 : defaultAutoCloseMs
+      );
 
       if (!message) {
         return null;
@@ -2298,7 +2302,7 @@
     if (!_feedbackToastController) {
       _feedbackToastController = createToastController({
         position: "bottom-right",
-        autoCloseMs: 4500
+        autoCloseMs: 4000
       });
     }
 

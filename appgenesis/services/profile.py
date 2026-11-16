@@ -294,29 +294,6 @@ def mirror_meu_perfil_custom_fields_to_member_columns(member: Member, values: di
     member.training_outros = str(values.get(MEU_PERFIL_CUSTOM_TRAINING_OUTROS_KEY) or "").strip() or None
 
 
-def migrate_meu_perfil_custom_fields_to_builtin_columns(session: Session) -> int:
-    """Repõe morada (custom_morada, custom_cidade, custom_freguesia, custom_codigo_postal) nas colunas de members e retira-as de profile_custom_fields."""
-    address_map = {
-        "custom_morada": "address",
-        "custom_cidade": "city",
-        "custom_freguesia": "freguesia",
-        "custom_codigo_postal": "postal_code",
-    }
-    changed = 0
-    for member in session.execute(select(Member)).scalars():
-        values = parse_member_profile_fields(member.profile_custom_fields)
-        before = dict(values)
-        for custom_key, column in address_map.items():
-            custom_value = str(values.pop(custom_key, "") or "").strip()
-            if custom_value:
-                setattr(member, column, custom_value)
-        if values != before:
-            member.profile_custom_fields = serialize_member_profile_fields(values)
-            changed += 1
-    session.commit()
-    return changed
-
-
 def build_menu_process_field_storage_key(menu_key: str, field_key: str) -> str:
     clean_menu_key = str(menu_key or "").strip().lower()
     clean_field_key = str(field_key or "").strip().lower()

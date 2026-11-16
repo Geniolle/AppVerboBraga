@@ -603,33 +603,6 @@
               {% endif %}
               {% endif %}
               {% endfor %}
-              {% if 'morada' in profile_personal_visible_fields or 'cidade' in profile_personal_visible_fields or 'freguesia' in profile_personal_visible_fields or 'codigo_postal' in profile_personal_visible_fields %}
-              <input type="hidden" name="address_fields_present" value="1">
-              {% endif %}
-              {% if 'morada' in profile_personal_visible_fields %}
-              <div class="field full" style="order: 70;" data-profile-section-pane="{{ profile_personal_field_section_map.get('morada', '') }}">
-                <label for="edit_address">Morada</label>
-                <input id="edit_address" name="address" value="{{ '' if user_personal_data.address == '-' else user_personal_data.address }}">
-              </div>
-              {% endif %}
-              {% if 'cidade' in profile_personal_visible_fields %}
-              <div class="field" style="order: 71;" data-profile-section-pane="{{ profile_personal_field_section_map.get('cidade', '') }}">
-                <label for="edit_city">Cidade</label>
-                <input id="edit_city" name="city" value="{{ '' if user_personal_data.city == '-' else user_personal_data.city }}">
-              </div>
-              {% endif %}
-              {% if 'freguesia' in profile_personal_visible_fields %}
-              <div class="field" style="order: 72;" data-profile-section-pane="{{ profile_personal_field_section_map.get('freguesia', '') }}">
-                <label for="edit_freguesia">Freguesia</label>
-                <input id="edit_freguesia" name="freguesia" value="{{ '' if user_personal_data.freguesia == '-' else user_personal_data.freguesia }}">
-              </div>
-              {% endif %}
-              {% if 'codigo_postal' in profile_personal_visible_fields %}
-              <div class="field" style="order: 73;" data-profile-section-pane="{{ profile_personal_field_section_map.get('codigo_postal', '') }}">
-                <label for="edit_postal_code">Código postal</label>
-                <input id="edit_postal_code" name="postal_code" value="{{ '' if user_personal_data.postal_code == '-' else user_personal_data.postal_code }}">
-              </div>
-              {% endif %}
               <div class="profile-edit-actions">
               <button type="submit">Gravar</button>
               <button type="button" class="profile-cancel-btn" data-appgenesis-cancel="1" data-appgenesis-cancel-target="perfil-pessoal-card">Cancelar</button>
@@ -2475,7 +2448,7 @@
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260716-persist-change-v1"></script>
   <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20260716-quantity-origin-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260716-persist-change-v1"></script>
-  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260716-pagesize-50-v1"></script>
+  <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260716-flash-timing-v1"></script>
   <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
   <script src="/static/js/modules/top_submenu_runtime_v1.js?v=20260621-trackpad-swipe-v3"></script>
   <script src="/static/js/modules/process_keys_registry_v1.js?v=20260707-process-keys-registry-v1"></script>
@@ -2487,7 +2460,7 @@
   <script src="/static/js/modules/process_submenu_runtime_v1.js?v=20260707-process-submenu-stage6-v1"></script>
   <script src="/static/js/modules/process_menu_runtime_v1.js?v=20260713-entity-edit-hash-v1"></script>
   <script src="/static/js/modules/profile_phone_field_v1.js?v=20260716-reset-v8"></script>
-  <script src="/static/js/new_user.js?v=20260716-readonly-columns-v1"></script>
+  <script src="/static/js/new_user.js?v=20260716-flash-timing-v1"></script>
   <script src="/static/js/modules/top_menu_active_v1.js?v=20260702-scope-fix-v1"></script>
   <script src="/static/js/modules/sidebar_sections_layout_v1.js?v=20260623-estruturas-sessoes-v1"></script>
   <script src="/static/js/modules/process_lists_runtime_v5.js?v=20260429e"></script>

@@ -4,6 +4,11 @@
 
 {% block head_extra %}
   <link rel="stylesheet" href="/static/css/user_invite_accept.css?v=20260623-invite-country-v1">
+  <style>
+    .password-field { position: relative; }
+    .password-field input { width: 100%; padding-right: 72px; }
+    .toggle-password { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: auto; padding: 4px 8px; font-size: 12px; }
+  </style>
 {% endblock %}
 
 {% block body %}
@@ -71,33 +76,19 @@
                 {% endif %}
               </small>
             </div>
-            <div class="field full">
-              <label for="invite_address">Morada *</label>
-              <input id="invite_address" name="address" required value="{{ form_data.address }}">
-            </div>
-            <div class="field">
-              <label for="invite_city">Cidade *</label>
-              <input id="invite_city" name="city" required value="{{ form_data.city }}">
-            </div>
-            <div class="field">
-              <label for="invite_freguesia">Freguesia *</label>
-              <input id="invite_freguesia" name="freguesia" required value="{{ form_data.freguesia }}">
-            </div>
-            <div class="field">
-              <label for="invite_postal_code">Código postal *</label>
-              <input id="invite_postal_code" name="postal_code" required value="{{ form_data.postal_code }}">
-            </div>
-            <div class="field">
-              <label for="invite_birth_date">Data de nascimento *</label>
-              <input id="invite_birth_date" type="date" name="birth_date" required value="{{ form_data.birth_date }}">
-            </div>
             <div class="field">
               <label for="invite_password">Palavra-passe *</label>
-              <input id="invite_password" name="password" type="password" minlength="8" required>
+              <div class="password-field">
+                <input id="invite_password" name="password" type="password" minlength="8" required>
+                <button type="button" class="toggle-password" data-toggle-password="invite_password">Exibir</button>
+              </div>
             </div>
             <div class="field">
               <label for="invite_confirm_password">Confirmar palavra-passe *</label>
-              <input id="invite_confirm_password" name="confirm_password" type="password" minlength="8" required>
+              <div class="password-field">
+                <input id="invite_confirm_password" name="confirm_password" type="password" minlength="8" required>
+                <button type="button" class="toggle-password" data-toggle-password="invite_confirm_password">Exibir</button>
+              </div>
             </div>
           </div>
           <div class="actions">
@@ -108,4 +99,14 @@
       {% endif %}
     </section>
   </main>
+  <script>
+    document.querySelectorAll("[data-toggle-password]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var input = document.getElementById(btn.dataset.togglePassword);
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Ocultar" : "Exibir";
+      });
+    });
+  </script>
 {% endblock %}

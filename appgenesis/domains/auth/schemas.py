@@ -28,10 +28,5 @@ class InviteAcceptSubmitFormInput:
     full_name: str
     primary_phone: str
     country: str
-    address: str
-    city: str
-    freguesia: str
-    postal_code: str
-    birth_date: str
     password: str
     confirm_password: str

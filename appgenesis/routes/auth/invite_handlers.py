@@ -133,11 +133,6 @@ def invite_accept_submit(
     full_name: str = Form(...),
     primary_phone: str = Form(...),
     country: str = Form(""),
-    address: str = Form(...),
-    city: str = Form(...),
-    freguesia: str = Form(...),
-    postal_code: str = Form(...),
-    birth_date: str = Form(""),
     password: str = Form(...),
     confirm_password: str = Form(...),
 ) -> HTMLResponse:
@@ -146,11 +141,6 @@ def invite_accept_submit(
         full_name=full_name,
         primary_phone=primary_phone,
         country=country,
-        address=address,
-        city=city,
-        freguesia=freguesia,
-        postal_code=postal_code,
-        birth_date=birth_date,
         password=password,
         confirm_password=confirm_password,
     )
