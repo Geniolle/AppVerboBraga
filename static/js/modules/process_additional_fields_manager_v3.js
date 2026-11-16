@@ -1323,6 +1323,8 @@
         hiddenContainer: "[data-additional-fields-hidden-container]",
         totalLabel: "[data-configurable-total-label]"
       },
+      // Clicar na linha abre a edicao logo abaixo dela.
+      inlineEditor: true,
       // Linhas do tipo Cabecalho: nome em negrito.
       onRender: function (ctx) {
         const headerLabel = getFieldTypeLabel_v3("header");

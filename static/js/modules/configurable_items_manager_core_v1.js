@@ -182,6 +182,7 @@
       initialItems: toArray_v1(config.initialItems),
       preventEditorSubmit: config.preventEditorSubmit !== false,
       persistOnChange: config.persistOnChange === true,
+      inlineEditor: config.inlineEditor === true,
       actions: {
         edit: config.actions && config.actions.edit === false ? false : true,
         remove: config.actions && config.actions.remove === false ? false : true,
@@ -514,6 +515,9 @@
       return;
     }
 
+    // Antes de recriar as linhas, devolve o formulario inline ao seu sitio (nao o perde com a tabela).
+    restoreInlineFormV1(manager);
+
     const filteredItems = getVisibleItems_v1(manager);
     const totalAllItems = manager.state.items.length;
     const totalItems = filteredItems.length;
@@ -546,6 +550,14 @@
 
         row.appendChild(td);
       });
+
+      if (manager.config.inlineEditor) {
+        row.style.cursor = "pointer";
+        row.addEventListener("click", (event) => {
+          if (event.target.closest("button, a, input, select, textarea, label")) return;
+          editItem_v1(manager, itemId);
+        });
+      }
 
       const actionsTd = document.createElement("td");
       actionsTd.className = "configurable-items-actions-cell-v1 admin-col-actions-v1";
@@ -716,10 +728,60 @@
     }
   }
 
+  // Edicao inline (config.inlineEditor): o formulario abre logo abaixo da linha do item.
+  function saveFormOriginV1(manager, formCard) {
+    if (!manager._formOriginV1) {
+      manager._formOriginV1 = { parent: formCard.parentNode, next: formCard.nextSibling };
+    }
+  }
+
+  function restoreInlineFormV1(manager) {
+    const formCard = manager.elements && manager.elements.formCard;
+    const origin = manager._formOriginV1;
+
+    if (formCard && origin && origin.parent) {
+      const anchor = origin.next && origin.next.parentNode === origin.parent ? origin.next : null;
+      origin.parent.insertBefore(formCard, anchor);
+    }
+
+    if (manager._inlineRowV1 && manager._inlineRowV1.parentNode) {
+      manager._inlineRowV1.parentNode.removeChild(manager._inlineRowV1);
+    }
+    manager._inlineRowV1 = null;
+  }
+
+  function mountInlineFormV1(manager, itemId, formCard) {
+    restoreInlineFormV1(manager);
+    saveFormOriginV1(manager, formCard);
+
+    const body = manager.elements.tableBody;
+    if (!body) return;
+
+    const rowEl = Array.prototype.find.call(body.querySelectorAll("tr"), (row) => {
+      return String(row.dataset.configurableItemId) === String(itemId);
+    });
+    if (!rowEl) return;
+
+    const inlineRow = document.createElement("tr");
+    inlineRow.className = "configurable-items-inline-editor-row-v1";
+    const cell = document.createElement("td");
+    cell.colSpan = rowEl.children.length;
+    cell.appendChild(formCard);
+    inlineRow.appendChild(cell);
+    rowEl.parentNode.insertBefore(inlineRow, rowEl.nextSibling);
+    manager._inlineRowV1 = inlineRow;
+  }
+
   function openFormCard_v1(manager, title) {
     const formCard = manager.elements.formCard;
 
     if (formCard) {
+      if (manager.config.inlineEditor && manager.state.editingId) {
+        mountInlineFormV1(manager, manager.state.editingId, formCard);
+      } else {
+        restoreInlineFormV1(manager);
+      }
+
       formCard.hidden = false;
 
       if (typeof formCard.scrollIntoView === "function") {
@@ -733,6 +795,8 @@
   }
 
   function closeFormCard_v1(manager) {
+    restoreInlineFormV1(manager);
+
     if (manager.elements.formCard) {
       manager.elements.formCard.hidden = true;
     }
