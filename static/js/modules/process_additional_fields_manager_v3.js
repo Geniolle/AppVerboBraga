@@ -1323,6 +1323,19 @@
         hiddenContainer: "[data-additional-fields-hidden-container]",
         totalLabel: "[data-configurable-total-label]"
       },
+      // Linhas do tipo Cabecalho: nome em negrito.
+      onRender: function (ctx) {
+        const headerLabel = getFieldTypeLabel_v3("header");
+        const body = ctx.elements && ctx.elements.tableBody ? ctx.elements.tableBody : ctx.root;
+        body.querySelectorAll("tr").forEach(function (rowEl) {
+          const cells = rowEl.querySelectorAll("td");
+          if (cells.length < 2) return;
+          const isHeader = cells[1].textContent.trim() === headerLabel;
+          Array.prototype.forEach.call(cells, function (cellEl) {
+            cellEl.style.fontWeight = isHeader ? "700" : "";
+          });
+        });
+      },
       columns: [
         {
           key: "label",

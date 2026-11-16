@@ -16,7 +16,7 @@
   const namespace = window.AppGenesisConfigurableItems;
 
   const DEFAULT_CONFIGURABLE_PAGE_SIZE_V1 = 5;
-  const DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = [5, 10, 20];
+  const DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = [5, 10, 20, 50];
 
   //###################################################################################
   // (2) HELPERS GERAIS

@@ -58,7 +58,7 @@ def test_core_exposes_shared_page_size_constants() -> None:
     script_text = CORE_PATH.read_text(encoding="utf-8")
 
     assert "const DEFAULT_CONFIGURABLE_PAGE_SIZE_V1 = 5;" in script_text
-    assert "const DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = [5, 10, 20];" in script_text
+    assert "const DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = [5, 10, 20, 50];" in script_text
     assert "namespace.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1 = DEFAULT_CONFIGURABLE_PAGE_SIZE_V1;" in script_text
     assert (
         "namespace.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1 = DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1;"

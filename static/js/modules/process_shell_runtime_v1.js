@@ -31,7 +31,7 @@
   const DEFAULT_TABLE_SELECTOR = "table";
   const DEFAULT_FOOTER_SELECTOR = ".admin-status-table-footer-v1, .table-limiter";
   const DEFAULT_PAGE_SIZE = 5;
-  const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 20];
+  const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
   const DEFAULT_SEARCH_DEBOUNCE_MS = 150;
   const DEFAULT_ACTIONS_SELECTOR = ".table-actions";
 
