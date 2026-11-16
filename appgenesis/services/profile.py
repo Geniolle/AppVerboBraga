@@ -195,7 +195,8 @@ def get_hidden_process_targets_from_rules(
 
     hidden_targets: set[str] = set()
     for target_field, target_rules in grouped_rules.items():
-        if not all(is_process_subsequent_rule_met(rule, values_by_field) for rule in target_rules):
+        # Regras do mesmo alvo: basta uma cumprida para o alvo ficar visivel (OR).
+        if not any(is_process_subsequent_rule_met(rule, values_by_field) for rule in target_rules):
             hidden_targets.add(target_field)
     return hidden_targets
 
@@ -1365,6 +1366,7 @@ def get_user_personal_data(
             Member.member_status,
             User.account_status,
             Member.is_collaborator,
+            Member.photo_url,
         )
        .join(User, User.member_id == Member.id)
        .where(User.id == user_id)
@@ -1373,6 +1375,7 @@ def get_user_personal_data(
     if row is None:
         return {
             "full_name": "-",
+            "photo_url": "",
             "login_email": "-",
             "primary_phone": "-",
             "country": "-",
@@ -1473,6 +1476,7 @@ def get_user_personal_data(
 
     return {
         "full_name": row.full_name or "-",
+        "photo_url": row.photo_url or "",
         "login_email": row.login_email or "-",
         "primary_phone": row.primary_phone or "-",
         "country": row.country or "-",

@@ -56,6 +56,10 @@ class Settings:
     BASE_DIR: Path
     STATIC_DIR: Path
     ENTITY_LOGOS_DIR: Path
+    PROFILE_PHOTOS_DIR: Path
+    MAX_PROFILE_PHOTO_SIZE_BYTES: int
+    ALLOWED_PROFILE_PHOTO_EXTENSIONS: set[str]
+    PROFILE_PHOTO_CONTENT_TYPE_EXTENSION: dict[str, str]
 
     MAX_ENTITY_LOGO_SIZE_BYTES: int
     ALLOWED_ENTITY_LOGO_EXTENSIONS: set[str]
@@ -110,11 +114,21 @@ def _build_settings() -> Settings:
     static_dir = base_dir / "static"
     entity_logos_dir = static_dir / "entities"
     entity_logos_dir.mkdir(parents=True, exist_ok=True)
+    profile_photos_dir = static_dir / "profile_photos"
+    profile_photos_dir.mkdir(parents=True, exist_ok=True)
 
     return Settings(
         BASE_DIR=base_dir,
         STATIC_DIR=static_dir,
         ENTITY_LOGOS_DIR=entity_logos_dir,
+        PROFILE_PHOTOS_DIR=profile_photos_dir,
+        MAX_PROFILE_PHOTO_SIZE_BYTES=5 * 1024 * 1024,
+        ALLOWED_PROFILE_PHOTO_EXTENSIONS={".png", ".jpg", ".jpeg", ".webp"},
+        PROFILE_PHOTO_CONTENT_TYPE_EXTENSION={
+            "image/png": ".png",
+            "image/jpeg": ".jpg",
+            "image/webp": ".webp",
+        },
         MAX_ENTITY_LOGO_SIZE_BYTES=5 * 1024 * 1024,
         ALLOWED_ENTITY_LOGO_EXTENSIONS={".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"},
         LOGO_CONTENT_TYPE_EXTENSION={

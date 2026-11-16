@@ -41,6 +41,10 @@ from appgenesis.services.auth_profile_entity_scope import (
 from appgenesis.services.page import build_users_new_url, get_page_data
 from appgenesis.services.permissions import get_user_entity_permissions
 from appgenesis.services.session import get_current_user, get_session_entity_id
+from appgenesis.services.profile_photo import (
+    delete_profile_photo_file,
+    save_profile_photo_upload,
+)
 from appgenesis.services.profile import (
     mirror_meu_perfil_custom_fields_to_member_columns,
     build_menu_process_field_storage_key,
@@ -1570,6 +1574,21 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             elif payload_was_submitted:
                 updated_quantity_values.pop(storage_key, None)
         # APPGENESIS_MEU_PERFIL_QUANTITY_PERSISTENCE_V1_END
+
+        # Foto de perfil (campo fixo): nova foto substitui a anterior; "remover" limpa a foto.
+        photo_upload = submitted_form.get("profile_photo")
+        if hasattr(photo_upload, "filename") and photo_upload.filename:
+            new_photo_url, photo_error = save_profile_photo_upload(photo_upload)
+            if photo_error:
+                return RedirectResponse(
+                    url=_build_post_save_redirect_url_v6(submitted_form, profile_error=photo_error, profile_tab="pessoal"),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+            delete_profile_photo_file(member.photo_url)
+            member.photo_url = new_photo_url
+        elif str(submitted_form.get("remove_profile_photo") or "") == "1":
+            delete_profile_photo_file(member.photo_url)
+            member.photo_url = None
 
         previous_phone = (member.primary_phone or "").strip()
         member.full_name = clean_full_name

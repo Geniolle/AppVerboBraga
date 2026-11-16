@@ -195,8 +195,9 @@ def update_sidebar_menu_process_quantity_fields_v1(
                 False,
                 f"O campo origem da regra '{rule_label}' deve existir em Campos adicionais.",
             )
-        if str(quantity_field_meta.get("field_type") or "").strip().lower() != "number":
-            return False, f"O campo origem da regra '{rule_label}' deve ser numérico."
+        # A quantidade e' o valor inteiro preenchido no campo origem (numero, texto ou lista com numeros).
+        if str(quantity_field_meta.get("field_type") or "").strip().lower() not in {"number", "text", "list"}:
+            return False, f"O campo origem da regra '{rule_label}' deve ser numérico, texto ou lista."
 
         if not repeated_field_keys:
             return False, f"Selecione os campos repetidos da regra '{rule_label}'."

@@ -71,6 +71,12 @@ def _build_subsequent_field_key_v3(
     return f"subseq_{base_key}"
 
 
+def _normalize_subsequent_target_type(raw_target_type: Any) -> str:
+    # "section" = aba (cabeçalho); "field" = campo. Regras antigas sem tipo ficam como campo.
+    clean_target_type = str(raw_target_type or "").strip().lower()
+    return "section" if clean_target_type in {"section", "aba", "header"} else "field"
+
+
 def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, str]]:
     if not isinstance(raw_fields, (list, tuple)):
         return []
@@ -115,6 +121,12 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
             or raw_field.get("condition")
             or raw_field.get("condicao")
             or raw_field.get("condição")
+        )
+
+        target_type = _normalize_subsequent_target_type(
+            raw_field.get("target_type")
+            or raw_field.get("targetType")
+            or raw_field.get("subsequent_target_type")
         )
 
         trigger_value = str(
@@ -173,6 +185,7 @@ def normalize_menu_process_subsequent_fields(raw_fields: Any) -> list[dict[str, 
                 "field_key": subsequent_field_key,
                 "subsequent_field": subsequent_field_key,
                 "subsequent_field_key": subsequent_field_key,
+                "target_type": target_type,
                 "operator": operator,
                 "condition": operator,
                 "trigger_value": trigger_value,

@@ -138,12 +138,13 @@
       Array.isArray(optionCache && optionCache.staticOptions) ? optionCache.staticOptions : []
     );
 
+    optionCache.fieldOptions = resolved.selectableOptions || [];
+    optionCache.headerOptions = resolved.headerOptions || [];
+
     rebuildSelectOptions_v1(elements.triggerField, resolved.selectableOptions, {
       placeholder: "Selecione"
     });
-    rebuildSelectOptions_v1(elements.subsequentField, resolved.selectableOptions, {
-      placeholder: "Selecione"
-    });
+    rebuildSubsequentOptions_v1(elements, optionCache, true);
 
     if (manager && typeof manager.render === "function") {
       manager.render();
@@ -196,8 +197,39 @@
       emptyState: form.querySelector("[data-process-subsequent-fields-empty]"),
       totalLabel: form.querySelector("[data-process-subsequent-fields-total-label]"),
       pageSize: form.querySelector("[data-process-subsequent-fields-page-size]"),
-      pagination: form.querySelector("[data-process-subsequent-fields-pagination]")
+      pagination: form.querySelector("[data-process-subsequent-fields-pagination]"),
+      targetType: form.querySelector("[data-process-subsequent-target-type]"),
+      fieldLabel: form.querySelector("[data-process-subsequent-field-label]")
     };
+  }
+
+  // Aplicar a: "field" (campo) ou "section" (aba/cabecalho). Cada tipo tem a sua propria lista.
+  function getTargetType_v1(elements) {
+    return elements.targetType && elements.targetType.value === "section" ? "section" : "field";
+  }
+
+  function rebuildSubsequentOptions_v1(elements, optionCache, keepValue) {
+    const cache = optionCache || {};
+    const isSection = getTargetType_v1(elements) === "section";
+    const previousValue = keepValue ? toSafeString_v1(elements.subsequentField.value).trim() : "";
+
+    rebuildSelectOptions_v1(
+      elements.subsequentField,
+      isSection ? (cache.headerOptions || []) : (cache.fieldOptions || []),
+      { placeholder: "Selecione" }
+    );
+    elements.subsequentField.value = previousValue;
+
+    if (elements.fieldLabel) {
+      elements.fieldLabel.textContent = isSection ? "Aba subsequente" : "Campo subsequente";
+    }
+  }
+
+  function findSubsequentTargetLabel_v1(optionCache, targetType, key) {
+    const cache = optionCache || {};
+    const list = targetType === "section" ? (cache.headerOptions || []) : (cache.fieldOptions || []);
+    const found = list.find(function (option) { return option.key === key; });
+    return found ? found.label : key;
   }
 
   function hasRequiredElements_v1(elements) {
@@ -234,6 +266,7 @@
         const fieldKey = readInput_v1(row, "subsequent_field");
         const operator = readInput_v1(row, "subsequent_operator") || "equals";
         const triggerValue = readInput_v1(row, "subsequent_trigger_value");
+        const targetType = readInput_v1(row, "subsequent_target_type") === "section" ? "section" : "field";
         const key = readInput_v1(row, "subsequent_field_key")
           || "sub_" + normalizeKey_v1(triggerField + "_" + fieldKey + "_" + operator) + "_" + (index + 1);
 
@@ -242,6 +275,7 @@
           key: key,
           triggerField: triggerField,
           fieldKey: fieldKey,
+          targetType: targetType,
           operator: operator,
           triggerValue: triggerValue
         };
@@ -270,6 +304,7 @@
         ["subsequent_field_key", item.key],
         ["subsequent_trigger_field", item.triggerField],
         ["subsequent_field", item.fieldKey],
+        ["subsequent_target_type", item.targetType === "section" ? "section" : "field"],
         ["subsequent_operator", item.operator],
         ["subsequent_trigger_value", item.triggerValue]
       ];
@@ -297,6 +332,12 @@
 
     elements.editorKey.value = "";
     elements.triggerField.value = "";
+    if (elements.targetType) {
+      elements.targetType.value = "field";
+    }
+    if (context && context.optionCache) {
+      rebuildSubsequentOptions_v1(elements, context.optionCache, false);
+    }
     elements.subsequentField.value = "";
     elements.operator.value = "equals";
     elements.triggerValue.value = "";
@@ -311,6 +352,12 @@
 
     elements.editorKey.value = item.key || "";
     elements.triggerField.value = item.triggerField || "";
+    if (elements.targetType) {
+      elements.targetType.value = item.targetType === "section" ? "section" : "field";
+    }
+    if (context.optionCache) {
+      rebuildSubsequentOptions_v1(elements, context.optionCache, false);
+    }
     elements.subsequentField.value = item.fieldKey || "";
     elements.operator.value = item.operator || "equals";
     elements.triggerValue.value = item.triggerValue || "";
@@ -332,6 +379,7 @@
       key: key,
       triggerField: triggerField,
       fieldKey: fieldKey,
+      targetType: getTargetType_v1(elements),
       operator: operator,
       triggerValue: triggerValue
     };
@@ -424,7 +472,7 @@
       if (hasDraft_v1(elements, manager)) {
         const item = readEditorItem_v1({
           manager: manager,
-          elements: manager.elements,
+          elements: elements,
           state: manager.state
         });
         const validationResult = validateItem_v1(item, {
@@ -483,7 +531,9 @@
 
     const optionCache = {
       staticOptions: snapshotSelectOptions_v1(elements.triggerField)
-        .concat(snapshotSelectOptions_v1(elements.subsequentField))
+        .concat(snapshotSelectOptions_v1(elements.subsequentField)),
+      fieldOptions: [],
+      headerOptions: []
     };
     const manager = core.createConfigurableItemsManager_v1({
       root: form,
@@ -491,6 +541,15 @@
       itemNamePlural: "campos subsequentes",
       createTitle: "Criar campo subsequente",
       editTitle: "Editar campo subsequente",
+      actions: { copy: true },
+      persistOnChange: true,
+      getItemLabel: function (item) {
+        const target = findSubsequentTargetLabel_v1(optionCache, item.targetType, item.fieldKey);
+        const trigger = getOptionLabel_v1(elements.triggerField, item.triggerField) || item.triggerField;
+        const condition = getOperatorLabel_v1(item.operator);
+        const value = item.triggerValue ? " " + item.triggerValue : "";
+        return target + " (" + trigger + " " + condition + value + ")";
+      },
       pageSizeDefault: Number.parseInt(elements.pageSize.value, 10) || core.DEFAULT_CONFIGURABLE_PAGE_SIZE_V1,
       pageSizeOptions: core.DEFAULT_CONFIGURABLE_PAGE_SIZE_OPTIONS_V1,
       initialItems: readInitialItems_v1(elements),
@@ -516,10 +575,17 @@
           }
         },
         {
+          key: "targetType",
+          label: "Aplicar a",
+          render: function (item) {
+            return item.targetType === "section" ? "Aba" : "Campo";
+          }
+        },
+        {
           key: "fieldKey",
           label: "Campo subsequente",
           render: function (item) {
-            return getOptionLabel_v1(elements.subsequentField, item.fieldKey) || "-";
+            return findSubsequentTargetLabel_v1(optionCache, item.targetType, item.fieldKey) || "-";
           }
         },
         {
@@ -540,9 +606,15 @@
       getItemId: function (item, index) {
         return item.managerId || item.__managerId || item.key || ("subsequent_" + (index + 1));
       },
-      readEditorItem: readEditorItem_v1,
-      loadEditorItem: loadEditorItem_v1,
-      clearEditor: clearEditor_v1,
+      readEditorItem: function (context) {
+        return readEditorItem_v1({ elements: elements, state: context.state });
+      },
+      loadEditorItem: function (item) {
+        loadEditorItem_v1(item, { elements: elements, optionCache: optionCache });
+      },
+      clearEditor: function () {
+        clearEditor_v1({ elements: elements, optionCache: optionCache });
+      },
       validateItem: validateItem_v1,
       syncHiddenInputs: syncHiddenInputs_v1
     });
@@ -556,6 +628,12 @@
     bindFieldOptionsRefresh_v1(form, elements, manager, optionCache);
     bindCancel_v1(form, elements, manager);
     bindSubmit_v1(form, elements, manager);
+
+    if (elements.targetType) {
+      elements.targetType.addEventListener("change", function () {
+        rebuildSubsequentOptions_v1(elements, optionCache, false);
+      });
+    }
     manager.syncHiddenInputs();
 
     return manager;

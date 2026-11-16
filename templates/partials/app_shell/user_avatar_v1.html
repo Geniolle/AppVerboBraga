@@ -2,7 +2,7 @@
    ao cabecalho do processo (partials/app_shell/process_header_v1.html,
    incluido em templates/new_user.html) em vez de viver numa topbar global
    separada (ver new_user_topbar.html). #}
-<div id="user-menu" class="user-menu process-shell-user-v1">
+<div id="user-menu" class="user-menu process-shell-user-v1" data-photo-url="{{ user_personal_data.photo_url if user_personal_data and user_personal_data.photo_url else '' }}">
   <button id="user-menu-trigger" class="user-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="user-dropdown" aria-label="Abrir menu do utilizador">
     <img id="user-avatar-image" class="avatar-img" alt="Foto do utilizador">
   </button>

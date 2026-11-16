@@ -171,6 +171,7 @@
         formTitle: selectors.formTitle || "[data-configurable-form-title]"
       },
       getItemId: typeof config.getItemId === "function" ? config.getItemId : defaultGetItemId_v1,
+      getItemLabel: typeof config.getItemLabel === "function" ? config.getItemLabel : null,
       readEditorItem: typeof config.readEditorItem === "function" ? config.readEditorItem : null,
       loadEditorItem: typeof config.loadEditorItem === "function" ? config.loadEditorItem : null,
       clearEditor: typeof config.clearEditor === "function" ? config.clearEditor : null,
@@ -180,10 +181,12 @@
       onRender: typeof config.onRender === "function" ? config.onRender : null,
       initialItems: toArray_v1(config.initialItems),
       preventEditorSubmit: config.preventEditorSubmit !== false,
+      persistOnChange: config.persistOnChange === true,
       actions: {
         edit: config.actions && config.actions.edit === false ? false : true,
         remove: config.actions && config.actions.remove === false ? false : true,
-        move: config.actions && config.actions.move === false ? false : true
+        move: config.actions && config.actions.move === false ? false : true,
+        copy: config.actions && config.actions.copy === true
       }
     };
   }
@@ -351,8 +354,13 @@
       return;
     }
 
+    if (action === "copy") {
+      copyItem_v1(manager, itemId);
+      return;
+    }
+
     if (action === "up" || action === "down") {
-      moveItem_v1(manager, itemId, action);
+      openMovePicker_v1(manager, itemId, action);
       return;
     }
 
@@ -443,6 +451,18 @@
       btn.dataset.configurableManagerId = managerId;
       btn.textContent = "Editar";
       container.appendChild(btn);
+    }
+
+    if (manager.config.actions.copy) {
+      const copyBtn = document.createElement("button");
+      copyBtn.type = "button";
+      copyBtn.title = "Copiar";
+      copyBtn.setAttribute("aria-label", "Copiar");
+      copyBtn.dataset.configurableAction = "copy";
+      copyBtn.dataset.configurableItemId = itemId;
+      copyBtn.dataset.configurableManagerId = managerId;
+      copyBtn.textContent = "Copiar";
+      container.appendChild(copyBtn);
     }
 
     if (manager.config.actions.remove) {
@@ -754,6 +774,29 @@
     closeFormCard_v1(manager);
   }
 
+  // Copiar: abre o formulario de criacao ja preenchido com os dados da regra (sem chave, para criar nova).
+  function copyItem_v1(manager, itemId) {
+    const itemIndex = findItemIndexById_v1(manager, itemId);
+
+    if (itemIndex < 0) {
+      return;
+    }
+
+    const copied = { ...manager.state.items[itemIndex], key: "" };
+    manager.state.editingId = "";
+    manager.root.classList.remove("configurable-items-editing-v1");
+    openCreateItem_v1(manager);
+
+    if (typeof manager.config.loadEditorItem === "function") {
+      manager.config.loadEditorItem(copied, {
+        manager,
+        root: manager.root,
+        elements: manager.elements,
+        index: itemIndex
+      });
+    }
+  }
+
   function editItem_v1(manager, itemId) {
     const itemIndex = findItemIndexById_v1(manager, itemId);
 
@@ -816,6 +859,117 @@
 
     manager.render();
     notifyChange_v1(manager);
+
+    persistManagerChange_v1(manager);
+  }
+
+  // persistOnChange: eliminar/mover grava logo (sincroniza campos ocultos e submete o formulario).
+  function persistManagerChange_v1(manager) {
+    if (!manager.config.persistOnChange) return;
+    manager.syncHiddenInputs();
+    const formEl = manager.root.tagName === "FORM" ? manager.root : manager.root.closest("form");
+    if (formEl) {
+      HTMLFormElement.prototype.submit.call(formEl);
+    }
+  }
+
+  // Subir/Descer: escolhe o item de referencia (acima/abaixo do qual o item editado fica).
+  function getItemPickerLabel_v1(manager, item) {
+    if (typeof manager.config.getItemLabel === "function") {
+      const custom = toSafeString_v1(manager.config.getItemLabel(item)).trim();
+      if (custom) return custom;
+    }
+    const firstColumn = (manager.config.columns || [])[0];
+    if (firstColumn && typeof firstColumn.render === "function") {
+      const rendered = toSafeString_v1(firstColumn.render(item, 0, manager)).trim();
+      if (rendered && rendered !== "-") return rendered;
+    }
+    return toSafeString_v1(item.label || item.key || item.__managerId).trim();
+  }
+
+  function openMovePicker_v1(manager, itemId, direction) {
+    const itemIndex = findItemIndexById_v1(manager, itemId);
+    if (itemIndex < 0) return;
+
+    const current = manager.state.items[itemIndex];
+    const others = manager.state.items.filter((row) => String(row.__managerId) !== String(itemId));
+    if (!others.length) return;
+
+    const isUp = direction === "up";
+    const itemName = getItemPickerLabel_v1(manager, current);
+    const dialog = document.createElement("dialog");
+    dialog.className = "appgenesis-move-picker-v1";
+    dialog.style.cssText = "padding:20px;border:1px solid #d6dbe6;border-radius:10px;min-width:320px;max-width:90vw;";
+
+    const title = document.createElement("h3");
+    title.textContent = (isUp ? "Subir: " : "Descer: ") + itemName;
+    title.style.margin = "0 0 12px";
+
+    const label = document.createElement("label");
+    label.textContent = isUp ? "Ficar acima de:" : "Ficar abaixo de:";
+    label.style.display = "block";
+    label.style.marginBottom = "6px";
+
+    const select = document.createElement("select");
+    select.style.width = "100%";
+    others.forEach((row) => {
+      const option = document.createElement("option");
+      option.value = String(row.__managerId);
+      option.textContent = getItemPickerLabel_v1(manager, row);
+      select.appendChild(option);
+    });
+
+    const actions = document.createElement("div");
+    actions.style.cssText = "display:flex;gap:8px;justify-content:flex-end;margin-top:16px;";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "action-btn-cancel";
+    cancelBtn.textContent = "Cancelar";
+    cancelBtn.addEventListener("click", () => dialog.close());
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.className = "action-btn";
+    confirmBtn.textContent = "Confirmar";
+    confirmBtn.addEventListener("click", () => {
+      moveItemRelative_v1(manager, itemId, select.value, isUp ? "before" : "after");
+      dialog.close();
+    });
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    dialog.appendChild(title);
+    dialog.appendChild(label);
+    dialog.appendChild(select);
+    dialog.appendChild(actions);
+    dialog.addEventListener("close", () => dialog.remove());
+
+    document.body.appendChild(dialog);
+    dialog.showModal();
+  }
+
+  function moveItemRelative_v1(manager, itemId, targetId, position) {
+    const itemIndex = findItemIndexById_v1(manager, itemId);
+    if (itemIndex < 0 || String(itemId) === String(targetId)) return;
+
+    const item = manager.state.items[itemIndex];
+    manager.state.items.splice(itemIndex, 1);
+
+    const targetIndex = findItemIndexById_v1(manager, targetId);
+    if (targetIndex < 0) {
+      manager.state.items.splice(itemIndex, 0, item);
+      return;
+    }
+
+    manager.state.items.splice(position === "after" ? targetIndex + 1 : targetIndex, 0, item);
+    manager.state.items.forEach((row, index) => {
+      row.__managerOrder = index + 1;
+    });
+
+    manager.render();
+    notifyChange_v1(manager);
+    persistManagerChange_v1(manager);
   }
 
   function moveItem_v1(manager, itemId, direction) {
@@ -841,6 +995,7 @@
 
     manager.render();
     notifyChange_v1(manager);
+    persistManagerChange_v1(manager);
   }
 
   function addOrUpdateItem_v1(manager, rawItem) {

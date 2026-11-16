@@ -28,6 +28,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
     subsequent_field: list[str] = Form(default=[]),
     subsequent_operator: list[str] = Form(default=[]),
     subsequent_trigger_value: list[str] = Form(default=[]),
+    subsequent_target_type: list[str] = Form(default=[]),
     redirect_menu: str = Form("administrativo"),
     redirect_target: str = Form("#settings-menu-edit-card"),
     return_url: str = Form(""),
@@ -88,6 +89,7 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
             len(subsequent_field),
             len(subsequent_operator),
             len(subsequent_trigger_value),
+            len(subsequent_target_type),
         )
 
         payload_fields: list[dict[str, str]] = []
@@ -113,6 +115,9 @@ def edit_sidebar_menu_process_subsequent_fields_handler(
                         "trigger_value": subsequent_trigger_value[row_index]
                         if row_index < len(subsequent_trigger_value)
                         else "",
+                        "target_type": subsequent_target_type[row_index]
+                        if row_index < len(subsequent_target_type)
+                        else "field",
                     }
                 )
 

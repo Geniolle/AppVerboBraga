@@ -869,6 +869,7 @@
     );
 
     const manager = core.createConfigurableItemsManager_v1({
+      persistOnChange: true,
       root: form,
       itemName: "campo",
       itemNamePlural: "campos",

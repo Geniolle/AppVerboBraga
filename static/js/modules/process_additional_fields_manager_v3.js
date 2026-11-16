@@ -1304,6 +1304,7 @@
     const initialItems = readLegacyAdditionalFields_v3(root);
 
     const manager = core.createConfigurableItemsManager_v1({
+      persistOnChange: true,
       root,
       itemName: "campo",
       itemNamePlural: "campos",

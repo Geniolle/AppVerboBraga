@@ -755,6 +755,7 @@
     }
 
     const manager = core.createConfigurableItemsManager_v1({
+      persistOnChange: true,
       root: elements.root,
       itemName: "coluna",
       itemNamePlural: "colunas",
@@ -892,6 +893,7 @@
     elements.root.dataset.hasSourceSubprocess = "0";
 
     const manager = core.createConfigurableItemsManager_v1({
+      persistOnChange: true,
       root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",

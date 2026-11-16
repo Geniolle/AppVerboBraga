@@ -271,10 +271,13 @@
     const selectableOptions = Array.isArray(resolved.selectableOptions)
       ? resolved.selectableOptions
       : [];
-    const quantityOptions = selectableOptions.filter((option) => option.fieldType === "number");
+    // Origem: campo numerico, de texto ou de lista (o valor inteiro preenchido define a quantidade).
+    const quantityOptions = selectableOptions.filter((option) =>
+      ["number", "text", "list"].indexOf(option.fieldType) !== -1
+    );
 
     rebuildSelectOptions_v1(elements.editorQuantityField, quantityOptions, {
-      placeholder: "Selecione"
+      placeholder: quantityOptions.length ? "Selecione" : "Crie um campo em Campos adicionais"
     });
     rebuildSelectOptions_v1(elements.editorRepeatedFields, selectableOptions, {
       multiple: true
@@ -573,6 +576,7 @@
         .concat(snapshotSelectOptions_v1(elements.editorHeaderKey))
     };
     const manager = core.createConfigurableItemsManager_v1({
+      persistOnChange: true,
       root: form,
       itemName: "regra",
       itemNamePlural: "regras",

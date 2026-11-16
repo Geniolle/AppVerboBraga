@@ -425,7 +425,8 @@ function getHiddenProcessTargets(rules, valuesByField = {}) {
   });
   const hiddenTargets = new Set();
   groupedRules.forEach((targetRules, targetField) => {
-    if (!targetRules.every((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField))) {
+    // Regras do mesmo alvo: basta uma cumprida para o alvo ficar visivel (OR).
+    if (!targetRules.some((rule) => isProcessSubsequentRuleSatisfied(rule, valuesByField))) {
       hiddenTargets.add(targetField);
     }
   });
@@ -2670,8 +2671,9 @@ function renderMeuPerfilQuantityGroups() {
     const desiredCount = Number.isFinite(sourceValueRaw)
       ? Math.min(Math.max(sourceValueRaw, 0), rule.maxItems)
       : 0;
-    const sourceIndex = profilePersonalVisibleFields.indexOf(rule.quantityFieldKey);
-    const baseOrder = sourceIndex >= 0 ? ((sourceIndex + 1) * 10) : ((profilePersonalVisibleFields.length + 1) * 10);
+    // Ordem do campo origem: a que ja tem no formulario (a variavel profilePersonalVisibleFields nao existe neste escopo).
+    const originAnchorEl = editAnchorEl || readOnlyAnchorEl;
+    const baseOrder = (originAnchorEl && Number.parseInt(getComputedStyle(originAnchorEl).order, 10)) || 0;
     if (readOnlyAnchorEl) {
       readOnlyAnchorEl.style.order = String(baseOrder);
     }
@@ -2687,11 +2689,13 @@ function renderMeuPerfilQuantityGroups() {
     }
     nextQuantityValuesByRule[rule.key] = nextItems;
 
-    if (readonlyGridEl && nextItems.length) {
+    // Leitura: o bloco por colunas (renderReadonlyRuleQuantityReadonlyV1) substitui este bloco empilhado; nao gerar duplicado.
+    if (false && readonlyGridEl && nextItems.length) {
       const groupEl = document.createElement("div");
       groupEl.className = "personal-item";
       groupEl.style.gridColumn = "1 / -1";
-      groupEl.style.order = String(baseOrder + 1);
+      // Grupo repetido no fim da aba (depois dos campos fixos, ordem 190/200), por pedido.
+      groupEl.style.order = "300";
       groupEl.setAttribute("data-profile-section-pane", ruleSectionKey || "");
       groupEl.setAttribute("data-meu-perfil-quantity-generated", "1");
 
@@ -2744,7 +2748,7 @@ function renderMeuPerfilQuantityGroups() {
     if (editGridEl && nextItems.length) {
       const blockEl = document.createElement("div");
       blockEl.className = "field full dynamic-process-quantity-editor-block";
-      blockEl.style.order = String(baseOrder + 1);
+      blockEl.style.order = "300";
       blockEl.setAttribute("data-profile-section-pane", ruleSectionKey || "");
       blockEl.setAttribute("data-meu-perfil-quantity-generated", "1");
       blockEl.setAttribute("data-meu-perfil-quantity-source-key", rule.quantityFieldKey);
@@ -4022,6 +4026,24 @@ function collectCurrentMeuPerfilProcessValues() {
   return valuesByField;
 }
 
+// So escreve quando o estado difere (evita ciclo com o MutationObserver).
+function enforceMeuPerfilHiddenSectionLinksV1() {
+  document.querySelectorAll(".submenu-item[data-profile-section]").forEach((linkEl) => {
+    const sectionKey = normalizeMenuKey(linkEl.dataset.profileSection);
+    const shouldHide = hiddenMeuPerfilSectionKeys.has(sectionKey);
+    if (shouldHide) {
+      // Confirma o estilo real: outro gestor pode limpar display entre redesenhos.
+      if (linkEl.style.getPropertyValue("display") !== "none") {
+        linkEl.style.setProperty("display", "none", "important");
+      }
+      linkEl.dataset.meuPerfilHidden = "1";
+    } else if (linkEl.dataset.meuPerfilHidden === "1") {
+      linkEl.style.removeProperty("display");
+      delete linkEl.dataset.meuPerfilHidden;
+    }
+  });
+}
+
 function applyMeuPerfilProcessSubsequentVisibility() {
   const setting = getSidebarMenuSetting(MEU_PERFIL_MENU_KEY);
   const personalCardEl = document.getElementById("perfil-pessoal-card");
@@ -4038,7 +4060,12 @@ function applyMeuPerfilProcessSubsequentVisibility() {
     const submenuLinks = itemsEl.querySelectorAll(".submenu-item[data-profile-section]");
     submenuLinks.forEach((linkEl) => {
       const sectionKey = normalizeMenuKey(linkEl.dataset.profileSection);
-      linkEl.style.display = hiddenMeuPerfilSectionKeys.has(sectionKey) ? "none" : "";
+      // !important: o gestor de abas com overflow (tabs_overflow_v1.js) limpa style.display ao recalcular.
+      if (hiddenMeuPerfilSectionKeys.has(sectionKey)) {
+        linkEl.style.setProperty("display", "none", "important");
+      } else {
+        linkEl.style.removeProperty("display");
+      }
     });
   }
 
@@ -4067,6 +4094,34 @@ function applyMeuPerfilProcessSubsequentVisibility() {
   }
   renderMeuPerfilQuantityGroups();
 }
+
+// Campos obrigatorios em abas ocultas bloqueiam a validacao do navegador sem mensagem visivel.
+// Antes de validar o submit, suspende 'required' nos controlos ocultos e repoe nos visiveis.
+function syncMeuPerfilHiddenRequiredFields() {
+  const formEl = document.querySelector("#perfil-pessoal-card .profile-edit-form");
+  if (!formEl) {
+    return;
+  }
+  formEl.querySelectorAll("input, select, textarea").forEach((controlEl) => {
+    if (controlEl.type === "hidden" || controlEl.disabled) {
+      return;
+    }
+    const isHidden = controlEl.offsetParent === null;
+    if (isHidden && controlEl.required) {
+      controlEl.required = false;
+      controlEl.dataset.meuPerfilRequiredOff = "1";
+    } else if (!isHidden && controlEl.dataset.meuPerfilRequiredOff === "1") {
+      controlEl.required = true;
+      delete controlEl.dataset.meuPerfilRequiredOff;
+    }
+  });
+}
+
+document.addEventListener("click", (event) => {
+  if (event.target.closest("#perfil-pessoal-card .profile-edit-form [type='submit']")) {
+    syncMeuPerfilHiddenRequiredFields();
+  }
+}, true);
 
 function setupMeuPerfilQuantityRules() {
   const personalCardEl = document.getElementById("perfil-pessoal-card");
@@ -4133,6 +4188,17 @@ function setupConditionalProcessVisibility() {
       personalFormEl.addEventListener(eventName, () => {
         applyMeuPerfilProcessSubsequentVisibility();
       });
+    });
+    // Aplica ja no carregamento: sem isto abas ocultas por regra ficam visiveis ate a primeira alteracao.
+    applyMeuPerfilProcessSubsequentVisibility();
+    // O menu de abas e redesenhado por outros gestores (tabs_overflow_v1.js) depois do setup:
+    // um observador volta a ocultar as abas que a regra manda ocultar.
+    enforceMeuPerfilHiddenSectionLinksV1();
+    new MutationObserver(enforceMeuPerfilHiddenSectionLinksV1).observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"]
     });
   }
 
@@ -5346,7 +5412,30 @@ function handleHashNavigation(rawHash) {
   }
 }
 
-const avatarDataUri = buildAvatarDataUri(currentUserName);
+// Foto de perfil (se existir) substitui as iniciais no avatar.
+const profilePhotoMenuEl = document.getElementById("user-menu");
+const profilePhotoUrl = profilePhotoMenuEl && profilePhotoMenuEl.dataset ? String(profilePhotoMenuEl.dataset.photoUrl || "").trim() : "";
+const avatarDataUri = profilePhotoUrl || buildAvatarDataUri(currentUserName);
+
+// Pre-visualizacao da foto escolhida no formulario de Dados pessoais.
+const profilePhotoInputEl = document.getElementById("edit_profile_photo");
+const profilePhotoPreviewEl = document.getElementById("edit_profile_photo_preview");
+if (profilePhotoInputEl && profilePhotoPreviewEl) {
+  profilePhotoInputEl.addEventListener("change", () => {
+    const file = profilePhotoInputEl.files && profilePhotoInputEl.files[0];
+    if (!file) {
+      return;
+    }
+    profilePhotoPreviewEl.src = URL.createObjectURL(file);
+    profilePhotoPreviewEl.hidden = false;
+    const placeholderEl = profilePhotoPreviewEl.parentElement
+      ? profilePhotoPreviewEl.parentElement.querySelector(".profile-photo-placeholder-v1")
+      : null;
+    if (placeholderEl) {
+      placeholderEl.hidden = true;
+    }
+  });
+}
 if (userAvatarImageEl) {
   userAvatarImageEl.src = avatarDataUri;
 }
@@ -6153,6 +6242,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
         personalGrid.appendChild(host);
       }
     }
+    // Grupo repetido no fim da aba (depois dos campos fixos, ordem 190/200).
+    host.style.order = "300";
 
     let payloadInput = host.querySelector("input[name='process_quantity_payload__" + rule.key + "']");
 
@@ -6430,6 +6521,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return;
     }
 
+    // Evita duplicados: cada render substitui o bloco de leitura anterior da regra.
+    grid.querySelectorAll("[data-profile-quantity-readonly-rule-key='" + rule.key + "']").forEach((oldEl) => oldEl.remove());
+
     const host = document.createElement("div");
 
     host.className = "personal-item profile-quantity-readonly-v1";
@@ -6661,10 +6755,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
     wrapper.dataset.profileQuantityOriginKeepV1 = "1";
     wrapper.dataset.profileFieldKey = normalizeMenuKey(rule.quantityFieldKey);
-
-    if (rule.headerKey) {
-      wrapper.dataset.profileSectionPane = rule.headerKey;
-    }
+    // O campo origem (ex.: Quantos filhos?) mantem o cabecalho configurado; so os grupos repetidos vao para o cabecalho da regra.
 
     wrapper.hidden = false;
 
@@ -8680,17 +8771,20 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     url.searchParams.set("appgenesis_after_save", "1");
 
     if (actionLookup.includes("/users/profile/personal")) {
+      // URL limpa: sem parametros do editor de processo (admin_tab, settings_*), senao o retorno cai no editor.
       const profileSection = getCurrentProfileSectionReturnUrlV6();
+      const profileUrl = new URL("/users/new", window.location.origin);
 
-      url.searchParams.set("menu", "meu_perfil");
-      url.searchParams.set("target", "#perfil-pessoal-card");
-      url.searchParams.set("profile_tab", "pessoal");
+      profileUrl.searchParams.set("appgenesis_after_save", "1");
+      profileUrl.searchParams.set("menu", "meu_perfil");
+      profileUrl.searchParams.set("target", "#perfil-pessoal-card");
+      profileUrl.searchParams.set("profile_tab", "pessoal");
 
       if (profileSection) {
-        url.searchParams.set("profile_section", profileSection);
+        profileUrl.searchParams.set("profile_section", profileSection);
       }
 
-      return url.pathname + url.search + url.hash;
+      return profileUrl.pathname + profileUrl.search + "#perfil-pessoal-card";
     }
 
     if (isEntityUpdateAction) {
