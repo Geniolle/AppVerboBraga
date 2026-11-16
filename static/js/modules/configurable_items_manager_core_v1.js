@@ -555,6 +555,13 @@
         row.style.cursor = "pointer";
         row.addEventListener("click", (event) => {
           if (event.target.closest("button, a, input, select, textarea, label")) return;
+          // Segundo clique na mesma linha: fecha como Cancelar, so se nao houve alteracoes.
+          if (manager._inlineRowV1 && String(manager.state.editingId) === String(itemId)) {
+            if (!inlineFormHasChangesV1(manager)) {
+              closeEditorItem_v1(manager);
+            }
+            return;
+          }
           editItem_v1(manager, itemId);
         });
       }
@@ -735,9 +742,25 @@
     }
   }
 
+  function serializeFormValuesV1(formCard) {
+    const parts = [];
+    formCard.querySelectorAll("input, select, textarea").forEach((el) => {
+      const value = el.type === "checkbox" || el.type === "radio" ? String(el.checked) : String(el.value);
+      parts.push((el.name || el.id) + "=" + value);
+    });
+    return parts.join("&");
+  }
+
+  function inlineFormHasChangesV1(manager) {
+    const formCard = manager.elements && manager.elements.formCard;
+    if (!formCard || manager._inlineSnapshotV1 === undefined) return false;
+    return serializeFormValuesV1(formCard) !== manager._inlineSnapshotV1;
+  }
+
   function restoreInlineFormV1(manager) {
     const formCard = manager.elements && manager.elements.formCard;
     const origin = manager._formOriginV1;
+    manager._inlineSnapshotV1 = undefined;
 
     if (formCard && origin && origin.parent) {
       const anchor = origin.next && origin.next.parentNode === origin.parent ? origin.next : null;
@@ -748,6 +771,10 @@
       manager._inlineRowV1.parentNode.removeChild(manager._inlineRowV1);
     }
     manager._inlineRowV1 = null;
+
+    if (manager.elements && manager.elements.formTitle) {
+      manager.elements.formTitle.style.display = "";
+    }
   }
 
   function mountInlineFormV1(manager, itemId, formCard) {
@@ -770,6 +797,12 @@
     inlineRow.appendChild(cell);
     rowEl.parentNode.insertBefore(inlineRow, rowEl.nextSibling);
     manager._inlineRowV1 = inlineRow;
+    manager._inlineSnapshotV1 = serializeFormValuesV1(formCard);
+
+    // Edicao inline: sem o titulo "Editar ..." do cartao.
+    if (manager.elements.formTitle) {
+      manager.elements.formTitle.style.display = "none";
+    }
   }
 
   function openFormCard_v1(manager, title) {
