@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 COL_TIPO = "TIPO DE AGENDAMENTO"
@@ -38,6 +38,9 @@ def filtrar_eventos_do_mes(linhas: list[list[str]], hoje: date) -> list[dict]:
     i_tipo = cabecalho.index(COL_TIPO)
     i_data = cabecalho.index(COL_DATA)
 
+    proximo_mes = (hoje.replace(day=1) + timedelta(days=32)).replace(day=1)
+    meses_validos = {(hoje.year, hoje.month), (proximo_mes.year, proximo_mes.month)}
+
     resultado = []
     for linha in linhas[1:]:
         if len(linha) <= max(i_tipo, i_data):
@@ -45,7 +48,7 @@ def filtrar_eventos_do_mes(linhas: list[list[str]], hoje: date) -> list[dict]:
         if linha[i_tipo].strip().upper() != TIPO_EVENTO:
             continue
         data = parse_data(linha[i_data])
-        if data is None or data.year != hoje.year or data.month != hoje.month or data < hoje:
+        if data is None or (data.year, data.month) not in meses_validos or data < hoje:
             continue
         linha_dict = dict(zip(cabecalho, linha))
         resultado.append({c: linha_dict.get(c, "") for c in CAMPOS_PUBLICOS} | {"data": data.isoformat()})
