@@ -577,6 +577,7 @@
     };
     const manager = core.createConfigurableItemsManager_v1({
       persistOnChange: true,
+      inlineEditor: true,
       root: form,
       itemName: "regra",
       itemNamePlural: "regras",

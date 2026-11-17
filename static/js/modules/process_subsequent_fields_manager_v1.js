@@ -543,6 +543,7 @@
       editTitle: "Editar campo subsequente",
       actions: { copy: true },
       persistOnChange: true,
+      inlineEditor: true,
       getItemLabel: function (item) {
         const target = findSubsequentTargetLabel_v1(optionCache, item.targetType, item.fieldKey);
         const trigger = getOptionLabel_v1(elements.triggerField, item.triggerField) || item.triggerField;

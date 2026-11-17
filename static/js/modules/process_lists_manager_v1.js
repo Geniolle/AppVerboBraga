@@ -756,6 +756,7 @@
 
     const manager = core.createConfigurableItemsManager_v1({
       persistOnChange: true,
+      inlineEditor: true,
       root: elements.root,
       itemName: "coluna",
       itemNamePlural: "colunas",
@@ -894,6 +895,7 @@
 
     const manager = core.createConfigurableItemsManager_v1({
       persistOnChange: true,
+      inlineEditor: true,
       root: elements.root,
       itemName: "lista",
       itemNamePlural: "listas",

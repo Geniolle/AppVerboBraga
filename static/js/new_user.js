@@ -9586,6 +9586,18 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 })();
 
 // APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
+// Clicar numa linha da lista de menus (Sessoes > Menu) executa a mesma acao de "Editar informacoes".
+document.addEventListener("click", (event) => {
+  const row = event.target.closest("#menu-ativo-table tbody tr, #menu-inativo-table tbody tr");
+  if (!row || event.target.closest("button, a, input, select, textarea, label, .table-actions")) {
+    return;
+  }
+  const editAction = row.querySelector(".appgenesis-row-actions-item-edit-v1");
+  if (editAction) {
+    editAction.click();
+  }
+});
+
 /* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
 function appgenesisAutoDismissFlashMessages_v1() {
   // Sucesso: 4 s. Erro: 8 s. Ambos desaparecem com fade.

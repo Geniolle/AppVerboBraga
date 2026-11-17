@@ -5743,6 +5743,12 @@ input.action-btn-cancel,
   margin-top: 8px;
 }
 
+/* Linhas da lista de menus clicaveis (abrem a edicao). */
+#menu-ativo-table tbody tr,
+#menu-inativo-table tbody tr {
+  cursor: pointer;
+}
+
 /* Grupo repetido (Quantidade de filhos): sempre no fim da aba, depois dos campos fixos (ordem 190/200). */
 #perfil-pessoal-card .personal-grid > .profile-quantity-rule-v1,
 #perfil-pessoal-card .personal-grid > .profile-quantity-readonly-v1 {
