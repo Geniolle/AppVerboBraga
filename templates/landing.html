@@ -1,15 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Verbo da Vida Braga{% endblock %}
+{% block title %}Verbo da Vida Braga | Uma Igreja, Uma Família{% endblock %}
 
 {% block head_extra %}
-<meta name="description" content="Igreja Verbo da Vida Braga: Praceta Beato Inácio de Azevedo, 7, São Vicente, Braga. Quartas-feiras às 20h30 e domingos às 10h.">
-<meta property="og:title" content="Verbo da Vida Braga">
-<meta property="og:description" content="Igreja Verbo da Vida Braga. Venha visitar-nos em São Vicente, Braga.">
+<meta name="description" content="Conhece a Igreja Verbo da Vida Braga. Junta-te a nós aos domingos às 10h e às quartas-feiras às 20h30. Há um lugar para ti aqui.">
+<meta property="og:title" content="Verbo da Vida Braga | Uma Igreja, Uma Família">
+<meta property="og:description" content="Há um lugar para ti aqui. Praceta Beato Inácio de Azevedo, 7, São Vicente, Braga.">
 <meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://verbodavidabraga.pt/static/img/hero-placeholder.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#101014">
 <link rel="canonical" href="https://verbodavidabraga.pt/">
 <link rel="stylesheet" href="/static/css/genesis-public.css?v=20261117-cabecalho-v2">
+<link rel="stylesheet" href="/static/css/site-moderno.css?v=20261118-moderno-v1">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Church","name":"Verbo da Vida Braga","url":"https://verbodavidabraga.pt/","address":{"@type":"PostalAddress","streetAddress":"Praceta Beato Inácio de Azevedo, 7","addressLocality":"São Vicente","addressRegion":"Braga","addressCountry":"PT"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":"Sunday","opens":"10:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Wednesday","opens":"20:30"}]}
+</script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <style>
@@ -52,15 +58,17 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: #8a6d3f;
   }
   .vb-evento-hora {
     font-size: 0.875rem;
-    color: #6b6863;
+    color: #55534e;
   }
   .vb-evento-titulo {
     margin: 0;
     font-size: 1.05rem;
     line-height: 1.3;
+    color: var(--vb-ink);
   }
   @media (min-width: 768px) {
     .vb-evento { flex-basis: 280px; }
@@ -140,17 +148,50 @@
       .catch(function () { seccao.hidden = true; });
   })();
 
+  /* Próximo encontro (fuso Europe/Lisbon). Horários fixos: domingo 10h00, quarta 20h30. */
+  (function () {
+    var caixa = document.getElementById('vb-proximo');
+    if (!caixa || !window.Intl) return;
+    try {
+      var partes = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Lisbon', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      }).formatToParts(new Date());
+      var valor = {};
+      partes.forEach(function (p) { valor[p.type] = p.value; });
+      var dias = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      var nomes = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+      var agora = dias[valor.weekday] * 1440 + Number(valor.hour) * 60 + Number(valor.minute);
+      var encontros = [
+        { dia: 0, hora: 10, minuto: 0 },
+        { dia: 3, hora: 20, minuto: 30 }
+      ];
+      var proximo = null;
+      encontros.forEach(function (e) {
+        var inicio = e.dia * 1440 + e.hora * 60 + e.minuto;
+        var candidato = inicio > agora ? inicio - agora : inicio + 7 * 1440 - agora;
+        if (!proximo || candidato < proximo.distancia) proximo = { e: e, distancia: candidato };
+      });
+      var e = proximo.e;
+      var hh = e.hora < 10 ? '0' + e.hora : String(e.hora);
+      var mm = e.minuto < 10 ? '0' + e.minuto : String(e.minuto);
+      caixa.textContent = 'Próximo encontro: ' + nomes[e.dia] + ' às ' + hh + 'h' + mm;
+      caixa.hidden = false;
+    } catch (erro) {
+      caixa.hidden = true;
+    }
+  })();
+
   window.addEventListener('load', function () {
     if (!window.gsap || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (window.ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
-    gsap.from('.vb-hero-content > *', { y: 32, opacity: 0, duration: 0.9, stagger: 0.12, ease: 'power3.out' });
-    gsap.from('.vb-card', {
+    gsap.from('.vb-hero__conteudo > *', { y: 32, opacity: 0, duration: 0.9, stagger: 0.12, ease: 'power3.out' });
+    gsap.from('.vb-cartao', {
       y: 48, opacity: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out',
-      scrollTrigger: { trigger: '.vb-cards', start: 'top 85%' }
+      scrollTrigger: { trigger: '.vb-grid3', start: 'top 85%' }
     });
-    gsap.utils.toArray('.vb-eventos, .about-inner, .church-inner, .final-cta .container').forEach(function (el) {
-      gsap.from(el, {
-        y: 40, opacity: 0, duration: 0.9, ease: 'power3.out',
+    gsap.utils.toArray('.vb-sec, .vb-final').forEach(function (el) {
+      gsap.from(el.querySelectorAll('.vb-dupla, .vb-culto, .vb-visita__cartao, .vb-video, .vb-sec__rotulo'), {
+        y: 40, opacity: 0, duration: 0.9, stagger: 0.1, ease: 'power3.out',
         scrollTrigger: { trigger: el, start: 'top 85%' }
       });
     });
@@ -164,100 +205,158 @@
 {% include 'partials/public_header.html' %}
 
 <main id="main">
-  <section class="vb-hero">
-    <div class="vb-hero-content">
-      <h1>Bem-vindo à Verbo da Vida Braga</h1>
-      <p>Venha fazer parte da nossa família. Adoramos, oramos e crescemos juntos na fé.</p>
-      <a href="#visita" class="vb-btn">Ver horários</a>
+
+  <section class="vb-hero" aria-labelledby="vb-hero-titulo">
+    <div class="vb-wrap vb-hero__conteudo">
+      <p class="vb-hero__eyebrow">Verbo da Vida Braga</p>
+      <h1 id="vb-hero-titulo">Há um lugar para ti aqui.</h1>
+      <p class="vb-hero__texto">Somos uma família que vive a Palavra, cresce na fé e partilha o amor de Deus. Queremos conhecer-te.</p>
+      <div class="vb-hero__acoes">
+        <a href="#visita" class="vb-btn vb-btn--primario">Planeia a tua visita</a>
+        <a href="#quem-somos" class="vb-btn vb-btn--secundario">Conhece a nossa igreja</a>
+      </div>
+      <p class="vb-hero__info"><strong>Domingo às 10h00</strong> · <strong>Quarta-feira às 20h30</strong></p>
     </div>
   </section>
 
-  <section class="vb-highlights" aria-label="Destaques">
-    <p class="vb-section-label">Destaques da semana</p>
-    <div class="vb-cards">
-      <a href="#visita" class="vb-card">
-        <h2>Quarta-feira</h2>
-        <p>Encontro às 20h30</p>
-        <span class="vb-btn-small">Ver morada</span>
-      </a>
-      <a href="#visita" class="vb-card">
-        <h2>Domingo</h2>
-        <p>Culto às 10h</p>
-        <span class="vb-btn-small">Ver morada</span>
-      </a>
-      <a href="https://www.instagram.com/verbobraga/" target="_blank" rel="noopener" class="vb-card">
-        <h2>Acompanhe</h2>
-        <p>Novidades e vídeos no Instagram e no YouTube</p>
-        <span class="vb-btn-small">Seguir @verbobraga</span>
-      </a>
-    </div>
-  </section>
+  <section class="vb-sec" aria-labelledby="vb-visita-inicio">
+    <div class="vb-wrap">
+      <span class="vb-sec__rotulo">Primeira visita</span>
+      <h2 id="vb-visita-inicio">A tua próxima visita começa aqui.</h2>
+      <p class="vb-sec__intro">Queremos que te sintas em casa desde o primeiro momento.</p>
 
-  <section class="vb-eventos" id="eventos" aria-label="Próximos eventos">
-    <p class="vb-section-label">Próximos eventos</p>
-    <ul id="eventos-agenda" class="vb-eventos-lista" tabindex="0" aria-label="Lista de eventos, deslize para ver mais"></ul>
-    <p id="eventos-vazio" hidden>Sem eventos agendados para os próximos dois meses.</p>
-  </section>
+      <div class="vb-grid3">
+        <a href="#horarios" class="vb-cartao">
+          <span class="vb-cartao__icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          </span>
+          <h3>Os nossos cultos</h3>
+          <p>Domingo às 10h00<br>Quarta-feira às 20h30</p>
+          <span class="vb-cartao__acao">Ver horários →</span>
+        </a>
 
-  <section class="vb-posts" aria-label="Publicações do Instagram">
-    <p class="vb-section-label">Do nosso Instagram</p>
-    <div class="vb-post-embed">
-      <blockquote class="instagram-media" data-instagram-permalink="https://www.instagram.com/p/DeWdFN8FvXb/" data-instagram-version="14">
-        <a href="https://www.instagram.com/p/DeWdFN8FvXb/" target="_blank" rel="noopener">Ver publicação no Instagram</a>
-      </blockquote>
-    </div>
-  </section>
+        <a href="https://www.google.com/maps/search/?api=1&amp;query=Praceta+Beato+In%C3%A1cio+de+Azevedo+7+Braga" target="_blank" rel="noopener" class="vb-cartao">
+          <span class="vb-cartao__icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1 1 12 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></svg>
+          </span>
+          <h3>Como chegar</h3>
+          <p>Praceta Beato Inácio de Azevedo, 7<br>São Vicente, Braga</p>
+          <span class="vb-cartao__acao">Ver localização →</span>
+        </a>
 
-  <section class="about-genesis" id="quem-somos">
-    <div class="container">
-      <div class="about-inner">
-        <div class="about-label">Quem somos</div>
-        <div class="about-content">
-          <p>
-            A Igreja Verbo da Vida Braga é uma comunidade aberta a todos.
-            Cada domingo e cada quarta-feira são uma oportunidade para ouvir, partilhar e servir.
-          </p>
-        </div>
+        <a href="#visita" class="vb-cartao">
+          <span class="vb-cartao__icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+          </span>
+          <h3>Primeira visita</h3>
+          <p>É a tua primeira vez? Descobre o que podes esperar quando nos visitares.</p>
+          <span class="vb-cartao__acao">Planeia a tua visita →</span>
+        </a>
       </div>
     </div>
   </section>
 
-  <section class="church" id="visita">
-    <div class="container">
-      <div class="church-inner">
-        <div class="church-brand">
-          <img src="/static/img/logo-verbo-da-vida.png" alt="Logótipo Verbo da Vida Braga" width="240" height="210">
-        </div>
-        <div class="church-content">
-          <p class="eyebrow">Visite-nos</p>
-          <h2>Venha conhecer-nos.</h2>
-
-          <dl class="church-details">
-            <div>
-              <dt>Morada</dt>
-              <dd>Praceta Beato Inácio de Azevedo, 7<br>São Vicente, Braga</dd>
-            </div>
-            <div>
-              <dt>Encontros</dt>
-              <dd>Quartas-feiras às 20h30<br>Domingos às 10h</dd>
-            </div>
-          </dl>
-
-          <ul class="church-social">
-            <li><a href="https://www.instagram.com/verbobraga/" target="_blank" rel="noopener">Instagram &middot; @verbobraga</a></li>
-            <li><a href="https://www.youtube.com/@verbobraga" target="_blank" rel="noopener">YouTube &middot; @verbobraga</a></li>
-          </ul>
-        </div>
+  <section class="vb-sec vb-sec--escuro" id="quem-somos" aria-labelledby="vb-familia">
+    <div class="vb-wrap vb-dupla">
+      <div class="vb-dupla__imagem" role="img" aria-label="Comunidade da Verbo da Vida Braga"></div>
+      <div>
+        <span class="vb-sec__rotulo">Quem somos</span>
+        <h2 id="vb-familia">Mais do que um lugar. Uma família.</h2>
+        <p>A Igreja Verbo da Vida Braga é uma comunidade aberta a todos. Cada domingo e cada quarta-feira são uma oportunidade para ouvir, partilhar e servir.</p>
+        <p>Na Verbo da Vida Braga caminhamos juntos, aprendemos a Palavra e partilhamos momentos que fortalecem a nossa fé.</p>
       </div>
     </div>
   </section>
 
-  <section class="final-cta">
-    <div class="container">
-      <p>Estamos à sua espera.</p>
-      <a href="https://www.google.com/maps/search/?api=1&amp;query=Praceta+Beato+In%C3%A1cio+de+Azevedo+7+Braga" target="_blank" rel="noopener" class="btn btn-primary">Como chegar</a>
+  <section class="vb-sec" id="horarios" aria-labelledby="vb-cultos">
+    <div class="vb-wrap">
+      <span class="vb-sec__rotulo">Horários</span>
+      <h2 id="vb-cultos">Há sempre um próximo encontro.</h2>
+      <p class="vb-proximo" id="vb-proximo" hidden></p>
+
+      <div class="vb-cultos">
+        <article class="vb-culto">
+          <p class="vb-culto__dia">Domingo</p>
+          <p class="vb-culto__hora">10h00</p>
+          <p>Culto</p>
+        </article>
+        <article class="vb-culto">
+          <p class="vb-culto__dia">Quarta-feira</p>
+          <p class="vb-culto__hora">20h30</p>
+          <p>Encontro</p>
+        </article>
+      </div>
     </div>
   </section>
+
+  <section class="vb-sec" id="eventos" aria-labelledby="vb-eventos-titulo">
+    <div class="vb-wrap">
+      <span class="vb-sec__rotulo">Agenda</span>
+      <h2 id="vb-eventos-titulo">Próximos eventos</h2>
+      <ul id="eventos-agenda" class="vb-eventos-lista" tabindex="0" aria-label="Lista de eventos, deslize para ver mais"></ul>
+      <p id="eventos-vazio" hidden>Novos encontros em breve. Fica atento às nossas novidades e acompanha-nos nas redes sociais.</p>
+    </div>
+  </section>
+
+  <section class="vb-sec vb-sec--escuro" aria-labelledby="vb-mensagens">
+    <div class="vb-wrap vb-video">
+      <a class="vb-video__capa" href="https://www.youtube.com/@verbobraga" target="_blank" rel="noopener">
+        <span class="vb-video__play" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </span>
+        <span class="vb-sr-only">Abrir o canal do YouTube da Verbo da Vida Braga</span>
+      </a>
+      <div>
+        <span class="vb-sec__rotulo">YouTube</span>
+        <h2 id="vb-mensagens">Uma Palavra para a tua vida.</h2>
+        <p class="vb-sec__intro">Assiste às nossas mensagens e continua a crescer na fé, onde quer que estejas.</p>
+        <a href="https://www.youtube.com/@verbobraga" target="_blank" rel="noopener" class="vb-btn vb-btn--primario">Ver canal no YouTube</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="vb-sec" aria-labelledby="vb-instagram">
+    <div class="vb-wrap">
+      <span class="vb-sec__rotulo">Instagram</span>
+      <h2 id="vb-instagram">A vida acontece em comunidade.</h2>
+      <div class="vb-posts-embed">
+        <blockquote class="instagram-media" data-instagram-permalink="https://www.instagram.com/p/DeWdFN8FvXb/" data-instagram-version="14">
+          <a href="https://www.instagram.com/p/DeWdFN8FvXb/" target="_blank" rel="noopener">Ver publicação no Instagram</a>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="vb-sec" id="visita" aria-labelledby="vb-visite">
+    <div class="vb-wrap vb-visita">
+      <div class="vb-visita__cartao">
+        <span class="vb-sec__rotulo">Visite-nos</span>
+        <h2 id="vb-visite">Estamos à tua espera em Braga.</h2>
+        <dl>
+          <div>
+            <dt>Morada</dt>
+            <dd>Praceta Beato Inácio de Azevedo, 7<br>São Vicente, Braga, Portugal</dd>
+          </div>
+          <div>
+            <dt>Encontros</dt>
+            <dd>Domingo às 10h00<br>Quarta-feira às 20h30</dd>
+          </div>
+        </dl>
+        <a href="https://www.google.com/maps/search/?api=1&amp;query=Praceta+Beato+In%C3%A1cio+de+Azevedo+7+Braga" target="_blank" rel="noopener" class="vb-btn vb-btn--escuro">Como chegar</a>
+      </div>
+      <div class="vb-visita__logo">
+        <img src="/static/img/logo-verbo-da-vida.png" alt="Logótipo Verbo da Vida Braga" width="260" height="228">
+      </div>
+    </div>
+  </section>
+
+  <section class="vb-final" aria-label="Convite">
+    <div class="vb-wrap">
+      <p>Estamos à tua espera.</p>
+      <a href="https://www.google.com/maps/search/?api=1&amp;query=Praceta+Beato+In%C3%A1cio+de+Azevedo+7+Braga" target="_blank" rel="noopener" class="vb-btn vb-btn--primario">Como chegar</a>
+    </div>
+  </section>
+
 </main>
 
 {% include 'partials/public_footer.html' %}

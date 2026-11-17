@@ -1,12 +1,23 @@
-<footer class="footer">
-  <div class="container">
-    <div class="footer-inner">
+<footer class="vb-rodape">
+  <div class="vb-wrap">
+    <div class="vb-rodape__grid">
       <div>
-        <div class="footer-brand">Verbo da Vida Braga</div>
-        <p class="text-small text-muted">Igreja Verbo da Vida · São Vicente, Braga.</p>
+        <img src="/static/img/logo-verbo-da-vida.png" alt="Logótipo Verbo da Vida Braga" width="60" height="52" style="margin-bottom:16px">
+        <p>Uma igreja, uma família, um propósito.</p>
       </div>
 
-      <div class="footer-section">
+      <div>
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="/">Início</a></li>
+          <li><a href="#quem-somos">Quem somos</a></li>
+          <li><a href="#horarios">Horários</a></li>
+          <li><a href="#eventos">Eventos</a></li>
+          <li><a href="#visita">Visite-nos</a></li>
+        </ul>
+      </div>
+
+      <div>
         <h4>Morada</h4>
         <ul>
           <li>Praceta Beato Inácio de Azevedo, 7</li>
@@ -14,24 +25,24 @@
         </ul>
       </div>
 
-      <div class="footer-section">
-        <h4>Redes</h4>
+      <div>
+        <h4>Comunidade</h4>
         <ul>
           <li><a href="https://www.instagram.com/verbobraga/" target="_blank" rel="noopener">Instagram</a></li>
           <li><a href="https://www.youtube.com/@verbobraga" target="_blank" rel="noopener">YouTube</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-section">
-        <h4>Área de membros</h4>
-        <ul>
-          <li><a href="/login">Entrar</a></li>
+          <li><a href="/login">Área de membros</a></li>
         </ul>
       </div>
     </div>
 
-    <div class="footer-bottom">
-      <p>&copy; Verbo da Vida Braga. Todos os direitos reservados.</p>
+    <div class="vb-rodape__base">
+      <p>&copy; <span id="vb-ano">2026</span> Verbo da Vida Braga. Todos os direitos reservados.</p>
     </div>
   </div>
 </footer>
+<script>
+  (function () {
+    var el = document.getElementById('vb-ano');
+    if (el) el.textContent = String(new Date().getFullYear());
+  })();
+</script>

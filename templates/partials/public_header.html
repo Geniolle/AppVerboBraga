@@ -1,21 +1,80 @@
-<header class="vb-header">
-  <div class="vb-header-inner">
-    <a href="/" class="vb-brand" aria-label="Verbo da Vida Braga — início">
-      <img src="/static/img/logo-verbo-da-vida.png" alt="" width="44" height="38">
+<header class="vb-hdr" id="vb-hdr">
+  <div class="vb-wrap vb-hdr__bar">
+    <a href="/" class="vb-hdr__logo" aria-label="Verbo da Vida Braga — início">
+      <img src="/static/img/logo-verbo-da-vida.png" alt="" width="52" height="45">
     </a>
-    <form class="vb-search" role="search" action="/" method="get">
-      <label class="vb-sr-only" for="vb-pesquisa">Pesquisar</label>
-      <input id="vb-pesquisa" name="q" type="search" placeholder="Pesquisar">
-      <button type="submit" aria-label="Pesquisar">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-    </form>
-    <nav class="vb-nav" aria-label="Principal">
+
+    <nav class="vb-hdr__nav" id="vb-menu" aria-label="Principal">
       <a href="/">Início</a>
       <a href="#quem-somos">Quem somos</a>
-      <a href="#visita">Horários</a>
+      <a href="#horarios">Horários</a>
+      <a href="#eventos">Eventos</a>
       <a href="#visita">Visite-nos</a>
-      <a href="/login" class="vb-nav-login">Entrar</a>
+      <a href="/login" class="vb-hdr__entrar">Entrar</a>
     </nav>
+
+    <div class="vb-hdr__acoes">
+      <button type="button" class="vb-hdr__icon" id="vb-pesquisa-btn" aria-expanded="false" aria-controls="vb-pesquisa-painel" aria-label="Pesquisar">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <a href="#visita" class="vb-hdr__cta">Planeia a tua visita</a>
+      <button type="button" class="vb-hdr__menu-btn" id="vb-menu-btn" aria-expanded="false" aria-controls="vb-menu" aria-label="Abrir menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="vb-hdr__pesquisa" id="vb-pesquisa-painel" role="search" hidden>
+    <div class="vb-wrap">
+      <form action="/" method="get">
+        <label class="vb-sr-only" for="vb-pesquisa">Pesquisar</label>
+        <input id="vb-pesquisa" name="q" type="search" placeholder="Pesquisar no site">
+        <button type="submit">Pesquisar</button>
+      </form>
+    </div>
   </div>
 </header>
+
+<script>
+  (function () {
+    var hdr = document.getElementById('vb-hdr');
+    var menuBtn = document.getElementById('vb-menu-btn');
+    var pesqBtn = document.getElementById('vb-pesquisa-btn');
+    var pesqPainel = document.getElementById('vb-pesquisa-painel');
+    var pesqInput = document.getElementById('vb-pesquisa');
+    if (!hdr) return;
+
+    function fecharMenu() {
+      hdr.classList.remove('is-open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.setAttribute('aria-label', 'Abrir menu');
+    }
+    menuBtn.addEventListener('click', function () {
+      var abrir = !hdr.classList.contains('is-open');
+      hdr.classList.toggle('is-open', abrir);
+      menuBtn.setAttribute('aria-expanded', String(abrir));
+      menuBtn.setAttribute('aria-label', abrir ? 'Fechar menu' : 'Abrir menu');
+    });
+
+    pesqBtn.addEventListener('click', function () {
+      var abrir = pesqPainel.hidden;
+      pesqPainel.hidden = !abrir;
+      pesqBtn.setAttribute('aria-expanded', String(abrir));
+      if (abrir) pesqInput.focus();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      fecharMenu();
+      if (!pesqPainel.hidden) {
+        pesqPainel.hidden = true;
+        pesqBtn.setAttribute('aria-expanded', 'false');
+        pesqBtn.focus();
+      }
+    });
+
+    document.querySelectorAll('#vb-menu a').forEach(function (a) {
+      a.addEventListener('click', fecharMenu);
+    });
+  })();
+</script>
