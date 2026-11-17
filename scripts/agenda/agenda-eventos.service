@@ -1,0 +1,15 @@
+[Unit]
+Description=Atualiza eventos do mês a partir da folha AppAgendaDepartamentos
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+EnvironmentFile=/etc/appgenesis/agenda.env
+Environment=AGENDA_OUTPUT_FILE=/opt/appgenesis/app/static/agenda/eventos.json
+WorkingDirectory=/opt/appgenesis/app/scripts/agenda
+ExecStart=/opt/appgenesis/agenda-venv/bin/python eventos_do_mes.py
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=120

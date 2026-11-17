@@ -1,0 +1,10 @@
+[Unit]
+Description=Atualização diária dos eventos da agenda
+
+[Timer]
+OnCalendar=*-*-* 06:00:00
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -640,11 +640,19 @@ a:hover {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 8px var(--container-padding-mobile);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.vb-brand {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-16);
-  flex-wrap: wrap;
+  gap: 10px;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .vb-brand img {
@@ -653,10 +661,86 @@ a:hover {
   width: auto;
 }
 
+.vb-brand-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.vb-search {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  justify-self: center;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0 6px 0 14px;
+}
+
+.vb-search input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font: inherit;
+  padding: 8px 0;
+  outline: none;
+}
+
+.vb-search input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.vb-search button {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+}
+
+.vb-search:focus-within {
+  border-color: #fff;
+}
+
+.vb-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .vb-nav {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
   gap: var(--space-16) var(--space-24);
+}
+
+@media (max-width: 767px) {
+  .vb-header-inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .vb-brand-name {
+    display: none;
+  }
+
+  .vb-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: none;
+  }
+
+  .vb-nav {
+    gap: var(--space-8) var(--space-16);
+  }
 }
 
 .vb-nav a {
