@@ -566,17 +566,25 @@ body {
   line-height: 1.5;
 }
 
-.vb-visita__logo {
-  display: grid;
-  place-items: center;
+.vb-visita__video {
   border-radius: var(--vb-radius);
+  overflow: hidden;
   background: var(--vb-night);
-  padding: 48px;
+  box-shadow: var(--vb-shadow);
+  max-width: 340px;
+  width: 100%;
+  justify-self: center;
 }
 
-.vb-visita__logo img {
-  width: min(260px, 70%);
+.vb-visita__video video {
+  display: block;
+  width: 100%;
   height: auto;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  color: var(--vb-white);
+  font-size: 0.95rem;
+  padding: 16px;
 }
 
 /* Chamada final */
