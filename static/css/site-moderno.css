@@ -124,8 +124,8 @@ body {
 
 .vb-hdr__icon,
 .vb-hdr__menu-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--vb-line);
@@ -731,6 +731,10 @@ body {
 }
 
 @media (max-width: 560px) {
+  .vb-visita__video {
+    max-width: 260px;
+  }
+
   .vb-hdr__logo img {
     height: 44px;
   }
