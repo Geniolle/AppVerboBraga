@@ -20,7 +20,11 @@
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scroll-padding-inline: 16px;
+    scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+  }
+  .vb-eventos-lista::-webkit-scrollbar {
+    display: none;
   }
   .vb-evento {
     flex: 0 0 240px;
@@ -70,6 +74,28 @@
     var vazio = document.getElementById('eventos-vazio');
     var seccao = document.getElementById('eventos');
     if (!lista || !seccao) return;
+    function iniciarRotacao(lista) {
+      if (lista.children.length < 2) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var cartoes = lista.children;
+      var atual = -1;
+      var pausado = false;
+      var retomar = null;
+      function pausar() { pausado = true; clearTimeout(retomar); }
+      function continuar() { clearTimeout(retomar); retomar = setTimeout(function () { pausado = false; }, 4000); }
+      lista.addEventListener('mouseenter', pausar);
+      lista.addEventListener('mouseleave', continuar);
+      lista.addEventListener('touchstart', pausar, { passive: true });
+      lista.addEventListener('touchend', continuar);
+      setInterval(function () {
+        if (pausado) return;
+        var proximo;
+        do { proximo = Math.floor(Math.random() * cartoes.length); } while (proximo === atual);
+        atual = proximo;
+        var x = cartoes[proximo].getBoundingClientRect().left - lista.getBoundingClientRect().left + lista.scrollLeft - 16;
+        lista.scrollTo({ left: x, behavior: 'smooth' });
+      }, 3000);
+    }
     fetch('/api/eventos-agenda', { headers: { Accept: 'application/json' } })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
       .then(function (dados) {
@@ -104,6 +130,7 @@
           li.appendChild(corpo);
           lista.appendChild(li);
         });
+        iniciarRotacao(lista);
       })
       .catch(function () { seccao.hidden = true; });
   })();
