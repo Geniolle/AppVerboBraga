@@ -1436,7 +1436,9 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             if isinstance(field_size, int) and field_size > 0:
                 clean_values = [value[:field_size] for value in clean_values]
             clean_custom_value = ", ".join(clean_values)
-            if field_required and not clean_custom_value:
+            # Obrigatorios validam so a aba que esta a ser gravada (profile_section), nao as outras abas.
+            in_saved_section = not redirect_profile_section or visible_field_section_map.get(custom_key, "") == redirect_profile_section
+            if field_required and not clean_custom_value and in_saved_section:
                 field_label = option_labels_by_key.get(custom_key) or custom_key
                 if field_label not in missing_required_custom_labels:
                     missing_required_custom_labels.append(field_label)
