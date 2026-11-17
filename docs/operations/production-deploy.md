@@ -1,5 +1,29 @@
 # AppGenesis Production Deployment
 
+## Servidor de produção (prd)
+
+- **IP**: `141.147.76.187` (Oracle Cloud, Ubuntu 24.04). O IP `132.226.134.7` que aparece em docs antigas está desatualizado.
+- **Login SSH**: `ubuntu@141.147.76.187` (não `opc`; `opc` é recusado).
+- **Chave SSH**: `Servidor/ssh-Genesys-chavekey-2026-11-12.key` (no repo local; nunca commitar nem copiar para fora do repo; a chave `Servidor/ssh-Genesys-key-2026-11-12.key` é a outra).
+- **Projeto no servidor**: `/opt/appgenesis/app` (git `origin/master` em `github.com/Geniolle/AppVerboBraga`).
+- **Compose**: `/opt/appgenesis/app/docker-compose.prod.yml` (serviços `web` = `appverbobraga-web-prod`, `db` = `appverbobraga-db-prod`, Postgres 16, BD `app_igreja`, utilizador `appgenesis`).
+- **Backups**: `~/backups/appgenesis-prod-pre-<commit>-<timestamp>.sql.gz` (criar antes de cada deploy).
+- **Docker** só com `sudo docker ...` (utilizador `ubuntu` não está no grupo docker).
+
+### Comando SSH (a partir do PC; copiar a chave para pasta temporária com `chmod 600` se o Windows recusar permissões)
+
+```bash
+ssh -i <caminho-da-chave> -o BatchMode=yes ubuntu@141.147.76.187
+```
+
+### Passos de deploy
+
+1. Backup da BD: `sudo docker exec appverbobraga-db-prod pg_dump -U appgenesis -d app_igreja --no-owner | gzip > ~/backups/appgenesis-prod-pre-<commit>-$(date +%Y%m%d-%H%M%S).sql.gz`
+2. `cd /opt/appgenesis/app && git pull --ff-only origin master`
+3. `sudo docker compose -f docker-compose.prod.yml build web && sudo docker compose -f docker-compose.prod.yml up -d web`
+4. Confirmar `healthy` e `GET /health` = 200.
+5. Estáticos: o volume `app_static_prod` (montado em `/app/static`) não é atualizado pelo deploy. Se o commit mudar `static/`, sincronizar com `docker cp` antes de testar.
+
 ## Certificate Management
 
 ### Current Setup
