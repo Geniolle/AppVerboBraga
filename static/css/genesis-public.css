@@ -739,7 +739,14 @@ a:hover {
   }
 
   .vb-nav {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-content: center;
     gap: var(--space-8) var(--space-16);
+  }
+
+  .vb-header .vb-nav a {
+    font-size: 0.75rem;
   }
 }
 
