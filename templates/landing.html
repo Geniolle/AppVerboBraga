@@ -27,12 +27,14 @@
         if (!eventos.length) { vazio.hidden = false; return; }
         eventos.forEach(function (ev) {
           var li = document.createElement('li');
+          li.style.cssText = 'display:flex;gap:12px;align-items:center;margin:0 0 16px';
+          var texto = document.createElement('div');
           if (typeof ev.imagem_url === 'string' && /^https:\/\//.test(ev.imagem_url)) {
             var imagem = document.createElement('img');
             imagem.src = ev.imagem_url;
             imagem.alt = '';
             imagem.loading = 'lazy';
-            imagem.style.cssText = 'float:left;width:96px;height:auto;margin:0 12px 8px 0;border-radius:8px';
+            imagem.style.cssText = 'flex:0 0 96px;width:96px;height:auto;border-radius:8px';
             li.appendChild(imagem);
           }
           var data = document.createElement('strong');
@@ -42,9 +44,10 @@
           hora.textContent = ev['HORA DE INÍCIO'] ? ' · ' + String(ev['HORA DE INÍCIO']).slice(0, 5) : '';
           var titulo = document.createElement('span');
           titulo.textContent = ' ' + (ev['TÍTULO DA AGENDA'] || '');
-          li.appendChild(data);
-          li.appendChild(hora);
-          li.appendChild(titulo);
+          texto.appendChild(data);
+          texto.appendChild(hora);
+          texto.appendChild(titulo);
+          li.appendChild(texto);
           lista.appendChild(li);
         });
       })
@@ -89,9 +92,9 @@
   </section>
 
   <section class="vb-eventos" id="eventos" aria-label="Próximos eventos">
-    <p class="vb-section-label">Eventos deste mês</p>
+    <p class="vb-section-label">Próximos eventos</p>
     <ul id="eventos-agenda" class="vb-eventos-lista"></ul>
-    <p id="eventos-vazio" hidden>Sem eventos agendados para este mês.</p>
+    <p id="eventos-vazio" hidden>Sem eventos agendados para os próximos dois meses.</p>
   </section>
 
   <section class="vb-posts" aria-label="Publicações do Instagram">
