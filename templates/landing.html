@@ -27,6 +27,14 @@
         if (!eventos.length) { vazio.hidden = false; return; }
         eventos.forEach(function (ev) {
           var li = document.createElement('li');
+          if (typeof ev.imagem_url === 'string' && /^https:\/\//.test(ev.imagem_url)) {
+            var imagem = document.createElement('img');
+            imagem.src = ev.imagem_url;
+            imagem.alt = '';
+            imagem.loading = 'lazy';
+            imagem.style.cssText = 'display:block;max-width:160px;height:auto;margin-bottom:8px;border-radius:8px';
+            li.appendChild(imagem);
+          }
           var data = document.createElement('strong');
           var partes = String(ev.data || '').split('-');
           data.textContent = partes.length === 3 ? partes[2] + '/' + partes[1] : '';

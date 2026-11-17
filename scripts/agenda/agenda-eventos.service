@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-User=ubuntu
+User=root
 EnvironmentFile=/etc/appgenesis/agenda.env
-Environment=AGENDA_OUTPUT_FILE=/opt/appgenesis/app/static/agenda/eventos.json
+Environment=AGENDA_OUTPUT_FILE=/var/lib/docker/volumes/app_static_prod/_data/agenda/eventos.json
 WorkingDirectory=/opt/appgenesis/app/scripts/agenda
 ExecStart=/opt/appgenesis/agenda-venv/bin/python eventos_do_mes.py
 Nice=10
