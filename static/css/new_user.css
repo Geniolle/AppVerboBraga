@@ -5921,3 +5921,8 @@ input.action-btn-cancel,
   vertical-align: middle;
   pointer-events: none;
 }
+
+/* Cartao de Dados pessoais escondido ate o JS aplicar o estado inicial (ver new_user.js). */
+#perfil-pessoal-card:not(.profile-ready) {
+  visibility: hidden;
+}
