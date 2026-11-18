@@ -218,7 +218,7 @@ body {
   display: flex;
   align-items: flex-end;
   color: var(--vb-white);
-  background: var(--vb-night) url("/static/img/hero-braga.jpg") center / cover no-repeat;
+  background: var(--vb-night) url("/static/img/hero-concerto-desfocado.jpg") center / cover no-repeat;
   isolation: isolate;
 }
 
