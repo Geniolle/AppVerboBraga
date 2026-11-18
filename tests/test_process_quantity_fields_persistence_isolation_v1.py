@@ -553,7 +553,8 @@ def test_update_quantity_fields_quantity_field_must_exist_in_additional_fields()
     assert "deve existir em Campos adicionais" in error
 
 
-def test_update_quantity_fields_quantity_field_must_be_number_type():
+def test_update_quantity_fields_quantity_field_must_be_number_text_or_list_type():
+    # Desde 3a89b3f o campo origem pode ser numero, texto ou lista; data continua invalido.
     SessionLocal = _build_session_factory()
     _seed_menu(SessionLocal, menu_key="processo_teste_a")
 
@@ -564,14 +565,14 @@ def test_update_quantity_fields_quantity_field_must_be_number_type():
         [
             {
                 "label": "Filhos",
-                "quantity_field_key": "custom_nome_filho",
+                "quantity_field_key": "custom_data_nascimento_filho",
                 "repeated_field_keys": ["custom_outro_texto"],
             }
         ],
     )
     session.close()
     assert ok is False
-    assert "deve ser numérico" in error
+    assert "deve ser numérico, texto ou lista" in error
 
 
 def test_update_quantity_fields_repeated_field_must_exist_in_additional_fields():
