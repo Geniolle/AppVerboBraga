@@ -1490,6 +1490,30 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
             else:
                 updated_quantity_values.pop(storage_key, None)
 
+        # Campos origem de quantidade sao contagens: so inteiros nao negativos.
+        quantity_origin_keys = {
+            str(quantity_rule.get("quantity_field_key") or "").strip().lower()
+            for quantity_rule in quantity_rules
+        }
+        invalid_quantity_labels: list[str] = []
+        for custom_key in active_custom_keys:
+            if custom_key not in quantity_origin_keys:
+                continue
+            origin_value = str(current_meu_perfil_values.get(custom_key) or "").strip()
+            if origin_value and not (origin_value.isascii() and origin_value.isdigit()):
+                origin_label = option_labels_by_key.get(custom_key) or custom_key
+                if origin_label not in invalid_quantity_labels:
+                    invalid_quantity_labels.append(origin_label)
+        if invalid_quantity_labels:
+            return RedirectResponse(
+                url=_build_post_save_redirect_url_v6(
+                    submitted_form,
+                    profile_error=" ".join(f"{label} só aceita números inteiros não negativos." for label in invalid_quantity_labels),
+                    profile_tab="pessoal",
+                ),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
         if missing_required_custom_labels:
             return RedirectResponse(
                 url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Preencha os campos obrigatórios: " + ", ".join(missing_required_custom_labels) + ".",
@@ -1564,6 +1588,15 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
                 rule_key,
             )
             if not storage_key:
+                continue
+
+            quantity_field_key_hidden = str(quantity_rule.get("quantity_field_key") or "").strip().lower()
+            if (
+                quantity_field_key_hidden in hidden_meu_perfil_targets
+                or visible_field_section_map.get(quantity_field_key_hidden) in hidden_meu_perfil_targets
+            ):
+                # Campo origem oculto por regra: os itens do grupo nao podem ficar guardados.
+                updated_quantity_values.pop(storage_key, None)
                 continue
 
             payload_field_name = f"process_quantity_payload__{rule_key}"

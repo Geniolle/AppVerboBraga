@@ -597,6 +597,7 @@
                   value="{{ user_personal_data.custom_fields.get(field_key, '') }}"
                   {% if custom_required %}required{% endif %}
                   {% if custom_size and custom_type in ["text", "email", "phone"] %}maxlength="{{ custom_size }}"{% endif %}
+                  {% if custom_type == "number" %}min="0" step="1"{% endif %}
                 >
                 {% endif %}
               </div>
