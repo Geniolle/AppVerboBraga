@@ -237,7 +237,7 @@ body {
 }
 
 .vb-hero__conteudo {
-  padding: 120px 0 72px;
+  padding: 120px var(--vb-gutter) 72px 0;
   max-width: 640px;
   margin-left: max(var(--vb-gutter), calc((100vw - var(--vb-max)) / 2));
   margin-right: 0;
