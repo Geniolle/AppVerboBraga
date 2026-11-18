@@ -206,6 +206,8 @@ def _filter_meu_perfil_fields_by_subsequent_rules_v2(
         )
 
         if field_has_specific_rule and not field_has_specific_rule_met:
+            # Campo alvo de regra fica renderizado (oculto pelo JS) para mostrar/ocultar na hora, sem gravar.
+            filtered_fields.append(field_key)
             continue
 
         if field_key in clean_hidden_targets and not field_has_specific_rule_met:

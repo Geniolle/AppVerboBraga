@@ -6712,6 +6712,12 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     return normalizeMenuKey(sectionInput ? sectionInput.value : "");
   }
 
+  // Cabecalho onde o campo origem esta configurado (ex.: Dados pessoais), nao o cabecalho da regra de quantidade.
+  function getQuantityOriginOwnSectionV1(quantityFieldKey) {
+    const setting = getMeuPerfilQuantityOriginSettingV1() || {};
+    return normalizeMenuKey(getFieldSectionMap(setting).get(normalizeMenuKey(quantityFieldKey)) || "");
+  }
+
   function getQuantityOriginWrapperV1(control) {
     if (!control) {
       return null;
@@ -6774,7 +6780,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     }
 
     const currentSection = getQuantityOriginCurrentSectionV1();
-    const targetSection = normalizeMenuKey(rule.headerKey || wrapper.dataset.profileSectionPane || "");
+    const targetSection = getQuantityOriginOwnSectionV1(rule.quantityFieldKey)
+      || normalizeMenuKey(rule.headerKey || wrapper.dataset.profileSectionPane || "");
 
     if (!currentSection || !targetSection) {
       wrapper.style.display = "";
@@ -6820,7 +6827,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return;
     }
 
-    const targetSection = normalizeMenuKey(rule.headerKey);
+    const targetSection = getQuantityOriginOwnSectionV1(quantityFieldKey)
+      || normalizeMenuKey(rule.headerKey);
 
     let keepWrapper = null;
 
@@ -9531,8 +9539,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     }
 
     const fieldMetaMap = buildMeuPerfilFieldMetaMapSubsequentV1(setting);
-    const valuesByField = buildValuesByFieldSubsequentV1(rules);
-    const hiddenTargets = getHiddenProcessTargets(rules, valuesByField);
+    // rawRules: as funcoes ja normalizam; passar regras normalizadas zera-as (targetField/triggerField perdidos).
+    const valuesByField = buildValuesByFieldSubsequentV1(rawRules);
+    const hiddenTargets = getHiddenProcessTargets(rawRules, valuesByField);
     const targetFields = new Set();
 
     rules.forEach((rule) => {
