@@ -223,10 +223,8 @@ def test_update_additional_fields_menu_not_found_returns_error():
 
 def test_update_additional_fields_headers_are_reordered_before_regular_fields():
     """
-    Comportamento existente: normalize_menu_process_additional_fields (geracao ativa,
-    linha 4880) reordena a lista final colocando TODOS os headers primeiro, mesmo que
-    tenham sido submetidos misturados com campos normais. Este teste trava o
-    comportamento atual; nao uniformizar/alterar nesta fase.
+    A ordem da configuracao e preservada: um cabecalho fica na posicao em que foi
+    submetido (a aba segue essa ordem). Antes os cabecalhos iam sempre para o topo.
     """
     SessionLocal = _build_session_factory()
     _seed_menu(
@@ -250,7 +248,7 @@ def test_update_additional_fields_headers_are_reordered_before_regular_fields():
 
     config, _ = _load_config(SessionLocal, "processo_teste_a")
     keys = [item["key"] for item in config["additional_fields"]]
-    assert keys == ["custom_secao_1", "custom_campo_a", "custom_campo_b"]
+    assert keys == ["custom_campo_a", "custom_secao_1", "custom_campo_b"]
 
 
 def test_update_additional_fields_stable_key_preserved_when_key_resupplied():

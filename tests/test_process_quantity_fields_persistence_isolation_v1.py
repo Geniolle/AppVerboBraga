@@ -553,7 +553,8 @@ def test_update_quantity_fields_quantity_field_must_exist_in_additional_fields()
     assert "deve existir em Campos adicionais" in error
 
 
-def test_update_quantity_fields_quantity_field_must_be_number_type():
+def test_update_quantity_fields_quantity_field_accepts_text_origin():
+    # Origem da quantidade aceita number, text e list (quantity_field_service).
     SessionLocal = _build_session_factory()
     _seed_menu(SessionLocal, menu_key="processo_teste_a")
 
@@ -570,8 +571,8 @@ def test_update_quantity_fields_quantity_field_must_be_number_type():
         ],
     )
     session.close()
-    assert ok is False
-    assert "deve ser numérico" in error
+    assert ok is True
+    assert error is None or error == ""
 
 
 def test_update_quantity_fields_repeated_field_must_exist_in_additional_fields():

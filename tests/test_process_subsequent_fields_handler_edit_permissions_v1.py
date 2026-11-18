@@ -62,6 +62,7 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
         subsequent_field=[],
         subsequent_operator=[],
         subsequent_trigger_value=[],
+        subsequent_target_type=[],
         redirect_menu="administrativo",
         redirect_target="#settings-menu-edit-card",
         return_url="",

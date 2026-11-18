@@ -30,7 +30,7 @@ def test_new_user_js_keeps_stage3_wrappers_for_process_menu_builder() -> None:
     assert "function mergeDynamicProcessMenus() {" in script_text
     assert "return appGenesisProcessMenuConfigBuilderV1.mergeDynamicProcessMenus();" in script_text
     assert "appGenesisProcessMenuConfigBuilderV1.configure({" in script_text
-    assert "appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig();" in script_text
+    assert "appGenesisProcessMenuConfigBuilderV1.initializeMenuConfig(" in script_text
 
 
 def test_process_menu_config_builder_module_exposes_expected_symbols() -> None:
