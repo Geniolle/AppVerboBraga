@@ -9805,3 +9805,17 @@ if (document.readyState === "loading") {
 } else {
   refreshProfileMissingTabDotsV1();
 }
+
+// Esconde o cartao de Dados pessoais ate o JS aplicar o estado (leitura/edicao) da pagina:
+// evita a pintura inicial do HTML do servidor (botao Editar piscando apos Gravar).
+// Fallback em 1500 ms para nunca ficar escondido se o JS falhar.
+(function markProfileCardReadyV1() {
+  const markReady = () => {
+    const cardEl = document.getElementById("perfil-pessoal-card");
+    if (cardEl) {
+      cardEl.classList.add("profile-ready");
+    }
+  };
+  window.setTimeout(markReady, 260);
+  window.setTimeout(markReady, 1500);
+})();
