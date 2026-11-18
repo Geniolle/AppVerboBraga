@@ -5926,3 +5926,22 @@ input.action-btn-cancel,
 #perfil-pessoal-card:not(.profile-ready) {
   visibility: hidden;
 }
+
+/* Overlay "A gravar..." sobre Dados pessoais durante o POST. */
+#perfil-pessoal-card {
+  position: relative;
+}
+#perfil-pessoal-card.profile-saving::after {
+  content: "A gravar…";
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: inherit;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #3b47a8;
+}
