@@ -9819,3 +9819,19 @@ if (document.readyState === "loading") {
   window.setTimeout(markReady, 260);
   window.setTimeout(markReady, 1500);
 })();
+
+// Enquanto Dados pessoais e gravado (POST + redirect), tapa o cartao com "A gravar..."
+// para nao se ver a tela anterior durante o pedido.
+(function bindProfileSavingOverlayV1() {
+  const cardEl = document.getElementById("perfil-pessoal-card");
+  const formEl = cardEl ? cardEl.querySelector(".profile-edit-form") : null;
+  if (!formEl) {
+    return;
+  }
+  formEl.addEventListener("submit", () => {
+    cardEl.classList.add("profile-saving");
+    formEl.querySelectorAll("button[type=submit]").forEach((btnEl) => {
+      btnEl.disabled = true;
+    });
+  });
+})();
