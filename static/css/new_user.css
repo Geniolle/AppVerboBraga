@@ -5867,3 +5867,57 @@ input.action-btn-cancel,
   display: block;
   margin-bottom: 12px;
 }
+
+/* Campos ocultos por regra subsequente ou duplicados da origem de quantidade ficam sempre ocultos.
+   O JS pode mostrar e ocultar de novo durante um change; sem isto o campo pisca. */
+#perfil-pessoal-card .field[data-profile-subsequent-hidden-v1="1"],
+#perfil-pessoal-card .personal-item[data-profile-subsequent-hidden-v1="1"],
+#perfil-pessoal-card .field[data-profile-quantity-origin-duplicate-v1="1"] {
+  display: none !important;
+}
+
+/* Itens da quantidade: campos lado a lado; data com a largura da descricao (nao ocupa a linha toda). */
+#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  grid-auto-flow: row;
+  align-items: end;
+  gap: 16px;
+}
+#perfil-pessoal-card .profile-quantity-item-grid-v1 > .field {
+  grid-column: auto !important;
+  order: 0 !important;
+  min-width: 0;
+}
+#perfil-pessoal-card .profile-quantity-item-grid-v1 > .field:has(input[type="date"]) {
+  width: 400px;
+}
+
+/* Cada item numa linha propria; o campo Nome ocupa a largura disponivel; a data mantem a largura da descricao. */
+#perfil-pessoal-card .profile-quantity-items-wrap-v1 {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 24px;
+}
+#perfil-pessoal-card .profile-quantity-item-v1 {
+  width: 100%;
+}
+#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+}
+#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+  grid-template-columns: minmax(0, 1fr) 400px !important;
+}
+
+/* Bolinha vermelha informativa nas abas de Meus dados com campo obrigatorio em falta. */
+.submenu-item .profile-tab-missing-dot-v1 {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: #dc2626;
+  vertical-align: middle;
+  pointer-events: none;
+}

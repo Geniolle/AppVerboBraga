@@ -1516,3 +1516,18 @@ Decisão do projeto (validada pelo utilizador):
 ### Proibido
 - Adicionar nova aba fixa de Meus dados sem passar pela configuração de Cabeçalho (aba).
 - Remover cartões de morada/treinamento antes da Fase 1 estar concluída.
+
+## Regra obrigatória: commits, push e Pull Requests
+
+1. Nunca fazer push direto para o `master`.
+2. Para cada alteração, criar um ramo a partir do `master` atualizado:
+   - `git checkout master && git pull`
+   - `git checkout -b <tipo>/<descricao-curta>` (ex.: `fix/hero-padding`, `feat/eventos-carrossel`)
+3. Antes de cada commit, correr os testes com o mesmo comando do CI (passo "Run tests" em `.github/workflows/ci.yml`, com todos os `--ignore` dos testes Selenium).
+4. Se um teste falhar:
+   - se for um bug, corrigir o código;
+   - se o comportamento mudou de propósito, atualizar o teste no mesmo commit e explicar porquê na mensagem.
+5. Nunca fazer commit nem push com testes a falhar.
+6. Fazer push do ramo (`git push -u origin <ramo>`) e abrir um Pull Request para o `master`, com uma descrição do que mudou e porquê.
+7. Esperar que o check `CI / test` fique verde no PR. Se falhar, corrigir no mesmo ramo antes de pedir merge.
+8. O merge para o `master` só é feito depois do CI passar e com aprovação do utilizador.

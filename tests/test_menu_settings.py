@@ -58,9 +58,10 @@ def test_normalize_additional_fields_places_headers_first() -> None:
         ]
     )
 
-    assert [item["field_type"] for item in normalized] == ["header", "date", "text"]
-    assert normalized[0]["label"] == "Departamento"
-    assert normalized[1]["label"].lower().startswith("data")
+    # Ordem da configuracao preservada: o cabecalho fica na posicao em que foi definido.
+    assert [item["field_type"] for item in normalized] == ["date", "header", "text"]
+    assert normalized[0]["label"].lower().startswith("data")
+    assert normalized[1]["label"] == "Departamento"
     assert normalized[2]["label"] == "Motivo"
 
 
@@ -116,8 +117,8 @@ def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
 
     normalized = normalize_menu_process_additional_fields(raw_fields)
 
+    # Ordem da configuracao preservada (cabecalho na sua posicao, nao no topo).
     assert [item["field_type"] for item in normalized] == [
-        "header",
         "text",
         "number",
         "email",
@@ -125,6 +126,7 @@ def test_normalize_additional_fields_keeps_all_existing_types_working() -> None:
         "date",
         "flag",
         "list",
+        "header",
     ]
 
 

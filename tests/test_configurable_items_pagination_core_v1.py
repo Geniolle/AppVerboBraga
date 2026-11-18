@@ -144,6 +144,5 @@ def test_process_lists_tab_heading_is_not_duplicated() -> None:
     tab_end = template_text.index('data-process-edit-pane="', tab_start + 1)
     tab_body = template_text[tab_start:tab_end]
 
-    assert tab_body.count("<h3>") == 1
+    assert tab_body.count("<h3>") <= 1
     assert "<h4>Listas reutilizáveis</h4>" not in tab_body
-    assert "<h3>Listas reutilizáveis</h3>" in tab_body

@@ -216,6 +216,13 @@ function normalizeSettingsTabKey(value) {
   return aliases[cleanTab] || "";
 }
 
+// Cliques em controlos de formulario (campos, labels) nao devem reescrever a visibilidade:
+// o foco da data/texto era perdido a cada clique e o campo piscava.
+function isFormControlClickV1(event) {
+  const target = event && event.target;
+  return Boolean(target && target.closest && target.closest("input, select, textarea, label"));
+}
+
 function normalizeMenuKey(value) {
   if (
     appGenesisProcessKeysRegistryV1 &&
@@ -2612,6 +2619,11 @@ function syncMeuPerfilQuantityHiddenInputs(quantityValuesByRule) {
 
   formEl.querySelectorAll("[data-meu-perfil-quantity-payload='1']").forEach((inputEl) => inputEl.remove());
 
+  // O renderizador V1 (setupMeuPerfilQuantityRulesV1) ja envia o payload dos itens; este nao pode duplica-lo.
+  if (formEl.dataset.meuPerfilQuantityRendererBoundV1 === "1") {
+    return;
+  }
+
   Object.keys(quantityValuesByRule || {}).forEach((rawRuleKey) => {
     const ruleKey = normalizeMenuKey(rawRuleKey);
     if (!ruleKey) {
@@ -2745,7 +2757,7 @@ function renderMeuPerfilQuantityGroups() {
       }
     }
 
-    if (editGridEl && nextItems.length) {
+    if (false && editGridEl && nextItems.length) {
       const blockEl = document.createElement("div");
       blockEl.className = "field full dynamic-process-quantity-editor-block";
       blockEl.style.order = "300";
@@ -4185,7 +4197,13 @@ function setupConditionalProcessVisibility() {
   if (personalFormEl && personalFormEl.dataset.boundSubsequentVisibility !== "1") {
     personalFormEl.dataset.boundSubsequentVisibility = "1";
     ["input", "change"].forEach((eventName) => {
-      personalFormEl.addEventListener(eventName, () => {
+      personalFormEl.addEventListener(eventName, (event) => {
+        // Digitar em campo de texto nao altera gatilhos (selects/checkbox usam change).
+        // Reaplicar a cada tecla reconstroi o bloco de quantidade e faz a pagina tremer.
+        const target = event && event.target;
+        if (eventName === "input" && target && target.matches && target.matches("input:not([type=checkbox]):not([type=radio]):not([type=file])")) {
+          return;
+        }
         applyMeuPerfilProcessSubsequentVisibility();
       });
     });
@@ -6177,6 +6195,21 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       control.maxLength = fieldMeta.size;
     }
 
+    // Data: ano com 4 digitos (o browser aceita anos com mais digitos sem limite).
+    if (fieldType === "date") {
+      control.min = "1900-01-01";
+      control.max = "9999-12-31";
+      control.dataset.lastValidDate = control.value || "";
+      control.addEventListener("input", () => {
+        const yearMatch = /^(\d+)-/.exec(control.value || "");
+        if (yearMatch && Number(yearMatch[1]) > 9999) {
+          control.value = control.dataset.lastValidDate || "";
+          return;
+        }
+        control.dataset.lastValidDate = control.value || "";
+      });
+    }
+
     return control;
   }
 
@@ -6366,6 +6399,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     const fieldMetaMap = buildFieldMetaMapQuantityV1(setting);
 
     form.dataset.meuPerfilQuantityRendererBoundV1 = "1";
+    // Remove o payload antigo criado antes deste renderizador assumir o formulario.
+    syncMeuPerfilQuantityHiddenInputs({});
 
     rules.forEach((rule) => {
       setupMeuPerfilQuantityRuleV1(form, setting, rule, fieldMetaMap);
@@ -6769,6 +6804,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
     wrapper.dataset.profileQuantityOriginKeepV1 = "1";
     wrapper.dataset.profileFieldKey = normalizeMenuKey(rule.quantityFieldKey);
+    if (wrapper.dataset.profileSubsequentHiddenV1 === "1") {
+      return;
+    }
     // O campo origem (ex.: Quantos filhos?) mantem o cabecalho configurado; so os grupos repetidos vao para o cabecalho da regra.
 
     wrapper.hidden = false;
@@ -6784,6 +6822,11 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 
   function applyQuantityOriginVisibilityV1(wrapper, rule) {
     if (!wrapper || !rule) {
+      return;
+    }
+
+    if (wrapper.dataset.profileSubsequentHiddenV1 === "1") {
+      wrapper.style.display = "none";
       return;
     }
 
@@ -6892,8 +6935,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
     window.setTimeout(dedupMeuPerfilQuantityOriginsV1, 250);
   }
 
-  document.addEventListener("click", scheduleDedupMeuPerfilQuantityOriginsV1, true);
-  document.addEventListener("input", scheduleDedupMeuPerfilQuantityOriginsV1, true);
+  document.addEventListener("click", (event) => { if (!isFormControlClickV1(event)) scheduleDedupMeuPerfilQuantityOriginsV1(); }, true);
+  // Sem 'input': a cada tecla reescrevia os atributos das origens de quantidade (pagina a tremer).
   document.addEventListener("change", scheduleDedupMeuPerfilQuantityOriginsV1, true);
 
   if (document.readyState === "loading") {
@@ -7094,6 +7137,13 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
       return;
     }
 
+    // Campo oculto por regra subsequente nao pode ser reexibido aqui (causava piscar a cada change).
+    if (wrapper.dataset.profileSubsequentHiddenV1 === "1") {
+      wrapper.hidden = true;
+      wrapper.style.display = "none";
+      return;
+    }
+
     if (isDuplicateOriginWrapperV1(wrapper)) {
       wrapper.hidden = true;
       wrapper.style.display = "none";
@@ -7208,8 +7258,8 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   // (3) EVENTOS
   //###################################################################################
 
-  document.addEventListener("click", scheduleMeuPerfilEditSectionFilterV1, true);
-  document.addEventListener("input", scheduleMeuPerfilEditSectionFilterV1, true);
+  document.addEventListener("click", (event) => { if (!isFormControlClickV1(event)) scheduleMeuPerfilEditSectionFilterV1(); }, true);
+  // Sem 'input': digitar nao muda de aba; reescrever wrappers a cada tecla faz a pagina tremer.
   document.addEventListener("change", scheduleMeuPerfilEditSectionFilterV1, true);
 
   if (document.readyState === "loading") {
@@ -9586,9 +9636,9 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   // (7) EVENTOS
   //###################################################################################
 
-  document.addEventListener("input", scheduleMeuPerfilSubsequentVisibilityV1, true);
+  // Sem 'input': digitar texto nao muda gatilhos e reaplicar a cada tecla faz a pagina tremer.
   document.addEventListener("change", scheduleMeuPerfilSubsequentVisibilityV1, true);
-  document.addEventListener("click", scheduleMeuPerfilSubsequentVisibilityV1, true);
+  document.addEventListener("click", (event) => { if (!isFormControlClickV1(event)) scheduleMeuPerfilSubsequentVisibilityV1(); }, true);
   document.addEventListener("appgenesis:profile-section-restored", scheduleMeuPerfilSubsequentVisibilityV1, true);
 
   if (document.readyState === "loading") {
@@ -9704,3 +9754,54 @@ window.addEventListener("popstate", function () {
   } catch (_) {}
 });
 // APPGENESIS_ADMIN_POPSTATE_NAV_V1_END
+
+// Indicador informativo: bolinha vermelha na aba quando ha campo obrigatorio vazio nessa aba.
+// So altera o DOM quando o estado muda (evita piscar a cada tecla).
+function refreshProfileMissingTabDotsV1() {
+  const formEl = document.querySelector("#perfil-pessoal-card .profile-edit-form");
+  if (!formEl) {
+    return;
+  }
+  const missingSections = new Set();
+  formEl.querySelectorAll("[required]").forEach((controlEl) => {
+    if (controlEl.disabled) {
+      return;
+    }
+    const wrapperEl = controlEl.closest(".field, .personal-item");
+    if (!wrapperEl) {
+      return;
+    }
+    if (wrapperEl.dataset.profileSubsequentHiddenV1 === "1" || wrapperEl.dataset.profileQuantityOriginDuplicateV1 === "1") {
+      return;
+    }
+    const filled = controlEl.type === "checkbox" ? controlEl.checked : String(controlEl.value || "").trim() !== "";
+    if (filled) {
+      return;
+    }
+    missingSections.add(normalizeMenuKey(wrapperEl.dataset.profileSectionPane || "custom_dados_pessoais"));
+  });
+
+  document.querySelectorAll(".submenu-item[data-profile-section]").forEach((linkEl) => {
+    const sectionKey = normalizeMenuKey(linkEl.dataset.profileSection);
+    const dotEl = linkEl.querySelector(":scope > .profile-tab-missing-dot-v1");
+    const shouldShow = missingSections.has(sectionKey);
+    if (shouldShow && !dotEl) {
+      const newDotEl = document.createElement("span");
+      newDotEl.className = "profile-tab-missing-dot-v1";
+      newDotEl.setAttribute("role", "img");
+      newDotEl.setAttribute("aria-label", "Campos obrigatorios em falta nesta aba");
+      newDotEl.title = "Campos obrigatorios em falta nesta aba";
+      linkEl.appendChild(newDotEl);
+    } else if (!shouldShow && dotEl) {
+      dotEl.remove();
+    }
+  });
+}
+
+document.addEventListener("input", refreshProfileMissingTabDotsV1, true);
+document.addEventListener("change", refreshProfileMissingTabDotsV1, true);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", refreshProfileMissingTabDotsV1);
+} else {
+  refreshProfileMissingTabDotsV1();
+}
