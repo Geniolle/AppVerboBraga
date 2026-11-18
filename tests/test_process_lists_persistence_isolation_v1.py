@@ -111,11 +111,8 @@ def test_process_lists_css_is_scoped_to_the_reusable_editor():
 def test_process_lists_template_uses_current_css_and_scoped_editor_markup():
     template_text = Path("templates/new_user.html").read_text(encoding="utf-8")
 
-    assert (
-        "/static/css/modules/configurable_items_manager_v1.css"
-        "?v=20260713-shared-list-card-header-v1"
-        in template_text
-    )
+    # Verifica o asset com cache buster, sem fixar a versao (muda a cada ajuste de CSS).
+    assert "/static/css/modules/configurable_items_manager_v1.css?v=" in template_text
     assert "data-process-list-reusable-manager" in template_text
     assert "data-process-list-reusable-editor-block" in template_text
     assert "process-lists-editor-grid-v1" in template_text

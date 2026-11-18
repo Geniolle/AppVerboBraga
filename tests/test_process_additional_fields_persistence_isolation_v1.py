@@ -221,12 +221,10 @@ def test_update_additional_fields_menu_not_found_returns_error():
     assert error == "Menu não encontrado."
 
 
-def test_update_additional_fields_headers_are_reordered_before_regular_fields():
+def test_update_additional_fields_keep_submitted_order_with_headers():
     """
-    Comportamento existente: normalize_menu_process_additional_fields (geracao ativa,
-    linha 4880) reordena a lista final colocando TODOS os headers primeiro, mesmo que
-    tenham sido submetidos misturados com campos normais. Este teste trava o
-    comportamento atual; nao uniformizar/alterar nesta fase.
+    Desde d3fb070 a ordem da lista de Campos adicionais e a ordem de exibicao:
+    os cabecalhos ficam onde foram submetidos (nao sao movidos para o inicio).
     """
     SessionLocal = _build_session_factory()
     _seed_menu(
@@ -250,7 +248,7 @@ def test_update_additional_fields_headers_are_reordered_before_regular_fields():
 
     config, _ = _load_config(SessionLocal, "processo_teste_a")
     keys = [item["key"] for item in config["additional_fields"]]
-    assert keys == ["custom_secao_1", "custom_campo_a", "custom_campo_b"]
+    assert keys == ["custom_campo_a", "custom_secao_1", "custom_campo_b"]
 
 
 def test_update_additional_fields_stable_key_preserved_when_key_resupplied():
