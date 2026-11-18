@@ -740,7 +740,7 @@ body {
   }
 
   .vb-hero__conteudo {
-    padding: 96px 0 56px;
+    padding: 96px var(--vb-gutter) 56px 0;
   }
 
   .vb-sec {
