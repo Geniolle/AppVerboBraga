@@ -6515,10 +6515,18 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
   //###################################################################################
 
   function renderReadonlyRuleQuantityReadonlyV1(grid, setting, rule, fieldMetaMap) {
-    const values = getQuantityReadonlyValuesV1(rule.key);
+    let values = getQuantityReadonlyValuesV1(rule.key);
 
     if (!Array.isArray(values) || !values.length) {
-      return;
+      // Sem itens gravados: mostra os itens previstos pela quantidade (igual ao modo de edicao).
+      const originEl = document.querySelector(
+        "#perfil-pessoal-card [data-profile-field-key='" + rule.quantityFieldKey + "'] .personal-value"
+      );
+      const originCount = parseInt(originEl ? originEl.textContent.trim() : "", 10);
+      if (!Number.isInteger(originCount) || originCount < 1) {
+        return;
+      }
+      values = Array.from({length: Math.min(originCount, 50)}, () => ({}));
     }
 
     // Evita duplicados: cada render substitui o bloco de leitura anterior da regra.
