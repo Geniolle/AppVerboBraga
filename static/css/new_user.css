@@ -5996,3 +5996,8 @@ input.action-btn-cancel,
   font-size: 0.85rem;
   font-weight: 600;
 }
+
+/* Ao gravar a configuração de campos, o card de edição fica escondido até a página atualizar. */
+form.process-fields-config-saving-v1 .process-fields-config-editor-grid-v1[data-process-fields-config-editor-block] {
+  display: none !important;
+}
