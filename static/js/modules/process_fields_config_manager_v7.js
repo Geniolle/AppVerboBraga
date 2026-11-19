@@ -780,6 +780,10 @@
       desativarInputsLegadosV8(form, elements);
       // Esconde o card de edição enquanto a página atualiza (evita mostrar o editor já gravado).
       form.classList.add("process-fields-config-saving-v1");
+      const editorCardEl = elements.editorBlock && elements.editorBlock.closest("section");
+      if (editorCardEl) {
+        editorCardEl.classList.add("process-fields-config-editor-card-hidden-v1");
+      }
       submitNativo_v7(form);
     });
 
