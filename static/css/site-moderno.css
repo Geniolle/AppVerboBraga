@@ -309,8 +309,9 @@ body {
   color: var(--vb-white);
 }
 
-.vb-hero__info {
-  margin-top: 28px;
+/* .vb-hero p em genesis-public.css zera margin-top; (0,2,1) vence */
+.vb-hero p.vb-hero__info {
+  margin-top: 36px;
   font-size: 0.95rem;
   color: var(--vb-muted);
 }
