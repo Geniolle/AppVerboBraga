@@ -9835,3 +9835,17 @@ if (document.readyState === "loading") {
     });
   });
 })();
+
+// As abas sao reconstruidas por outros gestores depois do arranque (tabs_overflow_v1.js),
+// o que apagava a bolinha. Recalcula sempre que o DOM muda (so mexe no DOM se o estado mudar).
+(function keepProfileMissingTabDotsV1() {
+  if (!document.getElementById("perfil-pessoal-card")) {
+    return;
+  }
+  new MutationObserver(() => refreshProfileMissingTabDotsV1()).observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  window.setTimeout(refreshProfileMissingTabDotsV1, 300);
+  window.setTimeout(refreshProfileMissingTabDotsV1, 1200);
+})();
