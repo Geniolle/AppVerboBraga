@@ -18,11 +18,6 @@ SIDEBAR_MENU_DEFAULTS: tuple[dict[str, Any], ...] = (
     {"key": "administrativo", "label": "Administrativo", "requires_admin": True},
     {"key": "empresa", "label": "Empresa", "requires_admin": True},
     {"key": MENU_MEU_PERFIL_KEY, "label": "Meus dados", "requires_admin": True},
-    {"key": "financeiro", "label": "Financeiro", "requires_admin": True},
-    {"key": "relatorios", "label": "Relatorios", "requires_admin": True},
-    {"key": "links", "label": "Links", "requires_admin": False},
-    {"key": "contato", "label": "Contacto", "requires_admin": False},
-    {"key": "tutorial", "label": "Tutorial", "requires_admin": False},
 )
 
 SIDEBAR_MENU_KEYS = {item["key"] for item in SIDEBAR_MENU_DEFAULTS}
@@ -48,11 +43,6 @@ MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "empresa": "dados_gerais",
     "home": "geral",
     MENU_MEU_PERFIL_KEY: "igreja",
-    "financeiro": "igreja",
-    "relatorios": "igreja",
-    "links": "igreja",
-    "contato": "igreja",
-    "tutorial": "igreja",
     "tesouraria": "tesouraria",
 }
 MENU_CONFIG_SIDEBAR_SECTION_KEY = "sidebar_section"
@@ -134,28 +124,6 @@ MENU_PROCESS_FIELD_OPTIONS_BY_KEY: dict[str, tuple[dict[str, str], ...]] = {
         {"key": "ultima_verificacao_whatsapp", "label": "Última verificação WhatsApp"},
         {"key": "detalhe_verificacao", "label": "Detalhe da verificação"},
     ),
-    "financeiro": (
-        {"key": "nome", "label": "Nome"},
-        {"key": "estado", "label": "Estado"},
-        {"key": "criado_em", "label": "Criado em"},
-    ),
-    "relatorios": (
-        {"key": "nome", "label": "Nome"},
-        {"key": "estado", "label": "Estado"},
-        {"key": "criado_em", "label": "Criado em"},
-    ),
-    "links": (
-        {"key": "sessao", "label": "Sessão"},
-        {"key": "contactos", "label": "Contactos"},
-    ),
-    "contato": (
-        {"key": "email", "label": "Email"},
-        {"key": "telefone", "label": "Telefone"},
-    ),
-    "tutorial": (
-        {"key": "passos", "label": "Passos"},
-        {"key": "ajuda", "label": "Ajuda"},
-    ),
 }
 
 MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
@@ -163,11 +131,6 @@ MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY: dict[str, list[str]] = {
     "administrativo": ["entidade", "utilizador", "definicoes"],
     "empresa": ["dados_gerais", "morada"],
     MENU_MEU_PERFIL_KEY: ["nome", "telefone", "email", "data_nascimento"],
-    "financeiro": ["nome", "estado", "criado_em"],
-    "relatorios": ["nome", "estado", "criado_em"],
-    "links": ["sessao", "contactos"],
-    "contato": ["email", "telefone"],
-    "tutorial": ["passos", "ajuda"],
 }
 
 MENU_MEU_PERFIL_FIELD_OPTIONS: tuple[dict[str, str], ...] = tuple(

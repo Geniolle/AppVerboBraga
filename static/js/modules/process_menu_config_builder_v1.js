@@ -198,33 +198,6 @@
           { label: "Tipo de acesso", value: "Utilizador" }
         ]
       },
-      links: {
-        title: "Links",
-        description: "Atalhos internos do painel.",
-        items: [{ label: "Sessão atual", target: "#sessao-card" }],
-        details: [
-          { label: "Modulo", value: "Links" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
-      contato: {
-        title: "Contacto",
-        description: "Informações e opções de contacto.",
-        items: [{ label: "Dados do utilizador ligado", target: "#sessao-card" }],
-        details: [
-          { label: "Email", value: state.currentUserEmail },
-          { label: "Canal", value: "Interno" }
-        ]
-      },
-      tutorial: {
-        title: "Tutorial",
-        description: "Guia rapido de uso desta tela.",
-        items: [{ label: "Passo 1: atualizar perfil", target: "#perfil-pessoal-card" }],
-        details: [
-          { label: "Modo", value: "Guiado" },
-          { label: "Dificuldade", value: "Basico" }
-        ]
-      }
     };
 
     if (!state.currentUserIsAdmin) {
@@ -263,37 +236,8 @@
           { label: "Status", value: "Ativo" }
         ]
       },
-      financeiro: {
-        title: "Financeiro",
-        description: "Acesso a opções de conta e estado.",
-        items: [
-          { label: "Estado da conta", target: "#create-user-card" },
-          { label: "Histórico de criação", target: "#recent-users-card" }
-        ],
-        details: [
-          { label: "Modulo", value: "Financeiro" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
-      relatorios: {
-        title: "Relatorios",
-        description: "Relatorios e historico de utilizadores.",
-        items: [
-          { label: "Últimos criados", target: "#recent-users-card" },
-          { label: "Voltar ao formulario", target: "#create-user-card" }
-        ],
-        details: [
-          { label: "Modulo", value: "Relatorios" },
-          { label: "Status", value: "Ativo" }
-        ]
-      }
     });
 
-    baseMenuConfig.links.items.push({ label: "Criar utilizador", target: "#create-user-card" });
-    baseMenuConfig.tutorial.items = [
-      { label: "Passo 1: criar utilizador", target: "#create-user-card" },
-      { label: "Passo 2: validar em historico", target: "#recent-users-card" }
-    ];
 
     return baseMenuConfig;
   }

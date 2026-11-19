@@ -131,16 +131,11 @@ def test_stage6_process_submenu_runtime_clicks_keep_runtime_behavior() -> None:
             const fixedKeys = new Set([
               "home",
               "perfil",
-              "links",
-              "contato",
-              "tutorial",
               "administrativo",
               "meu_perfil",
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "financeiro",
-              "relatorios"
             ]);
             return Array.from(document.querySelectorAll(".menu-item[data-menu]"))
               .map((element) => String(element.getAttribute("data-menu") || "").trim().toLowerCase())

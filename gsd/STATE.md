@@ -38,12 +38,6 @@ Updated: 2026-07-06
 - Administrativo
 - Empresa
 - Meus dados
-- Funcionários
-- Financeiro
-- Relatórios
-- Links
-- Contato
-- Tutorial
 
 ## What Is In Progress At A Planning Level
 

@@ -146,16 +146,11 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
             const fixedKeys = new Set([
               "home",
               "perfil",
-              "links",
-              "contato",
-              "tutorial",
               "administrativo",
               "meu_perfil",
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "financeiro",
-              "relatorios"
             ]);
             return Array.from(document.querySelectorAll(".menu-item[data-menu]"))
               .map((element) => String(element.getAttribute("data-menu") || "").trim().toLowerCase())

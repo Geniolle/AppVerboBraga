@@ -611,14 +611,9 @@
           </form>
         </section>
 
-        <section id="sessao-card" class="card" data-menu-scope="links,contato" {% if initial_menu not in ['links', 'contato'] or (initial_menu_target and initial_menu_target != '#sessao-card') %}style="display: none;"{% endif %}>
-          <h2>Sessão</h2>
-          <p>Ligado como <strong>{{ current_user.full_name }}</strong> ({{ current_user.login_email }})</p>
-        </section>
-
         {% if current_user_is_admin %}
         {% if not (user_edit_data is defined and user_edit_data.id) %}
-        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="utilizador" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-menu-scope="administrativo,meu_perfil,financeiro,relatorios,links,tutorial" {% if initial_menu not in ['administrativo', 'meu_perfil', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
+        <section id="create-user-card" class="card entity-panel-card appgenesis-process-action-card-v1" data-admin-subprocess="utilizador" data-admin-subprocess-role="form" data-admin-subprocess-inline-create-enabled="1" data-menu-scope="administrativo,meu_perfil" {% if initial_menu not in ['administrativo', 'meu_perfil'] or initial_menu_target != '#create-user-card' %}style="display: none;"{% endif %}>
             <div class="entity-create-toolbar appgenesis-process-action-toolbar-v1">
             <details id="create-user-collapse" class="entity-create-collapse appgenesis-process-action-details-v1 admin-subprocess-create-collapse-v1" data-appgenesis-user-create-details="1"{% if errors %} open{% endif %}>
               <summary class="appgenesis-process-action-toggle-v1">
@@ -727,7 +722,7 @@
         {% endif %}
 
         {% if user_edit_data is defined and user_edit_data.id %}
-        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil,financeiro,relatorios,links,tutorial" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil', 'financeiro', 'relatorios', 'links', 'tutorial'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
+        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           <div class="admin-subsection">
