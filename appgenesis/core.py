@@ -35,6 +35,7 @@ from appgenesis.db.bootstrap import (
 )
 from appgenesis.db.session import SessionLocal, engine
 from appgenesis.integrations.oauth import oauth
+from appgenesis.services.static_assets import ASSET_VERSION
 from appgenesis.models import (
     Entity,
     Member,
@@ -95,6 +96,7 @@ ENTITY_NUMBER_MIN = settings.ENTITY_NUMBER_MIN
 ENTITY_NUMBER_MAX = settings.ENTITY_NUMBER_MAX
 
 templates = Jinja2Templates(directory=str(Path(BASE_DIR) / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 __all__ = [
     "OAuth",

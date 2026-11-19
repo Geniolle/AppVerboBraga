@@ -287,7 +287,7 @@ E eu também acrescentaria uma pequena seção operacional:
 
 Sempre que alterar `templates/new_user.html` ou assets usados por ele:
 
-1. Atualizar o cache buster dos ficheiros CSS/JS alterados.
+1. Não editar cache busters à mão: os assets usam `?v={{ asset_version }}` (gerado no arranque, `appgenesis/services/static_assets.py`). Um deploy/restart atualiza-os automaticamente.
 2. Validar JavaScript com:
 
 ```bash
