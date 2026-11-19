@@ -5911,7 +5911,8 @@ input.action-btn-cancel,
 }
 
 /* Bolinha vermelha informativa nas abas de Meus dados com campo obrigatorio em falta. */
-.submenu-item .profile-tab-missing-dot-v1 {
+.submenu-item .profile-tab-missing-dot-v1,
+.process-edit-tab-link .profile-tab-missing-dot-v1 {
   display: inline-block;
   width: 8px;
   height: 8px;
