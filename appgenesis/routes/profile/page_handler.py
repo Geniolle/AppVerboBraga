@@ -63,31 +63,6 @@ from appgenesis.models import (
 
 from appgenesis.routes.profile.router import router
 
-# APPGENESIS_DEBUG_SESSOES_FLOW_V1_START
-import logging as _logging_page
-import os as _os_page
-
-_SESSOES_PAGE_LOGGER = _logging_page.getLogger(__name__)
-
-
-def _debug_sessoes_page_enabled_v1(request=None) -> bool:
-    if _os_page.environ.get("APPGENESIS_DEBUG_SESSOES_FLOW") == "1":
-        return True
-    if request is not None:
-        try:
-            if dict(request.query_params).get("debug_sessoes") == "1":
-                return True
-        except Exception:
-            pass
-    return False
-
-
-def _log_sessoes_page_v1(event: str, **payload) -> None:
-    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
-    _SESSOES_PAGE_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
-
-# APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
-
 
 ESTRUTURAS_MENU_KEY_V1 = "sessoes"
 ESTRUTURAS_MENU_TARGETS_V1 = {
@@ -104,13 +79,11 @@ ESTRUTURAS_SESSOES_TARGETS_V1 = {
     "#admin-sidebar-sections-form-card",
 }
 
-
 def _normalize_card_target_v1(raw_target: str) -> str:
     clean_target = str(raw_target or "").strip()
     if not clean_target:
         return ""
     return clean_target if clean_target.startswith("#") else f"#{clean_target.lstrip('#')}"
-
 
 def _normalize_authorization_profile_target_v1(raw_target: str) -> str:
     clean_target = _normalize_card_target_v1(raw_target).lower()
@@ -130,7 +103,6 @@ def _normalize_authorization_profile_target_v1(raw_target: str) -> str:
         "#auth-objeto-form-card": "#auth-objeto-card",
     }
     return target_alias_map.get(clean_target, "")
-
 
 def _normalize_tab_target_for_match_v1(raw_target: str, *, menu_key: str = "") -> str:
     clean_target = _normalize_card_target_v1(raw_target).lower()
@@ -155,7 +127,6 @@ def _normalize_tab_target_for_match_v1(raw_target: str, *, menu_key: str = "") -
         return f"{clean_target[:-10]}-card"
     return clean_target
 
-
 def _targets_match_for_menu_v1(menu_key: str, left_target: str, right_target: str) -> bool:
     return _normalize_tab_target_for_match_v1(
         left_target,
@@ -164,7 +135,6 @@ def _targets_match_for_menu_v1(menu_key: str, left_target: str, right_target: st
         right_target,
         menu_key=menu_key,
     )
-
 
 def _resolve_active_tab_index_v1(
     *,
@@ -190,7 +160,6 @@ def _resolve_active_tab_index_v1(
 
     return 0
 
-
 def _resolve_settings_edit_origin_menu_v1(raw_resolved_menu: str) -> str:
     """Devolve o menu/contexto real com que o pedido chegou, para o editor de processo usar como
     redirect_menu. Deve ser chamado com o menu ANTES de _resolve_estruturas_navigation_context_v1
@@ -203,7 +172,6 @@ def _resolve_settings_edit_origin_menu_v1(raw_resolved_menu: str) -> str:
     if raw_resolved_menu in {"administrativo", ESTRUTURAS_MENU_KEY_V1}:
         return raw_resolved_menu
     return ESTRUTURAS_MENU_KEY_V1
-
 
 def _resolve_estruturas_navigation_context_v1(
     *,
@@ -238,7 +206,6 @@ def _resolve_estruturas_navigation_context_v1(
 
     return clean_menu, clean_admin_tab
 
-
 def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
     if not isinstance(menu_row, dict):
         return "__empty__"
@@ -269,7 +236,6 @@ def _resolve_first_dynamic_section_key(menu_row: dict[str, Any] | None) -> str:
     if len(section_order) == 1 and section_order[0] == "__geral__":
         return f"field:{first_field_key}" if first_field_key else "__empty__"
     return section_order[0]
-
 
 def _resolve_initial_menu_target(
     resolved_menu: str,
@@ -347,7 +313,6 @@ def _resolve_initial_menu_target(
         return "#dynamic-process-card", _resolve_first_dynamic_section_key(matched_menu_row)
     return "", ""
 
-
 def _find_sidebar_menu_setting_by_key_v1(
     sidebar_menu_settings: list[dict[str, Any]],
     menu_key: str,
@@ -365,7 +330,6 @@ def _find_sidebar_menu_setting_by_key_v1(
 
     return None
 
-
 def _resolve_dynamic_process_section_for_menu_v1(
     sidebar_menu_settings: list[dict[str, Any]],
     menu_key: str,
@@ -381,7 +345,6 @@ def _resolve_dynamic_process_section_for_menu_v1(
         return ""
 
     return resolved_section
-
 
 def _build_auth_profile_return_url_v1(
     *,
@@ -410,7 +373,6 @@ def _build_auth_profile_return_url_v1(
 
     return f"/users/new?{urlencode(query_params)}{clean_target}"
 
-
 def _build_auth_objeto_return_url_v1(
     *,
     target: str = "",
@@ -426,7 +388,6 @@ def _build_auth_objeto_return_url_v1(
 
     return f"/users/new?{urlencode(query_params)}{clean_target}"
 
-
 # APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
 
 def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_active: object = None) -> str:
@@ -440,7 +401,6 @@ def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_ac
 
     return "ativo"
 
-
 def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
     if not isinstance(section, dict):
         return True
@@ -449,7 +409,6 @@ def _sidebar_section_is_active_for_page_v22(section: dict[str, Any]) -> bool:
         section.get("status"),
         section.get("is_active"),
     ) == "ativo"
-
 
 def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> list[dict[str, Any]]:
     raw_sections = page_data.get("sidebar_section_options")
@@ -487,7 +446,6 @@ def _resolve_sidebar_sections_from_page_data_v22(page_data: dict[str, Any]) -> l
 
     return []
 
-
 def _split_sidebar_sections_for_page_v22(
     page_data: dict[str, Any],
     sidebar_section_edit_key: str,
@@ -521,8 +479,6 @@ def _split_sidebar_sections_for_page_v22(
 
 # APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
-
-
 @router.get("/users/new", response_class=HTMLResponse)
 def new_user_page(
     request: Request,
@@ -554,7 +510,6 @@ def new_user_page(
     auth_objeto_edit_key: str = "",
     appgenesis_after_save: str = "",
 ) -> HTMLResponse:
-    _dbg_page = _debug_sessoes_page_enabled_v1(request)
 
     resolved_profile_tab = profile_tab.strip().lower()
     if resolved_profile_tab not in {"pessoal", "morada", "treinamento"}:
@@ -567,19 +522,6 @@ def new_user_page(
     clean_settings_edit_key = resolve_menu_key_alias(settings_edit_key)
     clean_target_from_query = _normalize_card_target_v1(target)
 
-    if _dbg_page and (resolved_menu == ESTRUTURAS_MENU_KEY_V1 or sidebar_section_edit_key):
-        _log_sessoes_page_v1(
-            "page:start",
-            raw_menu=menu,
-            resolved_menu=resolved_menu,
-            raw_admin_tab=admin_tab,
-            target=target,
-            sidebar_section_edit_key=sidebar_section_edit_key,
-            success=success,
-            error=error,
-            appgenesis_after_save=appgenesis_after_save,
-        )
-
     resolved_menu, resolved_admin_tab = _resolve_estruturas_navigation_context_v1(
         resolved_menu=resolved_menu,
         resolved_admin_tab=admin_tab.strip().lower(),
@@ -588,14 +530,6 @@ def new_user_page(
         sidebar_section_edit_key=sidebar_section_edit_key,
     )
 
-    if _dbg_page and (resolved_menu == ESTRUTURAS_MENU_KEY_V1 or sidebar_section_edit_key):
-        _log_sessoes_page_v1(
-            "page:navigation_context",
-            resolved_menu=resolved_menu,
-            resolved_admin_tab=resolved_admin_tab,
-            target=clean_target_from_query,
-            sidebar_section_edit_key=sidebar_section_edit_key,
-        )
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1:
         if resolved_admin_tab not in {"contas", "sessoes"}:
             resolved_admin_tab = "contas"
@@ -688,12 +622,6 @@ def new_user_page(
             and resolved_menu == ESTRUTURAS_MENU_KEY_V1
             and resolved_admin_tab == "sessoes"
         ):
-            if _dbg_page:
-                _log_sessoes_page_v1(
-                    "page:post_save_guard",
-                    sidebar_section_edit_key_antes=sidebar_section_edit_key,
-                    acao="limpar_edit_key",
-                )
             sidebar_section_edit_key = ""
         # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_END
 
@@ -801,39 +729,16 @@ def new_user_page(
     if clean_dynamic_section_from_query:
         initial_dynamic_process_section = clean_dynamic_section_from_query
 
-    if _dbg_page and resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
-        _log_sessoes_page_v1(
-            "page:initial_target_before",
-            initial_menu_target=initial_menu_target,
-            sidebar_section_edit_key=sidebar_section_edit_key,
-            appgenesis_after_save=appgenesis_after_save,
-        )
-
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1 and resolved_admin_tab == "sessoes":
         if str(sidebar_section_edit_key or "").strip():
             initial_menu_target = "#admin-sidebar-sections-form-card"
-            if _dbg_page:
-                _log_sessoes_page_v1(
-                    "page:sessoes_target_decision",
-                    sidebar_section_edit_key=sidebar_section_edit_key,
-                    chosen_initial_menu_target="#admin-sidebar-sections-form-card",
-                    motivo="edit_key_present",
-                )
         else:
             initial_menu_target = "#admin-sidebar-sections-card"
-            if _dbg_page:
-                _log_sessoes_page_v1(
-                    "page:sessoes_target_decision",
-                    sidebar_section_edit_key=sidebar_section_edit_key,
-                    chosen_initial_menu_target="#admin-sidebar-sections-card",
-                    motivo="no_edit_key",
-                )
         initial_dynamic_process_section = ""
         clean_dynamic_section_from_query = ""
 
     is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
     # APPGENESIS_PAGE_HANDLER_POST_SAVE_CONTEXT_V1_END
-
 
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_SESSOES_V2_START
     admin_subprocess_state_v2 = None
@@ -855,16 +760,6 @@ def new_user_page(
                 return_url="/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card",
             )
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_SESSOES_V2_END
-
-    if _dbg_page and admin_subprocess_state_v2 is not None and resolved_admin_tab == "sessoes":
-        _log_sessoes_page_v1(
-            "page:admin_subprocess_state",
-            is_editing=admin_subprocess_state_v2.is_editing,
-            edit_key=getattr(admin_subprocess_state_v2, "edit_key", None),
-            return_url=getattr(admin_subprocess_state_v2, "return_url", None),
-            active_count=len(active_sidebar_sections_v22 or []),
-            inactive_count=len(inactive_sidebar_sections_v22 or []),
-        )
 
     auth_profile_subprocess_state_v1 = None
 

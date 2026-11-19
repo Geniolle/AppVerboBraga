@@ -2,8 +2,6 @@
 # HELPERS PARTILHADOS PELOS HANDLERS DE PROCESS-SETTINGS (Fase 8)
 # ###################################################################################
 
-import logging as _logging_sessoes
-import os as _os_sessoes
 from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from fastapi import Request
@@ -14,31 +12,6 @@ from appgenesis.services.session import get_current_user, get_session_entity_id
 from appgenesis.services.auth import is_admin_user
 from appgenesis.services.permissions import get_user_entity_permissions
 
-# APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_START
-_PROCESS_EDITOR_FLOW_LOGGER = _logging_sessoes.getLogger(__name__ + ".process_editor")
-
-
-def _debug_process_editor_flow_enabled_v1(request: Request | None = None) -> bool:
-    if _os_sessoes.environ.get("APPGENESIS_DEBUG_PROCESS_EDITOR") == "1":
-        return True
-    if request is not None:
-        try:
-            qs = dict(request.query_params)
-            if qs.get("debug_process_editor") == "1":
-                return True
-        except Exception:
-            pass
-    return False
-
-
-def _log_process_editor_flow_v1(request: Request | None, event: str, **payload) -> None:
-    if not _debug_process_editor_flow_enabled_v1(request):
-        return
-    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
-    _PROCESS_EDITOR_FLOW_LOGGER.info("[PROCESS_EDITOR_FLOW] %s | %s", event, parts)
-
-
-# APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_END
 
 
 def _sanitize_users_new_settings_return_url_v1(
