@@ -491,8 +491,9 @@ Cada etapa segue a regra 17 do `AGENTS.md`. Estado registado aqui.
 
 | Etapa | Descrição | PR | Testes | Validação | Estado |
 |---|---|---|---|---|---|
-| 0 | Regra de execução por etapas e registo | (este PR) | - | - | em curso |
-| 1 | Remover ferramentas de debug de flicker do ecrã principal | - | - | - | pendente |
+| 0 | Regra de execução por etapas e registo | #95 | n/a (docs) | revisão | concluída |
+| 1 | Remover ferramentas de debug de flicker (`debug_flicker`) | (esta etapa) | `test_debug_flicker_removed_v1.py` + CI | pyflakes sem novos avisos (23 = base) | em curso |
+| 1b | Remover logs de depuração gated por flag (`_debug_sessoes*`, `_log_sessoes_flow*`, `navigation_reload_guard`, `return_after_save`, `new_user.js`) | - | - | - | pendente |
 | 2 | Versão de assets automática (substitui `?v=` manuais) | - | - | - | pendente |
 | 3 | Assets de código saem do volume de produção (`static_prod`) | - | - | - | pendente |
 | 4 | Mojibake e texto corrompido | - | - | - | pendente |
