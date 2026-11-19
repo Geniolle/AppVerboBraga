@@ -898,7 +898,14 @@
           key: "headerLabel",
           label: "Cabeçalho do campo",
           render: function (item) {
-            return item.headerLabel || "Sem cabeçalho";
+            if (item.headerLabel) {
+              return item.headerLabel;
+            }
+            // Campo sem cabeçalho: etiqueta amarela para destacar.
+            const tagEl = document.createElement("span");
+            tagEl.className = "field-no-header-tag-v1";
+            tagEl.textContent = "Sem cabeçalho";
+            return tagEl;
           }
         }
       ],

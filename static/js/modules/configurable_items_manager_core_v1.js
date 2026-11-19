@@ -316,7 +316,7 @@
     return manager.state.items.filter((item) => {
       return manager.config.columns.some((column) => {
         const cellValue = column.render
-          ? toSafeString_v1(column.render(item, 0, manager))
+          ? (function (v) { return v instanceof Node ? v.textContent : toSafeString_v1(v); })(column.render(item, 0, manager))
           : toSafeString_v1(item[column.key] == null ? "" : item[column.key]);
         return normalizeLookup_v1(cellValue).indexOf(query) !== -1;
       });
