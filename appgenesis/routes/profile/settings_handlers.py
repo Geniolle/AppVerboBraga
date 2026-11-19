@@ -36,40 +36,12 @@ from starlette.status import HTTP_302_FOUND, HTTP_303_SEE_OTHER
 # (Fase 8) — necessario para o efeito colateral dos decorators @router.
 from appgenesis.routes.profile import process_settings  # noqa: F401
 
-# APPGENESIS_DEBUG_SESSOES_FLOW_V1_START
-import logging as _logging_sessoes
-import os as _os_sessoes
 
-_SESSOES_FLOW_LOGGER = _logging_sessoes.getLogger(__name__)
-
-
-def _debug_sessoes_flow_enabled_v1(request=None) -> bool:
-    if _os_sessoes.environ.get("APPGENESIS_DEBUG_SESSOES_FLOW") == "1":
-        return True
-    if request is not None:
-        try:
-            qs = dict(request.query_params)
-            if qs.get("debug_sessoes") == "1":
-                return True
-        except Exception:
-            pass
-    return False
-
-
-def _log_sessoes_flow_v1(event: str, **payload) -> None:
-    parts = " | ".join(f"{k}={v!r}" for k, v in payload.items())
-    _SESSOES_FLOW_LOGGER.info("[SESSOES_FLOW] %s | %s", event, parts)
-
-
-# APPGENESIS_DEBUG_SESSOES_FLOW_V1_END
-
-# APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_START -- helpers movidos para
+# Helpers de process-settings importados aqui por compatibilidade (Fase 8).
 # appgenesis/routes/profile/process_settings/common.py (Fase 8); mantidos
 # importaveis aqui para compatibilidade com os handlers ainda nao migrados
 # e com testes que importam diretamente deste modulo.
 from appgenesis.routes.profile.process_settings.common import (
-    _debug_process_editor_flow_enabled_v1,
-    _log_process_editor_flow_v1,
     _sanitize_users_new_settings_return_url_v1,
     _SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
     _build_settings_redirect_url,
@@ -77,15 +49,12 @@ from appgenesis.routes.profile.process_settings.common import (
     _require_menu_settings_owner_v1,
 )
 
-# APPGENESIS_DEBUG_PROCESS_EDITOR_FLOW_V1_END
-
 
 # APPGENESIS_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_START
 
 # ###################################################################################
 # (SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1) CONSULTAR VERSAO GLOBAL DO SIDEBAR
 # ###################################################################################
-
 
 @router.get("/settings/menu/sidebar-refresh-version")
 def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
@@ -107,7 +76,6 @@ def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
             }
         )
 
-
 # APPGENESIS_SIDEBAR_GLOBAL_REFRESH_ENDPOINT_V1_END
 
 # APPGENESIS_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_START
@@ -115,7 +83,6 @@ def get_sidebar_refresh_version_v1(request: Request) -> JSONResponse:
 # ###################################################################################
 # (SIDEBAR_SECTIONS_DATA_ENDPOINT_V6) LER SESSOES DO SIDEBAR DIRETO DO BD
 # ###################################################################################
-
 
 @router.get("/settings/menu/sidebar-sections-data")
 def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
@@ -174,16 +141,13 @@ def get_sidebar_sections_data_v6(request: Request) -> JSONResponse:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-
 # APPGENESIS_SIDEBAR_SECTIONS_DATA_ENDPOINT_V6_END
-
 
 # APPGENESIS_SESSOES_RETURN_URL_V17_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_RETURN_URL_V17) URL SEGURA DE RETORNO PARA A ABA SESSOES
 # ###################################################################################
-
 
 def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
     raw_url = str(return_url or "").strip()
@@ -203,9 +167,7 @@ def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
 
     return raw_url
 
-
 # APPGENESIS_SESSOES_RETURN_URL_V17_END
-
 
 # APPGENESIS_SESSOES_SAVE_ONE_V19_START
 
@@ -213,10 +175,8 @@ def _sanitize_sidebar_section_return_url_v17(return_url: object) -> str:
 # (SIDEBAR_SECTION_SAVE_ONE_V19) CRIAR/EDITAR SESSAO COM ESTADO PERSISTENTE
 # ###################################################################################
 
-
 def _normalize_sidebar_section_text_v19(value: object) -> str:
     return str(value or "").strip()
-
 
 def _slugify_sidebar_section_key_v19(value: object) -> str:
     import re
@@ -235,7 +195,6 @@ def _slugify_sidebar_section_key_v19(value: object) -> str:
 
     return raw_value or "nova_sessao"
 
-
 def _normalize_sidebar_section_status_v19(value: object) -> str:
     clean_value = _normalize_sidebar_section_text_v19(value).lower()
 
@@ -244,14 +203,12 @@ def _normalize_sidebar_section_status_v19(value: object) -> str:
 
     return "ativo"
 
-
 def _sidebar_section_status_label_v19(value: object) -> str:
     return (
         "Inativo"
         if _normalize_sidebar_section_status_v19(value) == "inativo"
         else "Ativo"
     )
-
 
 def _normalize_sidebar_section_scope_v19(value: object) -> str:
     clean_value = _normalize_sidebar_section_text_v19(value).lower()
@@ -261,7 +218,6 @@ def _normalize_sidebar_section_scope_v19(value: object) -> str:
 
     return "all"
 
-
 def _sidebar_section_scope_to_scopes_v19(value: object) -> list[str]:
     clean_value = _normalize_sidebar_section_scope_v19(value)
 
@@ -269,7 +225,6 @@ def _sidebar_section_scope_to_scopes_v19(value: object) -> list[str]:
         return [clean_value]
 
     return ["owner", "legado"]
-
 
 def _sidebar_section_scope_label_v19(value: object) -> str:
     clean_value = _normalize_sidebar_section_scope_v19(value)
@@ -282,17 +237,11 @@ def _sidebar_section_scope_label_v19(value: object) -> str:
 
     return "Default"
 
-
 def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-    _dbg = _debug_sessoes_flow_enabled_v1()
-
     fallback = "/users/new?menu=sessoes&admin_tab=sessoes&sidebar_sections_tab=sessoes&target=admin-sidebar-sections-card#admin-sidebar-sections-card"
     raw_url = _normalize_sidebar_section_text_v19(return_url) or fallback
-
-    if _dbg:
-        _log_sessoes_flow_v1("sanitize:start", raw_url=raw_url)
 
     if (
         raw_url.startswith("http://")
@@ -365,33 +314,12 @@ def _sanitize_sidebar_section_return_url_v19(return_url: object) -> str:
         ("", "", "/users/new", urlencode(clean_params), "admin-sidebar-sections-card")
     )
 
-    if _dbg:
-        removed = [
-            k
-            for k, _ in parse_qsl((urlsplit(raw_url)).query, keep_blank_values=True)
-            if k in blocked_params
-        ]
-        _log_sessoes_flow_v1(
-            "sanitize:done",
-            sanitized_url=sanitized,
-            params_removidos=removed,
-            fragment="admin-sidebar-sections-card",
-        )
-
     return sanitized
-
 
 def _append_sidebar_section_message_v19(
     return_url: str, message_key: str, message: str
 ) -> str:
     from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-
-    _dbg = _debug_sessoes_flow_enabled_v1()
-
-    if _dbg:
-        _log_sessoes_flow_v1(
-            "append_message:start", message_key=message_key, base_return_url=return_url
-        )
 
     parts = urlsplit(return_url)
     params = [
@@ -411,11 +339,7 @@ def _append_sidebar_section_message_v19(
         )
     )
 
-    if _dbg:
-        _log_sessoes_flow_v1("append_message:done", final_url=final_url)
-
     return final_url
-
 
 def _redirect_sidebar_section_message_v19(
     return_url: str,
@@ -447,7 +371,6 @@ def _redirect_sidebar_section_message_v19(
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
-
 def _redirect_sidebar_section_edit_error_v19(
     original_key: str, error: str
 ) -> RedirectResponse:
@@ -466,7 +389,6 @@ def _redirect_sidebar_section_edit_error_v19(
     )
     return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
 
-
 def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
     """URL de sucesso pós-save de Sessões — sempre limpa, sem estado de edição."""
     from urllib.parse import urlencode, urlunsplit
@@ -484,7 +406,6 @@ def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
         ("", "", "/users/new", urlencode(params), "admin-sidebar-sections-card")
     )
 
-
 def _is_sidebar_section_ajax_request_v1(request: Request) -> bool:
     requested_with = str(request.headers.get("X-Requested-With") or "").strip()
 
@@ -493,7 +414,6 @@ def _is_sidebar_section_ajax_request_v1(request: Request) -> bool:
 
     accept = str(request.headers.get("Accept") or "").strip().lower()
     return "application/json" in accept
-
 
 def _sidebar_section_json_error_v1(
     message: str,
@@ -512,7 +432,6 @@ def _sidebar_section_json_error_v1(
 
     return JSONResponse(payload, status_code=status_code)
 
-
 def _sidebar_section_json_success_v1(message: str, redirect_url: str) -> JSONResponse:
     return JSONResponse(
         {
@@ -521,7 +440,6 @@ def _sidebar_section_json_success_v1(message: str, redirect_url: str) -> JSONRes
             "redirect_url": redirect_url,
         }
     )
-
 
 def _make_unique_sidebar_section_key_v19(base_key: str, used_keys: set[str]) -> str:
     clean_base_key = _slugify_sidebar_section_key_v19(base_key)
@@ -537,7 +455,6 @@ def _make_unique_sidebar_section_key_v19(base_key: str, used_keys: set[str]) -> 
         candidate = f"{clean_base_key}_{counter}"
 
     return candidate
-
 
 def _read_sidebar_sections_for_save_one_v19(session) -> list[dict[str, str]]:
     from appgenesis.menu_settings import (
@@ -566,7 +483,6 @@ def _read_sidebar_sections_for_save_one_v19(session) -> list[dict[str, str]]:
         menu_config = {}
 
     return normalize_sidebar_sections(menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY))
-
 
 def _persist_sidebar_sections_status_v19(
     session,
@@ -651,7 +567,6 @@ def _persist_sidebar_sections_status_v19(
     )
     session.commit()
 
-
 @router.post("/settings/menu/sidebar-section-save", response_class=HTMLResponse)
 def save_one_sidebar_section_v19(
     request: Request,
@@ -663,26 +578,11 @@ def save_one_sidebar_section_v19(
     section_status_override_v19: str = Form(""),
     sidebar_section_return_url: str = Form(""),
 ) -> RedirectResponse:
-    _dbg_save = _debug_sessoes_flow_enabled_v1(request)
     _is_ajax = _is_sidebar_section_ajax_request_v1(request)
-
-    if _dbg_save:
-        _log_sessoes_flow_v1(
-            "save:start",
-            section_mode=section_mode,
-            original_section_key=original_section_key,
-            section_label=section_label,
-            section_status=section_status,
-            sidebar_section_return_url=sidebar_section_return_url,
-            is_ajax=_is_ajax,
-        )
 
     safe_return_url = _sanitize_sidebar_section_return_url_v19(
         sidebar_section_return_url
     )
-
-    if _dbg_save:
-        _log_sessoes_flow_v1("save:safe_return_url", safe_return_url=safe_return_url)
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -748,15 +648,6 @@ def save_one_sidebar_section_v19(
 
         if not clean_label:
             if clean_mode == "edit" and clean_original_key:
-                if _dbg_save:
-                    _log_sessoes_flow_v1(
-                        "save:error_redirect",
-                        motivo="label_vazio",
-                        clean_mode=clean_mode,
-                        edit_key=clean_original_key,
-                        tem_edit_key=True,
-                        tem_form_card=True,
-                    )
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
                         "Informe o nome da sessão.",
@@ -764,15 +655,6 @@ def save_one_sidebar_section_v19(
                     )
                 return _redirect_sidebar_section_edit_error_v19(
                     clean_original_key, "Informe o nome da sessão."
-                )
-            if _dbg_save:
-                _log_sessoes_flow_v1(
-                    "save:error_redirect",
-                    motivo="label_vazio",
-                    clean_mode=clean_mode,
-                    redirect_url=safe_return_url,
-                    tem_edit_key=False,
-                    tem_form_card=False,
                 )
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
@@ -822,15 +704,6 @@ def save_one_sidebar_section_v19(
                     )
 
             if not found_section:
-                if _dbg_save:
-                    _log_sessoes_flow_v1(
-                        "save:error_redirect",
-                        motivo="sessao_nao_encontrada",
-                        clean_original_key=clean_original_key,
-                        redirect_url=safe_return_url,
-                        tem_edit_key=False,
-                        tem_form_card=False,
-                    )
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
                         "Sessão não encontrada para edição.",
@@ -882,15 +755,6 @@ def save_one_sidebar_section_v19(
 
         if not ok:
             if clean_mode == "edit" and clean_original_key:
-                if _dbg_save:
-                    _log_sessoes_flow_v1(
-                        "save:error_redirect",
-                        motivo="update_falhou",
-                        clean_mode=clean_mode,
-                        edit_key=clean_original_key,
-                        tem_edit_key=True,
-                        tem_form_card=True,
-                    )
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
                         error_message or "Não foi possível gravar a sessão.",
@@ -899,15 +763,6 @@ def save_one_sidebar_section_v19(
                 return _redirect_sidebar_section_edit_error_v19(
                     clean_original_key,
                     error_message or "Não foi possível gravar a sessão.",
-                )
-            if _dbg_save:
-                _log_sessoes_flow_v1(
-                    "save:error_redirect",
-                    motivo="update_falhou",
-                    clean_mode=clean_mode,
-                    redirect_url=safe_return_url,
-                    tem_edit_key=False,
-                    tem_form_card=False,
                 )
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
@@ -934,33 +789,18 @@ def save_one_sidebar_section_v19(
         )
         _success_url = _build_sidebar_sections_success_url_v1(_success_msg)
 
-        if _dbg_save:
-            _log_sessoes_flow_v1(
-                "save:success_redirect",
-                clean_mode=clean_mode,
-                target_section_key=target_section_key,
-                clean_status=clean_status,
-                success_url=_success_url,
-                tem_edit_key="sidebar_section_edit_key" in _success_url,
-                tem_form_card="admin-sidebar-sections-form-card" in _success_url,
-                tem_appgenesis_after_save="appgenesis_after_save=1" in _success_url,
-            )
-
         if _is_ajax:
             return _sidebar_section_json_success_v1(_success_msg, _success_url)
 
         return RedirectResponse(url=_success_url, status_code=status.HTTP_303_SEE_OTHER)
 
-
 # APPGENESIS_SESSOES_SAVE_ONE_V19_END
-
 
 # APPGENESIS_SESSOES_SERVER_MOVE_ONE_V25_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_MOVE_ONE_V25) MOVER SESSAO COM FLUXO SERVER-SIDE
 # ###################################################################################
-
 
 @router.post("/settings/menu/sidebar-section-move-one", response_class=HTMLResponse)
 def move_one_sidebar_section_v25(
@@ -1093,16 +933,13 @@ def move_one_sidebar_section_v25(
             "Hierarquia da sessão atualizada com sucesso.",
         )
 
-
 # APPGENESIS_SESSOES_SERVER_MOVE_ONE_V25_END
-
 
 # APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_START
 
 # ###################################################################################
 # (SIDEBAR_SECTION_DELETE_ONE_V1) ELIMINAR SESSAO INATIVA COM VALIDACAO DE OWNER
 # ###################################################################################
-
 
 @router.post("/settings/menu/sidebar-section-delete", response_class=HTMLResponse)
 def delete_one_sidebar_section_v1(
@@ -1164,16 +1001,13 @@ def delete_one_sidebar_section_v1(
             "Sessão eliminada com sucesso.",
         )
 
-
 # APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_END
-
 
 # APPGENESIS_SIDEBAR_SECTIONS_HANDLER_V2_START
 
 # ###################################################################################
 # (SIDEBAR_SECTIONS_HANDLER_V2) GRAVAR SESSOES E PROPAGAR VISIBILIDADE AOS MENUS
 # ###################################################################################
-
 
 @router.post("/settings/menu/sidebar-sections", response_class=HTMLResponse)
 def edit_sidebar_sections_v2(
@@ -1293,9 +1127,7 @@ def edit_sidebar_sections_v2(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-
 # APPGENESIS_SIDEBAR_SECTIONS_HANDLER_V2_END
-
 
 # ###################################################################################
 # (MENU_SETTINGS_CRUD_V1) GRAVAR CONFIGURACOES GERAIS DAS PASTAS -- movido para
@@ -1306,28 +1138,22 @@ def edit_sidebar_sections_v2(
 # movidos para appgenesis/routes/profile/process_settings/additional_field_handlers.py
 # (Fase 8)
 
-
 # (3) CONFIGURACAO DOS CAMPOS DO PROCESSO MENU -- movido para
 # appgenesis/routes/profile/process_settings/field_handlers.py (Fase 8)
-
 
 # (4) CAMPOS QUANTIDADE DO PROCESSO MENU -- movido para
 # appgenesis/routes/profile/process_settings/quantity_field_handlers.py (Fase 8)
 
-
 # (5) LISTAS DO PROCESSO MENU -- movido para
 # appgenesis/routes/profile/process_settings/list_handlers.py (Fase 8)
 
-
 # (4) CAMPOS SUBSEQUENTES -- movido para
 # appgenesis/routes/profile/process_settings/subsequent_field_handlers.py (Fase 8)
-
 
 _MENU_SUBPROCESS_DEFAULT_RETURN_URL = (
     "/users/new?menu=sessoes&admin_tab=contas&target=menu-subprocess-card-active"
     "#menu-subprocess-card-active"
 )
-
 
 @router.post("/settings/menu/menu-save", response_class=HTMLResponse)
 def menu_subprocess_save_handler_v1(
@@ -1382,7 +1208,6 @@ def menu_subprocess_save_handler_v1(
             status_code=HTTP_303_SEE_OTHER,
         )
 
-
 @router.post("/settings/menu/menu-move", response_class=HTMLResponse)
 def menu_subprocess_move_handler_v1(
     request: Request,
@@ -1430,7 +1255,6 @@ def menu_subprocess_move_handler_v1(
             ),
             status_code=HTTP_303_SEE_OTHER,
         )
-
 
 @router.post("/settings/menu/menu-delete", response_class=HTMLResponse)
 def menu_subprocess_delete_handler_v1(

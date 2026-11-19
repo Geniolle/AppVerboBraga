@@ -18,9 +18,7 @@ from appgenesis.routes.profile.process_settings.common import (
     _build_settings_redirect_url,
     _build_settings_editor_stay_redirect_url_v1,
     _SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
-    _log_process_editor_flow_v1,
 )
-
 
 @router.post("/settings/menu/process-fields", response_class=HTMLResponse, response_model=None)
 def edit_sidebar_menu_process_fields_handler(
@@ -36,16 +34,6 @@ def edit_sidebar_menu_process_fields_handler(
     clean_menu_key = resolve_menu_key_alias(menu_key)
     # Gravacao AJAX (JS): responde JSON, sem redirect nem recarregamento da pagina.
     is_ajax_save = request.headers.get("x-requested-with") == "appgenesis-ajax-save"
-
-    _log_process_editor_flow_v1(
-        request,
-        "process_fields:received",
-        menu_key=menu_key,
-        clean_menu_key=clean_menu_key,
-        redirect_menu=redirect_menu,
-        redirect_target=redirect_target,
-        return_url=return_url,
-    )
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
@@ -208,14 +196,6 @@ def edit_sidebar_menu_process_fields_handler(
             redirect_menu=redirect_menu,
             settings_edit_key=clean_menu_key,
             settings_tab="campos-config",
-            return_url=return_url,
-        )
-        _log_process_editor_flow_v1(
-            request,
-            "process_fields:success_redirect",
-            redirect_menu=redirect_menu,
-            redirect_target=_SETTINGS_MENU_EDITOR_STAY_TARGET_V1,
-            final_url=success_redirect_url,
             return_url=return_url,
         )
 
