@@ -18,7 +18,6 @@ from appgenesis.services.process_settings.normalizers import (
     SIDEBAR_MENU_ADDITIONAL_FIELDS_PROTECTED_KEYS,
     _build_custom_field_key_from_label,
     _build_group_scoped_custom_field_key,
-    _fix_common_mojibake,
     _get_additional_field_group_key,
     _load_menu_config,
     _menu_exists,
@@ -59,7 +58,7 @@ def _normalize_sentence_case_label_keep_acronyms(raw_label: str) -> str:
 
 
 def _normalize_additional_field_label(raw_label: Any) -> str:
-    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    clean_label = str(raw_label or "")
     clean_label = " ".join(clean_label.strip().split())
     if not clean_label:
         return ""

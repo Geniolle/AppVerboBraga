@@ -336,7 +336,7 @@ def _normalize_custom_field_key(raw_key: str) -> str:
 
 
 def _normalize_sentence_case_text(raw_text: Any) -> str:
-    clean_text = _fix_common_mojibake(str(raw_text or ""))
+    clean_text = str(raw_text or "")
     clean_text = " ".join(clean_text.strip().split())
     if not clean_text:
         return ""
@@ -347,7 +347,7 @@ def _normalize_sentence_case_text(raw_text: Any) -> str:
 
 
 def _normalize_menu_label_preserve_case(raw_label: Any) -> str:
-    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    clean_label = str(raw_label or "")
     clean_label = " ".join(clean_label.strip().split())
     return clean_label
 
@@ -427,7 +427,7 @@ def _build_sidebar_section_key_from_label(label: str) -> str:
 
 
 def _normalize_sidebar_section_label(raw_label: Any) -> str:
-    clean_label = _fix_common_mojibake(str(raw_label or ""))
+    clean_label = str(raw_label or "")
     clean_label = " ".join(clean_label.strip().split())
     if not clean_label:
         return ""
@@ -647,33 +647,6 @@ def resolve_menu_sidebar_section_key(
         valid_section_keys,
         ordered_section_keys,
     )
-
-
-PT_PT_QUESTION_MARK_REPLACEMENTS: tuple[tuple[str, str], ...] = (
-    (r"\bconfigura\?\?o\b", "configuração"),
-    (r"\bconfigura\?\?es\b", "configurações"),
-    (r"\bdefini\?\?es\b", "definições"),
-    (r"\binforma\?\?es\b", "informações"),
-    (r"\ba\?\?es\b", "ações"),
-    (r"\bna\?o\b", "não"),
-    (r"\bpa\?s\b", "país"),
-)
-
-
-def _fix_common_mojibake(raw_text: str) -> str:
-    text_value = str(raw_text or "")
-    if not text_value:
-        return ""
-    fixed_text = text_value
-    if "Ã" in text_value or "Â" in text_value or "�" in text_value:
-        try:
-            repaired = text_value.encode("latin1").decode("utf-8")
-            fixed_text = repaired or text_value
-        except UnicodeError:
-            fixed_text = text_value
-    for pattern, replacement in PT_PT_QUESTION_MARK_REPLACEMENTS:
-        fixed_text = re.sub(pattern, replacement, fixed_text, flags=re.IGNORECASE)
-    return fixed_text
 
 
 def _parse_menu_config(raw_menu_config: Any) -> dict[str, Any]:
