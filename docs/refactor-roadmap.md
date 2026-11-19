@@ -484,3 +484,17 @@ Considerar a refatoração bem estruturada quando:
 - cada fluxo crítico tiver testes de regressão;
 - o frontend principal estiver dividido por secções reutilizáveis;
 - não houver texto PT-PT corrompido nos fluxos principais.
+
+## Registo de execução
+
+Cada etapa segue a regra 17 do `AGENTS.md`. Estado registado aqui.
+
+| Etapa | Descrição | PR | Testes | Validação | Estado |
+|---|---|---|---|---|---|
+| 0 | Regra de execução por etapas e registo | (este PR) | - | - | em curso |
+| 1 | Remover ferramentas de debug de flicker do ecrã principal | - | - | - | pendente |
+| 2 | Versão de assets automática (substitui `?v=` manuais) | - | - | - | pendente |
+| 3 | Assets de código saem do volume de produção (`static_prod`) | - | - | - | pendente |
+| 4 | Mojibake e texto corrompido | - | - | - | pendente |
+| 5 | Dividir `new_user.html` / `new_user.js` por módulos | - | - | - | pendente |
+| 6 | Testes excluídos do CI e pyflakes bloqueante | - | - | - | pendente |
