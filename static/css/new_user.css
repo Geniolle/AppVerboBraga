@@ -567,6 +567,11 @@ body {
   white-space: nowrap;
 }
 
+/* O display acima anula o atributo hidden: o botao aparecia em todas as paginas ate o JS o mover. */
+   .entity-create-link-shortcut[hidden] {
+  display: none;
+}
+
    .entity-create-link-slot {
   flex: 1 1 420px;
   min-width: min(420px, 100%);
