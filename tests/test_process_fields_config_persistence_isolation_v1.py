@@ -551,7 +551,7 @@ def test_update_process_fields_built_in_menu_key_uses_static_options_without_add
     SessionLocal = _build_session_factory()
     _seed_menu(
         SessionLocal,
-        menu_key="financeiro",
+        menu_key="empresa",
         entity_id=1,
         menu_config={},
     )
@@ -559,16 +559,16 @@ def test_update_process_fields_built_in_menu_key_uses_static_options_without_add
     session = SessionLocal()
     ok, error = update_sidebar_menu_process_fields(
         session,
-        "financeiro",
-        visible_fields=["nome", "estado"],
+        "empresa",
+        visible_fields=["dados_gerais", "morada"],
         visible_headers=["", ""],
     )
     session.close()
 
     assert ok is True
     assert error == ""
-    config, _ = _load_config(SessionLocal, "financeiro")
-    assert config["process_visible_fields"] == ["nome", "estado"]
+    config, _ = _load_config(SessionLocal, "empresa")
+    assert config["process_visible_fields"] == ["dados_gerais", "morada"]
     # Menus built-in nao tem nenhuma opcao do tipo "header" (os dicts em
     # MENU_PROCESS_FIELD_OPTIONS_BY_KEY nao definem "field_type").
     assert config["process_visible_field_header_map"] == {}

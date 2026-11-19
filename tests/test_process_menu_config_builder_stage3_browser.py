@@ -156,16 +156,11 @@ def test_stage3_process_menu_config_builder_finds_at_least_one_dynamic_process()
             const fixedKeys = new Set([
               "home",
               "perfil",
-              "links",
-              "contato",
-              "tutorial",
               "administrativo",
               "meu_perfil",
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "financeiro",
-              "relatorios"
             ]);
             return Array.from(document.querySelectorAll(".menu-item[data-menu]"))
               .map((element) => String(element.getAttribute("data-menu") || "").trim().toLowerCase())
