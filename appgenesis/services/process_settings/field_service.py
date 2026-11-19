@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 from appgenesis.services.process_settings.normalizers import (
     MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY,
     MENU_MEU_PERFIL_KEY,
-    MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS,
     MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY,
     MENU_PROCESS_FIELD_OPTIONS_BY_KEY,
     _load_menu_config,
@@ -31,11 +30,7 @@ def get_menu_process_field_options(
     clean_menu_key = _resolve_legacy_menu_alias(menu_key)
     raw_options = MENU_PROCESS_FIELD_OPTIONS_BY_KEY.get(clean_menu_key, tuple())
     additional_options = get_menu_process_additional_fields(menu_config)
-    if (
-        clean_menu_key not in MENU_PROCESS_ADDITIONAL_PRIORITY_EXCLUDED_KEYS
-        and additional_options
-    ):
-        return [dict(item) for item in additional_options]
+    # Os campos proprios do processo somam-se aos Campos adicionais (ex.: cabecalhos), nunca sao substituidos.
     options = [dict(item) for item in raw_options]
     if additional_options:
         options.extend(additional_options)
