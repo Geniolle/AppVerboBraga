@@ -778,6 +778,8 @@
 
       manager.syncHiddenInputs();
       desativarInputsLegadosV8(form, elements);
+      // Esconde o card de edição enquanto a página atualiza (evita mostrar o editor já gravado).
+      form.classList.add("process-fields-config-saving-v1");
       submitNativo_v7(form);
     });
 
