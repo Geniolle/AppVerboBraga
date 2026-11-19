@@ -1500,7 +1500,7 @@
 
                       <div class="field full">
                         <label for="process-quantity-editor-repeated-fields">Campos repetidos</label>
-                        <select id="process-quantity-editor-repeated-fields" multiple size="6" data-process-quantity-editor-repeated-fields>
+                        <select id="process-quantity-editor-repeated-fields" multiple size="6" data-process-quantity-editor-repeated-fields data-process-quantity-field-header-map='{{ (settings_edit_data.process_visible_field_header_map|default({}))|tojson }}'>
                           {% for field in settings_edit_data.process_selectable_field_options|default([]) %}
                             <option value="{{ field.key }}">{{ field.label }}</option>
                           {% endfor %}
@@ -2447,7 +2447,7 @@
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v=20260716-inline-toggle-v1"></script>
   <script src="/static/js/modules/process_additional_fields_manager_v3.js?v=20261119-default-size-v1"></script>
   <script src="/static/js/modules/process_lists_manager_v1.js?v=20260717-inline-editor-v1"></script>
-  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20261119-checklist-v1"></script>
+  <script src="/static/js/modules/process_quantity_fields_manager_v1.js?v=20261119-checklist-header-v1"></script>
   <script src="/static/js/modules/process_subsequent_fields_manager_v1.js?v=20260717-inline-editor-v1"></script>
   <script src="/static/js/modules/process_shell_runtime_v1.js?v=20260716-flash-timing-v1"></script>
   <script src="/static/js/modules/appgenesis_cancel_controller_v1.js?v=20260710-process-editor-stay-v1"></script>
