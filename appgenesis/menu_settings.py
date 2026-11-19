@@ -53,7 +53,6 @@ from appgenesis.services.process_settings.normalizers import (
     _build_menu_key_from_label,
     _build_sidebar_section_key_from_label,
     _build_sidebar_section_payload,
-    _fix_common_mojibake,
     _get_additional_field_group_key,
     _is_sidebar_section_delete_protected,
     _load_menu_config,

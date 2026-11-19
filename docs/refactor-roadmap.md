@@ -495,7 +495,7 @@ Cada etapa segue a regra 17 do `AGENTS.md`. Estado registado aqui.
 | 1 | Remover ferramentas de debug de flicker (`debug_flicker`) | #96 (deploy prd ok) | `test_debug_flicker_removed_v1.py` + CI (503 passed) | dev sem scripts de flicker, sem erros; prd healthy | concluída |
 | 1b | Remover logs de depuração gated por flag (`_debug_sessoes*`, `_log_sessoes_flow*`, `navigation_reload_guard`, `return_after_save`, `new_user.js`) | - | - | - | pendente |
 | 2 | Versão de assets automática (substitui `?v=` manuais) | (esta etapa) | `test_static_asset_version_v1.py` + CI (506 passed) | dev: 60 refs `/static/` com a mesma versão, sem erros na consola | concluída (prd no deploy) |
-| 3 | Assets de código saem do volume de produção (`static_prod`) | (esta etapa) | `test_prod_compose_static_volumes_v1.py` + CI; `docker compose config` válido | prd: migração de logos/fotos/agenda para volumes novos com contagem antes/depois | em curso |
-| 4 | Mojibake e texto corrompido | - | - | - | pendente |
+| 3 | Assets de código saem do volume de produção (`static_prod`) | #98 | `test_prod_compose_static_volumes_v1.py` + CI; `docker compose config` válido | prd: 1 logo, 1 foto, 1 `eventos.json` copiados para `app_*_prod` (checksums iguais); health 200; logo/foto/css 200; volume `app_static_prod` mantido como legado | concluída |
+| 4 | Remover remendos de texto corrompido (JS `ui_text_cleanup`, `settings_process_tabs`, `_fix_common_mojibake`, tabela `??`) | (esta etapa) | `test_no_mojibake_literals_v1.py` + CI (509 passed); pyflakes 79→78 | dev e prd: 0 registos corrompidos (`DB_TARGETS`, leitura); páginas sem Ã/�, sem erros na consola | em curso |
 | 5 | Dividir `new_user.html` / `new_user.js` por módulos | - | - | - | pendente |
 | 6 | Testes excluídos do CI e pyflakes bloqueante | - | - | - | pendente |
