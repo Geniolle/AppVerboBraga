@@ -154,7 +154,6 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "funcionarios",
               "financeiro",
               "relatorios"
             ]);

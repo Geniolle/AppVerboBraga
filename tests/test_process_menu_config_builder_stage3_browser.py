@@ -164,7 +164,6 @@ def test_stage3_process_menu_config_builder_finds_at_least_one_dynamic_process()
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "funcionarios",
               "financeiro",
               "relatorios"
             ]);
