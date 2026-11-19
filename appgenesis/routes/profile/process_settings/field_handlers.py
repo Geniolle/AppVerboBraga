@@ -203,9 +203,6 @@ def edit_sidebar_menu_process_fields_handler(
                 status_code=status.HTTP_303_SEE_OTHER,
             )
 
-        if is_ajax_save:
-            return JSONResponse({"ok": True, "message": "Configuração dos campos atualizada com sucesso."})
-
         success_redirect_url = _build_settings_editor_stay_redirect_url_v1(
             success_message="Configuração dos campos atualizada com sucesso.",
             redirect_menu=redirect_menu,
@@ -221,6 +218,9 @@ def edit_sidebar_menu_process_fields_handler(
             final_url=success_redirect_url,
             return_url=return_url,
         )
+
+        if is_ajax_save:
+            return JSONResponse({"ok": True, "redirect_url": success_redirect_url})
 
         return RedirectResponse(
             url=success_redirect_url,
