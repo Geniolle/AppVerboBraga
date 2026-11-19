@@ -473,6 +473,23 @@ body {
   text-decoration: none;
 }
 
+.vb-depto__btn img {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.vb-depto__btn--so-icone {
+  width: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+.vb-depto__btn--so-icone img {
+  width: 26px;
+  height: 18px;
+}
+
 .vb-depto__btn--primario {
   background: var(--vb-ink);
   color: var(--vb-white);
