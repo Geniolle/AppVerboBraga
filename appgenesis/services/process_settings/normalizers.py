@@ -38,6 +38,7 @@ MENU_SECTION_OPTIONS: tuple[dict[str, str], ...] = (
 MENU_SECTION_LABELS = {item["key"]: item["label"] for item in MENU_SECTION_OPTIONS}
 MENU_SECTION_BY_SYSTEM_MENU_KEY = {
     "administrativo": "sistema",
+    "sessoes": "sistema",
     "perfil_de_autorizacao": "sistema",
     "empresa": "dados_gerais",
     "home": "geral",
