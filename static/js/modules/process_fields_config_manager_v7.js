@@ -719,7 +719,7 @@
   // Gravacao sem recarregar a pagina: o servidor responde JSON. Sem recarregar, a sidebar
   // nao deve reiniciar a pagina por causa da alteracao (pauseOnce + refreshBaseline).
   // Se o pedido falhar de forma inesperada, cai no envio nativo.
-  async function enviarSalvarAjaxV7(form, manager) {
+  async function enviarSalvarAjaxV7(form, manager, editorCardEl) {
     const sidebarApi = window.AppGenesisSidebarGlobalRefreshV1;
 
     if (sidebarApi && typeof sidebarApi.pauseOnce === "function") {
@@ -761,6 +761,9 @@
     }
 
     if (data && data.error) {
+      if (editorCardEl) {
+        editorCardEl.hidden = false;
+      }
       showValidationMessage_v7(data.error);
       return;
     }
@@ -830,7 +833,12 @@
 
       manager.syncHiddenInputs();
       desativarInputsLegadosV8(form, elements);
-      enviarSalvarAjaxV7(form, manager);
+      // O formulario inline fica dentro da secção do card de edição: escondemos a secção durante o pedido.
+      const editorCardEl = elements.editorBlock && elements.editorBlock.closest("section");
+      if (editorCardEl) {
+        editorCardEl.hidden = true;
+      }
+      enviarSalvarAjaxV7(form, manager, editorCardEl);
     });
 
     if (form.dataset.processFieldsConfigSubmitNativeBoundV8 !== "1") {
