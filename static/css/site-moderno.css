@@ -473,6 +473,14 @@ body {
   text-decoration: none;
 }
 
+.vb-depto__icone-img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
 .vb-depto__btn img {
   width: 20px;
   height: 20px;
