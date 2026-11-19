@@ -778,6 +778,8 @@
 
       manager.syncHiddenInputs();
       desativarInputsLegadosV8(form, elements);
+      // Esconde a lista antiga ate a pagina recarregar com os dados gravados.
+      form.classList.add("process-fields-config-saving-v1");
       submitNativo_v7(form);
     });
 
