@@ -211,6 +211,44 @@
     Array.from(select.options || []).forEach((option) => {
       option.selected = selectedValues.has(toSafeString_v1(option.value).trim());
     });
+    renderRepeatedChecklist_v1(select);
+  }
+
+  // Campos repetidos: lista de caixas de seleção (mais clara que a multi-seleção com Ctrl).
+  // O <select> continua a ser a fonte de verdade; as caixas só o espelham.
+  function renderRepeatedChecklist_v1(select) {
+    if (!select || !select.matches("[data-process-quantity-editor-repeated-fields]")) {
+      return;
+    }
+
+    let checklistEl = select.parentElement.querySelector(".profile-quantity-checklist-v1");
+    if (!checklistEl) {
+      checklistEl = document.createElement("div");
+      checklistEl.className = "profile-quantity-checklist-v1";
+      select.hidden = true;
+      select.insertAdjacentElement("afterend", checklistEl);
+    }
+
+    checklistEl.innerHTML = "";
+    if (!select.options.length) {
+      checklistEl.textContent = "Sem campos disponíveis.";
+      return;
+    }
+
+    Array.from(select.options).forEach((option) => {
+      const labelEl = document.createElement("label");
+      labelEl.className = "profile-quantity-checklist-item-v1";
+      const checkboxEl = document.createElement("input");
+      checkboxEl.type = "checkbox";
+      checkboxEl.checked = option.selected;
+      checkboxEl.addEventListener("change", () => {
+        option.selected = checkboxEl.checked;
+      });
+      const textEl = document.createElement("span");
+      textEl.textContent = option.textContent;
+      labelEl.append(checkboxEl, textEl);
+      checklistEl.appendChild(labelEl);
+    });
   }
 
   function snapshotSelectOptions_v1(select) {
@@ -282,6 +320,7 @@
     rebuildSelectOptions_v1(elements.editorRepeatedFields, selectableOptions, {
       multiple: true
     });
+    renderRepeatedChecklist_v1(elements.editorRepeatedFields);
     rebuildSelectOptions_v1(elements.editorHeaderKey, resolved.headerOptions, {
       placeholder: "Sem cabecalho"
     });
