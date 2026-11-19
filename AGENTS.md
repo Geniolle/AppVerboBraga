@@ -1531,3 +1531,21 @@ Decisão do projeto (validada pelo utilizador):
 6. Fazer push do ramo (`git push -u origin <ramo>`) e abrir um Pull Request para o `master`, com uma descrição do que mudou e porquê.
 7. Esperar que o check `CI / test` fique verde no PR. Se falhar, corrigir no mesmo ramo antes de pedir merge.
 8. O merge para o `master` só é feito depois do CI passar e com aprovação do utilizador.
+
+## 17) Refatoração por etapas (obrigatório)
+
+Sempre que o trabalho for uma refatoração ou correção em várias partes, seguir este processo sem exceção:
+
+1. Ler antes de alterar: `docs/architecture-guidelines.md`, `docs/refactor-roadmap.md` e a secção "Registo de execução" desse roadmap.
+2. Dividir o trabalho em etapas pequenas e reversíveis. Cada etapa deve caber num PR.
+3. Para cada etapa, por esta ordem, sem saltar para a seguinte antes de concluir a anterior:
+   - alterar só o que a etapa cobre;
+   - adicionar ou atualizar testes do que mudou;
+   - correr a suíte CI (comando do workflow, sem testes Selenium) e `pyflakes`/`node --check` nos ficheiros alterados;
+   - validar no dev (página real, logs sem traceback, sem mojibake);
+   - registar o resultado no "Registo de execução" do roadmap (etapa, PR, testes, validação, riscos);
+   - abrir PR para `master`, esperar CI verde, fazer merge e só então avançar.
+4. Deploy em prd só depois do merge, com backup da BD antes (ver `docs/operations/production-deploy.md`).
+5. Não avançar com etapa em aberto, teste vermelho ou validação por fazer. Se uma etapa ficar bloqueada, parar e registar o motivo no roadmap.
+6. Não criar documentos novos para o mesmo assunto; atualizar os existentes.
+7. Mudanças de dados em produção (SQL pontual) devem ser registadas no PR e no roadmap, com contagem antes e depois.
