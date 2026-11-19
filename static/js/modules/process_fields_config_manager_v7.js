@@ -719,40 +719,6 @@
   // Gravacao sem recarregar a pagina: o servidor responde JSON. Sem recarregar, a sidebar
   // nao deve reiniciar a pagina por causa da alteracao (pauseOnce + refreshBaseline).
   // Se o pedido falhar de forma inesperada, cai no envio nativo.
-  // Atualiza, sem recarregar, o que o servidor calcula: a bolinha da aba Configuração dos campos
-  // e a tabela de campos (cabeçalhos / etiquetas "Sem cabeçalho"). Lê a própria página em GET.
-  async function refreshServerStateAfterSaveV7() {
-    try {
-      const response = await fetch(window.location.href, {
-        credentials: "same-origin",
-        headers: { "Accept": "text/html" }
-      });
-      const html = await response.text();
-      const freshDoc = new DOMParser().parseFromString(html, "text/html");
-
-      const liveTabEl = document.querySelector('[data-process-edit-tab="campos-config"]');
-      const freshTabEl = freshDoc.querySelector('[data-process-edit-tab="campos-config"]');
-      if (liveTabEl && freshTabEl) {
-        const liveDotEl = liveTabEl.querySelector(".profile-tab-missing-dot-v1");
-        const freshDotEl = freshTabEl.querySelector(".profile-tab-missing-dot-v1");
-        if (liveDotEl) {
-          liveDotEl.remove();
-        }
-        if (freshDotEl) {
-          liveTabEl.appendChild(freshDotEl.cloneNode(true));
-        }
-      }
-
-      const liveTableEl = document.getElementById("settings-process-fields-table");
-      const freshTableEl = freshDoc.getElementById("settings-process-fields-table");
-      if (liveTableEl && freshTableEl) {
-        liveTableEl.replaceWith(freshTableEl);
-      }
-    } catch (error) {
-      // Falha ao atualizar: a gravação já foi feita; a pagina mostra o estado local.
-    }
-  }
-
   async function enviarSalvarAjaxV7(form, manager, editorCardEl) {
     const sidebarApi = window.AppGenesisSidebarGlobalRefreshV1;
 
@@ -778,7 +744,7 @@
     }
 
     if (data && data.ok) {
-      // Limpa o contexto de "voltar apos gravar": senao um recarregamento reabre o editor antigo.
+      // Gravado na base de dados: atualiza a página com o estado guardado (mesmo destino do envio normal).
       ["appgenesis:return_after_save", "appgenesis:return_after_save_time", "appgenesis:post-save-context-v3", "appgenesis:return-url-post-save-v4"].forEach(function (key) {
         try {
           window.sessionStorage.removeItem(key);
@@ -786,12 +752,7 @@
           // sessionStorage indisponivel: nada a limpar.
         }
       });
-      manager.clearEditing();
-      manager.render();
-      if (sidebarApi && typeof sidebarApi.refreshBaseline === "function") {
-        sidebarApi.refreshBaseline("local_ajax_save");
-      }
-      refreshServerStateAfterSaveV7();
+      window.location.assign(data.redirect_url || window.location.href);
       return;
     }
 
