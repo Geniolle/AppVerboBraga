@@ -214,6 +214,15 @@
     renderRepeatedChecklist_v1(select);
   }
 
+  function readFieldHeaderMap_v1(select) {
+    try {
+      const parsed = JSON.parse(select.getAttribute("data-process-quantity-field-header-map") || "{}");
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
   // Campos repetidos: lista de caixas de seleção (mais clara que a multi-seleção com Ctrl).
   // O <select> continua a ser a fonte de verdade; as caixas só o espelham.
   function renderRepeatedChecklist_v1(select) {
@@ -230,12 +239,28 @@
     }
 
     checklistEl.innerHTML = "";
-    if (!select.options.length) {
-      checklistEl.textContent = "Sem campos disponíveis.";
+    const headerSelectEl = select.closest("form") ? select.closest("form").querySelector("[data-process-quantity-editor-header-key]") : null;
+    const groupHeaderKey = headerSelectEl ? toSafeString_v1(headerSelectEl.value).trim() : "";
+    const fieldHeaderMap = readFieldHeaderMap_v1(select);
+    // Só os campos que pertencem ao cabeçalho escolhido. Sem cabeçalho escolhido, mostra todos.
+    const visibleOptions = Array.from(select.options).filter((option) => {
+      if (!groupHeaderKey) {
+        return true;
+      }
+      return toSafeString_v1(fieldHeaderMap[option.value]).trim() === groupHeaderKey;
+    });
+    // Campos selecionados fora do cabeçalho deixam de contar (evita repetidos invisíveis).
+    Array.from(select.options).forEach((option) => {
+      if (groupHeaderKey && !visibleOptions.includes(option)) {
+        option.selected = false;
+      }
+    });
+    if (!visibleOptions.length) {
+      checklistEl.textContent = "Sem campos neste cabeçalho.";
       return;
     }
 
-    Array.from(select.options).forEach((option) => {
+    visibleOptions.forEach((option) => {
       const labelEl = document.createElement("label");
       labelEl.className = "profile-quantity-checklist-item-v1";
       const checkboxEl = document.createElement("input");
@@ -324,6 +349,12 @@
     rebuildSelectOptions_v1(elements.editorHeaderKey, resolved.headerOptions, {
       placeholder: "Sem cabecalho"
     });
+    if (elements.editorHeaderKey && !elements.editorHeaderKey.dataset.checklistBoundV1) {
+      elements.editorHeaderKey.dataset.checklistBoundV1 = "1";
+      elements.editorHeaderKey.addEventListener("change", () => {
+        renderRepeatedChecklist_v1(elements.editorRepeatedFields);
+      });
+    }
 
     if (manager) {
       manager.render();
@@ -427,6 +458,7 @@
     elements.editorQuantityField.value = item.quantityFieldKey || "";
     selectMultipleValues_v1(elements.editorRepeatedFields, item.repeatedFieldKeys || []);
     elements.editorHeaderKey.value = item.headerKey || "";
+    renderRepeatedChecklist_v1(elements.editorRepeatedFields);
     elements.editorMaxItems.value = item.maxItems || "10";
     elements.editorItemLabel.value = item.itemLabel || "Item";
     elements.editorLabel.focus();
