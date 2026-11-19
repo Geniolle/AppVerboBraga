@@ -421,6 +421,60 @@ body {
   color: var(--vb-ink);
 }
 
+/* Visita: cartões mais compactos */
+.vb-grid3 .vb-cartao {
+  padding: 24px;
+  gap: 10px;
+}
+
+.vb-grid3 .vb-cartao__icone {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.vb-grid3 .vb-cartao h3 {
+  font-size: 1.35rem;
+  margin-top: 4px;
+}
+
+/* Departamentos */
+.vb-deptos {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+}
+
+.vb-depto__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.vb-depto__btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--vb-ink);
+  color: var(--vb-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.vb-depto__btn--primario {
+  background: var(--vb-ink);
+  color: var(--vb-white);
+}
+
+@media (min-width: 960px) {
+  .vb-deptos {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* Família (duas colunas) */
 .vb-dupla {
   display: grid;
