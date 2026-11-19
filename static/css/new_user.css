@@ -6001,3 +6001,8 @@ input.action-btn-cancel,
 form.process-fields-config-saving-v1 .process-fields-config-editor-grid-v1[data-process-fields-config-editor-block] {
   display: none !important;
 }
+
+/* Card de edicao da configuracao de campos escondido enquanto a pagina atualiza apos Gravar. */
+.process-fields-config-editor-card-hidden-v1 {
+  display: none !important;
+}
