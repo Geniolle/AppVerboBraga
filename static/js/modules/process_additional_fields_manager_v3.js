@@ -824,6 +824,18 @@
     return { valid: true };
   }
 
+  // Tamanho padrao ao escolher o tipo (editavel depois). So na troca de tipo pelo utilizador,
+  // para nao sobrescrever o tamanho gravado ao abrir a edicao de um campo existente.
+  const DEFAULT_SIZE_BY_TYPE_V3 = { text: "255", email: "255", phone: "20", number: "10" };
+
+  function applyDefaultSizeForType_v3(root) {
+    const editor = getEditorRoot_v3(root);
+    const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    if (DEFAULT_SIZE_BY_TYPE_V3[fieldType]) {
+      setInputValue_v3(editor, "[data-additional-field-editor-size]", DEFAULT_SIZE_BY_TYPE_V3[fieldType]);
+    }
+  }
+
   function updateEditorVisibility_v3(root) {
     const editor = getEditorRoot_v3(root);
     const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
@@ -994,6 +1006,7 @@
 
     if (typeSelect) {
       typeSelect.addEventListener("change", () => {
+        applyDefaultSizeForType_v3(root);
         refreshAutomaticSourceOptions_v3(root);
         updateEditorVisibility_v3(root);
       });
@@ -1214,6 +1227,7 @@
 
     if (typeSelect) {
       typeSelect.addEventListener("change", () => {
+        applyDefaultSizeForType_v3(root);
         refreshAutomaticSourceOptions_v3(root);
         updateEditorVisibility_v3(root);
       });
