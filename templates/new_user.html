@@ -2393,40 +2393,41 @@
 {% block scripts %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-  <script>
-    window.__APPGENESIS_BOOTSTRAP__ = {
-      currentUserName: {{ current_user.full_name|tojson }},
-      currentUserEmail: {{ current_user.login_email|tojson }},
-      currentUserIsAdmin: {{ current_user_is_admin|tojson }},
-      currentUserCanManageTenantStructure: {{ current_user_can_manage_tenant_structure|tojson }},
-      dashboardData: {{ dashboard_data|tojson }},
-      currentUserPhone: {{ user_personal_data.primary_phone|tojson }},
-      currentUserAccountStatus: {{ user_personal_data.account_status|tojson }},
-      currentUserMemberStatus: {{ user_personal_data.member_status|tojson }},
-      currentUserEntities: {{ user_personal_data.entities|tojson }},
-      currentUserAddress: {{ user_personal_data.address|tojson }},
-      currentUserCity: {{ user_personal_data.city|tojson }},
-      currentUserFreguesia: {{ user_personal_data.freguesia|tojson }},
-      currentUserPostalCode: {{ user_personal_data.postal_code|tojson }},
-      profilePersonalSections: {{ profile_personal_sections|tojson }},
-      profilePersonalVisibleFields: {{ profile_personal_visible_fields|tojson }},
-      profilePersonalFieldLabels: {{ profile_personal_field_labels|tojson }},
-      initialProfileTab: {{ profile_tab|tojson }},
-      initialMenu: {{ initial_menu|tojson }},
-      initialMenuTarget: {{ initial_menu_target|tojson }},
-      initialDynamicProcessSection: {{ initial_dynamic_process_section|tojson }},
-      initialAdminTab: {{ admin_tab|tojson }},
-      currentEntityId: {{ entity_permissions.selected_entity_id|tojson }},
-      settingsAction: {{ settings_action|tojson }},
-      settingsTab: {{ settings_tab|tojson }},
-      settingsEditKey: {{ settings_edit_key|tojson }},
-      sidebarMenuSettings: {{ sidebar_menu_settings|tojson }},
-      visibleSidebarMenuKeys: {{ visible_sidebar_menu_keys|tojson }},
-      menuProcessValuesMap: {{ menu_process_values_map|tojson }},
-      menuProcessHistoryMap: {{ menu_process_history_map|tojson }},
-      menuProcessQuantityValuesMap: {{ menu_process_quantity_values_map|tojson }}
-    };
+  <script type="application/json" id="appgenesis-bootstrap">
+    {
+      "currentUserName": {{ current_user.full_name|tojson }},
+      "currentUserEmail": {{ current_user.login_email|tojson }},
+      "currentUserIsAdmin": {{ current_user_is_admin|tojson }},
+      "currentUserCanManageTenantStructure": {{ current_user_can_manage_tenant_structure|tojson }},
+      "dashboardData": {{ dashboard_data|tojson }},
+      "currentUserPhone": {{ user_personal_data.primary_phone|tojson }},
+      "currentUserAccountStatus": {{ user_personal_data.account_status|tojson }},
+      "currentUserMemberStatus": {{ user_personal_data.member_status|tojson }},
+      "currentUserEntities": {{ user_personal_data.entities|tojson }},
+      "currentUserAddress": {{ user_personal_data.address|tojson }},
+      "currentUserCity": {{ user_personal_data.city|tojson }},
+      "currentUserFreguesia": {{ user_personal_data.freguesia|tojson }},
+      "currentUserPostalCode": {{ user_personal_data.postal_code|tojson }},
+      "profilePersonalSections": {{ profile_personal_sections|tojson }},
+      "profilePersonalVisibleFields": {{ profile_personal_visible_fields|tojson }},
+      "profilePersonalFieldLabels": {{ profile_personal_field_labels|tojson }},
+      "initialProfileTab": {{ profile_tab|tojson }},
+      "initialMenu": {{ initial_menu|tojson }},
+      "initialMenuTarget": {{ initial_menu_target|tojson }},
+      "initialDynamicProcessSection": {{ initial_dynamic_process_section|tojson }},
+      "initialAdminTab": {{ admin_tab|tojson }},
+      "currentEntityId": {{ entity_permissions.selected_entity_id|tojson }},
+      "settingsAction": {{ settings_action|tojson }},
+      "settingsTab": {{ settings_tab|tojson }},
+      "settingsEditKey": {{ settings_edit_key|tojson }},
+      "sidebarMenuSettings": {{ sidebar_menu_settings|tojson }},
+      "visibleSidebarMenuKeys": {{ visible_sidebar_menu_keys|tojson }},
+      "menuProcessValuesMap": {{ menu_process_values_map|tojson }},
+      "menuProcessHistoryMap": {{ menu_process_history_map|tojson }},
+      "menuProcessQuantityValuesMap": {{ menu_process_quantity_values_map|tojson }}
+    }
   </script>
+  <script src="/static/js/modules/app_bootstrap_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/appgenesis_dialog_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/process_field_options_resolver_v1.js?v={{ asset_version }}"></script>
   <script src="/static/js/modules/configurable_items_manager_core_v1.js?v={{ asset_version }}"></script>

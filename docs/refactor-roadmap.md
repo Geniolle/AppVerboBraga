@@ -497,5 +497,7 @@ Cada etapa segue a regra 17 do `AGENTS.md`. Estado registado aqui.
 | 2 | Versão de assets automática (substitui `?v=` manuais) | (esta etapa) | `test_static_asset_version_v1.py` + CI (506 passed) | dev: 60 refs `/static/` com a mesma versão, sem erros na consola | concluída (prd no deploy) |
 | 3 | Assets de código saem do volume de produção (`static_prod`) | #98 | `test_prod_compose_static_volumes_v1.py` + CI; `docker compose config` válido | prd: 1 logo, 1 foto, 1 `eventos.json` copiados para `app_*_prod` (checksums iguais); health 200; logo/foto/css 200; volume `app_static_prod` mantido como legado | concluída |
 | 4 | Remover remendos de texto corrompido (JS `ui_text_cleanup`, `settings_process_tabs`, `_fix_common_mojibake`, tabela `??`) | (esta etapa) | `test_no_mojibake_literals_v1.py` + CI (509 passed); pyflakes 79→78 | dev e prd: 0 registos corrompidos (`DB_TARGETS`, leitura); páginas sem Ã/�, sem erros na consola | em curso |
-| 5 | Dividir `new_user.html` / `new_user.js` por módulos | - | - | - | pendente |
+| 5a | `new_user.html`: bootstrap inline (`window.__APPGENESIS_BOOTSTRAP__`, 30 chaves) → bloco JSON `#appgenesis-bootstrap` + `static/js/modules/app_bootstrap_v1.js` | (esta etapa) | `test_app_bootstrap_json_v1.py` (2) + CI | dev: 30 chaves, dados corretos, 0 erros na consola | em curso |
+| 5b | `new_user.js` (≈9.850 linhas) por domínio: auth/menu/perfil/processos/utilizadores, uma fatia por PR, cada uma com teste e validação | - | - | - | pendente |
+| 5c | `new_user.css` (≈6.000 linhas) por componente, mantendo a ordem de cascata | - | - | - | pendente |
 | 6 | Testes excluídos do CI e pyflakes bloqueante | - | - | - | pendente |
