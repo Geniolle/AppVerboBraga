@@ -716,6 +716,58 @@
     HTMLFormElement.prototype.submit.call(form);
   }
 
+  // Gravacao sem recarregar a pagina: o servidor responde JSON. Sem recarregar, a sidebar
+  // nao deve reiniciar a pagina por causa da alteracao (pauseOnce + refreshBaseline).
+  // Se o pedido falhar de forma inesperada, cai no envio nativo.
+  async function enviarSalvarAjaxV7(form, manager) {
+    const sidebarApi = window.AppGenesisSidebarGlobalRefreshV1;
+
+    if (sidebarApi && typeof sidebarApi.pauseOnce === "function") {
+      sidebarApi.pauseOnce();
+    }
+
+    let data = null;
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "same-origin",
+        headers: {
+          "X-Requested-With": "appgenesis-ajax-save",
+          "Accept": "application/json"
+        }
+      });
+      data = await response.json();
+    } catch (error) {
+      submitNativo_v7(form);
+      return;
+    }
+
+    if (data && data.ok) {
+      // Limpa o contexto de "voltar apos gravar": senao um recarregamento reabre o editor antigo.
+      ["appgenesis:return_after_save", "appgenesis:return_after_save_time", "appgenesis:post-save-context-v3", "appgenesis:return-url-post-save-v4"].forEach(function (key) {
+        try {
+          window.sessionStorage.removeItem(key);
+        } catch (error) {
+          // sessionStorage indisponivel: nada a limpar.
+        }
+      });
+      manager.clearEditing();
+      manager.render();
+      if (sidebarApi && typeof sidebarApi.refreshBaseline === "function") {
+        sidebarApi.refreshBaseline("local_ajax_save");
+      }
+      return;
+    }
+
+    if (data && data.error) {
+      showValidationMessage_v7(data.error);
+      return;
+    }
+
+    submitNativo_v7(form);
+  }
+
   function vincularCancelamentoGlobalV7(form, elements, manager) {
     if (!form || !elements || !elements.cancelButton || form.dataset.processFieldsConfigCancelBoundV7 === "1") {
       return;
@@ -778,13 +830,7 @@
 
       manager.syncHiddenInputs();
       desativarInputsLegadosV8(form, elements);
-      // Esconde o card de edição enquanto a página atualiza (evita mostrar o editor já gravado).
-      form.classList.add("process-fields-config-saving-v1");
-      const editorCardEl = elements.editorBlock && elements.editorBlock.closest("section");
-      if (editorCardEl) {
-        editorCardEl.classList.add("process-fields-config-editor-card-hidden-v1");
-      }
-      submitNativo_v7(form);
+      enviarSalvarAjaxV7(form, manager);
     });
 
     if (form.dataset.processFieldsConfigSubmitNativeBoundV8 !== "1") {
