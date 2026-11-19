@@ -37,7 +37,6 @@ Registo de acesso por entidade a módulos não-core.
 |---|---|---|
 | `home` | ✅ Core | Ativo |
 | `administrativo` | ✅ Core | Ativo |
-| `funcionarios` | ✅ Core | Ativo |
 | `financeiro` | ✅ Core | Ativo |
 | `relatorios` | ✅ Core | Ativo |
 | `links` | ✅ Core | Ativo |

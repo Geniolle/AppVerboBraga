@@ -14,7 +14,6 @@ O mecanismo genérico de resolução de acesso a módulos `resolve_module_access
 As tabelas `app_modules` e `entity_module_entitlements` estão populadas no banco com os seguintes módulos:
 - `home` (core=True, active=True)
 - `administrativo` (core=True, active=True)
-- `funcionarios` (core=True, active=True)
 - `financeiro` (core=True, active=True)
 - `relatorios` (core=True, active=True)
 - `links` (core=True, active=True)

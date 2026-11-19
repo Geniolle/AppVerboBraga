@@ -263,18 +263,6 @@
           { label: "Status", value: "Ativo" }
         ]
       },
-      funcionarios: {
-        title: "Funcionarios",
-        description: "Gestao de funcionarios e acessos.",
-        items: [
-          { label: "Criar registo de funcionario", target: "#create-user-card" },
-          { label: "Ver registos recentes", target: "#recent-users-card" }
-        ],
-        details: [
-          { label: "Modulo", value: "Funcionarios" },
-          { label: "Status", value: "Ativo" }
-        ]
-      },
       financeiro: {
         title: "Financeiro",
         description: "Acesso a opções de conta e estado.",

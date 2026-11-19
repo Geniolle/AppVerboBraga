@@ -139,7 +139,6 @@ def test_stage6_process_submenu_runtime_clicks_keep_runtime_behavior() -> None:
               "sessoes",
               "empresa",
               "perfil_de_autorizacao",
-              "funcionarios",
               "financeiro",
               "relatorios"
             ]);
