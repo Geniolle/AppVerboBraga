@@ -214,7 +214,7 @@ body {
 
 .vb-hero {
   position: relative;
-  min-height: min(72vh, 680px);
+  min-height: min(60vh, 560px);
   display: flex;
   align-items: flex-end;
   color: var(--vb-white);
