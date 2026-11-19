@@ -445,6 +445,14 @@ body {
   grid-template-columns: 1fr;
 }
 
+.vb-depto__logo {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  border-radius: 12px;
+}
+
 .vb-depto__acoes {
   display: flex;
   flex-wrap: wrap;
