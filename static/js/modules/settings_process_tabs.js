@@ -192,6 +192,18 @@
   // (5) GARANTIR OS NOMES DAS 3 ABAS
   //###################################################################################
 
+  // Atualiza so o texto da aba; preserva a bolinha (span filho) quando existe.
+  function setTabLabelKeepingDots_v1(element, label) {
+    const textNode = Array.from(element.childNodes).find(function (node) {
+      return node.nodeType === Node.TEXT_NODE;
+    });
+    if (element.querySelector(".profile-tab-missing-dot-v1") && textNode) {
+      textNode.nodeValue = label;
+      return;
+    }
+    element.textContent = label;
+  }
+
   function normalizeVisibleTabLabels() {
     const candidates = Array.from(document.querySelectorAll("a, button, [role='tab']"));
 
@@ -199,7 +211,7 @@
       const text = normalizeText(element.textContent);
 
       if (text === "geral") {
-        element.textContent = "Geral";
+        setTabLabelKeepingDots_v1(element, "Geral");
         return;
       }
 
@@ -208,7 +220,7 @@
         text === "configuracao de campos" ||
         text === "configuracao campos"
       ) {
-        element.textContent = "Configuração dos campos";
+        setTabLabelKeepingDots_v1(element, "Configuração dos campos");
         return;
       }
 
@@ -216,17 +228,17 @@
         text === "campos adicionais" ||
         text === "campo adicionais"
       ) {
-        element.textContent = "Campos adicionais";
+        setTabLabelKeepingDots_v1(element, "Campos adicionais");
         return;
       }
 
       if (text === "campos quantidade" || text === "campos de quantidade") {
-        element.textContent = "Campos Quantidade";
+        setTabLabelKeepingDots_v1(element, "Campos Quantidade");
         return;
       }
 
       if (text === "lista") {
-        element.textContent = "Lista";
+        setTabLabelKeepingDots_v1(element, "Lista");
       }
     });
   }
