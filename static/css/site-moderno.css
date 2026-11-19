@@ -481,6 +481,103 @@ body {
   border-radius: 14px;
 }
 
+.vb-depto-card__topo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.vb-depto-card__topo h3 {
+  margin: 0;
+}
+
+.vb-depto-card__icone {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.vb-depto-card__icone.vb-cartao__icone {
+  display: grid;
+  place-items: center;
+}
+
+.vb-depto-voltar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  color: var(--vb-ink);
+  text-decoration: none;
+}
+
+.vb-depto-pagina__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 32px;
+}
+
+.vb-depto-pagina__icone {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  object-fit: contain;
+}
+
+.vb-depto-pagina__cabecalho h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 6px 0 8px;
+}
+
+.vb-depto-pagina__texto p {
+  max-width: 62ch;
+  line-height: 1.65;
+  color: #4a4843;
+}
+
+.vb-depto-pagina__acoes {
+  margin-top: 28px;
+}
+
+.vb-depto-pagina__fotos {
+  display: grid;
+  gap: 16px;
+  margin-top: 40px;
+  grid-template-columns: 1fr;
+}
+
+.vb-depto-pagina__fotos img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--vb-radius);
+}
+
+@media (min-width: 720px) {
+  .vb-depto-pagina__fotos {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .vb-depto-pagina__cabecalho {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .vb-depto-pagina__icone {
+    width: 72px;
+    height: 72px;
+  }
+}
+
 .vb-depto__btn img {
   width: 20px;
   height: 20px;

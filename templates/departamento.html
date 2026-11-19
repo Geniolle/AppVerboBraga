@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ d.nome }} | Verbo da Vida Braga{% endblock %}
+
+{% block head_extra %}
+<meta name="description" content="{{ d.nome }} — {{ d.resumo }} Igreja Verbo da Vida Braga, Braga.">
+<meta name="theme-color" content="#101014">
+<link rel="canonical" href="https://verbodavidabraga.pt/departamentos/{{ d.slug }}">
+<link rel="stylesheet" href="/static/css/genesis-public.css?v={{ asset_version }}">
+<link rel="stylesheet" href="/static/css/site-moderno.css?v={{ asset_version }}">
+{% endblock %}
+
+{% block body %}
+<a href="#main" class="skip-link">Saltar para conteúdo</a>
+
+{% include 'partials/public_header.html' %}
+
+<main id="main">
+  <section class="vb-sec">
+    <div class="vb-wrap">
+      <a href="/#departamentos" class="vb-depto-voltar">← Departamentos</a>
+
+      <div class="vb-depto-pagina__cabecalho">
+        {% if d.imagem %}
+        <img class="vb-depto-pagina__icone" src="{{ d.imagem }}" width="96" height="96" alt="Logótipo {{ d.nome }}">
+        {% endif %}
+        <div>
+          <span class="vb-sec__rotulo">Departamento</span>
+          <h1>{{ d.nome }}</h1>
+          <p class="vb-sec__intro">{{ d.resumo }}</p>
+        </div>
+      </div>
+
+      <div class="vb-depto-pagina__texto">
+        {% for paragrafo in d.descricao %}
+        <p>{{ paragrafo }}</p>
+        {% endfor %}
+      </div>
+
+      {% if d.acoes %}
+      <div class="vb-depto__acoes vb-depto-pagina__acoes">
+        {% for acao in d.acoes %}
+        <a href="{{ acao.url }}" target="_blank" rel="noopener" class="vb-depto__btn{% if acao.principal %} vb-depto__btn--primario{% endif %}">{{ acao.texto }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if d.fotos %}
+      <div class="vb-depto-pagina__fotos">
+        {% for foto in d.fotos %}
+        <img src="{{ foto.url }}" alt="{{ foto.alt }}" loading="lazy" width="640" height="480">
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+{% include 'partials/public_footer.html' %}
+{% endblock %}
