@@ -288,7 +288,12 @@
       normalizedHash = "#admin-account-status-card";
     }
 
-    if (state.normalizeAuthorizationProfileTarget(normalizedHash)) {
+    // Com menu=administrativo na URL (ex.: retorno apos gravar perfil), o hash #auth-profile-*
+    // pertence ao Administrativo; nao o desviar para o menu Perfil de autorizacao.
+    const urlMenuKey = state.normalizeMenuKey(
+      new URLSearchParams(state.windowRef.location.search || "").get("menu") || ""
+    );
+    if (urlMenuKey !== "administrativo" && state.normalizeAuthorizationProfileTarget(normalizedHash)) {
       activateMenuTarget("perfil_de_autorizacao", normalizedHash);
       return;
     }
@@ -302,6 +307,9 @@
       "#recent-entities-card": "administrativo",
       "#inactive-entities-card": "administrativo",
       "#auth-profile-card": "administrativo",
+      "#auth-profile-form-card": "administrativo",
+      "#auth-profile-active-card": "administrativo",
+      "#auth-profile-inactive-card": "administrativo",
       "#admin-account-status-card": state.ESTRUTURAS_MENU_KEY_V1,
       "#admin-sidebar-sections-card": state.ESTRUTURAS_MENU_KEY_V1,
       "#admin-sidebar-sections-form-card": state.ESTRUTURAS_MENU_KEY_V1,
