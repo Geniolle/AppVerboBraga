@@ -301,6 +301,7 @@
       "#edit-entity-card": "administrativo",
       "#recent-entities-card": "administrativo",
       "#inactive-entities-card": "administrativo",
+      "#auth-profile-card": "administrativo",
       "#admin-account-status-card": state.ESTRUTURAS_MENU_KEY_V1,
       "#admin-sidebar-sections-card": state.ESTRUTURAS_MENU_KEY_V1,
       "#admin-sidebar-sections-form-card": state.ESTRUTURAS_MENU_KEY_V1,

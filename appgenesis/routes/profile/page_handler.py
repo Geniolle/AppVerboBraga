@@ -351,6 +351,7 @@ def _build_auth_profile_return_url_v1(
     sidebar_menu_settings: list[dict[str, Any]],
     dynamic_process_section: str = "",
     target: str = "",
+    menu: str = "perfil_de_autorizacao",
 ) -> str:
     clean_target = _normalize_card_target_v1(target)
     if not clean_target or clean_target == "#auth-profile-active-card":
@@ -364,7 +365,7 @@ def _build_auth_profile_return_url_v1(
         )
 
     query_params: dict[str, str] = {
-        "menu": "perfil_de_autorizacao",
+        "menu": menu,
         "target": clean_target,
     }
 
@@ -764,7 +765,7 @@ def new_user_page(
     auth_profile_subprocess_state_v1 = None
 
     auth_profile_menu_visible = (
-        resolved_menu == "perfil_de_autorizacao"
+        resolved_menu in {"perfil_de_autorizacao", "administrativo"}
         or "perfil_de_autorizacao" in visible_menu_keys
     )
 
@@ -787,6 +788,7 @@ def new_user_page(
                     sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
                     dynamic_process_section=clean_dynamic_section_from_query,
                     target=auth_profile_return_target_v1,
+                    menu="administrativo" if resolved_menu == "administrativo" else "perfil_de_autorizacao",
                 )
                 auth_profile_entity_context_v1 = build_auth_profile_entity_context_v1(
                     session,
