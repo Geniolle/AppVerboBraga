@@ -75,7 +75,7 @@ def test_additional_field_types_include_time_with_correct_label() -> None:
     assert types_by_key["email"] == "Email"
     assert types_by_key["phone"] == "Telefone"
     assert types_by_key["date"] == "Data"
-    assert types_by_key["flag"] == "Flag"
+    assert types_by_key["flag"] == "Botão"
     assert types_by_key["header"] == "Cabeçalho (aba)"
     assert types_by_key["list"] == "Lista"
 

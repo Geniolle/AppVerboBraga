@@ -83,11 +83,27 @@ ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "phone", "label": "Telefone"},
     {"key": "date", "label": "Data"},
     {"key": "time", "label": "Horário"},
-    {"key": "flag", "label": "Flag"},
+    {"key": "flag", "label": "Botão"},
     {"key": "header", "label": "Cabeçalho (aba)"},
     {"key": "list", "label": "Lista"},
 )
 ADDITIONAL_FIELD_TYPE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_TYPES}
+ADDITIONAL_FIELD_BUTTON_STYLES: tuple[dict[str, str], ...] = (
+    {"key": "checkbox", "label": "Checkbox"},
+    {"key": "radio", "label": "Radio button"},
+    {"key": "toggle", "label": "Toggle switch"},
+    {"key": "segmented", "label": "Botões segmentados"},
+    {"key": "confirm", "label": "Aceitar / Rejeitar"},
+)
+ADDITIONAL_FIELD_BUTTON_STYLE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_BUTTON_STYLES}
+ADDITIONAL_FIELD_BUTTON_STYLE_DEFAULT = "toggle"
+
+
+def _normalize_additional_field_button_style(raw_value: Any) -> str:
+    clean_value = str(raw_value or "").strip().lower()
+    if clean_value in ADDITIONAL_FIELD_BUTTON_STYLE_KEYS:
+        return clean_value
+    return ADDITIONAL_FIELD_BUTTON_STYLE_DEFAULT
 ADDITIONAL_FIELD_DEFAULT_TYPE = "text"
 ADDITIONAL_FIELD_DEFAULT_SIZE = 30
 ADDITIONAL_FIELD_MAX_SIZE = 255
