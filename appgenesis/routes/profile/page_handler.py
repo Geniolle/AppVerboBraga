@@ -781,7 +781,10 @@ def new_user_page(
                         ),
                     },
                 )
-                from appgenesis.services.profile import resolve_active_session_options_v1
+                from appgenesis.services.profile import (
+                    resolve_active_menu_options_v1,
+                    resolve_active_session_options_v1,
+                )
 
                 auth_profile_subprocess_config_v1 = build_auth_profile_config_for_context_v1(
                     auth_profile_subprocess_config_v1,
@@ -789,6 +792,12 @@ def new_user_page(
                     session_options=[
                         (option["value"], option["label"])
                         for option in resolve_active_session_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
+                    menu_options=[
+                        (option["value"], option["label"])
+                        for option in resolve_active_menu_options_v1(
                             page_data.get("sidebar_menu_settings") or []
                         )
                     ],

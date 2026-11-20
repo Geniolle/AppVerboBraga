@@ -312,6 +312,14 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
         options=(),
     ),
     AdminFieldConfig(
+        key="menu_origin",
+        label="Menu de origem",
+        input_name="auth_profile_menu_origin",
+        field_type="select",
+        required=True,
+        options=(),
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",
