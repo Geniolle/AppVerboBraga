@@ -103,7 +103,7 @@
 
   function normalizeListSourceType_v3(value) {
     const clean = normalizeLookup_v3(value);
-    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "profile_menu_tabs") return clean;
+    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "active_sessions" || clean === "profile_menu_tabs") return clean;
     return "manual";
   }
 
@@ -323,6 +323,10 @@
 
     if (listSourceType === "active_menus") {
       return "Menus ativos";
+    }
+
+    if (listSourceType === "active_sessions") {
+      return "Sessões ativas";
     }
 
     if (listSourceType === "profile_menu_tabs") {
@@ -893,7 +897,7 @@
         resetManual: false,
         resetAutomatic: true
       });
-    } else if (listSourceType === "active_menus" || listSourceType === "profile_menu_tabs") {
+    } else if (listSourceType === "active_menus" || listSourceType === "active_sessions" || listSourceType === "profile_menu_tabs") {
       resetListSourceFields_v3(root, {
         resetSourceType: false,
         resetManual: true,

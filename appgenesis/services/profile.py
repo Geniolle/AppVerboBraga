@@ -467,7 +467,7 @@ def serialize_menu_process_records(values: list[dict[str, Any]] | tuple[dict[str
 
 def normalize_process_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list", "active_menus", "profile_menu_tabs"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 
@@ -496,6 +496,41 @@ def _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
         )
         if clean_key
     }
+
+
+def _resolve_active_sidebar_sections_list_options_v1(
+    *,
+    sidebar_menu_settings: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    # Sessoes = secoes da barra lateral (sidebar_sections) guardadas no menu Administrativo.
+    from appgenesis.services.process_settings.normalizers import (
+        MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
+        normalize_sidebar_sections,
+    )
+
+    administrativo_row = next(
+        (
+            row
+            for row in sidebar_menu_settings
+            if _normalize_process_list_source_key_v1(row.get("key")) == "administrativo"
+        ),
+        None,
+    )
+    if administrativo_row is None:
+        return []
+
+    menu_config = administrativo_row.get("menu_config") or {}
+    sections = normalize_sidebar_sections(menu_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY) or [])
+
+    return [
+        {
+            "value": str(section["key"]),
+            "label": str(section["label"]),
+            "status": "active",
+        }
+        for section in sections
+        if section.get("is_active")
+    ]
 
 
 def _resolve_active_sidebar_menu_list_options_v1(
@@ -1045,6 +1080,11 @@ def resolve_field_list_options_v1(
         return _resolve_active_sidebar_menu_list_options_v1(
             sidebar_menu_settings=settings,
             visible_sidebar_menu_keys=visible_keys,
+        )
+
+    if list_source_type == "active_sessions":
+        return _resolve_active_sidebar_sections_list_options_v1(
+            sidebar_menu_settings=settings,
         )
 
     if list_source_type == "profile_menu_tabs":
