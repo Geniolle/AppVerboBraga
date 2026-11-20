@@ -19,3 +19,11 @@ def test_admin_tab_perfil_de_autorizacao_resolves_to_auth_profile_card():
     # admin_tab=perfil_de_autorizacao sem target deixava o separador vazio (#dynamic-process-card).
     assert 'cleanTab === "perfil_de_autorizacao"' in source
     assert 'return "#auth-profile-card";' in source
+
+
+def test_admin_tab_perfil_de_autorizacao_is_allowed_on_server():
+    source = (RUNTIME_JS.parents[3] / "appgenesis" / "routes" / "profile" / "page_handler.py").read_text(encoding="utf-8")
+
+    # Sem esta entrada na allowlist, o reload forca admin_tab=entidade e o separador fica vazio.
+    assert '"sessoes", "perfil_de_autorizacao"}' in source
+    assert 'if resolved_admin_tab == "perfil_de_autorizacao":\n            return "#auth-profile-card", ""' in source
