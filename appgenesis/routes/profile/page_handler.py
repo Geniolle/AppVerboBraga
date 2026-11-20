@@ -747,7 +747,7 @@ def new_user_page(
             try:
                 clean_auth_profile_edit_key_v1 = (
                     str(auth_profile_edit_key or "").strip()
-                    if resolved_menu == "perfil_de_autorizacao"
+                    if resolved_menu in {"perfil_de_autorizacao", "administrativo"}
                     else ""
                 )
                 auth_profile_return_target_v1 = (
@@ -787,7 +787,7 @@ def new_user_page(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
                     edit_key=clean_auth_profile_edit_key_v1,
-                    menu_key="perfil_de_autorizacao",
+                    menu_key="administrativo" if resolved_menu == "administrativo" else "perfil_de_autorizacao",
                     return_url=auth_profile_return_url_v1,
                     success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
                     error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
