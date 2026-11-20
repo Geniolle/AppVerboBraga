@@ -1538,13 +1538,13 @@ button.action-btn.configurable-items-create-trigger-v1 {
   height: 38px;
 }
 
-/* Fonte dos dados: 160px de largura e 38px de altura */
+/* Fonte dos dados: 190px de largura e 40px de altura (igual ao Campo obrigatorio) */
 [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] [data-additional-field-list-source-wrap] {
-  width: 160px;
+  width: 190px;
   justify-self: start;
 }
 
 [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] #process-additional-field-editor-list-source-type {
-  width: 160px;
-  height: 38px;
+  width: 190px;
+  height: 40px;
 }
