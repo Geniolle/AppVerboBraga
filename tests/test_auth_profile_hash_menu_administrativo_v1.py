@@ -27,3 +27,13 @@ def test_admin_tab_perfil_de_autorizacao_is_allowed_on_server():
     # Sem esta entrada na allowlist, o reload forca admin_tab=entidade e o separador fica vazio.
     assert '"sessoes", "perfil_de_autorizacao"}' in source
     assert 'if resolved_admin_tab == "perfil_de_autorizacao":\n            return "#auth-profile-card", ""' in source
+
+
+def test_auth_profile_targets_are_native_admin_targets():
+    source = (RUNTIME_JS.parent / "admin_target_registry_v1.js").read_text(encoding="utf-8")
+    block = source[source.index("NATIVE_ADMIN_TARGETS_V1 = new Set(") :]
+    block = block[: block.index("]);")]
+
+    # Sem estes alvos no conjunto nativo, o reload de #auth-profile-card cai em #dynamic-process-card.
+    assert '"#auth-profile-card"' in block
+    assert '"#auth-profile-active-card"' in block
