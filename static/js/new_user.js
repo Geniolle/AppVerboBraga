@@ -9761,9 +9761,23 @@ window.addEventListener("popstate", function () {
 
 // Indicador informativo: bolinha vermelha na aba quando ha campo obrigatorio vazio nessa aba.
 // So altera o DOM quando o estado muda (evita piscar a cada tecla).
+// Durante o carregamento os renderizadores de quantidade preenchem os inputs (150-600ms).
+// Acender a bolinha antes disso e apaga-la depois causava o pisca: so se acende apos a pagina estabilizar.
+const PROFILE_DOTS_SETTLE_MS_V1 = 1500;
+let profileDotsSettleTimerV1 = 0;
+
 function refreshProfileMissingTabDotsV1() {
   const formEl = document.querySelector("#perfil-pessoal-card .profile-edit-form");
   if (!formEl) {
+    return;
+  }
+  if (performance.now() < PROFILE_DOTS_SETTLE_MS_V1) {
+    if (!profileDotsSettleTimerV1) {
+      profileDotsSettleTimerV1 = window.setTimeout(function () {
+        profileDotsSettleTimerV1 = 0;
+        refreshProfileMissingTabDotsV1();
+      }, PROFILE_DOTS_SETTLE_MS_V1 - performance.now() + 20);
+    }
     return;
   }
   const missingSections = new Set();
