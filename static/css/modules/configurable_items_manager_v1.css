@@ -1502,3 +1502,27 @@ button.action-btn.configurable-items-create-trigger-v1 {
   margin: 0;
   line-height: 1.2;
 }
+
+/* ###################################################################################
+   CAMPOS ADICIONAIS - LARGURA DOS CAMPOS AJUSTADA AO CONTEUDO
+   Campos com largura fixa e compacta; apenas "Lista manual" ocupa duas colunas.
+   ################################################################################### */
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 240px));
+  justify-content: start;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] [data-additional-field-list-wrap] {
+  grid-column: span 2;
+}
+
+@media (max-width: 720px) {
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] {
+    grid-template-columns: 1fr;
+  }
+
+  [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] [data-additional-field-list-wrap] {
+    grid-column: auto;
+  }
+}
