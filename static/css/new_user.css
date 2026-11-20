@@ -1307,6 +1307,112 @@ label {
   outline-offset: 2px;
 }
 
+/* Estilo checkbox dentro de Meus dados: caixa de seleção nativa (sem interruptor) */
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"] {
+  -webkit-appearance: checkbox;
+  appearance: checkbox;
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  max-height: 18px;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  box-shadow: none;
+}
+
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before {
+  display: none;
+}
+
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked {
+  background: none;
+}
+
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before {
+  transform: none;
+}
+
+/* Grupos de botões (Radio, Segmentado, Aceitar/Rejeitar) em Meus dados */
+#perfil-pessoal-card .profile-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#perfil-pessoal-card .profile-button-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #313845;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+#perfil-pessoal-card .profile-button-option:hover {
+  background: #f3f6fb;
+}
+
+#perfil-pessoal-card .profile-button-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+
+#perfil-pessoal-card .profile-button-option:has(input:checked) {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #ffffff;
+}
+
+#perfil-pessoal-card .profile-button-option:has(input:focus-visible) {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+#perfil-pessoal-card .profile-button-group--segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+#perfil-pessoal-card .profile-button-group--segmented .profile-button-option {
+  border: 0;
+  border-radius: 0;
+  min-height: 38px;
+}
+
+#perfil-pessoal-card .profile-button-group--segmented .profile-button-option + .profile-button-option {
+  border-left: 1px solid #cbd5e1;
+}
+
+#perfil-pessoal-card .profile-button-group--segmented .profile-button-option:has(input:checked) {
+  background: #2563eb;
+}
+
+#perfil-pessoal-card .profile-button-group--confirm .profile-button-option:has(input:checked) {
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
    .profile-multi-value-label {
   display: flex;
   align-items: center;

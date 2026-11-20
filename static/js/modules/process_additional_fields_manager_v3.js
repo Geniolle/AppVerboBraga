@@ -13,6 +13,11 @@
   const SUPPORTED_TYPES = new Set(["text", "number", "email", "phone", "date", "time", "flag", "header", "list"]);
   const BUTTON_STYLES_V3 = new Set(["checkbox", "radio", "toggle", "segmented", "confirm"]);
   const DEFAULT_BUTTON_STYLE_V3 = "toggle";
+  const LIST_BUTTON_STYLES_V3 = new Set(["radio", "segmented", "confirm"]);
+
+  function effectiveFieldType_v3(fieldType, buttonStyle) {
+    return fieldType === "flag" && LIST_BUTTON_STYLES_V3.has(buttonStyle) ? "list" : fieldType;
+  }
 
   function normalizeButtonStyle_v3(value) {
     const clean = toSafeString_v3(value).trim().toLowerCase();
@@ -550,7 +555,11 @@
         automaticOnlyActive: fieldType === "list"
           ? normalizeRequired_v3(automaticOnlyActiveValues[index])
           : false,
-        buttonStyle: fieldType === "flag" ? normalizeButtonStyle_v3(buttonStyles[index]) : "",
+        buttonStyle: fieldType === "flag"
+          ? normalizeButtonStyle_v3(buttonStyles[index])
+          : (fieldType === "list" && LIST_BUTTON_STYLES_V3.has(toSafeString_v3(buttonStyles[index]).trim().toLowerCase())
+            ? toSafeString_v3(buttonStyles[index]).trim().toLowerCase()
+            : ""),
         order: index + 1
       });
     }
@@ -599,8 +608,9 @@
 
     setInputValue_v3(editor, "[data-additional-field-editor-key]", item.key || "");
     setInputValue_v3(editor, "[data-additional-field-editor-label]", item.label || "");
-    setInputValue_v3(editor, "[data-additional-field-editor-type]", item.fieldType || "text");
-    setInputValue_v3(editor, "[data-additional-field-editor-button-style]", normalizeButtonStyle_v3(item.buttonStyle));
+    const isRadioLike = item.fieldType === "list" && LIST_BUTTON_STYLES_V3.has(item.buttonStyle);
+    setInputValue_v3(editor, "[data-additional-field-editor-type]", isRadioLike ? "flag" : (item.fieldType || "text"));
+    setInputValue_v3(editor, "[data-additional-field-editor-button-style]", isRadioLike ? item.buttonStyle : normalizeButtonStyle_v3(item.buttonStyle));
     setInputValue_v3(editor, "[data-additional-field-editor-size]", item.size || "");
     setInputValue_v3(editor, "[data-additional-field-editor-required]", item.isRequired ? "1" : "");
     setInputValue_v3(editor, "[data-additional-field-editor-list-source-type]", item.listSourceType || "manual");
@@ -631,10 +641,12 @@
     const label = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-label]")).trim();
     const explicitRawKey = toSafeString_v3(getInputValue_v3(editor, "[data-additional-field-editor-key]")).trim();
     const rawKey = explicitRawKey || label;
-    const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
-    const buttonStyle = fieldType === "flag"
+    const selectedType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedStyle = selectedType === "flag"
       ? normalizeButtonStyle_v3(getInputValue_v3(editor, "[data-additional-field-editor-button-style]"))
       : "";
+    const fieldType = effectiveFieldType_v3(selectedType, selectedStyle);
+    const buttonStyle = selectedType === "flag" ? selectedStyle : "";
     const key = normalizeFieldKey_v3(rawKey);
     const listSourceType = normalizeListSourceType_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
@@ -853,7 +865,9 @@
 
   function updateEditorVisibility_v3(root) {
     const editor = getEditorRoot_v3(root);
-    const fieldType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedType = normalizeFieldType_v3(getInputValue_v3(editor, "[data-additional-field-editor-type]"));
+    const selectedStyle = normalizeButtonStyle_v3(getInputValue_v3(editor, "[data-additional-field-editor-button-style]"));
+    const fieldType = effectiveFieldType_v3(selectedType, selectedStyle);
     const listSourceType = normalizeListSourceType_v3(
       getInputValue_v3(editor, "[data-additional-field-editor-list-source-type]")
     );
@@ -903,7 +917,7 @@
 
     const buttonStyleWrap = editor.querySelector("[data-additional-field-button-style-wrap]");
     if (buttonStyleWrap) {
-      buttonStyleWrap.style.display = fieldType === "flag" ? "" : "none";
+      buttonStyleWrap.style.display = selectedType === "flag" ? "" : "none";
     }
 
     if (manualListWrap) {
@@ -1018,6 +1032,7 @@
 
     const editor = getEditorRoot_v3(root);
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const buttonStyleSelect = editor.querySelector("[data-additional-field-editor-button-style]");
     const listSourceTypeSelect = editor.querySelector("[data-additional-field-editor-list-source-type]");
     const sourceProcessSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
     const sourceSectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
@@ -1028,6 +1043,12 @@
       typeSelect.addEventListener("change", () => {
         applyDefaultSizeForType_v3(root);
         refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (buttonStyleSelect) {
+      buttonStyleSelect.addEventListener("change", () => {
         updateEditorVisibility_v3(root);
       });
     }
@@ -1098,7 +1119,11 @@
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_key", item.key || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_label", item.label || ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_type", fieldType));
-      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_button_style", fieldType === "flag" ? normalizeButtonStyle_v3(item.buttonStyle) : ""));
+      hiddenContainer.appendChild(createHiddenInput_v3("additional_field_button_style",
+        fieldType === "flag"
+          ? normalizeButtonStyle_v3(item.buttonStyle)
+          : (fieldType === "list" && LIST_BUTTON_STYLES_V3.has(item.buttonStyle) ? item.buttonStyle : "")
+      ));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_required", item.isRequired ? "1" : ""));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_size", normalizeSize_v3(item.size, fieldType)));
       hiddenContainer.appendChild(createHiddenInput_v3("additional_field_list_key", fieldType === "list" && listSourceType === "manual" ? manualListKey : ""));
@@ -1240,6 +1265,7 @@
     const editor = getEditorRoot_v3(root);
     const parentForm = root.closest("form");
     const typeSelect = editor.querySelector("[data-additional-field-editor-type]");
+    const buttonStyleSelect = editor.querySelector("[data-additional-field-editor-button-style]");
     const listSourceTypeSelect = editor.querySelector("[data-additional-field-editor-list-source-type]");
     const sourceProcessSelect = editor.querySelector("[data-additional-field-editor-source-process-key]");
     const sourceSectionSelect = editor.querySelector("[data-additional-field-editor-source-section-key]");
@@ -1250,6 +1276,12 @@
       typeSelect.addEventListener("change", () => {
         applyDefaultSizeForType_v3(root);
         refreshAutomaticSourceOptions_v3(root);
+        updateEditorVisibility_v3(root);
+      });
+    }
+
+    if (buttonStyleSelect) {
+      buttonStyleSelect.addEventListener("change", () => {
         updateEditorVisibility_v3(root);
       });
     }
@@ -1382,7 +1414,7 @@
           key: "fieldType",
           label: "Tipo do campo",
           render: function (item) {
-            return getFieldTypeLabel_v3(item.fieldType);
+            return item.buttonStyle ? "Botão" : getFieldTypeLabel_v3(item.fieldType);
           }
         },
         {
