@@ -44,7 +44,16 @@ def test_auth_profile_edit_key_honored_on_administrativo():
 
     # Sem isto, o link Editar (menu=administrativo) ignora auth_profile_edit_key e abre em modo create.
     assert 'if resolved_menu in {"perfil_de_autorizacao", "administrativo"}' in source
-    assert 'menu_key="administrativo" if resolved_menu == "administrativo"' in source
+    assert "menu_key=auth_profile_context_menu_v1," in source
+
+
+def test_auth_profile_state_rendered_when_administrativo_visible_from_any_menu():
+    source = (RUNTIME_JS.parents[3] / "appgenesis" / "routes" / "profile" / "page_handler.py").read_text(encoding="utf-8")
+
+    # Navegacao entre menus e client-side: abrir a pagina em Home/Empresa/etc. e depois ir a
+    # Administrativo > Perfil de autorizacao deixava a aba vazia (cards nao renderizados).
+    assert 'bool({"perfil_de_autorizacao", "administrativo"} & set(visible_menu_keys))' in source
+    assert '"perfil_de_autorizacao" if resolved_menu == "perfil_de_autorizacao" else "administrativo"' in source
 
 
 def test_auth_profile_return_target_is_list_after_save():

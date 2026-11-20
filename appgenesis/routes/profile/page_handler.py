@@ -735,9 +735,14 @@ def new_user_page(
 
     auth_profile_subprocess_state_v1 = None
 
+    # A aba vive no Administrativo e a navegacao entre menus e client-side: o estado tem de ser
+    # renderizado sempre que o utilizador ve o Administrativo, nao so quando a pagina abre nele.
     auth_profile_menu_visible = (
         resolved_menu in {"perfil_de_autorizacao", "administrativo"}
-        or "perfil_de_autorizacao" in visible_menu_keys
+        or bool({"perfil_de_autorizacao", "administrativo"} & set(visible_menu_keys))
+    )
+    auth_profile_context_menu_v1 = (
+        "perfil_de_autorizacao" if resolved_menu == "perfil_de_autorizacao" else "administrativo"
     )
 
     if auth_profile_menu_visible:
@@ -756,7 +761,7 @@ def new_user_page(
                     sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
                     dynamic_process_section=clean_dynamic_section_from_query,
                     target=auth_profile_return_target_v1,
-                    menu="administrativo" if resolved_menu == "administrativo" else "perfil_de_autorizacao",
+                    menu=auth_profile_context_menu_v1,
                 )
                 auth_profile_entity_context_v1 = build_auth_profile_entity_context_v1(
                     session,
@@ -784,7 +789,7 @@ def new_user_page(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
                     edit_key=clean_auth_profile_edit_key_v1,
-                    menu_key="administrativo" if resolved_menu == "administrativo" else "perfil_de_autorizacao",
+                    menu_key=auth_profile_context_menu_v1,
                     return_url=auth_profile_return_url_v1,
                     success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
                     error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
