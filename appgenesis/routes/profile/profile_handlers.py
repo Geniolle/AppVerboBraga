@@ -731,7 +731,8 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             for raw_key in page_data.get("visible_sidebar_menu_keys", [])
             if str(raw_key or "").strip()
         }
-        if AUTH_PROFILE_MENU_KEY not in visible_menu_keys:
+        # Perfil de autorizacao pode ser gerido pelo menu proprio ou pela aba do Administrativo.
+        if not ({AUTH_PROFILE_MENU_KEY, "administrativo"} & visible_menu_keys):
             return RedirectResponse(
                 url=build_users_new_url(
                     menu="home",
@@ -899,7 +900,8 @@ async def delete_authorization_profile_subprocess(request: Request) -> RedirectR
             for raw_key in page_data.get("visible_sidebar_menu_keys", [])
             if str(raw_key or "").strip()
         }
-        if AUTH_PROFILE_MENU_KEY not in visible_menu_keys:
+        # Perfil de autorizacao pode ser gerido pelo menu proprio ou pela aba do Administrativo.
+        if not ({AUTH_PROFILE_MENU_KEY, "administrativo"} & visible_menu_keys):
             return RedirectResponse(
                 url=build_users_new_url(
                     menu="home",
@@ -1065,7 +1067,8 @@ async def save_objeto_autorizacao_subprocess(request: Request) -> RedirectRespon
             for raw_key in page_data.get("visible_sidebar_menu_keys", [])
             if str(raw_key or "").strip()
         }
-        if AUTH_PROFILE_MENU_KEY not in visible_menu_keys:
+        # Perfil de autorizacao pode ser gerido pelo menu proprio ou pela aba do Administrativo.
+        if not ({AUTH_PROFILE_MENU_KEY, "administrativo"} & visible_menu_keys):
             return RedirectResponse(
                 url=build_users_new_url(
                     menu="home",
