@@ -64,3 +64,17 @@ def test_menu_origin_filter_script_is_wired_into_page():
 
     assert 'select[data-depends-on]' in script
     assert "auth_profile_menu_origin_filter_v1.js" in template
+
+
+def test_tab_options_include_all_headers_option_per_menu_with_tabs():
+    from appgenesis.services.profile import resolve_active_tab_options_v1
+
+    options = resolve_active_tab_options_v1(
+        [
+            {"key": "administrativo", "label": "Administrativo", "is_active": True, "is_deleted": False, "sidebar_section_key": "sistema"},
+        ]
+    )
+    values = [option["value"] for option in options]
+
+    assert "administrativo:todos" in values
+    assert "administrativo:perfil_de_autorizacao" in values
