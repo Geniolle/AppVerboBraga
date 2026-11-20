@@ -73,10 +73,7 @@
                 placeholder="{{ phone_placeholder }}"
               >
               <small class="field-help">
-                O telefone deve começar com o prefixo internacional do país selecionado.
-                {% if selected_phone_country %}
-                  Exemplo para {{ selected_phone_country.label }}: {{ selected_phone_country.calling_code }}.
-                {% endif %}
+                Escreva só o número: o país selecionado já define o prefixo.
               </small>
             </div>
             <div class="password-pair">
