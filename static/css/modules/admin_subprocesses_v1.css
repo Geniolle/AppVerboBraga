@@ -686,6 +686,11 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
   margin: 0;
 }
 
+/* Editor inline: o titulo "Editar perfil" ocupava uma linha inteira sem conteudo. */
+.auth-profile-inline-editor-row #auth-profile-form-card > h2 {
+  display: none;
+}
+
 .auth-profile-inline-editor-row .admin-subprocess-grid-auth-profile-v1 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
