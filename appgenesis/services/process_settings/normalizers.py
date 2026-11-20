@@ -104,6 +104,18 @@ def _normalize_additional_field_button_style(raw_value: Any) -> str:
     if clean_value in ADDITIONAL_FIELD_BUTTON_STYLE_KEYS:
         return clean_value
     return ADDITIONAL_FIELD_BUTTON_STYLE_DEFAULT
+
+
+ADDITIONAL_FIELD_LIST_BUTTON_STYLES = ("radio", "segmented", "confirm")
+
+
+def _normalize_additional_field_button_style_for_type(item_type: Any, raw_value: Any) -> str:
+    if item_type == "flag":
+        return _normalize_additional_field_button_style(raw_value)
+    if item_type == "list":
+        clean_value = str(raw_value or "").strip().lower()
+        return clean_value if clean_value in ADDITIONAL_FIELD_LIST_BUTTON_STYLES else ""
+    return ""
 ADDITIONAL_FIELD_DEFAULT_TYPE = "text"
 ADDITIONAL_FIELD_DEFAULT_SIZE = 30
 ADDITIONAL_FIELD_MAX_SIZE = 255

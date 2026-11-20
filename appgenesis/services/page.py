@@ -738,6 +738,7 @@ def get_page_data(
                 "size": field_size,
                 "is_required": is_required,
                 "list_key": list_key,
+                "button_style": str(custom_field.get("button_style") or "").strip().lower(),
                 "list_source_type": str(custom_field.get("list_source_type") or "manual").strip().lower() or "manual",
                 "automatic_source_process_key": str(custom_field.get("automatic_source_process_key") or "").strip().lower(),
                 "automatic_source_section_key": str(custom_field.get("automatic_source_section_key") or "").strip().lower(),

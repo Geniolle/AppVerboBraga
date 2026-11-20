@@ -23,3 +23,14 @@ def test_flag_keeps_button_style_and_other_types_do_not():
     text = next(item for item in items if item["field_type"] == "text")
     assert flag["button_style"] == "confirm"
     assert "button_style" not in text
+
+
+def test_list_keeps_only_list_button_styles():
+    from appgenesis.services.process_settings.normalizers import _normalize_additional_field_button_style_for_type
+
+    assert _normalize_additional_field_button_style_for_type("list", "radio") == "radio"
+    assert _normalize_additional_field_button_style_for_type("list", "segmented") == "segmented"
+    assert _normalize_additional_field_button_style_for_type("list", "toggle") == ""
+    assert _normalize_additional_field_button_style_for_type("list", "") == ""
+    assert _normalize_additional_field_button_style_for_type("text", "radio") == ""
+    assert _normalize_additional_field_button_style_for_type("flag", "") == "toggle"

@@ -552,7 +552,7 @@
               <div class="field" data-profile-section-pane="{{ profile_personal_field_section_map.get(field_key, '') }}" data-profile-field-key="{{ field_key }}">
                 <label for="edit_{{ field_key }}">{{ profile_personal_field_labels.get(field_key, field_key) }}{% if custom_required and custom_type != "flag" %} *{% endif %}</label>
                 {% if custom_type == "flag" %}
-                <label class="profile-custom-flag-control">
+                <label class="profile-custom-flag-control{% if custom_meta.get('button_style') == 'checkbox' %} profile-custom-flag-control--checkbox{% endif %}">
                   <input
                     id="edit_{{ field_key }}"
                     type="checkbox"
@@ -562,6 +562,21 @@
                   >
                   <span>Ativo</span>
                 </label>
+                {% elif custom_type == "list" and custom_meta.get("button_style") in ["radio", "segmented", "confirm"] %}
+                <div class="profile-button-group profile-button-group--{{ custom_meta.get('button_style') }}" role="radiogroup" aria-label="{{ profile_personal_field_labels.get(field_key, field_key) }}">
+                  {% for option_value in custom_list_options %}
+                  <label class="profile-button-option">
+                    <input
+                      type="radio"
+                      name="custom_field__{{ field_key }}"
+                      value="{{ option_value }}"
+                      {% if user_personal_data.custom_fields.get(field_key, '') == option_value %}checked{% endif %}
+                      {% if custom_required and loop.first %}required{% endif %}
+                    >
+                    <span>{{ option_value }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
                 {% elif custom_type == "list" %}
                 <select
                   id="edit_{{ field_key }}"
@@ -1925,7 +1940,7 @@
                       <input type="hidden" name="additional_field_key" value="{{ field.key }}" disabled>
                       <input type="hidden" name="additional_field_label" value="{{ field.label }}" disabled>
                       <input type="hidden" name="additional_field_type" value="{{ additional_field_type }}" disabled>
-                      <input type="hidden" name="additional_field_button_style" value="{{ field.button_style|default('toggle') if additional_field_type == 'flag' else '' }}" disabled>
+                      <input type="hidden" name="additional_field_button_style" value="{% if additional_field_type == 'flag' %}{{ field.button_style|default('toggle') }}{% elif additional_field_type == 'list' %}{{ field.button_style|default('') }}{% endif %}" disabled>
                       <input type="hidden" name="additional_field_required" value="{% if additional_field_required %}1{% else %}{% endif %}" disabled>
                       <input type="hidden" name="additional_field_size" value="{{ field.size|default('') }}" disabled>
                       <input type="hidden" name="additional_field_list_key" value="{{ field.list_key|default('') }}" disabled>
