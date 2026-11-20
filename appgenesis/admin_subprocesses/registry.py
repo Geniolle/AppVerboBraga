@@ -413,7 +413,7 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
         ),
         AUTH_PROFILE_DELETE_ACTION,
     ),
-    menu_scope="perfil_de_autorizacao",
+    menu_scope="administrativo,perfil_de_autorizacao",
     empty_active_message="Sem perfis ativos.",
     empty_inactive_message="Sem perfis inativos.",
     action_form_key_field="auth_profile_key",

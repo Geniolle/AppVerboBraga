@@ -249,7 +249,8 @@
     if (cleanMenuKey === "administrativo") {
       baseItems = [
         { label: "Entidade", target: "#recent-entities-card" },
-        { label: "Utilizador", target: "#create-user-card" }
+        { label: "Utilizador", target: "#create-user-card" },
+        { label: "Perfil de autorização", target: "#auth-profile-card" }
       ];
     } else if (cleanMenuKey === state.ESTRUTURAS_MENU_KEY_V1) {
       baseItems = [
