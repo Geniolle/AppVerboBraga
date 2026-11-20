@@ -76,9 +76,6 @@
   grid-column: span 2;
 }
 
-.admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
-  grid-column: span 2;
-}
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
   order: 1;
