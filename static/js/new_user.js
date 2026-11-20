@@ -9645,9 +9645,10 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 })();
 
 // APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
-// Clicar numa linha da lista de menus (Sessoes > Menu) executa a mesma acao de "Editar informacoes".
+// Clicar numa linha da lista de menus (Sessoes > Menu) ou de perfis ativos (Administrativo > Perfil de autorizacao)
+// executa a mesma acao de "Editar informacoes".
 document.addEventListener("click", (event) => {
-  const row = event.target.closest("#menu-ativo-table tbody tr, #menu-inativo-table tbody tr");
+  const row = event.target.closest("#menu-ativo-table tbody tr, #menu-inativo-table tbody tr, #auth-profile-active-table tbody tr");
   if (!row || event.target.closest("button, a, input, select, textarea, label, .table-actions")) {
     return;
   }

@@ -62,3 +62,10 @@ def test_auth_profile_return_target_is_list_after_save():
     # Depois de gravar (criar ou editar) o redirect volta a lista, nao ao formulario de edicao.
     assert 'auth_profile_return_target_v1 = "#auth-profile-card"' in source
     assert '"#auth-profile-form-card"\n                    if clean_auth_profile_edit_key_v1' not in source
+
+
+def test_auth_profile_row_click_opens_edit():
+    source = (RUNTIME_JS.parents[1] / "new_user.js").read_text(encoding="utf-8")
+
+    # Clicar na linha de perfil ativo executa a acao Editar (mesmo padrao da lista de menus).
+    assert "#auth-profile-active-table tbody tr" in source
