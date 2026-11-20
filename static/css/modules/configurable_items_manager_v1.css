@@ -1537,3 +1537,14 @@ button.action-btn.configurable-items-create-trigger-v1 {
   width: 160px;
   height: 38px;
 }
+
+/* Fonte dos dados: 160px de largura e 38px de altura */
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] [data-additional-field-list-source-wrap] {
+  width: 160px;
+  justify-self: start;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] #process-additional-field-editor-list-source-type {
+  width: 160px;
+  height: 38px;
+}
