@@ -10,13 +10,15 @@
     <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
     {% if field.field_type == "select" %}
+      {% set _option_groups = dict(field.option_groups) if field.option_groups else {} %}
       <select
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
+        {% if field.depends_on_input %}data-depends-on="{{ field.depends_on_input }}"{% endif %}
         {% if field.required %}required{% endif %}
       >
         {% for option_value, option_label in field.options %}
-          <option value="{{ option_value }}" {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
+          <option value="{{ option_value }}" {% if _option_groups %}data-group="{{ _option_groups.get(option_value, '') }}"{% endif %} {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
         {% endfor %}
       </select>
     {% elif field.field_type == "readonly" %}

@@ -801,6 +801,12 @@ def new_user_page(
                             page_data.get("sidebar_menu_settings") or []
                         )
                     ],
+                    menu_option_groups=[
+                        (option["value"], option["section"])
+                        for option in resolve_active_menu_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
                 )
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,
