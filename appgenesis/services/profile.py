@@ -524,7 +524,17 @@ def resolve_active_tab_options_v1(
     options: list[dict[str, str]] = []
     for menu_option in resolve_active_menu_options_v1(sidebar_menu_settings):
         menu_key = menu_option["value"]
-        for tab in resolve_process_tabs_v1(menu_key, sidebar_menu_settings or []):
+        tabs = resolve_process_tabs_v1(menu_key, sidebar_menu_settings or [])
+        if not tabs:
+            continue
+        options.append(
+            {
+                "value": f"{menu_key}:todos",
+                "label": "Todos os cabeçalhos",
+                "menu": menu_key,
+            }
+        )
+        for tab in tabs:
             options.append(
                 {
                     "value": f"{menu_key}:{tab.key}",
