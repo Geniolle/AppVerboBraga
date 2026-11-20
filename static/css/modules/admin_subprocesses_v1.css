@@ -665,3 +665,20 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 }
 
 /* APPGENESIS_ADMIN_SUBPROCESSES_V1_END */
+
+/* Editor do Perfil de autorizacao aberto logo abaixo da linha clicada (auth_profile_inline_editor_v1.js). */
+.auth-profile-inline-editor-row > td {
+  padding: 12px 16px;
+  white-space: normal;
+}
+
+.auth-profile-inline-editor-row #auth-profile-form-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.auth-profile-inline-editor-row .admin-subprocess-grid-auth-profile-v1 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
