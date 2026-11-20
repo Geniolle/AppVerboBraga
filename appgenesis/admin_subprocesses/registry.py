@@ -304,6 +304,14 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
         placeholder="Ex.: Secretaria",
     ),
     AdminFieldConfig(
+        key="session_origin",
+        label="Sessão da origem",
+        input_name="auth_profile_session_origin",
+        field_type="select",
+        required=True,
+        options=(),
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",

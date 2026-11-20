@@ -32,6 +32,7 @@ AUTH_PROFILE_SECTION_KEY = "custom_perfil_header"
 AUTH_PROFILE_DYNAMIC_SECTION_KEY = "custom_perfil"
 AUTH_PROFILE_LABEL_VALUE_KEYS = ("custom_perfil", "custom_nome_do_perfil")
 AUTH_PROFILE_SCOPE_MODE_KEY = "__scope_mode"
+AUTH_PROFILE_SESSION_ORIGIN_KEY = "__sessao_origem"
 AUTH_PROFILE_SCOPE_LABEL_KEY = "__scope_label"
 AUTH_PROFILE_STATUS_KEY = "__estado"
 AUTH_PROFILE_TECHNICAL_KEY = "__key"
@@ -430,6 +431,7 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                     "menu_key": stored_menu_key,
                     "entity_number": entity_number,
                     "visibility_scope_mode": scope_mode,
+                    "session_origin": str(values.get(AUTH_PROFILE_SESSION_ORIGIN_KEY) or "").strip(),
                     "visibility_scope_label": scope_label or _scope_label(scope_mode),
                     "status": status_value,
                     "status_label": _status_label(status_value),
@@ -602,6 +604,11 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         target_values.pop(AUTH_PROFILE_LEGACY_ENTITY_SCOPE_MODE_KEY, None)
         target_values.pop(AUTH_PROFILE_LEGACY_ENTITY_SCOPE_LABEL_KEY, None)
         target_values[AUTH_PROFILE_SCOPE_MODE_KEY] = scope_mode
+        session_origin = str(payload.get("session_origin") or "").strip().lower()
+        if session_origin:
+            target_values[AUTH_PROFILE_SESSION_ORIGIN_KEY] = session_origin
+        else:
+            target_values.pop(AUTH_PROFILE_SESSION_ORIGIN_KEY, None)
         target_values[AUTH_PROFILE_SCOPE_LABEL_KEY] = scope_label
         target_values[AUTH_PROFILE_STATUS_KEY] = status_value
         # O numero da entidade vem sempre do contexto do servidor (nunca do payload

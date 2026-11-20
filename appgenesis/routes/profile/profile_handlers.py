@@ -622,6 +622,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_scope_mode = str(
         submitted_form.get("auth_profile_visibility_scope_mode") or ""
     ).strip().lower()
+    clean_session_origin = str(
+        submitted_form.get("auth_profile_session_origin") or ""
+    ).strip().lower()
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -766,6 +769,19 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             selected_entity_id=resolved_selected_entity_id,
             permissions=entity_permissions,
         )
+        from appgenesis.services.profile import resolve_active_session_options_v1
+        from appgenesis.menu_settings import get_sidebar_menu_settings
+
+        allowed_session_origins = {
+            option["value"]
+            for option in resolve_active_session_options_v1(get_sidebar_menu_settings(session))
+        }
+        if clean_session_origin not in allowed_session_origins:
+            return _redirect_with_profile_feedback(
+                "Sessão da origem inválida ou inativa.",
+                is_error=True,
+            )
+
         auth_profile_repo = AuthorizationProfileAdminRepository(auth_profile_config)
         save_ok, save_reason, saved_key = auth_profile_repo.save_row(
             session,
@@ -773,6 +789,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "label": clean_label,
                 "visibility_scope_mode": clean_scope_mode,
                 "status": clean_status,
+                "session_origin": clean_session_origin,
                 "dynamic_values": dynamic_field_values,
             },
             context={
