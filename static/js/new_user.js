@@ -6162,6 +6162,7 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
         option.textContent = optionValue;
         if (toSafeStringMeuPerfilQuantityV1(existingValue) === toSafeStringMeuPerfilQuantityV1(optionValue)) {
           option.selected = true;
+          option.defaultSelected = true;
         }
         control.appendChild(option);
       });
@@ -6173,12 +6174,15 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
         control.checked = ["1", "true", "sim", "yes", "on"].includes(
           toSafeStringMeuPerfilQuantityV1(existingValue).trim().toLowerCase()
         );
+        control.defaultChecked = control.checked;
       } else {
         control.type = getDynamicProcessInputType(fieldType);
       }
 
       if (fieldType !== "flag") {
         control.value = toSafeStringMeuPerfilQuantityV1(existingValue);
+        // defaultValue: o Cancelar faz form.reset(), que repoe o valor guardado em vez de limpar.
+        control.defaultValue = control.value;
       }
     }
 
