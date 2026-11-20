@@ -781,9 +781,17 @@ def new_user_page(
                         ),
                     },
                 )
+                from appgenesis.services.profile import resolve_active_session_options_v1
+
                 auth_profile_subprocess_config_v1 = build_auth_profile_config_for_context_v1(
                     auth_profile_subprocess_config_v1,
                     auth_profile_entity_context_v1,
+                    session_options=[
+                        (option["value"], option["label"])
+                        for option in resolve_active_session_options_v1(
+                            page_data.get("sidebar_menu_settings") or []
+                        )
+                    ],
                 )
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,

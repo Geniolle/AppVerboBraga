@@ -498,6 +498,13 @@ def _normalize_visible_sidebar_menu_keys_for_list_resolver_v1(
     }
 
 
+def resolve_active_session_options_v1(
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+) -> list[dict[str, str]]:
+    settings = [dict(row) for row in (sidebar_menu_settings or []) if isinstance(row, dict)]
+    return _resolve_active_sidebar_sections_list_options_v1(sidebar_menu_settings=settings)
+
+
 def _resolve_active_sidebar_sections_list_options_v1(
     *,
     sidebar_menu_settings: list[dict[str, Any]],
