@@ -750,11 +750,8 @@ def new_user_page(
                     if resolved_menu in {"perfil_de_autorizacao", "administrativo"}
                     else ""
                 )
-                auth_profile_return_target_v1 = (
-                    "#auth-profile-form-card"
-                    if clean_auth_profile_edit_key_v1
-                    else "#auth-profile-card"
-                )
+                # Sucesso (criar ou editar) volta sempre a lista; erros mantem o formulario via profile_handlers.
+                auth_profile_return_target_v1 = "#auth-profile-card"
                 auth_profile_return_url_v1 = _build_auth_profile_return_url_v1(
                     sidebar_menu_settings=list(page_data.get("sidebar_menu_settings", [])),
                     dynamic_process_section=clean_dynamic_section_from_query,
