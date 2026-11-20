@@ -721,3 +721,12 @@ def test_pending_user_invite_token_keeps_member_user_identity() -> None:
         assert activated_user.account_status == UserAccountStatus.ACTIVE.value
         assert member.member_status == MemberStatus.ACTIVE.value
         assert session.scalar(select(func.count()).select_from(User)) == 1
+
+
+def test_build_international_phone_value_adds_country_prefix_to_national_number() -> None:
+    from appgenesis.services.phone_country import build_international_phone_value
+
+    assert build_international_phone_value("PT", "999999999") == ("+351999999999", "")
+    assert build_international_phone_value("PT", "+351 912 345 678") == ("+351912345678", "")
+    assert build_international_phone_value("PT", "") == ("", "Telefone principal é obrigatório.")
+    assert build_international_phone_value("PT", "+55 11 99999-9999")[1] != ""

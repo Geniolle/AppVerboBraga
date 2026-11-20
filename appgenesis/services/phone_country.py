@@ -158,27 +158,44 @@ def normalize_phone_value(value: str) -> str:
 # (3) VALIDACAO
 # ###################################################################################
 
-def validate_phone_prefix_for_country(country_code: str, phone: str) -> str:
+def build_international_phone_value(country_code: str, phone: str) -> tuple[str, str]:
+    """Devolve (telefone_completo, erro). O prefixo do pais selecionado e acrescentado
+    quando o utilizador escreve so o numero nacional; um numero com '+' tem de usar o
+    prefixo do pais selecionado."""
     normalized_country_code = normalize_country_code(country_code)
     if not normalized_country_code:
-        return "País é obrigatório."
+        return "", "País é obrigatório."
 
     supported_country = get_supported_phone_country_option(normalized_country_code)
     if supported_country is None:
-        return "País inválido."
+        return "", "País inválido."
 
     normalized_phone = normalize_phone_value(phone)
     if not normalized_phone:
-        return "Telefone principal é obrigatório."
+        return "", "Telefone principal é obrigatório."
 
     expected_dial_code = supported_country["calling_code"]
-    if not normalized_phone.startswith(expected_dial_code):
-        return (
-            "O telefone deve começar com o prefixo internacional do país selecionado. "
-            f"Exemplo para {supported_country['label']}: {expected_dial_code}."
-        )
+    dial_digits = expected_dial_code.lstrip("+")
 
-    return ""
+    if normalized_phone.startswith("+"):
+        if not normalized_phone.startswith(expected_dial_code):
+            return "", (
+                "O telefone deve começar com o prefixo internacional do país selecionado. "
+                f"Exemplo para {supported_country['label']}: {expected_dial_code}."
+            )
+        national_digits = normalized_phone[len(expected_dial_code):]
+    else:
+        national_digits = normalized_phone
+
+    if not national_digits:
+        return "", "Telefone principal é obrigatório."
+
+    return f"+{dial_digits}{national_digits}", ""
+
+
+def validate_phone_prefix_for_country(country_code: str, phone: str) -> str:
+    _full_phone, error = build_international_phone_value(country_code, phone)
+    return error
 
 
 __all__ = [
@@ -187,6 +204,7 @@ __all__ = [
     "get_supported_phone_country_option",
     "normalize_country_code",
     "normalize_phone_value",
+    "build_international_phone_value",
     "validate_phone_prefix_for_country",
 ]
 
