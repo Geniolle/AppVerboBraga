@@ -47,7 +47,11 @@
     "#admin-sidebar-sections-card",
     "#admin-sidebar-sections-form-card",
     "#settings-card",
-    "#settings-menu-edit-card"
+    "#settings-menu-edit-card",
+    "#auth-profile-card",
+    "#auth-profile-form-card",
+    "#auth-profile-active-card",
+    "#auth-profile-inactive-card"
   ]);
 
   const ESTRUTURAS_NATIVE_TARGETS_V1 = new Set([
