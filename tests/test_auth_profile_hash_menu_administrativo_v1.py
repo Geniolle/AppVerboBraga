@@ -37,3 +37,11 @@ def test_auth_profile_targets_are_native_admin_targets():
     # Sem estes alvos no conjunto nativo, o reload de #auth-profile-card cai em #dynamic-process-card.
     assert '"#auth-profile-card"' in block
     assert '"#auth-profile-active-card"' in block
+
+
+def test_auth_profile_edit_key_honored_on_administrativo():
+    source = (RUNTIME_JS.parents[3] / "appgenesis" / "routes" / "profile" / "page_handler.py").read_text(encoding="utf-8")
+
+    # Sem isto, o link Editar (menu=administrativo) ignora auth_profile_edit_key e abre em modo create.
+    assert 'if resolved_menu in {"perfil_de_autorizacao", "administrativo"}' in source
+    assert 'menu_key="administrativo" if resolved_menu == "administrativo"' in source
