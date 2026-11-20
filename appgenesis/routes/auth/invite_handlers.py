@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 from fastapi import Form, Query, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -26,6 +28,27 @@ from appgenesis.services.session import get_entity_context_for_user, set_session
 from appgenesis.web.templates import templates
 
 from appgenesis.routes.auth.router import router
+
+
+INVITE_ACCEPT_FLASH_KEY = "invite_accept_flash"
+
+
+def _store_invite_accept_flash(request: Request, token: str, **state: object) -> RedirectResponse:
+    # PRG: o POST nao devolve a pagina; guarda o estado (sem palavras-passe) e redireciona
+    # para o GET. Um refresh deixa de reenviar o formulario anterior.
+    request.session[INVITE_ACCEPT_FLASH_KEY] = {"token": token, **state}
+    return RedirectResponse(
+        url="/users/invite/accept?" + urlencode({"token": token}),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+def _pop_invite_accept_flash(request: Request, token: str) -> dict | None:
+    flash = request.session.pop(INVITE_ACCEPT_FLASH_KEY, None)
+    if isinstance(flash, dict) and flash.get("token") == token:
+        return flash
+    return None
+
 
 def render_invite_accept(
     request: Request,
@@ -91,6 +114,17 @@ def invite_accept_page(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    flash = _pop_invite_accept_flash(request, clean_token)
+    if flash is not None:
+        return render_invite_accept(
+            request,
+            token=clean_token,
+            error=str(flash.get("error") or ""),
+            success=str(flash.get("success") or ""),
+            form_data=flash.get("form_data") or None,
+            account_already_active=bool(flash.get("account_already_active")),
+        )
+
     invite_payload = parse_user_invite_token(clean_token)
     if invite_payload is None:
         return render_invite_accept(
@@ -148,29 +182,27 @@ def invite_accept_submit(
     clean_token = form.token.strip()
     invite_payload = parse_user_invite_token(clean_token)
     if invite_payload is None:
-        return render_invite_accept(
+        return _store_invite_accept_flash(
             request,
-            token=clean_token,
+            clean_token,
             error="Convite inválido ou expirado. Solicite um novo convite ao administrador.",
-            status_code=status.HTTP_400_BAD_REQUEST,
         )
 
     with SessionLocal() as session:
         result = execute_invite_accept(session, form, invite_payload)
 
         if isinstance(result, InviteAcceptInvalid):
-            return render_invite_accept(
+            return _store_invite_accept_flash(
                 request,
-                token=clean_token,
+                clean_token,
                 error=result.error,
                 form_data=result.form_data,
-                status_code=result.status_code,
             )
 
         if isinstance(result, InviteAcceptAlreadyActive):
-            return render_invite_accept(
+            return _store_invite_accept_flash(
                 request,
-                token=clean_token,
+                clean_token,
                 success="Esta conta já foi ativada. Pode entrar no sistema.",
                 account_already_active=True,
             )
