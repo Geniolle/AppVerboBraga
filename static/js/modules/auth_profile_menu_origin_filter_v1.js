@@ -41,6 +41,11 @@
 
     const keepPrevious = visible.some((option) => option.value === previousValue);
     selectEl.value = keepPrevious ? previousValue : (visible[0] ? visible[0].value : "");
+
+    // Cascata: os select dependentes deste (ex.: Menu -> Cabecalho) tambem se atualizam.
+    if (formEl) {
+      formEl.querySelectorAll('select[data-depends-on="' + selectEl.name + '"]').forEach(applyDependentSelectV1);
+    }
   }
 
   function applyAllV1(root) {

@@ -515,6 +515,26 @@ def resolve_active_menu_options_v1(
     return options
 
 
+def resolve_active_tab_options_v1(
+    sidebar_menu_settings: list[dict[str, Any]] | None,
+) -> list[dict[str, str]]:
+    # Cabecalhos (abas) de cada menu ativo. O valor e "menu:aba" para ser unico entre menus.
+    from appgenesis.services.process_tabs import resolve_process_tabs_v1
+
+    options: list[dict[str, str]] = []
+    for menu_option in resolve_active_menu_options_v1(sidebar_menu_settings):
+        menu_key = menu_option["value"]
+        for tab in resolve_process_tabs_v1(menu_key, sidebar_menu_settings or []):
+            options.append(
+                {
+                    "value": f"{menu_key}:{tab.key}",
+                    "label": tab.label,
+                    "menu": menu_key,
+                }
+            )
+    return options
+
+
 def resolve_active_session_options_v1(
     sidebar_menu_settings: list[dict[str, Any]] | None,
 ) -> list[dict[str, str]]:

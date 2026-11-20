@@ -628,6 +628,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_menu_origin = str(
         submitted_form.get("auth_profile_menu_origin") or ""
     ).strip().lower()
+    clean_tab_origin = str(
+        submitted_form.get("auth_profile_tab_origin") or ""
+    ).strip().lower()
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -775,6 +778,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         from appgenesis.services.profile import (
             resolve_active_menu_options_v1,
             resolve_active_session_options_v1,
+            resolve_active_tab_options_v1,
         )
         from appgenesis.menu_settings import get_sidebar_menu_settings
 
@@ -798,6 +802,16 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "Menu de origem inválido ou não pertence à sessão escolhida.",
                 is_error=True,
             )
+        allowed_tab_origins = {
+            option["value"]
+            for option in resolve_active_tab_options_v1(sidebar_settings_for_origin)
+            if option["menu"] == clean_menu_origin
+        }
+        if clean_tab_origin not in allowed_tab_origins:
+            return _redirect_with_profile_feedback(
+                "Cabeçalho (aba) inválido ou não pertence ao menu escolhido.",
+                is_error=True,
+            )
 
         auth_profile_repo = AuthorizationProfileAdminRepository(auth_profile_config)
         save_ok, save_reason, saved_key = auth_profile_repo.save_row(
@@ -808,6 +822,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "status": clean_status,
                 "session_origin": clean_session_origin,
                 "menu_origin": clean_menu_origin,
+                "tab_origin": clean_tab_origin,
                 "dynamic_values": dynamic_field_values,
             },
             context={

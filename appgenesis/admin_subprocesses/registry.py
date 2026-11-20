@@ -320,6 +320,14 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
         options=(),
     ),
     AdminFieldConfig(
+        key="tab_origin",
+        label="Cabeçalho (aba)",
+        input_name="auth_profile_tab_origin",
+        field_type="select",
+        required=True,
+        options=(),
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",
