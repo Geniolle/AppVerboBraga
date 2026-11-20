@@ -1238,66 +1238,71 @@ label {
   font-weight: 500;
 }
 
-/* Flags de Meus dados: botao que fica verde quando ativo (o checkbox continua no DOM e e gravado normalmente) */
+/* Flags de Meus dados: interruptor (toggle switch). O checkbox continua no DOM e e gravado normalmente. */
 #perfil-pessoal-card .profile-custom-flag-control {
   position: relative;
   min-height: 40px;
-  justify-content: center;
+  justify-content: space-between;
   padding: 0 14px;
   cursor: pointer;
   user-select: none;
   font-size: 14px;
   font-weight: 600;
   color: #313845;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 #perfil-pessoal-card .profile-custom-flag-control:hover {
   background: #f3f6fb;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"] {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-  pointer-events: none;
-}
-
 #perfil-pessoal-card .profile-custom-flag-control span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  flex: 1 1 auto;
+  text-align: left;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control::before {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  flex: 0 0 40px;
+  width: 40px;
+  min-width: 40px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]::before {
   content: "";
-  display: none;
-  width: 14px;
-  height: 14px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: inset 0 0 0 2px #15803d;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control:has(input:checked) {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked {
   background: #16a34a;
-  border-color: #15803d;
-  color: #ffffff;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control:has(input:checked):hover {
-  background: #15803d;
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked::before {
+  transform: translateX(18px);
 }
 
-#perfil-pessoal-card .profile-custom-flag-control:has(input:checked)::before {
-  display: inline-block;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-#perfil-pessoal-card .profile-custom-flag-control:has(input:focus-visible) {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
