@@ -328,6 +328,18 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
         options=(),
     ),
     AdminFieldConfig(
+        key="authorization_level",
+        label="Autorização",
+        input_name="auth_profile_authorization_level",
+        field_type="select",
+        required=True,
+        options=(
+            ("todas", "Todas as autorizações"),
+            ("exibir", "Exibir"),
+            ("editar", "Editar"),
+        ),
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",

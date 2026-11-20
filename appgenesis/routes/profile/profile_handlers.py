@@ -631,6 +631,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_tab_origin = str(
         submitted_form.get("auth_profile_tab_origin") or ""
     ).strip().lower()
+    clean_authorization_level = str(
+        submitted_form.get("auth_profile_authorization_level") or ""
+    ).strip().lower()
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -812,6 +815,11 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "Cabeçalho (aba) inválido ou não pertence ao menu escolhido.",
                 is_error=True,
             )
+        if clean_authorization_level not in {"todas", "exibir", "editar"}:
+            return _redirect_with_profile_feedback(
+                "Autorização inválida.",
+                is_error=True,
+            )
 
         auth_profile_repo = AuthorizationProfileAdminRepository(auth_profile_config)
         save_ok, save_reason, saved_key = auth_profile_repo.save_row(
@@ -823,6 +831,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "session_origin": clean_session_origin,
                 "menu_origin": clean_menu_origin,
                 "tab_origin": clean_tab_origin,
+                "authorization_level": clean_authorization_level,
                 "dynamic_values": dynamic_field_values,
             },
             context={

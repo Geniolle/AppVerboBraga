@@ -68,12 +68,13 @@
 }
 
 .admin-subprocess-grid-auth-profile-v1 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-/* Nome de perfil ocupa o dobro; Sessao da origem e Menu de origem ficam com o mesmo tamanho. */
+/* Nome de perfil ocupa 3 colunas; Sessao da origem e Menu de origem ocupam 1 cada (linha 1).
+   Cabecalho, Autorizacao, Sistema, Estado e Entidade ocupam 1 coluna cada (linha 2). */
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="label"] {
-  grid-column: span 2;
+  grid-column: span 3;
 }
 
 
@@ -686,7 +687,7 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
 }
 
 .auth-profile-inline-editor-row .admin-subprocess-grid-auth-profile-v1 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 @media (max-width: 720px) {
