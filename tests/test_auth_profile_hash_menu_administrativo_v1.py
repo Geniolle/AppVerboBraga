@@ -78,3 +78,11 @@ def test_auth_profile_inline_editor_placed_below_row():
     assert "rowEl.insertAdjacentElement(\"afterend\", holderEl)" in source
     template = (RUNTIME_JS.parents[3] / "templates" / "new_user.html").read_text(encoding="utf-8")
     assert "auth_profile_inline_editor_v1.js" in template
+
+
+def test_auth_profile_inline_editor_closes_on_second_click_without_changes():
+    source = (RUNTIME_JS.parents[1] / "modules" / "auth_profile_inline_editor_v1.js").read_text(encoding="utf-8")
+
+    # Segundo clique na linha aberta sem alteracoes fecha o editor; com alteracoes nao navega.
+    assert "if (!hasChangesV1()) {\n      closeEditorV1();" in source
+    assert "stopImmediatePropagation" in source
