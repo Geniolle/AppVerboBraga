@@ -1509,7 +1509,7 @@ button.action-btn.configurable-items-create-trigger-v1 {
    ################################################################################### */
 
 [data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] {
-  grid-template-columns: repeat(auto-fill, minmax(200px, 240px));
+  grid-template-columns: repeat(3, 240px);
   justify-content: start;
 }
 
