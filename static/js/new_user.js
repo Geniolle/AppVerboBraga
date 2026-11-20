@@ -72,9 +72,6 @@ const UTILIZADOR_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
 const MENU_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
   ? appGenesisProcessReferenceRegistryV1.MENU_SUBPROCESS_KEY_V1
   : "menu";
-const OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1
-  ? appGenesisProcessReferenceRegistryV1.OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
-  : "objeto_de_autorizacao";
 const LEGACY_DOCUMENTOS_MENU_KEY = appGenesisProcessKeysRegistryV1
   ? appGenesisProcessKeysRegistryV1.LEGACY_DOCUMENTOS_MENU_KEY
   : "documentos";
@@ -1131,11 +1128,6 @@ const AUTHORIZATION_PROFILE_TARGET_ALIAS_MAP_V1 = appGenesisAdminTargetRegistryV
       "#auth-profile-active-card": "#auth-profile-card",
       "#auth-profile-inactive-card": "#auth-profile-card",
       "#auth-profile-form-card": "#auth-profile-card",
-      "#auth-objeto": "#auth-objeto-card",
-      "#auth-objeto-card": "#auth-objeto-card",
-      "#auth-objeto-active-card": "#auth-objeto-card",
-      "#auth-objeto-inactive-card": "#auth-objeto-card",
-      "#auth-objeto-form-card": "#auth-objeto-card"
     });
 const AUTH_PROFILE_NATIVE_TARGETS_V1 = appGenesisAdminTargetRegistryV1
   ? appGenesisAdminTargetRegistryV1.AUTH_PROFILE_NATIVE_TARGETS_V1
@@ -3607,10 +3599,6 @@ function getAdminSubprocessKeyByTargetV1(target) {
     "#auth-profile-form-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
     "#auth-profile-active-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
     "#auth-profile-inactive-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
-    "#auth-objeto-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-form-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-active-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1,
-    "#auth-objeto-inactive-card": OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1
   };
   return targetMap[cleanTarget] || "";
 }

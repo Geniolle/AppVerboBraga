@@ -4,7 +4,6 @@ from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.admin_subprocesses.registry import (
     AUTHORIZATION_PROFILE_CONFIG,
     ENTIDADE_CONFIG,
-    OBJETO_AUTORIZACAO_CONFIG,
 )
 
 
@@ -23,38 +22,9 @@ def test_admin_subprocess_form_grid_uses_generic_config_class_not_hardcoded_key(
 
     assert 'data-admin-subprocess-field-key="{{ field.key }}"' in template_text
     assert "state.config.form_grid_css_class" in template_text
-    assert "state.config.key == 'objeto_de_autorizacao'" not in template_text
     # A classe generica deve ser aplicada tanto na grelha de edicao como na de criacao,
     # corrigindo a inconsistencia em que so' o formulario de edicao a recebia.
     assert template_text.count("state.config.form_grid_css_class") >= 2
-
-
-def test_objeto_autorizacao_config_sets_dedicated_grid_variant() -> None:
-    css_text = (PROJECT_ROOT / "static" / "css" / "modules" / "admin_subprocesses_v1.css").read_text(
-        encoding="utf-8"
-    )
-
-    assert OBJETO_AUTORIZACAO_CONFIG.form_grid_css_class == "admin-subprocess-grid-objeto-autorizacao-v1"
-    assert '.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key=\"custom_nome_do_perfil\"]' in css_text
-    assert '.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key=\"custom_processo\"]' in css_text
-    assert '.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key=\"custom_subprocesso\"]' in css_text
-    assert '.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key=\"visibility_scope_mode\"]' in css_text
-    assert '.admin-subprocess-grid-objeto-autorizacao-v1 > [data-admin-subprocess-field-key=\"status\"]' in css_text
-
-
-def test_objeto_autorizacao_create_and_edit_forms_both_get_dedicated_grid_variant() -> None:
-    env = _build_admin_subprocess_jinja_env_v1()
-    macro_module = env.get_template("macros/admin_subprocess.html").module
-
-    create_html = macro_module.render_admin_subprocess_form(
-        AdminSubprocessState(config=OBJETO_AUTORIZACAO_CONFIG, mode="create")
-    )
-    edit_html = macro_module.render_admin_subprocess_form(
-        AdminSubprocessState(config=OBJETO_AUTORIZACAO_CONFIG, mode="edit", edit_data={"key": "x"})
-    )
-
-    assert "admin-subprocess-grid-v1 admin-subprocess-grid-objeto-autorizacao-v1" in create_html
-    assert "admin-subprocess-grid-v1 admin-subprocess-grid-objeto-autorizacao-v1" in edit_html
 
 
 ####################################################################################

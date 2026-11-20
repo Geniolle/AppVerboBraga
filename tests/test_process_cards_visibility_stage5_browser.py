@@ -138,9 +138,6 @@ def test_stage5_process_cards_visibility_click_flow_keeps_runtime_behavior() -> 
         _click_submenu_v1(driver, "Perfis")
         wait.until(lambda drv: _card_is_visible_v1(drv, "auth-profile-active-card"))
 
-        _click_submenu_v1(driver, "Objeto de autorização")
-        wait.until(lambda drv: _card_is_visible_v1(drv, "auth-objeto-active-card"))
-
         candidate_menu_keys = driver.execute_script(
             """
             const fixedKeys = new Set([

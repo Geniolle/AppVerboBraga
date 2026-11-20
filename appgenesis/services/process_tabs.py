@@ -514,7 +514,6 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
     elif clean_menu == "perfil_de_autorizacao":
         return [
             ProcessTabConfig("perfis", "Perfis", "#auth-profile-card", "list"),
-            ProcessTabConfig("objeto_de_autorizacao", "Objeto de autorização", "#auth-objeto-card", "list"),
         ]
 
     # 2. Dynamic processes sections resolution (e.g. from header options)

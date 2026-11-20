@@ -297,7 +297,6 @@ def test_automatic_list_source_menu_real_flow() -> None:
         ]
         assert subprocess_options[0] == ("", "Todos os subprocessos")
         assert ("perfis", "Perfis") in subprocess_options
-        assert ("objeto_de_autorizacao", "Objeto de autorização") in subprocess_options
         driver.execute_script("arguments[0].value='perfis'", subprocess)
         assert subprocess.get_attribute("value") == "perfis"
         driver.find_element(By.CSS_SELECTOR, "[data-process-list-editor-label]").send_keys(label)
