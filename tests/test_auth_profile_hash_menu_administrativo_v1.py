@@ -69,3 +69,12 @@ def test_auth_profile_row_click_opens_edit():
 
     # Clicar na linha de perfil ativo executa a acao Editar (mesmo padrao da lista de menus).
     assert "#auth-profile-active-table tbody tr" in source
+
+
+def test_auth_profile_inline_editor_placed_below_row():
+    source = (RUNTIME_JS.parents[1] / "modules" / "auth_profile_inline_editor_v1.js").read_text(encoding="utf-8")
+
+    # Modo Editar abre logo abaixo da linha do perfil (nao no topo da lista), como Campos adicionais.
+    assert "rowEl.insertAdjacentElement(\"afterend\", holderEl)" in source
+    template = (RUNTIME_JS.parents[3] / "templates" / "new_user.html").read_text(encoding="utf-8")
+    assert "auth_profile_inline_editor_v1.js" in template
