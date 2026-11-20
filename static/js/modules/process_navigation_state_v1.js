@@ -95,6 +95,9 @@
     if (cleanTab === "utilizador") {
       return "#create-user-card";
     }
+    if (cleanTab === "perfil_de_autorizacao") {
+      return "#auth-profile-card";
+    }
     if (cleanTab === "contas") {
       return "#menu-subprocess-card-active";
     }
