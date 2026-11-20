@@ -1526,3 +1526,14 @@ button.action-btn.configurable-items-create-trigger-v1 {
     grid-column: auto;
   }
 }
+
+/* Tipo do campo: 160px de largura e 38px de altura */
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] .field:has(#process-additional-field-editor-type) {
+  width: 160px;
+  justify-self: start;
+}
+
+[data-process-additional-fields-manager-v3="1"] [data-additional-field-editor-block] #process-additional-field-editor-type {
+  width: 160px;
+  height: 38px;
+}
