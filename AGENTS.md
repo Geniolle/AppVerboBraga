@@ -311,7 +311,7 @@ Regras:
 5. Campos antigos que só tenham `list_key` devem continuar compatíveis, assumindo fonte **Manual** por padrão.
 6. A resolução automática deve respeitar entidade ativa, permissões, owner, legado e separação multi-tenant já aplicadas ao contexto atual.
 7. Se a origem automática ficar incompleta ou apontar para processo/aba/campo removido, a UI não pode quebrar; deve apresentar estado controlado e lista vazia quando necessário.
-8. É proibido criar listas automáticas hardcoded para processos específicos como **Perfil de autorização** ou **Objeto de autorização**.
+8. É proibido criar listas automáticas hardcoded para processos específicos como **Perfil de autorização** .
 
 <!-- APPGENESIS_STATIC_GRID_RULE_V1_START -->
 
@@ -571,17 +571,17 @@ Sempre que for criado ou configurado um novo processo dinâmico/listável no App
 
 Apenas os processos **Administrativo** e **Estruturas** (sessoes) podem ter campos hardcoded em `AdminSubprocessConfig.fields`.
 
-Todos os outros subprocessos dinâmicos (ex: Objeto de autorização) **devem** ler os seus campos de conteúdo da configuração do processo:
+Todos os outros subprocessos dinâmicos (ex: Perfil de autorização) **devem** ler os seus campos de conteúdo da configuração do processo:
 
 1. Definir `uses_dynamic_fields=True` em `AdminSubprocessConfig`.
 2. Definir `dynamic_fields_menu_key` com a chave do processo pai (ex: `"perfil_de_autorizacao"`).
-3. Definir `dynamic_fields_section_header_key` com a chave do header configurado (ex: `"custom_objeto_de_autorizacao"`).
+3. Definir `dynamic_fields_section_header_key` com a chave do header configurado (ex: `"custom_perfil"`).
 4. O resolver reutilizável é `resolve_subprocess_section_fields_v1` em `appgenesis/services/process_tabs.py` — filtra `process_visible_field_rows` por `header_key` e retorna os campos configurados.
 5. A função centralizadora de exceção é `is_system_hardcoded_process(menu_key)` em `appgenesis/services/process_tabs.py` — retorna `True` apenas para `{"administrativo", "sessoes"}`.
 6. Os campos técnicos (Sistema, Estado) ficam em `fields=` do config. Os campos de conteúdo vêm de `resolved_dynamic_fields` no estado.
 7. O formulário Jinja2 renderiza `state.resolved_dynamic_fields` (com `name="process_field__<key>"`) antes dos campos técnicos de `state.config.fields`.
 8. O save handler lê `process_field__*` do formulário e passa `dynamic_values` ao repositório.
-9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico em `objeto_de_autorizacao`/`custom_objeto_label` para compatibilidade.
+9. O repositório armazena os campos dinâmicos nos seus próprios keys, mais o label canónico do subprocesso para compatibilidade.
 10. É proibido adicionar campos de conteúdo hardcoded num subprocesso dinâmico — os campos devem vir sempre de `Configuração dos campos`.
 <!-- APPGENESIS_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
 
@@ -1115,7 +1115,7 @@ Regras obrigatórias:
    `create_toggle_in_active_header=True` em `AdminSubprocessConfig`
    (`appgenesis/admin_subprocesses/registry.py`), por subprocesso. Configs
    atuais com o campo ativo: `sessoes`, `menu`, `perfil_de_autorizacao`,
-   `objeto_de_autorizacao`, `utilizador`. Não ativos (e porquê):
+   `utilizador`. Não ativos (e porquê):
    - `entidade`: o card de criação ainda é HTML legado (`create-entity-card`
      em `templates/new_user.html`), sem `data-admin-subprocess`/
      `admin-subprocess-create-collapse-v1` — o botão inline não encontraria o
@@ -1344,7 +1344,7 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 
 1. **`process_tabs.py`**: A aba principal do subprocesso deve apontar para o `default_target` do `AdminSubprocessConfig` (ex: `#auth-profile-card`), não para o card da tabela ativa (ex: `#auth-profile-active-card`). O `default_target` é o card que contém o accordion de criação.
 
-2. **`getAdminSubprocessKeyByTargetV1`** em `new_user.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"objeto_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `perfil_de_autorizacao` e `objeto_de_autorizacao`), cada um tem a sua própria chave para que o JS possa distingui-los.
+2. **`getAdminSubprocessKeyByTargetV1`** em `new_user.js`: Todos os targets nativos do subprocesso (card principal, form-card, active-card, inactive-card) devem estar no `targetMap`, retornando a `key` do `AdminSubprocessConfig` (ex: `"perfil_de_autorizacao"`). Para subprocessos dentro do mesmo menu (como `sessoes` e `menu`), cada um tem a sua própria chave para que o JS possa distingui-los.
 
 3. **`supportsStructuredAdminGroups`** em `applyContentForMenuTarget`: O `menuKey` do subprocesso (o menu pai, ex: `"perfil_de_autorizacao"`) deve estar incluído nesta condição. Subprocessos filhos no mesmo menu partilham o mesmo `menuKey` mas têm `data-admin-subprocess` distintos.
 
@@ -1360,11 +1360,10 @@ Todo subprocesso nativo que usa o macro `render_admin_subprocess_state` deve ter
 |---|---|---|---|
 | `sessoes` | `admin-sidebar-sections-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
 | `perfil_de_autorizacao` | `auth-profile-card` | `perfil_de_autorizacao` | inicializado por APPGENESIS_AUTH_PROFILE_MENUCONFIG_INIT_V1 |
-| `objeto_de_autorizacao` | `auth-objeto-card` | `perfil_de_autorizacao` | partilhado com `perfil_de_autorizacao` (mesma entrada no menuConfig, aba diferente) |
 | `menu` | `menu-subprocess-card` | `administrativo,sessoes` | `sessoes` (via sidebarMenuSettings) |
 | `entidade` | `create-entity-card` | `administrativo` | `administrativo` (via sidebarMenuSettings) |
 
-**Nota:** Quando dois subprocessos partilham o mesmo `menu_scope` (ex: `perfil_de_autorizacao` e `objeto_de_autorizacao`), o macro `admin_subprocess.html` usa a lista de targets do config (`default_target`, `edit_target`, `active_card_id`, `inactive_card_id`) para determinar se o subprocesso está activo. Apenas os cards do subprocesso cujos targets correspondem ao `initial_menu_target` ficam visíveis no servidor. O JavaScript usa o `data-admin-subprocess` (= `config.key`) para o agrupamento correcto.
+**Nota:** Quando dois subprocessos partilham o mesmo `menu_scope` (ex: `sessoes` e `menu`), o macro `admin_subprocess.html` usa a lista de targets do config (`default_target`, `edit_target`, `active_card_id`, `inactive_card_id`) para determinar se o subprocesso está activo. Apenas os cards do subprocesso cujos targets correspondem ao `initial_menu_target` ficam visíveis no servidor. O JavaScript usa o `data-admin-subprocess` (= `config.key`) para o agrupamento correcto.
 
 ### Proibido:
 - Apontar a aba principal para `*-active-card` ou `*-inactive-card` (reservados para as tabelas).

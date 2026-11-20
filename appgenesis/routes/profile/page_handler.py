@@ -13,7 +13,6 @@ from sqlalchemy.orm import Session
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
 from appgenesis.admin_subprocesses.repositories.auth_profile_repository import AuthorizationProfileAdminRepository
-from appgenesis.admin_subprocesses.repositories.objeto_autorizacao_repository import ObjetoAutorizacaoAdminRepository
 from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.services.auth_profile_entity_scope import (
@@ -96,11 +95,6 @@ def _normalize_authorization_profile_target_v1(raw_target: str) -> str:
         "#auth-profile-active-card": "#auth-profile-card",
         "#auth-profile-inactive-card": "#auth-profile-card",
         "#auth-profile-form-card": "#auth-profile-card",
-        "#auth-objeto": "#auth-objeto-card",
-        "#auth-objeto-card": "#auth-objeto-card",
-        "#auth-objeto-active-card": "#auth-objeto-card",
-        "#auth-objeto-inactive-card": "#auth-objeto-card",
-        "#auth-objeto-form-card": "#auth-objeto-card",
     }
     return target_alias_map.get(clean_target, "")
 
@@ -281,12 +275,6 @@ def _resolve_initial_menu_target(
     if clean_menu_key == MENU_MEU_PERFIL_KEY:
         return "#perfil-pessoal-card", ""
     if clean_menu_key == "perfil_de_autorizacao":
-        clean_auth_objeto_edit_key = str(
-            clean_query_edit_params.get("auth_objeto_edit_key") or ""
-        ).strip()
-        if clean_auth_objeto_edit_key:
-            return "#auth-objeto-form-card", ""
-
         clean_auth_profile_edit_key = str(
             clean_query_edit_params.get("auth_profile_edit_key") or ""
         ).strip()
@@ -373,23 +361,6 @@ def _build_auth_profile_return_url_v1(
         query_params["dynamic_process_section"] = clean_dynamic_section
 
     return f"/users/new?{urlencode(query_params)}{clean_target}"
-
-def _build_auth_objeto_return_url_v1(
-    *,
-    target: str = "",
-) -> str:
-    clean_target = _normalize_card_target_v1(target)
-    if not clean_target or clean_target == "#auth-objeto-active-card":
-        clean_target = "#auth-objeto-card"
-
-    query_params: dict[str, str] = {
-        "menu": "perfil_de_autorizacao",
-        "target": clean_target,
-    }
-
-    return f"/users/new?{urlencode(query_params)}{clean_target}"
-
-# APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
 
 def _normalize_sidebar_section_status_for_page_v22(raw_status: object, raw_is_active: object = None) -> str:
     if raw_is_active is False:
@@ -508,7 +479,6 @@ def new_user_page(
     section_key: str = "",
     sidebar_section_edit_key: str = "",
     auth_profile_edit_key: str = "",
-    auth_objeto_edit_key: str = "",
     appgenesis_after_save: str = "",
 ) -> HTMLResponse:
 
@@ -702,7 +672,6 @@ def new_user_page(
     initial_target_query_edit_params_v1 = {
         "sidebar_section_edit_key": sidebar_section_edit_key,
         "auth_profile_edit_key": auth_profile_edit_key,
-        "auth_objeto_edit_key": auth_objeto_edit_key,
     }
 
     initial_menu_target, initial_dynamic_process_section = _resolve_initial_menu_target(
@@ -828,57 +797,6 @@ def new_user_page(
             except Exception:
                 auth_profile_subprocess_state_v1 = None
 
-    # APPGENESIS_ADMIN_SUBPROCESS_STATE_OBJETO_V1_START
-    auth_objeto_subprocess_state_v1 = None
-
-    if auth_profile_menu_visible:
-        auth_objeto_subprocess_config_v1 = get_admin_subprocess_config("objeto_de_autorizacao")
-
-        if auth_objeto_subprocess_config_v1 is not None and auth_objeto_subprocess_config_v1.enabled:
-            try:
-                clean_auth_objeto_edit_key_v1 = (
-                    str(auth_objeto_edit_key or "").strip()
-                    if resolved_menu == "perfil_de_autorizacao"
-                    else ""
-                )
-                auth_objeto_return_target_v1 = (
-                    "#auth-objeto-form-card"
-                    if clean_auth_objeto_edit_key_v1
-                    else "#auth-objeto-card"
-                )
-                auth_objeto_return_url_v1 = _build_auth_objeto_return_url_v1(
-                    target=auth_objeto_return_target_v1,
-                )
-                auth_objeto_repo_v1 = ObjetoAutorizacaoAdminRepository(
-                    auth_objeto_subprocess_config_v1
-                )
-                auth_objeto_rows_v1 = auth_objeto_repo_v1.list_rows(
-                    session,
-                    context={
-                        "user_id": current_user["id"],
-                        "entity_number": (
-                            str(selected_entity_number)
-                            if selected_entity_number is not None
-                            else ""
-                        ),
-                    },
-                )
-                auth_objeto_subprocess_state_v1 = build_admin_subprocess_state(
-                    config=auth_objeto_subprocess_config_v1,
-                    rows=auth_objeto_rows_v1,
-                    edit_key=clean_auth_objeto_edit_key_v1,
-                    menu_key="perfil_de_autorizacao",
-                    return_url=auth_objeto_return_url_v1,
-                    success=profile_success if resolved_menu == "perfil_de_autorizacao" else "",
-                    error=profile_error if resolved_menu == "perfil_de_autorizacao" else "",
-                    sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
-                    visible_sidebar_menu_keys=visible_menu_keys,
-                    menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
-                    active_entity_id=selected_entity_id,
-                )
-            except Exception:
-                auth_objeto_subprocess_state_v1 = None
-    # APPGENESIS_ADMIN_SUBPROCESS_STATE_OBJETO_V1_END
 
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None
@@ -1027,14 +945,12 @@ def new_user_page(
         "appgenesis_after_save": is_post_save_return,
         "sidebar_section_edit_key": str(sidebar_section_edit_key or "").strip().lower(),
         "auth_profile_edit_key": str(auth_profile_edit_key or "").strip().lower(),
-        "auth_objeto_edit_key": str(auth_objeto_edit_key or "").strip().lower(),
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
         "auth_profile_subprocess_state": auth_profile_subprocess_state_v1,
-        "auth_objeto_subprocess_state": auth_objeto_subprocess_state_v1,
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "admin_subprocess_entity_state": admin_subprocess_entity_state,
         "admin_subprocess_user_state": admin_subprocess_user_state,

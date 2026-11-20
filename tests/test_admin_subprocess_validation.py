@@ -17,7 +17,6 @@ _NATIVE_REPOSITORY_BACKED_KEYS = {
     "entidade",
     "sessoes",
     "perfil_de_autorizacao",
-    "objeto_de_autorizacao",
     "menu",
 }
 

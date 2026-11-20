@@ -798,13 +798,6 @@ def _build_profile_menu_tabs_controller_key_candidates_v1(
         if clean_candidate and clean_candidate not in candidates:
             candidates.append(clean_candidate)
 
-    if (
-        _normalize_process_list_source_key_v1(current_menu_key) == "perfil_de_autorizacao"
-        and _normalize_process_list_source_key_v1(field_definition.get("header_key"))
-        == "custom_objeto_de_autorizacao"
-    ):
-        append_candidate("custom_processo")
-
     for raw_candidate in (
         field_definition.get("profile_source_field_key"),
         field_definition.get("profileSourceFieldKey"),

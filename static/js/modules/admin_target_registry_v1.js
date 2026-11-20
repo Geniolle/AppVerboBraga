@@ -72,11 +72,6 @@
     "#auth-profile-active-card": "#auth-profile-card",
     "#auth-profile-inactive-card": "#auth-profile-card",
     "#auth-profile-form-card": "#auth-profile-card",
-    "#auth-objeto": "#auth-objeto-card",
-    "#auth-objeto-card": "#auth-objeto-card",
-    "#auth-objeto-active-card": "#auth-objeto-card",
-    "#auth-objeto-inactive-card": "#auth-objeto-card",
-    "#auth-objeto-form-card": "#auth-objeto-card"
   });
 
   const AUTH_PROFILE_NATIVE_TARGETS_V1 = new Set(
@@ -212,10 +207,6 @@
       "#auth-profile-form-card": "perfil_de_autorizacao",
       "#auth-profile-active-card": "perfil_de_autorizacao",
       "#auth-profile-inactive-card": "perfil_de_autorizacao",
-      "#auth-objeto-card": "objeto_de_autorizacao",
-      "#auth-objeto-form-card": "objeto_de_autorizacao",
-      "#auth-objeto-active-card": "objeto_de_autorizacao",
-      "#auth-objeto-inactive-card": "objeto_de_autorizacao"
     };
     return targetMap[cleanTarget] || "";
   }

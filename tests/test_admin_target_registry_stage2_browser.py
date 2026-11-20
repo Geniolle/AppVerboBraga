@@ -107,12 +107,6 @@ def _browser_console_errors_v1(driver: webdriver.Chrome) -> list[dict]:
             "auth-profile-active-card",
             "Perfis",
         ),
-        (
-            "/users/new?menu=perfil_de_autorizacao&target=auth-objeto-active-card#auth-objeto-active-card",
-            "perfil_de_autorizacao",
-            "auth-objeto-active-card",
-            "Objeto de autorização",
-        ),
     ],
 )
 def test_stage2_admin_target_registry_browser_routes_keep_runtime_behavior(

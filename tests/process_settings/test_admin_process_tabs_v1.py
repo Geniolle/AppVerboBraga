@@ -95,5 +95,4 @@ def test_resolve_process_tab_options_v1_for_authorization_profile():
 
     assert [option["value"] for option in options] == [
         "perfis",
-        "objeto_de_autorizacao",
     ]

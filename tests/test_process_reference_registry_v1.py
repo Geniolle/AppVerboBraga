@@ -25,7 +25,6 @@ def test_new_user_js_consumes_process_reference_registry_constants() -> None:
     assert "const ENTIDADE_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1" in script_text
     assert "const UTILIZADOR_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1" in script_text
     assert "const MENU_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1" in script_text
-    assert "const OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1 = appGenesisProcessReferenceRegistryV1" in script_text
 
 
 def test_process_reference_registry_module_exposes_expected_symbols() -> None:
@@ -40,4 +39,3 @@ def test_process_reference_registry_module_exposes_expected_symbols() -> None:
     assert "ENTIDADE_SUBPROCESS_KEY_V1" in module_text
     assert "UTILIZADOR_SUBPROCESS_KEY_V1" in module_text
     assert "MENU_SUBPROCESS_KEY_V1" in module_text
-    assert "OBJETO_AUTORIZACAO_SUBPROCESS_KEY_V1" in module_text

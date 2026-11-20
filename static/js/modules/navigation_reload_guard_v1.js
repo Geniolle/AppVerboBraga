@@ -184,7 +184,6 @@ function hasProtectedReloadNavigationContextV1(url) {
     "settings_edit_key",
     "settings_action",
     "auth_profile_edit_key",
-    "auth_objeto_edit_key",
     "sidebar_section_edit_key",
     "entity_edit_id",
     "user_edit_id",
@@ -199,7 +198,6 @@ function hasProtectedReloadNavigationContextV1(url) {
   const protectedTargets = new Set([
     "#settings-menu-edit-card",
     "#auth-profile-form-card",
-    "#auth-objeto-form-card",
     "#admin-sidebar-sections-form-card",
     "#edit-user-card",
     "#edit-entity-card"

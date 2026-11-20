@@ -260,7 +260,6 @@
     } else if (cleanMenuKey === "perfil_de_autorizacao") {
       baseItems = [
         { label: "Perfis", target: "#auth-profile-card" },
-        { label: "Objeto de autorização", target: "#auth-objeto-card" }
       ];
     }
 
@@ -457,9 +456,7 @@
       !(
         state.visibleSidebarMenuKeys.has("perfil_de_autorizacao") ||
         (documentRef && documentRef.getElementById("auth-profile-card")) ||
-        (documentRef && documentRef.getElementById("auth-profile-active-card")) ||
-        (documentRef && documentRef.getElementById("auth-objeto-card")) ||
-        (documentRef && documentRef.getElementById("auth-objeto-active-card"))
+        (documentRef && documentRef.getElementById("auth-profile-active-card"))
       )
     ) {
       return;
@@ -470,7 +467,6 @@
       singleView: true,
       items: [
         { label: "Perfis", target: "#auth-profile-card" },
-        { label: "Objeto de autorização", target: "#auth-objeto-card" }
       ]
     };
   }
