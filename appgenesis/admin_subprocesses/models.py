@@ -25,6 +25,10 @@ class AdminFieldConfig:
     readonly_on_edit: bool = False
     css_class: str = ""
     default_value: str = ""
+    # Select dependente: cada opcao pertence a um grupo; so aparecem as opcoes do grupo
+    # escolhido no select indicado em depends_on_input (input_name).
+    option_groups: tuple[tuple[str, str], ...] = ()
+    depends_on_input: str = ""
 
 
 @dataclass(frozen=True)

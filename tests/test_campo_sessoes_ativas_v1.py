@@ -39,3 +39,28 @@ def test_active_sessions_is_accepted_by_normalizers():
 
     assert _normalize_additional_field_list_source_type_v1("active_sessions") == "active_sessions"
     assert _normalize_process_tab_list_source_type_v1("active_sessions", {}) == "active_sessions"
+
+
+def test_menu_options_carry_their_sidebar_section_for_dependent_filter():
+    from appgenesis.services.profile import resolve_active_menu_options_v1
+
+    options = resolve_active_menu_options_v1(
+        [
+            {"key": "empresa", "label": "Empresa", "is_active": True, "is_deleted": False, "sidebar_section_key": "dados_gerais"},
+            {"key": "home", "label": "Home", "is_active": True, "is_deleted": False, "sidebar_section_key": "geral"},
+        ]
+    )
+    by_value = {option["value"]: option["section"] for option in options}
+
+    assert by_value == {"empresa": "dados_gerais", "home": "geral"}
+
+
+def test_menu_origin_filter_script_is_wired_into_page():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    script = (root / "static" / "js" / "modules" / "auth_profile_menu_origin_filter_v1.js").read_text(encoding="utf-8")
+    template = (root / "templates" / "new_user.html").read_text(encoding="utf-8")
+
+    assert 'select[data-depends-on]' in script
+    assert "auth_profile_menu_origin_filter_v1.js" in template

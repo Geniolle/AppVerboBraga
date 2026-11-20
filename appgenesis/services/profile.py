@@ -502,10 +502,17 @@ def resolve_active_menu_options_v1(
     sidebar_menu_settings: list[dict[str, Any]] | None,
 ) -> list[dict[str, str]]:
     settings = [dict(row) for row in (sidebar_menu_settings or []) if isinstance(row, dict)]
-    return _resolve_active_sidebar_menu_list_options_v1(
+    section_by_menu = {
+        _normalize_process_list_source_key_v1(row.get("key")): str(row.get("sidebar_section_key") or "").strip().lower()
+        for row in settings
+    }
+    options = _resolve_active_sidebar_menu_list_options_v1(
         sidebar_menu_settings=settings,
         visible_sidebar_menu_keys=set(),
     )
+    for option in options:
+        option["section"] = section_by_menu.get(option["value"], "")
+    return options
 
 
 def resolve_active_session_options_v1(

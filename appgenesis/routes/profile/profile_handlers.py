@@ -791,10 +791,11 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         allowed_menu_origins = {
             option["value"]
             for option in resolve_active_menu_options_v1(sidebar_settings_for_origin)
+            if option["section"] == clean_session_origin
         }
         if clean_menu_origin not in allowed_menu_origins:
             return _redirect_with_profile_feedback(
-                "Menu de origem inválido ou inativo.",
+                "Menu de origem inválido ou não pertence à sessão escolhida.",
                 is_error=True,
             )
 
