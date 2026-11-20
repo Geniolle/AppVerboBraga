@@ -295,6 +295,15 @@ SESSOES_CONFIG = AdminSubprocessConfig(
 
 AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
     AdminFieldConfig(
+        key="label",
+        label="Nome de perfil",
+        input_name="auth_profile_label",
+        field_type="text",
+        required=True,
+        max_length=80,
+        placeholder="Ex.: Secretaria",
+    ),
+    AdminFieldConfig(
         key="visibility_scope_mode",
         label="Sistema",
         input_name="auth_profile_visibility_scope_mode",
