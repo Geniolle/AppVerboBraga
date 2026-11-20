@@ -1925,6 +1925,7 @@
                       <input type="hidden" name="additional_field_key" value="{{ field.key }}" disabled>
                       <input type="hidden" name="additional_field_label" value="{{ field.label }}" disabled>
                       <input type="hidden" name="additional_field_type" value="{{ additional_field_type }}" disabled>
+                      <input type="hidden" name="additional_field_button_style" value="{{ field.button_style|default('toggle') if additional_field_type == 'flag' else '' }}" disabled>
                       <input type="hidden" name="additional_field_required" value="{% if additional_field_required %}1{% else %}{% endif %}" disabled>
                       <input type="hidden" name="additional_field_size" value="{{ field.size|default('') }}" disabled>
                       <input type="hidden" name="additional_field_list_key" value="{{ field.list_key|default('') }}" disabled>
@@ -1962,6 +1963,18 @@
                         >
                           {% for type_option in settings_edit_data.additional_field_type_options %}
                           <option value="{{ type_option.key }}">{{ type_option.label }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+
+                      <div class="field" data-additional-field-button-style-wrap style="display: none;">
+                        <label for="process-additional-field-editor-button-style">Estilo do botão</label>
+                        <select
+                          id="process-additional-field-editor-button-style"
+                          data-additional-field-editor-button-style
+                        >
+                          {% for style_option in settings_edit_data.additional_field_button_style_options|default([]) %}
+                          <option value="{{ style_option.key }}">{{ style_option.label }}</option>
                           {% endfor %}
                         </select>
                       </div>

@@ -19,6 +19,7 @@ from appgenesis.services.process_settings.normalizers import (
     ADDITIONAL_FIELD_MAX_SIZE,
     ADDITIONAL_FIELD_TEXTUAL_TYPES,
     ADDITIONAL_FIELD_TYPE_KEYS,
+    ADDITIONAL_FIELD_BUTTON_STYLES,
     ADDITIONAL_FIELD_TYPES,
     MENU_CONFIG_DISPLAY_ORDER_KEY,
     MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY,
@@ -302,6 +303,9 @@ def get_sidebar_menu_settings(
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
                 ],
+                "additional_field_button_style_options": [
+                    dict(item) for item in ADDITIONAL_FIELD_BUTTON_STYLES
+                ],
                 **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": default_index,
                 "_has_explicit_order": explicit_display_order is not None,
@@ -411,6 +415,9 @@ def get_sidebar_menu_settings(
                 "process_list_columns": process_layout_config["list_columns"],
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
+                ],
+                "additional_field_button_style_options": [
+                    dict(item) for item in ADDITIONAL_FIELD_BUTTON_STYLES
                 ],
                 **_build_admin_subprocess_sidebar_metadata(menu_key),
                 "_fallback_order": fallback_order,

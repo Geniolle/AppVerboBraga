@@ -60,6 +60,7 @@ def _call_handler(SessionLocal, current_user, is_admin, permissions, **form_over
         additional_field_key=[],
         additional_field_label=[],
         additional_field_type=[],
+        additional_field_button_style=[],
         additional_field_required=[],
         additional_field_size=[],
         additional_field_list_key=[],
@@ -149,6 +150,7 @@ def test_edit_additional_fields_owner_success_creates_rows():
         additional_field_key=["", ""],
         additional_field_label=["Estado", "Motivo"],
         additional_field_type=["text", "text"],
+        additional_field_button_style=[],
         additional_field_required=["on", ""],
     )
 
@@ -191,6 +193,7 @@ def test_edit_additional_fields_removal_via_blank_rows():
         additional_field_key=[""],
         additional_field_label=[""],
         additional_field_type=["text"],
+        additional_field_button_style=[],
     )
 
     assert response.status_code == 303
@@ -210,6 +213,7 @@ def test_edit_additional_fields_protected_menu_key_blocks_and_reports_error():
         additional_field_key=[""],
         additional_field_label=["Estado"],
         additional_field_type=["text"],
+        additional_field_button_style=[],
     )
 
     assert response.status_code == 303
@@ -230,6 +234,7 @@ def test_edit_additional_fields_menu_not_found_error_redirect():
         additional_field_key=[""],
         additional_field_label=["Estado"],
         additional_field_type=["text"],
+        additional_field_button_style=[],
     )
 
     assert response.status_code == 303
@@ -305,6 +310,7 @@ def test_regression_header_restore_after_additional_fields_save_locks_current_be
         additional_field_key=["", ""],
         additional_field_label=["Secao 1", "Campo A"],
         additional_field_type=["header", "text"],
+        additional_field_button_style=[],
     )
     assert first_response.status_code == 303
 
@@ -321,6 +327,7 @@ def test_regression_header_restore_after_additional_fields_save_locks_current_be
         additional_field_key=["custom_secao_1", "custom_campo_a", "", ""],
         additional_field_label=["Secao 1", "Campo A", "Secao 2", "Campo B"],
         additional_field_type=["header", "text", "header", "text"],
+        additional_field_button_style=[],
     )
     assert second_response.status_code == 303
 

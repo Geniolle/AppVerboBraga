@@ -22,6 +22,7 @@ from appgenesis.services.process_settings.normalizers import (
     _load_menu_config,
     _menu_exists,
     _normalize_additional_field_type,
+    _normalize_additional_field_button_style,
     _normalize_custom_field_key,
     _normalize_menu_key,
     _normalize_sentence_case_text,
@@ -195,6 +196,11 @@ def normalize_menu_process_additional_fields_v1(
 
         if item_size is not None:
             normalized_item["size"] = item_size
+
+        if item_type == "flag":
+            normalized_item["button_style"] = _normalize_additional_field_button_style(
+                raw_item.get("button_style")
+            )
 
         if item_type == "list" and item_list_key:
             normalized_item["list_key"] = item_list_key
@@ -763,6 +769,11 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
 
         if item_size is not None:
             normalized_item["size"] = item_size
+
+        if item_type == "flag":
+            normalized_item["button_style"] = _normalize_additional_field_button_style(
+                raw_item.get("button_style")
+            )
 
         if item_type == "list":
             normalized_item["list_source_type"] = item_list_source_type
