@@ -625,6 +625,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_session_origin = str(
         submitted_form.get("auth_profile_session_origin") or ""
     ).strip().lower()
+    clean_menu_origin = str(
+        submitted_form.get("auth_profile_menu_origin") or ""
+    ).strip().lower()
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -769,16 +772,29 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             selected_entity_id=resolved_selected_entity_id,
             permissions=entity_permissions,
         )
-        from appgenesis.services.profile import resolve_active_session_options_v1
+        from appgenesis.services.profile import (
+            resolve_active_menu_options_v1,
+            resolve_active_session_options_v1,
+        )
         from appgenesis.menu_settings import get_sidebar_menu_settings
 
+        sidebar_settings_for_origin = get_sidebar_menu_settings(session)
         allowed_session_origins = {
             option["value"]
-            for option in resolve_active_session_options_v1(get_sidebar_menu_settings(session))
+            for option in resolve_active_session_options_v1(sidebar_settings_for_origin)
         }
         if clean_session_origin not in allowed_session_origins:
             return _redirect_with_profile_feedback(
                 "Sessão da origem inválida ou inativa.",
+                is_error=True,
+            )
+        allowed_menu_origins = {
+            option["value"]
+            for option in resolve_active_menu_options_v1(sidebar_settings_for_origin)
+        }
+        if clean_menu_origin not in allowed_menu_origins:
+            return _redirect_with_profile_feedback(
+                "Menu de origem inválido ou inativo.",
                 is_error=True,
             )
 
@@ -790,6 +806,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "visibility_scope_mode": clean_scope_mode,
                 "status": clean_status,
                 "session_origin": clean_session_origin,
+                "menu_origin": clean_menu_origin,
                 "dynamic_values": dynamic_field_values,
             },
             context={
