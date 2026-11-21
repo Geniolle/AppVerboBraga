@@ -6416,7 +6416,7 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   }
 }
 
-/* Agenda: grade de 12 colunas. Linha 1: Tipo | Organizador (max 160px) | Titulo (8). Linha 2: 4 campos iguais (3). */
+/* Agenda: grade de 12 colunas. Linha 1: Tipo | Organizador (max 160px) | Titulo (8). Linha 2: 4 campos iguais (3). Linha 3: Detalhes (12). Linha 4: Localizacao | Morada (6). Linha 5: Inserir | Atribuir | Precisa (4). */
 #dynamic-process-edit-form[data-menu-key="agenda"] .personal-grid {
   grid-template-columns: repeat(12, minmax(0, 1fr));
 }
@@ -6451,16 +6451,16 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   grid-column: span 6;
 }
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_detalhes_do_agendamento"] {
-  grid-column: span 6;
+  grid-column: span 12;
 }
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_inserir_data_na_escala"] {
-  grid-column: span 3;
+  grid-column: span 4;
 }
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_atribuir_aos_recados"] {
-  grid-column: span 3;
+  grid-column: span 4;
 }
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_precisa_de_apoio_dos_departamentos"] {
-  grid-column: span 3;
+  grid-column: span 4;
 }
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_tipo_de_agendamento"],
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_organizador"] {
