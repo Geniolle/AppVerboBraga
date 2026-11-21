@@ -6397,3 +6397,21 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 .appgenesis-card-header-v1 > .dynamic-process-list-create-btn-v1 {
   margin-right: auto !important;
 }
+
+/* Formulario de processo de lista (inline na linha): 3 campos por linha, como nos processos dinamicos. */
+.dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.dynamic-process-inline-editor-row .profile-edit-form .field.full {
+  grid-column: 1 / -1;
+}
+@media (max-width: 900px) {
+  .dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
+    grid-template-columns: 1fr;
+  }
+}
