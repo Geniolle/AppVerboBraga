@@ -53,6 +53,10 @@
     "#funcoes-administrativas-form-card",
     "#funcoes-administrativas-active-card",
     "#funcoes-administrativas-inactive-card",
+    "#departamentos-card",
+    "#departamentos-form-card",
+    "#departamentos-active-card",
+    "#departamentos-inactive-card",
     "#auth-profile-form-card",
     "#auth-profile-active-card",
     "#auth-profile-inactive-card"
@@ -65,6 +69,10 @@
     "#menu-subprocess-card-active",
     "#menu-subprocess-card-inactive",
     "#admin-sidebar-sections-card",
+    "#departamentos-card",
+    "#departamentos-form-card",
+    "#departamentos-active-card",
+    "#departamentos-inactive-card",
     "#admin-sidebar-sections-card-active",
     "#admin-sidebar-sections-card-inactive",
     "#admin-sidebar-sections-form-card",
@@ -219,6 +227,10 @@
       "#funcoes-administrativas-form-card": "funcoes_administrativas",
       "#funcoes-administrativas-active-card": "funcoes_administrativas",
       "#funcoes-administrativas-inactive-card": "funcoes_administrativas",
+      "#departamentos-card": "departamentos",
+      "#departamentos-form-card": "departamentos",
+      "#departamentos-active-card": "departamentos",
+      "#departamentos-inactive-card": "departamentos",
     };
     return targetMap[cleanTarget] || "";
   }

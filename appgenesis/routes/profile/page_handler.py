@@ -488,6 +488,7 @@ def new_user_page(
     auth_profile_copy_key: str = "",
     functions_edit_key: str = "",
     functions_copy_key: str = "",
+    departments_edit_key: str = "",
     appgenesis_after_save: str = "",
 ) -> HTMLResponse:
 
@@ -511,7 +512,7 @@ def new_user_page(
     )
 
     if resolved_menu == ESTRUTURAS_MENU_KEY_V1:
-        if resolved_admin_tab not in {"contas", "sessoes"}:
+        if resolved_admin_tab not in {"contas", "sessoes", "departamentos"}:
             resolved_admin_tab = "contas"
     else:
         if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas"}:
@@ -927,6 +928,41 @@ def new_user_page(
             except Exception:
                 funcoes_subprocess_state_v1 = None
 
+    # Departamentos (Sistema > Definições > Departamentos): lista, criar, editar e eliminar.
+    departamentos_subprocess_state_v1 = None
+    if resolved_menu == "sessoes" or "sessoes" in visible_menu_keys:
+        departamentos_config_v1 = get_admin_subprocess_config("departamentos")
+        if departamentos_config_v1 is not None and departamentos_config_v1.enabled:
+            try:
+                from appgenesis.admin_subprocesses.repositories.departments_repository import (
+                    DepartmentsAdminRepository,
+                )
+
+                clean_departments_edit_key_v1 = str(departments_edit_key or "").strip()
+                departamentos_return_url_v1 = (
+                    "/users/new?menu=sessoes&admin_tab=departamentos"
+                    "&target=departamentos-card#departamentos-card"
+                )
+                departamentos_rows_v1 = DepartmentsAdminRepository(departamentos_config_v1).list_rows(
+                    session,
+                    {"entity_id": selected_entity_id},
+                )
+                departamentos_subprocess_state_v1 = build_admin_subprocess_state(
+                    config=departamentos_config_v1,
+                    rows=departamentos_rows_v1,
+                    edit_key=clean_departments_edit_key_v1,
+                    menu_key="sessoes",
+                    return_url=departamentos_return_url_v1,
+                    success=profile_success if resolved_menu == "sessoes" else "",
+                    error=profile_error if resolved_menu == "sessoes" else "",
+                    sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
+                    visible_sidebar_menu_keys=visible_menu_keys,
+                    menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
+                    active_entity_id=selected_entity_id,
+                )
+            except Exception:
+                departamentos_subprocess_state_v1 = None
+
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None
 
@@ -1081,6 +1117,7 @@ def new_user_page(
         "admin_subprocess_state": admin_subprocess_state_v2,
         "auth_profile_subprocess_state": auth_profile_subprocess_state_v1,
         "funcoes_subprocess_state": funcoes_subprocess_state_v1,
+        "departamentos_subprocess_state": departamentos_subprocess_state_v1,
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "admin_subprocess_entity_state": admin_subprocess_entity_state,
         "admin_subprocess_user_state": admin_subprocess_user_state,

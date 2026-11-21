@@ -838,11 +838,101 @@ FUNCTIONS_ADMIN_CONFIG = AdminSubprocessConfig(
 )
 
 
+DEPARTAMENTOS_ADMIN_TECHNICAL_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Nome do departamento",
+        input_name="departments_label",
+        field_type="text",
+        required=True,
+        max_length=150,
+    ),
+    AdminFieldConfig(
+        key="description",
+        label="Descrição",
+        input_name="departments_description",
+        field_type="text",
+        max_length=500,
+    ),
+    AdminFieldConfig(
+        key="status",
+        label="Estado",
+        input_name="departments_status",
+        field_type="select",
+        required=True,
+        options=(
+            ("ativo", "Ativo"),
+            ("inativo", "Inativo"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="entity_number",
+        label="Entidade",
+        input_name="departments_entity_number_display",
+        field_type="readonly",
+    ),
+)
+
+_DEPARTAMENTOS_ADMIN_COLUMNS = tuple(
+    replace(column, label="DEPARTAMENTO") if column.key == "label" else column
+    for column in AUTHORIZATION_PROFILE_CONFIG.columns
+    if column.key in {"label", "status"}
+)
+
+DEPARTAMENTOS_ADMIN_CONFIG = AdminSubprocessConfig(
+    key="departamentos",
+    label="Departamentos",
+    singular_label="Departamento",
+    plural_label="Departamentos",
+    edit_param="departments_edit_key",
+    row_click_edit=True,
+    default_target="departamentos-card",
+    edit_target="departamentos-form-card",
+    create_title="Criar departamento",
+    edit_title="Editar departamento",
+    active_title="Departamentos ativos",
+    inactive_title="Departamentos inativos",
+    active_card_id="departamentos-active-card",
+    inactive_card_id="departamentos-inactive-card",
+    active_table_id="departamentos-active-table",
+    inactive_table_id="departamentos-inactive-table",
+    active_limiter_id="departamentos-active-limiter",
+    inactive_limiter_id="departamentos-inactive-limiter",
+    save_endpoint="/users/departments/save",
+    create_endpoint="/users/departments/save",
+    update_endpoint="/users/departments/save",
+    delete_endpoint="/users/departments/delete",
+    repository_name="departments",
+    repository_class="appgenesis.admin_subprocesses.repositories.departments_repository.DepartmentsAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="departments_mode",
+    edit_key_field="original_departments_key",
+    return_url_field="departments_return_url",
+    create_mode_value="create",
+    edit_mode_value="edit",
+    enabled=True,
+    migration_status="native",
+    form_grid_css_class="",
+    fields=DEPARTAMENTOS_ADMIN_TECHNICAL_FIELDS,
+    columns=_DEPARTAMENTOS_ADMIN_COLUMNS,
+    actions=AUTHORIZATION_PROFILE_CONFIG.actions,
+    create_toggle_in_active_header=True,
+    menu_scope="sessoes",
+    empty_active_message="Sem departamentos ativos.",
+    empty_inactive_message="Sem departamentos inativos.",
+)
+
+
 ADMIN_SUBPROCESS_REGISTRY = {
     ENTIDADE_CONFIG.key: ENTIDADE_CONFIG,
     SESSOES_CONFIG.key: SESSOES_CONFIG,
     AUTHORIZATION_PROFILE_CONFIG.key: AUTHORIZATION_PROFILE_CONFIG,
     FUNCTIONS_ADMIN_CONFIG.key: FUNCTIONS_ADMIN_CONFIG,
+    DEPARTAMENTOS_ADMIN_CONFIG.key: DEPARTAMENTOS_ADMIN_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,
