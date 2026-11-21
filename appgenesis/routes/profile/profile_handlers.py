@@ -797,7 +797,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
         }
         if clean_session_origin not in allowed_session_origins:
             return _redirect_with_profile_feedback(
-                "Sessão da origem inválida ou inativa.",
+                "Definição da origem inválida ou inativa.",
                 is_error=True,
             )
         allowed_menu_origins = {

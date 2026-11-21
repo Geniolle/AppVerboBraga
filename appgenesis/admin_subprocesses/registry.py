@@ -252,7 +252,7 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
 SESSOES_CONFIG = AdminSubprocessConfig(
     key="sessoes",
     label="Definições",
-    singular_label="Sessão",
+    singular_label="Definição",
     plural_label="Definições",
     edit_param="sidebar_section_edit_key",
     default_target="admin-sidebar-sections-card",
@@ -306,7 +306,7 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
     ),
     AdminFieldConfig(
         key="session_origin",
-        label="Sessão da origem",
+        label="Definição da origem",
         input_name="auth_profile_session_origin",
         field_type="select",
         required=True,

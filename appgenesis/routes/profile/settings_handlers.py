@@ -706,13 +706,13 @@ def save_one_sidebar_section_v19(
             if not found_section:
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
-                        "Sessão não encontrada para edição.",
+                        "Definição não encontrada para edição.",
                         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     )
                 return _redirect_sidebar_section_message_v19(
                     safe_return_url,
                     "error",
-                    "Sessão não encontrada para edição.",
+                    "Definição não encontrada para edição.",
                 )
         else:
             used_keys = {
@@ -783,9 +783,9 @@ def save_one_sidebar_section_v19(
         )
 
         _success_msg = (
-            "Sessão atualizada com sucesso."
+            "Definição atualizada com sucesso."
             if clean_mode == "edit"
-            else "Sessão criada com sucesso."
+            else "Definição criada com sucesso."
         )
         _success_url = _build_sidebar_sections_success_url_v1(_success_msg)
 
@@ -888,7 +888,7 @@ def move_one_sidebar_section_v25(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Sessão não encontrada para mover.",
+                "Definição não encontrada para mover.",
             )
 
         target_index = (
@@ -899,7 +899,7 @@ def move_one_sidebar_section_v25(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "success",
-                "Sessão já está no limite da hierarquia.",
+                "Definição já está no limite da hierarquia.",
             )
 
         payload_sections[current_index], payload_sections[target_index] = (
@@ -998,7 +998,7 @@ def delete_one_sidebar_section_v1(
         return _redirect_sidebar_section_message_v19(
             safe_return_url,
             "success",
-            "Sessão eliminada com sucesso.",
+            "Definição eliminada com sucesso.",
         )
 
 # APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_END
