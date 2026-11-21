@@ -747,7 +747,8 @@ function buildProcessSections(setting, processValuesByField = {}) {
         : processListsByKey.get(optionListKey) || [],
       isRequired: normalizeProcessFieldRequired(optionRequiredRaw),
       editableWhen: option.editable_when || null,
-      requiredWhen: option.required_when || null
+      requiredWhen: option.required_when || null,
+      visibleWhen: option.visible_when || null
     });
   });
 
@@ -763,6 +764,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       isRequired: Boolean(fieldMeta.isRequired),
       editableWhen: fieldMeta.editableWhen || null,
       requiredWhen: fieldMeta.requiredWhen || null,
+      visibleWhen: fieldMeta.visibleWhen || null,
       listKey: normalizeMenuKey(fieldMeta.listKey),
       listOptions: Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions.slice() : [],
       value: typeof fieldValue === "string" ? fieldValue : "",
@@ -2073,7 +2075,7 @@ function openDynamicProcessCreateInlineV1(sectionFields, layoutConfig, bodyEl) {
 }
 
 // Move o formulario para uma linha da tabela (apos anchorRowEl, ou no topo se nulo).
-// Campos com editable_when / required_when: editavel e obrigatorio so quando o campo de gatilho tem o valor da regra.
+// Regras por campo: editable_when, required_when e visible_when (equals ou is_not_empty).
 function applyConditionalProcessFieldRulesV1(formEl) {
   if (!formEl) {
     return;
@@ -2088,10 +2090,18 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     }
     return String(triggerEl.value || "").trim().toLowerCase();
   };
+  const ruleMet = (rule) => {
+    const current = readTriggerValue(rule.trigger_field);
+    if (rule.operator === "is_not_empty") {
+      return current !== "";
+    }
+    return current === String(rule.trigger_value).trim().toLowerCase();
+  };
   formEl.querySelectorAll("[data-process-field-key]").forEach((containerEl) => {
     const editableRaw = containerEl.dataset.editableWhen;
     const requiredRaw = containerEl.dataset.requiredWhen;
-    if (!editableRaw && !requiredRaw) {
+    const visibleRaw = containerEl.dataset.visibleWhen;
+    if (!editableRaw && !requiredRaw && !visibleRaw) {
       return;
     }
     const inputEl = containerEl.querySelector("input, select, textarea");
@@ -2100,18 +2110,23 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     }
     const labelEl = containerEl.querySelector("label");
     const fieldLabel = containerEl.dataset.fieldLabel || "";
-    if (editableRaw) {
-      const rule = JSON.parse(editableRaw);
-      const editable = readTriggerValue(rule.trigger_field) === String(rule.trigger_value).trim().toLowerCase();
-      inputEl.disabled = !editable;
+    let visible = true;
+    if (visibleRaw) {
+      visible = ruleMet(JSON.parse(visibleRaw));
+      containerEl.style.display = visible ? "" : "none";
     }
+    let editable = true;
+    if (editableRaw) {
+      editable = ruleMet(JSON.parse(editableRaw));
+    }
+    inputEl.disabled = !visible || !editable;
+    let required = false;
     if (requiredRaw) {
-      const rule = JSON.parse(requiredRaw);
-      const required = readTriggerValue(rule.trigger_field) === String(rule.trigger_value).trim().toLowerCase();
-      inputEl.required = required;
-      if (labelEl && fieldLabel) {
-        labelEl.textContent = required ? `${fieldLabel} *` : fieldLabel;
-      }
+      required = ruleMet(JSON.parse(requiredRaw));
+    }
+    inputEl.required = visible && required;
+    if (labelEl && fieldLabel && requiredRaw) {
+      labelEl.textContent = required && visible ? `${fieldLabel} *` : fieldLabel;
     }
   });
 }
@@ -3585,6 +3600,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       }
       if (field.requiredWhen) {
         fieldContainerEl.dataset.requiredWhen = JSON.stringify(field.requiredWhen);
+      }
+      if (field.visibleWhen) {
+        fieldContainerEl.dataset.visibleWhen = JSON.stringify(field.visibleWhen);
       }
       fieldContainerEl.dataset.fieldLabel = fieldLabel;
 
