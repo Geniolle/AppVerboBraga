@@ -18,6 +18,11 @@ from appgenesis.admin_subprocesses.repositories.auth_profile_repository import (
     AuthorizationProfileAdminRepository,
 )
 from appgenesis.db.session import SessionLocal
+from appgenesis.services.process_records_service import (
+    ENTITY_RECORD_MENU_KEYS,
+    create_process_record,
+    update_process_record,
+)
 from appgenesis.domains.meu_perfil.use_cases import (
     UpdateWhatsappVerificationFailure,
     execute_verify_whatsapp_profile,
@@ -1589,6 +1594,86 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
+def _save_entity_process_record(
+    *,
+    session: Session,
+    submitted_form: Any,
+    process_setting: dict[str, Any],
+    menu_key: str,
+    section_key: str,
+    section_field_keys: list[str],
+    history_action: str,
+    record_id: str,
+    entity_id: int,
+    user_id: int,
+) -> RedirectResponse:
+    """Criar, editar ou mudar estado de um registo de processo partilhado por entidade."""
+    field_meta_by_key = {
+        str(option.get("key") or "").strip().lower(): option
+        for option in (process_setting.get("process_field_options") or [])
+        if isinstance(option, dict)
+    }
+    values: dict[str, str] = {}
+    missing_labels: list[str] = []
+    for field_key in section_field_keys:
+        meta = field_meta_by_key.get(field_key) or {}
+        field_type = _normalize_process_field_type(meta.get("field_type"))
+        raw_value = str(submitted_form.get(f"process_field__{field_key}") or "").strip()
+        if field_type == "flag":
+            values[field_key] = "1" if raw_value == "1" else "0"
+            continue
+        if raw_value:
+            values[field_key] = raw_value
+        elif _normalize_process_field_required(meta.get("is_required", meta.get("required"))):
+            missing_labels.append(str(meta.get("label") or field_key))
+
+    def _redirect(**params: Any) -> RedirectResponse:
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(submitted_form, menu=menu_key, **params),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    if history_action in {"update", "toggle_status"}:
+        if not record_id:
+            return _redirect(profile_error="Registo não identificado.")
+        if history_action == "toggle_status":
+            requested_state = str(submitted_form.get("history_record_state") or "").strip().lower()
+            changed = update_process_record(
+                session,
+                entity_id=entity_id,
+                menu_key=menu_key,
+                record_id=record_id,
+                state=requested_state or None,
+            )
+        else:
+            if missing_labels:
+                return _redirect(profile_error=f"Preencha: {', '.join(missing_labels)}.")
+            changed = update_process_record(
+                session,
+                entity_id=entity_id,
+                menu_key=menu_key,
+                record_id=record_id,
+                values=values,
+            )
+        if not changed:
+            return _redirect(profile_error="Registo não encontrado.")
+        session.commit()
+        return _redirect(profile_success="Registo atualizado com sucesso.")
+
+    if missing_labels:
+        return _redirect(profile_error=f"Preencha: {', '.join(missing_labels)}.")
+    create_process_record(
+        session,
+        entity_id=entity_id,
+        menu_key=menu_key,
+        values=values,
+        section_key=section_key,
+        created_by_user_id=user_id,
+    )
+    session.commit()
+    return _redirect(profile_success="Registo criado com sucesso.")
+
+
 @router.post("/users/profile/process-data")
 async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
@@ -1690,6 +1775,20 @@ async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
                     profile_error="Sem campos configurados para esta aba.",
                 ),
                 status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+        if clean_menu_key in ENTITY_RECORD_MENU_KEYS:
+            return _save_entity_process_record(
+                session=session,
+                submitted_form=submitted_form,
+                process_setting=process_setting,
+                menu_key=clean_menu_key,
+                section_key=requested_section_key,
+                section_field_keys=section_field_keys,
+                history_action=requested_history_action,
+                record_id=requested_history_record_id,
+                entity_id=get_session_entity_id(request),
+                user_id=current_user["id"],
             )
 
         field_meta_by_key: dict[str, dict[str, Any]] = {}

@@ -16,6 +16,9 @@ from sqlalchemy.orm import Session
 
 from appgenesis.models.process_record import ProcessRecord
 
+# Processos de lista cujos registos ficam na tabela process_records (partilhados por entidade).
+ENTITY_RECORD_MENU_KEYS = frozenset({"agenda"})
+
 STATE_ACTIVE = "ativo"
 STATE_INACTIVE = "inativo"
 _VALID_STATES = {STATE_ACTIVE, STATE_INACTIVE}
@@ -178,6 +181,7 @@ def _find_row(session: Session, *, entity_id: Any, menu_key: Any, record_id: Any
 
 
 __all__ = [
+    "ENTITY_RECORD_MENU_KEYS",
     "STATE_ACTIVE",
     "STATE_INACTIVE",
     "create_process_record",
