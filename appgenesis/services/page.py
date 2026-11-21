@@ -58,6 +58,11 @@ from appgenesis.domains.meu_perfil.visibility import apply_meu_perfil_subsequent
 
 
 
+from appgenesis.services.process_records_service import (
+    ENTITY_RECORD_MENU_KEYS,
+    list_process_records,
+)
+
 def _serialize_resolved_list_option_labels_v1(
     resolved_options: list[dict[str, str]] | None,
 ) -> list[str]:
@@ -303,6 +308,16 @@ def _resolve_actor_menu_process_maps(
                 quantity_values_by_rule[rule_key] = quantity_values
         if quantity_values_by_rule:
             menu_process_quantity_values_map[menu_key] = quantity_values_by_rule
+        if menu_key in ENTITY_RECORD_MENU_KEYS:
+            # Processos partilhados por entidade (ex.: Agenda): registos na tabela process_records.
+            menu_history_rows = (
+                list_process_records(session, entity_id=selected_entity_id, menu_key=menu_key)
+                if selected_entity_id is not None
+                else []
+            )
+            if menu_history_rows:
+                menu_process_history_map[menu_key] = menu_history_rows
+            continue
         history_storage_key = build_menu_process_records_storage_key(menu_key)
         if history_storage_key:
             menu_history_rows = parse_menu_process_records(actor_profile_fields.get(history_storage_key))
