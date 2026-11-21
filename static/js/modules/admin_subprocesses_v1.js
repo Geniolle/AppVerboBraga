@@ -845,7 +845,7 @@
       return visibleCreateCard;
     }
 
-    throw new Error("Não foi possível localizar a área principal de Sessões para substituir o card.");
+    throw new Error("Não foi possível localizar a área principal de Definições para substituir o card.");
   }
 
   function _replaceSessoesListCardV1(cardId, nextCard) {

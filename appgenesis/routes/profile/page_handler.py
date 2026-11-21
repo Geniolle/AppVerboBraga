@@ -594,7 +594,7 @@ def new_user_page(
         # APPGENESIS_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
 
         # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_START
-        # Se é um retorno pós-save de Sessões, limpar sidebar_section_edit_key antes de
+        # Se é um retorno pós-save de Definições, limpar sidebar_section_edit_key antes de
         # qualquer uso. Garante que o card de edição não reabre mesmo que a URL ainda
         # contenha o parâmetro por algum motivo.
         if (

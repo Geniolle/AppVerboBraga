@@ -251,9 +251,9 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
 
 SESSOES_CONFIG = AdminSubprocessConfig(
     key="sessoes",
-    label="Sessões",
+    label="Definições",
     singular_label="Sessão",
-    plural_label="Sessões",
+    plural_label="Definições",
     edit_param="sidebar_section_edit_key",
     default_target="admin-sidebar-sections-card",
     # Cartoes reais da lista (o "admin-sidebar-sections-card" nao existe no DOM):
@@ -263,8 +263,8 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     edit_target="admin-sidebar-sections-form-card",
     create_title="Nova sessão",
     edit_title="Editar sessão",
-    active_title="Sessões ativas",
-    inactive_title="Sessões inativas",
+    active_title="Definições ativas",
+    inactive_title="Definições inativas",
     create_endpoint="/settings/menu/sidebar-section-save",
     update_endpoint="/settings/menu/sidebar-section-save",
     save_endpoint="/settings/menu/sidebar-section-save",
@@ -288,8 +288,8 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     columns=DEFAULT_COLUMNS,
     actions=DEFAULT_ACTIVE_ACTIONS + (SIDEBAR_SECTION_DELETE_ACTION,),
     menu_scope="administrativo,sessoes",
-    empty_active_message="Sem sessões ativas.",
-    empty_inactive_message="Sem sessões inativas.",
+    empty_active_message="Sem definições ativas.",
+    empty_inactive_message="Sem definições inativas.",
     edit_url_extra_params="admin_tab=sessoes&sidebar_sections_tab=sessoes",
     create_toggle_in_active_header=True,
 )
