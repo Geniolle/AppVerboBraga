@@ -4407,6 +4407,10 @@ function setupConditionalProcessVisibility() {
         if (dynamicProcessPopulatingV1) {
           return;
         }
+        // Editor inline aberto: redesenhar a lista fecharia o editor (perde a linha em edicao).
+        if (dynamicProcessInlineHolderV1) {
+          return;
+        }
         const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
         if (!cleanMenuKey) {
           return;
