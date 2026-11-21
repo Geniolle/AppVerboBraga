@@ -6179,10 +6179,10 @@ input.action-btn-cancel,
 
 
 /* APPGENESIS_EMPRESA_LAYOUT_3_FIELDS_V1_START
-   Empresa > Dados institucionais: tres campos por linha; sem o campo Papel no tenant. */
+   Empresa > Dados institucionais: quatro campos por linha; sem o campo Papel no tenant. */
 #empresa-card form:has(> .entity-first-row) {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px 16px;
 }
 
