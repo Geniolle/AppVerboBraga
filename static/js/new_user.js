@@ -1044,6 +1044,9 @@ const dynamicProcessEditGridEl = document.getElementById("dynamic-process-edit-g
 const dynamicProcessEditFormEl = document.getElementById("dynamic-process-edit-form");
 // Verdadeiro enquanto populateDynamicProcessListFormV1 preenche o formulario (evita redesenhos durante o preenchimento).
 let dynamicProcessPopulatingV1 = false;
+// Formulario de processo de lista: posicao original e linha onde esta aberto (edicao/criacao inline).
+let dynamicProcessInlineOriginV1 = null;
+let dynamicProcessInlineHolderV1 = null;
 const dynamicProcessMenuKeyInputEl = document.getElementById("dynamic-process-menu-key");
 const dynamicProcessSectionKeyInputEl = document.getElementById("dynamic-process-section-key");
 const dynamicProcessHistoryActionInputEl = document.getElementById("dynamic-process-history-action");
@@ -2034,7 +2037,75 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig) {
     }
   }
 
-  dynamicProcessEditFormEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  const populatedRecordId = String(row && row.record_id || "").trim();
+  const anchorRowEl = [dynamicProcessActiveBodyEl, dynamicProcessInactiveBodyEl]
+    .filter(Boolean)
+    .map((bodyEl) => bodyEl.querySelector(`tr[data-record-id="${populatedRecordId}"]`))
+    .find(Boolean) || null;
+  placeDynamicProcessFormInRowV1(anchorRowEl, anchorRowEl ? anchorRowEl.parentElement : dynamicProcessActiveBodyEl);
+  dynamicProcessEditFormEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Abre o formulario de criacao logo abaixo do cabecalho da lista (topo do corpo da tabela).
+function openDynamicProcessCreateInlineV1(sectionFields, layoutConfig, bodyEl) {
+  if (!dynamicProcessEditFormEl || !bodyEl) {
+    return;
+  }
+  dynamicProcessEditFormEl.reset();
+  if (dynamicProcessHistoryActionInputEl) {
+    dynamicProcessHistoryActionInputEl.value = "create";
+  }
+  if (dynamicProcessHistoryRecordIdInputEl) {
+    dynamicProcessHistoryRecordIdInputEl.value = "";
+  }
+  if (dynamicProcessSubmitBtnEl) {
+    dynamicProcessSubmitBtnEl.textContent = "Guardar";
+  }
+  placeDynamicProcessFormInRowV1(null, bodyEl);
+  dynamicProcessEditFormEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+// Move o formulario para uma linha da tabela (apos anchorRowEl, ou no topo se nulo).
+function placeDynamicProcessFormInRowV1(anchorRowEl, bodyEl) {
+  if (!dynamicProcessEditFormEl || !bodyEl) {
+    return;
+  }
+  if (!dynamicProcessInlineOriginV1) {
+    dynamicProcessInlineOriginV1 = {
+      parent: dynamicProcessEditFormEl.parentNode,
+      next: dynamicProcessEditFormEl.nextSibling
+    };
+  }
+  let holderEl = dynamicProcessInlineHolderV1;
+  if (!holderEl) {
+    holderEl = document.createElement("tr");
+    holderEl.className = "dynamic-process-inline-editor-row";
+    const cellEl = document.createElement("td");
+    cellEl.colSpan = Math.max(1, bodyEl.parentElement ? bodyEl.parentElement.querySelectorAll("thead th").length : 1);
+    holderEl.appendChild(cellEl);
+  }
+  holderEl.firstElementChild.appendChild(dynamicProcessEditFormEl);
+  if (anchorRowEl) {
+    anchorRowEl.insertAdjacentElement("afterend", holderEl);
+  } else {
+    bodyEl.insertBefore(holderEl, bodyEl.firstChild);
+  }
+  dynamicProcessEditFormEl.style.display = "";
+  dynamicProcessInlineHolderV1 = holderEl;
+}
+
+// Devolve o formulario a sua posicao original e fecha a edicao inline.
+function closeDynamicProcessInlineFormV1() {
+  if (dynamicProcessEditFormEl && dynamicProcessInlineOriginV1 && dynamicProcessInlineOriginV1.parent) {
+    const origin = dynamicProcessInlineOriginV1;
+    const anchor = origin.next && origin.next.parentNode === origin.parent ? origin.next : null;
+    origin.parent.insertBefore(dynamicProcessEditFormEl, anchor);
+    dynamicProcessEditFormEl.style.display = "none";
+  }
+  if (dynamicProcessInlineHolderV1 && dynamicProcessInlineHolderV1.parentNode) {
+    dynamicProcessInlineHolderV1.parentNode.removeChild(dynamicProcessInlineHolderV1);
+  }
+  dynamicProcessInlineHolderV1 = null;
 }
 
 function submitDynamicProcessListRecordStateV1(rowRecordId, nextState) {
@@ -2398,6 +2469,21 @@ function renderDynamicProcessListTableCardV1(options) {
   bodyEl.__processListRowMap = new Map();
   emptyEl.textContent = emptyMessage;
   cardEl.style.display = "";
+
+  // Botao "+" ao lado do titulo para criar registo (padrao dos processos de lista).
+  if (titleEl && titleEl.parentElement) {
+    titleEl.parentElement.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
+    if (typeof safeOptions.onCreate === "function") {
+      const createBtnEl = document.createElement("button");
+      createBtnEl.type = "button";
+      createBtnEl.className = "admin-subprocess-inline-create-btn-v1 dynamic-process-list-create-btn-v1";
+      createBtnEl.textContent = "+";
+      createBtnEl.title = String(layoutConfig.createTitle || "Criar");
+      createBtnEl.setAttribute("aria-label", String(layoutConfig.createTitle || "Criar"));
+      createBtnEl.addEventListener("click", () => safeOptions.onCreate());
+      titleEl.insertAdjacentElement("afterend", createBtnEl);
+    }
+  }
 
   const headerRowEl = document.createElement("tr");
   resolvedColumns.forEach((column) => {
@@ -3267,6 +3353,15 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     : "Campos";
   const layoutConfig = getDynamicProcessLayoutConfig(processSetting, menuLabel, sectionLabel);
   const listProcessLayoutMode = Boolean(layoutConfig.isListProcess);
+  // Processos normais: devolve os cards que a lista escondeu.
+  if (!listProcessLayoutMode) {
+    [dynamicProcessCardEl, dynamicProcessActionCardEl].forEach((cardEl) => {
+      if (cardEl && cardEl.dataset.hiddenByListV1 === "1") {
+        cardEl.style.display = "";
+        delete cardEl.dataset.hiddenByListV1;
+      }
+    });
+  }
   const absenceProcessMode = isAbsenceProcessMenu(cleanMenuKey, menuLabel, sectionLabel);
   // "uses_record_history" (calculado no backend a partir de process_record_uses_history/process_layout
   // no menu_config) permite ativar o modo "Criar <processo>" com lista de registos para qualquer
@@ -3553,6 +3648,13 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       dynamicProcessHistoryBlockEl.style.display = "none";
     }
 
+    closeDynamicProcessInlineFormV1();
+    [dynamicProcessCardEl, dynamicProcessActionCardEl].forEach((cardEl) => {
+      if (cardEl) {
+        cardEl.style.display = "none";
+        cardEl.dataset.hiddenByListV1 = "1";
+      }
+    });
     renderDynamicProcessListTableCardV1({
       cardEl: dynamicProcessActiveCardEl,
       titleEl: dynamicProcessActiveTitleEl,
@@ -3565,7 +3667,8 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       sectionFields,
       layoutConfig,
       title: layoutConfig.activeTitle,
-      emptyMessage: layoutConfig.emptyActiveMessage
+      emptyMessage: layoutConfig.emptyActiveMessage,
+      onCreate: () => openDynamicProcessCreateInlineV1(sectionFields, layoutConfig, dynamicProcessActiveBodyEl)
     });
     renderDynamicProcessListTableCardV1({
       cardEl: dynamicProcessInactiveCardEl,
@@ -4308,6 +4411,7 @@ document.addEventListener("appgenesis:cancelled", function (event) {
   const cardId = card && card.id ? card.id : "";
 
   if (cardId === "dynamic-process-card") {
+    closeDynamicProcessInlineFormV1();
     resetDynamicProcessCancelStateV1();
   }
 
