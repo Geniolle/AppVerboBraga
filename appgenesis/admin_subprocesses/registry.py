@@ -301,7 +301,6 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
         field_type="text",
         required=True,
         max_length=80,
-        placeholder="Ex.: Secretaria",
     ),
     AdminFieldConfig(
         key="session_origin",
