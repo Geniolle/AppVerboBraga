@@ -6182,8 +6182,29 @@ input.action-btn-cancel,
    Empresa > Dados institucionais: quatro campos por linha; sem o campo Papel no tenant. */
 #empresa-card form:has(> .entity-first-row) {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 12px 16px;
+}
+
+/* Linhas 2 a 4 em 4 campos por linha (3 de 12 colunas); na linha 2 o NIF e o Telefone
+   ficam mais estreitos e o Email ganha essa largura. */
+#empresa-card form > .entity-second-row > .field,
+#empresa-card form > .entity-third-row > .field,
+#empresa-card form > .entity-fourth-row > .field {
+  grid-column: span 3;
+}
+
+#empresa-card form > .entity-second-row > .entity-first-row-tax,
+#empresa-card form > .entity-second-row > .entity-second-row-phone {
+  grid-column: span 2;
+}
+
+#empresa-card form > .entity-second-row > .entity-second-row-email {
+  grid-column: span 5;
+}
+
+#empresa-card form > .entity-second-row > .entity-second-row-responsible {
+  grid-column: span 3;
 }
 
 #empresa-card form > .entity-first-row,
