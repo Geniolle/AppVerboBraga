@@ -684,7 +684,7 @@ def update_sidebar_menu_label(
     requested_section_key = _normalize_sidebar_section_key(sidebar_section_key)
     if requested_section_key:
         if requested_section_key not in section_keys_set:
-            return False, "Sessão inválida."
+            return False, "Definição inválida."
         menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = requested_section_key
     elif section_keys:
         current_section_key = _normalize_sidebar_section_key(
@@ -1057,7 +1057,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
     clean_section_key = _normalize_sidebar_section_key(section_key)
 
     if not clean_section_key:
-        return False, "Sessão inválida."
+        return False, "Definição inválida."
 
     administrativo_row = session.execute(
         text(
@@ -1072,7 +1072,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
     ).scalar_one_or_none()
 
     if administrativo_row is None:
-        return False, "Sessão inválida."
+        return False, "Definição inválida."
 
     current_menu_config = _parse_sidebar_menu_config_v2(administrativo_row)
     current_sections = normalize_sidebar_sections(
@@ -1089,7 +1089,7 @@ def delete_sidebar_section(session: Session, section_key: str) -> tuple[bool, st
     )
 
     if target_section is None:
-        return False, "Sessão inválida."
+        return False, "Definição inválida."
 
     if _is_sidebar_section_delete_protected(clean_section_key):
         return False, "Não é permitido eliminar esta sessão."

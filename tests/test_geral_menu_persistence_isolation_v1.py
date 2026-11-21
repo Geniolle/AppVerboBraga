@@ -366,7 +366,7 @@ def test_update_sidebar_menu_label_rejects_invalid_sidebar_section():
     session.close()
 
     assert ok is False
-    assert error == "Sessão inválida."
+    assert error == "Definição inválida."
 
 
 ####################################################################################

@@ -714,7 +714,7 @@
   }
 
   function _showSessoesSaveAjaxSuccessV1(message) {
-    var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Sessão atualizada com sucesso.");
+    var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Definição atualizada com sucesso.");
 
     if (
       window.AppGenesisProcessShell &&
