@@ -2418,6 +2418,16 @@ function renderDynamicProcessListTableCardV1(options) {
     trEl.appendChild(
       createDynamicProcessListActionsCellV1(row, sectionFields, layoutConfig)
     );
+    // Clicar na linha abre a edicao do registo (botoes e campos dentro da linha mantem a sua acao).
+    if (String(row && row.record_id || "").trim()) {
+      trEl.classList.add("dynamic-process-list-row-clickable-v1");
+      trEl.addEventListener("click", (event) => {
+        if (event.target.closest && event.target.closest("button, a, input, select, textarea, label")) {
+          return;
+        }
+        populateDynamicProcessListFormV1(sectionFields, row, layoutConfig);
+      });
+    }
     bodyEl.appendChild(trEl);
   });
 
