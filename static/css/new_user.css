@@ -6287,3 +6287,12 @@ input.action-btn-cancel,
   cursor: default;
 }
 /* APPGENESIS_EMPRESA_LAYOUT_3_FIELDS_V1_END */
+
+
+/* Dados institucionais: modo visualizacao por defeito; o lapis (profile-edit-toggle) abre o formulario. */
+#empresa-card:not(.editing) .profile-edit-form {
+  display: none !important;
+}
+#empresa-card.editing .profile-readonly {
+  display: none;
+}

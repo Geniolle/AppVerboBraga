@@ -184,7 +184,14 @@
         </section>
 
         <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa" {% if initial_menu != 'empresa' %}style="display: none;"{% endif %}>
+          {% if company_profile_data %}
+          <div class="profile-card-header">
+            <h2>Perfil institucional da entidade</h2>
+            <button type="button" class="profile-edit-toggle profile-edit-icon-v1" data-edit-target="empresa-card" aria-label="Editar" title="Editar"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm17.71-10.21a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+          </div>
+          {% else %}
           <h2>Perfil institucional da entidade</h2>
+          {% endif %}
           {% if entity_error and initial_menu == "empresa" %}
             <div class="alert error">{{ entity_error }}</div>
           {% endif %}
@@ -192,7 +199,27 @@
             <div class="alert ok">{{ entity_success }}</div>
           {% endif %}
           {% if company_profile_data %}
-          <form method="post" action="/empresa/update" enctype="multipart/form-data">
+          <div class="profile-readonly">
+            {% if company_profile_data.logo_url %}
+            <img class="profile-photo-readonly-v1" src="{{ company_profile_data.logo_url }}" alt="Imagem da entidade">
+            {% endif %}
+            <div class="personal-grid">
+              <div class="personal-item"><span class="personal-label">Nº da entidade</span><strong class="personal-value">{{ company_profile_data.entity_number or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">País</span><strong class="personal-value">{{ company_profile_data.country or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nome da entidade</span><strong class="personal-value">{{ company_profile_data.name or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Acrónimo</span><strong class="personal-value">{{ company_profile_data.acronym or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nº Identificação Fiscal</span><strong class="personal-value">{{ company_profile_data.tax_id or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Email</span><strong class="personal-value">{{ company_profile_data.email or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Telefone</span><strong class="personal-value">{{ company_profile_data.phone or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nome do responsável</span><strong class="personal-value">{{ company_profile_data.responsible_name or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Morada</span><strong class="personal-value">{{ company_profile_data.address or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nº da porta</span><strong class="personal-value">{{ company_profile_data.door_number or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Freguesia</span><strong class="personal-value">{{ company_profile_data.freguesia or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Código postal</span><strong class="personal-value">{{ company_profile_data.postal_code or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Cidade</span><strong class="personal-value">{{ company_profile_data.city or '-' }}</strong></div>
+            </div>
+          </div>
+          <form method="post" action="/empresa/update" enctype="multipart/form-data" class="profile-edit-form">
             <input type="hidden" name="entity_id" value="{{ company_profile_data.id }}">
             <div class="entity-first-row">
               <div class="field entity-first-row-client">
@@ -277,7 +304,7 @@
             </div>
             <div class="form-action-row">
               <button type="submit" class="action-btn">Guardar</button>
-              <button type="button" class="action-btn-cancel" data-appgenesis-cancel="1" data-appgenesis-cancel-return-url="/users/new?menu=empresa">Cancelar</button>
+              <button type="button" class="action-btn-cancel" data-appgenesis-cancel="1">Cancelar</button>
             </div>
           </form>
           {% else %}
