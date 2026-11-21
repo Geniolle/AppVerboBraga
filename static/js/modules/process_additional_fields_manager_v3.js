@@ -326,7 +326,7 @@
     }
 
     if (listSourceType === "active_sessions") {
-      return "Definições ativas";
+      return "Sessões ativas";
     }
 
     if (listSourceType === "profile_menu_tabs") {

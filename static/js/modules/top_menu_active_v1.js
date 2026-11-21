@@ -388,7 +388,7 @@
       // O rótulo memorizado só é válido para a navegação de URL limpo do Administrativo. Fora
       // desse contexto (ex.: reentrar em Estruturas > Menu depois de visitar outro menu), reagir
       // à mutação do DOM reaplicando esse rótulo forçava de volta uma aba de outro menu (ex.:
-      // "Menu") sobre o conteúdo realmente ativo (ex.: "Definições"), deixando a aba dessincronizada
+      // "Menu") sobre o conteúdo realmente ativo (ex.: "Sessões"), deixando a aba dessincronizada
       // do conteúdo até um refresh recarregar o estado correto a partir do backend.
       activeTabLabelV4 = "";
       return;

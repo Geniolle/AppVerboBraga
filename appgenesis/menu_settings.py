@@ -1713,7 +1713,7 @@ def update_sidebar_sections_v2(
     session.commit()
 
     if updated_menus_count <= 0:
-        return False, "Nenhum menu foi atualizado com a visibilidade das definições."
+        return False, "Nenhum menu foi atualizado com a visibilidade das sessões."
 
     return True, ""
 

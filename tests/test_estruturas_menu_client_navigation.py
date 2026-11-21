@@ -88,7 +88,7 @@ def test_client_navigation_to_estruturas_menu_shows_tables_without_refresh() -> 
         driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='sessoes']").click()
         wait.until(
             lambda drv: (
-                "Definições"
+                "Sessões"
                 in [
                     e.text.strip()
                     for e in drv.find_elements(By.CSS_SELECTOR, ".submenu-item.active")
@@ -143,7 +143,7 @@ def test_reentering_estruturas_keeps_active_tab_and_content_in_sync() -> None:
         driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='sessoes']").click()
         wait.until(
             lambda drv: (
-                "Definições"
+                "Sessões"
                 in [
                     e.text.strip()
                     for e in drv.find_elements(By.CSS_SELECTOR, ".submenu-item.active")
@@ -291,7 +291,7 @@ def test_client_navigation_to_estruturas_menu_shows_inactive_card_without_refres
         driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='sessoes']").click()
         wait.until(
             lambda drv: (
-                "Definições"
+                "Sessões"
                 in [
                     e.text.strip()
                     for e in drv.find_elements(By.CSS_SELECTOR, ".submenu-item.active")
@@ -346,7 +346,7 @@ def _open_estruturas_menu_list_v1(
     driver.find_element(By.CSS_SELECTOR, ".menu-item[data-menu='sessoes']").click()
     wait.until(
         lambda drv: (
-            "Definições"
+            "Sessões"
             in [
                 e.text.strip()
                 for e in drv.find_elements(By.CSS_SELECTOR, ".submenu-item.active")

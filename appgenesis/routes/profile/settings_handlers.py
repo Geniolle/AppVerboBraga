@@ -390,7 +390,7 @@ def _redirect_sidebar_section_edit_error_v19(
     return RedirectResponse(url=url, status_code=status.HTTP_303_SEE_OTHER)
 
 def _build_sidebar_sections_success_url_v1(message: str = "") -> str:
-    """URL de sucesso pós-save de Definições — sempre limpa, sem estado de edição."""
+    """URL de sucesso pós-save de Sessões — sempre limpa, sem estado de edição."""
     from urllib.parse import urlencode, urlunsplit
 
     params = [
@@ -602,14 +602,14 @@ def save_one_sidebar_section_v19(
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
-                    "Apenas administradores podem alterar definições do sidebar.",
+                    "Apenas administradores podem alterar sessões do sidebar.",
                     status_code=status.HTTP_403_FORBIDDEN,
                     redirect_url=safe_return_url,
                 )
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Apenas administradores podem alterar definições do sidebar.",
+                "Apenas administradores podem alterar sessões do sidebar.",
             )
 
         selected_entity_id = get_session_entity_id(request)
@@ -626,14 +626,14 @@ def save_one_sidebar_section_v19(
         ):
             if _is_ajax:
                 return _sidebar_section_json_error_v1(
-                    "Apenas Owner pode alterar definições do sidebar.",
+                    "Apenas Owner pode alterar sessões do sidebar.",
                     status_code=status.HTTP_403_FORBIDDEN,
                     redirect_url=safe_return_url,
                 )
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Apenas Owner pode alterar definições do sidebar.",
+                "Apenas Owner pode alterar sessões do sidebar.",
             )
 
         clean_mode = _normalize_sidebar_section_text_v19(section_mode).lower()
@@ -706,13 +706,13 @@ def save_one_sidebar_section_v19(
             if not found_section:
                 if _is_ajax:
                     return _sidebar_section_json_error_v1(
-                        "Definição não encontrada para edição.",
+                        "Sessão não encontrada para edição.",
                         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     )
                 return _redirect_sidebar_section_message_v19(
                     safe_return_url,
                     "error",
-                    "Definição não encontrada para edição.",
+                    "Sessão não encontrada para edição.",
                 )
         else:
             used_keys = {
@@ -783,9 +783,9 @@ def save_one_sidebar_section_v19(
         )
 
         _success_msg = (
-            "Definição atualizada com sucesso."
+            "Sessão atualizada com sucesso."
             if clean_mode == "edit"
-            else "Definição criada com sucesso."
+            else "Sessão criada com sucesso."
         )
         _success_url = _build_sidebar_sections_success_url_v1(_success_msg)
 
@@ -826,7 +826,7 @@ def move_one_sidebar_section_v25(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Apenas administradores podem alterar definições do sidebar.",
+                "Apenas administradores podem alterar sessões do sidebar.",
             )
 
         selected_entity_id = get_session_entity_id(request)
@@ -844,7 +844,7 @@ def move_one_sidebar_section_v25(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Apenas Owner pode alterar definições do sidebar.",
+                "Apenas Owner pode alterar sessões do sidebar.",
             )
 
         clean_section_key = _slugify_sidebar_section_key_v19(section_key)
@@ -888,7 +888,7 @@ def move_one_sidebar_section_v25(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Definição não encontrada para mover.",
+                "Sessão não encontrada para mover.",
             )
 
         target_index = (
@@ -899,7 +899,7 @@ def move_one_sidebar_section_v25(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "success",
-                "Definição já está no limite da hierarquia.",
+                "Sessão já está no limite da hierarquia.",
             )
 
         payload_sections[current_index], payload_sections[target_index] = (
@@ -964,7 +964,7 @@ def delete_one_sidebar_section_v1(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Apenas administradores podem alterar definições do sidebar.",
+                "Apenas administradores podem alterar sessões do sidebar.",
             )
 
         selected_entity_id = get_session_entity_id(request)
@@ -982,7 +982,7 @@ def delete_one_sidebar_section_v1(
             return _redirect_sidebar_section_message_v19(
                 safe_return_url,
                 "error",
-                "Apenas Owner pode alterar definições do sidebar.",
+                "Apenas Owner pode alterar sessões do sidebar.",
             )
 
         clean_section_key = _slugify_sidebar_section_key_v19(section_key)
@@ -998,7 +998,7 @@ def delete_one_sidebar_section_v1(
         return _redirect_sidebar_section_message_v19(
             safe_return_url,
             "success",
-            "Definição eliminada com sucesso.",
+            "Sessão eliminada com sucesso.",
         )
 
 # APPGENESIS_SESSOES_SERVER_DELETE_ONE_V1_END
@@ -1031,7 +1031,7 @@ def edit_sidebar_sections_v2(
         if not is_admin_user(session, current_user["id"], current_user["login_email"]):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message="Apenas administradores podem alterar definições do sidebar.",
+                    error_message="Apenas administradores podem alterar sessões do sidebar.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key="administrativo",
@@ -1055,7 +1055,7 @@ def edit_sidebar_sections_v2(
         ):
             return RedirectResponse(
                 url=_build_settings_redirect_url(
-                    error_message="Apenas Owner pode alterar definições do sidebar.",
+                    error_message="Apenas Owner pode alterar sessões do sidebar.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key="administrativo",
@@ -1105,7 +1105,7 @@ def edit_sidebar_sections_v2(
             return RedirectResponse(
                 url=_build_settings_redirect_url(
                     error_message=error_message
-                    or "Não foi possível gravar as definições do sidebar.",
+                    or "Não foi possível gravar as sessões do sidebar.",
                     redirect_menu=redirect_menu,
                     redirect_target=redirect_target,
                     settings_edit_key="administrativo",
@@ -1117,7 +1117,7 @@ def edit_sidebar_sections_v2(
 
         return RedirectResponse(
             url=_build_settings_redirect_url(
-                success_message="Definições do sidebar e visibilidade dos menus atualizadas com sucesso.",
+                success_message="Sessões do sidebar e visibilidade dos menus atualizadas com sucesso.",
                 redirect_menu=redirect_menu,
                 redirect_target=redirect_target,
                 settings_edit_key="administrativo",

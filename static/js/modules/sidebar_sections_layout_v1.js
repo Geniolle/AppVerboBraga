@@ -1,5 +1,5 @@
 // APPGENESIS_LEGACY_SESSOES_GUARD_V31_START
-// Guard único que detecta renderização nativa de Definições (admin_subprocess "sessoes").
+// Guard único que detecta renderização nativa de Sessões (admin_subprocess "sessoes").
 // Todos os blocos legados que injetam/criam conteúdo devem verificar esta função antes de correr.
 // Seletores: [data-admin-subprocess="sessoes"] é o atributo definido pelo macro render_admin_subprocess_state.
 function shouldDisableLegacySidebarSectionsRuntimeV1() {
@@ -193,7 +193,7 @@ function shouldDisableLegacySidebarSectionsRuntimeV1() {
 
     return cards.find(function (card) {
       const texto = normalizarTextoSessoesLayout_v2(card.textContent);
-      return texto.includes("sessoes do sidebar") || texto.includes("definições do sidebar");
+      return texto.includes("sessoes do sidebar") || texto.includes("sessões do sidebar");
     }) || null;
   }
 
@@ -1396,7 +1396,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       const parsed = JSON.parse(script.textContent || "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      console.warn("APPGENESIS V6: não foi possível ler definições do template.", error);
+      console.warn("APPGENESIS V6: não foi possível ler sessões do template.", error);
       return [];
     }
   }
@@ -1417,7 +1417,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       });
 
       if (!response.ok) {
-        console.warn("APPGENESIS V6: endpoint de definições respondeu com erro.", response.status);
+        console.warn("APPGENESIS V6: endpoint de sessões respondeu com erro.", response.status);
         return [];
       }
 
@@ -1427,7 +1427,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
         return payload.sections;
       }
     } catch (error) {
-      console.warn("APPGENESIS V6: falha ao consultar definições do BD.", error);
+      console.warn("APPGENESIS V6: falha ao consultar sessões do BD.", error);
     }
 
     return [];
@@ -2308,7 +2308,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       const parsed = JSON.parse(script.textContent || "[]");
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      console.warn("APPGENESIS V9: não foi possível ler definições do template.", error);
+      console.warn("APPGENESIS V9: não foi possível ler sessões do template.", error);
       return [];
     }
   }
@@ -2338,7 +2338,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
         return payload.sections;
       }
     } catch (error) {
-      console.warn("APPGENESIS V9: falha ao carregar definições do BD.", error);
+      console.warn("APPGENESIS V9: falha ao carregar sessões do BD.", error);
     }
 
     return [];
@@ -2608,7 +2608,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
 
       const emptyCell = document.createElement("td");
       emptyCell.colSpan = 4;
-      emptyCell.textContent = tipo === "inativo" ? "Sem definições inativas." : "Sem definições ativas.";
+      emptyCell.textContent = tipo === "inativo" ? "Sem sessões inativas." : "Sem sessões ativas.";
 
       emptyRow.appendChild(emptyCell);
       tbody.appendChild(emptyRow);
@@ -2678,7 +2678,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
 
     formulario.appendChild(descricao);
     formulario.appendChild(criarTabelaEstadoV9("", ativas, "ativo"));
-    formulario.appendChild(criarTabelaEstadoV9("Definições inativas", inativas, "inativo"));
+    formulario.appendChild(criarTabelaEstadoV9("Sessões inativas", inativas, "inativo"));
 
     cardLista.appendChild(titulo);
     cardLista.appendChild(formulario);
@@ -3222,11 +3222,11 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       search.includes("target=admin-sidebar-sections-card") ||
       search.includes("target=admin-sidebar-sections-form-card") ||
       search.includes("admin_tab=sessoes") ||
-      search.includes("admin_tab=definições") ||
+      search.includes("admin_tab=sessões") ||
       search.includes("sidebar_section_edit_key=") ||
       href.includes("dynamic_process_section=sidebar") ||
       href.includes("dynamic_process_section=sessoes") ||
-      href.includes("dynamic_process_section=definições");
+      href.includes("dynamic_process_section=sessões");
   }
 
   function abaSessoesEstaAtivaV12() {
@@ -3497,7 +3497,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
 
 // APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_START
 // Desativado pelo fluxo nativo V30.
-// Motivo: forçava URL/aba de Definições.
+// Motivo: forçava URL/aba de Sessões.
 // APPGENESIS_SESSOES_LIMPAR_DYNAMIC_ENTIDADE_V21_END
 
 // APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_START
@@ -3662,7 +3662,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       };
     }
     catch (error) {
-      console.warn("APPGENESIS V23: falha ao ler split backend de Definições.", error);
+      console.warn("APPGENESIS V23: falha ao ler split backend de Sessões.", error);
       return {
         active: [],
         inactive: []
@@ -3682,7 +3682,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
       return Array.isArray(parsed) ? parsed : [];
     }
     catch (error) {
-      console.warn("APPGENESIS V23: falha ao ler opções de Definições.", error);
+      console.warn("APPGENESIS V23: falha ao ler opções de Sessões.", error);
       return [];
     }
   }
@@ -3844,13 +3844,13 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
     card.dataset.menuScope = "administrativo,sessoes";
 
     const title = document.createElement("h2");
-    title.textContent = "Definições ativas";
+    title.textContent = "Sessões ativas";
     card.appendChild(title);
 
     if (!Array.isArray(sessoesAtivas) || sessoesAtivas.length === 0) {
       const empty = document.createElement("p");
       empty.className = "empty appgenesis-sidebar-section-empty-v23";
-      empty.textContent = "Sem definições ativas.";
+      empty.textContent = "Sem sessões ativas.";
       card.appendChild(empty);
     }
     else {
@@ -3934,7 +3934,7 @@ const createBlock = wrapper && wrapper.querySelector(".appgenesis-create-entry-b
         }
       })
       .catch((error) => {
-        console.warn("APPGENESIS V23: fallback usado para definições ativas.", error);
+        console.warn("APPGENESIS V23: fallback usado para sessões ativas.", error);
       });
   }
 
