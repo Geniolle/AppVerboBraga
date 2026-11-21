@@ -6353,3 +6353,8 @@ input.action-btn-cancel,
 body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-card {
   display: none !important;
 }
+
+/* Processos de lista: linha clicavel abre a edicao do registo. */
+.dynamic-process-list-row-clickable-v1 {
+  cursor: pointer;
+}
