@@ -256,6 +256,7 @@
     } else if (cleanMenuKey === state.ESTRUTURAS_MENU_KEY_V1) {
       baseItems = [
         { label: "Sessões", target: "#admin-sidebar-sections-card" },
+        { label: "Departamentos", target: "#departamentos-card" },
         { label: "Menu", target: "#menu-subprocess-card-active" }
       ];
     } else if (cleanMenuKey === "perfil_de_autorizacao") {

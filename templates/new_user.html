@@ -48,6 +48,9 @@
         {% if funcoes_subprocess_state %}
           {{ render_admin_subprocess_state(funcoes_subprocess_state) }}
         {% endif %}
+        {% if departamentos_subprocess_state %}
+          {{ render_admin_subprocess_state(departamentos_subprocess_state) }}
+        {% endif %}
 
         <!-- APPGENESIS_MENU_SUBPROCESS_V1_START -->
         {% if admin_subprocess_menu_state %}

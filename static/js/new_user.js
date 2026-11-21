@@ -3787,6 +3787,10 @@ function getAdminSubprocessKeyByTargetV1(target) {
     "#funcoes-administrativas-form-card": "funcoes_administrativas",
     "#funcoes-administrativas-active-card": "funcoes_administrativas",
     "#funcoes-administrativas-inactive-card": "funcoes_administrativas",
+    "#departamentos-card": "departamentos",
+    "#departamentos-form-card": "departamentos",
+    "#departamentos-active-card": "departamentos",
+    "#departamentos-inactive-card": "departamentos",
   };
   return targetMap[cleanTarget] || "";
 }
