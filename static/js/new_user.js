@@ -1042,6 +1042,8 @@ const dynamicProcessSectionLabelEl = document.getElementById("dynamic-process-se
 const dynamicProcessReadOnlyGridEl = document.getElementById("dynamic-process-readonly-grid");
 const dynamicProcessEditGridEl = document.getElementById("dynamic-process-edit-grid");
 const dynamicProcessEditFormEl = document.getElementById("dynamic-process-edit-form");
+// Verdadeiro enquanto populateDynamicProcessListFormV1 preenche o formulario (evita redesenhos durante o preenchimento).
+let dynamicProcessPopulatingV1 = false;
 const dynamicProcessMenuKeyInputEl = document.getElementById("dynamic-process-menu-key");
 const dynamicProcessSectionKeyInputEl = document.getElementById("dynamic-process-section-key");
 const dynamicProcessHistoryActionInputEl = document.getElementById("dynamic-process-history-action");
@@ -1991,27 +1993,39 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig) {
       : "Editar registo";
   }
 
-  sectionFields.forEach((field) => {
-    const fieldKey = normalizeMenuKey(field && field.key);
-    if (!fieldKey) {
-      return;
-    }
-    const inputEl = dynamicProcessEditFormEl.querySelector(`[name="process_field__${fieldKey}"]`);
-    if (!inputEl) {
-      return;
-    }
-    const rawValue = String(values[fieldKey] || "").trim();
-    if (inputEl.type === "checkbox") {
-      inputEl.checked = isTruthyFlagValue(rawValue);
+  dynamicProcessPopulatingV1 = true;
+  try {
+    sectionFields.forEach((field) => {
+      const fieldKey = normalizeMenuKey(field && field.key);
+      if (!fieldKey) {
+        return;
+      }
+      const inputEl = dynamicProcessEditFormEl.querySelector(`[name="process_field__${fieldKey}"]`);
+      if (!inputEl) {
+        return;
+      }
+      const rawValue = String(values[fieldKey] || "").trim();
+      if (inputEl.type === "checkbox") {
+        inputEl.checked = isTruthyFlagValue(rawValue);
+        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+      const normalizedValue = normalizeProcessFieldType(field && field.fieldType) === "date"
+        ? normalizeDateInputValue(rawValue)
+        : rawValue;
+      inputEl.value = normalizedValue;
       inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-      return;
-    }
-    const normalizedValue = normalizeProcessFieldType(field && field.fieldType) === "date"
-      ? normalizeDateInputValue(rawValue)
-      : rawValue;
-    inputEl.value = normalizedValue;
-    inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+    });
+  } finally {
+    dynamicProcessPopulatingV1 = false;
+  }
+  // Repoe o estado de edicao do registo selecionado.
+  if (dynamicProcessHistoryActionInputEl) {
+    dynamicProcessHistoryActionInputEl.value = "update";
+  }
+  if (dynamicProcessHistoryRecordIdInputEl) {
+    dynamicProcessHistoryRecordIdInputEl.value = String(row && row.record_id || "").trim();
+  }
 
   if (layoutConfig && layoutConfig.stateEnabled) {
     const stateSelectEl = dynamicProcessEditFormEl.querySelector("[name='process_state']");
@@ -4247,6 +4261,9 @@ function setupConditionalProcessVisibility() {
     dynamicProcessEditFormEl.dataset.boundSubsequentVisibility = "1";
     ["input", "change"].forEach((eventName) => {
       dynamicProcessEditFormEl.addEventListener(eventName, () => {
+        if (dynamicProcessPopulatingV1) {
+          return;
+        }
         const cleanMenuKey = normalizeMenuKey(dynamicProcessMenuKeyInputEl ? dynamicProcessMenuKeyInputEl.value : "");
         if (!cleanMenuKey) {
           return;
