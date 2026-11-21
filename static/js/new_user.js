@@ -4018,6 +4018,14 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       }
       return rowSectionKey === String(selectedSection.key || "");
     });
+    const sortFieldKey = normalizeMenuKey(processSetting && processSetting.process_record_sort_field);
+    if (sortFieldKey) {
+      visibleRows.sort((left, right) => {
+        const leftValue = String((left && left.values && left.values[sortFieldKey]) || "");
+        const rightValue = String((right && right.values && right.values[sortFieldKey]) || "");
+        return leftValue.localeCompare(rightValue, "pt", { sensitivity: "base" });
+      });
+    }
     const splitRows = splitDynamicProcessListRows(visibleRows, layoutConfig);
 
     if (dynamicProcessTitleEl) {

@@ -427,6 +427,11 @@ def resolve_dynamic_process_layout_config(
         "show_system_column": bool(show_system_column and layout == PROCESS_LAYOUT_LIST),
         "include_remaining_fields": bool(include_remaining_fields and layout == PROCESS_LAYOUT_LIST),
         "list_columns": list_columns if layout == PROCESS_LAYOUT_LIST else [],
+        "sort_field": (
+            str(list_config.get("sort_field") or "").strip().lower()
+            if layout == PROCESS_LAYOUT_LIST
+            else ""
+        ),
     }
 
 
