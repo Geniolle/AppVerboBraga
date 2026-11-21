@@ -10,6 +10,7 @@ from sqlalchemy import text
 from appgenesis.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
 
 FUNCTIONS_MENU_CONFIG_KEY = "authorization_functions"
+ALL_PROFILES_VALUE = "__all__"
 FUNCTIONS_SCOPE_LABELS = {"all": "Default", "owner": "Owner", "legado": "Legado"}
 FUNCTIONS_STATUS_LABELS = {"ativo": "Ativo", "inativo": "Inativo"}
 
@@ -30,6 +31,39 @@ def build_function_key(label: Any) -> str:
     clean = str(label or "").strip().lower()
     clean = re.sub(r"[^a-z0-9]+", "_", clean).strip("_")
     return clean or "funcao"
+
+
+def normalize_profile_keys(raw_value: Any) -> list[str]:
+    raw_items = [raw_value] if isinstance(raw_value, str) else list(raw_value or [])
+    keys: list[str] = []
+    for item in raw_items:
+        clean_key = str(item or "").strip().lower()
+        if clean_key:
+            keys.append(clean_key)
+    return keys
+
+
+def list_active_profile_options(
+    session: Any,
+    auth_config: Any,
+    *,
+    user_id: Any,
+    entity_number: str,
+) -> list[tuple[str, str]]:
+    # Opcoes do campo Perfil de autorizacao: so perfis ativos da aba Perfil de autorizacao.
+    from appgenesis.admin_subprocesses.repositories.auth_profile_repository import (
+        AuthorizationProfileAdminRepository,
+    )
+
+    rows = AuthorizationProfileAdminRepository(auth_config).list_rows(
+        session,
+        context={"user_id": user_id, "entity_number": entity_number},
+    )
+    return [
+        (str(row.get("key") or ""), str(row.get("label") or ""))
+        for row in rows
+        if row.get("key") and str(row.get("status") or "") == "ativo"
+    ]
 
 
 def _load_functions(session: Any) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -71,6 +105,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         status_value = _normalize_status(item.get("status"))
         scope_mode = _normalize_scope_mode(item.get("visibility_scope_mode"))
         label = str(item.get("label") or "").strip()
+        profile_keys = normalize_profile_keys(item.get("authorization_profiles"))
         return {
             "key": str(item.get("key") or ""),
             "label": label,
@@ -80,11 +115,13 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
             "visibility_scope_label": FUNCTIONS_SCOPE_LABELS[scope_mode],
             "entity_number": str(item.get("entity_number") or ""),
             "created_at": str(item.get("created_at") or ""),
+            "authorization_profiles": profile_keys,
             "values": {
                 "label": label,
                 "visibility_scope_mode": scope_mode,
                 "status": status_value,
                 "entity_number": str(item.get("entity_number") or ""),
+                "authorization_profiles": profile_keys,
             },
         }
 
@@ -116,6 +153,21 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         if not label:
             return False, "label_required", ""
 
+        profile_keys = normalize_profile_keys(payload.get("authorization_profiles"))
+        if not profile_keys:
+            return False, "profile_required", ""
+        if ALL_PROFILES_VALUE in profile_keys:
+            # "Todos os perfis" e exclusivo: guarda o marcador, que vale para todos os perfis ativos.
+            if len(profile_keys) > 1:
+                return False, "profile_all_exclusive", ""
+            profile_keys = [ALL_PROFILES_VALUE]
+        else:
+            if len(set(profile_keys)) != len(profile_keys):
+                return False, "profile_duplicate", ""
+            allowed_keys = {str(key).strip().lower() for key in (context or {}).get("allowed_profile_keys") or []}
+            if any(key not in allowed_keys for key in profile_keys):
+                return False, "profile_not_found", ""
+
         menu_config, items = _load_functions(session)
         clean_edit_key = str(edit_key or "").strip().lower()
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -132,6 +184,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
                     "label": label,
                     "visibility_scope_mode": scope_mode,
                     "status": status_value,
+                    "authorization_profiles": profile_keys,
                 }
             )
             saved_key = str(target.get("key") or clean_edit_key)
@@ -150,6 +203,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
                     "visibility_scope_mode": scope_mode,
                     "status": status_value,
                     "entity_number": entity_number,
+                    "authorization_profiles": profile_keys,
                     "created_at": now,
                 }
             )

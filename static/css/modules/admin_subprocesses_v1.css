@@ -726,6 +726,35 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
   cursor: pointer;
 }
 
+/* Perfil de autorizacao (Funcoes): varias linhas de select; cada linha tem "-", o campo tem "+". */
+.admin-profile-multi-rows-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-profile-multi-row-v1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-profile-multi-row-v1 select {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="authorization_profiles"] {
+  grid-column: 1 / -1;
+  order: 4;
+}
+
+.admin-profile-multi-add-v1 {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
 /* Editor inline: abre logo abaixo da linha clicada (mesmo padrao de Campos adicionais e Perfil de autorizacao). */
 .admin-subprocess-inline-editor-row > td {
   padding: 12px 16px;

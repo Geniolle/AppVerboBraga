@@ -5,7 +5,41 @@
 {% endmacro %}
 
 
+{% macro render_admin_subprocess_profile_row(field, selected_value="") %}
+  <div class="admin-profile-multi-row-v1" data-admin-profile-multi-row>
+    <select name="{{ field.input_name }}" data-admin-profile-multi-select aria-label="{{ field.label }}">
+      <option value="" hidden {% if not selected_value %}selected{% endif %}>Selecionar perfil</option>
+      <option value="__all__" {% if selected_value == '__all__' %}selected{% endif %}>Todos os perfis</option>
+      {% for option_value, option_label in field.options %}
+        <option value="{{ option_value }}" {% if selected_value == option_value %}selected{% endif %}>{{ option_label }}</option>
+      {% endfor %}
+    </select>
+    <button type="button" class="admin-subprocess-action-btn-v1 admin-profile-multi-remove-v1" data-admin-profile-multi-remove title="Remover perfil" aria-label="Remover perfil">&minus;</button>
+  </div>
+{% endmacro %}
+
+
+{% macro render_admin_subprocess_profile_multi(field, selected_values) %}
+  {% set _selected = selected_values if selected_values else [] %}
+  <div class="field admin-subprocess-field-v1 admin-profile-multi-field-v1 {{ field.css_class }}" data-admin-subprocess-field-key="{{ field.key }}" data-admin-profile-multi="1">
+    <label>{{ field.label }}{% if field.required %} *{% endif %}</label>
+    <div class="admin-profile-multi-rows-v1" data-admin-profile-multi-rows>
+      {% for sel in (_selected if _selected else ['']) %}
+        {{ render_admin_subprocess_profile_row(field, sel) }}
+      {% endfor %}
+    </div>
+    <button type="button" class="admin-subprocess-action-btn-v1 admin-profile-multi-add-v1" data-admin-profile-multi-add title="Adicionar perfil" aria-label="Adicionar perfil">+</button>
+    <template data-admin-profile-multi-template>
+      {{ render_admin_subprocess_profile_row(field, '') }}
+    </template>
+  </div>
+{% endmacro %}
+
+
 {% macro render_admin_subprocess_field(field, value="") %}
+{% if field.field_type == "profile_multi" %}
+  {{ render_admin_subprocess_profile_multi(field, value) }}
+{% else %}
   <div class="field admin-subprocess-field-v1 {{ field.css_class }}" data-admin-subprocess-field-key="{{ field.key }}">
     <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
@@ -41,6 +75,7 @@
       >
     {% endif %}
   </div>
+{% endif %}
 {% endmacro %}
 
 

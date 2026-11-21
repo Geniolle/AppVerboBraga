@@ -873,7 +873,10 @@ def new_user_page(
         funcoes_config_v1 = get_admin_subprocess_config("funcoes_administrativas")
         if funcoes_config_v1 is not None and funcoes_config_v1.enabled:
             try:
-                from appgenesis.admin_subprocesses.repositories.functions_repository import FunctionsAdminRepository
+                from appgenesis.admin_subprocesses.repositories.functions_repository import (
+                    FunctionsAdminRepository,
+                    list_active_profile_options,
+                )
                 from appgenesis.admin_subprocesses.service import find_admin_subprocess_row as _find_row_v1
 
                 clean_funcoes_edit_key_v1 = str(functions_edit_key or "").strip().lower()
@@ -884,7 +887,17 @@ def new_user_page(
                     permissions=entity_permissions,
                 )
                 funcoes_rows_v1 = FunctionsAdminRepository(funcoes_config_v1).list_rows(session)
-                funcoes_config_v1 = build_auth_profile_config_for_context_v1(funcoes_config_v1, funcoes_entity_context_v1)
+                funcoes_profile_options_v1 = list_active_profile_options(
+                    session,
+                    get_admin_subprocess_config("perfil_de_autorizacao"),
+                    user_id=current_user["id"],
+                    entity_number=funcoes_entity_context_v1.get("selected_entity_number", ""),
+                )
+                funcoes_config_v1 = build_auth_profile_config_for_context_v1(
+                    funcoes_config_v1,
+                    funcoes_entity_context_v1,
+                    authorization_profile_options=funcoes_profile_options_v1,
+                )
                 funcoes_subprocess_state_v1 = build_admin_subprocess_state(
                     config=funcoes_config_v1,
                     rows=funcoes_rows_v1,

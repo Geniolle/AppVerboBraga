@@ -2182,6 +2182,10 @@ _FUNCTIONS_ERROR_MESSAGES = {
     "label_required": "Nome da função é obrigatório.",
     "not_found": "Função não encontrada.",
     "active_function": "Só é possível eliminar funções inativas.",
+    "profile_required": "Escolha pelo menos um perfil de autorização.",
+    "profile_duplicate": "Cada perfil de autorização só pode ser escolhido uma vez.",
+    "profile_not_found": "Perfil de autorização inválido ou inativo.",
+    "profile_all_exclusive": "\"Todos os perfis\" não pode ser combinado com outros perfis.",
 }
 
 
@@ -2223,7 +2227,10 @@ def _functions_actor_allowed(request: Request, session: Session) -> tuple[dict[s
 
 @router.post("/users/functions/save")
 async def save_authorization_function(request: Request) -> RedirectResponse:
-    from appgenesis.admin_subprocesses.repositories.functions_repository import FunctionsAdminRepository
+    from appgenesis.admin_subprocesses.repositories.functions_repository import (
+        FunctionsAdminRepository,
+        list_active_profile_options,
+    )
 
     submitted_form = await request.form()
     mode = str(submitted_form.get("functions_mode") or "create").strip().lower()
@@ -2236,14 +2243,25 @@ async def save_authorization_function(request: Request) -> RedirectResponse:
             return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=status.HTTP_302_FOUND)
         config = get_admin_subprocess_config("funcoes_administrativas")
         repo = FunctionsAdminRepository(config)
+        entity_number = entity_context.get("selected_entity_number", "")
+        allowed_profile_keys = [
+            key
+            for key, _label in list_active_profile_options(
+                session,
+                get_admin_subprocess_config("perfil_de_autorizacao"),
+                user_id=current_user["id"],
+                entity_number=entity_number,
+            )
+        ]
         ok, reason, _saved_key = repo.save_row(
             session,
             {
                 "label": str(submitted_form.get("functions_label") or "").strip(),
                 "visibility_scope_mode": str(submitted_form.get("functions_visibility_scope_mode") or "").strip(),
                 "status": str(submitted_form.get("functions_status") or "").strip(),
+                "authorization_profiles": submitted_form.getlist("functions_authorization_profiles"),
             },
-            context={"entity_number": entity_context.get("selected_entity_number", "")},
+            context={"entity_number": entity_number, "allowed_profile_keys": allowed_profile_keys},
             edit_key=edit_key,
         )
         if not ok:

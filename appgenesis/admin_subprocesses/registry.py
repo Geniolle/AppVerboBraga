@@ -774,6 +774,13 @@ FUNCTIONS_ADMIN_TECHNICAL_FIELDS = (
         input_name="functions_entity_number_display",
         field_type="readonly",
     ),
+    AdminFieldConfig(
+        key="authorization_profiles",
+        label="Perfil de autorização",
+        input_name="functions_authorization_profiles",
+        field_type="profile_multi",
+        required=True,
+    ),
 )
 
 
