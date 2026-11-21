@@ -6576,3 +6576,37 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   cursor: pointer;
   align-self: flex-start;
 }
+
+/* Paginacao das listas de processo (entradas por pagina e navegacao). */
+.dynamic-process-pager-v1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+.dynamic-process-pager-v1 select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+}
+.dynamic-process-pager-v1 button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #174ea6;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dynamic-process-pager-v1 button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.dynamic-process-pager-status-v1 {
+  color: #1d4ed8;
+  font-weight: 700;
+}

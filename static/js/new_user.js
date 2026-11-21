@@ -2812,12 +2812,92 @@ function renderDynamicProcessListTableCardV1(options) {
 
   tableEl.style.display = "";
   emptyEl.style.display = rows.length ? "none" : "";
-  if (limiterEl) {
-    limiterEl.style.display = "";
-    limiterEl.innerHTML = "";
-  }
+  setupDynamicProcessListPagerV1(bodyEl, limiterEl);
 
   enhanceProcessShellTables(cardEl);
+}
+
+// Paginacao propria das listas de processo: "entradas por pagina" (5, 10, 20, 50) e navegacao.
+function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
+  if (!bodyEl || !limiterEl) {
+    return;
+  }
+  if (!bodyEl.__pagerState) {
+    bodyEl.__pagerState = { pageSize: 5, page: 0 };
+  }
+  const state = bodyEl.__pagerState;
+  limiterEl.innerHTML = "";
+  limiterEl.style.display = "";
+
+  const wrapEl = document.createElement("div");
+  wrapEl.className = "dynamic-process-pager-v1";
+
+  const selectEl = document.createElement("select");
+  [5, 10, 20, 50].forEach((size) => {
+    const optionEl = document.createElement("option");
+    optionEl.value = String(size);
+    optionEl.textContent = String(size);
+    selectEl.appendChild(optionEl);
+  });
+  selectEl.value = String(state.pageSize);
+
+  const sizeLabelEl = document.createElement("span");
+  sizeLabelEl.textContent = "entradas por página";
+
+  const prevBtnEl = document.createElement("button");
+  prevBtnEl.type = "button";
+  prevBtnEl.textContent = "‹";
+  prevBtnEl.setAttribute("aria-label", "Página anterior");
+
+  const statusEl = document.createElement("span");
+  statusEl.className = "dynamic-process-pager-status-v1";
+
+  const nextBtnEl = document.createElement("button");
+  nextBtnEl.type = "button";
+  nextBtnEl.textContent = "›";
+  nextBtnEl.setAttribute("aria-label", "Página seguinte");
+
+  const applyPage = () => {
+    const anchorRows = [...bodyEl.querySelectorAll("tr[data-record-id]")];
+    const total = anchorRows.length;
+    const pages = Math.max(1, Math.ceil(total / state.pageSize));
+    state.page = Math.min(state.page, pages - 1);
+    const start = state.page * state.pageSize;
+    const end = start + state.pageSize;
+    anchorRows.forEach((rowEl, index) => {
+      const visible = index >= start && index < end;
+      rowEl.style.display = visible ? "" : "none";
+      const holderEl = rowEl.nextElementSibling;
+      if (holderEl && holderEl.classList.contains("dynamic-process-inline-editor-row")) {
+        holderEl.style.display = visible ? "" : "none";
+      }
+    });
+    statusEl.textContent = `[ ${total ? state.page + 1 : 0} / ${pages} ]`;
+    prevBtnEl.disabled = state.page <= 0;
+    nextBtnEl.disabled = state.page >= pages - 1;
+  };
+
+  selectEl.addEventListener("change", () => {
+    state.pageSize = Number(selectEl.value) || 5;
+    state.page = 0;
+    applyPage();
+  });
+  prevBtnEl.addEventListener("click", () => {
+    state.page = Math.max(0, state.page - 1);
+    applyPage();
+  });
+  nextBtnEl.addEventListener("click", () => {
+    state.page += 1;
+    applyPage();
+  });
+
+  wrapEl.appendChild(selectEl);
+  wrapEl.appendChild(sizeLabelEl);
+  wrapEl.appendChild(prevBtnEl);
+  wrapEl.appendChild(statusEl);
+  wrapEl.appendChild(nextBtnEl);
+  limiterEl.appendChild(wrapEl);
+  applyPage();
 }
 
 function buildProcessOptionMetaMap(setting) {
