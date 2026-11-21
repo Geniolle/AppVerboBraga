@@ -865,12 +865,6 @@ DEPARTAMENTOS_ADMIN_TECHNICAL_FIELDS = (
             ("inativo", "Inativo"),
         ),
     ),
-    AdminFieldConfig(
-        key="entity_number",
-        label="Entidade",
-        input_name="departments_entity_number_display",
-        field_type="readonly",
-    ),
 )
 
 _DEPARTAMENTOS_ADMIN_COLUMNS = tuple(

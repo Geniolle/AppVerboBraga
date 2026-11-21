@@ -510,8 +510,8 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
     elif clean_menu == "sessoes":
         return [
             ProcessTabConfig("sessoes", "Sessões", "#admin-sidebar-sections-card", "custom"),
-            ProcessTabConfig("departamentos", "Departamentos", "#departamentos-card", "custom"),
             ProcessTabConfig("contas", "Menu", "#menu-subprocess-card-active", "custom"),
+            ProcessTabConfig("departamentos", "Departamentos", "#departamentos-card", "custom"),
         ]
     elif clean_menu == "perfil_de_autorizacao":
         return [
