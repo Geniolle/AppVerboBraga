@@ -79,11 +79,11 @@
 
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] {
-  order: 1;
+  order: 2;
 }
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] {
-  order: 2;
+  order: 1;
 }
 
 .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] {
