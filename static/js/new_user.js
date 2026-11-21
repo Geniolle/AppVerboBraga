@@ -2099,34 +2099,6 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     }
     return current === String(rule.trigger_value).trim().toLowerCase();
   };
-  // Campos "adicionar": ficam ocultos ate o botao "+" ou ate terem valor (um par de cada vez).
-  let previousAddVisible = true;
-  formEl.querySelectorAll("[data-process-field-key][data-add-button-label]").forEach((containerEl) => {
-    const key = containerEl.dataset.processFieldKey;
-    const inputEl = containerEl.querySelector("input, select, textarea");
-    const revealed = formEl.dataset[`reveal_${key}`] === "1";
-    const filled = Boolean(inputEl && String(inputEl.value || "").trim());
-    const visible = revealed || filled;
-    containerEl.style.display = visible ? "" : "none";
-    if (inputEl) {
-      inputEl.disabled = !visible;
-    }
-    if (!containerEl._addButtonEl) {
-      const buttonEl = document.createElement("button");
-      buttonEl.type = "button";
-      buttonEl.className = "dynamic-process-add-pair-btn-v1";
-      buttonEl.textContent = `+ ${containerEl.dataset.addButtonLabel}`;
-      buttonEl.addEventListener("click", () => {
-        formEl.dataset[`reveal_${key}`] = "1";
-        applyConditionalProcessFieldRulesV1(formEl);
-      });
-      containerEl.parentNode.insertBefore(buttonEl, containerEl);
-      containerEl._addButtonEl = buttonEl;
-    }
-    containerEl._addButtonEl.style.display = !visible && previousAddVisible ? "" : "none";
-    previousAddVisible = previousAddVisible && visible;
-  });
-
   formEl.querySelectorAll("[data-process-field-key]").forEach((containerEl) => {
     const editableRaw = containerEl.dataset.editableWhen;
     const requiredRaw = containerEl.dataset.requiredWhen;
@@ -2158,6 +2130,38 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     if (labelEl && fieldLabel && requiredRaw) {
       labelEl.textContent = required && visible ? `${fieldLabel} *` : fieldLabel;
     }
+  });
+
+  // Campos "adicionar": ficam ocultos ate o botao "+" ou ate terem valor (um par de cada vez).
+  // O botao so aparece quando o campo anterior (ex.: Tom n) ja esta visivel.
+  formEl.querySelectorAll("[data-process-field-key][data-add-button-label]").forEach((containerEl) => {
+    const key = containerEl.dataset.processFieldKey;
+    const inputEl = containerEl.querySelector("input, select, textarea");
+    const revealed = formEl.dataset[`reveal_${key}`] === "1";
+    const filled = Boolean(inputEl && String(inputEl.value || "").trim());
+    const visible = revealed || filled;
+    containerEl.style.display = visible ? "" : "none";
+    if (inputEl) {
+      inputEl.disabled = !visible;
+    }
+    if (!containerEl._addButtonEl) {
+      const buttonEl = document.createElement("button");
+      buttonEl.type = "button";
+      buttonEl.className = "dynamic-process-add-pair-btn-v1";
+      buttonEl.textContent = `+ ${containerEl.dataset.addButtonLabel}`;
+      buttonEl.addEventListener("click", () => {
+        formEl.dataset[`reveal_${key}`] = "1";
+        applyConditionalProcessFieldRulesV1(formEl);
+      });
+      containerEl.parentNode.insertBefore(buttonEl, containerEl);
+      containerEl._addButtonEl = buttonEl;
+    }
+    let previousEl = containerEl.previousElementSibling;
+    while (previousEl && previousEl.classList.contains("dynamic-process-add-pair-btn-v1")) {
+      previousEl = previousEl.previousElementSibling;
+    }
+    const previousShown = !previousEl || previousEl.style.display !== "none";
+    containerEl._addButtonEl.style.display = !visible && previousShown ? "" : "none";
   });
 }
 
