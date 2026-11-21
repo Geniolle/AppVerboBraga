@@ -307,6 +307,7 @@
       "#recent-entities-card": "administrativo",
       "#inactive-entities-card": "administrativo",
       "#auth-profile-card": "administrativo",
+      "#funcoes-administrativas-card": "administrativo",
       "#auth-profile-form-card": "administrativo",
       "#auth-profile-active-card": "administrativo",
       "#auth-profile-inactive-card": "administrativo",

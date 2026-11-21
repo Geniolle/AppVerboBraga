@@ -505,6 +505,7 @@ def resolve_process_tabs_v1(menu_key: str, sidebar_menu_settings: list[dict[str,
             ProcessTabConfig("entidade", "Entidade", "#create-entity-card", "custom"),
             ProcessTabConfig("utilizador", "Utilizador", "#create-user-card", "custom"),
             ProcessTabConfig("perfil_de_autorizacao", "Perfil de autorização", "#auth-profile-card", "custom"),
+            ProcessTabConfig("funcoes_administrativas", "Funções Administrativas", "#funcoes-administrativas-card", "custom"),
         ]
     elif clean_menu == "sessoes":
         return [

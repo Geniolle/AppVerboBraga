@@ -265,6 +265,8 @@ def _resolve_initial_menu_target(
             return "#create-user-card", ""
         if resolved_admin_tab == "perfil_de_autorizacao":
             return "#auth-profile-card", ""
+        if resolved_admin_tab == "funcoes_administrativas":
+            return "#funcoes-administrativas-card", ""
         return "#recent-entities-card", ""
     if clean_menu_key == ESTRUTURAS_MENU_KEY_V1:
         if settings_edit_key:
@@ -510,7 +512,7 @@ def new_user_page(
         if resolved_admin_tab not in {"contas", "sessoes"}:
             resolved_admin_tab = "contas"
     else:
-        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao"}:
+        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas"}:
             resolved_admin_tab = "entidade"
         if resolved_admin_tab == "definicoes":
             resolved_admin_tab = "contas"

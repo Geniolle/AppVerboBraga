@@ -98,6 +98,9 @@
     if (cleanTab === "perfil_de_autorizacao") {
       return "#auth-profile-card";
     }
+    if (cleanTab === "funcoes_administrativas") {
+      return "#funcoes-administrativas-card";
+    }
     if (cleanTab === "contas") {
       return "#menu-subprocess-card-active";
     }

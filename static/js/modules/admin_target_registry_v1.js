@@ -49,6 +49,7 @@
     "#settings-card",
     "#settings-menu-edit-card",
     "#auth-profile-card",
+    "#funcoes-administrativas-card",
     "#auth-profile-form-card",
     "#auth-profile-active-card",
     "#auth-profile-inactive-card"
