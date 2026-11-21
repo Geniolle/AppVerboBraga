@@ -726,6 +726,23 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
   cursor: pointer;
 }
 
+/* Editor inline: abre logo abaixo da linha clicada (mesmo padrao de Campos adicionais e Perfil de autorizacao). */
+.admin-subprocess-inline-editor-row > td {
+  padding: 12px 16px;
+  white-space: normal;
+}
+
+.admin-subprocess-inline-editor-row [data-admin-inline-edit-form="1"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.admin-subprocess-inline-editor-row [data-admin-inline-edit-form="1"] > h2 {
+  display: none;
+}
+
 form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] input {
   width: 130px;
   min-width: 130px;

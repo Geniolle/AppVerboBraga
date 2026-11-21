@@ -585,6 +585,22 @@ Todos os outros subprocessos dinâmicos (ex: Perfil de autorização) **devem** 
 10. É proibido adicionar campos de conteúdo hardcoded num subprocesso dinâmico — os campos devem vir sempre de `Configuração dos campos`.
 <!-- APPGENESIS_SUBPROCESS_DYNAMIC_FIELDS_RULE_V1_END -->
 
+## Regra global: edição abre logo abaixo da linha clicada (menus com lista)
+
+Quando o utilizador clica numa linha de uma lista de um processo de menu (Campos adicionais, Perfil de autorização, Funções administrativas, e os restantes subprocessos com edição), o formulário de **edição** abre **por baixo da linha clicada**, nunca no topo da lista.
+
+1. Padrão de referência: Editar processo › **Campos adicionais** (Meus dados). É o comportamento a copiar.
+2. Em `AdminSubprocessConfig`, ativar `row_click_edit=True`. Com a flag ativa:
+   - a `<tr>` recebe `data-row-edit-href` (mesmo destino do botão Editar) e a classe `admin-subprocess-row-clickable-v1`;
+   - a `<table>` recebe `data-admin-inline-edit-param`, `data-admin-inline-tab` e `data-admin-inline-card-id`;
+   - o card do formulário recebe `data-admin-inline-edit-form="1"`.
+3. Módulo reutilizável: `static/js/modules/admin_subprocess_inline_editor_v1.js` (incluído em `templates/new_user.html`). Move o card do formulário para uma `<tr class="admin-subprocess-inline-editor-row">` logo abaixo da linha com o parâmetro de edição na URL.
+4. Segundo clique na mesma linha: sem alterações fecha o editor e repõe `admin_tab` e a âncora da tabela na URL; com alterações não faz nada e não navega.
+5. Cliques em links, botões, campos e `.table-actions` mantêm a ação própria (não abrem nem fecham o editor).
+6. O título interno "Editar ..." do card fica oculto no editor inline (`.admin-subprocess-inline-editor-row [data-admin-inline-edit-form="1"] > h2`).
+7. É proibido voltar a abrir a edição no topo da lista para subprocessos com `row_click_edit=True`.
+8. Editor de Perfil de autorização (`auth_profile_inline_editor_v1.js`) segue a mesma regra e é o exemplo de código a seguir quando um subprocesso precisar de lógica específica.
+
 <!-- APPGENESIS_LIST_FIELD_RESOLUTION_RULE_V1_START -->
 ## Regra de resolução de opções para campos dinâmicos do tipo Lista
 
