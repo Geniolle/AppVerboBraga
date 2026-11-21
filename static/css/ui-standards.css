@@ -182,4 +182,16 @@ input.action-btn-cancel,
   border-top: 1px solid var(--appgenesis-create-card-border-v4) !important;
 }
 
+/* APPGENESIS_FIELD_LABEL_CENTER_V1_START
+   Regra global: o nome do campo fica centrado sobre a largura do proprio campo.
+   Labels que contem um controlo (checkbox/radio) ficam de fora. */
+.field > label:not(:has(input, select, textarea)),
+.admin-subprocess-field-v1 > label:not(:has(input, select, textarea)) {
+  display: block;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+/* APPGENESIS_FIELD_LABEL_CENTER_V1_END */
+
 /* APPGENESIS_CREATE_CARD_STANDARD_V4_END */
