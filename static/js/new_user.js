@@ -2486,33 +2486,24 @@ function renderDynamicProcessListTableCardV1(options) {
   emptyEl.textContent = emptyMessage;
   cardEl.style.display = "";
 
-  // Botao "+" logo ao lado do titulo para criar registo (agrupados para o flex nao o afastar).
-  if (titleEl && titleEl.parentElement) {
-    cardEl.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
-    let titleGroupEl = titleEl.closest(".dynamic-process-list-title-group-v1");
-    if (!titleGroupEl && typeof safeOptions.onCreate === "function") {
-      titleGroupEl = document.createElement("div");
-      titleGroupEl.className = "dynamic-process-list-title-group-v1";
-      titleEl.parentElement.insertBefore(titleGroupEl, titleEl);
-      titleGroupEl.appendChild(titleEl);
-    }
-    if (titleGroupEl && typeof safeOptions.onCreate === "function") {
-      const createBtnEl = document.createElement("button");
-      createBtnEl.type = "button";
-      createBtnEl.className = "admin-subprocess-inline-create-btn-v1 dynamic-process-list-create-btn-v1";
-      const createIconEl = document.createElement("span");
-      createIconEl.className = "admin-subprocess-inline-create-icon-v1";
-      createIconEl.setAttribute("aria-hidden", "true");
-      createIconEl.textContent = "+";
-      createBtnEl.appendChild(createIconEl);
-      const createLabelEl = document.createElement("span");
-      createLabelEl.textContent = String(layoutConfig.createTitle || "Criar");
-      createBtnEl.appendChild(createLabelEl);
-      createBtnEl.title = String(layoutConfig.createTitle || "Criar");
-      createBtnEl.setAttribute("aria-label", String(layoutConfig.createTitle || "Criar"));
-      createBtnEl.addEventListener("click", () => safeOptions.onCreate());
-      titleGroupEl.appendChild(createBtnEl);
-    }
+  // Botao "+" logo apos o titulo para criar registo (margin-right:auto no botao mantem os restantes elementos a direita).
+  cardEl.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
+  if (titleEl && typeof safeOptions.onCreate === "function") {
+    const createBtnEl = document.createElement("button");
+    createBtnEl.type = "button";
+    createBtnEl.className = "admin-subprocess-inline-create-btn-v1 dynamic-process-list-create-btn-v1";
+    const createIconEl = document.createElement("span");
+    createIconEl.className = "admin-subprocess-inline-create-icon-v1";
+    createIconEl.setAttribute("aria-hidden", "true");
+    createIconEl.textContent = "+";
+    createBtnEl.appendChild(createIconEl);
+    const createLabelEl = document.createElement("span");
+    createLabelEl.textContent = String(layoutConfig.createTitle || "Criar");
+    createBtnEl.appendChild(createLabelEl);
+    createBtnEl.title = String(layoutConfig.createTitle || "Criar");
+    createBtnEl.setAttribute("aria-label", String(layoutConfig.createTitle || "Criar"));
+    createBtnEl.addEventListener("click", () => safeOptions.onCreate());
+    titleEl.insertAdjacentElement("afterend", createBtnEl);
   }
 
   const headerRowEl = document.createElement("tr");
