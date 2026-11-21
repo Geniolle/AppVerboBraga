@@ -3814,7 +3814,7 @@ if (
 }
 
 // activateSubprocessCardsV1: rotina única de ativação de card principal + cards relacionados
-// (lista de ativos / lista de inativos) de um subprocesso administrativo (ex.: Menu, Definições,
+// (lista de ativos / lista de inativos) de um subprocesso administrativo (ex.: Menu, Sessões,
 // Perfil de autorização). É a MESMA função usada tanto no boot inicial (bootstrap -> activateMenu
 // -> aqui) quanto em qualquer navegação por clique (sidebar, submenu, hash, dropdown) -- não há
 // rotina duplicada: todos os pontos de entrada de navegação client-side convergem para aqui.

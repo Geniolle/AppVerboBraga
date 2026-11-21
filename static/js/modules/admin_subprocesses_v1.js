@@ -714,7 +714,7 @@
   }
 
   function _showSessoesSaveAjaxSuccessV1(message) {
-    var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Definição atualizada com sucesso.");
+    var safeMessage = _normalizeSessoesAjaxMessageV1(message, "Sessão atualizada com sucesso.");
 
     if (
       window.AppGenesisProcessShell &&
@@ -845,7 +845,7 @@
       return visibleCreateCard;
     }
 
-    throw new Error("Não foi possível localizar a área principal de Definições para substituir o card.");
+    throw new Error("Não foi possível localizar a área principal de Sessões para substituir o card.");
   }
 
   function _replaceSessoesListCardV1(cardId, nextCard) {

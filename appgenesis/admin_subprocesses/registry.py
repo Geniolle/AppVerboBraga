@@ -37,12 +37,12 @@ ENTITY_FIELDS = (
 SIDEBAR_SECTION_FIELDS = (
     AdminFieldConfig(
         key="label",
-        label="Nome da definição",
+        label="Nome da sessão",
         input_name="section_label",
         field_type="text",
         required=True,
         max_length=80,
-        placeholder="Informe o nome da definição",
+        placeholder="Informe o nome da sessão",
     ),
     AdminFieldConfig(
         key="visibility_scope_mode",
@@ -117,7 +117,7 @@ SIDEBAR_SECTION_DELETE_ACTION = AdminActionConfig(
     visible_when=("inativo",),
     condition_field="can_delete",
     requires_confirmation=True,
-    confirmation_message="Tem a certeza que pretende eliminar esta definição?",
+    confirmation_message="Tem a certeza que pretende eliminar esta sessão?",
 )
 
 
@@ -251,9 +251,9 @@ ENTIDADE_CONFIG = AdminSubprocessConfig(
 
 SESSOES_CONFIG = AdminSubprocessConfig(
     key="sessoes",
-    label="Definições",
-    singular_label="Definição",
-    plural_label="Definições",
+    label="Sessões",
+    singular_label="Sessão",
+    plural_label="Sessões",
     edit_param="sidebar_section_edit_key",
     default_target="admin-sidebar-sections-card",
     # Cartoes reais da lista (o "admin-sidebar-sections-card" nao existe no DOM):
@@ -261,10 +261,10 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     active_card_id="admin-sidebar-sections-card-active",
     inactive_card_id="admin-sidebar-sections-card-inactive",
     edit_target="admin-sidebar-sections-form-card",
-    create_title="Nova definição",
-    edit_title="Editar definição",
-    active_title="Definições ativas",
-    inactive_title="Definições inativas",
+    create_title="Nova sessão",
+    edit_title="Editar sessão",
+    active_title="Sessões ativas",
+    inactive_title="Sessões inativas",
     create_endpoint="/settings/menu/sidebar-section-save",
     update_endpoint="/settings/menu/sidebar-section-save",
     save_endpoint="/settings/menu/sidebar-section-save",
@@ -288,8 +288,8 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     columns=DEFAULT_COLUMNS,
     actions=DEFAULT_ACTIVE_ACTIONS + (SIDEBAR_SECTION_DELETE_ACTION,),
     menu_scope="administrativo,sessoes",
-    empty_active_message="Sem definições ativas.",
-    empty_inactive_message="Sem definições inativas.",
+    empty_active_message="Sem sessões ativas.",
+    empty_inactive_message="Sem sessões inativas.",
     edit_url_extra_params="admin_tab=sessoes&sidebar_sections_tab=sessoes",
     create_toggle_in_active_header=True,
 )
