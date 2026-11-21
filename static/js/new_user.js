@@ -3313,7 +3313,12 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   }
 
   const renderedInputsByFieldKey = new Map();
-  sectionFields.forEach((field) => {
+  // Toggle switches (flags) ficam sempre no fim do formulario; a ordem relativa dos demais campos e mantida.
+  const orderedSectionFields = [
+    ...sectionFields.filter((field) => normalizeProcessFieldType(field.fieldType) !== "flag"),
+    ...sectionFields.filter((field) => normalizeProcessFieldType(field.fieldType) === "flag"),
+  ];
+  orderedSectionFields.forEach((field) => {
     const fieldKey = normalizeMenuKey(field.key);
     if (!fieldKey) {
       return;
