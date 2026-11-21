@@ -6389,3 +6389,11 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   align-items: center;
   gap: 8px;
 }
+
+/* Lista de processo: "+" logo apos o titulo; o titulo nao cresce e a area de busca fica a direita. */
+.appgenesis-card-header-v1 > h2:has(+ .dynamic-process-list-create-btn-v1) {
+  flex: 0 0 auto;
+}
+.appgenesis-card-header-v1 > .dynamic-process-list-create-btn-v1 {
+  margin-right: auto !important;
+}
