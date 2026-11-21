@@ -1240,7 +1240,8 @@ label {
 
 /* Flags de Meus dados: interruptor (toggle switch). O checkbox continua no DOM e e gravado normalmente. */
 #perfil-pessoal-card .profile-custom-flag-control,
-#dynamic-process-card .profile-custom-flag-control {
+#dynamic-process-card .profile-custom-flag-control,
+.dynamic-process-inline-editor-row .profile-custom-flag-control {
   position: relative;
   min-height: 40px;
   justify-content: space-between;
@@ -1254,18 +1255,21 @@ label {
 }
 
 #perfil-pessoal-card .profile-custom-flag-control:hover,
-#dynamic-process-card .profile-custom-flag-control:hover {
+#dynamic-process-card .profile-custom-flag-control:hover,
+.dynamic-process-inline-editor-row .profile-custom-flag-control:hover {
   background: #f3f6fb;
 }
 
 #perfil-pessoal-card .profile-custom-flag-control span,
-#dynamic-process-card .profile-custom-flag-control span {
+#dynamic-process-card .profile-custom-flag-control span,
+.dynamic-process-inline-editor-row .profile-custom-flag-control span {
   flex: 1 1 auto;
   text-align: left;
 }
 
 #perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"],
-#dynamic-process-card .profile-custom-flag-control input[type="checkbox"] {
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"],
+.dynamic-process-inline-editor-row .profile-custom-flag-control input[type="checkbox"] {
   -webkit-appearance: none;
   appearance: none;
   box-sizing: border-box;
@@ -1286,7 +1290,8 @@ label {
 }
 
 #perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]::before,
-#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]::before {
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]::before,
+.dynamic-process-inline-editor-row .profile-custom-flag-control input[type="checkbox"]::before {
   content: "";
   position: absolute;
   top: 3px;
@@ -1300,24 +1305,28 @@ label {
 }
 
 #perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked,
-#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:checked {
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:checked,
+.dynamic-process-inline-editor-row .profile-custom-flag-control input[type="checkbox"]:checked {
   background: #16a34a;
 }
 
 #perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked::before,
-#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:checked::before {
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:checked::before,
+.dynamic-process-inline-editor-row .profile-custom-flag-control input[type="checkbox"]:checked::before {
   transform: translateX(18px);
 }
 
 #perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:focus-visible,
-#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:focus-visible {
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:focus-visible,
+.dynamic-process-inline-editor-row .profile-custom-flag-control input[type="checkbox"]:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
 /* Estilo checkbox dentro de Meus dados: caixa de seleção nativa (sem interruptor) */
 #perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"],
-#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"] {
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"],
+.dynamic-process-inline-editor-row .profile-custom-flag-control--checkbox input[type="checkbox"] {
   -webkit-appearance: checkbox;
   appearance: checkbox;
   flex: 0 0 18px;
@@ -1333,17 +1342,20 @@ label {
 }
 
 #perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before,
-#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before {
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before,
+.dynamic-process-inline-editor-row .profile-custom-flag-control--checkbox input[type="checkbox"]::before {
   display: none;
 }
 
 #perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked,
-#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked {
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked,
+.dynamic-process-inline-editor-row .profile-custom-flag-control--checkbox input[type="checkbox"]:checked {
   background: none;
 }
 
 #perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before,
-#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before {
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before,
+.dynamic-process-inline-editor-row .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before {
   transform: none;
 }
 
@@ -6369,4 +6381,11 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 .dynamic-process-inline-editor-row .profile-edit-form {
   display: block !important;
 }
+}
+
+/* "+" junto ao titulo do cartao de processo de lista. */
+.dynamic-process-list-title-group-v1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
