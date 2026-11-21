@@ -745,7 +745,9 @@ function buildProcessSections(setting, processValuesByField = {}) {
       listOptions: resolvedListOptions.length
         ? resolvedListOptions
         : processListsByKey.get(optionListKey) || [],
-      isRequired: normalizeProcessFieldRequired(optionRequiredRaw)
+      isRequired: normalizeProcessFieldRequired(optionRequiredRaw),
+      editableWhen: option.editable_when || null,
+      requiredWhen: option.required_when || null
     });
   });
 
@@ -759,6 +761,8 @@ function buildProcessSections(setting, processValuesByField = {}) {
       fieldType: normalizedFieldType === "header" ? "text" : normalizedFieldType,
       size: normalizeProcessFieldSize(fieldMeta.size, normalizedFieldType),
       isRequired: Boolean(fieldMeta.isRequired),
+      editableWhen: fieldMeta.editableWhen || null,
+      requiredWhen: fieldMeta.requiredWhen || null,
       listKey: normalizeMenuKey(fieldMeta.listKey),
       listOptions: Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions.slice() : [],
       value: typeof fieldValue === "string" ? fieldValue : "",
@@ -2024,6 +2028,7 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig) {
   } finally {
     dynamicProcessPopulatingV1 = false;
   }
+  applyConditionalProcessFieldRulesV1(dynamicProcessEditFormEl);
   // Repoe o estado de edicao do registo selecionado.
   if (dynamicProcessHistoryActionInputEl) {
     dynamicProcessHistoryActionInputEl.value = "update";
@@ -2068,6 +2073,49 @@ function openDynamicProcessCreateInlineV1(sectionFields, layoutConfig, bodyEl) {
 }
 
 // Move o formulario para uma linha da tabela (apos anchorRowEl, ou no topo se nulo).
+// Campos com editable_when / required_when: editavel e obrigatorio so quando o campo de gatilho tem o valor da regra.
+function applyConditionalProcessFieldRulesV1(formEl) {
+  if (!formEl) {
+    return;
+  }
+  const readTriggerValue = (triggerField) => {
+    const triggerEl = formEl.querySelector(`[name="process_field__${triggerField}"]`);
+    if (!triggerEl) {
+      return "";
+    }
+    if (triggerEl.type === "checkbox") {
+      return triggerEl.checked ? "1" : "0";
+    }
+    return String(triggerEl.value || "").trim().toLowerCase();
+  };
+  formEl.querySelectorAll("[data-process-field-key]").forEach((containerEl) => {
+    const editableRaw = containerEl.dataset.editableWhen;
+    const requiredRaw = containerEl.dataset.requiredWhen;
+    if (!editableRaw && !requiredRaw) {
+      return;
+    }
+    const inputEl = containerEl.querySelector("input, select, textarea");
+    if (!inputEl) {
+      return;
+    }
+    const labelEl = containerEl.querySelector("label");
+    const fieldLabel = containerEl.dataset.fieldLabel || "";
+    if (editableRaw) {
+      const rule = JSON.parse(editableRaw);
+      const editable = readTriggerValue(rule.trigger_field) === String(rule.trigger_value).trim().toLowerCase();
+      inputEl.disabled = !editable;
+    }
+    if (requiredRaw) {
+      const rule = JSON.parse(requiredRaw);
+      const required = readTriggerValue(rule.trigger_field) === String(rule.trigger_value).trim().toLowerCase();
+      inputEl.required = required;
+      if (labelEl && fieldLabel) {
+        labelEl.textContent = required ? `${fieldLabel} *` : fieldLabel;
+      }
+    }
+  });
+}
+
 function placeDynamicProcessFormInRowV1(anchorRowEl, bodyEl) {
   if (!dynamicProcessEditFormEl || !bodyEl) {
     return;
@@ -2087,6 +2135,7 @@ function placeDynamicProcessFormInRowV1(anchorRowEl, bodyEl) {
     holderEl.appendChild(cellEl);
   }
   holderEl.firstElementChild.appendChild(dynamicProcessEditFormEl);
+  applyConditionalProcessFieldRulesV1(dynamicProcessEditFormEl);
   if (anchorRowEl) {
     anchorRowEl.insertAdjacentElement("afterend", holderEl);
   } else {
@@ -3531,6 +3580,13 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       const fieldContainerEl = document.createElement("div");
       fieldContainerEl.className = "field";
       fieldContainerEl.dataset.processFieldKey = fieldKey;
+      if (field.editableWhen) {
+        fieldContainerEl.dataset.editableWhen = JSON.stringify(field.editableWhen);
+      }
+      if (field.requiredWhen) {
+        fieldContainerEl.dataset.requiredWhen = JSON.stringify(field.requiredWhen);
+      }
+      fieldContainerEl.dataset.fieldLabel = fieldLabel;
 
       const inputId = `dynamic_process_${cleanMenuKey}_${String(selectedSection ? (selectedSection.key || "") : "")}_${fieldKey}`
         .replace(/[^a-z0-9_]+/gi, "_");
@@ -4407,6 +4463,7 @@ function setupConditionalProcessVisibility() {
     dynamicProcessEditFormEl.dataset.boundSubsequentVisibility = "1";
     ["input", "change"].forEach((eventName) => {
       dynamicProcessEditFormEl.addEventListener(eventName, () => {
+        applyConditionalProcessFieldRulesV1(dynamicProcessEditFormEl);
         if (dynamicProcessPopulatingV1) {
           return;
         }
