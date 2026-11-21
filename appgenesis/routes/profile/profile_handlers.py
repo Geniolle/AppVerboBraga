@@ -1594,6 +1594,16 @@ async def update_personal_profile(request: Request) -> RedirectResponse:
         status_code=status.HTTP_303_SEE_OTHER,
     )
 
+def _conditional_field_rule_met_v1(rule: Any, submitted_form: Any) -> bool:
+    # Avalia editable_when / required_when: valor do campo de gatilho igual ao valor da regra.
+    if not isinstance(rule, dict):
+        return False
+    trigger_field = str(rule.get("trigger_field") or "").strip().lower()
+    trigger_value = str(rule.get("trigger_value") or "").strip().lower()
+    submitted_trigger = str(submitted_form.get(f"process_field__{trigger_field}") or "").strip().lower()
+    return bool(trigger_field) and submitted_trigger == trigger_value
+
+
 def _save_entity_process_record(
     *,
     session: Session,
@@ -1622,9 +1632,18 @@ def _save_entity_process_record(
         if field_type == "flag":
             values[field_key] = "1" if raw_value == "1" else "0"
             continue
+        editable_rule = meta.get("editable_when")
+        if editable_rule and not _conditional_field_rule_met_v1(editable_rule, submitted_form):
+            # Campo nao editavel nesta situacao: nao grava valor.
+            continue
+        required_rule = meta.get("required_when")
+        if required_rule:
+            is_required_now = _conditional_field_rule_met_v1(required_rule, submitted_form)
+        else:
+            is_required_now = _normalize_process_field_required(meta.get("is_required", meta.get("required")))
         if raw_value:
             values[field_key] = raw_value
-        elif _normalize_process_field_required(meta.get("is_required", meta.get("required"))):
+        elif is_required_now:
             missing_labels.append(str(meta.get("label") or field_key))
 
     def _redirect(**params: Any) -> RedirectResponse:

@@ -601,6 +601,17 @@ def _normalize_additional_field_source_key_v1(raw_value: Any) -> str:
     return _normalize_menu_key(raw_value)
 
 
+def _normalize_conditional_field_rule_v1(raw_rule: Any) -> dict[str, str] | None:
+    # Regra "so quando o campo X tem o valor Y" (editable_when / required_when).
+    if not isinstance(raw_rule, dict):
+        return None
+    trigger_field = str(raw_rule.get("trigger_field") or "").strip().lower()
+    trigger_value = str(raw_rule.get("trigger_value") or "").strip()
+    if not trigger_field or not trigger_value:
+        return None
+    return {"trigger_field": trigger_field, "trigger_value": trigger_value}
+
+
 def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, Any]]:
     if not isinstance(raw_fields, (list, tuple, set)):
         return []
@@ -776,6 +787,11 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         )
         if item_button_style:
             normalized_item["button_style"] = item_button_style
+
+        for conditional_key in ("editable_when", "required_when"):
+            conditional_rule = _normalize_conditional_field_rule_v1(raw_item.get(conditional_key))
+            if conditional_rule:
+                normalized_item[conditional_key] = conditional_rule
 
         if item_type == "list":
             normalized_item["list_source_type"] = item_list_source_type
