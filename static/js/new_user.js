@@ -2891,8 +2891,11 @@ function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
     applyPage();
   });
 
+  const spacerEl = document.createElement("span");
+  spacerEl.className = "dynamic-process-pager-spacer-v1";
   wrapEl.appendChild(selectEl);
   wrapEl.appendChild(sizeLabelEl);
+  wrapEl.appendChild(spacerEl);
   wrapEl.appendChild(prevBtnEl);
   wrapEl.appendChild(statusEl);
   wrapEl.appendChild(nextBtnEl);

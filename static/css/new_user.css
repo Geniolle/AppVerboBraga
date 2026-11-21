@@ -6577,24 +6577,33 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   align-self: flex-start;
 }
 
-/* Paginacao das listas de processo (entradas por pagina e navegacao). */
+/* Paginacao das listas de processo: mesmo layout do rodape "entradas por pagina" dos outros cartoes. */
 .dynamic-process-pager-v1 {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
   font-size: 13px;
   color: #374151;
 }
 .dynamic-process-pager-v1 select {
-  height: 32px;
+  width: 72px;
+  height: 36px;
   padding: 0 8px;
   border: 1px solid #cfd5df;
   border-radius: 6px;
   background: #ffffff;
+  font-size: 13px;
+}
+.dynamic-process-pager-v1 > span:nth-of-type(1) {
+  white-space: nowrap;
+}
+.dynamic-process-pager-v1 .dynamic-process-pager-spacer-v1 {
+  flex: 1 1 auto;
 }
 .dynamic-process-pager-v1 button {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   border: 1px solid #cfd5df;
   border-radius: 6px;
   background: #ffffff;
@@ -6607,6 +6616,8 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   cursor: default;
 }
 .dynamic-process-pager-status-v1 {
+  white-space: nowrap;
   color: #1d4ed8;
   font-weight: 700;
+  font-size: 13px;
 }
