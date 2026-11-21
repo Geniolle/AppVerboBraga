@@ -2817,13 +2817,13 @@ function renderDynamicProcessListTableCardV1(options) {
   enhanceProcessShellTables(cardEl);
 }
 
-// Paginacao propria das listas de processo: "entradas por pagina" (5, 10, 20, 50) e navegacao.
+// Paginacao das listas de processo no padrao "Mais": mostra as primeiras linhas e "Mais" abre o proximo bloco.
 function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
   if (!bodyEl || !limiterEl) {
     return;
   }
   if (!bodyEl.__pagerState) {
-    bodyEl.__pagerState = { pageSize: 5, page: 0 };
+    bodyEl.__pagerState = { pageSize: 5, shown: 5 };
   }
   const state = bodyEl.__pagerState;
   limiterEl.innerHTML = "";
@@ -2844,63 +2844,46 @@ function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
   const sizeLabelEl = document.createElement("span");
   sizeLabelEl.textContent = "entradas por página";
 
-  const prevBtnEl = document.createElement("button");
-  prevBtnEl.type = "button";
-  prevBtnEl.textContent = "‹";
-  prevBtnEl.setAttribute("aria-label", "Página anterior");
+  const moreBtnEl = document.createElement("button");
+  moreBtnEl.type = "button";
+  moreBtnEl.className = "dynamic-process-pager-more-v1";
+  moreBtnEl.textContent = "Mais";
 
   const statusEl = document.createElement("span");
   statusEl.className = "dynamic-process-pager-status-v1";
 
-  const nextBtnEl = document.createElement("button");
-  nextBtnEl.type = "button";
-  nextBtnEl.textContent = "›";
-  nextBtnEl.setAttribute("aria-label", "Página seguinte");
-
-  const applyPage = () => {
+  const applyShown = () => {
     const anchorRows = [...bodyEl.querySelectorAll("tr[data-record-id]")];
     const total = anchorRows.length;
-    const pages = Math.max(1, Math.ceil(total / state.pageSize));
-    state.page = Math.min(state.page, pages - 1);
-    const start = state.page * state.pageSize;
-    const end = start + state.pageSize;
+    const shown = Math.min(state.shown, total);
     anchorRows.forEach((rowEl, index) => {
-      const visible = index >= start && index < end;
+      const visible = index < shown;
       rowEl.style.display = visible ? "" : "none";
       const holderEl = rowEl.nextElementSibling;
       if (holderEl && holderEl.classList.contains("dynamic-process-inline-editor-row")) {
         holderEl.style.display = visible ? "" : "none";
       }
     });
-    statusEl.textContent = `[ ${total ? state.page + 1 : 0} / ${pages} ]`;
-    prevBtnEl.disabled = state.page <= 0;
-    nextBtnEl.disabled = state.page >= pages - 1;
+    statusEl.textContent = `[ ${shown} / ${total} ]`;
+    moreBtnEl.style.display = shown < total ? "" : "none";
   };
 
   selectEl.addEventListener("change", () => {
     state.pageSize = Number(selectEl.value) || 5;
-    state.page = 0;
-    applyPage();
+    state.shown = state.pageSize;
+    applyShown();
   });
-  prevBtnEl.addEventListener("click", () => {
-    state.page = Math.max(0, state.page - 1);
-    applyPage();
-  });
-  nextBtnEl.addEventListener("click", () => {
-    state.page += 1;
-    applyPage();
+  moreBtnEl.addEventListener("click", () => {
+    state.shown += state.pageSize;
+    applyShown();
   });
 
-  const spacerEl = document.createElement("span");
-  spacerEl.className = "dynamic-process-pager-spacer-v1";
   wrapEl.appendChild(selectEl);
   wrapEl.appendChild(sizeLabelEl);
-  wrapEl.appendChild(spacerEl);
-  wrapEl.appendChild(prevBtnEl);
+  wrapEl.appendChild(moreBtnEl);
   wrapEl.appendChild(statusEl);
-  wrapEl.appendChild(nextBtnEl);
   limiterEl.appendChild(wrapEl);
-  applyPage();
+  applyShown();
 }
 
 function buildProcessOptionMetaMap(setting) {

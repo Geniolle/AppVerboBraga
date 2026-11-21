@@ -6601,7 +6601,7 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 .dynamic-process-pager-v1 .dynamic-process-pager-spacer-v1 {
   flex: 1 1 auto;
 }
-.dynamic-process-pager-v1 button {
+.dynamic-process-pager-v1 button:not(.dynamic-process-pager-more-v1) {
   width: 34px;
   height: 34px;
   border: 1px solid #cfd5df;
@@ -6620,4 +6620,14 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   color: #1d4ed8;
   font-weight: 700;
   font-size: 13px;
+}
+/* Botao "Mais" da paginacao das listas de processo (mesmo padrao do cartao de Menus). */
+.dynamic-process-pager-more-v1 {
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
 }
