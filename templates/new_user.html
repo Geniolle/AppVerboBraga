@@ -184,8 +184,7 @@
         </section>
 
         <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa" {% if initial_menu != 'empresa' %}style="display: none;"{% endif %}>
-          <h2>Perfil institucional da entidade ativa</h2>
-          <p>Estes dados pertencem à entidade atualmente ativa e serão refletidos no cadastro da entidade.</p>
+          <h2>Perfil institucional da entidade</h2>
           {% if entity_error and initial_menu == "empresa" %}
             <div class="alert error">{{ entity_error }}</div>
           {% endif %}
