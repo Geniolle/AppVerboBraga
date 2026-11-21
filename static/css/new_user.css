@@ -1239,7 +1239,8 @@ label {
 }
 
 /* Flags de Meus dados: interruptor (toggle switch). O checkbox continua no DOM e e gravado normalmente. */
-#perfil-pessoal-card .profile-custom-flag-control {
+#perfil-pessoal-card .profile-custom-flag-control,
+#dynamic-process-card .profile-custom-flag-control {
   position: relative;
   min-height: 40px;
   justify-content: space-between;
@@ -1252,16 +1253,19 @@ label {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control:hover {
+#perfil-pessoal-card .profile-custom-flag-control:hover,
+#dynamic-process-card .profile-custom-flag-control:hover {
   background: #f3f6fb;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control span {
+#perfil-pessoal-card .profile-custom-flag-control span,
+#dynamic-process-card .profile-custom-flag-control span {
   flex: 1 1 auto;
   text-align: left;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"] {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"],
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"] {
   -webkit-appearance: none;
   appearance: none;
   box-sizing: border-box;
@@ -1281,7 +1285,8 @@ label {
   transition: background-color 0.2s ease;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]::before {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]::before,
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]::before {
   content: "";
   position: absolute;
   top: 3px;
@@ -1294,21 +1299,25 @@ label {
   transition: transform 0.2s ease;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked,
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:checked {
   background: #16a34a;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked::before {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:checked::before,
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:checked::before {
   transform: translateX(18px);
 }
 
-#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:focus-visible {
+#perfil-pessoal-card .profile-custom-flag-control input[type="checkbox"]:focus-visible,
+#dynamic-process-card .profile-custom-flag-control input[type="checkbox"]:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
 /* Estilo checkbox dentro de Meus dados: caixa de seleção nativa (sem interruptor) */
-#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"] {
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"],
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"] {
   -webkit-appearance: checkbox;
   appearance: checkbox;
   flex: 0 0 18px;
@@ -1323,26 +1332,31 @@ label {
   box-shadow: none;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before {
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before,
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]::before {
   display: none;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked {
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked,
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked {
   background: none;
 }
 
-#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before {
+#perfil-pessoal-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before,
+#dynamic-process-card .profile-custom-flag-control--checkbox input[type="checkbox"]:checked::before {
   transform: none;
 }
 
 /* Grupos de botões (Radio, Segmentado, Aceitar/Rejeitar) em Meus dados */
-#perfil-pessoal-card .profile-button-group {
+#perfil-pessoal-card .profile-button-group,
+#dynamic-process-card .profile-button-group {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-#perfil-pessoal-card .profile-button-option {
+#perfil-pessoal-card .profile-button-option,
+#dynamic-process-card .profile-button-option {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1360,11 +1374,13 @@ label {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-#perfil-pessoal-card .profile-button-option:hover {
+#perfil-pessoal-card .profile-button-option:hover,
+#dynamic-process-card .profile-button-option:hover {
   background: #f3f6fb;
 }
 
-#perfil-pessoal-card .profile-button-option input[type="radio"] {
+#perfil-pessoal-card .profile-button-option input[type="radio"],
+#dynamic-process-card .profile-button-option input[type="radio"] {
   position: absolute;
   opacity: 0;
   width: 1px;
@@ -1373,18 +1389,21 @@ label {
   pointer-events: none;
 }
 
-#perfil-pessoal-card .profile-button-option:has(input:checked) {
+#perfil-pessoal-card .profile-button-option:has(input:checked),
+#dynamic-process-card .profile-button-option:has(input:checked) {
   background: #16a34a;
   border-color: #15803d;
   color: #ffffff;
 }
 
-#perfil-pessoal-card .profile-button-option:has(input:focus-visible) {
+#perfil-pessoal-card .profile-button-option:has(input:focus-visible),
+#dynamic-process-card .profile-button-option:has(input:focus-visible) {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
-#perfil-pessoal-card .profile-button-group--segmented {
+#perfil-pessoal-card .profile-button-group--segmented,
+#dynamic-process-card .profile-button-group--segmented {
   display: inline-flex;
   flex-wrap: nowrap;
   gap: 0;
@@ -1394,21 +1413,25 @@ label {
   background: #ffffff;
 }
 
-#perfil-pessoal-card .profile-button-group--segmented .profile-button-option {
+#perfil-pessoal-card .profile-button-group--segmented .profile-button-option,
+#dynamic-process-card .profile-button-group--segmented .profile-button-option {
   border: 0;
   border-radius: 0;
   min-height: 38px;
 }
 
-#perfil-pessoal-card .profile-button-group--segmented .profile-button-option + .profile-button-option {
+#perfil-pessoal-card .profile-button-group--segmented .profile-button-option + .profile-button-option,
+#dynamic-process-card .profile-button-group--segmented .profile-button-option + .profile-button-option {
   border-left: 1px solid #cbd5e1;
 }
 
-#perfil-pessoal-card .profile-button-group--segmented .profile-button-option:has(input:checked) {
+#perfil-pessoal-card .profile-button-group--segmented .profile-button-option:has(input:checked),
+#dynamic-process-card .profile-button-group--segmented .profile-button-option:has(input:checked) {
   background: #2563eb;
 }
 
-#perfil-pessoal-card .profile-button-group--confirm .profile-button-option:has(input:checked) {
+#perfil-pessoal-card .profile-button-group--confirm .profile-button-option:has(input:checked),
+#dynamic-process-card .profile-button-group--confirm .profile-button-option:has(input:checked) {
   background: #2563eb;
   border-color: #1d4ed8;
 }
@@ -2128,15 +2151,18 @@ th {
    (PERFIL) Dados pessoais: Nome, Telefone e Email na primeira linha
 ################################################################################### */
 
-#perfil-pessoal-card .profile-edit-form .personal-grid {
+#perfil-pessoal-card .profile-edit-form .personal-grid,
+#dynamic-process-card .profile-edit-form .personal-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-#perfil-pessoal-card .profile-edit-form .field.full {
+#perfil-pessoal-card .profile-edit-form .field.full,
+#dynamic-process-card .profile-edit-form .field.full {
   grid-column: 1 / -1;
 }
 
-#perfil-pessoal-card .profile-edit-form #edit_login_email {
+#perfil-pessoal-card .profile-edit-form #edit_login_email,
+#dynamic-process-card .profile-edit-form #edit_login_email {
   background: #ffffff;
 }
 
@@ -2156,43 +2182,53 @@ th {
    (PERFIL) Ordem dos campos: Nome | Telefone | Email
 ################################################################################### */
 
-#perfil-pessoal-card .profile-edit-form .personal-grid {
+#perfil-pessoal-card .profile-edit-form .personal-grid,
+#dynamic-process-card .profile-edit-form .personal-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-#perfil-pessoal-card .profile-edit-form .profile-field-name {
+#perfil-pessoal-card .profile-edit-form .profile-field-name,
+#dynamic-process-card .profile-edit-form .profile-field-name {
   order: 1;
 }
 
-#perfil-pessoal-card .profile-edit-form .profile-field-phone {
+#perfil-pessoal-card .profile-edit-form .profile-field-phone,
+#dynamic-process-card .profile-edit-form .profile-field-phone {
   order: 2;
 }
 
-#perfil-pessoal-card .profile-edit-form .profile-field-email {
+#perfil-pessoal-card .profile-edit-form .profile-field-email,
+#dynamic-process-card .profile-edit-form .profile-field-email {
   order: 3;
 }
 
-#perfil-pessoal-card .profile-edit-form .profile-field-country {
+#perfil-pessoal-card .profile-edit-form .profile-field-country,
+#dynamic-process-card .profile-edit-form .profile-field-country {
   order: 4;
 }
 
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_full_name) {
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_full_name),
+#dynamic-process-card .profile-edit-form .field:has(#edit_full_name) {
   order: 1;
 }
 
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_primary_phone) {
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_primary_phone),
+#dynamic-process-card .profile-edit-form .field:has(#edit_primary_phone) {
   order: 2;
 }
 
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_login_email) {
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_login_email),
+#dynamic-process-card .profile-edit-form .field:has(#edit_login_email) {
   order: 3;
 }
 
-#perfil-pessoal-card .profile-edit-form .field:has(#edit_country) {
+#perfil-pessoal-card .profile-edit-form .field:has(#edit_country),
+#dynamic-process-card .profile-edit-form .field:has(#edit_country) {
   order: 4;
 }
 
-#perfil-pessoal-card .profile-edit-form .field.full:has(#edit_login_email) {
+#perfil-pessoal-card .profile-edit-form .field.full:has(#edit_login_email),
+#dynamic-process-card .profile-edit-form .field.full:has(#edit_login_email) {
   grid-column: auto;
 }
 
@@ -5917,7 +5953,8 @@ input.action-btn-cancel,
 }
 
 /* Botoes Gravar/Cancelar em Dados pessoais: linha propria, abaixo dos campos */
-#perfil-pessoal-card .personal-grid > .profile-edit-actions {
+#perfil-pessoal-card .personal-grid > .profile-edit-actions,
+#dynamic-process-card .personal-grid > .profile-edit-actions {
   grid-column: 1 / -1;
   width: 100%;
   margin-top: 8px;
@@ -5931,27 +5968,32 @@ input.action-btn-cancel,
 
 /* Grupo repetido (Quantidade de filhos): sempre no fim da aba, depois dos campos fixos (ordem 190/200). */
 #perfil-pessoal-card .personal-grid > .profile-quantity-rule-v1,
-#perfil-pessoal-card .personal-grid > .profile-quantity-readonly-v1 {
+#perfil-pessoal-card .personal-grid > .profile-quantity-readonly-v1,
+#dynamic-process-card .personal-grid > .profile-quantity-readonly-v1 {
   order: 300;
 }
 /* Itens do grupo repetido: cada item e' uma coluna, lado a lado (campos empilhados dentro de cada coluna). */
 #perfil-pessoal-card .profile-quantity-items-wrap-v1,
-#perfil-pessoal-card .profile-quantity-readonly-list-v1 {
+#perfil-pessoal-card .profile-quantity-readonly-list-v1,
+#dynamic-process-card .profile-quantity-readonly-list-v1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
   align-items: start;
 }
-#perfil-pessoal-card .profile-quantity-item-v1 {
+#perfil-pessoal-card .profile-quantity-item-v1,
+#dynamic-process-card .profile-quantity-item-v1 {
   min-width: 0;
 }
-#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+#perfil-pessoal-card .profile-quantity-item-grid-v1,
+#dynamic-process-card .profile-quantity-item-grid-v1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 /* Botoes Gravar/Cancelar sempre por ultimo (ordem inline do JS pode ser 230). */
-#perfil-pessoal-card .personal-grid > .profile-edit-actions {
+#perfil-pessoal-card .personal-grid > .profile-edit-actions,
+#dynamic-process-card .personal-grid > .profile-edit-actions {
   order: 400 !important;
 }
 
@@ -6052,41 +6094,49 @@ input.action-btn-cancel,
    O JS pode mostrar e ocultar de novo durante um change; sem isto o campo pisca. */
 #perfil-pessoal-card .field[data-profile-subsequent-hidden-v1="1"],
 #perfil-pessoal-card .personal-item[data-profile-subsequent-hidden-v1="1"],
-#perfil-pessoal-card .field[data-profile-quantity-origin-duplicate-v1="1"] {
+#perfil-pessoal-card .field[data-profile-quantity-origin-duplicate-v1="1"],
+#dynamic-process-card .field[data-profile-quantity-origin-duplicate-v1="1"] {
   display: none !important;
 }
 
 /* Itens da quantidade: campos lado a lado; data com a largura da descricao (nao ocupa a linha toda). */
-#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+#perfil-pessoal-card .profile-quantity-item-grid-v1,
+#dynamic-process-card .profile-quantity-item-grid-v1 {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) 400px;
   grid-auto-flow: row;
   align-items: end;
   gap: 16px;
 }
-#perfil-pessoal-card .profile-quantity-item-grid-v1 > .field {
+#perfil-pessoal-card .profile-quantity-item-grid-v1 > .field,
+#dynamic-process-card .profile-quantity-item-grid-v1 > .field {
   grid-column: auto !important;
   order: 0 !important;
   min-width: 0;
 }
-#perfil-pessoal-card .profile-quantity-item-grid-v1 > .field:has(input[type="date"]) {
+#perfil-pessoal-card .profile-quantity-item-grid-v1 > .field:has(input[type="date"]),
+#dynamic-process-card .profile-quantity-item-grid-v1 > .field:has(input[type="date"]) {
   width: 400px;
 }
 
 /* Cada item numa linha propria; o campo Nome ocupa a largura disponivel; a data mantem a largura da descricao. */
-#perfil-pessoal-card .profile-quantity-items-wrap-v1 {
+#perfil-pessoal-card .profile-quantity-items-wrap-v1,
+#dynamic-process-card .profile-quantity-items-wrap-v1 {
   grid-template-columns: minmax(0, 1fr) !important;
   gap: 24px;
 }
-#perfil-pessoal-card .profile-quantity-item-v1 {
+#perfil-pessoal-card .profile-quantity-item-v1,
+#dynamic-process-card .profile-quantity-item-v1 {
   width: 100%;
 }
-#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+#perfil-pessoal-card .profile-quantity-item-grid-v1,
+#dynamic-process-card .profile-quantity-item-grid-v1 {
   width: 100%;
   max-width: none;
   justify-self: stretch;
 }
-#perfil-pessoal-card .profile-quantity-item-grid-v1 {
+#perfil-pessoal-card .profile-quantity-item-grid-v1,
+#dynamic-process-card .profile-quantity-item-grid-v1 {
   grid-template-columns: minmax(0, 1fr) 400px !important;
 }
 
@@ -6109,7 +6159,8 @@ input.action-btn-cancel,
 }
 
 /* Overlay "A gravar..." sobre Dados pessoais durante o POST. */
-#perfil-pessoal-card {
+#perfil-pessoal-card,
+#dynamic-process-card  {
   position: relative;
 }
 #perfil-pessoal-card.profile-saving::after {
