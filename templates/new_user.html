@@ -199,6 +199,10 @@
                 <label>Nº da entidade</label>
                 <input class="readonly-field" value="{{ company_profile_data.entity_number or '-' }}" readonly disabled>
               </div>
+              <div class="field entity-fourth-row-country">
+                <label for="empresa_country">País *</label>
+                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
+              </div>
               <div class="field entity-first-row-name">
                 <label for="empresa_name">Nome da entidade *</label>
                 <input id="empresa_name" name="name" required value="{{ company_profile_data.name }}">
@@ -207,12 +211,12 @@
                 <label for="empresa_acronym">Acrónimo (opcional)</label>
                 <input id="empresa_acronym" name="acronym" maxlength="5" value="{{ company_profile_data.acronym }}">
               </div>
+            </div>
+            <div class="entity-second-row">
               <div class="field entity-first-row-tax">
                 <label for="empresa_tax_id">Nº Identificação Fiscal *</label>
                 <input id="empresa_tax_id" name="tax_id" maxlength="20" required value="{{ company_profile_data.tax_id }}">
               </div>
-            </div>
-            <div class="entity-second-row">
               <div class="field entity-second-row-email">
                 <label for="empresa_email">Email *</label>
                 <input id="empresa_email" name="email" type="email" required value="{{ company_profile_data.email }}">
@@ -248,10 +252,6 @@
               <div class="field entity-fourth-row-city">
                 <label for="empresa_city">Cidade *</label>
                 <input id="empresa_city" name="city" maxlength="120" required value="{{ company_profile_data.city }}">
-              </div>
-              <div class="field entity-fourth-row-country">
-                <label for="empresa_country">País *</label>
-                <input id="empresa_country" name="country" maxlength="50" required value="{{ company_profile_data.country }}">
               </div>
             </div>
             <div class="entity-fifth-row entity-fifth-row-edit">
