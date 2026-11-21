@@ -6176,3 +6176,31 @@ input.action-btn-cancel,
   font-size: 0.85rem;
   font-weight: 600;
 }
+
+
+/* APPGENESIS_EMPRESA_LAYOUT_3_FIELDS_V1_START
+   Empresa > Dados institucionais: tres campos por linha; sem o campo Papel no tenant. */
+#empresa-card form:has(> .entity-first-row) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+#empresa-card form > .entity-first-row,
+#empresa-card form > .entity-second-row,
+#empresa-card form > .entity-third-row,
+#empresa-card form > .entity-fourth-row,
+#empresa-card form > .entity-fifth-row {
+  display: contents;
+  margin: 0;
+}
+
+#empresa-card form > .form-action-row {
+  grid-column: 1 / -1;
+}
+
+/* Seletor da imagem da entidade: uma coluna, igual ao seletor de foto do utilizador. */
+#empresa-card .entity-fifth-row-logo {
+  grid-column: auto;
+}
+/* APPGENESIS_EMPRESA_LAYOUT_3_FIELDS_V1_END */

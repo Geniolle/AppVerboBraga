@@ -5442,6 +5442,25 @@ if (profilePhotoInputEl && profilePhotoPreviewEl) {
     }
   });
 }
+// Imagem da entidade (Empresa > Dados institucionais): mesmo seletor da foto de perfil.
+const empresaLogoInputEl = document.getElementById("empresa_logo_file");
+const empresaLogoPreviewEl = document.getElementById("empresa_logo_preview");
+if (empresaLogoInputEl && empresaLogoPreviewEl) {
+  empresaLogoInputEl.addEventListener("change", () => {
+    const file = empresaLogoInputEl.files && empresaLogoInputEl.files[0];
+    if (!file) {
+      return;
+    }
+    empresaLogoPreviewEl.src = URL.createObjectURL(file);
+    empresaLogoPreviewEl.hidden = false;
+    const placeholderEl = empresaLogoPreviewEl.parentElement
+      ? empresaLogoPreviewEl.parentElement.querySelector(".profile-photo-placeholder-v1")
+      : null;
+    if (placeholderEl) {
+      placeholderEl.hidden = true;
+    }
+  });
+}
 if (userAvatarImageEl) {
   userAvatarImageEl.src = avatarDataUri;
 }
