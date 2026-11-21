@@ -388,6 +388,7 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
     singular_label="Perfil",
     plural_label="Perfis",
     edit_param="auth_profile_edit_key",
+    copy_param="auth_profile_copy_key",
     default_target="auth-profile-card",
     edit_target="auth-profile-form-card",
     create_title="Criar perfil",

@@ -13,7 +13,9 @@ from sqlalchemy.orm import Session
 # APPGENESIS_ADMIN_SUBPROCESS_PAGE_IMPORTS_V2_START
 from appgenesis.admin_subprocesses.registry import get_admin_subprocess_config, ENTIDADE_CONFIG, UTILIZADOR_CONFIG
 from appgenesis.admin_subprocesses.repositories.auth_profile_repository import AuthorizationProfileAdminRepository
-from appgenesis.admin_subprocesses.service import build_admin_subprocess_state
+from dataclasses import replace as _dataclass_replace
+
+from appgenesis.admin_subprocesses.service import build_admin_subprocess_state, find_admin_subprocess_row
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_config_for_context_v1,
@@ -481,6 +483,7 @@ def new_user_page(
     section_key: str = "",
     sidebar_section_edit_key: str = "",
     auth_profile_edit_key: str = "",
+    auth_profile_copy_key: str = "",
     appgenesis_after_save: str = "",
 ) -> HTMLResponse:
 
@@ -834,6 +837,29 @@ def new_user_page(
                     menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
                     active_entity_id=selected_entity_id,
                 )
+                # Copiar: abre o formulario de criacao ja preenchido com os dados do perfil de origem.
+                clean_auth_profile_copy_key_v1 = str(auth_profile_copy_key or "").strip().lower()
+                if clean_auth_profile_copy_key_v1 and not auth_profile_subprocess_state_v1.is_editing:
+                    copy_row_v1 = find_admin_subprocess_row(
+                        auth_profile_rows_v1,
+                        auth_profile_subprocess_config_v1,
+                        clean_auth_profile_copy_key_v1,
+                    )
+                    if copy_row_v1:
+                        auth_profile_subprocess_state_v1 = _dataclass_replace(
+                            auth_profile_subprocess_state_v1,
+                            prefill_values={
+                                key: copy_row_v1.get(key, "")
+                                for key in (
+                                    "session_origin",
+                                    "menu_origin",
+                                    "tab_origin",
+                                    "authorization_level",
+                                    "visibility_scope_mode",
+                                    "status",
+                                )
+                            },
+                        )
             except Exception:
                 auth_profile_subprocess_state_v1 = None
 
