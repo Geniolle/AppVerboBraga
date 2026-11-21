@@ -748,7 +748,8 @@ function buildProcessSections(setting, processValuesByField = {}) {
       isRequired: normalizeProcessFieldRequired(optionRequiredRaw),
       editableWhen: option.editable_when || null,
       requiredWhen: option.required_when || null,
-      visibleWhen: option.visible_when || null
+      visibleWhen: option.visible_when || null,
+      addButtonLabel: option.add_button_label || null
     });
   });
 
@@ -765,6 +766,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       editableWhen: fieldMeta.editableWhen || null,
       requiredWhen: fieldMeta.requiredWhen || null,
       visibleWhen: fieldMeta.visibleWhen || null,
+      addButtonLabel: fieldMeta.addButtonLabel || null,
       listKey: normalizeMenuKey(fieldMeta.listKey),
       listOptions: Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions.slice() : [],
       value: typeof fieldValue === "string" ? fieldValue : "",
@@ -2097,6 +2099,34 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     }
     return current === String(rule.trigger_value).trim().toLowerCase();
   };
+  // Campos "adicionar": ficam ocultos ate o botao "+" ou ate terem valor (um par de cada vez).
+  let previousAddVisible = true;
+  formEl.querySelectorAll("[data-process-field-key][data-add-button-label]").forEach((containerEl) => {
+    const key = containerEl.dataset.processFieldKey;
+    const inputEl = containerEl.querySelector("input, select, textarea");
+    const revealed = formEl.dataset[`reveal_${key}`] === "1";
+    const filled = Boolean(inputEl && String(inputEl.value || "").trim());
+    const visible = revealed || filled;
+    containerEl.style.display = visible ? "" : "none";
+    if (inputEl) {
+      inputEl.disabled = !visible;
+    }
+    if (!containerEl._addButtonEl) {
+      const buttonEl = document.createElement("button");
+      buttonEl.type = "button";
+      buttonEl.className = "dynamic-process-add-pair-btn-v1";
+      buttonEl.textContent = `+ ${containerEl.dataset.addButtonLabel}`;
+      buttonEl.addEventListener("click", () => {
+        formEl.dataset[`reveal_${key}`] = "1";
+        applyConditionalProcessFieldRulesV1(formEl);
+      });
+      containerEl.parentNode.insertBefore(buttonEl, containerEl);
+      containerEl._addButtonEl = buttonEl;
+    }
+    containerEl._addButtonEl.style.display = !visible && previousAddVisible ? "" : "none";
+    previousAddVisible = previousAddVisible && visible;
+  });
+
   formEl.querySelectorAll("[data-process-field-key]").forEach((containerEl) => {
     const editableRaw = containerEl.dataset.editableWhen;
     const requiredRaw = containerEl.dataset.requiredWhen;
@@ -2135,6 +2165,10 @@ function placeDynamicProcessFormInRowV1(anchorRowEl, bodyEl) {
   if (!dynamicProcessEditFormEl || !bodyEl) {
     return;
   }
+  // Cada abertura do formulario comeca sem pares "+" revelados.
+  Object.keys(dynamicProcessEditFormEl.dataset)
+    .filter((datasetKey) => datasetKey.startsWith("reveal_"))
+    .forEach((datasetKey) => delete dynamicProcessEditFormEl.dataset[datasetKey]);
   if (!dynamicProcessInlineOriginV1) {
     dynamicProcessInlineOriginV1 = {
       parent: dynamicProcessEditFormEl.parentNode,
@@ -3603,6 +3637,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       }
       if (field.visibleWhen) {
         fieldContainerEl.dataset.visibleWhen = JSON.stringify(field.visibleWhen);
+      }
+      if (field.addButtonLabel) {
+        fieldContainerEl.dataset.addButtonLabel = field.addButtonLabel;
       }
       fieldContainerEl.dataset.fieldLabel = fieldLabel;
 
