@@ -614,11 +614,17 @@ def _normalize_row_fields_v1(raw_row_fields: Any) -> list[dict[str, Any]]:
         if not key or key in seen:
             continue
         seen.add(key)
-        row_fields.append({
+        row_field: dict[str, Any] = {
             "key": key,
             "label": str(raw_field.get("label") or key).strip() or key,
             "required": bool(raw_field.get("required")),
-        })
+        }
+        options_menu_key = str(raw_field.get("options_menu_key") or "").strip().lower()
+        options_field_key = str(raw_field.get("options_field_key") or "").strip().lower()
+        if options_menu_key and options_field_key:
+            row_field["options_menu_key"] = options_menu_key
+            row_field["options_field_key"] = options_field_key
+        row_fields.append(row_field)
     return row_fields
 
 
