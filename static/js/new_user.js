@@ -2829,9 +2829,12 @@ function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
   limiterEl.innerHTML = "";
   limiterEl.style.display = "";
 
+  // Mesma estrutura do rodape "Mais" dos outros cartoes (classes appgenesis-load-more-*).
   const wrapEl = document.createElement("div");
-  wrapEl.className = "dynamic-process-pager-v1";
+  wrapEl.className = "appgenesis-load-more-footer-v1";
 
+  const pageSizeWrapEl = document.createElement("div");
+  pageSizeWrapEl.className = "appgenesis-load-more-page-size-v1";
   const selectEl = document.createElement("select");
   [5, 10, 20, 50].forEach((size) => {
     const optionEl = document.createElement("option");
@@ -2840,17 +2843,24 @@ function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
     selectEl.appendChild(optionEl);
   });
   selectEl.value = String(state.pageSize);
-
   const sizeLabelEl = document.createElement("span");
   sizeLabelEl.textContent = "entradas por página";
+  pageSizeWrapEl.appendChild(selectEl);
+  pageSizeWrapEl.appendChild(sizeLabelEl);
 
+  const statusWrapEl = document.createElement("div");
+  statusWrapEl.className = "appgenesis-load-more-status-v1";
   const moreBtnEl = document.createElement("button");
   moreBtnEl.type = "button";
-  moreBtnEl.className = "dynamic-process-pager-more-v1";
+  moreBtnEl.className = "appgenesis-load-more-btn-v1";
   moreBtnEl.textContent = "Mais";
-
   const statusEl = document.createElement("span");
-  statusEl.className = "dynamic-process-pager-status-v1";
+  statusEl.className = "appgenesis-load-more-counter-v1";
+  statusWrapEl.appendChild(moreBtnEl);
+  statusWrapEl.appendChild(statusEl);
+
+  wrapEl.appendChild(pageSizeWrapEl);
+  wrapEl.appendChild(statusWrapEl);
 
   const applyShown = () => {
     const anchorRows = [...bodyEl.querySelectorAll("tr[data-record-id]")];
@@ -2878,10 +2888,6 @@ function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
     applyShown();
   });
 
-  wrapEl.appendChild(selectEl);
-  wrapEl.appendChild(sizeLabelEl);
-  wrapEl.appendChild(moreBtnEl);
-  wrapEl.appendChild(statusEl);
   limiterEl.appendChild(wrapEl);
   applyShown();
 }
