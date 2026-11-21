@@ -2488,6 +2488,12 @@ function renderDynamicProcessListTableCardV1(options) {
 
   // Botao "+" logo apos o titulo para criar registo (margin-right:auto no botao mantem os restantes elementos a direita).
   cardEl.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
+  // Titulo nao cresce e o "+" fica junto dele (regra de cartao com botao inline; ver admin_subprocess_inline_create_v1.css).
+  if (typeof safeOptions.onCreate === "function") {
+    cardEl.setAttribute("data-admin-subprocess-inline-create-enabled", "1");
+  } else {
+    cardEl.removeAttribute("data-admin-subprocess-inline-create-enabled");
+  }
   if (titleEl && typeof safeOptions.onCreate === "function") {
     const createBtnEl = document.createElement("button");
     createBtnEl.type = "button";
