@@ -6400,7 +6400,7 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 
 /* Formulario de processo de lista (inline na linha): 3 campos por linha, como nos processos dinamicos. */
 .dynamic-process-inline-editor-row .profile-edit-form .personal-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 160px 160px minmax(0, 1fr);
 }
 .dynamic-process-inline-editor-row .profile-edit-form .field.full {
   grid-column: 1 / -1;
