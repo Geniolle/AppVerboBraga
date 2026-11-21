@@ -190,6 +190,7 @@ input.action-btn-cancel,
   display: block;
   width: 100%;
   text-align: left;
+  font-weight: 700;
   box-sizing: border-box;
 }
 /* APPGENESIS_FIELD_LABEL_CENTER_V1_END */
