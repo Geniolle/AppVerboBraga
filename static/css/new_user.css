@@ -6415,3 +6415,31 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
     grid-template-columns: 1fr;
   }
 }
+
+/* Agenda: grade de 4 colunas. Linha 1: Tipo | Organizador | Titulo (2). Linha 2: Data | Hora inicio | Hora fim | Data fim. */
+#dynamic-process-edit-form[data-menu-key="agenda"] .personal-grid {
+  grid-template-columns: 160px 160px minmax(0, 1fr) minmax(0, 1fr);
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key] {
+  grid-column: span 1;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_titulo_da_agenda"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_localizacao"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_morada"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_detalhes_do_agendamento"] {
+  grid-column: span 2;
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="agenda"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+  #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key] {
+    grid-column: auto;
+  }
+}
