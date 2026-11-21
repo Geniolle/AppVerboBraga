@@ -6199,8 +6199,61 @@ input.action-btn-cancel,
   grid-column: 1 / -1;
 }
 
-/* Seletor da imagem da entidade: uma coluna, igual ao seletor de foto do utilizador. */
+/* Seletor da imagem da entidade: linha propria, por baixo de todos os campos. */
 #empresa-card .entity-fifth-row-logo {
-  grid-column: auto;
+  grid-column: 1 / -1;
+}
+
+#empresa-card .entity-logo-picker-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+#empresa-card #empresa_logo_picker {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+#empresa-card .entity-logo-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  min-width: 200px;
+  margin-top: 6px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #d8dce4;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+#empresa-card .entity-logo-menu[hidden] {
+  display: none;
+}
+
+#empresa-card .entity-logo-menu-item {
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #2f3540;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#empresa-card .entity-logo-menu-item:hover,
+#empresa-card .entity-logo-menu-item:focus-visible {
+  background: #edf1f6;
+}
+
+#empresa-card .entity-logo-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 /* APPGENESIS_EMPRESA_LAYOUT_3_FIELDS_V1_END */

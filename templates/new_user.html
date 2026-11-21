@@ -259,18 +259,22 @@
               <div class="field profile-photo-field-v1 entity-fifth-row-logo">
                 <span class="personal-label">Imagem/ícone da entidade</span>
                 <div class="profile-photo-row-v1">
-                  <label class="profile-photo-picker-v1" for="empresa_logo_file" title="Escolher imagem da entidade">
-                    <img id="empresa_logo_preview" class="profile-photo-preview-v1" alt="" src="{{ company_profile_data.logo_url or '' }}" {% if not company_profile_data.logo_url %}hidden{% endif %}>
-                    <span class="profile-photo-placeholder-v1" {% if company_profile_data.logo_url %}hidden{% endif %} aria-hidden="true">{{ (company_profile_data.name or '?')[:1] }}</span>
-                    <span class="profile-photo-camera-v1" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 14.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg></span>
-                  </label>
+                  <div class="entity-logo-picker-wrap">
+                    <button type="button" class="profile-photo-picker-v1" id="empresa_logo_picker" aria-haspopup="menu" aria-expanded="false" aria-controls="empresa_logo_menu" title="Alterar imagem da entidade">
+                      <img id="empresa_logo_preview" class="profile-photo-preview-v1" alt="" src="{{ company_profile_data.logo_url or '' }}" {% if not company_profile_data.logo_url %}hidden{% endif %}>
+                      <span class="profile-photo-placeholder-v1" {% if company_profile_data.logo_url %}hidden{% endif %} aria-hidden="true">{{ (company_profile_data.name or '?')[:1] }}</span>
+                      <span class="profile-photo-camera-v1" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9zm3 14.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg></span>
+                    </button>
+                    <div id="empresa_logo_menu" class="entity-logo-menu" role="menu" hidden>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="select">Selecionar imagem</button>
+                      <button type="button" class="entity-logo-menu-item" role="menuitem" data-logo-action="remove" {% if not company_profile_data.logo_url %}disabled{% endif %}>Remover imagem</button>
+                    </div>
+                  </div>
                   <input id="empresa_logo_file" class="visually-hidden-v1" type="file" name="entity_logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
+                  <input id="empresa_remove_logo" type="hidden" name="remove_logo" value="">
                   <div class="profile-photo-text-v1">
                     <span class="profile-photo-title-v1">Clique na imagem para alterar</span>
                     <small>PNG, JPG ou WEBP, até 5MB.</small>
-                    {% if company_profile_data.logo_url %}
-                    <label class="profile-photo-remove-v1"><input type="checkbox" name="remove_logo" value="1"> Remover imagem</label>
-                    {% endif %}
                   </div>
                 </div>
               </div>

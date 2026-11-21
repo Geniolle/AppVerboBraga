@@ -5442,22 +5442,78 @@ if (profilePhotoInputEl && profilePhotoPreviewEl) {
     }
   });
 }
-// Imagem da entidade (Empresa > Dados institucionais): mesmo seletor da foto de perfil.
+// Imagem da entidade (Empresa > Dados institucionais): ao clicar na foto abre o menu
+// "Selecionar imagem" / "Remover imagem".
 const empresaLogoInputEl = document.getElementById("empresa_logo_file");
 const empresaLogoPreviewEl = document.getElementById("empresa_logo_preview");
-if (empresaLogoInputEl && empresaLogoPreviewEl) {
+const empresaLogoPickerEl = document.getElementById("empresa_logo_picker");
+const empresaLogoMenuEl = document.getElementById("empresa_logo_menu");
+const empresaRemoveLogoEl = document.getElementById("empresa_remove_logo");
+if (empresaLogoInputEl && empresaLogoPreviewEl && empresaLogoPickerEl && empresaLogoMenuEl && empresaRemoveLogoEl) {
+  const empresaLogoPlaceholderEl = empresaLogoPickerEl.querySelector(".profile-photo-placeholder-v1");
+
+  function setEmpresaLogoMenuOpenV1(open) {
+    empresaLogoMenuEl.hidden = !open;
+    empresaLogoPickerEl.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function showEmpresaLogoPreviewV1(src) {
+    empresaLogoPreviewEl.src = src;
+    empresaLogoPreviewEl.hidden = false;
+    if (empresaLogoPlaceholderEl) {
+      empresaLogoPlaceholderEl.hidden = true;
+    }
+  }
+
+  function clearEmpresaLogoPreviewV1() {
+    empresaLogoPreviewEl.removeAttribute("src");
+    empresaLogoPreviewEl.hidden = true;
+    if (empresaLogoPlaceholderEl) {
+      empresaLogoPlaceholderEl.hidden = false;
+    }
+  }
+
+  empresaLogoPickerEl.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setEmpresaLogoMenuOpenV1(empresaLogoMenuEl.hidden);
+  });
+
+  empresaLogoMenuEl.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-logo-action]");
+    if (!action || action.disabled) {
+      return;
+    }
+    event.stopPropagation();
+    setEmpresaLogoMenuOpenV1(false);
+    if (action.dataset.logoAction === "select") {
+      empresaLogoInputEl.click();
+      return;
+    }
+    if (action.dataset.logoAction === "remove") {
+      empresaRemoveLogoEl.value = "1";
+      empresaLogoInputEl.value = "";
+      clearEmpresaLogoPreviewV1();
+    }
+  });
+
   empresaLogoInputEl.addEventListener("change", () => {
     const file = empresaLogoInputEl.files && empresaLogoInputEl.files[0];
     if (!file) {
       return;
     }
-    empresaLogoPreviewEl.src = URL.createObjectURL(file);
-    empresaLogoPreviewEl.hidden = false;
-    const placeholderEl = empresaLogoPreviewEl.parentElement
-      ? empresaLogoPreviewEl.parentElement.querySelector(".profile-photo-placeholder-v1")
-      : null;
-    if (placeholderEl) {
-      placeholderEl.hidden = true;
+    empresaRemoveLogoEl.value = "";
+    showEmpresaLogoPreviewV1(URL.createObjectURL(file));
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!empresaLogoMenuEl.hidden && !event.target.closest("#empresa_logo_menu, #empresa_logo_picker")) {
+      setEmpresaLogoMenuOpenV1(false);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      setEmpresaLogoMenuOpenV1(false);
     }
   });
 }
