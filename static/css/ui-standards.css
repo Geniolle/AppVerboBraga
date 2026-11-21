@@ -196,3 +196,11 @@ input.action-btn-cancel,
 /* APPGENESIS_FIELD_LABEL_CENTER_V1_END */
 
 /* APPGENESIS_CREATE_CARD_STANDARD_V4_END */
+
+/* Regra global: cabecalhos de tabela com a mesma fonte do sistema, preto e negrito (todos os cabecalhos, atuais e futuros). */
+table thead th,
+table thead th * {
+  font-family: inherit !important;
+  color: #000 !important;
+  font-weight: 700 !important;
+}
