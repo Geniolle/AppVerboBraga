@@ -6416,9 +6416,13 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   }
 }
 
-/* Agenda: grade de 4 colunas. Linha 1: Tipo | Organizador | Titulo (2). Linha 2: Data | Hora inicio | Hora fim | Data fim. */
+/* Agenda: grade de 4 colunas iguais. Linha 1: Tipo | Organizador (max 160px) | Titulo (2). Linha 2: Data | Hora inicio | Hora fim | Data fim. */
 #dynamic-process-edit-form[data-menu-key="agenda"] .personal-grid {
-  grid-template-columns: 160px 160px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_tipo_de_agendamento"],
+#dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key="custom_organizador"] {
+  max-width: 160px;
 }
 #dynamic-process-edit-form[data-menu-key="agenda"] .field[data-process-field-key] {
   grid-column: span 1;
