@@ -2488,8 +2488,8 @@ function renderDynamicProcessListTableCardV1(options) {
 
   // Botao "+" logo ao lado do titulo para criar registo (agrupados para o flex nao o afastar).
   if (titleEl && titleEl.parentElement) {
-    titleEl.parentElement.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
-    let titleGroupEl = titleEl.parentElement.querySelector(":scope > .dynamic-process-list-title-group-v1");
+    cardEl.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
+    let titleGroupEl = titleEl.closest(".dynamic-process-list-title-group-v1");
     if (!titleGroupEl && typeof safeOptions.onCreate === "function") {
       titleGroupEl = document.createElement("div");
       titleGroupEl.className = "dynamic-process-list-title-group-v1";
