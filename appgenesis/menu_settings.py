@@ -300,6 +300,7 @@ def get_sidebar_menu_settings(
                     "include_remaining_fields"
                 ],
                 "process_list_columns": process_layout_config["list_columns"],
+                "process_record_sort_field": process_layout_config.get("sort_field", ""),
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
                 ],
@@ -413,6 +414,7 @@ def get_sidebar_menu_settings(
                     "include_remaining_fields"
                 ],
                 "process_list_columns": process_layout_config["list_columns"],
+                "process_record_sort_field": process_layout_config.get("sort_field", ""),
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
                 ],
