@@ -1047,6 +1047,8 @@ let dynamicProcessPopulatingV1 = false;
 // Formulario de processo de lista: posicao original e linha onde esta aberto (edicao/criacao inline).
 let dynamicProcessInlineOriginV1 = null;
 let dynamicProcessInlineHolderV1 = null;
+// Valores do formulario inline no momento em que abriu (para saber se houve alteracoes).
+let dynamicProcessInlineSnapshotV1 = "";
 const dynamicProcessMenuKeyInputEl = document.getElementById("dynamic-process-menu-key");
 const dynamicProcessSectionKeyInputEl = document.getElementById("dynamic-process-section-key");
 const dynamicProcessHistoryActionInputEl = document.getElementById("dynamic-process-history-action");
@@ -2092,6 +2094,20 @@ function placeDynamicProcessFormInRowV1(anchorRowEl, bodyEl) {
   }
   dynamicProcessEditFormEl.style.display = "";
   dynamicProcessInlineHolderV1 = holderEl;
+  dynamicProcessInlineSnapshotV1 = serializeDynamicProcessFormV1();
+}
+
+function serializeDynamicProcessFormV1() {
+  if (!dynamicProcessEditFormEl) {
+    return "";
+  }
+  return Array.from(dynamicProcessEditFormEl.querySelectorAll("input, select, textarea"))
+    .map((el) => `${el.name || el.id}=${el.type === "checkbox" || el.type === "radio" ? String(el.checked) : String(el.value)}`)
+    .join("&");
+}
+
+function dynamicProcessInlineHasChangesV1() {
+  return Boolean(dynamicProcessInlineHolderV1) && serializeDynamicProcessFormV1() !== dynamicProcessInlineSnapshotV1;
 }
 
 // Devolve o formulario a sua posicao original e fecha a edicao inline.
@@ -2470,10 +2486,17 @@ function renderDynamicProcessListTableCardV1(options) {
   emptyEl.textContent = emptyMessage;
   cardEl.style.display = "";
 
-  // Botao "+" ao lado do titulo para criar registo (padrao dos processos de lista).
+  // Botao "+" logo ao lado do titulo para criar registo (agrupados para o flex nao o afastar).
   if (titleEl && titleEl.parentElement) {
     titleEl.parentElement.querySelectorAll(".dynamic-process-list-create-btn-v1").forEach((btnEl) => btnEl.remove());
-    if (typeof safeOptions.onCreate === "function") {
+    let titleGroupEl = titleEl.parentElement.querySelector(":scope > .dynamic-process-list-title-group-v1");
+    if (!titleGroupEl && typeof safeOptions.onCreate === "function") {
+      titleGroupEl = document.createElement("div");
+      titleGroupEl.className = "dynamic-process-list-title-group-v1";
+      titleEl.parentElement.insertBefore(titleGroupEl, titleEl);
+      titleGroupEl.appendChild(titleEl);
+    }
+    if (titleGroupEl && typeof safeOptions.onCreate === "function") {
       const createBtnEl = document.createElement("button");
       createBtnEl.type = "button";
       createBtnEl.className = "admin-subprocess-inline-create-btn-v1 dynamic-process-list-create-btn-v1";
@@ -2488,7 +2511,7 @@ function renderDynamicProcessListTableCardV1(options) {
       createBtnEl.title = String(layoutConfig.createTitle || "Criar");
       createBtnEl.setAttribute("aria-label", String(layoutConfig.createTitle || "Criar"));
       createBtnEl.addEventListener("click", () => safeOptions.onCreate());
-      titleEl.insertAdjacentElement("afterend", createBtnEl);
+      titleGroupEl.appendChild(createBtnEl);
     }
   }
 
@@ -2548,6 +2571,15 @@ function renderDynamicProcessListTableCardV1(options) {
       }
       const entry = bodyEl.__processListRowMap && bodyEl.__processListRowMap.get(clickedRowEl.dataset.recordId);
       if (!entry) {
+        return;
+      }
+      // Com alteracoes por guardar, o clique na linha nao navega (igual ao editor inline de Campos adicionais).
+      if (dynamicProcessInlineHasChangesV1()) {
+        return;
+      }
+      const openedRowEl = dynamicProcessInlineHolderV1 ? dynamicProcessInlineHolderV1.previousElementSibling : null;
+      if (openedRowEl && openedRowEl.dataset && openedRowEl.dataset.recordId === clickedRowEl.dataset.recordId) {
+        closeDynamicProcessInlineFormV1();
         return;
       }
       populateDynamicProcessListFormV1(entry.sectionFields, entry.row, entry.layoutConfig);
