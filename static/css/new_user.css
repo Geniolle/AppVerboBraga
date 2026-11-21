@@ -6364,3 +6364,9 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 #dynamic-process-action-card[data-hidden-by-list-v1="1"] {
   display: none !important;
 }
+
+/* Formulario de processo de lista aberto logo abaixo da linha clicada. */
+.dynamic-process-inline-editor-row .profile-edit-form {
+  display: block !important;
+}
+}
