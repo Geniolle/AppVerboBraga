@@ -1600,8 +1600,13 @@ def _conditional_field_rule_met_v1(rule: Any, submitted_form: Any) -> bool:
         return False
     trigger_field = str(rule.get("trigger_field") or "").strip().lower()
     trigger_value = str(rule.get("trigger_value") or "").strip().lower()
+    operator = str(rule.get("operator") or "equals").strip().lower()
     submitted_trigger = str(submitted_form.get(f"process_field__{trigger_field}") or "").strip().lower()
-    return bool(trigger_field) and submitted_trigger == trigger_value
+    if not trigger_field:
+        return False
+    if operator == "is_not_empty":
+        return bool(submitted_trigger)
+    return submitted_trigger == trigger_value
 
 
 def _save_entity_process_record(
