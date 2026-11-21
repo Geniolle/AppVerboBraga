@@ -8,12 +8,24 @@
   const INTERACTIVE_SELECTOR = "a, button, input, select, textarea, label, summary, details, .table-actions";
 
   const state = {
+    formEl: null,
     formOrigin: null,
     snapshot: "",
     rowEl: null,
     holderEl: null,
     editParam: ""
   };
+
+  // Formulario do mesmo subprocesso da tabela (data-admin-subprocess), nunca o primeiro da pagina.
+  function findFormForTableV1(tableEl) {
+    const subprocessKey = tableEl.getAttribute("data-admin-inline-tab") || "";
+    if (!subprocessKey) {
+      return null;
+    }
+    return global.document.querySelector(
+      FORM_SELECTOR + "[data-admin-subprocess='" + subprocessKey.replace(/['"\\]/g, "") + "']"
+    );
+  }
 
   function getEditKeyFromUrlV1(editParam) {
     try {
@@ -43,7 +55,7 @@
   }
 
   function hasChangesV1() {
-    const formEl = global.document.querySelector(FORM_SELECTOR);
+    const formEl = state.formEl;
     return Boolean(state.holderEl && formEl) && serializeFormV1(formEl) !== state.snapshot;
   }
 
@@ -65,7 +77,7 @@
   }
 
   function closeEditorV1() {
-    const formEl = global.document.querySelector(FORM_SELECTOR);
+    const formEl = state.formEl;
     const origin = state.formOrigin;
 
     if (formEl && origin && origin.parent) {
@@ -84,28 +96,35 @@
     cleanEditUrlV1();
   }
 
+  // Procura entre todas as tabelas com row_click_edit a que tem a linha do parametro da URL.
+  function findEditTargetV1() {
+    const tables = Array.from(global.document.querySelectorAll(TABLE_SELECTOR));
+    for (const tableEl of tables) {
+      const editParam = tableEl.getAttribute("data-admin-inline-edit-param") || "";
+      const editKey = getEditKeyFromUrlV1(editParam);
+      if (!editParam || !editKey) {
+        continue;
+      }
+      const rowEl = findRowForEditKeyV1(tableEl, editParam, editKey);
+      const formEl = rowEl ? findFormForTableV1(tableEl) : null;
+      if (rowEl && formEl) {
+        return { tableEl, rowEl, formEl, editParam };
+      }
+    }
+    return null;
+  }
+
   function placeInlineEditorV1() {
-    const tableEl = global.document.querySelector(TABLE_SELECTOR);
-    const formEl = global.document.querySelector(FORM_SELECTOR);
+    const target = findEditTargetV1();
 
-    if (!tableEl || !formEl) {
+    if (!target) {
       return;
     }
 
-    const editParam = tableEl.getAttribute("data-admin-inline-edit-param") || "";
-    const editKey = getEditKeyFromUrlV1(editParam);
-
-    if (!editParam || !editKey) {
-      return;
-    }
-
-    const rowEl = findRowForEditKeyV1(tableEl, editParam, editKey);
-
-    if (!rowEl) {
-      return;
-    }
+    const { rowEl, formEl, editParam } = target;
 
     state.editParam = editParam;
+    state.formEl = formEl;
 
     if (!state.formOrigin) {
       state.formOrigin = { parent: formEl.parentNode, next: formEl.nextSibling };
