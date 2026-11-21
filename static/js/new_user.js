@@ -2099,8 +2099,10 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
   listEl.className = "dynamic-process-rows-list-v1";
   const addBtnEl = document.createElement("button");
   addBtnEl.type = "button";
-  addBtnEl.className = "dynamic-process-add-pair-btn-v1";
-  addBtnEl.textContent = "+ Adicionar";
+  addBtnEl.className = "dynamic-process-row-add-v1";
+  addBtnEl.textContent = "+";
+  addBtnEl.setAttribute("aria-label", "Adicionar linha");
+  addBtnEl.title = "Adicionar linha";
   wrapEl.appendChild(headEl);
   wrapEl.appendChild(listEl);
   wrapEl.appendChild(addBtnEl);
