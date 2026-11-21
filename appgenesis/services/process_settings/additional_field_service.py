@@ -592,7 +592,7 @@ def _normalize_process_list_key_v8(raw_key: Any) -> str:
 
 def _normalize_additional_field_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "profile_menu_tabs"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "active_departments", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 

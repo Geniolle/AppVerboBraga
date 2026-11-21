@@ -15,7 +15,7 @@ from appgenesis.core import (
     ENTITY_PROFILE_SCOPE_LEGADO,
     ENTITY_PROFILE_SCOPE_OWNER,
 )
-from appgenesis.models import Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
+from appgenesis.models import Department, Entity, Member, MemberEntity, MemberEntityStatus, User, UserAccountStatus
 from appgenesis.menu_settings import (
     MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_FIELD_LABELS,
@@ -83,12 +83,28 @@ def _serialize_resolved_list_option_labels_v1(
     ]
 
 
+def _active_department_options_v1(session: Session, entity_id: int | None) -> list[dict[str, str]]:
+    if not entity_id:
+        return []
+    names = session.execute(
+        select(Department.name)
+        .where(Department.entity_id == int(entity_id), Department.is_active.is_(True))
+        .order_by(Department.name)
+    ).scalars().all()
+    return [
+        {"value": str(name).strip(), "label": str(name).strip(), "status": "active"}
+        for name in names
+        if str(name or "").strip()
+    ]
+
+
 def _decorate_sidebar_list_field_options_v1(
     *,
     sidebar_menu_settings: list[dict[str, Any]],
     visible_sidebar_menu_keys: set[str],
     menu_process_history_map: dict[str, list[dict[str, Any]]],
     selected_entity_id: int | None,
+    department_options: list[dict[str, str]] | None = None,
 ) -> None:
     for sidebar_item in sidebar_menu_settings:
         if not isinstance(sidebar_item, dict):
@@ -121,6 +137,7 @@ def _decorate_sidebar_list_field_options_v1(
                         sidebar_menu_settings=sidebar_menu_settings,
                         visible_sidebar_menu_keys=visible_sidebar_menu_keys,
                         menu_process_history_map=menu_process_history_map,
+                        department_options=department_options,
                     )
                     field_definition["resolved_list_options"] = [
                         dict(option)
@@ -328,6 +345,7 @@ def _resolve_actor_menu_process_maps(
         visible_sidebar_menu_keys=set(visible_sidebar_menu_keys),
         menu_process_history_map=menu_process_history_map,
         selected_entity_id=selected_entity_id,
+        department_options=_active_department_options_v1(session, selected_entity_id),
     )
     return {
         "actor_profile_fields": actor_profile_fields,
