@@ -601,6 +601,27 @@ def _normalize_additional_field_source_key_v1(raw_value: Any) -> str:
     return _normalize_menu_key(raw_value)
 
 
+def _normalize_row_fields_v1(raw_row_fields: Any) -> list[dict[str, Any]]:
+    # Campos de cada linha de um campo "rows" (ex.: Musica + Tom).
+    if not isinstance(raw_row_fields, list):
+        return []
+    row_fields: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw_field in raw_row_fields:
+        if not isinstance(raw_field, dict):
+            continue
+        key = str(raw_field.get("key") or "").strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        row_fields.append({
+            "key": key,
+            "label": str(raw_field.get("label") or key).strip() or key,
+            "required": bool(raw_field.get("required")),
+        })
+    return row_fields
+
+
 def _normalize_conditional_field_rule_v1(raw_rule: Any) -> dict[str, str] | None:
     # Regra "so quando o campo X tem o valor Y" (editable_when / required_when).
     if not isinstance(raw_rule, dict):
@@ -788,6 +809,9 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         add_button_label = str(raw_item.get("add_button_label") or "").strip()
         if add_button_label:
             normalized_item["add_button_label"] = add_button_label
+
+        if item_type == "rows":
+            normalized_item["row_fields"] = _normalize_row_fields_v1(raw_item.get("row_fields"))
 
         item_button_style = _normalize_additional_field_button_style_for_type(
             item_type, raw_item.get("button_style")

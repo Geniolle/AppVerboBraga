@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unicodedata
 from datetime import date, datetime, timezone
 from typing import Any
@@ -79,7 +80,7 @@ from appgenesis.dynamic_process_layout import (
 
 from appgenesis.routes.profile.router import router
 
-PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list"}
+PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list", "rows"}
 PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
 MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {
@@ -1609,6 +1610,31 @@ def _conditional_field_rule_met_v1(rule: Any, submitted_form: Any) -> bool:
     return submitted_trigger == trigger_value
 
 
+def _normalize_rows_submission_v1(raw_value: Any, row_fields: list[dict[str, Any]]) -> tuple[list[dict[str, str]], list[int]]:
+    # Campo "rows" (ex.: Musica + Tom): devolve as linhas preenchidas e os numeros das linhas incompletas.
+    try:
+        raw_rows = json.loads(str(raw_value or "[]"))
+    except (TypeError, ValueError):
+        return [], []
+    if not isinstance(raw_rows, list):
+        return [], []
+    keys = [str(field.get("key") or "") for field in row_fields]
+    required_keys = [str(field.get("key") or "") for field in row_fields if field.get("required")]
+    clean_rows: list[dict[str, str]] = []
+    incomplete_rows: list[int] = []
+    for raw_row in raw_rows[:50]:
+        if not isinstance(raw_row, dict):
+            continue
+        clean_row = {key: str(raw_row.get(key) or "").strip()[:200] for key in keys if key}
+        if not any(clean_row.values()):
+            continue
+        row_number = len(clean_rows) + 1
+        if any(not clean_row.get(key) for key in required_keys):
+            incomplete_rows.append(row_number)
+        clean_rows.append(clean_row)
+    return [row for index, row in enumerate(clean_rows, start=1) if index not in incomplete_rows], incomplete_rows
+
+
 def _save_entity_process_record(
     *,
     session: Session,
@@ -1646,6 +1672,15 @@ def _save_entity_process_record(
             is_required_now = _conditional_field_rule_met_v1(required_rule, submitted_form)
         else:
             is_required_now = _normalize_process_field_required(meta.get("is_required", meta.get("required")))
+        if field_type == "rows":
+            clean_rows, incomplete_rows = _normalize_rows_submission_v1(raw_value, meta.get("row_fields") or [])
+            if clean_rows:
+                values[field_key] = json.dumps(clean_rows, ensure_ascii=False)
+            elif is_required_now and not incomplete_rows:
+                missing_labels.append(str(meta.get("label") or field_key))
+            for row_number in incomplete_rows:
+                missing_labels.append(f"{meta.get('label') or field_key} (linha {row_number})")
+            continue
         if raw_value:
             values[field_key] = raw_value
         elif is_required_now:

@@ -168,7 +168,7 @@ const selectedDynamicSectionByMenu = appGenesisProcessMenuConfigBuilderV1
   ? appGenesisProcessMenuConfigBuilderV1.selectedDynamicSectionByMenu
   : {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
-const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "time", "flag", "list"]);
+const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "time", "flag", "list", "rows"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 
 
@@ -749,7 +749,8 @@ function buildProcessSections(setting, processValuesByField = {}) {
       editableWhen: option.editable_when || null,
       requiredWhen: option.required_when || null,
       visibleWhen: option.visible_when || null,
-      addButtonLabel: option.add_button_label || null
+      addButtonLabel: option.add_button_label || null,
+      rowFields: Array.isArray(option.row_fields) ? option.row_fields : []
     });
   });
 
@@ -767,6 +768,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       requiredWhen: fieldMeta.requiredWhen || null,
       visibleWhen: fieldMeta.visibleWhen || null,
       addButtonLabel: fieldMeta.addButtonLabel || null,
+      rowFields: Array.isArray(fieldMeta.rowFields) ? fieldMeta.rowFields : [],
       listKey: normalizeMenuKey(fieldMeta.listKey),
       listOptions: Array.isArray(fieldMeta.listOptions) ? fieldMeta.listOptions.slice() : [],
       value: typeof fieldValue === "string" ? fieldValue : "",
@@ -2032,6 +2034,7 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig) {
   } finally {
     dynamicProcessPopulatingV1 = false;
   }
+  resetProcessRowsFieldsV1(dynamicProcessEditFormEl, values);
   applyConditionalProcessFieldRulesV1(dynamicProcessEditFormEl);
   // Repoe o estado de edicao do registo selecionado.
   if (dynamicProcessHistoryActionInputEl) {
@@ -2063,6 +2066,7 @@ function openDynamicProcessCreateInlineV1(sectionFields, layoutConfig, bodyEl) {
     return;
   }
   dynamicProcessEditFormEl.reset();
+  resetProcessRowsFieldsV1(dynamicProcessEditFormEl, {});
   if (dynamicProcessHistoryActionInputEl) {
     dynamicProcessHistoryActionInputEl.value = "create";
   }
@@ -2077,6 +2081,98 @@ function openDynamicProcessCreateInlineV1(sectionFields, layoutConfig, bodyEl) {
 }
 
 // Move o formulario para uma linha da tabela (apos anchorRowEl, ou no topo se nulo).
+// Campo "rows" (ex.: Musica + Tom): linhas com "+" para adicionar e "-" para remover, como nas Funcoes.
+// O valor vai para um input oculto em JSON: [{"musica": "...", "tom": "..."}].
+function buildProcessRowsEditorV1(wrapEl, rowFields) {
+  const hiddenEl = wrapEl._hiddenEl;
+  const gridTemplate = `repeat(${Math.max(rowFields.length, 1)}, minmax(0, 1fr)) 36px`;
+  const headEl = document.createElement("div");
+  headEl.className = "dynamic-process-row-head-v1";
+  headEl.style.gridTemplateColumns = gridTemplate;
+  rowFields.forEach((rowField) => {
+    const headCellEl = document.createElement("span");
+    headCellEl.textContent = rowField.label + (rowField.required ? " *" : "");
+    headEl.appendChild(headCellEl);
+  });
+  headEl.appendChild(document.createElement("span"));
+  const listEl = document.createElement("div");
+  listEl.className = "dynamic-process-rows-list-v1";
+  const addBtnEl = document.createElement("button");
+  addBtnEl.type = "button";
+  addBtnEl.className = "dynamic-process-add-pair-btn-v1";
+  addBtnEl.textContent = "+ Adicionar";
+  wrapEl.appendChild(headEl);
+  wrapEl.appendChild(listEl);
+  wrapEl.appendChild(addBtnEl);
+
+  const syncHidden = () => {
+    const rows = [...listEl.querySelectorAll(".dynamic-process-row-v1")].map((rowEl) => {
+      const rowValues = {};
+      rowFields.forEach((rowField) => {
+        const inputEl = rowEl.querySelector(`[data-row-field="${rowField.key}"]`);
+        rowValues[rowField.key] = inputEl ? String(inputEl.value || "") : "";
+      });
+      return rowValues;
+    });
+    hiddenEl.value = JSON.stringify(rows.filter((rowValues) => Object.values(rowValues).some((value) => value.trim())));
+  };
+  const addRow = (values) => {
+    const rowEl = document.createElement("div");
+    rowEl.className = "dynamic-process-row-v1";
+    rowEl.style.gridTemplateColumns = gridTemplate;
+    rowFields.forEach((rowField) => {
+      const inputEl = document.createElement("input");
+      inputEl.type = "text";
+      inputEl.dataset.rowField = rowField.key;
+      inputEl.setAttribute("aria-label", rowField.label);
+      inputEl.value = String((values && values[rowField.key]) || "");
+      inputEl.addEventListener("input", syncHidden);
+      rowEl.appendChild(inputEl);
+    });
+    const removeBtnEl = document.createElement("button");
+    removeBtnEl.type = "button";
+    removeBtnEl.className = "dynamic-process-row-remove-v1";
+    removeBtnEl.textContent = "−";
+    removeBtnEl.setAttribute("aria-label", "Remover linha");
+    removeBtnEl.addEventListener("click", () => {
+      rowEl.remove();
+      if (!listEl.children.length) {
+        addRow({});
+      }
+      syncHidden();
+    });
+    rowEl.appendChild(removeBtnEl);
+    listEl.appendChild(rowEl);
+    syncHidden();
+  };
+  addBtnEl.addEventListener("click", () => addRow({}));
+  wrapEl._setRows = (rows) => {
+    listEl.replaceChildren();
+    (Array.isArray(rows) && rows.length ? rows : [{}]).forEach((rowValues) => addRow(rowValues));
+    syncHidden();
+  };
+  wrapEl._setRows([]);
+}
+
+// Preenche (ou limpa) os campos "rows" do formulario com os valores do registo.
+function resetProcessRowsFieldsV1(formEl, valuesByKey) {
+  if (!formEl) {
+    return;
+  }
+  formEl.querySelectorAll(".dynamic-process-rows-container-v1").forEach((wrapEl) => {
+    const fieldKey = normalizeMenuKey(wrapEl.closest("[data-process-field-key]")?.dataset.processFieldKey);
+    let rows = [];
+    try {
+      rows = JSON.parse(String((valuesByKey && valuesByKey[fieldKey]) || "[]"));
+    } catch (error) {
+      rows = [];
+    }
+    if (typeof wrapEl._setRows === "function") {
+      wrapEl._setRows(Array.isArray(rows) ? rows : []);
+    }
+  });
+}
+
 // Regras por campo: editable_when, required_when e visible_when (equals ou is_not_empty).
 function applyConditionalProcessFieldRulesV1(formEl) {
   if (!formEl) {
@@ -2110,6 +2206,7 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     if (!inputEl) {
       return;
     }
+    const isRowsField = Boolean(containerEl.querySelector(".dynamic-process-rows-container-v1"));
     const labelEl = containerEl.querySelector("label");
     const fieldLabel = containerEl.dataset.fieldLabel || "";
     let visible = true;
@@ -2121,12 +2218,16 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     if (editableRaw) {
       editable = ruleMet(JSON.parse(editableRaw));
     }
-    inputEl.disabled = !visible || !editable;
+    containerEl.querySelectorAll("input, select, textarea").forEach((controlEl) => {
+      controlEl.disabled = !visible || !editable;
+    });
     let required = false;
     if (requiredRaw) {
       required = ruleMet(JSON.parse(requiredRaw));
     }
-    inputEl.required = visible && required;
+    if (!isRowsField) {
+      inputEl.required = visible && required;
+    }
     if (labelEl && fieldLabel && requiredRaw) {
       labelEl.textContent = required && visible ? `${fieldLabel} *` : fieldLabel;
     }
@@ -2458,11 +2559,33 @@ function resolveDynamicProcessListCellTextV1(row, column, layoutConfig) {
   }
   if (column.sourceKind === "field") {
     const rawValue = String(values[normalizeMenuKey(column.fieldKey)] || "").trim();
+    const rowsText = formatProcessRowsForListV1(rawValue);
+    if (rowsText !== null) {
+      return rowsText || "-";
+    }
     return column.fieldType === "flag"
       ? (isTruthyFlagValue(rawValue) ? "Sim" : "Não")
       : (rawValue || "-");
   }
   return "-";
+}
+
+function formatProcessRowsForListV1(rawValue) {
+  if (!rawValue.startsWith("[{")) {
+    return null;
+  }
+  try {
+    const rows = JSON.parse(rawValue);
+    if (!Array.isArray(rows)) {
+      return null;
+    }
+    return rows
+      .map((rowValues) => Object.values(rowValues || {}).map((value) => String(value || "").trim()).filter(Boolean).join(" / "))
+      .filter(Boolean)
+      .join(", ");
+  } catch (error) {
+    return null;
+  }
 }
 
 function appendDynamicProcessListCellV1(trEl, row, column, layoutConfig) {
@@ -3701,6 +3824,19 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
         renderedInputsByFieldKey.set(fieldKey, selectEl);
         fieldContainerEl.appendChild(labelEl);
         fieldContainerEl.appendChild(selectEl);
+      } else if (fieldType === "rows") {
+        const hiddenEl = document.createElement("input");
+        hiddenEl.type = "hidden";
+        hiddenEl.name = inputName;
+        hiddenEl.value = "[]";
+        const rowsWrapEl = document.createElement("div");
+        rowsWrapEl.className = "dynamic-process-rows-container-v1";
+        rowsWrapEl._hiddenEl = hiddenEl;
+        rowsWrapEl.appendChild(hiddenEl);
+        buildProcessRowsEditorV1(rowsWrapEl, field.rowFields || []);
+        renderedInputsByFieldKey.set(fieldKey, hiddenEl);
+        fieldContainerEl.appendChild(labelEl);
+        fieldContainerEl.appendChild(rowsWrapEl);
       } else {
         const inputEl = document.createElement("input");
         const inputValue = fieldType === "date"

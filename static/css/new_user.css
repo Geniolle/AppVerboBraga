@@ -6513,3 +6513,51 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Campo "rows" (ex.: Musica + Tom): cabecalho, linhas e botao "-" alinhados. */
+#dynamic-process-edit-form .dynamic-process-rows-container-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#dynamic-process-edit-form .dynamic-process-row-head-v1 {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+}
+#dynamic-process-edit-form .dynamic-process-rows-list-v1 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 input {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 input:disabled {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+#dynamic-process-edit-form .dynamic-process-row-remove-v1 {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  font-weight: 800;
+  cursor: pointer;
+}
