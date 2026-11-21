@@ -98,6 +98,21 @@ def _active_department_options_v1(session: Session, entity_id: int | None) -> li
     ]
 
 
+def _record_value_options_v1(
+    session: Session,
+    entity_id: int,
+    menu_key: str,
+    field_key: str,
+) -> list[dict[str, str]]:
+    # Opcoes de uma lista = valores distintos de um campo nos registos de outro processo (A-Z).
+    rows = list_process_records(session, entity_id=entity_id, menu_key=menu_key)
+    values = {str((row.get("values") or {}).get(field_key) or "").strip() for row in rows}
+    return [
+        {"value": value, "label": value, "status": "active"}
+        for value in sorted((value for value in values if value), key=str.casefold)
+    ]
+
+
 def _decorate_sidebar_list_field_options_v1(
     *,
     sidebar_menu_settings: list[dict[str, Any]],
@@ -105,6 +120,7 @@ def _decorate_sidebar_list_field_options_v1(
     menu_process_history_map: dict[str, list[dict[str, Any]]],
     selected_entity_id: int | None,
     department_options: list[dict[str, str]] | None = None,
+    session: Session | None = None,
 ) -> None:
     for sidebar_item in sidebar_menu_settings:
         if not isinstance(sidebar_item, dict):
@@ -128,6 +144,19 @@ def _decorate_sidebar_list_field_options_v1(
                 field_type = str(
                     field_definition.get("field_type") or field_definition.get("type") or ""
                 ).strip().lower()
+
+                if field_type == "rows" and session is not None and selected_entity_id is not None:
+                    decorated_row_fields: list[dict[str, Any]] = []
+                    for raw_row_field in field_definition.get("row_fields") or []:
+                        row_field = dict(raw_row_field)
+                        options_menu_key = str(row_field.get("options_menu_key") or "").strip().lower()
+                        options_field_key = str(row_field.get("options_field_key") or "").strip().lower()
+                        if options_menu_key and options_field_key:
+                            row_field["list_options"] = _record_value_options_v1(
+                                session, selected_entity_id, options_menu_key, options_field_key
+                            )
+                        decorated_row_fields.append(row_field)
+                    field_definition["row_fields"] = decorated_row_fields
 
                 if field_type == "list":
                     resolved_options = resolve_field_list_options_v1(
@@ -332,6 +361,13 @@ def _resolve_actor_menu_process_maps(
                 if selected_entity_id is not None
                 else []
             )
+            sort_field = str(
+                (sidebar_item.get("process_list_config") or {}).get("sort_field") or ""
+            ).strip().lower()
+            if sort_field and menu_history_rows:
+                menu_history_rows.sort(
+                    key=lambda row: str((row.get("values") or {}).get(sort_field) or "").casefold()
+                )
             if menu_history_rows:
                 menu_process_history_map[menu_key] = menu_history_rows
             continue
@@ -346,6 +382,7 @@ def _resolve_actor_menu_process_maps(
         menu_process_history_map=menu_process_history_map,
         selected_entity_id=selected_entity_id,
         department_options=_active_department_options_v1(session, selected_entity_id),
+        session=session,
     )
     return {
         "actor_profile_fields": actor_profile_fields,

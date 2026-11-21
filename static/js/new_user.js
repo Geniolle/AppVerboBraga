@@ -2123,12 +2123,30 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
     rowEl.className = "dynamic-process-row-v1";
     rowEl.style.gridTemplateColumns = gridTemplate;
     rowFields.forEach((rowField) => {
-      const inputEl = document.createElement("input");
-      inputEl.type = "text";
+      const listOptions = Array.isArray(rowField.list_options) ? rowField.list_options : [];
+      let inputEl;
+      if (listOptions.length) {
+        inputEl = document.createElement("select");
+        const emptyOptionEl = document.createElement("option");
+        emptyOptionEl.value = "";
+        emptyOptionEl.textContent = "Selecione";
+        inputEl.appendChild(emptyOptionEl);
+        listOptions.forEach((option) => {
+          const optionEl = document.createElement("option");
+          optionEl.value = String(option.value || "");
+          optionEl.textContent = String(option.label || option.value || "");
+          inputEl.appendChild(optionEl);
+        });
+        inputEl.value = String((values && values[rowField.key]) || "");
+        inputEl.addEventListener("change", syncHidden);
+      } else {
+        inputEl = document.createElement("input");
+        inputEl.type = "text";
+        inputEl.value = String((values && values[rowField.key]) || "");
+        inputEl.addEventListener("input", syncHidden);
+      }
       inputEl.dataset.rowField = rowField.key;
       inputEl.setAttribute("aria-label", rowField.label);
-      inputEl.value = String((values && values[rowField.key]) || "");
-      inputEl.addEventListener("input", syncHidden);
       rowEl.appendChild(inputEl);
     });
     const removeBtnEl = document.createElement("button");
