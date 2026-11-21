@@ -67,6 +67,7 @@ def build_auth_profile_config_for_context_v1(
     menu_option_groups: list[tuple[str, str]] | None = None,
     tab_options: list[tuple[str, str]] | None = None,
     tab_option_groups: list[tuple[str, str]] | None = None,
+    authorization_profile_options: list[tuple[str, str]] | None = None,
 ) -> AdminSubprocessConfig:
     entity_number_display = str((entity_context or {}).get("selected_entity_number") or "")
 
@@ -74,6 +75,9 @@ def build_auth_profile_config_for_context_v1(
     for field in config.fields:
         if field.key == AUTH_PROFILE_ENTITY_NUMBER_FIELD_KEY:
             adjusted_fields.append(replace(field, default_value=entity_number_display))
+            continue
+        if field.key == "authorization_profiles":
+            adjusted_fields.append(replace(field, options=tuple(authorization_profile_options or ())))
             continue
         if field.key == "session_origin":
             adjusted_fields.append(replace(field, options=tuple(session_options or ())))
