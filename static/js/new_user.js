@@ -3357,8 +3357,8 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   if (!listProcessLayoutMode) {
     [dynamicProcessCardEl, dynamicProcessActionCardEl].forEach((cardEl) => {
       if (cardEl && cardEl.dataset.hiddenByListV1 === "1") {
-        cardEl.style.display = "";
         delete cardEl.dataset.hiddenByListV1;
+        cardEl.style.display = "";
       }
     });
   }
@@ -3649,9 +3649,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     }
 
     closeDynamicProcessInlineFormV1();
+    // Escondido por atributo (regra CSS !important), para nao ser reposto por outros redesenhos.
     [dynamicProcessCardEl, dynamicProcessActionCardEl].forEach((cardEl) => {
       if (cardEl) {
-        cardEl.style.display = "none";
         cardEl.dataset.hiddenByListV1 = "1";
       }
     });
