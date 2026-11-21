@@ -180,7 +180,7 @@ def test_auth_profile_repository_save_row_allows_same_generated_key_across_diffe
                             "section_key": AUTH_PROFILE_SECTION_KEY,
                             "values": {
                                 "custom_perfil": "sessoes",
-                                "custom_nome_do_perfil": "Sessões (Entidade 1001)",
+                                "custom_nome_do_perfil": "Definições (Entidade 1001)",
                                 "__estado": "ativo",
                                 AUTH_PROFILE_ENTITY_NUMBER_KEY: "1001",
                             },
