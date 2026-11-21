@@ -2381,6 +2381,7 @@ function renderDynamicProcessListTableCardV1(options) {
 
   headEl.innerHTML = "";
   bodyEl.innerHTML = "";
+  bodyEl.__processListRowMap = new Map();
   emptyEl.textContent = emptyMessage;
   cardEl.style.display = "";
 
@@ -2419,17 +2420,32 @@ function renderDynamicProcessListTableCardV1(options) {
       createDynamicProcessListActionsCellV1(row, sectionFields, layoutConfig)
     );
     // Clicar na linha abre a edicao do registo (botoes e campos dentro da linha mantem a sua acao).
-    if (String(row && row.record_id || "").trim()) {
+    const rowRecordKey = String(row && row.record_id || "").trim();
+    if (rowRecordKey) {
       trEl.classList.add("dynamic-process-list-row-clickable-v1");
-      trEl.addEventListener("click", (event) => {
-        if (event.target.closest && event.target.closest("button, a, input, select, textarea, label")) {
-          return;
-        }
-        populateDynamicProcessListFormV1(sectionFields, row, layoutConfig);
-      });
+      trEl.dataset.recordId = rowRecordKey;
+      bodyEl.__processListRowMap.set(rowRecordKey, { row, sectionFields, layoutConfig });
     }
     bodyEl.appendChild(trEl);
   });
+  // Listener unico no tbody (sobrevive a linhas recriadas/clonadas pela tabela).
+  if (!bodyEl.dataset.processListRowEditBound) {
+    bodyEl.dataset.processListRowEditBound = "1";
+    bodyEl.addEventListener("click", (event) => {
+      const clickedRowEl = event.target.closest ? event.target.closest("tr[data-record-id]") : null;
+      if (!clickedRowEl || !bodyEl.contains(clickedRowEl)) {
+        return;
+      }
+      if (event.target.closest("button, a, input, select, textarea, label")) {
+        return;
+      }
+      const entry = bodyEl.__processListRowMap && bodyEl.__processListRowMap.get(clickedRowEl.dataset.recordId);
+      if (!entry) {
+        return;
+      }
+      populateDynamicProcessListFormV1(entry.sectionFields, entry.row, entry.layoutConfig);
+    });
+  }
 
   tableEl.style.display = "";
   emptyEl.style.display = rows.length ? "none" : "";
