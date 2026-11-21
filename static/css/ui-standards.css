@@ -183,13 +183,13 @@ input.action-btn-cancel,
 }
 
 /* APPGENESIS_FIELD_LABEL_CENTER_V1_START
-   Regra global: o nome do campo fica centrado sobre a largura do proprio campo.
+   Regra global: o nome do campo fica alinhado a esquerda, sobre a largura do proprio campo.
    Labels que contem um controlo (checkbox/radio) ficam de fora. */
 .field > label:not(:has(input, select, textarea)),
 .admin-subprocess-field-v1 > label:not(:has(input, select, textarea)) {
   display: block;
   width: 100%;
-  text-align: center;
+  text-align: left;
   box-sizing: border-box;
 }
 /* APPGENESIS_FIELD_LABEL_CENTER_V1_END */
