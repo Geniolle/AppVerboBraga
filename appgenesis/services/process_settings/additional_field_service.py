@@ -785,6 +785,10 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if item_size is not None:
             normalized_item["size"] = item_size
 
+        add_button_label = str(raw_item.get("add_button_label") or "").strip()
+        if add_button_label:
+            normalized_item["add_button_label"] = add_button_label
+
         item_button_style = _normalize_additional_field_button_style_for_type(
             item_type, raw_item.get("button_style")
         )
