@@ -37,12 +37,12 @@ ENTITY_FIELDS = (
 SIDEBAR_SECTION_FIELDS = (
     AdminFieldConfig(
         key="label",
-        label="Nome da sessão",
+        label="Nome da definição",
         input_name="section_label",
         field_type="text",
         required=True,
         max_length=80,
-        placeholder="Informe o nome da sessão",
+        placeholder="Informe o nome da definição",
     ),
     AdminFieldConfig(
         key="visibility_scope_mode",
@@ -117,7 +117,7 @@ SIDEBAR_SECTION_DELETE_ACTION = AdminActionConfig(
     visible_when=("inativo",),
     condition_field="can_delete",
     requires_confirmation=True,
-    confirmation_message="Tem a certeza que pretende eliminar esta sessão?",
+    confirmation_message="Tem a certeza que pretende eliminar esta definição?",
 )
 
 
@@ -261,8 +261,8 @@ SESSOES_CONFIG = AdminSubprocessConfig(
     active_card_id="admin-sidebar-sections-card-active",
     inactive_card_id="admin-sidebar-sections-card-inactive",
     edit_target="admin-sidebar-sections-form-card",
-    create_title="Nova sessão",
-    edit_title="Editar sessão",
+    create_title="Nova definição",
+    edit_title="Editar definição",
     active_title="Definições ativas",
     inactive_title="Definições inativas",
     create_endpoint="/settings/menu/sidebar-section-save",
@@ -695,7 +695,7 @@ MENU_CONFIG = AdminSubprocessConfig(
     columns=(
         AdminColumnConfig(key="label", label="MENU LATERAL", source="label", css_class="admin-col-main-v1", always_visible=True),
         AdminColumnConfig(key="entity_number", label="Nº DA ENTIDADE", source="entity_number", css_class="admin-col-number-v1"),
-        AdminColumnConfig(key="sidebar_section", label="SESSÃO", source="sidebar_section_label", css_class="admin-col-section-v1"),
+        AdminColumnConfig(key="sidebar_section", label="DEFINIÇÃO", source="sidebar_section_label", css_class="admin-col-section-v1"),
         AdminColumnConfig(key="system", label="SISTEMA", source="visibility_scope_label", css_class="admin-col-system-v1"),
         AdminColumnConfig(key="status", label="ESTADO", source="status_label", css_class="admin-col-status-v1", always_visible=True),
     ),
