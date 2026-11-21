@@ -6296,3 +6296,9 @@ input.action-btn-cancel,
 #empresa-card.editing .profile-readonly {
   display: none;
 }
+
+
+/* Dados institucionais (Empresa): sem o card generico "Editar" do processo dinamico. */
+body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-card {
+  display: none !important;
+}
