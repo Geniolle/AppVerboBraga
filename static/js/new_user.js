@@ -3424,6 +3424,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
     dynamicProcessMenuKeyInputEl.value = cleanMenuKey;
     dynamicProcessMenuKeyInputEl.defaultValue = cleanMenuKey;
   }
+  if (dynamicProcessEditFormEl) {
+    dynamicProcessEditFormEl.dataset.menuKey = cleanMenuKey;
+  }
   if (dynamicProcessSectionKeyInputEl) {
     const resolvedSectionKey = String(selectedSection ? (selectedSection.key || "") : "");
     dynamicProcessSectionKeyInputEl.value = resolvedSectionKey;
