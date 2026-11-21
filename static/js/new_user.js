@@ -2477,7 +2477,14 @@ function renderDynamicProcessListTableCardV1(options) {
       const createBtnEl = document.createElement("button");
       createBtnEl.type = "button";
       createBtnEl.className = "admin-subprocess-inline-create-btn-v1 dynamic-process-list-create-btn-v1";
-      createBtnEl.textContent = "+";
+      const createIconEl = document.createElement("span");
+      createIconEl.className = "admin-subprocess-inline-create-icon-v1";
+      createIconEl.setAttribute("aria-hidden", "true");
+      createIconEl.textContent = "+";
+      createBtnEl.appendChild(createIconEl);
+      const createLabelEl = document.createElement("span");
+      createLabelEl.textContent = String(layoutConfig.createTitle || "Criar");
+      createBtnEl.appendChild(createLabelEl);
       createBtnEl.title = String(layoutConfig.createTitle || "Criar");
       createBtnEl.setAttribute("aria-label", String(layoutConfig.createTitle || "Criar"));
       createBtnEl.addEventListener("click", () => safeOptions.onCreate());
