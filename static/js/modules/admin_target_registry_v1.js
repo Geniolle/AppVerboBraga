@@ -50,6 +50,9 @@
     "#settings-menu-edit-card",
     "#auth-profile-card",
     "#funcoes-administrativas-card",
+    "#funcoes-administrativas-form-card",
+    "#funcoes-administrativas-active-card",
+    "#funcoes-administrativas-inactive-card",
     "#auth-profile-form-card",
     "#auth-profile-active-card",
     "#auth-profile-inactive-card"
@@ -212,6 +215,10 @@
       "#auth-profile-form-card": "perfil_de_autorizacao",
       "#auth-profile-active-card": "perfil_de_autorizacao",
       "#auth-profile-inactive-card": "perfil_de_autorizacao",
+      "#funcoes-administrativas-card": "funcoes_administrativas",
+      "#funcoes-administrativas-form-card": "funcoes_administrativas",
+      "#funcoes-administrativas-active-card": "funcoes_administrativas",
+      "#funcoes-administrativas-inactive-card": "funcoes_administrativas",
     };
     return targetMap[cleanTarget] || "";
   }

@@ -486,6 +486,8 @@ def new_user_page(
     sidebar_section_edit_key: str = "",
     auth_profile_edit_key: str = "",
     auth_profile_copy_key: str = "",
+    functions_edit_key: str = "",
+    functions_copy_key: str = "",
     appgenesis_after_save: str = "",
 ) -> HTMLResponse:
 
@@ -865,6 +867,50 @@ def new_user_page(
             except Exception:
                 auth_profile_subprocess_state_v1 = None
 
+    # Funcoes administrativas: mesma tela do Perfil de autorizacao (lista, criar, editar, copiar, eliminar).
+    funcoes_subprocess_state_v1 = None
+    if resolved_menu == "administrativo" or "administrativo" in visible_menu_keys:
+        funcoes_config_v1 = get_admin_subprocess_config("funcoes_administrativas")
+        if funcoes_config_v1 is not None and funcoes_config_v1.enabled:
+            try:
+                from appgenesis.admin_subprocesses.repositories.functions_repository import FunctionsAdminRepository
+                from appgenesis.admin_subprocesses.service import find_admin_subprocess_row as _find_row_v1
+
+                clean_funcoes_edit_key_v1 = str(functions_edit_key or "").strip().lower()
+                funcoes_return_url_v1 = "/users/new?menu=administrativo&admin_tab=funcoes_administrativas&target=funcoes-administrativas-card#funcoes-administrativas-card"
+                funcoes_entity_context_v1 = build_auth_profile_entity_context_v1(
+                    session,
+                    selected_entity_id=entity_permissions.get("selected_entity_id"),
+                    permissions=entity_permissions,
+                )
+                funcoes_rows_v1 = FunctionsAdminRepository(funcoes_config_v1).list_rows(session)
+                funcoes_config_v1 = build_auth_profile_config_for_context_v1(funcoes_config_v1, funcoes_entity_context_v1)
+                funcoes_subprocess_state_v1 = build_admin_subprocess_state(
+                    config=funcoes_config_v1,
+                    rows=funcoes_rows_v1,
+                    edit_key=clean_funcoes_edit_key_v1,
+                    menu_key="administrativo",
+                    return_url=funcoes_return_url_v1,
+                    success=profile_success if resolved_menu == "administrativo" else "",
+                    error=profile_error if resolved_menu == "administrativo" else "",
+                    sidebar_menu_settings=list(page_data.get("sidebar_menu_settings") or []),
+                    visible_sidebar_menu_keys=visible_menu_keys,
+                    menu_process_history_map=dict(page_data.get("menu_process_history_map") or {}),
+                    active_entity_id=selected_entity_id,
+                )
+                clean_funcoes_copy_key_v1 = str(functions_copy_key or "").strip().lower()
+                if clean_funcoes_copy_key_v1 and not funcoes_subprocess_state_v1.is_editing:
+                    copy_row_funcoes_v1 = _find_row_v1(funcoes_rows_v1, funcoes_config_v1, clean_funcoes_copy_key_v1)
+                    if copy_row_funcoes_v1:
+                        funcoes_subprocess_state_v1 = _dataclass_replace(
+                            funcoes_subprocess_state_v1,
+                            prefill_values={
+                                key: copy_row_funcoes_v1.get(key, "")
+                                for key in ("visibility_scope_mode", "status")
+                            },
+                        )
+            except Exception:
+                funcoes_subprocess_state_v1 = None
 
     # APPGENESIS_ADMIN_SUBPROCESS_STATE_MENU_V1_START
     admin_subprocess_menu_state_v1 = None
@@ -1019,6 +1065,7 @@ def new_user_page(
         "admin_tab": resolved_admin_tab,
         "admin_subprocess_state": admin_subprocess_state_v2,
         "auth_profile_subprocess_state": auth_profile_subprocess_state_v1,
+        "funcoes_subprocess_state": funcoes_subprocess_state_v1,
         "admin_subprocess_menu_state": admin_subprocess_menu_state_v1,
         "admin_subprocess_entity_state": admin_subprocess_entity_state,
         "admin_subprocess_user_state": admin_subprocess_user_state,

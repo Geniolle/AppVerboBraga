@@ -704,4 +704,25 @@ table[data-admin-responsive-table="1"] td.admin-col-main-v1 {
   .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key] {
     grid-column: auto;
   }
+
+  form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Funcoes: Nome da funcao ocupa o espaco livre; Estado, Sistema e Entidade ocupam so o conteudo, na mesma linha. */
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 {
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: end;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="label"] {
+  grid-column: auto;
+}
+
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] select,
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] select,
+form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] input {
+  width: 130px;
+  min-width: 130px;
 }
