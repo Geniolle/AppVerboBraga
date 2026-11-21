@@ -6574,5 +6574,5 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
-  align-self: center;
+  align-self: flex-start;
 }
