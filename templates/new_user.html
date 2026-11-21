@@ -119,7 +119,7 @@
           <p id="dynamic-process-empty" class="empty" style="display: none;">Sem campos configurados para esta aba.</p>
         </section>
 
-        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
+        <section id="dynamic-process-active-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" data-admin-subprocess-status="ativo" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-active-title">Registos ativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
             <table
@@ -135,7 +135,7 @@
           <div id="dynamic-process-active-limiter" class="table-limiter"></div>
         </section>
 
-        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
+        <section id="dynamic-process-inactive-card" class="card admin-subprocess-card-v1 admin-subprocess-table-card-v1" data-admin-subprocess-status="inativo" {% if initial_menu_target != '#dynamic-process-card' or not initial_menu_is_list_process %}style="display: none;"{% endif %}>
           <h2 id="dynamic-process-inactive-title">Registos inativos</h2>
           <div class="admin-subprocess-table-wrap-v1">
             <table
