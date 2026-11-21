@@ -722,6 +722,10 @@ form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [d
 
 form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="status"] select,
 form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="visibility_scope_mode"] select,
+.admin-subprocess-row-clickable-v1 {
+  cursor: pointer;
+}
+
 form[action="/users/functions/save"] .admin-subprocess-grid-auth-profile-v1 > [data-admin-subprocess-field-key="entity_number"] input {
   width: 130px;
   min-width: 130px;

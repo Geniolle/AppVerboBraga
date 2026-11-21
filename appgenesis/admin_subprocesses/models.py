@@ -123,6 +123,7 @@ class AdminSubprocessConfig:
     create_toggle_in_active_header: bool = False
     form_grid_css_class: str = ""
     copy_param: str = ""
+    row_click_edit: bool = False
 
 
 @dataclass

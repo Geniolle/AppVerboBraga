@@ -563,7 +563,8 @@
           </thead>
           <tbody>
             {% for row in rows %}
-              <tr>
+              {% set _row_edit_href = "/users/new?menu=" ~ (state.menu_key or 'administrativo') ~ ("&" ~ state.config.edit_url_extra_params if state.config.edit_url_extra_params else "") ~ "&target=" ~ state.config.edit_target ~ "&" ~ state.config.edit_param ~ "=" ~ row.get(state.config.identity_field, row.get("key", row.get("id", ""))) ~ "#" ~ state.config.edit_target %}
+              <tr{% if state.config.row_click_edit %} class="admin-subprocess-row-clickable-v1" data-row-edit-href="{{ _row_edit_href }}"{% endif %}>
                 {% for column in state.config.columns %}
                   {% set cell_value = row.get(column.source, "") %}
                   {% set _sort_val = row.get(column.sort_value_source, cell_value) if column.sort_value_source else cell_value %}
@@ -603,6 +604,23 @@
       <div id="{{ _limiter_id }}" class="table-limiter"></div>
     {% else %}
       <p class="empty">{{ _empty_msg or _empty_fallback }}</p>
+    {% endif %}
+    {% if state.config.row_click_edit %}
+    <script>
+      (function () {
+        if (window.__APPGENESIS_ADMIN_ROW_CLICK_EDIT_V1__) {
+          return;
+        }
+        window.__APPGENESIS_ADMIN_ROW_CLICK_EDIT_V1__ = true;
+        document.addEventListener("click", function (event) {
+          const row = event.target.closest("tr[data-row-edit-href]");
+          if (!row || event.target.closest("a, button, form, input, select, textarea, label, summary, details")) {
+            return;
+          }
+          window.location.href = row.dataset.rowEditHref;
+        });
+      })();
+    </script>
     {% endif %}
   </section>
 {% endmacro %}

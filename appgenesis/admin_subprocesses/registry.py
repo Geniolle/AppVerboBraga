@@ -789,6 +789,7 @@ FUNCTIONS_ADMIN_CONFIG = AdminSubprocessConfig(
     plural_label="Funções",
     edit_param="functions_edit_key",
     copy_param="functions_copy_key",
+    row_click_edit=True,
     default_target="funcoes-administrativas-card",
     edit_target="funcoes-administrativas-form-card",
     create_title="Criar função",
