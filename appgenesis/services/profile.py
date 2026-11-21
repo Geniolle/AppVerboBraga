@@ -467,7 +467,7 @@ def serialize_menu_process_records(values: list[dict[str, Any]] | tuple[dict[str
 
 def normalize_process_list_source_type_v1(raw_value: Any) -> str:
     clean_value = str(raw_value or "").strip().lower()
-    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "profile_menu_tabs"}:
+    if clean_value in {"automatic", "field_list", "active_menus", "active_sessions", "active_departments", "profile_menu_tabs"}:
         return clean_value
     return "manual"
 
@@ -1078,6 +1078,7 @@ def resolve_field_list_options_v1(
     visible_sidebar_menu_keys: set[str] | list[str] | tuple[str, ...] | None = None,
     menu_process_history_map: dict[str, list[dict[str, Any]]] | None = None,
     current_field_values: dict[str, Any] | None = None,
+    department_options: list[dict[str, str]] | None = None,
     _visited: frozenset[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     del active_entity_id
@@ -1140,6 +1141,9 @@ def resolve_field_list_options_v1(
         return _resolve_active_sidebar_sections_list_options_v1(
             sidebar_menu_settings=settings,
         )
+
+    if list_source_type == "active_departments":
+        return [dict(option) for option in (department_options or [])]
 
     if list_source_type == "profile_menu_tabs":
         return _resolve_profile_menu_tabs_list_options_v1(

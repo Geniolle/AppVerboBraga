@@ -103,7 +103,7 @@
 
   function normalizeListSourceType_v3(value) {
     const clean = normalizeLookup_v3(value);
-    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "active_sessions" || clean === "profile_menu_tabs") return clean;
+    if (clean === "automatic" || clean === "field_list" || clean === "active_menus" || clean === "active_sessions" || clean === "active_departments" || clean === "profile_menu_tabs") return clean;
     return "manual";
   }
 
@@ -327,6 +327,10 @@
 
     if (listSourceType === "active_sessions") {
       return "Sessões ativas";
+    }
+
+    if (listSourceType === "active_departments") {
+      return "Departamentos ativos";
     }
 
     if (listSourceType === "profile_menu_tabs") {
@@ -897,7 +901,7 @@
         resetManual: false,
         resetAutomatic: true
       });
-    } else if (listSourceType === "active_menus" || listSourceType === "active_sessions" || listSourceType === "profile_menu_tabs") {
+    } else if (listSourceType === "active_menus" || listSourceType === "active_sessions" || listSourceType === "active_departments" || listSourceType === "profile_menu_tabs") {
       resetListSourceFields_v3(root, {
         resetSourceType: false,
         resetManual: true,
