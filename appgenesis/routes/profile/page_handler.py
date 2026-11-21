@@ -886,7 +886,9 @@ def new_user_page(
                     selected_entity_id=entity_permissions.get("selected_entity_id"),
                     permissions=entity_permissions,
                 )
-                funcoes_rows_v1 = FunctionsAdminRepository(funcoes_config_v1).list_rows(session)
+                funcoes_rows_v1 = FunctionsAdminRepository(funcoes_config_v1).list_rows(
+                    session, {"entity_id": selected_entity_id}
+                )
                 funcoes_profile_options_v1 = list_active_profile_options(
                     session,
                     get_admin_subprocess_config("perfil_de_autorizacao"),

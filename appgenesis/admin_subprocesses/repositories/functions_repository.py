@@ -66,16 +66,30 @@ def list_active_profile_options(
     ]
 
 
-def _load_functions(session: Any) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def _entity_id_from_context(context: dict[str, Any] | None) -> int | None:
+    raw_value = (context or {}).get("entity_id")
+    try:
+        return int(raw_value) if raw_value not in (None, "") else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _load_functions(session: Any, context: dict[str, Any] | None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    # Multi-tenant: a linha do menu Administrativo e por entidade; sem entidade nao ha funcoes.
+    entity_id = _entity_id_from_context(context)
+    if entity_id is None:
+        return {}, []
     row = session.execute(
         text(
             """
             SELECT menu_config
             FROM sidebar_menu_settings
             WHERE lower(trim(menu_key)) = 'administrativo'
+              AND entity_id = :entity_id
             LIMIT 1
             """
-        )
+        ),
+        {"entity_id": entity_id},
     ).fetchone()
     if not row:
         return {}, []
@@ -86,18 +100,28 @@ def _load_functions(session: Any) -> tuple[dict[str, Any], list[dict[str, Any]]]
     return menu_config, items
 
 
-def _store_functions(session: Any, menu_config: dict[str, Any], items: list[dict[str, Any]]) -> None:
+def _store_functions(
+    session: Any,
+    context: dict[str, Any] | None,
+    menu_config: dict[str, Any],
+    items: list[dict[str, Any]],
+) -> bool:
+    entity_id = _entity_id_from_context(context)
+    if entity_id is None:
+        return False
     menu_config[FUNCTIONS_MENU_CONFIG_KEY] = items
-    session.execute(
+    result = session.execute(
         text(
             """
             UPDATE sidebar_menu_settings
             SET menu_config = :menu_config
             WHERE lower(trim(menu_key)) = 'administrativo'
+              AND entity_id = :entity_id
             """
         ),
-        {"menu_config": json.dumps(menu_config, ensure_ascii=False)},
+        {"menu_config": json.dumps(menu_config, ensure_ascii=False), "entity_id": entity_id},
     )
+    return bool(getattr(result, "rowcount", 1))
 
 
 class FunctionsAdminRepository(BaseAdminSubprocessRepository):
@@ -126,7 +150,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         }
 
     def list_rows(self, session: Any, context: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-        _menu_config, items = _load_functions(session)
+        _menu_config, items = _load_functions(session, context)
         return [self._build_row(item) for item in items if str(item.get("key") or "").strip()]
 
     def get_for_edit(
@@ -168,7 +192,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
             if any(key not in allowed_keys for key in profile_keys):
                 return False, "profile_not_found", ""
 
-        menu_config, items = _load_functions(session)
+        menu_config, items = _load_functions(session, context)
         clean_edit_key = str(edit_key or "").strip().lower()
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         scope_mode = _normalize_scope_mode(payload.get("visibility_scope_mode"))
@@ -208,7 +232,8 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
                 }
             )
 
-        _store_functions(session, menu_config, items)
+        if not _store_functions(session, context, menu_config, items):
+            return False, "menu_not_found", ""
         return True, "saved", saved_key
 
     def delete_row(
@@ -218,14 +243,15 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         context: dict[str, Any] | None = None,
     ) -> tuple[bool, str]:
         clean_key = str(edit_key or "").strip().lower()
-        menu_config, items = _load_functions(session)
+        menu_config, items = _load_functions(session, context)
         target = next((item for item in items if str(item.get("key") or "").lower() == clean_key), None)
         if target is None:
             return False, "not_found"
         if _normalize_status(target.get("status")) == "ativo":
             return False, "active_function"
         items = [item for item in items if str(item.get("key") or "").lower() != clean_key]
-        _store_functions(session, menu_config, items)
+        if not _store_functions(session, context, menu_config, items):
+            return False, "menu_not_found"
         return True, "deleted"
 
 

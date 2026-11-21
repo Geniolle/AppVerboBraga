@@ -2185,6 +2185,7 @@ _FUNCTIONS_ERROR_MESSAGES = {
     "profile_required": "Escolha pelo menos um perfil de autorização.",
     "profile_duplicate": "Cada perfil de autorização só pode ser escolhido uma vez.",
     "profile_not_found": "Perfil de autorização inválido ou inativo.",
+    "menu_not_found": "Menu Administrativo não configurado para esta entidade.",
     "profile_all_exclusive": "\"Todos os perfis\" não pode ser combinado com outros perfis.",
 }
 
@@ -2261,7 +2262,11 @@ async def save_authorization_function(request: Request) -> RedirectResponse:
                 "status": str(submitted_form.get("functions_status") or "").strip(),
                 "authorization_profiles": submitted_form.getlist("functions_authorization_profiles"),
             },
-            context={"entity_number": entity_number, "allowed_profile_keys": allowed_profile_keys},
+            context={
+                "entity_id": get_session_entity_id(request),
+                "entity_number": entity_number,
+                "allowed_profile_keys": allowed_profile_keys,
+            },
             edit_key=edit_key,
         )
         if not ok:
@@ -2288,7 +2293,7 @@ async def delete_authorization_function(request: Request) -> RedirectResponse:
         if current_user is None:
             return RedirectResponse(url="/login?error=Efetue login para continuar.", status_code=status.HTTP_302_FOUND)
         repo = FunctionsAdminRepository(get_admin_subprocess_config("funcoes_administrativas"))
-        ok, reason = repo.delete_row(session, key)
+        ok, reason = repo.delete_row(session, key, context={"entity_id": get_session_entity_id(request)})
         if not ok:
             return _functions_redirect(
                 return_url,
