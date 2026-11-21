@@ -156,7 +156,7 @@
             {% endfor %}
           {% endif %}
           {% for field in state.config.fields %}
-            {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else "" %}
+            {% set field_value = state.edit_data.get(field.key, "") if state.edit_data else (state.prefill_values.get(field.key, "") if state.prefill_values else "") %}
             {{ render_admin_subprocess_field(field, field_value) }}
           {% endfor %}
         </div>
@@ -175,7 +175,7 @@
       </form>
     {% else %}
       <div class="appgenesis-process-action-toolbar-v1">
-        <details class="entity-create-collapse admin-subprocess-create-collapse-v1 appgenesis-process-action-details-v1">
+        <details class="entity-create-collapse admin-subprocess-create-collapse-v1 appgenesis-process-action-details-v1"{% if state.prefill_values %} open{% endif %}>
           <summary class="appgenesis-process-action-toggle-v1">
             <span>{{ state.config.create_title }}</span>
           </summary>
@@ -193,7 +193,7 @@
                   {% endfor %}
                 {% endif %}
                 {% for field in state.config.fields %}
-                  {{ render_admin_subprocess_field(field, field.default_value) }}
+                  {{ render_admin_subprocess_field(field, (state.prefill_values.get(field.key, field.default_value) if state.prefill_values else field.default_value)) }}
                 {% endfor %}
               </div>
 
@@ -383,6 +383,14 @@
       >👁</button>
     {% endif %}
 
+    {% if state.config.copy_param %}
+    <a
+      class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
+      title="Copiar"
+      aria-label="Copiar"
+      href="/users/new?menu={{ state.menu_key or 'administrativo' }}{% if state.config.edit_url_extra_params %}&amp;{{ state.config.edit_url_extra_params }}{% endif %}&amp;target={{ state.config.default_target }}&amp;{{ state.config.copy_param }}={{ row_key }}#{{ state.config.default_target }}"
+    >&#10697;</a>
+    {% endif %}
     <a
       class="admin-subprocess-action-btn-v1 admin-subprocess-action-link-v1"
       title="Editar"

@@ -122,6 +122,7 @@ class AdminSubprocessConfig:
     dynamic_fields_section_header_key: str = ""
     create_toggle_in_active_header: bool = False
     form_grid_css_class: str = ""
+    copy_param: str = ""
 
 
 @dataclass
@@ -139,6 +140,7 @@ class AdminSubprocessState:
     return_url: str = ""
     resolved_dynamic_fields: list[dict[str, Any]] = field(default_factory=list)
     edit_values: dict[str, Any] = field(default_factory=dict)
+    prefill_values: dict[str, Any] = field(default_factory=dict)
 
     @property
     def is_editing(self) -> bool:
