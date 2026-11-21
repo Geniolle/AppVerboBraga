@@ -45,12 +45,9 @@
           {{ render_admin_subprocess_state(auth_profile_subprocess_state) }}
         {% endif %}
 
-        <section id="funcoes-administrativas-card" class="card" data-menu-scope="administrativo" style="display: none;">
-          <div class="profile-card-header">
-            <h2>Funções Administrativas</h2>
-          </div>
-          <p class="empty">Sem funções administrativas criadas.</p>
-        </section>
+        {% if funcoes_subprocess_state %}
+          {{ render_admin_subprocess_state(funcoes_subprocess_state) }}
+        {% endif %}
 
         <!-- APPGENESIS_MENU_SUBPROCESS_V1_START -->
         {% if admin_subprocess_menu_state %}

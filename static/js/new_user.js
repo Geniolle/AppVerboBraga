@@ -3599,6 +3599,10 @@ function getAdminSubprocessKeyByTargetV1(target) {
     "#auth-profile-form-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
     "#auth-profile-active-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
     "#auth-profile-inactive-card": PERFIL_AUTORIZACAO_MENU_KEY_V1,
+    "#funcoes-administrativas-card": "funcoes_administrativas",
+    "#funcoes-administrativas-form-card": "funcoes_administrativas",
+    "#funcoes-administrativas-active-card": "funcoes_administrativas",
+    "#funcoes-administrativas-inactive-card": "funcoes_administrativas",
   };
   return targetMap[cleanTarget] || "";
 }

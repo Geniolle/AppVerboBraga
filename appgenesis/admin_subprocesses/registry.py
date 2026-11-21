@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from .models import (
     AdminActionConfig,
     AdminColumnConfig,
@@ -734,10 +736,105 @@ CONTAS_CONFIG = AdminSubprocessConfig(
 )
 
 
+FUNCTIONS_ADMIN_TECHNICAL_FIELDS = (
+    AdminFieldConfig(
+        key="label",
+        label="Nome da função",
+        input_name="functions_label",
+        field_type="text",
+        required=True,
+        max_length=80,
+    ),
+    AdminFieldConfig(
+        key="status",
+        label="Estado",
+        input_name="functions_status",
+        field_type="select",
+        required=True,
+        options=(
+            ("ativo", "Ativo"),
+            ("inativo", "Inativo"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="visibility_scope_mode",
+        label="Sistema",
+        input_name="functions_visibility_scope_mode",
+        field_type="select",
+        required=True,
+        options=(
+            ("all", "Default"),
+            ("owner", "Owner"),
+            ("legado", "Legado"),
+        ),
+    ),
+    AdminFieldConfig(
+        key="entity_number",
+        label="Entidade",
+        input_name="functions_entity_number_display",
+        field_type="readonly",
+    ),
+)
+
+
+_FUNCTIONS_ADMIN_COLUMNS = tuple(
+    replace(column, label="FUNÇÕES") if column.key == "label" else column
+    for column in AUTHORIZATION_PROFILE_CONFIG.columns
+)
+
+FUNCTIONS_ADMIN_CONFIG = AdminSubprocessConfig(
+    key="funcoes_administrativas",
+    label="Funções administrativas",
+    singular_label="Função",
+    plural_label="Funções",
+    edit_param="functions_edit_key",
+    copy_param="functions_copy_key",
+    default_target="funcoes-administrativas-card",
+    edit_target="funcoes-administrativas-form-card",
+    create_title="Criar função",
+    edit_title="Editar função",
+    active_title="Funções ativas",
+    inactive_title="Funções inativas",
+    active_card_id="funcoes-administrativas-active-card",
+    inactive_card_id="funcoes-administrativas-inactive-card",
+    active_table_id="funcoes-administrativas-active-table",
+    inactive_table_id="funcoes-administrativas-inactive-table",
+    active_limiter_id="funcoes-administrativas-active-limiter",
+    inactive_limiter_id="funcoes-administrativas-inactive-limiter",
+    save_endpoint="/users/functions/save",
+    create_endpoint="/users/functions/save",
+    update_endpoint="/users/functions/save",
+    delete_endpoint="/users/functions/delete",
+    repository_name="functions",
+    repository_class="appgenesis.admin_subprocesses.repositories.functions_repository.FunctionsAdminRepository",
+    status_field="status",
+    active_value="ativo",
+    inactive_value="inativo",
+    identity_field="key",
+    label_field="label",
+    mode_field="functions_mode",
+    edit_key_field="original_functions_key",
+    return_url_field="functions_return_url",
+    create_mode_value="create",
+    edit_mode_value="edit",
+    enabled=True,
+    migration_status="native",
+    form_grid_css_class="admin-subprocess-grid-auth-profile-v1",
+    fields=FUNCTIONS_ADMIN_TECHNICAL_FIELDS,
+    columns=_FUNCTIONS_ADMIN_COLUMNS,
+    actions=AUTHORIZATION_PROFILE_CONFIG.actions,
+    create_toggle_in_active_header=True,
+    menu_scope="administrativo",
+    empty_active_message="Sem funções ativas.",
+    empty_inactive_message="Sem funções inativas.",
+)
+
+
 ADMIN_SUBPROCESS_REGISTRY = {
     ENTIDADE_CONFIG.key: ENTIDADE_CONFIG,
     SESSOES_CONFIG.key: SESSOES_CONFIG,
     AUTHORIZATION_PROFILE_CONFIG.key: AUTHORIZATION_PROFILE_CONFIG,
+    FUNCTIONS_ADMIN_CONFIG.key: FUNCTIONS_ADMIN_CONFIG,
     UTILIZADOR_CONFIG.key: UTILIZADOR_CONFIG,
     MENU_CONFIG.key: MENU_CONFIG,
     CONTAS_CONFIG.key: CONTAS_CONFIG,
