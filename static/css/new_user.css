@@ -6594,3 +6594,8 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
     grid-template-columns: 1fr;
   }
 }
+
+/* Musicas: o campo Letra ocupa a linha inteira (linha 2). */
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_letra"] {
+  grid-column: 1 / -1;
+}
