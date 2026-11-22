@@ -6485,19 +6485,21 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   opacity: 1;
 }
 
-/* Ensaio: Musica n e Tom n lado a lado (2 colunas). Responsavel ocupa a linha inteira. */
+/* Ensaio: linha 1 com Data, Horario e Responsavel (3 colunas). Campo Musicas ocupa a linha inteira. */
 #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 #dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_responsavel"] {
-  grid-column: span 2;
+  grid-column: span 1;
+}
+@media (max-width: 900px) {
+  #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 720px) {
   #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
     grid-template-columns: 1fr;
-  }
-  #dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_responsavel"] {
-    grid-column: auto;
   }
 }
 
