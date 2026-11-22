@@ -1564,3 +1564,10 @@ Sempre que o trabalho for uma refatoração ou correção em várias partes, seg
 5. Não avançar com etapa em aberto, teste vermelho ou validação por fazer. Se uma etapa ficar bloqueada, parar e registar o motivo no roadmap.
 6. Não criar documentos novos para o mesmo assunto; atualizar os existentes.
 7. Mudanças de dados em produção (SQL pontual) devem ser registadas no PR e no roadmap, com contagem antes e depois.
+
+## Regra global: rodapé de paginação "Mais / Menos"
+
+- Toda tabela ou lista paginada (administrativa, lista de processo ou editor de configuração) usa o rodapé "Mais / Menos": seletor 5/10/20/50 à esquerda, "Mais" e `[ visíveis / total ]` no centro, "Menos" à direita.
+- Não criar paginação própria (setas, anterior/seguinte, números de página) nem sobrepor o CSS do rodapé por cartão.
+- Nunca apagar o conteúdo do rodapé (`innerHTML = ""`); depois de redesenhar linhas, chamar `enhanceProcessShellTables(cartão)`.
+- Especificação completa: `docs/specs/rodape-paginacao-mais-menos.md`.

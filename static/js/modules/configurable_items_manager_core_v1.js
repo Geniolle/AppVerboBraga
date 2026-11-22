@@ -706,7 +706,12 @@
       const lessBtn = createElement_v1("button", "appgenesis-load-more-btn-v1", "Menos");
       lessBtn.type = "button";
       lessBtn.addEventListener("click", () => {
-        manager.state.visibleCount = manager.state.pageSize;
+        // Regra global: "Menos" volta ao bloco anterior (multiplo do tamanho da pagina), nunca abaixo de uma pagina.
+        const pageSize = manager.state.pageSize;
+        manager.state.visibleCount = Math.max(
+          pageSize,
+          Math.floor((Math.min(manager.state.visibleCount, totalItems) - 1) / pageSize) * pageSize
+        );
         manager.render();
       });
       lessEl.appendChild(lessBtn);

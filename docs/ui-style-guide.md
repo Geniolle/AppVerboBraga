@@ -58,3 +58,8 @@ Quando criar nova tela:
 1. Reutilizar os tokens de `ui-standards.css`.
 2. Evitar valores hardcoded para tamanho de campo e botao.
 3. Se precisar de variacao, criar classe derivada mantendo os tokens base.
+
+## Paginacao de tabelas e listas (regra global)
+
+Toda tabela ou lista paginada usa o rodape "Mais / Menos" do controlador partilhado.
+Especificacao completa (medidas, regras e como ligar): `docs/specs/rodape-paginacao-mais-menos.md`.
