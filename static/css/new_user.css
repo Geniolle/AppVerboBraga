@@ -6633,3 +6633,9 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   color: #6b7280;
   cursor: not-allowed;
 }
+
+/* Ensaio: coluna Musica com 500px (cabe o maior nome de musica do sistema, 65 caracteres). */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-head-v1,
+#dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-v1 {
+  grid-template-columns: 500px minmax(0, 1fr) minmax(0, 1fr) 36px !important;
+}
