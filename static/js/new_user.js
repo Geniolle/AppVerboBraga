@@ -2137,7 +2137,15 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
     rowFields.forEach((rowField) => {
       const listOptions = Array.isArray(rowField.list_options) ? rowField.list_options : [];
       let inputEl;
-      if (listOptions.length) {
+      if (rowField.readonly) {
+        // Campo automatico: fechado (cinzento), preenchido a partir de outro campo da linha.
+        inputEl = document.createElement("input");
+        inputEl.type = "text";
+        inputEl.readOnly = true;
+        inputEl.tabIndex = -1;
+        inputEl.className = "dynamic-process-row-readonly-v1";
+        inputEl.value = String((values && values[rowField.key]) || "");
+      } else if (listOptions.length) {
         inputEl = document.createElement("select");
         const emptyOptionEl = document.createElement("option");
         emptyOptionEl.value = "";
@@ -2147,10 +2155,23 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
           const optionEl = document.createElement("option");
           optionEl.value = String(option.value || "");
           optionEl.textContent = String(option.label || option.value || "");
+          optionEl.dataset.extra = String(option.extra || "");
           inputEl.appendChild(optionEl);
         });
         inputEl.value = String((values && values[rowField.key]) || "");
-        inputEl.addEventListener("change", syncHidden);
+        inputEl.addEventListener("change", () => {
+          // Preenche os campos automaticos desta linha a partir da opcao escolhida.
+          const chosenEl = inputEl.options[inputEl.selectedIndex];
+          rowFields
+            .filter((otherField) => otherField.autofill_from === rowField.key)
+            .forEach((otherField) => {
+              const autoEl = rowEl.querySelector(`[data-row-field="${otherField.key}"]`);
+              if (autoEl) {
+                autoEl.value = chosenEl ? String(chosenEl.dataset.extra || "") : "";
+              }
+            });
+          syncHidden();
+        });
       } else {
         inputEl = document.createElement("input");
         inputEl.type = "text";

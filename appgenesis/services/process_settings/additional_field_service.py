@@ -624,6 +624,14 @@ def _normalize_row_fields_v1(raw_row_fields: Any) -> list[dict[str, Any]]:
         if options_menu_key and options_field_key:
             row_field["options_menu_key"] = options_menu_key
             row_field["options_field_key"] = options_field_key
+            options_extra_key = str(raw_field.get("options_extra_field_key") or "").strip().lower()
+            if options_extra_key:
+                row_field["options_extra_field_key"] = options_extra_key
+        autofill_from = str(raw_field.get("autofill_from") or "").strip().lower()
+        if raw_field.get("readonly"):
+            row_field["readonly"] = True
+        if autofill_from:
+            row_field["autofill_from"] = autofill_from
         row_fields.append(row_field)
     return row_fields
 
