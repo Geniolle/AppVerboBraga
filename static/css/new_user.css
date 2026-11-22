@@ -6637,7 +6637,7 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 /* Ensaio: coluna Musica com 250px. */
 #dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-head-v1,
 #dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-v1 {
-  grid-template-columns: 250px 150px 150px 36px !important;
+  grid-template-columns: 250px 250px 250px 36px !important;
 }
 
 /* Ensaio: campo Musicas ocupa a linha inteira (as colunas de Musica/Autor/Tom precisam da largura toda). */
