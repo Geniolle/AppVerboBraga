@@ -2337,7 +2337,14 @@ function applyAutoDocumentNumbersV1(formEl) {
       });
     }
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateEl.value || "").trim());
-    inputEl.value = match ? `${rule.prefix || ""}${match[1].slice(2)}${match[2]}${match[3]}` : "";
+    const weekdayNames = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    if (!match) {
+      inputEl.value = "";
+    } else if (rule.format === "weekday") {
+      inputEl.value = weekdayNames[new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getDay()];
+    } else {
+      inputEl.value = `${rule.prefix || ""}${match[1].slice(2)}${match[2]}${match[3]}`;
+    }
     inputEl.readOnly = true;
     inputEl.tabIndex = -1;
     inputEl.classList.add("dynamic-process-auto-readonly-v1");

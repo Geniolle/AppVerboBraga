@@ -1636,6 +1636,17 @@ def _normalize_rows_submission_v1(raw_value: Any, row_fields: list[dict[str, Any
     return [row for index, row in enumerate(clean_rows, start=1) if index not in incomplete_rows], incomplete_rows
 
 
+WEEKDAY_NAMES_PT_V1 = (
+    "Segunda-feira",
+    "Terça-feira",
+    "Quarta-feira",
+    "Quinta-feira",
+    "Sexta-feira",
+    "Sábado",
+    "Domingo",
+)
+
+
 def _apply_auto_document_number_v1(values: dict[str, str], field_key: str, meta: dict[str, Any]) -> None:
     """Numero calculado a partir de uma data (ex.: Entradas: R + AAMMDD da Data), como uma formula."""
     rule = meta.get("auto_document_number")
@@ -1647,6 +1658,9 @@ def _apply_auto_document_number_v1(values: dict[str, str], field_key: str, meta:
         parsed_date = datetime.strptime(str(values.get(date_key) or ""), "%Y-%m-%d")
     except ValueError:
         values.pop(field_key, None)
+        return
+    if str(rule.get("format") or "") == "weekday":
+        values[field_key] = WEEKDAY_NAMES_PT_V1[parsed_date.weekday()]
         return
     values[field_key] = f"{prefix}{parsed_date.strftime('%y%m%d')}"
 
