@@ -672,6 +672,8 @@ function getDynamicProcessLayoutConfig(setting, menuLabel, sectionLabel) {
     stateEnabled: Boolean(setting && setting.process_record_state_enabled),
     showSystemColumn: Boolean(setting && setting.process_record_show_system_column),
     includeRemainingFields: Boolean(setting && setting.process_record_include_remaining_fields),
+    inactiveFieldKey: normalizeMenuKey(setting && setting.process_record_inactive_field_key),
+    inactiveFieldValue: String(setting && setting.process_record_inactive_field_value || "").trim().toLowerCase(),
     statusFieldKey: String(
       setting && setting.process_record_status_field_key
         ? setting.process_record_status_field_key
@@ -1929,6 +1931,16 @@ function getDynamicProcessRecordState(row, layoutConfig) {
 function splitDynamicProcessListRows(rows, layoutConfig) {
   const normalizedRows = Array.isArray(rows) ? rows.filter((row) => row && typeof row === "object") : [];
   return normalizedRows.reduce((accumulator, row) => {
+    // Regra por campo (ex.: Musicas com OBSOLETA = Sim vao para os inativos), mesmo sem estado do registo.
+    if (layoutConfig && layoutConfig.inactiveFieldKey) {
+      const fieldValue = String((row.values && row.values[layoutConfig.inactiveFieldKey]) || "").trim().toLowerCase();
+      if (fieldValue === layoutConfig.inactiveFieldValue) {
+        accumulator.inactive.push(row);
+      } else {
+        accumulator.active.push(row);
+      }
+      return accumulator;
+    }
     if (!layoutConfig || !layoutConfig.stateEnabled) {
       accumulator.active.push(row);
       return accumulator;

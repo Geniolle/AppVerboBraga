@@ -432,6 +432,16 @@ def resolve_dynamic_process_layout_config(
             if layout == PROCESS_LAYOUT_LIST
             else ""
         ),
+        "inactive_field_key": (
+            str(list_config.get("inactive_field_key") or "").strip().lower()
+            if layout == PROCESS_LAYOUT_LIST
+            else ""
+        ),
+        "inactive_field_value": (
+            str(list_config.get("inactive_field_value") or "").strip()
+            if layout == PROCESS_LAYOUT_LIST
+            else ""
+        ),
     }
 
 
