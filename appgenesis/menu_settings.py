@@ -301,6 +301,8 @@ def get_sidebar_menu_settings(
                 ],
                 "process_list_columns": process_layout_config["list_columns"],
                 "process_record_sort_field": process_layout_config.get("sort_field", ""),
+                "process_record_inactive_field_key": process_layout_config.get("inactive_field_key", ""),
+                "process_record_inactive_field_value": process_layout_config.get("inactive_field_value", ""),
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
                 ],
@@ -415,6 +417,8 @@ def get_sidebar_menu_settings(
                 ],
                 "process_list_columns": process_layout_config["list_columns"],
                 "process_record_sort_field": process_layout_config.get("sort_field", ""),
+                "process_record_inactive_field_key": process_layout_config.get("inactive_field_key", ""),
+                "process_record_inactive_field_value": process_layout_config.get("inactive_field_value", ""),
                 "additional_field_type_options": [
                     dict(item) for item in ADDITIONAL_FIELD_TYPES
                 ],
