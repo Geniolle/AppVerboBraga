@@ -2209,7 +2209,7 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
         linkBtnEl.dataset.linkFrom = rowField.link_button_from;
         linkBtnEl.setAttribute("aria-label", "Abrir video");
         linkBtnEl.title = "Abrir video";
-        linkBtnEl.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="2" y="5" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 10l6-3v10l-6-3z" fill="currentColor"/></svg>';
+        linkBtnEl.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" style="display:block;width:20px;height:20px;min-width:20px;flex:0 0 auto"><rect x="2" y="6" width="13" height="12" rx="2.5" fill="currentColor"/><path d="M15 10.5l6-3.5v10l-6-3.5z" fill="currentColor"/></svg>';
         linkBtnEl.addEventListener("click", () => {
           const sourceEl = rowEl.querySelector(`[data-row-field="${rowField.link_button_from}"]`);
           const chosenEl = sourceEl && sourceEl.tagName === "SELECT" ? sourceEl.options[sourceEl.selectedIndex] : null;

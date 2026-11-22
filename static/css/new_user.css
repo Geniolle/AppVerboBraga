@@ -6693,6 +6693,13 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   color: #174ea6;
   cursor: pointer;
 }
+#dynamic-process-edit-form .dynamic-process-row-link-v1 svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  flex: 0 0 auto;
+}
 #dynamic-process-edit-form .dynamic-process-row-link-v1:disabled {
   opacity: 0.4;
   cursor: not-allowed;
