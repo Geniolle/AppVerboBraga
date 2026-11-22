@@ -6662,3 +6662,8 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   color: #374151;
   text-align: left;
 }
+
+/* Ensaio: o nome "Musicas" acima do bloco fica oculto (cada sub-campo ja tem o seu nome). */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_musicas"] > label:first-child {
+  display: none;
+}
