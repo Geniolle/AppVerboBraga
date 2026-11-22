@@ -80,7 +80,7 @@ from appgenesis.dynamic_process_layout import (
 
 from appgenesis.routes.profile.router import router
 
-PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list", "rows"}
+PROCESS_FIELD_TYPES = {"text", "number", "email", "phone", "date", "flag", "list", "rows", "longtext"}
 PROCESS_TEXTUAL_FIELD_TYPES = {"text", "number", "email", "phone"}
 PROCESS_DEFAULT_FIELD_TYPE = "text"
 MEU_PERFIL_BUILTIN_DUPLICATE_LABELS = {

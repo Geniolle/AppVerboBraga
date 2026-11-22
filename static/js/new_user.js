@@ -168,7 +168,7 @@ const selectedDynamicSectionByMenu = appGenesisProcessMenuConfigBuilderV1
   ? appGenesisProcessMenuConfigBuilderV1.selectedDynamicSectionByMenu
   : {};
 const processTextualTypes = new Set(["text", "number", "email", "phone"]);
-const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "time", "flag", "list", "rows"]);
+const processSupportedTypes = new Set(["text", "number", "email", "phone", "date", "time", "flag", "list", "rows", "longtext"]);
 const processSubsequentOperators = new Set(["equals", "not_equals", "is_empty", "is_not_empty"]);
 
 
@@ -3855,6 +3855,16 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
         renderedInputsByFieldKey.set(fieldKey, selectEl);
         fieldContainerEl.appendChild(labelEl);
         fieldContainerEl.appendChild(selectEl);
+      } else if (fieldType === "longtext") {
+        const areaEl = document.createElement("textarea");
+        areaEl.id = inputId;
+        areaEl.name = inputName;
+        areaEl.rows = 8;
+        areaEl.value = editDefaultValue;
+        areaEl.required = fieldRequired;
+        renderedInputsByFieldKey.set(fieldKey, areaEl);
+        fieldContainerEl.appendChild(labelEl);
+        fieldContainerEl.appendChild(areaEl);
       } else if (fieldType === "rows") {
         const hiddenEl = document.createElement("input");
         hiddenEl.type = "hidden";

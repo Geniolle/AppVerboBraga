@@ -6611,3 +6611,18 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   order: 3;
   grid-column: span 2;
 }
+
+/* Musicas: campo Letra como area de texto de 8 linhas, linha inteira. */
+#dynamic-process-edit-form[data-menu-key="musicas"] textarea[name="process_field__custom_letra"] {
+  width: 100%;
+  height: 200px;
+  min-height: 200px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid #cfd5df;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
