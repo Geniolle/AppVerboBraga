@@ -830,6 +830,14 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if str(raw_item.get("text_format") or "").strip().lower() == "sentence" and item_type in {"text", "longtext"}:
             normalized_item["text_format"] = "sentence"
 
+        capitalize_words = [
+            str(word).strip()
+            for word in (raw_item.get("capitalize_words") or [])
+            if str(word or "").strip()
+        ]
+        if capitalize_words and item_type in {"text", "longtext"}:
+            normalized_item["capitalize_words"] = capitalize_words
+
         item_button_style = _normalize_additional_field_button_style_for_type(
             item_type, raw_item.get("button_style")
         )
