@@ -6773,3 +6773,10 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
     grid-column: auto;
   }
 }
+
+/* Numero calculado a partir de uma data (ex.: Entradas): fechado e cinzento. */
+#dynamic-process-edit-form input.dynamic-process-auto-readonly-v1 {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}

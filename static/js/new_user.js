@@ -751,6 +751,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       editableWhen: option.editable_when || null,
       requiredWhen: option.required_when || null,
       visibleWhen: option.visible_when || null,
+      autoDocumentNumber: option.auto_document_number || null,
       addButtonLabel: option.add_button_label || null,
       rowFields: Array.isArray(option.row_fields) ? option.row_fields : []
     });
@@ -769,6 +770,7 @@ function buildProcessSections(setting, processValuesByField = {}) {
       editableWhen: fieldMeta.editableWhen || null,
       requiredWhen: fieldMeta.requiredWhen || null,
       visibleWhen: fieldMeta.visibleWhen || null,
+      autoDocumentNumber: fieldMeta.autoDocumentNumber || null,
       addButtonLabel: fieldMeta.addButtonLabel || null,
       rowFields: Array.isArray(fieldMeta.rowFields) ? fieldMeta.rowFields : [],
       listKey: normalizeMenuKey(fieldMeta.listKey),
@@ -2314,6 +2316,34 @@ function resetProcessRowsFieldsV1(formEl, valuesByKey) {
   });
 }
 
+// Campo calculado a partir de uma data (auto_document_number, ex.: R + AAMMDD): fechado e preenchido ao escolher a data.
+function applyAutoDocumentNumbersV1(formEl) {
+  formEl.querySelectorAll("[data-auto-document-number]").forEach((containerEl) => {
+    let rule = null;
+    try {
+      rule = JSON.parse(containerEl.dataset.autoDocumentNumber || "null");
+    } catch (error) {
+      rule = null;
+    }
+    const inputEl = containerEl.querySelector("input");
+    const dateEl = rule ? formEl.querySelector(`[name="process_field__${rule.date_field}"]`) : null;
+    if (!inputEl || !dateEl) {
+      return;
+    }
+    if (!dateEl._autoDocumentBound) {
+      dateEl._autoDocumentBound = true;
+      ["input", "change"].forEach((eventName) => {
+        dateEl.addEventListener(eventName, () => applyAutoDocumentNumbersV1(formEl));
+      });
+    }
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateEl.value || "").trim());
+    inputEl.value = match ? `${rule.prefix || ""}${match[1].slice(2)}${match[2]}${match[3]}` : "";
+    inputEl.readOnly = true;
+    inputEl.tabIndex = -1;
+    inputEl.classList.add("dynamic-process-auto-readonly-v1");
+  });
+}
+
 // Regras por campo: editable_when, required_when e visible_when (equals ou is_not_empty).
 function applyConditionalProcessFieldRulesV1(formEl) {
   if (!formEl) {
@@ -2405,6 +2435,7 @@ function applyConditionalProcessFieldRulesV1(formEl) {
     const previousShown = !previousEl || previousEl.style.display !== "none";
     containerEl._addButtonEl.style.display = !visible && previousShown ? "" : "none";
   });
+  applyAutoDocumentNumbersV1(formEl);
 }
 
 function placeDynamicProcessFormInRowV1(anchorRowEl, bodyEl) {
@@ -3909,6 +3940,9 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
       }
       if (field.visibleWhen) {
         fieldContainerEl.dataset.visibleWhen = JSON.stringify(field.visibleWhen);
+      }
+      if (field.autoDocumentNumber) {
+        fieldContainerEl.dataset.autoDocumentNumber = JSON.stringify(field.autoDocumentNumber);
       }
       if (field.addButtonLabel) {
         fieldContainerEl.dataset.addButtonLabel = field.addButtonLabel;
