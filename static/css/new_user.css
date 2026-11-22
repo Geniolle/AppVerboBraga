@@ -6583,6 +6583,8 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   display: flex !important;
   justify-content: center !important;
   position: relative;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 #dynamic-process-active-card .appgenesis-load-more-footer-v1 .appgenesis-load-more-page-size-v1,
 #dynamic-process-inactive-card .appgenesis-load-more-footer-v1 .appgenesis-load-more-page-size-v1 {
