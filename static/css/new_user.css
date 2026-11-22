@@ -6750,3 +6750,26 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   resize: vertical;
   cursor: default;
 }
+
+/* Ausencias: Data inicio, Data fim, Nome do colaborador e Motivo numa unica linha (Motivo o maior). */
+#dynamic-process-edit-form[data-menu-key="ausencias"] .personal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_data_inicio"],
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_data_fim"] {
+  grid-column: span 2;
+}
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_nome_colaborador"] {
+  grid-column: span 3;
+}
+#dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key="custom_motivo"] {
+  grid-column: span 5;
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="ausencias"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+  #dynamic-process-edit-form[data-menu-key="ausencias"] .field[data-process-field-key] {
+    grid-column: auto;
+  }
+}
