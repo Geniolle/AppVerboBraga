@@ -6780,3 +6780,19 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   color: #6b7280;
   cursor: not-allowed;
 }
+
+/* Entradas: 2 linhas de 4 campos iguais (Dia, Data, Tipo, Numero / Valor, Aux. 1, Aux. 2, Aux. substituto). */
+#dynamic-process-edit-form[data-menu-key="entradas"] .personal-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+#dynamic-process-edit-form[data-menu-key="entradas"] .field[data-process-field-key] {
+  grid-column: span 3;
+}
+@media (max-width: 720px) {
+  #dynamic-process-edit-form[data-menu-key="entradas"] .personal-grid {
+    grid-template-columns: 1fr;
+  }
+  #dynamic-process-edit-form[data-menu-key="entradas"] .field[data-process-field-key] {
+    grid-column: auto;
+  }
+}
