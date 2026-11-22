@@ -6645,41 +6645,18 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   grid-column: 1 / -1;
 }
 
-/* Campo rows: nome do sub-campo a esquerda do campo, na mesma linha (Musica | Autor | Tom). */
+/* Campo rows: nome do sub-campo em cima do campo, alinhado a esquerda (Musica | Autor | Tom). */
 #dynamic-process-edit-form .dynamic-process-row-cell-v1 {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   min-width: 0;
-}
-#dynamic-process-edit-form .dynamic-process-row-cell-v1 > input,
-#dynamic-process-edit-form .dynamic-process-row-cell-v1 > select {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: auto;
 }
 #dynamic-process-edit-form .dynamic-process-row-cell-label-v1 {
-  flex: 0 0 auto;
+  display: block;
   font-size: 12px;
   font-weight: 700;
   color: #374151;
-  white-space: nowrap;
+  text-align: left;
 }
-/* Nome do campo "rows" (ex.: Musicas) a esquerda do bloco de linhas. */
-#dynamic-process-edit-form .field:has(> label + .dynamic-process-rows-container-v1) {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 12px;
-}
-#dynamic-process-edit-form .field:has(> label + .dynamic-process-rows-container-v1) > label {
-  flex: 0 0 150px;
-  width: 150px;
-  margin: 0;
-  padding-top: 12px;
-}
-#dynamic-process-edit-form .field:has(> label + .dynamic-process-rows-container-v1) > .dynamic-process-rows-container-v1 {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
