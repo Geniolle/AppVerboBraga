@@ -6576,25 +6576,3 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   cursor: pointer;
   align-self: flex-start;
 }
-
-/* Listas de processo: o status "Mais [ n / total ]" fica no centro do cartao; o seletor fica a esquerda. */
-#dynamic-process-active-card .appgenesis-load-more-footer-v1,
-#dynamic-process-inactive-card .appgenesis-load-more-footer-v1 {
-  display: flex !important;
-  justify-content: center !important;
-  position: relative;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-#dynamic-process-active-card .appgenesis-load-more-footer-v1 .appgenesis-load-more-page-size-v1,
-#dynamic-process-inactive-card .appgenesis-load-more-footer-v1 .appgenesis-load-more-page-size-v1 {
-  position: absolute !important;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-#dynamic-process-active-card .appgenesis-load-more-footer-v1 .appgenesis-load-more-status-v1,
-#dynamic-process-inactive-card .appgenesis-load-more-footer-v1 .appgenesis-load-more-status-v1 {
-  margin: 0 auto !important;
-  text-align: center;
-}

@@ -1974,8 +1974,8 @@ function resetDynamicProcessListCardsV1() {
     dynamicProcessInactiveLimiterEl
   ].forEach((limiterEl) => {
     if (limiterEl) {
+      // Nao apagar o conteudo: o controlador partilhado (process_shell) guarda referencias a estes elementos.
       limiterEl.style.display = "none";
-      limiterEl.innerHTML = "";
     }
   });
 }
@@ -2830,84 +2830,11 @@ function renderDynamicProcessListTableCardV1(options) {
 
   tableEl.style.display = "";
   emptyEl.style.display = rows.length ? "none" : "";
-  setupDynamicProcessListPagerV1(bodyEl, limiterEl);
+  if (limiterEl) {
+    limiterEl.style.display = "";
+  }
 
   enhanceProcessShellTables(cardEl);
-}
-
-// Paginacao das listas de processo no padrao "Mais": mostra as primeiras linhas e "Mais" abre o proximo bloco.
-function setupDynamicProcessListPagerV1(bodyEl, limiterEl) {
-  if (!bodyEl || !limiterEl) {
-    return;
-  }
-  if (!bodyEl.__pagerState) {
-    bodyEl.__pagerState = { pageSize: 5, shown: 5 };
-  }
-  const state = bodyEl.__pagerState;
-  limiterEl.innerHTML = "";
-  limiterEl.style.display = "";
-
-  // Mesma estrutura do rodape "Mais" dos outros cartoes (classes appgenesis-load-more-*).
-  const wrapEl = document.createElement("div");
-  wrapEl.className = "appgenesis-load-more-footer-v1";
-
-  const pageSizeWrapEl = document.createElement("div");
-  pageSizeWrapEl.className = "appgenesis-load-more-page-size-v1";
-  const selectEl = document.createElement("select");
-  [5, 10, 20, 50].forEach((size) => {
-    const optionEl = document.createElement("option");
-    optionEl.value = String(size);
-    optionEl.textContent = String(size);
-    selectEl.appendChild(optionEl);
-  });
-  selectEl.value = String(state.pageSize);
-  const sizeLabelEl = document.createElement("span");
-  sizeLabelEl.textContent = "entradas por página";
-  pageSizeWrapEl.appendChild(selectEl);
-  pageSizeWrapEl.appendChild(sizeLabelEl);
-
-  const statusWrapEl = document.createElement("div");
-  statusWrapEl.className = "appgenesis-load-more-status-v1";
-  const moreBtnEl = document.createElement("button");
-  moreBtnEl.type = "button";
-  moreBtnEl.className = "appgenesis-load-more-btn-v1";
-  moreBtnEl.textContent = "Mais";
-  const statusEl = document.createElement("span");
-  statusEl.className = "appgenesis-load-more-counter-v1";
-  statusWrapEl.appendChild(moreBtnEl);
-  statusWrapEl.appendChild(statusEl);
-
-  wrapEl.appendChild(pageSizeWrapEl);
-  wrapEl.appendChild(statusWrapEl);
-
-  const applyShown = () => {
-    const anchorRows = [...bodyEl.querySelectorAll("tr[data-record-id]")];
-    const total = anchorRows.length;
-    const shown = Math.min(state.shown, total);
-    anchorRows.forEach((rowEl, index) => {
-      const visible = index < shown;
-      rowEl.style.display = visible ? "" : "none";
-      const holderEl = rowEl.nextElementSibling;
-      if (holderEl && holderEl.classList.contains("dynamic-process-inline-editor-row")) {
-        holderEl.style.display = visible ? "" : "none";
-      }
-    });
-    statusEl.textContent = `[ ${shown} / ${total} ]`;
-    moreBtnEl.style.display = shown < total ? "" : "none";
-  };
-
-  selectEl.addEventListener("change", () => {
-    state.pageSize = Number(selectEl.value) || 5;
-    state.shown = state.pageSize;
-    applyShown();
-  });
-  moreBtnEl.addEventListener("click", () => {
-    state.shown += state.pageSize;
-    applyShown();
-  });
-
-  limiterEl.appendChild(wrapEl);
-  applyShown();
 }
 
 function buildProcessOptionMetaMap(setting) {
