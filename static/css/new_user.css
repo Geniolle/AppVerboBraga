@@ -6639,3 +6639,8 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 #dynamic-process-edit-form[data-menu-key="ensaio"] .dynamic-process-row-v1 {
   grid-template-columns: 500px minmax(0, 1fr) minmax(0, 1fr) 36px !important;
 }
+
+/* Ensaio: campo Musicas ocupa a linha inteira (as colunas de Musica/Autor/Tom precisam da largura toda). */
+#dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_musicas"] {
+  grid-column: 1 / -1;
+}
