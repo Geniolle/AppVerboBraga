@@ -6704,3 +6704,49 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   opacity: 0.4;
   cursor: not-allowed;
 }
+#dynamic-process-edit-form .dynamic-process-row-note-v1 {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  cursor: pointer;
+}
+#dynamic-process-edit-form .dynamic-process-row-note-v1 svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  flex: 0 0 auto;
+}
+#dynamic-process-edit-form .dynamic-process-row-note-v1:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* Painel da letra: linha inteira abaixo dos campos, so leitura e fechado. */
+#dynamic-process-edit-form .dynamic-process-row-v1 > .dynamic-process-row-lyrics-v1 {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#dynamic-process-edit-form .dynamic-process-row-v1 > .dynamic-process-row-lyrics-v1[hidden] {
+  display: none;
+}
+#dynamic-process-edit-form .dynamic-process-row-lyrics-text-v1 {
+  width: 100%;
+  box-sizing: border-box;
+  background: #e5e7eb;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  resize: vertical;
+  cursor: default;
+}
