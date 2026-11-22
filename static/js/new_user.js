@@ -2139,6 +2139,20 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
       const chosenEl = sourceEl && sourceEl.tagName === "SELECT" ? sourceEl.options[sourceEl.selectedIndex] : null;
       btnEl.disabled = !(chosenEl && chosenEl.dataset.url);
     });
+    // Icone de nota: o painel de letra (so leitura) acompanha a musica escolhida.
+    rowEl.querySelectorAll(".dynamic-process-row-note-v1").forEach((btnEl) => {
+      const sourceEl = rowEl.querySelector(`[data-row-field="${btnEl.dataset.lyricsFrom}"]`);
+      const chosenEl = sourceEl && sourceEl.tagName === "SELECT" ? sourceEl.options[sourceEl.selectedIndex] : null;
+      const panelEl = btnEl._lyricsPanelEl;
+      btnEl.disabled = !(chosenEl && chosenEl.value);
+      if (panelEl) {
+        const lyrics = chosenEl ? String(chosenEl.dataset.lyrics || "") : "";
+        panelEl.querySelector("textarea").value = lyrics || "Sem letra registada para esta música.";
+        if (btnEl.disabled) {
+          panelEl.hidden = true;
+        }
+      }
+    });
   };
   const addRow = (values) => {
     const rowEl = document.createElement("div");
@@ -2167,6 +2181,7 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
           optionEl.textContent = String(option.label || option.value || "");
           optionEl.dataset.extra = String(option.extra || "");
           optionEl.dataset.url = String(option.url || "");
+          optionEl.dataset.lyrics = String(option.lyrics || "");
           inputEl.appendChild(optionEl);
         });
         inputEl.value = String((values && values[rowField.key]) || "");
@@ -2220,6 +2235,36 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
         });
         controlWrapEl.appendChild(linkBtnEl);
       }
+      if (rowField.lyrics_button_from) {
+        // Icone de nota: mostra a letra da musica escolhida em "lyrics_button_from", numa linha abaixo, so leitura.
+        const noteBtnEl = document.createElement("button");
+        noteBtnEl.type = "button";
+        noteBtnEl.className = "dynamic-process-row-note-v1";
+        noteBtnEl.dataset.lyricsFrom = rowField.lyrics_button_from;
+        noteBtnEl.setAttribute("aria-label", "Ver letra");
+        noteBtnEl.title = "Ver letra";
+        noteBtnEl.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" style="display:block;width:20px;height:20px;min-width:20px;flex:0 0 auto"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="currentColor"/><circle cx="17" cy="16" r="3" fill="currentColor"/></svg>';
+        const lyricsPanelEl = document.createElement("div");
+        lyricsPanelEl.className = "dynamic-process-row-lyrics-v1";
+        lyricsPanelEl.hidden = true;
+        const lyricsLabelEl = document.createElement("span");
+        lyricsLabelEl.className = "dynamic-process-row-cell-label-v1";
+        lyricsLabelEl.textContent = "Letra";
+        const lyricsTextEl = document.createElement("textarea");
+        lyricsTextEl.readOnly = true;
+        lyricsTextEl.tabIndex = -1;
+        lyricsTextEl.rows = 8;
+        lyricsTextEl.className = "dynamic-process-row-lyrics-text-v1";
+        lyricsPanelEl.appendChild(lyricsLabelEl);
+        lyricsPanelEl.appendChild(lyricsTextEl);
+        noteBtnEl._lyricsPanelEl = lyricsPanelEl;
+        noteBtnEl.addEventListener("click", () => {
+          refreshRowLinks(rowEl);
+          lyricsPanelEl.hidden = !lyricsPanelEl.hidden;
+        });
+        controlWrapEl.appendChild(noteBtnEl);
+        rowEl._lyricsPanels = (rowEl._lyricsPanels || []).concat(lyricsPanelEl);
+      }
       cellEl.appendChild(controlWrapEl);
       rowEl.appendChild(cellEl);
     });
@@ -2236,6 +2281,8 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
       syncHidden();
     });
     rowEl.appendChild(removeBtnEl);
+    // Paineis de letra ocupam a linha toda, abaixo dos campos da linha.
+    (rowEl._lyricsPanels || []).forEach((panelEl) => rowEl.appendChild(panelEl));
     listEl.appendChild(rowEl);
     syncHidden();
   };
