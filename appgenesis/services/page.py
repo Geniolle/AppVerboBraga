@@ -103,13 +103,20 @@ def _record_value_options_v1(
     entity_id: int,
     menu_key: str,
     field_key: str,
+    extra_field_key: str = "",
 ) -> list[dict[str, str]]:
     # Opcoes de uma lista = valores distintos de um campo nos registos de outro processo (A-Z).
+    # extra_field_key: outro campo do mesmo registo, levado junto (ex.: Autor = Versao da musica).
     rows = list_process_records(session, entity_id=entity_id, menu_key=menu_key)
-    values = {str((row.get("values") or {}).get(field_key) or "").strip() for row in rows}
+    extra_by_value: dict[str, str] = {}
+    for row in rows:
+        row_values = row.get("values") or {}
+        value = str(row_values.get(field_key) or "").strip()
+        if value and value not in extra_by_value:
+            extra_by_value[value] = str(row_values.get(extra_field_key) or "").strip() if extra_field_key else ""
     return [
-        {"value": value, "label": value, "status": "active"}
-        for value in sorted((value for value in values if value), key=str.casefold)
+        {"value": value, "label": value, "status": "active", "extra": extra_by_value[value]}
+        for value in sorted(extra_by_value, key=str.casefold)
     ]
 
 
@@ -151,9 +158,10 @@ def _decorate_sidebar_list_field_options_v1(
                         row_field = dict(raw_row_field)
                         options_menu_key = str(row_field.get("options_menu_key") or "").strip().lower()
                         options_field_key = str(row_field.get("options_field_key") or "").strip().lower()
+                        options_extra_key = str(row_field.get("options_extra_field_key") or "").strip().lower()
                         if options_menu_key and options_field_key:
                             row_field["list_options"] = _record_value_options_v1(
-                                session, selected_entity_id, options_menu_key, options_field_key
+                                session, selected_entity_id, options_menu_key, options_field_key, options_extra_key
                             )
                         decorated_row_fields.append(row_field)
                     field_definition["row_fields"] = decorated_row_fields

@@ -6626,3 +6626,10 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   line-height: 1.5;
   box-sizing: border-box;
 }
+
+/* Campo automatico de linha (ex.: Autor no Ensaio): fechado e cinzento. */
+#dynamic-process-edit-form .dynamic-process-row-v1 input.dynamic-process-row-readonly-v1 {
+  background: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
