@@ -6599,3 +6599,15 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 #dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_letra"] {
   grid-column: 1 / -1;
 }
+
+/* Musicas: linha 3 = Status Projecao | Obsoleta | Comentarios (ocupa o resto da linha). */
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_status"] {
+  order: 1;
+}
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_obsoleta"] {
+  order: 2;
+}
+#dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key="custom_comentarios"] {
+  order: 3;
+  grid-column: span 2;
+}
