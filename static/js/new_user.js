@@ -2132,6 +2132,14 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
     });
     hiddenEl.value = JSON.stringify(rows.filter((rowValues) => Object.values(rowValues).some((value) => value.trim())));
   };
+  // Liga/desliga os icones de video da linha conforme a musica escolhida tenha link.
+  const refreshRowLinks = (rowEl) => {
+    rowEl.querySelectorAll(".dynamic-process-row-link-v1").forEach((btnEl) => {
+      const sourceEl = rowEl.querySelector(`[data-row-field="${btnEl.dataset.linkFrom}"]`);
+      const chosenEl = sourceEl && sourceEl.tagName === "SELECT" ? sourceEl.options[sourceEl.selectedIndex] : null;
+      btnEl.disabled = !(chosenEl && chosenEl.dataset.url);
+    });
+  };
   const addRow = (values) => {
     const rowEl = document.createElement("div");
     rowEl.className = "dynamic-process-row-v1";
@@ -2158,6 +2166,7 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
           optionEl.value = String(option.value || "");
           optionEl.textContent = String(option.label || option.value || "");
           optionEl.dataset.extra = String(option.extra || "");
+          optionEl.dataset.url = String(option.url || "");
           inputEl.appendChild(optionEl);
         });
         inputEl.value = String((values && values[rowField.key]) || "");
@@ -2172,6 +2181,7 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
                 autoEl.value = chosenEl ? String(chosenEl.dataset.extra || "") : "";
               }
             });
+          refreshRowLinks(rowEl);
           syncHidden();
         });
       } else {
@@ -2188,7 +2198,29 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
       cellLabelEl.className = "dynamic-process-row-cell-label-v1";
       cellLabelEl.textContent = rowField.label + (rowField.required ? " *" : "");
       cellEl.appendChild(cellLabelEl);
-      cellEl.appendChild(inputEl);
+      const controlWrapEl = document.createElement("div");
+      controlWrapEl.className = "dynamic-process-row-control-v1";
+      controlWrapEl.appendChild(inputEl);
+      if (rowField.link_button_from) {
+        // Icone de video: abre o link da musica escolhida em "link_button_from".
+        const linkBtnEl = document.createElement("button");
+        linkBtnEl.type = "button";
+        linkBtnEl.className = "dynamic-process-row-link-v1";
+        linkBtnEl.dataset.linkFrom = rowField.link_button_from;
+        linkBtnEl.setAttribute("aria-label", "Abrir video");
+        linkBtnEl.title = "Abrir video";
+        linkBtnEl.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="2" y="5" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 10l6-3v10l-6-3z" fill="currentColor"/></svg>';
+        linkBtnEl.addEventListener("click", () => {
+          const sourceEl = rowEl.querySelector(`[data-row-field="${rowField.link_button_from}"]`);
+          const chosenEl = sourceEl && sourceEl.tagName === "SELECT" ? sourceEl.options[sourceEl.selectedIndex] : null;
+          const url = chosenEl ? String(chosenEl.dataset.url || "") : "";
+          if (url) {
+            window.open(url, "_blank", "noopener");
+          }
+        });
+        controlWrapEl.appendChild(linkBtnEl);
+      }
+      cellEl.appendChild(controlWrapEl);
       rowEl.appendChild(cellEl);
     });
     const removeBtnEl = document.createElement("button");

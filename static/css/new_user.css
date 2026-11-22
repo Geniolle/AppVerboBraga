@@ -6667,3 +6667,33 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 #dynamic-process-edit-form[data-menu-key="ensaio"] .field[data-process-field-key="custom_musicas"] > label:first-child {
   display: none;
 }
+
+/* Campo rows: controlo + icone de video lado a lado. */
+#dynamic-process-edit-form .dynamic-process-row-control-v1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+#dynamic-process-edit-form .dynamic-process-row-control-v1 > input,
+#dynamic-process-edit-form .dynamic-process-row-control-v1 > select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#dynamic-process-edit-form .dynamic-process-row-link-v1 {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b9cdf5;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #174ea6;
+  cursor: pointer;
+}
+#dynamic-process-edit-form .dynamic-process-row-link-v1:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
