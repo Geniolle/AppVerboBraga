@@ -1663,6 +1663,9 @@ def _save_entity_process_record(
         if field_type == "flag":
             values[field_key] = "1" if raw_value == "1" else "0"
             continue
+        if meta.get("text_format") == "sentence" and raw_value:
+            # Regra de formato: minusculas com a primeira letra em maiuscula (ex.: Musicas).
+            raw_value = raw_value[:1].upper() + raw_value[1:].lower()
         editable_rule = meta.get("editable_when")
         if editable_rule and not _conditional_field_rule_met_v1(editable_rule, submitted_form):
             # Campo nao editavel nesta situacao: nao grava valor.

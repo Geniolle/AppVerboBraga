@@ -819,6 +819,9 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if item_type == "rows":
             normalized_item["row_fields"] = _normalize_row_fields_v1(raw_item.get("row_fields"))
 
+        if str(raw_item.get("text_format") or "").strip().lower() == "sentence" and item_type in {"text", "longtext"}:
+            normalized_item["text_format"] = "sentence"
+
         item_button_style = _normalize_additional_field_button_style_for_type(
             item_type, raw_item.get("button_style")
         )
