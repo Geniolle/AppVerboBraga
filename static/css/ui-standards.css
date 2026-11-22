@@ -192,7 +192,8 @@ input.action-btn-cancel,
 .admin-subprocess-field-v1:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
 .admin-subprocess-field-v1:has(> label + select),
 .admin-subprocess-field-v1:has(> label + textarea) {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   align-items: center;
   gap: 12px;
 }
