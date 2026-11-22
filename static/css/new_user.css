@@ -6579,7 +6579,7 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 
 /* Musicas: 4 campos por linha; Url ao lado da Versao e o campo mais largo. */
 #dynamic-process-edit-form[data-menu-key="musicas"] .personal-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.6fr);
+  grid-template-columns: minmax(0, 1fr) 135px minmax(0, 1.4fr) minmax(0, 1.6fr);
 }
 #dynamic-process-edit-form[data-menu-key="musicas"] .field[data-process-field-key] {
   grid-column: span 1;
