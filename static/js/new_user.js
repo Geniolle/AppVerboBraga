@@ -2625,6 +2625,11 @@ function resolveDynamicProcessListCellTextV1(row, column, layoutConfig) {
     if (rowsText !== null) {
       return rowsText || "-";
     }
+    // Datas na lista: dd/mm/aaaa (valor guardado em aaaa-mm-dd; sem conversao de fuso, e so data).
+    const isoDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(rawValue);
+    if (isoDateMatch) {
+      return `${isoDateMatch[3]}/${isoDateMatch[2]}/${isoDateMatch[1]}`;
+    }
     return column.fieldType === "flag"
       ? (isTruthyFlagValue(rawValue) ? "Sim" : "Não")
       : (rawValue || "-");
