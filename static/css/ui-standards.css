@@ -182,25 +182,9 @@ input.action-btn-cancel,
   border-top: 1px solid var(--appgenesis-create-card-border-v4) !important;
 }
 
-/* APPGENESIS_FIELD_LABEL_LEFT_V2_START
-   Regra global: o nome do campo fica a esquerda do proprio campo, na mesma linha.
-   Largura fixa de 150px para o nome; o campo ocupa o resto. Labels que contem um
-   controlo (checkbox/radio) ficam de fora. */
-.field:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
-.field:has(> label + select),
-.field:has(> label + textarea),
-.admin-subprocess-field-v1:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
-.admin-subprocess-field-v1:has(> label + select),
-.admin-subprocess-field-v1:has(> label + textarea) {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center;
-  gap: 12px;
-}
-.field:has(> label + textarea),
-.admin-subprocess-field-v1:has(> label + textarea) {
-  align-items: flex-start;
-}
+/* APPGENESIS_FIELD_LABEL_TOP_LEFT_V3_START
+   Regra global: o nome do campo fica em cima do proprio campo, alinhado a esquerda.
+   Labels que contem um controlo (checkbox/radio) ficam de fora. */
 .field > label:not(:has(input, select, textarea)),
 .admin-subprocess-field-v1 > label:not(:has(input, select, textarea)) {
   display: block;
@@ -209,33 +193,19 @@ input.action-btn-cancel,
   font-weight: 700;
   box-sizing: border-box;
 }
-.field:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) > label,
-.field:has(> label + select) > label,
-.field:has(> label + textarea) > label,
-.admin-subprocess-field-v1:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) > label,
-.admin-subprocess-field-v1:has(> label + select) > label,
-.admin-subprocess-field-v1:has(> label + textarea) > label {
-  flex: 0 0 150px;
-  width: 150px;
-  margin: 0;
-  font-weight: 700;
+.field > label:has(+ input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
+.field > label:has(+ select),
+.field > label:has(+ textarea),
+.admin-subprocess-field-v1 > label:has(+ input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])),
+.admin-subprocess-field-v1 > label:has(+ select),
+.admin-subprocess-field-v1 > label:has(+ textarea) {
+  display: block;
+  width: 100%;
   text-align: left;
+  font-weight: 700;
+  box-sizing: border-box;
 }
-.field:has(> label + textarea) > label,
-.admin-subprocess-field-v1:has(> label + textarea) > label {
-  padding-top: 12px;
-}
-.field:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) > :is(input, select, textarea),
-.field:has(> label + select) > :is(input, select, textarea),
-.field:has(> label + textarea) > :is(input, select, textarea),
-.admin-subprocess-field-v1:has(> label + input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) > :is(input, select, textarea),
-.admin-subprocess-field-v1:has(> label + select) > :is(input, select, textarea),
-.admin-subprocess-field-v1:has(> label + textarea) > :is(input, select, textarea) {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: auto;
-}
-/* APPGENESIS_FIELD_LABEL_LEFT_V2_END */
+/* APPGENESIS_FIELD_LABEL_TOP_LEFT_V3_END */
 
 /* APPGENESIS_CREATE_CARD_STANDARD_V4_END */
 
