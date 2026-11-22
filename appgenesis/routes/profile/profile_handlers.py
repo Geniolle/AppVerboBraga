@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unicodedata
 from datetime import date, datetime, timezone
 from typing import Any
@@ -1666,6 +1667,9 @@ def _save_entity_process_record(
         if meta.get("text_format") == "sentence" and raw_value:
             # Regra de formato: minusculas com a primeira letra em maiuscula (ex.: Musicas).
             raw_value = raw_value[:1].upper() + raw_value[1:].lower()
+        for capitalize_word in meta.get("capitalize_words") or []:
+            # Palavras com maiuscula fixa (ex.: Deus), em qualquer ponto do texto.
+            raw_value = re.sub(rf"{re.escape(capitalize_word)}", capitalize_word, raw_value, flags=re.IGNORECASE)
         editable_rule = meta.get("editable_when")
         if editable_rule and not _conditional_field_rule_met_v1(editable_rule, submitted_form):
             # Campo nao editavel nesta situacao: nao grava valor.
