@@ -6580,7 +6580,7 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 /* Listas de processo: o status "Mais [ n / total ]" fica no centro do cartao; o seletor fica a esquerda. */
 #dynamic-process-active-card .appgenesis-load-more-footer-v1,
 #dynamic-process-inactive-card .appgenesis-load-more-footer-v1 {
-  display: flex;
+  display: flex !important;
   justify-content: center;
   position: relative;
 }
