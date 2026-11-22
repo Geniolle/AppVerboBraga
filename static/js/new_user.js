@@ -2107,6 +2107,8 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
     headEl.appendChild(headCellEl);
   });
   headEl.appendChild(document.createElement("span"));
+  // Nome de cada sub-campo fica a esquerda do proprio campo (regra global); o cabecalho deixa de ser preciso.
+  headEl.style.display = "none";
   const listEl = document.createElement("div");
   listEl.className = "dynamic-process-rows-list-v1";
   const addBtnEl = document.createElement("button");
@@ -2180,7 +2182,14 @@ function buildProcessRowsEditorV1(wrapEl, rowFields) {
       }
       inputEl.dataset.rowField = rowField.key;
       inputEl.setAttribute("aria-label", rowField.label);
-      rowEl.appendChild(inputEl);
+      const cellEl = document.createElement("div");
+      cellEl.className = "dynamic-process-row-cell-v1";
+      const cellLabelEl = document.createElement("span");
+      cellLabelEl.className = "dynamic-process-row-cell-label-v1";
+      cellLabelEl.textContent = rowField.label + (rowField.required ? " *" : "");
+      cellEl.appendChild(cellLabelEl);
+      cellEl.appendChild(inputEl);
+      rowEl.appendChild(cellEl);
     });
     const removeBtnEl = document.createElement("button");
     removeBtnEl.type = "button";
