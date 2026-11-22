@@ -850,6 +850,15 @@ def normalize_menu_process_additional_fields(raw_fields: Any) -> list[dict[str, 
         if capitalize_words and item_type in {"text", "longtext"}:
             normalized_item["capitalize_words"] = capitalize_words
 
+        auto_number_rule = raw_item.get("auto_document_number")
+        if isinstance(auto_number_rule, dict) and item_type == "text":
+            auto_date_field = str(auto_number_rule.get("date_field") or "").strip().lower()
+            if auto_date_field:
+                normalized_item["auto_document_number"] = {
+                    "prefix": str(auto_number_rule.get("prefix") or "")[:10],
+                    "date_field": auto_date_field,
+                }
+
         item_button_style = _normalize_additional_field_button_style_for_type(
             item_type, raw_item.get("button_style")
         )

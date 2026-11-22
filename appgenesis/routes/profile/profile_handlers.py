@@ -1636,6 +1636,21 @@ def _normalize_rows_submission_v1(raw_value: Any, row_fields: list[dict[str, Any
     return [row for index, row in enumerate(clean_rows, start=1) if index not in incomplete_rows], incomplete_rows
 
 
+def _apply_auto_document_number_v1(values: dict[str, str], field_key: str, meta: dict[str, Any]) -> None:
+    """Numero calculado a partir de uma data (ex.: Entradas: R + AAMMDD da Data), como uma formula."""
+    rule = meta.get("auto_document_number")
+    if not isinstance(rule, dict):
+        return
+    date_key = str(rule.get("date_field") or "").strip().lower()
+    prefix = str(rule.get("prefix") or "")
+    try:
+        parsed_date = datetime.strptime(str(values.get(date_key) or ""), "%Y-%m-%d")
+    except ValueError:
+        values.pop(field_key, None)
+        return
+    values[field_key] = f"{prefix}{parsed_date.strftime('%y%m%d')}"
+
+
 def _save_entity_process_record(
     *,
     session: Session,
@@ -1692,6 +1707,9 @@ def _save_entity_process_record(
             values[field_key] = raw_value
         elif is_required_now:
             missing_labels.append(str(meta.get("label") or field_key))
+
+    for field_key in section_field_keys:
+        _apply_auto_document_number_v1(values, field_key, field_meta_by_key.get(field_key) or {})
 
     def _redirect(**params: Any) -> RedirectResponse:
         return RedirectResponse(
