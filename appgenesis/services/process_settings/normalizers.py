@@ -87,7 +87,7 @@ ADDITIONAL_FIELD_TYPES: tuple[dict[str, str], ...] = (
     {"key": "header", "label": "Cabeçalho (aba)"},
     {"key": "list", "label": "Lista"},
 )
-ADDITIONAL_FIELD_TYPE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_TYPES} | {"rows"}
+ADDITIONAL_FIELD_TYPE_KEYS = {item["key"] for item in ADDITIONAL_FIELD_TYPES} | {"rows", "longtext"}
 ADDITIONAL_FIELD_BUTTON_STYLES: tuple[dict[str, str], ...] = (
     {"key": "checkbox", "label": "Checkbox"},
     {"key": "radio", "label": "Radio button"},
