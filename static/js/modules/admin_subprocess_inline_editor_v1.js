@@ -84,6 +84,9 @@
   function closeEditorV1() {
     const formEl = state.formEl;
     const origin = state.formOrigin;
+    const closedFormId = formEl ? formEl.id : "";
+    const tableEl = global.document.querySelector(TABLE_SELECTOR);
+    const closedCardId = tableEl ? tableEl.getAttribute("data-admin-inline-card-id") || "" : "";
 
     if (formEl && origin && origin.parent) {
       const anchor = origin.next && origin.next.parentNode === origin.parent ? origin.next : null;
@@ -98,6 +101,9 @@
     state.holderEl = null;
     state.rowEl = null;
     state.snapshot = "";
+    if (closedFormId && closedCardId) {
+      global.document.dispatchEvent(new CustomEvent("appgenesis:inline-editor-closed", { detail: { formId: closedFormId, cardId: closedCardId } }));
+    }
     cleanEditUrlV1();
   }
 
