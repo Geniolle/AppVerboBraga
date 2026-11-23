@@ -102,7 +102,8 @@
     Array.from(state.scopedCards || []).forEach((card) => {
       const rawScope = card.getAttribute("data-menu-scope") || "";
       const scopes = rawScope.split(",").map((value) => state.normalizeMenuKey(value)).filter(Boolean);
-      card.style.display = scopes.includes(menuKey) ? "" : "none";
+      // edit-user-card so e mostrado pelo alvo de edicao, nunca pelo escopo do menu.
+      card.style.display = scopes.includes(menuKey) && card.id !== "edit-user-card" ? "" : "none";
     });
     setDynamicProcessCardsVisibility(false);
   }
