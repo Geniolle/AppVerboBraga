@@ -179,6 +179,19 @@
     }
   }, true);
 
+  // Cancelar dentro do editor inline fecha o editor (remove a linha de holder), para nao reaparecer
+  // aberto ao voltar ao menu.
+  global.document.addEventListener("click", (event) => {
+    const formEl = state.formEl;
+    if (!formEl || !state.holderEl || !event.target || !event.target.closest) {
+      return;
+    }
+    const cancelEl = event.target.closest("[data-appgenesis-cancel], .action-btn-cancel, [data-edit-cancel]");
+    if (cancelEl && formEl.contains(cancelEl)) {
+      closeEditorV1();
+    }
+  }, true);
+
   if (global.document.readyState === "loading") {
     global.document.addEventListener("DOMContentLoaded", placeInlineEditorV1);
   } else {
