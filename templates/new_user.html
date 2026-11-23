@@ -1176,7 +1176,7 @@
 
         {% if current_user_can_manage_tenant_structure and admin_subprocess_entity_state is not none %}
           {{ render_admin_subprocess_tables(admin_subprocess_entity_state) }}
-        {% else %}
+        {% elif current_user_can_manage_tenant_structure %}
           <section id="recent-entities-card" class="card" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#recent-entities-card' %}style="display: none;"{% endif %}>
             <h2>Dados gerais</h2>
             {% set _dados_gerais_entities = recent_entities[:1] %}
