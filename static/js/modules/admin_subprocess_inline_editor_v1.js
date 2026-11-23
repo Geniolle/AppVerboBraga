@@ -87,6 +87,7 @@
     const closedFormId = formEl ? formEl.id : "";
     const openTableEl = state.rowEl && state.rowEl.closest ? state.rowEl.closest("table") : null;
     const closedCardId = openTableEl ? openTableEl.getAttribute("data-admin-inline-card-id") || "" : "";
+    const closedListCardId = openTableEl && openTableEl.closest("section") ? openTableEl.closest("section").id || "" : "";
 
     if (formEl && origin && origin.parent) {
       const anchor = origin.next && origin.next.parentNode === origin.parent ? origin.next : null;
@@ -102,7 +103,7 @@
     state.rowEl = null;
     state.snapshot = "";
     if (closedFormId && closedCardId) {
-      global.document.dispatchEvent(new CustomEvent("appgenesis:inline-editor-closed", { detail: { formId: closedFormId, cardId: closedCardId } }));
+      global.document.dispatchEvent(new CustomEvent("appgenesis:inline-editor-closed", { detail: { formId: closedFormId, cardId: closedListCardId || closedCardId } }));
     }
     cleanEditUrlV1();
   }
