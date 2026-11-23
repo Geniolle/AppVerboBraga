@@ -752,7 +752,7 @@
         {% endif %}
 
         {% if user_edit_data is defined and user_edit_data.id %}
-        <section id="edit-user-card" class="card entity-panel-card" data-menu-scope="administrativo,meu_perfil" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
+        <section id="edit-user-card" class="card entity-panel-card" data-admin-subprocess="utilizador" data-admin-inline-edit-form="1" data-menu-scope="administrativo,meu_perfil" data-readonly-mode="{% if user_readonly_mode %}1{% else %}0{% endif %}" {% if initial_menu not in ['administrativo', 'meu_perfil'] or initial_menu_target != '#edit-user-card' %}style="display: none;"{% endif %}>
           <h2>{% if user_readonly_mode %}Exibir utilizador{% else %}Editar utilizador{% endif %}</h2>
 
           <div class="admin-subsection">
