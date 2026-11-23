@@ -220,7 +220,8 @@
       const isAdminSubprocessGroupedBlock =
         allowAdminSubprocessGroupForTarget &&
         Boolean(adminSubprocessKey) &&
-        card.getAttribute("data-admin-subprocess") === adminSubprocessKey;
+        card.getAttribute("data-admin-subprocess") === adminSubprocessKey &&
+        card.id !== "edit-user-card";
       const shouldShowCard =
         targetSelector === ("#" + card.id) ||
         isAdminSubprocessGroupedBlock ||
