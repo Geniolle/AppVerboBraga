@@ -1028,6 +1028,9 @@ def new_user_page(
     sidebar_menu_settings = list(page_data.get("sidebar_menu_settings", []))
     
     resolved_tabs_config = resolve_process_tabs_v1(clean_menu_key, sidebar_menu_settings)
+    # Aba Entidade (Administrativo) so para o owner do sistema; restantes perfis nao veem.
+    if clean_menu_key == "administrativo" and not page_data.get("current_user_can_manage_tenant_structure"):
+        resolved_tabs_config = [t for t in resolved_tabs_config if t.key != "entidade"]
     initial_menu_tabs = [t.to_dict() for t in resolved_tabs_config]
     
     if initial_menu_tabs:
@@ -1113,7 +1116,11 @@ def new_user_page(
         "sidebar_section_edit_data": sidebar_section_edit_data_v22,
         "active_sidebar_sections": active_sidebar_sections_v22,
         "inactive_sidebar_sections": inactive_sidebar_sections_v22,
-        "admin_tab": resolved_admin_tab,
+        "admin_tab": (
+            "utilizador"
+            if resolved_admin_tab == "entidade" and not page_data.get("current_user_can_manage_tenant_structure")
+            else resolved_admin_tab
+        ),
         "admin_subprocess_state": admin_subprocess_state_v2,
         "auth_profile_subprocess_state": auth_profile_subprocess_state_v1,
         "funcoes_subprocess_state": funcoes_subprocess_state_v1,
