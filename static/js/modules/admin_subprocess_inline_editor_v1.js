@@ -85,8 +85,8 @@
     const formEl = state.formEl;
     const origin = state.formOrigin;
     const closedFormId = formEl ? formEl.id : "";
-    const tableEl = global.document.querySelector(TABLE_SELECTOR);
-    const closedCardId = tableEl ? tableEl.getAttribute("data-admin-inline-card-id") || "" : "";
+    const openTableEl = state.rowEl && state.rowEl.closest ? state.rowEl.closest("table") : null;
+    const closedCardId = openTableEl ? openTableEl.getAttribute("data-admin-inline-card-id") || "" : "";
 
     if (formEl && origin && origin.parent) {
       const anchor = origin.next && origin.next.parentNode === origin.parent ? origin.next : null;
