@@ -125,12 +125,17 @@
   }
 
   function cardBelongsToUserGroup(menuKey, targetSelector, card) {
+    if (menuKey !== "administrativo") {
+      return false;
+    }
+    // Edicao de utilizador so aparece quando o alvo e a edicao (nao fica aberta ao voltar ao menu).
+    if (card.id === "edit-user-card") {
+      return targetSelector === "#edit-user-card";
+    }
     return (
-      menuKey === "administrativo" &&
       targetSelector === "#create-user-card" &&
       (
         card.id === "create-user-card" ||
-        card.id === "edit-user-card" ||
         card.id === "admin-users-created-card" ||
         card.id === "inactive-users-card"
       )
