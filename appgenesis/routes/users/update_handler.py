@@ -31,6 +31,7 @@ from appgenesis.models import (
 from appgenesis.routes.users.router import router
 from appgenesis.routes.users.helpers import (
     _ensure_not_last_active_admin_for_member,
+    _get_active_entity_ids_for_member,
     _member_is_within_permissions,
     _resolve_entity_from_user_email,
 )
@@ -196,6 +197,14 @@ def update_user(
         if clean_account_status not in ALLOWED_ACCOUNT_STATUS:
             errors.append("Estado de conta inválido.")
 
+        # Entidade so pode ser alterada pelo owner; legado mantem a entidade atual.
+        can_manage_tenant_structure = bool(
+            entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))
+        )
+        if not can_manage_tenant_structure and clean_entity_id.isdigit() and user.member_id:
+            current_entity_ids = _get_active_entity_ids_for_member(session, user.member_id)
+            if int(clean_entity_id) not in current_entity_ids:
+                errors.append("Apenas o owner pode alterar a entidade do utilizador.")
         selected_entity = None
         entity_resolution_error = ""
         explicit_entity, explicit_entity_error = _resolve_explicit_user_entity_v1(
