@@ -39,7 +39,6 @@
     "#recent-entities-card",
     "#inactive-entities-card",
     "#create-user-card",
-    "#edit-user-card",
     "#admin-users-created-card",
     "#inactive-users-card",
     "#admin-account-create-card",
