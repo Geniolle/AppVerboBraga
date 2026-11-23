@@ -372,6 +372,22 @@
     });
   }
 
+  // Quando o editor inline fecha, o alvo guardado do menu deixa de apontar para o formulario de edicao;
+  // senao o menu reabre o formulario ao voltar a navegar.
+  global.document.addEventListener("appgenesis:inline-editor-closed", (event) => {
+    const detail = (event && event.detail) || {};
+    if (!detail.formId || !detail.cardId) {
+      return;
+    }
+    const formTarget = "#" + detail.formId;
+    const listTarget = "#" + detail.cardId;
+    Object.keys(state.selectedTargetByMenu || {}).forEach((menuKey) => {
+      if (state.selectedTargetByMenu[menuKey] === formTarget) {
+        state.selectedTargetByMenu[menuKey] = listTarget;
+      }
+    });
+  });
+
   global.AppGenesisProcessMenuRuntimeV1 = Object.freeze({
     configure,
     activateMenu,
