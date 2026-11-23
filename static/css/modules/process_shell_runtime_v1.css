@@ -1276,3 +1276,16 @@ body.appgenesis-url-feedback-active-v1 .card .alert {
 /* APPGENESIS_LOAD_MORE_HIDDEN_OVERRIDE_V1_END */
 
 /* APPGENESIS_PROCESS_SHELL_RUNTIME_V1_END */
+
+/* Campo de pesquisa do card: o input herda min-height/borda/radius globais (ui-standards) e
+   desenhava uma caixa de 42px por dentro da pilula de 32px ao focar. */
+.appgenesis-card-search-v1 input,
+.appgenesis-card-search-v1 input:focus {
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  min-height: 0 !important;
+  height: 100%;
+  background: transparent !important;
+  padding: 0 !important;
+}
