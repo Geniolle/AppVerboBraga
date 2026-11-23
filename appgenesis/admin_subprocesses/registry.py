@@ -492,6 +492,7 @@ UTILIZADOR_CONFIG = AdminSubprocessConfig(
     edit_param="user_edit_id",
     default_target="create-user-card",
     edit_target="edit-user-card",
+    row_click_edit=True,
     create_title="Criar utilizador",
     edit_title="Editar utilizador",
     active_title="Utilizador ativo",
