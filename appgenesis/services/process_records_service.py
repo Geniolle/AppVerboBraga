@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from appgenesis.models.process_record import ProcessRecord
 
 # Processos de lista cujos registos ficam na tabela process_records (partilhados por entidade).
-ENTITY_RECORD_MENU_KEYS = frozenset({"agenda", "musicas"})
+ENTITY_RECORD_MENU_KEYS = frozenset({"agenda", "musicas", "membresia"})
 
 STATE_ACTIVE = "ativo"
 STATE_INACTIVE = "inativo"
