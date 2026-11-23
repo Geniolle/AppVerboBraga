@@ -97,3 +97,9 @@ def test_empty_values_are_refused(session):
 def test_invalid_state_is_refused(session):
     with pytest.raises(ValueError):
         create_process_record(session, entity_id=1, menu_key="agenda", values=AGENDA_VALUES, state="apagado")
+
+
+def test_membresia_usa_registos_da_entidade():
+    from appgenesis.services.process_records_service import ENTITY_RECORD_MENU_KEYS
+
+    assert "membresia" in ENTITY_RECORD_MENU_KEYS
