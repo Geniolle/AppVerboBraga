@@ -37,9 +37,14 @@
 
   function findRowForEditKeyV1(tableEl, editParam, editKey) {
     return Array.from(tableEl.querySelectorAll("tbody > tr")).find((rowEl) => {
-      return Array.from(rowEl.querySelectorAll("a[href]")).some((linkEl) => {
+      const rowHref = rowEl.getAttribute("data-row-edit-href") || "";
+      const candidates = Array.from(rowEl.querySelectorAll("a[href]")).map((linkEl) => linkEl.getAttribute("href"));
+      if (rowHref) {
+        candidates.push(rowHref);
+      }
+      return candidates.some((hrefValue) => {
         try {
-          const href = new URL(linkEl.getAttribute("href"), global.location.origin);
+          const href = new URL(hrefValue, global.location.origin);
           return String(href.searchParams.get(editParam) || "") === editKey;
         } catch (error) {
           return false;
