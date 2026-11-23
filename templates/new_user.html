@@ -804,7 +804,7 @@
                     {% if not user_readonly_mode %}required{% endif %}
                     data-user-entity-select="1"
                     data-user-entity-name-target="edit_user_entity_name"
-                    {% if user_readonly_mode or not entities_for_user_edit_form %}disabled{% endif %}
+                    {% if user_readonly_mode or not entities_for_user_edit_form or not current_user_can_manage_tenant_structure %}disabled{% endif %}
                   >
                     <option
                       value=""
@@ -821,9 +821,10 @@
                     >{{ entity.entity_number }}</option>
                     {% endfor %}
                   </select>
+                  {% if not current_user_can_manage_tenant_structure %}<input type="hidden" name="entity_id" value="{{ user_edit_data.entity_id or '' }}">{% endif %}
                 </div>
                 <div class="field">
-                  <label for="edit_user_entity_name">Entidade (automática pelo Nº da Entidade)</label>
+                  <label for="edit_user_entity_name">Nome da entidade</label>
                   <input
                     id="edit_user_entity_name"
                     value="{{ user_edit_data.entity_name if user_edit_data.entity_name else '-' }}"
