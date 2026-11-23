@@ -247,8 +247,11 @@
     let baseItems = null;
 
     if (cleanMenuKey === "administrativo") {
+      const canManageTenant = Boolean(
+        window.__APPGENESIS_BOOTSTRAP__ && window.__APPGENESIS_BOOTSTRAP__.currentUserCanManageTenantStructure
+      );
       baseItems = [
-        { label: "Entidade", target: "#recent-entities-card" },
+        ...(canManageTenant ? [{ label: "Entidade", target: "#recent-entities-card" }] : []),
         { label: "Utilizador", target: "#create-user-card" },
         { label: "Perfil de autorização", target: "#auth-profile-card" },
         { label: "Funções Administrativas", target: "#funcoes-administrativas-card" }
