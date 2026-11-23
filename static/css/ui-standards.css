@@ -216,3 +216,15 @@ table thead th * {
   color: #000 !important;
   font-weight: 700 !important;
 }
+
+/* Regra global: campo nao editavel fica com fundo cinzento. */
+input:disabled:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+select:disabled,
+textarea:disabled,
+input[readonly]:not([type="hidden"]),
+textarea[readonly],
+.readonly-field {
+  background-color: #eceef2 !important;
+  color: #5b6472 !important;
+  cursor: not-allowed;
+}
