@@ -543,13 +543,6 @@ body {
   break-inside: avoid;
 }
 
-@media (min-width: 960px) {
-  .vb-depto-pagina__texto {
-    column-count: 2;
-    column-gap: 56px;
-  }
-}
-
 .vb-depto-pagina__acoes {
   margin-top: 28px;
 }
