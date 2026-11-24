@@ -65,12 +65,31 @@
       <script>
         (function () {
           var lista = document.querySelector('.vb-livros__lista');
+          var pausado = false;
+          function mover(direcao) {
+            var no_fim = lista.scrollLeft + lista.clientWidth >= lista.scrollWidth - 2;
+            if (direcao > 0 && no_fim) {
+              lista.scrollTo({ left: 0, behavior: 'smooth' });
+              return;
+            }
+            var passo = lista.querySelector('.vb-livro').offsetWidth + 16;
+            lista.scrollBy({ left: passo * direcao, behavior: 'smooth' });
+          }
           document.querySelectorAll('.vb-livros__seta').forEach(function (botao) {
             botao.addEventListener('click', function () {
-              var passo = lista.querySelector('.vb-livro').offsetWidth + 16;
-              lista.scrollBy({ left: passo * Number(botao.dataset.direcao), behavior: 'smooth' });
+              mover(Number(botao.dataset.direcao));
             });
           });
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          lista.addEventListener('mouseenter', function () { pausado = true; });
+          lista.addEventListener('mouseleave', function () { pausado = false; });
+          lista.addEventListener('focusin', function () { pausado = true; });
+          lista.addEventListener('focusout', function () { pausado = false; });
+          lista.addEventListener('touchstart', function () { pausado = true; }, { passive: true });
+          lista.addEventListener('touchend', function () { pausado = false; });
+          setInterval(function () {
+            if (!pausado && !document.hidden) mover(1);
+          }, 5000);
         })();
       </script>
       {% endif %}
