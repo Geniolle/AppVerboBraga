@@ -540,6 +540,7 @@ body {
   margin: 0 0 18px;
   line-height: 1.65;
   color: #4a4843;
+  break-inside: avoid;
 }
 
 @media (min-width: 960px) {
