@@ -110,6 +110,9 @@
     };
   }
 
+  // Reutilizado por codigo_postal_morada_v1.js (lista de arruamentos).
+  window.appgenesisAttachListV1 = attachList;
+
   function setup(countryEl, cityEl, freguesiaEl) {
     const cityList = attachList(cityEl);
     const freguesiaList = freguesiaEl ? attachList(freguesiaEl) : null;
