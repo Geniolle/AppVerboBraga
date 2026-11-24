@@ -45,6 +45,36 @@
       </div>
       {% endif %}
 
+      {% if d.livros %}
+      <section class="vb-livros" aria-labelledby="vb-livros-titulo">
+        <h2 id="vb-livros-titulo">Alguns títulos</h2>
+        <div class="vb-livros__barra">
+          <button type="button" class="vb-livros__seta" data-direcao="-1" aria-label="Títulos anteriores">←</button>
+          <button type="button" class="vb-livros__seta" data-direcao="1" aria-label="Títulos seguintes">→</button>
+        </div>
+        <ul class="vb-livros__lista" tabindex="0" aria-label="Títulos da livraria, deslize para ver mais">
+          {% for livro in d.livros %}
+          <li class="vb-livro">
+            <img src="{{ livro.capa }}" alt="Capa de {{ livro.titulo }}" width="600" height="600" loading="lazy">
+            <p class="vb-livro__titulo">{{ livro.titulo }}</p>
+            <p class="vb-livro__autor">{{ livro.autor }}</p>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      <script>
+        (function () {
+          var lista = document.querySelector('.vb-livros__lista');
+          document.querySelectorAll('.vb-livros__seta').forEach(function (botao) {
+            botao.addEventListener('click', function () {
+              var passo = lista.querySelector('.vb-livro').offsetWidth + 16;
+              lista.scrollBy({ left: passo * Number(botao.dataset.direcao), behavior: 'smooth' });
+            });
+          });
+        })();
+      </script>
+      {% endif %}
+
       {% if d.fotos %}
       <div class="vb-depto-pagina__fotos">
         {% for foto in d.fotos %}
