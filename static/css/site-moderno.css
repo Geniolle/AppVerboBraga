@@ -537,9 +537,16 @@ body {
 }
 
 .vb-depto-pagina__texto p {
-  max-width: 62ch;
+  margin: 0 0 18px;
   line-height: 1.65;
   color: #4a4843;
+}
+
+@media (min-width: 960px) {
+  .vb-depto-pagina__texto {
+    column-count: 2;
+    column-gap: 56px;
+  }
 }
 
 .vb-depto-pagina__acoes {
