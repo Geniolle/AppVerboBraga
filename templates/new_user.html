@@ -474,16 +474,22 @@
               <div class="field phone-row-v1" data-profile-section-pane="{{ profile_personal_field_section_map.get('telefone', '') }}" data-phone-field-v1>
                 <label for="edit_country_code">Telefone *</label>
                 <div class="phone-row-controls-v1">
-                  <select
-                    id="edit_country_code"
-                    class="phone-country-select-v1"
-                    aria-label="Indicativo e país"
-                    data-phone-country-select-v1
-                  >
-                    {% for option in phone_country_options %}
-                    <option value="{{ option.dial_code }}|{{ option.label }}">{{ option.dial_code }} {{ option.label }}</option>
-                    {% endfor %}
-                  </select>
+                  <div class="phone-country-combo-v1" data-phone-combo-v1>
+                    <button
+                      id="edit_country_code"
+                      type="button"
+                      class="phone-country-trigger-v1"
+                      aria-haspopup="listbox"
+                      aria-expanded="false"
+                      aria-controls="edit-country-listbox"
+                      data-phone-trigger-v1
+                    >+351</button>
+                    <ul id="edit-country-listbox" class="phone-country-listbox-v1" role="listbox" hidden data-phone-listbox-v1>
+                      {% for option in phone_country_options %}
+                      <li role="option" data-dial="{{ option.dial_code }}" data-country="{{ option.label }}">{{ option.dial_code }} {{ option.label }}</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
                   <input
                     id="edit_primary_phone_national"
                     type="tel"
