@@ -1020,6 +1020,7 @@ body {
 .vb-livro img {
   display: block;
   width: 100%;
+  height: auto;
   aspect-ratio: 1 / 1;
   object-fit: contain;
   background: #fff;
