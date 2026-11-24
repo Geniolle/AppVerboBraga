@@ -1040,3 +1040,84 @@ body {
   color: var(--vb-muted);
   font-size: 0.9rem;
 }
+
+/* ---------- Página do Centro de Cura (hero, destaques, notícias) ---------- */
+
+.vb-depto-hero {
+  position: relative;
+  margin: -24px calc(50% - 50vw) 0;
+  padding: 120px 24px 56px;
+  background-size: cover;
+  background-position: center;
+  color: var(--vb-white);
+}
+
+.vb-depto-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(16, 16, 20, 0.45), rgba(16, 16, 20, 0.85));
+}
+
+.vb-depto-hero > * {
+  position: relative;
+  max-width: var(--vb-max);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.vb-depto-hero h1 {
+  color: var(--vb-white);
+}
+
+.vb-depto-hero p {
+  color: var(--vb-white);
+  margin: 12px auto 0;
+}
+
+.vb-depto-destaques,
+.vb-depto-noticias {
+  margin-top: 48px;
+}
+
+.vb-depto-destaques h2,
+.vb-depto-noticias h2 {
+  margin: 0 0 16px;
+}
+
+.vb-depto-destaques__grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.vb-depto-destaque {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 72px;
+  padding: 20px 24px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.vb-depto-destaque:hover {
+  color: var(--vb-gold);
+}
+
+.vb-depto-noticias ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vb-depto-noticias li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--vb-line);
+}
+
+@media (min-width: 768px) {
+  .vb-depto-destaques__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
