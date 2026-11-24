@@ -5911,6 +5911,15 @@ input.action-btn-cancel,
   position: relative;
 }
 
+.phone-country-combo-v1 .phone-country-trigger-v1,
+.phone-country-combo-v1 .phone-country-trigger-v1:hover,
+.phone-country-combo-v1 .phone-country-trigger-v1:focus,
+.phone-country-combo-v1 .phone-country-trigger-v1[aria-expanded="true"] {
+  background: #ffffff !important;
+  color: #172033 !important;
+  box-shadow: none;
+}
+
 .phone-country-trigger-v1 {
   width: 100%;
   height: 42px;
