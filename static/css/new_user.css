@@ -6816,3 +6816,38 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
     grid-column: auto;
   }
 }
+
+.cidade-combo-v1 {
+  position: relative;
+}
+
+.cidade-listbox-v1 {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #d4ddeb;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+
+.cidade-listbox-v1[hidden] {
+  display: none;
+}
+
+.cidade-listbox-v1 li {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #253046;
+}
+
+.cidade-listbox-v1 li:hover {
+  background: #eef2f7;
+}
