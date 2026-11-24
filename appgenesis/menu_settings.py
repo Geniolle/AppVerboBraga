@@ -171,6 +171,35 @@ def _normalize_system_menu_label(menu_key: Any, menu_label: Any) -> str:
     return clean_menu_label
 
 
+def _menu_rows_for_entity(session: Session, entity_id: int | None) -> list[Any]:
+    """Linhas de sidebar_menu_settings da entidade; menus 'Default' criados pelo owner aplicam-se a todas."""
+    rows = list(
+        session.execute(
+            text("SELECT * FROM sidebar_menu_settings WHERE entity_id = :entity_id"),
+            {"entity_id": entity_id},
+        ).all()
+    )
+    owner_id = session.execute(
+        text(
+            "SELECT id FROM entities WHERE profile_scope = 'owner' AND is_active IS TRUE "
+            "ORDER BY id LIMIT 1"
+        )
+    ).scalar()
+    if owner_id is None or entity_id is None or int(owner_id) == int(entity_id):
+        return rows
+    default_owner_rows = [
+        row
+        for row in session.execute(
+            text("SELECT * FROM sidebar_menu_settings WHERE entity_id = :entity_id"),
+            {"entity_id": owner_id},
+        ).all()
+        if get_menu_visibility_scope_mode(_parse_menu_config(row.menu_config)) == MENU_VISIBILITY_SCOPE_ALL
+    ]
+    default_keys = {_normalize_menu_key(row.menu_key) for row in default_owner_rows}
+    kept = [row for row in rows if _normalize_menu_key(row.menu_key) not in default_keys]
+    return kept + default_owner_rows
+
+
 def get_sidebar_menu_settings(
     session: Session, active_entity_id: int | None = None
 ) -> list[dict[str, Any]]:
@@ -179,16 +208,7 @@ def get_sidebar_menu_settings(
     resolved_entity_id = active_entity_id
     if resolved_entity_id is None:
         resolved_entity_id = _resolve_sidebar_menu_settings_entity_id(session)
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_label, is_active, is_deleted, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
     db_by_key = {
         _normalize_menu_key(row.menu_key): row
         for row in rows
@@ -1371,16 +1391,7 @@ def get_sidebar_menu_settings_v2(
         session, active_entity_id=resolved_entity_id
     )
 
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
 
     config_by_key = {
         _normalize_menu_key(row.menu_key): _parse_menu_config(row.menu_config)
@@ -1417,16 +1428,7 @@ def get_sidebar_menu_settings_v3(
         session, active_entity_id=resolved_entity_id
     )
 
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
 
     config_by_key = {
         _normalize_menu_key(row.menu_key): _parse_menu_config(row.menu_config)
@@ -1463,16 +1465,7 @@ def get_sidebar_menu_settings_v4(
         session, active_entity_id=resolved_entity_id
     )
 
-    rows = session.execute(
-        text(
-            """
-            SELECT menu_key, menu_config
-            FROM sidebar_menu_settings
-            WHERE entity_id = :entity_id
-            """
-        ),
-        {"entity_id": resolved_entity_id},
-    ).all()
+    rows = _menu_rows_for_entity(session, resolved_entity_id)
 
     config_by_key = {
         _normalize_menu_key(row.menu_key): _parse_menu_config(row.menu_config)
