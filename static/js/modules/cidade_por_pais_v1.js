@@ -5,19 +5,18 @@
   const CITY_INPUT_ID = "edit_custom_cidade";
   const LIST_ID = "edit_custom_cidade_list";
   const DATA_URL = "/static/data/cidades_por_pais.json";
-  // Nomes dos paises da lista (pt) -> codigo ISO 3166-1 alpha-2.
-  const ISO_BY_LABEL = {
-    "Albânia": "AL", "Alemanha": "DE", "Andorra": "AD", "Áustria": "AT", "Bélgica": "BE",
-    "Bielorrússia": "BY", "Bósnia e Herzegovina": "BA", "Bulgária": "BG", "Chipre": "CY",
-    "Croácia": "HR", "Dinamarca": "DK", "Eslováquia": "SK", "Eslovénia": "SI", "Espanha": "ES",
-    "Estónia": "EE", "Finlândia": "FI", "França": "FR", "Grécia": "GR", "Hungria": "HU",
-    "Irlanda": "IE", "Islândia": "IS", "Itália": "IT", "Kosovo": "XK", "Letónia": "LV",
-    "Liechtenstein": "LI", "Lituânia": "LT", "Luxemburgo": "LU", "Macedónia do Norte": "MK",
-    "Malta": "MT", "Moldávia": "MD", "Mónaco": "MC", "Montenegro": "ME", "Noruega": "NO",
-    "Países Baixos": "NL", "Polónia": "PL", "Portugal": "PT", "Reino Unido": "GB",
-    "República Checa": "CZ", "Roménia": "RO", "Rússia": "RU", "San Marino": "SM", "Sérvia": "RS",
-    "Suécia": "SE", "Suíça": "CH", "Ucrânia": "UA"
-  };
+  const COUNTRIES_URL = "/static/data/paises_pt.json";
+  let countriesPromise = null;
+  // Nome do pais (pt) -> codigo ISO 3166-1 alpha-2, a partir de static/data/paises_pt.json.
+  function loadIsoByLabel() {
+    if (!countriesPromise) {
+      countriesPromise = fetch(COUNTRIES_URL)
+        .then((res) => res.json())
+        .then((rows) => Object.fromEntries(rows.map(([iso, name]) => [name, iso])))
+        .catch(() => ({}));
+    }
+    return countriesPromise;
+  }
 
   let citiesPromise = null;
   function loadCities() {
@@ -38,8 +37,8 @@
     cityEl.setAttribute("autocomplete", "off");
 
     function refresh() {
-      const iso = ISO_BY_LABEL[countryEl.value] || "";
-      loadCities().then((data) => {
+      Promise.all([loadIsoByLabel(), loadCities()]).then(([isoByLabel, data]) => {
+        const iso = isoByLabel[countryEl.value] || "";
         datalist.innerHTML = "";
         (data[iso] || []).forEach((name) => {
           const option = document.createElement("option");
