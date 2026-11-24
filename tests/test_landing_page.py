@@ -57,3 +57,18 @@ def test_landing_lista_departamentos_com_saber_mais(client):
     response = client.get("/")
     for departamento in DEPARTAMENTOS:
         assert f'href="/departamentos/{departamento["slug"]}"' in response.text
+
+
+def test_livraria_mostra_capas_com_titulo_e_autor(client):
+    """Carrossel da livraria: cada livro tem capa existente, título e autor."""
+    from pathlib import Path
+
+    from appgenesis.routes.landing import DEPARTAMENTOS
+
+    livraria = next(d for d in DEPARTAMENTOS if d["slug"] == "a-livraria")
+    response = client.get("/departamentos/a-livraria")
+    assert response.status_code == 200
+    for livro in livraria["livros"]:
+        assert livro["titulo"] in response.text
+        assert livro["autor"] in response.text
+        assert Path("static", livro["capa"].removeprefix("/static/")).is_file()
