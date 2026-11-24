@@ -62,7 +62,7 @@ DEPARTAMENTOS = [
     },
     {
         "slug": "a-livraria",
-        "nome": "A livraria",
+        "nome": "Verbo Shop",
         "imagem": "/static/img/icon-verboshop.png",
         "resumo": "Leituras que edificam. Conhecimento que transforma.",
         "descricao": [
