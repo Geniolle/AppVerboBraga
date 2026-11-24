@@ -59,23 +59,62 @@
       </div>
       {% endif %}
 
-      {% if d.noticias %}
-      <section class="vb-depto-noticias" aria-labelledby="vb-noticias-titulo">
-        <h2 id="vb-noticias-titulo">Notícias</h2>
-        <ul>
-          {% for noticia in d.noticias %}
-          <li><a href="{{ noticia.url }}">{{ noticia.titulo }}</a></li>
-          {% endfor %}
-        </ul>
-      </section>
-      {% endif %}
-
       {% if d.acoes and not d.hero %}
       <div class="vb-depto__acoes vb-depto-pagina__acoes">
         {% for acao in d.acoes %}
         <a href="{{ acao.url }}" target="_blank" rel="noopener" class="vb-depto__btn{% if acao.principal %} vb-depto__btn--primario{% endif %}">{{ acao.texto }}</a>
         {% endfor %}
       </div>
+      {% endif %}
+
+      {% if d.noticias %}
+      <section class="vb-noticias" aria-labelledby="vb-noticias-titulo">
+        <h2 id="vb-noticias-titulo">Notícias</h2>
+        <div class="vb-noticias__barra">
+          <button type="button" class="vb-livros__seta" data-direcao="-1" aria-label="Notícias anteriores">←</button>
+          <button type="button" class="vb-livros__seta" data-direcao="1" aria-label="Notícias seguintes">→</button>
+        </div>
+        <ul class="vb-noticias__lista" tabindex="0" aria-label="Notícias, deslize para ver mais">
+          {% for noticia in d.noticias %}
+          <li class="vb-noticia">
+            <img src="{{ noticia.imagem }}" alt="" width="600" height="375" loading="lazy">
+            <div class="vb-noticia__corpo">
+              <h3>{{ noticia.titulo }}</h3>
+              <p>{{ noticia.texto }}</p>
+              <a href="{{ noticia.url }}" class="vb-noticia__link">Leia mais →</a>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      <script>
+        (function () {
+          var lista = document.querySelector('.vb-noticias__lista');
+          var pausado = false;
+          function mover(direcao) {
+            var no_fim = lista.scrollLeft + lista.clientWidth >= lista.scrollWidth - 2;
+            if (direcao > 0 && no_fim) {
+              lista.scrollTo({ left: 0, behavior: 'smooth' });
+              return;
+            }
+            var passo = lista.querySelector('.vb-noticia').offsetWidth + 16;
+            lista.scrollBy({ left: passo * direcao, behavior: 'smooth' });
+          }
+          document.querySelectorAll('.vb-noticias .vb-livros__seta').forEach(function (botao) {
+            botao.addEventListener('click', function () { mover(Number(botao.dataset.direcao)); });
+          });
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          lista.addEventListener('mouseenter', function () { pausado = true; });
+          lista.addEventListener('mouseleave', function () { pausado = false; });
+          lista.addEventListener('focusin', function () { pausado = true; });
+          lista.addEventListener('focusout', function () { pausado = false; });
+          lista.addEventListener('touchstart', function () { pausado = true; }, { passive: true });
+          lista.addEventListener('touchend', function () { pausado = false; });
+          setInterval(function () {
+            if (!pausado && !document.hidden) mover(1);
+          }, 5000);
+        })();
+      </script>
       {% endif %}
 
       {% if d.livros %}
