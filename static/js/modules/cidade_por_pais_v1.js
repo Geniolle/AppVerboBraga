@@ -84,7 +84,13 @@
     cityEl.addEventListener("input", renderList);
     cityEl.addEventListener("blur", closeList);
     cityEl.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeList();
+      // Enter nesta lista so fecha a lista: nao pode submeter o formulario de morada.
+      if (event.key === "Enter") {
+        event.preventDefault();
+        closeList();
+      } else if (event.key === "Escape") {
+        closeList();
+      }
     });
     refresh();
   }
