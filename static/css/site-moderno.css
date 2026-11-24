@@ -1047,6 +1047,10 @@ main#main {
   overflow-x: clip;
 }
 
+.vb-depto-hero + .vb-depto-pagina__texto {
+  margin-top: 40px;
+}
+
 .vb-depto-hero {
   position: relative;
   margin: -24px calc(50% - 50vw) 0;
