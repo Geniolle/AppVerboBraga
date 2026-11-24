@@ -49,7 +49,7 @@
     nationalEl.value = initial.national;
 
     function showSelection() {
-      triggerEl.textContent = dialCode;
+      triggerEl.value = dialCode;
       countryNameEl.value = countryName;
     }
 
@@ -71,16 +71,48 @@
       closeList();
     }
 
-    triggerEl.addEventListener("click", () => {
-      const willOpen = listEl.hidden;
-      listEl.hidden = !willOpen;
-      triggerEl.setAttribute("aria-expanded", String(willOpen));
+    function openList() {
+      listEl.hidden = false;
+      triggerEl.setAttribute("aria-expanded", "true");
+    }
+
+    function filterItems() {
+      const query = triggerEl.value.trim().toLowerCase();
+      items.forEach((item) => {
+        const text = `${item.dial} ${item.country}`.toLowerCase();
+        item.el.hidden = Boolean(query) && !text.includes(query);
+      });
+    }
+
+    triggerEl.addEventListener("focus", () => { triggerEl.select(); openList(); filterItems(); });
+    triggerEl.addEventListener("click", openList);
+    triggerEl.addEventListener("input", () => {
+      openList();
+      filterItems();
+      const exact = items.find((item) => item.dial === triggerEl.value.trim());
+      if (exact) {
+        dialCode = exact.dial;
+        countryName = exact.country;
+        countryNameEl.value = countryName;
+        render();
+      }
     });
-    items.forEach((item) => {
-      item.el.addEventListener("click", () => choose(item));
+    triggerEl.addEventListener("blur", () => {
+      const typed = items.find((item) => item.dial === triggerEl.value.trim());
+      if (typed) { dialCode = typed.dial; countryName = typed.country; }
+      showSelection();
+      render();
+      closeList();
     });
     triggerEl.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeList();
+      if (event.key === "Escape") { closeList(); return; }
+      if (event.key === "Enter") {
+        const first = items.find((item) => !item.el.hidden);
+        if (first && !listEl.hidden) { event.preventDefault(); choose(first); }
+      }
+    });
+    items.forEach((item) => {
+      item.el.addEventListener("mousedown", (event) => { event.preventDefault(); choose(item); });
     });
     document.addEventListener("mousedown", (event) => {
       if (!fieldEl.contains(event.target)) closeList();

@@ -475,15 +475,19 @@
                 <label for="edit_country_code">Telefone *</label>
                 <div class="phone-row-controls-v1">
                   <div class="phone-country-combo-v1" data-phone-combo-v1>
-                    <button
+                    <input
                       id="edit_country_code"
-                      type="button"
+                      type="text"
                       class="phone-country-trigger-v1"
+                      autocomplete="off"
+                      role="combobox"
                       aria-haspopup="listbox"
                       aria-expanded="false"
                       aria-controls="edit-country-listbox"
+                      aria-label="Indicativo e país"
+                      value="+351"
                       data-phone-trigger-v1
-                    >+351</button>
+                    >
                     <ul id="edit-country-listbox" class="phone-country-listbox-v1" role="listbox" hidden data-phone-listbox-v1>
                       {% for option in phone_country_options %}
                       <li role="option" data-dial="{{ option.dial_code }}" data-country="{{ option.label }}">{{ option.dial_code }} {{ option.label }}</li>
