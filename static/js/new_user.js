@@ -10564,8 +10564,9 @@ if (document.readyState === "loading") {
   // Com profile_section na URL (retorno de Gravar), revela so depois do estado da secao aplicado.
   const hasProfileSectionInUrl = new URL(window.location.href).searchParams.has("profile_section");
   if (hasProfileSectionInUrl) {
+    // Espera o estado inicial assentar (leitura) antes de revelar: o HTML do servidor pode pintar em edicao por instantes.
     document.addEventListener("appgenesis:profile-section-restored", () => {
-      window.requestAnimationFrame(markReady);
+      window.setTimeout(() => window.requestAnimationFrame(markReady), 1000);
     }, { once: true });
   } else {
     window.setTimeout(markReady, 260);
