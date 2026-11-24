@@ -23,8 +23,9 @@ DEPARTAMENTOS = [
         "imagem": "/static/img/icon-centro-de-cura.png",
         "resumo": "Ensinar · Orar · Acreditar · Curar.",
         "descricao": [
-            "Primeiro Centro de Cura na Europa, da Verbo da Vida Braga.",
-            "Próxima edição em breve. Faz a tua inscrição e fica a par das novidades.",
+            "O Centro de Cura Rhema acolhe homens e mulheres com todo o tipo de enfermidades, com o propósito de ensinar que a vontade do Senhor é manifestar a cura conquistada por Jesus Cristo.",
+            "Ao longo de cada edição, os participantes ouvem ensinamentos da Palavra de Deus, recebem aconselhamento pessoal e, no último dia, recebem oração com imposição de mãos.",
+            "São muitos os testemunhos de curas e milagres em cada edição do Centro de Cura Rhema. Afinal, «não há impossíveis para o Senhor em nenhuma das Suas promessas».",
         ],
         "acoes": [
             {"texto": "Inscrição", "url": "https://forms.gle/qVLuDgFuJf8znRfg7", "principal": True},
