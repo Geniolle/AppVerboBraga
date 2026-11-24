@@ -5903,8 +5903,13 @@ input.action-btn-cancel,
 
 .phone-row-controls-v1 {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  grid-template-columns: 124px minmax(0, 1fr);
   gap: 12px;
+}
+
+.phone-country-select-v1 {
+  width: 100%;
+  min-width: 0;
 }
 
 .phone-country-input-v1,
@@ -5917,47 +5922,6 @@ input.action-btn-cancel,
   .phone-row-controls-v1 {
     grid-template-columns: 1fr;
   }
-}
-
-.phone-country-combo-v1 {
-  position: relative;
-}
-
-.phone-country-listbox-v1 {
-  position: absolute;
-  z-index: 60;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  max-height: 260px;
-  margin: 0;
-  padding: 4px 0;
-  overflow-y: auto;
-  list-style: none;
-  background: #ffffff;
-  border: 1px solid #d4ddeb;
-  border-radius: 8px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
-}
-
-.phone-country-listbox-v1[hidden],
-.phone-country-listbox-v1 li[hidden] {
-  display: none;
-}
-
-.phone-country-listbox-v1 li {
-  padding: 8px 12px;
-  cursor: pointer;
-  color: #253046;
-}
-
-.phone-country-listbox-v1 li:hover,
-.phone-country-listbox-v1 li:focus {
-  background: #eef2f7;
-}
-
-.card:has(.phone-country-combo-v1) {
-  overflow: visible;
 }
 
 .personal-grid > .field:has(select[name="gender"]) {
