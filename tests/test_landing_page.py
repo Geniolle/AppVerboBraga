@@ -74,10 +74,10 @@ def test_livraria_mostra_capas_com_titulo_e_autor(client):
         assert Path("static", livro["capa"].removeprefix("/static/")).is_file()
 
 
-def test_centro_de_cura_tem_hero_destaques_e_sem_secao_alimente(client):
-    """Página do Centro de Cura: hero com fundo, cartões de destaque e sem 'Alimente sua fé'."""
+def test_centro_de_cura_usa_cabecalho_padrao_e_sem_secao_alimente(client):
+    """Centro de Cura usa o mesmo cabeçalho dos outros departamentos e não mostra 'Alimente sua fé'."""
     response = client.get("/departamentos/centro-de-cura")
     assert response.status_code == 200
-    assert "vb-depto-hero" in response.text
-    assert "vb-depto-destaques__grid" in response.text
+    assert "vb-depto-pagina__cabecalho" in response.text
+    assert "vb-depto-hero" not in response.text
     assert "Alimente sua fé" not in response.text
