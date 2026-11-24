@@ -1043,6 +1043,10 @@ body {
 
 /* ---------- Página do Centro de Cura (hero, destaques, notícias) ---------- */
 
+main#main {
+  overflow-x: clip;
+}
+
 .vb-depto-hero {
   position: relative;
   margin: -24px calc(50% - 50vw) 0;
