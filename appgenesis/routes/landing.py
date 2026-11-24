@@ -32,6 +32,8 @@ DEPARTAMENTOS = [
             {"texto": "Ver trailer", "url": "https://www.youtube.com/watch?v=dfpbPAMCMzU", "principal": False},
         ],
         "fotos": [],
+        "hero": "/static/img/hero-braga.jpg",
+        "noticias": [],
     },
     {
         "slug": "jovens",

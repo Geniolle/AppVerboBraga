@@ -20,6 +20,13 @@
     <div class="vb-wrap">
       <a href="/#departamentos" class="vb-depto-voltar">← Departamentos</a>
 
+      {% if d.hero %}
+      <section class="vb-depto-hero" style="background-image: url('{{ d.hero }}')">
+        <span class="vb-sec__rotulo">Departamento</span>
+        <h1>{{ d.nome }}</h1>
+        <p>{{ d.resumo }}</p>
+      </section>
+      {% else %}
       <div class="vb-depto-pagina__cabecalho">
         {% if d.imagem %}
         <img class="vb-depto-pagina__icone" src="{{ d.imagem }}" width="96" height="96" alt="Logótipo {{ d.nome }}">
@@ -30,6 +37,7 @@
           <p class="vb-sec__intro">{{ d.resumo }}</p>
         </div>
       </div>
+      {% endif %}
 
       <div class="vb-depto-pagina__texto">
         {% for paragrafo in d.descricao %}
@@ -37,7 +45,32 @@
         {% endfor %}
       </div>
 
-      {% if d.acoes %}
+      {% if d.hero and d.acoes %}
+      <div class="vb-depto-destaques">
+        <h2>Destaques</h2>
+        <div class="vb-depto-destaques__grid">
+          {% for acao in d.acoes %}
+          <a href="{{ acao.url }}" target="_blank" rel="noopener" class="vb-cartao vb-depto-destaque">
+            <span>{{ acao.texto }}</span>
+            <span aria-hidden="true">→</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if d.noticias %}
+      <section class="vb-depto-noticias" aria-labelledby="vb-noticias-titulo">
+        <h2 id="vb-noticias-titulo">Notícias</h2>
+        <ul>
+          {% for noticia in d.noticias %}
+          <li><a href="{{ noticia.url }}">{{ noticia.titulo }}</a></li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      {% if d.acoes and not d.hero %}
       <div class="vb-depto__acoes vb-depto-pagina__acoes">
         {% for acao in d.acoes %}
         <a href="{{ acao.url }}" target="_blank" rel="noopener" class="vb-depto__btn{% if acao.principal %} vb-depto__btn--primario{% endif %}">{{ acao.texto }}</a>
