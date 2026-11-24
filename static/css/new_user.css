@@ -6505,6 +6505,12 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   opacity: 1;
 }
 
+/* Linha de edicao inline (todos os processos): fundo cinzento fixo, sem depender do hover. */
+.admin-subprocess-table-v1 tbody tr.dynamic-process-inline-editor-row,
+.admin-subprocess-table-v1 tbody tr.dynamic-process-inline-editor-row:hover {
+  background: #f8fafc;
+}
+
 /* Ensaio: linha 1 com Data, Horario e Responsavel (3 colunas). Campo Musicas ocupa a linha inteira. */
 #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
