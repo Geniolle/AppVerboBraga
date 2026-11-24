@@ -10561,7 +10561,15 @@ if (document.readyState === "loading") {
       cardEl.classList.add("profile-ready");
     }
   };
-  window.setTimeout(markReady, 260);
+  // Com profile_section na URL (retorno de Gravar), revela so depois do estado da secao aplicado.
+  const hasProfileSectionInUrl = new URL(window.location.href).searchParams.has("profile_section");
+  if (hasProfileSectionInUrl) {
+    document.addEventListener("appgenesis:profile-section-restored", () => {
+      window.requestAnimationFrame(markReady);
+    }, { once: true });
+  } else {
+    window.setTimeout(markReady, 260);
+  }
   window.setTimeout(markReady, 1500);
 })();
 
