@@ -21,7 +21,7 @@ DEPARTAMENTOS = [
         "slug": "centro-de-cura",
         "nome": "Centro de Cura",
         "imagem": "/static/img/icon-centro-de-cura.png",
-        "resumo": "Ensinar · Orar · Acreditar · Curar.",
+        "resumo": "Ensinar · Acreditar · Orar · Curar.",
         "descricao": [
             "O Centro de Cura Rhema acolhe homens e mulheres com todo o tipo de enfermidades, com o propósito de ensinar que a vontade do Senhor é manifestar a cura conquistada por Jesus Cristo.",
             "Ao longo de cada edição, os participantes ouvem ensinamentos da Palavra de Deus, recebem aconselhamento pessoal e, no último dia, recebem oração com imposição de mãos.",
