@@ -1925,6 +1925,10 @@ function normalizeDynamicProcessRecordState(rawValue) {
 }
 
 function getDynamicProcessRecordState(row, layoutConfig) {
+  // Registos de entidade trazem o estado do registo (ativo/inativo); usa-o antes do campo de valores.
+  if (row && typeof row.state === "string" && row.state.trim()) {
+    return normalizeDynamicProcessRecordState(row.state);
+  }
   const values = row && row.values && typeof row.values === "object" ? row.values : {};
   const statusFieldKey = normalizeMenuKey(layoutConfig && layoutConfig.statusFieldKey || "__estado") || "__estado";
   return normalizeDynamicProcessRecordState(values[statusFieldKey]);
