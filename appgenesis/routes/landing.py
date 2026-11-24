@@ -33,6 +33,14 @@ DEPARTAMENTOS = [
             {"texto": "Ver trailer", "url": "https://www.youtube.com/watch?v=dfpbPAMCMzU", "principal": False},
         ],
         "fotos": [],
+        "noticias": [
+            {"titulo": "Título da notícia 1", "texto": "Texto de exemplo para a notícia 1.", "url": "#", "imagem": "/static/img/hero-braga.jpg"},
+            {"titulo": "Título da notícia 2", "texto": "Texto de exemplo para a notícia 2.", "url": "#", "imagem": "/static/img/hero-concerto-desfocado.jpg"},
+            {"titulo": "Título da notícia 3", "texto": "Texto de exemplo para a notícia 3.", "url": "#", "imagem": "/static/img/centro-de-cura-logo.jpg"},
+            {"titulo": "Título da notícia 4", "texto": "Texto de exemplo para a notícia 4.", "url": "#", "imagem": "/static/img/hero-braga.jpg"},
+            {"titulo": "Título da notícia 5", "texto": "Texto de exemplo para a notícia 5.", "url": "#", "imagem": "/static/img/hero-concerto-desfocado.jpg"},
+            {"titulo": "Título da notícia 6", "texto": "Texto de exemplo para a notícia 6.", "url": "#", "imagem": "/static/img/centro-de-cura-logo.jpg"},
+        ],
     },
     {
         "slug": "jovens",
