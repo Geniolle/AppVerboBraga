@@ -26,6 +26,10 @@ from appgenesis.services.auth_profile_entity_scope import (
     lock_visibility_scope_field_v1,
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
+from appgenesis.services.process_settings.normalizers import (
+    MENU_CONFIG_SIDEBAR_SECTION_KEY,
+    _load_menu_config,
+)
 from appgenesis.services.process_settings.list_service import (
     get_process_list_source_menus_v1,
     get_process_list_source_subprocess_map_v1,
@@ -572,6 +576,7 @@ def new_user_page(
         "lista",
         "campos-subsequentes",
         "sessoes-sidebar",
+        "sessao",
     }:
         clean_settings_tab = ""
 
@@ -700,6 +705,17 @@ def new_user_page(
             if row_key == clean_settings_edit_key:
                 settings_edit_data = dict(row)
                 break
+
+    if settings_edit_data is not None:
+        # Aba "Sessao": opcoes = secoes ativas da barra lateral; atual = sidebar_section do menu.
+        settings_edit_data["session_options"] = [
+            {"key": str(section.get("key") or ""), "label": str(section.get("label") or section.get("key") or "")}
+            for section in (_resolve_sidebar_sections_from_page_data_v22(page_data) or [])
+            if _sidebar_section_is_active_for_page_v22(section)
+        ]
+        settings_edit_data["session_current_key"] = str(
+            _load_menu_config(session, clean_settings_edit_key).get(MENU_CONFIG_SIDEBAR_SECTION_KEY) or ""
+        )
 
     process_list_source_menus_v1 = get_process_list_source_menus_v1(
         session,
