@@ -24,6 +24,7 @@ from appgenesis.admin_subprocesses.repositories.functions_repository import (
     FunctionsAdminRepository,
 )
 from appgenesis.models import Entity
+from appgenesis.services.access_actions import ALL_ACTIONS, normalize_actions
 
 ACCESS_FILTER_ENV_VAR = "APPGENESIS_ACCESS_FILTER_V1"
 OWNER_SYSTEM_TYPE = "owner"
@@ -89,29 +90,25 @@ def resolve_allowed_menu_keys_v1(
     return allowed
 
 
-NIVEL_EDITAR = "editar"
-NIVEL_EXIBIR = "exibir"
-NIVEL_SEM_ACESSO = ""
-
-
-def resolve_menu_access_level_v1(
+def resolve_menu_actions_v1(
     session: Any,
     *,
     entity_id: int | None,
     user_system_type: str | None,
     menu_key: str,
-) -> str:
-    """Nivel do utilizador no menu: 'editar', 'exibir' ou '' (sem acesso).
+) -> frozenset[str]:
+    """Acoes permitidas no menu (exibir, editar, criar, eliminar).
 
-    Sem filtro (flag desligada ou owner) devolve 'editar'.
+    Sem filtro (flag desligada ou owner) devolve todas as acoes.
+    Varios perfis do mesmo menu somam as acoes (uniao).
     """
     if not access_filter_enabled():
-        return NIVEL_EDITAR
+        return frozenset(ALL_ACTIONS)
     clean_system_type = str(user_system_type or "").strip().lower()
     if clean_system_type == OWNER_SYSTEM_TYPE:
-        return NIVEL_EDITAR
+        return frozenset(ALL_ACTIONS)
     if entity_id is None:
-        return NIVEL_SEM_ACESSO
+        return frozenset()
 
     entity_number = session.execute(
         select(Entity.entity_number).where(Entity.id == entity_id).limit(1)
@@ -132,7 +129,7 @@ def resolve_menu_access_level_v1(
             else:
                 profile_keys.add(str(key).strip().lower())
     if not all_profiles and not profile_keys:
-        return NIVEL_SEM_ACESSO
+        return frozenset()
 
     profile_rows = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG).list_rows(
         session,
@@ -142,7 +139,7 @@ def resolve_menu_access_level_v1(
         },
     )
     clean_menu_key = str(menu_key or "").strip().lower()
-    level = NIVEL_SEM_ACESSO
+    actions: set[str] = set()
     for profile_row in profile_rows:
         if profile_row.get("status") != "ativo":
             continue
@@ -150,12 +147,8 @@ def resolve_menu_access_level_v1(
             continue
         if str(profile_row.get("menu_origin") or "").strip().lower() != clean_menu_key:
             continue
-        row_level = str(profile_row.get("authorization_level") or "").strip().lower()
-        if row_level in {"editar", "todas"}:
-            return NIVEL_EDITAR
-        if row_level == "exibir":
-            level = NIVEL_EXIBIR
-    return level
+        actions.update(normalize_actions(profile_row.get("authorization_level")))
+    return frozenset(actions)
 
 
 def apply_access_filter_to_menu_keys_v1(
@@ -169,7 +162,7 @@ def apply_access_filter_to_menu_keys_v1(
 
 __all__ = [
     "access_filter_enabled",
-    "resolve_menu_access_level_v1",
+    "resolve_menu_actions_v1",
     "apply_access_filter_to_menu_keys_v1",
     "resolve_allowed_menu_keys_v1",
 ]

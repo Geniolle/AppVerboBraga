@@ -48,12 +48,18 @@
       <select
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
+        {% if field.multiple %}multiple size="4"{% endif %}
         {% if field.depends_on_input %}data-depends-on="{{ field.depends_on_input }}"{% endif %}
         {% if field.required %}required{% endif %}
         {% if field.locked %}disabled{% endif %}
       >
         {% for option_value, option_label in field.options %}
-          <option value="{{ option_value }}" {% if _option_groups %}data-group="{{ _option_groups.get(option_value, '') }}"{% endif %} {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>
+          {% if field.multiple %}
+            {% set _is_selected = (value is string and option_value in (value or '').split(',')) or (value is not string and value and option_value in value) %}
+          {% else %}
+            {% set _is_selected = value == option_value %}
+          {% endif %}
+          <option value="{{ option_value }}" {% if _option_groups %}data-group="{{ _option_groups.get(option_value, '') }}"{% endif %} {% if _is_selected %}selected{% endif %}>{{ option_label }}</option>
         {% endfor %}
       </select>
     {% elif field.field_type == "readonly" %}

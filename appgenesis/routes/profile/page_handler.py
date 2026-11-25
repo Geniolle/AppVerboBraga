@@ -17,6 +17,7 @@ from dataclasses import replace as _dataclass_replace
 
 from appgenesis.admin_subprocesses.service import build_admin_subprocess_state, find_admin_subprocess_row
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
+from appgenesis.services.access_actions import actions_label
 from appgenesis.services.access_filter import access_filter_enabled
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_config_for_context_v1,
@@ -460,23 +461,24 @@ def _split_sidebar_sections_for_page_v22(
 
 # APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
-def _meu_perfil_read_only_v1(session: Any, request: Request, resolved_menu: str) -> bool:
-    # Menu com nivel exibir (funcao): a pagina fica so de leitura (sem botoes de editar).
-    from appgenesis.services.access_filter import NIVEL_EDITAR, resolve_menu_access_level_v1
+def _menu_missing_actions_v1(session: Any, request: Request, resolved_menu: str) -> list[str]:
+    # Acoes que o utilizador NAO tem no menu (exibir/editar/criar/eliminar). Vazio = tudo permitido.
+    from appgenesis.services.access_actions import ALL_ACTIONS
+    from appgenesis.services.access_filter import resolve_menu_actions_v1
 
     if not resolved_menu:
-        return False
+        return []
     current_user = get_current_user(request, session)
     if current_user is None:
-        return False
+        return []
     user = session.get(User, current_user["id"])
-    level = resolve_menu_access_level_v1(
+    allowed = resolve_menu_actions_v1(
         session,
         entity_id=get_session_entity_id(request),
         user_system_type=getattr(user, "system_type", ""),
         menu_key=resolved_menu,
     )
-    return level != NIVEL_EDITAR
+    return [action for action in ALL_ACTIONS if action not in allowed]
 
 
 @router.get("/users/new", response_class=HTMLResponse)
@@ -621,7 +623,7 @@ def new_user_page(
         ):
             resolved_menu = "home"
         # APPGENESIS_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
-        meu_perfil_read_only_v1 = _meu_perfil_read_only_v1(session, request, resolved_menu)
+        menu_missing_actions_v1 = _menu_missing_actions_v1(session, request, resolved_menu)
 
         # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_START
         # Se é um retorno pós-save de Sessões, limpar sidebar_section_edit_key antes de
@@ -865,12 +867,11 @@ def new_user_page(
                 _auth_session_labels_v1 = {o["value"]: o["label"] for o in resolve_active_session_options_v1(page_data.get("sidebar_menu_settings") or [])}
                 _auth_menu_labels_v1 = {o["value"]: o["label"] for o in resolve_active_menu_options_v1(page_data.get("sidebar_menu_settings") or [])}
                 _auth_tab_labels_v1 = {o["value"]: o["label"] for o in resolve_active_tab_options_v1(page_data.get("sidebar_menu_settings") or [])}
-                _auth_level_labels_v1 = {"todas": "Todas as autorizações", "exibir": "Exibir", "editar": "Editar"}
                 for _auth_row_v1 in auth_profile_rows_v1:
                     _auth_row_v1["session_origin_label"] = _auth_session_labels_v1.get(_auth_row_v1.get("session_origin"), _auth_row_v1.get("session_origin") or "")
                     _auth_row_v1["menu_origin_label"] = _auth_menu_labels_v1.get(_auth_row_v1.get("menu_origin"), _auth_row_v1.get("menu_origin") or "")
                     _auth_row_v1["tab_origin_label"] = _auth_tab_labels_v1.get(_auth_row_v1.get("tab_origin"), _auth_row_v1.get("tab_origin") or "")
-                    _auth_row_v1["authorization_label"] = _auth_level_labels_v1.get(_auth_row_v1.get("authorization_level"), _auth_row_v1.get("authorization_level") or "")
+                    _auth_row_v1["authorization_label"] = actions_label(_auth_row_v1.get("authorization_level"))
                 auth_profile_subprocess_config_v1 = lock_visibility_scope_field_v1(
                     auth_profile_subprocess_config_v1,
                     get_entity_profile_scope_v1(session, get_session_entity_id(request)),
@@ -1183,7 +1184,7 @@ def new_user_page(
         "admin_subprocess_user_state": admin_subprocess_user_state,
         "current_user_can_manage_tenant_structure": bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
-        "meu_perfil_read_only": meu_perfil_read_only_v1,
+        "menu_missing_actions": menu_missing_actions_v1,
         **page_data,
     }
 

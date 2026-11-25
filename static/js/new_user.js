@@ -2000,7 +2000,7 @@ function resetDynamicProcessListCardsV1() {
 
 // Nivel exibir no menu atual (marcador renderizado pelo servidor).
 function isMenuReadOnlyV1() {
-  return Boolean(document.querySelector(".access-readonly-marker"));
+  return Boolean(document.querySelector(".access-no-editar"));
 }
 
 // Visualizar: bloqueia os campos (disabled) guardando o estado anterior; editar repoe-o.
