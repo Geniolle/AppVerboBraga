@@ -8,6 +8,12 @@ from uuid import uuid4
 
 from sqlalchemy import select
 
+from appgenesis.admin_subprocesses.repositories.auth_profile_entity_store import (
+    EntityAuthProfileStore,
+    load_entity_auth_profile_store_v1,
+    resolve_entity_id_for_auth_profiles_v1,
+    save_entity_auth_profile_store_v1,
+)
 from appgenesis.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
 from appgenesis.menu_settings import (
     get_menu_visibility_scope_label,
@@ -323,10 +329,12 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         self,
         session: Any,
         context: dict[str, Any] | None = None,
-    ) -> tuple[Member | None, dict[str, str], list[dict[str, Any]], str, str]:
-        member = self._resolve_member(session, context)
-        if member is None:
+    ) -> tuple[Any, dict[str, str], list[dict[str, Any]], str, str]:
+        # Perfis por entidade (nao por membro): ver auth_profile_entity_store.py.
+        entity_id = resolve_entity_id_for_auth_profiles_v1(session, context)
+        if entity_id is None:
             return None, {}, [], "owner", "Owner"
+        member = load_entity_auth_profile_store_v1(session, entity_id)
 
         existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
         records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
@@ -675,6 +683,8 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
 
         existing_profile_fields["process__perfil_de_autorizacao__custom_perfil"] = label
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+        if isinstance(member, EntityAuthProfileStore):
+            save_entity_auth_profile_store_v1(session, member)
         return True, "saved", generated_key
 
     def delete_row(
@@ -778,4 +788,6 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
         )
 
         member.profile_custom_fields = serialize_member_profile_fields(existing_profile_fields)
+        if isinstance(member, EntityAuthProfileStore):
+            save_entity_auth_profile_store_v1(session, member)
         return True, "deleted"
