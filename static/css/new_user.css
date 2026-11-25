@@ -6901,3 +6901,11 @@ body:has(.access-readonly-marker) .profile-edit-toggle,
 body:has(.access-readonly-marker) .profile-edit-icon-v1 {
   display: none !important;
 }
+
+/* Nivel exibir: esconde criar, editar e copiar nas listas de processo (botoes de escrita). */
+body:has(.access-readonly-marker) [class*="inline-create-btn"],
+body:has(.access-readonly-marker) .admin-subprocess-create-collapse-v1,
+body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="Editar"],
+body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="Copiar"] {
+  display: none !important;
+}
