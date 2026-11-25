@@ -1307,7 +1307,17 @@
                   <option value="{{ session_option.key }}" {% if session_option.key == settings_edit_data.session_current_key %}selected{% endif %}>{{ session_option.label }}</option>
                   {% endfor %}
                 </select>
-                <button type="submit" class="btn-primary">Guardar</button>
+                <div class="form-action-row">
+                  <button type="submit" class="action-btn">Guardar</button>
+                  <button
+                    type="button"
+                    class="action-btn-cancel"
+                    data-appgenesis-cancel="1"
+                    data-appgenesis-cancel-target="settings-menu-edit-card"
+                    data-appgenesis-cancel-return-target="#{{ settings_edit_exit_target }}"
+                    data-appgenesis-cancel-return-url="{{ settings_edit_exit_url }}"
+                  >Cancelar</button>
+                </div>
               </form>
             </section>
           </div>
