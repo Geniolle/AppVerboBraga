@@ -69,8 +69,8 @@
             {% endif %}
           {% endfor %}
 
-          <div class="menu-section">{{ section_label }}</div>
           {% if section_state.has_items %}
+          <div class="menu-section">{{ section_label }}</div>
             <nav class="menu-list" aria-label="Menu {{ section_label|lower }}">
               {% for setting in sidebar_menu_settings %}
                 {% set current_section = setting.sidebar_section_key|default(setting.menu_section|default("", true), true) %}
