@@ -8,6 +8,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from appgenesis.services.phone_country import list_phone_country_options
+from appgenesis.services.access_filter import (
+    apply_access_filter_to_menu_keys_v1,
+    resolve_allowed_menu_keys_v1,
+)
 from appgenesis.services.profile import PERSONAL_GENDER_OPTIONS
 from appgenesis.core import (
     ENTITY_NUMBER_MAX,
@@ -695,6 +699,16 @@ def get_page_data(
     )
     sidebar_menu_settings = menu_context["sidebar_menu_settings"]
     visible_sidebar_menu_keys = menu_context["visible_sidebar_menu_keys"]
+    # Filtro de acesso por funcao (ativo com APPGENESIS_ACCESS_FILTER_V1=1).
+    _actor_user_v1 = session.get(User, actor_user_id) if actor_user_id else None
+    _allowed_menu_keys_v1 = resolve_allowed_menu_keys_v1(
+        session,
+        entity_id=selected_entity_id,
+        user_system_type=getattr(_actor_user_v1, "system_type", ""),
+    )
+    visible_sidebar_menu_keys = apply_access_filter_to_menu_keys_v1(
+        set(visible_sidebar_menu_keys), _allowed_menu_keys_v1
+    )
 
     process_maps = _resolve_actor_menu_process_maps(
         session,
