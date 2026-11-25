@@ -6511,6 +6511,11 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   background: #f8fafc;
 }
 
+/* Cartao de edicao inline (Administrativo > Utilizador): mesmo tom cinzento da linha de edicao. */
+.admin-subprocess-table-v1 tbody tr.admin-subprocess-inline-editor-row td > .card {
+  background: #f8fafc;
+}
+
 /* Ensaio: linha 1 com Data, Horario e Responsavel (3 colunas). Campo Musicas ocupa a linha inteira. */
 #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
