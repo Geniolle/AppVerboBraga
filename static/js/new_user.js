@@ -1998,11 +1998,32 @@ function resetDynamicProcessListCardsV1() {
   });
 }
 
+// Visualizar: bloqueia os campos (disabled) guardando o estado anterior; editar repoe-o.
+function applyDynamicProcessViewLockV1(formEl, lock) {
+  if (!formEl) {
+    return;
+  }
+  formEl.querySelectorAll("input:not([type='hidden']), select, textarea").forEach((fieldEl) => {
+    if (lock) {
+      if (fieldEl.dataset.viewLockPrev === undefined) {
+        fieldEl.dataset.viewLockPrev = fieldEl.disabled ? "1" : "0";
+      }
+      fieldEl.disabled = true;
+      return;
+    }
+    if (fieldEl.dataset.viewLockPrev !== undefined) {
+      fieldEl.disabled = fieldEl.dataset.viewLockPrev === "1";
+      delete fieldEl.dataset.viewLockPrev;
+    }
+  });
+}
+
 function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig, options) {
   if (!dynamicProcessEditFormEl) {
     return;
   }
 
+  applyDynamicProcessViewLockV1(dynamicProcessEditFormEl, false);
   const isViewOnly = Boolean(options && options.viewOnly);
   dynamicProcessEditFormEl.classList.toggle("dynamic-process-view-only-v1", isViewOnly);
   if (dynamicProcessCardEl) {
@@ -2060,6 +2081,7 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig, opti
   }
   resetProcessRowsFieldsV1(dynamicProcessEditFormEl, values);
   applyConditionalProcessFieldRulesV1(dynamicProcessEditFormEl);
+  applyDynamicProcessViewLockV1(dynamicProcessEditFormEl, isViewOnly);
   // Repoe o estado de edicao do registo selecionado.
   if (dynamicProcessHistoryActionInputEl) {
     dynamicProcessHistoryActionInputEl.value = "update";
