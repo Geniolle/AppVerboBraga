@@ -25,6 +25,7 @@
 {% endblock %}
 
 {% block body %}
+{% if meu_perfil_read_only %}<span class="access-readonly-marker" hidden></span>{% endif %}
   <div class="layout">
     {% include "partials/app_shell/sidebar_modern_v1.html" %}
 
