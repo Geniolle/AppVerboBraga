@@ -6883,14 +6883,14 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
 }
 
 /* Perfil de autorizacao: colunas de origem com largura fixa para a coluna AÇÕES caber na tabela. */
-th[data-admin-column-key="session_origin"],
-td[data-admin-column-key="session_origin"],
-th[data-admin-column-key="menu_origin"],
-td[data-admin-column-key="menu_origin"],
-th[data-admin-column-key="tab_origin"],
-td[data-admin-column-key="tab_origin"],
-th[data-admin-column-key="authorization"],
-td[data-admin-column-key="authorization"] {
+.admin-subprocess-table-v1 th[data-admin-column-key="session_origin"],
+.admin-subprocess-table-v1 td[data-admin-column-key="session_origin"],
+.admin-subprocess-table-v1 th[data-admin-column-key="menu_origin"],
+.admin-subprocess-table-v1 td[data-admin-column-key="menu_origin"],
+.admin-subprocess-table-v1 th[data-admin-column-key="tab_origin"],
+.admin-subprocess-table-v1 td[data-admin-column-key="tab_origin"],
+.admin-subprocess-table-v1 th[data-admin-column-key="authorization"],
+.admin-subprocess-table-v1 td[data-admin-column-key="authorization"] {
   min-width: 140px;
   max-width: 140px;
   white-space: normal;
