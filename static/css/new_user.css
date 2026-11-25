@@ -6525,6 +6525,16 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   max-width: 260px;
 }
 
+/* Utilizador: coluna PERFIL NO SISTEMA ajustada ao conteudo (sobra largura para o Nome). */
+#admin-users-table td[data-admin-column-key="system_profile"],
+#admin-users-table th[data-admin-column-key="system_profile"],
+#inactive-users-table td[data-admin-column-key="system_profile"],
+#inactive-users-table th[data-admin-column-key="system_profile"] {
+  min-width: 0;
+  max-width: none;
+  width: 1%;
+}
+
 /* Ensaio: linha 1 com Data, Horario e Responsavel (3 colunas). Campo Musicas ocupa a linha inteira. */
 #dynamic-process-edit-form[data-menu-key="ensaio"] .personal-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
