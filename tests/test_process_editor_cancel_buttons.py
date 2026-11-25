@@ -78,6 +78,7 @@ PROCESS_EDITOR_FORM_ACTIONS = [
     "/settings/menu/process-lists",
     "/settings/menu/process-subsequent-fields",
     "/settings/menu/process-additional-fields",
+    "/settings/menu/session",
 ]
 
 

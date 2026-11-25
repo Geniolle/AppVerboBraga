@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from appgenesis.services.process_settings.normalizers import (
     MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY,
+    MENU_CONFIG_SIDEBAR_SECTION_KEY,
+    MENU_CONFIG_SIDEBAR_SECTIONS_KEY,
     MENU_MEU_PERFIL_KEY,
     MENU_PROCESS_DEFAULT_VISIBLE_FIELDS_BY_KEY,
     MENU_PROCESS_FIELD_OPTIONS_BY_KEY,
@@ -17,6 +19,7 @@ from appgenesis.services.process_settings.normalizers import (
     _menu_exists,
     _resolve_legacy_menu_alias,
     ensure_sidebar_menu_settings_defaults,
+    normalize_sidebar_sections,
 )
 from appgenesis.services.process_settings.additional_field_service import (
     get_menu_process_additional_fields,
@@ -616,6 +619,51 @@ def update_sidebar_menu_process_fields_v4(
 
     return True, ""
     # APPGENESIS_PROCESS_CREATE_EDIT_FLOW_V4_PROCESS_FIELDS_SAVE_END
+
+
+def update_sidebar_menu_session_v1(
+    session: Session,
+    menu_key: str,
+    section_key: str,
+) -> tuple[bool, str]:
+    # Liga o menu a uma sessao (secao da barra lateral). Gravado em todas as linhas do menu,
+    # como as restantes configuracoes do editor (ver update_sidebar_menu_process_fields_v4).
+    clean_menu_key = _resolve_legacy_menu_alias(menu_key)
+    clean_section_key = str(section_key or "").strip().lower()
+
+    if not clean_menu_key or not _menu_exists(session, clean_menu_key):
+        return False, "Menu não encontrado."
+
+    administrativo_config = _load_menu_config(session, "administrativo")
+    valid_section_keys = {
+        str(section.get("key") or "").strip().lower()
+        for section in normalize_sidebar_sections(
+            administrativo_config.get(MENU_CONFIG_SIDEBAR_SECTIONS_KEY)
+        )
+        if str(section.get("status") or "").strip().lower() == "ativo"
+    }
+    if clean_section_key not in valid_section_keys:
+        return False, "Sessão inválida."
+
+    menu_config = _load_menu_config(session, clean_menu_key)
+    menu_config[MENU_CONFIG_SIDEBAR_SECTION_KEY] = clean_section_key
+    menu_config[MENU_CONFIG_SIDEBAR_GLOBAL_REFRESH_VERSION_KEY] = str(uuid4())
+
+    session.execute(
+        text(
+            """
+            UPDATE sidebar_menu_settings
+            SET menu_config = :menu_config
+            WHERE lower(trim(menu_key)) = :menu_key
+            """
+        ),
+        {
+            "menu_key": clean_menu_key,
+            "menu_config": json.dumps(menu_config, ensure_ascii=False),
+        },
+    )
+    session.commit()
+    return True, ""
 
 
 def update_sidebar_menu_process_fields(

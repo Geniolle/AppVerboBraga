@@ -1273,6 +1273,9 @@
           <p>Atualize as configurações deste processo.</p>
           {% if settings_has_process_fields %}
           <div class="process-edit-tabs" id="process-edit-tabs" role="tablist" aria-label="Abas de edição do processo">
+            {% if settings_owner_fields_enabled %}
+            <a href="#settings-tab-sessao" role="tab" aria-selected="{% if settings_edit_active_tab == 'sessao' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'sessao' %}active{% endif %}" data-process-edit-tab="sessao">Sessão</a>
+            {% endif %}
             <a href="#settings-tab-geral" role="tab" aria-selected="{% if settings_edit_active_tab == 'geral' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'geral' %}active{% endif %}" data-process-edit-tab="geral">Geral</a>
             {% set missing_header_ns = namespace(count=0) %}
             {% for field_row in (settings_process_visible_field_rows or []) %}
@@ -1287,6 +1290,26 @@
               <a href="#settings-tab-lista" role="tab" aria-selected="{% if settings_edit_active_tab == 'lista' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'lista' %}active{% endif %}" data-process-edit-tab="lista">Listas</a>
               <a href="#settings-tab-campos-subsequentes" role="tab" aria-selected="{% if settings_edit_active_tab == 'campos-subsequentes' %}true{% else %}false{% endif %}" class="process-edit-tab-link {% if settings_edit_active_tab == 'campos-subsequentes' %}active{% endif %}" data-process-edit-tab="campos-subsequentes">Campos Subsequentes</a>
             {% endif %}
+          </div>
+          {% endif %}
+          {% if settings_owner_fields_enabled %}
+          <div id="settings-tab-sessao" class="process-edit-pane {% if settings_edit_active_tab == 'sessao' %}active{% endif %}" data-process-edit-pane="sessao">
+            <section class="card admin-subprocess-table-card-v1" id="settings-menu-session-card">
+              <h2>Sessão do menu</h2>
+              <form method="post" action="/settings/menu/session" data-menu-session-form-v1="1">
+                <input type="hidden" name="menu_key" value="{{ settings_edit_data.key }}">
+                <input type="hidden" name="redirect_menu" value="{{ settings_edit_origin_menu }}">
+                <input type="hidden" name="redirect_target" value="#settings-menu-edit-card">
+                <input type="hidden" name="return_url" value="{{ settings_edit_return_url }}">
+                <label for="settings-menu-session-select">Sessão</label>
+                <select id="settings-menu-session-select" name="section_key" required>
+                  {% for session_option in (settings_edit_data.session_options or []) %}
+                  <option value="{{ session_option.key }}" {% if session_option.key == settings_edit_data.session_current_key %}selected{% endif %}>{{ session_option.label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn-primary">Guardar</button>
+              </form>
+            </section>
           </div>
           {% endif %}
           <div id="settings-tab-geral" class="process-edit-pane {% if settings_edit_active_tab == 'geral' %}active{% endif %}" data-process-edit-pane="geral">
