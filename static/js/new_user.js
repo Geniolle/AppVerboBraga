@@ -1998,9 +1998,14 @@ function resetDynamicProcessListCardsV1() {
   });
 }
 
-function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig) {
+function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig, options) {
   if (!dynamicProcessEditFormEl) {
     return;
+  }
+
+  const isViewOnly = Boolean(options && options.viewOnly);
+  if (dynamicProcessCardEl) {
+    dynamicProcessCardEl.classList.toggle("dynamic-process-view-only-v1", isViewOnly);
   }
 
   dynamicProcessEditFormEl.reset();
@@ -2021,9 +2026,9 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig) {
     dynamicProcessCardEl.classList.add("editing");
   }
   if (dynamicProcessTitleEl) {
-    dynamicProcessTitleEl.textContent = layoutConfig && layoutConfig.editTitle
-      ? layoutConfig.editTitle
-      : "Editar registo";
+    dynamicProcessTitleEl.textContent = isViewOnly
+      ? "Exibir registo"
+      : (layoutConfig && layoutConfig.editTitle ? layoutConfig.editTitle : "Editar registo");
   }
 
   dynamicProcessPopulatingV1 = true;
@@ -2818,6 +2823,21 @@ function createDynamicProcessListActionsCellV1(row, sectionFields, layoutConfig)
   const actionsWrapEl = document.createElement("div");
   actionsWrapEl.className = "table-actions admin-subprocess-row-actions-v1";
 
+  const viewBtnEl = document.createElement("button");
+  viewBtnEl.type = "button";
+  viewBtnEl.className = "admin-subprocess-action-btn-v1";
+  viewBtnEl.title = "Visualizar detalhes";
+  viewBtnEl.setAttribute("aria-label", "Visualizar detalhes");
+  viewBtnEl.innerHTML = "&#128065;";
+  viewBtnEl.disabled = !rowRecordId;
+  viewBtnEl.addEventListener("click", () => {
+    if (!rowRecordId) {
+      return;
+    }
+    populateDynamicProcessListFormV1(sectionFields, row, layoutConfig, { viewOnly: true });
+  });
+  actionsWrapEl.appendChild(viewBtnEl);
+
   const editBtnEl = document.createElement("button");
   editBtnEl.type = "button";
   editBtnEl.className = "admin-subprocess-action-btn-v1";
@@ -2829,7 +2849,7 @@ function createDynamicProcessListActionsCellV1(row, sectionFields, layoutConfig)
     if (!rowRecordId) {
       return;
     }
-    populateDynamicProcessListFormV1(sectionFields, row, layoutConfig);
+    populateDynamicProcessListFormV1(sectionFields, row, layoutConfig, { viewOnly: false });
   });
   actionsWrapEl.appendChild(editBtnEl);
 

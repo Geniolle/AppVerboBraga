@@ -6909,3 +6909,13 @@ body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="
 body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="Copiar"] {
   display: none !important;
 }
+
+/* Visualizar registo (sem gravar): campos so leitura e sem botao Guardar. */
+#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-submit-btn {
+  display: none !important;
+}
+#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-edit-form input,
+#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-edit-form select,
+#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-edit-form textarea {
+  pointer-events: none;
+}
