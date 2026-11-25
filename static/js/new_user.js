@@ -1998,6 +1998,11 @@ function resetDynamicProcessListCardsV1() {
   });
 }
 
+// Nivel exibir no menu atual (marcador renderizado pelo servidor).
+function isMenuReadOnlyV1() {
+  return Boolean(document.querySelector(".access-readonly-marker"));
+}
+
 // Visualizar: bloqueia os campos (disabled) guardando o estado anterior; editar repoe-o.
 function applyDynamicProcessViewLockV1(formEl, lock) {
   if (!formEl) {
@@ -3035,7 +3040,10 @@ function renderDynamicProcessListTableCardV1(options) {
         closeDynamicProcessInlineFormV1();
         return;
       }
-      populateDynamicProcessListFormV1(entry.sectionFields, entry.row, entry.layoutConfig);
+      // Nivel exibir (marcador da pagina): clicar na linha abre em modo visualizar.
+      populateDynamicProcessListFormV1(entry.sectionFields, entry.row, entry.layoutConfig, {
+        viewOnly: isMenuReadOnlyV1(),
+      });
     });
   }
 
