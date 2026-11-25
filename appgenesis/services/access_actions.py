@@ -28,6 +28,9 @@ _LEGACY_EXPANSION: dict[str, tuple[str, ...]] = {
 }
 
 
+V2_PREFIX = "v2:"
+
+
 def _raw_items(raw: Any) -> Iterable[str]:
     if raw is None:
         return ()
@@ -36,22 +39,32 @@ def _raw_items(raw: Any) -> Iterable[str]:
     return raw
 
 
-def normalize_actions(raw: Any) -> tuple[str, ...]:
-    """Devolve as acoes validas, na ordem canonica, sem duplicados."""
+def _strict_actions(raw: Any) -> tuple[str, ...]:
+    # Formato novo: so as acoes marcadas (sem expansao de valores antigos).
     chosen: set[str] = set()
     for item in _raw_items(raw):
         clean = str(item or "").strip().lower()
-        if not clean:
-            continue
-        if clean in _LEGACY_EXPANSION:
-            chosen.update(_LEGACY_EXPANSION[clean])
-        elif clean in ALL_ACTIONS:
-            chosen.add(clean)
+        if clean.startswith(V2_PREFIX):
+            clean = clean[len(V2_PREFIX):]
+        for token in clean.split(","):
+            token = token.strip()
+            if token in ALL_ACTIONS:
+                chosen.add(token)
     return tuple(action for action in ALL_ACTIONS if action in chosen)
 
 
+def normalize_actions(raw: Any) -> tuple[str, ...]:
+    """Acoes do perfil. Valor com prefixo v2: e o formato novo; sem prefixo e legado."""
+    if isinstance(raw, str) and raw.strip().lower().startswith(V2_PREFIX):
+        return _strict_actions(raw)
+    if isinstance(raw, str) and raw.strip().lower() in _LEGACY_EXPANSION:
+        return _LEGACY_EXPANSION[raw.strip().lower()]
+    return _strict_actions(raw)
+
+
 def serialize_actions(raw: Any) -> str:
-    return ",".join(normalize_actions(raw))
+    actions = _strict_actions(raw)
+    return V2_PREFIX + ",".join(actions) if actions else ""
 
 
 def actions_label(raw: Any) -> str:
