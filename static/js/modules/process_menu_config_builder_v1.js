@@ -331,12 +331,25 @@
       const nativeSubprocessSetting = state.getSidebarAdminSubprocessSetting(menuKey);
 
       if (menuKey === state.EMPRESA_MENU_KEY_V1) {
+        // Nomes das abas vem da configuracao do menu (Campos adicionais -> cabecalhos), nunca fixos.
+        const empresaHeaderLabels = new Map(
+          (Array.isArray(setting.process_header_options) ? setting.process_header_options : [])
+            .map((option) => [String(option.key || ""), String(option.label || "").trim()])
+        );
+        const empresaHeaderKeys = [...new Set(
+          (Array.isArray(setting.process_visible_field_rows) ? setting.process_visible_field_rows : [])
+            .map((row) => String(row.header_key || "").trim())
+            .filter(Boolean)
+        )];
+        const empresaItems = empresaHeaderKeys
+          .filter((headerKey) => empresaHeaderLabels.get(headerKey))
+          .map((headerKey) => ({ label: empresaHeaderLabels.get(headerKey), target: "#empresa-card" }));
         menuConfig[state.EMPRESA_MENU_KEY_V1] = {
           ...(existingConfig || {}),
           title: cleanMenuLabel,
           singleView: true,
           toggleOnMenuClick: true,
-          items: [{ label: "Dados institucionais", target: "#empresa-card" }]
+          items: empresaItems
         };
         return;
       }
