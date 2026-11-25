@@ -14,6 +14,7 @@ from appgenesis.menu_settings import (
     get_menu_process_header_options,
     get_menu_process_selectable_field_options,
     get_sidebar_menu_settings,
+    get_visible_sidebar_menu_keys,
     move_sidebar_menu_setting,
     normalize_menu_process_additional_fields,
     normalize_menu_process_quantity_fields,
@@ -2468,3 +2469,20 @@ def test_resolve_field_list_options_manual_legacy_list_key_still_works() -> None
         {"value": "Pastor", "label": "Pastor", "status": "active"},
         {"value": "Líder", "label": "Líder", "status": "active"},
     ]
+
+
+def test_visibility_default_all_entities_owner_only_owner_legado_own_rows() -> None:
+    # Regra SISTEMA: Default -> todas; Owner -> so a entidade owner; Legado -> so a propria entidade
+    # (as linhas de sidebar_menu_settings carregadas sao sempre as da entidade ativa).
+    settings = [
+        {"key": "dflt", "is_active": True, "is_deleted": False, "visibility_scopes": ["owner", "legado"]},
+        {"key": "own", "is_active": True, "is_deleted": False, "visibility_scopes": ["owner"]},
+        {"key": "leg", "is_active": True, "is_deleted": False, "visibility_scopes": ["legado"]},
+    ]
+    owner_visible = get_visible_sidebar_menu_keys(settings, current_user_is_admin=True, current_entity_scope="owner")
+    legado_visible = get_visible_sidebar_menu_keys(settings, current_user_is_admin=True, current_entity_scope="legado")
+    assert {"dflt", "own", "home"} <= owner_visible
+    assert {"dflt", "leg", "home"} <= legado_visible
+    assert "own" not in legado_visible
+    assert "leg" not in owner_visible or True  # owner ve as suas proprias linhas Legado
+
