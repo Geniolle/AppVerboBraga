@@ -20,6 +20,8 @@ from appgenesis.admin_subprocesses.models import AdminSubprocessState
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_config_for_context_v1,
     build_auth_profile_entity_context_v1,
+    get_entity_profile_scope_v1,
+    lock_visibility_scope_field_v1,
 )
 from appgenesis.services.process_tabs import resolve_process_tabs_v1
 from appgenesis.services.process_settings.list_service import (
@@ -839,6 +841,10 @@ def new_user_page(
                     _auth_row_v1["menu_origin_label"] = _auth_menu_labels_v1.get(_auth_row_v1.get("menu_origin"), _auth_row_v1.get("menu_origin") or "")
                     _auth_row_v1["tab_origin_label"] = _auth_tab_labels_v1.get(_auth_row_v1.get("tab_origin"), _auth_row_v1.get("tab_origin") or "")
                     _auth_row_v1["authorization_label"] = _auth_level_labels_v1.get(_auth_row_v1.get("authorization_level"), _auth_row_v1.get("authorization_level") or "")
+                auth_profile_subprocess_config_v1 = lock_visibility_scope_field_v1(
+                    auth_profile_subprocess_config_v1,
+                    get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+                )
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
