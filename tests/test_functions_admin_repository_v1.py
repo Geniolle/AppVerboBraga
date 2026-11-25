@@ -52,6 +52,7 @@ def _stored(session: _FakeSession, entity_id: int = 1) -> dict:
 def _payload(label: str = "Diretor", status: str = "ativo", profiles=None) -> dict:
     return {
         "label": label,
+        "system_profile": "default",
         "status": status,
         "visibility_scope_mode": "all",
         "authorization_profiles": ["teste_autorizacao"] if profiles is None else profiles,
@@ -206,3 +207,21 @@ def test_save_without_administrativo_row_is_refused():
     session = _FakeSession({})
     ok, reason, _ = _repo().save_row(session, _payload("Diretor"), context=CONTEXT)
     assert (ok, reason) == (False, "menu_not_found")
+
+
+def test_save_requires_system_profile():
+    payload = _payload("Diretor")
+    payload["system_profile"] = ""
+    ok, reason, _ = _repo().save_row(_FakeSession({1: {}}), payload, context=CONTEXT)
+    assert (ok, reason) == (False, "system_profile_required")
+
+
+def test_saved_function_exposes_system_profile_label():
+    session = _FakeSession({1: {}})
+    payload = _payload("Diretor")
+    payload["system_profile"] = "owner"
+    ok, _reason, key = _repo().save_row(session, payload, context=CONTEXT)
+    assert ok is True
+    row = next(r for r in _repo().list_rows(session, context=CONTEXT) if r["key"] == key)
+    assert row["system_profile"] == "owner"
+    assert row["system_profile_label"] == "Admin"

@@ -2386,6 +2386,7 @@ _FUNCTIONS_ERROR_MESSAGES = {
     "label_required": "Nome da função é obrigatório.",
     "not_found": "Função não encontrada.",
     "active_function": "Só é possível eliminar funções inativas.",
+    "system_profile_required": "Escolha o perfil no sistema da função.",
     "profile_required": "Escolha pelo menos um perfil de autorização.",
     "profile_duplicate": "Cada perfil de autorização só pode ser escolhido uma vez.",
     "profile_not_found": "Perfil de autorização inválido ou inativo.",
@@ -2462,6 +2463,7 @@ async def save_authorization_function(request: Request) -> RedirectResponse:
             session,
             {
                 "label": str(submitted_form.get("functions_label") or "").strip(),
+                "system_profile": str(submitted_form.get("functions_system_profile") or "").strip().lower(),
                 "visibility_scope_mode": resolve_visibility_scope_for_entity_v1(
                     submitted_form.get("functions_visibility_scope_mode"),
                     get_entity_profile_scope_v1(session, get_session_entity_id(request)),
