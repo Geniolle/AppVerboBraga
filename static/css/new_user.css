@@ -7014,3 +7014,12 @@ body:has(.access-no-eliminar) .admin-subprocess-action-btn-v1[title^="Eliminar"]
 .admin-subprocess-toggle-v1 input[type="checkbox"]:disabled + .admin-subprocess-toggle-track-v1 {
   opacity: 0.6;
 }
+
+/* O gatilho do campo lista mantem o fundo do select (a regra global button:hover pintava de azul). */
+.admin-subprocess-multi-trigger-v1,
+.admin-subprocess-multi-trigger-v1:hover,
+.admin-subprocess-multi-trigger-v1:focus,
+.admin-subprocess-multi-trigger-v1:active {
+  background: #ffffff;
+  color: #0f172a;
+}
