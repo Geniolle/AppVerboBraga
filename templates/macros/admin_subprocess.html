@@ -43,22 +43,28 @@
   <div class="field admin-subprocess-field-v1 {{ field.css_class }}" data-admin-subprocess-field-key="{{ field.key }}">
     <label for="admin_subprocess_{{ field.key }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
 
-    {% if field.field_type == "select" %}
+    {% if field.field_type == "select" and field.multiple %}
+      <div class="admin-subprocess-toggle-list-v1" id="admin_subprocess_{{ field.key }}" role="group" aria-label="{{ field.label }}">
+        {% for option_value, option_label in field.options %}
+          {% set _is_on = (value is string and option_value in (value or '').split(',')) or (value is not string and value and option_value in value) %}
+          <label class="admin-subprocess-toggle-v1">
+            <input type="checkbox" name="{{ field.input_name }}" value="{{ option_value }}" {% if _is_on %}checked{% endif %} {% if field.locked %}disabled{% endif %}>
+            <span class="admin-subprocess-toggle-track-v1" aria-hidden="true"><span class="admin-subprocess-toggle-thumb-v1"></span></span>
+            <span class="admin-subprocess-toggle-label-v1">{{ option_label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    {% elif field.field_type == "select" %}
       {% set _option_groups = dict(field.option_groups) if field.option_groups else {} %}
       <select
         id="admin_subprocess_{{ field.key }}"
         name="{{ field.input_name }}"
-        {% if field.multiple %}multiple size="4"{% endif %}
         {% if field.depends_on_input %}data-depends-on="{{ field.depends_on_input }}"{% endif %}
         {% if field.required %}required{% endif %}
         {% if field.locked %}disabled{% endif %}
       >
         {% for option_value, option_label in field.options %}
-          {% if field.multiple %}
-            {% set _is_selected = (value is string and option_value in (value or '').split(',')) or (value is not string and value and option_value in value) %}
-          {% else %}
-            {% set _is_selected = value == option_value %}
-          {% endif %}
+          {% set _is_selected = value == option_value %}
           <option value="{{ option_value }}" {% if _option_groups %}data-group="{{ _option_groups.get(option_value, '') }}"{% endif %} {% if _is_selected %}selected{% endif %}>{{ option_label }}</option>
         {% endfor %}
       </select>
