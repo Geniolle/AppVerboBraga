@@ -862,6 +862,8 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 error_message = "Informe o perfil."
             elif save_reason == "duplicate_key":
                 error_message = "Já existe um perfil com esse nome."
+            elif save_reason == "duplicate_operation":
+                error_message = "Já existe um perfil ativo para esta sessão, menu e cabeçalho. Altere o perfil existente."
             elif save_reason == "edit_key_not_found":
                 error_message = "Perfil não encontrado para edição."
             elif save_reason == "member_not_found":

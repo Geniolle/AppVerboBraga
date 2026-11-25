@@ -682,3 +682,63 @@ def test_auth_profile_config_exposes_delete_action() -> None:
     assert AUTHORIZATION_PROFILE_CONFIG.action_form_key_field == "auth_profile_key"
     delete_action = next(action for action in AUTHORIZATION_PROFILE_CONFIG.actions if action.key == "delete")
     assert delete_action.visible_when == ("inativo",)
+
+
+def test_auth_profile_repository_blocks_second_active_profile_for_same_operation(monkeypatch) -> None:
+    # Opcao A: mesma sessao + menu + cabecalho ja coberto por um perfil ativo -> bloqueia.
+    records_storage_key = build_menu_process_records_storage_key(AUTH_PROFILE_MENU_KEY)
+    member = SimpleNamespace(
+        profile_custom_fields=serialize_member_profile_fields(
+            {
+                records_storage_key: serialize_menu_process_records(
+                    [
+                        {
+                            "record_id": "existing-1",
+                            "created_at": "",
+                            "section_key": AUTH_PROFILE_SECTION_KEY,
+                            "values": {
+                                "custom_perfil": "Perfil A",
+                                "custom_nome_do_perfil": "Perfil A",
+                                "__estado": "ativo",
+                                "__numero_entidade": "1001",
+                                "__sessao_origem": "sistema",
+                                "__menu_origem": "administrativo",
+                                "__cabecalho_origem": "administrativo:todos",
+                                "__autorizacao": "exibir",
+                            },
+                        }
+                    ]
+                )
+            }
+        )
+    )
+    repo = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG)
+
+    def fake_load_record_bundle(self, session, context=None):
+        existing_profile_fields = parse_member_profile_fields(member.profile_custom_fields)
+        existing_records = parse_menu_process_records(existing_profile_fields.get(records_storage_key))
+        return member, existing_profile_fields, existing_records, "owner", "Owner"
+
+    monkeypatch.setattr(AuthorizationProfileAdminRepository, "_load_record_bundle", fake_load_record_bundle)
+    monkeypatch.setattr(
+        auth_profile_module,
+        "get_sidebar_menu_settings",
+        lambda session: _build_auth_profile_sidebar_settings(),
+    )
+
+    save_ok, save_reason, _saved_key = repo.save_row(
+        object(),
+        {
+            "dynamic_values": {"custom_perfil_2": "Perfil B"},
+            "visibility_scope_mode": "owner",
+            "status": "ativo",
+            "session_origin": "sistema",
+            "menu_origin": "administrativo",
+            "tab_origin": "administrativo:todos",
+            "authorization_level": "editar",
+        },
+        context={"entity_number": "1001"},
+    )
+
+    assert save_ok is False
+    assert save_reason == "duplicate_operation"
