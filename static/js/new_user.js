@@ -10654,3 +10654,55 @@ if (document.readyState === "loading") {
   window.setTimeout(refreshProfileMissingTabDotsV1, 300);
   window.setTimeout(refreshProfileMissingTabDotsV1, 1200);
 })();
+
+// Campo de selecao multipla (Autorizacao): abre/fecha a lista de interruptores e atualiza o resumo.
+(function initMultiDropdownToggleV1() {
+  function summaryFor(dropdownEl) {
+    const labels = Array.from(dropdownEl.querySelectorAll("input[type='checkbox']:checked")).map((inputEl) => {
+      const labelEl = inputEl.closest("label");
+      const textEl = labelEl ? labelEl.querySelector(".admin-subprocess-toggle-label-v1") : null;
+      return textEl ? textEl.textContent.trim() : inputEl.value;
+    });
+    const summaryEl = dropdownEl.querySelector("[data-multi-summary]");
+    if (summaryEl) {
+      summaryEl.textContent = labels.length ? labels.join(", ") : "Selecione";
+    }
+  }
+
+  function closeAllPanels() {
+    document.querySelectorAll(".admin-subprocess-multi-panel-v1").forEach((panelEl) => {
+      panelEl.hidden = true;
+      const dropdownEl = panelEl.closest("[data-multi-dropdown]");
+      const triggerEl = dropdownEl ? dropdownEl.querySelector("[data-multi-trigger]") : null;
+      if (triggerEl) {
+        triggerEl.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    const triggerEl = event.target.closest ? event.target.closest("[data-multi-trigger]") : null;
+    if (triggerEl) {
+      const dropdownEl = triggerEl.closest("[data-multi-dropdown]");
+      const panelEl = dropdownEl ? dropdownEl.querySelector(".admin-subprocess-multi-panel-v1") : null;
+      if (!panelEl) {
+        return;
+      }
+      const willOpen = panelEl.hidden;
+      closeAllPanels();
+      panelEl.hidden = !willOpen;
+      triggerEl.setAttribute("aria-expanded", String(willOpen));
+      return;
+    }
+    if (!event.target.closest(".admin-subprocess-multi-dropdown-v1")) {
+      closeAllPanels();
+    }
+  });
+
+  document.addEventListener("change", (event) => {
+    const dropdownEl = event.target.closest ? event.target.closest("[data-multi-dropdown]") : null;
+    if (dropdownEl && event.target.matches("input[type='checkbox']")) {
+      summaryFor(dropdownEl);
+    }
+  });
+})();
