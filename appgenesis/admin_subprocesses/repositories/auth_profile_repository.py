@@ -577,6 +577,27 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                 return False, "duplicate_key", ""
             target_index = None
 
+        # Opcao A: uma operacao (sessao + menu + cabecalho) so pode ter um perfil ativo na entidade.
+        # Para mudar o nivel, altera-se o perfil existente.
+        if status_value == "ativo":
+            operation_key = (
+                str(payload.get("session_origin") or "").strip().lower(),
+                str(payload.get("menu_origin") or "").strip().lower(),
+                str(payload.get("tab_origin") or "").strip().lower(),
+            )
+            for index, row in enumerate(existing_rows):
+                if index == target_index or str(row.get("status") or "") != "ativo":
+                    continue
+                if not _row_matches_entity_context_v1(row, context=entity_scoped_context):
+                    continue
+                row_operation_key = (
+                    str(row.get("session_origin") or "").strip().lower(),
+                    str(row.get("menu_origin") or "").strip().lower(),
+                    str(row.get("tab_origin") or "").strip().lower(),
+                )
+                if row_operation_key == operation_key:
+                    return False, "duplicate_operation", ""
+
         if target_index is None:
             target_record = {
                 "record_id": uuid4().hex,
