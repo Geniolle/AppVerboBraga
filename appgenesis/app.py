@@ -27,18 +27,18 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=str(settings.STATIC_DIR)), name="static")
     is_production = os.getenv("PRODUCTION", "").lower() in ("true", "1", "yes")
 
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    from appgenesis.services.access_write_guard import access_write_guard_middleware
+
+    app.add_middleware(BaseHTTPMiddleware, dispatch=access_write_guard_middleware)
+
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.APP_SECRET_KEY,
         same_site="lax",
         https_only=is_production,
     )
-
-    from starlette.middleware.base import BaseHTTPMiddleware
-
-    from appgenesis.services.access_write_guard import access_write_guard_middleware
-
-    app.add_middleware(BaseHTTPMiddleware, dispatch=access_write_guard_middleware)
 
     @app.get("/health")
     async def health_check():
