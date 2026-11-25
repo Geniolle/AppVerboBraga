@@ -17,6 +17,7 @@ from dataclasses import replace as _dataclass_replace
 
 from appgenesis.admin_subprocesses.service import build_admin_subprocess_state, find_admin_subprocess_row
 from appgenesis.admin_subprocesses.models import AdminSubprocessState
+from appgenesis.services.access_filter import access_filter_enabled
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_config_for_context_v1,
     build_auth_profile_entity_context_v1,
@@ -588,6 +589,12 @@ def new_user_page(
         # Tambem permite menus nao visiveis se for retorno pos-save, para manter
         # o contexto de edicao.
         is_post_save_return = str(appgenesis_after_save or "").strip() == "1"
+        if access_filter_enabled() and not visible_menu_keys:
+            return HTMLResponse(
+                "<!doctype html><meta charset='utf-8'><title>Sem acesso</title>"
+                "<p>Sem acesso ao sistema. Contacte o administrador para atribuir uma função.</p>",
+                status_code=403,
+            )
         if (
             resolved_menu not in {"perfil", MENU_MEU_PERFIL_KEY}
             and resolved_menu not in visible_menu_keys

@@ -40,7 +40,7 @@ def test_owner_is_exempt(enabled):
 
 def test_user_gets_menus_of_function_profiles_only(enabled):
     allowed = af.resolve_allowed_menu_keys_v1(_FakeSession(), entity_id=1, user_system_type="default")
-    assert allowed == {"home", "meu_perfil"}
+    assert allowed == {"meu_perfil"}
 
 
 def test_inactive_function_and_profile_are_ignored(enabled):
@@ -48,9 +48,9 @@ def test_inactive_function_and_profile_are_ignored(enabled):
     assert "agenda" not in allowed and "membresia" not in allowed
 
 
-def test_no_matching_function_leaves_only_home(enabled):
+def test_no_matching_function_gives_no_menus(enabled):
     allowed = af.resolve_allowed_menu_keys_v1(_FakeSession(), entity_id=1, user_system_type="legado")
-    assert allowed == {"home"}
+    assert allowed == set()
 
 
 def test_all_profiles_marker_gives_every_active_profile_menu(monkeypatch):
@@ -60,9 +60,10 @@ def test_all_profiles_marker_gives_every_active_profile_menu(monkeypatch):
     ])
     monkeypatch.setattr(af.AuthorizationProfileAdminRepository, "list_rows", lambda self, session, context=None: PROFILES)
     allowed = af.resolve_allowed_menu_keys_v1(_FakeSession(), entity_id=1, user_system_type="super_user")
-    assert allowed == {"home", "meu_perfil", "agenda"}
+    assert allowed == {"meu_perfil", "agenda"}
 
 
 def test_apply_filter_keeps_only_allowed():
-    assert af.apply_access_filter_to_menu_keys_v1({"home", "agenda", "x"}, {"home", "agenda"}) == {"home", "agenda"}
+    assert af.apply_access_filter_to_menu_keys_v1({"home", "agenda", "x"}, {"agenda"}) == {"agenda"}
     assert af.apply_access_filter_to_menu_keys_v1({"home", "x"}, None) == {"home", "x"}
+    assert af.apply_access_filter_to_menu_keys_v1({"home"}, set()) == set()
