@@ -14,6 +14,7 @@ from appgenesis.admin_subprocesses.repositories.auth_profile_entity_store import
     resolve_entity_id_for_auth_profiles_v1,
     save_entity_auth_profile_store_v1,
 )
+from appgenesis.services.access_actions import normalize_actions, serialize_actions
 from appgenesis.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
 from appgenesis.menu_settings import (
     get_menu_visibility_scope_label,
@@ -445,7 +446,7 @@ class AuthorizationProfileAdminRepository(BaseAdminSubprocessRepository):
                     "session_origin": str(values.get(AUTH_PROFILE_SESSION_ORIGIN_KEY) or "").strip(),
                     "menu_origin": str(values.get(AUTH_PROFILE_MENU_ORIGIN_KEY) or "").strip(),
                     "tab_origin": str(values.get(AUTH_PROFILE_TAB_ORIGIN_KEY) or "").strip(),
-                    "authorization_level": str(values.get(AUTH_PROFILE_AUTHORIZATION_LEVEL_KEY) or "").strip(),
+                    "authorization_level": serialize_actions(normalize_actions(values.get(AUTH_PROFILE_AUTHORIZATION_LEVEL_KEY))),
                     "visibility_scope_label": scope_label or _scope_label(scope_mode),
                     "status": status_value,
                     "status_label": _status_label(status_value),

@@ -46,7 +46,7 @@
     {% if field.field_type == "select" and field.multiple %}
       {% set _selected_labels = namespace(items=[]) %}
       {% for option_value, option_label in field.options %}
-        {% if (value is string and option_value in (value or '').split(',')) or (value is not string and value and option_value in value) %}
+        {% if (value is string and option_value in ((value or '') | replace('v2:', '')).split(',')) or (value is not string and value and option_value in value) %}
           {% set _selected_labels.items = _selected_labels.items + [option_label] %}
         {% endif %}
       {% endfor %}
@@ -57,7 +57,7 @@
         </button>
         <div class="admin-subprocess-multi-panel-v1" role="group" aria-label="{{ field.label }}" hidden>
           {% for option_value, option_label in field.options %}
-            {% set _is_on = (value is string and option_value in (value or '').split(',')) or (value is not string and value and option_value in value) %}
+            {% set _is_on = (value is string and option_value in ((value or '') | replace('v2:', '')).split(',')) or (value is not string and value and option_value in value) %}
             <label class="admin-subprocess-toggle-v1">
               <input type="checkbox" name="{{ field.input_name }}" value="{{ option_value }}" {% if _is_on %}checked{% endif %} {% if field.locked %}disabled{% endif %}>
               <span class="admin-subprocess-toggle-track-v1" aria-hidden="true"><span class="admin-subprocess-toggle-thumb-v1"></span></span>
