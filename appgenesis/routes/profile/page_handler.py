@@ -829,6 +829,16 @@ def new_user_page(
                         )
                     ],
                 )
+                # Rotulos legiveis para as colunas de origem do perfil (Definicao, Menu, Cabecalho, Autorizacao).
+                _auth_session_labels_v1 = {o["value"]: o["label"] for o in resolve_active_session_options_v1(page_data.get("sidebar_menu_settings") or [])}
+                _auth_menu_labels_v1 = {o["value"]: o["label"] for o in resolve_active_menu_options_v1(page_data.get("sidebar_menu_settings") or [])}
+                _auth_tab_labels_v1 = {o["value"]: o["label"] for o in resolve_active_tab_options_v1(page_data.get("sidebar_menu_settings") or [])}
+                _auth_level_labels_v1 = {"todas": "Todas as autorizações", "exibir": "Exibir", "editar": "Editar"}
+                for _auth_row_v1 in auth_profile_rows_v1:
+                    _auth_row_v1["session_origin_label"] = _auth_session_labels_v1.get(_auth_row_v1.get("session_origin"), _auth_row_v1.get("session_origin") or "")
+                    _auth_row_v1["menu_origin_label"] = _auth_menu_labels_v1.get(_auth_row_v1.get("menu_origin"), _auth_row_v1.get("menu_origin") or "")
+                    _auth_row_v1["tab_origin_label"] = _auth_tab_labels_v1.get(_auth_row_v1.get("tab_origin"), _auth_row_v1.get("tab_origin") or "")
+                    _auth_row_v1["authorization_label"] = _auth_level_labels_v1.get(_auth_row_v1.get("authorization_level"), _auth_row_v1.get("authorization_level") or "")
                 auth_profile_subprocess_state_v1 = build_admin_subprocess_state(
                     config=auth_profile_subprocess_config_v1,
                     rows=auth_profile_rows_v1,
