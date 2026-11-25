@@ -10690,6 +10690,12 @@ if (document.readyState === "loading") {
       }
       const willOpen = panelEl.hidden;
       closeAllPanels();
+      if (willOpen) {
+        const rect = triggerEl.getBoundingClientRect();
+        panelEl.style.top = `${rect.bottom + 4}px`;
+        panelEl.style.left = `${rect.left}px`;
+        panelEl.style.width = `${rect.width}px`;
+      }
       panelEl.hidden = !willOpen;
       triggerEl.setAttribute("aria-expanded", String(willOpen));
       return;
@@ -10698,6 +10704,9 @@ if (document.readyState === "loading") {
       closeAllPanels();
     }
   });
+
+  window.addEventListener("scroll", closeAllPanels, true);
+  window.addEventListener("resize", closeAllPanels);
 
   document.addEventListener("change", (event) => {
     const dropdownEl = event.target.closest ? event.target.closest("[data-multi-dropdown]") : null;
