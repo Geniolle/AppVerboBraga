@@ -706,9 +706,16 @@ def get_page_data(
         entity_id=selected_entity_id,
         user_system_type=getattr(_actor_user_v1, "system_type", ""),
     )
-    visible_sidebar_menu_keys = apply_access_filter_to_menu_keys_v1(
-        set(visible_sidebar_menu_keys), _allowed_menu_keys_v1
-    )
+    if _allowed_menu_keys_v1 is not None:
+        # Com o filtro, a permissao vem da funcao (nao de requires_admin).
+        visible_sidebar_menu_keys = apply_access_filter_to_menu_keys_v1(
+            get_visible_sidebar_menu_keys(
+                sidebar_menu_settings,
+                current_user_is_admin=True,
+                current_entity_scope=current_entity_scope,
+            ),
+            _allowed_menu_keys_v1,
+        )
 
     process_maps = _resolve_actor_menu_process_maps(
         session,

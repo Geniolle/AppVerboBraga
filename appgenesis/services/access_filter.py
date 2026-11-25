@@ -4,7 +4,8 @@ Cadeia: perfil no sistema do utilizador -> funcoes ativas com esse perfil ->
 perfis de autorizacao dessas funcoes -> menus (menu de origem) desses perfis.
 
 Ativo apenas com APPGENESIS_ACCESS_FILTER_V1=1. Quando inativo, ou para o
-utilizador owner, nao ha filtro (devolve None).
+utilizador owner, nao ha filtro (devolve None). Sem funcao/perfil, nao ha menus
+(nem Home). Os menus nao dependem de requires_admin quando o filtro esta ativo.
 """
 
 from __future__ import annotations
@@ -25,7 +26,6 @@ from appgenesis.admin_subprocesses.repositories.functions_repository import (
 from appgenesis.models import Entity
 
 ACCESS_FILTER_ENV_VAR = "APPGENESIS_ACCESS_FILTER_V1"
-CORE_MENU_KEYS = frozenset({"home"})
 OWNER_SYSTEM_TYPE = "owner"
 
 
@@ -46,7 +46,7 @@ def resolve_allowed_menu_keys_v1(
     if clean_system_type == OWNER_SYSTEM_TYPE:
         return None
     if entity_id is None:
-        return set(CORE_MENU_KEYS)
+        return set()
 
     entity_number = session.execute(
         select(Entity.entity_number).where(Entity.id == entity_id).limit(1)
@@ -68,7 +68,7 @@ def resolve_allowed_menu_keys_v1(
                 profile_keys.add(str(key).strip().lower())
 
     if not all_profiles and not profile_keys:
-        return set(CORE_MENU_KEYS)
+        return set()
 
     profile_rows = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG).list_rows(
         session,
@@ -77,7 +77,7 @@ def resolve_allowed_menu_keys_v1(
             "entity_number": "" if entity_number is None else str(entity_number),
         },
     )
-    allowed = set(CORE_MENU_KEYS)
+    allowed: set[str] = set()
     for profile_row in profile_rows:
         if profile_row.get("status") != "ativo":
             continue
