@@ -34,6 +34,12 @@ def create_app() -> FastAPI:
         https_only=is_production,
     )
 
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    from appgenesis.services.access_write_guard import access_write_guard_middleware
+
+    app.add_middleware(BaseHTTPMiddleware, dispatch=access_write_guard_middleware)
+
     @app.get("/health")
     async def health_check():
         try:
