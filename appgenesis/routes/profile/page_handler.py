@@ -461,10 +461,10 @@ def _split_sidebar_sections_for_page_v22(
 # APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
 def _meu_perfil_read_only_v1(session: Any, request: Request, resolved_menu: str) -> bool:
-    # Meus dados com nivel exibir: a pagina fica so de leitura (sem botoes de editar).
+    # Menu com nivel exibir (funcao): a pagina fica so de leitura (sem botoes de editar).
     from appgenesis.services.access_filter import NIVEL_EDITAR, resolve_menu_access_level_v1
 
-    if resolved_menu != MENU_MEU_PERFIL_KEY:
+    if not resolved_menu:
         return False
     current_user = get_current_user(request, session)
     if current_user is None:
@@ -474,7 +474,7 @@ def _meu_perfil_read_only_v1(session: Any, request: Request, resolved_menu: str)
         session,
         entity_id=get_session_entity_id(request),
         user_system_type=getattr(user, "system_type", ""),
-        menu_key=MENU_MEU_PERFIL_KEY,
+        menu_key=resolved_menu,
     )
     return level != NIVEL_EDITAR
 
