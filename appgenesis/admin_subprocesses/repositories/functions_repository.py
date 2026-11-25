@@ -8,6 +8,11 @@ from typing import Any
 from sqlalchemy import text
 
 from appgenesis.admin_subprocesses.repositories.base import BaseAdminSubprocessRepository
+from appgenesis.services.user_system import (
+    ALLOWED_USER_SYSTEM_TYPES,
+    get_user_system_type_label_v1,
+    normalize_user_system_type_v1,
+)
 
 FUNCTIONS_MENU_CONFIG_KEY = "authorization_functions"
 ALL_PROFILES_VALUE = "__all__"
@@ -130,9 +135,12 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         scope_mode = _normalize_scope_mode(item.get("visibility_scope_mode"))
         label = str(item.get("label") or "").strip()
         profile_keys = normalize_profile_keys(item.get("authorization_profiles"))
+        system_profile = normalize_user_system_type_v1(item.get("system_profile"))
         return {
             "key": str(item.get("key") or ""),
             "label": label,
+            "system_profile": system_profile,
+            "system_profile_label": get_user_system_type_label_v1(system_profile),
             "status": status_value,
             "status_label": FUNCTIONS_STATUS_LABELS[status_value],
             "visibility_scope_mode": scope_mode,
@@ -177,6 +185,10 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
         if not label:
             return False, "label_required", ""
 
+        system_profile = str(payload.get("system_profile") or "").strip().lower()
+        if system_profile not in ALLOWED_USER_SYSTEM_TYPES:
+            return False, "system_profile_required", ""
+
         profile_keys = normalize_profile_keys(payload.get("authorization_profiles"))
         if not profile_keys:
             return False, "profile_required", ""
@@ -206,6 +218,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
             target.update(
                 {
                     "label": label,
+                    "system_profile": system_profile,
                     "visibility_scope_mode": scope_mode,
                     "status": status_value,
                     "authorization_profiles": profile_keys,
@@ -224,6 +237,7 @@ class FunctionsAdminRepository(BaseAdminSubprocessRepository):
                 {
                     "key": saved_key,
                     "label": label,
+                    "system_profile": system_profile,
                     "visibility_scope_mode": scope_mode,
                     "status": status_value,
                     "entity_number": entity_number,

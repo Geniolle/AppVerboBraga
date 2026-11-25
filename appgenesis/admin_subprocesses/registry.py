@@ -771,6 +771,19 @@ FUNCTIONS_ADMIN_TECHNICAL_FIELDS = (
         max_length=80,
     ),
     AdminFieldConfig(
+        key="system_profile",
+        label="Perfil no sistema",
+        input_name="functions_system_profile",
+        field_type="select",
+        required=True,
+        options=(
+            ("default", "User"),
+            ("owner", "Admin"),
+            ("super_user", "Super User"),
+            ("legado", "Legado"),
+        ),
+    ),
+    AdminFieldConfig(
         key="status",
         label="Estado",
         input_name="functions_status",
@@ -809,9 +822,29 @@ FUNCTIONS_ADMIN_TECHNICAL_FIELDS = (
 )
 
 
-_FUNCTIONS_ADMIN_COLUMNS = tuple(
-    replace(column, label="FUNÇÕES") if column.key == "label" else column
-    for column in AUTHORIZATION_PROFILE_CONFIG.columns
+_FUNCTIONS_ADMIN_COLUMNS = (
+    AdminColumnConfig(
+        key="label",
+        label="FUNÇÕES",
+        source="label",
+        css_class="admin-col-main-v1",
+        always_visible=True,
+        sortable=True,
+        default_sort="asc",
+    ),
+    AdminColumnConfig(
+        key="system_profile",
+        label="PERFIL NO SISTEMA",
+        source="system_profile_label",
+        css_class="admin-col-text-v1",
+    ),
+    AdminColumnConfig(
+        key="status",
+        label="ESTADO",
+        source="status_label",
+        css_class="admin-col-status-v1",
+        always_visible=True,
+    ),
 )
 
 FUNCTIONS_ADMIN_CONFIG = AdminSubprocessConfig(
