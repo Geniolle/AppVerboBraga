@@ -430,6 +430,30 @@ AUTHORIZATION_PROFILE_CONFIG = AdminSubprocessConfig(
             default_sort="asc",
         ),
         AdminColumnConfig(
+            key="session_origin",
+            label="DEFINIÇÃO DA ORIGEM",
+            source="session_origin_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
+            key="menu_origin",
+            label="MENU DE ORIGEM",
+            source="menu_origin_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
+            key="tab_origin",
+            label="CABEÇALHO (ABA)",
+            source="tab_origin_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
+            key="authorization",
+            label="AUTORIZAÇÃO",
+            source="authorization_label",
+            css_class="admin-col-text-v1",
+        ),
+        AdminColumnConfig(
             key="system",
             label="SISTEMA",
             source="visibility_scope_label",
