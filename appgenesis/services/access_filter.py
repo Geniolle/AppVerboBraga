@@ -89,6 +89,75 @@ def resolve_allowed_menu_keys_v1(
     return allowed
 
 
+NIVEL_EDITAR = "editar"
+NIVEL_EXIBIR = "exibir"
+NIVEL_SEM_ACESSO = ""
+
+
+def resolve_menu_access_level_v1(
+    session: Any,
+    *,
+    entity_id: int | None,
+    user_system_type: str | None,
+    menu_key: str,
+) -> str:
+    """Nivel do utilizador no menu: 'editar', 'exibir' ou '' (sem acesso).
+
+    Sem filtro (flag desligada ou owner) devolve 'editar'.
+    """
+    if not access_filter_enabled():
+        return NIVEL_EDITAR
+    clean_system_type = str(user_system_type or "").strip().lower()
+    if clean_system_type == OWNER_SYSTEM_TYPE:
+        return NIVEL_EDITAR
+    if entity_id is None:
+        return NIVEL_SEM_ACESSO
+
+    entity_number = session.execute(
+        select(Entity.entity_number).where(Entity.id == entity_id).limit(1)
+    ).scalar()
+    functions = FunctionsAdminRepository(FUNCTIONS_ADMIN_CONFIG).list_rows(
+        session, context={"entity_id": entity_id}
+    )
+    profile_keys: set[str] = set()
+    all_profiles = False
+    for function_row in functions:
+        if function_row.get("status") != "ativo":
+            continue
+        if str(function_row.get("system_profile") or "") != clean_system_type:
+            continue
+        for key in function_row.get("authorization_profiles") or []:
+            if key == ALL_PROFILES_VALUE:
+                all_profiles = True
+            else:
+                profile_keys.add(str(key).strip().lower())
+    if not all_profiles and not profile_keys:
+        return NIVEL_SEM_ACESSO
+
+    profile_rows = AuthorizationProfileAdminRepository(AUTHORIZATION_PROFILE_CONFIG).list_rows(
+        session,
+        context={
+            "selected_entity_id": entity_id,
+            "entity_number": "" if entity_number is None else str(entity_number),
+        },
+    )
+    clean_menu_key = str(menu_key or "").strip().lower()
+    level = NIVEL_SEM_ACESSO
+    for profile_row in profile_rows:
+        if profile_row.get("status") != "ativo":
+            continue
+        if not all_profiles and str(profile_row.get("key") or "").lower() not in profile_keys:
+            continue
+        if str(profile_row.get("menu_origin") or "").strip().lower() != clean_menu_key:
+            continue
+        row_level = str(profile_row.get("authorization_level") or "").strip().lower()
+        if row_level in {"editar", "todas"}:
+            return NIVEL_EDITAR
+        if row_level == "exibir":
+            level = NIVEL_EXIBIR
+    return level
+
+
 def apply_access_filter_to_menu_keys_v1(
     visible_menu_keys: set[str],
     allowed_menu_keys: set[str] | None,
@@ -100,6 +169,7 @@ def apply_access_filter_to_menu_keys_v1(
 
 __all__ = [
     "access_filter_enabled",
+    "resolve_menu_access_level_v1",
     "apply_access_filter_to_menu_keys_v1",
     "resolve_allowed_menu_keys_v1",
 ]

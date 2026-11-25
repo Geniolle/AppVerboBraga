@@ -6895,3 +6895,9 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   max-width: 140px;
   white-space: normal;
 }
+
+/* Meus dados com nivel exibir (funcao): so leitura, sem botoes de editar. */
+body:has(.access-readonly-marker) .profile-edit-toggle,
+body:has(.access-readonly-marker) .profile-edit-icon-v1 {
+  display: none !important;
+}

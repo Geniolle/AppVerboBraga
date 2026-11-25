@@ -67,3 +67,38 @@ def test_apply_filter_keeps_only_allowed():
     assert af.apply_access_filter_to_menu_keys_v1({"home", "agenda", "x"}, {"agenda"}) == {"agenda"}
     assert af.apply_access_filter_to_menu_keys_v1({"home", "x"}, None) == {"home", "x"}
     assert af.apply_access_filter_to_menu_keys_v1({"home"}, set()) == set()
+
+
+LEVEL_PROFILES = [
+    {"key": "perfil_ver", "status": "ativo", "menu_origin": "meu_perfil", "authorization_level": "exibir"},
+    {"key": "perfil_edit", "status": "ativo", "menu_origin": "agenda", "authorization_level": "editar"},
+]
+
+
+@pytest.fixture
+def levels(monkeypatch):
+    monkeypatch.setenv(af.ACCESS_FILTER_ENV_VAR, "1")
+    monkeypatch.setattr(af.FunctionsAdminRepository, "list_rows", lambda self, session, context=None: [
+        {"key": "user", "status": "ativo", "system_profile": "default", "authorization_profiles": ["perfil_ver", "perfil_edit"]},
+    ])
+    monkeypatch.setattr(af.AuthorizationProfileAdminRepository, "list_rows", lambda self, session, context=None: LEVEL_PROFILES)
+
+
+def test_exibir_profile_gives_read_only_level(levels):
+    level = af.resolve_menu_access_level_v1(_FakeSession(), entity_id=1, user_system_type="default", menu_key="meu_perfil")
+    assert level == af.NIVEL_EXIBIR
+
+
+def test_editar_profile_gives_edit_level(levels):
+    level = af.resolve_menu_access_level_v1(_FakeSession(), entity_id=1, user_system_type="default", menu_key="agenda")
+    assert level == af.NIVEL_EDITAR
+
+
+def test_menu_without_profile_has_no_access(levels):
+    level = af.resolve_menu_access_level_v1(_FakeSession(), entity_id=1, user_system_type="default", menu_key="membresia")
+    assert level == af.NIVEL_SEM_ACESSO
+
+
+def test_level_is_unrestricted_without_filter(monkeypatch):
+    monkeypatch.delenv(af.ACCESS_FILTER_ENV_VAR, raising=False)
+    assert af.resolve_menu_access_level_v1(_FakeSession(), entity_id=1, user_system_type="default", menu_key="x") == af.NIVEL_EDITAR

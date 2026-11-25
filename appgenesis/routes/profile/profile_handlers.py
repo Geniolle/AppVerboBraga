@@ -1041,9 +1041,32 @@ async def delete_authorization_profile_subprocess(request: Request) -> RedirectR
         is_error=False,
     )
 
+def _menu_edit_denied_v1(request: Request, menu_key: str) -> bool:
+    # True quando o utilizador so tem nivel exibir (ou nenhum) no menu: nao pode gravar.
+    from appgenesis.services.access_filter import NIVEL_EDITAR, resolve_menu_access_level_v1
+
+    with SessionLocal() as session:
+        current_user = get_current_user(request, session)
+        if current_user is None:
+            return True
+        user = session.get(User, current_user["id"])
+        level = resolve_menu_access_level_v1(
+            session,
+            entity_id=get_session_entity_id(request),
+            user_system_type=getattr(user, "system_type", ""),
+            menu_key=menu_key,
+        )
+        return level != NIVEL_EDITAR
+
+
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
+    if _menu_edit_denied_v1(request, MENU_MEU_PERFIL_KEY):
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Sem permissão para editar Meus dados."),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
     # APPGENESIS_KEEP_CURRENT_PROCESS_AFTER_PROFILE_SAVE_V1_START
     # Este endpoint grava sempre dados do Meu perfil. Depois de gravar,
     # o utilizador deve continuar no Meu perfil e na aba onde estava.
@@ -1783,6 +1806,11 @@ def _save_entity_process_record(
 async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
     clean_menu_key = resolve_menu_key_alias(submitted_form.get("menu_key"))
+    if clean_menu_key and _menu_edit_denied_v1(request, clean_menu_key):
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key, profile_error="Sem permissão para editar este processo."),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
     requested_section_key = str(submitted_form.get("section_key") or "").strip()
     requested_history_action = str(submitted_form.get("history_action") or "").strip().lower()
     requested_history_record_id = str(submitted_form.get("history_record_id") or "").strip()

@@ -460,6 +460,25 @@ def _split_sidebar_sections_for_page_v22(
 
 # APPGENESIS_SESSOES_BACKEND_SPLIT_ENTIDADE_V22_END
 
+def _meu_perfil_read_only_v1(session: Any, request: Request, resolved_menu: str) -> bool:
+    # Meus dados com nivel exibir: a pagina fica so de leitura (sem botoes de editar).
+    from appgenesis.services.access_filter import NIVEL_EDITAR, resolve_menu_access_level_v1
+
+    if resolved_menu != MENU_MEU_PERFIL_KEY:
+        return False
+    current_user = get_current_user(request, session)
+    if current_user is None:
+        return False
+    user = session.get(User, current_user["id"])
+    level = resolve_menu_access_level_v1(
+        session,
+        entity_id=get_session_entity_id(request),
+        user_system_type=getattr(user, "system_type", ""),
+        menu_key=MENU_MEU_PERFIL_KEY,
+    )
+    return level != NIVEL_EDITAR
+
+
 @router.get("/users/new", response_class=HTMLResponse)
 def new_user_page(
     request: Request,
@@ -602,6 +621,7 @@ def new_user_page(
         ):
             resolved_menu = "home"
         # APPGENESIS_PAGE_HANDLER_ALLOW_MEU_PERFIL_V1_END
+        meu_perfil_read_only_v1 = _meu_perfil_read_only_v1(session, request, resolved_menu)
 
         # APPGENESIS_SESSOES_POST_SAVE_GUARD_V1_START
         # Se é um retorno pós-save de Sessões, limpar sidebar_section_edit_key antes de
@@ -1163,6 +1183,7 @@ def new_user_page(
         "admin_subprocess_user_state": admin_subprocess_user_state,
         "current_user_can_manage_tenant_structure": bool(entity_permissions.get("can_manage_tenant_structure", entity_permissions.get("can_manage_all_entities", False))),
         "current_user_can_manage_all_entities": bool(entity_permissions.get("can_manage_all_entities", False)),
+        "meu_perfil_read_only": meu_perfil_read_only_v1,
         **page_data,
     }
 
