@@ -50,6 +50,7 @@
         name="{{ field.input_name }}"
         {% if field.depends_on_input %}data-depends-on="{{ field.depends_on_input }}"{% endif %}
         {% if field.required %}required{% endif %}
+        {% if field.locked %}disabled{% endif %}
       >
         {% for option_value, option_label in field.options %}
           <option value="{{ option_value }}" {% if _option_groups %}data-group="{{ _option_groups.get(option_value, '') }}"{% endif %} {% if value == option_value %}selected{% endif %}>{{ option_label }}</option>

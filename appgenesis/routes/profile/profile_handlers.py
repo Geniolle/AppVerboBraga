@@ -41,6 +41,8 @@ from appgenesis.menu_settings import (
 )
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_entity_context_v1,
+    get_entity_profile_scope_v1,
+    resolve_visibility_scope_for_entity_v1,
 )
 from appgenesis.services.page import build_users_new_url, get_page_data
 from appgenesis.services.permissions import get_user_entity_permissions
@@ -833,7 +835,10 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
             session,
             {
                 "label": clean_label,
-                "visibility_scope_mode": clean_scope_mode,
+                "visibility_scope_mode": resolve_visibility_scope_for_entity_v1(
+                    clean_scope_mode,
+                    get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+                ),
                 "status": clean_status,
                 "session_origin": clean_session_origin,
                 "menu_origin": clean_menu_origin,

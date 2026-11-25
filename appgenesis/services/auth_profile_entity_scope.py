@@ -107,8 +107,55 @@ def build_auth_profile_config_for_context_v1(
     return replace(config, fields=tuple(adjusted_fields))
 
 
+########################################################################################
+# (3) SISTEMA (visibility_scope_mode): so o owner escolhe; as outras entidades criam Legado
+########################################################################################
+
+AUTH_PROFILE_VISIBILITY_SCOPE_INPUT = "auth_profile_visibility_scope_mode"
+
+
+def get_entity_profile_scope_v1(session: Session, entity_id: int | None) -> str:
+    if entity_id is None:
+        return ENTITY_PROFILE_SCOPE_LEGADO
+    scope = session.execute(
+        select(Entity.profile_scope).where(Entity.id == entity_id).limit(1)
+    ).scalar()
+    return str(scope or ENTITY_PROFILE_SCOPE_LEGADO).strip().lower()
+
+
+def resolve_visibility_scope_for_entity_v1(submitted_scope: Any, entity_profile_scope: str) -> str:
+    # Entidade owner: escolhe livremente. Outras entidades: sempre Legado (criam so para si).
+    if str(entity_profile_scope or "").strip().lower() == "owner":
+        return str(submitted_scope or "").strip().lower() or "owner"
+    return ENTITY_PROFILE_SCOPE_LEGADO
+
+
+def lock_visibility_scope_field_v1(
+    config: AdminSubprocessConfig, entity_profile_scope: str
+) -> AdminSubprocessConfig:
+    if str(entity_profile_scope or "").strip().lower() == "owner":
+        return config
+    adjusted_fields: list[AdminFieldConfig] = []
+    for field in config.fields:
+        if field.input_name == AUTH_PROFILE_VISIBILITY_SCOPE_INPUT:
+            adjusted_fields.append(
+                replace(
+                    field,
+                    options=(("legado", "Legado"),),
+                    default_value="legado",
+                    locked=True,
+                )
+            )
+            continue
+        adjusted_fields.append(field)
+    return replace(config, fields=tuple(adjusted_fields))
+
+
 __all__ = [
     "AUTH_PROFILE_ENTITY_NUMBER_FIELD_KEY",
+    "get_entity_profile_scope_v1",
+    "lock_visibility_scope_field_v1",
+    "resolve_visibility_scope_for_entity_v1",
     "build_auth_profile_config_for_context_v1",
     "build_auth_profile_entity_context_v1",
 ]

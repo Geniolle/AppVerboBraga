@@ -29,6 +29,8 @@ class AdminFieldConfig:
     # escolhido no select indicado em depends_on_input (input_name).
     option_groups: tuple[tuple[str, str], ...] = ()
     depends_on_input: str = ""
+    # Campo bloqueado (disabled) no formulario; o servidor aplica o mesmo valor.
+    locked: bool = False
 
 
 @dataclass(frozen=True)
