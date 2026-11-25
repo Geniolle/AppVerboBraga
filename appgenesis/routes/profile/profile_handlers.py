@@ -39,6 +39,7 @@ from appgenesis.menu_settings import (
     update_sidebar_menu_label,
     update_sidebar_menu_process_fields,
 )
+from appgenesis.services.access_actions import serialize_actions
 from appgenesis.services.auth_profile_entity_scope import (
     build_auth_profile_entity_context_v1,
     get_entity_profile_scope_v1,
@@ -640,9 +641,9 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
     clean_tab_origin = str(
         submitted_form.get("auth_profile_tab_origin") or ""
     ).strip().lower()
-    clean_authorization_level = str(
-        submitted_form.get("auth_profile_authorization_level") or ""
-    ).strip().lower()
+    clean_authorization_level = serialize_actions(
+        submitted_form.getlist("auth_profile_authorization_level")
+    )
     clean_status = _normalize_process_state(
         submitted_form.get("auth_profile_status")
     )
@@ -824,7 +825,7 @@ async def save_authorization_profile_subprocess(request: Request) -> RedirectRes
                 "Cabeçalho (aba) inválido ou não pertence ao menu escolhido.",
                 is_error=True,
             )
-        if clean_authorization_level not in {"todas", "exibir", "editar"}:
+        if not clean_authorization_level:
             return _redirect_with_profile_feedback(
                 "Autorização inválida.",
                 is_error=True,
@@ -1041,28 +1042,28 @@ async def delete_authorization_profile_subprocess(request: Request) -> RedirectR
         is_error=False,
     )
 
-def _menu_edit_denied_v1(request: Request, menu_key: str) -> bool:
-    # True quando o utilizador so tem nivel exibir (ou nenhum) no menu: nao pode gravar.
-    from appgenesis.services.access_filter import NIVEL_EDITAR, resolve_menu_access_level_v1
+def _menu_action_denied_v1(request: Request, menu_key: str, required_any: tuple[str, ...]) -> bool:
+    # True quando o utilizador nao tem nenhuma das acoes exigidas no menu.
+    from appgenesis.services.access_filter import resolve_menu_actions_v1
 
     with SessionLocal() as session:
         current_user = get_current_user(request, session)
         if current_user is None:
             return True
         user = session.get(User, current_user["id"])
-        level = resolve_menu_access_level_v1(
+        actions = resolve_menu_actions_v1(
             session,
             entity_id=get_session_entity_id(request),
             user_system_type=getattr(user, "system_type", ""),
             menu_key=menu_key,
         )
-        return level != NIVEL_EDITAR
+        return not any(action in actions for action in required_any)
 
 
 @router.post("/users/profile/personal")
 async def update_personal_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
-    if _menu_edit_denied_v1(request, MENU_MEU_PERFIL_KEY):
+    if _menu_action_denied_v1(request, MENU_MEU_PERFIL_KEY, ("editar",)):
         return RedirectResponse(
             url=_build_post_save_redirect_url_v6(submitted_form, profile_error="Sem permissão para editar Meus dados."),
             status_code=status.HTTP_303_SEE_OTHER,
@@ -1806,17 +1807,24 @@ def _save_entity_process_record(
 async def update_dynamic_process_profile(request: Request) -> RedirectResponse:
     submitted_form = await request.form()
     clean_menu_key = resolve_menu_key_alias(submitted_form.get("menu_key"))
-    if clean_menu_key and _menu_edit_denied_v1(request, clean_menu_key):
-        return RedirectResponse(
-            url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key, profile_error="Sem permissão para editar este processo."),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
     requested_section_key = str(submitted_form.get("section_key") or "").strip()
     requested_history_action = str(submitted_form.get("history_action") or "").strip().lower()
     requested_history_record_id = str(submitted_form.get("history_record_id") or "").strip()
     requested_history_record_state = str(
         submitted_form.get("history_record_state") or ""
     ).strip().lower()
+    # Acao exigida: eliminar (delete), editar (update / estado) ou criar (novo registo).
+    if requested_history_action == "delete":
+        required_process_action = ("eliminar",)
+    elif requested_history_action in {"update", "toggle_status"}:
+        required_process_action = ("editar",)
+    else:
+        required_process_action = ("criar",)
+    if clean_menu_key and _menu_action_denied_v1(request, clean_menu_key, required_process_action):
+        return RedirectResponse(
+            url=_build_post_save_redirect_url_v6(submitted_form, menu=clean_menu_key, profile_error="Sem permissão para esta ação neste processo."),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
 
     if not clean_menu_key:
         return RedirectResponse(

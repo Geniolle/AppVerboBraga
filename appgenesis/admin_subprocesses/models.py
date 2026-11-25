@@ -31,6 +31,8 @@ class AdminFieldConfig:
     depends_on_input: str = ""
     # Campo bloqueado (disabled) no formulario; o servidor aplica o mesmo valor.
     locked: bool = False
+    # Select de selecao multipla (valores separados por virgula no armazenamento).
+    multiple: bool = False
 
 
 @dataclass(frozen=True)

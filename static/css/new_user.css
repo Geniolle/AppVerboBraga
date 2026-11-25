@@ -6896,26 +6896,18 @@ body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-ca
   white-space: normal;
 }
 
-/* Meus dados com nivel exibir (funcao): so leitura, sem botoes de editar. */
-body:has(.access-readonly-marker) .profile-edit-toggle,
-body:has(.access-readonly-marker) .profile-edit-icon-v1 {
+/* Acoes do perfil (marcadores do servidor): esconde o que o utilizador nao tem no menu. */
+body:has(.access-no-criar) [class*="inline-create-btn"],
+body:has(.access-no-criar) .admin-subprocess-create-collapse-v1,
+body:has(.access-no-criar) button.appgenesis-row-actions-item-v1[title^="Copiar"],
+body:has(.access-no-criar) .admin-subprocess-action-btn-v1[title^="Copiar"],
+body:has(.access-no-editar) .profile-edit-toggle,
+body:has(.access-no-editar) .profile-edit-icon-v1,
+body:has(.access-no-editar) button.appgenesis-row-actions-item-v1[title^="Editar"],
+body:has(.access-no-editar) .admin-subprocess-action-btn-v1[title^="Editar"],
+body:has(.access-no-editar) button.appgenesis-row-actions-item-v1[title^="Inativar"],
+body:has(.access-no-editar) button.appgenesis-row-actions-item-v1[title^="Ativar"],
+body:has(.access-no-eliminar) button.appgenesis-row-actions-item-v1[title^="Eliminar"],
+body:has(.access-no-eliminar) .admin-subprocess-action-btn-v1[title^="Eliminar"] {
   display: none !important;
-}
-
-/* Nivel exibir: esconde criar, editar e copiar nas listas de processo (botoes de escrita). */
-body:has(.access-readonly-marker) [class*="inline-create-btn"],
-body:has(.access-readonly-marker) .admin-subprocess-create-collapse-v1,
-body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="Editar"],
-body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="Copiar"] {
-  display: none !important;
-}
-
-/* Visualizar registo (sem gravar): campos so leitura e sem botao Guardar. */
-#dynamic-process-edit-form.dynamic-process-view-only-v1 button[type="submit"] {
-  display: none !important;
-}
-#dynamic-process-edit-form.dynamic-process-view-only-v1 input,
-#dynamic-process-edit-form.dynamic-process-view-only-v1 select,
-#dynamic-process-edit-form.dynamic-process-view-only-v1 textarea {
-  pointer-events: none;
 }

@@ -25,7 +25,7 @@
 {% endblock %}
 
 {% block body %}
-{% if meu_perfil_read_only %}<span class="access-readonly-marker" hidden></span>{% endif %}
+{% for _missing_action in (menu_missing_actions or []) %}<span class="access-no-{{ _missing_action }}" hidden></span>{% endfor %}
   <div class="layout">
     {% include "partials/app_shell/sidebar_modern_v1.html" %}
 

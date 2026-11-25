@@ -334,10 +334,12 @@ AUTHORIZATION_PROFILE_TECHNICAL_FIELDS = (
         input_name="auth_profile_authorization_level",
         field_type="select",
         required=True,
+        multiple=True,
         options=(
-            ("todas", "Todas as autorizações"),
             ("exibir", "Exibir"),
             ("editar", "Editar"),
+            ("criar", "Criar"),
+            ("eliminar", "Eliminar"),
         ),
     ),
     AdminFieldConfig(
