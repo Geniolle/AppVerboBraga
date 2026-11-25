@@ -2460,7 +2460,10 @@ async def save_authorization_function(request: Request) -> RedirectResponse:
             session,
             {
                 "label": str(submitted_form.get("functions_label") or "").strip(),
-                "visibility_scope_mode": str(submitted_form.get("functions_visibility_scope_mode") or "").strip(),
+                "visibility_scope_mode": resolve_visibility_scope_for_entity_v1(
+                    submitted_form.get("functions_visibility_scope_mode"),
+                    get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+                ),
                 "status": str(submitted_form.get("functions_status") or "").strip(),
                 "authorization_profiles": submitted_form.getlist("functions_authorization_profiles"),
             },
