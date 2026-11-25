@@ -726,7 +726,10 @@ def new_user_page(
     admin_subprocess_state_v2 = None
 
     if current_user_is_admin:
-        sessoes_subprocess_config_v2 = get_admin_subprocess_config("sessoes")
+        sessoes_subprocess_config_v2 = lock_visibility_scope_field_v1(
+            get_admin_subprocess_config("sessoes"),
+            get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+        )
 
         if sessoes_subprocess_config_v2 is not None:
             all_sidebar_sections_for_subprocess_v2 = list(active_sidebar_sections_v22 or []) + list(inactive_sidebar_sections_v22 or [])
@@ -917,6 +920,10 @@ def new_user_page(
                     funcoes_entity_context_v1,
                     authorization_profile_options=funcoes_profile_options_v1,
                 )
+                funcoes_config_v1 = lock_visibility_scope_field_v1(
+                    funcoes_config_v1,
+                    get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+                )
                 funcoes_subprocess_state_v1 = build_admin_subprocess_state(
                     config=funcoes_config_v1,
                     rows=funcoes_rows_v1,
@@ -983,7 +990,10 @@ def new_user_page(
     admin_subprocess_menu_state_v1 = None
 
     if current_user_is_admin:
-        menu_subprocess_config_v1 = get_admin_subprocess_config("menu")
+        menu_subprocess_config_v1 = lock_visibility_scope_field_v1(
+            get_admin_subprocess_config("menu"),
+            get_entity_profile_scope_v1(session, get_session_entity_id(request)),
+        )
 
         if menu_subprocess_config_v1 is not None and menu_subprocess_config_v1.enabled:
             try:

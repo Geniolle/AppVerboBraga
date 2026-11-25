@@ -111,7 +111,13 @@ def build_auth_profile_config_for_context_v1(
 # (3) SISTEMA (visibility_scope_mode): so o owner escolhe; as outras entidades criam Legado
 ########################################################################################
 
-AUTH_PROFILE_VISIBILITY_SCOPE_INPUT = "auth_profile_visibility_scope_mode"
+# Campos SISTEMA (visibility_scope_mode) de todos os processos.
+VISIBILITY_SCOPE_INPUTS_V1 = (
+    "auth_profile_visibility_scope_mode",
+    "section_visibility_scope_mode",
+    "menu_visibility_scope",
+    "functions_visibility_scope_mode",
+)
 
 
 def get_entity_profile_scope_v1(session: Session, entity_id: int | None) -> str:
@@ -137,7 +143,7 @@ def lock_visibility_scope_field_v1(
         return config
     adjusted_fields: list[AdminFieldConfig] = []
     for field in config.fields:
-        if field.input_name == AUTH_PROFILE_VISIBILITY_SCOPE_INPUT:
+        if field.input_name in VISIBILITY_SCOPE_INPUTS_V1:
             adjusted_fields.append(
                 replace(
                     field,
