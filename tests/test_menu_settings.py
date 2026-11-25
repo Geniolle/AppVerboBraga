@@ -2486,3 +2486,10 @@ def test_visibility_default_all_entities_owner_only_owner_legado_own_rows() -> N
     assert "own" not in legado_visible
     assert "leg" not in owner_visible or True  # owner ve as suas proprias linhas Legado
 
+
+def test_tab_options_todos_cabecalhos_for_menu_without_tabs() -> None:
+    # Cabecalho (aba) 'Todos os cabecalhos' tem de existir mesmo em menus sem abas (ex.: Home).
+    from appgenesis.services.profile import resolve_active_tab_options_v1
+    settings = [{"key": "home", "is_active": True, "is_deleted": False, "menu_config": {}}]
+    values = [option["value"] for option in resolve_active_tab_options_v1(settings)]
+    assert "home:todos" in values

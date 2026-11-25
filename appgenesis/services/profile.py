@@ -524,9 +524,7 @@ def resolve_active_tab_options_v1(
     options: list[dict[str, str]] = []
     for menu_option in resolve_active_menu_options_v1(sidebar_menu_settings):
         menu_key = menu_option["value"]
-        tabs = resolve_process_tabs_v1(menu_key, sidebar_menu_settings or [])
-        if not tabs:
-            continue
+        # 'Todos os cabecalhos' existe em todos os menus ativos, mesmo sem abas (ex.: Home).
         options.append(
             {
                 "value": f"{menu_key}:todos",
@@ -534,6 +532,7 @@ def resolve_active_tab_options_v1(
                 "menu": menu_key,
             }
         )
+        tabs = resolve_process_tabs_v1(menu_key, sidebar_menu_settings or [])
         for tab in tabs:
             options.append(
                 {
