@@ -6911,11 +6911,11 @@ body:has(.access-readonly-marker) button.appgenesis-row-actions-item-v1[title^="
 }
 
 /* Visualizar registo (sem gravar): campos so leitura e sem botao Guardar. */
-#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-submit-btn {
+#dynamic-process-edit-form.dynamic-process-view-only-v1 button[type="submit"] {
   display: none !important;
 }
-#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-edit-form input,
-#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-edit-form select,
-#dynamic-process-card.dynamic-process-view-only-v1 #dynamic-process-edit-form textarea {
+#dynamic-process-edit-form.dynamic-process-view-only-v1 input,
+#dynamic-process-edit-form.dynamic-process-view-only-v1 select,
+#dynamic-process-edit-form.dynamic-process-view-only-v1 textarea {
   pointer-events: none;
 }

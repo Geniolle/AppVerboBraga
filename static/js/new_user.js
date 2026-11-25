@@ -2004,6 +2004,7 @@ function populateDynamicProcessListFormV1(sectionFields, row, layoutConfig, opti
   }
 
   const isViewOnly = Boolean(options && options.viewOnly);
+  dynamicProcessEditFormEl.classList.toggle("dynamic-process-view-only-v1", isViewOnly);
   if (dynamicProcessCardEl) {
     dynamicProcessCardEl.classList.toggle("dynamic-process-view-only-v1", isViewOnly);
   }
