@@ -37,7 +37,10 @@
       <div class="vb-dizimos">
         <article class="vb-cartao vb-dizimos__cartao">
           <h2>Transferência bancária (IBAN)</h2>
-          <p class="vb-dizimos__valor">{{ p.iban }}</p>
+          <div class="vb-dizimos__linha">
+            <p class="vb-dizimos__valor">{{ p.iban }}</p>
+            <button type="button" class="vb-dizimos__copiar" data-copiar="{{ p.iban | replace(' ', '') }}" aria-label="Copiar IBAN">Copiar</button>
+          </div>
           <p>Titular: {{ p.titular }}</p>
         </article>
         <article class="vb-cartao vb-dizimos__cartao">
@@ -50,4 +53,36 @@
 </main>
 
 {% include 'partials/public_footer.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    document.querySelectorAll('.vb-dizimos__copiar').forEach(function (btn) {
+      var original = btn.textContent;
+      btn.addEventListener('click', function () {
+        var texto = btn.getAttribute('data-copiar');
+        function feito(ok) {
+          btn.textContent = ok ? 'Copiado' : 'Erro';
+          setTimeout(function () { btn.textContent = original; }, 2000);
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(texto).then(function () { feito(true); }, function () { feito(false); });
+          return;
+        }
+        var area = document.createElement('textarea');
+        area.value = texto;
+        area.setAttribute('readonly', '');
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        document.body.removeChild(area);
+        feito(ok);
+      });
+    });
+  })();
+</script>
 {% endblock %}
