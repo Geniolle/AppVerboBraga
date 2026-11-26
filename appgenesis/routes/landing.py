@@ -109,6 +109,27 @@ async def landing_page(request: Request):
     )
 
 
+DIZIMOS = {
+    "titulo": "Dízimos e Ofertas",
+    "resumo": "Contribuir é participar na obra de Deus.",
+    "descricao": [
+        "Os dízimos e as ofertas sustentam o trabalho da igreja: os cultos, os departamentos e as missões.",
+        "Podes contribuir por transferência bancária ou por MB Way. Agradecemos a tua fidelidade.",
+    ],
+    "iban": "PT50 0036 0085 9910 0058 9412 3",
+    "titular": "IGREJA VERBO VIDA BRAGA",
+    "mbway": "+351 936 945 580",
+}
+
+
+@router.get("/dizimos-e-ofertas", response_class=HTMLResponse)
+async def dizimos_page(request: Request):
+    """Página de dízimos e ofertas (dados fixos em DIZIMOS)."""
+    return templates.TemplateResponse(
+        request, "dizimos.html", {"request": request, "p": DIZIMOS}
+    )
+
+
 @router.get("/departamentos/{slug}", response_class=HTMLResponse)
 async def departamento_page(request: Request, slug: str):
     """Página de um departamento (dados fixos em DEPARTAMENTOS)."""
