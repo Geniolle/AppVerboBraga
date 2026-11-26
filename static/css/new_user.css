@@ -6277,6 +6277,14 @@ input.action-btn-cancel,
   grid-column: span 3;
 }
 
+/* Texto de ajuda do logo: 10px, abaixo do seletor. */
+#empresa-card .entity-logo-hint,
+#edit-entity-card .entity-logo-hint {
+  font-size: 10px;
+  display: block;
+  margin-top: 6px;
+}
+
 /* Rotulo do seletor de imagem: mesmo padrao dos rotulos de campo (13px, 700, #586273). */
 #empresa-card .profile-photo-field-v1 > .personal-label,
 #edit-entity-card .profile-photo-field-v1 > .personal-label {
