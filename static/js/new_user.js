@@ -6156,81 +6156,86 @@ if (profilePhotoInputEl && profilePhotoPreviewEl) {
     }
   });
 }
-// Imagem da entidade (Empresa > Dados institucionais): ao clicar na foto abre o menu
-// "Selecionar imagem" / "Remover imagem".
-const empresaLogoInputEl = document.getElementById("empresa_logo_file");
-const empresaLogoPreviewEl = document.getElementById("empresa_logo_preview");
-const empresaLogoPickerEl = document.getElementById("empresa_logo_picker");
-const empresaLogoMenuEl = document.getElementById("empresa_logo_menu");
-const empresaRemoveLogoEl = document.getElementById("empresa_remove_logo");
-if (empresaLogoInputEl && empresaLogoPreviewEl && empresaLogoPickerEl && empresaLogoMenuEl && empresaRemoveLogoEl) {
-  const empresaLogoPlaceholderEl = empresaLogoPickerEl.querySelector(".profile-photo-placeholder-v1");
+// Seletor de imagem/icone da entidade (Dados da empresa e Editar entidade): clique na foto abre
+// o menu "Selecionar imagem" / "Remover imagem". Mesmo comportamento para os dois formularios.
+function bindEntityLogoPickerV1(prefix) {
+  const inputEl = document.getElementById(`${prefix}_logo_file`);
+  const previewEl = document.getElementById(`${prefix}_logo_preview`);
+  const pickerEl = document.getElementById(`${prefix}_logo_picker`);
+  const menuEl = document.getElementById(`${prefix}_logo_menu`);
+  const removeEl = document.getElementById(`${prefix}_remove_logo`);
+  if (!inputEl || !previewEl || !pickerEl || !menuEl || !removeEl) {
+    return;
+  }
+  const placeholderEl = pickerEl.querySelector(".profile-photo-placeholder-v1");
 
-  function setEmpresaLogoMenuOpenV1(open) {
-    empresaLogoMenuEl.hidden = !open;
-    empresaLogoPickerEl.setAttribute("aria-expanded", open ? "true" : "false");
+  function setMenuOpen(open) {
+    menuEl.hidden = !open;
+    pickerEl.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
-  function showEmpresaLogoPreviewV1(src) {
-    empresaLogoPreviewEl.src = src;
-    empresaLogoPreviewEl.hidden = false;
-    if (empresaLogoPlaceholderEl) {
-      empresaLogoPlaceholderEl.hidden = true;
+  function showPreview(src) {
+    previewEl.src = src;
+    previewEl.hidden = false;
+    if (placeholderEl) {
+      placeholderEl.hidden = true;
     }
   }
 
-  function clearEmpresaLogoPreviewV1() {
-    empresaLogoPreviewEl.removeAttribute("src");
-    empresaLogoPreviewEl.hidden = true;
-    if (empresaLogoPlaceholderEl) {
-      empresaLogoPlaceholderEl.hidden = false;
+  function clearPreview() {
+    previewEl.removeAttribute("src");
+    previewEl.hidden = true;
+    if (placeholderEl) {
+      placeholderEl.hidden = false;
     }
   }
 
-  empresaLogoPickerEl.addEventListener("click", (event) => {
+  pickerEl.addEventListener("click", (event) => {
     event.stopPropagation();
-    setEmpresaLogoMenuOpenV1(empresaLogoMenuEl.hidden);
+    setMenuOpen(menuEl.hidden);
   });
 
-  empresaLogoMenuEl.addEventListener("click", (event) => {
+  menuEl.addEventListener("click", (event) => {
     const action = event.target.closest("[data-logo-action]");
     if (!action || action.disabled) {
       return;
     }
     event.stopPropagation();
-    setEmpresaLogoMenuOpenV1(false);
+    setMenuOpen(false);
     if (action.dataset.logoAction === "select") {
-      empresaLogoInputEl.click();
+      inputEl.click();
       return;
     }
     if (action.dataset.logoAction === "remove") {
-      empresaRemoveLogoEl.value = "1";
-      empresaLogoInputEl.value = "";
-      clearEmpresaLogoPreviewV1();
+      removeEl.value = "1";
+      inputEl.value = "";
+      clearPreview();
     }
   });
 
-  empresaLogoInputEl.addEventListener("change", () => {
-    const file = empresaLogoInputEl.files && empresaLogoInputEl.files[0];
+  inputEl.addEventListener("change", () => {
+    const file = inputEl.files && inputEl.files[0];
     if (!file) {
       return;
     }
-    empresaRemoveLogoEl.value = "";
-    showEmpresaLogoPreviewV1(URL.createObjectURL(file));
+    removeEl.value = "";
+    showPreview(URL.createObjectURL(file));
   });
 
   document.addEventListener("click", (event) => {
-    if (!empresaLogoMenuEl.hidden && !event.target.closest("#empresa_logo_menu, #empresa_logo_picker")) {
-      setEmpresaLogoMenuOpenV1(false);
+    if (!menuEl.hidden && !event.target.closest(`#${prefix}_logo_menu, #${prefix}_logo_picker`)) {
+      setMenuOpen(false);
     }
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      setEmpresaLogoMenuOpenV1(false);
+      setMenuOpen(false);
     }
   });
 }
+bindEntityLogoPickerV1("empresa");
+bindEntityLogoPickerV1("edit_entity");
 if (userAvatarImageEl) {
   userAvatarImageEl.src = avatarDataUri;
 }
