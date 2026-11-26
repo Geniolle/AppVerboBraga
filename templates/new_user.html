@@ -1111,6 +1111,24 @@
                 <label for="edit_entity_created_at">Data da criação</label>
                 <input id="edit_entity_created_at" class="readonly-field" value="{{ entity_edit_data.created_at }}" readonly disabled>
               </div>
+              <div class="field entity-edit-status-row">
+                <label for="edit_entity_status">Estado da entidade *</label>
+                {% if current_user_can_manage_tenant_structure %}
+                <select id="edit_entity_status" name="entity_status" required>
+                  <option value="active" {% if entity_edit_data.status == "active" %}selected{% endif %}>Ativa</option>
+                  <option value="inactive" {% if entity_edit_data.status == "inactive" %}selected{% endif %}>Inativa</option>
+                </select>
+                {% else %}
+                <input
+                  id="edit_entity_status"
+                  class="readonly-field"
+                  value="{% if entity_edit_data.status == 'active' %}Ativa{% else %}Inativa{% endif %}"
+                  readonly
+                  disabled
+                >
+                <input type="hidden" name="entity_status" value="{{ entity_edit_data.status }}">
+                {% endif %}
+              </div>
             </div>
             <div class="entity-fifth-row entity-fifth-row-edit">
               <div class="field profile-photo-field-v1 entity-fifth-row-logo">
@@ -1131,24 +1149,6 @@
                   <input id="edit_entity_logo_file" class="visually-hidden-v1" type="file" name="entity_logo_file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml">
                   <input id="edit_entity_remove_logo" type="hidden" name="remove_logo" value="">
                 </div>
-              </div>
-              <div class="field entity-edit-status-row">
-                <label for="edit_entity_status">Estado da entidade *</label>
-                {% if current_user_can_manage_tenant_structure %}
-                <select id="edit_entity_status" name="entity_status" required>
-                  <option value="active" {% if entity_edit_data.status == "active" %}selected{% endif %}>Ativa</option>
-                  <option value="inactive" {% if entity_edit_data.status == "inactive" %}selected{% endif %}>Inativa</option>
-                </select>
-                {% else %}
-                <input
-                  id="edit_entity_status"
-                  class="readonly-field"
-                  value="{% if entity_edit_data.status == 'active' %}Ativa{% else %}Inativa{% endif %}"
-                  readonly
-                  disabled
-                >
-                <input type="hidden" name="entity_status" value="{{ entity_edit_data.status }}">
-                {% endif %}
               </div>
             </div>
 
