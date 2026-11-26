@@ -252,10 +252,10 @@
       );
       baseItems = [
         ...(canManageTenant ? [{ label: "Entidade", target: "#recent-entities-card" }] : []),
+        { label: "Dados da empresa", target: "#empresa-card" },
         { label: "Utilizador", target: "#create-user-card" },
         { label: "Perfil de autorização", target: "#auth-profile-card" },
-        { label: "Funções Administrativas", target: "#funcoes-administrativas-card" },
-        { label: "Dados da empresa", target: "#empresa-card" }
+        { label: "Funções Administrativas", target: "#funcoes-administrativas-card" }
       ];
     } else if (cleanMenuKey === state.ESTRUTURAS_MENU_KEY_V1) {
       baseItems = [
