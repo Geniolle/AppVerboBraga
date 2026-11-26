@@ -4443,9 +4443,12 @@ function setDynamicProcessEditToggleVisible(isVisible) {
 // regra CSS ".card.editing .profile-edit-toggle". Repoe a visibilidade aqui sempre que o card deixa
 // de estar em edicao (Cancelar/Guardar via JS, sem recarregar a pagina).
 function restoreDynamicProcessEditToggleVisibility() {
+  // So repoe quando o proprio processo dinamico esta visivel: senao (ex.: Administrativo > Entidade
+  // depois de Guardar) o botao Editar aparece num card vazio.
   if (
     dynamicProcessEditToggleEl &&
     dynamicProcessCardEl &&
+    dynamicProcessCardEl.offsetParent !== null &&
     !dynamicProcessCardEl.classList.contains("editing")
   ) {
     setDynamicProcessEditToggleVisible(true);
