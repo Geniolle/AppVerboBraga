@@ -213,18 +213,18 @@
             {% endif %}
             <div class="personal-grid">
               <div class="personal-item"><span class="personal-label">Nº da entidade</span><strong class="personal-value">{{ company_profile_data.entity_number or '-' }}</strong></div>
-              <div class="personal-item"><span class="personal-label">País</span><strong class="personal-value">{{ company_profile_data.country or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Nome da entidade</span><strong class="personal-value">{{ company_profile_data.name or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Acrónimo</span><strong class="personal-value">{{ company_profile_data.acronym or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Nº Identificação Fiscal</span><strong class="personal-value">{{ company_profile_data.tax_id or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Email</span><strong class="personal-value">{{ company_profile_data.email or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Telefone</span><strong class="personal-value">{{ company_profile_data.phone or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Nome do responsável</span><strong class="personal-value">{{ company_profile_data.responsible_name or '-' }}</strong></div>
-              <div class="personal-item"><span class="personal-label">Morada</span><strong class="personal-value">{{ company_profile_data.address or '-' }}</strong></div>
-              <div class="personal-item"><span class="personal-label">Nº da porta</span><strong class="personal-value">{{ company_profile_data.door_number or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">País</span><strong class="personal-value">{{ company_profile_data.country or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Cidade</span><strong class="personal-value">{{ company_profile_data.city or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Freguesia</span><strong class="personal-value">{{ company_profile_data.freguesia or '-' }}</strong></div>
               <div class="personal-item"><span class="personal-label">Código postal</span><strong class="personal-value">{{ company_profile_data.postal_code or '-' }}</strong></div>
-              <div class="personal-item"><span class="personal-label">Cidade</span><strong class="personal-value">{{ company_profile_data.city or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Morada</span><strong class="personal-value">{{ company_profile_data.address or '-' }}</strong></div>
+              <div class="personal-item"><span class="personal-label">Nº da porta</span><strong class="personal-value">{{ company_profile_data.door_number or '-' }}</strong></div>
             </div>
           </div>
           <form method="post" action="/empresa/update" enctype="multipart/form-data" class="profile-edit-form">
