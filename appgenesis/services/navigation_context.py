@@ -17,6 +17,7 @@ _ALLOWED_ADMIN_TABS: frozenset[str] = frozenset({
     "perfil_autorizacao",
     "contas",
     "definicoes",
+    "dados_empresa",
 })
 
 

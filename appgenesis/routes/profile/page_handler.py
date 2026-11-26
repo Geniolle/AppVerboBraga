@@ -258,8 +258,6 @@ def _resolve_initial_menu_target(
         if isinstance(raw_row, dict) and str(raw_row.get("key") or "").strip()
     }
 
-    if clean_menu_key == "empresa":
-        return "#empresa-card", ""
     if clean_menu_key == "home":
         return "#home-summary-card", ""
     if clean_menu_key == "perfil":
@@ -275,6 +273,8 @@ def _resolve_initial_menu_target(
             return "#auth-profile-card", ""
         if resolved_admin_tab == "funcoes_administrativas":
             return "#funcoes-administrativas-card", ""
+        if resolved_admin_tab == "dados_empresa":
+            return "#empresa-card", ""
         return "#recent-entities-card", ""
     if clean_menu_key == ESTRUTURAS_MENU_KEY_V1:
         if settings_edit_key:
@@ -543,7 +543,7 @@ def new_user_page(
         if resolved_admin_tab not in {"contas", "sessoes", "departamentos"}:
             resolved_admin_tab = "contas"
     else:
-        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas"}:
+        if resolved_admin_tab not in {"utilizador", "entidade", "contas", "definicoes", "sessoes", "perfil_de_autorizacao", "funcoes_administrativas", "dados_empresa"}:
             resolved_admin_tab = "entidade"
         if resolved_admin_tab == "definicoes":
             resolved_admin_tab = "contas"
