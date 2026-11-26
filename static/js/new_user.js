@@ -10432,28 +10432,22 @@ function setupProcessAdditionalFieldsManagerV2_guard_v1() {
 })();
 
 // APPGENESIS_MEU_PERFIL_SUBSEQUENT_VISIBILITY_V1_END
-// Clicar numa linha da lista de menus (Sessoes > Menu) ou de perfis ativos (Administrativo > Perfil de autorizacao)
-// executa a mesma acao de "Editar informacoes".
+// Regra global: clicar numa linha de qualquer tabela abre a edicao do registo (ou a exibicao,
+// se nao houver permissao de edicao). Botoes, links, campos e menus dentro da linha mantem a sua acao.
+// As linhas de processo de lista (tr[data-record-id]) tem handler proprio.
 document.addEventListener("click", (event) => {
-  const row = event.target.closest("#menu-ativo-table tbody tr, #menu-inativo-table tbody tr, #auth-profile-active-table tbody tr");
-  if (!row || event.target.closest("button, a, input, select, textarea, label, .table-actions")) {
+  const row = event.target.closest ? event.target.closest("table tbody tr") : null;
+  if (!row || row.dataset.recordId) {
     return;
   }
-  const editAction = row.querySelector(".appgenesis-row-actions-item-edit-v1");
-  if (editAction) {
-    editAction.click();
-  }
-});
-
-// Administrativo > Entidade: clicar numa linha abre o modo edicao (link "Modificar entidade").
-document.addEventListener("click", (event) => {
-  const row = event.target.closest("#recent-entities-table tbody tr");
-  if (!row || event.target.closest("button, a, input, select, textarea, label, .table-actions")) {
+  if (event.target.closest("button, a, input, select, textarea, label, summary, [role='menu'], .table-actions")) {
     return;
   }
-  const editLink = row.querySelector('a[href*="target=edit-entity-card"]');
-  if (editLink) {
-    editLink.click();
+  const action =
+    row.querySelector('.appgenesis-row-actions-item-edit-v1, a[href*="target=edit-"], a[href*="_edit_id="]:not([href*="_view=1"])') ||
+    row.querySelector('.appgenesis-row-actions-item-view-v1, a[href*="_view=1"], a[title^="Exibir"]');
+  if (action) {
+    action.click();
   }
 });
 
