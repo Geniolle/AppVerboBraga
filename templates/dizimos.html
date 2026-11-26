@@ -66,21 +66,24 @@
           btn.textContent = ok ? 'Copiado' : 'Erro';
           setTimeout(function () { btn.textContent = original; }, 2000);
         }
+        function copiarFallback() {
+          var area = document.createElement('textarea');
+          area.value = texto;
+          area.setAttribute('readonly', '');
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.select();
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+          document.body.removeChild(area);
+          feito(ok);
+        }
         if (navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(texto).then(function () { feito(true); }, function () { feito(false); });
+          navigator.clipboard.writeText(texto).then(function () { feito(true); }, copiarFallback);
           return;
         }
-        var area = document.createElement('textarea');
-        area.value = texto;
-        area.setAttribute('readonly', '');
-        area.style.position = 'fixed';
-        area.style.opacity = '0';
-        document.body.appendChild(area);
-        area.select();
-        var ok = false;
-        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
-        document.body.removeChild(area);
-        feito(ok);
+        copiarFallback();
       });
     });
   })();
