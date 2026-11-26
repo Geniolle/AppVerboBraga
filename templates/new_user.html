@@ -191,7 +191,7 @@
           </div>
         </section>
 
-        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="empresa" {% if initial_menu != 'empresa' %}style="display: none;"{% endif %}>
+        <section id="empresa-card" class="card entity-panel-card" data-menu-scope="administrativo" {% if initial_menu != 'administrativo' or initial_menu_target != '#empresa-card' %}style="display: none;"{% endif %}>
           {% if company_profile_data %}
           <div class="profile-card-header">
             <h2>Perfil institucional da entidade</h2>
@@ -200,10 +200,10 @@
           {% else %}
           <h2>Perfil institucional da entidade</h2>
           {% endif %}
-          {% if entity_error and initial_menu == "empresa" %}
+          {% if entity_error and initial_menu == "administrativo" and initial_menu_target == "#empresa-card" %}
             <div class="alert error">{{ entity_error }}</div>
           {% endif %}
-          {% if entity_success and initial_menu == "empresa" %}
+          {% if entity_success and initial_menu == "administrativo" and initial_menu_target == "#empresa-card" %}
             <div class="alert ok">{{ entity_success }}</div>
           {% endif %}
           {% if company_profile_data %}

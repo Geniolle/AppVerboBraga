@@ -20,7 +20,7 @@ from appgenesis.shared.results import RedirectOutcome
 
 
 def _empresa_error_redirect(msg: str) -> RedirectOutcome:
-    url = build_users_new_url(menu="empresa", entity_error=msg) + "#empresa-card"
+    url = build_users_new_url(menu="administrativo", admin_tab="dados_empresa", entity_error=msg) + "#empresa-card"
     return RedirectOutcome(url=url, status_code=303)
 
 
@@ -113,7 +113,7 @@ def execute_update_empresa_profile(
         (BASE_DIR / delete_old_logo_after_commit.lstrip("/")).unlink(missing_ok=True)
 
     url = (
-        build_users_new_url(menu="empresa", entity_success="Perfil da empresa atualizado com sucesso.")
+        build_users_new_url(menu="administrativo", admin_tab="dados_empresa", entity_success="Perfil da empresa atualizado com sucesso.")
         + "#empresa-card"
     )
     return RedirectOutcome(url=url, status_code=303)

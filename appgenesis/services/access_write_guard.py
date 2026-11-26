@@ -36,7 +36,7 @@ WRITE_RULES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("/users/generate-invite", "administrativo", (ACTION_CRIAR,)),
     ("/users/resend-invite", "administrativo", (ACTION_EDITAR,)),
     ("/entities/", "administrativo", (ACTION_CRIAR, ACTION_EDITAR)),
-    ("/empresa/update", "empresa", (ACTION_EDITAR,)),
+    ("/empresa/update", "administrativo", (ACTION_EDITAR,)),
     ("/settings/menu/", "sessoes", (ACTION_CRIAR, ACTION_EDITAR)),
 )
 
