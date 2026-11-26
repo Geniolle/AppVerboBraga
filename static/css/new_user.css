@@ -7094,3 +7094,29 @@ body:has(.access-no-eliminar) .admin-subprocess-action-btn-v1[title^="Eliminar"]
   background: #ffffff;
   color: #0f172a;
 }
+
+/* Cursor de mao em todos os elementos com interacao de clique (padrao global). */
+button:not(:disabled),
+a[href],
+summary,
+select:not(:disabled),
+label[for],
+[role="button"]:not([aria-disabled="true"]),
+.profile-photo-picker-v1,
+.entity-logo-menu-item:not(:disabled),
+.admin-subprocess-multi-trigger-v1,
+.admin-subprocess-toggle-v1,
+.table-icon-btn,
+.dynamic-process-list-row-clickable-v1,
+#recent-entities-table tbody tr,
+#auth-profile-active-table tbody tr,
+#menu-ativo-table tbody tr,
+#menu-inativo-table tbody tr {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+.entity-logo-menu-item:disabled {
+  cursor: not-allowed;
+}
