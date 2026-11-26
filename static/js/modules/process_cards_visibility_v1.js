@@ -25,7 +25,6 @@
     ESTRUTURAS_MENU_KEY_V1: "sessoes",
     scopedCards: [],
     dynamicProcessCardEl: null,
-    dynamicProcessActionCardEl: null,
     dynamicProcessActiveCardEl: null,
     dynamicProcessInactiveCardEl: null,
     debugTabsLog: function () {},
@@ -58,9 +57,6 @@
     if ("dynamicProcessCardEl" in safeOptions) {
       state.dynamicProcessCardEl = safeOptions.dynamicProcessCardEl;
     }
-    if ("dynamicProcessActionCardEl" in safeOptions) {
-      state.dynamicProcessActionCardEl = safeOptions.dynamicProcessActionCardEl;
-    }
     if ("dynamicProcessActiveCardEl" in safeOptions) {
       state.dynamicProcessActiveCardEl = safeOptions.dynamicProcessActiveCardEl;
     }
@@ -86,9 +82,6 @@
 
     if (state.dynamicProcessCardEl) {
       state.dynamicProcessCardEl.style.display = displayValue;
-    }
-    if (state.dynamicProcessActionCardEl) {
-      state.dynamicProcessActionCardEl.style.display = displayValue;
     }
     if (state.dynamicProcessActiveCardEl) {
       state.dynamicProcessActiveCardEl.style.display = displayValue;

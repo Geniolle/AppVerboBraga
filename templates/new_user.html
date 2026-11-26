@@ -71,22 +71,10 @@
 
 
 
-<section id="dynamic-process-action-card" class="card appgenesis-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
-          <div class="appgenesis-process-action-toolbar-v1">
-            <button
-              id="dynamic-process-edit-toggle"
-              type="button"
-              class="profile-edit-toggle appgenesis-process-action-toggle-v1"
-              data-edit-target="dynamic-process-card"
-            >
-              Editar
-            </button>
-          </div>
-        </section>
-
         <section id="dynamic-process-card" class="card appgenesis-process-action-card-v1" {% if initial_menu_target != '#dynamic-process-card' %}style="display: none;"{% endif %}>
           <div class="profile-card-header">
             <h2 id="dynamic-process-title">Processo</h2>
+            <button id="dynamic-process-edit-toggle" type="button" class="profile-edit-toggle appgenesis-process-action-toggle-v1" data-edit-target="dynamic-process-card">Editar</button>
           </div>
           {% if profile_success and initial_menu not in ["perfil", "meu_perfil"] %}
             <div class="alert ok">{{ profile_success }}</div>

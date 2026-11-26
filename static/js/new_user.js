@@ -1049,7 +1049,6 @@ const trainingOutrosEnabledEl = document.getElementById("edit_training_outros_en
 const trainingOutrosInputEl = document.getElementById("edit_training_outros");
 const processFieldsBuilderEl = document.getElementById("process-fields-builder");
 const dynamicProcessCardEl = document.getElementById("dynamic-process-card");
-const dynamicProcessActionCardEl = document.getElementById("dynamic-process-action-card");
 const dynamicProcessTitleEl = document.getElementById("dynamic-process-title");
 const dynamicProcessDescriptionEl = document.getElementById("dynamic-process-description");
 const dynamicProcessSectionLabelEl = document.getElementById("dynamic-process-section-label");
@@ -3854,7 +3853,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
   const listProcessLayoutMode = Boolean(layoutConfig.isListProcess);
   // Processos normais: devolve os cards que a lista escondeu.
   if (!listProcessLayoutMode) {
-    [dynamicProcessCardEl, dynamicProcessActionCardEl].forEach((cardEl) => {
+    [dynamicProcessCardEl].forEach((cardEl) => {
       if (cardEl && cardEl.dataset.hiddenByListV1 === "1") {
         delete cardEl.dataset.hiddenByListV1;
         cardEl.style.display = "";
@@ -4199,7 +4198,7 @@ function renderDynamicProcessCard(menuKey, sectionKey) {
 
     closeDynamicProcessInlineFormV1();
     // Escondido por atributo (regra CSS !important), para nao ser reposto por outros redesenhos.
-    [dynamicProcessCardEl, dynamicProcessActionCardEl].forEach((cardEl) => {
+    [dynamicProcessCardEl].forEach((cardEl) => {
       if (cardEl) {
         cardEl.dataset.hiddenByListV1 = "1";
       }
@@ -4320,7 +4319,6 @@ if (
     ESTRUTURAS_MENU_KEY_V1,
     scopedCards,
     dynamicProcessCardEl,
-    dynamicProcessActionCardEl,
     dynamicProcessActiveCardEl,
     dynamicProcessInactiveCardEl,
     debugTabsLog: debugTabsLogV1,
@@ -4425,9 +4423,6 @@ function setDynamicProcessEditToggleVisible(isVisible) {
   if (isProfileMenu) {
     isVisible = false;
   }
-  if (dynamicProcessActionCardEl) {
-    dynamicProcessActionCardEl.style.display = isVisible ? "" : "none";
-  }
   if (!dynamicProcessEditToggleEl) {
     return;
   }
@@ -4438,10 +4433,7 @@ function setDynamicProcessEditToggleVisible(isVisible) {
   }
 }
 
-// O botao "Criar/Editar" do processo dinamico vive num card de acao separado
-// (#dynamic-process-action-card), fora de #dynamic-process-card, por isso nao e alcancado pela
-// regra CSS ".card.editing .profile-edit-toggle". Repoe a visibilidade aqui sempre que o card deixa
-// de estar em edicao (Cancelar/Guardar via JS, sem recarregar a pagina).
+// Repoe a visibilidade do botao "Criar/Editar" do processo dinamico quando o card deixa de estar em edicao.
 function restoreDynamicProcessEditToggleVisibility() {
   // So repoe quando o proprio processo dinamico esta visivel: senao (ex.: Administrativo > Entidade
   // depois de Guardar) o botao Editar aparece num card vazio.
@@ -6270,9 +6262,7 @@ profileEditButtons.forEach((button) => {
 
 if (dynamicProcessEditToggleEl) {
   dynamicProcessEditToggleEl.addEventListener("click", () => {
-    // O botao vive num card separado (#dynamic-process-action-card), fora de #dynamic-process-card,
-    // por isso a regra CSS ".card.editing .profile-edit-toggle" nao o alcanca mais. Escondemos aqui
-    // explicitamente; restoreDynamicProcessEditToggleVisibility() reverte ao cancelar/fechar.
+    // Esconde o botao enquanto o formulario esta aberto; restoreDynamicProcessEditToggleVisibility() reverte ao cancelar/fechar.
     setDynamicProcessEditToggleVisible(false);
     if (dynamicProcessHistoryActionInputEl) {
       dynamicProcessHistoryActionInputEl.value = "create";
