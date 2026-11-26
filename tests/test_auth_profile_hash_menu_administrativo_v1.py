@@ -67,8 +67,8 @@ def test_auth_profile_return_target_is_list_after_save():
 def test_auth_profile_row_click_opens_edit():
     source = (RUNTIME_JS.parents[1] / "new_user.js").read_text(encoding="utf-8")
 
-    # Clicar na linha de perfil ativo executa a acao Editar (mesmo padrao da lista de menus).
-    assert "#auth-profile-active-table tbody tr" in source
+    # Clicar em qualquer linha de tabela executa a acao Editar (regra global de linhas clicaveis).
+    assert 'event.target.closest("table tbody tr")' in source
 
 
 def test_auth_profile_inline_editor_placed_below_row():

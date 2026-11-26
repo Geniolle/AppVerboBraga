@@ -7119,3 +7119,8 @@ select:disabled,
 .entity-logo-menu-item:disabled {
   cursor: not-allowed;
 }
+
+/* Regra global: linhas de tabela abrem a edicao ao clique (cursor de mao). */
+table tbody tr {
+  cursor: pointer;
+}
