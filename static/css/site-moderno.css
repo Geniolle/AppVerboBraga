@@ -1222,6 +1222,17 @@ main#main {
   font-size: 1.2rem;
 }
 
+.vb-dizimos__titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vb-dizimos__logo {
+  width: auto;
+  height: 32px;
+}
+
 .vb-dizimos__valor {
   font-weight: 700;
   font-size: 1.1rem;
