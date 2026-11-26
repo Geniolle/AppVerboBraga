@@ -10452,6 +10452,18 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// Administrativo > Entidade: clicar numa linha abre o modo edicao (link "Modificar entidade").
+document.addEventListener("click", (event) => {
+  const row = event.target.closest("#recent-entities-table tbody tr");
+  if (!row || event.target.closest("button, a, input, select, textarea, label, .table-actions")) {
+    return;
+  }
+  const editLink = row.querySelector('a[title="Modificar entidade"]');
+  if (editLink) {
+    editLink.click();
+  }
+});
+
 /* APPGENESIS_AUTO_DISMISS_FLASH_MESSAGES_V1_START */
 function appgenesisAutoDismissFlashMessages_v1() {
   // Sucesso: 4 s. Erro: 8 s. Ambos desaparecem com fade.
