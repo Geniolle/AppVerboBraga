@@ -6277,6 +6277,11 @@ input.action-btn-cancel,
   grid-column: span 3;
 }
 
+/* Imagem/icone: sempre a ultima linha, ocupa a largura toda. */
+#empresa-card form > .entity-fifth-row > .entity-fifth-row-logo {
+  grid-column: 1 / -1;
+}
+
 #empresa-card form > .entity-first-row,
 #empresa-card form > .entity-second-row,
 #empresa-card form > .entity-third-row,
