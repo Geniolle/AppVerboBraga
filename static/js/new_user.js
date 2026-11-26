@@ -10458,7 +10458,7 @@ document.addEventListener("click", (event) => {
   if (!row || event.target.closest("button, a, input, select, textarea, label, .table-actions")) {
     return;
   }
-  const editLink = row.querySelector('a[title="Modificar entidade"]');
+  const editLink = row.querySelector('a[href*="target=edit-entity-card"]');
   if (editLink) {
     editLink.click();
   }
