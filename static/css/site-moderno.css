@@ -1227,3 +1227,32 @@ main#main {
   font-size: 1.1rem;
   word-break: break-word;
 }
+
+.vb-dizimos__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.vb-dizimos__linha .vb-dizimos__valor {
+  margin: 0;
+  flex: 1 1 200px;
+}
+
+.vb-dizimos__copiar {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--vb-ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--vb-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vb-dizimos__copiar:focus-visible {
+  outline: 2px solid var(--vb-ink);
+  outline-offset: 2px;
+}
