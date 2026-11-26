@@ -6458,19 +6458,13 @@ input.action-btn-cancel,
 }
 
 
-/* Dados institucionais (Empresa): sem o card generico "Editar" do processo dinamico. */
-body:has(#empresa-card:not([style*="display: none"])) #dynamic-process-action-card {
-  display: none !important;
-}
-
 /* Processos de lista: linha clicavel abre a edicao do registo. */
 .dynamic-process-list-row-clickable-v1 {
   cursor: pointer;
 }
 
 /* Processos de lista: o card generico "Criar/Editar" e o formulario ficam ocultos; o formulario abre inline na linha. */
-#dynamic-process-card[data-hidden-by-list-v1="1"],
-#dynamic-process-action-card[data-hidden-by-list-v1="1"] {
+#dynamic-process-card[data-hidden-by-list-v1="1"] {
   display: none !important;
 }
 
